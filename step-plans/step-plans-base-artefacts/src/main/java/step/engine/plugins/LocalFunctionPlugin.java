@@ -69,8 +69,7 @@ public class LocalFunctionPlugin extends AbstractExecutionEnginePlugin {
 			String functionName = annotation.name().length()>0?annotation.name():m.getName();
 			
 			LocalFunction function = new LocalFunction();
-			function.setAttributes(new HashMap<>());
-			function.getAttributes().put(AbstractOrganizableObject.NAME, functionName);
+			function.setName(functionName);
 			function.setClassName(m.getDeclaringClass().getName());
 
 			functions.add(function);

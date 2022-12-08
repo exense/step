@@ -140,7 +140,7 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 	public <IN,OUT> Output<OUT> callFunction(String tokenHandleId, Function function, FunctionInput<IN> functionInput, Class<OUT> outputClass) {	
 		Input<IN> input = new Input<>();
 		input.setPayload(functionInput.getPayload());
-		input.setFunction(function.getAttributes().get(AbstractOrganizableObject.NAME));
+		input.setFunction(function.getName());
 		
 		// Build the property map used for the function layer
 		Map<String, String> properties = new HashMap<>();

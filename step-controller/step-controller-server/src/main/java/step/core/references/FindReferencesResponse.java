@@ -28,11 +28,11 @@ public class FindReferencesResponse {
 
     // convenience constructors
     public FindReferencesResponse(Plan plan) {
-        this(ReferrerType.PLAN, plan.getId().toString(), plan.getAttribute(AbstractOrganizableObject.NAME), plan.getAttributes());
+        this(ReferrerType.PLAN, plan.getId().toString(), plan.getName(), plan.getAttributes());
     }
 
     public FindReferencesResponse(Function function) {
-        this(ReferrerType.KEYWORD, function.getId().toString(), function.getAttribute(AbstractOrganizableObject.NAME), function.getAttributes());
+        this(ReferrerType.KEYWORD, function.getId().toString(), function.getName(), function.getAttributes());
     }
 
 

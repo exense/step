@@ -80,7 +80,7 @@ public class FunctionPackageManagerTest {
 		// Retrieve the created package
 		FunctionPackage actualFunctionPackage = pm.getFunctionPackage(fp.getId().toString());
 		// Assert its name
-		assertEquals("testLocation.test", actualFunctionPackage.getAttribute(AbstractOrganizableObject.NAME));
+		assertEquals("testLocation.test", actualFunctionPackage.getName());
 		
 		// Get the first function that should have been generated
 		Function f1Repo = f.getFunctionById(f1.getId().toString());
@@ -191,7 +191,7 @@ public class FunctionPackageManagerTest {
 		// Retrieve the created package
 		FunctionPackage actualFunctionPackage = pm.getFunctionPackage(testPackage.getId().toString());
 		// Assert its name
-		assertEquals(resourceFileName, actualFunctionPackage.getAttribute(AbstractOrganizableObject.NAME));
+		assertEquals(resourceFileName, actualFunctionPackage.getName());
 		
 		// Get the first function that should have been generated
 		Function f1Repo = f.getFunctionById(f1.getId().toString());

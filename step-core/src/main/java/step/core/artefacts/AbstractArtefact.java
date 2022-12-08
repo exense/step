@@ -197,7 +197,7 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
 		if (isUseDynamicName()) {
 			String value = getDynamicName().get();
 			if (value != null && !value.equals("")) {
-				addAttribute(AbstractOrganizableObject.NAME, value);
+				setName(value);
 			}
 		}
 	}

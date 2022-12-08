@@ -28,7 +28,7 @@ public class SetSchedulerTaskAttributesTest {
 
 		ExecutiontTaskParameters plan1 = collectionFactory.getCollection("tasks", ExecutiontTaskParameters.class)
 				.find(Filters.empty(), null, null, null, 0).findFirst().get();
-		assertEquals(NAME, plan1.getAttribute(AbstractOrganizableObject.NAME));
+		assertEquals(NAME, plan1.getName());
 	}
 
 }

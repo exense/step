@@ -50,7 +50,7 @@ public class PlanLocatorTest {
 
 	private Plan newPlan(String name) {
 		Plan plan = new Plan();
-		plan.addAttribute(AbstractOrganizableObject.NAME, name);
+		plan.setName(name);
 		planAccessor.save(plan);
 		return plan;
 	}
@@ -60,7 +60,7 @@ public class PlanLocatorTest {
 	}
 	
 	private ObjectPredicate objectPredicate(String name) {
-		return t -> ((Plan)t).getAttribute(AbstractOrganizableObject.NAME).equals(name);
+		return t -> ((Plan)t).getname().equals(name);
 	}
 
 }

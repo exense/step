@@ -67,7 +67,7 @@ public class ExecutionManagerImpl implements ExecutionManager {
 			if(plan!=null) {
 				execution.setPlanId(plan.getId().toString());
 				if(execution.getDescription()==null) {
-					execution.setDescription(plan.getAttributes()!=null?plan.getAttributes().get(AbstractOrganizableObject.NAME):null);
+					execution.setDescription(plan.getName());
 				}
 			}
 			saveExecution(execution);

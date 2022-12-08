@@ -178,7 +178,7 @@ public abstract class AbtractFunctionServices extends AbstractEntityServices<Fun
 	public Function newFunctionTypeConf(@PathParam("id") String type) {
 		Function newFunction = functionManager.newFunction(type);
 		newFunction.setAttributes(new HashMap<>());
-		newFunction.getAttributes().put(AbstractOrganizableObject.NAME, "");
+		newFunction.setName("");
 		newFunction.setSchema(Json.createObjectBuilder().build());
 		getObjectEnricher().accept(newFunction);
 		return newFunction;

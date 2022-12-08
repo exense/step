@@ -192,7 +192,7 @@ public class AccessServices extends AbstractStepServices {
 		conf.setAuthentication(authenticationManager.useAuthentication());
 		conf.setAuthenticatorName(authenticationManager.getAuthenticatorName());
 		conf.setNoLoginMask(configuration.getPropertyAsBoolean(CONFIG_KEY_JWT_NOLOGIN, false));
-		conf.setRoles(roleProvider.getRoles().stream().map(r->r.getAttributes().get(AbstractOrganizableObject.NAME)).collect(Collectors.toList()));
+		conf.setRoles(roleProvider.getRoles().stream().map(r->r.getName()).collect(Collectors.toList()));
 		
 		// conf should cover more than just AccessConfiguration but we'll store the info here for right now
 		Configuration ctrlConf = getContext().getConfiguration();

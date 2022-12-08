@@ -259,13 +259,9 @@ public class InteractiveServices extends AbstractStepServices {
 		CallFunction callFunction = FunctionArtefacts.keyword(functionAttributes).withInput("{}").build();
 
 		// TODO do this centrally. Currently the same logic is implemented in the UI
-		Map<String, String> attributes = new HashMap<>();
-		attributes.put("name", function.getAttributes().get(AbstractOrganizableObject.NAME));
-		callFunction.setAttributes(attributes);
+		callFunction.setName(function.getName());
 		FunctionGroup functionGroup = new FunctionGroup();
-		attributes = new HashMap<>();
-		attributes.put("name", "Session");
-		functionGroup.setAttributes(attributes);
+		functionGroup.setName("Session");
 		
 		Plan plan = PlanBuilder.create()
 				.startBlock(functionGroup)

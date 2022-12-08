@@ -1,7 +1,5 @@
 package step.functions.packages;
 
-import static step.core.accessors.AbstractOrganizableObject.NAME;
-
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -250,7 +248,7 @@ public class FunctionPackageManager implements Closeable {
 			// search for an existing function with the same name and reuse its ID
 			// this is needed as long Plans refer to Functions by ID
 			if (previousFunctions != null) {
-				previousFunctions.stream().filter(f -> f.getAttribute(NAME).equals(newFunction.getAttribute(NAME)))
+				previousFunctions.stream().filter(f -> f.getName().equals(newFunction.getName()))
 						.findFirst().ifPresent(oldFunction -> newFunction.setId(oldFunction.getId()));
 			}
 
@@ -269,7 +267,7 @@ public class FunctionPackageManager implements Closeable {
 
 		// set the name of the function package
 		String name = buildFunctionPackageName(newFunctionPackage);
-		newFunctionPackage.addAttribute(NAME, name);
+		newFunctionPackage.setName(name);
 
 		registerWatcher(newFunctionPackage);
 

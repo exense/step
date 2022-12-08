@@ -72,13 +72,9 @@ public class JMeterHandlerTest {
 		
 		f.setJmeterTestplan(new DynamicValue<String>(file.getAbsolutePath()));
 
-		//f.setLibrariesFile(new DynamicValue<>());
 		f.setId(new ObjectId());
-		Map<String, String> attributes = new HashMap<>();
-		attributes.put(AbstractOrganizableObject.NAME, "medor");
-		f.setAttributes(attributes);
+		f.setName("medor");
 
-		//f.setScriptFile(new DynamicValue<String>(getScriptDir() + "/" + scriptFile));
 		return f;
 	}
 }

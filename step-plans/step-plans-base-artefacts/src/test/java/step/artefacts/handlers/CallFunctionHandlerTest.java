@@ -188,16 +188,13 @@ public class CallFunctionHandlerTest extends AbstractArtefactHandlerTest {
 	protected Function newFunction(ObjectId id) {
 		Function function = new Function();
 		function.setId(id);
-		function.addAttribute(AbstractOrganizableObject.NAME, id.toString());
+		function.setName(id.toString());
 		return function;
 	}
 	
 	protected Function newFunction(String name) {
 		Function function = new Function();
-		
-		Map<String, String> attributes = new HashMap<>();
-		attributes.put(AbstractOrganizableObject.NAME, name);
-		function.setAttributes(attributes);
+		function.setName(name);
 		return function;
 	}
 	

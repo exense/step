@@ -60,7 +60,7 @@ public class ResourceManagerImplTest {
 		Resource resourceActual = resourceAccessor.get(resource.getId());
 		assertEquals(resource, resourceActual);
 		assertEquals("TestResource.txt", resourceActual.getResourceName());
-		assertEquals("TestResource.txt", resourceActual.getAttribute(AbstractOrganizableObject.NAME));
+		assertEquals("TestResource.txt", resourceActual.getName());
 		
 		// Assert that the revision has been persisted
 		ResourceRevision fisrtResourceRevisionFromDB = resourceRevisionAccessor.get(resource.getCurrentRevisionId());
@@ -79,7 +79,7 @@ public class ResourceManagerImplTest {
 		Resource actualResource = resourceManager.getResource(resourceId);
 		// Assert that the resource name matches with the new uploaded content
 		assertEquals("TestResource2.txt", actualResource.getResourceName());
-		assertEquals("TestResource2.txt", actualResource.getAttribute(AbstractOrganizableObject.NAME));
+		assertEquals("TestResource2.txt", actualResource.getName());
 
 		ResourceRevision secondResourceRevision = resourceManager.getResourceRevision(actualResource.getCurrentRevisionId().toString());
 		assertNotNull(secondResourceRevision);
@@ -88,11 +88,11 @@ public class ResourceManagerImplTest {
 		assertNotSame(fisrtResourceRevisionFromDB, secondResourceRevision);
 
 		// Try to force renaming the resource
-		actualResource.addAttribute(AbstractOrganizableObject.NAME, "newResourceName");
+		actualResource.setName("newResourceName");
 		resourceManager.saveResource(actualResource);
 		// Ensure that the name of the resource remained in sync with the resourceName
 		actualResource = resourceManager.getResource(resourceId);
-		assertEquals("TestResource2.txt", actualResource.getAttribute(AbstractOrganizableObject.NAME));
+		assertEquals("TestResource2.txt", actualResource.getName());
 		assertEquals("TestResource2.txt", actualResource.getResourceName());
 
 		File resourceFileActual = new File(rootFolder.getAbsolutePath()+"/functions/"+resourceId+"/"+secondResourceRevision.getId().toString()+"/"+secondResourceRevision.getResourceFileName());
@@ -128,7 +128,7 @@ public class ResourceManagerImplTest {
 		Resource actualResource = resourceManager.getResource(resourceContainer.getResource().getId().toString());
 		assertNotNull(actualResource);
 
-		assertEquals("TestResource.txt", actualResource.getAttribute(AbstractOrganizableObject.NAME));
+		assertEquals("TestResource.txt", actualResource.getName());
 		assertEquals("TestResource.txt", actualResource.getResourceName());
 	}
 
@@ -231,7 +231,7 @@ public class ResourceManagerImplTest {
 
 		// Create a directory resource
 		Resource resource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, true, new FileInputStream(zippedFolder), "TestResource.zip", true, null);
-		assertEquals("TestResource", resource.getAttribute(AbstractOrganizableObject.NAME));
+		assertEquals("TestResource", resource.getName());
 		assertEquals("TestResource", resource.getResourceName());
 
 		// Assert that the resource has been created
@@ -257,7 +257,7 @@ public class ResourceManagerImplTest {
 
 		Resource updatedResource = resourceManager.saveResourceContent(resourceId, new FileInputStream(resourceContentFile), "newName.zip");
 		// Assert that the name of the resource and the resourceName have been updated accordingly
-		assertEquals("newName", updatedResource.getAttribute(AbstractOrganizableObject.NAME));
+		assertEquals("newName", updatedResource.getName());
 		assertEquals("newName", updatedResource.getResourceName());
 
 		resourceRevision = resourceManager.getResourceRevision(updatedResource.getCurrentRevisionId().toString());

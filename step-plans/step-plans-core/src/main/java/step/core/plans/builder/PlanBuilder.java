@@ -46,12 +46,7 @@ public class PlanBuilder {
 	public Plan build() {
 		if(stack.isEmpty()) {
 			Plan plan = new Plan(root);
-			HashMap<String, String> attributes = new HashMap<String, String>();
-			Map<String, String> rootArtefactAttributes = root.getAttributes();
-			if(rootArtefactAttributes != null && rootArtefactAttributes.containsKey(AbstractOrganizableObject.NAME)) {
-				attributes.put(AbstractOrganizableObject.NAME, rootArtefactAttributes.get(AbstractOrganizableObject.NAME));
-			}
-			plan.setAttributes(attributes);
+			plan.setAttributes(root.getName());
 			return plan;
 		} else {
 			throw new RuntimeException("Unbalanced block "+stack.peek());

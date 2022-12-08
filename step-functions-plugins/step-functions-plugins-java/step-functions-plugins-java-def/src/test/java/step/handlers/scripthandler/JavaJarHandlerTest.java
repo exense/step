@@ -119,9 +119,7 @@ public class JavaJarHandlerTest {
 		f.setScriptLanguage(new DynamicValue<String>("java"));
 		f.setLibrariesFile(new DynamicValue<>());
 		f.setId(new ObjectId());
-		Map<String, String> attributes = new HashMap<>();
-		attributes.put(AbstractOrganizableObject.NAME, kwName);
-		f.setAttributes(attributes);
+		f.setName(kwName);
 		File file = ResourceExtractor.extractResource(getClass().getClassLoader(), scriptFile);
 		f.setScriptFile(new DynamicValue<String>(file.getPath()));
 		file.deleteOnExit();

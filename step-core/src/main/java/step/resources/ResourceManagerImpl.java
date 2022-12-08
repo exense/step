@@ -138,7 +138,7 @@ public class ResourceManagerImpl implements ResourceManager {
 		String resourceName = getResourceName(resourceFileName, resource.isDirectory());
 		// Keep resourceName and name attribute in sync
 		resource.setResourceName(resourceName);
-		resource.addAttribute(AbstractOrganizableObject.NAME, resourceName);
+		resource.setName(resourceName);
 		createResourceRevisionAndSaveContent(resourceStream, resourceFileName, resource);
 		return resource;
 	}
@@ -311,7 +311,7 @@ public class ResourceManagerImpl implements ResourceManager {
 		resourceName = getResourceName(name, isDirectory);
 
 		Resource resource = new Resource();
-		resource.addAttribute(AbstractOrganizableObject.NAME, resourceName);
+		resource.setName(resourceName);
 		resource.setResourceName(resourceName);
 		resource.setResourceType(resourceTypeId);
 		resource.setEphemeral(resourceType.isEphemeral());
@@ -346,7 +346,7 @@ public class ResourceManagerImpl implements ResourceManager {
 	@Override
 	public Resource saveResource(Resource resource) throws IOException {
 		// Ensure that the name remains in sync with resourceName
-		resource.addAttribute(AbstractOrganizableObject.NAME, resource.getResourceName());
+		resource.setName(resource.getResourceName());
 		return resourceAccessor.save(resource);
 	}
 	

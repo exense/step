@@ -108,7 +108,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 
 		String name = node.getName();
 		// Name the report node after the keyword if it's not already the case
-		String functionName = function.getAttribute(AbstractOrganizableObject.NAME);
+		String functionName = function.getName();
 		if(name.equals(CallFunction.ARTEFACT_NAME) && functionName != null) {
 			node.setName(functionName);
 		}

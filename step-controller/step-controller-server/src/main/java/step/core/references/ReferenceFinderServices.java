@@ -148,7 +148,7 @@ public class ReferenceFinderServices extends AbstractStepServices {
             Plan p = (Plan) o;
             switch (req.searchType) {
                 case PLAN_NAME:
-                    return p.getAttribute(AbstractOrganizableObject.NAME).equals(req.searchValue);
+                    return p.getName().equals(req.searchValue);
                 case PLAN_ID:
                     return p.getId().toString().equals(req.searchValue);
                 default:
@@ -158,7 +158,7 @@ public class ReferenceFinderServices extends AbstractStepServices {
             Function f = (Function) o;
             switch (req.searchType) {
                 case KEYWORD_NAME:
-                    return f.getAttribute(AbstractOrganizableObject.NAME).equals(req.searchValue);
+                    return f.getName().equals(req.searchValue);
                 case KEYWORD_ID:
                     return f.getId().toString().equals(req.searchValue);
                 default:
@@ -168,7 +168,7 @@ public class ReferenceFinderServices extends AbstractStepServices {
             Resource r = (Resource) o;
             switch (req.searchType) {
                 case RESOURCE_NAME:
-                    return r.getAttribute(AbstractOrganizableObject.NAME).equals(req.searchValue);
+                    return r.getName().equals(req.searchValue);
                 case RESOURCE_ID:
                     return r.getId().toString().equals(req.searchValue);
                 default:

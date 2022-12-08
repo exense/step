@@ -233,7 +233,7 @@ public class FunctionGroupHandlerTest {
 		
 		Function function = new Function();
 		String name = UUID.randomUUID().toString();
-		function.addAttribute(AbstractOrganizableObject.NAME, name);
+		function.setName(name);
 		CallFunction callFunction = FunctionArtefacts.keyword(name);
 
 		RetryIfFails retryIfFail = new RetryIfFails();

@@ -65,7 +65,7 @@ public class ThreadManagerServices extends AbstractStepServices {
 			Plan plan = executionContext.getPlan();
 			if(plan != null) {
 				String planId = plan.getId().toString();
-				String planName = plan.getAttributes().get(AbstractOrganizableObject.NAME);
+				String planName = plan.getName();
 				String executionType = executionContext.getExecutionType();
 				// TODO implement this in a generic way
 				if(TestSetExecutionType.NAME.equals(executionType)) {

@@ -143,9 +143,9 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
         if (clonedEntity instanceof AbstractOrganizableObject) {
             AbstractOrganizableObject organizableObject = (AbstractOrganizableObject) clonedEntity;
             // Append _Copy to new plan name
-            String name = organizableObject.getAttribute(AbstractOrganizableObject.NAME);
+            String name = organizableObject.getName();
             String newName = name + "_Copy";
-            organizableObject.addAttribute(AbstractOrganizableObject.NAME, newName);
+            organizableObject.setName(newName);
         }
         // Save the cloned plan
         save(clonedEntity);

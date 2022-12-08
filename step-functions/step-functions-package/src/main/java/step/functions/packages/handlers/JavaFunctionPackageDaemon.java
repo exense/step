@@ -81,7 +81,7 @@ public class JavaFunctionPackageDaemon extends FunctionPackageUtils {
 					
 					GeneralScriptFunction function = new GeneralScriptFunction();
 					function.setAttributes(new HashMap<>());
-					function.getAttributes().put(AbstractOrganizableObject.NAME, functionName);
+					function.setName(functionName);
 					
 					if(packageLibrariesFile != null) {
 						function.getLibrariesFile().setValue(parameters.getPackageLibrariesLocation());

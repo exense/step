@@ -104,7 +104,7 @@ public abstract class AbstractFunctionType<T extends Function> {
 	
 	public T copyFunction(T function) throws FunctionTypeException {
 		function.setId(null);
-		function.getAttributes().put(AbstractOrganizableObject.NAME,function.getAttributes().get(AbstractOrganizableObject.NAME)+"_Copy");
+		function.setname(function.getName()+"_Copy");
 		return function;
 	}
 	

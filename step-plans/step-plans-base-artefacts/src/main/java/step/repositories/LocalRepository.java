@@ -48,7 +48,7 @@ public class LocalRepository extends AbstractRepository {
 		Plan plan = planAccessor.get(planId);
 
 		ArtefactInfo info = new ArtefactInfo();
-		info.setName(plan.getAttributes()!=null?plan.getAttributes().get(AbstractOrganizableObject.NAME):null);
+		info.setName(plan.getName());
 		info.setType(AbstractArtefact.getArtefactName(plan.getRoot().getClass()));
 		return info;
 	}
@@ -87,7 +87,7 @@ public class LocalRepository extends AbstractRepository {
 
 	private void addTestRunStatus(List<TestRunStatus> testRunStatusList, AbstractArtefact abstractArtefact) {
 		testRunStatusList.add(new TestRunStatus(abstractArtefact.getId().toString(),
-				abstractArtefact.getAttributes().get(AbstractOrganizableObject.NAME), ReportNodeStatus.NORUN));
+				abstractArtefact.getName(), ReportNodeStatus.NORUN));
 	}
 
 	@Override

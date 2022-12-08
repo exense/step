@@ -322,12 +322,10 @@ public class ParameterManagerPluginTest {
 
 	protected Function newFunction(String app, String name) {
 		Function function = new Function();
-		Map<String, String> attributes = new HashMap<String, String>();
-		attributes.put(AbstractOrganizableObject.NAME, name);
+		function.setName(name);
 		if(app != null) {
-			attributes.put(Function.APPLICATION, app);
+			function.getAttributes().put(Function.APPLICATION, app);
 		}
-		function.setAttributes(attributes);
 		return function;
 	}
 	

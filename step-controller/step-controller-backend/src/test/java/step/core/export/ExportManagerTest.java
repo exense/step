@@ -487,11 +487,11 @@ public class ExportManagerTest {
 
 		Plan testSet01 = planAccessor.get(testSet01Id);
 		assertNotNull(testSet01);
-		assertEquals("TestSet 01", testSet01.getAttribute(AbstractOrganizableObject.NAME));
+		assertEquals("TestSet 01", testSet01.getName());
 		
 		Plan testCase01 = planAccessor.get(testCase01Id);
 		assertNotNull(testCase01);
-		assertEquals("TestCase 01", testCase01.getAttribute(AbstractOrganizableObject.NAME));
+		assertEquals("TestCase 01", testCase01.getName());
 		
 		Function composite01 = functionAccessor.get(composite01Id);
 		assertNotNull(composite01);
@@ -604,7 +604,7 @@ public class ExportManagerTest {
 		planAccessor.save(plan);
 		Function function = new Function();
 		String functionName = UUID.randomUUID().toString();
-		function.addAttribute(AbstractOrganizableObject.NAME, functionName);
+		function.setName(functionName);
 		functionAccessor.save(function);
 		Sequence sequence = sequence();
 		sequence.addChild(callPlan(plan.getId().toString()));
@@ -668,7 +668,7 @@ public class ExportManagerTest {
 		compositeFunctionType.setupFunction(function);
 		String compositePlanId = function.getPlanId();
 		String functionName = UUID.randomUUID().toString();
-		function.addAttribute(AbstractOrganizableObject.NAME, functionName);
+		function.setName(functionName);
 		functionAccessor.save(function);
 		
 		Sequence sequence = sequence();
@@ -743,7 +743,7 @@ public class ExportManagerTest {
 											.endBlock()
 										.endBlock().build();
 		String uniqueName = UUID.randomUUID().toString();
-		plan.addAttribute(AbstractOrganizableObject.NAME, uniqueName);
+		plan.setName(uniqueName);
 		planAccessor.save(plan);
 		
 		File testExportFile = new File("testExport.json");
@@ -837,10 +837,10 @@ public class ExportManagerTest {
 		assertNotEquals("5c3860fb66d4260008813172", actualPlan.getId().toString());
 		assertEquals(actualPlan, actualPlan);
 		AbstractArtefact root = actualPlan.getRoot();
-		assertEquals("DataSet_while", root.getAttribute(AbstractOrganizableObject.NAME));
+		assertEquals("DataSet_while", root.getName());
 		
 		AbstractArtefact firstChild = root.getChildren().get(0);
-		assertEquals("DataSet", firstChild.getAttribute(AbstractOrganizableObject.NAME));
+		assertEquals("DataSet", firstChild.getName());
 	}
 	
 	@Test

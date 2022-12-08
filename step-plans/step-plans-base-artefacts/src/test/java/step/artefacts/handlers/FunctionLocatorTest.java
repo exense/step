@@ -82,9 +82,9 @@ public class FunctionLocatorTest {
 
 	private Function newFunction(String name, String version) {
 		Function function = new Function();
-		function.addAttribute(AbstractOrganizableObject.NAME, name);
+		function.setName(name);
 		if(version != null) {
-			function.addAttribute(AbstractOrganizableObject.VERSION, version);
+			function.setVersion(version);
 		}
 		functionAccessor.save(function);
 		return function;

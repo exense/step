@@ -77,9 +77,7 @@ public class PlanStepParser implements StepParser<PlanStep> {
 				String stepName = step.getName();
 				String dynamicNameExpression = step.getDynamicNameExpression();
 				if(stepName!=null) {
-					Map<String, String> attributes = new HashMap<>();
-					attributes.put(AbstractOrganizableObject.NAME, stepName);
-					artefact.setAttributes(attributes);					
+					artefact.setName(stepName);
 				} else if(dynamicNameExpression != null) {
 					artefact.setDynamicName(new DynamicValue<>(dynamicNameExpression, ""));
 					artefact.setUseDynamicName(true);

@@ -50,7 +50,7 @@ public class AccessManagerImpl implements AccessManager {
 	public Role getRoleInContext(Session session) {
 		String roleName = roleResolver.getRoleInContext(session);
 		try {
-			Role role = roleProvider.getRoles().stream().filter(r->roleName.equals(r.getAttributes().get(AbstractOrganizableObject.NAME))).findFirst().get();
+			Role role = roleProvider.getRoles().stream().filter(r->roleName.equals(r.getName())).findFirst().get();
 			return role;
 		} catch (NoSuchElementException e) {
 			throw new RuntimeException("The role "+roleName+" doesn't exist");

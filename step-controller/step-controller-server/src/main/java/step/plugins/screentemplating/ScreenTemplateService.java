@@ -164,7 +164,7 @@ public class ScreenTemplateService extends AbstractStepServices {
 			contextBindings.put("user", session.getUser().getUsername());
 			Role roleInContext = accessManager.getRoleInContext(session);
 			if(roleInContext!= null) {
-				String roleName = roleInContext.getAttributes().get(AbstractOrganizableObject.NAME);
+				String roleName = roleInContext.getName();
 				contextBindings.put("role", roleName);
 			}
 		}

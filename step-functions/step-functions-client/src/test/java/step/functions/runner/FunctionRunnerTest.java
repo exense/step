@@ -38,9 +38,7 @@ public class FunctionRunnerTest {
 	public void test() throws IOException {
 		TestFunction f = new TestFunction();
 		f.setId(new ObjectId());
-		Map<String, String> attributes = new HashMap<>();
-		attributes.put(AbstractOrganizableObject.NAME, "moustache");
-		f.setAttributes(attributes);
+		f.setName("moustache");
 		
 		try(Context context = FunctionRunner.getContext(new TestFunctionType())) {
 			Output<JsonObject> o = context.run(f, "{}");

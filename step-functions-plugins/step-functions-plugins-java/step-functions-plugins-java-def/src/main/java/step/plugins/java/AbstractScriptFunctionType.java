@@ -104,8 +104,8 @@ public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction
 
 	private String getScriptFilename(GeneralScriptFunction function) {
 		StringBuilder filename = new StringBuilder();
-		if (function.getAttributes().containsKey(AbstractOrganizableObject.NAME)) {
-			filename.append(function.getAttributes().get(AbstractOrganizableObject.NAME));
+		if (function.getName()!=null) {
+			filename.append(function.getName());
 			filename.append("_");
 		}
 		filename.append(UUID.randomUUID());
@@ -153,13 +153,13 @@ public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction
 				try {
 					Files.createDirectory(folder.toPath());
 				} catch (IOException e) {
-					throw new SetupFunctionException("Unable to create script folder '"+folder.getAbsolutePath()+"' for function '"+function.getAttributes().get(AbstractOrganizableObject.NAME), e);
+					throw new SetupFunctionException("Unable to create script folder '"+folder.getAbsolutePath()+"' for function '"+function.getName(), e);
 				}
 			}
 			try {
 				scriptFile.createNewFile();
 			} catch (IOException e) {
-				throw new SetupFunctionException("Unable to create script folder '"+folder.getAbsolutePath()+"' for function '"+function.getAttributes().get(AbstractOrganizableObject.NAME), e);
+				throw new SetupFunctionException("Unable to create script folder '"+folder.getAbsolutePath()+"' for function '"+function.getName(), e);
 			}
 			
 			if(templateStream!=null) {

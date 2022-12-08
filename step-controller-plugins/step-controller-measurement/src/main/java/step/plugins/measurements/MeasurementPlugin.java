@@ -146,7 +146,7 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 			if (isArtefactInstrumented(artefactInstance)) {
 				Measurement measurement = new Measurement();
 				measurement.setName(node.getName());
-				measurement.addCustomField(ORIGIN, artefactInstance.getAttribute(AbstractOrganizableObject.NAME));
+				measurement.addCustomField(ORIGIN, artefactInstance.getName());
 				measurement.setValue((long) node.getDuration());
 				measurement.setBegin(node.getExecutionTime());
 				measurement.setType(TYPE_CUSTOM);
