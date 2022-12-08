@@ -46,7 +46,7 @@ public class PlanBuilder {
 	public Plan build() {
 		if(stack.isEmpty()) {
 			Plan plan = new Plan(root);
-			plan.setAttributes(root.getName());
+			plan.setName(root.getName());
 			return plan;
 		} else {
 			throw new RuntimeException("Unbalanced block "+stack.peek());

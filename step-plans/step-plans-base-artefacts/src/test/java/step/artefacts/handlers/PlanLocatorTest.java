@@ -60,7 +60,7 @@ public class PlanLocatorTest {
 	}
 	
 	private ObjectPredicate objectPredicate(String name) {
-		return t -> ((Plan)t).getname().equals(name);
+		return t -> ((Plan)t).getName().equals(name);
 	}
 
 }
