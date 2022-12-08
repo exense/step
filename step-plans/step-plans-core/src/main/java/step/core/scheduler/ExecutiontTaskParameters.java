@@ -25,7 +25,7 @@ import step.core.objectenricher.EnricheableObject;
 public class ExecutiontTaskParameters extends AbstractOrganizableObject implements EnricheableObject {
 	
 	// TODO remove this field and create a migration task to also remove it from the DB
-	public String name;
+	public String _name;
 	
 	public ExecutionParameters executionsParameters;
 	
@@ -51,7 +51,7 @@ public class ExecutiontTaskParameters extends AbstractOrganizableObject implemen
 	 * @return
 	 */
 	public String getName() {
-		return name;
+		return _name;
 	}
 
 	/**
@@ -60,7 +60,7 @@ public class ExecutiontTaskParameters extends AbstractOrganizableObject implemen
 	 * @param name
 	 */
 	public void setName(String name) {
-		this.name = name;
+		this._name = name;
 	}
 
 	public ExecutionParameters getExecutionsParameters() {
@@ -91,7 +91,7 @@ public class ExecutiontTaskParameters extends AbstractOrganizableObject implemen
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
-		result = prime * result + ((name == null) ? 0 : name.hashCode());
+		result = prime * result + ((_name == null) ? 0 : _name.hashCode());
 		return result;
 	}
 

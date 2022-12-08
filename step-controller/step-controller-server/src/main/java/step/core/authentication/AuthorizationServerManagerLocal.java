@@ -21,7 +21,7 @@ public class AuthorizationServerManagerLocal implements AuthorizationServerManag
     @Override
     public String issueToken(String username, Session session) {
         Role role = accessManager.getRoleInContext(session);
-        String token = generateToken(username, role.getAttribute("name"),
+        String token = generateToken(username, role.getName(),
                 Date.from(ZonedDateTime.now().plusHours(8).toInstant()));
         session.setToken(AuthenticationFilter.AUTHENTICATION_SCHEME + " " + token);
         session.setLocalToken(true);
@@ -31,7 +31,7 @@ public class AuthorizationServerManagerLocal implements AuthorizationServerManag
     @Override
     public String refreshToken(Session session) {
         Role role = accessManager.getRoleInContext(session);
-        String token = generateToken(session.getUser().getSessionUsername(), role.getAttribute("name"),
+        String token = generateToken(session.getUser().getSessionUsername(), role.getName(),
                 Date.from(ZonedDateTime.now().plusHours(8).toInstant()));
         session.setToken(AuthenticationFilter.AUTHENTICATION_SCHEME + " " + token);
         return token;
@@ -41,7 +41,7 @@ public class AuthorizationServerManagerLocal implements AuthorizationServerManag
     public String getServiceAccountToken(Session session, long days) {
         Role role = accessManager.getRoleInContext(session);
         days = (days <= 0) ? 36500 : days;
-        String token = generateToken(session.getUser().getSessionUsername(), role.getAttribute("name"),
+        String token = generateToken(session.getUser().getSessionUsername(), role.getName(),
                 Date.from(ZonedDateTime.now().plusDays(days).toInstant()));
         return token;
     }

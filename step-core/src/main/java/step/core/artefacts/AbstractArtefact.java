@@ -65,9 +65,13 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
 	
 	public AbstractArtefact() {
 		super();
+		/*
 		Map<String, String> defaultAttributes = new HashMap<>();
 		defaultAttributes.put("name", getArtefactName(this.getClass()));
 		attributes = defaultAttributes;
+		 */
+		setName(getArtefactName(this.getClass()));
+
 		persistNode = true;
 		dynamicName = new DynamicValue<String>("");
 		//dynamicName.setDynamic(true);

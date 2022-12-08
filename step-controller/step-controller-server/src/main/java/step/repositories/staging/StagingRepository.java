@@ -50,7 +50,7 @@ public class StagingRepository extends AbstractRepository {
 		StagingContext stagingContext = stagingContextAccessor.get(repositoryParameters.get(REPOSITORY_PARAM_CONTEXTID));
 		ArtefactInfo info = new ArtefactInfo();
 		info.setType("testplan");
-		info.setName(stagingContext.getPlan().getRoot().getAttributes().get("name"));
+		info.setName(stagingContext.getPlan().getRoot().getName());
 		return info;
 	}
 

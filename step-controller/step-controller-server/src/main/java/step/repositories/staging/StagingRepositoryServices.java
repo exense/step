@@ -125,7 +125,7 @@ public class StagingRepositoryServices extends AbstractStepServices {
 		
 		params.setRepositoryObject(new RepositoryObjectReference(StagingRepositoryPlugin.STAGING_REPOSITORY, repositoryParameters));
 		params.setMode(ExecutionMode.RUN);
-		params.setDescription(context.plan.getRoot().getAttributes().get("name"));
+		params.setDescription(context.plan.getRoot().getName());
 		params.setIsolatedExecution(isolate);
 		// TODO replace by the real user
 		params.setUserID("remote");

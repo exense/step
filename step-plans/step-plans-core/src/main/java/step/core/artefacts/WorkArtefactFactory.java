@@ -44,9 +44,7 @@ public class WorkArtefactFactory {
 				// Property artefacts remain attached to their parent and are thus not subject to transclusion
 				artefact.setChildren(ArtefactHandler.excludePropertyChildren(parentArtefact.getChildren()));
 			}
-			HashMap<String, String> attributes = new HashMap<>();
-			attributes.put("name", name);
-			artefact.setAttributes(attributes);
+			artefact.setName(name);
 			setPersistNodeValue(artefact, persistNode);
 			return artefact;
 		} catch (InstantiationException | IllegalAccessException e) {

@@ -82,7 +82,7 @@ public class RemotePlanRunner extends AbstractRemoteClient implements PlanRunner
 		planAccessor.save(plan);
 		
 		String planId = plan.getId().toString();
-		String name = plan.getAttributes().get("name");
+		String name = plan.getName();
 		
 		return runPlanById(executionParameters, planId, name);
 	}

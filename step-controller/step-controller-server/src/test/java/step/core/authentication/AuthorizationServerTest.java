@@ -21,7 +21,7 @@ public class AuthorizationServerTest {
             @Override
             public Role getRoleInContext(Session session) {
                 Role role = new Role();
-                role.addAttribute("name","admin");
+                role.setName("admin");
                 return role;
             }
 
