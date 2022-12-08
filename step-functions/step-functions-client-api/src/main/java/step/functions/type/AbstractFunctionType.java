@@ -104,7 +104,7 @@ public abstract class AbstractFunctionType<T extends Function> {
 	
 	public T copyFunction(T function) throws FunctionTypeException {
 		function.setId(null);
-		function.setname(function.getName()+"_Copy");
+		function.setName(function.getName()+"_Copy");
 		return function;
 	}
 	
