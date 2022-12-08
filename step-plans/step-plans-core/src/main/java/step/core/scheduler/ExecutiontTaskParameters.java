@@ -23,10 +23,7 @@ import step.core.execution.model.ExecutionParameters;
 import step.core.objectenricher.EnricheableObject;
 
 public class ExecutiontTaskParameters extends AbstractOrganizableObject implements EnricheableObject {
-	
-	// TODO remove this field and create a migration task to also remove it from the DB
-	public String name;
-	
+
 	public ExecutionParameters executionsParameters;
 	
 	public String cronExpression;
@@ -43,24 +40,6 @@ public class ExecutiontTaskParameters extends AbstractOrganizableObject implemen
 		this.executionsParameters = executionsParameters;
 		this.cronExpression = cronExpr;
 		this.active = true;
-	}
-
-	/**
-	 * @deprecated This field isn't used anymore. The task name is now persisted as
-	 *             attribute.Please use getAttribute("name") instead
-	 * @return
-	 */
-	public String getName() {
-		return name;
-	}
-
-	/**
-	 * @deprecated This field isn't used anymore. The task name is now persisted as
-	 *             attribute.Please use setAttribute("name","...") instead
-	 * @param name
-	 */
-	public void setName(String name) {
-		this.name = name;
 	}
 
 	public ExecutionParameters getExecutionsParameters() {
@@ -91,7 +70,7 @@ public class ExecutiontTaskParameters extends AbstractOrganizableObject implemen
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
-		result = prime * result + ((name == null) ? 0 : name.hashCode());
+		result = prime * result + ((getName() == null) ? 0 : getName().hashCode());
 		return result;
 	}
 
