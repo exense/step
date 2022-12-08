@@ -46,7 +46,7 @@ public class SetSchedulerTaskAttributes extends MigrationTask {
 		AtomicInteger i = new AtomicInteger();
 		tasksCollection.find(Filters.equals("attributes.name", (String) null), null, null, null, 0).forEach(t -> {
 			i.incrementAndGet();
-			((DocumentObject) t.computeIfAbsent("attributes", k -> new DocumentObject())).put(,
+			((DocumentObject) t.computeIfAbsent("attributes", k -> new DocumentObject())).put(AbstractOrganizableObject.NAME,
 					t.get(AbstractOrganizableObject.NAME));
 			
 			tasksCollection.save(t);
