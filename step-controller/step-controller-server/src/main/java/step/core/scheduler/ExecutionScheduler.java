@@ -64,14 +64,14 @@ public class ExecutionScheduler {
 			Iterator<ExecutiontTaskParameters> it = getActiveExecutionTasks();
 			while(it.hasNext()) {
 				ExecutiontTaskParameters task = it.next();
-				logger.info("Loading schedule for task '" + task.getName) + "' having for id : " + task.getId());
+				logger.info("Loading schedule for task '" + task.getName() + "' having for id : " + task.getId());
 				try {
 					boolean mayFireAgain = executor.schedule(task);
 					if(!mayFireAgain) {
 						removeExecutionTask(task.getId().toString());
 					}
 				} catch (Exception e) {
-					logger.error("An error occurred while scheduling task. "+ task.toString()+ ". Disabling task.", e);
+					logger.error("An error occurred while scheduling task. "+ task.getName()+ ". Disabling task.", e);
 					disableExecutionTask(task.getId().toString());
 				}
 			}
