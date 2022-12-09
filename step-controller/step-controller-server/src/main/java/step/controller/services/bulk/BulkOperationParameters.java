@@ -11,7 +11,7 @@ public class BulkOperationParameters {
     private BulkOperationTargetType targetType;
 
     private List<String> ids;
-    private TableFilter filter;
+    private List<TableFilter> filters;
 
     public boolean isPreview() {
         return preview;
@@ -37,11 +37,11 @@ public class BulkOperationParameters {
         this.ids = ids;
     }
 
-    public TableFilter getFilter() {
-        return filter;
+    public List<TableFilter> getFilters() {
+        return filters;
     }
 
-    public void setFilter(TableFilter filter) {
-        this.filter = filter;
+    public void setFilters(List<TableFilter> filters) {
+        this.filters = filters;
     }
 }
