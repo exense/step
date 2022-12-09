@@ -208,6 +208,19 @@ public class FunctionExecutionServiceImplTest {
 		Assert.assertEquals("Unexpected error while executing the keyword on the agent", output.getError().getMsg());
 	}
 
+	@Test
+	public void testOutput() throws FunctionExecutionServiceException {
+		OutputMessageBuilder outputMessageBuilder = new OutputMessageBuilder();
+		outputMessageBuilder.setPayloadJson("{\"payload\":{\"stringValue\":\"string\"}}");
+		OutputMessage outputMessage = outputMessageBuilder.build();
+
+		FunctionExecutionService f = getFunctionExecutionServiceForGridClientTest(outputMessage, null, null, null);
+
+		Output<JsonObject> output = callFunctionWithDummyInput(f);
+		Assert.assertNotNull(output);
+		Assert.assertEquals("string",output.getPayload().get("stringValue").toString());
+	}
+
 	protected Output<JsonObject> callFunctionWithDummyInput(FunctionExecutionService f)
 			throws FunctionExecutionServiceException {
 		TokenWrapper token = f.getTokenHandle(new HashMap<>(), new HashMap<>(), true, new TokenWrapperOwner() {});
