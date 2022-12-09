@@ -60,11 +60,15 @@ import step.resources.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 public class Controller {
 
 	public static final Version VERSION = new Version(3,20,0);
+
+	public static String USER_ACTIVITY_MAP_KEY = "userActivityMap";
 	private Configuration configuration;
 	
 	private GlobalContext context;
@@ -124,6 +128,10 @@ public class Controller {
 		Collection<User> userCollection = collectionFactory.getCollection("users", User.class);
 		context.setUserAccessor(new UserAccessorImpl(userCollection));
 		tableRegistry.register("users", new Table<>(userCollection, "user-read",false));
+
+		//Im memory map to store last user activities
+		Map<String, Long> userActivityMap = new ConcurrentHashMap<>();
+		context.put(USER_ACTIVITY_MAP_KEY, userActivityMap);
 		
 		
 		context.setRepositoryObjectManager(new RepositoryObjectManager());

@@ -35,6 +35,8 @@ import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.reports.ReportNode;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
+import step.core.execution.model.Execution;
+import step.core.execution.model.ExecutionAccessor;
 import step.core.objectenricher.ObjectHookRegistry;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.Plan;
@@ -49,6 +51,8 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static step.core.Controller.USER_ACTIVITY_MAP_KEY;
+
 @Singleton
 @Path("controller")
 @Tag(name = "Controller")
@@ -58,7 +62,9 @@ public class ControllerServices extends AbstractStepServices {
 	private PlanLocator planLocator;
 	private ObjectPredicate objectPredicate;
 	private Controller controller;
-			
+	private ExecutionAccessor executionAccessor;
+	private Map<String, Long> userActivityMap;
+
 	@PostConstruct
 	public void init() throws Exception {
 		super.init();
@@ -70,6 +76,9 @@ public class ControllerServices extends AbstractStepServices {
 		SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
 		planLocator = new PlanLocator(getContext().getPlanAccessor(), selectorHelper);
 		objectPredicate = context.get(ObjectHookRegistry.class).getObjectPredicate(getSession());
+
+		executionAccessor = context.getExecutionAccessor();
+		userActivityMap = (Map<String, Long>) context.get(USER_ACTIVITY_MAP_KEY);
 	}
 	
 	@POST
@@ -193,5 +202,38 @@ public class ControllerServices extends AbstractStepServices {
 			}
 		});
 		return result;
+	}
+
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/status")
+	@Secured(right="controller-manage")
+	public Status getControllerStatus() {
+		Status status = new Status();
+		List<Execution> activeTests = executionAccessor.getActiveTests();
+		status.activeTests = activeTests.size();
+		status.lastExecutionEndTime = -1;
+		Iterator<Execution> iterator = executionAccessor.findLastEnded(1).iterator();
+		status.lastExecutionEndTime = (iterator.hasNext()) ? iterator.next().getEndTime() : -1;
+		status.lastUserActivityTime = userActivityMap.values().stream().mapToLong(v -> v).max().orElse(-1);
+
+		//If test are currently running idle time is 0
+		if (status.activeTests > 0) {
+			status.idleTimeMs = 0;
+		} else {
+			//idle time is either latest end time of executions or last logged-in user activity
+			long lastActivity = (status.lastUserActivityTime > status.lastExecutionEndTime) ?
+					status.lastUserActivityTime : status.lastExecutionEndTime;
+			status.idleTimeMs = System.currentTimeMillis() - lastActivity;
+		}
+		return status;
+	}
+
+
+	private class Status {
+		public long idleTimeMs;
+		public long activeTests;
+		public long lastExecutionEndTime;
+		public long lastUserActivityTime;
 	}
 }

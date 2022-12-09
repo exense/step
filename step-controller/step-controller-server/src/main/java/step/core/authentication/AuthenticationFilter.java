@@ -19,7 +19,10 @@ import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.Provider;
 import java.io.IOException;
+import java.util.Map;
 import java.util.Objects;
+
+import static step.core.Controller.USER_ACTIVITY_MAP_KEY;
 
 @Secured
 @Provider
@@ -33,6 +36,8 @@ public class AuthenticationFilter extends AbstractStepServices implements Contai
     private AuthorizationServerManagerLocal authorizationServerManager;
     private ResourceServerManager resourceServerManager;
     private UserAccessor userAccessor;
+    private Map<String, Long> userActivityMap;
+
 
     @PostConstruct
     public void init() throws Exception {
@@ -42,6 +47,7 @@ public class AuthenticationFilter extends AbstractStepServices implements Contai
         authorizationServerManager = context.get(AuthorizationServerManagerLocal.class);
         resourceServerManager = context.get(ResourceServerManager.class);
         userAccessor = context.getUserAccessor();
+        userActivityMap = (Map<String, Long>) context.get(USER_ACTIVITY_MAP_KEY);
     }
 
     @Override
@@ -58,6 +64,7 @@ public class AuthenticationFilter extends AbstractStepServices implements Contai
                 // Validate and parse the token
                 AuthenticationTokenDetails authenticationTokenDetails = resourceServerManager.parseAndValidateToken(token, getSession());
                 initSessionIfRequired(authenticationTokenDetails);
+                updateUserActivityMap();
             } catch (Exception e) {
                 logger.error("Authorization failed",e);
                 abortWithUnauthorized(requestContext);
@@ -66,6 +73,11 @@ public class AuthenticationFilter extends AbstractStepServices implements Contai
             abortWithUnauthorized(requestContext);
             return;
         }
+    }
+
+    private void updateUserActivityMap() {
+        String username = getSession().getUser().getUsername();
+        userActivityMap.put(username, System.currentTimeMillis());
     }
 
     private void initSessionIfRequired(AuthenticationTokenDetails authenticationTokenDetails) {
