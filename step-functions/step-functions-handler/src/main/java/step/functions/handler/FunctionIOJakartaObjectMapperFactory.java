@@ -21,6 +21,7 @@ package step.functions.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonp.JSONPModule;
+import org.glassfish.json.OutputJsonProviderImpl;
 import step.functions.io.Input;
 import step.functions.io.Output;
 
@@ -33,7 +34,7 @@ public class FunctionIOJakartaObjectMapperFactory {
 
 	public static ObjectMapper createObjectMapper() {
 		ObjectMapper mapper = new ObjectMapper();
-		mapper.registerModule(new JSONPModule());
+		mapper.registerModule(new JSONPModule(new OutputJsonProviderImpl()));
 		return mapper;
 	}
 }
