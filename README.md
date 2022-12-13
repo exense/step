@@ -4,6 +4,8 @@
 
 **Official Website** : [http://step.exense.ch](http://step.exense.ch)
 
+**Download link** : [step-distribution/releases](https://github.com/exense/step-distribution/releases)
+
 ## Instructions for developers
 
 ### Git hooks setup
