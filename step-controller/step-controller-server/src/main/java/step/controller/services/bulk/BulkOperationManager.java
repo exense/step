@@ -14,9 +14,11 @@ import step.core.ql.OQLFilterBuilder;
 import step.framework.server.Session;
 import step.framework.server.tables.service.TableFilter;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public class BulkOperationManager<T extends AbstractIdentifiableObject> {
 
@@ -55,11 +57,14 @@ public class BulkOperationManager<T extends AbstractIdentifiableObject> {
                     Consumer<Filter> operationByFilter = getFilterConsumer(collection, operationById_);
                     Filter filter;
                     if (targetType == BulkOperationTargetType.FILTER) {
-                        TableFilter tableFilter = parameters.getFilter();
-                        if (tableFilter != null) {
-                            Filter requestFilter = tableFilter.toFilter();
+                        List<TableFilter> tableFilters = parameters.getFilters();
+                        if (tableFilters != null) {
+                            List<Filter> requestFilters = tableFilters.stream().map(TableFilter::toFilter).collect(Collectors.toList());
                             Filter contextFilter = OQLFilterBuilder.getFilter(contextObjectFilter.getOQLFilter());
-                            filter = Filters.and(List.of(contextFilter, requestFilter));
+                            List<Filter> filters = new ArrayList<>();
+                            filters.add(contextFilter);
+                            filters.addAll(requestFilters);
+                            filter = Filters.and(filters);
                         } else {
                             throw new RuntimeException("Filter is null");
                         }
@@ -85,12 +90,12 @@ public class BulkOperationManager<T extends AbstractIdentifiableObject> {
                 throw new ControllerServiceException(400, "No Ids specified. Please specify a list of entity Ids to be processed");
             }
         } else if (targetType == BulkOperationTargetType.FILTER) {
-            TableFilter tableFilter = parameters.getFilter();
-            if (tableFilter == null) {
+            List<TableFilter> filters = parameters.getFilters();
+            if (filters == null) {
                 throw new ControllerServiceException(400, "No filter specified. Please specify filter for the entities to to be processed");
             }
         } else if (targetType == BulkOperationTargetType.ALL) {
-            if (parameters.getFilter() != null || parameters.getIds() != null) {
+            if (parameters.getFilters() != null || parameters.getIds() != null) {
                 throw new ControllerServiceException(400, "No filter or Ids should be specified using target ALL.");
             }
         }
