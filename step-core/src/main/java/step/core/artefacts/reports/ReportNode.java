@@ -215,8 +215,8 @@ public class ReportNode extends AbstractIdentifiableObject {
 		return false;
 	}
 
-//	@Override
-//	public String toString() {
-//		return "ReportNode [name=" + name + ", id=" + getId() + "]";
-//	}
+	@Override
+	public String toString() {
+		return "ReportNode=[name=" + name + ", id=" + getId() + "]";
+	}
 }

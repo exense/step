@@ -1,0 +1,22 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="StepRunnerWithPlansAnnotationTest" type="JUnit" factoryName="JUnit" nameIsGenerated="true">
+    <module name="step-junit" />
+    <selectedOptions>
+      <option name="environmentVariables" visible="false" />
+    </selectedOptions>
+    <extension name="coverage">
+      <pattern>
+        <option name="PATTERN" value="step.client.*" />
+        <option name="ENABLED" value="true" />
+      </pattern>
+    </extension>
+    <option name="PACKAGE_NAME" value="step.client" />
+    <option name="MAIN_CLASS_NAME" value="step.client.StepRunnerWithPlansAnnotationTest" />
+    <option name="METHOD_NAME" value="" />
+    <option name="TEST_OBJECT" value="class" />
+    <option name="VM_PARAMETERS" value="-ea -DexecParams=&quot;{ \&quot;PARAM_EXEC\&quot; : \&quot;value2\&quot;}&quot;" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
