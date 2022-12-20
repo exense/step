@@ -207,7 +207,6 @@ public class ControllerServices extends AbstractStepServices {
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/status")
-	@Secured(right="controller-manage")
 	public Status getControllerStatus() {
 		Status status = new Status();
 		List<Execution> activeTests = executionAccessor.getActiveTests();
