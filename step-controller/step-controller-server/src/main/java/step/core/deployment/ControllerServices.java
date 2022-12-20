@@ -65,6 +65,8 @@ public class ControllerServices extends AbstractStepServices {
 	private ExecutionAccessor executionAccessor;
 	private Map<String, Long> userActivityMap;
 
+	private long initializationTime;
+
 	@PostConstruct
 	public void init() throws Exception {
 		super.init();
@@ -79,6 +81,7 @@ public class ControllerServices extends AbstractStepServices {
 
 		executionAccessor = context.getExecutionAccessor();
 		userActivityMap = (Map<String, Long>) context.get(USER_ACTIVITY_MAP_KEY);
+		initializationTime = System.currentTimeMillis();
 	}
 	
 	@POST
@@ -214,7 +217,7 @@ public class ControllerServices extends AbstractStepServices {
 		status.lastExecutionEndTime = -1;
 		Iterator<Execution> iterator = executionAccessor.findLastEnded(1).iterator();
 		status.lastExecutionEndTime = (iterator.hasNext()) ? iterator.next().getEndTime() : -1;
-		status.lastUserActivityTime = userActivityMap.values().stream().mapToLong(v -> v).max().orElse(-1);
+		status.lastUserActivityTime = userActivityMap.values().stream().mapToLong(v -> v).max().orElse(initializationTime);
 
 		//If test are currently running idle time is 0
 		if (status.activeTests > 0) {
