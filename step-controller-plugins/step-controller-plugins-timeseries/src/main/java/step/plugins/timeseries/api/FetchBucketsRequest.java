@@ -5,6 +5,7 @@ import java.util.*;
 public class FetchBucketsRequest {
     private Long start;
     private Long end;
+    private String oqlFilter;
     private Map<String, String> params;
     private Set<String> groupDimensions = new HashSet<>();
     private Long numberOfBuckets;
@@ -65,6 +66,15 @@ public class FetchBucketsRequest {
 
     public FetchBucketsRequest setPercentiles(List<Integer> percentiles) {
         this.percentiles = percentiles;
+        return this;
+    }
+
+    public String getOqlFilter() {
+        return oqlFilter;
+    }
+
+    public FetchBucketsRequest setOqlFilter(String oqlFilter) {
+        this.oqlFilter = oqlFilter;
         return this;
     }
 }
