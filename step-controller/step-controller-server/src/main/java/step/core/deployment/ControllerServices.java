@@ -216,7 +216,8 @@ public class ControllerServices extends AbstractStepServices {
 		status.activeTests = activeTests.size();
 		status.lastExecutionEndTime = -1;
 		Iterator<Execution> iterator = executionAccessor.findLastEnded(1).iterator();
-		status.lastExecutionEndTime = (iterator.hasNext()) ? iterator.next().getEndTime() : -1;
+		status.lastExecutionEndTime = (iterator.hasNext()) ?
+				Objects.requireNonNullElse(iterator.next().getEndTime(),-1L) : -1;
 		status.lastUserActivityTime = userActivityMap.values().stream().mapToLong(v -> v).max().orElse(initializationTime);
 
 		//If test are currently running idle time is 0
