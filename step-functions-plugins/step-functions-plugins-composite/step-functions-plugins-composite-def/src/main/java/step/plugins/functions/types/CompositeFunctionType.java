@@ -73,25 +73,27 @@ public class CompositeFunctionType extends AbstractFunctionType<CompositeFunctio
 	public void setupFunction(CompositeFunction function) throws SetupFunctionException {
 		super.setupFunction(function);
 
+		// if existing plan is not explicitly selected for the new function, we create a new one
+		if (function.getPlanId() == null) {
+			Plan plan = PlanBuilder.create().startBlock(BaseArtefacts.sequence()).endBlock().build();
+			// hide the plan of the composite keyword
+			plan.setVisible(false);
 
-        Plan plan = PlanBuilder.create().startBlock(BaseArtefacts.sequence()).endBlock().build();
-        // hide the plan of the composite keyword
-        plan.setVisible(false);
+			// add same context attributes to plan
+			if (objectHookRegistry != null) {
+				try {
+					AbstractContext context = new AbstractContext() {
+					};
+					objectHookRegistry.rebuildContext(context, function);
+					objectHookRegistry.getObjectEnricher(context).accept(plan);
+				} catch (Exception e) {
+					throw new SetupFunctionException("Error while rebuilding context for function " + function, e);
+				}
+			}
 
-        // add same context attributes to plan
-        if(objectHookRegistry != null) {
-            try {
-                AbstractContext context = new AbstractContext() {};
-                objectHookRegistry.rebuildContext(context, function);
-                objectHookRegistry.getObjectEnricher(context).accept(plan);
-            } catch (Exception e) {
-                throw new SetupFunctionException("Error while rebuilding context for function "+function, e);
-            }
-        }
-
-        planAccessor.save(plan);
-
-  		function.setPlanId(plan.getId().toString());
+			planAccessor.save(plan);
+			function.setPlanId(plan.getId().toString());
+		}
 	}
 
 	@Override
