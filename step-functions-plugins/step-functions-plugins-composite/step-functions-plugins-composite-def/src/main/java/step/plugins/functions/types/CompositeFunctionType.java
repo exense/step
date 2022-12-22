@@ -25,6 +25,8 @@ import step.core.AbstractContext;
 import step.core.objectenricher.ObjectHookRegistry;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
+import step.core.plans.PlanType;
+import step.core.plans.PlanTypeRegistry;
 import step.core.plans.builder.PlanBuilder;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionTypeException;
@@ -40,11 +42,13 @@ public class CompositeFunctionType extends AbstractFunctionType<CompositeFunctio
 	protected final PlanAccessor planAccessor;
 
 	private final ObjectHookRegistry objectHookRegistry;
+	private final PlanTypeRegistry planTypeRegistry;
 
-	public CompositeFunctionType(PlanAccessor planAccessor, ObjectHookRegistry objectHookRegistry) {
+	public CompositeFunctionType(PlanAccessor planAccessor, ObjectHookRegistry objectHookRegistry, PlanTypeRegistry planTypeRegistry) {
 		super();
 		this.planAccessor = planAccessor;
 		this.objectHookRegistry = objectHookRegistry;
+		this.planTypeRegistry = planTypeRegistry;
 	}
 
 	@Override
@@ -94,7 +98,25 @@ public class CompositeFunctionType extends AbstractFunctionType<CompositeFunctio
 	public CompositeFunction copyFunction(CompositeFunction function) throws FunctionTypeException {
 		CompositeFunction copy = super.copyFunction(function);
 
-		// TODO Copy plan
+		// copy plan
+		if (copy.getPlanId() != null) {
+			Plan origPlan = planAccessor.get(copy.getPlanId());
+			if (origPlan != null) {
+				PlanType<Plan> planType = planTypeRegistry != null ? (PlanType<Plan>) planTypeRegistry.getPlanType(origPlan.getClass()) : null;
+				if (planType != null) {
+					Plan copyPlan = planType.clonePlan(origPlan, false);
+					Plan newPlan = planAccessor.save(copyPlan);
+
+					// assign a link to the new plan
+					copy.setPlanId(newPlan.getId().toString());
+				} else {
+					throw new FunctionTypeException("Unable to resolve plan type for class " + origPlan.getClass());
+				}
+			} else {
+				throw new FunctionTypeException("Plan not found: " + copy.getPlanId());
+			}
+		}
+
 		return copy;
 	}
 

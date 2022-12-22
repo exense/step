@@ -45,6 +45,7 @@ import step.core.execution.ExecutionEngine;
 import step.core.execution.OperationMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.objectenricher.ObjectHookRegistry;
+import step.core.plans.PlanTypeRegistry;
 import step.engine.plugins.ExecutionEnginePlugin;
 
 public class Executor {
@@ -64,9 +65,15 @@ public class Executor {
 		List<ExecutionEnginePlugin> additionalPlugins = globalContext.getControllerPluginManager().getExecutionEnginePlugins();
 		
 		ObjectHookRegistry objectHookRegistry = globalContext.require(ObjectHookRegistry.class);
-		
+		PlanTypeRegistry planTypeRegistry = globalContext.get(PlanTypeRegistry.class);
+
 		executionEngine = ExecutionEngine.builder().withOperationMode(OperationMode.CONTROLLER)
-				.withParentContext(globalContext).withPluginsFromClasspath().withPlugins(additionalPlugins).withObjectHookRegistry(objectHookRegistry).build();
+				.withParentContext(globalContext)
+				.withPluginsFromClasspath()
+				.withPlugins(additionalPlugins)
+				.withObjectHookRegistry(objectHookRegistry)
+				.withPlanTypeRegistry(planTypeRegistry)
+				.build();
 		
 		try {
 			Properties props = getProperties();

@@ -34,6 +34,7 @@ import step.core.objectenricher.*;
 import step.core.plans.InMemoryPlanAccessor;
 import step.core.plans.LayeredPlanAccessor;
 import step.core.plans.Plan;
+import step.core.plans.PlanTypeRegistry;
 import step.core.plans.runner.PlanRunner;
 import step.core.plans.runner.PlanRunnerResult;
 import step.core.plugins.Plugin;
@@ -76,7 +77,8 @@ public class ExecutionEngine {
 		private OperationMode operationMode;
 		private AbstractExecutionEngineContext parentContext;
 		private ObjectHookRegistry objectHookRegistry;
-		
+		private PlanTypeRegistry planTypeRegistry;
+
 		public Builder() {
 			super();
 			pluginBuilder = PluginManager.builder(ExecutionEnginePlugin.class);
@@ -145,6 +147,14 @@ public class ExecutionEngine {
 			this.objectHookRegistry = objectHookRegistry;
 			return this;
 		}
+
+		/**
+		 * Use a specific {@link PlanTypeRegistry}
+		 */
+		public Builder withPlanTypeRegistry(PlanTypeRegistry planTypeRegistry) {
+			this.planTypeRegistry = planTypeRegistry;
+			return this;
+		}
 		
 		/**
 		 * @return creates the {@link ExecutionEngine} instance
@@ -167,6 +177,9 @@ public class ExecutionEngine {
 			}
 			if(objectHookRegistry != null) {
 				executionEngineContext.put(ObjectHookRegistry.class, objectHookRegistry);
+			}
+			if(planTypeRegistry != null) {
+				executionEngineContext.put(PlanTypeRegistry.class, planTypeRegistry);
 			}
 			ExecutionEnginePlugin plugins = pluginManager.getProxy();
 			plugins.initializeExecutionEngineContext(parentContext, executionEngineContext);
