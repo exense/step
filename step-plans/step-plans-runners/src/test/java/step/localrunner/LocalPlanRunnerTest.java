@@ -20,8 +20,7 @@ package step.localrunner;
 
 
 import static org.junit.Assert.assertEquals;
-import static step.planbuilder.BaseArtefacts.for_;
-import static step.planbuilder.BaseArtefacts.sequence;
+import static step.planbuilder.BaseArtefacts.*;
 import static step.planbuilder.FunctionArtefacts.keyword;
 import static step.planbuilder.FunctionArtefacts.keywordWithDynamicInput;
 import static step.planbuilder.FunctionArtefacts.keywordWithDynamicKeyValues;
@@ -36,6 +35,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import junit.framework.Assert;
+import step.artefacts.CallFunction;
 import step.artefacts.Echo;
 import step.artefacts.FunctionGroup;
 import step.artefacts.Script;
@@ -234,8 +234,8 @@ public class LocalPlanRunnerTest {
 //	protected List<ReportNode> getChildren(ReportNodeAccessor reportNodeAccessor, ReportNode node) {
 //		return StreamSupport.stream(Spliterators.spliteratorUnknownSize(reportNodeAccessor.getChildren(node.getId()), Spliterator.ORDERED), false).collect(Collectors.toList());
 //	}
-	
-	//TODO analyze why this test is failing when building in maven @Test
+
+	@Test
 	public void testKeywordWithDynamicKeyValues() {
 		Plan plan = PlanBuilder.create().startBlock(for_(1, 10))
 				.add(keywordWithDynamicKeyValues("keyword1", "Param1","'value1'"))
@@ -244,7 +244,30 @@ public class LocalPlanRunnerTest {
 		
 		PlanRunnerResult result = runner.run(plan);
 		result.visitReportNodes(node->{
-			assertEquals(ReportNodeStatus.PASSED, node);
+			assertEquals(ReportNodeStatus.PASSED, node.getStatus());
+		});;
+		assertEquals(ReportNodeStatus.PASSED, result.getResult());
+	}
+
+	@Test
+	public void testKeywordOutputValues() {
+		CallFunction callFunction = keywordWithDynamicKeyValues("keyword1", "string", "'value1'", "boolean", "true",
+				"int", "1");
+		callFunction.addChild(echo("output.string"));
+		callFunction.addChild(check("output.string.toString() == \"value1\""));
+		callFunction.addChild(check("output.int.toString() == \"1\""));
+		callFunction.addChild(check("output.int.intValue() == 1"));
+		callFunction.addChild(check("Boolean.parseBoolean(output.boolean.toString())"));
+		CallFunction callFunction1 = keywordWithDynamicKeyValues("keyword1", "string2", "previous.string");
+		callFunction1.addChild(check("output.string2.toString() == \"value1\""));
+		Plan plan = PlanBuilder.create().startBlock(sequence())
+				.add(callFunction)
+				.add(callFunction1)
+				.endBlock().build();
+
+		PlanRunnerResult result = runner.run(plan);
+		result.visitReportNodes(node->{
+			assertEquals(ReportNodeStatus.PASSED, node.getStatus());
 		});;
 		assertEquals(ReportNodeStatus.PASSED, result.getResult());
 	}
