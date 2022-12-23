@@ -28,7 +28,6 @@ import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.reports.ReportNode;
 import step.core.deployment.AbstractStepServices;
-import step.core.plans.PlanTypeRegistry;
 import step.framework.server.security.Secured;
 import step.core.encryption.EncryptionManager;
 import step.core.execution.AbstractExecutionEngineContext;
@@ -136,7 +135,6 @@ public class InteractiveServices extends AbstractStepServices {
 		GlobalContext context = getContext();
 		planAccessor = context.getPlanAccessor();
 		ObjectHookRegistry objectHookRegistry = context.require(ObjectHookRegistry.class);
-		PlanTypeRegistry planTypeRegistry = context.get(PlanTypeRegistry.class);
 		// the encryption manager might be null
 		EncryptionManager encryptionManager = context.get(EncryptionManager.class);
 		executionEngine = ExecutionEngine.builder().withOperationMode(OperationMode.CONTROLLER)
@@ -147,11 +145,7 @@ public class InteractiveServices extends AbstractStepServices {
 							ExecutionEngineContext executionEngineContext) {
 						executionEngineContext.setExecutionAccessor(new InMemoryExecutionAccessor());
 					}
-				})
-				.withPlugin(new ParameterManagerPlugin(context.get(ParameterManager.class), encryptionManager))
-				.withObjectHookRegistry(objectHookRegistry)
-				.withPlanTypeRegistry(planTypeRegistry)
-				.build();
+				}).withPlugin(new ParameterManagerPlugin(context.get(ParameterManager.class), encryptionManager)).withObjectHookRegistry(objectHookRegistry).build();
 		objectPredicateFactory = context.require(ObjectPredicateFactory.class);
 		functionTableScreenInputs = getContext().require(FunctionTableScreenInputs.class);
 		functionManager = getContext().get(FunctionManager.class);

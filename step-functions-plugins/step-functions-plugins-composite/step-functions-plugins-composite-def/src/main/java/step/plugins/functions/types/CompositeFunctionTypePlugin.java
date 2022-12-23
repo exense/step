@@ -32,9 +32,6 @@ public class CompositeFunctionTypePlugin extends AbstractExecutionEnginePlugin {
 
 	@Override
 	public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext context) {
-		FunctionTypeRegistry functionTypeRegistry = context.require(FunctionTypeRegistry.class);
-		ObjectHookRegistry objectHookRegistry = context.get(ObjectHookRegistry.class);
-		PlanTypeRegistry planTypeRegistry = context.get(PlanTypeRegistry.class);
-		functionTypeRegistry.registerFunctionType(new CompositeFunctionType(context.getPlanAccessor(), objectHookRegistry, planTypeRegistry));
+
 	}
 }

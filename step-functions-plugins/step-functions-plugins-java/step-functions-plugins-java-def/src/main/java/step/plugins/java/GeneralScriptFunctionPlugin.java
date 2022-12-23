@@ -30,8 +30,7 @@ public class GeneralScriptFunctionPlugin extends AbstractExecutionEnginePlugin {
 	
 	@Override
 	public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext context) {
-		FunctionTypeRegistry functionTypeRegistry = context.require(FunctionTypeRegistry.class);
-		functionTypeRegistry.registerFunctionType(new GeneralScriptFunctionType(context.getConfiguration()));
+
 	}
 
 }
