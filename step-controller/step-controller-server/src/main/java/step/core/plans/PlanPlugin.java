@@ -64,6 +64,10 @@ public class PlanPlugin extends AbstractControllerPlugin {
 				if (updateVisibility) {
 					plan.setCustomFields(null);
 					plan.setVisible(true);
+					if (plan.getRoot() != null) {
+						// delete all custom attributes for all children to clean up attributes like "source" cloned from original plan
+						plan.getRoot().deepCleanupAllCustomAttributes();
+					}
 				}
 				return plan;
 			}
