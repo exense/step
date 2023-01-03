@@ -6,11 +6,7 @@ import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -40,12 +36,12 @@ public class EntityDependencyTreeVisitor {
 
 	public void visitEntityDependencyTree(String entityName, String entityId, EntityTreeVisitor visitor,
 			boolean recursive) {
-		EntityTreeVisitorContext context = new EntityTreeVisitorContext(objectPredicate, recursive, visitor);
+		EntityTreeVisitorContext context = new EntityTreeVisitorContext(objectPredicate, recursive, visitor, null);
 		visitEntity(entityName, entityId, context);
 	}
 
-	public void visitSingleObject(Object object, EntityTreeVisitor visitor) {
-		EntityTreeVisitorContext context = new EntityTreeVisitorContext(objectPredicate, false, visitor);
+	public void visitSingleObject(Object object, EntityTreeVisitor visitor, Set<String> messageCollector) {
+		EntityTreeVisitorContext context = new EntityTreeVisitorContext(objectPredicate, false, visitor, messageCollector);
 		resolveEntityDependencies(object, context);
 	}
 
@@ -55,12 +51,14 @@ public class EntityDependencyTreeVisitor {
 		private final ObjectPredicate objectPredicate;
 		private final EntityTreeVisitor visitor;
 		private final Map<String, Object> stack = new HashMap<>();
+		private final Set<String> messageCollector;
 
-		public EntityTreeVisitorContext(ObjectPredicate objectPredicate, boolean recursive, EntityTreeVisitor visitor) {
+		public EntityTreeVisitorContext(ObjectPredicate objectPredicate, boolean recursive, EntityTreeVisitor visitor, Set<String> messageCollector) {
 			super();
 			this.objectPredicate = objectPredicate;
 			this.recursive = recursive;
 			this.visitor = visitor;
+			this.messageCollector = messageCollector;
 		}
 
 		public ObjectPredicate getObjectPredicate() {
@@ -87,6 +85,10 @@ public class EntityDependencyTreeVisitor {
 
 		protected Map<String, Object> getStack() {
 			return stack;
+		}
+
+		public Set<String> getMessageCollector() {
+			return messageCollector;
 		}
 	}
 

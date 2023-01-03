@@ -3,6 +3,7 @@ package step.core.entities;
 import static org.junit.Assert.assertEquals;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 import org.bson.types.ObjectId;
@@ -140,7 +141,7 @@ public class EntityDependencyTreeVisitorTest {
 			public String onResolvedEntityId(String entityName, String resolvedEntityId) {
 				return newIdString;
 			}
-		});
+		}, new HashSet<String>());
 		
 		assertEquals(0, entityIds.size());
 		assertEquals(newIdString, entity1.getReferenceAsString());
