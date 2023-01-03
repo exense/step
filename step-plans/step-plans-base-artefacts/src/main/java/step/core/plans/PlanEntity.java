@@ -12,9 +12,14 @@ public class PlanEntity extends Entity<Plan, Accessor<Plan>> {
         super(EntityManager.plans, accessor, Plan.class);
         entityManager.addDependencyTreeVisitorHook((entity, context) -> {
             if (entity instanceof CallPlan) {
-                Plan plan = planLocator.selectPlan((CallPlan) entity, context.getObjectPredicate(), null);
-                if (plan != null) {
+                try {
+                    Plan plan = planLocator.selectPlanNotNull((CallPlan) entity, context.getObjectPredicate(), null);
                     context.visitEntity(EntityManager.plans, plan.getId().toString());
+                } catch (PlanLocator.PlanLocatorException ex) {
+                    // just skip missing plan during import, but add error message to import result
+                    if (context.getMessageCollector() != null) {
+                        context.getMessageCollector().add(ex.getMessage());
+                    }
                 }
             }
         });
