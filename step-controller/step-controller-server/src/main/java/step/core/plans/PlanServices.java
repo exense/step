@@ -130,7 +130,7 @@ public class PlanServices extends AbstractEntityServices<Plan> {
 		// Delegate clone to plan type manager
 		@SuppressWarnings("unchecked")
 		PlanType<Plan> planType = (PlanType<Plan>) planTypeRegistry.getPlanType(plan.getClass());
-		Plan clonePlan = planType.clonePlan(plan);
+		Plan clonePlan = planType.clonePlan(plan, true);
 		assignNewId(clonePlan.getRoot());
 		return clonePlan;
 	}

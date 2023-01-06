@@ -226,7 +226,7 @@ public class ImportManager {
 				if(logger.isDebugEnabled()) {
 					logger.debug("Updating references for entity: entityName = " + entityName + ", id " + entity.getId());
 				}
-				entityManager.updateReferences(entity, importContext.getReferences(), o -> true);
+				entityManager.updateReferences(entity, importContext.getReferences(), o -> true, importContext.getMessages());
 
 			}
 			// save the entity before running the import hooks. this is needed because
