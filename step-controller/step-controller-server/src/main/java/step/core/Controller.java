@@ -31,6 +31,7 @@ import step.core.artefacts.reports.ReportNodeAccessorImpl;
 import step.core.collections.Collection;
 import step.core.collections.CollectionFactory;
 import step.core.collections.CollectionFactoryConfigurationParser;
+import step.core.collections.VersionableEntity;
 import step.core.deployment.WebApplicationConfigurationManager;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
@@ -114,8 +115,13 @@ public class Controller {
 				collectionFactory.getCollection("executions", Execution.class));
 		context.setExecutionAccessor(executionAccessor);		
 		context.setExecutionManager(new ExecutionManagerImpl(executionAccessor));
-		
-		context.setPlanAccessor(new PlanAccessorImpl(collectionFactory.getCollection("plans", Plan.class)));
+
+		PlanAccessorImpl plans = new PlanAccessorImpl(collectionFactory.getCollection("plans", Plan.class));
+		if (configuration.getPropertyAsBoolean("collections.plans.versioned",true)) {
+			plans.setVersionedCollections(collectionFactory.getVersionedCollection("plans"));
+		}
+		context.setPlanAccessor(plans);
+
 		context.setReportNodeAccessor(
 				new ReportNodeAccessorImpl(collectionFactory.getCollection("reports", ReportNode.class)));
 		context.setScheduleAccessor(new ExecutionTaskAccessorImpl(

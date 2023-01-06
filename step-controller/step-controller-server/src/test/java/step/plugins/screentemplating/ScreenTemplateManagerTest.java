@@ -34,7 +34,7 @@ import ch.exense.commons.app.Configuration;
 import junit.framework.Assert;
 import step.commons.activation.Expression;
 import step.core.collections.Collection;
-import step.core.objectenricher.EnricheableObject;
+import step.core.collections.VersionableEntity;
 import step.core.objectenricher.ObjectPredicate;
 
 public class ScreenTemplateManagerTest {
@@ -73,6 +73,21 @@ public class ScreenTemplateManagerTest {
 
 			@Override
 			public void save(Iterable<ScreenInput> entities) {
+			}
+
+			@Override
+			public Stream<VersionableEntity> getHistory(ObjectId id, Integer skip, Integer limit) {
+				return null;
+			}
+
+			@Override
+			public ScreenInput restoreVersion(ObjectId entityId, ObjectId versionId) {
+				return null;
+			}
+
+			@Override
+			public void setVersionedCollections(Collection<VersionableEntity> versionedCollection) {
+
 			}
 
 			@Override

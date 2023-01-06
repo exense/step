@@ -157,6 +157,11 @@ public class RemoteCollection<T> implements Collection<T> {
         throw notImplemented();
     }
 
+    @Override
+    public Class<T> getEntityClass() {
+        return entityClass;
+    }
+
     protected UnsupportedOperationException notImplemented()  {
         return new UnsupportedOperationException("This method is currently not implemented");
     }

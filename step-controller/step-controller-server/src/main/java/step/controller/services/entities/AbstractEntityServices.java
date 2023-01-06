@@ -13,6 +13,7 @@ import step.core.access.User;
 import step.core.accessors.AbstractIdentifiableObject;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.Accessor;
+import step.core.collections.VersionableEntity;
 import step.core.deployment.AbstractStepServices;
 import step.core.deployment.ControllerServiceException;
 import step.core.entities.Entity;
@@ -196,5 +197,36 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
     @Secured(right = "{entity}-read")
     public TableResponse<T> request(TableRequest request) throws TableServiceException {
         return tableService.request(entityName, request, getSession());
+    }
+
+    @Operation(operationId = "get{Entity}History", description = "Retrieves entity's versioned")
+    @GET
+    @Path("/{id}/history")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Secured(right = "{entity}-read")
+    public List<History> getHistory(@PathParam("id") String id) {
+        return accessor.getHistory(new ObjectId(id), 0, 1000)
+                .map(v->new History(v.getId().toHexString(), v.getUpdateTime()))
+                .collect(Collectors.toList());
+    }
+
+    public static class History {
+        public String id;
+        public long updateTime;
+
+        public History(String id, long updateTime) {
+            this.id = id;
+            this.updateTime = updateTime;
+        }
+    }
+
+    @Operation(operationId = "restore{Entity}Version", description = "Restore a version of this entity")
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Secured(right = "{entity}-write")
+    @Path("/restore/{id}/{versionId}")
+    public T restoreVersion(@PathParam("id") String id, @PathParam("versionId") String versionId) {
+        return accessor.restoreVersion(new ObjectId(id), new ObjectId(versionId));
     }
 }
