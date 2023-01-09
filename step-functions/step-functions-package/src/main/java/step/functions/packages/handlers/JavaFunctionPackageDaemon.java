@@ -17,6 +17,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import step.attachments.FileResolver;
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.dynamicbeans.DynamicValue;
 import step.core.scanner.AnnotationScanner;
 import step.grid.contextbuilder.ApplicationContextBuilder;
 import step.grid.contextbuilder.LocalFileApplicationContextFactory;
@@ -82,7 +83,9 @@ public class JavaFunctionPackageDaemon extends FunctionPackageUtils {
 					GeneralScriptFunction function = new GeneralScriptFunction();
 					function.setAttributes(new HashMap<>());
 					function.getAttributes().put(AbstractOrganizableObject.NAME, functionName);
-					
+
+					function.getCallTimeout().setValue(annotation.timeout());
+
 					if(packageLibrariesFile != null) {
 						function.getLibrariesFile().setValue(parameters.getPackageLibrariesLocation());
 					}
