@@ -85,6 +85,7 @@ public class JavaFunctionPackageDaemon extends FunctionPackageUtils {
 					function.getAttributes().put(AbstractOrganizableObject.NAME, functionName);
 
 					function.getCallTimeout().setValue(annotation.timeout());
+					function.setDescription(annotation.description());
 
 					if(packageLibrariesFile != null) {
 						function.getLibrariesFile().setValue(parameters.getPackageLibrariesLocation());
