@@ -132,6 +132,8 @@
                                 <bannedDependencies>
                                     <excludes>
                                         <exclude>org.junit.jupiter</exclude>
+                                        <exclude>org.junit.platform</exclude>
+                                        <exclude>org.testng</exclude>
                                     </excludes>
                                 </bannedDependencies>
                             </rules>
