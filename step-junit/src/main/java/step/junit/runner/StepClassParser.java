@@ -63,7 +63,7 @@ public class StepClassParser {
         return executionParameters;
     }
 
-    public List<Runner> createRunnersForClass(Class<?> klass, ExecutionEngine executionEngine, Map<String, String> executionParameters) {
+    public List<Runner> createRunnersForClass(Class<?> klass, ExecutionEngine executionEngine) {
         final List<Runner> result = new ArrayList<>();
         // Plans from annotation @Plans
         result.addAll(getRunnersFromPlansAnnotation(klass, executionEngine));
