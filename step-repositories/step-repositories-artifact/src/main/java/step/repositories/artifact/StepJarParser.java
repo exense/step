@@ -75,10 +75,10 @@ public class StepJarParser {
 	protected List<Plan> getPlansForClass(Class<?> klass) {
 
 		List<Plan> result = new ArrayList<>();
-		List<Runner> runners;
+		List<Runner> plans;
 		try {
-			runners = stepClassParser.createRunnersForClass(klass, ExecutionEngine.builder().build());
-			runners.forEach(runner -> {
+			plans = stepClassParser.createRunnersForClass(klass, ExecutionEngine.builder().build());
+			plans.forEach(runner -> {
 				StepPlanRunner stepRunner = (StepPlanRunner) runner;
 				Plan plan = stepRunner.getPlan();
 				if (plan != null) {

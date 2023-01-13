@@ -12,6 +12,6 @@ public class ClassRunnerBuilder extends RunnerBuilder {
 
     @Override
     public Runner runnerForClass(Class<?> klass) throws Throwable {
-        return new StepClassRunner(klass,classParser, ExecutionEngine.builder().build());
+        return new StepClassRunner(klass,classParser, new HashMap<>(), ExecutionEngine.builder().build());
     }
 }
