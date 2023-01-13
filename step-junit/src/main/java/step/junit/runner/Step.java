@@ -18,11 +18,41 @@
  ******************************************************************************/
 package step.junit.runner;
 
+import java.util.List;
+
 import org.junit.experimental.categories.Categories;
+import org.junit.runner.Runner;
 import org.junit.runners.model.InitializationError;
+import org.junit.runners.model.RunnerBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import step.core.execution.ExecutionContext;
+import step.core.execution.ExecutionEngine;
+import step.engine.plugins.AbstractExecutionEnginePlugin;
+import step.resources.ResourceManager;
 
 public class Step extends Categories {
-	public Step(Class<?> klass) throws InitializationError {
-		super(klass, new ClassRunnerBuilder());
+
+	private final StepClassParser classParser = new StepClassParser(false);
+	private final Class<?> klass;
+	private final List<Runner> listRunners;
+
+	private ExecutionEngine executionEngine;
+
+	public Step(Class<?> klass, RunnerBuilder builder) throws InitializationError {
+		super(klass,builder);
+		this.klass = klass;
+		try {
+			executionEngine = ExecutionEngine.builder().withPluginsFromClasspath().build();
+			listRunners = classParser.createRunnersForClass(klass,executionEngine);
+		} catch (Exception e) {
+			throw new InitializationError(e);
+		}
+	}
+
+	@Override
+	protected List<Runner> getChildren() {
+		return listRunners;
 	}
 }
