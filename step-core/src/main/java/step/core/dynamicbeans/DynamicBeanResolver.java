@@ -22,6 +22,8 @@ import java.beans.BeanInfo;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -82,35 +84,40 @@ public class DynamicBeanResolver {
 				Class<? extends Object> clazz = o.getClass();
 				@SuppressWarnings("unchecked")
 				T out = (T) clazz.newInstance();
-				
-				BeanInfo beanInfo = beanInfoCache.get(clazz);
-				if(beanInfo==null) {
-					beanInfo = Introspector.getBeanInfo(clazz, Object.class);
-					beanInfoCache.put(clazz, beanInfo);
-				}
-				
-				for(PropertyDescriptor descriptor:beanInfo.getPropertyDescriptors()) {
-					Method method = descriptor.getReadMethod();
-					if(method!=null) {
-						Object newValue;
-						Object oldValue = method.invoke(o);
-						if(oldValue!=null) {
-							if(oldValue instanceof DynamicValue) {
-								DynamicValue<?> dynamicValue = (DynamicValue<?>) oldValue;
-								newValue = dynamicValue.cloneValue();
-							} else if(method.isAnnotationPresent(ContainsDynamicValues.class)) {
-								newValue = cloneDynamicValues(oldValue);
+				if (List.class.isAssignableFrom(clazz)) {
+					List l = (List) o;
+					List outList = (List) out;
+					l.forEach(c -> outList.add(cloneDynamicValues(c)));
+				} else {
+					BeanInfo beanInfo = beanInfoCache.get(clazz);
+					if (beanInfo == null) {
+						beanInfo = Introspector.getBeanInfo(clazz, Object.class);
+						beanInfoCache.put(clazz, beanInfo);
+					}
+
+					for (PropertyDescriptor descriptor : beanInfo.getPropertyDescriptors()) {
+						Method method = descriptor.getReadMethod();
+						if (method != null) {
+							Object newValue;
+							Object oldValue = method.invoke(o);
+							if (oldValue != null) {
+								if (oldValue instanceof DynamicValue) {
+									DynamicValue<?> dynamicValue = (DynamicValue<?>) oldValue;
+									newValue = dynamicValue.cloneValue();
+								} else if (method.isAnnotationPresent(ContainsDynamicValues.class)) {
+									newValue = cloneDynamicValues(oldValue);
+								} else {
+									newValue = oldValue;
+								}
 							} else {
-								newValue = oldValue;
+								newValue = null;
 							}
-						} else {
-							newValue = null;
-						}
-						Method writeMethod = descriptor.getWriteMethod();
-						if(writeMethod!=null) {
-							descriptor.getWriteMethod().invoke(out, newValue);							
-						} else {
-							//throw new RuntimeException("Unable to clone object "+o.toString()+". No setter found for "+descriptor);
+							Method writeMethod = descriptor.getWriteMethod();
+							if (writeMethod != null) {
+								descriptor.getWriteMethod().invoke(out, newValue);
+							} else {
+								//throw new RuntimeException("Unable to clone object "+o.toString()+". No setter found for "+descriptor);
+							}
 						}
 					}
 				}
