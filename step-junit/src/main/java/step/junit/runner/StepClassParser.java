@@ -63,27 +63,27 @@ public class StepClassParser {
         return executionParameters;
     }
 
-    public List<Runner> createRunnersForClass(Class<?> klass, ExecutionEngine executionEngine, Map<String, String> executionParameters) {
+    public List<Runner> createRunnersForClass(Class<?> klass, ExecutionEngine executionEngine) throws Exception {
         final List<Runner> result = new ArrayList<>();
         // Plans from annotation @Plans
-        result.addAll(getRunnersFromPlansAnnotation(klass, executionEngine));
+        result.addAll(getPlansFromPlansAnnotation(klass, executionEngine));
         // Plans from methods annotated with @Plan
-        result.addAll(getRunnersFromAnnotatedMethods(klass, executionEngine));
+        result.addAll(getPlanFromAnnotatedMethods(klass, executionEngine));
         return result;
     }
 
-    private List<StepPlanRunner> getRunnersFromPlansAnnotation(Class<?> klass, ExecutionEngine executionEngine) {
+    private List<StepPlanRunner> getPlansFromPlansAnnotation(Class<?> klass, ExecutionEngine executionEngine) {
         final List<StepPlanRunner> result = new ArrayList<>();
         Plans plans;
         if ((plans = klass.getAnnotation(Plans.class)) != null) {
             for (String name : plans.value()) {
-                result.add(createPlanRunner(klass, name, executionEngine));
+                result.add(createPlan(klass, name, executionEngine));
             }
         }
         return result;
     }
 
-    private List<StepPlanRunner> getRunnersFromAnnotatedMethods(Class<?> klass, ExecutionEngine executionEngine) {
+    private List<StepPlanRunner> getPlanFromAnnotatedMethods(Class<?> klass, ExecutionEngine executionEngine) {
         try (AnnotationScanner annotationScanner = AnnotationScanner.forAllClassesFromClassLoader(klass.getClassLoader())) {
             return annotationScanner.getMethodsWithAnnotation(step.junit.runners.annotations.Plan.class).stream()
                     .filter(m -> m.getDeclaringClass() == klass).map(m -> {
@@ -110,16 +110,13 @@ public class StepClassParser {
                         } catch (Exception e) {
                             exception = e;
                         }
-                        try {
-                            return new StepPlanRunner(klass, plan,planName, executionEngine, getExecutionParametersForClass(klass));
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
+                        return new StepPlanRunner(klass, planName, plan, getExecutionParametersForClass(klass), executionEngine,
+                                exception);
                     }).collect(Collectors.toList());
         }
     }
 
-    private StepPlanRunner createPlanRunner(Class<?> klass, String name, ExecutionEngine executionEngine) {
+    private StepPlanRunner createPlan(Class<?> klass, String name, ExecutionEngine executionEngine) {
         Plan plan = null;
         Exception exception = null;
         try {
@@ -134,7 +131,7 @@ public class StepClassParser {
             exception = e;
         }
 
-        return new StepPlanRunner(klass, plan, name, executionEngine, getExecutionParametersForClass(klass));
+        return new StepPlanRunner(klass, name, plan, getExecutionParametersForClass(klass), executionEngine, exception);
     }
 
     private static void setPlanName(Plan plan, String name) {
