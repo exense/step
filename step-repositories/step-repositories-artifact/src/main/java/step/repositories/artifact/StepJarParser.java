@@ -1,13 +1,15 @@
 package step.repositories.artifact;
 
+import org.junit.runner.Runner;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.execution.ExecutionEngine;
 import step.core.plans.Plan;
 import step.core.scanner.AnnotationScanner;
 import step.functions.Function;
 import step.handlers.javahandler.Keyword;
 import step.junit.runner.StepClassParser;
-import step.junit.runner.StepClassParserResult;
+import step.junit.runner.StepPlanRunner;
 import step.junit.runners.annotations.Plans;
 import step.plugins.java.GeneralScriptFunction;
 
@@ -73,11 +75,12 @@ public class StepJarParser {
 	protected List<Plan> getPlansForClass(Class<?> klass) {
 
 		List<Plan> result = new ArrayList<>();
-		List<StepClassParserResult> plans;
+		List<Runner> plans;
 		try {
-			plans = stepClassParser.createPlansForClass(klass);
-			plans.forEach(p -> {
-				Plan plan = p.getPlan();
+			plans = stepClassParser.createRunnersForClass(klass, ExecutionEngine.builder().build());
+			plans.forEach(runner -> {
+				StepPlanRunner stepRunner = (StepPlanRunner) runner;
+				Plan plan = stepRunner.getPlan();
 				if (plan != null) {
 					result.add(plan);
 				} else {
