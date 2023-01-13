@@ -20,6 +20,11 @@
 
     <dependencies>
         <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${junit.version}</version>
+        </dependency>
+        <dependency>
             <groupId>ch.exense.step</groupId>
             <artifactId>step-controller-server</artifactId>
             <version>${project.version}</version>
