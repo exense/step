@@ -18,41 +18,139 @@
  ******************************************************************************/
 package step.junit.runner;
 
+import java.io.IOException;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-import org.junit.experimental.categories.Categories;
-import org.junit.runner.Runner;
+import org.junit.internal.runners.model.EachTestNotifier;
+import org.junit.runner.Description;
+import org.junit.runner.notification.RunNotifier;
+import org.junit.runners.ParentRunner;
 import org.junit.runners.model.InitializationError;
-import org.junit.runners.model.RunnerBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
+import step.core.plans.Plan;
+import step.core.plans.runner.PlanRunnerResult;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
+import step.junit.runners.annotations.ExecutionParameters;
+import step.resources.LocalResourceManagerImpl;
 import step.resources.ResourceManager;
 
-public class Step extends Categories {
+public class Step extends ParentRunner<StepClassParserResult> {
+
+	private static final Logger logger = LoggerFactory.getLogger(Step.class);
 
 	private final StepClassParser classParser = new StepClassParser(false);
 	private final Class<?> klass;
-	private final List<Runner> listRunners;
+	private final List<StepClassParserResult> listPlans;
 
 	private ExecutionEngine executionEngine;
+	private ResourceManager resourceManager;
 
-	public Step(Class<?> klass, RunnerBuilder builder) throws InitializationError {
-		super(klass,builder);
+	public Step(Class<?> klass) throws InitializationError {
+		super(klass);
+
 		this.klass = klass;
 		try {
-			executionEngine = ExecutionEngine.builder().withPluginsFromClasspath().build();
-			listRunners = classParser.createRunnersForClass(klass,executionEngine);
+			executionEngine = ExecutionEngine.builder().withPlugin(new AbstractExecutionEnginePlugin() {
+				@Override
+				public void afterExecutionEnd(ExecutionContext context) {
+					resourceManager = context.getResourceManager();
+				}
+			}).withPluginsFromClasspath().build();
+			listPlans = classParser.createPlansForClass(klass);
 		} catch (Exception e) {
 			throw new InitializationError(e);
 		}
 	}
 
 	@Override
-	protected List<Runner> getChildren() {
-		return listRunners;
+	protected Description describeChild(StepClassParserResult child) {
+		return Description.createTestDescription(klass, child.getName());
+	}
+
+	@Override
+	protected void runChild(StepClassParserResult child, RunNotifier notifier) {
+		Description desc = Description.createTestDescription(klass, child.getName());
+		EachTestNotifier childNotifier = new EachTestNotifier(notifier, desc);
+
+		childNotifier.fireTestStarted();
+
+		try {
+			Exception initializingException = child.getInitializingException();
+			if (initializingException == null) {
+				Plan plan = child.getPlan();
+				Map<String, String> executionParameters = getExecutionParametersForClass();
+				PlanRunnerResult result = executionEngine.execute(plan, executionParameters);
+				ReportNodeStatus resultStatus = result.getResult();
+
+				if (resultStatus == ReportNodeStatus.FAILED) {
+					notifyFailure(childNotifier, result, "Plan execution failed", true);
+				} else if (resultStatus == ReportNodeStatus.TECHNICAL_ERROR) {
+					notifyFailure(childNotifier, result, "Technical error while executing plan", false);
+				} else if (resultStatus != ReportNodeStatus.PASSED) {
+					notifyFailure(childNotifier, result, "The plan execution returned an unexpected status\" + result",
+							false);
+				}
+			} else {
+				childNotifier.addFailure(initializingException);
+			}
+		} catch (Exception e) {
+			childNotifier.addFailure(e);
+		} finally {
+			if (resourceManager instanceof LocalResourceManagerImpl) {
+				// Cleanup resource manager after execution
+				((LocalResourceManagerImpl) resourceManager).cleanup();
+			}
+			childNotifier.fireTestFinished();
+		}
+	}
+
+	protected Map<String, String> getExecutionParametersForClass() {
+		Map<String, String> executionParameters = new HashMap<String, String>();
+		ExecutionParameters params;
+		if ((params = klass.getAnnotation(ExecutionParameters.class)) != null) {
+			String key = null;
+			for (String param : params.value()) {
+				if (key == null) {
+					key = param;
+				} else {
+					executionParameters.put(key, param);
+					key = null;
+				}
+			}
+		}
+		return executionParameters;
+	}
+
+	protected void notifyFailure(EachTestNotifier childNotifier, PlanRunnerResult res, String errorMsg,
+			boolean assertionError) {
+		String executionTree;
+		Writer w = new StringWriter();
+		try {
+			res.printTree(w, true);
+			executionTree = w.toString();
+		} catch (IOException e) {
+			logger.error("Error while writing execution tree", w);
+			executionTree = "Error while writing tree. See logs for details.";
+		}
+		String detailMessage = errorMsg + "\nExecution tree is:\n" + executionTree;
+		if (assertionError) {
+			childNotifier.addFailure(new AssertionError(detailMessage));
+		} else {
+			childNotifier.addFailure(new Exception(detailMessage));
+		}
+	}
+
+	@Override
+	protected List<StepClassParserResult> getChildren() {
+		return listPlans;
 	}
 }
