@@ -28,6 +28,27 @@ public class ControllerServiceException extends RuntimeException {
 		this.errorMessage = errorMessage;
 	}
 
+	public ControllerServiceException(String errorMessage, Throwable cause) {
+		super(errorMessage, cause);
+		this.httpErrorCode = 500;
+		this.errorName = null;
+		this.errorMessage = errorMessage;
+	}
+
+	public ControllerServiceException(int httpErrorCode, String errorMessage, Throwable cause) {
+		super(errorMessage, cause);
+		this.httpErrorCode = httpErrorCode;
+		this.errorName = null;
+		this.errorMessage = errorMessage;
+	}
+
+	public ControllerServiceException(int httpErrorCode, String errorName, String errorMessage, Throwable cause) {
+		super(errorMessage, cause);
+		this.httpErrorCode = httpErrorCode;
+		this.errorName = errorName;
+		this.errorMessage = errorMessage;
+	}
+
 	public int getHttpErrorCode() {
 		return httpErrorCode;
 	}
