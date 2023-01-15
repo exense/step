@@ -87,9 +87,10 @@ public class ControllerSettingAccessorImpl extends AbstractAccessor<ControllerSe
 
 	@Override
 	public void remove(ObjectId id) {
+		ControllerSetting toBeDeleted = get(id);
 		super.remove(id);
 		for (ControllerSettingHook hook : hooks) {
-			hook.onSettingRemove(id);
+			hook.onSettingRemove(id, toBeDeleted);
 		}
 	}
 
