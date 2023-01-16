@@ -84,10 +84,10 @@ public class ArtifactRepository extends AbstractRepository {
         ControllerSetting settingsXml = controllerSettingAccessor.getSettingByKey(mavenSettingsId);
         File artifact = getArtifact(repositoryParameters, settingsXml);
 
-        String[] includedClasses = repositoryParameters.getOrDefault(PARAM_INCLUDE_CLASSES, "").split(",");
-        String[] includedAnnotations = repositoryParameters.getOrDefault(PARAM_INCLUDE_ANNOTATIONS, "").split(",");
-        String[] excludedClasses = repositoryParameters.getOrDefault(PARAM_EXCLUDE_CLASSES, "").split(",");
-        String[] excludedAnnotations = repositoryParameters.getOrDefault(PARAM_EXCLUDE_ANNOTATIONS, "").split(",");
+        String[] includedClasses = repositoryParameters.getOrDefault(PARAM_INCLUDE_CLASSES, ",").split(",");
+        String[] includedAnnotations = repositoryParameters.getOrDefault(PARAM_INCLUDE_ANNOTATIONS, ",").split(",");
+        String[] excludedClasses = repositoryParameters.getOrDefault(PARAM_EXCLUDE_CLASSES, ",").split(",");
+        String[] excludedAnnotations = repositoryParameters.getOrDefault(PARAM_EXCLUDE_ANNOTATIONS, ",").split(",");
 
         List<Plan> plans = parsePlan(artifact,includedClasses,includedAnnotations,excludedClasses,excludedAnnotations);
         return new FileAndPlan(artifact, plans);
