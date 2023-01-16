@@ -39,6 +39,10 @@ public class ArtifactRepository extends AbstractRepository {
     protected static final String PARAM_CLASSIFIER = "classifier";
     protected static final String PARAM_MAVEN_SETTINGS = "mavenSettings";
     private static final String PARAM_THREAD_NUMBER = "threads";
+    private static final String PARAM_INCLUDE_CLASSES = "includeClasses";
+    private static final String PARAM_INCLUDE_ANNOTATIONS = "includeAnnotations";
+    private static final String PARAM_EXCLUDE_CLASSES = "excludeClasses";
+    private static final String PARAM_EXCLUDE_ANNOTATIONS = "excludeAnnotations";
 
     public static final String MAVEN_SETTINGS_PREFIX = "maven_settings_";
     protected static final String MAVEN_SETTINGS_DEFAULT = "default";
@@ -79,7 +83,13 @@ public class ArtifactRepository extends AbstractRepository {
         String mavenSettingsId = MAVEN_SETTINGS_PREFIX + repositoryParameters.getOrDefault(PARAM_MAVEN_SETTINGS, MAVEN_SETTINGS_DEFAULT);
         ControllerSetting settingsXml = controllerSettingAccessor.getSettingByKey(mavenSettingsId);
         File artifact = getArtifact(repositoryParameters, settingsXml);
-        List<Plan> plans = parsePlan(artifact);
+
+        String[] includedClasses = repositoryParameters.getOrDefault(PARAM_INCLUDE_CLASSES, "").split(",");
+        String[] includedAnnotations = repositoryParameters.getOrDefault(PARAM_INCLUDE_ANNOTATIONS, "").split(",");
+        String[] excludedClasses = repositoryParameters.getOrDefault(PARAM_EXCLUDE_CLASSES, "").split(",");
+        String[] excludedAnnotations = repositoryParameters.getOrDefault(PARAM_EXCLUDE_ANNOTATIONS, "").split(",");
+
+        List<Plan> plans = parsePlan(artifact,includedClasses,includedAnnotations,excludedClasses,excludedAnnotations);
         return new FileAndPlan(artifact, plans);
     }
 
@@ -155,8 +165,8 @@ public class ArtifactRepository extends AbstractRepository {
 
     }
 
-    private List<Plan> parsePlan(File file) {
-        return new StepJarParser().getPlansForJar(file);
+    private List<Plan> parsePlan(File file, String[] includedClasses, String[] includedAnnotations, String[] excludedClasses, String[] excludedAnnotations) {
+        return new StepJarParser().getPlansForJar(file,includedClasses,includedAnnotations,excludedClasses,excludedAnnotations);
     }
 
     private static class FileAndPlan {
