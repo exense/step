@@ -20,6 +20,7 @@ import step.core.plans.builder.PlanBuilder;
 import step.core.repositories.*;
 import step.functions.Function;
 
+import javax.annotation.Nonnull;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -82,6 +83,11 @@ public class ArtifactRepository extends AbstractRepository {
     private FileAndPlan getAndParseArtifact(Map<String, String> repositoryParameters) {
         String mavenSettingsId = MAVEN_SETTINGS_PREFIX + repositoryParameters.getOrDefault(PARAM_MAVEN_SETTINGS, MAVEN_SETTINGS_DEFAULT);
         ControllerSetting settingsXml = controllerSettingAccessor.getSettingByKey(mavenSettingsId);
+
+        if (settingsXml==null) {
+            throw new ControllerServiceException("No settings found for \""+mavenSettingsId+"\"");
+        }
+
         File artifact = getArtifact(repositoryParameters, settingsXml);
 
         String[] includedClasses = repositoryParameters.getOrDefault(PARAM_INCLUDE_CLASSES, ",").split(",");
