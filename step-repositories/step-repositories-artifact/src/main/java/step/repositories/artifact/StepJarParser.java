@@ -64,15 +64,15 @@ public class StepJarParser {
             Set<String> excludedA = new HashSet<>(List.of(excludedAnnotations));
 
             for (Method m : annotationScanner.getMethodsWithAnnotation(step.junit.runners.annotations.Plan.class)) {
-                logger.info("Checking if "+m.getName()+" should be filtered...");
+                System.out.println("Checking if "+m.getName()+" should be filtered...");
                 boolean filtered=false;
                 for (Annotation a : m.getAnnotations()) {
                     if (excludedA.contains(a.toString()) ||  (!includedA.isEmpty() && !includedA.contains(a.toString()))) {
-                        logger.info("Filtering out @Plan method "+m.getName());
+                        System.out.println("Filtering out @Plan method "+m.getName());
                         filtered=true;
                         break;
                     } else {
-                        logger.info("Not filtering @Plan method "+m.getName());
+                        System.out.println("Not filtering @Plan method "+m.getName());
                     }
                 }
                 if (!filtered) {
@@ -85,12 +85,12 @@ public class StepJarParser {
             Set<String> excluded = new HashSet<>(List.of(excludedClasses));
             HashSet<Class<?>> tmp = new HashSet<>();
             for (Class<?> klass : classesWithPlans) {
-                logger.info("Checking if "+klass.getName()+" should be filtered...");
+                System.out.println("Checking if "+klass.getName()+" should be filtered...");
                 if (!excluded.contains(klass.getName()) && (included.isEmpty() || included.contains(klass.getName()))) {
                     tmp.add(klass);
-                    logger.info("Not filtering class "+klass.getName());
+                    System.out.println("Not filtering class "+klass.getName());
                 } else {
-                    logger.info("Filtering out class "+klass.getName());
+                    System.out.println("Filtering out class "+klass.getName());
                 }
             }
             classesWithPlans = tmp;
