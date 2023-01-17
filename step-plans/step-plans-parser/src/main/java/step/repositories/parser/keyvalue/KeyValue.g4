@@ -22,7 +22,7 @@ value : WORD|STRING|DYNAMIC_EXPRESSION;
   
 EQ : '=';
 
-WORD: (~[|=" \u00A0\t\r\n])+ ;
+WORD: (~[|=" \u00A0\t\r\n] | '\'' ~[']* '\'' | STRING )+ ;
 
 STRING
  : '"' (~["\r\n] | '""')* '"'
