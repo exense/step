@@ -1,5 +1,7 @@
 package step.repositories.artifact;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
@@ -17,6 +19,8 @@ import java.lang.reflect.Method;
 import java.util.*;
 
 public class StepJarParser {
+
+    private static final Logger logger = LoggerFactory.getLogger(StepJarParser.class);
 
     private final StepClassParser stepClassParser;
 
@@ -63,6 +67,7 @@ public class StepJarParser {
                 boolean filtered=false;
                 for (Annotation a : m.getAnnotations()) {
                     if (excludedA.contains(a.toString()) ||  (!includedA.isEmpty() && !includedA.contains(a.toString()))) {
+                        logger.debug("Filtering out @Plan method "+m.getName());
                         filtered=true;
                         break;
                     }
@@ -79,6 +84,8 @@ public class StepJarParser {
             for (Class<?> klass : classesWithPlans) {
                 if (!excluded.contains(klass.getName()) && (included.isEmpty() || included.contains(klass.getName()))) {
                     tmp.add(klass);
+                } else {
+                    logger.debug("Filtering out class "+klass.getName());
                 }
             }
             classesWithPlans = tmp;
