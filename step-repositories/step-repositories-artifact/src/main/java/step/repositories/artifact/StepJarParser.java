@@ -65,22 +65,22 @@ public class StepJarParser {
             Set<String> excludedA = new HashSet<>(List.of(excludedAnnotations));
 
             for (Method m : annotationScanner.getMethodsWithAnnotation(step.junit.runners.annotations.Plan.class)) {
-                System.out.println("Checking if "+m.getName()+" should be filtered...");
+                logger.debug("Checking if "+m.getName()+" should be filtered...");
                 boolean filtered=!includedA.isEmpty();
                 for (Annotation a : m.getAnnotations()) {
                     if (excludedA.contains(a.toString())) {
-                        System.out.println("Filtering out @Plan method "+m.getName()+" due to excluded annotation "+a);
+                        logger.debug("Filtering out @Plan method "+m.getName()+" due to excluded annotation "+a);
                         filtered=true;
                         break;
                     } else if (includedA.contains(a.toString())) {
-                        System.out.println("Including @Plan method "+m.getName()+" due to included annotation "+a);
+                        logger.debug("Including @Plan method "+m.getName()+" due to included annotation "+a);
                         filtered=false;
                     }
                 }
                 if (!filtered) {
                     classesWithPlans.add(m.getDeclaringClass());
                 } else {
-                    System.out.println(m.getName()+" has been filtered out");
+                    logger.debug(m.getName()+" has been filtered out");
                 }
             }
 
@@ -89,12 +89,12 @@ public class StepJarParser {
             Set<String> excluded = new HashSet<>(List.of(excludedClasses));
             HashSet<Class<?>> tmp = new HashSet<>();
             for (Class<?> klass : classesWithPlans) {
-                System.out.println("Checking if "+klass.getName()+" should be filtered...");
+                logger.debug("Checking if "+klass.getName()+" should be filtered...");
                 if (!excluded.contains(klass.getName()) && (included.isEmpty() || included.contains(klass.getName()))) {
                     tmp.add(klass);
-                    System.out.println("Not filtering class "+klass.getName());
+                    logger.debug("Not filtering class "+klass.getName());
                 } else {
-                    System.out.println("Filtering out class "+klass.getName());
+                    logger.debug("Filtering out class "+klass.getName());
                 }
             }
             classesWithPlans = tmp;
