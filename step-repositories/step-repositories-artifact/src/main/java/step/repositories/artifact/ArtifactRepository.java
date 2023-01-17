@@ -49,6 +49,11 @@ public class ArtifactRepository extends AbstractRepository {
     protected static final String MAVEN_SETTINGS_DEFAULT = "default";
     protected static final String CONFIGURATION_MAVEN_FOLDER = "repository.artifact.maven.folder";
     protected static final String DEFAULT_MAVEN_FOLDER = "maven";
+    protected static final String MAVEN_EMPTY_SETTINGS =
+            "<settings xmlns=\"http://maven.apache.org/SETTINGS/1.0.0\"\n" +
+                    "          xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+                    "          xsi:schemaLocation=\"http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd\">\n" +
+                    "</settings>\n";
 
     private final PlanAccessor planAccessor;
     private final ControllerSettingAccessor controllerSettingAccessor;
@@ -85,7 +90,9 @@ public class ArtifactRepository extends AbstractRepository {
         ControllerSetting settingsXml = controllerSettingAccessor.getSettingByKey(mavenSettingsId);
 
         if (settingsXml==null) {
-            throw new ControllerServiceException("No settings found for \""+mavenSettingsId+"\"");
+            //throw new ControllerServiceException();
+            logger.warn("No settings found for \""+mavenSettingsId+"\", using empty settings instead.");
+            controllerSettingAccessor.updateOrCreateSetting(mavenSettingsId,MAVEN_EMPTY_SETTINGS);
         }
 
         File artifact = getArtifact(repositoryParameters, settingsXml);
