@@ -67,7 +67,7 @@ public class StepJarParser {
                 boolean filtered=false;
                 for (Annotation a : m.getAnnotations()) {
                     if (excludedA.contains(a.toString()) ||  (!includedA.isEmpty() && !includedA.contains(a.toString()))) {
-                        logger.debug("Filtering out @Plan method "+m.getName());
+                        logger.info("Filtering out @Plan method "+m.getName());
                         filtered=true;
                         break;
                     }
@@ -85,7 +85,7 @@ public class StepJarParser {
                 if (!excluded.contains(klass.getName()) && (included.isEmpty() || included.contains(klass.getName()))) {
                     tmp.add(klass);
                 } else {
-                    logger.debug("Filtering out class "+klass.getName());
+                    logger.info("Filtering out class "+klass.getName());
                 }
             }
             classesWithPlans = tmp;
@@ -96,10 +96,8 @@ public class StepJarParser {
             // Find all keywords
             List<Function> functions = getFunctions(annotationScanner, jarFile);
             result.forEach(p -> p.setFunctions(functions));
-        } catch (
-                Exception e) {
-            throw new RuntimeException(
-                    "Exception when trying to list the plans of jar file '" + jarFile.getName() + "'", e);
+        } catch (Exception e) {
+            throw new RuntimeException("Exception when trying to list the plans of jar file '" + jarFile.getName() + "'", e);
         }
 
         return result;
