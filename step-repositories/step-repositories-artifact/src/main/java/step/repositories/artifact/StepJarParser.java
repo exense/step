@@ -48,7 +48,8 @@ public class StepJarParser {
         return functions;
     }
 
-    public List<Plan> getPlansForJar(File jarFile, String[] includedClasses, String[] includedAnnotations, String[] excludedClasses, String[] excludedAnnotations) {
+    public List<Plan> getPlansForJar(File jarFile, String[] includedClasses, String[] includedAnnotations,
+                                     String[] excludedClasses, String[] excludedAnnotations) {
 
         List<Plan> result = new ArrayList<>();
 
@@ -65,14 +66,14 @@ public class StepJarParser {
 
             for (Method m : annotationScanner.getMethodsWithAnnotation(step.junit.runners.annotations.Plan.class)) {
                 System.out.println("Checking if "+m.getName()+" should be filtered...");
-                boolean filtered=false;
+                boolean filtered=true;
                 for (Annotation a : m.getAnnotations()) {
-                    if (excludedA.contains(a.toString()) ||  (!includedA.isEmpty() && !includedA.contains(a.toString()))) {
-                        System.out.println("Filtering out @Plan method "+m.getName());
+                    if (excludedA.contains(a.toString())) {
+                        System.out.println("Filtering out @Plan method "+m.getName()+" due to excluded annotation "+a);
                         filtered=true;
                         break;
-                    } else {
-                        System.out.println("Not filtering @Plan method "+m.getName());
+                    } else if (!includedA.isEmpty() && includedA.contains(a.toString())) {
+                        filtered=false;
                     }
                 }
                 if (!filtered) {
