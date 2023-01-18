@@ -19,6 +19,17 @@
 package step.plugins.interactive;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonObjectBuilder;
+import jakarta.json.JsonValue;
+import org.everit.json.schema.Schema;
+import org.everit.json.schema.internal.JSONPrinter;
+import org.everit.json.schema.loader.SchemaLoader;
+import org.json.JSONObject;
+import org.json.JSONWriter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.artefacts.ArtefactQueue;
 import step.artefacts.CallFunction;
 import step.artefacts.FunctionGroup;
@@ -66,6 +77,8 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.*;
+
+import static step.core.accessors.AbstractOrganizableObject.NAME;
 
 @Singleton
 @Path("interactive")
@@ -256,11 +269,13 @@ public class InteractiveServices extends AbstractStepServices {
 		ObjectPredicate objectPredicate = objectPredicateFactory.getObjectPredicate(getSession());
 		Map<String, String> functionAttributes = functionTableScreenInputs.getSelectionAttributes(function, null, objectPredicate);
 
-		CallFunction callFunction = FunctionArtefacts.keyword(functionAttributes).withInput("{}").build();
+		//build input based on schema
+		String inputs = FunctionArtefacts.buildInputFromSchema(function).toString();
+		CallFunction callFunction = FunctionArtefacts.keyword(functionAttributes).withInput(inputs).build();
 
 		// TODO do this centrally. Currently the same logic is implemented in the UI
 		Map<String, String> attributes = new HashMap<>();
-		attributes.put("name", function.getAttributes().get(AbstractOrganizableObject.NAME));
+		attributes.put("name", function.getAttributes().get(NAME));
 		callFunction.setAttributes(attributes);
 		FunctionGroup functionGroup = new FunctionGroup();
 		attributes = new HashMap<>();

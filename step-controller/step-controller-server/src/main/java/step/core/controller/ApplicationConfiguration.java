@@ -16,23 +16,28 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.core.access;
+package step.core.controller;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class AccessConfiguration {
+public class ApplicationConfiguration {
 	
 	boolean authentication;
 
 	private String authenticatorName;
-	
+
 	boolean demo;
-	
+
 	boolean debug;
 	
 	boolean noLoginMask;
+
+	boolean passwordManagement;
+
+	boolean userManagement;
+	boolean roleManagement;
+	boolean projectMembershipManagement;
 	
 	List<String> roles;
 	
@@ -42,78 +47,72 @@ public class AccessConfiguration {
 	
 	String title;
 
-	public AccessConfiguration() {
-		super();
-		this.miscParams = new HashMap<>();
+	public ApplicationConfiguration(boolean authentication, String authenticatorName, boolean demo, boolean debug,
+									boolean noLoginMask, boolean passwordManagement, boolean userManagement,
+									boolean roleManagement, boolean projectMembershipManagement,
+									List<String> roles, Map<String, String> miscParams, String defaultUrl, String title) {
+		this.authentication = authentication;
+		this.authenticatorName = authenticatorName;
+		this.demo = demo;
+		this.debug = debug;
+		this.noLoginMask = noLoginMask;
+		this.userManagement = userManagement;
+		this.roleManagement = roleManagement;
+		this.projectMembershipManagement = projectMembershipManagement;
+		this.passwordManagement = passwordManagement;
+		this.roles = roles;
+		this.miscParams = miscParams;
+		this.defaultUrl = defaultUrl;
+		this.title = title;
 	}
 
 	public boolean isDemo() {
 		return demo;
 	}
 
-	public void setDemo(boolean demo) {
-		this.demo = demo;
-	}
-
 	public boolean isNoLoginMask() {
 		return noLoginMask;
 	}
 
-	public void setNoLoginMask(boolean noLoginMask) {
-		this.noLoginMask = noLoginMask;
+	public boolean isPasswordManagement() {
+		return passwordManagement;
+	}
+
+	public boolean isUserManagement() {
+		return userManagement;
+	}
+
+	public boolean isRoleManagement() {
+		return roleManagement;
+	}
+
+	public boolean isProjectMembershipManagement() {
+		return projectMembershipManagement;
 	}
 
 	public boolean isDebug() {
 		return debug;
 	}
 
-	public void setDebug(boolean debug) {
-		this.debug = debug;
-	}
-
 	public boolean isAuthentication() {
 		return authentication;
-	}
-
-	public void setAuthentication(boolean authentication) {
-		this.authentication = authentication;
 	}
 
 	public List<String> getRoles() {
 		return roles;
 	}
 
-	public void setRoles(List<String> roles) {
-		this.roles = roles;
-	}
-
 	public Map<String, String> getMiscParams() {
 		return miscParams;
-	}
-
-	public void setMiscParams(Map<String, String> miscParams) {
-		this.miscParams = miscParams;
 	}
 
 	public String getDefaultUrl() {
 		return defaultUrl;
 	}
 
-	public void setDefaultUrl(String defaultUrl) {
-		this.defaultUrl = defaultUrl;
-	}
-
 	public String getTitle() {
 		return title;
 	}
-
-	public void setTitle(String title) {
-		this.title = title;
-	}
-
-    public void setAuthenticatorName(String authenticatorName) {
-		this.authenticatorName = authenticatorName;
-    }
 
 	public String getAuthenticatorName() {
 		return authenticatorName;

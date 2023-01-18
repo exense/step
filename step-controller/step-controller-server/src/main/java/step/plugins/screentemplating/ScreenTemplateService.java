@@ -35,7 +35,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.bson.types.ObjectId;
 
 import step.core.GlobalContext;
-import step.framework.server.access.AccessManager;
+import step.framework.server.access.AuthorizationManager;
 import step.core.access.Role;
 import step.core.access.User;
 import step.core.accessors.AbstractOrganizableObject;
@@ -50,7 +50,7 @@ import step.core.objectenricher.ObjectPredicateFactory;
 @Tag(name = "Screens")
 public class ScreenTemplateService extends AbstractStepServices {
 	
-	protected AccessManager accessManager;
+	protected AuthorizationManager authorizationManager;
 	protected ScreenTemplateManager screenTemplateManager;
 	protected ScreenInputAccessor screenInputAccessor;
 	protected ObjectPredicateFactory objectPredicateFactory;
@@ -59,7 +59,7 @@ public class ScreenTemplateService extends AbstractStepServices {
 	public void init() throws Exception {
 		super.init();
 		GlobalContext context = getContext();
-		accessManager = context.get(AccessManager.class);
+		authorizationManager = context.get(AuthorizationManager.class);
 		screenInputAccessor = context.get(ScreenInputAccessor.class);
 		screenTemplateManager = context.get(ScreenTemplateManager.class);
 		objectPredicateFactory = context.get(ObjectPredicateFactory.class);
@@ -162,7 +162,7 @@ public class ScreenTemplateService extends AbstractStepServices {
 		Session<User> session = getSession();
 		if(session!=null) {
 			contextBindings.put("user", session.getUser().getUsername());
-			Role roleInContext = accessManager.getRoleInContext(session);
+			Role roleInContext = authorizationManager.getRoleInContext(session);
 			if(roleInContext!= null) {
 				String roleName = roleInContext.getAttributes().get(AbstractOrganizableObject.NAME);
 				contextBindings.put("role", roleName);

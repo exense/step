@@ -32,6 +32,7 @@ import step.core.collections.Collection;
 import step.core.collections.CollectionFactory;
 import step.core.collections.CollectionFactoryConfigurationParser;
 import step.core.collections.VersionableEntity;
+import step.core.controller.SessionResponseBuilder;
 import step.core.deployment.WebApplicationConfigurationManager;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
@@ -55,17 +56,23 @@ import step.engine.execution.ExecutionManagerImpl;
 import step.expressions.ExpressionHandler;
 import step.framework.server.ServerPluginManager;
 import step.framework.server.ServiceRegistrationCallback;
+import step.framework.server.access.AuthorizationManager;
+import step.framework.server.access.NoAuthorizationManager;
 import step.framework.server.tables.Table;
 import step.framework.server.tables.TableRegistry;
 import step.resources.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 public class Controller {
 
 	public static final Version VERSION = new Version(3,20,0);
+
+	public static String USER_ACTIVITY_MAP_KEY = "userActivityMap";
 	private Configuration configuration;
 	
 	private GlobalContext context;
@@ -97,7 +104,17 @@ public class Controller {
 		context.setCollectionFactory(collectionFactory);
 
 		context.setContorllerPluginManager(new ControllerPluginManager(context.require(ServerPluginManager.class)));
-		
+
+		NoAuthorizationManager noAccessManager = new NoAuthorizationManager();
+		context.put(AuthorizationManager.class, noAccessManager);
+
+		SessionResponseBuilder sessionResponseBuilder = new SessionResponseBuilder();
+		context.put(SessionResponseBuilder.class, sessionResponseBuilder);
+		sessionResponseBuilder.registerHook(s -> Map.of("username", s.getUser().getSessionUsername()));
+		//AuthorizationManager might get overwritten by plugins, FE still need a default role in OS
+		sessionResponseBuilder.registerHook(s -> Map.of("role", context.get(AuthorizationManager.class).getRoleInContext(s)));
+		sessionResponseBuilder.registerHook(s -> Map.of("authenticated", s.isAuthenticated()));
+
 		ResourceAccessor resourceAccessor = new ResourceAccessorImpl(collectionFactory.getCollection("resources", Resource.class));
 		ResourceRevisionAccessor resourceRevisionAccessor = new ResourceRevisionAccessorImpl(
 				collectionFactory.getCollection("resourceRevisions", ResourceRevision.class));
@@ -131,7 +148,11 @@ public class Controller {
 		context.setUserAccessor(new UserAccessorImpl(userCollection));
 		tableRegistry.register("users", new Table<>(userCollection, "user-read",false));
 		
-		
+		//Im memory map to store last user activities
+		Map<String, Long> userActivityMap = new ConcurrentHashMap<>();
+		context.put(USER_ACTIVITY_MAP_KEY, userActivityMap);
+
+
 		context.setRepositoryObjectManager(new RepositoryObjectManager());
 		context.setExpressionHandler(new ExpressionHandler(configuration.getProperty("tec.expressions.scriptbaseclass"), 
 				configuration.getPropertyAsInteger("tec.expressions.warningthreshold",200),

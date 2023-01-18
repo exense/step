@@ -19,21 +19,49 @@
 package step.core.deployment;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 
+import step.core.GlobalContext;
+import step.core.controller.ApplicationConfiguration;
+import step.core.controller.ApplicationConfigurationManager;
+import step.core.controller.SessionResponseBuilder;
 import step.core.plugins.AbstractWebPlugin;
-import step.core.plugins.WebPlugin;
+import step.framework.server.Session;
+import step.framework.server.security.Secured;
 
 @Singleton
 @Path("/app")
 @Tag(name="Private Application")
 public class ApplicationServices extends AbstractStepServices {
+
+	private WebApplicationConfigurationManager webApplicationConfigurationManager;
+	private ApplicationConfigurationManager applicationConfigurationManager;
+	private SessionResponseBuilder sessionResponseBuilder;
+
+	public ApplicationServices() {
+		super();
+	}
+
+	@PostConstruct
+	public void init() throws Exception {
+		super.init();
+		GlobalContext context = getContext();
+		webApplicationConfigurationManager = getContext().require(WebApplicationConfigurationManager.class);
+		applicationConfigurationManager = Objects.requireNonNullElse(context.get(ApplicationConfigurationManager.class),
+				new ApplicationConfigurationManager());
+		sessionResponseBuilder = getContext().require(SessionResponseBuilder.class);
+
+	}
+
 
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
@@ -41,4 +69,23 @@ public class ApplicationServices extends AbstractStepServices {
 	public List<AbstractWebPlugin> getWebPlugins() {
 		return getContext().getControllerPluginManager().getWebPlugins();
 	}
+
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/conf")
+	public ApplicationConfiguration getApplicationConfiguration() {
+		ApplicationConfiguration conf = applicationConfigurationManager.getDefaultBuilder(configuration)
+						.putMiscParam("enforceschemas", getContext().getConfiguration().getProperty("enforceschemas", "false"))
+								.putMiscParams(webApplicationConfigurationManager.getConfiguration(getSession())).build();
+		return conf;
+	}
+
+	@GET
+	@Secured
+	@Path("/session")
+	public Map<String, Object> getCurrentSession() {
+		Session session = Objects.requireNonNullElse(getSession(),new Session());
+		return sessionResponseBuilder.build(session);
+	}
+
 }
