@@ -225,7 +225,7 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @Secured(right = "{entity}-write")
-    @Path("/restore/{id}/{versionId}")
+    @Path("{id}/restore/{versionId}")
     public T restoreVersion(@PathParam("id") String id, @PathParam("versionId") String versionId) {
         return accessor.restoreVersion(new ObjectId(id), new ObjectId(versionId));
     }
