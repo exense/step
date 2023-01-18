@@ -16,7 +16,8 @@ public interface ControllerSettingAccessor extends Accessor<ControllerSetting> {
 
 	ControllerSetting createSettingIfNotExisting(String settingSchedulerEnabled, String string);
 
-	void addHook(ControllerSettingHook hook);
+	void addHook(String key, ControllerSettingHook hook);
 
-	List<ControllerSettingHook> getHooks();
+	boolean removeHook(String key, ControllerSettingHook hook);
+
 }

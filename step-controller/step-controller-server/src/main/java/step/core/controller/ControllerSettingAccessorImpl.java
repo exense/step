@@ -24,15 +24,13 @@ import step.core.collections.Collection;
 import step.core.collections.Filters;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ControllerSettingAccessorImpl extends AbstractAccessor<ControllerSetting> implements ControllerSettingAccessor {
 
-	private final List<ControllerSettingHook> hooks = new ArrayList<>();
-
-	private final Set<ControllerSettingHook> calledHooks = new HashSet<>();
+	private final Map<String, List<ControllerSettingHook>> hooksMap = new ConcurrentHashMap<>();
 
 	public ControllerSettingAccessorImpl(Collection<ControllerSetting> collectionDriver) {
 		super(collectionDriver);
@@ -43,45 +41,46 @@ public class ControllerSettingAccessorImpl extends AbstractAccessor<ControllerSe
 	}
 
 	@Override
-	public void addHook(ControllerSettingHook hook) {
-		this.hooks.add(hook);
+	public void addHook(String key, ControllerSettingHook hook) {
+		this.hooksMap.computeIfAbsent(key, k -> new ArrayList<>());
+		List<ControllerSettingHook> list = this.hooksMap.get(key);
+		list.add(hook);
 	}
 
 	@Override
-	public List<ControllerSettingHook> getHooks() {
-		return hooks;
+	public boolean removeHook(String key, ControllerSettingHook hook) {
+		List<ControllerSettingHook> hooks = getHooksBySettingKey(key);
+		if(hooks != null){
+			return hooks.remove(hook);
+		} else {
+			return false;
+		}
 	}
 
 	@Override
 	public ControllerSetting save(ControllerSetting entity) {
+		// TODO: theoretically we can update the key of existing entity. Should we notify hooks for values before update / after update
 		ControllerSetting res = super.save(entity);
-		for (ControllerSettingHook hook : hooks) {
-			hook.onSettingSave(res);
-
-			// the trick for the save(Iterable<ControllerSetting> entities) method - we notify that the hook was called to avoid calling twice
-			calledHooks.add(hook);
+		List<ControllerSettingHook> hooks = getHooksBySettingKey(entity.getKey());
+		if (hooks != null) {
+			for (ControllerSettingHook hook : hooks) {
+				hook.onSettingSave(res);
+			}
 		}
 		return res;
 	}
 
 	@Override
 	public void save(Iterable<ControllerSetting> entities) {
-		synchronized (calledHooks) {
-			calledHooks.clear();
+		super.save(entities);
 
-			super.save(entities);
-
-			// some collections (PostgreSQLCollection) don't call the single save() method (they insert batch in DB instead)
-			// so we need a trick to check if our hooks are already called or not (to avoid calling them twice)
-			for (ControllerSettingHook hook : hooks) {
-				if (!calledHooks.contains(hook)) {
-					for (ControllerSetting entity : entities) {
-						hook.onSettingSave(entity);
-					}
+		for (ControllerSetting entity : entities) {
+			List<ControllerSettingHook> hooks = getHooksBySettingKey(entity.getKey());
+			if (hooks != null) {
+				for (ControllerSettingHook hook : hooks) {
+					hook.onSettingSave(entity);
 				}
 			}
-
-			calledHooks.clear();
 		}
 	}
 
@@ -89,9 +88,21 @@ public class ControllerSettingAccessorImpl extends AbstractAccessor<ControllerSe
 	public void remove(ObjectId id) {
 		ControllerSetting toBeDeleted = get(id);
 		super.remove(id);
-		for (ControllerSettingHook hook : hooks) {
-			hook.onSettingRemove(id, toBeDeleted);
+		List<ControllerSettingHook> hooks = getHooksBySettingKey(toBeDeleted.getKey());
+
+		if (hooks != null) {
+			for (ControllerSettingHook hook : hooks) {
+				hook.onSettingRemove(id, toBeDeleted);
+			}
 		}
+	}
+
+	protected List<ControllerSettingHook> getHooksBySettingKey(String settingKey){
+		return this.hooksMap.get(settingKey);
+	}
+
+	protected Map<String, List<ControllerSettingHook>> getHooksMap() {
+		return hooksMap;
 	}
 
 	// TODO: the following methods should be moved to a ControllerSettingManager.
