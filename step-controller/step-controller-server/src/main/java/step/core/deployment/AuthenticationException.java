@@ -18,11 +18,13 @@
  ******************************************************************************/
 package step.core.deployment;
 
-public class AuthenticationException extends Exception {
+import jakarta.ws.rs.core.Response;
+
+public class AuthenticationException extends ControllerServiceException {
 
 	private static final long serialVersionUID = -8816266853456269282L;
 
 	public AuthenticationException(String msg) {
-		super(msg);
+		super(Response.Status.UNAUTHORIZED.getStatusCode(), msg);
 	}
 }

@@ -25,12 +25,16 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.artefacts.CallPlan;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
 
 public class PlanLocator {
+
+	private static final Logger log = LoggerFactory.getLogger(PlanLocator.class);
 	
 	private final PlanAccessor accessor;
 	private final SelectorHelper selectorHelper;
@@ -42,7 +46,7 @@ public class PlanLocator {
 	}
 	
 	/**
-	 * Resolve a {@link CallPlan} artefact to the underlying {@link Plan}
+	 * Resolve a {@link CallPlan} artefact to the underlying {@link Plan}. Returns null if plan is not resolved by ID
 	 * 
 	 * @param artefact the {@link CallPlan} artefact
 	 * @param objectPredicate the predicate to be used to filter the results out
@@ -64,5 +68,43 @@ public class PlanLocator {
 			a = matchingFunctions.stream().findFirst().orElseThrow(()->new RuntimeException("Unable to find plan with attributes: "+selectionAttributes.toString()));
 		}
 		return a;
+	}
+
+	/**
+	 * Resolve a {@link CallPlan} artefact to the underlying {@link Plan}. Throws an exception if plan is not resolved for any reason
+	 *
+	 * @param artefact        the {@link CallPlan} artefact
+	 * @param objectPredicate the predicate to be used to filter the results out
+	 * @param bindings        the bindings to be used for the evaluation of dynamic expressions (can be null)
+	 * @return the {@link Plan} referenced by the provided artefact
+	 */
+	public Plan selectPlanNotNull(CallPlan artefact, ObjectPredicate objectPredicate, Map<String, Object> bindings) throws PlanLocatorException {
+		Plan p;
+		try {
+			p = selectPlan(artefact, objectPredicate, bindings);
+		} catch (Exception ex) {
+			log.error("Unable to resolve call plan", ex);
+			throw new PlanLocatorException(createPlanNotResolvedMessage(artefact), ex);
+		}
+		if (p == null) {
+			throw new PlanLocatorException(createPlanNotResolvedMessage(artefact));
+		}
+		return p;
+	}
+
+	private String createPlanNotResolvedMessage(CallPlan artefact) {
+		String planId = artefact.getPlanId();
+		String selectionAttributes = artefact.getSelectionAttributes().get();
+		return "Could not resolve called plan with ID:'" + (planId == null ? "" : planId) + "'; Selection attributes: '" + (selectionAttributes == null ? "" : selectionAttributes) + "'";
+	}
+
+	public static class PlanLocatorException extends Exception {
+		public PlanLocatorException(String message) {
+			super(message);
+		}
+
+		public PlanLocatorException(String message, Throwable cause) {
+			super(message, cause);
+		}
 	}
 }

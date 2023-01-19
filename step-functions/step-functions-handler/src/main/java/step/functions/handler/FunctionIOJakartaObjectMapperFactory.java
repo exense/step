@@ -21,6 +21,7 @@ package step.functions.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsonp.JSONPModule;
+import org.glassfish.json.OutputJsonProviderImpl;
 import step.functions.io.Input;
 import step.functions.io.Output;
 
@@ -33,7 +34,15 @@ public class FunctionIOJakartaObjectMapperFactory {
 
 	public static ObjectMapper createObjectMapper() {
 		ObjectMapper mapper = new ObjectMapper();
-		mapper.registerModule(new JSONPModule());
+		// This mapper is using a customized JsonProvider which override some classes used during deserialization
+		// to replace JsonStringImpl by our own mainly for overriding the toString method.
+		// The background for this is that we are abusing the usage of JsonObject (in the sense that we do not control it)
+		// for the keyword output in the controller. Relying on the usage of the toString method directly or indirectly
+		// via groovy string interpolation ${} which invoke the toString method.
+		// This has been working as of now only because we were using a very old version of javax.json (1.0.0)
+		// since 1.0.3 (2013) they changed/corrected the implementation of the toString to output a valid json string representation
+		// To support Java 17 we hat do move the jakarta packages which contain this json change/fix even in the oldest version
+		mapper.registerModule(new JSONPModule(new OutputJsonProviderImpl()));
 		return mapper;
 	}
 }

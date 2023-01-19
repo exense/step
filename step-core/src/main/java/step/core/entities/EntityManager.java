@@ -117,7 +117,7 @@ public class EntityManager  {
 		}, recursive);
 	}
 
-	public void updateReferences(Object entity, Map<String, String> references, ObjectPredicate objectPredicate) {
+	public void updateReferences(Object entity, Map<String, String> references, ObjectPredicate objectPredicate, Set<String> messageCollector) {
 		if(entity!=null) {
 			EntityDependencyTreeVisitor entityDependencyTreeVisitor = new EntityDependencyTreeVisitor(this, objectPredicate);
 			entityDependencyTreeVisitor.visitSingleObject(entity, new EntityTreeVisitor() {
@@ -138,7 +138,7 @@ public class EntityManager  {
 					}
 					return newEntityId;
 				}
-			});
+			}, messageCollector);
 		}
 	}
 

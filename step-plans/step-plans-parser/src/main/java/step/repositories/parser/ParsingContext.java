@@ -18,14 +18,14 @@
  ******************************************************************************/
 package step.repositories.parser;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Stack;
-
 import ch.exense.commons.app.Configuration;
 import step.core.artefacts.AbstractArtefact;
 import step.core.plans.PlanAccessor;
 import step.functions.accessor.FunctionAccessor;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Stack;
 
 public class ParsingContext {
 	
@@ -156,7 +156,7 @@ public class ParsingContext {
 	
 	public void addParsingError(String errorMsg) {
 		String errorPrefix;
-		if(currentStep!=null) {
+		if (currentStep != null && currentStep.toString() != null) {
 			errorPrefix = "Error in step " + currentStep.toString() + ": ";
 		} else {
 			errorPrefix = "";

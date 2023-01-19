@@ -74,5 +74,6 @@ public class BaseArtefactPlugin extends AbstractExecutionEnginePlugin {
 		// Special artefacts that are not accessible in the UI
 		artefactHandlerRegistry.put(StreamingArtefact.class, StreamingArtefactHandler.class);
 		artefactHandlerRegistry.put(CheckArtefact.class, CheckArtefactHandler.class);
+		artefactHandlerRegistry.put(Failure.class, FailureHandler.class);
 	}
 }

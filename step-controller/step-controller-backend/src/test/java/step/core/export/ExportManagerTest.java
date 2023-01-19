@@ -663,7 +663,7 @@ public class ExportManagerTest {
 	}
 	
 	private void testExportPlansWithCompoFct(boolean overwrite) throws Exception {
-		CompositeFunctionType compositeFunctionType = new CompositeFunctionType(planAccessor, null);
+		CompositeFunctionType compositeFunctionType = new CompositeFunctionType(planAccessor, null, null);
 		CompositeFunction function = compositeFunctionType.newFunction();
 		compositeFunctionType.setupFunction(function);
 		String compositePlanId = function.getPlanId();

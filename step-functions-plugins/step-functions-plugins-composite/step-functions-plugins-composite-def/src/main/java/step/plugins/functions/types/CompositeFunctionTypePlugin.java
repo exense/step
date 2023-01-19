@@ -21,6 +21,7 @@ package step.plugins.functions.types;
 import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionEngineContext;
 import step.core.objectenricher.ObjectHookRegistry;
+import step.core.plans.PlanTypeRegistry;
 import step.core.plugins.Plugin;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.engine.plugins.FunctionPlugin;
@@ -31,8 +32,6 @@ public class CompositeFunctionTypePlugin extends AbstractExecutionEnginePlugin {
 
 	@Override
 	public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext context) {
-		FunctionTypeRegistry functionTypeRegistry = context.require(FunctionTypeRegistry.class);
-		ObjectHookRegistry objectHookRegistry = context.get(ObjectHookRegistry.class);
-		functionTypeRegistry.registerFunctionType(new CompositeFunctionType(context.getPlanAccessor(), objectHookRegistry));
+
 	}
 }

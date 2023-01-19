@@ -78,11 +78,7 @@ public class QuotaManagerControllerPlugin extends AbstractControllerPlugin {
 	@Override
 	public void serverStop(GlobalContext context) {
 		if (fileWatchService != null) {
-			try {
-				fileWatchService.close();
-			} catch (IOException e) {
-				logger.error("Error while closing file watch service", e);
-			}
+			fileWatchService.close();
 		}
 	}
 }

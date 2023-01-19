@@ -5,27 +5,25 @@ import jakarta.annotation.PostConstruct;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import org.bson.types.ObjectId;
+import step.controller.services.async.AsyncTask;
 import step.controller.services.async.AsyncTaskManager;
 import step.controller.services.async.AsyncTaskStatus;
-import step.controller.services.bulk.BulkOperationManager;
-import step.controller.services.bulk.BulkOperationParameters;
-import step.controller.services.bulk.BulkOperationReport;
 import step.core.GlobalContext;
 import step.core.access.User;
 import step.core.accessors.AbstractIdentifiableObject;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.Accessor;
-import step.core.collections.Collection;
 import step.core.deployment.AbstractStepServices;
 import step.core.deployment.ControllerServiceException;
 import step.core.entities.Entity;
-import step.core.objectenricher.ObjectFilter;
 import step.framework.server.Session;
 import step.framework.server.security.Secured;
 import step.framework.server.tables.service.TableRequest;
 import step.framework.server.tables.service.TableResponse;
 import step.framework.server.tables.service.TableService;
 import step.framework.server.tables.service.TableServiceException;
+import step.framework.server.tables.service.bulk.TableBulkOperationReport;
+import step.framework.server.tables.service.bulk.TableBulkOperationRequest;
 
 import java.util.List;
 import java.util.Map;
@@ -37,14 +35,14 @@ import java.util.stream.StreamSupport;
 public abstract class AbstractEntityServices<T extends AbstractIdentifiableObject> extends AbstractStepServices {
 
     private final String entityName;
-    private BulkOperationManager<T> bulkOperationManager;
     private Accessor<T> accessor;
     private TableService tableService;
     /**
      * Associates {@link Session} to threads. This is used by requests that are executed
-     * outside the Jetty scope like for {@link BulkOperationManager}
+     * outside the Jetty scope like for {@link AsyncTaskManager}
      */
     private static final ThreadLocal<Session<User>> sessions = new ThreadLocal<>();
+    private AsyncTaskManager asyncTaskManager;
 
     public AbstractEntityServices(String entityName) {
         this.entityName = entityName;
@@ -56,24 +54,24 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
         GlobalContext context = getContext();
         Entity<T, Accessor<T>> entityType = (Entity<T, Accessor<T>>) context.getEntityManager().getEntityByName(entityName);
         accessor = entityType.getAccessor();
-        Collection<T> collection = accessor.getCollectionDriver();
-        bulkOperationManager = new BulkOperationManager<>(collection, context.require(AsyncTaskManager.class));
         tableService = context.require(TableService.class);
+        asyncTaskManager = context.require(AsyncTaskManager.class);
     }
 
     /**
      * Set the current {@link Session} for the current thread. This is useful for request that are processed
-     * outside the Jetty scope like for {@link BulkOperationManager}
+     * outside the Jetty scope like for {@link AsyncTaskManager}
+     *
      * @param session the current {@link Session}
      */
-    public static void setCurrentSession(Session<User> session) {
+    protected static void setCurrentSession(Session<User> session) {
         sessions.set(session);
     }
 
     @Override
     protected Session<User> getSession() {
         Session<User> userSession = sessions.get();
-        if(userSession != null) {
+        if (userSession != null) {
             return userSession;
         } else {
             return super.getSession();
@@ -113,9 +111,9 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
     @Path("/bulk/clone")
     @Consumes(MediaType.APPLICATION_JSON)
     @Secured(right = "{entity}-write")
-    public AsyncTaskStatus<BulkOperationReport> cloneEntities(BulkOperationParameters parameters) {
-        ObjectFilter contextObjectFilter = getObjectFilter();
-        return bulkOperationManager.performBulkOperation(parameters, this::clone, contextObjectFilter, getSession());
+    public AsyncTaskStatus<TableBulkOperationReport> cloneEntities(TableBulkOperationRequest request) {
+        return scheduleAsyncTaskWithinSessionContext(h ->
+                tableService.performBulkOperation(entityName, request, this::clone, getSession()));
     }
 
     @Operation(operationId = "save{Entity}", description = "Saves the provided entity")
@@ -166,8 +164,7 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
     @Path("/bulk/delete")
     @Consumes(MediaType.APPLICATION_JSON)
     @Secured(right = "{entity}-delete")
-    public AsyncTaskStatus<BulkOperationReport> bulkDelete(BulkOperationParameters parameters) {
-        ObjectFilter contextObjectFilter = getObjectFilter();
+    public AsyncTaskStatus<TableBulkOperationReport> bulkDelete(TableBulkOperationRequest request) {
         Consumer<String> consumer = t -> {
             try {
                 delete(t);
@@ -175,7 +172,20 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
                 throw new RuntimeException(e);
             }
         };
-        return bulkOperationManager.performBulkOperation(parameters, consumer, contextObjectFilter, getSession());
+        return scheduleAsyncTaskWithinSessionContext(h ->
+                tableService.performBulkOperation(entityName, request, consumer, getSession()));
+    }
+
+    protected <R> AsyncTaskStatus<R> scheduleAsyncTaskWithinSessionContext(AsyncTask<R> asyncTask) {
+        Session<User> session = getSession();
+        return asyncTaskManager.scheduleAsyncTask(t -> {
+            setCurrentSession(session);
+            try {
+                return asyncTask.apply(t);
+            } finally {
+                setCurrentSession(null);
+            }
+        });
     }
 
     @Operation(operationId = "get{Entity}Table", description = "Get the table view according to provided request")

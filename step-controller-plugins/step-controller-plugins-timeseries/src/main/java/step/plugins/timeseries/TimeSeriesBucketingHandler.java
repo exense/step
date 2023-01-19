@@ -63,7 +63,7 @@ public class TimeSeriesBucketingHandler implements MeasurementHandler {
     @Override
     public void processGauges(List<Measurement> measurements) {
         measurements.forEach(measurement -> {
-            if (measurement != null && measurement.getType().equals(THREAD_GROUP_MEASUREMENT_TYPE)) {
+            if (measurement != null) {
                 BucketAttributes bucketAttributes = measurementToBucketAttributes(measurement);
                 bucketAttributes.put(METRIC_TYPE_KEY, METRIC_TYPE_SAMPLER);
                 this.ingestionPipeline.ingestPoint(bucketAttributes, measurement.getBegin(), measurement.getValue());
