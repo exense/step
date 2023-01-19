@@ -59,10 +59,16 @@ public class PlanPlugin extends AbstractControllerPlugin {
 			}
 
 			@Override
-			public Plan clonePlan(Plan plan) {
+			public Plan clonePlan(Plan plan, boolean updateVisibility) {
 				plan.setId(new ObjectId());
-				plan.setCustomFields(null);
-				plan.setVisible(true);
+				if (updateVisibility) {
+					plan.setCustomFields(null);
+					plan.setVisible(true);
+					if (plan.getRoot() != null) {
+						// delete all custom attributes for all children to clean up attributes like "source" cloned from original plan
+						plan.getRoot().deepCleanupAllCustomAttributes();
+					}
+				}
 				return plan;
 			}
 

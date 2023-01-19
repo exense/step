@@ -26,7 +26,7 @@ public interface PlanType<T extends Plan> {
 
     public T newPlan(String template) throws Exception;
 
-    public T clonePlan(T plan);
+    public T clonePlan(T plan, boolean updateVisibility);
 
     public void onBeforeSave(T plan);
 

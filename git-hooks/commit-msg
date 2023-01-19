@@ -6,7 +6,7 @@
 # Only the first line of the commit message is checked.
 # If for some reason, this policy should be ignored for a commit, you may pass the --no-verify flag.
 
-filtered="$(head -n 1 "$1" | egrep '^[A-Z]{2,}-[0-9]+ .+$')"
+filtered="$(head -n 1 "$1" | egrep '[A-Z]{2,}-[0-9]+[ -].+$')"
 test "" = "$filtered" && {
 	echo >&2 "POLICY REJECT: Commit message must start with issue number followed by space and message (e.g. 'SED-123 bugfix')"
 	exit 1

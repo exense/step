@@ -202,6 +202,20 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
 		}
 	}
 
+	public void deepCleanupAllCustomAttributes() {
+		if (getCustomAttributes() != null) {
+			getCustomAttributes().clear();
+		}
+
+		List<AbstractArtefact> children = getChildren();
+		if (children != null) {
+			for (AbstractArtefact child : children) {
+				// repeat recursively for all children
+				child.deepCleanupAllCustomAttributes();
+			}
+		}
+	}
+
 	public DynamicValue<Boolean> getInstrumentNode() {
 		return instrumentNode;
 	}
