@@ -66,8 +66,13 @@ public class DynamicBeanResolver {
 							}
 						} else if(method.isAnnotationPresent(ContainsDynamicValues.class)) {
 							Object value = method.invoke(o);
-							evaluate(value, bindings);
-						}						
+							if (value instanceof  List) {
+								List l = (List) value;
+								l.forEach(v -> evaluate(v, bindings));
+							} else {
+								evaluate(value, bindings);
+							}
+						}
 					}
 				}
 			} catch (Exception e) {
