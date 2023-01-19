@@ -28,9 +28,9 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.junit.Assert;
 import org.junit.Test;
 
-import junit.framework.Assert;
 import ch.exense.commons.io.FileHelper;
 import step.plugins.quotamanager.config.Quota;
 import step.plugins.quotamanager.config.QuotaManagerConfig;
