@@ -46,8 +46,6 @@ public class ErrorFilter extends AbstractStepServices implements ExceptionMapper
 			portalServiceError.setErrorMessage(portalException.getErrorMessage());
 			return Response.status(portalException.getHttpErrorCode()).entity(portalServiceError)
 					.type(MediaType.APPLICATION_JSON).build();
-		} else if(exception instanceof ApplicationException) {
-			return Response.status(Response.Status.BAD_REQUEST).entity(((ApplicationException) exception).getErrorMessage()).type("text/plain").build();
 		} else {
 			logger.error("Unexpected error while processing request", exception);
 			return Response.status(500).entity("Unexpected server error occurred: "+exception.getClass().getName()+":"+exception.getMessage()).type("text/plain").build();

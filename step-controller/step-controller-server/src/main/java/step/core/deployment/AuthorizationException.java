@@ -18,11 +18,13 @@
  ******************************************************************************/
 package step.core.deployment;
 
-public class TokenValidationException extends AuthenticationException {
+import jakarta.ws.rs.core.Response;
 
-	private static final long serialVersionUID = 1609024448637213042L;
+public class AuthorizationException extends ControllerServiceException {
 
-	public TokenValidationException(String msg) {
-		super(msg);
+	private static final long serialVersionUID = -8816266853456269282L;
+
+	public AuthorizationException(String msg) {
+		super(Response.Status.FORBIDDEN.getStatusCode(), msg);
 	}
 }

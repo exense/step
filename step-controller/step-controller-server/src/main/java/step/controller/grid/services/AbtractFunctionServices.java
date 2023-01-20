@@ -55,6 +55,7 @@ import step.functions.services.GetTokenHandleParameter;
 import step.functions.type.FunctionTypeException;
 import step.functions.type.SetupFunctionException;
 import step.grid.TokenWrapper;
+import step.planbuilder.FunctionArtefacts;
 
 import java.util.HashMap;
 import java.util.List;
@@ -140,6 +141,16 @@ public abstract class AbtractFunctionServices extends AbstractEntityServices<Fun
 		} else {
 			return null;
 		}
+	}
+
+	@Operation(operationId = "get{Entity}sInputsFromSchema")
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="{entity}-read")
+	@Path("/{id}/schema/inputs")
+	public JsonObject getFunctionInputFromSchema(@PathParam("id") String functionId) {
+		Function function = functionManager.getFunctionById(functionId);
+		return FunctionArtefacts.buildInputFromSchema(function);
 	}
 
 	@Override
