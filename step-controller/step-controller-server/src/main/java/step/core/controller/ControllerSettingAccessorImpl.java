@@ -26,6 +26,7 @@ import step.core.collections.Filters;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ControllerSettingAccessorImpl extends AbstractAccessor<ControllerSetting> implements ControllerSettingAccessor {
@@ -59,22 +60,64 @@ public class ControllerSettingAccessorImpl extends AbstractAccessor<ControllerSe
 
 	@Override
 	public ControllerSetting save(ControllerSetting entity) {
-		// TODO: theoretically we can update the key of existing entity. Should we notify hooks for values before update / after update
+		// we can change the key of existing setting - in this case we notify hooks about deleted/created setting
+		ControllerSetting oldValueWithChangedKey = getOldValueWithAnotherKey(entity);
 		ControllerSetting res = super.save(entity);
+
+		if (oldValueWithChangedKey != null) {
+			List<ControllerSettingHook> hooksOnDelete = getHooksBySettingKey(oldValueWithChangedKey.getKey());
+			if (hooksOnDelete != null) {
+				for (ControllerSettingHook hook : hooksOnDelete) {
+					hook.onSettingRemove(oldValueWithChangedKey.getId(), oldValueWithChangedKey);
+				}
+			}
+		}
+
 		List<ControllerSettingHook> hooks = getHooksBySettingKey(entity.getKey());
 		if (hooks != null) {
 			for (ControllerSettingHook hook : hooks) {
 				hook.onSettingSave(res);
 			}
 		}
+
 		return res;
+	}
+
+	private ControllerSetting getOldValueWithAnotherKey(ControllerSetting newValue){
+		ControllerSetting oldValue = null;
+		if (newValue.getId() != null) {
+			oldValue = get(newValue.getId());
+			if (oldValue != null && !Objects.equals(oldValue.getKey(), newValue.getKey())) {
+				 return oldValue;
+			}
+		}
+		return null;
 	}
 
 	@Override
 	public void save(Iterable<ControllerSetting> entities) {
+		List<ControllerSetting> oldValuesWithChangedKeys = new ArrayList<>();
+		for (ControllerSetting newValue : entities) {
+			ControllerSetting valueWithChangedKey = getOldValueWithAnotherKey(newValue);
+			if (valueWithChangedKey != null) {
+				oldValuesWithChangedKeys.add(valueWithChangedKey);
+			}
+		}
+
 		super.save(entities);
 
 		for (ControllerSetting entity : entities) {
+			ControllerSetting oldValueWithChangedKey = oldValuesWithChangedKeys.stream().filter(v -> Objects.equals(v.getId(), entity.getId())).findFirst().orElse(null);
+
+			if (oldValueWithChangedKey != null) {
+				List<ControllerSettingHook> hooksOnDelete = getHooksBySettingKey(oldValueWithChangedKey.getKey());
+				if (hooksOnDelete != null) {
+					for (ControllerSettingHook hook : hooksOnDelete) {
+						hook.onSettingRemove(oldValueWithChangedKey.getId(), oldValueWithChangedKey);
+					}
+				}
+			}
+
 			List<ControllerSettingHook> hooks = getHooksBySettingKey(entity.getKey());
 			if (hooks != null) {
 				for (ControllerSettingHook hook : hooks) {

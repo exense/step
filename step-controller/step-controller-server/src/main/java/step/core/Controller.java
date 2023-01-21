@@ -64,7 +64,7 @@ import java.io.IOException;
 
 public class Controller {
 
-	public static final Version VERSION = new Version(3,20,0);
+	public static final Version VERSION = new Version(3,21,0);
 	private Configuration configuration;
 	
 	private GlobalContext context;
