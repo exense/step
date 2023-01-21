@@ -56,7 +56,7 @@ public class EmbeddedFunctionPackageImporterTest {
 		assertEquals("value2", functionPackage.getAttribute("attribute2"));
 		
 		List<ObjectId> functionIDs = functionPackage.getFunctions();
-		Assert.assertEquals(2, functionIDs.size());
+		Assert.assertEquals(3, functionIDs.size());
 		functionIDs.forEach(f->{
 			GeneralScriptFunction function = (GeneralScriptFunction) functionAccessor.get(f);
 			assertEquals(true, function.isExecuteLocally());
