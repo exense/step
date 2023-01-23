@@ -51,4 +51,8 @@ public class StepRunnerWithPlansAnnotationTest extends AbstractKeyword {
 		Assert.assertEquals("Value", properties.get("PARAM_EXEC"));
 	}
 
+	@Plan("Echo PARAM_EXEC")
+	@Keyword
+	public void inlinePlan() {}
+
 }

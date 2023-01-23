@@ -33,7 +33,7 @@ public class EchoReportNode extends ReportNode {
 	}
 
 	@Override
-	public String toString(){
-		return "EchoReportNode=[echo=" + echo + "]";
+	public String getReportAsString() {
+		return echo;
 	}
 }

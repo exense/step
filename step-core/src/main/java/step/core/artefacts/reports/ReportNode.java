@@ -215,8 +215,12 @@ public class ReportNode extends AbstractIdentifiableObject {
 		return false;
 	}
 
-	@Override
-	public String toString() {
-		return "ReportNode=[name=" + name + ", id=" + getId() + "]";
+	/**
+	 * @return a string representation of this report node.
+	 * This method is called by reprt generators like the JUnit runner
+	 */
+	@JsonIgnore
+	public String getReportAsString() {
+		return null;
 	}
 }

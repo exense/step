@@ -142,7 +142,7 @@ public class PlanRunnerResult {
 	 * @throws IOException
 	 */
 	public PlanRunnerResult printTree() throws IOException {
-		return printTree(new OutputStreamWriter(System.out), false);
+		return printTree(new OutputStreamWriter(System.out), true, false);
 	}
 	
 	/**
@@ -154,10 +154,10 @@ public class PlanRunnerResult {
 	public PlanRunnerResult printTree(Writer writer) throws IOException {
 		return printTree(writer, false);
 	}
-	
+
 	/**
 	 * Prints the result tree to the {@link Writer} provided as input
-	 * 
+	 *
 	 * @param writer
 	 * @param printAttachments if the attachments of the report nodes have to be
 	 *                         printed out (currently restricted to attachments
@@ -166,6 +166,21 @@ public class PlanRunnerResult {
 	 * @throws IOException
 	 */
 	public PlanRunnerResult printTree(Writer writer, boolean printAttachments) throws IOException {
+		return printTree(writer, false, printAttachments);
+	}
+
+	/**
+	 * Prints the result tree to the {@link Writer} provided as input
+	 * 
+	 * @param writer
+	 * @param printNodeDetails if the details of the report nodes should be printed out
+	 * @param printAttachments if the attachments of the report nodes have to be
+	 *                         printed out (currently restricted to attachments
+	 *                         called "exception.log")
+	 * @return
+	 * @throws IOException
+	 */
+	public PlanRunnerResult printTree(Writer writer, boolean printNodeDetails, boolean printAttachments) throws IOException {
 		BufferedWriter bWriter = new BufferedWriter(writer);
 		visitReportTree(event->{
 			try {
@@ -173,7 +188,17 @@ public class PlanRunnerResult {
 						bWriter.write(" ");
 				}
 				ReportNode node = event.getNode();
-				bWriter.write(node.getName()+":"+node.getStatus()+":"+(node.getError()!=null?node.getError().getMsg():"" + node.toString()));
+				StringBuilder row = new StringBuilder();
+				row.append(node.getName());
+				String reportAsString = node.getReportAsString();
+				if (printNodeDetails && reportAsString != null) {
+					row.append("(" + reportAsString + ")");
+				}
+				row.append(":" + node.getStatus() + ":");
+				if (node.getError() != null) {
+					row.append(node.getError().getMsg());
+				}
+				bWriter.write(row.toString());
 				bWriter.write("\n");
 				
 				if(printAttachments) {
