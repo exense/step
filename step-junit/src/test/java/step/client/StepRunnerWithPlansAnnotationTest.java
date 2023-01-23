@@ -18,8 +18,9 @@
  ******************************************************************************/
 package step.client;
 
+import org.junit.Assert;
 import org.junit.runner.RunWith;
-
+import step.handlers.javahandler.AbstractKeyword;
 import step.handlers.javahandler.Keyword;
 import step.junit.runner.Step;
 import step.junit.runners.annotations.ExecutionParameters;
@@ -29,7 +30,7 @@ import step.junit.runners.annotations.Plans;
 @RunWith(Step.class)
 @Plans({"plan2.plan"})
 @ExecutionParameters({"PARAM_EXEC","Value"})
-public class StepRunnerWithPlansAnnotationTest {
+public class StepRunnerWithPlansAnnotationTest extends AbstractKeyword {
 	
 	@Plan()
 	@Keyword
@@ -43,8 +44,11 @@ public class StepRunnerWithPlansAnnotationTest {
 // 	Uncomment it out to perform the negative test manually 
 //	@Plan
 //	public void implicitPlanWithWithoutKeywordAnnotation() {}
-	
-	@Plan("Echo \"${PARAM_EXEC}\"")
-	public void explicitPlan() {}
+
+	@Plan
+	@Keyword
+	public void explicitPlan() {
+		Assert.assertEquals("Value", properties.get("PARAM_EXEC"));
+	}
 
 }
