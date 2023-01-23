@@ -45,9 +45,15 @@ public class StepRunnerWithPlansAnnotationTest extends AbstractKeyword {
 //	@Plan
 //	public void implicitPlanWithWithoutKeywordAnnotation() {}
 
+	@Plan("planWithAssert\nAssert key = \"value\"")
+	@Keyword
+	public void planWithAssert() {
+		output.add("key","value");
+	}
+
 	@Plan
 	@Keyword
-	public void explicitPlan() {
+	public void explicitPlanWithExecutionParameter() {
 		Assert.assertEquals("Value", properties.get("PARAM_EXEC"));
 	}
 
