@@ -27,7 +27,5 @@ import java.lang.annotation.RetentionPolicy;
  */
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ExecutionParameters {
-	public static String EXEC_PARAMS_KEY = "execParams";
-
 	String[] value();
 }

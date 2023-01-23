@@ -217,7 +217,7 @@ public class ReportNode extends AbstractIdentifiableObject {
 
 	/**
 	 * @return a string representation of this report node.
-	 * This method is called by reprt generators like the JUnit runner
+	 * This method is called by report generators like the JUnit runner
 	 */
 	@JsonIgnore
 	public String getReportAsString() {
