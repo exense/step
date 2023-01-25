@@ -174,7 +174,7 @@ public class FunctionPackageManagerTest {
 	
 	@Test
 	public void resourceBasedFunctionPackage() throws Exception {
-		String resourceFileName = "TestResource.jar";
+		String resourceFileName = "java-plugin-handler-test.jar";
 
 		Function f1 = function("f1");
 		registerPackageHandler(List.of(f1));
@@ -250,7 +250,7 @@ public class FunctionPackageManagerTest {
 	}
 
 	private Resource createTestResource(String resourceFileName, ResourceManager resourceManager) throws Exception {
-		FileInputStream fis = new FileInputStream(new File("src/test/resources/" + resourceFileName));
+		FileInputStream fis = new FileInputStream(new File("src/test/resources/local/" + resourceFileName));
 
 		// Create a resource
 		Resource resource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, fis,
