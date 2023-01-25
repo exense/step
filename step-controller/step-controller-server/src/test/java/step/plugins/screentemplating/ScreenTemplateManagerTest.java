@@ -86,7 +86,7 @@ public class ScreenTemplateManagerTest {
 			}
 
 			@Override
-			public void setVersionedCollections(Collection<VersionableEntity> versionedCollection) {
+			public void enableVersioning(Collection<VersionableEntity> versionedCollection, Long newVersionThresholdMs) {
 
 			}
 

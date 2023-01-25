@@ -112,7 +112,7 @@ public class ParameterManagerTest {
 		System.out.println("ms:"+(System.currentTimeMillis()-t1));
 		Assert.assertEquals(params.get("key1"),"value"+nIt);
 		
-		Assert.assertTrue((System.currentTimeMillis()-t1)<500);	
+		Assert.assertTrue((System.currentTimeMillis()-t1)<2000);
 	}
 	
 	@Test

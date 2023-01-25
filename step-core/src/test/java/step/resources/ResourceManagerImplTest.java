@@ -240,7 +240,9 @@ public class ResourceManagerImplTest {
 
 		// Assert that the resource can be retrieved and is the same as the one returned at creation
 		Resource actualResource = resourceManager.getResource(resourceId);
-		assertSame(resource, actualResource);
+		assertEquals(resource, actualResource);
+		assertEquals(resource.getResourceName(), actualResource.getResourceName());
+		assertEquals(resource.getCurrentRevisionId(), actualResource.getCurrentRevisionId());
 
 		// Assert that the resource has been extracted and saved as directory
 		ResourceRevisionFileHandle resourceFile = resourceManager.getResourceFile(resourceId);

@@ -165,6 +165,10 @@ public class EntityDependencyTreeVisitorTest {
 		private DynamicValue<String> referenceAsDynamicValue;
 		private String infiniteRecursion;
 		private String customReference;
+
+		public EntityType1() {
+			super();
+		}
 		
 		public EntityType1(String entityRef) {
 			super();
@@ -264,7 +268,10 @@ public class EntityDependencyTreeVisitorTest {
 	public static class ReferenceObject {
 		
 		private String entityRef;
-		
+
+		public ReferenceObject() {
+		}
+
 		public ReferenceObject(String entityRef) {
 			super();
 			this.entityRef = entityRef;

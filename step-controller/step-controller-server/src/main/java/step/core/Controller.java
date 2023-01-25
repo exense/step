@@ -31,7 +31,6 @@ import step.core.artefacts.reports.ReportNodeAccessorImpl;
 import step.core.collections.Collection;
 import step.core.collections.CollectionFactory;
 import step.core.collections.CollectionFactoryConfigurationParser;
-import step.core.collections.VersionableEntity;
 import step.core.controller.SessionResponseBuilder;
 import step.core.deployment.WebApplicationConfigurationManager;
 import step.core.dynamicbeans.DynamicBeanResolver;
@@ -134,9 +133,6 @@ public class Controller {
 		context.setExecutionManager(new ExecutionManagerImpl(executionAccessor));
 
 		PlanAccessorImpl plans = new PlanAccessorImpl(collectionFactory.getCollection("plans", Plan.class));
-		if (configuration.getPropertyAsBoolean("collections.plans.versioned",true)) {
-			plans.setVersionedCollections(collectionFactory.getVersionedCollection("plans"));
-		}
 		context.setPlanAccessor(plans);
 
 		context.setReportNodeAccessor(

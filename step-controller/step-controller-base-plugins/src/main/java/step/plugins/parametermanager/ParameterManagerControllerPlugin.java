@@ -61,9 +61,6 @@ public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
 
 		Accessor<Parameter> parameterAccessor = new AbstractAccessor<>(collection);
 		context.put("ParameterAccessor", parameterAccessor);
-		if (context.getConfiguration().getPropertyAsBoolean("collections." + ENTITY_PARAMETERS + ".versioned",true)) {
-			parameterAccessor.setVersionedCollections(context.getCollectionFactory().getVersionedCollection(ENTITY_PARAMETERS));
-		}
 
 		context.get(TableRegistry.class).register(ENTITY_PARAMETERS, new Table<>(collection, "param-read", true)
 				.withResultItemEnricher(p -> ParameterServices.maskProtectedValue(p)));
