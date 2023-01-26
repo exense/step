@@ -28,6 +28,7 @@ import java.util.Set;
 import org.bson.types.ObjectId;
 
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.dynamicbeans.DynamicValue;
 import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionEngineContext;
 import step.core.execution.OperationMode;
@@ -69,6 +70,7 @@ public class LocalFunctionPlugin extends AbstractExecutionEnginePlugin {
 			String functionName = annotation.name().length()>0?annotation.name():m.getName();
 			
 			LocalFunction function = new LocalFunction();
+			function.getCallTimeout().setValue(annotation.timeout());
 			function.setAttributes(new HashMap<>());
 			function.getAttributes().put(AbstractOrganizableObject.NAME, functionName);
 			function.setClassName(m.getDeclaringClass().getName());

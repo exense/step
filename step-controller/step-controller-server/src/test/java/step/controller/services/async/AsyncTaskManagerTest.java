@@ -1,7 +1,7 @@
 package step.controller.services.async;
 
 import ch.exense.commons.io.Poller;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -9,14 +9,14 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeoutException;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.Assert.*;
 
-class AsyncTaskManagerTest {
+public class AsyncTaskManagerTest {
 
     private static final String TEST = "test";
 
     @Test
-    void test() throws InterruptedException, TimeoutException, IOException {
+    public void test() throws InterruptedException, TimeoutException, IOException {
         CountDownLatch latch1 = new CountDownLatch(1);
         CountDownLatch latch2 = new CountDownLatch(1);
         CountDownLatch latch3 = new CountDownLatch(1);
@@ -34,13 +34,13 @@ class AsyncTaskManagerTest {
 
         assertFalse(task.isReady());
         assertNull(task.getResult());
-        assertEquals(0, task.getProgress());
+        assertEquals(0, task.getProgress(),0);
 
         latch1.countDown();
         latch2.await();
 
         task = asyncTaskManager.getAsyncTaskStatus(id);
-        assertEquals(0.5f, task.getProgress());
+        assertEquals(0.5f, task.getProgress(),0);
 
         latch3.countDown();
 
@@ -54,7 +54,7 @@ class AsyncTaskManagerTest {
         task = asyncTaskManager.removeReadyAsyncTaskStatus(id);
         // Assert it is ready
         assertTrue(task.isReady());
-        assertEquals(1, task.getProgress());
+        assertEquals(1, task.getProgress(),0);
         assertEquals(TEST, task.getResult());
         assertEquals(Set.of("My Warning"), task.getWarnings());
 
@@ -68,7 +68,7 @@ class AsyncTaskManagerTest {
     }
 
     @Test
-    void testError() throws InterruptedException, TimeoutException, IOException {
+    public void testError() throws InterruptedException, TimeoutException, IOException {
         AsyncTaskManager asyncTaskManager = new AsyncTaskManager();
         AsyncTaskStatus<?> task = asyncTaskManager.scheduleAsyncTask(h -> {
             throw new RuntimeException("My error");

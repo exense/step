@@ -22,15 +22,23 @@ import jakarta.json.Json;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
 
+import jakarta.json.JsonValue;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.artefacts.Assert;
 import step.artefacts.Assert.AssertOperator;
 import step.artefacts.CallFunction;
 import step.artefacts.FunctionGroup;
 import step.core.dynamicbeans.DynamicValue;
+import step.functions.Function;
 
 import java.util.Map;
 
+import static step.core.accessors.AbstractOrganizableObject.NAME;
+
 public class FunctionArtefacts {
+
+	private static final Logger logger = LoggerFactory.getLogger(FunctionArtefacts.class);
 	
 	public static FunctionGroup session() {
 		return new FunctionGroup();
@@ -142,6 +150,36 @@ public class FunctionArtefacts {
 	
 	public static CallFunction keyword(String keywordName, boolean remote) {
 		return keyword(keywordName, remote, "{}");
+	}
+
+	public static JsonObject buildInputFromSchema(Function function) {
+		JsonObjectBuilder inputBuilder = Json.createObjectBuilder();
+		JsonObject schema = function.getSchema();
+		if (schema != null && schema.get("properties") != null) {
+			if (schema.get("properties").getValueType().equals(JsonValue.ValueType.OBJECT)) {
+				JsonObject properties = schema.getJsonObject("properties");
+				properties.keySet().forEach(k -> {
+					if (properties.get(k).getValueType().equals(JsonValue.ValueType.OBJECT)) {
+						JsonObjectBuilder dynamicExpressionBuilder = Json.createObjectBuilder();
+						JsonObject prop = properties.getJsonObject(k);
+						String type = prop.getString("type","");
+						String defaultValue = prop.getString("default", null);
+						boolean isDynamic = (type.equals("number") || type.equals("integer") || type.equals("boolean"));
+						String value = (defaultValue != null) ? defaultValue : "<" + type + ">";
+						dynamicExpressionBuilder.add("dynamic", isDynamic);
+						dynamicExpressionBuilder.add((isDynamic) ? "expression" : "value", value);
+						inputBuilder.add(k, dynamicExpressionBuilder.build());
+					} else {
+						logger.error("Invalid schema provided for function " + function.getAttribute(NAME) +
+								". The property '" + k +  "' should be a json object. Schema provided: " + schema.toString());
+					}
+				});
+			} else {
+				logger.error("Invalid schema provided for function " + function.getAttribute(NAME) +
+						". The 'properties' should be a json object. Schema provided: " + schema.toString());
+			}
+		}
+		return inputBuilder.build();
 	}
 
 	public static CallFunctionBuilder keyword(Map<String, String> attributes) {

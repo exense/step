@@ -29,7 +29,7 @@ import step.core.GlobalContext;
 import step.core.accessors.Accessor;
 import step.core.deployment.ControllerServiceException;
 import step.core.encryption.EncryptionManagerException;
-import step.framework.server.access.AccessManager;
+import step.framework.server.access.AuthorizationManager;
 import step.framework.server.security.Secured;
 import step.framework.server.security.SecuredContext;
 import step.parameter.Parameter;
@@ -49,7 +49,7 @@ import java.util.stream.StreamSupport;
 @SecuredContext(key = "entity", value = "param")
 public class ParameterServices extends AbstractEntityServices<Parameter> {
 
-	private AccessManager accessManager;
+	private AuthorizationManager authorizationManager;
 	private Accessor<Parameter> parameterAccessor;
 	private ParameterManager parameterManager;
 
@@ -64,7 +64,7 @@ public class ParameterServices extends AbstractEntityServices<Parameter> {
 		GlobalContext context = getContext();
 		parameterAccessor = (Accessor<Parameter>) context.get("ParameterAccessor");
 		parameterManager = context.require(ParameterManager.class);
-		accessManager = context.get(AccessManager.class);
+		authorizationManager = context.get(AuthorizationManager.class);
 	}
 
 	@GET
@@ -145,7 +145,7 @@ public class ParameterServices extends AbstractEntityServices<Parameter> {
 	}
 
 	protected boolean hasGlobalParamRight() {
-		return accessManager.checkRightInContext(getSession(), "param-global-write");
+		return authorizationManager.checkRightInContext(getSession(), "param-global-write");
 	}
 
 	protected static boolean isProtected(Parameter oldParameter) {

@@ -29,21 +29,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import step.artefacts.Check;
-import step.artefacts.DataSetArtefact;
-import step.artefacts.ForBlock;
-import step.artefacts.ForEachBlock;
-import step.artefacts.FunctionGroup;
-import step.artefacts.IfBlock;
-import step.artefacts.RetryIfFails;
-import step.artefacts.Sequence;
-import step.artefacts.Sleep;
-import step.artefacts.Synchronized;
-import step.artefacts.TestCase;
-import step.artefacts.TestScenario;
-import step.artefacts.TestSet;
+import step.artefacts.*;
 import step.artefacts.ThreadGroup;
-import step.artefacts.While;
+import step.core.artefacts.AbstractArtefact;
 import step.datapool.excel.ExcelDataPool;
 import step.datapool.file.FileDataPool;
 import step.datapool.sequence.IntSequenceDataPool;
@@ -487,10 +475,23 @@ public class DefaultDescriptionStepParserTest extends AbstractDescriptionStepPar
 	@Test
 	public void testCheck() throws ParsingException {
 		List<AbstractStep> steps = new ArrayList<>();
-		steps.add(step("Check Expression= true \n"));
+		steps.add(step("Check Expression= true \n "));
+		steps.add(step("Check Expression = key2.toString().equals('value2') \n "));
+		steps.add(step("Check Expression = |key.toString().equals(\"value with space\")| \n "));
+		steps.add(step("Check Expression = key2.toString().equals(\"value2 \"\"escaped quotes\"\" test\") \n "));
+		steps.add(step("Check Expression = key.toString().equals('value with space') \n "));
 
-		Check artefact = parseAndGetUniqueChild(steps, Check.class);
-		Assert.assertNotNull(artefact);
-		Assert.assertEquals("true",artefact.getExpression().getExpression());
+		List<AbstractArtefact> children = parse(steps).getChildren();
+		Assert.assertEquals(5, children.size());
+		Check check = (Check) children.get(0);
+		Assert.assertEquals("true",check.getExpression().getExpression());
+		check = (Check) children.get(1);
+		Assert.assertEquals("key2.toString().equals('value2')",check.getExpression().getExpression());
+		check = (Check) children.get(2);
+		Assert.assertEquals("key.toString().equals(\"value with space\")",check.getExpression().getExpression());
+		check = (Check) children.get(3);
+		Assert.assertEquals("key2.toString().equals(\"value2 \"\"escaped quotes\"\" test\")",check.getExpression().getExpression());
+		check = (Check) children.get(4);
+		Assert.assertEquals("key.toString().equals('value with space')",check.getExpression().getExpression());
 	}
 }
