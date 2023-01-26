@@ -35,6 +35,16 @@ public class MyKeywordLibrary extends AbstractKeyword {
 			});
 		}
 	}
+
+	@Keyword(timeout=100)
+	public void MyKeywordWithTimeout() {
+		output.add("MyKey", "MyValue");
+		if(properties!=null) {
+			properties.forEach((key, value)->{
+				output.add(key, value);
+			});
+		}
+	}
 	
 	@Keyword
 	public void TestClassloader() {
