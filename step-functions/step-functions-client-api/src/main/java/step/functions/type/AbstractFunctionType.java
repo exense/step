@@ -127,10 +127,14 @@ public abstract class AbstractFunctionType<T extends Function> {
 	
 	protected void registerFile(File file, String properyName, Map<String, String> props) {
 		FileVersionId fileVersionId = registerFile(file);
-		props.put(properyName+".id", fileVersionId.getFileId());
-		props.put(properyName+".version", fileVersionId.getVersion());
+		registerFileVersionId(properyName, props, fileVersionId);
 	}
-	
+
+	private void registerFileVersionId(String properyName, Map<String, String> props, FileVersionId fileVersionId) {
+		props.put(properyName +".id", fileVersionId.getFileId());
+		props.put(properyName +".version", fileVersionId.getVersion());
+	}
+
 	protected FileVersionId registerFile(File file) {
 		FileVersion fileVersion;
 		try {
@@ -140,7 +144,12 @@ public abstract class AbstractFunctionType<T extends Function> {
 			throw new RuntimeException("Error while registering file "+file.getAbsolutePath(), e);
 		}
 	}
-	
+
+	protected void registerResource(ClassLoader cl, String resourceName, boolean isDirectory, String properyName, Map<String, String> props) {
+		FileVersionId fileVersionId = registerResource(cl, resourceName, isDirectory);
+		registerFileVersionId(properyName, props, fileVersionId);
+	}
+
 	protected FileVersionId registerResource(ClassLoader cl, String resourceName, boolean isDirectory) {
 		try {
 			return gridFileServices.registerFile(cl.getResourceAsStream(resourceName), resourceName, isDirectory).getVersionId();
