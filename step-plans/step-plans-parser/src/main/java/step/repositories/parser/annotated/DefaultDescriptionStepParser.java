@@ -440,7 +440,7 @@ public class DefaultDescriptionStepParser extends AbstractDescriptionStepParser 
 		parsingContext.addArtefactToCurrentParent(result);
 	}
 	
-	@Step("Check (.*)$")
+	@Step(value="Check (Expression *=.*)$", priority=2)
 	public static void check(ParsingContext parsingContext, String args) {
 		JsonObject object = parseKeyValues(args);
 		Check artefact = new Check();
@@ -449,6 +449,15 @@ public class DefaultDescriptionStepParser extends AbstractDescriptionStepParser 
 		}
 		parsingContext.addArtefactToCurrentParent(artefact);
 	}
+
+	@Step(value="Check (.*)$", priority=1)
+	public static void checkExpression(ParsingContext parsingContext, String args) {
+		Check artefact = new Check();
+		artefact.setExpression(new DynamicValue<Boolean>(args.trim(),""));
+		parsingContext.addArtefactToCurrentParent(artefact);
+	}
+
+
 	
 	@Step("^([\\d\\w]+):(.*)$")
 	public static void map(ParsingContext parsingContext, String keyword, String argument) {
