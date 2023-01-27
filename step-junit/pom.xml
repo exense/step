@@ -32,5 +32,10 @@
 			<artifactId>step-plans-parser</artifactId>
 			<version>${project.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>ch.exense.step</groupId>
+			<artifactId>step-functions-plugins-local-composite</artifactId>
+			<version>${project.version}</version>
+		</dependency>
 	</dependencies>
 </project>
