@@ -45,6 +45,13 @@ public class StepRunnerWithPlansAnnotationTest extends AbstractKeyword {
 //	@Plan
 //	public void implicitPlanWithWithoutKeywordAnnotation() {}
 
+	//Negative test: Commented out as this test is failing per design.
+	//@Plan
+	@Keyword()
+	public void implicitPlanWithError() {
+		throw new RuntimeException();
+	}
+
 	@Plan("planWithAssert\nAssert key = \"value\"")
 	@Keyword
 	public void planWithAssert() {

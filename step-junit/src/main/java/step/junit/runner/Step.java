@@ -180,7 +180,7 @@ public class Step extends ParentRunner<StepClassParserResult> {
 		String executionTree;
 		Writer w = new StringWriter();
 		try {
-			res.printTree(w, true);
+			res.printTree(w, true, true);
 			executionTree = w.toString();
 		} catch (IOException e) {
 			logger.error("Error while writing execution tree", w);
