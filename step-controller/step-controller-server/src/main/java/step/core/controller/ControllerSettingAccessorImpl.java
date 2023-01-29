@@ -55,7 +55,7 @@ public class ControllerSettingAccessorImpl extends AbstractAccessor<ControllerSe
 	@Override
 	public boolean removeHook(String key, ControllerSettingHook hook) {
 		List<ControllerSettingHook> hooks = getHooksBySettingKey(key);
-		if(hooks != null){
+		if (hooks != null) {
 			return hooks.remove(hook);
 		} else {
 			return false;
@@ -65,54 +65,80 @@ public class ControllerSettingAccessorImpl extends AbstractAccessor<ControllerSe
 	@Override
 	public ControllerSetting save(ControllerSetting entity) {
 		// we can change the key of existing setting - in this case we notify hooks about deleted/created setting
-		ControllerSetting oldValueWithChangedKey = getOldValueWithAnotherKey(entity);
+		ControllerSetting oldValue = getOldValue(entity);
 		ControllerSetting res = super.save(entity);
 
-		callHookForChangedKey(oldValueWithChangedKey);
+		if (oldValueHasAnotherKey(oldValue, entity)) {
+			callHooksForChangedKey(oldValue);
+		}
 
 		List<ControllerSettingHook> hooks = getHooksBySettingKey(entity.getKey());
 		if (hooks != null) {
-			for (ControllerSettingHook hook : hooks) {
-				callHookOnSettingSaveSafely(res, hook);
+			try {
+				for (ControllerSettingHook hook : hooks) {
+					callHookOnSettingSave(res, hook, false);
+				}
+			} catch (Exception ex) {
+				rollbackOldValue(res.getId(), oldValue, ex);
 			}
 		}
 
 		return res;
 	}
 
-	private ControllerSetting getOldValueWithAnotherKey(ControllerSetting newValue){
-		ControllerSetting oldValue = null;
+	private ControllerSetting getOldValue(ControllerSetting newValue) {
 		if (newValue.getId() != null) {
-			oldValue = get(newValue.getId());
-			if (oldValue != null && !Objects.equals(oldValue.getKey(), newValue.getKey())) {
-				return oldValue;
-			}
+			return get(newValue.getId());
 		}
 		return null;
 	}
 
+	private boolean oldValueHasAnotherKey(ControllerSetting oldValue, ControllerSetting newValue) {
+		if (newValue != null) {
+			if (oldValue != null) {
+				return !Objects.equals(oldValue.getKey(), newValue.getKey());
+			}
+		}
+		return false;
+	}
+
 	@Override
 	public void save(Iterable<ControllerSetting> entities) {
+		List<ControllerSetting> oldValues = new ArrayList<>();
 		List<ControllerSetting> oldValuesWithChangedKeys = new ArrayList<>();
 		for (ControllerSetting newValue : entities) {
-			ControllerSetting valueWithChangedKey = getOldValueWithAnotherKey(newValue);
-			if (valueWithChangedKey != null) {
-				oldValuesWithChangedKeys.add(valueWithChangedKey);
+			ControllerSetting oldValue = getOldValue(newValue);
+			if (oldValue != null) {
+				oldValues.add(oldValue);
+				if (oldValueHasAnotherKey(oldValue, newValue)) {
+					oldValuesWithChangedKeys.add(oldValue);
+				}
 			}
 		}
 
 		super.save(entities);
 
-		for (ControllerSetting entity : entities) {
-			ControllerSetting oldValueWithChangedKey = oldValuesWithChangedKeys.stream().filter(v -> Objects.equals(v.getId(), entity.getId())).findFirst().orElse(null);
+		try {
+			for (ControllerSetting entity : entities) {
+				ControllerSetting oldValueWithChangedKey = oldValuesWithChangedKeys.stream().filter(v -> Objects.equals(v.getId(), entity.getId())).findFirst().orElse(null);
 
-			callHookForChangedKey(oldValueWithChangedKey);
+				callHooksForChangedKey(oldValueWithChangedKey);
 
-			List<ControllerSettingHook> hooks = getHooksBySettingKey(entity.getKey());
-			if (hooks != null) {
-				for (ControllerSettingHook hook : hooks) {
-					callHookOnSettingSaveSafely(entity, hook);
+				List<ControllerSettingHook> hooks = getHooksBySettingKey(entity.getKey());
+				if (hooks != null) {
+					for (ControllerSettingHook hook : hooks) {
+						callHookOnSettingSave(entity, hook, false);
+					}
 				}
+			}
+		} catch (Exception ex) {
+			// rollback save on hook failure
+			for (ControllerSetting entity : entities) {
+				rollbackOldValue(
+						entity.getId(),
+						oldValues.stream().filter(v -> Objects.equals(v.getId(), entity.getId())).findFirst().orElse(null),
+						ex
+				);
 			}
 		}
 	}
@@ -124,45 +150,88 @@ public class ControllerSettingAccessorImpl extends AbstractAccessor<ControllerSe
 		List<ControllerSettingHook> hooks = getHooksBySettingKey(toBeDeleted.getKey());
 
 		if (hooks != null) {
-			for (ControllerSettingHook hook : hooks) {
-				callHookOnSettingRemoveSafely(toBeDeleted, hook);
+			try {
+				for (ControllerSettingHook hook : hooks) {
+					callHookOnSettingRemove(toBeDeleted, hook, false);
+				}
+			} catch (Exception ex) {
+				rollbackOldValue(id, toBeDeleted, ex);
 			}
 		}
+	}
+
+	protected void rollbackOldValue(ObjectId settingId, ControllerSetting oldValue, Exception ex) {
+		if (oldValue != null) {
+			// if some hook fails, we try to revert the operation
+			super.save(oldValue);
+
+			// notify already called hooks about reverted operation
+			for (ControllerSettingHook calledHook : getHooksBySettingKey(oldValue.getKey())) {
+				// ignore errors in this case, because otherwise we can get the infinite error loop
+				callHookOnSettingSave(oldValue, calledHook, true);
+			}
+		} else {
+			ControllerSetting toBeRemoved = get(settingId);
+
+			if (toBeRemoved != null) {
+				super.remove(settingId);
+
+				// notify already called hooks about reverted operation
+				for (ControllerSettingHook calledHook : getHooksBySettingKey(toBeRemoved.getKey())) {
+					// ignore errors in this case, because otherwise we can get the infinite error loop
+					callHookOnSettingRemove(toBeRemoved, calledHook, true);
+				}
+			}
+		}
+
+		// notify the caller about rollback
+		throw new ControllerSettingHookRollbackException("Controller setting rollback", ex);
 	}
 
 	/**
 	 * Calls the onSettingRemove hooks when key is changed in some controller setting (the value with old key is handled as removed)
 	 */
-	protected void callHookForChangedKey(ControllerSetting oldValueWithChangedKey) {
+	protected void callHooksForChangedKey(ControllerSetting oldValueWithChangedKey) {
 		if (oldValueWithChangedKey != null) {
 			List<ControllerSettingHook> hooksOnDelete = getHooksBySettingKey(oldValueWithChangedKey.getKey());
 			if (hooksOnDelete != null) {
-				for (ControllerSettingHook hook : hooksOnDelete) {
-					callHookOnSettingRemoveSafely(oldValueWithChangedKey, hook);
+				try {
+					for (ControllerSettingHook hook : hooksOnDelete) {
+						callHookOnSettingRemove(oldValueWithChangedKey, hook, false);
+					}
+				} catch (Exception ex) {
+					rollbackOldValue(oldValueWithChangedKey.getId(), oldValueWithChangedKey, ex);
+					throw ex;
 				}
 			}
 		}
 	}
 
-	protected void callHookOnSettingRemoveSafely(ControllerSetting deletedSetting, ControllerSettingHook hook) {
+	protected void callHookOnSettingRemove(ControllerSetting deletedSetting, ControllerSettingHook hook, boolean ignoreError) {
 		try {
 			hook.onSettingRemove(deletedSetting.getId(), deletedSetting);
 		} catch (Exception ex) {
-			// we just catch exception and log, because we want all other hooks to be called
-			log.error("Controller setting hook error", ex);
+			if (ignoreError) {
+				log.error("Controller setting hook error", ex);
+			} else {
+				throw ex;
+			}
 		}
 	}
 
-	protected void callHookOnSettingSaveSafely(ControllerSetting res, ControllerSettingHook hook) {
+	protected void callHookOnSettingSave(ControllerSetting res, ControllerSettingHook hook, boolean ignoreError) {
 		try {
 			hook.onSettingSave(res);
-		} catch (Exception ex){
-			// we just catch exception and log, because we want all other hooks to be called
-			log.error("Controller setting hook error", ex);
+		} catch (Exception ex) {
+			if (ignoreError) {
+				log.error("Controller setting hook error", ex);
+			} else {
+				throw ex;
+			}
 		}
 	}
 
-	protected List<ControllerSettingHook> getHooksBySettingKey(String settingKey){
+	protected List<ControllerSettingHook> getHooksBySettingKey(String settingKey) {
 		return this.hooksMap.get(settingKey);
 	}
 
@@ -195,7 +264,7 @@ public class ControllerSettingAccessorImpl extends AbstractAccessor<ControllerSe
 
 	private ControllerSetting getOrCreateSettingByKey(String key) {
 		ControllerSetting setting = getSettingByKey(key);
-		if(setting == null) {
+		if (setting == null) {
 			setting = new ControllerSetting();
 			setting.setKey(key);
 		}
