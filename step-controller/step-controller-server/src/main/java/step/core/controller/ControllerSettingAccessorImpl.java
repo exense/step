@@ -1,24 +1,26 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
 package step.core.controller;
 
 import org.bson.types.ObjectId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.core.accessors.AbstractAccessor;
 import step.core.collections.Collection;
 import step.core.collections.Filters;
@@ -30,6 +32,8 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ControllerSettingAccessorImpl extends AbstractAccessor<ControllerSetting> implements ControllerSettingAccessor {
+
+	private static final Logger log = LoggerFactory.getLogger(ControllerSettingAccessorImpl.class);
 
 	private final Map<String, List<ControllerSettingHook>> hooksMap = new ConcurrentHashMap<>();
 
@@ -64,19 +68,12 @@ public class ControllerSettingAccessorImpl extends AbstractAccessor<ControllerSe
 		ControllerSetting oldValueWithChangedKey = getOldValueWithAnotherKey(entity);
 		ControllerSetting res = super.save(entity);
 
-		if (oldValueWithChangedKey != null) {
-			List<ControllerSettingHook> hooksOnDelete = getHooksBySettingKey(oldValueWithChangedKey.getKey());
-			if (hooksOnDelete != null) {
-				for (ControllerSettingHook hook : hooksOnDelete) {
-					hook.onSettingRemove(oldValueWithChangedKey.getId(), oldValueWithChangedKey);
-				}
-			}
-		}
+		callHookForChangedKey(oldValueWithChangedKey);
 
 		List<ControllerSettingHook> hooks = getHooksBySettingKey(entity.getKey());
 		if (hooks != null) {
 			for (ControllerSettingHook hook : hooks) {
-				hook.onSettingSave(res);
+				callHookOnSettingSaveSafely(res, hook);
 			}
 		}
 
@@ -88,7 +85,7 @@ public class ControllerSettingAccessorImpl extends AbstractAccessor<ControllerSe
 		if (newValue.getId() != null) {
 			oldValue = get(newValue.getId());
 			if (oldValue != null && !Objects.equals(oldValue.getKey(), newValue.getKey())) {
-				 return oldValue;
+				return oldValue;
 			}
 		}
 		return null;
@@ -109,19 +106,12 @@ public class ControllerSettingAccessorImpl extends AbstractAccessor<ControllerSe
 		for (ControllerSetting entity : entities) {
 			ControllerSetting oldValueWithChangedKey = oldValuesWithChangedKeys.stream().filter(v -> Objects.equals(v.getId(), entity.getId())).findFirst().orElse(null);
 
-			if (oldValueWithChangedKey != null) {
-				List<ControllerSettingHook> hooksOnDelete = getHooksBySettingKey(oldValueWithChangedKey.getKey());
-				if (hooksOnDelete != null) {
-					for (ControllerSettingHook hook : hooksOnDelete) {
-						hook.onSettingRemove(oldValueWithChangedKey.getId(), oldValueWithChangedKey);
-					}
-				}
-			}
+			callHookForChangedKey(oldValueWithChangedKey);
 
 			List<ControllerSettingHook> hooks = getHooksBySettingKey(entity.getKey());
 			if (hooks != null) {
 				for (ControllerSettingHook hook : hooks) {
-					hook.onSettingSave(entity);
+					callHookOnSettingSaveSafely(entity, hook);
 				}
 			}
 		}
@@ -135,8 +125,40 @@ public class ControllerSettingAccessorImpl extends AbstractAccessor<ControllerSe
 
 		if (hooks != null) {
 			for (ControllerSettingHook hook : hooks) {
-				hook.onSettingRemove(id, toBeDeleted);
+				callHookOnSettingRemoveSafely(toBeDeleted, hook);
 			}
+		}
+	}
+
+	/**
+	 * Calls the onSettingRemove hooks when key is changed in some controller setting (the value with old key is handled as removed)
+	 */
+	protected void callHookForChangedKey(ControllerSetting oldValueWithChangedKey) {
+		if (oldValueWithChangedKey != null) {
+			List<ControllerSettingHook> hooksOnDelete = getHooksBySettingKey(oldValueWithChangedKey.getKey());
+			if (hooksOnDelete != null) {
+				for (ControllerSettingHook hook : hooksOnDelete) {
+					callHookOnSettingRemoveSafely(oldValueWithChangedKey, hook);
+				}
+			}
+		}
+	}
+
+	protected void callHookOnSettingRemoveSafely(ControllerSetting deletedSetting, ControllerSettingHook hook) {
+		try {
+			hook.onSettingRemove(deletedSetting.getId(), deletedSetting);
+		} catch (Exception ex) {
+			// we just catch exception and log, because we want all other hooks to be called
+			log.error("Controller setting hook error", ex);
+		}
+	}
+
+	protected void callHookOnSettingSaveSafely(ControllerSetting res, ControllerSettingHook hook) {
+		try {
+			hook.onSettingSave(res);
+		} catch (Exception ex){
+			// we just catch exception and log, because we want all other hooks to be called
+			log.error("Controller setting hook error", ex);
 		}
 	}
 
@@ -170,7 +192,7 @@ public class ControllerSettingAccessorImpl extends AbstractAccessor<ControllerSe
 		ControllerSetting setting = getSettingByKey(key);
 		return setting != null ? Boolean.valueOf(setting.getValue()) : false;
 	}
-	
+
 	private ControllerSetting getOrCreateSettingByKey(String key) {
 		ControllerSetting setting = getSettingByKey(key);
 		if(setting == null) {
