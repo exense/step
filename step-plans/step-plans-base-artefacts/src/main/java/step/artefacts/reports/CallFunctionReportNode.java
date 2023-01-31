@@ -114,4 +114,9 @@ public class CallFunctionReportNode extends ReportNode {
 	public void setMeasures(List<Measure> measures) {
 		this.measures = measures;
 	}
+
+	@Override
+	public String getReportAsString() {
+		return "Input=" + input + ", Output=" + output;
+	}
 }
