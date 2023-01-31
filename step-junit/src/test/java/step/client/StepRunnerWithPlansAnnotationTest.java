@@ -18,8 +18,9 @@
  ******************************************************************************/
 package step.client;
 
+import org.junit.Assert;
 import org.junit.runner.RunWith;
-
+import step.handlers.javahandler.AbstractKeyword;
 import step.handlers.javahandler.Keyword;
 import step.junit.runner.Step;
 import step.junit.runners.annotations.ExecutionParameters;
@@ -28,8 +29,8 @@ import step.junit.runners.annotations.Plans;
 
 @RunWith(Step.class)
 @Plans({"plan2.plan"})
-@ExecutionParameters({"PARAM_EXEC","Value"})
-public class StepRunnerWithPlansAnnotationTest {
+@ExecutionParameters({"PARAM_EXEC","Value","PARAM_EXEC2","Value","PARAM_EXEC3","Value"})
+public class StepRunnerWithPlansAnnotationTest extends AbstractKeyword {
 	
 	@Plan()
 	@Keyword
@@ -40,11 +41,47 @@ public class StepRunnerWithPlansAnnotationTest {
 	public void implicitPlanWithWithCustomKeywordName() {}
 	
 //	Negative test: Commented out as this test is failing per design. 
-// 	Uncomment it out to perform the negative test manually 
+// 	Uncomment it out to perform the negative test manually
 //	@Plan
 //	public void implicitPlanWithWithoutKeywordAnnotation() {}
-	
-	@Plan("Echo \"${PARAM_EXEC}\"")
-	public void explicitPlan() {}
+
+	//Negative test: Commented out as this test is failing per design.
+	//@Plan
+	@Keyword()
+	public void implicitPlanWithError() {
+		throw new RuntimeException();
+	}
+
+	@Plan("planWithAssert\nAssert key = \"value\"")
+	@Keyword
+	public void planWithAssert() {
+		output.add("key","value");
+	}
+
+	@Plan
+	@Keyword
+	public void explicitPlanWithExecutionParameter() {
+		Assert.assertEquals("Value", properties.get("PARAM_EXEC"));
+	}
+
+	// This test has to be executed with -DPARAM_EXEC2=Sysprop1 as system property
+	// It is failing otherwise and therefore commented out
+	//@Plan
+	@Keyword
+	public void explicitPlanWithSystemProperty() {
+		Assert.assertEquals("Sysprop1", properties.get("PARAM_EXEC2"));
+	}
+
+	// This test has to be executed with STEP_PARAM_EXEC3=Envvar1 as environment variable
+	// It is failing otherwise and therefore commented out
+	//@Plan
+	@Keyword
+	public void explicitPlanWithEnvironmentVariable() {
+		Assert.assertEquals("Envvar1", properties.get("PARAM_EXEC3"));
+	}
+
+	@Plan("Echo PARAM_EXEC")
+	@Keyword
+	public void inlinePlan() {}
 
 }
