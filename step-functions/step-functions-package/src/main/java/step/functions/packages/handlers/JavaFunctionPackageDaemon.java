@@ -1,9 +1,6 @@
 package step.functions.packages.handlers;
 
-import java.io.File;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.StringReader;
+import java.io.*;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Set;
@@ -18,11 +15,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import step.attachments.FileResolver;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.plans.Plan;
 import step.core.scanner.AnnotationScanner;
+import step.functions.Function;
 import step.grid.contextbuilder.ApplicationContextBuilder;
 import step.grid.contextbuilder.LocalFileApplicationContextFactory;
 import step.grid.contextbuilder.LocalFolderApplicationContextFactory;
 import step.handlers.javahandler.Keyword;
+import step.plans.nl.RootArtefactType;
+import step.plans.nl.parser.PlanParser;
+import step.plugins.functions.types.CompositeFunctionUtils;
 import step.plugins.java.GeneralScriptFunction;
 import step.resources.LocalResourceManagerImpl;
 
@@ -77,57 +79,79 @@ public class JavaFunctionPackageDaemon extends FunctionPackageUtils {
 				Set<Method> methods = annotationScanner.getMethodsWithAnnotation(Keyword.class);
 				for(Method m:methods) {
 					Keyword annotation = m.getAnnotation(Keyword.class);
-					
-					String functionName = annotation.name().length()>0?annotation.name():m.getName();
-					
-					GeneralScriptFunction function = new GeneralScriptFunction();
-					function.setAttributes(new HashMap<>());
-					function.getAttributes().put(AbstractOrganizableObject.NAME, functionName);
-
-					function.getCallTimeout().setValue(annotation.timeout());
-					function.setDescription(annotation.description());
-
-					if(packageLibrariesFile != null) {
-						function.getLibrariesFile().setValue(parameters.getPackageLibrariesLocation());
-					}
-					
-					function.getScriptFile().setValue(parameters.getPackageLocation());
-					function.getScriptLanguage().setValue("java");
-					
-					JsonObject schema;
-					String schemaStr = annotation.schema();
-					if(schemaStr.length()>0) {
+					Function res;
+					if(annotation.planReference() != null && !annotation.planReference().isBlank()){
 						try {
-							schema = Json.createReader(new StringReader(schemaStr)).readObject();
-						} catch (JsonParsingException e) {
-							functions.exception = "Parsing error in the schema for keyword '"+m.getName()+"'. The error was: "+e.getMessage();
-							functions.functions.clear();
-							return functions;
-						}catch (JsonException e) {
-							functions.exception = "I/O error in the schema for keyword '"+m.getName()+"'. The error was: "+e.getMessage();
-							functions.functions.clear();
-							return functions;
-						}catch (Exception e) {
-							functions.exception = "Unknown error in the schema for keyword '"+m.getName()+"'. The error was: "+e.getMessage();
+							Plan plan = parsePlanFromPlanReference(m, annotation.planReference());
+							res = CompositeFunctionUtils.createLocalCompositeFunction(annotation, m, plan);
+						} catch (Exception ex){
+							functions.exception = "Parsing error in the the plan for composite keyword '" + m.getName() + "'. The error was: " + ex.getMessage();
 							functions.functions.clear();
 							return functions;
 						}
 					} else {
-						schema = Json.createObjectBuilder().build();
+						String functionName = annotation.name().length() > 0 ? annotation.name() : m.getName();
+
+						GeneralScriptFunction function = new GeneralScriptFunction();
+						function.setAttributes(new HashMap<>());
+						function.getAttributes().put(AbstractOrganizableObject.NAME, functionName);
+
+						function.getCallTimeout().setValue(annotation.timeout());
+						function.setDescription(annotation.description());
+
+						if (packageLibrariesFile != null) {
+							function.getLibrariesFile().setValue(parameters.getPackageLibrariesLocation());
+						}
+
+						function.getScriptFile().setValue(parameters.getPackageLocation());
+						function.getScriptLanguage().setValue("java");
+
+						JsonObject schema;
+						String schemaStr = annotation.schema();
+						if (schemaStr.length() > 0) {
+							try {
+								schema = Json.createReader(new StringReader(schemaStr)).readObject();
+							} catch (JsonParsingException e) {
+								functions.exception = "Parsing error in the schema for keyword '" + m.getName() + "'. The error was: " + e.getMessage();
+								functions.functions.clear();
+								return functions;
+							} catch (JsonException e) {
+								functions.exception = "I/O error in the schema for keyword '" + m.getName() + "'. The error was: " + e.getMessage();
+								functions.functions.clear();
+								return functions;
+							} catch (Exception e) {
+								functions.exception = "Unknown error in the schema for keyword '" + m.getName() + "'. The error was: " + e.getMessage();
+								functions.functions.clear();
+								return functions;
+							}
+						} else {
+							schema = Json.createObjectBuilder().build();
+						}
+						function.setSchema(schema);
+						String htmlTemplate = function.getAttributes().remove("htmlTemplate");
+						if (htmlTemplate != null && !htmlTemplate.isEmpty()) {
+							function.setHtmlTemplate(htmlTemplate);
+							function.setUseCustomTemplate(true);
+						}
+						res = function;
 					}
-					function.setSchema(schema);
-					String htmlTemplate = function.getAttributes().remove("htmlTemplate");
-					if (htmlTemplate != null && !htmlTemplate.isEmpty()) {
-						function.setHtmlTemplate(htmlTemplate);
-						function.setUseCustomTemplate(true);
-					}
-					
-					functions.functions.add(function);
+					functions.functions.add(res);
 				}
 			}
 		} catch (Throwable e) {
 			functions.exception = e.getClass().getName() + ": " + e.getMessage();
 		}
 		return functions;
+	}
+
+	private Plan parsePlanFromPlanReference(Method m, String planReference) throws Exception {
+		InputStream stream = m.getDeclaringClass().getResourceAsStream(planReference);
+		if (stream == null) {
+			throw new Exception("Plan '" + planReference + "' was not found for class " + m.getClass().getName());
+		}
+
+		Plan plan = new PlanParser().parse(stream, RootArtefactType.TestCase);
+		plan.setVisible(false);
+		return plan;
 	}
 }

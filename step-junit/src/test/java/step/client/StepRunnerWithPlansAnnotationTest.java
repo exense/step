@@ -19,7 +19,6 @@
 package step.client;
 
 import org.junit.runner.RunWith;
-
 import step.handlers.javahandler.Keyword;
 import step.junit.runner.Step;
 import step.junit.runners.annotations.ExecutionParameters;
@@ -27,14 +26,13 @@ import step.junit.runners.annotations.Plan;
 import step.junit.runners.annotations.Plans;
 
 @RunWith(Step.class)
-@Plans({"plan2.plan"})
+@Plans({"plan2.plan", "plan3.plan"})
 @ExecutionParameters({"PARAM_EXEC","Value"})
 public class StepRunnerWithPlansAnnotationTest {
-	
-	@Plan()
-	@Keyword
-	public void implicitPlanWithDefaultKeywordName() {}
-	
+
+	public void implicitPlanWithDefaultKeywordName() {
+	}
+
 	@Plan
 	@Keyword(name = "My custom keyword name")
 	public void implicitPlanWithWithCustomKeywordName() {}

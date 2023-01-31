@@ -18,32 +18,24 @@
  ******************************************************************************/
 package step.plugins.functions.types;
 
-import org.bson.types.ObjectId;
-import step.core.accessors.AbstractOrganizableObject;
 import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionEngineContext;
 import step.core.execution.OperationMode;
+import step.core.objectenricher.ObjectHookRegistry;
 import step.core.plans.Plan;
+import step.core.plans.PlanAccessor;
 import step.core.plugins.Plugin;
 import step.core.scanner.CachedAnnotationScanner;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.engine.plugins.FunctionPlugin;
-import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
-import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionTypeRegistry;
 import step.handlers.javahandler.Keyword;
-import step.handlers.javahandler.KeywordExecutor;
 import step.plans.nl.RootArtefactType;
 import step.plans.nl.parser.PlanParser;
-import step.plugins.java.handler.KeywordHandler;
-import step.repositories.parser.StepsParser;
 
+import java.io.InputStream;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @Plugin(dependencies= {FunctionPlugin.class})
@@ -51,88 +43,52 @@ public class LocalCompositeFunctionPlugin extends AbstractExecutionEnginePlugin 
 
 	private FunctionAccessor functionAccessor;
 	private FunctionTypeRegistry functionTypeRegistry;
+	private PlanAccessor planAccessor;
 
 	@Override
 	public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext context) {
-		if(context.getOperationMode() == OperationMode.LOCAL) {
+		if (context.getOperationMode() == OperationMode.LOCAL) {
 			functionAccessor = context.require(FunctionAccessor.class);
+			planAccessor = context.getPlanAccessor();
 			functionTypeRegistry = context.require(FunctionTypeRegistry.class);
-			
-			functionTypeRegistry.registerFunctionType(new LocalCompositeFunctionType());
-			List<Function> localFunctions = getLocalFunctions();
-			functionAccessor.save(localFunctions);
+
+			functionTypeRegistry.registerFunctionType(
+					new CompositeFunctionType(
+							planAccessor,
+							context.inheritFromParentOrComputeIfAbsent(parentContext, ObjectHookRegistry.class, objectHookRegistryClass -> new ObjectHookRegistry()),
+							null
+					)
+			);
+			saveLocalFunctions();
 		}
 	}
-	
-	public List<Function> getLocalFunctions() {
-		List<Function> functions = new ArrayList<Function>();
 
+	public void saveLocalFunctions() {
 		Set<Method> methods = CachedAnnotationScanner.getMethodsWithAnnotation(Keyword.class);
-		for(Method m:methods) {
+		for (Method m : methods) {
 			Keyword annotation = m.getAnnotation(Keyword.class);
-			
-			String functionName = annotation.name().length()>0?annotation.name():m.getName();
-			
-			LocalFunction function = new LocalFunction();
-			function.getCallTimeout().setValue(annotation.timeout());
-			function.setAttributes(new HashMap<>());
-			function.getAttributes().put(AbstractOrganizableObject.NAME, functionName);
-			function.setClassName(m.getDeclaringClass().getName());
-			PlanParser planParser = new PlanParser();
-			try {
-				Plan plan = planParser.parse("", RootArtefactType.TestCase);
-			} catch (StepsParser.ParsingException e) {
-				throw new RuntimeException(e);
+
+			// keywords with plan reference are not local functions but composite functions linked with plan
+			if (annotation.planReference() != null && !annotation.planReference().isBlank()) {
+				try {
+					Plan plan = planAccessor.save(parsePlanFromPlanReference(m, annotation.planReference()));
+					functionAccessor.save(CompositeFunctionUtils.createLocalCompositeFunction(annotation, m, plan));
+				} catch (Exception ex) {
+					throw new RuntimeException("Unable to prepare local composite", ex);
+				}
 			}
-			functions.add(function);
-		}
-		return functions;
-	}
-
-	public static class LocalFunction extends Function {
-		
-		String className;
-		
-		public LocalFunction() {
-			super();
-			this.setId(new ObjectId());
-		}
-	
-		@Override
-		public boolean requiresLocalExecution() {
-			return true;
-		}
-
-		public String getClassName() {
-			return className;
-		}
-
-		public void setClassName(String className) {
-			this.className = className;
 		}
 	}
-	
-	private class LocalCompositeFunctionType extends AbstractFunctionType<LocalFunction> {
 
-		@Override
-		public String getHandlerChain(LocalFunction function) {
-			return KeywordHandler.class.getName();
+	private Plan parsePlanFromPlanReference(Method m, String planReference) throws Exception {
+		InputStream stream = m.getDeclaringClass().getResourceAsStream(planReference);
+		if (stream == null) {
+			throw new Exception("Plan '" + planReference + "' was not found for class " + m.getClass().getName());
 		}
 
-		@Override
-		public Map<String, String> getHandlerProperties(LocalFunction function) {
-			Map<String, String> properties = new HashMap<>();
-			
-			StringBuilder classes = new StringBuilder();
-			classes.append(function.getClassName()+";");
-			properties.put(KeywordExecutor.KEYWORD_CLASSES, classes.toString());
-			
-			return properties;
-		}
-
-		@Override
-		public LocalFunction newFunction() {
-			return new LocalFunction();
-		}
+		Plan plan = new PlanParser().parse(stream, RootArtefactType.TestCase);
+		plan.setVisible(false);
+		return plan;
 	}
+
 }
