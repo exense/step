@@ -1,3 +1,21 @@
+/*******************************************************************************
+ * Copyright (C) 2020, exense GmbH
+ *  
+ * This file is part of STEP
+ *  
+ * STEP is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *  
+ * STEP is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *  
+ * You should have received a copy of the GNU Affero General Public License
+ * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
+ ******************************************************************************/
 // Generated from KeyValue.g4 by ANTLR 4.5.3
 
     package step.repositories.parser.keyvalue;
@@ -19,20 +37,20 @@ public class KeyValueLexer extends Lexer {
 	protected static final PredictionContextCache _sharedContextCache =
 		new PredictionContextCache();
 	public static final int
-		EQ=1, WORD=2, STRING=3, STRING2=4, DYNAMIC_EXPRESSION=5, SPACE=6;
+		EQ=1, WORD=2, STRING=3, DYNAMIC_EXPRESSION=4, SPACE=5;
 	public static String[] modeNames = {
 		"DEFAULT_MODE"
 	};
 
 	public static final String[] ruleNames = {
-		"EQ", "WORD", "STRING", "STRING2", "DYNAMIC_EXPRESSION", "SPACE"
+		"EQ", "WORD", "STRING", "DYNAMIC_EXPRESSION", "SPACE"
 	};
 
 	private static final String[] _LITERAL_NAMES = {
 		null, "'='"
 	};
 	private static final String[] _SYMBOLIC_NAMES = {
-		null, "EQ", "WORD", "STRING", "STRING2", "DYNAMIC_EXPRESSION", "SPACE"
+		null, "EQ", "WORD", "STRING", "DYNAMIC_EXPRESSION", "SPACE"
 	};
 	public static final Vocabulary VOCABULARY = new VocabularyImpl(_LITERAL_NAMES, _SYMBOLIC_NAMES);
 
@@ -89,25 +107,21 @@ public class KeyValueLexer extends Lexer {
 	public ATN getATN() { return _ATN; }
 
 	public static final String _serializedATN =
-		"\3\u0430\ud6d1\u8206\uad2d\u4417\uaef1\u8d80\uaadd\2\b=\b\1\4\2\t\2\4"+
-		"\3\t\3\4\4\t\4\4\5\t\5\4\6\t\6\4\7\t\7\3\2\3\2\3\3\3\3\3\3\3\3\3\3\6\3"+
-		"\27\n\3\r\3\16\3\30\3\4\3\4\3\4\3\4\7\4\37\n\4\f\4\16\4\"\13\4\3\4\3\4"+
-		"\3\5\3\5\7\5(\n\5\f\5\16\5+\13\5\3\5\3\5\3\6\3\6\3\6\3\6\7\6\63\n\6\f"+
-		"\6\16\6\66\13\6\3\6\3\6\3\7\3\7\3\7\3\7\2\2\b\3\3\5\4\7\5\t\6\13\7\r\b"+
-		"\3\2\7\t\2\13\f\17\17\"\"$$??~~\u00a2\u00a2\5\2\f\f\17\17$$\5\2\f\f\17"+
-		"\17))\3\2~~\6\2\13\f\17\17\"\"\u00a2\u00a2D\2\3\3\2\2\2\2\5\3\2\2\2\2"+
-		"\7\3\2\2\2\2\t\3\2\2\2\2\13\3\2\2\2\2\r\3\2\2\2\3\17\3\2\2\2\5\26\3\2"+
-		"\2\2\7\32\3\2\2\2\t%\3\2\2\2\13.\3\2\2\2\r9\3\2\2\2\17\20\7?\2\2\20\4"+
-		"\3\2\2\2\21\27\n\2\2\2\22\23\n\2\2\2\23\27\5\t\5\2\24\25\n\2\2\2\25\27"+
-		"\5\7\4\2\26\21\3\2\2\2\26\22\3\2\2\2\26\24\3\2\2\2\27\30\3\2\2\2\30\26"+
-		"\3\2\2\2\30\31\3\2\2\2\31\6\3\2\2\2\32 \7$\2\2\33\37\n\3\2\2\34\35\7$"+
-		"\2\2\35\37\7$\2\2\36\33\3\2\2\2\36\34\3\2\2\2\37\"\3\2\2\2 \36\3\2\2\2"+
-		" !\3\2\2\2!#\3\2\2\2\" \3\2\2\2#$\7$\2\2$\b\3\2\2\2%)\7)\2\2&(\n\4\2\2"+
-		"\'&\3\2\2\2(+\3\2\2\2)\'\3\2\2\2)*\3\2\2\2*,\3\2\2\2+)\3\2\2\2,-\7)\2"+
-		"\2-\n\3\2\2\2.\64\7~\2\2/\63\n\5\2\2\60\61\7~\2\2\61\63\7~\2\2\62/\3\2"+
-		"\2\2\62\60\3\2\2\2\63\66\3\2\2\2\64\62\3\2\2\2\64\65\3\2\2\2\65\67\3\2"+
-		"\2\2\66\64\3\2\2\2\678\7~\2\28\f\3\2\2\29:\t\6\2\2:;\3\2\2\2;<\b\7\2\2"+
-		"<\16\3\2\2\2\n\2\26\30\36 )\62\64\3\b\2\2";
+		"\3\u0430\ud6d1\u8206\uad2d\u4417\uaef1\u8d80\uaadd\2\7.\b\1\4\2\t\2\4"+
+		"\3\t\3\4\4\t\4\4\5\t\5\4\6\t\6\3\2\3\2\3\3\6\3\21\n\3\r\3\16\3\22\3\4"+
+		"\3\4\3\4\3\4\7\4\31\n\4\f\4\16\4\34\13\4\3\4\3\4\3\5\3\5\3\5\3\5\7\5$"+
+		"\n\5\f\5\16\5\'\13\5\3\5\3\5\3\6\3\6\3\6\3\6\2\2\7\3\3\5\4\7\5\t\6\13"+
+		"\7\3\2\6\t\2\13\f\17\17\"\"$$??~~\u00a2\u00a2\5\2\f\f\17\17$$\3\2~~\6"+
+		"\2\13\f\17\17\"\"\u00a2\u00a2\62\2\3\3\2\2\2\2\5\3\2\2\2\2\7\3\2\2\2\2"+
+		"\t\3\2\2\2\2\13\3\2\2\2\3\r\3\2\2\2\5\20\3\2\2\2\7\24\3\2\2\2\t\37\3\2"+
+		"\2\2\13*\3\2\2\2\r\16\7?\2\2\16\4\3\2\2\2\17\21\n\2\2\2\20\17\3\2\2\2"+
+		"\21\22\3\2\2\2\22\20\3\2\2\2\22\23\3\2\2\2\23\6\3\2\2\2\24\32\7$\2\2\25"+
+		"\31\n\3\2\2\26\27\7$\2\2\27\31\7$\2\2\30\25\3\2\2\2\30\26\3\2\2\2\31\34"+
+		"\3\2\2\2\32\30\3\2\2\2\32\33\3\2\2\2\33\35\3\2\2\2\34\32\3\2\2\2\35\36"+
+		"\7$\2\2\36\b\3\2\2\2\37%\7~\2\2 $\n\4\2\2!\"\7~\2\2\"$\7~\2\2# \3\2\2"+
+		"\2#!\3\2\2\2$\'\3\2\2\2%#\3\2\2\2%&\3\2\2\2&(\3\2\2\2\'%\3\2\2\2()\7~"+
+		"\2\2)\n\3\2\2\2*+\t\5\2\2+,\3\2\2\2,-\b\6\2\2-\f\3\2\2\2\b\2\22\30\32"+
+		"#%\3\b\2\2";
 	public static final ATN _ATN =
 		new ATNDeserializer().deserialize(_serializedATN.toCharArray());
 	static {
