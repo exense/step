@@ -22,10 +22,7 @@ import step.functions.Function;
 
 import javax.annotation.Nonnull;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static step.planbuilder.BaseArtefacts.callPlan;
@@ -154,8 +151,16 @@ public class ArtifactRepository extends AbstractRepository {
         List<Function> functions = new ArrayList<>();
         fileAndPlan.plans.forEach(plan -> {
             String name = getPlanName(plan);
+
             plan.setVisible(false);
-            functions.addAll(plan.getFunctions());
+
+            Collection<Function> testCaseFunctions = plan.getFunctions();
+
+            plan.setFunctions(testCaseFunctions);
+            functions.addAll(testCaseFunctions);
+
+            enrichPlan(context, plan);
+            
             planAccessor.save(plan);
             planBuilder.add(callPlan(plan.getId().toString(), name));
         });
