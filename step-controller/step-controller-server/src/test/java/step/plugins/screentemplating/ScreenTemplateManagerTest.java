@@ -34,7 +34,7 @@ import ch.exense.commons.app.Configuration;
 import junit.framework.Assert;
 import step.commons.activation.Expression;
 import step.core.collections.Collection;
-import step.core.collections.VersionableEntity;
+import step.core.collections.EntityVersion;
 import step.core.objectenricher.ObjectPredicate;
 
 public class ScreenTemplateManagerTest {
@@ -76,7 +76,7 @@ public class ScreenTemplateManagerTest {
 			}
 
 			@Override
-			public Stream<VersionableEntity> getHistory(ObjectId id, Integer skip, Integer limit) {
+			public Stream<EntityVersion> getHistory(ObjectId id, Integer skip, Integer limit) {
 				return null;
 			}
 
@@ -86,7 +86,12 @@ public class ScreenTemplateManagerTest {
 			}
 
 			@Override
-			public void enableVersioning(Collection<VersionableEntity> versionedCollection, Long newVersionThresholdMs) {
+			public boolean isVersioningEnabled() {
+				return false;
+			}
+
+			@Override
+			public void enableVersioning(Collection<EntityVersion> versionedCollection, Long newVersionThresholdMs) {
 
 			}
 

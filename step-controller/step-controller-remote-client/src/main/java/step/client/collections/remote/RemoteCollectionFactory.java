@@ -7,7 +7,7 @@ import step.client.AbstractRemoteClient;
 import step.client.credentials.ControllerCredentials;
 import step.core.collections.Collection;
 import step.core.collections.CollectionFactory;
-import step.core.collections.VersionableEntity;
+import step.core.collections.EntityVersion;
 
 public class RemoteCollectionFactory implements CollectionFactory {
 
@@ -48,7 +48,7 @@ public class RemoteCollectionFactory implements CollectionFactory {
     }
 
     @Override
-    public Collection<VersionableEntity> getVersionedCollection(String name) {
-        return new RemoteCollection(client, name + CollectionFactory.VERSION_COLLECTION_SUFFIX, VersionableEntity.class);
+    public Collection<EntityVersion> getVersionedCollection(String name) {
+        return new RemoteCollection(client, name + CollectionFactory.VERSION_COLLECTION_SUFFIX, EntityVersion.class);
     }
 }

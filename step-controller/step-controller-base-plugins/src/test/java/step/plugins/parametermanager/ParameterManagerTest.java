@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -35,9 +36,14 @@ import ch.exense.commons.app.Configuration;
 import org.junit.Assert;
 import org.junit.Test;
 
+import step.core.accessors.AbstractAccessor;
+import step.core.collections.Collection;
+import step.core.collections.Filters;
+import step.core.collections.mongodb.MongoDBCollectionFactory;
 import step.parameter.Parameter;
 import step.commons.activation.Expression;
 import step.core.accessors.InMemoryAccessor;
+import step.parameter.ParameterAccessor;
 import step.parameter.ParameterManager;
 
 public class ParameterManagerTest {
@@ -89,7 +95,14 @@ public class ParameterManagerTest {
 	
 	@Test
 	public void testPerf() throws ScriptException {
-		InMemoryAccessor<Parameter> accessor = new InMemoryAccessor<>();
+		Properties properties = new Properties();
+		properties.put("host", "central-mongodb.stepcloud-test.ch");
+		properties.put("database", "test");
+		properties.put("username", "tester");
+		properties.put("password", "5dB(rs+4YRJe");
+		Collection<Parameter> collection = new MongoDBCollectionFactory(properties).getCollection("perfParameters", Parameter.class);
+		AbstractAccessor<Parameter> accessor = new AbstractAccessor<>(collection);
+		accessor.getCollectionDriver().remove(Filters.empty());
 		ParameterManager m = new ParameterManager(accessor, null, new Configuration());
 		
 		int nIt = 100;
@@ -110,7 +123,7 @@ public class ParameterManagerTest {
 		System.out.println("ms:"+(System.currentTimeMillis()-t1));
 		Assert.assertEquals(params.get("key1"),"value"+nIt);
 		
-		Assert.assertTrue((System.currentTimeMillis()-t1)<5000);
+		Assert.assertTrue((System.currentTimeMillis()-t1)<2000);
 	}
 	
 	@Test
