@@ -117,7 +117,8 @@ public class TimeSeriesService extends AbstractStepServices {
     private TimeSeriesAggregationQuery mapToQuery(FetchBucketsRequest request) {
         TimeSeriesAggregationQuery timeSeriesAggregationQuery = aggregationPipeline.newQuery()
                 .range(request.getStart(), request.getEnd())
-                .filter(request.getParams() != null ? request.getParams() : Collections.emptyMap())
+                .filter(request.getOqlFilter())
+                .filter(request.getParams())
                 .groupBy(request.getGroupDimensions());
         if (request.getIntervalSize() > 0) {
             timeSeriesAggregationQuery.window(request.getIntervalSize());

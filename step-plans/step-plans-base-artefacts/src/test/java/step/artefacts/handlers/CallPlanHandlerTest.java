@@ -38,7 +38,7 @@ public class CallPlanHandlerTest extends AbstractArtefactHandlerTest {
 		AtomicBoolean executed = new AtomicBoolean();
 		
 		CheckArtefact check = new CheckArtefact(c->{
-			context.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED);
+			c.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED);
 			executed.set(true);
 		});
 		

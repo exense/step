@@ -113,7 +113,7 @@ public class Controller {
 		//AuthorizationManager might get overwritten by plugins, FE still need a default role in OS
 		sessionResponseBuilder.registerHook(s -> Map.of("role", context.get(AuthorizationManager.class).getRoleInContext(s)));
 		sessionResponseBuilder.registerHook(s -> Map.of("authenticated", s.isAuthenticated()));
-		
+
 		ResourceAccessor resourceAccessor = new ResourceAccessorImpl(collectionFactory.getCollection("resources", Resource.class));
 		ResourceRevisionAccessor resourceRevisionAccessor = new ResourceRevisionAccessorImpl(
 				collectionFactory.getCollection("resourceRevisions", ResourceRevision.class));
@@ -131,8 +131,10 @@ public class Controller {
 				collectionFactory.getCollection("executions", Execution.class));
 		context.setExecutionAccessor(executionAccessor);		
 		context.setExecutionManager(new ExecutionManagerImpl(executionAccessor));
-		
-		context.setPlanAccessor(new PlanAccessorImpl(collectionFactory.getCollection("plans", Plan.class)));
+
+		PlanAccessorImpl plans = new PlanAccessorImpl(collectionFactory.getCollection("plans", Plan.class));
+		context.setPlanAccessor(plans);
+
 		context.setReportNodeAccessor(
 				new ReportNodeAccessorImpl(collectionFactory.getCollection("reports", ReportNode.class)));
 		context.setScheduleAccessor(new ExecutionTaskAccessorImpl(
