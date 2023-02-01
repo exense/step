@@ -197,4 +197,35 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
     public TableResponse<T> request(TableRequest request) throws TableServiceException {
         return tableService.request(entityName, request, getSession());
     }
+
+    @Operation(operationId = "get{Entity}Versions", description = "Retrieves the versions of the entity with the given id")
+    @GET
+    @Path("/{id}/versions")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Secured(right = "{entity}-read")
+    public List<History> getVersions(@PathParam("id") String id) {
+        return accessor.getHistory(new ObjectId(id), 0, 1000)
+                .map(v->new History(v.getId().toHexString(), v.getUpdateTime()))
+                .collect(Collectors.toList());
+    }
+
+    public static class History {
+        public String id;
+        public long updateTime;
+
+        public History(String id, long updateTime) {
+            this.id = id;
+            this.updateTime = updateTime;
+        }
+    }
+
+    @Operation(operationId = "restore{Entity}Version", description = "Restore a version of this entity")
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Secured(right = "{entity}-write")
+    @Path("{id}/restore/{versionId}")
+    public T restoreVersion(@PathParam("id") String id, @PathParam("versionId") String versionId) {
+        return accessor.restoreVersion(new ObjectId(id), new ObjectId(versionId));
+    }
 }
