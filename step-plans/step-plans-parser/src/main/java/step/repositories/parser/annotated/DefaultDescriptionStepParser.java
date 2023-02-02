@@ -439,8 +439,8 @@ public class DefaultDescriptionStepParser extends AbstractDescriptionStepParser 
 		result.setText(new DynamicValue<>(expression, ""));
 		parsingContext.addArtefactToCurrentParent(result);
 	}
-	
-	@Step(value="Check (Expression *=.*)$", priority=2)
+
+	@Step(value="Check[ \u00A0\t\r\n]+(Expression[ \u00A0\t\r\n]*=.*)$", priority=2)
 	public static void check(ParsingContext parsingContext, String args) {
 		JsonObject object = parseKeyValues(args);
 		Check artefact = new Check();

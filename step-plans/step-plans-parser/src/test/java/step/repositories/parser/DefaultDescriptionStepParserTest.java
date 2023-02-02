@@ -488,15 +488,16 @@ public class DefaultDescriptionStepParserTest extends AbstractDescriptionStepPar
 	@Test
 	public void testCheck() throws ParsingException {
 		List<AbstractStep> steps = new ArrayList<>();
-		steps.add(step("Check Expression= true \n "));
+		steps.add(step("Check   Expression= true \n "));
 		steps.add(step("Check Expression = key2.toString().equals('value2') \n "));
 		steps.add(step("Check Expression    =    |key.toString().equals(\"value with space\")| \n "));
 		steps.add(step("Check key2.toString().equals(\"value2 \"\"escaped quotes\"\" test\") \n "));
 		steps.add(step("Check key.toString().equals('value with space') \n "));
 		steps.add(step("Check key.toString() == 'value with space' \n "));
+		steps.add(step("Check 	 \u00A0\r\nExpression    =    |key.toString().equals(\"value with space\")| \n "));
 
 		List<AbstractArtefact> children = parse(steps).getChildren();
-		Assert.assertEquals(6, children.size());
+		Assert.assertEquals(7, children.size());
 		Check check = (Check) children.get(0);
 		Assert.assertEquals("true",check.getExpression().getExpression());
 		check = (Check) children.get(1);
@@ -509,5 +510,7 @@ public class DefaultDescriptionStepParserTest extends AbstractDescriptionStepPar
 		Assert.assertEquals("key.toString().equals('value with space')",check.getExpression().getExpression());
 		check = (Check) children.get(5);
 		Assert.assertEquals("key.toString() == 'value with space'",check.getExpression().getExpression());
+		check = (Check) children.get(6);
+		Assert.assertEquals("key.toString().equals(\"value with space\")",check.getExpression().getExpression());
 	}
 }
