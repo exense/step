@@ -71,5 +71,9 @@ public class AssertReportNode extends ReportNode {
 	public void setExpected(String expected) {
 		this.expected = expected;
 	}
-	
+
+	@Override
+	public String getReportAsString() {
+		return message;
+	}
 }
