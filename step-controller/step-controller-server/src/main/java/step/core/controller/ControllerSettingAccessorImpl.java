@@ -80,6 +80,9 @@ public class ControllerSettingAccessorImpl extends AbstractAccessor<ControllerSe
 				}
 			} catch (Exception ex) {
 				rollbackOldValue(res.getId(), oldValue, ex);
+
+				// notify the caller about rollback
+				throw new ControllerSettingHookRollbackException("Controller setting rollback", ex);
 			}
 		}
 
@@ -134,12 +137,20 @@ public class ControllerSettingAccessorImpl extends AbstractAccessor<ControllerSe
 		} catch (Exception ex) {
 			// rollback save on hook failure
 			for (ControllerSetting entity : entities) {
-				rollbackOldValue(
-						entity.getId(),
-						oldValues.stream().filter(v -> Objects.equals(v.getId(), entity.getId())).findFirst().orElse(null),
-						ex
-				);
+				try {
+					rollbackOldValue(
+							entity.getId(),
+							oldValues.stream().filter(v -> Objects.equals(v.getId(), entity.getId())).findFirst().orElse(null),
+							ex
+					);
+				} catch (Exception ex2) {
+					// just print errors in log during rollback
+					log.error("Controller setting hook error", ex);
+				}
 			}
+
+			// notify the caller about rollback
+			throw new ControllerSettingHookRollbackException("Controller setting rollback", ex);
 		}
 	}
 
@@ -156,6 +167,9 @@ public class ControllerSettingAccessorImpl extends AbstractAccessor<ControllerSe
 				}
 			} catch (Exception ex) {
 				rollbackOldValue(id, toBeDeleted, ex);
+
+				// notify the caller about rollback
+				throw new ControllerSettingHookRollbackException("Controller setting rollback", ex);
 			}
 		}
 	}
@@ -184,8 +198,6 @@ public class ControllerSettingAccessorImpl extends AbstractAccessor<ControllerSe
 			}
 		}
 
-		// notify the caller about rollback
-		throw new ControllerSettingHookRollbackException("Controller setting rollback", ex);
 	}
 
 	/**
