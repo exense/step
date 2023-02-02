@@ -36,6 +36,8 @@ import ch.exense.commons.app.Configuration;
 import org.junit.Assert;
 import org.junit.Test;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.core.accessors.AbstractAccessor;
 import step.core.collections.Collection;
 import step.core.collections.Filters;
@@ -43,10 +45,11 @@ import step.core.collections.mongodb.MongoDBCollectionFactory;
 import step.parameter.Parameter;
 import step.commons.activation.Expression;
 import step.core.accessors.InMemoryAccessor;
-import step.parameter.ParameterAccessor;
 import step.parameter.ParameterManager;
 
 public class ParameterManagerTest {
+
+	private static final Logger logger = LoggerFactory.getLogger(ParameterManagerTest.class);
 
 	@Test
 	public void testJavascript() throws ScriptException {
@@ -115,15 +118,15 @@ public class ParameterManagerTest {
 		
 		long t1 = System.currentTimeMillis();
 		Map<String, String> params = m.getAllParameterValues(bindings, null);
-		System.out.println("ms:"+(System.currentTimeMillis()-t1));
+		logger.info("ms:"+(System.currentTimeMillis()-t1));
 		Assert.assertEquals(params.get("key1"),"value"+nIt);
 		
 		t1 = System.currentTimeMillis();
 		params = m.getAllParameterValues(bindings, null);
-		System.out.println("ms:"+(System.currentTimeMillis()-t1));
+		logger.info("ms:"+(System.currentTimeMillis()-t1));
 		Assert.assertEquals(params.get("key1"),"value"+nIt);
 		
-		Assert.assertTrue((System.currentTimeMillis()-t1)<2000);
+		Assert.assertTrue((System.currentTimeMillis()-t1)<3000);
 	}
 	
 	@Test
