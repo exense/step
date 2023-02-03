@@ -161,9 +161,9 @@ public class StepJarParser {
             try {
                 URL url = null;
                 if (file.startsWith("/")) {
-                    url = new URL("jar:file:/" + artifact.getAbsolutePath() + "!" + file);
+                    url = new URL("jar:file:" + artifact.getAbsolutePath() + "!" + file);
                 } else {
-                    url = new URL("jar:file:/" + artifact.getAbsolutePath() + "!/" +
+                    url = new URL("jar:file:" + artifact.getAbsolutePath() + "!/" +
                             klass.getPackageName().replace(".","/")+"/"+file);
                 }
 
