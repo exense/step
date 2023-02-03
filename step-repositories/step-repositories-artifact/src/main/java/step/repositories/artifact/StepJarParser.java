@@ -11,11 +11,17 @@ import step.handlers.javahandler.Keyword;
 import step.junit.runner.StepClassParser;
 import step.junit.runner.StepClassParserResult;
 import step.junit.runners.annotations.Plans;
+import step.plans.nl.RootArtefactType;
+import step.plans.nl.parser.PlanParser;
 import step.plugins.java.GeneralScriptFunction;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.net.URL;
+import java.nio.file.Path;
 import java.util.*;
 
 public class StepJarParser {
@@ -103,7 +109,7 @@ public class StepJarParser {
             classesWithPlans = tmp;
 
             // Create plans for discovered classes
-            classesWithPlans.forEach(c -> result.addAll(getPlansForClass(c)));
+            classesWithPlans.forEach(c -> result.addAll(getPlansForClass(annotationScanner,c,artifact)));
 
             // Find all keywords
             List<Function> functions = getFunctions(annotationScanner, artifact, dependency);
@@ -115,24 +121,66 @@ public class StepJarParser {
         return result;
     }
 
-    protected List<Plan> getPlansForClass(Class<?> klass) {
+    protected List<Plan> getPlansForClass(AnnotationScanner annotationScanner, Class<?> klass, File artifact) {
 
         List<Plan> result = new ArrayList<>();
         List<StepClassParserResult> plans;
         try {
-            plans = stepClassParser.createPlansForClass(klass);
-            plans.forEach(p -> {
-                Plan plan = p.getPlan();
-                if (plan != null) {
-                    result.add(plan);
-                } else {
-                    // TODO handle error
-                }
-            });
+            plans = stepClassParser.getPlanFromAnnotatedMethods(annotationScanner,klass);
+            plans.addAll(getPlanFromPlansAnnotation(klass,artifact));
+
         } catch (Exception e) {
             throw new RuntimeException(
-                    "Exception when trying to create the plans for class '" + klass.getCanonicalName() + "'", e);
+                    "Unhandled exception when searching for plans for class '" + klass.getCanonicalName() + "'", e);
         }
+        plans.forEach(p -> {
+            Exception e = p.getInitializingException();
+            if (e != null) {
+                throw new RuntimeException("Exception when trying to create the plans for class '" + klass.getCanonicalName() + "'", e);
+            }
+            Plan plan = p.getPlan();
+            if (plan != null) {
+                result.add(plan);
+            } else {
+                throw new RuntimeException("No exception but also no plans for class '" + klass.getCanonicalName() + "'", e);
+            }
+        });
+        return result;
+    }
+
+    private List<StepClassParserResult> getPlanFromPlansAnnotation(Class<?> klass, File artifact) {
+        final List<StepClassParserResult> result = new ArrayList<>();
+
+        Exception exception = null;
+        PlanParser planParser = new PlanParser();
+
+        Plans plans = klass.getAnnotation(Plans.class);
+
+        for (String file : plans.value()) {
+            Plan plan = null;
+            try {
+                URL url = null;
+                if (file.startsWith("/")) {
+                    url = new URL("jar:file:/" + artifact.getAbsolutePath() + "!" + file);
+                } else {
+                    url = new URL("jar:file:/" + artifact.getAbsolutePath() + "!/" +
+                            klass.getPackageName().replace(".","/")+"/"+file);
+                }
+
+                InputStream stream = url.openStream();
+
+                if (stream != null) {
+                    plan = planParser.parse(stream, RootArtefactType.TestCase);
+                } else {
+                    throw new FileNotFoundException(file);
+                }
+                StepClassParser.setPlanName(plan,file);
+            } catch (Exception e) {
+                exception = e;
+            }
+            result.add(new StepClassParserResult(file, plan, exception));
+        }
+
         return result;
     }
 }
