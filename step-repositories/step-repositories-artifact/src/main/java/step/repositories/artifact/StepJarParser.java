@@ -28,7 +28,7 @@ public class StepJarParser {
         stepClassParser = new StepClassParser(false);
     }
 
-    private List<Function> getFunctions(AnnotationScanner annotationScanner, File file) {
+    private List<Function> getFunctions(AnnotationScanner annotationScanner, File artifact, File libraries) {
         List<Function> functions = new ArrayList<>();
 
         Set<Method> methods = annotationScanner.getMethodsWithAnnotation(Keyword.class);
@@ -40,7 +40,8 @@ public class StepJarParser {
             GeneralScriptFunction function = new GeneralScriptFunction();
             function.setAttributes(new HashMap<>());
             function.getAttributes().put(AbstractOrganizableObject.NAME, functionName);
-            function.setScriptFile(new DynamicValue<>(file.getAbsolutePath()));
+            function.setScriptFile(new DynamicValue<>(artifact.getAbsolutePath()));
+            function.setLibrariesFile(new DynamicValue<>(libraries.getAbsolutePath()));
             function.setScriptLanguage(new DynamicValue<>("java"));
 
             functions.add(function);
@@ -48,12 +49,12 @@ public class StepJarParser {
         return functions;
     }
 
-    public List<Plan> getPlansForJar(File jarFile, String[] includedClasses, String[] includedAnnotations,
+    public List<Plan> getPlansForJar(File artifact, File dependency, String[] includedClasses, String[] includedAnnotations,
                                      String[] excludedClasses, String[] excludedAnnotations) {
 
         List<Plan> result = new ArrayList<>();
 
-        try (AnnotationScanner annotationScanner = AnnotationScanner.forSpecificJar(jarFile)) {
+        try (AnnotationScanner annotationScanner = AnnotationScanner.forSpecificJar(artifact)) {
             // Find classes containing plans:
             Set<Class<?>> classesWithPlans = new HashSet<>();
             // Classes with @Plans annotation
@@ -103,10 +104,10 @@ public class StepJarParser {
             classesWithPlans.forEach(c -> result.addAll(getPlansForClass(c)));
 
             // Find all keywords
-            List<Function> functions = getFunctions(annotationScanner, jarFile);
+            List<Function> functions = getFunctions(annotationScanner, artifact, dependency);
             result.forEach(p -> p.setFunctions(functions));
         } catch (Exception e) {
-            throw new RuntimeException("Exception when trying to list the plans of jar file '" + jarFile.getName() + "'", e);
+            throw new RuntimeException("Exception when trying to list the plans of jar file '" + artifact.getName() + "'", e);
         }
 
         return result;
