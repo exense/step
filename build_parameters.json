@@ -6,6 +6,7 @@
 		{
 			"ACTION": "COMPILE",
 			"TYPE": "POM",
+			"BEFORE": "step-java-before-compile_3.18",
 			"FOLDER": "step-parent/",
 			"PARAMETERS": [
 				{
