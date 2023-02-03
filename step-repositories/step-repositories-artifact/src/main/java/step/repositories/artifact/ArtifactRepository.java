@@ -116,6 +116,11 @@ public class ArtifactRepository extends AbstractRepository {
             String version = repositoryParameters.get(PARAM_LIB_VERSION);
             String groupId = repositoryParameters.get(PARAM_LIB_GROUP_ID);
             String classifier = repositoryParameters.get(PARAM_LIB_CLASSIFIER);
+
+            if (classifier!=null && artifactId==null) {
+                artifactId = repositoryParameters.get(PARAM_ARTIFACT_ID);
+            }
+
             if (artifactId!=null) {
                 if (groupId==null) {
                     groupId = getMandatoryRepositoryParameter(repositoryParameters,PARAM_GROUP_ID);
