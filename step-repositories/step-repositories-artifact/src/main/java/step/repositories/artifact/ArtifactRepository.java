@@ -20,7 +20,6 @@ import step.core.plans.builder.PlanBuilder;
 import step.core.repositories.*;
 import step.functions.Function;
 
-import javax.annotation.Nonnull;
 import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -35,6 +34,12 @@ public class ArtifactRepository extends AbstractRepository {
     protected static final String PARAM_VERSION = "version";
     protected static final String PARAM_GROUP_ID = "groupId";
     protected static final String PARAM_CLASSIFIER = "classifier";
+
+    protected static final String PARAM_LIB_ARTIFACT_ID = "libArtifactId";
+    protected static final String PARAM_LIB_VERSION = "libVersion";
+    protected static final String PARAM_LIB_GROUP_ID = "libGroupId";
+    protected static final String PARAM_LIB_CLASSIFIER = "libClassifier";
+
     protected static final String PARAM_MAVEN_SETTINGS = "mavenSettings";
     private static final String PARAM_THREAD_NUMBER = "threads";
     private static final String PARAM_INCLUDE_CLASSES = "includeClasses";
@@ -93,13 +98,38 @@ public class ArtifactRepository extends AbstractRepository {
 
         File artifact = getArtifact(repositoryParameters, settingsXml);
 
+        File libraries = getLibraries(repositoryParameters, settingsXml);
+
         String[] includedClasses = repositoryParameters.getOrDefault(PARAM_INCLUDE_CLASSES, ",").split(",");
         String[] includedAnnotations = repositoryParameters.getOrDefault(PARAM_INCLUDE_ANNOTATIONS, ",").split(",");
         String[] excludedClasses = repositoryParameters.getOrDefault(PARAM_EXCLUDE_CLASSES, ",").split(",");
         String[] excludedAnnotations = repositoryParameters.getOrDefault(PARAM_EXCLUDE_ANNOTATIONS, ",").split(",");
 
-        List<Plan> plans = parsePlan(artifact,includedClasses,includedAnnotations,excludedClasses,excludedAnnotations);
+        List<Plan> plans = parsePlan(artifact,libraries,includedClasses,includedAnnotations,excludedClasses,excludedAnnotations);
         return new FileAndPlan(artifact, plans);
+    }
+
+    private File getLibraries(Map<String, String> repositoryParameters, ControllerSetting settingsXml) {
+        try {
+            MavenArtifactClient mavenArtifactClient = new MavenArtifactClient(settingsXml.getValue(), localRepository);
+            String artifactId = repositoryParameters.get(PARAM_LIB_ARTIFACT_ID);
+            String version = repositoryParameters.get(PARAM_LIB_VERSION);
+            String groupId = repositoryParameters.get(PARAM_LIB_GROUP_ID);
+            String classifier = repositoryParameters.get(PARAM_LIB_CLASSIFIER);
+            if (artifactId!=null) {
+                if (groupId==null) {
+                    groupId = getMandatoryRepositoryParameter(repositoryParameters,PARAM_GROUP_ID);
+                }
+                if (version==null) {
+                    version = getMandatoryRepositoryParameter(repositoryParameters,PARAM_VERSION);
+                }
+                return mavenArtifactClient.getArtifact(new DefaultArtifact(groupId, artifactId, classifier, "jar", version));
+            } else {
+                return null;
+            }
+        } catch (SettingsBuildingException | ArtifactResolutionException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private File getArtifact(Map<String, String> repositoryParameters, ControllerSetting settingsXml) {
@@ -182,8 +212,8 @@ public class ArtifactRepository extends AbstractRepository {
 
     }
 
-    private List<Plan> parsePlan(File file, String[] includedClasses, String[] includedAnnotations, String[] excludedClasses, String[] excludedAnnotations) {
-        return new StepJarParser().getPlansForJar(file,includedClasses,includedAnnotations,excludedClasses,excludedAnnotations);
+    private List<Plan> parsePlan(File artifact, File libraries, String[] includedClasses, String[] includedAnnotations, String[] excludedClasses, String[] excludedAnnotations) {
+        return new StepJarParser().getPlansForJar(artifact,libraries,includedClasses,includedAnnotations,excludedClasses,excludedAnnotations);
     }
 
     private static class FileAndPlan {
