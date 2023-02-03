@@ -112,11 +112,21 @@ public class ArtifactRepository extends AbstractRepository {
     private File getLibraries(Map<String, String> repositoryParameters, ControllerSetting settingsXml) {
         try {
             MavenArtifactClient mavenArtifactClient = new MavenArtifactClient(settingsXml.getValue(), localRepository);
-            String artifactId = getMandatoryRepositoryParameter(repositoryParameters, PARAM_LIB_ARTIFACT_ID);
-            String version = getMandatoryRepositoryParameter(repositoryParameters, PARAM_LIB_VERSION);
-            String groupId = getMandatoryRepositoryParameter(repositoryParameters, PARAM_LIB_GROUP_ID);
+            String artifactId = repositoryParameters.get(PARAM_LIB_ARTIFACT_ID);
+            String version = repositoryParameters.get(PARAM_LIB_VERSION);
+            String groupId = repositoryParameters.get(PARAM_LIB_GROUP_ID);
             String classifier = repositoryParameters.get(PARAM_LIB_CLASSIFIER);
-            return mavenArtifactClient.getArtifact(new DefaultArtifact(groupId, artifactId, classifier, "jar", version));
+            if (artifactId!=null) {
+                if (groupId==null) {
+                    groupId = getMandatoryRepositoryParameter(repositoryParameters,PARAM_GROUP_ID);
+                }
+                if (version==null) {
+                    version = getMandatoryRepositoryParameter(repositoryParameters,PARAM_VERSION);
+                }
+                return mavenArtifactClient.getArtifact(new DefaultArtifact(groupId, artifactId, classifier, "jar", version));
+            } else {
+                return null;
+            }
         } catch (SettingsBuildingException | ArtifactResolutionException e) {
             throw new RuntimeException(e);
         }

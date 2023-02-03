@@ -41,7 +41,9 @@ public class StepJarParser {
             function.setAttributes(new HashMap<>());
             function.getAttributes().put(AbstractOrganizableObject.NAME, functionName);
             function.setScriptFile(new DynamicValue<>(artifact.getAbsolutePath()));
-            function.setLibrariesFile(new DynamicValue<>(libraries.getAbsolutePath()));
+            if (libraries!=null) {
+                function.setLibrariesFile(new DynamicValue<>(libraries.getAbsolutePath()));
+            }
             function.setScriptLanguage(new DynamicValue<>("java"));
 
             functions.add(function);
