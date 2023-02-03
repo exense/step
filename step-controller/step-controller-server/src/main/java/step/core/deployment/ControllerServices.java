@@ -60,12 +60,12 @@ public class ControllerServices extends AbstractStepServices {
 
 	private Version currentVersion;
 	private PlanLocator planLocator;
-	private ObjectPredicate objectPredicate;
 	private Controller controller;
 	private ExecutionAccessor executionAccessor;
 	private Map<String, Long> userActivityMap;
 
 	private long initializationTime;
+	private ObjectHookRegistry objectHooks;
 
 	@PostConstruct
 	public void init() throws Exception {
@@ -77,7 +77,7 @@ public class ControllerServices extends AbstractStepServices {
 		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(getContext().getExpressionHandler()));
 		SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
 		planLocator = new PlanLocator(getContext().getPlanAccessor(), selectorHelper);
-		objectPredicate = context.get(ObjectHookRegistry.class).getObjectPredicate(getSession());
+		objectHooks = context.get(ObjectHookRegistry.class);
 
 		executionAccessor = context.getExecutionAccessor();
 		userActivityMap = (Map<String, Long>) context.get(USER_ACTIVITY_MAP_KEY);
@@ -117,6 +117,7 @@ public class ControllerServices extends AbstractStepServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="execution-read")
 	public Plan getReportNodeRootPlan(@PathParam("id") String reportNodeId) {
+		ObjectPredicate objectPredicate = objectHooks.getObjectPredicate(getSession());
 		PlanAccessor planAccessor = getContext().getPlanAccessor();
 		ReportNode reportNode = getContext().getReportAccessor().get(reportNodeId);
 		Plan plan = planAccessor.get(getContext().getExecutionAccessor().get(reportNode.getExecutionID()).getPlanId());
