@@ -14,7 +14,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import step.attachments.FileResolver;
 import step.core.accessors.AbstractOrganizableObject;
-import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
 import step.core.scanner.AnnotationScanner;
 import step.functions.Function;
@@ -83,7 +82,8 @@ public class JavaFunctionPackageDaemon extends FunctionPackageUtils {
 					if(annotation.planReference() != null && !annotation.planReference().isBlank()){
 						try {
 							Plan plan = parsePlanFromPlanReference(m, annotation.planReference());
-							res = CompositeFunctionUtils.createLocalCompositeFunction(annotation, m, plan);
+							// TODO: save a new plan
+							res = CompositeFunctionUtils.createCompositeFunction(annotation, m, plan.getId().toString());
 						} catch (Exception ex){
 							functions.exception = "Parsing error in the the plan for composite keyword '" + m.getName() + "'. The error was: " + ex.getMessage();
 							functions.functions.clear();
