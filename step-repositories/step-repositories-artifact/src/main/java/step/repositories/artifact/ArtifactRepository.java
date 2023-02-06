@@ -94,6 +94,7 @@ public class ArtifactRepository extends AbstractRepository {
         if (settingsXml==null) {
             logger.warn("No settings found for \""+mavenSettingsId+"\", using empty settings instead.");
             controllerSettingAccessor.updateOrCreateSetting(mavenSettingsId,MAVEN_EMPTY_SETTINGS);
+            settingsXml = controllerSettingAccessor.getSettingByKey(mavenSettingsId);
         }
 
         File artifact = getArtifact(repositoryParameters, settingsXml);
