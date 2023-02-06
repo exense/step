@@ -59,9 +59,9 @@ public class StepClassParser {
 		final List<StepClassParserResult> result = new ArrayList<>();
 		Plans plans;
 
-		logger.info("searching for annotation for class "+klass.getName());
+		logger.debug("searching for annotation for class "+klass.getName());
 		if ((plans = klass.getAnnotation(Plans.class)) != null) {
-			logger.info("found annotation :"+ plans.value() + " for class "+klass.getName());
+			logger.debug("found annotation :"+ plans.value() + " for class "+klass.getName());
 			for (String name : plans.value()) {
 				result.add(createPlan(klass, name));
 			}
@@ -110,13 +110,12 @@ public class StepClassParser {
 		Exception exception = null;
 		try {
 			InputStream stream = klass.getResourceAsStream(name);
-			logger.info("stream is:"+ stream+ " for class "+klass.getName());
 			if (stream == null) {
 				throw new Exception("Plan '" + name + "' was not found for class " + klass.getName());
 			}
 
 			plan = planParser.parse(stream, RootArtefactType.TestCase);
-			logger.info("plan is:"+ plan+ " for class "+klass.getName());
+			logger.debug("plan is:"+ plan+ " for class "+klass.getName());
 			setPlanName(plan, name);
 		} catch (Exception e) {
 			exception = e;
