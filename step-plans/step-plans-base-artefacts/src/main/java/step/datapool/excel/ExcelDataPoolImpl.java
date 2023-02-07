@@ -310,11 +310,16 @@ public class ExcelDataPoolImpl extends DataSet<ExcelDataPool> {
 	@Override
 	public void addRow(Object rowInput_) {
 		if(rowInput_ instanceof Map) {
-			Row row = sheet.createRow(sheet.getLastRowNum()+1);
+			Row row = null;
 			Map<?,?> rowInput = (Map<?,?>) rowInput_;
 			for(Object keyObject:rowInput.keySet()) {
 				if(keyObject instanceof String) {
 					int cellNum = mapHeaderToCellNum(sheet, (String)keyObject, true);
+					// actual creation of row deferred to here because header row
+					// might have to be created first in mapHeaderToCellNum
+					if (row == null) {
+						row = sheet.createRow(sheet.getLastRowNum()+1);
+					}
 					Cell cell = row.createCell(cellNum);
 					cell.setCellValue(rowInput.get(keyObject).toString());
 					updated = true;

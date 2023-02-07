@@ -30,12 +30,7 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Locale;
 
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CellStyle;
-import org.apache.poi.ss.usermodel.DateUtil;
-import org.apache.poi.ss.usermodel.FormulaEvaluator;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -172,8 +167,8 @@ public class ExcelFunctions {
 		boolean isFormulaPatched = false;
 		String initialFormula = null; 
 		
-		int chkTyp = cell.getCellType();
-		if (chkTyp == Cell.CELL_TYPE_FORMULA){
+		CellType chkTyp = cell.getCellType();
+		if (chkTyp == CellType.FORMULA){
 			
 			initialFormula = cell.getCellFormula();
 			// Some formula have to be changed before they can be evaluated in POI
@@ -186,10 +181,10 @@ public class ExcelFunctions {
 		}
 		
 		try {
-			int typ = evaluateFormulaCell(cell, evaluator);
-			if (typ == -1) typ = cell.getCellType();
+			CellType typ = evaluateFormulaCell(cell, evaluator);
+			if (typ == CellType._NONE) typ = cell.getCellType();
 			switch (typ) {
-		        case Cell.CELL_TYPE_NUMERIC:
+		        case NUMERIC:
 		        	/* Datum und Zeit (sind auch Zahlen) */
 		            if (DateUtil.isCellDateFormatted(cell)) {
 		            	Date dat = cell.getDateCellValue();
@@ -242,22 +237,22 @@ public class ExcelFunctions {
 		        		return numberValueString;
 		        	}
 		           
-		        case Cell.CELL_TYPE_BOOLEAN:
+		        case BOOLEAN:
 		            return Boolean.toString(cell.getBooleanCellValue());
 		            
-		        case Cell.CELL_TYPE_FORMULA:
+		        case FORMULA:
 		        	/* Dieser Fall wird jetzt nie eintreffen, da im Falle einer Formel neu die
 		        	 * Berechnung zurueckgegeben wurde, die dann einen eigenen Typ hat.
 		        	 */
 		            return cell.getCellFormula();
 		           
-		        case Cell.CELL_TYPE_STRING:
+		        case STRING:
 		        	return cell.getRichStringCellValue().getString();
 	
-		        case Cell.CELL_TYPE_BLANK:
+		        case BLANK:
 		            return "";
 		            
-		        case Cell.CELL_TYPE_ERROR:
+		        case ERROR:
 		        	switch (cell.getErrorCellValue()){
 		        		case 1: return "#NULL!";
 		        		case 2: return "#DIV/0!";
@@ -281,8 +276,8 @@ public class ExcelFunctions {
 
 	}
 
-	private static int evaluateFormulaCell(Cell cell, FormulaEvaluator evaluator) {
-		int typ = -1;
+	private static CellType evaluateFormulaCell(Cell cell, FormulaEvaluator evaluator) {
+		CellType typ = CellType._NONE;
 		try {
 			typ = evaluator.evaluateFormulaCell(cell);
 		} catch (RuntimeException e) {
