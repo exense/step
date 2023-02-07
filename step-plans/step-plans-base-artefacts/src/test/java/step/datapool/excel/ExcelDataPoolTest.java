@@ -364,7 +364,8 @@ public class ExcelDataPoolTest extends AbstractArtefactTest {
 	public void testAddRowToNewExcel() {
 		String uid = UUID.randomUUID().toString();
 		ExcelDataPool conf = new ExcelDataPool();
-		conf.setFile(new DynamicValue<String>(ExcelFunctionsTest.getResourceFile(".").getAbsolutePath()+"/testNewExcel"+uid+".xlsx"));
+		String fileName = ExcelFunctionsTest.getResourceFile(".").getAbsolutePath()+"/testNewExcel-"+uid+".xlsx";
+		conf.setFile(new DynamicValue<String>(fileName));
 		conf.setHeaders(new DynamicValue<Boolean>(true));
 		conf.setWorksheet(new DynamicValue<String>("Test"));
 		conf.setForWrite(new DynamicValue<Boolean>(true));

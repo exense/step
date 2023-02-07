@@ -104,6 +104,14 @@ public class ExcelFunctionsTest {
 		
 		Assert.assertEquals(value, actual);
 	}
+
+	@Test
+	public void testXlookupFunction() throws Exception {
+		// this is just a sanity check, B2 is actually a simple text cell
+		Assert.assertEquals("D2.Regi", ExcelFunctions.getCell(getResourceFile("Excel-XLOOKUP.xlsx"), "KW023_Dokument_suchen", "B2"));
+		// THIS is the actual XLOOKUP function call
+		Assert.assertEquals("Dokumentname_geändert_ws_03.02.2023 ", ExcelFunctions.getCell(getResourceFile("Excel-XLOOKUP.xlsx"), "KW023_Dokument_suchen", "C2"));
+	}
 	
 	public static File getResourceFile(String filename) {
 		return FileHelper.getClassLoaderResourceAsFile(ExcelFunctionsTest.class.getClassLoader(), filename);
