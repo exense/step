@@ -18,8 +18,20 @@
  ******************************************************************************/
 package step.artefacts.reports;
 
+import step.artefacts.Check;
+import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.reports.ReportNode;
+import step.core.dynamicbeans.DynamicValue;
 
 public class CheckReportNode extends ReportNode {
 
+	@Override
+	public String getReportAsString() {
+		AbstractArtefact resolvedArtefact = getResolvedArtefact();
+		if (resolvedArtefact != null && resolvedArtefact instanceof Check) {
+			DynamicValue<Boolean> expression = ((Check) resolvedArtefact).getExpression();
+			return (expression != null) ? expression.getExpression() : null;
+		}
+		return super.getReportAsString();
+	}
 }
