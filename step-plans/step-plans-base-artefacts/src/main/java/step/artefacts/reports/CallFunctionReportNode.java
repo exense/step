@@ -25,6 +25,7 @@ import jakarta.json.JsonObject;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.reports.ReportNode;
 import step.core.reports.Measure;
 
@@ -117,6 +118,10 @@ public class CallFunctionReportNode extends ReportNode {
 
 	@Override
 	public String getReportAsString() {
-		return "Input=" + input + ", Output=" + output;
+		String report = "Input=" + input + ", Output=" + output;
+		String kwName = functionAttributes.get(AbstractOrganizableObject.NAME);
+		return (this.getName().equals(kwName)) ?
+				report :
+				"Keyword name=" + kwName + ", " + report;
 	}
 }
