@@ -43,6 +43,7 @@ public class MigrationManagerTasksPlugin extends AbstractControllerPlugin {
 		migrationManager.register(MigrateSeleniumFunctions.class);
 		migrationManager.register(MigrateFunctionCallsById.class);
 		migrationManager.register(ScreenInputHtmlTemplateMigrationTask.class);
+		migrationManager.register(MigrateLogicFlowFunctions.class);
 	}
 
 	@Override
