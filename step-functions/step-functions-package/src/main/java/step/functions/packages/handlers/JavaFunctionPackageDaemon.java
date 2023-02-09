@@ -12,6 +12,8 @@ import jakarta.json.stream.JsonParsingException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.attachments.FileResolver;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.plans.Plan;
@@ -28,6 +30,8 @@ import step.plugins.java.GeneralScriptFunction;
 import step.resources.LocalResourceManagerImpl;
 
 public class JavaFunctionPackageDaemon extends FunctionPackageUtils {
+
+	private static final Logger log = LoggerFactory.getLogger(JavaFunctionPackageDaemon.class);
 	
 	public JavaFunctionPackageDaemon() {
 		super(new FileResolver(new LocalResourceManagerImpl()));
@@ -80,15 +84,9 @@ public class JavaFunctionPackageDaemon extends FunctionPackageUtils {
 					Keyword annotation = m.getAnnotation(Keyword.class);
 					Function res;
 					if(annotation.planReference() != null && !annotation.planReference().isBlank()){
-						try {
-							Plan plan = parsePlanFromPlanReference(m, annotation.planReference());
-							// TODO: save a new plan
-							res = CompositeFunctionUtils.createCompositeFunction(annotation, m, plan.getId().toString());
-						} catch (Exception ex){
-							functions.exception = "Parsing error in the the plan for composite keyword '" + m.getName() + "'. The error was: " + ex.getMessage();
-							functions.functions.clear();
-							return functions;
-						}
+						// composite function
+						log.warn("Unable to process the composite keyword {} linked with plan {}", annotation.name(), annotation.planReference());
+						res = null;
 					} else {
 						String functionName = annotation.name().length() > 0 ? annotation.name() : m.getName();
 
@@ -135,7 +133,9 @@ public class JavaFunctionPackageDaemon extends FunctionPackageUtils {
 						}
 						res = function;
 					}
-					functions.functions.add(res);
+					if (res != null) {
+						functions.functions.add(res);
+					}
 				}
 			}
 		} catch (Throwable e) {
@@ -144,14 +144,4 @@ public class JavaFunctionPackageDaemon extends FunctionPackageUtils {
 		return functions;
 	}
 
-	private Plan parsePlanFromPlanReference(Method m, String planReference) throws Exception {
-		InputStream stream = m.getDeclaringClass().getResourceAsStream(planReference);
-		if (stream == null) {
-			throw new Exception("Plan '" + planReference + "' was not found for class " + m.getClass().getName());
-		}
-
-		Plan plan = new PlanParser().parse(stream, RootArtefactType.TestCase);
-		plan.setVisible(false);
-		return plan;
-	}
 }
