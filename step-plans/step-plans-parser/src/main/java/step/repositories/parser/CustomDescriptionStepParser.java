@@ -144,7 +144,6 @@ public class CustomDescriptionStepParser implements StepParser<DescriptionStep> 
 			Plan plan = new Plan(rootArtefact);
 			parsingContext.getPlanAccessor().save(plan);
 
-			// TODO: local composite?
 			CompositeFunction function = new CompositeFunction();
 			function.setId(new ObjectId());
 			function.setPlanId(plan.getId().toString());
