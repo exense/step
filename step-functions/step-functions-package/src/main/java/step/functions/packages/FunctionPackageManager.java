@@ -6,10 +6,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -101,6 +98,9 @@ public class FunctionPackageManager implements Closeable {
 	 * @throws Exception if any error occurs during loading
 	 */
 	public List<Function> getPackagePreview(FunctionPackage functionPackage) throws Exception {
+		if (functionPackage.getPackageLocation()==null) {
+			throw new Exception("Empty package file");
+		}
 		// Build the Functions with the corresponding handler
 		FunctionPackageHandler handler = getPackageHandler(functionPackage);
 		List<Function> functions = handler.buildFunctions(functionPackage, true, null);
