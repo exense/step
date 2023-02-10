@@ -98,7 +98,7 @@ public class FunctionPackageManager implements Closeable {
 	 * @throws Exception if any error occurs during loading
 	 */
 	public List<Function> getPackagePreview(FunctionPackage functionPackage) throws Exception {
-		if (functionPackage.getPackageLocation()==null || functionPackage.getPackageLocation().isBlank()) {
+		if (functionPackage.isEmpty()) {
 			return List.of();
 		}
 		// Build the Functions with the corresponding handler
@@ -209,8 +209,7 @@ public class FunctionPackageManager implements Closeable {
 
 	private FunctionPackage addOrUpdateFunctionPackage(FunctionPackage previousFunctionPackage,
 			FunctionPackage newFunctionPackage) throws Exception {
-		String packageLocation = newFunctionPackage.getPackageLocation();
-		if (packageLocation == null || packageLocation.isBlank()) {
+		if (newFunctionPackage.isEmpty()) {
 			throw new Exception("Empty package file");
 		}
 
