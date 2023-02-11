@@ -23,7 +23,6 @@ import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.net.URL;
-import java.nio.file.Path;
 import java.util.*;
 
 public class StepJarParser {
@@ -45,15 +44,18 @@ public class StepJarParser {
         for (Method m : methods) {
             Keyword annotation = m.getAnnotation(Keyword.class);
 
-            Function res;
-            if (annotation.planReference() != null && !annotation.planReference().isBlank()) {
-                try {
-                    res = CompositeFunctionUtils.createCompositeFunction(annotation, m, parsePlanFromPlanReference(m, annotation.planReference()));
-                } catch (Exception ex) {
-                    throw new RuntimeException("Unable to parse plan from reference", ex);
-                }
-            } else {
-                String functionName = annotation.name().length() > 0 ? annotation.name() : m.getName();
+			Function res;
+			if (annotation.planReference() != null && !annotation.planReference().isBlank()) {
+				try {
+					res = CompositeFunctionUtils.createCompositeFunction(
+                            annotation, m,
+                            new PlanParser().parseCompositePlanFromPlanReference(m, annotation.planReference())
+					);
+				} catch (Exception ex) {
+					throw new RuntimeException("Unable to parse plan from reference", ex);
+				}
+			} else {
+				String functionName = annotation.name().length() > 0 ? annotation.name() : m.getName();
 
                 GeneralScriptFunction function = new GeneralScriptFunction();
                 function.setAttributes(new HashMap<>());
@@ -71,19 +73,8 @@ public class StepJarParser {
         return functions;
     }
 
-    private Plan parsePlanFromPlanReference(Method m, String planReference) throws Exception {
-        InputStream stream = m.getDeclaringClass().getResourceAsStream(planReference);
-        if (stream == null) {
-            throw new Exception("Plan '" + planReference + "' was not found for class " + m.getClass().getName());
-        }
-
-        Plan plan = new PlanParser().parse(stream, RootArtefactType.TestCase);
-        plan.setVisible(false);
-        return plan;
-    }
-
-    public List<Plan> getPlansForJar(File artifact, File dependency, String[] includedClasses, String[] includedAnnotations,
-                                     String[] excludedClasses, String[] excludedAnnotations) {
+	public List<Plan> getPlansForJar(File artifact, File dependency, String[] includedClasses, String[] includedAnnotations,
+									 String[] excludedClasses, String[] excludedAnnotations) {
 
         List<Plan> result = new ArrayList<>();
 

@@ -71,7 +71,7 @@ public class LocalCompositeFunctionPlugin extends AbstractExecutionEnginePlugin 
 			// keywords with plan reference are not local functions but composite functions linked with plan
 			if (annotation.planReference() != null && !annotation.planReference().isBlank()) {
 				try {
-					functionAccessor.save(CompositeFunctionUtils.createCompositeFunction(annotation, m, parsePlanFromPlanReference(m, annotation.planReference())));
+					functionAccessor.save(CompositeFunctionUtils.createCompositeFunction(annotation, m, new PlanParser().parseCompositePlanFromPlanReference(m, annotation.planReference())));
 				} catch (Exception ex) {
 					throw new RuntimeException("Unable to prepare local composite", ex);
 				}
@@ -79,15 +79,5 @@ public class LocalCompositeFunctionPlugin extends AbstractExecutionEnginePlugin 
 		}
 	}
 
-	private Plan parsePlanFromPlanReference(Method m, String planReference) throws Exception {
-		InputStream stream = m.getDeclaringClass().getResourceAsStream(planReference);
-		if (stream == null) {
-			throw new Exception("Plan '" + planReference + "' was not found for class " + m.getClass().getName());
-		}
-
-		Plan plan = new PlanParser().parse(stream, RootArtefactType.TestCase);
-		plan.setVisible(false);
-		return plan;
-	}
 
 }

@@ -84,9 +84,7 @@ public class JavaFunctionPackageDaemon extends FunctionPackageUtils {
 					Keyword annotation = m.getAnnotation(Keyword.class);
 					Function res;
 					if(annotation.planReference() != null && !annotation.planReference().isBlank()){
-						// composite function
-						log.warn("Unable to process the composite keyword {} linked with plan {}", annotation.name(), annotation.planReference());
-						res = null;
+						res = CompositeFunctionUtils.createCompositeFunction(annotation, m, new PlanParser().parseCompositePlanFromPlanReference(m, annotation.planReference()));
 					} else {
 						String functionName = annotation.name().length() > 0 ? annotation.name() : m.getName();
 
@@ -133,9 +131,8 @@ public class JavaFunctionPackageDaemon extends FunctionPackageUtils {
 						}
 						res = function;
 					}
-					if (res != null) {
-						functions.functions.add(res);
-					}
+
+					functions.functions.add(res);
 				}
 			}
 		} catch (Throwable e) {

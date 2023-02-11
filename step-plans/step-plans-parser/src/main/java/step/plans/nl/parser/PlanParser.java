@@ -23,6 +23,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -180,6 +181,17 @@ public class PlanParser {
 		Plan plan = new Plan(rootArtefact);
 		plan.setFunctions(functions);
 		plan.setSubPlans(subPlans);
+		return plan;
+	}
+
+	public Plan parseCompositePlanFromPlanReference(Method m, String planReference) throws Exception {
+		InputStream stream = m.getDeclaringClass().getResourceAsStream(planReference);
+		if (stream == null) {
+			throw new Exception("Plan '" + planReference + "' was not found for class " + m.getClass().getName());
+		}
+
+		Plan plan = this.parse(stream, RootArtefactType.TestCase);
+		plan.setVisible(false);
 		return plan;
 	}
 }
