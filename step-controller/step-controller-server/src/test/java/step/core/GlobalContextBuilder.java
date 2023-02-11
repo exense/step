@@ -88,7 +88,7 @@ public class GlobalContextBuilder {
 		context.setScheduleAccessor(new InMemoryExecutionTaskAccessor());
 		context.setUserAccessor(new InMemoryUserAccessor());
 		context.setRepositoryObjectManager(new RepositoryObjectManager());
-		
+
 		FunctionAccessor functionAccessor = new InMemoryFunctionAccessorImpl();
 		context.put(FunctionAccessor.class, functionAccessor);
 		

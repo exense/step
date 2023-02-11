@@ -120,7 +120,7 @@ public class ArtefactFunctionHandlerTest {
 
 	private Map<String, String> getInputProperties(Plan compositePlan, ReportNode parentNode) {
 		Map<String, String> properties = new HashMap<>();
-		properties.put(ArtefactFunctionHandler.PLANID_KEY, compositePlan.getId().toString());
+		properties.put(ArtefactFunctionHandler.COMPOSITE_FUNCTION_KEY, compositePlan.getId().toString());
 		properties.put(AbstractFunctionHandler.PARENTREPORTID_KEY, parentNode.getId().toString());
 		return properties;
 	}

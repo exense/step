@@ -663,10 +663,10 @@ public class ExportManagerTest {
 	}
 	
 	private void testExportPlansWithCompoFct(boolean overwrite) throws Exception {
-		CompositeFunctionType compositeFunctionType = new CompositeFunctionType(planAccessor, null, null);
+		CompositeFunctionType compositeFunctionType = new CompositeFunctionType(null, null);
 		CompositeFunction function = compositeFunctionType.newFunction();
 		compositeFunctionType.setupFunction(function);
-		String compositePlanId = function.getPlanId();
+		String compositePlanId = function.getPlan().getId().toHexString();
 		String functionName = UUID.randomUUID().toString();
 		function.addAttribute(AbstractOrganizableObject.NAME, functionName);
 		functionAccessor.save(function);
@@ -697,7 +697,7 @@ public class ExportManagerTest {
 			assertEquals(1, nbFunctions.intValue());
 			
 			Plan actualPlan = planAccessor.get(plan.getId());
-			Plan actualCompositePlan = planAccessor.get(compositePlanId);
+			Plan actualCompositePlan = function.getPlan();
 			Function actualFunction = functionAccessor.get(function.getId());
 
 			if (overwrite) {

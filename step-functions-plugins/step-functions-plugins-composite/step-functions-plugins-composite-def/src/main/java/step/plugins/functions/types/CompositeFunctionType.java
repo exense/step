@@ -39,14 +39,11 @@ public class CompositeFunctionType extends AbstractFunctionType<CompositeFunctio
 
 	protected FileVersionId handlerJar;
 
-	protected final PlanAccessor planAccessor;
-
 	private final ObjectHookRegistry objectHookRegistry;
 	private final PlanTypeRegistry planTypeRegistry;
 
-	public CompositeFunctionType(PlanAccessor planAccessor, ObjectHookRegistry objectHookRegistry, PlanTypeRegistry planTypeRegistry) {
+	public CompositeFunctionType(ObjectHookRegistry objectHookRegistry, PlanTypeRegistry planTypeRegistry) {
 		super();
-		this.planAccessor = planAccessor;
 		this.objectHookRegistry = objectHookRegistry;
 		this.planTypeRegistry = planTypeRegistry;
 	}
@@ -65,7 +62,7 @@ public class CompositeFunctionType extends AbstractFunctionType<CompositeFunctio
 	@Override
 	public Map<String, String> getHandlerProperties(CompositeFunction function) {
 		Map<String, String> props = new HashMap<>();
-		props.put(ArtefactFunctionHandler.PLANID_KEY, function.getPlanId());
+		props.put(ArtefactFunctionHandler.COMPOSITE_FUNCTION_KEY, function.getId().toString());
 		return props;
 	}
 
@@ -74,7 +71,7 @@ public class CompositeFunctionType extends AbstractFunctionType<CompositeFunctio
 		super.setupFunction(function);
 
 		// if existing plan is not explicitly selected for the new function, we create a new one
-		if (function.getPlanId() == null) {
+		if (function.getPlan() == null) {
 			Plan plan = PlanBuilder.create().startBlock(BaseArtefacts.sequence()).endBlock().build();
 			// hide the plan of the composite keyword
 			plan.setVisible(false);
@@ -91,8 +88,7 @@ public class CompositeFunctionType extends AbstractFunctionType<CompositeFunctio
 				}
 			}
 
-			planAccessor.save(plan);
-			function.setPlanId(plan.getId().toString());
+			function.setPlan(plan);
 		}
 	}
 
@@ -101,21 +97,13 @@ public class CompositeFunctionType extends AbstractFunctionType<CompositeFunctio
 		CompositeFunction copy = super.copyFunction(function);
 
 		// copy plan
-		if (copy.getPlanId() != null) {
-			Plan origPlan = planAccessor.get(copy.getPlanId());
-			if (origPlan != null) {
-				PlanType<Plan> planType = planTypeRegistry != null ? (PlanType<Plan>) planTypeRegistry.getPlanType(origPlan.getClass()) : null;
-				if (planType != null) {
-					Plan copyPlan = planType.clonePlan(origPlan, false);
-					Plan newPlan = planAccessor.save(copyPlan);
-
-					// assign a link to the new plan
-					copy.setPlanId(newPlan.getId().toString());
-				} else {
-					throw new FunctionTypeException("Unable to resolve plan type for class " + origPlan.getClass());
-				}
+		if (copy.getPlan() != null) {
+			// TODO: probably it is not required to copy plan here
+			PlanType<Plan> planType = planTypeRegistry != null ? (PlanType<Plan>) planTypeRegistry.getPlanType(copy.getPlan().getClass()) : null;
+			if (planType != null) {
+				copy.setPlan(planType.clonePlan(copy.getPlan(), false));
 			} else {
-				throw new FunctionTypeException("Plan not found: " + copy.getPlanId());
+				throw new FunctionTypeException("Unable to resolve plan type for class " + copy.getPlan().getClass());
 			}
 		}
 
