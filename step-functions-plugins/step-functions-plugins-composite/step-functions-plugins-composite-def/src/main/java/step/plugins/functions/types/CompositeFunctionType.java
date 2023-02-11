@@ -18,14 +18,10 @@
  ******************************************************************************/
 package step.plugins.functions.types;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import step.core.AbstractContext;
 import step.core.objectenricher.ObjectHookRegistry;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
-import step.core.plans.PlanType;
 import step.core.plans.PlanTypeRegistry;
 import step.core.plans.builder.PlanBuilder;
 import step.functions.type.AbstractFunctionType;
@@ -35,15 +31,20 @@ import step.grid.filemanager.FileVersionId;
 import step.planbuilder.BaseArtefacts;
 import step.plugins.functions.types.composite.ArtefactFunctionHandler;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class CompositeFunctionType extends AbstractFunctionType<CompositeFunction> {
 
 	protected FileVersionId handlerJar;
 
+	private final PlanAccessor planAccessor;
 	private final ObjectHookRegistry objectHookRegistry;
 	private final PlanTypeRegistry planTypeRegistry;
 
-	public CompositeFunctionType(ObjectHookRegistry objectHookRegistry, PlanTypeRegistry planTypeRegistry) {
+	public CompositeFunctionType(PlanAccessor planAccessor, ObjectHookRegistry objectHookRegistry, PlanTypeRegistry planTypeRegistry) {
 		super();
+		this.planAccessor = planAccessor;
 		this.objectHookRegistry = objectHookRegistry;
 		this.planTypeRegistry = planTypeRegistry;
 	}
@@ -72,7 +73,24 @@ public class CompositeFunctionType extends AbstractFunctionType<CompositeFunctio
 
 		// if existing plan is not explicitly selected for the new function, we create a new one
 		if (function.getPlan() == null) {
-			Plan plan = PlanBuilder.create().startBlock(BaseArtefacts.sequence()).endBlock().build();
+			Plan plan = null;
+
+			if (function.getPlanId() == null) {
+				// create a new blank plan
+				plan = PlanBuilder.create().startBlock(BaseArtefacts.sequence()).endBlock().build();
+			} else {
+				// TODO: maybe we need to change this behavior
+				// if we create a new composite with linked existing plan (for example, in step.controller.grid.services.FunctionServices)
+				// the plan id is passed in composite function - we need to store the copy of this plan inside the composite
+				plan = planAccessor.get(function.getPlanId());
+				if (plan == null) {
+					throw new SetupFunctionException("Plan not found by id: " + function.getPlanId());
+				}
+
+				// we only use planId field to pass the plan when create a new function, but we don't need to store the id
+				function.setPlanId(null);
+			}
+
 			// hide the plan of the composite keyword
 			plan.setVisible(false);
 
@@ -88,26 +106,14 @@ public class CompositeFunctionType extends AbstractFunctionType<CompositeFunctio
 				}
 			}
 
+			// save plan in composite function
 			function.setPlan(plan);
 		}
 	}
 
 	@Override
 	public CompositeFunction copyFunction(CompositeFunction function) throws FunctionTypeException {
-		CompositeFunction copy = super.copyFunction(function);
-
-		// copy plan
-		if (copy.getPlan() != null) {
-			// TODO: probably it is not required to copy plan here
-			PlanType<Plan> planType = planTypeRegistry != null ? (PlanType<Plan>) planTypeRegistry.getPlanType(copy.getPlan().getClass()) : null;
-			if (planType != null) {
-				copy.setPlan(planType.clonePlan(copy.getPlan(), false));
-			} else {
-				throw new FunctionTypeException("Unable to resolve plan type for class " + copy.getPlan().getClass());
-			}
-		}
-
-		return copy;
+		return super.copyFunction(function);
 	}
 
 	@Override
