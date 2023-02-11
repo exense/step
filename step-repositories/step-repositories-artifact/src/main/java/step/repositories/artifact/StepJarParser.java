@@ -48,9 +48,7 @@ public class StepJarParser {
             Function res;
             if (annotation.planReference() != null && !annotation.planReference().isBlank()) {
                 try {
-                    Plan plan = parsePlanFromPlanReference(m, annotation.planReference());
-                    plan = planAccessor.save(plan);
-                    res = CompositeFunctionUtils.createCompositeFunction(annotation, m, plan.getId().toString());
+                    res = CompositeFunctionUtils.createCompositeFunction(annotation, m, parsePlanFromPlanReference(m, annotation.planReference()));
                 } catch (Exception ex) {
                     throw new RuntimeException("Unable to parse plan from reference", ex);
                 }

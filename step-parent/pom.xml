@@ -58,7 +58,7 @@
 		<exense-commons.version>2023.2.9-63e4f33d84876105ae79796f</exense-commons.version>
 		<step-framework.version>2023.2.9-63e4f42684876105ae7a026a</step-framework.version>
 		<step-grid.version>2023.2.9-63e4f3bd84876105ae79b781</step-grid.version>
-		<step-api.version>2023.2.9-63e4f06584876105ae7816c1</step-api.version>
+		<step-api.version>1.2.0-SNAPSHOT</step-api.version>
 		<rtm.version>3.0.0</rtm.version>
 		<!-- external dependencies -->
 		<junit.version>4.13.1</junit.version>

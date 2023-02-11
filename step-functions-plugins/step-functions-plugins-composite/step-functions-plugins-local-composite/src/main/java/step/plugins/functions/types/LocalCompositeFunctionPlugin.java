@@ -71,8 +71,7 @@ public class LocalCompositeFunctionPlugin extends AbstractExecutionEnginePlugin 
 			// keywords with plan reference are not local functions but composite functions linked with plan
 			if (annotation.planReference() != null && !annotation.planReference().isBlank()) {
 				try {
-					Plan plan = planAccessor.save(parsePlanFromPlanReference(m, annotation.planReference()));
-					functionAccessor.save(CompositeFunctionUtils.createCompositeFunction(annotation, m, plan.getId().toString()));
+					functionAccessor.save(CompositeFunctionUtils.createCompositeFunction(annotation, m, parsePlanFromPlanReference(m, annotation.planReference())));
 				} catch (Exception ex) {
 					throw new RuntimeException("Unable to prepare local composite", ex);
 				}
