@@ -666,7 +666,6 @@ public class ExportManagerTest {
 		CompositeFunctionType compositeFunctionType = new CompositeFunctionType(planAccessor,null, null);
 		CompositeFunction function = compositeFunctionType.newFunction();
 		compositeFunctionType.setupFunction(function);
-		String compositePlanId = function.getPlan().getId().toHexString();
 		String functionName = UUID.randomUUID().toString();
 		function.addAttribute(AbstractOrganizableObject.NAME, functionName);
 		functionAccessor.save(function);
@@ -693,21 +692,18 @@ public class ExportManagerTest {
 			planAccessor.getAll().forEachRemaining(p-> nbPlans.incrementAndGet());
 			AtomicInteger nbFunctions = new AtomicInteger(0);
 			functionAccessor.getAll().forEachRemaining(f->nbFunctions.incrementAndGet());
-			assertEquals(2, nbPlans.intValue());
+			assertEquals(1, nbPlans.intValue());
 			assertEquals(1, nbFunctions.intValue());
 			
 			Plan actualPlan = planAccessor.get(plan.getId());
-			Plan actualCompositePlan = function.getPlan();
 			Function actualFunction = functionAccessor.get(function.getId());
 
 			if (overwrite) {
 				assertEquals(plan.getId(), actualPlan.getId());
 				assertEquals(plan.getRoot(), actualPlan.getRoot());
-				assertEquals(compositePlanId, actualCompositePlan.getId().toHexString());
 				assertEquals(function.getId(), actualFunction.getId());
 			} else {
 				assertNull(actualPlan);
-				assertNull(actualCompositePlan);
 				assertNull(actualFunction);
 			}
 		} finally {

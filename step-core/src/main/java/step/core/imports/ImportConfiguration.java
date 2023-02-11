@@ -31,7 +31,7 @@ public class ImportConfiguration {
 	private final boolean overwrite;
 
 	public ImportConfiguration(File file, ObjectEnricher objectEnricher, List<String> entitiesFilter,
-			boolean overwrite) {
+							   boolean overwrite) {
 		super();
 		this.file = file;
 		this.objectEnricher = objectEnricher;

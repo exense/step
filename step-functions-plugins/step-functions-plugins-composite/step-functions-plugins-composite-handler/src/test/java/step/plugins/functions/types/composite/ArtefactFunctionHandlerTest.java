@@ -18,16 +18,8 @@
  ******************************************************************************/
 package step.plugins.functions.types.composite;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import javax.json.Json;
-import javax.json.JsonObject;
-
 import org.junit.Assert;
 import org.junit.Test;
-
 import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.Return;
 import step.artefacts.Script;
@@ -38,6 +30,9 @@ import step.core.execution.ExecutionEngine;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
 import step.core.reports.ErrorType;
+import step.engine.plugins.FunctionPlugin;
+import step.functions.Function;
+import step.functions.accessor.FunctionAccessor;
 import step.functions.handler.AbstractFunctionHandler;
 import step.functions.handler.FunctionHandlerFactory;
 import step.functions.io.Input;
@@ -46,6 +41,13 @@ import step.grid.agent.tokenpool.TokenReservationSession;
 import step.grid.agent.tokenpool.TokenSession;
 import step.grid.contextbuilder.ApplicationContextBuilder;
 import step.planbuilder.BaseArtefacts;
+
+import javax.json.Json;
+import javax.json.JsonObject;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ArtefactFunctionHandlerTest {
 
@@ -57,7 +59,8 @@ public class ArtefactFunctionHandlerTest {
 		r.setOutput(new DynamicValue<>("{\"Result\":{\"dynamic\":true,\"expression\":\"input.Input1\"}}"));
 		
 		Plan compositePlan = PlanBuilder.create().startBlock(BaseArtefacts.sequence()).add(r).endBlock().build();
-		context.getPlanAccessor().save(compositePlan);
+		TestCompositeFunction compositeFunction = new TestCompositeFunction(compositePlan);
+		context.get(FunctionAccessor.class).save(compositeFunction);
 		
 		ReportNode parentNode = new ReportNode();
 		context.getReportNodeAccessor().save(parentNode);
@@ -66,7 +69,7 @@ public class ArtefactFunctionHandlerTest {
 		
 		Input<JsonObject> input = new Input<>();
 		input.setPayload(Json.createObjectBuilder().add("Input1", "InputValue1").build());
-		Map<String, String> properties = getInputProperties(compositePlan, parentNode);
+		Map<String, String> properties = getInputProperties(compositeFunction, parentNode);
 		input.setProperties(properties);
 		Output<JsonObject> output = handler.handle(input);
 		
@@ -79,7 +82,7 @@ public class ArtefactFunctionHandlerTest {
 	}
 
 	protected ExecutionContext newExecutionContext() {
-		return ExecutionEngine.builder().withPlugin(new BaseArtefactPlugin()).build().newExecutionContext();
+		return ExecutionEngine.builder().withPlugins(Arrays.asList(new BaseArtefactPlugin(), new FunctionPlugin())).build().newExecutionContext();
 	}
 
 	protected ArtefactFunctionHandler createArtefactFunctionHandler(ExecutionContext context) {
@@ -102,7 +105,8 @@ public class ArtefactFunctionHandlerTest {
 		script.setScript("output.setError('MyError'");
 		
 		Plan compositePlan = PlanBuilder.create().startBlock(BaseArtefacts.sequence()).add(script).endBlock().build();
-		context.getPlanAccessor().save(compositePlan);
+		TestCompositeFunction compositeFunction = new TestCompositeFunction(compositePlan);
+		context.get(FunctionAccessor.class).save(compositeFunction);
 		
 		ReportNode parentNode = new ReportNode();
 		context.getReportNodeAccessor().save(parentNode);
@@ -110,7 +114,7 @@ public class ArtefactFunctionHandlerTest {
 		ArtefactFunctionHandler handler = createArtefactFunctionHandler(context);
 		
 		Input<JsonObject> input = new Input<>();
-		Map<String, String> properties = getInputProperties(compositePlan, parentNode);
+		Map<String, String> properties = getInputProperties(compositeFunction, parentNode);
 		input.setProperties(properties);
 		Output<JsonObject> output = handler.handle(input);
 		
@@ -118,10 +122,27 @@ public class ArtefactFunctionHandlerTest {
 		Assert.assertEquals(ErrorType.TECHNICAL, output.getError().getType());
 	}
 
-	private Map<String, String> getInputProperties(Plan compositePlan, ReportNode parentNode) {
+	private Map<String, String> getInputProperties(Function compositeFunction, ReportNode parentNode) {
 		Map<String, String> properties = new HashMap<>();
-		properties.put(ArtefactFunctionHandler.COMPOSITE_FUNCTION_KEY, compositePlan.getId().toString());
+		properties.put(ArtefactFunctionHandler.COMPOSITE_FUNCTION_KEY, compositeFunction.getId().toString());
 		properties.put(AbstractFunctionHandler.PARENTREPORTID_KEY, parentNode.getId().toString());
 		return properties;
+	}
+
+	/**
+	 * Test class to emulate the composite function (the real CompositeFunction class is outside of this module)
+	 */
+	private static class TestCompositeFunction extends Function implements ArtefactFunction {
+
+		private final Plan plan;
+
+		public TestCompositeFunction(Plan plan) {
+			this.plan = plan;
+		}
+
+		@Override
+		public Plan getPlan() {
+			return plan;
+		}
 	}
 }
