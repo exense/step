@@ -209,11 +209,9 @@ public class FunctionPackageManager implements Closeable {
 
 	private FunctionPackage addOrUpdateFunctionPackage(FunctionPackage previousFunctionPackage,
 			FunctionPackage newFunctionPackage) throws Exception {
-		String packageLocation = newFunctionPackage.getPackageLocation();
-		if (packageLocation == null || packageLocation.isBlank()) {
+		if (newFunctionPackage.isEmpty()) {
 			throw new Exception("Empty package file");
 		}
-
 		// Auto detect the appropriate package handler
 		FunctionPackageHandler handler = getPackageHandler(newFunctionPackage);
 		
