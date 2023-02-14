@@ -98,11 +98,6 @@ public class FunctionPackage extends AbstractOrganizableObject implements Enrich
 		return executeLocally;
 	}
 
-	@JsonIgnore
-	public boolean isEmpty() {
-		return packageLocation==null || packageLocation.isBlank();
-	}
-
 	public void setExecuteLocally(boolean executeLocally) {
 		this.executeLocally = executeLocally;
 	}

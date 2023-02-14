@@ -98,9 +98,8 @@ public class FunctionPackageManager implements Closeable {
 	 * @throws Exception if any error occurs during loading
 	 */
 	public List<Function> getPackagePreview(FunctionPackage functionPackage) throws Exception {
-		if (functionPackage.isEmpty()) {
-			throw new Exception("Empty package file");
-		}
+		checkPackageValidity(functionPackage);
+
 		// Build the Functions with the corresponding handler
 		FunctionPackageHandler handler = getPackageHandler(functionPackage);
 		List<Function> functions = handler.buildFunctions(functionPackage, true, null);
@@ -117,6 +116,8 @@ public class FunctionPackageManager implements Closeable {
 	 */
 	public FunctionPackage addOrUpdateFunctionPackage(FunctionPackage newFunctionPackage)
 			throws Exception {
+		checkPackageValidity(newFunctionPackage);
+
 		FunctionPackage previousFunctionPackage = null;
 		if (newFunctionPackage.getId() != null) {
 			previousFunctionPackage = get(newFunctionPackage.getId());
@@ -133,9 +134,8 @@ public class FunctionPackageManager implements Closeable {
 	 * @return the updated {@link FunctionPackage}
 	 * @throws Exception if any error occurs during reloading
 	 */
-	public FunctionPackage reloadFunctionPackage(String functionPackageId)
-			throws Exception {
-		assert functionPackageId != null;
+	public FunctionPackage reloadFunctionPackage(String functionPackageId) throws Exception {
+
 		FunctionPackage functionPackage = getFunctionPackage(functionPackageId);
 		assert functionPackage != null;
 		return addOrUpdateFunctionPackage(functionPackage, functionPackage);
@@ -157,6 +157,14 @@ public class FunctionPackageManager implements Closeable {
 	public void close() throws IOException {
 		if (changeWatcher != null) {
 			changeWatcher.close();
+		}
+	}
+
+	private void checkPackageValidity(FunctionPackage functionPackage) throws Exception {
+		if (functionPackage.getPackageLocation()==null) {
+			throw new Exception("Invalid package location: resource was null");
+		} else if (functionPackage.getPackageLocation().isEmpty()) {
+			throw new Exception("Invalid package location: resource was empty");
 		}
 	}
 
@@ -196,6 +204,7 @@ public class FunctionPackageManager implements Closeable {
 	}
 
 	private List<Function> deleteFunctions(FunctionPackage previousFunctionPackage) {
+
 		List<Function> previousFunctions = getPackageFunctions(previousFunctionPackage);
 		previousFunctions.forEach(function -> {
 			try {
@@ -209,10 +218,9 @@ public class FunctionPackageManager implements Closeable {
 
 	private FunctionPackage addOrUpdateFunctionPackage(FunctionPackage previousFunctionPackage,
 			FunctionPackage newFunctionPackage) throws Exception {
-		if (newFunctionPackage.isEmpty()) {
-			throw new Exception("Empty package file");
-		}
-		// Auto detect the appropriate package handler
+		checkPackageValidity(newFunctionPackage);
+
+		// Auto-detect the appropriate package handler
 		FunctionPackageHandler handler = getPackageHandler(newFunctionPackage);
 		
 		// resolve the attribute values if necessary
