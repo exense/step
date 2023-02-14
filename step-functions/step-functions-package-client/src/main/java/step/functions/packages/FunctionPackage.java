@@ -3,7 +3,6 @@ package step.functions.packages;
 import java.util.List;
 import java.util.Map;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.bson.types.ObjectId;
 
 import step.core.accessors.AbstractOrganizableObject;
