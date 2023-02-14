@@ -177,18 +177,12 @@ public class FunctionPackageManager implements Closeable {
 
 	private void cleanupObsoleteResource(FunctionPackage previousFunctionPackage, FunctionPackage newFunctionPackage) {
 		if (previousFunctionPackage != null && newFunctionPackage != null) {
-
-			String newResourceId = getResourceId(newFunctionPackage);
-			String newResourceLibId = getLibraryResourceId(newFunctionPackage);
-
 			// cleanup main resource
-			if (previousFunctionPackage.getPackageLocation() != null &&
-					!previousFunctionPackage.getPackageLocation().isBlank()) {
-
+			if (previousFunctionPackage.getPackageLocation() != null
+					&& newFunctionPackage.getPackageLocation() != null) {
 				String previousResourceId = getResourceId(previousFunctionPackage);
-				if (previousResourceId != null &&
-						!previousResourceId.equals(newResourceId) &&
-						!previousResourceId.equals(newResourceLibId)) {
+				String newResourceId = getResourceId(newFunctionPackage);
+				if (previousResourceId != null && !previousResourceId.equals(newResourceId)) {
 					if (resourceManager.resourceExists(previousResourceId)) {
 						resourceManager.deleteResource(previousResourceId);
 					}
@@ -196,15 +190,13 @@ public class FunctionPackageManager implements Closeable {
 			}
 
 			// cleanup library resource
-			if (previousFunctionPackage.getPackageLibrariesLocation() != null &&
-					!previousFunctionPackage.getPackageLibrariesLocation().isBlank()) {
-
-				String previousResourceLibId = getLibraryResourceId(previousFunctionPackage);
-				if (previousResourceLibId != null &&
-						!previousResourceLibId.equals(newResourceId) &&
-						!previousResourceLibId.equals(newResourceLibId)) {
-					if (resourceManager.resourceExists(previousResourceLibId)) {
-						resourceManager.deleteResource(previousResourceLibId);
+			if (previousFunctionPackage.getPackageLibrariesLocation() != null
+					&& newFunctionPackage.getPackageLibrariesLocation() != null) {
+				String previousResourceId = getLibraryResourceId(previousFunctionPackage);
+				String newResourceId = getLibraryResourceId(newFunctionPackage);
+				if (previousResourceId != null && !previousResourceId.equals(newResourceId)) {
+					if (resourceManager.resourceExists(previousResourceId)) {
+						resourceManager.deleteResource(previousResourceId);
 					}
 				}
 			}
