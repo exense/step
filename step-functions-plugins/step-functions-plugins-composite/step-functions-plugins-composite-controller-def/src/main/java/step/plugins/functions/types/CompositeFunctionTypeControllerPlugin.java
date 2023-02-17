@@ -20,6 +20,7 @@ package step.plugins.functions.types;
 
 import step.core.GlobalContext;
 import step.core.objectenricher.ObjectHookRegistry;
+import step.core.plans.PlanPlugin;
 import step.core.plans.PlanTypeRegistry;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
@@ -29,7 +30,7 @@ import step.functions.editors.FunctionEditorRegistry;
 import step.functions.plugin.FunctionControllerPlugin;
 import step.functions.type.FunctionTypeRegistry;
 
-@Plugin(dependencies= {FunctionControllerPlugin.class})
+@Plugin(dependencies= {FunctionControllerPlugin.class, PlanPlugin.class})
 public class CompositeFunctionTypeControllerPlugin extends AbstractControllerPlugin {
 
 	@Override
