@@ -76,10 +76,11 @@
 						<phase>install</phase>
 						<configuration>
 							<url>http://localhost:4201</url>
-							<groupId>ch.exense.step.tests</groupId>
-							<artifactId>step-testing-composite</artifactId>
-							<artifactVersion>2023.1.23-63ce17a8fd5f6139bc330c80</artifactVersion>
-							<description>step-testing-e2e-client-tests-3.13.0-tests</description>
+							<groupId>ch.exense.step</groupId>
+							<artifactId>step-functions-plugins-java-handler-test</artifactId>
+							<artifactVersion>0.0.0-20230218.123842-1</artifactVersion>
+							<artifactClassifier>jar-with-dependencies</artifactClassifier>
+							<description>iegorov-plugin-test</description>
 							<userId>me</userId>
 							<customParameters>
 								<env>PROD</env>

@@ -1,6 +1,13 @@
 package step.plugins.maven;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.core5.http.ParseException;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
+import org.apache.hc.core5.http.io.entity.HttpEntities;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -9,9 +16,6 @@ import org.apache.maven.plugins.annotations.Parameter;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -30,6 +34,9 @@ public class StepFunctionsDeployMojo extends AbstractMojo {
 	@Parameter(property = "step-functions-deploy.artifact-version", required = true)
 	private String artifactVersion;
 
+	@Parameter(property = "step-functions-deploy.artifact-classifier", required = false)
+	private String artifactClassifier;
+
 	@Parameter(property = "step-functions-deploy.description", required = false, defaultValue = "")
 	private String description;
 
@@ -41,10 +48,12 @@ public class StepFunctionsDeployMojo extends AbstractMojo {
 
 	// TODO: security token?
 
-	private final HttpClient httpClient = HttpClient.newHttpClient();
+	private final CloseableHttpClient httpClient = HttpClients.createDefault();
 
 	private final ObjectMapper objectMapper = new ObjectMapper();
 
+	public StepFunctionsDeployMojo() {
+	}
 
 	public void execute() throws MojoExecutionException {
 		try {
@@ -64,6 +73,9 @@ public class StepFunctionsDeployMojo extends AbstractMojo {
 			repoParams.put("groupId", groupId);
 			repoParams.put("artifactId", artifactId);
 			repoParams.put("version", artifactVersion);
+			if (artifactClassifier != null && !artifactClassifier.isEmpty()) {
+				repoParams.put("classifier", artifactClassifier);
+			}
 
 			repoRef.setRepositoryParameters(repoParams);
 
@@ -72,20 +84,22 @@ public class StepFunctionsDeployMojo extends AbstractMojo {
 			String bodyString = objectMapper.writeValueAsString(bodyDto);
 			getLog().info("Request body: " + bodyString);
 
-			HttpRequest request = HttpRequest.newBuilder()
-					.uri(new URI(fullUri))
-					.header("Content-Type", "application/json")
-					.POST(HttpRequest.BodyPublishers.ofString(bodyString))
-					.build();
+			// TODO: cookie?
+			HttpPost post = new HttpPost(new URI(fullUri));
+			post.addHeader("Content-Type", "application/json");
+//			post.addHeader("Cookie", "sessionid=node0bgesd8tlzwkijv4lkf9q2acn0.node0");
+			post.setEntity(HttpEntities.create(bodyString));
 
-			HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-			if (response.statusCode() != 200) {
-				throw new MojoExecutionException("Bad response status from step: " + response.statusCode());
+			try (CloseableHttpResponse response = httpClient.execute(post)){
+				getLog().info("Response received: " + response.getCode());
+				if (response.getCode() != 200) {
+					throw new MojoExecutionException("Bad response status from step: " + response.getCode());
+				}
+
+				getLog().info("Execution has been registered in step: " + EntityUtils.toString(response.getEntity()));
 			}
 
-			getLog().info("Execution has been registered in step: " + response.body());
-
-		} catch (URISyntaxException | IOException | InterruptedException e) {
+		} catch (URISyntaxException | IOException | ParseException e) {
 			getLog().error("Unable to deploy the package to step", e);
 			throw new MojoExecutionException("Unable to deploy the package to step", e);
 		}
@@ -98,5 +112,69 @@ public class StepFunctionsDeployMojo extends AbstractMojo {
 		}
 		fullUri += "rest/executions/start";
 		return fullUri;
+	}
+
+	public String getUrl() {
+		return url;
+	}
+
+	public void setUrl(String url) {
+		this.url = url;
+	}
+
+	public String getGroupId() {
+		return groupId;
+	}
+
+	public void setGroupId(String groupId) {
+		this.groupId = groupId;
+	}
+
+	public String getArtifactId() {
+		return artifactId;
+	}
+
+	public void setArtifactId(String artifactId) {
+		this.artifactId = artifactId;
+	}
+
+	public String getArtifactVersion() {
+		return artifactVersion;
+	}
+
+	public void setArtifactVersion(String artifactVersion) {
+		this.artifactVersion = artifactVersion;
+	}
+
+	public String getArtifactClassifier() {
+		return artifactClassifier;
+	}
+
+	public void setArtifactClassifier(String artifactClassifier) {
+		this.artifactClassifier = artifactClassifier;
+	}
+
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
+	public String getUserId() {
+		return userId;
+	}
+
+	public void setUserId(String userId) {
+		this.userId = userId;
+	}
+
+	public Map<String, String> getCustomParameters() {
+		return customParameters;
+	}
+
+	public void setCustomParameters(Map<String, String> customParameters) {
+		this.customParameters = customParameters;
 	}
 }
