@@ -33,7 +33,8 @@
 		<module>step-functions-plugins-node</module>
 		<module>step-functions-plugins-jmeter</module>
 		<module>step-functions-plugins-composite</module>
-	</modules>
+        <module>step-functions-deploy-maven-plugin</module>
+    </modules>
 	
 	<dependencies>
 	</dependencies>
