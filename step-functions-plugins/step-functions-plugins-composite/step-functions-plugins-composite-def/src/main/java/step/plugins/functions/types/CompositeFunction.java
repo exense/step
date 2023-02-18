@@ -18,31 +18,17 @@
  ******************************************************************************/
 package step.plugins.functions.types;
 
-import step.core.entities.EntityManager;
-import step.core.entities.EntityReference;
 import step.core.plans.Plan;
 import step.functions.Function;
 import step.plugins.functions.types.composite.ArtefactFunction;
 
 public class CompositeFunction extends Function implements ArtefactFunction {
 
-	// TODO: remove plan id?
-	protected String planId;
-
 	protected Plan plan;
 	
 	public CompositeFunction() {
 		super();
 		executeLocally = true;
-	}
-
-	@EntityReference(type=EntityManager.plans)
-	public String getPlanId() {
-		return planId;
-	}
-
-	public void setPlanId(String planId) {
-		this.planId = planId;
 	}
 
 	public Plan getPlan() {

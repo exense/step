@@ -21,8 +21,6 @@ package step.plugins.functions.types;
 import step.core.AbstractContext;
 import step.core.objectenricher.ObjectHookRegistry;
 import step.core.plans.Plan;
-import step.core.plans.PlanAccessor;
-import step.core.plans.PlanTypeRegistry;
 import step.core.plans.builder.PlanBuilder;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionTypeException;
@@ -38,15 +36,11 @@ public class CompositeFunctionType extends AbstractFunctionType<CompositeFunctio
 
 	protected FileVersionId handlerJar;
 
-	private final PlanAccessor planAccessor;
 	private final ObjectHookRegistry objectHookRegistry;
-	private final PlanTypeRegistry planTypeRegistry;
 
-	public CompositeFunctionType(PlanAccessor planAccessor, ObjectHookRegistry objectHookRegistry, PlanTypeRegistry planTypeRegistry) {
+	public CompositeFunctionType(ObjectHookRegistry objectHookRegistry) {
 		super();
-		this.planAccessor = planAccessor;
 		this.objectHookRegistry = objectHookRegistry;
-		this.planTypeRegistry = planTypeRegistry;
 	}
 
 	@Override
@@ -71,27 +65,9 @@ public class CompositeFunctionType extends AbstractFunctionType<CompositeFunctio
 	public void setupFunction(CompositeFunction function) throws SetupFunctionException {
 		super.setupFunction(function);
 
-		// if existing plan is not explicitly selected for the new function, we create a new one
+		// for the new function we need to create a default (empty) plan
 		if (function.getPlan() == null) {
-			Plan plan = null;
-
-			if (function.getPlanId() == null) {
-				// create a new blank plan
-				plan = PlanBuilder.create().startBlock(BaseArtefacts.sequence()).endBlock().build();
-			} else {
-				// TODO: maybe we need to change this behavior
-				// if we create a new composite with linked existing plan (for example, in step.controller.grid.services.FunctionServices)
-				// the plan id is passed in composite function - we need to store the copy of this plan inside the composite
-				plan = planAccessor.get(function.getPlanId());
-				if (plan == null) {
-					throw new SetupFunctionException("Plan not found by id: " + function.getPlanId());
-				}
-
-				// we only use planId field to pass the plan when create a new function, but we don't need to store the id
-				function.setPlanId(null);
-			}
-
-			// hide the plan of the composite keyword
+			Plan plan = PlanBuilder.create().startBlock(BaseArtefacts.sequence()).endBlock().build();;
 			plan.setVisible(false);
 
 			// add same context attributes to plan
@@ -100,6 +76,8 @@ public class CompositeFunctionType extends AbstractFunctionType<CompositeFunctio
 					AbstractContext context = new AbstractContext() {
 					};
 					objectHookRegistry.rebuildContext(context, function);
+
+					// TODO: do we need to call objectEnricher?
 					objectHookRegistry.getObjectEnricher(context).accept(plan);
 				} catch (Exception e) {
 					throw new SetupFunctionException("Error while rebuilding context for function " + function, e);

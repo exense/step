@@ -9,7 +9,10 @@ import step.functions.packages.FunctionPackagePlugin;
 import step.migration.MigrationContext;
 import step.migration.MigrationTask;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Stream;
 
 public class PlansInCompositeFunctionsMigrationTask extends MigrationTask {
@@ -26,6 +29,8 @@ public class PlansInCompositeFunctionsMigrationTask extends MigrationTask {
 
 	@Override
 	public void runUpgradeScript() {
+		Set<String> planIds = new HashSet<>();
+
 		// store plans linked with composite functions in functions collection instead of plans collection
 		functions
 				.find(Filters.equals("type", "step.plugins.functions.types.CompositeFunction"), null, null, null, 0)
@@ -37,13 +42,11 @@ public class PlansInCompositeFunctionsMigrationTask extends MigrationTask {
 						if (plan == null) {
 							logger.error("Plan not found by id: {}. Skipping...", planId);
 						} else {
+							planIds.add(planId);
+
 							f.remove("planId");
 							f.put("plan", plan);
 							functions.save(f);
-
-							// TODO: decide if we can remove the old plan
-//							plans.remove(Filters.id(plan.getId()));
-
 							logger.info("The plan has been migrated for composite function {}", f.getId().toString());
 						}
 
@@ -51,6 +54,22 @@ public class PlansInCompositeFunctionsMigrationTask extends MigrationTask {
 						logger.info("Composite function {} is already migrated. Skipping...", f.getId().toString());
 					}
 				});
+
+		logger.info("Removing {} old plans linked with composite functions...", planIds.size());
+		int plansCount = 0;
+		for (String planId : planIds) {
+			Document plan = this.plans.find(Filters.id(planId), null, null, null, 0).findFirst().orElse(null);
+			if (plan == null) {
+				logger.error("Plan not found by id: {}. Skipping...", planId);
+			} else {
+				if (!plan.getBoolean("visible")) {
+					plans.remove(Filters.id(plan.getId()));
+					logger.info("The plan {} has been removed", plan.getId().toString());
+					plansCount++;
+				}
+			}
+		}
+		logger.info("{} plans have been removed", plansCount);
 	}
 
 	@Override

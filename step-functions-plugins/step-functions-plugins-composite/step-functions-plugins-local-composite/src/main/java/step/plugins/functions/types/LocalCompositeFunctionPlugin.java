@@ -22,7 +22,6 @@ import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionEngineContext;
 import step.core.execution.OperationMode;
 import step.core.objectenricher.ObjectHookRegistry;
-import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
 import step.core.plugins.Plugin;
 import step.core.scanner.CachedAnnotationScanner;
@@ -31,10 +30,8 @@ import step.engine.plugins.FunctionPlugin;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.type.FunctionTypeRegistry;
 import step.handlers.javahandler.Keyword;
-import step.plans.nl.RootArtefactType;
 import step.plans.nl.parser.PlanParser;
 
-import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.util.Set;
 
@@ -54,9 +51,7 @@ public class LocalCompositeFunctionPlugin extends AbstractExecutionEnginePlugin 
 
 			functionTypeRegistry.registerFunctionType(
 					new CompositeFunctionType(
-							planAccessor,
-							context.inheritFromParentOrComputeIfAbsent(parentContext, ObjectHookRegistry.class, objectHookRegistryClass -> new ObjectHookRegistry()),
-							null
+							context.inheritFromParentOrComputeIfAbsent(parentContext, ObjectHookRegistry.class, objectHookRegistryClass -> new ObjectHookRegistry())
 					)
 			);
 			saveLocalFunctions();
