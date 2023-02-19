@@ -31,7 +31,7 @@ public class StepFunctionsDeployMojo extends AbstractMojo {
 	@Parameter(property = "step-functions-deploy.artifact-id", required = true)
 	private String artifactId;
 
-	@Parameter(property = "step-functions-deploy.artifact-version", required = true)
+	@Parameter(property = "step-functions-deploy.artifact-version", required = true, defaultValue = "${project.version}")
 	private String artifactVersion;
 
 	@Parameter(property = "step-functions-deploy.artifact-classifier", required = false)
@@ -46,6 +46,12 @@ public class StepFunctionsDeployMojo extends AbstractMojo {
 	@Parameter(property = "step-functions-deploy.custom-parameters", required = false)
 	private Map<String, String> customParameters;
 
+	@Parameter(defaultValue = "${project.build.finalName}", readonly = true)
+	private String buildFinalName;
+
+	@Parameter(defaultValue = "${project.version}", readonly = true)
+	private String projectVersion;
+
 	// TODO: security token?
 
 	private final CloseableHttpClient httpClient = HttpClients.createDefault();
@@ -56,6 +62,7 @@ public class StepFunctionsDeployMojo extends AbstractMojo {
 	}
 
 	public void execute() throws MojoExecutionException {
+		getLog().info("Deploy step functions for build " + buildFinalName + " and project version " + projectVersion);
 		try {
 			String fullUri = prepareFullUri();
 			getLog().info("Sending the package to " + fullUri);
@@ -176,5 +183,21 @@ public class StepFunctionsDeployMojo extends AbstractMojo {
 
 	public void setCustomParameters(Map<String, String> customParameters) {
 		this.customParameters = customParameters;
+	}
+
+	public String getBuildFinalName() {
+		return buildFinalName;
+	}
+
+	public void setBuildFinalName(String buildFinalName) {
+		this.buildFinalName = buildFinalName;
+	}
+
+	public String getProjectVersion() {
+		return projectVersion;
+	}
+
+	public void setProjectVersion(String projectVersion) {
+		this.projectVersion = projectVersion;
 	}
 }
