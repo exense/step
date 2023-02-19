@@ -76,9 +76,9 @@
 						<phase>deploy</phase>
 						<configuration>
 							<url>http://localhost:4201</url>
-							<groupId>ch.exense.step</groupId>
-							<artifactId>step-functions-plugins-java-handler-test</artifactId>
-							<artifactVersion>0.0.0-SNAPSHOT</artifactVersion>
+<!--							<groupId>ch.exense.step</groupId>-->
+<!--							<artifactId>step-functions-plugins-java-handler-test</artifactId>-->
+<!--							<artifactVersion>0.0.0-SNAPSHOT</artifactVersion>-->
 							<artifactClassifier>jar-with-dependencies</artifactClassifier>
 							<description>iegorov-plugin-test</description>
 							<userId>admin</userId>

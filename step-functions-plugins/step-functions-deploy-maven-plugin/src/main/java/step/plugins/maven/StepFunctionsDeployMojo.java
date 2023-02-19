@@ -25,10 +25,10 @@ public class StepFunctionsDeployMojo extends AbstractMojo {
 	@Parameter(property = "step-functions-deploy.url", required = true)
 	private String url;
 
-	@Parameter(property = "step-functions-deploy.group-id", required = true)
+	@Parameter(property = "step-functions-deploy.group-id", required = true, defaultValue = "${project.groupId}")
 	private String groupId;
 
-	@Parameter(property = "step-functions-deploy.artifact-id", required = true)
+	@Parameter(property = "step-functions-deploy.artifact-id", required = true, defaultValue = "${project.artifactId}")
 	private String artifactId;
 
 	@Parameter(property = "step-functions-deploy.artifact-version", required = true, defaultValue = "${project.version}")
@@ -36,6 +36,9 @@ public class StepFunctionsDeployMojo extends AbstractMojo {
 
 	@Parameter(property = "step-functions-deploy.artifact-classifier", required = false)
 	private String artifactClassifier;
+
+	@Parameter(property = "step-functions-deploy.step-maven-settings", required = false)
+	private String stepMavenSettings;
 
 	@Parameter(property = "step-functions-deploy.description", required = false, defaultValue = "")
 	private String description;
@@ -82,6 +85,9 @@ public class StepFunctionsDeployMojo extends AbstractMojo {
 			repoParams.put("version", artifactVersion);
 			if (artifactClassifier != null && !artifactClassifier.isEmpty()) {
 				repoParams.put("classifier", artifactClassifier);
+			}
+			if(stepMavenSettings != null && !stepMavenSettings.isEmpty()){
+				repoParams.put("mavenSettings", stepMavenSettings);
 			}
 
 			repoRef.setRepositoryParameters(repoParams);
@@ -199,5 +205,13 @@ public class StepFunctionsDeployMojo extends AbstractMojo {
 
 	public void setProjectVersion(String projectVersion) {
 		this.projectVersion = projectVersion;
+	}
+
+	public String getStepMavenSettings() {
+		return stepMavenSettings;
+	}
+
+	public void setStepMavenSettings(String stepMavenSettings) {
+		this.stepMavenSettings = stepMavenSettings;
 	}
 }
