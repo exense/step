@@ -90,7 +90,7 @@
 							</customParameters>
 						</configuration>
 						<goals>
-							<goal>step-functions-deploy</goal>
+							<goal>run-execution-bundle</goal>
 						</goals>
 					</execution>
 				</executions>

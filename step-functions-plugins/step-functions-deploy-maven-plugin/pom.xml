@@ -55,6 +55,13 @@
             <version>${jackson.version}</version>
         </dependency>
 
+        <!-- For polling -->
+        <dependency>
+            <groupId>ch.exense.commons</groupId>
+            <artifactId>exense-basic-commons</artifactId>
+            <version>${exense-commons.version}</version>
+        </dependency>
+
     </dependencies>
 
     <build>

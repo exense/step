@@ -10,7 +10,7 @@ public class StepFunctionsDeployMojoTest {
 	@Test
 	@Ignore
 	public void testExecute() throws MojoExecutionException {
-		StepFunctionsDeployMojo mojo = new StepFunctionsDeployMojo();
+		RunExecutionBundleMojo mojo = new RunExecutionBundleMojo();
 		mojo.setUrl("http://localhost:4201");
 		mojo.setArtifactId("step-functions-plugins-java-handler-test");
 		mojo.setArtifactVersion("0.0.0-20230218.123842-1");
