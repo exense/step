@@ -1,18 +1,17 @@
 package step.plugins.maven;
 
 import ch.exense.commons.io.Poller;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import org.apache.hc.client5.http.classic.methods.HttpGet;
-import org.apache.hc.client5.http.classic.methods.HttpPost;
-import org.apache.hc.client5.http.impl.classic.BasicHttpClientResponseHandler;
-import org.apache.hc.core5.http.io.entity.HttpEntities;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import step.client.executions.RemoteExecutionManager;
+import step.core.artefacts.reports.ReportNodeStatus;
+import step.core.execution.model.Execution;
+import step.core.execution.model.ExecutionMode;
+import step.core.execution.model.ExecutionParameters;
+import step.core.execution.model.ExecutionStatus;
+import step.core.repositories.RepositoryObjectReference;
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -61,73 +60,54 @@ public class RunExecutionBundleMojo extends AbstractStepPluginMojo {
 	}
 
 	public void execute() throws MojoExecutionException {
-		getLog().info("Run step executions for build " + getBuildFinalName() + " and project version " + getProjectVersion());
+		getLog().info("Run step execution for deployed module " + getBuildFinalName() + " (version=" + getProjectVersion() + ")");
 
-		HttpPost post = prepareExecutionRunRequest();
+		String executionId = null;
+		try (RemoteExecutionManager remoteExecutionManager = new RemoteExecutionManager(getControllerCredentials())) {
+			ExecutionParameters executionParameters = new ExecutionParameters();
+			executionParameters.setMode(ExecutionMode.RUN);
+			executionParameters.setUserID(getUserId());
+			executionParameters.setDescription(getDescription());
+			executionParameters.setCustomParameters(getCustomParameters());
+			executionParameters.setRepositoryObject(new RepositoryObjectReference("Artifact", prepareRepositoryParameters()));
 
-		String executionId;
-		try {
-			executionId = httpClient.execute(post, new BasicHttpClientResponseHandler());
+			executionId = remoteExecutionManager.execute(executionParameters);
 			getLog().info("Execution has been registered in step: " + executionId);
-		} catch (IOException ex) {
-			throw new MojoExecutionException("Bad response from step: " + ex.getMessage(), ex);
-		}
 
-		if (getCheckExecutionResult()) {
-			checkExecutionRunResult(executionId);
+			if (getCheckExecutionResult()) {
+				checkExecutionRunResult(remoteExecutionManager, executionId);
+			}
+		} catch (Exception ex) {
+			logAndThrow("Unable to run execution in step", ex);
 		}
 	}
 
-	private void checkExecutionRunResult(String executionId) throws MojoExecutionException {
+	private void checkExecutionRunResult(RemoteExecutionManager remoteExecutionManager, String executionId) throws MojoExecutionException {
 		getLog().info("Waiting for execution result from step...");
 		try {
 			Poller.waitFor(() -> {
 				try {
-					HttpGet request = prepareExecutionResultCheckRequest(executionId);
-					String response = httpClient.execute(request, new BasicHttpClientResponseHandler());
-					ExecutionStatusResponseDto responseBody = objectMapper.readValue(response, ExecutionStatusResponseDto.class);
+					Execution execution = remoteExecutionManager.getFuture(executionId).getExecution();
 
-					if (!Objects.equals(responseBody.getStatus(), ExecutionStatusResponseDto.EXECUTION_FINAL_STATUS)) {
-						getLog().info("Execution " + executionId + " is still in status " + responseBody.getStatus() + "...");
+					if (!Objects.equals(execution.getStatus(), ExecutionStatus.ENDED)) {
+						getLog().info("Execution " + executionId + " is still in status " + execution.getStatus() + "...");
 						return false;
-					} else if (!Objects.equals(responseBody.getResult(), ExecutionStatusResponseDto.REPORT_NODE_OK_STATUS)) {
-						throw new MojoExecutionException("The execution result is NOT OK for execution " + executionId + ". Final status is " + responseBody.getResult());
+					} else if (!Objects.equals(execution.getResult(), ReportNodeStatus.PASSED)) {
+						throw new MojoExecutionException("The execution result is NOT OK for execution " + executionId + ". Final status is " + execution.getResult());
 					} else {
-						getLog().info("The execution result is OK. Final status is " + responseBody.getResult());
+						getLog().info("The execution result is OK. Final status is " + execution.getResult());
 						return true;
 					}
-
 				} catch (MojoExecutionException e) {
 					throw new MojoExceptionWrapper("Unable to check the execution status", e);
-				} catch (IOException e) {
-					String errMess = "Unable to get execution result from step";
-					getLog().error(errMess, e);
-					throw new MojoExceptionWrapper(errMess, new MojoExecutionException(errMess, e));
 				}
 			}, getExecutionResultTimeoutS() * 1000, getExecutionResultPollPeriodS() * 1000);
 		} catch (TimeoutException | InterruptedException ex) {
-			String errMess = "The success execution result is not received from step in " + getExecutionResultTimeoutS() + "seconds";
-			getLog().error(errMess, ex);
-			throw new MojoExecutionException(errMess, ex);
-		} catch (MojoExceptionWrapper ex) {
-			throw ex.getCause();
+			logAndThrow("The success execution result is not received from step in " + getExecutionResultTimeoutS() + "seconds", ex);
 		}
 	}
 
-	protected HttpPost prepareExecutionRunRequest() throws MojoExecutionException {
-		String fullUri = prepareExecutionRunUri();
-
-		getLog().info("Calling the execution run in step: " + fullUri);
-
-		ExecutionParametersDto bodyDto = new ExecutionParametersDto();
-		bodyDto.setMode("RUN");
-		bodyDto.setUserID(getUserId());
-		bodyDto.setDescription(getDescription());
-		bodyDto.setCustomParameters(getCustomParameters());
-
-		RepositoryObjectReferenceDto repoRef = new RepositoryObjectReferenceDto();
-		repoRef.setRepositoryID("Artifact");
-
+	private HashMap<String, String> prepareRepositoryParameters() {
 		HashMap<String, String> repoParams = new HashMap<>();
 		repoParams.put("groupId", getGroupId());
 		repoParams.put("artifactId", getArtifactId());
@@ -138,68 +118,7 @@ public class RunExecutionBundleMojo extends AbstractStepPluginMojo {
 		if (getStepMavenSettings() != null && !getStepMavenSettings().isEmpty()) {
 			repoParams.put("mavenSettings", getStepMavenSettings());
 		}
-
-		repoRef.setRepositoryParameters(repoParams);
-
-		bodyDto.setRepositoryObject(repoRef);
-
-		String bodyString = null;
-		try {
-			bodyString = objectMapper.writeValueAsString(bodyDto);
-		} catch (JsonProcessingException e) {
-			String errMess = "Unable to prepare request body";
-			getLog().error(errMess, e);
-			throw new MojoExecutionException(errMess, e);
-		}
-		getLog().info("Request body: " + bodyString);
-
-		HttpPost post = null;
-		try {
-			post = new HttpPost(new URI(fullUri));
-		} catch (URISyntaxException e) {
-			getLog().error("Bad URI", e);
-			throw new MojoExecutionException("Unable execute bundle in step", e);
-		}
-
-		post.addHeader("Content-Type", "application/json");
-		if (getAuthToken() != null && !getAuthToken().isEmpty()) {
-			post.addHeader("Authorization", "Bearer " + getAuthToken());
-		}
-		post.setEntity(HttpEntities.create(bodyString));
-		return post;
-	}
-
-	protected HttpGet prepareExecutionResultCheckRequest(String executionId) throws MojoExecutionException {
-		HttpGet get = null;
-		try {
-			get = new HttpGet(new URI(prepareExecutionStatusUri(executionId)));
-		} catch (URISyntaxException e) {
-			getLog().error("Bad URI", e);
-			throw new MojoExecutionException("Unable to run execution bundle in step", e);
-		}
-		if (getAuthToken() != null && !getAuthToken().isEmpty()) {
-			get.addHeader("Authorization", "Bearer " + getAuthToken());
-		}
-
-		return get;
-	}
-
-	protected String prepareExecutionRunUri() {
-		String fullUri = getUrl();
-		if(!getUrl().endsWith("/")){
-			fullUri += "/";
-		}
-		fullUri += "rest/executions/start";
-		return fullUri;
-	}
-
-	protected String prepareExecutionStatusUri(String executionId) {
-		String fullUri = getUrl();
-		if(!getUrl().endsWith("/")){
-			fullUri += "/";
-		}
-		fullUri += "rest/executions/" + executionId;
-		return fullUri;
+		return repoParams;
 	}
 
 

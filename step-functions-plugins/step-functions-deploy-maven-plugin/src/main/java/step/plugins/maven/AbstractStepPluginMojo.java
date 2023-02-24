@@ -6,6 +6,7 @@ import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Parameter;
+import step.client.credentials.ControllerCredentials;
 
 public abstract class AbstractStepPluginMojo extends AbstractMojo {
 	protected final CloseableHttpClient httpClient = HttpClients.createDefault();
@@ -58,5 +59,9 @@ public abstract class AbstractStepPluginMojo extends AbstractMojo {
 	protected void logAndThrow(String errorText, Throwable e) throws MojoExecutionException {
 		getLog().error(errorText, e);
 		throw new MojoExecutionException(errorText, e);
+	}
+
+	protected ControllerCredentials getControllerCredentials(){
+		return new ControllerCredentials(getUrl(), getAuthToken());
 	}
 }

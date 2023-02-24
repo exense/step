@@ -70,6 +70,13 @@
             <version>${exense-commons.version}</version>
         </dependency>
 
+        <!-- Step remote clients -->
+        <dependency>
+            <groupId>ch.exense.step</groupId>
+            <artifactId>step-controller-remote-client</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
     </dependencies>
 
     <build>
