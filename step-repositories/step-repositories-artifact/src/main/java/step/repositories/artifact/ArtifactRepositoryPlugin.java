@@ -15,15 +15,18 @@ public class ArtifactRepositoryPlugin extends AbstractControllerPlugin {
 
     private static final Logger logger = LoggerFactory.getLogger(ArtifactRepositoryPlugin.class);
 
-    public static final String REPO_ID = "Artifact";
+    public static final String MAVEN_REPO_ID = "Artifact";
+    public static final String RESOURCE_REPO_ID = "ResourceArtifact";
 
     @Override
     public void serverStart(GlobalContext context) throws Exception {
         PlanAccessor planAccessor = context.getPlanAccessor();
         ControllerSettingAccessor controllerSettingAccessor = context.require(ControllerSettingAccessor.class);
         Configuration configuration = context.getConfiguration();
-        ArtifactRepository repository = new ArtifactRepository(planAccessor, controllerSettingAccessor, configuration);
-        context.getRepositoryObjectManager().registerRepository(REPO_ID, repository);
+        MavenArtifactRepository mavenRepository = new MavenArtifactRepository(planAccessor, controllerSettingAccessor, configuration);
+        ResourceArtifactRepository resourceRepository = new ResourceArtifactRepository(planAccessor, context.getResourceManager());
+        context.getRepositoryObjectManager().registerRepository(MAVEN_REPO_ID, mavenRepository);
+        context.getRepositoryObjectManager().registerRepository(RESOURCE_REPO_ID, resourceRepository);
         super.serverStart(context);
     }
 }

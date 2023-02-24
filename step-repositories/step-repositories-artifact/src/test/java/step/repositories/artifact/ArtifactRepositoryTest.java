@@ -22,9 +22,9 @@ import static org.junit.Assert.*;
 
 public class ArtifactRepositoryTest {
 
-    private static final Map<String, String> REPOSITORY_PARAMETERS = Map.of(ArtifactRepository.PARAM_GROUP_ID, "ch.exense.step",
-            ArtifactRepository.PARAM_ARTIFACT_ID, "step-junit", ArtifactRepository.PARAM_VERSION, "0.0.0",
-            ArtifactRepository.PARAM_CLASSIFIER, "tests");
+    private static final Map<String, String> REPOSITORY_PARAMETERS = Map.of(MavenArtifactRepository.PARAM_GROUP_ID, "ch.exense.step",
+            AbstractArtifactRepository.PARAM_ARTIFACT_ID, "step-junit", MavenArtifactRepository.PARAM_VERSION, "0.0.0",
+            MavenArtifactRepository.PARAM_CLASSIFIER, "tests");
     private static final String MAVEN_SETTINGS_NEXUS = "<settings xmlns=\"http://maven.apache.org/SETTINGS/1.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
             "  xsi:schemaLocation=\"http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd\">\n" +
             "    <profiles>\n" +
@@ -43,7 +43,7 @@ public class ArtifactRepositoryTest {
             "        <activeProfile>default</activeProfile>\n" +
             "    </activeProfiles>\n" +
             "</settings>";
-    private ArtifactRepository artifactRepository;
+    private MavenArtifactRepository artifactRepository;
     private ExecutionContext executionContext;
     private InMemoryPlanAccessor planAccessor;
 
@@ -54,7 +54,7 @@ public class ArtifactRepositoryTest {
         controllerSettingAccessor.createSettingIfNotExisting("maven_settings_default", MAVEN_SETTINGS_NEXUS);
 
         Configuration configuration = new Configuration();
-        artifactRepository = new ArtifactRepository(planAccessor, controllerSettingAccessor, configuration);
+        artifactRepository = new MavenArtifactRepository(planAccessor, controllerSettingAccessor, configuration);
         executionContext = ExecutionEngine.builder().build().newExecutionContext();
     }
 
@@ -113,7 +113,7 @@ public class ArtifactRepositoryTest {
         InMemoryControllerSettingAccessor controllerSettingAccessor = new InMemoryControllerSettingAccessor();
         controllerSettingAccessor.createSettingIfNotExisting("maven_settings_default", "settings> </settings>");
         Configuration configuration = new Configuration();
-        ArtifactRepository artifactRepository = new ArtifactRepository(planAccessor, controllerSettingAccessor, configuration);
+        MavenArtifactRepository artifactRepository = new MavenArtifactRepository(planAccessor, controllerSettingAccessor, configuration);
         ExecutionContext executionContext = ExecutionEngine.builder().build().newExecutionContext();
 
         // getArtefactInfo
