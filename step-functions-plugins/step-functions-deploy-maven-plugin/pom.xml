@@ -44,25 +44,6 @@
             <scope>provided</scope>
         </dependency>
 
-        <dependency>
-            <groupId>org.apache.httpcomponents.client5</groupId>
-            <artifactId>httpclient5</artifactId>
-            <version>5.2.1</version>
-        </dependency>
-
-        <!-- to prepare json body in rest calls -->
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-core</artifactId>
-            <version>${jackson.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>${jackson.version}</version>
-        </dependency>
-
         <!-- For polling -->
         <dependency>
             <groupId>ch.exense.commons</groupId>
@@ -76,6 +57,11 @@
             <artifactId>step-controller-remote-client</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>ch.exense.step</groupId>
+            <artifactId>step-functions-package-client</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
     </dependencies>
 
@@ -86,6 +72,9 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-plugin-plugin</artifactId>
                     <version>${maven-plugin-tools.version}</version>
+                    <configuration>
+                        <helpPackageName>step.plugins.maven</helpPackageName>
+                    </configuration>
                     <executions>
                         <execution>
                             <id>help-mojo</id>

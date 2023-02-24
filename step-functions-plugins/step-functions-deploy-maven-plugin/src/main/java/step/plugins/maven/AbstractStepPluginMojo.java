@@ -1,16 +1,11 @@
 package step.plugins.maven;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
-import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Parameter;
 import step.client.credentials.ControllerCredentials;
 
 public abstract class AbstractStepPluginMojo extends AbstractMojo {
-	protected final CloseableHttpClient httpClient = HttpClients.createDefault();
-	protected final ObjectMapper objectMapper = new ObjectMapper();
 
 	@Parameter(property = "step.url", required = true)
 	private String url;
