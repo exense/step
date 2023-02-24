@@ -72,29 +72,21 @@
 				<artifactId>step-functions-deploy-maven-plugin</artifactId>
 				<executions>
 					<execution>
-						<id>deploy-to-step</id>
-						<phase>deploy</phase>
+						<id>upload-package-to-step</id>
+						<phase>package</phase>
 						<configuration>
 							<url>http://localhost:4201</url>
 <!--							<groupId>ch.exense.step</groupId>-->
 <!--							<artifactId>step-functions-plugins-java-handler-test</artifactId>-->
 <!--							<artifactVersion>0.0.0-SNAPSHOT</artifactVersion>-->
-							<artifactClassifier>jar-with-dependencies</artifactClassifier>
-							<description>iegorov-plugin-test</description>
-							<userId>admin</userId>
-							<customParameters>
-								<env>PROD</env>
-								<PARAM_EXEC>Value</PARAM_EXEC>
-								<PARAM_EXEC2>Value</PARAM_EXEC2>
-								<PARAM_EXEC3>Value</PARAM_EXEC3>
-							</customParameters>
+							<authToken>...</authToken>
 						</configuration>
 						<goals>
-							<goal>run-execution-bundle</goal>
+							<goal>upload-keywords-package</goal>
 						</goals>
 					</execution>
 				</executions>
 			</plugin>
-		</plugins>	
+		</plugins>
 	</build>
 </project>

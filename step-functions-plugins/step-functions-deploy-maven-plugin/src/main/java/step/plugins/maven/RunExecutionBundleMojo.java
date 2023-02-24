@@ -2,14 +2,10 @@ package step.plugins.maven;
 
 import ch.exense.commons.io.Poller;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.impl.classic.BasicHttpClientResponseHandler;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
-import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.core5.http.io.entity.HttpEntities;
-import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
@@ -26,56 +22,40 @@ import java.util.concurrent.TimeoutException;
 // TODO: for uploading goal 'upload keyword package'
 // TODO: we can upload keywords on verify phase?
 @Mojo(name = "run-execution-bundle")
-public class RunExecutionBundleMojo extends AbstractMojo {
+public class RunExecutionBundleMojo extends AbstractStepPluginMojo {
 
-	@Parameter(property = "step-functions-deploy.url", required = true)
-	private String url;
-
-	@Parameter(property = "step-functions-deploy.group-id", required = true, defaultValue = "${project.groupId}")
+	@Parameter(property = "step-run-exec-bundle.group-id", required = true, defaultValue = "${project.groupId}")
 	private String groupId;
 
-	@Parameter(property = "step-functions-deploy.artifact-id", required = true, defaultValue = "${project.artifactId}")
+	@Parameter(property = "step-run-exec-bundle.artifact-id", required = true, defaultValue = "${project.artifactId}")
 	private String artifactId;
 
-	@Parameter(property = "step-functions-deploy.artifact-version", required = true, defaultValue = "${project.version}")
+	@Parameter(property = "step-run-exec-bundle.artifact-version", required = true, defaultValue = "${project.version}")
 	private String artifactVersion;
 
-	@Parameter(property = "step-functions-deploy.artifact-classifier", required = false)
+	@Parameter(property = "step-run-exec-bundle.artifact-classifier", required = false)
 	private String artifactClassifier;
 
-	@Parameter(property = "step-functions-deploy.step-maven-settings", required = false)
+	@Parameter(property = "step-run-exec-bundle.step-maven-settings", required = false)
 	private String stepMavenSettings;
 
-	@Parameter(property = "step-functions-deploy.description", required = false, defaultValue = "")
+	@Parameter(property = "step-run-exec-bundle.description", required = false, defaultValue = "")
 	private String description;
 
-	@Parameter(property = "step-functions-deploy.user-id", required = false, defaultValue = "admin")
+	@Parameter(property = "step-run-exec-bundle.user-id", required = false, defaultValue = "admin")
 	private String userId;
 
-	@Parameter(property = "step-functions-deploy.custom-parameters", required = false)
+	@Parameter(property = "step-run-exec-bundle.custom-parameters", required = false)
 	private Map<String, String> customParameters;
 
-	@Parameter(defaultValue = "${project.build.finalName}", readonly = true)
-	private String buildFinalName;
-
-	@Parameter(defaultValue = "${project.version}", readonly = true)
-	private String projectVersion;
-
-	@Parameter(property = "step-functions-deploy.auth-token", required = false)
-	private String authToken;
-
-	@Parameter(property = "step-functions-deploy.check-exec-result", defaultValue = "false")
+	@Parameter(property = "step-run-exec-bundle.check-exec-result", defaultValue = "false")
 	private Boolean checkExecutionResult;
 
-	@Parameter(property = "step-functions-deploy.exec-result-timeout-s", defaultValue = "30")
+	@Parameter(property = "step-run-exec-bundle.exec-result-timeout-s", defaultValue = "30")
 	private Integer executionResultTimeoutS;
 
-	@Parameter(property = "step-functions-deploy.exec-result-poll-period-s", defaultValue = "3")
+	@Parameter(property = "step-run-exec-bundle.exec-result-poll-period-s", defaultValue = "3")
 	private Integer executionResultPollPeriodS;
-
-	private final CloseableHttpClient httpClient = HttpClients.createDefault();
-
-	private final ObjectMapper objectMapper = new ObjectMapper();
 
 	public RunExecutionBundleMojo() {
 	}
@@ -223,14 +203,6 @@ public class RunExecutionBundleMojo extends AbstractMojo {
 	}
 
 
-	public String getUrl() {
-		return url;
-	}
-
-	public void setUrl(String url) {
-		this.url = url;
-	}
-
 	public String getGroupId() {
 		return groupId;
 	}
@@ -287,36 +259,12 @@ public class RunExecutionBundleMojo extends AbstractMojo {
 		this.customParameters = customParameters;
 	}
 
-	public String getBuildFinalName() {
-		return buildFinalName;
-	}
-
-	public void setBuildFinalName(String buildFinalName) {
-		this.buildFinalName = buildFinalName;
-	}
-
-	public String getProjectVersion() {
-		return projectVersion;
-	}
-
-	public void setProjectVersion(String projectVersion) {
-		this.projectVersion = projectVersion;
-	}
-
 	public String getStepMavenSettings() {
 		return stepMavenSettings;
 	}
 
 	public void setStepMavenSettings(String stepMavenSettings) {
 		this.stepMavenSettings = stepMavenSettings;
-	}
-
-	public String getAuthToken() {
-		return authToken;
-	}
-
-	public void setAuthToken(String authToken) {
-		this.authToken = authToken;
 	}
 
 	public Boolean getCheckExecutionResult() {

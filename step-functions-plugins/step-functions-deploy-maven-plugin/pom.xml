@@ -16,6 +16,8 @@
         <maven.compiler.target>11</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven-plugin-tools.version>3.7.1</maven-plugin-tools.version>
+        <maven-core.version>3.8.1</maven-core.version>
+        <maven-plugin-api.version>3.8.1</maven-plugin-api.version>
     </properties>
 
     <packaging>maven-plugin</packaging>
@@ -24,8 +26,14 @@
         <dependency>
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-plugin-api</artifactId>
-            <version>3.8.1</version>
+            <version>${maven-plugin-api.version}</version>
             <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-core</artifactId>
+            <version>${maven-core.version}</version>
         </dependency>
 
         <!-- dependencies to annotations -->
