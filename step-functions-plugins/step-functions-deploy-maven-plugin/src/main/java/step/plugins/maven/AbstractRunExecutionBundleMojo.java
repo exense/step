@@ -1,14 +1,13 @@
 package step.plugins.maven;
 
-import ch.exense.commons.io.Poller;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Parameter;
+import step.client.executions.RemoteExecutionFuture;
 import step.client.executions.RemoteExecutionManager;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
-import step.core.execution.model.ExecutionStatus;
 import step.core.repositories.RepositoryObjectReference;
 
 import java.util.Map;
@@ -65,23 +64,13 @@ public abstract class AbstractRunExecutionBundleMojo extends AbstractStepPluginM
 	private void checkExecutionRunResult(RemoteExecutionManager remoteExecutionManager, String executionId) throws MojoExecutionException {
 		getLog().info("Waiting for execution result from step...");
 		try {
-			Poller.waitFor(() -> {
-				try {
-					Execution execution = remoteExecutionManager.getFuture(executionId).getExecution();
-
-					if (!Objects.equals(execution.getStatus(), ExecutionStatus.ENDED)) {
-						getLog().info("Execution " + executionId + " is still in status " + execution.getStatus() + "...");
-						return false;
-					} else if (!Objects.equals(execution.getResult(), ReportNodeStatus.PASSED)) {
-						throw new MojoExecutionException("The execution result is NOT OK for execution " + executionId + ". Final status is " + execution.getResult());
-					} else {
-						getLog().info("The execution result is OK. Final status is " + execution.getResult());
-						return true;
-					}
-				} catch (MojoExecutionException e) {
-					throw new MojoExceptionWrapper("Unable to check the execution status", e);
-				}
-			}, getExecutionResultTimeoutS() * 1000, getExecutionResultPollPeriodS() * 1000);
+			RemoteExecutionFuture executionFuture = remoteExecutionManager.getFuture(executionId).waitForExecutionToTerminate(getExecutionResultTimeoutS() * 1000);
+			Execution endedExecution = executionFuture.getExecution();
+			if (!Objects.equals(endedExecution.getResult(), ReportNodeStatus.PASSED)) {
+				throw new MojoExecutionException("The execution result is NOT OK for execution " + executionId + ". Final status is " + endedExecution.getResult());
+			} else {
+				getLog().info("The execution result is OK. Final status is " + endedExecution.getResult());
+			}
 		} catch (TimeoutException | InterruptedException ex) {
 			logAndThrow("The success execution result is not received from step in " + getExecutionResultTimeoutS() + "seconds", ex);
 		}
