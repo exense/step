@@ -24,7 +24,6 @@ public class UploadKeywordsPackageMojo extends AbstractStepPluginMojo {
 
 
 		try (RemoteFunctionPackageClientImpl remoteFunctionPackageClient = new RemoteFunctionPackageClientImpl(getControllerCredentials())) {
-			// TODO: package library file, package attributes?
 			File packagedTarget = getFileToUpload();
 
 			FunctionPackage uploaded = remoteFunctionPackageClient.newKeywordPackage(null, packagedTarget, new HashMap<>());

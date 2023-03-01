@@ -44,7 +44,7 @@ public class RunPackagedExecutionBundleMojo extends AbstractRunExecutionBundleMo
 				logAndThrow("Unable to detect an artifact to upload", getDefaultMojoException());
 			} else {
 				getLog().info("Artifact is detected for upload to step: " + fileToUpload.getName());
-				// TODO: new resource type = 'artifact'?
+
 				Resource uploaded = resourceManager.createResource("temp", new FileInputStream(fileToUpload), fileToUpload.getName(), false, null);
 				if(uploaded == null){
 					logAndThrow("Uploaded resource is null", getDefaultMojoException());
@@ -70,7 +70,7 @@ public class RunPackagedExecutionBundleMojo extends AbstractRunExecutionBundleMo
 
 	private HashMap<String, String> prepareRepositoryParameters(String resourceId) {
 		HashMap<String, String> repoParams = new HashMap<>();
-		repoParams.put("artifactId", resourceId);
+		repoParams.put("resourceId", resourceId);
 		return repoParams;
 	}
 

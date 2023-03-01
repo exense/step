@@ -23,8 +23,7 @@ import static step.planbuilder.BaseArtefacts.callPlan;
 public abstract class AbstractArtifactRepository extends AbstractRepository {
 
 	protected static final Logger logger = LoggerFactory.getLogger(MavenArtifactRepository.class);
-	protected static final String PARAM_ARTIFACT_ID = "artifactId";
-	protected static final String PARAM_LIB_ARTIFACT_ID = "libArtifactId";
+
 	private static final String PARAM_THREAD_NUMBER = "threads";
 	private static final String PARAM_INCLUDE_CLASSES = "includeClasses";
 	private static final String PARAM_INCLUDE_ANNOTATIONS = "includeAnnotations";
@@ -53,9 +52,7 @@ public abstract class AbstractArtifactRepository extends AbstractRepository {
 		return info;
 	}
 
-	protected String resolveArtifactName(Map<String, String> repositoryParameters) {
-		return AbstractArtifactRepository.getMandatoryRepositoryParameter(repositoryParameters, PARAM_ARTIFACT_ID);
-	}
+	protected abstract String resolveArtifactName(Map<String, String> repositoryParameters);
 
 	@Override
 	public TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters) {

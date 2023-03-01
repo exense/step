@@ -14,10 +14,12 @@ import java.util.Set;
 
 public class MavenArtifactRepository extends AbstractArtifactRepository {
 
+    protected static final String PARAM_ARTIFACT_ID = "artifactId";
     protected static final String PARAM_VERSION = "version";
     protected static final String PARAM_GROUP_ID = "groupId";
     protected static final String PARAM_CLASSIFIER = "classifier";
 
+    protected static final String PARAM_LIB_ARTIFACT_ID = "libArtifactId";
     protected static final String PARAM_LIB_VERSION = "libVersion";
     protected static final String PARAM_LIB_GROUP_ID = "libGroupId";
     protected static final String PARAM_LIB_CLASSIFIER = "libClassifier";
@@ -98,6 +100,11 @@ public class MavenArtifactRepository extends AbstractArtifactRepository {
         } catch (SettingsBuildingException | ArtifactResolutionException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    protected String resolveArtifactName(Map<String, String> repositoryParameters) {
+        return AbstractArtifactRepository.getMandatoryRepositoryParameter(repositoryParameters, PARAM_ARTIFACT_ID);
     }
 
 }

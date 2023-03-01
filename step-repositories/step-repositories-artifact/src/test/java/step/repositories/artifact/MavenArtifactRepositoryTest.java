@@ -20,10 +20,10 @@ import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
 
-public class ArtifactRepositoryTest {
+public class MavenArtifactRepositoryTest {
 
     private static final Map<String, String> REPOSITORY_PARAMETERS = Map.of(MavenArtifactRepository.PARAM_GROUP_ID, "ch.exense.step",
-            AbstractArtifactRepository.PARAM_ARTIFACT_ID, "step-junit", MavenArtifactRepository.PARAM_VERSION, "0.0.0",
+            MavenArtifactRepository.PARAM_ARTIFACT_ID, "step-junit", MavenArtifactRepository.PARAM_VERSION, "0.0.0",
             MavenArtifactRepository.PARAM_CLASSIFIER, "tests");
     private static final String MAVEN_SETTINGS_NEXUS = "<settings xmlns=\"http://maven.apache.org/SETTINGS/1.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
             "  xsi:schemaLocation=\"http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd\">\n" +

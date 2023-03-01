@@ -1,28 +1,28 @@
 package step.repositories.artifact;
 
 import step.core.plans.PlanAccessor;
-import step.resources.ResourceAccessor;
 import step.resources.ResourceManager;
-import step.resources.ResourceRevisionContent;
 import step.resources.ResourceRevisionFileHandle;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
 public class ResourceArtifactRepository extends AbstractArtifactRepository {
 
+	protected static final String PARAM_RESOURCE_ID = "resourceId";
+	protected static final String PARAM_LIB_RESOURCE_ID = "libResourceId";
+
 	private final ResourceManager resourceManager;
 
 	public ResourceArtifactRepository(PlanAccessor planAccessor, ResourceManager resourceManager) {
-		super(Set.of(PARAM_ARTIFACT_ID), planAccessor); // artifact_id = resource_id
+		super(Set.of(PARAM_RESOURCE_ID), planAccessor); // artifact_id = resource_id
 		this.resourceManager = resourceManager;
 	}
 
 	@Override
 	protected File getLibraries(Map<String, String> repositoryParameters) {
-	    String resourceId = repositoryParameters.get(PARAM_LIB_ARTIFACT_ID);
+	    String resourceId = repositoryParameters.get(PARAM_LIB_RESOURCE_ID);
 		if(resourceId != null){
 			return getResourceFile(resourceId);
 		} else {
@@ -32,8 +32,13 @@ public class ResourceArtifactRepository extends AbstractArtifactRepository {
 
 	@Override
 	protected File getArtifact(Map<String, String> repositoryParameters) {
-		String resourceId = getMandatoryRepositoryParameter(repositoryParameters, PARAM_ARTIFACT_ID);
+		String resourceId = getMandatoryRepositoryParameter(repositoryParameters, PARAM_RESOURCE_ID);
 		return getResourceFile(resourceId);
+	}
+
+	@Override
+	protected String resolveArtifactName(Map<String, String> repositoryParameters) {
+		return AbstractArtifactRepository.getMandatoryRepositoryParameter(repositoryParameters, PARAM_RESOURCE_ID);
 	}
 
 	private File getResourceFile(String resourceId) {
