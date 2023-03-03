@@ -61,7 +61,8 @@ public abstract class AbstractFunctionPackageHandler extends FunctionPackageUtil
 			do {
 				res = inputStream.readLine();
 				if (res==null) {
-					throw new Exception("Unexpected error when starting the function package handler: the process exited before returning the result");
+					throw new Exception("Unexpected error when starting the function package handler: the process exited before returning the result. Error was: '"+
+							discovererDeamon.getProcessErrorLogAsString()+"'");
 				}
 			} while (!res.equals(READY_STRING));
 			list = objectMapper.readValue(inputStream, FunctionList.class);
