@@ -49,6 +49,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 
         context.getServiceRegistrationCallback().registerService(TimeSeriesService.class);
         TimeSeriesBucketingHandler handler = new TimeSeriesBucketingHandler(mainIngestionPipeline, attributes);
+        context.put(TimeSeriesBucketingHandler.class, handler);
         MeasurementPlugin.registerMeasurementHandlers(handler);
         GaugeCollectorRegistry.getInstance().registerHandler(handler);
 

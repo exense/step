@@ -6,19 +6,26 @@ import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
+import org.antlr.v4.runtime.ANTLRInputStream;
+import org.apache.commons.lang3.StringUtils;
 import org.rtm.commons.MeasurementAccessor;
 import step.controller.services.async.AsyncTaskManager;
 import step.controller.services.async.AsyncTaskStatus;
 import step.core.GlobalContext;
 import step.core.collections.Collection;
+import step.core.collections.Filter;
 import step.core.collections.Filters;
 import step.core.collections.SearchOrder;
 import step.core.collections.filters.Equals;
+import step.core.collections.inmemory.InMemoryCollection;
 import step.core.deployment.AbstractStepServices;
 import step.core.deployment.ControllerServiceException;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
+import step.core.ql.OQLFilterBuilder;
+import step.core.ql.OQLLexer;
 import step.core.timeseries.*;
+import step.core.timeseries.oql.OQLTimeSeriesFilterBuilder;
 import step.framework.server.security.Secured;
 import step.plugins.measurements.Measurement;
 import step.plugins.measurements.MeasurementPlugin;
@@ -26,6 +33,7 @@ import step.plugins.timeseries.api.*;
 
 import java.util.*;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static step.plugins.timeseries.TimeSeriesControllerPlugin.TIME_SERIES_ATTRIBUTES_DEFAULT;
@@ -43,11 +51,13 @@ public class TimeSeriesService extends AbstractStepServices {
     private TimeSeries timeSeries;
 
     private ExecutionAccessor executionAccessor;
+    private List<String> timeSeriesAttributes;
 
     @PostConstruct
     public void init() throws Exception {
         super.init();
         GlobalContext context = getContext();
+        timeSeriesAttributes = context.get(TimeSeriesBucketingHandler.class).getHandledAttributes();
         aggregationPipeline = context.require(TimeSeriesAggregationPipeline.class);
         asyncTaskManager = context.require(AsyncTaskManager.class);
         measurementCollection = context.getCollectionFactory().getCollection(MeasurementAccessor.ENTITY_NAME, Measurement.class);
@@ -62,9 +72,61 @@ public class TimeSeriesService extends AbstractStepServices {
     @Produces(MediaType.APPLICATION_JSON)
     public TimeSeriesAPIResponse getBuckets(FetchBucketsRequest request) {
         validateFetchRequest(request);
-        TimeSeriesAggregationQuery query = mapToQuery(request);
+
+        OQLVerifyResponse oqlVerifyResponse = this.verifyOql(request.getOqlFilter());
+        if (!oqlVerifyResponse.isValid()) {
+            throw new ControllerServiceException("Invalid OQL filter");
+        }
+        if (oqlVerifyResponse.hasUnknownFields() || !this.timeSeriesAttributes.containsAll(request.getGroupDimensions())) {
+            return this.getMeasurements(request, oqlVerifyResponse.getFields());
+        }
+        TimeSeriesAggregationQuery query = mapToQuery(request, this.aggregationPipeline);
+        TimeSeriesAggregationResponse response = query.run();
+        return mapToApiResponse(request, response);
+    }
+
+    public TimeSeriesAPIResponse getMeasurements(FetchBucketsRequest request, java.util.Collection<String> fields) {
+        Collection<Bucket> inmemoryBuckets = new InMemoryCollection<>();
+        TimeSeries timeSeries = new TimeSeries(inmemoryBuckets, Set.of(), 1000);
+        List<String> ignoreFilterAttributes = Arrays.asList("metricType");
+        Function<String, String> attributesPrefixRemoval = (attribute) -> {
+            if (attribute.startsWith("attributes.")) {
+                return attribute.replaceFirst("attributes.", "");
+            } else {
+                return attribute;
+            }
+        };
+        try (TimeSeriesIngestionPipeline ingestionPipeline = timeSeries.newIngestionPipeline(3000)) {
+            List<String> standardAttributes = new ArrayList<>(Arrays.asList(configuration.getProperty(TIME_SERIES_ATTRIBUTES_PROPERTY, TIME_SERIES_ATTRIBUTES_DEFAULT).split(",")));
+            standardAttributes.addAll(fields.stream().map(attributesPrefixRemoval).collect(Collectors.toList()));
+            standardAttributes.addAll(request.getGroupDimensions());
+            TimeSeriesBucketingHandler timeSeriesBucketingHandler = new TimeSeriesBucketingHandler(ingestionPipeline, standardAttributes);
+            LongAdder count = new LongAdder();
+            ArrayList<Filter> timestampClauses = new ArrayList<>(List.of(Filters.empty()));
+            if (request.getStart() != null) {
+                timestampClauses.add(Filters.gte("begin", request.getStart()));
+            }
+            if (request.getEnd() != null) {
+                timestampClauses.add(Filters.lt("begin", request.getEnd()));
+            }
+            Filter filter = Filters.and(Arrays.asList(Filters.and(timestampClauses), OQLTimeSeriesFilterBuilder.getFilter(request.getOqlFilter(), attributesPrefixRemoval, ignoreFilterAttributes)));
+            SearchOrder searchOrder = new SearchOrder("begin", 1);
+            // Iterate over each measurement and ingest it again
+            measurementCollection.find(filter, searchOrder, null, null, 0).forEach(measurement -> {
+                count.increment();
+                timeSeriesBucketingHandler.ingestExistingMeasurement(measurement);
+            });
+            ingestionPipeline.flush();
+        }
+
+        TimeSeriesAggregationPipeline aggregationPipeline = new TimeSeriesAggregationPipeline(inmemoryBuckets, 5000);
+        TimeSeriesAggregationQuery query = mapToQuery(request, aggregationPipeline);
         TimeSeriesAggregationResponse response = query.run();
 
+        return mapToApiResponse(request, response);
+    }
+
+    private TimeSeriesAPIResponse mapToApiResponse(FetchBucketsRequest request, TimeSeriesAggregationResponse response) {
         Map<BucketAttributes, Map<Long, Bucket>> series = response.getSeries();
         long intervalSize = response.getResolution();
         List<Long> axis = response.getAxis();
@@ -105,6 +167,43 @@ public class TimeSeriesService extends AbstractStepServices {
                 .build();
     }
 
+    @Secured(right = "execution-read")
+    @GET
+    @Path("/oql-verify")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public OQLVerifyResponse verifyOql(@QueryParam("oql") String oql) {
+        List<String> timeSeriesAttributes = this.timeSeriesAttributes
+                .stream()
+                .map(x -> "attributes." + x)
+                .collect(Collectors.toList());
+        boolean isValid = true;
+        boolean hasUnknownFields = false;
+        Set<String> fields = Collections.emptySet();
+        if (StringUtils.isNotEmpty(oql)) {
+            try {
+                fields = new HashSet<>(OQLTimeSeriesFilterBuilder.getFilterAttributes(oql));
+                hasUnknownFields = !timeSeriesAttributes.containsAll(fields);
+
+            } catch (IllegalStateException e) {
+                isValid = false;
+            }
+        }
+        return new OQLVerifyResponse(isValid, hasUnknownFields, fields);
+    }
+
+    private Set<String> getFilterAttributes(Filter filter) {
+        return Set.of();
+    }
+
+    public static void main(String[] args) {
+        String oql = "5 = a";
+        Filter filter = OQLFilterBuilder.getFilter(oql);
+        ANTLRInputStream stream = new ANTLRInputStream(oql);
+        OQLLexer oqlLexer = new OQLLexer(stream);
+        System.out.println(oqlLexer.getAllTokens());
+    }
+
     private void validateFetchRequest(FetchBucketsRequest request) {
         if (request.getStart() == null || request.getEnd() == null) {
             throw new ControllerServiceException("Start and End parameters must be specified");
@@ -114,19 +213,19 @@ public class TimeSeriesService extends AbstractStepServices {
         }
     }
 
-    private TimeSeriesAggregationQuery mapToQuery(FetchBucketsRequest request) {
-        TimeSeriesAggregationQuery timeSeriesAggregationQuery = aggregationPipeline.newQuery()
+    private TimeSeriesAggregationQuery mapToQuery(FetchBucketsRequest request,
+                                                  TimeSeriesAggregationPipeline pipeline) {
+        TimeSeriesAggregationQueryBuilder timeSeriesAggregationQuery = pipeline.newQueryBuilder()
                 .range(request.getStart(), request.getEnd())
-                .filter(request.getOqlFilter())
-                .filter(request.getParams())
-                .groupBy(request.getGroupDimensions());
+                .withFilter(OQLTimeSeriesFilterBuilder.getFilter(request.getOqlFilter()))
+                .withGroupDimensions(request.getGroupDimensions());
         if (request.getIntervalSize() > 0) {
             timeSeriesAggregationQuery.window(request.getIntervalSize());
         }
         if (request.getNumberOfBuckets() != null) {
             timeSeriesAggregationQuery.split(request.getNumberOfBuckets());
         }
-        return timeSeriesAggregationQuery;
+        return timeSeriesAggregationQuery.build();
     }
 
     @Operation(operationId = "rebuildTimeSeries", description = "Rebuild a time series based on the provided request")
