@@ -1,6 +1,7 @@
 package step.plugins.timeseries.api;
 
-import step.core.timeseries.BucketAttributes;
+
+import step.core.timeseries.bucket.BucketAttributes;
 
 import java.util.Map;
 

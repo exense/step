@@ -4,8 +4,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;
-import step.core.timeseries.BucketAttributes;
 import step.core.timeseries.TimeSeriesIngestionPipeline;
+import step.core.timeseries.bucket.BucketAttributes;
 import step.plugins.measurements.Measurement;
 import step.plugins.measurements.MeasurementHandler;
 

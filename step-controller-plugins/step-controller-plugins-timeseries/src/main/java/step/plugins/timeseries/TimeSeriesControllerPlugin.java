@@ -9,8 +9,8 @@ import step.core.deployment.WebApplicationConfigurationManager;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.core.timeseries.TimeSeries;
-import step.core.timeseries.TimeSeriesAggregationPipeline;
 import step.core.timeseries.TimeSeriesIngestionPipeline;
+import step.core.timeseries.aggregation.TimeSeriesAggregationPipeline;
 import step.plugins.measurements.GaugeCollectorRegistry;
 import step.plugins.measurements.MeasurementPlugin;
 

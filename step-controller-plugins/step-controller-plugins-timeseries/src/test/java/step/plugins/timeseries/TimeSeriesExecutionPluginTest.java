@@ -20,9 +20,9 @@ import step.core.execution.model.Execution;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
 import step.core.plans.runner.PlanRunnerResult;
-import step.core.timeseries.TimeSeriesAggregationPipeline;
-import step.core.timeseries.TimeSeriesAggregationQuery;
-import step.core.timeseries.TimeSeriesAggregationResponse;
+import step.core.timeseries.TimeSeriesFilterBuilder;
+import step.core.timeseries.aggregation.TimeSeriesAggregationPipeline;
+import step.core.timeseries.aggregation.TimeSeriesAggregationResponse;
 import step.engine.plugins.FunctionPlugin;
 import step.engine.plugins.LocalFunctionPlugin;
 import step.framework.server.ServiceRegistrationCallback;
@@ -128,10 +128,22 @@ public class TimeSeriesExecutionPluginTest extends AbstractKeyword {
 
 		//Thread.sleep(20000);
 
-		TimeSeriesAggregationResponse keywordsBuckets = timeSeriesAggregationPipeline.newQuery().range(t1, t2).filter(Map.of("type", "keyword")).groupBy(Set.of("name")).run();
+		TimeSeriesAggregationResponse keywordsBuckets = timeSeriesAggregationPipeline
+                .newQueryBuilder()
+                .range(t1, t2)
+                .withFilter(TimeSeriesFilterBuilder.buildFilter(Map.of("type", "keyword")))
+                .withGroupDimensions(Set.of("name"))
+                .build()
+                .run();
 		Assert.assertEquals(1,keywordsBuckets.getSeries().size());
 		//assertEquals(50,keywordsBuckets.getSeries().values().stream().findFirst().get().values().stream().findFirst().get().getCount());
-		TimeSeriesAggregationResponse customBuckets = timeSeriesAggregationPipeline.newQuery().range(t1, t2).filter(Map.of("type", "custom")).groupBy(Set.of("name","customAttr")).run();
+		TimeSeriesAggregationResponse customBuckets = timeSeriesAggregationPipeline
+                .newQueryBuilder()
+                .range(t1, t2)
+                .withFilter(TimeSeriesFilterBuilder.buildFilter(Map.of("type", "custom")))
+                .withGroupDimensions(Set.of("name","customAttr"))
+                .build()
+                .run();
 		Assert.assertEquals(2,customBuckets.getSeries().size());
 	}
 
