@@ -94,7 +94,6 @@ public class RunDeployedExecutionBundleMojoTest extends TestCase {
 		mojo.setUserId("testUser");
 		Map<String, String> params = createTestCustomParams();
 		mojo.setCustomParameters(params);
-		return;
 	}
 
 	private static Map<String, String> createTestCustomParams() {

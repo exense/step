@@ -2,6 +2,7 @@ package step.plugins.maven;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
 import step.core.repositories.RepositoryObjectReference;
 
 import java.util.HashMap;
@@ -9,6 +10,9 @@ import java.util.Map;
 
 @Mojo(name = "run-deployed-execution-bundle")
 public class RunDeployedExecutionBundleMojo extends AbstractRunExecutionBundleMojo {
+
+	@Parameter(property = "step-run-exec-bundle.step-maven-settings", required = false)
+	private String stepMavenSettings;
 
 	public RunDeployedExecutionBundleMojo() {
 	}
@@ -37,6 +41,14 @@ public class RunDeployedExecutionBundleMojo extends AbstractRunExecutionBundleMo
 			repoParams.put("mavenSettings", getStepMavenSettings());
 		}
 		return repoParams;
+	}
+
+	public String getStepMavenSettings() {
+		return stepMavenSettings;
+	}
+
+	public void setStepMavenSettings(String stepMavenSettings) {
+		this.stepMavenSettings = stepMavenSettings;
 	}
 
 }

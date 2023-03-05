@@ -23,8 +23,6 @@ public abstract class AbstractRunExecutionBundleMojo extends AbstractStepPluginM
 	private String artifactVersion;
 	@Parameter(property = "step-run-exec-bundle.artifact-classifier", required = false)
 	private String artifactClassifier;
-	@Parameter(property = "step-run-exec-bundle.step-maven-settings", required = false)
-	private String stepMavenSettings;
 	@Parameter(property = "step-run-exec-bundle.description", required = false, defaultValue = "")
 	private String description;
 	@Parameter(property = "step-run-exec-bundle.user-id", required = false, defaultValue = "admin")
@@ -132,14 +130,6 @@ public abstract class AbstractRunExecutionBundleMojo extends AbstractStepPluginM
 
 	public void setCustomParameters(Map<String, String> customParameters) {
 		this.customParameters = customParameters;
-	}
-
-	public String getStepMavenSettings() {
-		return stepMavenSettings;
-	}
-
-	public void setStepMavenSettings(String stepMavenSettings) {
-		this.stepMavenSettings = stepMavenSettings;
 	}
 
 	public Boolean getCheckExecutionResult() {

@@ -38,7 +38,7 @@ public class RunPackagedExecutionBundleMojo extends AbstractRunExecutionBundleMo
 	}
 
 	protected String uploadResourceToStep() throws MojoExecutionException {
-		try (RemoteResourceManager resourceManager = new RemoteResourceManager(getControllerCredentials())) {
+		try (RemoteResourceManager resourceManager = createRemoteResourceManager()) {
 			File fileToUpload = getFileToUpload();
 			if(fileToUpload == null){
 				logAndThrow("Unable to detect an artifact to upload", getDefaultMojoException());
@@ -57,6 +57,10 @@ public class RunPackagedExecutionBundleMojo extends AbstractRunExecutionBundleMo
 			logAndThrow("Unable to upload packaged resource to step", e);
 		}
 		return null;
+	}
+
+	protected RemoteResourceManager createRemoteResourceManager() {
+		return new RemoteResourceManager(getControllerCredentials());
 	}
 
 	private static MojoExecutionException getDefaultMojoException() {
@@ -107,5 +111,13 @@ public class RunPackagedExecutionBundleMojo extends AbstractRunExecutionBundleMo
 
 	private String artifactToString(Artifact artifact) {
 		return artifact.getGroupId() + ":" + artifact.getArtifactId() + ":" + artifact.getVersion() + ":" + artifact.getClassifier();
+	}
+
+	public MavenProject getProject() {
+		return project;
+	}
+
+	public void setProject(MavenProject project) {
+		this.project = project;
 	}
 }
