@@ -35,12 +35,10 @@ public abstract class AbstractRunExecutionBundleMojo extends AbstractStepPluginM
 	private Boolean checkExecutionResult;
 	@Parameter(property = "step-run-exec-bundle.exec-result-timeout-s", defaultValue = "30")
 	private Integer executionResultTimeoutS;
-	@Parameter(property = "step-run-exec-bundle.exec-result-poll-period-s", defaultValue = "3")
-	private Integer executionResultPollPeriodS;
 
 	protected void executeBundleOnStep(Map<String, Object> executionContext) throws MojoExecutionException {
 		String executionId = null;
-		try (RemoteExecutionManager remoteExecutionManager = new RemoteExecutionManager(getControllerCredentials())) {
+		try (RemoteExecutionManager remoteExecutionManager = createRemoteExecutionManager()) {
 			ExecutionParameters executionParameters = new ExecutionParameters();
 			executionParameters.setMode(ExecutionMode.RUN);
 			executionParameters.setUserID(getUserId());
@@ -57,6 +55,10 @@ public abstract class AbstractRunExecutionBundleMojo extends AbstractStepPluginM
 		} catch (Exception ex) {
 			logAndThrow("Unable to run execution in step", ex);
 		}
+	}
+
+	protected RemoteExecutionManager createRemoteExecutionManager() {
+		return new RemoteExecutionManager(getControllerCredentials());
 	}
 
 	protected abstract RepositoryObjectReference prepareExecutionRepositoryObject(Map<String, Object> executionContext);
@@ -156,11 +158,4 @@ public abstract class AbstractRunExecutionBundleMojo extends AbstractStepPluginM
 		this.executionResultTimeoutS = executionResultTimeoutS;
 	}
 
-	public Integer getExecutionResultPollPeriodS() {
-		return executionResultPollPeriodS;
-	}
-
-	public void setExecutionResultPollPeriodS(Integer executionResultPollPeriodS) {
-		this.executionResultPollPeriodS = executionResultPollPeriodS;
-	}
 }

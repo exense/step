@@ -62,7 +62,7 @@
 		<rtm.version>3.0.0</rtm.version>
 		<!-- external dependencies -->
 		<junit.version>4.13.1</junit.version>
-		<mockito.version>1.9.5</mockito.version>
+		<mockito.version>5.1.1</mockito.version>
 		<groovy.version>3.0.10</groovy.version>
 		<jackson.version>2.13.3</jackson.version>
 		<jersey.version>3.0.4</jersey.version>
