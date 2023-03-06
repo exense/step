@@ -202,14 +202,6 @@ public class TimeSeriesService extends AbstractStepServices {
         return Set.of();
     }
 
-    public static void main(String[] args) {
-        String oql = "5 = a";
-        Filter filter = OQLFilterBuilder.getFilter(oql);
-        ANTLRInputStream stream = new ANTLRInputStream(oql);
-        OQLLexer oqlLexer = new OQLLexer(stream);
-        System.out.println(oqlLexer.getAllTokens());
-    }
-
     private void validateFetchRequest(FetchBucketsRequest request) {
         if (request.getStart() == null || request.getEnd() == null) {
             throw new ControllerServiceException("Start and End parameters must be specified");
@@ -223,7 +215,11 @@ public class TimeSeriesService extends AbstractStepServices {
                                                   TimeSeriesAggregationPipeline pipeline) {
         TimeSeriesAggregationQueryBuilder timeSeriesAggregationQuery = pipeline.newQueryBuilder()
                 .range(request.getStart(), request.getEnd())
-                .withFilter(OQLTimeSeriesFilterBuilder.getFilter(request.getOqlFilter()))
+                .withFilter(Filters.and(
+                        Arrays.asList(
+                                TimeSeriesFilterBuilder.buildFilter(request.getOqlFilter()),
+                                TimeSeriesFilterBuilder.buildFilter(request.getParams()))
+                        ))
                 .withGroupDimensions(request.getGroupDimensions());
         if (request.getIntervalSize() > 0) {
             timeSeriesAggregationQuery.window(request.getIntervalSize());

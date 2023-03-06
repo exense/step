@@ -6,7 +6,7 @@ public class FetchBucketsRequest {
     private Long start;
     private Long end;
     private String oqlFilter;
-    private Map<String, String> params;
+    private Map<String, Object> params;
     private Set<String> groupDimensions = new HashSet<>();
     private Long numberOfBuckets;
     private long intervalSize; // in ms
@@ -28,11 +28,11 @@ public class FetchBucketsRequest {
         this.end = end;
     }
 
-    public Map<String, String> getParams() {
+    public Map<String, Object> getParams() {
         return params;
     }
 
-    public void setParams(Map<String, String> params) {
+    public void setParams(Map<String, Object> params) {
         this.params = params;
     }
 
