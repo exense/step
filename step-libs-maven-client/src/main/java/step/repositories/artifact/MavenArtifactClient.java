@@ -42,9 +42,10 @@ public class MavenArtifactClient {
     public MavenArtifactClient(String settingsXml, File localRepository) throws SettingsBuildingException {
         // SNAPSHOT jar files cannot be read without this property
         // let the user a chance to still override it
-        if (System.getProperty(AETHER_SNAPSHOT_PROPERTY)==null) {
-            System.setProperty(AETHER_SNAPSHOT_PROPERTY, "false");
+        if (System.getProperty(AETHER_SNAPSHOT_PROPERTY)!=null && System.getProperty(AETHER_SNAPSHOT_PROPERTY).equals("true")) {
+            logger.info("System property '"+AETHER_SNAPSHOT_PROPERTY+"' will be override to 'false'");
         }
+        System.setProperty(AETHER_SNAPSHOT_PROPERTY, "false");
 
         settings = createSettings(settingsXml);
         repositorySystem = getRepositorySystem();
@@ -162,7 +163,7 @@ public class MavenArtifactClient {
                 mirrorsForSettingsRepos.add(repoMirror);
             }
         }
-        // We now have a collection of mirrors and unmirrored repositories.
+        // We now have a collection of mirrors and un-mirrored repositories.
         settingsRepos.addAll(mirrorsForSettingsRepos);
 
         Set<RemoteRepository> enrichedRepos = new HashSet<>();
