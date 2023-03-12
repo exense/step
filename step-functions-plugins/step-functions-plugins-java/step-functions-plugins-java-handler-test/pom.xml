@@ -76,10 +76,12 @@
 						<phase>package</phase>
 						<configuration>
 							<url>http://localhost:4201</url>
-<!--							<groupId>ch.exense.step</groupId>-->
-<!--							<artifactId>step-functions-plugins-java-handler-test</artifactId>-->
-<!--							<artifactVersion>0.0.0-SNAPSHOT</artifactVersion>-->
-							<authToken>...</authToken>
+							<authToken>eyJhbGciOiJIUzI1NiJ9.eyJqdGkiOiI5YjI4MGNhYS1jZDNjLTQxOTgtYTVhOS03ZDY4ZGYyYjhlNTMiLCJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwOTAiLCJhdWQiOiJodHRwOi8vbG9jYWxob3N0OjgwOTAiLCJzdWIiOiJhZG1pbiIsIm5iZiI6MTY3NzE0OTU2NiwiaWF0IjoxNjc3MTQ5NTY2LCJleHAiOjE2Nzk3NDE1NjYsImlzTG9jYWxUb2tlbiI6dHJ1ZX0.3m75q3jHz4Qfbpwa5mCrwNHy4z-6w7aKSAQ6AAabLI0</authToken>
+							<customPackageAttributes>
+								<artifactId>${project.artifactId}</artifactId>
+								<versionId>${project.version}</versionId>
+							</customPackageAttributes>
+							<stepProjectId>63dbe1042a5b7a70e3cbf99b</stepProjectId>
 						</configuration>
 						<goals>
 							<goal>upload-keywords-package</goal>
