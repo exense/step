@@ -1,8 +1,8 @@
 package step.plugins.maven;
 
-import junit.framework.TestCase;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.junit.Assert;
+import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import step.client.executions.RemoteExecutionFuture;
@@ -17,11 +17,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
-public class RunDeployedExecutionBundleMojoTest extends TestCase {
+public class RunDeployedExecutionBundleMojoTest {
 
 	/**
 	 * Checks if the mojo calls the underlying {@link RemoteExecutionManager} with valid parameters
 	 */
+	@Test
 	public void testExecuteOk() throws MojoExecutionException, InterruptedException, TimeoutException {
 		RemoteExecutionManager remoteExecutionManagerMock = createExecutionManagerMock(ReportNodeStatus.PASSED);
 
@@ -48,6 +49,7 @@ public class RunDeployedExecutionBundleMojoTest extends TestCase {
 	/**
 	 * Checks if the mojo stops the lifecycle if the underlying {@link RemoteExecutionManager} returns failed status
 	 */
+	@Test
 	public void testExecuteNok() throws InterruptedException, TimeoutException {
 		RemoteExecutionManager remoteExecutionManagerMock = createExecutionManagerMock(ReportNodeStatus.FAILED);
 

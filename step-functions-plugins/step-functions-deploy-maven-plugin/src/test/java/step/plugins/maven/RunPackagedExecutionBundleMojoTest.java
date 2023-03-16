@@ -1,16 +1,14 @@
 package step.plugins.maven;
 
-import junit.framework.TestCase;
 import org.apache.commons.io.IOUtils;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
-import org.apache.tools.ant.types.resources.Files;
 import org.bson.types.ObjectId;
 import org.junit.Assert;
+import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import step.client.executions.RemoteExecutionFuture;
 import step.client.executions.RemoteExecutionManager;
@@ -20,7 +18,6 @@ import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.execution.model.ExecutionStatus;
-import step.core.objectenricher.ObjectEnricher;
 import step.resources.Resource;
 import step.resources.SimilarResourceExistingException;
 
@@ -36,8 +33,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
-public class RunPackagedExecutionBundleMojoTest extends TestCase {
+public class RunPackagedExecutionBundleMojoTest {
 
+	@Test
 	public void testExecuteOk() throws InterruptedException, TimeoutException, MojoExecutionException, MojoFailureException, URISyntaxException, SimilarResourceExistingException, IOException {
 		RemoteExecutionManager remoteExecutionManagerMock = createExecutionManagerMock(ReportNodeStatus.PASSED);
 

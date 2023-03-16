@@ -1,19 +1,20 @@
 package step.plugins.maven;
 
-import junit.framework.TestCase;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
 import org.junit.Ignore;
+import org.junit.Test;
 import org.mockito.Mockito;
 
 import java.io.File;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 
-public class UploadKeywordsPackageMojoTest extends TestCase {
+public class UploadKeywordsPackageMojoTest {
 
+	@Test
 	@Ignore
 	public void testExecuteOk() throws MojoExecutionException, MojoFailureException, URISyntaxException {
 		UploadKeywordsPackageMojo mojo = new UploadKeywordsPackageMojo();
