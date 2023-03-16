@@ -41,12 +41,6 @@
 			<type>test-jar</type>
 			<scope>test</scope>
 		</dependency>
-
-		<dependency>
-			<groupId>ch.exense.step</groupId>
-			<artifactId>step-functions-base-functions</artifactId>
-			<version>${project.version}</version>
-		</dependency>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
 			<artifactId>step-plans-base-artefacts</artifactId>
