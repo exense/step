@@ -51,6 +51,10 @@ import static step.plugins.timeseries.TimeSeriesExecutionPlugin.TIMESERIES_FLAG;
 @Tag(name = "TimeSeries")
 public class TimeSeriesService extends AbstractStepServices {
 
+    private static final String ATTRIBUTES_PREFIX = "attributes.";
+    private static final String METRIC_TYPE_ATTRIBUTE = "metricType";
+    private static final String TIMESTAMP_ATTRIBUTE = "begin";
+
     private AsyncTaskManager asyncTaskManager;
     private TimeSeriesAggregationPipeline aggregationPipeline;
     private Collection<Measurement> measurementCollection;
@@ -94,10 +98,10 @@ public class TimeSeriesService extends AbstractStepServices {
     public TimeSeriesAPIResponse getMeasurements(FetchBucketsRequest request, java.util.Collection<String> fields) {
         Collection<Bucket> inmemoryBuckets = new InMemoryCollection<>();
         TimeSeries timeSeries = new TimeSeries(inmemoryBuckets, Set.of(), 1000);
-        List<String> ignoreFilterAttributes = Arrays.asList("metricType");
+        List<String> ignoreFilterAttributes = Arrays.asList(METRIC_TYPE_ATTRIBUTE);
         Function<String, String> attributesPrefixRemoval = (attribute) -> {
-            if (attribute.startsWith("attributes.")) {
-                return attribute.replaceFirst("attributes.", "");
+            if (attribute.startsWith(ATTRIBUTES_PREFIX)) {
+                return attribute.replaceFirst(ATTRIBUTES_PREFIX, "");
             } else {
                 return attribute;
             }
@@ -110,13 +114,13 @@ public class TimeSeriesService extends AbstractStepServices {
             LongAdder count = new LongAdder();
             ArrayList<Filter> timestampClauses = new ArrayList<>(List.of(Filters.empty()));
             if (request.getStart() != null) {
-                timestampClauses.add(Filters.gte("begin", request.getStart()));
+                timestampClauses.add(Filters.gte(TIMESTAMP_ATTRIBUTE, request.getStart()));
             }
             if (request.getEnd() != null) {
-                timestampClauses.add(Filters.lt("begin", request.getEnd()));
+                timestampClauses.add(Filters.lt(TIMESTAMP_ATTRIBUTE, request.getEnd()));
             }
             Filter filter = Filters.and(Arrays.asList(Filters.and(timestampClauses), OQLTimeSeriesFilterBuilder.getFilter(request.getOqlFilter(), attributesPrefixRemoval, ignoreFilterAttributes)));
-            SearchOrder searchOrder = new SearchOrder("begin", 1);
+            SearchOrder searchOrder = new SearchOrder(TIMESTAMP_ATTRIBUTE, 1);
             // Iterate over each measurement and ingest it again
             measurementCollection.find(filter, searchOrder, null, null, 0).forEach(measurement -> {
                 count.increment();
@@ -181,7 +185,7 @@ public class TimeSeriesService extends AbstractStepServices {
     public OQLVerifyResponse verifyOql(@QueryParam("oql") String oql) {
         List<String> timeSeriesAttributes = this.timeSeriesAttributes
                 .stream()
-                .map(x -> "attributes." + x)
+                .map(x -> ATTRIBUTES_PREFIX + x)
                 .collect(Collectors.toList());
         boolean isValid = true;
         boolean hasUnknownFields = false;
@@ -196,10 +200,6 @@ public class TimeSeriesService extends AbstractStepServices {
             }
         }
         return new OQLVerifyResponse(isValid, hasUnknownFields, fields);
-    }
-
-    private Set<String> getFilterAttributes(Filter filter) {
-        return Set.of();
     }
 
     private void validateFetchRequest(FetchBucketsRequest request) {
