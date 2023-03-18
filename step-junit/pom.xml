@@ -39,8 +39,8 @@
 			<plugins>
 				<plugin>
 					<groupId>ch.exense.step</groupId>
-					<artifactId>step-functions-deploy-maven-plugin</artifactId>
-					<version>0.0.0-SNAPSHOT</version>
+					<artifactId>step-maven-plugins-ee</artifactId>
+					<version>${project.version}</version>
 				</plugin>
 			</plugins>
 		</pluginManagement>
