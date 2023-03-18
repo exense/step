@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>step-maven-plugins</artifactId>
+    <packaging>pom</packaging>
+
+    <parent>
+        <groupId>ch.exense.step</groupId>
+        <artifactId>step-parent</artifactId>
+        <version>0.0.0-SNAPSHOT</version>
+        <relativePath>../step-parent</relativePath>
+    </parent>
+
+    <properties>
+        <maven-plugin-tools.version>3.7.1</maven-plugin-tools.version>
+        <maven-core.version>3.8.1</maven-core.version>
+        <maven-plugin-api.version>3.8.1</maven-plugin-api.version>
+    </properties>
+
+    <modules>
+        <module>step-maven-plugins-commons</module>
+    </modules>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.apache.maven</groupId>
+                <artifactId>maven-plugin-api</artifactId>
+                <version>${maven-plugin-api.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.maven</groupId>
+                <artifactId>maven-core</artifactId>
+                <version>${maven-core.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <!-- dependencies to annotations -->
+            <dependency>
+                <groupId>org.apache.maven.plugin-tools</groupId>
+                <artifactId>maven-plugin-annotations</artifactId>
+                <version>${maven-plugin-tools.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-core</artifactId>
+                <version>${mockito.version}</version>
+                <scope>test</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+</project>
