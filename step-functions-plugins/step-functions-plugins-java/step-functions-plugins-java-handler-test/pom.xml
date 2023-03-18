@@ -76,12 +76,12 @@
 <!--						<phase>package</phase>-->
 <!--						<configuration>-->
 <!--							<url>http://localhost:4201</url>-->
-<!--							<authToken></authToken>-->
+<!--							<authToken>...</authToken>-->
 <!--							<customPackageAttributes>-->
 <!--								<artifactId>${project.artifactId}</artifactId>-->
 <!--								<versionId>${project.version}</versionId>-->
 <!--							</customPackageAttributes>-->
-<!--							<stepProjectId>63dbe1042a5b7a70e3cbf99b</stepProjectId>-->
+<!--							<stepProjectName>Common</stepProjectName>-->
 <!--						</configuration>-->
 <!--						<goals>-->
 <!--							<goal>upload-keywords-package-ee</goal>-->

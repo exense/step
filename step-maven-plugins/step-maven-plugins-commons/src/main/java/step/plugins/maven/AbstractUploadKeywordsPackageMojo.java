@@ -42,35 +42,27 @@ public abstract class AbstractUploadKeywordsPackageMojo extends AbstractStepPlug
 			}
 
 			getLog().info("Package attributes: " + packageAttributes);
-			getLog().info("Step project id: " + getStepProjectId());
 
 			// we try to find existing package (for update) if at least one tracking attribute is defined
 			if (!packageAttributes.isEmpty()) {
-				getLog().info("Trying to find existing package by attributes: " + packageAttributes);
 				AbstractAccessor<FunctionPackage> remoteFunctionAccessor = getRemoteFunctionAccessor();
 
 				Map<String, String> searchCriteria = new HashMap<>();
 				for (Map.Entry<String, String> entry : packageAttributes.entrySet()) {
 					searchCriteria.put("packageAttributes." + entry.getKey(), entry.getValue());
 				}
-				if (getStepProjectId() != null && !getStepProjectId().isBlank()) {
-					searchCriteria.put("attributes.project", getStepProjectId());
-				}
+
+				fillAdditionalPackageSearchCriteria(searchCriteria);
+				getLog().info("Search for function package with attributes: " + searchCriteria);
 
 				previousPackage = remoteFunctionAccessor.findByCriteria(searchCriteria);
 			}
 
 			FunctionPackage uploaded = null;
 
-			Map<String, String> customAttributes = null;
-			if(getStepProjectId() != null && !getStepProjectId().isBlank()){
-				customAttributes = new HashMap<>();
-				customAttributes.put("project", getStepProjectId());
-			}
-
 			if (previousPackage == null) {
 				getLog().info("Uploading the new function package...");
-				uploaded = remoteFunctionPackageClient.newKeywordPackageWithCustomAttributes(null, packagedTarget, packageAttributes, customAttributes);
+				uploaded = remoteFunctionPackageClient.newKeywordPackage(null, packagedTarget, packageAttributes);
 			} else {
 				getLog().info("Updating the existing function package (" + previousPackage.getId().toString() + ")...");
 				uploaded = remoteFunctionPackageClient.updateKeywordPackageById(previousPackage, null, packagedTarget, packageAttributes);
@@ -82,6 +74,10 @@ public abstract class AbstractUploadKeywordsPackageMojo extends AbstractStepPlug
 		} catch (Exception e) {
 			logAndThrow("Unable to upload keywords package to step", e);
 		}
+	}
+
+	protected void fillAdditionalPackageSearchCriteria(Map<String, String> searchCriteria) throws MojoExecutionException {
+
 	}
 
 	public MavenProject getProject() {
@@ -98,10 +94,6 @@ public abstract class AbstractUploadKeywordsPackageMojo extends AbstractStepPlug
 
 	public void setCustomPackageAttributes(Map<String, String> customPackageAttributes) {
 		this.customPackageAttributes = customPackageAttributes;
-	}
-
-	public String getStepProjectId() {
-		return null;
 	}
 
 	private AbstractAccessor<FunctionPackage> getRemoteFunctionAccessor() {

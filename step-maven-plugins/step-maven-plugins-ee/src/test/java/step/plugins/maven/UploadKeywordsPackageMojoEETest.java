@@ -40,7 +40,7 @@ public class UploadKeywordsPackageMojoEETest {
 		customAttributes.put("versionId", "0.0.0-SNAPSHOT");
 
 		mojo.setCustomPackageAttributes(customAttributes);
-		mojo.setStepProjectId("63dbe1042a5b7a70e3cbf99c");
+		mojo.setStepProjectName("63dbe1042a5b7a70e3cbf99c");
 
 		mojo.setProject(mockedProject);
 
