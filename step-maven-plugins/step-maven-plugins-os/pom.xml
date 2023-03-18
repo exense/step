@@ -11,6 +11,7 @@
     </parent>
 
     <artifactId>step-maven-plugins-os</artifactId>
+    <packaging>maven-plugin</packaging>
 
     <properties>
     </properties>

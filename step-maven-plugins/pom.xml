@@ -22,6 +22,8 @@
 
     <modules>
         <module>step-maven-plugins-commons</module>
+        <module>step-maven-plugins-os</module>
+        <module>step-maven-plugins-ee</module>
     </modules>
 
     <dependencyManagement>
