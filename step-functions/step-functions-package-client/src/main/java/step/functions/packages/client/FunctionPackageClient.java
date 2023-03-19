@@ -9,8 +9,6 @@ import step.functions.packages.FunctionPackage;
 
 public interface FunctionPackageClient extends Closeable {
 
-	FunctionPackage newKeywordPackageWithCustomAttributes(File packageLibraryFile, File packageFile, Map<String, String> packageAttributes, Map<String, String> attributes) throws IOException;
-
 	/**
 	 * Creates a new Keyword package
 	 * 

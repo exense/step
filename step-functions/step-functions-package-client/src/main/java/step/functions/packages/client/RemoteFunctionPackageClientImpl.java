@@ -3,7 +3,6 @@ package step.functions.packages.client;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 
 import jakarta.ws.rs.client.Entity;
@@ -32,7 +31,7 @@ public class RemoteFunctionPackageClientImpl extends AbstractRemoteClient implem
 		remoteResourceManager = new RemoteResourceManager(credentials);
 	}
 	
-	private FunctionPackage addOrUpdateKeywordPackage(FunctionPackage previousPackage, File packageLibraryFile, File packageFile, Map<String, String> packageAttributes, Map<String, String> attrs) throws IOException {
+	private FunctionPackage addOrUpdateKeywordPackage(FunctionPackage previousPackage, File packageLibraryFile, File packageFile, Map<String, String> packageAttributes) throws IOException {
 		FunctionPackage functionPackage = null;
 		if(previousPackage != null) {
 			functionPackage = previousPackage;
@@ -45,17 +44,10 @@ public class RemoteFunctionPackageClientImpl extends AbstractRemoteClient implem
 			functionPackage.setPackageLibrariesLocation(FileResolver.RESOURCE_PREFIX+packageLibraryResource.getId().toString());
 		}
 
-		// TODO: if we want to specify project id for function package, we need to specify the same project for packageResource as well...
 		Resource packageResource = upload(packageFile);
 		functionPackage.setPackageLocation(FileResolver.RESOURCE_PREFIX+packageResource.getId().toString());
 
 		functionPackage.setPackageAttributes(packageAttributes);
-		if (attrs != null) {
-			if (functionPackage.getAttributes() == null) {
-				functionPackage.setAttributes(new HashMap<>());
-			}
-			functionPackage.getAttributes().putAll(attrs);
-		}
 		functionPackage.setWatchForChange(false);
 
 		Builder b = requestBuilder("/rest/functionpackages/");
@@ -65,18 +57,13 @@ public class RemoteFunctionPackageClientImpl extends AbstractRemoteClient implem
 	}
 
 	@Override
-	public FunctionPackage newKeywordPackageWithCustomAttributes(File packageLibraryFile, File packageFile, Map<String, String> packageAttributes, Map<String, String> attributes) throws IOException {
-		return addOrUpdateKeywordPackage(null, packageLibraryFile, packageFile, packageAttributes, attributes);
-	}
-
-	@Override
 	public FunctionPackage newKeywordPackage(File packageLibraryFile, File packageFile, Map<String, String> packageAttributes) throws IOException {
-		return addOrUpdateKeywordPackage(null, packageLibraryFile, packageFile, packageAttributes, null);
+		return addOrUpdateKeywordPackage(null, packageLibraryFile, packageFile, packageAttributes);
 	}
 	
 	@Override
 	public FunctionPackage updateKeywordPackageById(FunctionPackage previousPackage, File packageLibraryFile, File packageFile, Map<String, String> packageAttributes) throws IOException {
-		return addOrUpdateKeywordPackage(previousPackage, packageLibraryFile, packageFile, packageAttributes, null);
+		return addOrUpdateKeywordPackage(previousPackage, packageLibraryFile, packageFile, packageAttributes);
 	}
 
 	@Override
