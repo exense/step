@@ -109,7 +109,7 @@
 		<module>../step-plans</module>
 		<module>../step-controller</module>
 		<module>../step-controller-plugins</module>
-		<module>../step-maven-plugins</module>
+		<module>../step-maven-plugin</module>
 		<module>../step-repositories</module>
 		<module>../step-ide</module>
 		<module>../step-junit</module>

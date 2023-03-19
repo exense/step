@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>step-maven-plugins</artifactId>
+    <artifactId>step-maven-plugin</artifactId>
     <packaging>pom</packaging>
 
     <parent>
@@ -15,15 +15,15 @@
     </parent>
 
     <properties>
-        <maven-plugin-tools.version>3.7.1</maven-plugin-tools.version>
+        <maven-plugin-tools.version>3.8.1</maven-plugin-tools.version>
         <maven-core.version>3.8.1</maven-core.version>
         <maven-plugin-api.version>3.8.1</maven-plugin-api.version>
     </properties>
 
     <modules>
-        <module>step-maven-plugins-commons</module>
-        <module>step-maven-plugins-os</module>
-        <module>step-maven-plugins-ee</module>
+        <module>step-commons-maven-plugin</module>
+        <module>step-os-maven-plugin</module>
+        <module>step-ee-maven-plugin</module>
     </modules>
 
     <dependencyManagement>
