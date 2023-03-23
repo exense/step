@@ -42,7 +42,7 @@ public class MavenArtifactClient {
     public MavenArtifactClient(String settingsXml, File localRepository) throws SettingsBuildingException {
         // SNAPSHOT jar files cannot be read without this property
         // let the user a chance to still override it
-        if (System.getProperty(AETHER_SNAPSHOT_PROPERTY)!=null && System.getProperty(AETHER_SNAPSHOT_PROPERTY).equals("true")) {
+        if (System.getProperty(AETHER_SNAPSHOT_PROPERTY)==null) {
             System.setProperty(AETHER_SNAPSHOT_PROPERTY, "false");
         }
 
