@@ -27,7 +27,7 @@ public abstract class AbstractUploadKeywordsPackageMojo extends AbstractStepPlug
 	public void execute() throws MojoExecutionException, MojoFailureException {
 		getLog().info("Uploading keywords package to step...");
 
-		try (RemoteFunctionPackageClientImpl remoteFunctionPackageClient = new RemoteFunctionPackageClientImpl(getControllerCredentials())) {
+		try (RemoteFunctionPackageClientImpl remoteFunctionPackageClient = createRemoteFunctionPackageClient()) {
 			File packagedTarget = getFileToUpload();
 
 			FunctionPackage previousPackage = null;
@@ -45,7 +45,7 @@ public abstract class AbstractUploadKeywordsPackageMojo extends AbstractStepPlug
 
 			// we try to find existing package (for update) if at least one tracking attribute is defined
 			if (!packageAttributes.isEmpty()) {
-				AbstractAccessor<FunctionPackage> remoteFunctionAccessor = getRemoteFunctionAccessor();
+				AbstractAccessor<FunctionPackage> remoteFunctionAccessor = createRemoteFunctionPackageAccessor();
 
 				Map<String, String> searchCriteria = new HashMap<>();
 				for (Map.Entry<String, String> entry : packageAttributes.entrySet()) {
@@ -76,6 +76,10 @@ public abstract class AbstractUploadKeywordsPackageMojo extends AbstractStepPlug
 		}
 	}
 
+	protected RemoteFunctionPackageClientImpl createRemoteFunctionPackageClient() {
+		return new RemoteFunctionPackageClientImpl(getControllerCredentials());
+	}
+
 	protected void fillAdditionalPackageSearchCriteria(Map<String, String> searchCriteria) throws MojoExecutionException {
 
 	}
@@ -96,7 +100,7 @@ public abstract class AbstractUploadKeywordsPackageMojo extends AbstractStepPlug
 		this.customPackageAttributes = customPackageAttributes;
 	}
 
-	private AbstractAccessor<FunctionPackage> getRemoteFunctionAccessor() {
+	protected AbstractAccessor<FunctionPackage> createRemoteFunctionPackageAccessor() {
 		RemoteAccessors remoteAccessors = new RemoteAccessors(new RemoteCollectionFactory(getControllerCredentials()));
 		return remoteAccessors.getAbstractAccessor("functionPackage", FunctionPackage.class);
 	}

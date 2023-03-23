@@ -21,7 +21,6 @@ import step.core.execution.model.ExecutionStatus;
 import step.resources.Resource;
 import step.resources.SimilarResourceExistingException;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,7 +32,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
-public class RunPackagedExecutionBundleMojoOSTest {
+public class RunPackagedExecutionBundleMojoOSTest extends AbstractMojoTest {
 
 	@Test
 	public void testExecuteOk() throws InterruptedException, TimeoutException, MojoExecutionException, MojoFailureException, URISyntaxException, SimilarResourceExistingException, IOException {
@@ -45,9 +44,8 @@ public class RunPackagedExecutionBundleMojoOSTest {
 
 		Mockito.when(remoteResourceManagerMock.createResource(Mockito.anyString(), Mockito.any(InputStream.class), Mockito.anyString(), Mockito.anyBoolean(), Mockito.isNull())).thenReturn(resourceMock);
 
-		RunPackagedExecutionBundleMojoTestable mojo = new RunPackagedExecutionBundleMojoTestable(remoteExecutionManagerMock, remoteResourceManagerMock);
+		RunPackagedExecutionBundleMojoOSTestable mojo = new RunPackagedExecutionBundleMojoOSTestable(remoteExecutionManagerMock, remoteResourceManagerMock);
 		configureMojo(mojo);
-
 		mojo.execute();
 
 		ArgumentCaptor<InputStream> fileCaptor = ArgumentCaptor.forClass(InputStream.class);
@@ -82,7 +80,7 @@ public class RunPackagedExecutionBundleMojoOSTest {
 		return remoteExecutionManagerMock;
 	}
 
-	private void configureMojo(RunPackagedExecutionBundleMojoTestable mojo) throws URISyntaxException {
+	private void configureMojo(RunPackagedExecutionBundleMojoOSTestable mojo) throws URISyntaxException {
 		mojo.setArtifactId("test-artifact-id");
 		mojo.setArtifactClassifier("jar-with-dependencies");
 		mojo.setArtifactVersion("1.0.0-RELEASE");
@@ -100,22 +98,13 @@ public class RunPackagedExecutionBundleMojoOSTest {
 
 		MavenProject mockedProject = Mockito.mock(MavenProject.class);
 
-		Artifact mainArtifact = Mockito.mock(Artifact.class);
-		Mockito.when(mainArtifact.getArtifactId()).thenReturn("test-artifact-id");
-		Mockito.when(mainArtifact.getClassifier()).thenReturn("jar");
-		Mockito.when(mainArtifact.getGroupId()).thenReturn("test-group-id");
-		Mockito.when(mainArtifact.getVersion()).thenReturn("1.0.0-RELEASE");
-		Mockito.when(mainArtifact.getFile()).thenReturn(new File(this.getClass().getClassLoader().getResource("step/plugins/maven/test-file-jar.jar").toURI()));
+		Artifact mainArtifact = createArtifactMock();
+
 		Mockito.when(mockedProject.getArtifact()).thenReturn(mainArtifact);
 
 		Mockito.when(mockedProject.getArtifacts()).thenReturn(new HashSet<>());
 
-		Artifact jarWithDependenciesArtifact = Mockito.mock(Artifact.class);
-		Mockito.when(jarWithDependenciesArtifact.getArtifactId()).thenReturn("test-artifact-id");
-		Mockito.when(jarWithDependenciesArtifact.getClassifier()).thenReturn("jar-with-dependencies");
-		Mockito.when(jarWithDependenciesArtifact.getGroupId()).thenReturn("test-group-id");
-		Mockito.when(jarWithDependenciesArtifact.getVersion()).thenReturn("1.0.0-RELEASE");
-		Mockito.when(jarWithDependenciesArtifact.getFile()).thenReturn(new File(this.getClass().getClassLoader().getResource("step/plugins/maven/test-file-jar-with-dependencies.jar").toURI()));
+		Artifact jarWithDependenciesArtifact = createArtifactWithDependenciesMock();
 
 		Mockito.when(mockedProject.getAttachedArtifacts()).thenReturn(Arrays.asList(jarWithDependenciesArtifact));
 
@@ -129,12 +118,12 @@ public class RunPackagedExecutionBundleMojoOSTest {
 		return params;
 	}
 
-	private static class RunPackagedExecutionBundleMojoTestable extends RunPackagedExecutionBundleMojoOS {
+	private static class RunPackagedExecutionBundleMojoOSTestable extends RunPackagedExecutionBundleMojoOS {
 
 		private RemoteExecutionManager remoteExecutionManagerMock;
 		private RemoteResourceManager remoteResourceManagerMock;
 
-		public RunPackagedExecutionBundleMojoTestable(RemoteExecutionManager remoteExecutionManagerMock, RemoteResourceManager remoteResourceManagerMock) {
+		public RunPackagedExecutionBundleMojoOSTestable(RemoteExecutionManager remoteExecutionManagerMock, RemoteResourceManager remoteResourceManagerMock) {
 			super();
 			this.remoteExecutionManagerMock = remoteExecutionManagerMock;
 			this.remoteResourceManagerMock = remoteResourceManagerMock;

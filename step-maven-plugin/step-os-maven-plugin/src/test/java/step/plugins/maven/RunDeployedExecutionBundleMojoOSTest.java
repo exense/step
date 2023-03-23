@@ -17,7 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
-public class RunDeployedExecutionBundleMojoOSTest {
+public class RunDeployedExecutionBundleMojoOSTest extends AbstractMojoTest {
 
 	/**
 	 * Checks if the mojo calls the underlying {@link RemoteExecutionManager} with valid parameters
@@ -26,7 +26,7 @@ public class RunDeployedExecutionBundleMojoOSTest {
 	public void testExecuteOk() throws MojoExecutionException, InterruptedException, TimeoutException {
 		RemoteExecutionManager remoteExecutionManagerMock = createExecutionManagerMock(ReportNodeStatus.PASSED);
 
-		RunDeployedExecutionBundleMojoTestable mojo = new RunDeployedExecutionBundleMojoTestable(remoteExecutionManagerMock);
+		RunDeployedExecutionBundleMojoOSTestable mojo = new RunDeployedExecutionBundleMojoOSTestable(remoteExecutionManagerMock);
 		configureMojo(mojo);
 
 		mojo.execute();
@@ -53,7 +53,7 @@ public class RunDeployedExecutionBundleMojoOSTest {
 	public void testExecuteNok() throws InterruptedException, TimeoutException {
 		RemoteExecutionManager remoteExecutionManagerMock = createExecutionManagerMock(ReportNodeStatus.FAILED);
 
-		RunDeployedExecutionBundleMojoTestable mojo = new RunDeployedExecutionBundleMojoTestable(remoteExecutionManagerMock);
+		RunDeployedExecutionBundleMojoOSTestable mojo = new RunDeployedExecutionBundleMojoOSTestable(remoteExecutionManagerMock);
 		configureMojo(mojo);
 
 		try {
@@ -80,7 +80,7 @@ public class RunDeployedExecutionBundleMojoOSTest {
 		return remoteExecutionManagerMock;
 	}
 
-	private void configureMojo(RunDeployedExecutionBundleMojoTestable mojo) {
+	private void configureMojo(RunDeployedExecutionBundleMojoOSTestable mojo) {
 		mojo.setArtifactId("test-artifact-id");
 		mojo.setArtifactClassifier("jar-with-dependencies");
 		mojo.setArtifactVersion("1.0.0-RELEASE");
@@ -105,11 +105,11 @@ public class RunDeployedExecutionBundleMojoOSTest {
 		return params;
 	}
 
-	private static class RunDeployedExecutionBundleMojoTestable extends RunDeployedExecutionBundleMojoOS {
+	private static class RunDeployedExecutionBundleMojoOSTestable extends RunDeployedExecutionBundleMojoOS {
 
 		private RemoteExecutionManager remoteExecutionManagerMock;
 
-		public RunDeployedExecutionBundleMojoTestable(RemoteExecutionManager remoteExecutionManagerMock) {
+		public RunDeployedExecutionBundleMojoOSTestable(RemoteExecutionManager remoteExecutionManagerMock) {
 			super();
 			this.remoteExecutionManagerMock = remoteExecutionManagerMock;
 		}
