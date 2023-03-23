@@ -43,9 +43,8 @@ public class MavenArtifactClient {
         // SNAPSHOT jar files cannot be read without this property
         // let the user a chance to still override it
         if (System.getProperty(AETHER_SNAPSHOT_PROPERTY)!=null && System.getProperty(AETHER_SNAPSHOT_PROPERTY).equals("true")) {
-            logger.info("System property '"+AETHER_SNAPSHOT_PROPERTY+"' will be override to 'false'");
+            System.setProperty(AETHER_SNAPSHOT_PROPERTY, "false");
         }
-        System.setProperty(AETHER_SNAPSHOT_PROPERTY, "false");
 
         settings = createSettings(settingsXml);
         repositorySystem = getRepositorySystem();
