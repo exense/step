@@ -105,6 +105,8 @@ public class MavenArtifactClient {
     private DefaultRepositorySystemSession getSession() {
         DefaultRepositorySystemSession session = MavenRepositorySystemUtils.newSession();
         session.setOffline(false);
+        // Force the update of SNAPSHOTS. This doesn't affect releases.
+        session.setUpdatePolicy("always");
 
         Proxy activeProxy = settings.getActiveProxy();
         if (activeProxy != null) {
