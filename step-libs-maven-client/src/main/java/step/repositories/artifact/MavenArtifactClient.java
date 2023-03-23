@@ -32,6 +32,7 @@ import java.util.*;
 
 public class MavenArtifactClient {
 
+    private static final String AETHER_SNAPSHOT_PROPERTY = "aether.artifactResolver.snapshotNormalization";
     private final Settings settings;
     private final RepositorySystem repositorySystem;
     private final File localRepository;
@@ -39,6 +40,12 @@ public class MavenArtifactClient {
     private static final Logger logger = LoggerFactory.getLogger(MavenArtifactClient.class);
 
     public MavenArtifactClient(String settingsXml, File localRepository) throws SettingsBuildingException {
+        // SNAPSHOT jar files cannot be read without this property
+        // let the user a chance to still override it
+        if (System.getProperty(AETHER_SNAPSHOT_PROPERTY)==null) {
+            System.setProperty(AETHER_SNAPSHOT_PROPERTY, "false");
+        }
+
         settings = createSettings(settingsXml);
         repositorySystem = getRepositorySystem();
         this.localRepository = localRepository;
@@ -157,7 +164,7 @@ public class MavenArtifactClient {
                 mirrorsForSettingsRepos.add(repoMirror);
             }
         }
-        // We now have a collection of mirrors and unmirrored repositories.
+        // We now have a collection of mirrors and un-mirrored repositories.
         settingsRepos.addAll(mirrorsForSettingsRepos);
 
         Set<RemoteRepository> enrichedRepos = new HashSet<>();
