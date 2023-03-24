@@ -50,6 +50,10 @@ public class StepJarParser {
             if (libraries!=null) {
                 function.setLibrariesFile(new DynamicValue<>(libraries.getAbsolutePath()));
             }
+
+            function.getCallTimeout().setValue(annotation.timeout());
+            function.setDescription(annotation.description());
+
             function.setScriptLanguage(new DynamicValue<>("java"));
 
             functions.add(function);
