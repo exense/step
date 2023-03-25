@@ -17,7 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
-public class RunDeployedExecutionBundleMojoEETest {
+public class RunDeployedExecutionBundleMojoEETest  extends AbstractMojoTest {
 
 	/**
 	 * Checks if the mojo calls the underlying {@link RemoteExecutionManager} with valid parameters

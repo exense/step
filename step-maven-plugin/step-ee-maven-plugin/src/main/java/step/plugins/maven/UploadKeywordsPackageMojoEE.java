@@ -50,8 +50,7 @@ public class UploadKeywordsPackageMojoEE extends AbstractUploadKeywordsPackageMo
 			getLog().info("Step project name: " + getStepProjectName());
 
 			// setup step project and use it to search fo existing packages
-
-			try (RemoteMultitenancyClientImpl multitenancyClient = new RemoteMultitenancyClientImpl(getControllerCredentials())) {
+			try (RemoteMultitenancyClientImpl multitenancyClient = createMultitenancyClient()) {
 				List<Tenant> availableTenants = multitenancyClient.getAvailableTenants();
 				Tenant currentTenant = null;
 				if (availableTenants != null) {
@@ -73,5 +72,9 @@ public class UploadKeywordsPackageMojoEE extends AbstractUploadKeywordsPackageMo
 
 		}
 
+	}
+
+	protected RemoteMultitenancyClientImpl createMultitenancyClient() {
+		return new RemoteMultitenancyClientImpl(getControllerCredentials());
 	}
 }

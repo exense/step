@@ -4,47 +4,186 @@ import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
-import org.junit.Ignore;
+import org.bson.types.ObjectId;
+import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
+import step.controller.multitenancy.Tenant;
+import step.controller.multitenancy.client.RemoteMultitenancyClientImpl;
+import step.core.accessors.AbstractAccessor;
+import step.functions.packages.FunctionPackage;
+import step.functions.packages.client.RemoteFunctionPackageClientImpl;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.HashMap;
+import java.sql.Date;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.*;
 
-public class UploadKeywordsPackageMojoEETest {
+public class UploadKeywordsPackageMojoEETest  extends AbstractMojoTest {
+
+	private static final FunctionPackage OLD_PACKAGE = createOldPackageMock();
+	private static final FunctionPackage UPDATED_PACKAGE = createUpdatedPackageMock();
+	private static final Tenant TENANT_1 = createTenant1();
+	private static final Tenant TENANT_2 = createTenant2();
+
+	private static final String ARTIFACT_ID = "step-functions-plugins-java-handler-test-3";
+	private static final String VERSION_ID = "0.0.0-SNAPSHOT";
+
+	private static FunctionPackage createOldPackageMock() {
+		FunctionPackage res = Mockito.mock(FunctionPackage.class);
+		Mockito.when(res.getId()).thenReturn(new ObjectId(Date.from(LocalDateTime.of(2023, 3, 10, 15, 55, 55).toInstant(ZoneOffset.UTC))));
+		return res;
+	}
+
+	private static FunctionPackage createUpdatedPackageMock() {
+		FunctionPackage res = Mockito.mock(FunctionPackage.class);
+		Mockito.when(res.getId()).thenReturn(new ObjectId(Date.from(LocalDateTime.of(2023, 3, 10, 15, 55, 55).toInstant(ZoneOffset.UTC))));
+		return res;
+	}
+
+	private static Tenant createTenant1() {
+		Tenant tenant1 = new Tenant();
+		tenant1.setName("project1");
+		tenant1.setProjectId(new ObjectId().toString());
+		return tenant1;
+	}
+
+	private static Tenant createTenant2() {
+		Tenant tenant2 = new Tenant();
+		tenant2.setName("project2");
+		tenant2.setProjectId(new ObjectId().toString());
+		return tenant2;
+	}
 
 	@Test
-	@Ignore
-	public void testExecuteOk() throws MojoExecutionException, MojoFailureException, URISyntaxException {
-		UploadKeywordsPackageMojoEE mojo = new UploadKeywordsPackageMojoEE();
+	public void testExecuteOk() throws Exception {
+		AbstractAccessor<FunctionPackage> functionAccessorMock = createRemoteFunctionAccessorMock();
+		RemoteFunctionPackageClientImpl remoteFunctionManagerMock = createRemoteFunctionManagerMock();
+		RemoteMultitenancyClientImpl multitenancyClientMock = createRemoteMultitenancyClientMock();
+		UploadKeywordsPackageMojoOSTestable mojo = new UploadKeywordsPackageMojoOSTestable(remoteFunctionManagerMock, functionAccessorMock, multitenancyClientMock);
+		configureMojo(mojo);
 
 		MavenProject mockedProject = Mockito.mock(MavenProject.class);
 
-		String artifactId = "step-functions-plugins-java-handler-test-3";
-		Mockito.when(mockedProject.getArtifactId()).thenReturn(artifactId);
+		Mockito.when(mockedProject.getArtifactId()).thenReturn(ARTIFACT_ID);
 
-		Artifact mainArtifact = Mockito.mock(Artifact.class);
-		Mockito.when(mainArtifact.getArtifactId()).thenReturn(artifactId);
-		Mockito.when(mainArtifact.getClassifier()).thenReturn("jar");
-		Mockito.when(mainArtifact.getGroupId()).thenReturn("test-group-id");
-		Mockito.when(mainArtifact.getVersion()).thenReturn("0.0.0-SNAPSHOT");
-		Mockito.when(mainArtifact.getFile()).thenReturn(new File(this.getClass().getClassLoader().getResource("step/plugins/maven/test-file-jar.jar").toURI()));
-
+		Artifact mainArtifact = createArtifactMock();
 		Mockito.when(mockedProject.getArtifact()).thenReturn(mainArtifact);
 
 		mojo.setUrl("http://localhost:4201");
-		mojo.setAuthToken("eyJhbGciOiJIUzI1NiJ9.eyJqdGkiOiI5YjI4MGNhYS1jZDNjLTQxOTgtYTVhOS03ZDY4ZGYyYjhlNTMiLCJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwOTAiLCJhdWQiOiJodHRwOi8vbG9jYWxob3N0OjgwOTAiLCJzdWIiOiJhZG1pbiIsIm5iZiI6MTY3NzE0OTU2NiwiaWF0IjoxNjc3MTQ5NTY2LCJleHAiOjE2Nzk3NDE1NjYsImlzTG9jYWxUb2tlbiI6dHJ1ZX0.3m75q3jHz4Qfbpwa5mCrwNHy4z-6w7aKSAQ6AAabLI0");
 		HashMap<String, String> customAttributes = new HashMap<>();
-		customAttributes.put("artifactId", artifactId);
-		customAttributes.put("versionId", "0.0.0-SNAPSHOT");
+		customAttributes.put("artifactId", ARTIFACT_ID);
+		customAttributes.put("versionId", VERSION_ID);
 
 		mojo.setCustomPackageAttributes(customAttributes);
-		mojo.setStepProjectName("63dbe1042a5b7a70e3cbf99c");
-
+		mojo.setStepProjectName(TENANT_1.getName());
 		mojo.setProject(mockedProject);
 
 		mojo.execute();
 
+		// verify arguments of external calls
+
+		// tenant should be chosen according to project name
+		Mockito.verify(multitenancyClientMock, Mockito.times(1)).selectTenant(Mockito.eq(TENANT_1.getName()));
+
+		// attributes used to search for existing function packages
+		ArgumentCaptor<Map<String, String>> searchCriteriaCaptor = ArgumentCaptor.forClass(Map.class);
+		Mockito.verify(functionAccessorMock, Mockito.times(1)).findByCriteria(searchCriteriaCaptor.capture());
+		Assert.assertEquals(Set.of("packageAttributes.versionId", "packageAttributes.artifactId", "attributes.project"), searchCriteriaCaptor.getValue().keySet());
+		Assert.assertEquals(VERSION_ID, searchCriteriaCaptor.getValue().get("packageAttributes.versionId"));
+		Assert.assertEquals(ARTIFACT_ID, searchCriteriaCaptor.getValue().get("packageAttributes.artifactId"));
+		Assert.assertEquals(TENANT_1.getProjectId(), searchCriteriaCaptor.getValue().get("attributes.project"));
+		Mockito.verifyNoMoreInteractions(functionAccessorMock);
+
+		// parameters used to upload (update) the function package
+		ArgumentCaptor<FunctionPackage> oldPackageCaptor = ArgumentCaptor.forClass(FunctionPackage.class);
+		ArgumentCaptor<File> uploadedFileCaptor = ArgumentCaptor.forClass(File.class);
+		ArgumentCaptor<Map<String, String>> uploadedPackageAttributesCaptor = ArgumentCaptor.forClass(Map.class);
+		Mockito.verify(remoteFunctionManagerMock, Mockito.times(1)).updateKeywordPackageById(
+				oldPackageCaptor.capture(),
+				Mockito.isNull(),
+				uploadedFileCaptor.capture(),
+				uploadedPackageAttributesCaptor.capture()
+		);
+		Assert.assertEquals(OLD_PACKAGE, oldPackageCaptor.getValue());
+		Assert.assertEquals("test-file-jar.jar", uploadedFileCaptor.getValue().getName());
+		Assert.assertEquals(Set.of("versionId", "artifactId"), uploadedPackageAttributesCaptor.getValue().keySet());
+		Assert.assertEquals(VERSION_ID, uploadedPackageAttributesCaptor.getValue().get("versionId"));
+		Assert.assertEquals(ARTIFACT_ID, uploadedPackageAttributesCaptor.getValue().get("artifactId"));
+
+		Mockito.verify(remoteFunctionManagerMock).close();
+
+		Mockito.verifyNoMoreInteractions(remoteFunctionManagerMock);
+	}
+
+	private void configureMojo(UploadKeywordsPackageMojoOSTestable mojo) throws URISyntaxException {
+		mojo.setUrl("http://localhost:8080");
+		mojo.setBuildFinalName("Test build name");
+		mojo.setProjectVersion("1.0.0");
+
+		MavenProject mockedProject = Mockito.mock(MavenProject.class);
+
+		Artifact mainArtifact = createArtifactMock();
+
+		Mockito.when(mockedProject.getArtifact()).thenReturn(mainArtifact);
+		Mockito.when(mockedProject.getArtifacts()).thenReturn(new HashSet<>());
+
+		Artifact jarWithDependenciesArtifact = createArtifactWithDependenciesMock();
+
+		Mockito.when(mockedProject.getAttachedArtifacts()).thenReturn(Arrays.asList(jarWithDependenciesArtifact));
+
+		mojo.setProject(mockedProject);
+	}
+
+	private RemoteFunctionPackageClientImpl createRemoteFunctionManagerMock() throws IOException {
+		RemoteFunctionPackageClientImpl remoteFunctionPackageClient = Mockito.mock(RemoteFunctionPackageClientImpl.class);
+		Mockito.when(remoteFunctionPackageClient.updateKeywordPackageById(Mockito.any(), Mockito.isNull(), Mockito.any(), Mockito.any())).thenReturn(UPDATED_PACKAGE);
+		return remoteFunctionPackageClient;
+	}
+
+	private AbstractAccessor<FunctionPackage> createRemoteFunctionAccessorMock(){
+		AbstractAccessor<FunctionPackage> mock = Mockito.mock(AbstractAccessor.class);
+		Mockito.when(mock.findByCriteria(Mockito.any())).thenReturn(OLD_PACKAGE);
+		return mock;
+	}
+
+	private RemoteMultitenancyClientImpl createRemoteMultitenancyClientMock(){
+		RemoteMultitenancyClientImpl mock = Mockito.mock(RemoteMultitenancyClientImpl.class);
+		Mockito.when(mock.getAvailableTenants()).thenReturn(List.of(TENANT_1, TENANT_2));
+		return mock;
+	}
+
+	private static class UploadKeywordsPackageMojoOSTestable extends UploadKeywordsPackageMojoEE {
+
+		private final RemoteFunctionPackageClientImpl functionPackageClientMock;
+		private final AbstractAccessor<FunctionPackage> remoteFunctionAccessor;
+		private final RemoteMultitenancyClientImpl remoteMultitenancyClientMock;
+
+		public UploadKeywordsPackageMojoOSTestable(RemoteFunctionPackageClientImpl functionPackageClientMock,
+												   AbstractAccessor<FunctionPackage> remoteFunctionAccessor,
+												   RemoteMultitenancyClientImpl remoteMultitenancyClientMock) {
+			this.functionPackageClientMock = functionPackageClientMock;
+			this.remoteFunctionAccessor = remoteFunctionAccessor;
+			this.remoteMultitenancyClientMock = remoteMultitenancyClientMock;
+		}
+
+		@Override
+		protected RemoteFunctionPackageClientImpl createRemoteFunctionPackageClient() {
+			return functionPackageClientMock;
+		}
+
+		@Override
+		protected AbstractAccessor<FunctionPackage> createRemoteFunctionPackageAccessor() {
+			return remoteFunctionAccessor;
+		}
+
+		@Override
+		protected RemoteMultitenancyClientImpl createMultitenancyClient() {
+			return remoteMultitenancyClientMock;
+		}
 	}
 }
