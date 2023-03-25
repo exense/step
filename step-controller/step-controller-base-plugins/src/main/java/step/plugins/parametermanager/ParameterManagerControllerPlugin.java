@@ -113,7 +113,6 @@ public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
 			screenInputAccessor.save(new ScreenInput(0, PARAMETER_TABLE, keyInput));
 			screenInputAccessor.save(new ScreenInput(1, PARAMETER_TABLE, new Input(InputType.TEXT, "value", "Value", null, null)));
 			screenInputAccessor.save(new ScreenInput(2, PARAMETER_TABLE, new Input(InputType.TEXT, "activationExpression.script", "Activation script", null, null)));
-			screenInputAccessor.save(new ScreenInput(3, PARAMETER_TABLE, new Input(InputType.TEXT, "priority", "	Priority", null, null)));
 		}
 		
 		// Ensure the key input is always up to date
