@@ -38,15 +38,6 @@
 	</dependencies>
 
 	<build>
-		<pluginManagement>
-			<plugins>
-				<plugin>
-					<groupId>ch.exense.step</groupId>
-					<artifactId>step-ee-maven-plugin</artifactId>
-					<version>${project.version}</version>
-				</plugin>
-			</plugins>
-		</pluginManagement>
 		<plugins>
 			<plugin>
 				<artifactId>maven-assembly-plugin</artifactId>
@@ -66,29 +57,6 @@
 					</execution>
 				</executions>
 			</plugin>
-
-<!--			<plugin>-->
-<!--				<groupId>ch.exense.step</groupId>-->
-<!--				<artifactId>step-ee-maven-plugin</artifactId>-->
-<!--				<executions>-->
-<!--					<execution>-->
-<!--						<id>upload-package-to-step</id>-->
-<!--						<phase>package</phase>-->
-<!--						<configuration>-->
-<!--							<url>http://localhost:4201</url>-->
-<!--							<authToken>...</authToken>-->
-<!--							<customPackageAttributes>-->
-<!--								<artifactId>${project.artifactId}</artifactId>-->
-<!--								<versionId>${project.version}</versionId>-->
-<!--							</customPackageAttributes>-->
-<!--							<stepProjectName>Common</stepProjectName>-->
-<!--						</configuration>-->
-<!--						<goals>-->
-<!--							<goal>upload-keywords-package-ee</goal>-->
-<!--						</goals>-->
-<!--					</execution>-->
-<!--				</executions>-->
-<!--			</plugin>-->
 		</plugins>
 	</build>
 </project>
