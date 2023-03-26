@@ -93,29 +93,15 @@ public class JavaFunctionPackageDaemon extends FunctionPackageUtils {
 					
 					function.getScriptFile().setValue(parameters.getPackageLocation());
 					function.getScriptLanguage().setValue("java");
-					
-					JsonObject schema;
-					String schemaStr = annotation.schema();
-					if(schemaStr.length()>0) {
-						try {
-							schema = Json.createReader(new StringReader(schemaStr)).readObject();
-						} catch (JsonParsingException e) {
-							functions.exception = "Parsing error in the schema for keyword '"+m.getName()+"'. The error was: "+e.getMessage();
-							functions.functions.clear();
-							return functions;
-						}catch (JsonException e) {
-							functions.exception = "I/O error in the schema for keyword '"+m.getName()+"'. The error was: "+e.getMessage();
-							functions.functions.clear();
-							return functions;
-						}catch (Exception e) {
-							functions.exception = "Unknown error in the schema for keyword '"+m.getName()+"'. The error was: "+e.getMessage();
-							functions.functions.clear();
-							return functions;
-						}
-					} else {
-						schema = Json.createObjectBuilder().build();
+
+					try {
+						function.setSchema(new KeywordJsonSchemaReader().readJsonSchemaForKeyword(annotation, m.getName()));
+					} catch (JsonSchemaPreparationException ex){
+						functions.exception = ex.getMessage();
+						functions.functions.clear();
+						return functions;
 					}
-					function.setSchema(schema);
+
 					String htmlTemplate = function.getAttributes().remove("htmlTemplate");
 					if (htmlTemplate != null && !htmlTemplate.isEmpty()) {
 						function.setHtmlTemplate(htmlTemplate);
