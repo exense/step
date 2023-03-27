@@ -135,7 +135,7 @@ public class FunctionPackageManager implements Closeable {
 	 * @throws Exception if any error occurs during reloading
 	 */
 	public FunctionPackage reloadFunctionPackage(String functionPackageId) throws Exception {
-
+		assert functionPackageId != null;
 		FunctionPackage functionPackage = getFunctionPackage(functionPackageId);
 		assert functionPackage != null;
 		return addOrUpdateFunctionPackage(functionPackage, functionPackage);
