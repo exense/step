@@ -8,10 +8,7 @@ import step.handlers.javahandler.JsonSchemaPropertyRef;
 import step.handlers.javahandler.Keyword;
 
 import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class KeywordJsonSchemaReader {
 
@@ -32,10 +29,9 @@ public class KeywordJsonSchemaReader {
 	}
 
 	private JsonObject readJsonSchemaFromAnnotationKeyword(JsonSchema jsonSchema, String methodName) throws JsonSchemaPreparationException {
-		// TODO: build the json schema
-		Map<String, JsonSchemaProperty> propertyRefs = new HashMap<>();
+		Map<String, JsonSchemaProperty> propertyRefsRegistry = new HashMap<>();
 		for (JsonSchemaPropertyRef jsonSchemaPropertyRef : jsonSchema.propertiesRefs()) {
-			propertyRefs.put(jsonSchemaPropertyRef.id(), jsonSchemaPropertyRef.property());
+			propertyRefsRegistry.put(jsonSchemaPropertyRef.id(), jsonSchemaPropertyRef.property());
 		}
 
 		JsonObjectBuilder topLevelBuilder = Json.createObjectBuilder();
@@ -51,14 +47,11 @@ public class KeywordJsonSchemaReader {
 		List<String> requiredProperties = new ArrayList<>();
 		for (JsonSchemaProperty property : jsonSchema.properties()) {
 			JsonObjectBuilder propertyBuilder = Json.createObjectBuilder();
-			while (property.propertyRef() != null && !property.propertyRef().isEmpty()) {
-				String ref = property.propertyRef();
-				property = propertyRefs.get(ref);
-				if (property == null) {
-					throw new JsonSchemaPreparationException("Unable to resolve json schema property ref '  " + ref + " ' for keyword '" + methodName + "'");
-				}
-				// TODO: check for cyclic references
+			String ref = property.propertyRef();
+			if(ref != null && !ref.isEmpty()){
+				property = getPropertyByRef(ref, propertyRefsRegistry, methodName);
 			}
+
 			JsonObjectBuilder propertyParamsBuilder = Json.createObjectBuilder();
 
 			propertyBuilder.add(property.name(), propertyParamsBuilder);
@@ -71,11 +64,20 @@ public class KeywordJsonSchemaReader {
 			if (property.defaultV() != null && !property.defaultV().isEmpty()) {
 				propertyParamsBuilder.add("default", property.defaultV());
 			}
+			
+			if (property.nestedPropertiesRefs() != null && property.nestedPropertiesRefs().length > 0) {
+				if (!Objects.equals("object", property.type())) {
+					throw new JsonSchemaPreparationException("Property having nested properties must have \"object\" type");
+				}
+				includeNestedProperties(propertyBuilder, Arrays.asList(property.nestedPropertiesRefs()), propertyRefsRegistry, methodName);
+			}
 
 			propertiesBuilder.add(propertyBuilder);
+
 			if (property.required()) {
 				requiredProperties.add(property.name());
 			}
+
 		}
 		JsonArrayBuilder requiredBuilder = Json.createArrayBuilder();
 		for (String requiredProperty : requiredProperties) {
@@ -84,6 +86,29 @@ public class KeywordJsonSchemaReader {
 		topLevelBuilder.add("required", requiredBuilder);
 
 		return topLevelBuilder.build();
+	}
+
+	private void includeNestedProperties(JsonObjectBuilder propertyBuilder, List<String> nestedPropertiesRefs, Map<String, JsonSchemaProperty> propertyRefsRegistry, String methodName) throws JsonSchemaPreparationException {
+		for (String nestedPropertiesRef : nestedPropertiesRefs) {
+			JsonSchemaProperty nestedProperty = getPropertyByRef(nestedPropertiesRef, propertyRefsRegistry, methodName);
+
+		}
+	}
+
+	private JsonSchemaProperty getPropertyByRef(String ref, Map<String, JsonSchemaProperty> propertyRefsRegistry, String methodName) throws JsonSchemaPreparationException {
+		if (ref == null || ref.isEmpty()) {
+			throw new JsonSchemaPreparationException("Unable to resolve json schema property ref '  " + ref + " ' for keyword '" + methodName + "'");
+		}
+
+		JsonSchemaProperty property = null;
+		while (ref != null && !ref.isEmpty()) {
+			property = propertyRefsRegistry.get(ref);
+			if (property == null) {
+				throw new JsonSchemaPreparationException("Unable to resolve json schema property ref '  " + ref + " ' for keyword '" + methodName + "'");
+			}
+			ref = property.propertyRef();
+		}
+		return property;
 	}
 
 	protected JsonObject createEmptyJsonSchema() {
