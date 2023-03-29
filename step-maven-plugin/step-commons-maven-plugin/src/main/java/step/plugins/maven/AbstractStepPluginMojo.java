@@ -40,9 +40,9 @@ public abstract class AbstractStepPluginMojo extends AbstractMojo {
 		this.projectVersion = projectVersion;
 	}
 
-	protected void logAndThrow(String errorText, Throwable e) throws MojoExecutionException {
+	protected MojoExecutionException logAndThrow(String errorText, Throwable e) {
 		getLog().error(errorText, e);
-		throw new MojoExecutionException(errorText, e);
+		return new MojoExecutionException(errorText, e);
 	}
 
 	protected ControllerCredentials getControllerCredentials(){

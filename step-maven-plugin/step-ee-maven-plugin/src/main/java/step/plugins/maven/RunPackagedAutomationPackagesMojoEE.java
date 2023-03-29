@@ -4,8 +4,8 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import step.client.credentials.ControllerCredentials;
 
-@Mojo(name = "run-packaged-execution-bundle-ee")
-public class RunPackagedExecutionBundleMojoEE extends AbstractRunPackagedExecutionBundleMojo {
+@Mojo(name = "run-packaged-automation-packages-ee")
+public class RunPackagedAutomationPackagesMojoEE extends AbstractRunPackagedAutomationPackagesMojo {
 
 	@Parameter(property = "step.auth-token", required = false)
 	private String authToken;

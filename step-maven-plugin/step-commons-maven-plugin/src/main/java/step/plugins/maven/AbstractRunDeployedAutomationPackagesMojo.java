@@ -7,16 +7,16 @@ import step.core.repositories.RepositoryObjectReference;
 import java.util.HashMap;
 import java.util.Map;
 
-public abstract class AbstractRunDeployedExecutionBundleMojo extends AbstractRunExecutionBundleMojo {
+public abstract class AbstractRunDeployedAutomationPackagesMojo extends AbstractRunAutomationPackagesMojo {
 
-	@Parameter(property = "step-run-exec-bundle.step-maven-settings", required = false)
+	@Parameter(property = "step-run-auto-packages.step-maven-settings", required = false)
 	private String stepMavenSettings;
 
-	public AbstractRunDeployedExecutionBundleMojo() {
+	public AbstractRunDeployedAutomationPackagesMojo() {
 	}
 
 	public void execute() throws MojoExecutionException {
-		getLog().info("Run step execution for deployed module " + getBuildFinalName() + " (version=" + getProjectVersion() + ")");
+		getLog().info("Run Step execution for deployed module " + getBuildFinalName() + " (version=" + getProjectVersion() + ")");
 
 		// empty context here - we just call the execution client according to the  plugin parameters
 		executeBundleOnStep(new HashMap<>());

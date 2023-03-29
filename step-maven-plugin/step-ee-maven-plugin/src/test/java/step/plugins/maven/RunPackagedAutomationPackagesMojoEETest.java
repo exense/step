@@ -32,7 +32,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
-public class RunPackagedExecutionBundleMojoEETest extends AbstractMojoTest {
+public class RunPackagedAutomationPackagesMojoEETest extends AbstractMojoTest {
 
 	@Test
 	public void testExecuteOk() throws InterruptedException, TimeoutException, MojoExecutionException, MojoFailureException, URISyntaxException, SimilarResourceExistingException, IOException {
@@ -44,7 +44,7 @@ public class RunPackagedExecutionBundleMojoEETest extends AbstractMojoTest {
 
 		Mockito.when(remoteResourceManagerMock.createResource(Mockito.anyString(), Mockito.any(InputStream.class), Mockito.anyString(), Mockito.anyBoolean(), Mockito.isNull())).thenReturn(resourceMock);
 
-		RunPackagedExecutionBundleMojoTestable mojo = new RunPackagedExecutionBundleMojoTestable(remoteExecutionManagerMock, remoteResourceManagerMock);
+		RunPackagedAutomationPackagesMojoTestable mojo = new RunPackagedAutomationPackagesMojoTestable(remoteExecutionManagerMock, remoteResourceManagerMock);
 		configureMojo(mojo);
 		mojo.execute();
 
@@ -80,7 +80,7 @@ public class RunPackagedExecutionBundleMojoEETest extends AbstractMojoTest {
 		return remoteExecutionManagerMock;
 	}
 
-	private void configureMojo(RunPackagedExecutionBundleMojoTestable mojo) throws URISyntaxException {
+	private void configureMojo(RunPackagedAutomationPackagesMojoTestable mojo) throws URISyntaxException {
 		mojo.setArtifactId("test-artifact-id");
 		mojo.setArtifactClassifier("jar-with-dependencies");
 		mojo.setArtifactVersion("1.0.0-RELEASE");
@@ -90,11 +90,12 @@ public class RunPackagedExecutionBundleMojoEETest extends AbstractMojoTest {
 		mojo.setAuthToken("abc");
 		mojo.setBuildFinalName("Test build name");
 		mojo.setProjectVersion("1.0.0");
-		mojo.setCheckExecutionResult(true);
 		mojo.setExecutionResultTimeoutS(3);
 		mojo.setUserId("testUser");
 		Map<String, String> params = createTestCustomParams();
-		mojo.setCustomParameters(params);
+		mojo.setExecutionParameters(params);
+		mojo.setWaitForExecution(true);
+		mojo.setEnsureExecutionSuccess(true);
 
 		MavenProject mockedProject = Mockito.mock(MavenProject.class);
 
@@ -118,12 +119,12 @@ public class RunPackagedExecutionBundleMojoEETest extends AbstractMojoTest {
 		return params;
 	}
 
-	private static class RunPackagedExecutionBundleMojoTestable extends RunPackagedExecutionBundleMojoEE {
+	private static class RunPackagedAutomationPackagesMojoTestable extends RunPackagedAutomationPackagesMojoEE {
 
 		private RemoteExecutionManager remoteExecutionManagerMock;
 		private RemoteResourceManager remoteResourceManagerMock;
 
-		public RunPackagedExecutionBundleMojoTestable(RemoteExecutionManager remoteExecutionManagerMock, RemoteResourceManager remoteResourceManagerMock) {
+		public RunPackagedAutomationPackagesMojoTestable(RemoteExecutionManager remoteExecutionManagerMock, RemoteResourceManager remoteResourceManagerMock) {
 			super();
 			this.remoteExecutionManagerMock = remoteExecutionManagerMock;
 			this.remoteResourceManagerMock = remoteResourceManagerMock;

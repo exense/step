@@ -49,7 +49,7 @@ public class UploadKeywordsPackageMojoEE extends AbstractUploadKeywordsPackageMo
 		if (getStepProjectName() != null && !getStepProjectName().isBlank()) {
 			getLog().info("Step project name: " + getStepProjectName());
 
-			// setup step project and use it to search fo existing packages
+			// setup Step project and use it to search fo existing packages
 			try (RemoteMultitenancyClientImpl multitenancyClient = createMultitenancyClient()) {
 				List<Tenant> availableTenants = multitenancyClient.getAvailableTenants();
 				Tenant currentTenant = null;
@@ -65,9 +65,9 @@ public class UploadKeywordsPackageMojoEE extends AbstractUploadKeywordsPackageMo
 				searchCriteria.put("attributes.project", currentTenant.getProjectId());
 
 			} catch (IOException e) {
-				logAndThrow("Unable to use multitenancy client", e);
+				throw logAndThrow("Unable to use multitenancy client", e);
 			} catch (Exception e) {
-				logAndThrow("Unable to use tenant: " + getStepProjectName(), e);
+				throw logAndThrow("Unable to use tenant: " + getStepProjectName(), e);
 			}
 
 		}

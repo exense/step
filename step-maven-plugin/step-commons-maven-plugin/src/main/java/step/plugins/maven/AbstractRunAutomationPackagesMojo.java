@@ -14,25 +14,27 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 
-public abstract class AbstractRunExecutionBundleMojo extends AbstractStepPluginMojo {
-	@Parameter(property = "step-run-exec-bundle.group-id", required = true, defaultValue = "${project.groupId}")
+public abstract class AbstractRunAutomationPackagesMojo extends AbstractStepPluginMojo {
+	@Parameter(property = "step-run-auto-packages.group-id", required = true, defaultValue = "${project.groupId}")
 	private String groupId;
-	@Parameter(property = "step-run-exec-bundle.artifact-id", required = true, defaultValue = "${project.artifactId}")
+	@Parameter(property = "step-run-auto-packages.artifact-id", required = true, defaultValue = "${project.artifactId}")
 	private String artifactId;
-	@Parameter(property = "step-run-exec-bundle.artifact-version", required = true, defaultValue = "${project.version}")
+	@Parameter(property = "step-run-auto-packages.artifact-version", required = true, defaultValue = "${project.version}")
 	private String artifactVersion;
-	@Parameter(property = "step-run-exec-bundle.artifact-classifier", required = false)
+	@Parameter(property = "step-run-auto-packages.artifact-classifier", required = false)
 	private String artifactClassifier;
-	@Parameter(property = "step-run-exec-bundle.description", required = false, defaultValue = "")
+	@Parameter(property = "step-run-auto-packages.description", required = false)
 	private String description;
-	@Parameter(property = "step-run-exec-bundle.user-id", required = false, defaultValue = "admin")
+	@Parameter(property = "step-run-auto-packages.user-id", required = false)
 	private String userId;
-	@Parameter(property = "step-run-exec-bundle.custom-parameters", required = false)
-	private Map<String, String> customParameters;
-	@Parameter(property = "step-run-exec-bundle.check-exec-result", defaultValue = "false")
-	private Boolean checkExecutionResult;
-	@Parameter(property = "step-run-exec-bundle.exec-result-timeout-s", defaultValue = "30")
+	@Parameter(property = "step-run-auto-packages.execution-parameters", required = false)
+	private Map<String, String> executionParameters;
+	@Parameter(property = "step-run-auto-packages.exec-result-timeout-s", defaultValue = "30")
 	private Integer executionResultTimeoutS;
+	@Parameter(property = "step-run-auto-packages.wait-for-exec", defaultValue = "true")
+	private Boolean waitForExecution;
+	@Parameter(property = "step-run-auto-packages.ensure-exec-success", defaultValue = "true")
+	private Boolean ensureExecutionSuccess;
 
 	protected void executeBundleOnStep(Map<String, Object> executionContext) throws MojoExecutionException {
 		String executionId = null;
@@ -41,17 +43,17 @@ public abstract class AbstractRunExecutionBundleMojo extends AbstractStepPluginM
 			executionParameters.setMode(ExecutionMode.RUN);
 			executionParameters.setUserID(getUserId());
 			executionParameters.setDescription(getDescription());
-			executionParameters.setCustomParameters(getCustomParameters());
+			executionParameters.setCustomParameters(getExecutionParameters());
 			executionParameters.setRepositoryObject(prepareExecutionRepositoryObject(executionContext));
 
 			executionId = remoteExecutionManager.execute(executionParameters);
-			getLog().info("Execution has been registered in step: " + executionId);
+			getLog().info("Execution has been registered in Step: " + executionId);
 
-			if (getCheckExecutionResult()) {
-				checkExecutionRunResult(remoteExecutionManager, executionId);
+			if (getWaitForExecution()) {
+				waitForExecutionFinish(remoteExecutionManager, executionId);
 			}
 		} catch (Exception ex) {
-			logAndThrow("Unable to run execution in step", ex);
+			throw logAndThrow("Unable to run execution in Step", ex);
 		}
 	}
 
@@ -61,18 +63,20 @@ public abstract class AbstractRunExecutionBundleMojo extends AbstractStepPluginM
 
 	protected abstract RepositoryObjectReference prepareExecutionRepositoryObject(Map<String, Object> executionContext);
 
-	private void checkExecutionRunResult(RemoteExecutionManager remoteExecutionManager, String executionId) throws MojoExecutionException {
-		getLog().info("Waiting for execution result from step...");
+	private void waitForExecutionFinish(RemoteExecutionManager remoteExecutionManager, String executionId) throws MojoExecutionException {
+		getLog().info("Waiting for execution result from Step...");
+
+		// run the execution and wait until it is finished
 		try {
 			RemoteExecutionFuture executionFuture = remoteExecutionManager.getFuture(executionId).waitForExecutionToTerminate(getExecutionResultTimeoutS() * 1000);
 			Execution endedExecution = executionFuture.getExecution();
-			if (!Objects.equals(endedExecution.getResult(), ReportNodeStatus.PASSED)) {
+			if (getEnsureExecutionSuccess() && !Objects.equals(endedExecution.getResult(), ReportNodeStatus.PASSED)) {
 				throw new MojoExecutionException("The execution result is NOT OK for execution " + executionId + ". Final status is " + endedExecution.getResult());
 			} else {
 				getLog().info("The execution result is OK. Final status is " + endedExecution.getResult());
 			}
 		} catch (TimeoutException | InterruptedException ex) {
-			logAndThrow("The success execution result is not received from step in " + getExecutionResultTimeoutS() + "seconds", ex);
+			throw logAndThrow("The success execution result is not received from Step in " + getExecutionResultTimeoutS() + "seconds", ex);
 		}
 	}
 
@@ -124,20 +128,12 @@ public abstract class AbstractRunExecutionBundleMojo extends AbstractStepPluginM
 		this.userId = userId;
 	}
 
-	public Map<String, String> getCustomParameters() {
-		return customParameters;
+	public Map<String, String> getExecutionParameters() {
+		return executionParameters;
 	}
 
-	public void setCustomParameters(Map<String, String> customParameters) {
-		this.customParameters = customParameters;
-	}
-
-	public Boolean getCheckExecutionResult() {
-		return checkExecutionResult;
-	}
-
-	public void setCheckExecutionResult(Boolean checkExecutionResult) {
-		this.checkExecutionResult = checkExecutionResult;
+	public void setExecutionParameters(Map<String, String> executionParameters) {
+		this.executionParameters = executionParameters;
 	}
 
 	public Integer getExecutionResultTimeoutS() {
@@ -148,4 +144,19 @@ public abstract class AbstractRunExecutionBundleMojo extends AbstractStepPluginM
 		this.executionResultTimeoutS = executionResultTimeoutS;
 	}
 
+	public Boolean getWaitForExecution() {
+		return waitForExecution;
+	}
+
+	public void setWaitForExecution(Boolean waitForExecution) {
+		this.waitForExecution = waitForExecution;
+	}
+
+	public Boolean getEnsureExecutionSuccess() {
+		return ensureExecutionSuccess;
+	}
+
+	public void setEnsureExecutionSuccess(Boolean ensureExecutionSuccess) {
+		this.ensureExecutionSuccess = ensureExecutionSuccess;
+	}
 }

@@ -25,7 +25,7 @@ public abstract class AbstractUploadKeywordsPackageMojo extends AbstractStepPlug
 
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
-		getLog().info("Uploading keywords package to step...");
+		getLog().info("Uploading keywords package to Step...");
 
 		try (RemoteFunctionPackageClientImpl remoteFunctionPackageClient = createRemoteFunctionPackageClient()) {
 			File packagedTarget = getFileToUpload();
@@ -72,7 +72,7 @@ public abstract class AbstractUploadKeywordsPackageMojo extends AbstractStepPlug
 			}
 			getLog().info("Keyword package uploaded: " + uploaded.getId().toString());
 		} catch (Exception e) {
-			logAndThrow("Unable to upload keywords package to step", e);
+			throw logAndThrow("Unable to upload keywords package to Step", e);
 		}
 	}
 

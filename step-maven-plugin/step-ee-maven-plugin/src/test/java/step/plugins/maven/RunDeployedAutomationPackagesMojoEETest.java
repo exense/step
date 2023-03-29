@@ -17,7 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
-public class RunDeployedExecutionBundleMojoEETest  extends AbstractMojoTest {
+public class RunDeployedAutomationPackagesMojoEETest extends AbstractMojoTest {
 
 	/**
 	 * Checks if the mojo calls the underlying {@link RemoteExecutionManager} with valid parameters
@@ -26,7 +26,7 @@ public class RunDeployedExecutionBundleMojoEETest  extends AbstractMojoTest {
 	public void testExecuteOk() throws MojoExecutionException, InterruptedException, TimeoutException {
 		RemoteExecutionManager remoteExecutionManagerMock = createExecutionManagerMock(ReportNodeStatus.PASSED);
 
-		RunDeployedExecutionBundleMojoTestable mojo = new RunDeployedExecutionBundleMojoTestable(remoteExecutionManagerMock);
+		RunDeployedAutomationPackagesMojoTestable mojo = new RunDeployedAutomationPackagesMojoTestable(remoteExecutionManagerMock);
 		configureMojo(mojo);
 
 		mojo.execute();
@@ -53,7 +53,7 @@ public class RunDeployedExecutionBundleMojoEETest  extends AbstractMojoTest {
 	public void testExecuteNok() throws InterruptedException, TimeoutException {
 		RemoteExecutionManager remoteExecutionManagerMock = createExecutionManagerMock(ReportNodeStatus.FAILED);
 
-		RunDeployedExecutionBundleMojoTestable mojo = new RunDeployedExecutionBundleMojoTestable(remoteExecutionManagerMock);
+		RunDeployedAutomationPackagesMojoTestable mojo = new RunDeployedAutomationPackagesMojoTestable(remoteExecutionManagerMock);
 		configureMojo(mojo);
 
 		try {
@@ -80,7 +80,7 @@ public class RunDeployedExecutionBundleMojoEETest  extends AbstractMojoTest {
 		return remoteExecutionManagerMock;
 	}
 
-	private void configureMojo(RunDeployedExecutionBundleMojoTestable mojo) {
+	private void configureMojo(RunDeployedAutomationPackagesMojoTestable mojo) {
 		mojo.setArtifactId("test-artifact-id");
 		mojo.setArtifactClassifier("jar-with-dependencies");
 		mojo.setArtifactVersion("1.0.0-RELEASE");
@@ -90,12 +90,14 @@ public class RunDeployedExecutionBundleMojoEETest  extends AbstractMojoTest {
 		mojo.setAuthToken("abc");
 		mojo.setBuildFinalName("Test build name");
 		mojo.setProjectVersion("1.0.0");
-		mojo.setCheckExecutionResult(true);
 		mojo.setExecutionResultTimeoutS(3);
 		mojo.setStepMavenSettings("default");
 		mojo.setUserId("testUser");
+		mojo.setWaitForExecution(true);
+		mojo.setEnsureExecutionSuccess(true);
+
 		Map<String, String> params = createTestCustomParams();
-		mojo.setCustomParameters(params);
+		mojo.setExecutionParameters(params);
 	}
 
 	private static Map<String, String> createTestCustomParams() {
@@ -105,11 +107,11 @@ public class RunDeployedExecutionBundleMojoEETest  extends AbstractMojoTest {
 		return params;
 	}
 
-	private static class RunDeployedExecutionBundleMojoTestable extends RunDeployedExecutionBundleMojoEE {
+	private static class RunDeployedAutomationPackagesMojoTestable extends RunDeployedAutomationPackagesMojoEE {
 
 		private RemoteExecutionManager remoteExecutionManagerMock;
 
-		public RunDeployedExecutionBundleMojoTestable(RemoteExecutionManager remoteExecutionManagerMock) {
+		public RunDeployedAutomationPackagesMojoTestable(RemoteExecutionManager remoteExecutionManagerMock) {
 			super();
 			this.remoteExecutionManagerMock = remoteExecutionManagerMock;
 		}

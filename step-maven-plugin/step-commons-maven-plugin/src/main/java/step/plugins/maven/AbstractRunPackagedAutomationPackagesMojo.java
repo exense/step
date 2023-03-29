@@ -16,22 +16,22 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public abstract class AbstractRunPackagedExecutionBundleMojo extends AbstractRunExecutionBundleMojo {
+public abstract class AbstractRunPackagedAutomationPackagesMojo extends AbstractRunAutomationPackagesMojo {
 
 	@Parameter(defaultValue = "${project}", readonly = true, required = true)
 	private MavenProject project;
 
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
-		// 1. Upload the packaged artifact as resource to step
+		// 1. Upload the packaged artifact as resource to Step
 		String resourceId = uploadResourceToStep();
 		if (resourceId == null) {
-			logAndThrow("Unable to upload execution bundle to step", new MojoExecutionException("Unable to run execution bundle"));
+			throw logAndThrow("Unable to upload automation package to Step", new MojoExecutionException("Unable to run automation package"));
 		}
 		Map<String, Object> executionContext = new HashMap<>();
 		executionContext.put("resourceId", resourceId);
 
-		// 2. Execute just uploaded artifact in step
+		// 2. Execute just uploaded artifact in Step
 		executeBundleOnStep(executionContext);
 	}
 
@@ -39,22 +39,21 @@ public abstract class AbstractRunPackagedExecutionBundleMojo extends AbstractRun
 		try (RemoteResourceManager resourceManager = createRemoteResourceManager()) {
 			File fileToUpload = getFileToUpload();
 			if(fileToUpload == null){
-				logAndThrow("Unable to detect an artifact to upload", getDefaultMojoException());
+				throw logAndThrow("Unable to detect an artifact to upload", getDefaultMojoException());
 			} else {
-				getLog().info("Artifact is detected for upload to step: " + fileToUpload.getName());
+				getLog().info("Artifact is detected for upload to Step: " + fileToUpload.getName());
 
 				Resource uploaded = resourceManager.createResource("temp", new FileInputStream(fileToUpload), fileToUpload.getName(), false, null);
 				if(uploaded == null){
-					logAndThrow("Uploaded resource is null", getDefaultMojoException());
+					throw logAndThrow("Uploaded resource is null", getDefaultMojoException());
 				} else {
-					getLog().info("Artifact has been uploaded as resource to step: " + uploaded.getId());
+					getLog().info("Artifact has been uploaded as resource to Step: " + uploaded.getId());
 					return uploaded.getId().toString();
 				}
 			}
 		} catch (IOException | SimilarResourceExistingException e) {
-			logAndThrow("Unable to upload packaged resource to step", e);
+			throw logAndThrow("Unable to upload packaged resource to Step", e);
 		}
-		return null;
 	}
 
 	protected RemoteResourceManager createRemoteResourceManager() {
@@ -62,7 +61,7 @@ public abstract class AbstractRunPackagedExecutionBundleMojo extends AbstractRun
 	}
 
 	private static MojoExecutionException getDefaultMojoException() {
-		return new MojoExecutionException("Unable to upload package resource to step");
+		return new MojoExecutionException("Unable to upload package resource to Step");
 	}
 
 	@Override
