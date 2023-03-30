@@ -41,7 +41,6 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.junit.Assert.assertEquals;
 import static step.plugins.timeseries.TimeSeriesExecutionPlugin.TIMESERIES_FLAG;
 
 public class TimeSeriesExecutionPluginTest extends AbstractKeyword {
@@ -87,11 +86,15 @@ public class TimeSeriesExecutionPluginTest extends AbstractKeyword {
 		tsPlugin.serverStart(globalContext);
 		timeSeriesAggregationPipeline = globalContext.get(TimeSeriesAggregationPipeline.class);
 		engine = ExecutionEngine.builder().withPlugin(new MeasurementPlugin(GaugeCollectorRegistry.getInstance()))
-				.withPlugin(new FunctionPlugin()).withPlugin(new ThreadPoolPlugin())
-				.withPlugin(new LocalFunctionPlugin()).withPlugin(new BaseArtefactPlugin()).withPlugin(new TimeSeriesExecutionPlugin())
+				.withPlugin(new FunctionPlugin())
+                .withPlugin(new ThreadPoolPlugin())
+				.withPlugin(new LocalFunctionPlugin())
+                .withPlugin(new BaseArtefactPlugin())
+                .withPlugin(new TimeSeriesExecutionPlugin())
 				.build();
 
 	}
+
 
 	@Test
 	public void testTimeSeriesPlugins() throws InterruptedException {
