@@ -5,17 +5,15 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import step.client.credentials.ControllerCredentials;
 import step.controller.multitenancy.Tenant;
+import step.controller.multitenancy.client.MultitenancyClient;
 import step.controller.multitenancy.client.RemoteMultitenancyClientImpl;
 
-import java.io.IOException;
-import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 @Mojo(name = "upload-keywords-package-ee")
 public class UploadKeywordsPackageMojoEE extends AbstractUploadKeywordsPackageMojo {
 
-	@Parameter(property = "step-upload-keywords.step-project-name")
+	@Parameter(property = "step.step-project-name")
 	private String stepProjectName;
 
 	@Parameter(property = "step.auth-token", required = false)
@@ -46,35 +44,30 @@ public class UploadKeywordsPackageMojoEE extends AbstractUploadKeywordsPackageMo
 	protected void fillAdditionalPackageSearchCriteria(Map<String, String> searchCriteria) throws MojoExecutionException {
 		super.fillAdditionalPackageSearchCriteria(searchCriteria);
 
-		if (getStepProjectName() != null && !getStepProjectName().isBlank()) {
+		if (getStepProjectName() != null && !getStepProjectName().isEmpty()) {
 			getLog().info("Step project name: " + getStepProjectName());
 
-			// setup Step project and use it to search fo existing packages
-			try (RemoteMultitenancyClientImpl multitenancyClient = createMultitenancyClient()) {
-				List<Tenant> availableTenants = multitenancyClient.getAvailableTenants();
-				Tenant currentTenant = null;
-				if (availableTenants != null) {
-					currentTenant = availableTenants.stream().filter(t -> Objects.equals(t.getName(), getStepProjectName())).findFirst().orElse(null);
+			TenantSwitcher tenantSwitcher = new TenantSwitcher() {
+				@Override
+				protected MultitenancyClient createClient() {
+					return createMultitenancyClient();
 				}
-				if (currentTenant == null) {
-					throw new MojoExecutionException("Unable to resolve tenant by name: " + getStepProjectName());
-				}
-				multitenancyClient.selectTenant(getStepProjectName());
+			};
+
+			try {
+				Tenant currentTenant = tenantSwitcher.switchTenant(getStepProjectName());
 
 				getLog().info("Current tenant: " + currentTenant.getName() + " (" + currentTenant.getProjectId() + "). Is global: " + currentTenant.isGlobal());
+
+				// setup Step project and use it to search fo existing packages
 				searchCriteria.put("attributes.project", currentTenant.getProjectId());
-
-			} catch (IOException e) {
-				throw logAndThrow("Unable to use multitenancy client", e);
 			} catch (Exception e) {
-				throw logAndThrow("Unable to use tenant: " + getStepProjectName(), e);
+				throw logAndThrow(e.getMessage(), e);
 			}
-
 		}
-
 	}
 
-	protected RemoteMultitenancyClientImpl createMultitenancyClient() {
+	protected MultitenancyClient createMultitenancyClient() {
 		return new RemoteMultitenancyClientImpl(getControllerCredentials());
 	}
 }

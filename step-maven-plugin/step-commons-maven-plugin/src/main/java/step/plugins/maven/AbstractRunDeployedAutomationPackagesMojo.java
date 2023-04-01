@@ -15,6 +15,7 @@ public abstract class AbstractRunDeployedAutomationPackagesMojo extends Abstract
 	public AbstractRunDeployedAutomationPackagesMojo() {
 	}
 
+	@Override
 	public void execute() throws MojoExecutionException {
 		getLog().info("Run Step execution for deployed module " + getBuildFinalName() + " (version=" + getProjectVersion() + ")");
 

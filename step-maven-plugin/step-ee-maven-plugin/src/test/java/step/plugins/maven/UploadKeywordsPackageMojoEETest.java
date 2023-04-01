@@ -1,15 +1,12 @@
 package step.plugins.maven;
 
 import org.apache.maven.artifact.Artifact;
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
 import org.bson.types.ObjectId;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
-import step.controller.multitenancy.Tenant;
 import step.controller.multitenancy.client.RemoteMultitenancyClientImpl;
 import step.core.accessors.AbstractAccessor;
 import step.functions.packages.FunctionPackage;
@@ -27,8 +24,7 @@ public class UploadKeywordsPackageMojoEETest  extends AbstractMojoTest {
 
 	private static final FunctionPackage OLD_PACKAGE = createOldPackageMock();
 	private static final FunctionPackage UPDATED_PACKAGE = createUpdatedPackageMock();
-	private static final Tenant TENANT_1 = createTenant1();
-	private static final Tenant TENANT_2 = createTenant2();
+
 
 	private static final String ARTIFACT_ID = "step-functions-plugins-java-handler-test-3";
 	private static final String VERSION_ID = "0.0.0-SNAPSHOT";
@@ -45,20 +41,6 @@ public class UploadKeywordsPackageMojoEETest  extends AbstractMojoTest {
 		return res;
 	}
 
-	private static Tenant createTenant1() {
-		Tenant tenant1 = new Tenant();
-		tenant1.setName("project1");
-		tenant1.setProjectId(new ObjectId().toString());
-		return tenant1;
-	}
-
-	private static Tenant createTenant2() {
-		Tenant tenant2 = new Tenant();
-		tenant2.setName("project2");
-		tenant2.setProjectId(new ObjectId().toString());
-		return tenant2;
-	}
-
 	@Test
 	public void testExecuteOk() throws Exception {
 		AbstractAccessor<FunctionPackage> functionAccessorMock = createRemoteFunctionAccessorMock();
@@ -66,23 +48,6 @@ public class UploadKeywordsPackageMojoEETest  extends AbstractMojoTest {
 		RemoteMultitenancyClientImpl multitenancyClientMock = createRemoteMultitenancyClientMock();
 		UploadKeywordsPackageMojoOSTestable mojo = new UploadKeywordsPackageMojoOSTestable(remoteFunctionManagerMock, functionAccessorMock, multitenancyClientMock);
 		configureMojo(mojo);
-
-		MavenProject mockedProject = Mockito.mock(MavenProject.class);
-
-		Mockito.when(mockedProject.getArtifactId()).thenReturn(ARTIFACT_ID);
-
-		Artifact mainArtifact = createArtifactMock();
-		Mockito.when(mockedProject.getArtifact()).thenReturn(mainArtifact);
-
-		mojo.setUrl("http://localhost:4201");
-		HashMap<String, String> customAttributes = new HashMap<>();
-		customAttributes.put("artifactId", ARTIFACT_ID);
-		customAttributes.put("versionId", VERSION_ID);
-
-		mojo.setCustomPackageAttributes(customAttributes);
-		mojo.setStepProjectName(TENANT_1.getName());
-		mojo.setProject(mockedProject);
-
 		mojo.execute();
 
 		// verify arguments of external calls
@@ -137,6 +102,14 @@ public class UploadKeywordsPackageMojoEETest  extends AbstractMojoTest {
 		Mockito.when(mockedProject.getAttachedArtifacts()).thenReturn(Arrays.asList(jarWithDependenciesArtifact));
 
 		mojo.setProject(mockedProject);
+
+		mojo.setUrl("http://localhost:4201");
+		HashMap<String, String> customAttributes = new HashMap<>();
+		customAttributes.put("artifactId", ARTIFACT_ID);
+		customAttributes.put("versionId", VERSION_ID);
+
+		mojo.setCustomPackageAttributes(customAttributes);
+		mojo.setStepProjectName(TENANT_1.getName());
 	}
 
 	private RemoteFunctionPackageClientImpl createRemoteFunctionManagerMock() throws IOException {

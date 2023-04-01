@@ -7,6 +7,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import step.client.executions.RemoteExecutionFuture;
 import step.client.executions.RemoteExecutionManager;
+import step.controller.multitenancy.client.MultitenancyClient;
+import step.controller.multitenancy.client.RemoteMultitenancyClientImpl;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionMode;
@@ -14,6 +16,7 @@ import step.core.execution.model.ExecutionParameters;
 import step.core.execution.model.ExecutionStatus;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
@@ -25,8 +28,9 @@ public class RunDeployedAutomationPackagesMojoEETest extends AbstractMojoTest {
 	@Test
 	public void testExecuteOk() throws MojoExecutionException, InterruptedException, TimeoutException {
 		RemoteExecutionManager remoteExecutionManagerMock = createExecutionManagerMock(ReportNodeStatus.PASSED);
+		RemoteMultitenancyClientImpl multitenancyClientMock = createRemoteMultitenancyClientMock();
 
-		RunDeployedAutomationPackagesMojoTestable mojo = new RunDeployedAutomationPackagesMojoTestable(remoteExecutionManagerMock);
+		RunDeployedAutomationPackagesMojoTestable mojo = new RunDeployedAutomationPackagesMojoTestable(remoteExecutionManagerMock, multitenancyClientMock);
 		configureMojo(mojo);
 
 		mojo.execute();
@@ -52,8 +56,9 @@ public class RunDeployedAutomationPackagesMojoEETest extends AbstractMojoTest {
 	@Test
 	public void testExecuteNok() throws InterruptedException, TimeoutException {
 		RemoteExecutionManager remoteExecutionManagerMock = createExecutionManagerMock(ReportNodeStatus.FAILED);
+		RemoteMultitenancyClientImpl multitenancyClientMock = createRemoteMultitenancyClientMock();
 
-		RunDeployedAutomationPackagesMojoTestable mojo = new RunDeployedAutomationPackagesMojoTestable(remoteExecutionManagerMock);
+		RunDeployedAutomationPackagesMojoTestable mojo = new RunDeployedAutomationPackagesMojoTestable(remoteExecutionManagerMock, multitenancyClientMock);
 		configureMojo(mojo);
 
 		try {
@@ -98,6 +103,8 @@ public class RunDeployedAutomationPackagesMojoEETest extends AbstractMojoTest {
 
 		Map<String, String> params = createTestCustomParams();
 		mojo.setExecutionParameters(params);
+
+		mojo.setStepProjectName(TENANT_1.getName());
 	}
 
 	private static Map<String, String> createTestCustomParams() {
@@ -107,18 +114,32 @@ public class RunDeployedAutomationPackagesMojoEETest extends AbstractMojoTest {
 		return params;
 	}
 
+	private RemoteMultitenancyClientImpl createRemoteMultitenancyClientMock(){
+		RemoteMultitenancyClientImpl mock = Mockito.mock(RemoteMultitenancyClientImpl.class);
+		Mockito.when(mock.getAvailableTenants()).thenReturn(List.of(TENANT_1, TENANT_2));
+		return mock;
+	}
+
 	private static class RunDeployedAutomationPackagesMojoTestable extends RunDeployedAutomationPackagesMojoEE {
 
 		private RemoteExecutionManager remoteExecutionManagerMock;
+		private MultitenancyClient multitenancyClientMock;
 
-		public RunDeployedAutomationPackagesMojoTestable(RemoteExecutionManager remoteExecutionManagerMock) {
+		public RunDeployedAutomationPackagesMojoTestable(RemoteExecutionManager remoteExecutionManagerMock, MultitenancyClient multitenancyClientMock) {
 			super();
 			this.remoteExecutionManagerMock = remoteExecutionManagerMock;
+			this.multitenancyClientMock = multitenancyClientMock;
 		}
 
 		@Override
 		protected RemoteExecutionManager createRemoteExecutionManager() {
 			return remoteExecutionManagerMock;
 		}
+
+		@Override
+		protected MultitenancyClient createMultitenancyClient() {
+			return multitenancyClientMock;
+		}
 	}
+
 }
