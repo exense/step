@@ -15,10 +15,11 @@ public interface FunctionPackageClient extends Closeable {
 	 * @param packageLibraryFile a Zip
 	 * @param packageFile the Jar/DLL file containing the Keyword definitions. The file will be uploaded to the Controller
 	 * @param packageAttributes the attributes of the Keyword (ex: version, app, etc)
+	 * @param trackingField (optional) the attribute to determine the uniqueness of the function package
 	 * @return the newly created {@link FunctionPackage}
 	 * @throws IOException in case of any error
 	 */
-	FunctionPackage newKeywordPackage(File packageLibraryFile, File packageFile, Map<String, String> packageAttributes)
+	FunctionPackage newKeywordPackage(File packageLibraryFile, File packageFile, Map<String, String> packageAttributes, String trackingField)
 			throws IOException;
 
 
@@ -29,11 +30,12 @@ public interface FunctionPackageClient extends Closeable {
 	 * @param packageLibraryFile a Zip
 	 * @param packageFile the Jar/DLL file containing the Keyword definitions. The file will be uploaded to the Controller
 	 * @param packageAttributes (optional) the attributes the keyword package can be identified with, by default the resource name will be used
+	 * @param trackingField (optional) the attribute to determine the uniqueness of the function package
 	 * @return the updated {@link FunctionPackage}
 	 * @throws IOException in case of any error
 	 */
 	FunctionPackage updateKeywordPackageById(FunctionPackage previousPackage, File packageLibraryFile, File packageFile,
-			Map<String, String> packageAttributes) throws IOException;
+			Map<String, String> packageAttributes, String trackingField) throws IOException;
 	
 	/**
 	 * Delete an existing Keyword package

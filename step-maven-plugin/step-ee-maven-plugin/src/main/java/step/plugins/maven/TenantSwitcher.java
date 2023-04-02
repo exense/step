@@ -23,10 +23,8 @@ public abstract class TenantSwitcher {
 			}
 			multitenancyClient.selectTenant(projectName);
 			return currentTenant;
-		} catch (IOException e) {
-			throw new MojoExecutionException("Unable to use multitenancy client", e);
 		} catch (Exception e) {
-			throw new MojoExecutionException("Unable to use tenant: " + projectName, e);
+			throw new MojoExecutionException(e.getMessage(), e);
 		}
 	}
 

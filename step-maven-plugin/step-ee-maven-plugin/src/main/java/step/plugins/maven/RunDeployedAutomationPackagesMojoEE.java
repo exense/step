@@ -42,6 +42,7 @@ public class RunDeployedAutomationPackagesMojoEE extends AbstractRunDeployedAuto
 				getLog().info("Current tenant: " + currentTenant.getName() + " (" + currentTenant.getProjectId() + "). Is global: " + currentTenant.isGlobal());
 
 			} catch (MojoExecutionException e) {
+				getLog().error("Unable to switch tenant");
 				throw logAndThrow(e.getMessage(), e);
 			}
 		}

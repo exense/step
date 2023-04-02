@@ -37,6 +37,7 @@ public class RunDeployedAutomationPackagesMojoEETest extends AbstractMojoTest {
 
 		ArgumentCaptor<ExecutionParameters> captor = ArgumentCaptor.forClass(ExecutionParameters.class);
 		Mockito.verify(remoteExecutionManagerMock, Mockito.times(1)).execute(captor.capture());
+
 		ExecutionParameters captured = captor.getValue();
 		Assert.assertEquals("Test description", captured.getDescription());
 		Assert.assertEquals("testUser", captured.getUserID());
@@ -122,8 +123,8 @@ public class RunDeployedAutomationPackagesMojoEETest extends AbstractMojoTest {
 
 	private static class RunDeployedAutomationPackagesMojoTestable extends RunDeployedAutomationPackagesMojoEE {
 
-		private RemoteExecutionManager remoteExecutionManagerMock;
-		private MultitenancyClient multitenancyClientMock;
+		private final RemoteExecutionManager remoteExecutionManagerMock;
+		private final MultitenancyClient multitenancyClientMock;
 
 		public RunDeployedAutomationPackagesMojoTestable(RemoteExecutionManager remoteExecutionManagerMock, MultitenancyClient multitenancyClientMock) {
 			super();

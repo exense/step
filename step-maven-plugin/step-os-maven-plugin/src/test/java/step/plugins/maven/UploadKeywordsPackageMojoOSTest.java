@@ -26,6 +26,7 @@ public class UploadKeywordsPackageMojoOSTest extends AbstractMojoTest {
 	private static final FunctionPackage OLD_PACKAGE = createOldPackageMock();
 	private static final FunctionPackage UPDATED_PACKAGE = createUpdatedPackageMock();
 
+	private static final String GROUP_ID = "my-group-id";
 	private static final String ARTIFACT_ID = "step-functions-plugins-java-handler-test-3";
 	private static final String VERSION_ID = "0.0.0-SNAPSHOT";
 
@@ -46,31 +47,18 @@ public class UploadKeywordsPackageMojoOSTest extends AbstractMojoTest {
 		AbstractAccessor<FunctionPackage> functionAccessorMock = createRemoteFunctionAccessorMock();
 		RemoteFunctionPackageClientImpl remoteFunctionManagerMock = createRemoteFunctionManagerMock();
 		UploadKeywordsPackageMojoOSTestable mojo = new UploadKeywordsPackageMojoOSTestable(remoteFunctionManagerMock, functionAccessorMock);
+
+		// configure mojo with test parameters and mocked Maven Project
 		configureMojo(mojo);
-
-		MavenProject mockedProject = Mockito.mock(MavenProject.class);
-
-		Mockito.when(mockedProject.getArtifactId()).thenReturn(ARTIFACT_ID);
-
-		Artifact mainArtifact = createArtifactMock();
-		Mockito.when(mockedProject.getArtifact()).thenReturn(mainArtifact);
-
-		mojo.setUrl("http://localhost:4201");
-		HashMap<String, String> customAttributes = new HashMap<>();
-		customAttributes.put("artifactId", ARTIFACT_ID);
-		customAttributes.put("versionId", VERSION_ID);
-
-		mojo.setCustomPackageAttributes(customAttributes);
-		mojo.setProject(mockedProject);
 
 		mojo.execute();
 
 		// verify arguments of external calls
 		ArgumentCaptor<Map<String, String>> searchCriteriaCaptor = ArgumentCaptor.forClass(Map.class);
 		Mockito.verify(functionAccessorMock, Mockito.times(1)).findByCriteria(searchCriteriaCaptor.capture());
-		Assert.assertEquals(Set.of("packageAttributes.versionId", "packageAttributes.artifactId"), searchCriteriaCaptor.getValue().keySet());
-		Assert.assertEquals(VERSION_ID, searchCriteriaCaptor.getValue().get("packageAttributes.versionId"));
-		Assert.assertEquals(ARTIFACT_ID, searchCriteriaCaptor.getValue().get("packageAttributes.artifactId"));
+		Assert.assertEquals(Set.of("customFields.tracking"), searchCriteriaCaptor.getValue().keySet());
+		Assert.assertEquals(GROUP_ID + "." + ARTIFACT_ID, searchCriteriaCaptor.getValue().get("customFields.tracking"));
+
 		Mockito.verifyNoMoreInteractions(functionAccessorMock);
 
 		ArgumentCaptor<FunctionPackage> oldPackageCaptor = ArgumentCaptor.forClass(FunctionPackage.class);
@@ -80,7 +68,8 @@ public class UploadKeywordsPackageMojoOSTest extends AbstractMojoTest {
 				oldPackageCaptor.capture(),
 				Mockito.isNull(),
 				uploadedFileCaptor.capture(),
-				uploadedPackageAttributesCaptor.capture()
+				uploadedPackageAttributesCaptor.capture(),
+				Mockito.eq(GROUP_ID + "." + ARTIFACT_ID)
 		);
 		Assert.assertEquals(OLD_PACKAGE, oldPackageCaptor.getValue());
 		Assert.assertEquals("test-file-jar.jar", uploadedFileCaptor.getValue().getName());
@@ -104,17 +93,31 @@ public class UploadKeywordsPackageMojoOSTest extends AbstractMojoTest {
 
 		Mockito.when(mockedProject.getArtifact()).thenReturn(mainArtifact);
 		Mockito.when(mockedProject.getArtifacts()).thenReturn(new HashSet<>());
+		Mockito.when(mockedProject.getArtifactId()).thenReturn(ARTIFACT_ID);
+		Mockito.when(mockedProject.getGroupId()).thenReturn(GROUP_ID);
 
 		Artifact jarWithDependenciesArtifact = createArtifactWithDependenciesMock();
 
 		Mockito.when(mockedProject.getAttachedArtifacts()).thenReturn(Arrays.asList(jarWithDependenciesArtifact));
 
 		mojo.setProject(mockedProject);
+
+		HashMap<String, String> customAttributes = new HashMap<>();
+		customAttributes.put("artifactId", ARTIFACT_ID);
+		customAttributes.put("versionId", VERSION_ID);
+
+		mojo.setCustomPackageAttributes(customAttributes);
 	}
 
 	private RemoteFunctionPackageClientImpl createRemoteFunctionManagerMock() throws IOException {
 		RemoteFunctionPackageClientImpl remoteFunctionPackageClient = Mockito.mock(RemoteFunctionPackageClientImpl.class);
-		Mockito.when(remoteFunctionPackageClient.updateKeywordPackageById(Mockito.any(), Mockito.isNull(), Mockito.any(), Mockito.any())).thenReturn(UPDATED_PACKAGE);
+		Mockito.when(remoteFunctionPackageClient.updateKeywordPackageById(
+				Mockito.any(),
+				Mockito.isNull(),
+				Mockito.any(),
+				Mockito.any(),
+				Mockito.any())
+		).thenReturn(UPDATED_PACKAGE);
 		return remoteFunctionPackageClient;
 	}
 

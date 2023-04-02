@@ -130,9 +130,9 @@ public class RunPackagedAutomationPackagesMojoEETest extends AbstractMojoTest {
 
 	private static class RunPackagedAutomationPackagesMojoTestable extends RunPackagedAutomationPackagesMojoEE {
 
-		private RemoteExecutionManager remoteExecutionManagerMock;
-		private RemoteResourceManager remoteResourceManagerMock;
-		private MultitenancyClient multitenancyClientMock;
+		private final RemoteExecutionManager remoteExecutionManagerMock;
+		private final RemoteResourceManager remoteResourceManagerMock;
+		private final MultitenancyClient multitenancyClientMock;
 
 		public RunPackagedAutomationPackagesMojoTestable(RemoteExecutionManager remoteExecutionManagerMock, RemoteResourceManager remoteResourceManagerMock, MultitenancyClient multitenancyClientMock) {
 			super();

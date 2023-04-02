@@ -23,6 +23,9 @@ public abstract class AbstractUploadKeywordsPackageMojo extends AbstractStepPlug
 	@Parameter(property = "step-upload-keywords.custom-package-attrs", required = false)
 	private Map<String, String> customPackageAttributes;
 
+	@Parameter(property = "step-upload-keywords.tracking-attr", required = false)
+	private String trackingAttribute;
+
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
 		getLog().info("Uploading keywords package to Step...");
@@ -36,24 +39,26 @@ public abstract class AbstractUploadKeywordsPackageMojo extends AbstractStepPlug
 			// init with default if the key is not explicitly defined via maven parameter
 			if (getCustomPackageAttributes() == null || getCustomPackageAttributes().isEmpty()) {
 				packageAttributes = new HashMap<>();
-				packageAttributes.put("artifactId", getProject().getArtifactId());
 			} else {
 				packageAttributes = getCustomPackageAttributes();
 			}
 
 			getLog().info("Package attributes: " + packageAttributes);
 
+			String trackingAttribute = (getTrackingAttribute() == null || getTrackingAttribute().isEmpty())
+					? getProject().getGroupId() + "." + getProject().getArtifactId()
+					: getTrackingAttribute();
+			getLog().info("Package tracking field: " + trackingAttribute);
+
 			// we try to find existing package (for update) if at least one tracking attribute is defined
-			if (!packageAttributes.isEmpty()) {
+			if (trackingAttribute != null && !trackingAttribute.isEmpty()) {
 				AbstractAccessor<FunctionPackage> remoteFunctionAccessor = createRemoteFunctionPackageAccessor();
 
 				Map<String, String> searchCriteria = new HashMap<>();
-				for (Map.Entry<String, String> entry : packageAttributes.entrySet()) {
-					searchCriteria.put("packageAttributes." + entry.getKey(), entry.getValue());
-				}
+				searchCriteria.put("customFields." + FunctionPackage.TRACKING_FIELD, trackingAttribute);
 
 				fillAdditionalPackageSearchCriteria(searchCriteria);
-				getLog().info("Search for function package with attributes: " + searchCriteria);
+				getLog().info("Search for function package with tracking value: " + searchCriteria);
 
 				previousPackage = remoteFunctionAccessor.findByCriteria(searchCriteria);
 			}
@@ -62,10 +67,10 @@ public abstract class AbstractUploadKeywordsPackageMojo extends AbstractStepPlug
 
 			if (previousPackage == null) {
 				getLog().info("Uploading the new function package...");
-				uploaded = remoteFunctionPackageClient.newKeywordPackage(null, packagedTarget, packageAttributes);
+				uploaded = remoteFunctionPackageClient.newKeywordPackage(null, packagedTarget, packageAttributes, trackingAttribute);
 			} else {
 				getLog().info("Updating the existing function package (" + previousPackage.getId().toString() + ")...");
-				uploaded = remoteFunctionPackageClient.updateKeywordPackageById(previousPackage, null, packagedTarget, packageAttributes);
+				uploaded = remoteFunctionPackageClient.updateKeywordPackageById(previousPackage, null, packagedTarget, packageAttributes, trackingAttribute);
 			}
 			if (uploaded == null) {
 				throw new MojoExecutionException("Uploaded function package is null. Upload failed");
@@ -98,6 +103,14 @@ public abstract class AbstractUploadKeywordsPackageMojo extends AbstractStepPlug
 
 	public void setCustomPackageAttributes(Map<String, String> customPackageAttributes) {
 		this.customPackageAttributes = customPackageAttributes;
+	}
+
+	public String getTrackingAttribute() {
+		return trackingAttribute;
+	}
+
+	public void setTrackingAttribute(String trackingAttribute) {
+		this.trackingAttribute = trackingAttribute;
 	}
 
 	protected AbstractAccessor<FunctionPackage> createRemoteFunctionPackageAccessor() {

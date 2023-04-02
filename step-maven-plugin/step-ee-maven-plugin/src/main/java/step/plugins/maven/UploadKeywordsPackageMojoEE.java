@@ -62,6 +62,7 @@ public class UploadKeywordsPackageMojoEE extends AbstractUploadKeywordsPackageMo
 				// setup Step project and use it to search fo existing packages
 				searchCriteria.put("attributes.project", currentTenant.getProjectId());
 			} catch (Exception e) {
+				getLog().error("Unable to switch tenant");
 				throw logAndThrow(e.getMessage(), e);
 			}
 		}

@@ -17,6 +17,8 @@ import step.resources.Resource;
  *
  */
 public class FunctionPackage extends AbstractOrganizableObject implements EnricheableObject {
+
+	public static final String TRACKING_FIELD = "tracking";
 	
 	protected String packageLibrariesLocation;
 	
