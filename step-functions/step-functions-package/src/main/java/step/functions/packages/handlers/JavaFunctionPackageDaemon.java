@@ -95,7 +95,7 @@ public class JavaFunctionPackageDaemon extends FunctionPackageUtils {
 					function.getScriptLanguage().setValue("java");
 
 					try {
-						function.setSchema(new KeywordJsonSchemaReader().readJsonSchemaForKeyword(annotation, m.getName()));
+						function.setSchema(new KeywordJsonSchemaReader().readJsonSchemaForKeyword(m));
 					} catch (JsonSchemaPreparationException ex){
 						functions.exception = ex.getMessage();
 						functions.functions.clear();

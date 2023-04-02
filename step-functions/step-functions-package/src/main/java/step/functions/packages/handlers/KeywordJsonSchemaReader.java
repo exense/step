@@ -2,128 +2,125 @@ package step.functions.packages.handlers;
 
 import jakarta.json.*;
 import jakarta.json.stream.JsonParsingException;
-import step.handlers.javahandler.JsonSchema;
-import step.handlers.javahandler.JsonSchemaProperty;
-import step.handlers.javahandler.JsonSchemaPropertyRef;
+import step.handlers.javahandler.Input;
 import step.handlers.javahandler.Keyword;
 
 import java.io.StringReader;
+import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.*;
 
 public class KeywordJsonSchemaReader {
 
-	public JsonObject readJsonSchemaForKeyword(Keyword keywordAnnotation, String methodName) throws JsonSchemaPreparationException{
+	public JsonObject readJsonSchemaForKeyword(Method method) throws JsonSchemaPreparationException{
+		Keyword keywordAnnotation = method.getAnnotation(Keyword.class);
+
 		boolean useTextJsonSchema = keywordAnnotation.schema() != null && !keywordAnnotation.schema().isEmpty();
-		boolean useAnnotatedJsonSchema = keywordAnnotation.jsonSchema() != null && keywordAnnotation.jsonSchema().length > 0;
-		if (useTextJsonSchema && useAnnotatedJsonSchema) {
+		boolean useAnnotatedJsonInputs = method.getParameters() != null && Arrays.stream(method.getParameters()).anyMatch(p -> p.isAnnotationPresent(Input.class));
+		if (useTextJsonSchema && useAnnotatedJsonInputs) {
 			throw new IllegalArgumentException("Ambiguous definition of json schema for keyword. You should define either 'jsonSchema' or 'schema' parameter in @Keyword annotation");
 		}
 
 		if (useTextJsonSchema) {
-			return readJsonSchemaFromPlainText(keywordAnnotation.schema(), methodName);
-		} else if (useAnnotatedJsonSchema) {
-			return readJsonSchemaFromAnnotationKeyword(keywordAnnotation.jsonSchema()[0], methodName);
+			return readJsonSchemaFromPlainText(keywordAnnotation.schema(), method);
+		} else if (useAnnotatedJsonInputs) {
+			return readJsonSchemaFromInputAnnotations(method);
 		} else {
 			return createEmptyJsonSchema();
 		}
 	}
 
-	private JsonObject readJsonSchemaFromAnnotationKeyword(JsonSchema jsonSchema, String methodName) throws JsonSchemaPreparationException {
-		Map<String, JsonSchemaProperty> propertyRefsRegistry = new HashMap<>();
-		for (JsonSchemaPropertyRef jsonSchemaPropertyRef : jsonSchema.propertiesRefs()) {
-			propertyRefsRegistry.put(jsonSchemaPropertyRef.id(), jsonSchemaPropertyRef.property());
-		}
-
+	private JsonObject readJsonSchemaFromInputAnnotations(Method method) throws JsonSchemaPreparationException {
 		JsonObjectBuilder topLevelBuilder = Json.createObjectBuilder();
+		// top-level type is always 'object'
+		topLevelBuilder.add("type", "object");
 
-		if (jsonSchema.title() != null && !jsonSchema.title().isEmpty()) {
-			topLevelBuilder.add("title", jsonSchema.title());
-		}
-		if (jsonSchema.description() != null && !jsonSchema.description().isEmpty()) {
-			topLevelBuilder.add("description", jsonSchema.description());
-		}
-		JsonArrayBuilder propertiesBuilder = Json.createArrayBuilder();
-		topLevelBuilder.add("properties", propertiesBuilder);
+		JsonObjectBuilder propertiesBuilder = Json.createObjectBuilder();
 		List<String> requiredProperties = new ArrayList<>();
-		for (JsonSchemaProperty property : jsonSchema.properties()) {
-			JsonObjectBuilder propertyBuilder = Json.createObjectBuilder();
-			String ref = property.propertyRef();
-			if(ref != null && !ref.isEmpty()){
-				property = getPropertyByRef(ref, propertyRefsRegistry, methodName);
-			}
-
+		for (Parameter p : method.getParameters()) {
 			JsonObjectBuilder propertyParamsBuilder = Json.createObjectBuilder();
 
-			propertyBuilder.add(property.name(), propertyParamsBuilder);
-
-			if (property.type() == null || property.type().isEmpty()) {
-				throw new JsonSchemaPreparationException("Property type is undefined for json schema property '" + property.type() + "' for keyword '" + methodName + "'");
-			}
-			propertyParamsBuilder.add("type", property.type());
-
-			if (property.defaultV() != null && !property.defaultV().isEmpty()) {
-				propertyParamsBuilder.add("default", property.defaultV());
-			}
-			
-			if (property.nestedPropertiesRefs() != null && property.nestedPropertiesRefs().length > 0) {
-				if (!Objects.equals("object", property.type())) {
-					throw new JsonSchemaPreparationException("Property having nested properties must have \"object\" type");
-				}
-				includeNestedProperties(propertyBuilder, Arrays.asList(property.nestedPropertiesRefs()), propertyRefsRegistry, methodName);
+			if (!p.isAnnotationPresent(Input.class)) {
+				throw new JsonSchemaPreparationException("Parameter " + p.getName() + " is not annotated with " + Input.class.getName());
 			}
 
-			propertiesBuilder.add(propertyBuilder);
+			Input inputAnnotation = p.getAnnotation(Input.class);
 
-			if (property.required()) {
-				requiredProperties.add(property.name());
+			String parameterName = inputAnnotation.name();
+			if(parameterName == null || parameterName.isEmpty()){
+				throw new JsonSchemaPreparationException("Parameter name is not resolved for parameter " + p.getName());
 			}
 
+			String type = resolveJsonPropertyType(p);
+			propertyParamsBuilder.add("type", type);
+
+			if (inputAnnotation.defaultValue() != null && !inputAnnotation.defaultValue().isEmpty()) {
+				addDefaultValue(p, inputAnnotation.defaultValue(), propertyParamsBuilder);
+			}
+
+			if (inputAnnotation.required()) {
+				requiredProperties.add(parameterName);
+			}
+
+			propertiesBuilder.add(parameterName, propertyParamsBuilder);
 		}
+		topLevelBuilder.add("properties", propertiesBuilder);
+
 		JsonArrayBuilder requiredBuilder = Json.createArrayBuilder();
 		for (String requiredProperty : requiredProperties) {
 			requiredBuilder.add(requiredProperty);
 		}
 		topLevelBuilder.add("required", requiredBuilder);
-
 		return topLevelBuilder.build();
 	}
 
-	private void includeNestedProperties(JsonObjectBuilder propertyBuilder, List<String> nestedPropertiesRefs, Map<String, JsonSchemaProperty> propertyRefsRegistry, String methodName) throws JsonSchemaPreparationException {
-		for (String nestedPropertiesRef : nestedPropertiesRefs) {
-			JsonSchemaProperty nestedProperty = getPropertyByRef(nestedPropertiesRef, propertyRefsRegistry, methodName);
-
+	private void addDefaultValue(Parameter p, String defaultValue, JsonObjectBuilder builder) throws JsonSchemaPreparationException {
+		if(String.class.isAssignableFrom(p.getType())){
+			builder.add("default", defaultValue);
+		} else if(Boolean.class.isAssignableFrom(p.getType())){
+			builder.add("default", Boolean.parseBoolean(defaultValue));
+		} else if(Integer.class.isAssignableFrom(p.getType())){
+			builder.add("default", Integer.parseInt(defaultValue));
+		} else if(Long.class.isAssignableFrom(p.getType())){
+			builder.add("default", Long.parseLong(defaultValue));
+		} else if(Double.class.isAssignableFrom(p.getType())){
+			builder.add("default", Double.parseDouble(defaultValue));
+		} else if(BigInteger.class.isAssignableFrom(p.getType())){
+			builder.add("default", BigInteger.valueOf(Long.parseLong(defaultValue)));
+		} else if(BigDecimal.class.isAssignableFrom(p.getType())){
+			builder.add("default", BigDecimal.valueOf(Double.parseDouble(defaultValue)));
+		} else {
+			throw new JsonSchemaPreparationException("Unable to resolve default value for parameter " + p.getName());
 		}
 	}
 
-	private JsonSchemaProperty getPropertyByRef(String ref, Map<String, JsonSchemaProperty> propertyRefsRegistry, String methodName) throws JsonSchemaPreparationException {
-		if (ref == null || ref.isEmpty()) {
-			throw new JsonSchemaPreparationException("Unable to resolve json schema property ref '  " + ref + " ' for keyword '" + methodName + "'");
+	private String resolveJsonPropertyType(Parameter p) {
+		if (String.class.isAssignableFrom(p.getType())) {
+			return "string";
+		} else if (Boolean.class.isAssignableFrom(p.getType())) {
+			return "boolean";
+		} else if (Number.class.isAssignableFrom(p.getType())) {
+			return "number";
+		} else {
+			return "object";
 		}
-
-		JsonSchemaProperty property = null;
-		while (ref != null && !ref.isEmpty()) {
-			property = propertyRefsRegistry.get(ref);
-			if (property == null) {
-				throw new JsonSchemaPreparationException("Unable to resolve json schema property ref '  " + ref + " ' for keyword '" + methodName + "'");
-			}
-			ref = property.propertyRef();
-		}
-		return property;
 	}
 
 	protected JsonObject createEmptyJsonSchema() {
 		return Json.createObjectBuilder().build();
 	}
 
-	protected JsonObject readJsonSchemaFromPlainText(String schema, String methodName) throws JsonSchemaPreparationException {
+	protected JsonObject readJsonSchemaFromPlainText(String schema, Method method) throws JsonSchemaPreparationException {
 		try {
 			return Json.createReader(new StringReader(schema)).readObject();
 		} catch (JsonParsingException e) {
-			throw new JsonSchemaPreparationException("Parsing error in the schema for keyword '" + methodName + "'. The error was: " + e.getMessage());
+			throw new JsonSchemaPreparationException("Parsing error in the schema for keyword '" + method.getName() + "'. The error was: " + e.getMessage());
 		} catch (JsonException e) {
-			throw new JsonSchemaPreparationException("I/O error in the schema for keyword '" + methodName + "'. The error was: " + e.getMessage());
+			throw new JsonSchemaPreparationException("I/O error in the schema for keyword '" + method.getName() + "'. The error was: " + e.getMessage());
 		} catch (Exception e) {
-			throw new JsonSchemaPreparationException("Unknown error in the schema for keyword '" + methodName + "'. The error was: " + e.getMessage());
+			throw new JsonSchemaPreparationException("Unknown error in the schema for keyword '" + method.getName() + "'. The error was: " + e.getMessage());
 		}
 	}
 

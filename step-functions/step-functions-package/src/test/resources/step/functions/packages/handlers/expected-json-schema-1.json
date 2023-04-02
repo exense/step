@@ -1,0 +1,26 @@
+{
+  "type": "object",
+  "properties": {
+    "numberField": {
+      "type": "number",
+      "default": 1
+    },
+    "booleanField": {
+      "type": "boolean",
+      "default": true
+    },
+    "stringField": {
+      "type": "string",
+      "default": "myValue"
+    },
+    "stringField2": {
+      "type": "string",
+      "default": "myValue2"
+    }
+  },
+  "required": [
+    "numberField",
+    "booleanField",
+    "stringField"
+  ]
+}
