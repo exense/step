@@ -45,6 +45,29 @@ public class KeywordJsonSchemaReaderTest {
 		Assert.assertEquals(expectedJsonNode, actualJsonNode);
 	}
 
+	@Test
+	public void jsonInputParamsReaderNestedFieldsTest() throws JsonSchemaPreparationException, IOException {
+		KeywordJsonSchemaReader reader = new KeywordJsonSchemaReader();
+
+		Method method = Arrays.stream(KeywordTestClass.class.getMethods()).filter(m -> m.getName().equals("MyKeywordWithInputNestedFieldAnnotation")).findFirst().orElseThrow();
+
+		log.info("Check json schema for method " + method.getName());
+		JsonObject schema = reader.readJsonSchemaForKeyword(method);
+		String jsonString = schema.toString();
+		log.info(jsonString);
+
+		File expectedSchema = new File("src/test/resources/step/functions/packages/handlers/expected-json-schema-2.json");
+
+		JsonFactory factory = new JsonFactory();
+		ObjectMapper mapper = DefaultJacksonMapperProvider.getObjectMapper(factory);
+
+		// compare json nodes to avoid unstable comparisons in case of changed whitespaces or fields ordering
+		JsonNode expectedJsonNode = mapper.readTree(expectedSchema);
+		JsonNode actualJsonNode = mapper.readTree(jsonString);
+
+		Assert.assertEquals(expectedJsonNode, actualJsonNode);
+	}
+
 	public static class KeywordTestClass extends AbstractKeyword {
 		@Keyword
 		public void MyKeywordWithInputAnnotation(@Input(name = "numberField", defaultValue = "1", required = true) Integer numberField,
@@ -52,6 +75,40 @@ public class KeywordJsonSchemaReaderTest {
 												 @Input(name = "stringField", defaultValue = "myValue", required = true) String stringField,
 												 @Input(name = "stringField2", defaultValue = "myValue2") String secondStringField) {
 			output.add("test", "test");
+		}
+
+		@Keyword
+		public void MyKeywordWithInputNestedFieldAnnotation(@Input(name = "stringField", defaultValue = "myValue", required = true) String stringField,
+															@Input(name = "stringField2", defaultValue = "myValue2") String secondStringField,
+															@Input(name = "propertyWithNestedFields") ClassWithNestedFields classWithNestedFields) {
+			output.add("test", "test");
+		}
+	}
+
+	public static class ClassWithNestedFields {
+		@Input(defaultValue = "nestedValue1", required = true)
+		private String nestedStringProperty;
+
+		@Input(name="numberProperty", defaultValue = "2")
+		private Integer nestedNumberProperty;
+
+		public ClassWithNestedFields() {
+		}
+
+		public String getNestedStringProperty() {
+			return nestedStringProperty;
+		}
+
+		public void setNestedStringProperty(String nestedStringProperty) {
+			this.nestedStringProperty = nestedStringProperty;
+		}
+
+		public Integer getNestedNumberProperty() {
+			return nestedNumberProperty;
+		}
+
+		public void setNestedNumberProperty(Integer nestedNumberProperty) {
+			this.nestedNumberProperty = nestedNumberProperty;
 		}
 	}
 
