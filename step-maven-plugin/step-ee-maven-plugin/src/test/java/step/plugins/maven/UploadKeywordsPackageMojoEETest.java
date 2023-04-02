@@ -60,7 +60,7 @@ public class UploadKeywordsPackageMojoEETest  extends AbstractMojoTest {
 		ArgumentCaptor<Map<String, String>> searchCriteriaCaptor = ArgumentCaptor.forClass(Map.class);
 		Mockito.verify(functionAccessorMock, Mockito.times(1)).findByCriteria(searchCriteriaCaptor.capture());
 		Assert.assertEquals(Set.of("customFields.tracking", "attributes.project"), searchCriteriaCaptor.getValue().keySet());
-		Assert.assertEquals("myGroupId.myArtifactId", searchCriteriaCaptor.getValue().get("customFields.tracking"));
+		Assert.assertEquals(GROUP_ID + "." + ARTIFACT_ID, searchCriteriaCaptor.getValue().get("customFields.tracking"));
 		Assert.assertEquals(TENANT_1.getProjectId(), searchCriteriaCaptor.getValue().get("attributes.project"));
 		Mockito.verifyNoMoreInteractions(functionAccessorMock);
 
@@ -73,7 +73,7 @@ public class UploadKeywordsPackageMojoEETest  extends AbstractMojoTest {
 				Mockito.isNull(),
 				uploadedFileCaptor.capture(),
 				uploadedPackageAttributesCaptor.capture(),
-				Mockito.eq(GROUP_ID + ". " + ARTIFACT_ID)
+				Mockito.eq(GROUP_ID + "." + ARTIFACT_ID)
 		);
 		Assert.assertEquals(OLD_PACKAGE, oldPackageCaptor.getValue());
 		Assert.assertEquals("test-file-jar.jar", uploadedFileCaptor.getValue().getName());
