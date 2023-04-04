@@ -57,7 +57,7 @@ public class RunPackagedAutomationPackagesMojoOSTest extends AbstractMojoTest {
 		Mockito.verify(remoteExecutionManagerMock, Mockito.times(1)).execute(captor.capture());
 		ExecutionParameters captured = captor.getValue();
 		Assert.assertEquals("Test description", captured.getDescription());
-		Assert.assertEquals("testUser", captured.getUserID());
+		Assert.assertEquals("dummy", captured.getUserID());
 		Assert.assertEquals("ResourceArtifact", captured.getRepositoryObject().getRepositoryID());
 		Assert.assertEquals(ExecutionMode.RUN, captured.getMode());
 		Assert.assertEquals(resourceMock.getId().toString(), captured.getRepositoryObject().getRepositoryParameters().get("resourceId"));
@@ -90,7 +90,6 @@ public class RunPackagedAutomationPackagesMojoOSTest extends AbstractMojoTest {
 		mojo.setBuildFinalName("Test build name");
 		mojo.setProjectVersion("1.0.0");
 		mojo.setExecutionResultTimeoutS(3);
-		mojo.setUserId("testUser");
 		mojo.setWaitForExecution(true);
 		mojo.setEnsureExecutionSuccess(true);
 

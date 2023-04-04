@@ -7,11 +7,17 @@ import step.client.credentials.ControllerCredentials;
 import step.controller.multitenancy.Tenant;
 import step.controller.multitenancy.client.MultitenancyClient;
 import step.controller.multitenancy.client.RemoteMultitenancyClientImpl;
+import step.core.execution.model.ExecutionParameters;
+
+import java.util.Map;
 
 @Mojo(name = "run-deployed-automation-packages-ee")
 public class RunDeployedAutomationPackagesMojoEE extends AbstractRunDeployedAutomationPackagesMojo {
-	@Parameter(property = "step.step-project-name")
+	@Parameter(property = "step.step-project-name", required = true)
 	private String stepProjectName;
+
+	@Parameter(property = "step-run-auto-packages.user-id", required = false)
+	private String userId;
 
 	@Parameter(property = "step.auth-token", required = false)
 	private String authToken;
@@ -51,6 +57,13 @@ public class RunDeployedAutomationPackagesMojoEE extends AbstractRunDeployedAuto
 	}
 
 	@Override
+	protected ExecutionParameters prepareExecutionParameters(Map<String, Object> executionContext) {
+		ExecutionParameters res = super.prepareExecutionParameters(executionContext);
+		res.setUserID(getUserId());
+		return res;
+	}
+
+	@Override
 	protected ControllerCredentials getControllerCredentials() {
 		return new ControllerCredentials(getUrl(), getAuthToken());
 	}
@@ -65,5 +78,13 @@ public class RunDeployedAutomationPackagesMojoEE extends AbstractRunDeployedAuto
 
 	public void setStepProjectName(String stepProjectName) {
 		this.stepProjectName = stepProjectName;
+	}
+
+	public String getUserId() {
+		return userId;
+	}
+
+	public void setUserId(String userId) {
+		this.userId = userId;
 	}
 }

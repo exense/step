@@ -4,6 +4,7 @@ import ch.exense.commons.app.Configuration;
 import org.apache.maven.settings.building.SettingsBuildingException;
 import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
+import step.constants.ArtifactConstants;
 import step.core.controller.ControllerSetting;
 import step.core.controller.ControllerSettingAccessor;
 import step.core.plans.PlanAccessor;
@@ -14,17 +15,17 @@ import java.util.Set;
 
 public class MavenArtifactRepository extends AbstractArtifactRepository {
 
-    protected static final String PARAM_ARTIFACT_ID = "artifactId";
-    protected static final String PARAM_VERSION = "version";
-    protected static final String PARAM_GROUP_ID = "groupId";
-    protected static final String PARAM_CLASSIFIER = "classifier";
+    protected static final String PARAM_ARTIFACT_ID = ArtifactConstants.PARAM_ARTIFACT_ID;
+    protected static final String PARAM_VERSION = ArtifactConstants.PARAM_VERSION;
+    protected static final String PARAM_GROUP_ID = ArtifactConstants.PARAM_GROUP_ID;
+    protected static final String PARAM_CLASSIFIER = ArtifactConstants.PARAM_CLASSIFIER;
 
-    protected static final String PARAM_LIB_ARTIFACT_ID = "libArtifactId";
-    protected static final String PARAM_LIB_VERSION = "libVersion";
-    protected static final String PARAM_LIB_GROUP_ID = "libGroupId";
-    protected static final String PARAM_LIB_CLASSIFIER = "libClassifier";
+    protected static final String PARAM_LIB_ARTIFACT_ID = ArtifactConstants.PARAM_LIB_ARTIFACT_ID;
+    protected static final String PARAM_LIB_VERSION = ArtifactConstants.PARAM_LIB_VERSION;
+    protected static final String PARAM_LIB_GROUP_ID = ArtifactConstants.PARAM_LIB_GROUP_ID;
+    protected static final String PARAM_LIB_CLASSIFIER = ArtifactConstants.PARAM_LIB_CLASSIFIER;
 
-    protected static final String PARAM_MAVEN_SETTINGS = "mavenSettings";
+    protected static final String PARAM_MAVEN_SETTINGS = ArtifactConstants.PARAM_MAVEN_SETTINGS;
 
     public static final String MAVEN_SETTINGS_PREFIX = "maven_settings_";
     protected static final String MAVEN_SETTINGS_DEFAULT = "default";

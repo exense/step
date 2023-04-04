@@ -13,7 +13,7 @@ import java.util.Map;
 @Mojo(name = "upload-keywords-package-ee")
 public class UploadKeywordsPackageMojoEE extends AbstractUploadKeywordsPackageMojo {
 
-	@Parameter(property = "step.step-project-name")
+	@Parameter(property = "step.step-project-name", required = true)
 	private String stepProjectName;
 
 	@Parameter(property = "step.auth-token", required = false)

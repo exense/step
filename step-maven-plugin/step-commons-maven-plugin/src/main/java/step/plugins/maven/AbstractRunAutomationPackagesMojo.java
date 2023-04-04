@@ -25,8 +25,6 @@ public abstract class AbstractRunAutomationPackagesMojo extends AbstractStepPlug
 	private String artifactClassifier;
 	@Parameter(property = "step-run-auto-packages.description", required = false)
 	private String description;
-	@Parameter(property = "step-run-auto-packages.user-id", required = false)
-	private String userId;
 	@Parameter(property = "step-run-auto-packages.execution-parameters", required = false)
 	private Map<String, String> executionParameters;
 	@Parameter(property = "step-run-auto-packages.exec-result-timeout-s", defaultValue = "30")
@@ -39,12 +37,7 @@ public abstract class AbstractRunAutomationPackagesMojo extends AbstractStepPlug
 	protected void executeBundleOnStep(Map<String, Object> executionContext) throws MojoExecutionException {
 		String executionId = null;
 		try (RemoteExecutionManager remoteExecutionManager = createRemoteExecutionManager()) {
-			ExecutionParameters executionParameters = new ExecutionParameters();
-			executionParameters.setMode(ExecutionMode.RUN);
-			executionParameters.setUserID(getUserId());
-			executionParameters.setDescription(getDescription());
-			executionParameters.setCustomParameters(getExecutionParameters());
-			executionParameters.setRepositoryObject(prepareExecutionRepositoryObject(executionContext));
+			ExecutionParameters executionParameters = prepareExecutionParameters(executionContext);
 
 			executionId = remoteExecutionManager.execute(executionParameters);
 			getLog().info("Execution has been registered in Step: " + executionId);
@@ -55,6 +48,15 @@ public abstract class AbstractRunAutomationPackagesMojo extends AbstractStepPlug
 		} catch (Exception ex) {
 			throw logAndThrow("Unable to run execution in Step", ex);
 		}
+	}
+
+	protected ExecutionParameters prepareExecutionParameters(Map<String, Object> executionContext) {
+		ExecutionParameters executionParameters = new ExecutionParameters();
+		executionParameters.setMode(ExecutionMode.RUN);
+		executionParameters.setDescription(getDescription());
+		executionParameters.setCustomParameters(getExecutionParameters());
+		executionParameters.setRepositoryObject(prepareExecutionRepositoryObject(executionContext));
+		return executionParameters;
 	}
 
 	protected RemoteExecutionManager createRemoteExecutionManager() {
@@ -118,14 +120,6 @@ public abstract class AbstractRunAutomationPackagesMojo extends AbstractStepPlug
 
 	public void setDescription(String description) {
 		this.description = description;
-	}
-
-	public String getUserId() {
-		return userId;
-	}
-
-	public void setUserId(String userId) {
-		this.userId = userId;
 	}
 
 	public Map<String, String> getExecutionParameters() {

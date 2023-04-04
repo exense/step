@@ -2,6 +2,7 @@ package step.plugins.maven;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Parameter;
+import step.constants.ArtifactConstants;
 import step.core.repositories.RepositoryObjectReference;
 
 import java.util.HashMap;
@@ -30,14 +31,14 @@ public abstract class AbstractRunDeployedAutomationPackagesMojo extends Abstract
 
 	private HashMap<String, String> prepareRepositoryParameters() {
 		HashMap<String, String> repoParams = new HashMap<>();
-		repoParams.put("groupId", getGroupId());
-		repoParams.put("artifactId", getArtifactId());
-		repoParams.put("version", getArtifactVersion());
+		repoParams.put(ArtifactConstants.PARAM_GROUP_ID, getGroupId());
+		repoParams.put(ArtifactConstants.PARAM_ARTIFACT_ID, getArtifactId());
+		repoParams.put(ArtifactConstants.PARAM_VERSION, getArtifactVersion());
 		if (getArtifactClassifier() != null && !getArtifactClassifier().isEmpty()) {
-			repoParams.put("classifier", getArtifactClassifier());
+			repoParams.put(ArtifactConstants.PARAM_CLASSIFIER, getArtifactClassifier());
 		}
 		if (getStepMavenSettings() != null && !getStepMavenSettings().isEmpty()) {
-			repoParams.put("mavenSettings", getStepMavenSettings());
+			repoParams.put(ArtifactConstants.PARAM_MAVEN_SETTINGS, getStepMavenSettings());
 		}
 		return repoParams;
 	}
