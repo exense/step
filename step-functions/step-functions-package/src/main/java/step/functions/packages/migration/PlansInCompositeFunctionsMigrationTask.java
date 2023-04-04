@@ -5,15 +5,11 @@ import step.core.collections.Collection;
 import step.core.collections.CollectionFactory;
 import step.core.collections.Document;
 import step.core.collections.Filters;
-import step.functions.packages.FunctionPackagePlugin;
 import step.migration.MigrationContext;
 import step.migration.MigrationTask;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
-import java.util.stream.Stream;
 
 public class PlansInCompositeFunctionsMigrationTask extends MigrationTask {
 
@@ -21,7 +17,7 @@ public class PlansInCompositeFunctionsMigrationTask extends MigrationTask {
 	private final Collection<Document> plans;
 
 	public PlansInCompositeFunctionsMigrationTask(CollectionFactory collectionFactory, MigrationContext migrationContext) {
-		super(new Version(3, 21, 0), collectionFactory, migrationContext);
+		super(new Version(3, 21, 2), collectionFactory, migrationContext);
 
 		functions = getDocumentCollection("functions");
 		plans = getDocumentCollection("plans");
