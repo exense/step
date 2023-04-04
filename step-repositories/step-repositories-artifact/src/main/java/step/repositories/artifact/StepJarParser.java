@@ -44,18 +44,18 @@ public class StepJarParser {
         for (Method m : methods) {
             Keyword annotation = m.getAnnotation(Keyword.class);
 
-			Function res;
-			if (annotation.planReference() != null && !annotation.planReference().isBlank()) {
-				try {
-					res = CompositeFunctionUtils.createCompositeFunction(
+            Function res;
+            if (annotation.planReference() != null && !annotation.planReference().isBlank()) {
+                try {
+                    res = CompositeFunctionUtils.createCompositeFunction(
                             annotation, m,
                             new PlanParser().parseCompositePlanFromPlanReference(m, annotation.planReference())
-					);
-				} catch (Exception ex) {
-					throw new RuntimeException("Unable to parse plan from reference", ex);
-				}
-			} else {
-				String functionName = annotation.name().length() > 0 ? annotation.name() : m.getName();
+                    );
+                } catch (Exception ex) {
+                    throw new RuntimeException("Unable to parse plan from reference", ex);
+                }
+            } else {
+                String functionName = annotation.name().length() > 0 ? annotation.name() : m.getName();
 
                 GeneralScriptFunction function = new GeneralScriptFunction();
                 function.setAttributes(new HashMap<>());
@@ -64,8 +64,9 @@ public class StepJarParser {
                 if (libraries != null) {
                     function.setLibrariesFile(new DynamicValue<>(libraries.getAbsolutePath()));
                 }
-    function.getCallTimeout().setValue(annotation.timeout());
-            function.setDescription(annotation.description());            function.setScriptLanguage(new DynamicValue<>("java"));
+                function.getCallTimeout().setValue(annotation.timeout());
+                function.setDescription(annotation.description());
+                function.setScriptLanguage(new DynamicValue<>("java"));
                 res = function;
             }
 
