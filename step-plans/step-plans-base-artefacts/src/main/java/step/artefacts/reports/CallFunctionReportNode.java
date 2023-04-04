@@ -119,7 +119,7 @@ public class CallFunctionReportNode extends ReportNode {
 	@Override
 	public String getReportAsString() {
 		String report = "Input=" + input + ", Output=" + output;
-		String kwName = functionAttributes.get(AbstractOrganizableObject.NAME);
+		String kwName = (functionAttributes != null) ? functionAttributes.get(AbstractOrganizableObject.NAME) : "Keyword not resolved";
 		return (this.getName().equals(kwName)) ?
 				report :
 				"Keyword name=" + kwName + ", " + report;

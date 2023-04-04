@@ -72,7 +72,7 @@ public class ObjectHookInterceptor extends AbstractStepServices implements Reade
 			if (annotation == null) {
 				Session session = getSession();
 				if (!objectHookRegistry.isObjectAcceptableInContext(session, enricheableObject)) {
-					throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, "You're not allowed to edit this object from within this context");
+					throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, "Authorization error", "You're not allowed to edit this object from within this context");
 				} else {
 					ObjectEnricher objectEnricher = objectHookRegistry.getObjectEnricher(session);
 					objectEnricher.accept(enricheableObject);

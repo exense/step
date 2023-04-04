@@ -64,7 +64,8 @@ public class StepJarParser {
                 if (libraries != null) {
                     function.setLibrariesFile(new DynamicValue<>(libraries.getAbsolutePath()));
                 }
-                function.setScriptLanguage(new DynamicValue<>("java"));
+    function.getCallTimeout().setValue(annotation.timeout());
+            function.setDescription(annotation.description());            function.setScriptLanguage(new DynamicValue<>("java"));
                 res = function;
             }
 
@@ -171,32 +172,32 @@ public class StepJarParser {
         PlanParser planParser = new PlanParser();
 
         Plans plans = klass.getAnnotation(Plans.class);
+        if (plans!=null) {
+            for (String file : plans.value()) {
+                Plan plan = null;
+                try {
+                    URL url = null;
+                    if (file.startsWith("/")) {
+                        url = new URL("jar:file:" + artifact.getAbsolutePath() + "!" + file);
+                    } else {
+                        url = new URL("jar:file:" + artifact.getAbsolutePath() + "!/" +
+                                klass.getPackageName().replace(".", "/") + "/" + file);
+                    }
 
-        for (String file : plans.value()) {
-            Plan plan = null;
-            try {
-                URL url = null;
-                if (file.startsWith("/")) {
-                    url = new URL("jar:file:" + artifact.getAbsolutePath() + "!" + file);
-                } else {
-                    url = new URL("jar:file:" + artifact.getAbsolutePath() + "!/" +
-                            klass.getPackageName().replace(".","/")+"/"+file);
+                    InputStream stream = url.openStream();
+
+                    if (stream != null) {
+                        plan = planParser.parse(stream, RootArtefactType.TestCase);
+                    } else {
+                        throw new FileNotFoundException(file);
+                    }
+                    StepClassParser.setPlanName(plan, file);
+                } catch (Exception e) {
+                    exception = e;
                 }
-
-                InputStream stream = url.openStream();
-
-                if (stream != null) {
-                    plan = planParser.parse(stream, RootArtefactType.TestCase);
-                } else {
-                    throw new FileNotFoundException(file);
-                }
-                StepClassParser.setPlanName(plan,file);
-            } catch (Exception e) {
-                exception = e;
+                result.add(new StepClassParserResult(file, plan, exception));
             }
-            result.add(new StepClassParserResult(file, plan, exception));
         }
-
         return result;
     }
 }
