@@ -125,7 +125,7 @@ public class TestGroupHandler {
 	
 	public static class TestArtefactMember {
 		
-		DynamicValue<Integer> localCount = new DynamicValue<Integer>(0);
+		public DynamicValue<Integer> localCount = new DynamicValue<Integer>(0);
 
 	}
 	

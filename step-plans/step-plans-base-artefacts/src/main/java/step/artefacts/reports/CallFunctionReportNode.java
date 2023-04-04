@@ -25,6 +25,7 @@ import jakarta.json.JsonObject;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.reports.ReportNode;
 import step.core.reports.Measure;
 
@@ -113,5 +114,14 @@ public class CallFunctionReportNode extends ReportNode {
 
 	public void setMeasures(List<Measure> measures) {
 		this.measures = measures;
+	}
+
+	@Override
+	public String getReportAsString() {
+		String report = "Input=" + input + ", Output=" + output;
+		String kwName = (functionAttributes != null) ? functionAttributes.get(AbstractOrganizableObject.NAME) : "Keyword not resolved";
+		return (this.getName().equals(kwName)) ?
+				report :
+				"Keyword name=" + kwName + ", " + report;
 	}
 }

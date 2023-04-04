@@ -82,6 +82,10 @@
             <groupId>ch.exense.step</groupId>
             <artifactId>step-controller-plugins-timeseries</artifactId>
             <version>${project.version}</version>
+        </dependency><dependency>
+            <groupId>ch.exense.step</groupId>
+            <artifactId>step-repositories-artifact</artifactId>
+            <version>${project.version}</version>
         </dependency>
 	</dependencies>
 </project>

@@ -41,4 +41,9 @@ public class SetReportNode extends ReportNode {
 	public void setValue(String value) {
 		this.value = value;
 	}
+
+	@Override
+	public String getReportAsString() {
+		return key + " = " + value;
+	}
 }

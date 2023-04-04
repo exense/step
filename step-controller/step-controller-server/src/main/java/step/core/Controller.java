@@ -69,7 +69,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class Controller {
 
-	public static final Version VERSION = new Version(3,21,0);
+	public static final Version VERSION = new Version(3,22,0);
 
 	public static String USER_ACTIVITY_MAP_KEY = "userActivityMap";
 	private Configuration configuration;
@@ -132,7 +132,9 @@ public class Controller {
 		context.setExecutionAccessor(executionAccessor);		
 		context.setExecutionManager(new ExecutionManagerImpl(executionAccessor));
 		
-		context.setPlanAccessor(new PlanAccessorImpl(collectionFactory.getCollection("plans", Plan.class)));
+		PlanAccessorImpl plans = new PlanAccessorImpl(collectionFactory.getCollection("plans", Plan.class));
+		context.setPlanAccessor(plans);
+
 		context.setReportNodeAccessor(
 				new ReportNodeAccessorImpl(collectionFactory.getCollection("reports", ReportNode.class)));
 		context.setScheduleAccessor(new ExecutionTaskAccessorImpl(

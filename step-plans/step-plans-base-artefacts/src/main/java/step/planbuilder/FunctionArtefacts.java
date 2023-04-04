@@ -19,9 +19,11 @@
 package step.planbuilder;
 
 import jakarta.json.Json;
+import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
 
+import jakarta.json.JsonString;
 import jakarta.json.JsonValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -155,28 +157,48 @@ public class FunctionArtefacts {
 	public static JsonObject buildInputFromSchema(Function function) {
 		JsonObjectBuilder inputBuilder = Json.createObjectBuilder();
 		JsonObject schema = function.getSchema();
-		if (schema != null && schema.get("properties") != null) {
-			if (schema.get("properties").getValueType().equals(JsonValue.ValueType.OBJECT)) {
-				JsonObject properties = schema.getJsonObject("properties");
-				properties.keySet().forEach(k -> {
-					if (properties.get(k).getValueType().equals(JsonValue.ValueType.OBJECT)) {
-						JsonObjectBuilder dynamicExpressionBuilder = Json.createObjectBuilder();
-						JsonObject prop = properties.getJsonObject(k);
-						String type = prop.getString("type","");
-						String defaultValue = prop.getString("default", null);
-						boolean isDynamic = (type.equals("number") || type.equals("integer") || type.equals("boolean"));
-						String value = (defaultValue != null) ? defaultValue : "<" + type + ">";
-						dynamicExpressionBuilder.add("dynamic", isDynamic);
-						dynamicExpressionBuilder.add((isDynamic) ? "expression" : "value", value);
-						inputBuilder.add(k, dynamicExpressionBuilder.build());
-					} else {
+		if (schema != null && schema.get("required") != null) {
+			if (schema.get("required").getValueType().equals(JsonValue.ValueType.ARRAY)) {
+				JsonArray required = schema.getJsonArray("required");
+				if (schema.get("properties").getValueType().equals(JsonValue.ValueType.OBJECT)) {
+					JsonObject properties = schema.getJsonObject("properties");
+					try {
+						required.getValuesAs(JsonString.class).forEach(v -> {
+							String key = v.getString();
+							if (properties.get(key) != null && properties.get(key).getValueType().equals(JsonValue.ValueType.OBJECT)) {
+								JsonObject prop = properties.getJsonObject(key);
+								String type = prop.getString("type", "");
+								JsonObjectBuilder dynamicExpressionBuilder = Json.createObjectBuilder();
+								dynamicExpressionBuilder.add("dynamic", false);
+								if (prop.get("default") != null) {
+									if (type.equals("number") || type.equals("integer")) {
+										dynamicExpressionBuilder.add("value", prop.getJsonNumber("default"));
+									} else if (type.equals("boolean")) {
+										dynamicExpressionBuilder.add("value", prop.getBoolean("default"));
+									} else {
+										dynamicExpressionBuilder.add("value", prop.getString("default"));
+									}
+								} else {
+									dynamicExpressionBuilder.add("value", "");
+								}
+								inputBuilder.add(key, dynamicExpressionBuilder.build());
+							} else {
+								logger.error("Invalid schema provided for function " + function.getAttribute(NAME) +
+										". The property '" + key + "' should be a json object. Schema provided: " + schema.toString());
+							}
+						});
+					} catch (ClassCastException e) {
 						logger.error("Invalid schema provided for function " + function.getAttribute(NAME) +
-								". The property '" + k +  "' should be a json object. Schema provided: " + schema.toString());
+								". The 'required' array should contain only strings, found: " + required);
 					}
-				});
-			} else {
+				} else {
+					logger.error("Invalid schema provided for function " + function.getAttribute(NAME) +
+							". The 'properties' should be a json object. Schema provided: " + schema.toString());
+				}
+			}
+			else {
 				logger.error("Invalid schema provided for function " + function.getAttribute(NAME) +
-						". The 'properties' should be a json object. Schema provided: " + schema.toString());
+						". The 'required' property should be a json array. Schema provided: " + schema.toString());
 			}
 		}
 		return inputBuilder.build();

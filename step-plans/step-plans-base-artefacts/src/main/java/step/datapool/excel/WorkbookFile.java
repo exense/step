@@ -88,7 +88,7 @@ class WorkbookFile implements AutoCloseable {
 				try {
 					inputStream = new BufferedInputStream(new FileInputStream(mainWorkbook));
 					workbook = WorkbookFactory.create(inputStream);
-				} catch (EncryptedDocumentException | InvalidFormatException | IOException e) {
+				} catch (EncryptedDocumentException | IOException e) {
 					throw new RuntimeException("Error while opening workbook '" + mainWorkbook.getName() + "'", e);
 				}	
 					
