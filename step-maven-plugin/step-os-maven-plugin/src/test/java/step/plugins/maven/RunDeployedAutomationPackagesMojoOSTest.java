@@ -35,7 +35,7 @@ public class RunDeployedAutomationPackagesMojoOSTest extends AbstractMojoTest {
 		Mockito.verify(remoteExecutionManagerMock, Mockito.times(1)).execute(captor.capture());
 		ExecutionParameters captured = captor.getValue();
 		Assert.assertEquals("Test description", captured.getDescription());
-		Assert.assertEquals("dummy", captured.getUserID());
+		Assert.assertNull(captured.getUserID());
 		Assert.assertEquals("Artifact", captured.getRepositoryObject().getRepositoryID());
 		Assert.assertEquals(ExecutionMode.RUN, captured.getMode());
 		Assert.assertEquals("test-artifact-id", captured.getRepositoryObject().getRepositoryParameters().get("artifactId"));
