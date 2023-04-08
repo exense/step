@@ -1,32 +1,28 @@
 package step.functions.packages.handlers;
 
-import java.io.File;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.StringReader;
-import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.Set;
-
-import jakarta.json.Json;
-import jakarta.json.JsonException;
-import jakarta.json.JsonObject;
-import jakarta.json.stream.JsonParsingException;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import step.attachments.FileResolver;
 import step.core.accessors.AbstractOrganizableObject;
-import step.core.dynamicbeans.DynamicValue;
 import step.core.scanner.AnnotationScanner;
 import step.grid.contextbuilder.ApplicationContextBuilder;
 import step.grid.contextbuilder.LocalFileApplicationContextFactory;
 import step.grid.contextbuilder.LocalFolderApplicationContextFactory;
 import step.handlers.javahandler.Keyword;
+import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
+import step.handlers.javahandler.jsonschema.KeywordJsonSchemaCreator;
 import step.plugins.java.GeneralScriptFunction;
 import step.resources.LocalResourceManagerImpl;
 
+import java.io.File;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.Set;
+
 public class JavaFunctionPackageDaemon extends FunctionPackageUtils {
+
+	private final KeywordJsonSchemaCreator schemaCreator = new KeywordJsonSchemaCreator();
 	
 	public JavaFunctionPackageDaemon() {
 		super(new FileResolver(new LocalResourceManagerImpl()));
@@ -95,7 +91,7 @@ public class JavaFunctionPackageDaemon extends FunctionPackageUtils {
 					function.getScriptLanguage().setValue("java");
 
 					try {
-						function.setSchema(new KeywordJsonSchemaReader().readJsonSchemaForKeyword(m));
+						function.setSchema(schemaCreator.createJsonSchemaForKeyword(m));
 					} catch (JsonSchemaPreparationException ex){
 						functions.exception = ex.getMessage();
 						functions.functions.clear();
