@@ -100,7 +100,7 @@ public class TimeSeriesHandlerTest {
         request.setStart(0);
         request.setEnd(9);
         request.setGroupDimensions(Collections.emptySet());
-        request.setNumberOfBuckets(1L);
+        request.setNumberOfBuckets(1);
         request.setPercentiles(Arrays.asList(10, 20, 50));
         request.setOqlFilter("");
         request.setParams(Map.of("eId", "abc"));
@@ -139,7 +139,7 @@ public class TimeSeriesHandlerTest {
         request.setStart(0);
         request.setEnd(bucketsCount * 1000);
         request.setGroupDimensions(Collections.emptySet());
-        request.setNumberOfBuckets(1L);
+        request.setNumberOfBuckets(1);
         request.setPercentiles(Arrays.asList(10, 20, 50));
         request.setOqlFilter("");
         request.setParams(Map.of("key", key));
@@ -174,7 +174,7 @@ public class TimeSeriesHandlerTest {
         request.setStart(0);
         request.setEnd(bucketsCount * 1000);
         request.setGroupDimensions(Collections.emptySet());
-        long responseBucketsCount = bucketsCount / 2L;
+        int responseBucketsCount = bucketsCount / 2;
         request.setNumberOfBuckets(responseBucketsCount); // 5
         request.setPercentiles(Arrays.asList(10, 20, 50));
         request.setOqlFilter("key = " + key);
@@ -209,7 +209,7 @@ public class TimeSeriesHandlerTest {
     public void fetchRawMeasurementsTest() {
         String key = RandomStringUtils.randomAlphabetic(5);
         int bucketsCount = 10;
-        long responseBucketsCount = bucketsCount / 2L;
+        int responseBucketsCount = bucketsCount / 2;
         List<Bucket> buckets = generateBuckets(key, bucketsCount);
         bucketsCollection.save(buckets);
         FetchBucketsRequest request = new FetchBucketsRequest();
@@ -237,7 +237,7 @@ public class TimeSeriesHandlerTest {
     public void bucketsThroughputTest() {
         String key = RandomStringUtils.randomAlphabetic(5);
         int bucketsCount = 10;
-        long responseBucketsCount = bucketsCount / 2L;
+        int responseBucketsCount = bucketsCount / 2;
         List<Bucket> buckets = generateBuckets(key, bucketsCount);
         bucketsCollection.save(buckets);
         FetchBucketsRequest request = new FetchBucketsRequest();

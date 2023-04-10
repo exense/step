@@ -8,7 +8,7 @@ public class FetchBucketsRequest {
     private String oqlFilter;
     private Map<String, Object> params;
     private Set<String> groupDimensions = new HashSet<>();
-    private Long numberOfBuckets;
+    private Integer numberOfBuckets;
     private long intervalSize; // in ms
     private List<Integer> percentiles = Collections.emptyList();
 
@@ -44,11 +44,11 @@ public class FetchBucketsRequest {
         this.groupDimensions = groupDimensions;
     }
 
-    public Long getNumberOfBuckets() {
+    public Integer getNumberOfBuckets() {
         return numberOfBuckets;
     }
 
-    public void setNumberOfBuckets(Long numberOfBuckets) {
+    public void setNumberOfBuckets(Integer numberOfBuckets) {
         this.numberOfBuckets = numberOfBuckets;
     }
 
