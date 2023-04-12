@@ -1,5 +1,6 @@
 package step.plugins.timeseries;
 
+import ch.exense.commons.app.Configuration;
 import org.apache.commons.lang3.StringUtils;
 import step.controller.services.async.AsyncTaskManager;
 import step.controller.services.async.AsyncTaskStatus;
@@ -30,6 +31,7 @@ import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static step.plugins.timeseries.TimeSeriesControllerPlugin.RESOLUTION_PERIOD_PROPERTY;
 import static step.plugins.timeseries.TimeSeriesExecutionPlugin.TIMESERIES_FLAG;
 
 public class TimeSeriesHandler {
@@ -45,6 +47,7 @@ public class TimeSeriesHandler {
             return attribute;
         }
     };
+    private final List<String> attributesWithPrefix;
 
     private final List<String> timeSeriesAttributes;
     private final AsyncTaskManager asyncTaskManager;
@@ -52,19 +55,26 @@ public class TimeSeriesHandler {
     private final step.core.collections.Collection<Measurement> measurementCollection;
     private final ExecutionAccessor executionAccessor;
     private final TimeSeries timeSeries;
+    private final int resolution;
 
-    public TimeSeriesHandler(List<String> timeSeriesAttributes,
+    public TimeSeriesHandler(int resolution,
+                             List<String> timeSeriesAttributes,
                              step.core.collections.Collection<Measurement> measurementCollection,
                              ExecutionAccessor executionAccessor,
                              TimeSeries timeSeries,
                              TimeSeriesAggregationPipeline aggregationPipeline,
                              AsyncTaskManager asyncTaskManager) {
+        this.resolution = resolution;
         this.timeSeriesAttributes = timeSeriesAttributes;
         this.measurementCollection = measurementCollection;
         this.aggregationPipeline = aggregationPipeline;
         this.executionAccessor = executionAccessor;
         this.asyncTaskManager = asyncTaskManager;
         this.timeSeries = timeSeries;
+        this.attributesWithPrefix = this.timeSeriesAttributes
+                .stream()
+                .map(x -> ATTRIBUTES_PREFIX + x)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -72,7 +82,7 @@ public class TimeSeriesHandler {
      */
     public TimeSeriesAPIResponse getMeasurements(FetchBucketsRequest request, Collection<String> fields) {
         step.core.collections.Collection<Bucket> inmemoryBuckets = new InMemoryCollection<>();
-        TimeSeries timeSeries = new TimeSeries(inmemoryBuckets, Set.of(), 1000);
+        TimeSeries timeSeries = new TimeSeries(inmemoryBuckets, Set.of(), resolution);
 
         try (TimeSeriesIngestionPipeline ingestionPipeline = timeSeries.newIngestionPipeline(3000)) {
             List<String> standardAttributes = new ArrayList<>(timeSeriesAttributes);
@@ -99,7 +109,7 @@ public class TimeSeriesHandler {
             });
         }
 
-        TimeSeriesAggregationPipeline aggregationPipeline = new TimeSeriesAggregationPipeline(inmemoryBuckets, 5000);
+        TimeSeriesAggregationPipeline aggregationPipeline = new TimeSeriesAggregationPipeline(inmemoryBuckets, resolution);
         TimeSeriesAggregationQuery query = mapToQuery(request, aggregationPipeline);
         TimeSeriesAggregationResponse response = query.run();
 
@@ -123,10 +133,7 @@ public class TimeSeriesHandler {
     }
 
     public OQLVerifyResponse verifyOql(String oql) {
-        List<String> attributesWithPrefix = this.timeSeriesAttributes
-                .stream()
-                .map(x -> ATTRIBUTES_PREFIX + x)
-                .collect(Collectors.toList());
+
         boolean isValid = true;
         boolean hasUnknownFields = false;
         Set<String> oqlAttributes = Collections.emptySet();

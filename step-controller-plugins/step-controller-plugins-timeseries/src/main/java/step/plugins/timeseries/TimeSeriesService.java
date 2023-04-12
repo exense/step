@@ -21,6 +21,8 @@ import step.plugins.timeseries.api.*;
 
 import java.util.*;
 
+import static step.plugins.timeseries.TimeSeriesControllerPlugin.RESOLUTION_PERIOD_PROPERTY;
+
 @Singleton
 @Path("/time-series")
 @Tag(name = "TimeSeries")
@@ -39,7 +41,8 @@ public class TimeSeriesService extends AbstractStepServices {
         Collection<Measurement> measurementCollection = context.getCollectionFactory().getCollection(MeasurementAccessor.ENTITY_NAME, Measurement.class);
         TimeSeries timeSeries = context.require(TimeSeries.class);
         ExecutionAccessor executionAccessor = context.getExecutionAccessor();
-        this.handler = new TimeSeriesHandler(timeSeriesAttributes, measurementCollection, executionAccessor, timeSeries, aggregationPipeline, asyncTaskManager);
+        int resolution = configuration.getPropertyAsInteger(RESOLUTION_PERIOD_PROPERTY, 1000);
+        this.handler = new TimeSeriesHandler(resolution, timeSeriesAttributes, measurementCollection, executionAccessor, timeSeries, aggregationPipeline, asyncTaskManager);
     }
 
     @Secured(right = "execution-read")
