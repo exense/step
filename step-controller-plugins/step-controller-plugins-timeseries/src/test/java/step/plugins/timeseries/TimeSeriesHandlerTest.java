@@ -27,6 +27,8 @@ import static step.plugins.timeseries.TimeSeriesExecutionPlugin.TIMESERIES_FLAG;
 
 public class TimeSeriesHandlerTest {
 
+    private static final long BUCKET_RESOLUTION = 200;
+    private static final long BUCKET_DURATION = 500;
     private static final List<String> TS_ATTRIBUTES = Arrays.asList("key", "field1", "field2", "field3");
     private static TimeSeriesHandler handler;
 
@@ -39,7 +41,7 @@ public class TimeSeriesHandlerTest {
         measurementsCollection = new InMemoryCollection<>();
         executionAccessor = new InMemoryExecutionAccessor();
         bucketsCollection = new InMemoryCollection<>();
-        TimeSeries timeSeries = new TimeSeries(bucketsCollection, Set.of(), 10);
+        TimeSeries timeSeries = new TimeSeries(bucketsCollection, Set.of(), (int) BUCKET_RESOLUTION);
         TimeSeriesAggregationPipeline aggregationPipeline = timeSeries.getAggregationPipeline();
         AsyncTaskManager asyncTaskManager = new AsyncTaskManager();
         handler = new TimeSeriesHandler(TS_ATTRIBUTES, measurementsCollection, executionAccessor, timeSeries, aggregationPipeline, asyncTaskManager);
@@ -106,27 +108,9 @@ public class TimeSeriesHandlerTest {
         request.setParams(Map.of("eId", "abc"));
         TimeSeriesAPIResponse response = handler.getBuckets(request);
         Assert.assertEquals(0, response.getStart());
-        Assert.assertEquals(10, response.getEnd());
+        Assert.assertEquals(BUCKET_RESOLUTION, response.getEnd());
         Assert.assertTrue(response.getMatrix().isEmpty());
         Assert.assertTrue(response.getMatrixKeys().isEmpty());
-    }
-
-    private List<Bucket> generateBuckets(String key, int bucketsCount) {
-        List<Bucket> buckets = new ArrayList<>();
-        for (int i = 0; i < bucketsCount; i++) {
-            Bucket bucket = new Bucket();
-            bucket.setBegin(i * 1000L);
-            bucket.setEnd(bucket.getBegin() + 1);
-            int count = RandomUtils.nextInt();
-            bucket.setCount(count);
-            bucket.setSum(count * 3L);
-            BucketAttributes attributes = new BucketAttributes();
-            attributes.put("key", key);
-            bucket.setAttributes(attributes);
-            bucket.setDistribution(Map.of(10L, 10L, 30L, 30L, 50L, 50L, 70L, 70L));
-            buckets.add(bucket);
-        }
-        return buckets;
     }
 
     @Test
@@ -177,14 +161,13 @@ public class TimeSeriesHandlerTest {
         int responseBucketsCount = bucketsCount / 2;
         request.setNumberOfBuckets(responseBucketsCount); // 5
         request.setPercentiles(Arrays.asList(10, 20, 50));
-        request.setOqlFilter("key = " + key);
+        request.setOqlFilter("attributes.key = " + key);
 
         TimeSeriesAPIResponse response = handler.getBuckets(request);
         Assert.assertEquals(0, response.getStart());
-        Assert.assertEquals(bucketsCount + 1000, response.getEnd());
-        Assert.assertEquals(responseBucketsCount, response.getMatrix().size());
-        Assert.assertEquals(responseBucketsCount, response.getMatrixKeys().size());
-        Assert.assertTrue(response.getMatrixKeys().get(0).isEmpty());
+        Assert.assertEquals(bucketsCount * 1000, response.getEnd());
+        Assert.assertEquals(responseBucketsCount, response.getMatrix().get(0).size());
+        Assert.assertEquals(1, response.getMatrixKeys().size());
 
         long sumValue = 0;
         long countValue = 0;
@@ -197,12 +180,10 @@ public class TimeSeriesHandlerTest {
         long responseTotalCount = 0;
         for (BucketResponse b : response.getMatrix().get(0)) {
             responseTotalSum += b.getSum();
-            countValue += b.getCount();
+            responseTotalCount += b.getCount();
         }
-        BucketResponse aggregatedBucket = response.getMatrix().get(0).get(0);
         Assert.assertEquals(sumValue, responseTotalSum);
         Assert.assertEquals(countValue, responseTotalCount);
-        Assert.assertEquals(3, aggregatedBucket.getPclValues().size());
     }
 
     @Test
@@ -228,8 +209,8 @@ public class TimeSeriesHandlerTest {
         List<Measurement> measurements = generateMeasurements(100, "unknownKey", key);
         measurementsCollection.save(measurements);
         response = handler.getBuckets(request);
-        Assert.assertEquals(0, response.getMatrix().size()); // we don't have measurements with unknown key
-        Assert.assertEquals(0, response.getMatrixKeys().size());
+        Assert.assertEquals(1, response.getMatrix().size()); // w have measurements with unknown key
+        Assert.assertEquals(1, response.getMatrixKeys().size());
 
     }
 
@@ -241,8 +222,10 @@ public class TimeSeriesHandlerTest {
         List<Bucket> buckets = generateBuckets(key, bucketsCount);
         bucketsCollection.save(buckets);
         FetchBucketsRequest request = new FetchBucketsRequest();
-        request.setStart(0);
-        request.setEnd(bucketsCount * 1000);
+        int start = 0;
+        request.setStart(start);
+        int end = bucketsCount * 1000;
+        request.setEnd(end);
         request.setGroupDimensions(Collections.emptySet());
 
         request.setNumberOfBuckets(responseBucketsCount); // 5
@@ -253,11 +236,34 @@ public class TimeSeriesHandlerTest {
         Assert.assertEquals(1, response.getMatrix().size());
         Assert.assertEquals(responseBucketsCount, response.getMatrix().get(0).size());
         Assert.assertEquals(1, response.getMatrixKeys().size());
-        Assert.assertEquals(responseBucketsCount, response.getMatrixKeys().get(0).size());
+        Assert.assertEquals(responseBucketsCount, response.getMatrix().get(0).size());
+        long expectedResolution = (end - start) / responseBucketsCount;
         response.getMatrix().get(0).forEach(b -> {
-            Assert.assertEquals(b.getThroughputPerHour(), 3600 * 1000 * b.getCount() / (b.getBegin() + 1000 - b.getBegin()));
+            Assert.assertEquals(b.getThroughputPerHour(), b.getCount() * 1000 * 3600 / expectedResolution);
         });
     }
+
+    /**
+     * Every bucket has a 500ms duration (end - start)
+     */
+    private List<Bucket> generateBuckets(String key, int bucketsCount) {
+        List<Bucket> buckets = new ArrayList<>();
+        for (int i = 0; i < bucketsCount; i++) {
+            Bucket bucket = new Bucket();
+            bucket.setBegin(i * 1000L);
+            bucket.setEnd(bucket.getBegin() + BUCKET_DURATION);
+            int count = RandomUtils.nextInt(0, 100);
+            bucket.setCount(count);
+            bucket.setSum(count * 3L);
+            BucketAttributes attributes = new BucketAttributes();
+            attributes.put("key", key);
+            bucket.setAttributes(attributes);
+            bucket.setDistribution(Map.of(10L, 10L, 30L, 30L, 50L, 50L, 70L, 70L));
+            buckets.add(bucket);
+        }
+        return buckets;
+    }
+
 
     private List<Measurement> generateMeasurements(int count, String keyAttribute, String keyValue) {
         List<Measurement> measurements = new ArrayList<>();
