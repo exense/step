@@ -42,7 +42,7 @@ import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.plugins.measurements.MeasurementPlugin;
 
-//@Plugin
+@Plugin
 public class RtmControllerPlugin extends AbstractControllerPlugin {
 
 	private static final Logger logger = LoggerFactory.getLogger(RtmControllerPlugin.class);
