@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
+import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import org.rtm.commons.MeasurementAccessor;
@@ -62,7 +63,7 @@ public class TimeSeriesService extends AbstractStepServices {
     @Path("/oql-verify")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public OQLVerifyResponse verifyOql(@QueryParam("oql") String oql) {
+    public OQLVerifyResponse verifyOql(@NotNull @QueryParam("oql") String oql) {
         return handler.verifyOql(oql);
     }
 

@@ -1,25 +1,34 @@
 package step.plugins.timeseries.api;
 
 
+import jakarta.validation.constraints.NotNull;
 import step.core.timeseries.bucket.BucketAttributes;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class BucketResponse {
 
+    @NotNull
     private final long begin;
+    @NotNull
     private final BucketAttributes attributes;
+    @NotNull
     private final long count;
+    @NotNull
     private final long sum;
+    @NotNull
     private final long min;
+    @NotNull
     private final long max;
-    // TODO rename to pclValues
+
     private final Map<Integer, Long> pclValues;
+    @NotNull
     private final long throughputPerHour;
 
     public BucketResponse(long begin, BucketAttributes attributes, long count, long sum, long min, long max, Map<Integer, Long> getPclValues, long throughputPerHour) {
         this.begin = begin;
-        this.attributes = attributes;
+        this.attributes = attributes != null ? attributes : new BucketAttributes();
         this.count = count;
         this.sum = sum;
         this.min = min;
