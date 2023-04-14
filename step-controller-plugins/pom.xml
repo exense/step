@@ -1,18 +1,18 @@
 <!--
   Copyright (C) 2020, exense GmbH
-
+   
   This file is part of STEP
-
+   
   STEP is free software: you can redistribute it and/or modify
   it under the terms of the GNU Affero General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
-
+   
   STEP is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU Affero General Public License for more details.
-
+   
   You should have received a copy of the GNU Affero General Public License
   along with STEP.  If not, see <http://www.gnu.org/licenses/>.
 -->
@@ -20,20 +20,21 @@
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>step-controller-plugins</artifactId>
 	<packaging>pom</packaging>
-
+	
 	<parent>
 		<groupId>ch.exense.step</groupId>
 		<artifactId>step-parent</artifactId>
 		<version>0.0.0-SNAPSHOT</version>
 		<relativePath>../step-parent</relativePath>
 	</parent>
-
+	
 	<modules>
 		<module>step-controller-measurement</module>
+		<module>step-controller-plugins-rtm</module>
 		<module>step-controller-plugins-script-editor</module>
         <module>step-controller-plugins-timeseries</module>
     </modules>
-
+	
 	<dependencies>
 	</dependencies>
 </project>

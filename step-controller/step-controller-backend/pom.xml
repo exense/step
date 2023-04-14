@@ -73,6 +73,11 @@
 			<artifactId>step-functions-plugins-node</artifactId>
 			<version>${project.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>ch.exense.step</groupId>
+			<artifactId>step-controller-plugins-rtm</artifactId>
+			<version>${project.version}</version>
+		</dependency>
         <dependency>
             <groupId>ch.exense.step</groupId>
             <artifactId>step-controller-plugins-timeseries</artifactId>
