@@ -10,13 +10,18 @@ import java.util.List;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import ch.exense.commons.processes.ManagedProcess;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.attachments.FileResolver;
 import step.core.objectenricher.ObjectEnricher;
 import step.functions.Function;
 import step.functions.packages.FunctionPackage;
 import step.functions.packages.FunctionPackageHandler;
+import step.functions.packages.FunctionPackageManager;
 
 public abstract class AbstractFunctionPackageHandler extends FunctionPackageUtils implements FunctionPackageHandler {
+
+	private static final Logger logger = LoggerFactory.getLogger(AbstractFunctionPackageHandler.class);
 
 	public AbstractFunctionPackageHandler(FileResolver fileResolver) {
 		super(fileResolver);
@@ -61,7 +66,8 @@ public abstract class AbstractFunctionPackageHandler extends FunctionPackageUtil
 			do {
 				res = inputStream.readLine();
 				if (res==null) {
-					throw new Exception("Unexpected error when starting the function package handler: the process exited before returning the result");
+					logger.error("Unexpected error when starting the function package handler: '"+discovererDeamon.getProcessErrorLogAsString()+"'");
+					throw new Exception("Unexpected error when starting the function package handler: the process exited before returning the result. See the logs on the controller for more detail");
 				}
 			} while (!res.equals(READY_STRING));
 			list = objectMapper.readValue(inputStream, FunctionList.class);
