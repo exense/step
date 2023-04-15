@@ -16,13 +16,13 @@ import java.util.Map;
 
 public abstract class AbstractUploadKeywordsPackageMojo extends AbstractStepPluginMojo {
 
-	@Parameter(property = "${project.groupId}", readonly = true, required = true)
+	@Parameter(defaultValue = "${project.groupId}", readonly = true, required = true)
 	private String groupId;
 
-	@Parameter(property = "${project.artifactId}", readonly = true, required = true)
+	@Parameter(defaultValue = "${project.artifactId}", readonly = true, required = true)
 	private String artifactId;
 
-	@Parameter(property = "${project.version}", readonly = true, required = true)
+	@Parameter(defaultValue = "${project.version}", readonly = true, required = true)
 	private String artifactVersion;
 
 	@Parameter(property = "step-upload-keywords.artifact-classifier", required = false)

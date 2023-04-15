@@ -64,7 +64,7 @@ public abstract class AbstractStepPluginMojo extends AbstractMojo {
 		return new MojoExecutionException(errorText, e);
 	}
 
-	protected ControllerCredentials getControllerCredentials(){
+	protected ControllerCredentials getControllerCredentials() {
 		return new ControllerCredentials(getUrl(), null);
 	}
 
@@ -100,6 +100,10 @@ public abstract class AbstractStepPluginMojo extends AbstractMojo {
 	}
 
 	private String artifactToString(Artifact artifact) {
-		return artifact.getGroupId() + ":" + artifact.getArtifactId() + ":" + artifact.getVersion() + ":" + artifact.getClassifier();
+		String s = artifact.getGroupId() + ":" + artifact.getArtifactId() + ":" + artifact.getVersion();
+		if (artifact.getClassifier() != null) {
+			s = s + ":" + artifact.getClassifier();
+		}
+		return s;
 	}
 }
