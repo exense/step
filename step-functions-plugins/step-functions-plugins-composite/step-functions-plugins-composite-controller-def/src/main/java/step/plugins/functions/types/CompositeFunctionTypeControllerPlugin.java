@@ -40,14 +40,12 @@ public class CompositeFunctionTypeControllerPlugin extends AbstractControllerPlu
 
 		FunctionTypeRegistry functionTypeRegistry = context.require(FunctionTypeRegistry.class);
 		ObjectHookRegistry objectHookRegistry = context.get(ObjectHookRegistry.class);
-		PlanTypeRegistry planTypeRegistry = context.get(PlanTypeRegistry.class);
 		functionTypeRegistry.registerFunctionType(new CompositeFunctionType(objectHookRegistry));
 
 		context.get(FunctionEditorRegistry.class).register(new FunctionEditor() {
 			@Override
 			public String getEditorPath(Function function) {
-				// TODO: replace with valid editor
-				return "/root/plans/editor/"+((CompositeFunction)function).getPlan().getId();
+				return "/root/composites/editor/"+((CompositeFunction)function).getPlan().getId();
 			}
 
 			@Override
