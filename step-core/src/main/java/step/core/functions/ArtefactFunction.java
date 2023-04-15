@@ -1,4 +1,4 @@
-package step.plugins.functions.types.composite;
+package step.core.functions;
 
 import step.core.plans.Plan;
 

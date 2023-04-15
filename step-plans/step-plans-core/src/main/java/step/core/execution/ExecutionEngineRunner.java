@@ -81,8 +81,9 @@ public class ExecutionEngineRunner {
 				executionLifecycleManager.afterImport(importResult);
 				
 				if(importResult.isSuccessful()) {
+					// if the plan is embedded in composite function, the plan (not planId!) has to be resolved in 'importPlan'
 					PlanAccessor planAccessor = executionContext.getPlanAccessor();
-					plan = planAccessor.get(new ObjectId(importResult.getPlanId()));
+					plan = importResult.getPlan() != null ? importResult.getPlan() : planAccessor.get(new ObjectId(importResult.getPlanId()));
 				}
 			}
 			
