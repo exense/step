@@ -72,6 +72,8 @@ public class UploadKeywordsPackageMojoOSTest extends AbstractMojoTest {
 				Mockito.eq(GROUP_ID + "." + ARTIFACT_ID)
 		);
 		Assert.assertEquals(OLD_PACKAGE, oldPackageCaptor.getValue());
+
+		// by default, we take 'jar' artifact (if the classifier is not specified)
 		Assert.assertEquals("test-file-jar.jar", uploadedFileCaptor.getValue().getName());
 		Assert.assertEquals(Set.of("versionId", "artifactId"), uploadedPackageAttributesCaptor.getValue().keySet());
 		Assert.assertEquals(VERSION_ID, uploadedPackageAttributesCaptor.getValue().get("versionId"));
@@ -86,6 +88,9 @@ public class UploadKeywordsPackageMojoOSTest extends AbstractMojoTest {
 		mojo.setUrl("http://localhost:8080");
 		mojo.setBuildFinalName("Test build name");
 		mojo.setProjectVersion("1.0.0");
+		mojo.setArtifactId(ARTIFACT_ID);
+		mojo.setArtifactVersion(VERSION_ID);
+		mojo.setGroupId(GROUP_ID);
 
 		MavenProject mockedProject = Mockito.mock(MavenProject.class);
 

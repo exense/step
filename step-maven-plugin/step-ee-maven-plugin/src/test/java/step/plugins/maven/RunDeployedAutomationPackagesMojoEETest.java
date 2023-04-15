@@ -43,9 +43,9 @@ public class RunDeployedAutomationPackagesMojoEETest extends AbstractMojoTest {
 		Assert.assertEquals("testUser", captured.getUserID());
 		Assert.assertEquals("Artifact", captured.getRepositoryObject().getRepositoryID());
 		Assert.assertEquals(ExecutionMode.RUN, captured.getMode());
-		Assert.assertEquals("test-artifact-id", captured.getRepositoryObject().getRepositoryParameters().get("artifactId"));
-		Assert.assertEquals("1.0.0-RELEASE", captured.getRepositoryObject().getRepositoryParameters().get("version"));
-		Assert.assertEquals("test-group-id", captured.getRepositoryObject().getRepositoryParameters().get("groupId"));
+		Assert.assertEquals(ARTIFACT_ID, captured.getRepositoryObject().getRepositoryParameters().get("artifactId"));
+		Assert.assertEquals(VERSION_ID, captured.getRepositoryObject().getRepositoryParameters().get("version"));
+		Assert.assertEquals(GROUP_ID, captured.getRepositoryObject().getRepositoryParameters().get("groupId"));
 		Assert.assertEquals("jar-with-dependencies", captured.getRepositoryObject().getRepositoryParameters().get("classifier"));
 		Assert.assertEquals("default", captured.getRepositoryObject().getRepositoryParameters().get("mavenSettings"));
 		Assert.assertEquals(createTestCustomParams(), captured.getCustomParameters());
@@ -87,10 +87,10 @@ public class RunDeployedAutomationPackagesMojoEETest extends AbstractMojoTest {
 	}
 
 	private void configureMojo(RunDeployedAutomationPackagesMojoTestable mojo) {
-		mojo.setArtifactId("test-artifact-id");
+		mojo.setArtifactId(ARTIFACT_ID);
 		mojo.setArtifactClassifier("jar-with-dependencies");
-		mojo.setArtifactVersion("1.0.0-RELEASE");
-		mojo.setGroupId("test-group-id");
+		mojo.setArtifactVersion(VERSION_ID);
+		mojo.setGroupId(GROUP_ID);
 		mojo.setDescription("Test description");
 		mojo.setUrl("http://localhost:8080");
 		mojo.setAuthToken("abc");

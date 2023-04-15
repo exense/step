@@ -4,7 +4,6 @@ import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Parameter;
-import org.apache.maven.project.MavenProject;
 import step.client.accessors.RemoteAccessors;
 import step.client.collections.remote.RemoteCollectionFactory;
 import step.core.accessors.AbstractAccessor;
@@ -17,8 +16,17 @@ import java.util.Map;
 
 public abstract class AbstractUploadKeywordsPackageMojo extends AbstractStepPluginMojo {
 
-	@Parameter(defaultValue = "${project}", readonly = true, required = true)
-	private MavenProject project;
+	@Parameter(property = "${project.groupId}", readonly = true, required = true)
+	private String groupId;
+
+	@Parameter(property = "${project.artifactId}", readonly = true, required = true)
+	private String artifactId;
+
+	@Parameter(property = "${project.version}", readonly = true, required = true)
+	private String artifactVersion;
+
+	@Parameter(property = "step-upload-keywords.artifact-classifier", required = false)
+	private String artifactClassifier;
 
 	@Parameter(property = "step-upload-keywords.custom-package-attrs", required = false)
 	private Map<String, String> customPackageAttributes;
@@ -89,14 +97,6 @@ public abstract class AbstractUploadKeywordsPackageMojo extends AbstractStepPlug
 
 	}
 
-	public MavenProject getProject() {
-		return project;
-	}
-
-	public void setProject(MavenProject project) {
-		this.project = project;
-	}
-
 	public Map<String, String> getCustomPackageAttributes() {
 		return customPackageAttributes;
 	}
@@ -113,24 +113,49 @@ public abstract class AbstractUploadKeywordsPackageMojo extends AbstractStepPlug
 		this.trackingAttribute = trackingAttribute;
 	}
 
+	public String getArtifactClassifier() {
+		return artifactClassifier;
+	}
+
+	public void setArtifactClassifier(String artifactClassifier) {
+		this.artifactClassifier = artifactClassifier;
+	}
+
+	public String getGroupId() {
+		return groupId;
+	}
+
+	public void setGroupId(String groupId) {
+		this.groupId = groupId;
+	}
+
+	public String getArtifactId() {
+		return artifactId;
+	}
+
+	public void setArtifactId(String artifactId) {
+		this.artifactId = artifactId;
+	}
+
+	public String getArtifactVersion() {
+		return artifactVersion;
+	}
+
+	public void setArtifactVersion(String artifactVersion) {
+		this.artifactVersion = artifactVersion;
+	}
+
 	protected AbstractAccessor<FunctionPackage> createRemoteFunctionPackageAccessor() {
 		RemoteAccessors remoteAccessors = new RemoteAccessors(new RemoteCollectionFactory(getControllerCredentials()));
 		return remoteAccessors.getAbstractAccessor("functionPackage", FunctionPackage.class);
 	}
 
 	private File getFileToUpload() throws MojoExecutionException {
-		Artifact artifact = project.getArtifact();
+		Artifact artifact = getArtifactByClassifier(getArtifactClassifier(), getGroupId(), getArtifactId(), getArtifactVersion());
 
 		if (artifact == null || artifact.getFile() == null) {
-			throw new MojoExecutionException("Unable to resolve artifact to deploy.");
+			throw new MojoExecutionException("Unable to resolve artifact to upload.");
 		}
-
-		getLog().info("Resolved artifact: "
-				+ artifact.getGroupId() + ":"
-				+ artifact.getArtifactId() + ":"
-				+ artifact.getClassifier() + ":"
-				+ artifact.getVersion()
-		);
 
 		return artifact.getFile();
 	}

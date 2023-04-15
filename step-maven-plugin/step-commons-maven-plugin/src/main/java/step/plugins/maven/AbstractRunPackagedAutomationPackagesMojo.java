@@ -3,8 +3,6 @@ package step.plugins.maven;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.plugins.annotations.Parameter;
-import org.apache.maven.project.MavenProject;
 import step.client.resources.RemoteResourceManager;
 import step.core.repositories.RepositoryObjectReference;
 import step.resources.Resource;
@@ -14,12 +12,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public abstract class AbstractRunPackagedAutomationPackagesMojo extends AbstractRunAutomationPackagesMojo {
-
-	@Parameter(defaultValue = "${project}", readonly = true, required = true)
-	private MavenProject project;
 
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
@@ -76,28 +70,7 @@ public abstract class AbstractRunPackagedAutomationPackagesMojo extends Abstract
 	}
 
 	private File getFileToUpload() {
-		Set<Artifact> allProjectArtifacts = new HashSet<>(project.getArtifacts());
-		allProjectArtifacts.add(project.getArtifact());
-		allProjectArtifacts.addAll(project.getAttachedArtifacts());
-		Artifact applicableArtifact = null;
-
-		List<String> artifactStrings = allProjectArtifacts.stream().map(this::artifactToString).collect(Collectors.toList());
-		getLog().info("All detected project artifacts: " + artifactStrings);
-
-		for (Artifact a : allProjectArtifacts) {
-			if (Objects.equals(a.getGroupId(), getGroupId()) && Objects.equals(a.getArtifactId(), getArtifactId()) && Objects.equals(a.getVersion(), getArtifactVersion())) {
-				if (getArtifactClassifier() != null) {
-					if (Objects.equals(a.getClassifier(), getArtifactClassifier())) {
-						applicableArtifact = a;
-					}
-				} else if (a.getClassifier() == null || a.getClassifier().equals("jar")) {
-					applicableArtifact = a;
-				}
-			}
-			if (applicableArtifact != null) {
-				break;
-			}
-		}
+		Artifact applicableArtifact = getArtifactByClassifier(getArtifactClassifier(), getGroupId(), getArtifactId(), getArtifactVersion());
 
 		if (applicableArtifact != null) {
 			return applicableArtifact.getFile();
@@ -106,15 +79,4 @@ public abstract class AbstractRunPackagedAutomationPackagesMojo extends Abstract
 		}
 	}
 
-	private String artifactToString(Artifact artifact) {
-		return artifact.getGroupId() + ":" + artifact.getArtifactId() + ":" + artifact.getVersion() + ":" + artifact.getClassifier();
-	}
-
-	public MavenProject getProject() {
-		return project;
-	}
-
-	public void setProject(MavenProject project) {
-		this.project = project;
-	}
 }

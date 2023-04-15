@@ -26,10 +26,6 @@ public class UploadKeywordsPackageMojoEETest  extends AbstractMojoTest {
 	private static final FunctionPackage UPDATED_PACKAGE = createUpdatedPackageMock();
 
 
-	private static final String GROUP_ID = "my-group-id";
-	private static final String ARTIFACT_ID = "step-functions-plugins-java-handler-test-3";
-	private static final String VERSION_ID = "0.0.0-SNAPSHOT";
-
 	private static FunctionPackage createOldPackageMock() {
 		FunctionPackage res = Mockito.mock(FunctionPackage.class);
 		Mockito.when(res.getId()).thenReturn(new ObjectId(Date.from(LocalDateTime.of(2023, 3, 10, 15, 55, 55).toInstant(ZoneOffset.UTC))));
@@ -47,7 +43,7 @@ public class UploadKeywordsPackageMojoEETest  extends AbstractMojoTest {
 		AbstractAccessor<FunctionPackage> functionAccessorMock = createRemoteFunctionAccessorMock();
 		RemoteFunctionPackageClientImpl remoteFunctionManagerMock = createRemoteFunctionManagerMock();
 		RemoteMultitenancyClientImpl multitenancyClientMock = createRemoteMultitenancyClientMock();
-		UploadKeywordsPackageMojoOSTestable mojo = new UploadKeywordsPackageMojoOSTestable(remoteFunctionManagerMock, functionAccessorMock, multitenancyClientMock);
+		UploadKeywordsPackageMojoEETestable mojo = new UploadKeywordsPackageMojoEETestable(remoteFunctionManagerMock, functionAccessorMock, multitenancyClientMock);
 
 		// configure mojo with test parameters and mocked Maven Project
 		configureMojo(mojo);
@@ -76,6 +72,8 @@ public class UploadKeywordsPackageMojoEETest  extends AbstractMojoTest {
 				Mockito.eq(GROUP_ID + "." + ARTIFACT_ID)
 		);
 		Assert.assertEquals(OLD_PACKAGE, oldPackageCaptor.getValue());
+
+		// by default, we take 'jar' artifact (if the classifier is not specified)
 		Assert.assertEquals("test-file-jar.jar", uploadedFileCaptor.getValue().getName());
 		Assert.assertEquals(Set.of("versionId", "artifactId"), uploadedPackageAttributesCaptor.getValue().keySet());
 		Assert.assertEquals(VERSION_ID, uploadedPackageAttributesCaptor.getValue().get("versionId"));
@@ -86,10 +84,13 @@ public class UploadKeywordsPackageMojoEETest  extends AbstractMojoTest {
 		Mockito.verifyNoMoreInteractions(remoteFunctionManagerMock);
 	}
 
-	private void configureMojo(UploadKeywordsPackageMojoOSTestable mojo) throws URISyntaxException {
+	private void configureMojo(UploadKeywordsPackageMojoEETestable mojo) throws URISyntaxException {
 		mojo.setUrl("http://localhost:8080");
 		mojo.setBuildFinalName("Test build name");
 		mojo.setProjectVersion("1.0.0");
+		mojo.setArtifactId(ARTIFACT_ID);
+		mojo.setArtifactVersion(VERSION_ID);
+		mojo.setGroupId(GROUP_ID);
 
 		MavenProject mockedProject = Mockito.mock(MavenProject.class);
 
@@ -139,13 +140,13 @@ public class UploadKeywordsPackageMojoEETest  extends AbstractMojoTest {
 		return mock;
 	}
 
-	private static class UploadKeywordsPackageMojoOSTestable extends UploadKeywordsPackageMojoEE {
+	private static class UploadKeywordsPackageMojoEETestable extends UploadKeywordsPackageMojoEE {
 
 		private final RemoteFunctionPackageClientImpl functionPackageClientMock;
 		private final AbstractAccessor<FunctionPackage> remoteFunctionAccessor;
 		private final RemoteMultitenancyClientImpl remoteMultitenancyClientMock;
 
-		public UploadKeywordsPackageMojoOSTestable(RemoteFunctionPackageClientImpl functionPackageClientMock,
+		public UploadKeywordsPackageMojoEETestable(RemoteFunctionPackageClientImpl functionPackageClientMock,
 												   AbstractAccessor<FunctionPackage> remoteFunctionAccessor,
 												   RemoteMultitenancyClientImpl remoteMultitenancyClientMock) {
 			this.functionPackageClientMock = functionPackageClientMock;

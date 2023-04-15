@@ -82,10 +82,10 @@ public class RunPackagedAutomationPackagesMojoEETest extends AbstractMojoTest {
 	}
 
 	private void configureMojo(RunPackagedAutomationPackagesMojoTestable mojo) throws URISyntaxException {
-		mojo.setArtifactId("test-artifact-id");
+		mojo.setArtifactId(ARTIFACT_ID);
 		mojo.setArtifactClassifier("jar-with-dependencies");
-		mojo.setArtifactVersion("1.0.0-RELEASE");
-		mojo.setGroupId("test-group-id");
+		mojo.setArtifactVersion(VERSION_ID);
+		mojo.setGroupId(GROUP_ID);
 		mojo.setDescription("Test description");
 		mojo.setUrl("http://localhost:8080");
 		mojo.setAuthToken("abc");
