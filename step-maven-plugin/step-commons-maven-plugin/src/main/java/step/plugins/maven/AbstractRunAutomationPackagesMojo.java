@@ -44,7 +44,7 @@ public abstract class AbstractRunAutomationPackagesMojo extends AbstractStepPlug
 	private String description;
 	@Parameter(property = "step-run-auto-packages.execution-parameters", required = false)
 	private Map<String, String> executionParameters;
-	@Parameter(property = "step-run-auto-packages.exec-result-timeout-s", defaultValue = "30")
+	@Parameter(property = "step-run-auto-packages.exec-result-timeout-s", defaultValue = "3600")
 	private Integer executionResultTimeoutS;
 	@Parameter(property = "step-run-auto-packages.wait-for-exec", defaultValue = "true")
 	private Boolean waitForExecution;
@@ -57,10 +57,13 @@ public abstract class AbstractRunAutomationPackagesMojo extends AbstractStepPlug
 			ExecutionParameters executionParameters = prepareExecutionParameters(executionContext);
 
 			executionId = remoteExecutionManager.execute(executionParameters);
-			getLog().info("Execution has been registered in Step: " + executionId);
+			String baseMessage = "Execution has been registered in Step: " + executionId;
 
 			if (getWaitForExecution()) {
+				getLog().info(baseMessage + ". Waiting on results...");
 				waitForExecutionFinish(remoteExecutionManager, executionId);
+			} else {
+				getLog().info(baseMessage + ". Waiting on results is disabled.");
 			}
 		} catch (Exception ex) {
 			throw logAndThrow("Unable to run execution in Step", ex);
