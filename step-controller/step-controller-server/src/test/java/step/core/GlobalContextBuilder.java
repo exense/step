@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -58,7 +58,7 @@ import java.io.File;
 import java.io.IOException;
 
 public class GlobalContextBuilder {
-	
+
 	private static final Logger logger = LoggerFactory.getLogger(GlobalContextBuilder.class);
 
 	public static GlobalContext createGlobalContext() throws CircularDependencyException, InstantiationException, IllegalAccessException, ClassNotFoundException {
@@ -72,13 +72,13 @@ public class GlobalContextBuilder {
 		//new since SED-440, class need a full refactoring
 		context.setExpressionHandler(expressionHandler);
 		context.setDynamicBeanResolver(dynamicBeanResolver);
-		
+
 		Configuration configuration = new Configuration();
 		ControllerPluginManager pluginManager = new ControllerPluginManager(new ServerPluginManager(configuration, null));
 		context.setContorllerPluginManager(pluginManager);
-		
+
 		context.setConfiguration(configuration);
-		
+
 		context.put(TableRegistry.class, new TableRegistry());
 		InMemoryExecutionAccessor executionAccessor = new InMemoryExecutionAccessor();
 		context.setExecutionAccessor(executionAccessor);
@@ -91,7 +91,7 @@ public class GlobalContextBuilder {
 
 		FunctionAccessor functionAccessor = new InMemoryFunctionAccessorImpl();
 		context.put(FunctionAccessor.class, functionAccessor);
-		
+
 		ResourceAccessor resourceAccessor = new InMemoryResourceAccessor();
 		InMemoryResourceRevisionAccessor resourceRevisionAccessor = new InMemoryResourceRevisionAccessor();
 		try {
@@ -109,7 +109,7 @@ public class GlobalContextBuilder {
 		} catch (IOException e) {
 			logger.error("Unable to create temp folder for the resource manager", e);
 		}
-		
+
 		context.setEntityManager(new EntityManager());
 		context.getEntityManager()
 				.register(new Entity<Execution, ExecutionAccessor>(EntityManager.executions,
@@ -126,7 +126,7 @@ public class GlobalContextBuilder {
 						Resource.class))
 				.register(new Entity<ResourceRevision, ResourceRevisionAccessor>(EntityManager.resourceRevisions,
 						resourceRevisionAccessor, ResourceRevision.class));
-		
+
 		return context;
 	}
 }

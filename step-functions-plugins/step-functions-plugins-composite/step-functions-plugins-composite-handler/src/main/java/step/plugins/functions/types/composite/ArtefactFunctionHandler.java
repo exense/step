@@ -24,6 +24,7 @@ import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
+import step.core.functions.ArtefactFunction;
 import step.core.reports.Error;
 import step.core.reports.ErrorType;
 import step.core.variables.VariableType;
