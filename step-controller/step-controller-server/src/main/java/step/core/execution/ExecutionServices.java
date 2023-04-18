@@ -18,29 +18,38 @@
  ******************************************************************************/
 package step.core.execution;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
-import jakarta.ws.rs.*;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.bson.types.ObjectId;
+
 import step.core.artefacts.reports.ReportNode;
 import step.core.collections.SearchOrder;
 import step.core.deployment.AbstractStepServices;
 import step.core.deployment.FindByCriteraParam;
+import step.framework.server.security.Secured;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.execution.model.ExecutionAccessorImpl;
 import step.core.execution.model.ExecutionParameters;
 import step.core.repositories.RepositoryObjectReference;
 import step.engine.execution.ExecutionLifecycleManager;
-import step.framework.server.security.Secured;
-
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 
 @Singleton
 @Path("executions")

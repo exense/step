@@ -27,7 +27,6 @@ import step.core.artefacts.reports.ReportNode;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
-import step.core.functions.ArtefactFunction;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
 import step.core.reports.ErrorType;

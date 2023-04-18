@@ -25,12 +25,9 @@ import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
-import step.core.functions.ArtefactFunction;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
 import step.core.repositories.*;
-import step.functions.Function;
-import step.functions.accessor.FunctionAccessor;
 
 import java.util.List;
 import java.util.Map;
@@ -39,23 +36,20 @@ import java.util.Set;
 public class LocalRepository extends AbstractRepository {
 
 	private final PlanAccessor planAccessor;
-	private final FunctionAccessor functionAccessor;
 
-	public LocalRepository(PlanAccessor planAccessor, FunctionAccessor functionAccessor) {
-		super(Set.of(RepositoryObjectReference.PLAN_ID, RepositoryObjectReference.FUNCTION_ID));
+	public LocalRepository(PlanAccessor planAccessor) {
+		super(Set.of(RepositoryObjectReference.PLAN_ID));
 		this.planAccessor = planAccessor;
-		this.functionAccessor = functionAccessor;
 	}
 
 	@Override
 	public ArtefactInfo getArtefactInfo(Map<String, String> repositoryParameters) throws Exception {
-		ResolvedPlan resolvedPlan = resolvePlan(repositoryParameters);
+		String planId = getPlanId(repositoryParameters);
+		Plan plan = planAccessor.get(planId);
 
 		ArtefactInfo info = new ArtefactInfo();
-		if (resolvedPlan.getPlan() != null) {
-			info.setName(resolvedPlan.getPlan().getAttributes() != null ? resolvedPlan.getPlan().getAttributes().get(AbstractOrganizableObject.NAME) : null);
-			info.setType(AbstractArtefact.getArtefactName(resolvedPlan.getPlan().getRoot().getClass()));
-		}
+		info.setName(plan.getAttributes()!=null?plan.getAttributes().get(AbstractOrganizableObject.NAME):null);
+		info.setType(AbstractArtefact.getArtefactName(plan.getRoot().getClass()));
 		return info;
 	}
 
@@ -63,56 +57,32 @@ public class LocalRepository extends AbstractRepository {
 	public TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters) throws Exception {
 		TestSetStatusOverview testSetStatusOverview = new TestSetStatusOverview();
 
-		ResolvedPlan resolvedPlan = resolvePlan(repositoryParameters);
+		String planId = getPlanId(repositoryParameters);
+		Plan plan = planAccessor.get(planId);
 
-		if (resolvedPlan.getPlan() != null) {
-			AbstractArtefact rootArtefact = resolvedPlan.getPlan().getRoot();
+		AbstractArtefact rootArtefact = plan.getRoot();
 
-			if (rootArtefact instanceof TestSet) {
-				// Perform a very basic parsing of the artefact tree to get a list of test cases referenced
-				// in this test set. Only direct children of the root node are considered
-				List<AbstractArtefact> children = rootArtefact.getChildren();
-				children.forEach(child -> {
-					if (child instanceof TestCase) {
-						addTestRunStatus(testSetStatusOverview.getRuns(), child);
-					} else if (child instanceof CallPlan) {
-						Plan referencedPlan = planAccessor.get(((CallPlan) child).getPlanId());
-						AbstractArtefact root = referencedPlan.getRoot();
-						if (root instanceof TestCase) {
-							addTestRunStatus(testSetStatusOverview.getRuns(), root);
-						}
+		if(rootArtefact instanceof TestSet) {
+			// Perform a very basic parsing of the artefact tree to get a list of test cases referenced
+			// in this test set. Only direct children of the root node are considered
+			List<AbstractArtefact> children = rootArtefact.getChildren();
+			children.forEach(child->{
+				if(child instanceof TestCase) {
+					addTestRunStatus(testSetStatusOverview.getRuns(), child);
+				} else if(child instanceof CallPlan) {
+					Plan referencedPlan = planAccessor.get(((CallPlan)child).getPlanId());
+					AbstractArtefact root = referencedPlan.getRoot();
+					if(root instanceof TestCase) {
+						addTestRunStatus(testSetStatusOverview.getRuns(), root);
 					}
-				});
-			}
+				}
+			});
 		}
 		return testSetStatusOverview;
 	}
 
-	private ResolvedPlan resolvePlan(Map<String, String> repositoryParameters) {
-		String planId = getPlanId(repositoryParameters);
-		String functionId = getFunctionId(repositoryParameters);
-
-		Plan plan = null;
-		boolean embedded = false;
-
-		if (planId != null) {
-			plan = planAccessor.get(planId);
-		} else if (functionId != null) {
-			embedded = true;
-			Function function = functionAccessor.get(functionId);
-			if (function instanceof ArtefactFunction) {
-				plan = ((ArtefactFunction) function).getPlan();
-			}
-		}
-		return new ResolvedPlan(plan, embedded);
-	}
-
 	private static String getPlanId(Map<String, String> repositoryParameters) {
 		return repositoryParameters.get(RepositoryObjectReference.PLAN_ID);
-	}
-
-	private static String getFunctionId(Map<String, String> repositoryParameters) {
-		return repositoryParameters.get(RepositoryObjectReference.FUNCTION_ID);
 	}
 
 	private void addTestRunStatus(List<TestRunStatus> testRunStatusList, AbstractArtefact abstractArtefact) {
@@ -124,23 +94,12 @@ public class LocalRepository extends AbstractRepository {
 	public ImportResult importArtefact(ExecutionContext context, Map<String, String> repositoryParameters)
 			throws Exception {
 		ImportResult importResult = new ImportResult();
-		ResolvedPlan resolvedPlan = resolvePlan(repositoryParameters);
-
-		if (resolvedPlan.getPlan() != null) {
-			if (!resolvedPlan.isEmbeddedInFunction()) {
-				importResult.setPlanId(resolvedPlan.getPlan().getId().toString());
-				importResult.setPlan(resolvedPlan.getPlan());
-
-				// TODO: context plan accessor for composite function?...
-				PlanAccessor contextPlanAccessor = context.getPlanAccessor();
-				if (contextPlanAccessor.get(resolvedPlan.getPlan().getId().toString()) == null) {
-					contextPlanAccessor.save(resolvedPlan.getPlan());
-				}
-			} else {
-				importResult.setPlan(resolvedPlan.getPlan());
-			}
-
-			importResult.setSuccessful(true);
+		String planId = getPlanId(context.getExecutionParameters().getRepositoryObject().getRepositoryParameters());
+		importResult.setPlanId(planId);
+		importResult.setSuccessful(true);
+		PlanAccessor contextPlanAccessor = context.getPlanAccessor();
+		if(contextPlanAccessor.get(planId) == null) {
+			contextPlanAccessor.save(planAccessor.get(planId));
 		}
 		return importResult;
 	}
@@ -148,23 +107,5 @@ public class LocalRepository extends AbstractRepository {
 	@Override
 	public void exportExecution(ExecutionContext context, Map<String, String> repositoryParameters) throws Exception {
 		// The local repository doesn't perform any export
-	}
-
-	private static class ResolvedPlan {
-		private final Plan plan;
-		private boolean embeddedInFunction = false;
-
-		public ResolvedPlan(Plan plan, boolean embeddedInFunction) {
-			this.plan = plan;
-			this.embeddedInFunction = embeddedInFunction;
-		}
-
-		public Plan getPlan() {
-			return plan;
-		}
-
-		public boolean isEmbeddedInFunction() {
-			return embeddedInFunction;
-		}
 	}
 }

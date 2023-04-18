@@ -18,8 +18,6 @@
  ******************************************************************************/
 package step.core.repositories;
 
-import step.core.plans.Plan;
-
 import java.io.Serializable;
 import java.util.List;
 
@@ -28,13 +26,8 @@ public class ImportResult implements Serializable {
 	private static final long serialVersionUID = 3711110316457339962L;
 
 	protected boolean successful = false;;
-
-	/**
-	 * NULL if the plan is embedded in composite keyword
-	 */
+	
 	protected String planId;
-
-	protected Plan plan;
 	
 	List<String> errors;
 
@@ -46,23 +39,12 @@ public class ImportResult implements Serializable {
 		this.successful = successful;
 	}
 
-	/**
-	 * NULL if the plan is embedded in composite keyword
-	 */
 	public String getPlanId() {
 		return planId;
 	}
 
 	public void setPlanId(String planId) {
 		this.planId = planId;
-	}
-
-	public Plan getPlan() {
-		return plan;
-	}
-
-	public void setPlan(Plan plan) {
-		this.plan = plan;
 	}
 
 	public List<String> getErrors() {

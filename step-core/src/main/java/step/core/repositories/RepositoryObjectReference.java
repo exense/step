@@ -23,7 +23,6 @@ import java.util.Map;
 public class RepositoryObjectReference {
 
 	public static final String PLAN_ID = "planid";
-	public static final String FUNCTION_ID = "functionid";
 	public static final String LOCAL_REPOSITORY_ID = "local";
 
 	private String repositoryID;

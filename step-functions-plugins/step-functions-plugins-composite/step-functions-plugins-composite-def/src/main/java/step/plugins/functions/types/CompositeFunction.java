@@ -20,7 +20,7 @@ package step.plugins.functions.types;
 
 import step.core.plans.Plan;
 import step.functions.Function;
-import step.core.functions.ArtefactFunction;
+import step.plugins.functions.types.composite.ArtefactFunction;
 
 public class CompositeFunction extends Function implements ArtefactFunction {
 
