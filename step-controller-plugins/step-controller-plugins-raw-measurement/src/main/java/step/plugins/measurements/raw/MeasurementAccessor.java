@@ -4,6 +4,7 @@ import com.mongodb.BasicDBObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.collections.*;
+import step.core.entities.EntityManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,7 +13,6 @@ import java.util.stream.Stream;
 
 public class MeasurementAccessor {
     private static final Logger logger = LoggerFactory.getLogger(MeasurementAccessor.class);
-    public static final String ENTITY_NAME = "measurements";
     private Collection<Document> coll;
 
     public MeasurementAccessor(Collection<Document> coll) {
