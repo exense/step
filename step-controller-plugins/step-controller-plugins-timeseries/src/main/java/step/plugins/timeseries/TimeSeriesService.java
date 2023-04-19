@@ -6,7 +6,6 @@ import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
-import org.rtm.commons.MeasurementAccessor;
 import step.controller.services.async.AsyncTaskManager;
 import step.controller.services.async.AsyncTaskStatus;
 import step.core.GlobalContext;
@@ -22,6 +21,7 @@ import step.core.timeseries.*;
 import step.framework.server.security.Secured;
 import step.plugins.measurements.Measurement;
 import step.plugins.measurements.MeasurementPlugin;
+import step.plugins.measurements.raw.MeasurementAccessor;
 import step.plugins.timeseries.api.*;
 
 import java.util.*;

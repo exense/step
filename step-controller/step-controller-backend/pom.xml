@@ -75,7 +75,7 @@
 		</dependency>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
-			<artifactId>step-controller-plugins-rtm</artifactId>
+			<artifactId>step-controller-plugins-raw-measurement</artifactId>
 			<version>${project.version}</version>
 		</dependency>
         <dependency>
