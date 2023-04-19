@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *
+ *  
  * This file is part of STEP
- *
+ *  
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ *  
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *
+ *  
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -34,7 +34,7 @@ import step.core.objectenricher.ObjectPredicate;
 public class EntityManager  {
 
     private static Logger logger = LoggerFactory.getLogger(EntityManager.class);
-
+	
 	public final static String executions = "executions";
 	public final static String plans = "plans";
 	public static final String functions = "functions";
@@ -61,7 +61,7 @@ public class EntityManager  {
 	public Collection<Entity<?, ?>> getEntities() {
 		return entities.values();
 	}
-
+	
 	public Entity<?,?> getEntityByName(String entityName) {
 		return entities.get(entityName);
 	}
@@ -86,7 +86,7 @@ public class EntityManager  {
 		}
 		entity.getAccessor().getAll().forEachRemaining(a -> {
 			if ((entity.isByPassObjectPredicate() || (!(a instanceof EnricheableObject) || objectPredicate.test((EnricheableObject) a)))) {
-				getEntitiesReferences(entityType,a.getId().toHexString(), objectPredicate, refs, recursively);
+				getEntitiesReferences(entityType,a.getId().toHexString(), objectPredicate, refs, recursively);	
 			}
 		});
 	}
@@ -100,12 +100,12 @@ public class EntityManager  {
 	public void getEntitiesReferences(String entityName, String entityId, ObjectPredicate objectPredicate, EntityReferencesMap references, boolean recursive) {
 		EntityDependencyTreeVisitor entityDependencyTreeVisitor = new EntityDependencyTreeVisitor(this, objectPredicate);
 		entityDependencyTreeVisitor.visitEntityDependencyTree(entityName, entityId, new EntityTreeVisitor() {
-
+			
 			@Override
 			public void onWarning(String warningMessage) {
 				references.addReferenceNotFoundWarning(warningMessage);
 			}
-
+			
 			@Override
 			public void onResolvedEntity(String entityName, String entityId, Object entity) {
 				references.addElementTo(entityName, entityId);
@@ -122,11 +122,11 @@ public class EntityManager  {
 		if(entity!=null) {
 			EntityDependencyTreeVisitor entityDependencyTreeVisitor = new EntityDependencyTreeVisitor(this, objectPredicate);
 			entityDependencyTreeVisitor.visitSingleObject(entity, new EntityTreeVisitor() {
-
+				
 				@Override
 				public void onWarning(String warningMessage) {
 				}
-
+				
 				@Override
 				public void onResolvedEntity(String entityName, String entityId, Object entity) {
 				}
@@ -176,5 +176,5 @@ public class EntityManager  {
 			importContext.getImportConfiguration().getObjectEnricher().accept((EnricheableObject) o);
 		}
 	}
-
+	
 }
