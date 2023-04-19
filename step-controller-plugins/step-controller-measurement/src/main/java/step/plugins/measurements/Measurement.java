@@ -4,7 +4,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Measurement extends HashMap<String, Object>  {
+public class Measurement extends HashMap<String, Object> {
 	Map<String, Object> customFields = new HashMap<>();
 
 	public long getBegin() {
