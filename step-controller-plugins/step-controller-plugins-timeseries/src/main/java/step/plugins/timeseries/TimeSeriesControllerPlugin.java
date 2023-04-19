@@ -9,8 +9,8 @@ import step.core.deployment.WebApplicationConfigurationManager;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.core.timeseries.TimeSeries;
-import step.core.timeseries.TimeSeriesAggregationPipeline;
 import step.core.timeseries.TimeSeriesIngestionPipeline;
+import step.core.timeseries.aggregation.TimeSeriesAggregationPipeline;
 import step.plugins.measurements.GaugeCollectorRegistry;
 import step.plugins.measurements.MeasurementPlugin;
 
@@ -49,6 +49,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 
         context.getServiceRegistrationCallback().registerService(TimeSeriesService.class);
         TimeSeriesBucketingHandler handler = new TimeSeriesBucketingHandler(mainIngestionPipeline, attributes);
+        context.put(TimeSeriesBucketingHandler.class, handler);
         MeasurementPlugin.registerMeasurementHandlers(handler);
         GaugeCollectorRegistry.getInstance().registerHandler(handler);
 
