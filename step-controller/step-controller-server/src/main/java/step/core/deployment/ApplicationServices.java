@@ -21,6 +21,7 @@ package step.core.deployment;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.PostConstruct;
@@ -78,6 +79,13 @@ public class ApplicationServices extends AbstractStepServices {
 						.putMiscParam("enforceschemas", getContext().getConfiguration().getProperty("enforceschemas", "false"))
 								.putMiscParams(webApplicationConfigurationManager.getConfiguration(getSession())).build();
 		return conf;
+	}
+
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("repositories/parameters")
+	public Set<String> getAllRepositoriesCanonicalParameters() {
+		return getContext().getRepositoryObjectManager().getAllRepositoriesCanonicalParameters();
 	}
 
 	@GET
