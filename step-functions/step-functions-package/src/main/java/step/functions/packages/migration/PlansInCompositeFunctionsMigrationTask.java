@@ -17,7 +17,7 @@ public class PlansInCompositeFunctionsMigrationTask extends MigrationTask {
 	private final Collection<Document> plans;
 
 	public PlansInCompositeFunctionsMigrationTask(CollectionFactory collectionFactory, MigrationContext migrationContext) {
-		super(new Version(3, 21, 2), collectionFactory, migrationContext);
+		super(new Version(3, 22, 0), collectionFactory, migrationContext);
 
 		functions = getDocumentCollection("functions");
 		plans = getDocumentCollection("plans");
