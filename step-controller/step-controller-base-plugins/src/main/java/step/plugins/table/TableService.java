@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
 import step.controller.services.async.AsyncTaskManager;
 import step.controller.services.async.AsyncTaskStatus;
 import step.core.GlobalContext;
-import step.core.deployment.ApplicationServices;
+import step.core.deployment.AbstractStepServices;
 import step.framework.server.security.Secured;
 import step.framework.server.tables.service.TableRequest;
 import step.framework.server.tables.service.TableResponse;
@@ -39,7 +39,7 @@ import step.resources.ResourceManager;
 @Singleton
 @Path("table")
 @Tag(name = "Tables")
-public class TableService extends ApplicationServices {
+public class TableService extends AbstractStepServices {
 
     private static final Logger logger = LoggerFactory.getLogger(TableService.class);
 

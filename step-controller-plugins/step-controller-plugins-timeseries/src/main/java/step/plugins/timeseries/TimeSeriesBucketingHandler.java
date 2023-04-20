@@ -4,8 +4,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;
-import step.core.timeseries.BucketAttributes;
 import step.core.timeseries.TimeSeriesIngestionPipeline;
+import step.core.timeseries.bucket.BucketAttributes;
 import step.plugins.measurements.Measurement;
 import step.plugins.measurements.MeasurementHandler;
 
@@ -51,10 +51,10 @@ public class TimeSeriesBucketingHandler implements MeasurementHandler {
     }
 
     private BucketAttributes measurementToBucketAttributes(Measurement measurement) {
-        Map<String, String> bucketAttributesMap = new HashMap<>();
+        Map<String, Object> bucketAttributesMap = new HashMap<>();
         attributes.forEach(a -> {
             if (measurement.containsKey(a)) {
-                bucketAttributesMap.put(a,measurement.get(a).toString());
+                bucketAttributesMap.put(a,measurement.get(a));
             }
         });
         return new BucketAttributes(bucketAttributesMap);
@@ -89,5 +89,9 @@ public class TimeSeriesBucketingHandler implements MeasurementHandler {
 
     @Override
     public void afterExecutionEnd(ExecutionContext context) {
+    }
+
+    public List<String> getHandledAttributes() {
+        return attributes;
     }
 }
