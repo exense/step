@@ -12,6 +12,7 @@ import step.controller.services.async.AsyncTaskStatus;
 import step.core.GlobalContext;
 import step.core.collections.Collection;
 import step.core.deployment.AbstractStepServices;
+import step.core.entities.EntityManager;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.timeseries.*;
 import step.core.timeseries.aggregation.TimeSeriesAggregationPipeline;
@@ -38,7 +39,7 @@ public class TimeSeriesService extends AbstractStepServices {
         List<String> timeSeriesAttributes = context.get(TimeSeriesBucketingHandler.class).getHandledAttributes();
         TimeSeriesAggregationPipeline aggregationPipeline = context.require(TimeSeriesAggregationPipeline.class);
         AsyncTaskManager asyncTaskManager = context.require(AsyncTaskManager.class);
-        Collection<Measurement> measurementCollection = context.getCollectionFactory().getCollection(MeasurementAccessor.ENTITY_NAME, Measurement.class);
+        Collection<Measurement> measurementCollection = context.getCollectionFactory().getCollection(EntityManager.measurements, Measurement.class);
         TimeSeries timeSeries = context.require(TimeSeries.class);
         ExecutionAccessor executionAccessor = context.getExecutionAccessor();
         int resolution = configuration.getPropertyAsInteger(RESOLUTION_PERIOD_PROPERTY, 1000);
