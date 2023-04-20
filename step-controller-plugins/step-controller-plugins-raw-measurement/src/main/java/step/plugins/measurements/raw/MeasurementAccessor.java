@@ -67,9 +67,6 @@ public class MeasurementAccessor {
         return this.coll.distinct(distinctField, filter);
     }
 
-    public void close() {
-    }
-
     private static Document convertToMongo(String m) {
         return new Document(BasicDBObject.parse(m));
     }

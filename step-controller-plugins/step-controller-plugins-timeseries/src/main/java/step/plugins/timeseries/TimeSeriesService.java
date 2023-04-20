@@ -15,6 +15,7 @@ import step.core.collections.SearchOrder;
 import step.core.collections.filters.Equals;
 import step.core.deployment.AbstractStepServices;
 import step.core.deployment.ControllerServiceException;
+import step.core.entities.EntityManager;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.timeseries.*;
@@ -50,7 +51,7 @@ public class TimeSeriesService extends AbstractStepServices {
         GlobalContext context = getContext();
         aggregationPipeline = context.require(TimeSeriesAggregationPipeline.class);
         asyncTaskManager = context.require(AsyncTaskManager.class);
-        measurementCollection = context.getCollectionFactory().getCollection(MeasurementAccessor.ENTITY_NAME, Measurement.class);
+        measurementCollection = context.getCollectionFactory().getCollection(EntityManager.measurements, Measurement.class);
         timeSeries = context.require(TimeSeries.class);
         executionAccessor = context.getExecutionAccessor();
     }

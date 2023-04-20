@@ -53,8 +53,5 @@ public class RawMeasurementsControllerPlugin extends AbstractControllerPlugin {
 
 	@Override
 	public void serverStop(GlobalContext context) {
-		if(accessor !=null) {
-			accessor.close();
-		}
 	}
 }
