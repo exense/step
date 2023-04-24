@@ -1,0 +1,232 @@
+---
+_class: "step.core.plans.Plan"
+attributes:
+  name: "Housekeeping Job"
+  project: "63dbe1042a5b7a70e3cbf99b"
+root:
+  _class: "Session"
+  attributes:
+    name: "Session"
+  children:
+    - _class: "If"
+      attributes:
+        name: "If"
+      children:
+        - _class: "CallKeyword"
+          attributes:
+            name: "Search_expired_execution"
+          children: []
+          skipNode:
+            value: false
+          instrumentNode:
+            value: false
+          continueParentNodeExecutionOnError:
+            value: false
+          remote:
+            value: true
+          token:
+            value: "{}"
+          function:
+            value: "{\"name\":\"Search_expired_execution\"}"
+          argument:
+            value: "{\"ttl\":{\"dynamic\":true,\"expression\":\"controllerSettings.getSettingByKey('housekeeping_executions_ttl').getValue()\"\
+          },\"limit\":\"1000\", \"excludeRetained\" : \"true\"}"
+          resultMap:
+            value: null
+          id: "63dbe1052a5b7a70e3cbf9c3"
+        - _class: "Set"
+          attributes:
+            name: "Set"
+          children: []
+          attachments: null
+          persistNode: true
+          skipNode:
+            value: false
+          instrumentNode:
+            value: false
+          continueParentNodeExecutionOnError:
+            value: false
+          key:
+            value: "executionId"
+          value:
+            dynamic: true
+            expression: "\"\""
+            expressionType: ""
+          id: "63dbe1052a5b7a70e3cbf9c4"
+        - _class: "While"
+          attributes:
+            name: "While"
+          children:
+            - _class: "Set"
+              attributes:
+                name: "Set"
+              description: null
+              children: []
+              customAttributes: null
+              attachments: null
+              persistNode: true
+              skipNode:
+                value: false
+              instrumentNode:
+                value: false
+              continueParentNodeExecutionOnError:
+                value: false
+              key:
+                value: "executionId"
+              value:
+                dynamic: true
+                expression: "\"\""
+                expressionType: ""
+              id: "63dbe1052a5b7a70e3cbf9c6"
+            - _class: "CallKeyword"
+              attributes:
+                name: "Get_next_expired_execution"
+              children:
+                - _class: "Set"
+                  attributes:
+                    name: "Set"
+                  children: []
+                  persistNode: true
+                  skipNode:
+                    value: false
+                  instrumentNode:
+                    value: false
+                  continueParentNodeExecutionOnError:
+                    value: false
+                  key:
+                    value: "executionId"
+                  value:
+                    dynamic: true
+                    expression: "output.id==null?\"\":output.id"
+                    expressionType: ""
+                  id: "63dbe1052a5b7a70e3cbf9c8"
+              persistNode: true
+              skipNode:
+                value: false
+              instrumentNode:
+                value: false
+              continueParentNodeExecutionOnError:
+                value: false
+              remote:
+                value: true
+              token:
+                value: "{}"
+              function:
+                value: "{\"name\":\"Get_next_expired_execution\"}"
+              argument:
+                value: "{}"
+              resultMap:
+                value: null
+              id: "63dbe1052a5b7a70e3cbf9c7"
+            - _class: "If"
+              attributes:
+                name: "If"
+              children:
+                - _class: "CallKeyword"
+                  attributes:
+                    name: "Delete_execution"
+                  children:
+                    - _class: "Assert"
+                      attributes:
+                        name: "Assert"
+                      children: []
+                      persistNode: true
+                      skipNode:
+                        value: false
+                      instrumentNode:
+                        value: false
+                      continueParentNodeExecutionOnError:
+                        value: false
+                      actual:
+                        dynamic: true
+                        expression: "'status'"
+                        expressionType: ""
+                      operator: "EQUALS"
+                      doNegate:
+                        value: false
+                      expected:
+                        dynamic: true
+                        expression: "'ok'"
+                        expressionType: ""
+                      customErrorMessage:
+                        value: ""
+                      id: "63dbe1052a5b7a70e3cbf9cb"
+                  persistNode: true
+                  skipNode:
+                    value: false
+                  instrumentNode:
+                    value: false
+                  continueParentNodeExecutionOnError:
+                    value: false
+                  remote:
+                    value: true
+                  token:
+                    value: "{}"
+                  function:
+                    value: "{\"name\":\"Delete_execution\"}"
+                  argument:
+                    value: "{\"id\":{\"dynamic\":true,\"expression\":\"executionId\"}}"
+                  resultMap:
+                    value: null
+                  id: "63dbe1052a5b7a70e3cbf9ca"
+              persistNode: true
+              skipNode:
+                value: false
+              instrumentNode:
+                value: false
+              continueParentNodeExecutionOnError:
+                value: false
+              condition:
+                dynamic: true
+                expression: "executionId != \"\""
+                expressionType: ""
+              id: "63dbe1052a5b7a70e3cbf9c9"
+          persistNode: true
+          skipNode:
+            value: false
+          instrumentNode:
+            value: false
+          continueParentNodeExecutionOnError:
+            value: false
+          condition:
+            dynamic: true
+            expression: ""
+            expressionType: ""
+          postCondition:
+            dynamic: true
+            expression: "executionId != \"\""
+            expressionType: ""
+          pacing:
+            value: null
+          timeout:
+            value: null
+          maxIterations:
+            value: null
+          id: "63dbe1052a5b7a70e3cbf9c5"
+      persistNode: true
+      skipNode:
+        value: false
+      instrumentNode:
+        value: false
+      continueParentNodeExecutionOnError:
+        value: false
+      condition:
+        dynamic: true
+        expression: "controllerSettings.getSettingByKey('housekeeping_enabled').getValue()=='true'"
+        expressionType: ""
+      id: "63dbe1052a5b7a70e3cbf9c2"
+  skipNode:
+    value: false
+  instrumentNode:
+    value: false
+  continueParentNodeExecutionOnError:
+    value: false
+  remote:
+    value: true
+  token:
+    value: "{}"
+  id: "63dbe1052a5b7a70e3cbf9c1"
+functions: null
+subPlans: null
+visible: true
+id: "63dbe1052a5b7a70e3cbf9cc"
