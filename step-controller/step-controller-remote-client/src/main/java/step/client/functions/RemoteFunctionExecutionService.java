@@ -31,6 +31,7 @@ import step.client.AbstractRemoteClient;
 import step.client.credentials.ControllerCredentials;
 import step.functions.Function;
 import step.functions.execution.FunctionExecutionService;
+import step.functions.execution.TokenLifecycleInterceptor;
 import step.functions.io.FunctionInput;
 import step.functions.io.Output;
 import step.functions.services.GetTokenHandleParameter;
@@ -101,5 +102,15 @@ public class RemoteFunctionExecutionService extends AbstractRemoteClient impleme
 	    };
 		
 		return executeRequest(()->b.post(entity,genericType));
+	}
+
+	@Override
+	public void registerTokenLifecycleInterceptor(TokenLifecycleInterceptor interceptor) {
+		// FIXME: does this need an implementation?
+	}
+
+	@Override
+	public void unregisterTokenLifecycleInterceptor(TokenLifecycleInterceptor interceptor) {
+
 	}
 }

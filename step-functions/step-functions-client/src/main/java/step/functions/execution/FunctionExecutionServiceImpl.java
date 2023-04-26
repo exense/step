@@ -102,7 +102,24 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 	}
 
 	private static final Logger logger = LoggerFactory.getLogger(FunctionExecutionServiceImpl.class);
-	
+
+	private final List<TokenLifecycleInterceptor> tokenLifecycleInterceptors = new ArrayList<>();
+
+	@Override
+	public void registerTokenLifecycleInterceptor(TokenLifecycleInterceptor interceptor) {
+		synchronized (tokenLifecycleInterceptors) {
+			tokenLifecycleInterceptors.add(interceptor);
+		}
+	}
+
+
+	@Override
+	public void unregisterTokenLifecycleInterceptor(TokenLifecycleInterceptor interceptor) {
+		synchronized (tokenLifecycleInterceptors) {
+			tokenLifecycleInterceptors.remove(interceptor);
+		}
+	}
+
 	@Override
 	public TokenWrapper getLocalTokenHandle() {
 		return gridClient.getLocalTokenHandle();
@@ -110,19 +127,46 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 
 	@Override
 	public TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests, boolean createSession, TokenWrapperOwner tokenWrapperOwner) throws FunctionExecutionServiceException {
+		System.err.println("FIXME " + this + " GETTING TOKEN");
+		TokenWrapper tokenWrapper = null;
 		try {
-			return gridClient.getTokenHandle(attributes, interests, createSession, tokenWrapperOwner);
+			tokenWrapper = gridClient.getTokenHandle(attributes, interests, createSession, tokenWrapperOwner);
 		} catch (AgentCallTimeoutException e) {
 			throw new FunctionExecutionServiceException("Timeout after "+e.getCallTimeout()+"ms while reserving the agent token. You can increase the call timeout by setting 'grid.client.token.reserve.timeout.ms' in step.properties",e );
 		} catch (AgentSideException e) {
 			throw new FunctionExecutionServiceException("Unexpected error on the agent side while reserving the agent token: "+e.getMessage(),e);
 		} catch (AgentCommunicationException e) {
 			throw new FunctionExecutionServiceException("Communication error between the controller and the agent while reserving the agent token",e);
-		} 
+		}
+
+		try {
+			for (TokenLifecycleInterceptor interceptor : getTokenLifecycleInterceptors()) {
+				interceptor.onGetTokenHandle(tokenWrapper.getID());
+			}
+		} catch (Exception e) {
+			try {
+				returnTokenHandle(tokenWrapper.getID());
+			} catch (Exception ignored) {
+				logger.warn("Unexpected error while returning token handle, ignoring: ", e);
+			}
+			throw new FunctionExecutionServiceException("Error while retrieving agent token: " + e.getMessage(), e);
+		}
+		return tokenWrapper;
+	}
+
+	private List<TokenLifecycleInterceptor> getTokenLifecycleInterceptors() {
+		List<TokenLifecycleInterceptor> interceptors;
+		synchronized (tokenLifecycleInterceptors) {
+			interceptors = new ArrayList<>(tokenLifecycleInterceptors);
+		}
+		return interceptors;
 	}
 
 	@Override
 	public void returnTokenHandle(String tokenHandleId) throws FunctionExecutionServiceException {
+		System.err.println("FIXME " + this + " RETURN TOKEN HANDLE");
+		List<TokenLifecycleInterceptor> interceptors = getTokenLifecycleInterceptors();
+		interceptors.forEach(i -> i.onReturnTokenHandle(tokenHandleId));
 		try {
 			gridClient.returnTokenHandle(tokenHandleId);
 		} catch (AgentCallTimeoutException e) {

@@ -41,6 +41,7 @@ import step.functions.accessor.FunctionAccessor;
 import step.functions.accessor.InMemoryFunctionAccessorImpl;
 import step.functions.execution.FunctionExecutionService;
 import step.functions.execution.FunctionExecutionServiceException;
+import step.functions.execution.TokenLifecycleInterceptor;
 import step.functions.io.FunctionInput;
 import step.functions.io.Output;
 import step.functions.type.AbstractFunctionType;
@@ -108,6 +109,16 @@ public class FunctionGroupHandlerTest {
 			public void initializeExecutionContext(ExecutionEngineContext executionEngineContext,
 					ExecutionContext executionContext) {
 				executionContext.put(FunctionExecutionService.class, new FunctionExecutionService() {
+
+					@Override
+					public void registerTokenLifecycleInterceptor(TokenLifecycleInterceptor interceptor) {
+
+					}
+
+					@Override
+					public void unregisterTokenLifecycleInterceptor(TokenLifecycleInterceptor interceptor) {
+
+					}
 
 					@Override
 					public TokenWrapper getLocalTokenHandle() {
@@ -269,7 +280,17 @@ public class FunctionGroupHandlerTest {
 				executionContext.put(FunctionAccessor.class, functionAccessor);
 				FunctionExecutionService functionExecutionService = new FunctionExecutionService() {
 
-							@Override
+					@Override
+					public void registerTokenLifecycleInterceptor(TokenLifecycleInterceptor interceptor) {
+
+					}
+
+					@Override
+					public void unregisterTokenLifecycleInterceptor(TokenLifecycleInterceptor interceptor) {
+
+					}
+
+					@Override
 							public TokenWrapper getLocalTokenHandle() {
 								return null;
 							}
