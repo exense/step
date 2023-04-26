@@ -44,6 +44,7 @@ public class EntityManager  {
 	public final static String resources = "resources";
 	public final static String resourceRevisions = "resourceRevisions";
 	public final static String recursive = "recursive";
+	public final static String measurements = "measurements";
 
 	private final Map<String, Entity<?,?>> entities = new ConcurrentHashMap<String, Entity<?,?>>();
 

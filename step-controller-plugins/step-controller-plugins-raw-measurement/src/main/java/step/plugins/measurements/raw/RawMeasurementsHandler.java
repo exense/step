@@ -16,11 +16,10 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plugins.measurements.rtm;
+package step.plugins.measurements.raw;
 
 import java.util.*;
 
-import org.rtm.commons.MeasurementAccessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,22 +29,22 @@ import step.plugins.measurements.GaugeCollectorRegistry;
 import step.plugins.measurements.MeasurementHandler;
 import step.plugins.measurements.Measurement;
 
-public class RtmHandler implements MeasurementHandler {
+public class RawMeasurementsHandler implements MeasurementHandler {
 
-	private static final Logger logger = LoggerFactory.getLogger(RtmHandler.class);
+	private static final Logger logger = LoggerFactory.getLogger(RawMeasurementsHandler.class);
 
 	private final MeasurementAccessor accessor;
 
-	public RtmHandler(MeasurementAccessor accessor) {
+	public RawMeasurementsHandler(MeasurementAccessor accessor) {
 		super();
 		this.accessor = accessor;
 		GaugeCollectorRegistry.getInstance().registerHandler(this);
 	}
 
 	public void processMeasurements(List<Measurement> measurements) {
-		List<?> rtmMeasurements = measurements;
+		List<?> castedMeasurements = measurements;
 		if (measurements.size()>0) {
-			accessor.saveManyMeasurements((List<Object>) rtmMeasurements);
+			accessor.saveManyMeasurements((List<Object>) castedMeasurements);
 		}
 	}
 

@@ -26,7 +26,9 @@ import step.core.execution.model.ReportExportStatus;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 public class RepositoryObjectManager {
 
@@ -99,5 +101,10 @@ public class RepositoryObjectManager {
 		} else {
 			return false;
 		}
+	}
+
+	public Set<String> getAllRepositoriesCanonicalParameters() {
+		return repositories.values().stream().map(Repository::getCanonicalRepositoryParameters)
+				.flatMap(Set::stream).collect(Collectors.toSet());
 	}
 }
