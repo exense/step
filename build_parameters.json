@@ -13,7 +13,7 @@
 				{
 					"NAME": "DEVELOPMENT",
 					"URL": "nexus-staging::https://nexus-enterprise.exense.ch/repository/staging-maven/",
-					"CONFIG": "DefaultBuild"
+					"CONFIG": "LocalBuild,SkipJavadoc"
 				},
 				{
 					"NAME": "INTEGRATION",
