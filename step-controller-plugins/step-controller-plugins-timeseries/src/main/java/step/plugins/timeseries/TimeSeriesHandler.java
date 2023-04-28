@@ -145,7 +145,11 @@ public class TimeSeriesHandler {
             } catch (IllegalStateException e) {
                 isValid = false;
             }
+			if (oqlAttributes.isEmpty()) { // there are strings like 'abcd' which is a valid OQL by some reason
+				isValid = false;
+			}
         }
+		
         return new OQLVerifyResponse(isValid, hasUnknownFields, oqlAttributes);
     }
 
