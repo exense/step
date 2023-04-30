@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Plan",
+  "type": "object",
+  "$defs": {
+    "DynamicValueDef": {
+      "type": "object",
+      "properties": {
+        "dynamic": {"type":  "boolean"},
+        "expression": {"type":  "string"},
+        "expressionType": {"type":  "string"}
+      }
+    },
+    "DynamicValueStringDef": {
+      "allOf": [{"$ref": "#/$defs/DynamicValueDef"}],
+      "properties": {
+        "value": {"type":  "string"}
+      },
+      "unevaluatedProperties": false
+    },
+    "DynamicValueBoolDef": {
+      "allOf": [{"$ref": "#/$defs/DynamicValueDef"}],
+      "properties": {
+        "value": {"type":  "boolean"}
+      },
+      "unevaluatedProperties": false
+    },
+    "ArtefactDef": {
+      "type": "object",
+      "anyOf": [
+        {
+          "$ref": "#/$defs/AssertDef"
+        },
+        {
+          "$ref": "#/$defs/IfBlockDef"
+        }
+      ],
+      "additionalProperties": false
+    },
+    "CommonArtefactFieldsDef": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ArtefactDef"
+          }
+        }
+      }
+    },
+    "AssertDef": {
+      "type": "object",
+      "properties": {
+        "Assert": {
+          "allOf":[{"$ref": "#/$defs/CommonArtefactFieldsDef"}],
+          "properties": {
+            "name": {
+              "type": "string",
+              "default": "Assert"
+            },
+            "actual": {
+              "$ref": "#/$defs/DynamicValueStringDef"
+            },
+            "expected": {
+              "$ref": "#/$defs/DynamicValueStringDef"
+            },
+            "doNegate": {
+              "$ref": "#/$defs/DynamicValueBoolDef"
+            },
+            "customErrorMessage": {
+              "$ref": "#/$defs/DynamicValueStringDef"
+            },
+            "operator":
+            {
+              "enum": ["EQUALS", "BEGINS_WITH", "ENDS_WITH", "CONTAINS", "MATCHES"]
+            }
+          },
+          "unevaluatedProperties": false
+        }
+      }
+    },
+    "IfBlockDef": {
+      "type": "object",
+      "properties": {
+        "IfBlock": {
+          "$ref": "#/$defs/CommonArtefactFieldsDef",
+          "properties": {
+            "name": {
+              "type": "string",
+              "default": "IfBlock"
+            },
+            "condition": {
+              "$ref": "#/$defs/DynamicValueBoolDef"
+            }
+          },
+          "required": [
+            "ifCondition"
+          ]
+        }
+      },
+      "unevaluatedProperties": false
+    }
+  },
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "root": {
+      "$ref": "#/$defs/ArtefactDef"
+    }
+  },
+  "required": [
+    "name", "root"
+  ],
+  "additionalProperties": false
+}
