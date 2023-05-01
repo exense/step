@@ -19,66 +19,45 @@
 package step.core.serialization;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import org.bson.types.ObjectId;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.plans.Plan;
 import step.core.plans.serialization.YamlPlanSerializer;
-import step.core.plans.serialization.model.SimpleYamlPlan;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 // TODO: this test is in step-plans-base-artefact package, because we need all artifact classes loaded (see my-plan.yml)
 public class YamlPlanSerializerTest {
 
 	private static final Logger log = LoggerFactory.getLogger(YamlPlanSerializerTest.class);
 
-	private final YamlPlanSerializer serializer = new YamlPlanSerializer();
+	private static final ObjectId STATIC_ID = new ObjectId("644fbe4e38a61e07cc3a4df8") ;
 
-	@Test
-	public void readPlanFromYaml() {
-		YAMLFactory factory = new YAMLFactory();
-		ObjectMapper om = DefaultJacksonMapperProvider.getObjectMapper(factory);
-
-		File yamlFile = new File("src/test/resources/step/core/plans/serialization/my-plan-short.yml");
-
-		try (FileInputStream is = new FileInputStream(yamlFile); ByteArrayOutputStream os = new ByteArrayOutputStream()) {
-			Plan plan = serializer.readPlanFromYaml(is);
-
-			serializer.toFullYaml(os, plan);
-
-			JsonNode fullYamlResult = om.readTree(os.toByteArray());
-			log.info(fullYamlResult.toPrettyString());
-
-			JsonNode expectedFullYaml = om.readTree(new File("src/test/resources/step/core/plans/serialization/my-plan.yml"));
-			Assert.assertEquals(expectedFullYaml, fullYamlResult);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
+	private final YamlPlanSerializer serializer = new YamlPlanSerializer(() -> STATIC_ID);
 
 	@Test
 	public void readSimplePlanFromYaml() {
-		YAMLFactory factory = new YAMLFactory();
-		ObjectMapper om = DefaultJacksonMapperProvider.getObjectMapper(factory);
-
+		// read simplified file
 		File yamlFile = new File("src/test/resources/step/core/plans/serialization/test-plan-simplified.yml");
 
 		try (FileInputStream is = new FileInputStream(yamlFile); ByteArrayOutputStream os = new ByteArrayOutputStream()) {
-			SimpleYamlPlan plan = serializer.readSimplePlanFromYaml(is);
+			// convert simplified plan to full plan
+			Plan fullPlan = serializer.readSimplePlanFromYaml(is);
 
-			Plan fullPlan = serializer.convertSimplePlanToFullPlan(plan);
+			// serialize plan to full yaml
 			serializer.toFullYaml(os, fullPlan);
+			log.info(os.toString(StandardCharsets.UTF_8));
 
-			JsonNode fullYamlResult = om.readTree(os.toByteArray());
-			log.info(fullYamlResult.toPrettyString());
+			// compare serialized plan with expected data
+			JsonNode expectedFullYaml = serializer.getMapper().readTree(new File("src/test/resources/step/core/plans/serialization/test-plan-full-expected.yml"));
+			Assert.assertEquals(expectedFullYaml, serializer.getMapper().readTree(os.toByteArray()));
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
