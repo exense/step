@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.plans.Plan;
 import step.core.plans.serialization.YamlPlanSerializer;
+import step.core.plans.serialization.model.SimpleYamlPlan;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -49,7 +50,7 @@ public class YamlPlanSerializerTest {
 		File yamlFile = new File("src/test/resources/step/core/plans/serialization/my-plan-short.yml");
 
 		try (FileInputStream is = new FileInputStream(yamlFile); ByteArrayOutputStream os = new ByteArrayOutputStream()) {
-			Plan plan = serializer.readPlanFromYaml(is, "63dbe1052a5b7a70e3cbf9cd");
+			Plan plan = serializer.readPlanFromYaml(is);
 
 			serializer.toFullYaml(os, plan);
 
@@ -58,6 +59,26 @@ public class YamlPlanSerializerTest {
 
 			JsonNode expectedFullYaml = om.readTree(new File("src/test/resources/step/core/plans/serialization/my-plan.yml"));
 			Assert.assertEquals(expectedFullYaml, fullYamlResult);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@Test
+	public void readSimplePlanFromYaml() {
+		YAMLFactory factory = new YAMLFactory();
+		ObjectMapper om = DefaultJacksonMapperProvider.getObjectMapper(factory);
+
+		File yamlFile = new File("src/test/resources/step/core/plans/serialization/test-plan-simplified.yml");
+
+		try (FileInputStream is = new FileInputStream(yamlFile); ByteArrayOutputStream os = new ByteArrayOutputStream()) {
+			SimpleYamlPlan plan = serializer.readSimplePlanFromYaml(is);
+
+			Plan fullPlan = serializer.convertSimplePlanToFullPlan(plan);
+			serializer.toFullYaml(os, fullPlan);
+
+			JsonNode fullYamlResult = om.readTree(os.toByteArray());
+			log.info(fullYamlResult.toPrettyString());
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}

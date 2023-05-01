@@ -2,13 +2,13 @@
 _class: "step.core.plans.Plan"
 attributes:
   name: "Housekeeping Job"
-  project: "63dbe1042a5b7a70e3cbf99b"
 root:
   _class: "Session"
   attributes:
     name: "Session"
   children:
     - _class: "If"
+      # remove attributes, use the 'name' field instead
       attributes:
         name: "If"
       children:
@@ -203,11 +203,9 @@ root:
           maxIterations:
             value: null
           id: "63dbe1052a5b7a70e3cbf9c5"
+      # persistNode - not editable
       persistNode: true
-      skipNode:
-        value: false
-      instrumentNode:
-        value: false
+      # skipNode, instrumentNode, continueParentNodeExecutionOnError
       continueParentNodeExecutionOnError:
         value: false
       condition:
@@ -226,7 +224,6 @@ root:
   token:
     value: "{}"
   id: "63dbe1052a5b7a70e3cbf9c1"
-functions: null
-subPlans: null
+#remove functions, subplans, visible = true by default
 visible: true
 id: "63dbe1052a5b7a70e3cbf9cc"

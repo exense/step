@@ -18,16 +18,24 @@
  ******************************************************************************/
 package step.core.plans.serialization;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.plans.Plan;
+import step.core.plans.serialization.model.SimpleYamlPlan;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.HashMap;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 public class YamlPlanSerializer {
 
@@ -40,19 +48,75 @@ public class YamlPlanSerializer {
 		this.mapper = DefaultJacksonMapperProvider.getObjectMapper(factory);
 	}
 
-	public Plan readPlanFromYaml(InputStream inputStream, String versionId) throws IOException {
+	public Plan readPlanFromYaml(InputStream inputStream) throws IOException {
 		Plan plan = mapper.readValue(inputStream, Plan.class);
-		// TODO: version ID
-		if (versionId != null) {
-			if (plan.getCustomFields() == null) {
-				plan.setCustomFields(new HashMap<>());
-			}
-			plan.getCustomFields().put("versionId", versionId);
-		}
 		return plan;
 	}
 
+	public SimpleYamlPlan readSimplePlanFromYaml(InputStream inputStream) throws IOException{
+		// TODO: validate using the json schema?
+		SimpleYamlPlan simpleYamlPlan = mapper.readValue(inputStream, SimpleYamlPlan.class);
+		return simpleYamlPlan;
+	}
+
+	// TODO: make private
+	public JsonNode convertSimplePlanToFullJson(SimpleYamlPlan simpleYamlPlan){
+		ObjectNode top = mapper.createObjectNode();
+		top.put(Plan.JSON_CLASS_FIELD, Plan.class.getName());
+		ObjectNode planAttributesNode = mapper.createObjectNode();
+		top.set("attributes", planAttributesNode);
+		planAttributesNode.put("name", simpleYamlPlan.getName());
+
+		top.set("root", convertSimpleArtifactToFull(simpleYamlPlan.getRoot()));
+		return top;
+	}
+
+	public Plan convertSimplePlanToFullPlan(SimpleYamlPlan simpleYamlPlan) throws JsonProcessingException {
+		JsonNode fullJson = convertSimplePlanToFullJson(simpleYamlPlan);
+		Plan fullPlan = mapper.treeToValue(fullJson, Plan.class);
+		// TODO: apply defaults
+		return fullPlan;
+	}
+
+	private JsonNode convertSimpleArtifactToFull(JsonNode simpleArtifact) {
+
+		List<String> specialFields = Arrays.asList("children", "name");
+
+		String shortArtifactClass = simpleArtifact.fieldNames().next();
+		JsonNode artifactData = simpleArtifact.get(shortArtifactClass);
+
+		ObjectNode fullArtifact = mapper.createObjectNode();
+		fullArtifact.put(Plan.JSON_CLASS_FIELD, shortArtifactClass);
+
+		ObjectNode planAttributesNode = mapper.createObjectNode();
+		planAttributesNode.put("name", artifactData.get("name").asText());
+		fullArtifact.set("attributes", planAttributesNode);
+
+		Iterator<Map.Entry<String, JsonNode>> fields = artifactData.fields();
+		while (fields.hasNext()) {
+			Map.Entry<String, JsonNode> next = fields.next();
+			if (!specialFields.contains(next.getKey())) {
+				fullArtifact.set(next.getKey(), next.getValue().deepCopy());
+			}
+		}
+
+		JsonNode simpleChildren = artifactData.get("children");
+		if (simpleChildren != null && simpleChildren.isArray()) {
+			ArrayNode childrenResult = mapper.createArrayNode();
+			for (JsonNode simpleChild : simpleChildren) {
+				childrenResult.add(convertSimpleArtifactToFull(simpleChild));
+			}
+			fullArtifact.set("children", childrenResult);
+		}
+
+		return fullArtifact;
+	}
+
 	public void toFullYaml(OutputStream os, Plan plan) throws IOException {
+		mapper.writeValue(os, plan);
+	}
+
+	public void toSimplifiedYaml(OutputStream os, SimpleYamlPlan plan) throws IOException {
 		mapper.writeValue(os, plan);
 	}
 }

@@ -34,8 +34,7 @@
         {
           "$ref": "#/$defs/IfBlockDef"
         }
-      ],
-      "additionalProperties": false
+      ]
     },
     "CommonArtefactFieldsDef": {
       "type": "object",
@@ -85,7 +84,7 @@
     "IfBlockDef": {
       "type": "object",
       "properties": {
-        "IfBlock": {
+        "If": {
           "$ref": "#/$defs/CommonArtefactFieldsDef",
           "properties": {
             "name": {
