@@ -178,6 +178,24 @@ public class PlanServices extends AbstractEntityServices<Plan> {
 		return result;
 	}
 
+	@Operation(description = "Returns the plan referenced by the given CallPlan.")
+	@POST
+	@Path("/lookup")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Secured(right="{entity}-read")
+	public Plan lookupCallPlan(CallPlan callPlan) {
+		Plan result = null;
+		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(getContext().getExpressionHandler()));
+		SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
+		PlanLocator planLocator = new PlanLocator(getContext().getPlanAccessor(), selectorHelper);
+		ObjectPredicate objectPredicate = objectPredicateFactory.getObjectPredicate(getSession());
+		try {
+			result = planLocator.selectPlan(callPlan, objectPredicate, null);
+		} catch (RuntimeException e) {}
+		return result;
+	}
+
 	@Operation(description = "Clones the provided artefact.")
 	@POST
 	@Path("/artefacts/clone")
