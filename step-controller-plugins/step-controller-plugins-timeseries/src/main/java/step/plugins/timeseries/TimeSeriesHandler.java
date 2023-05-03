@@ -147,9 +147,7 @@ public class TimeSeriesHandler {
             } catch (IllegalStateException e) {
                 isValid = false;
             }
-			
         }
-		
         return new OQLVerifyResponse(isValid, hasUnknownFields, oqlAttributes);
     }
 
