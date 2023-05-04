@@ -313,11 +313,21 @@
 
 	<profiles>
 		<profile>
+			<!-- Local compilation - no signature -->
 			<id>LocalBuild</id>
 			<activation>
 				<activeByDefault>true</activeByDefault>
 			</activation>
-			<!-- Local compilation - no signature -->
+		</profile>
+		<profile>
+			<!-- Skip javadoc generation -->
+			<id>SkipJavadoc</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+			<properties>
+				<maven.javadoc.skip>true</maven.javadoc.skip>
+			</properties>
 		</profile>
 		<profile>
 			<id>DependencyCheck</id>
