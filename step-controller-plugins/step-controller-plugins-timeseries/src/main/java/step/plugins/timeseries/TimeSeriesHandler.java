@@ -155,7 +155,7 @@ public class TimeSeriesHandler {
     }
 	
     public Set<String> getMeasurementsAttributes(String oqlFilter) {
-        Filter filter = OQLFilterBuilder.getFilter(oqlFilter);
+		Filter filter = OQLTimeSeriesFilterBuilder.getFilter(oqlFilter, attributesPrefixRemoval, Collections.emptySet());
         Set<String> fields = new HashSet<>();
         measurementCollection.find(filter, null, 0, FIELDS_SAMPLING_LIMIT, 0).forEach(measurement -> {
             fields.addAll(measurement.keySet());

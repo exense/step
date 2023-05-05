@@ -96,12 +96,7 @@ public class TimeSeriesService extends AbstractStepServices {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Set<String> getMeasurementsAttributes(@QueryParam("filter") String oqlFilter) {
-        Filter filter = OQLFilterBuilder.getFilter(oqlFilter);
-        Set<String> fields = new HashSet<>();
-        measurementCollection.find(filter, null, 0, FIELDS_SAMPLING_LIMIT, 0).forEach(measurement -> {
-            fields.addAll(measurement.keySet());
-        });
-        return fields;
+        return handler.getMeasurementsAttributes(oqlFilter);
     }
 
 }
