@@ -44,6 +44,11 @@
 			<artifactId>step-functions-client</artifactId>
 			<version>${project.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>org.reflections</groupId>
+			<artifactId>reflections</artifactId>
+			<version>0.10.2</version>
+		</dependency>
 
 		<dependency>
 			<groupId>org.apache.commons</groupId>

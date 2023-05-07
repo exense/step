@@ -18,13 +18,17 @@
  ******************************************************************************/
 package step.core.serialization;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.github.victools.jsonschema.generator.*;
 import org.bson.types.ObjectId;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.artefacts.IfBlock;
 import step.core.plans.Plan;
+import step.core.plans.serialization.YamlPlanJsonGenerator;
 import step.core.plans.serialization.YamlPlanSerializer;
 
 import java.io.ByteArrayOutputStream;
@@ -61,5 +65,18 @@ public class YamlPlanSerializerTest {
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	@Test
+	public void generateSchema() throws JsonProcessingException {
+//		SchemaGeneratorConfigBuilder configBuilder = new SchemaGeneratorConfigBuilder(SchemaVersion.DRAFT_2020_12, OptionPreset.PLAIN_JSON);
+//		SchemaGeneratorConfig config = configBuilder.build();
+//		SchemaGenerator generator = new SchemaGenerator(config);
+//		JsonNode jsonSchema = generator.generateSchema(IfBlock.class);
+//
+//		System.out.println(jsonSchema.toPrettyString());
+		YamlPlanJsonGenerator schemaGenerator = new YamlPlanJsonGenerator();
+		JsonNode schema = schemaGenerator.generateJsonSchema();
+		log.info(schema.toPrettyString());
 	}
 }
