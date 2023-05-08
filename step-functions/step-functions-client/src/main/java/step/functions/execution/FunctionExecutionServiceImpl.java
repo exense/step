@@ -127,7 +127,6 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 
 	@Override
 	public TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests, boolean createSession, TokenWrapperOwner tokenWrapperOwner) throws FunctionExecutionServiceException {
-		System.err.println("FIXME " + this + " GETTING TOKEN");
 		TokenWrapper tokenWrapper = null;
 		try {
 			tokenWrapper = gridClient.getTokenHandle(attributes, interests, createSession, tokenWrapperOwner);
@@ -164,7 +163,6 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 
 	@Override
 	public void returnTokenHandle(String tokenHandleId) throws FunctionExecutionServiceException {
-		System.err.println("FIXME " + this + " RETURN TOKEN HANDLE");
 		List<TokenLifecycleInterceptor> interceptors = getTokenLifecycleInterceptors();
 		interceptors.forEach(i -> i.onReturnTokenHandle(tokenHandleId));
 		try {
