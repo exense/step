@@ -22,6 +22,7 @@ import step.core.objectenricher.ObjectHookRegistry;
 import step.functions.Function;
 import step.functions.manager.FunctionManager;
 import step.functions.type.FunctionTypeException;
+import step.plugins.functions.types.CompositeFunction;
 import step.resources.Resource;
 import step.resources.ResourceManager;
 
@@ -261,7 +262,8 @@ public class FunctionPackageManager implements Closeable {
 			}
 
 			newFunction.setManaged(true);
-			newFunction.setExecuteLocally(newFunctionPackage.isExecuteLocally());
+			newFunction.setExecuteLocally(newFunctionPackage.isExecuteLocally() ||
+					(newFunction instanceof CompositeFunction));
 			newFunction.setTokenSelectionCriteria(newFunctionPackage.getTokenSelectionCriteria());
 			newFunction.addCustomField(FunctionPackageEntity.FUNCTION_PACKAGE_ID,
 					newFunctionPackage.getId().toString());
