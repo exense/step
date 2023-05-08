@@ -19,7 +19,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<artifactId>step-controller-plugins-rtm</artifactId>
+	<artifactId>step-controller-plugins-raw-measurement</artifactId>
 	<packaging>jar</packaging>
 
 	<parent>
@@ -34,11 +34,11 @@
 			<artifactId>step-controller-measurement</artifactId>
 			<version>${project.version}</version>
 		</dependency>
-		<dependency>
-			<groupId>ch.exense.rtm</groupId>
-			<artifactId>rtm</artifactId>
-			<version>${rtm.version}</version>
-		</dependency>
+        <dependency>
+			<groupId>ch.exense.step</groupId>
+			<artifactId>step-framework-collections</artifactId>
+			<version>${step-framework.version}</version>
+        </dependency>
 	</dependencies>
 
 	<build>
