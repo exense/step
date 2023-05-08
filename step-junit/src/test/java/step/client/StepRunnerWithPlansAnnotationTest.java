@@ -28,14 +28,12 @@ import step.junit.runners.annotations.Plan;
 import step.junit.runners.annotations.Plans;
 
 @RunWith(Step.class)
-@Plans({"plan2.plan"})
+@Plans({"plan2.plan", "plan3.plan"})
 @ExecutionParameters({"PARAM_EXEC","Value","PARAM_EXEC2","Value","PARAM_EXEC3","Value"})
 public class StepRunnerWithPlansAnnotationTest extends AbstractKeyword {
-	
-	@Plan()
-	@Keyword
-	public void implicitPlanWithDefaultKeywordName() {}
-	
+
+	public void implicitPlanWithDefaultKeywordName() {
+	}
 	@Plan
 	@Keyword(name = "My custom keyword name")
 	public void implicitPlanWithWithCustomKeywordName() {}

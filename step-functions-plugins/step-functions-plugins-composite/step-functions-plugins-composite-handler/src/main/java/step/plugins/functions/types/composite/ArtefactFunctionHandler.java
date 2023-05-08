@@ -24,9 +24,12 @@ import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
+import step.core.functions.ArtefactFunction;
 import step.core.reports.Error;
 import step.core.reports.ErrorType;
 import step.core.variables.VariableType;
+import step.functions.Function;
+import step.functions.accessor.FunctionAccessor;
 import step.functions.handler.AbstractFunctionHandler;
 import step.functions.handler.JsonBasedFunctionHandler;
 import step.functions.io.Input;
@@ -39,7 +42,7 @@ public class ArtefactFunctionHandler extends JsonBasedFunctionHandler {
 	private static final String OUTPUT = "output";
 
 	// Key agreed upon to pass the artefact serving as root to the handler (via props)
-	public static final String PLANID_KEY = "$planid";
+	public static final String COMPOSITE_FUNCTION_KEY = "$compfuncid";
 	
 	@Override
 	protected Output<JsonObject> handle(Input<JsonObject> input) {
@@ -50,7 +53,7 @@ public class ArtefactFunctionHandler extends JsonBasedFunctionHandler {
 		if(executionContext == null) {
 			output.setError("Running composite Keyword on agent not supported. Please change the keyword configuration accordingly.");
 		} else {
-			String planId = input.getProperties().get(PLANID_KEY);
+			String compFunctionId = input.getProperties().get(COMPOSITE_FUNCTION_KEY);
 			String parentReportId = input.getProperties().get(AbstractFunctionHandler.PARENTREPORTID_KEY);
 			
 			ReportNode parentNode;
@@ -67,8 +70,18 @@ public class ArtefactFunctionHandler extends JsonBasedFunctionHandler {
 			ReportNode previousCurrentNode = executionContext.getCurrentReportNode();
 			executionContext.setCurrentReportNode(parentNode);
 			executionContext.getReportNodeCache().put(parentNode);
-			
-			AbstractArtefact artefact = executionContext.getPlanAccessor().get(planId).getRoot();
+
+			FunctionAccessor functionAccessor = executionContext.get(FunctionAccessor.class);
+			if (functionAccessor == null) {
+				// function access has to be properly initialized via step.core.execution.ExecutionContextWrapper to handle a composite function
+				throw new IllegalStateException("Function accessor is not initialized within the execution context");
+			}
+			Function function = functionAccessor.get(compFunctionId);
+			if (!(function instanceof ArtefactFunction)) {
+				throw new IllegalStateException("Function " + compFunctionId + " has no linked plan");
+			}
+
+			AbstractArtefact artefact = ((ArtefactFunction) function).getPlan().getRoot();
 			
 			executionContext.getVariablesManager().putVariable(parentNode, INPUT, input.getPayload());
 			executionContext.getVariablesManager().putVariable(parentNode, VariableType.IMMUTABLE, OUTPUT, output);
