@@ -1,29 +1,24 @@
 package step.functions.packages.handlers;
 
-import java.io.*;
+import java.io.File;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Set;
 
-import jakarta.json.Json;
-import jakarta.json.JsonException;
-import jakarta.json.JsonObject;
-import jakarta.json.stream.JsonParsingException;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import step.attachments.FileResolver;
 import step.core.accessors.AbstractOrganizableObject;
-import step.core.plans.Plan;
 import step.core.scanner.AnnotationScanner;
 import step.functions.Function;
 import step.grid.contextbuilder.ApplicationContextBuilder;
 import step.grid.contextbuilder.LocalFileApplicationContextFactory;
 import step.grid.contextbuilder.LocalFolderApplicationContextFactory;
 import step.handlers.javahandler.Keyword;
-import step.plans.nl.RootArtefactType;
+import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
+import step.handlers.javahandler.jsonschema.KeywordJsonSchemaCreator;
 import step.plans.nl.parser.PlanParser;
 import step.plugins.functions.types.CompositeFunctionUtils;
 import step.plugins.java.GeneralScriptFunction;
@@ -31,8 +26,8 @@ import step.resources.LocalResourceManagerImpl;
 
 public class JavaFunctionPackageDaemon extends FunctionPackageUtils {
 
-	private static final Logger log = LoggerFactory.getLogger(JavaFunctionPackageDaemon.class);
-	
+	private final KeywordJsonSchemaCreator schemaCreator = new KeywordJsonSchemaCreator();
+
 	public JavaFunctionPackageDaemon() {
 		super(new FileResolver(new LocalResourceManagerImpl()));
 	}
@@ -103,28 +98,14 @@ public class JavaFunctionPackageDaemon extends FunctionPackageUtils {
 						res = function;
 					}
 					res.setDescription(annotation.description());
-					JsonObject schema;
-					String schemaStr = annotation.schema();
-					if (schemaStr.length() > 0) {
-						try {
-							schema = Json.createReader(new StringReader(schemaStr)).readObject();
-						} catch (JsonParsingException e) {
-							functions.exception = "Parsing error in the schema for keyword '" + m.getName() + "'. The error was: " + e.getMessage();
-							functions.functions.clear();
-							return functions;
-						} catch (JsonException e) {
-							functions.exception = "I/O error in the schema for keyword '" + m.getName() + "'. The error was: " + e.getMessage();
-							functions.functions.clear();
-							return functions;
-						} catch (Exception e) {
-							functions.exception = "Unknown error in the schema for keyword '" + m.getName() + "'. The error was: " + e.getMessage();
-							functions.functions.clear();
-							return functions;
-						}
-					} else {
-						schema = Json.createObjectBuilder().build();
+					try {
+						res.setSchema(schemaCreator.createJsonSchemaForKeyword(m));
+					} catch (JsonSchemaPreparationException ex){
+						functions.exception = ex.getMessage();
+						functions.functions.clear();
+						return functions;
 					}
-					res.setSchema(schema);
+
 					String htmlTemplate = res.getAttributes().remove("htmlTemplate");
 					if (htmlTemplate != null && !htmlTemplate.isEmpty()) {
 						res.setHtmlTemplate(htmlTemplate);
