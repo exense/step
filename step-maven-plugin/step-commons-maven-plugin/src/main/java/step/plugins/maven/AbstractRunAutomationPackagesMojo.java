@@ -57,7 +57,7 @@ public abstract class AbstractRunAutomationPackagesMojo extends AbstractStepPlug
 			ExecutionParameters executionParameters = prepareExecutionParameters(executionContext);
 
 			executionId = remoteExecutionManager.execute(executionParameters);
-			String baseMessage = "Execution has been registered in Step: " + executionId;
+			String baseMessage = "Execution has been started in Step (" + getUrl() + "): " + executionId;
 
 			if (getWaitForExecution()) {
 				getLog().info(baseMessage + ". Waiting on results...");
@@ -66,7 +66,7 @@ public abstract class AbstractRunAutomationPackagesMojo extends AbstractStepPlug
 				getLog().info(baseMessage + ". Waiting on results is disabled.");
 			}
 		} catch (Exception ex) {
-			throw logAndThrow("Unable to run execution in Step", ex);
+			throw logAndThrow("Unable to run execution in Step (" + getUrl() + ")", ex);
 		}
 	}
 
