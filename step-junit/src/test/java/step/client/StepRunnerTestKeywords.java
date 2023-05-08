@@ -33,7 +33,10 @@ public class StepRunnerTestKeywords extends AbstractKeyword {
 		System.out.println("My second keyword is called from composite!");
 	}
 
-	@Keyword(planReference = "composite1.plan")
+	@Keyword(planReference = "composite1.plan", schema = "{ \"properties\": { "
+			+ "\"myInput\": {\"type\": \"string\", \"default\":\"defaultValueString\"}"
+			+ "}, \"required\" : []}", properties = { "" },
+			description = "Keyword used to explicitly close the current driver.", name="MyCompoInPackage")
 	public void composite1() {
 
 	}
