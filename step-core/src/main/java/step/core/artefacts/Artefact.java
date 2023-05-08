@@ -34,4 +34,6 @@ public @interface Artefact {
 
 	boolean useAsTemplate() default false;
 
+	boolean test() default false;
+
 }

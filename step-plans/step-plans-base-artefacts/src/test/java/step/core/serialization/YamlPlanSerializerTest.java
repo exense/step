@@ -30,6 +30,7 @@ import step.artefacts.IfBlock;
 import step.core.plans.Plan;
 import step.core.plans.serialization.YamlPlanJsonGenerator;
 import step.core.plans.serialization.YamlPlanSerializer;
+import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -68,14 +69,8 @@ public class YamlPlanSerializerTest {
 	}
 
 	@Test
-	public void generateSchema() throws JsonProcessingException {
-//		SchemaGeneratorConfigBuilder configBuilder = new SchemaGeneratorConfigBuilder(SchemaVersion.DRAFT_2020_12, OptionPreset.PLAIN_JSON);
-//		SchemaGeneratorConfig config = configBuilder.build();
-//		SchemaGenerator generator = new SchemaGenerator(config);
-//		JsonNode jsonSchema = generator.generateSchema(IfBlock.class);
-//
-//		System.out.println(jsonSchema.toPrettyString());
-		YamlPlanJsonGenerator schemaGenerator = new YamlPlanJsonGenerator();
+	public void generateSchema() throws JsonSchemaPreparationException {
+		YamlPlanJsonGenerator schemaGenerator = new YamlPlanJsonGenerator("step");
 		JsonNode schema = schemaGenerator.generateJsonSchema();
 		log.info(schema.toPrettyString());
 	}
