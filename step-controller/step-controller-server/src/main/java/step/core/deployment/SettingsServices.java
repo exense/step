@@ -52,16 +52,29 @@ public class SettingsServices extends AbstractStepServices {
 			setting.setKey(key);
 		}
 		setting.setValue(value);
-		controllerSettingsAccessor.save(setting);
+
+		try {
+			controllerSettingsAccessor.save(setting);
+		} catch (Exception ex) {
+			// exception can be thrown by step.core.controller.ControllerSettingHook
+			// (for example, when we change the housekeeping job cron and try to save invalid cron expression)
+			throw new ControllerServiceException("Unable to change the value " + value + " for setting " + key, ex);
+		}
 	}
 
 	@DELETE
 	@Path("/{id}")
-	@Secured(right="settings-delete")
+	@Secured(right = "settings-delete")
 	public void deleteSetting(@PathParam("id") String key) {
 		ControllerSetting setting = controllerSettingsAccessor.getSettingByKey(key);
-		if(setting != null) {
-			controllerSettingsAccessor.remove(setting.getId());
+		if (setting != null) {
+			try {
+				controllerSettingsAccessor.remove(setting.getId());
+			} catch (Exception ex) {
+				// exception can be thrown by step.core.controller.ControllerSettingHook
+				// (for example, when we change the housekeeping job cron and try to save invalid cron expression)
+				throw new ControllerServiceException("Unable to remove the value for setting " + key, ex);
+			}
 		}
 	}
 	

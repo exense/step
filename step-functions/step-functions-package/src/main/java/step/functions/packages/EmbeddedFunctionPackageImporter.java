@@ -73,6 +73,7 @@ public class EmbeddedFunctionPackageImporter {
 
 				try {
 					FunctionPackage functionPackage = searchExistingFunctionPackage(f);
+					functionPackage.setPackageLocation(packageLocation);
 					addAttributeFromMetaFileIfAny(packageLocation, functionPackage);
 					
 					importedFunctionPackageIds.add(functionPackage.getId().toString());
