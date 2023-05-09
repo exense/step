@@ -48,11 +48,9 @@ public class StepJarParser {
     private static final Logger logger = LoggerFactory.getLogger(StepJarParser.class);
 
     private final StepClassParser stepClassParser;
-    private final PlanAccessor planAccessor;
 
-    public StepJarParser(PlanAccessor planAccessor) {
+    public StepJarParser() {
         this.stepClassParser = new StepClassParser(false);
-        this.planAccessor = planAccessor;
     }
 
     private List<Function> getFunctions(AnnotationScanner annotationScanner, File artifact, File libraries) {
