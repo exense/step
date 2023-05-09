@@ -1,0 +1,1180 @@
+{
+  "$schema" : "https://json-schema.org/draft/2020-12/schema",
+  "title" : "Plan",
+  "type" : "object",
+  "$defs" : {
+    "DynamicValueNumDef" : {
+      "type" : "object",
+      "properties" : {
+        "expression" : {
+          "type" : "string"
+        },
+        "expressionType" : {
+          "type" : "string"
+        },
+        "value" : {
+          "type" : "number"
+        }
+      }
+    },
+    "DynamicValueStringDef" : {
+      "type" : "object",
+      "properties" : {
+        "expression" : {
+          "type" : "string"
+        },
+        "expressionType" : {
+          "type" : "string"
+        },
+        "value" : {
+          "type" : "string"
+        }
+      }
+    },
+    "DynamicValueBooleanDef" : {
+      "type" : "object",
+      "properties" : {
+        "expression" : {
+          "type" : "string"
+        },
+        "expressionType" : {
+          "type" : "string"
+        },
+        "value" : {
+          "type" : "boolean"
+        }
+      }
+    },
+    "AfterSequenceDef" : {
+      "type" : "object",
+      "properties" : {
+        "AfterSequence" : {
+          "type" : "object",
+          "properties" : {
+            "continueOnError" : {
+              "$ref" : "#/$defs/DynamicValueBooleanDef"
+            },
+            "pacing" : {
+              "$ref" : "#/$defs/DynamicValueNumDef"
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "name" : {
+              "type" : "string",
+              "default" : "AfterSequence"
+            },
+            "children" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/$defs/ArtefactDef"
+              }
+            }
+          }
+        }
+      }
+    },
+    "SetDef" : {
+      "type" : "object",
+      "properties" : {
+        "Set" : {
+          "type" : "object",
+          "properties" : {
+            "key" : {
+              "$ref" : "#/$defs/DynamicValueStringDef"
+            },
+            "value" : {
+              "$ref" : "#/$defs/DynamicValueStringDef"
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "name" : {
+              "type" : "string",
+              "default" : "Set"
+            },
+            "children" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/$defs/ArtefactDef"
+              }
+            }
+          }
+        }
+      }
+    },
+    "CheckDef" : {
+      "type" : "object",
+      "properties" : {
+        "Check" : {
+          "type" : "object",
+          "properties" : {
+            "expression" : {
+              "$ref" : "#/$defs/DynamicValueBooleanDef"
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "name" : {
+              "type" : "string",
+              "default" : "Check"
+            },
+            "children" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/$defs/ArtefactDef"
+              }
+            }
+          }
+        }
+      }
+    },
+    "CheckArtefactDef" : {
+      "type" : "object",
+      "properties" : {
+        "CheckArtefact" : {
+          "type" : "object",
+          "properties" : {
+            "executionRunnable" : {
+              "type" : "object",
+              "properties" : { }
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "name" : {
+              "type" : "string",
+              "default" : "CheckArtefact"
+            },
+            "children" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/$defs/ArtefactDef"
+              }
+            }
+          }
+        }
+      }
+    },
+    "ScriptDef" : {
+      "type" : "object",
+      "properties" : {
+        "Script" : {
+          "type" : "object",
+          "properties" : {
+            "script" : {
+              "type" : "string"
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "name" : {
+              "type" : "string",
+              "default" : "Script"
+            },
+            "children" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/$defs/ArtefactDef"
+              }
+            }
+          }
+        }
+      }
+    },
+    "SequenceDef" : {
+      "type" : "object",
+      "properties" : {
+        "Sequence" : {
+          "type" : "object",
+          "properties" : {
+            "continueOnError" : {
+              "$ref" : "#/$defs/DynamicValueBooleanDef"
+            },
+            "pacing" : {
+              "$ref" : "#/$defs/DynamicValueNumDef"
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "name" : {
+              "type" : "string",
+              "default" : "Sequence"
+            },
+            "children" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/$defs/ArtefactDef"
+              }
+            }
+          }
+        }
+      }
+    },
+    "CallKeywordDef" : {
+      "type" : "object",
+      "properties" : {
+        "CallKeyword" : {
+          "type" : "object",
+          "properties" : {
+            "ARTEFACT_NAME" : {
+              "type" : "string"
+            },
+            "function" : {
+              "$ref" : "#/$defs/DynamicValueStringDef"
+            },
+            "argument" : {
+              "$ref" : "#/$defs/DynamicValueStringDef"
+            },
+            "resultMap" : {
+              "$ref" : "#/$defs/DynamicValueStringDef"
+            },
+            "remote" : {
+              "$ref" : "#/$defs/DynamicValueBooleanDef"
+            },
+            "token" : {
+              "$ref" : "#/$defs/DynamicValueStringDef"
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "name" : {
+              "type" : "string",
+              "default" : "CallKeyword"
+            },
+            "children" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/$defs/ArtefactDef"
+              }
+            }
+          }
+        }
+      }
+    },
+    "SwitchDef" : {
+      "type" : "object",
+      "properties" : {
+        "Switch" : {
+          "type" : "object",
+          "properties" : {
+            "expression" : {
+              "$ref" : "#/$defs/DynamicValueStringDef"
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "name" : {
+              "type" : "string",
+              "default" : "Switch"
+            },
+            "children" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/$defs/ArtefactDef"
+              }
+            }
+          }
+        }
+      }
+    },
+    "BeforeThreadDef" : {
+      "type" : "object",
+      "properties" : {
+        "BeforeThread" : {
+          "type" : "object",
+          "properties" : {
+            "continueOnError" : {
+              "$ref" : "#/$defs/DynamicValueBooleanDef"
+            },
+            "pacing" : {
+              "$ref" : "#/$defs/DynamicValueNumDef"
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "name" : {
+              "type" : "string",
+              "default" : "BeforeThread"
+            },
+            "children" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/$defs/ArtefactDef"
+              }
+            }
+          }
+        }
+      }
+    },
+    "ExportDef" : {
+      "type" : "object",
+      "properties" : {
+        "Export" : {
+          "type" : "object",
+          "properties" : {
+            "value" : {
+              "$ref" : "#/$defs/DynamicValueStringDef"
+            },
+            "file" : {
+              "$ref" : "#/$defs/DynamicValueStringDef"
+            },
+            "prefix" : {
+              "$ref" : "#/$defs/DynamicValueStringDef"
+            },
+            "filter" : {
+              "$ref" : "#/$defs/DynamicValueStringDef"
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "name" : {
+              "type" : "string",
+              "default" : "Export"
+            },
+            "children" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/$defs/ArtefactDef"
+              }
+            }
+          }
+        }
+      }
+    },
+    "StreamingArtefactDef" : {
+      "type" : "object",
+      "properties" : {
+        "StreamingArtefact" : {
+          "type" : "object",
+          "properties" : {
+            "description" : {
+              "type" : "string"
+            },
+            "name" : {
+              "type" : "string",
+              "default" : "StreamingArtefact"
+            },
+            "children" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/$defs/ArtefactDef"
+              }
+            }
+          }
+        }
+      }
+    },
+    "ForDef" : {
+      "type" : "object",
+      "properties" : {
+        "For" : {
+          "type" : "object",
+          "properties" : {
+            "item" : {
+              "$ref" : "#/$defs/DynamicValueStringDef"
+            },
+            "dataSourceType" : {
+              "type" : "string"
+            },
+            "dataSource" : {
+              "type" : "object",
+              "properties" : {
+                "forWrite" : {
+                  "$ref" : "#/$defs/DynamicValueBooleanDef"
+                }
+              }
+            },
+            "maxFailedLoops" : {
+              "$ref" : "#/$defs/DynamicValueNumDef"
+            },
+            "threads" : {
+              "$ref" : "#/$defs/DynamicValueNumDef"
+            },
+            "globalCounter" : {
+              "$ref" : "#/$defs/DynamicValueStringDef"
+            },
+            "userItem" : {
+              "$ref" : "#/$defs/DynamicValueStringDef"
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "name" : {
+              "type" : "string",
+              "default" : "For"
+            },
+            "children" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/$defs/ArtefactDef"
+              }
+            }
+          }
+        }
+      }
+    },
+    "CaseDef" : {
+      "type" : "object",
+      "properties" : {
+        "Case" : {
+          "type" : "object",
+          "properties" : {
+            "value" : {
+              "$ref" : "#/$defs/DynamicValueStringDef"
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "name" : {
+              "type" : "string",
+              "default" : "Case"
+            },
+            "children" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/$defs/ArtefactDef"
+              }
+            }
+          }
+        }
+      }
+    },
+    "ReturnDef" : {
+      "type" : "object",
+      "properties" : {
+        "Return" : {
+          "type" : "object",
+          "properties" : {
+            "output" : {
+              "$ref" : "#/$defs/DynamicValueStringDef"
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "name" : {
+              "type" : "string",
+              "default" : "Return"
+            },
+            "children" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/$defs/ArtefactDef"
+              }
+            }
+          }
+        }
+      }
+    },
+    "FailureDef" : {
+      "type" : "object",
+      "properties" : {
+        "Failure" : {
+          "type" : "object",
+          "properties" : {
+            "message" : {
+              "type" : "string"
+            },
+            "stackTrace" : {
+              "type" : "string"
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "name" : {
+              "type" : "string",
+              "default" : "Failure"
+            },
+            "children" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/$defs/ArtefactDef"
+              }
+            }
+          }
+        }
+      }
+    },
+    "ForEachDef" : {
+      "type" : "object",
+      "properties" : {
+        "ForEach" : {
+          "type" : "object",
+          "properties" : {
+            "item" : {
+              "$ref" : "#/$defs/DynamicValueStringDef"
+            },
+            "dataSourceType" : {
+              "type" : "string"
+            },
+            "dataSource" : {
+              "type" : "object",
+              "properties" : {
+                "forWrite" : {
+                  "$ref" : "#/$defs/DynamicValueBooleanDef"
+                }
+              }
+            },
+            "maxFailedLoops" : {
+              "$ref" : "#/$defs/DynamicValueNumDef"
+            },
+            "threads" : {
+              "$ref" : "#/$defs/DynamicValueNumDef"
+            },
+            "globalCounter" : {
+              "$ref" : "#/$defs/DynamicValueStringDef"
+            },
+            "userItem" : {
+              "$ref" : "#/$defs/DynamicValueStringDef"
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "name" : {
+              "type" : "string",
+              "default" : "ForEach"
+            },
+            "children" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/$defs/ArtefactDef"
+              }
+            }
+          }
+        }
+      }
+    },
+    "RetryIfFailsDef" : {
+      "type" : "object",
+      "properties" : {
+        "RetryIfFails" : {
+          "type" : "object",
+          "properties" : {
+            "maxRetries" : {
+              "$ref" : "#/$defs/DynamicValueNumDef"
+            },
+            "gracePeriod" : {
+              "$ref" : "#/$defs/DynamicValueNumDef"
+            },
+            "timeout" : {
+              "$ref" : "#/$defs/DynamicValueNumDef"
+            },
+            "releaseTokens" : {
+              "$ref" : "#/$defs/DynamicValueBooleanDef"
+            },
+            "reportLastTryOnly" : {
+              "$ref" : "#/$defs/DynamicValueBooleanDef"
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "name" : {
+              "type" : "string",
+              "default" : "RetryIfFails"
+            },
+            "children" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/$defs/ArtefactDef"
+              }
+            }
+          }
+        }
+      }
+    },
+    "WhileDef" : {
+      "type" : "object",
+      "properties" : {
+        "While" : {
+          "type" : "object",
+          "properties" : {
+            "condition" : {
+              "$ref" : "#/$defs/DynamicValueBooleanDef"
+            },
+            "postCondition" : {
+              "$ref" : "#/$defs/DynamicValueBooleanDef"
+            },
+            "pacing" : {
+              "$ref" : "#/$defs/DynamicValueNumDef"
+            },
+            "timeout" : {
+              "$ref" : "#/$defs/DynamicValueNumDef"
+            },
+            "maxIterations" : {
+              "$ref" : "#/$defs/DynamicValueNumDef"
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "name" : {
+              "type" : "string",
+              "default" : "While"
+            },
+            "children" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/$defs/ArtefactDef"
+              }
+            }
+          }
+        }
+      }
+    },
+    "EchoDef" : {
+      "type" : "object",
+      "properties" : {
+        "Echo" : {
+          "type" : "object",
+          "properties" : {
+            "text" : {
+              "$ref" : "#/$defs/DynamicValueStringDef"
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "name" : {
+              "type" : "string",
+              "default" : "Echo"
+            },
+            "children" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/$defs/ArtefactDef"
+              }
+            }
+          }
+        }
+      }
+    },
+    "CallPlanDef" : {
+      "type" : "object",
+      "properties" : {
+        "CallPlan" : {
+          "type" : "object",
+          "properties" : {
+            "planId" : {
+              "type" : "string"
+            },
+            "selectionAttributes" : {
+              "$ref" : "#/$defs/DynamicValueStringDef"
+            },
+            "input" : {
+              "$ref" : "#/$defs/DynamicValueStringDef"
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "name" : {
+              "type" : "string",
+              "default" : "CallPlan"
+            },
+            "children" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/$defs/ArtefactDef"
+              }
+            }
+          }
+        }
+      }
+    },
+    "TestScenarioDef" : {
+      "type" : "object",
+      "properties" : {
+        "TestScenario" : {
+          "type" : "object",
+          "properties" : {
+            "description" : {
+              "type" : "string"
+            },
+            "name" : {
+              "type" : "string",
+              "default" : "TestScenario"
+            },
+            "children" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/$defs/ArtefactDef"
+              }
+            }
+          }
+        }
+      }
+    },
+    "SynchronizedDef" : {
+      "type" : "object",
+      "properties" : {
+        "Synchronized" : {
+          "type" : "object",
+          "properties" : {
+            "lockName" : {
+              "$ref" : "#/$defs/DynamicValueStringDef"
+            },
+            "globalLock" : {
+              "$ref" : "#/$defs/DynamicValueBooleanDef"
+            },
+            "continueOnError" : {
+              "$ref" : "#/$defs/DynamicValueBooleanDef"
+            },
+            "pacing" : {
+              "$ref" : "#/$defs/DynamicValueNumDef"
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "name" : {
+              "type" : "string",
+              "default" : "Synchronized"
+            },
+            "children" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/$defs/ArtefactDef"
+              }
+            }
+          }
+        }
+      }
+    },
+    "BeforeSequenceDef" : {
+      "type" : "object",
+      "properties" : {
+        "BeforeSequence" : {
+          "type" : "object",
+          "properties" : {
+            "continueOnError" : {
+              "$ref" : "#/$defs/DynamicValueBooleanDef"
+            },
+            "pacing" : {
+              "$ref" : "#/$defs/DynamicValueNumDef"
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "name" : {
+              "type" : "string",
+              "default" : "BeforeSequence"
+            },
+            "children" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/$defs/ArtefactDef"
+              }
+            }
+          }
+        }
+      }
+    },
+    "TestSetDef" : {
+      "type" : "object",
+      "properties" : {
+        "TestSet" : {
+          "type" : "object",
+          "properties" : {
+            "threads" : {
+              "$ref" : "#/$defs/DynamicValueNumDef"
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "name" : {
+              "type" : "string",
+              "default" : "TestSet"
+            },
+            "children" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/$defs/ArtefactDef"
+              }
+            }
+          }
+        }
+      }
+    },
+    "SessionDef" : {
+      "type" : "object",
+      "properties" : {
+        "Session" : {
+          "type" : "object",
+          "properties" : {
+            "remote" : {
+              "$ref" : "#/$defs/DynamicValueBooleanDef"
+            },
+            "token" : {
+              "$ref" : "#/$defs/DynamicValueStringDef"
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "name" : {
+              "type" : "string",
+              "default" : "Session"
+            },
+            "children" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/$defs/ArtefactDef"
+              }
+            }
+          }
+        }
+      }
+    },
+    "DataSetDef" : {
+      "type" : "object",
+      "properties" : {
+        "DataSet" : {
+          "type" : "object",
+          "properties" : {
+            "item" : {
+              "$ref" : "#/$defs/DynamicValueStringDef"
+            },
+            "resetAtEnd" : {
+              "$ref" : "#/$defs/DynamicValueBooleanDef"
+            },
+            "dataSourceType" : {
+              "type" : "string"
+            },
+            "dataSource" : {
+              "type" : "object",
+              "properties" : {
+                "forWrite" : {
+                  "$ref" : "#/$defs/DynamicValueBooleanDef"
+                }
+              }
+            },
+            "maxFailedLoops" : {
+              "$ref" : "#/$defs/DynamicValueNumDef"
+            },
+            "threads" : {
+              "$ref" : "#/$defs/DynamicValueNumDef"
+            },
+            "globalCounter" : {
+              "$ref" : "#/$defs/DynamicValueStringDef"
+            },
+            "userItem" : {
+              "$ref" : "#/$defs/DynamicValueStringDef"
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "name" : {
+              "type" : "string",
+              "default" : "DataSet"
+            },
+            "children" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/$defs/ArtefactDef"
+              }
+            }
+          }
+        }
+      }
+    },
+    "SleepDef" : {
+      "type" : "object",
+      "properties" : {
+        "Sleep" : {
+          "type" : "object",
+          "properties" : {
+            "duration" : {
+              "$ref" : "#/$defs/DynamicValueNumDef"
+            },
+            "unit" : {
+              "$ref" : "#/$defs/DynamicValueStringDef"
+            },
+            "releaseTokens" : {
+              "$ref" : "#/$defs/DynamicValueBooleanDef"
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "name" : {
+              "type" : "string",
+              "default" : "Sleep"
+            },
+            "children" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/$defs/ArtefactDef"
+              }
+            }
+          }
+        }
+      }
+    },
+    "TestCaseDef" : {
+      "type" : "object",
+      "properties" : {
+        "TestCase" : {
+          "type" : "object",
+          "properties" : {
+            "description" : {
+              "type" : "string"
+            },
+            "name" : {
+              "type" : "string",
+              "default" : "TestCase"
+            },
+            "children" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/$defs/ArtefactDef"
+              }
+            }
+          }
+        }
+      }
+    },
+    "AssertDef" : {
+      "type" : "object",
+      "properties" : {
+        "Assert" : {
+          "type" : "object",
+          "properties" : {
+            "actual" : {
+              "$ref" : "#/$defs/DynamicValueStringDef"
+            },
+            "operator" : {
+              "enum" : [ "EQUALS", "BEGINS_WITH", "ENDS_WITH", "CONTAINS", "MATCHES" ]
+            },
+            "doNegate" : {
+              "$ref" : "#/$defs/DynamicValueBooleanDef"
+            },
+            "expected" : {
+              "$ref" : "#/$defs/DynamicValueStringDef"
+            },
+            "customErrorMessage" : {
+              "$ref" : "#/$defs/DynamicValueStringDef"
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "name" : {
+              "type" : "string",
+              "default" : "Assert"
+            },
+            "children" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/$defs/ArtefactDef"
+              }
+            }
+          }
+        }
+      }
+    },
+    "AfterThreadDef" : {
+      "type" : "object",
+      "properties" : {
+        "AfterThread" : {
+          "type" : "object",
+          "properties" : {
+            "continueOnError" : {
+              "$ref" : "#/$defs/DynamicValueBooleanDef"
+            },
+            "pacing" : {
+              "$ref" : "#/$defs/DynamicValueNumDef"
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "name" : {
+              "type" : "string",
+              "default" : "AfterThread"
+            },
+            "children" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/$defs/ArtefactDef"
+              }
+            }
+          }
+        }
+      }
+    },
+    "PlaceholderDef" : {
+      "type" : "object",
+      "properties" : {
+        "Placeholder" : {
+          "type" : "object",
+          "properties" : {
+            "description" : {
+              "type" : "string"
+            },
+            "name" : {
+              "type" : "string",
+              "default" : "Placeholder"
+            },
+            "children" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/$defs/ArtefactDef"
+              }
+            }
+          }
+        }
+      }
+    },
+    "IfDef" : {
+      "type" : "object",
+      "properties" : {
+        "If" : {
+          "type" : "object",
+          "properties" : {
+            "condition" : {
+              "$ref" : "#/$defs/DynamicValueBooleanDef"
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "name" : {
+              "type" : "string",
+              "default" : "If"
+            },
+            "children" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/$defs/ArtefactDef"
+              }
+            }
+          }
+        }
+      }
+    },
+    "ThreadGroupDef" : {
+      "type" : "object",
+      "properties" : {
+        "ThreadGroup" : {
+          "type" : "object",
+          "properties" : {
+            "users" : {
+              "$ref" : "#/$defs/DynamicValueNumDef"
+            },
+            "iterations" : {
+              "$ref" : "#/$defs/DynamicValueNumDef"
+            },
+            "rampup" : {
+              "$ref" : "#/$defs/DynamicValueNumDef"
+            },
+            "pack" : {
+              "$ref" : "#/$defs/DynamicValueNumDef"
+            },
+            "pacing" : {
+              "$ref" : "#/$defs/DynamicValueNumDef"
+            },
+            "startOffset" : {
+              "$ref" : "#/$defs/DynamicValueNumDef"
+            },
+            "maxDuration" : {
+              "$ref" : "#/$defs/DynamicValueNumDef"
+            },
+            "item" : {
+              "$ref" : "#/$defs/DynamicValueStringDef"
+            },
+            "localItem" : {
+              "$ref" : "#/$defs/DynamicValueStringDef"
+            },
+            "userItem" : {
+              "$ref" : "#/$defs/DynamicValueStringDef"
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "name" : {
+              "type" : "string",
+              "default" : "ThreadGroup"
+            },
+            "children" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/$defs/ArtefactDef"
+              }
+            }
+          }
+        }
+      }
+    },
+    "ArtefactDef" : {
+      "type" : "object",
+      "anyOf" : [ {
+        "$ref" : "#/$defs/AfterSequenceDef"
+      }, {
+        "$ref" : "#/$defs/SetDef"
+      }, {
+        "$ref" : "#/$defs/CheckDef"
+      }, {
+        "$ref" : "#/$defs/CheckArtefactDef"
+      }, {
+        "$ref" : "#/$defs/ScriptDef"
+      }, {
+        "$ref" : "#/$defs/SequenceDef"
+      }, {
+        "$ref" : "#/$defs/CallKeywordDef"
+      }, {
+        "$ref" : "#/$defs/SwitchDef"
+      }, {
+        "$ref" : "#/$defs/BeforeThreadDef"
+      }, {
+        "$ref" : "#/$defs/ExportDef"
+      }, {
+        "$ref" : "#/$defs/StreamingArtefactDef"
+      }, {
+        "$ref" : "#/$defs/ForDef"
+      }, {
+        "$ref" : "#/$defs/CaseDef"
+      }, {
+        "$ref" : "#/$defs/ReturnDef"
+      }, {
+        "$ref" : "#/$defs/FailureDef"
+      }, {
+        "$ref" : "#/$defs/ForEachDef"
+      }, {
+        "$ref" : "#/$defs/RetryIfFailsDef"
+      }, {
+        "$ref" : "#/$defs/WhileDef"
+      }, {
+        "$ref" : "#/$defs/EchoDef"
+      }, {
+        "$ref" : "#/$defs/CallPlanDef"
+      }, {
+        "$ref" : "#/$defs/TestScenarioDef"
+      }, {
+        "$ref" : "#/$defs/SynchronizedDef"
+      }, {
+        "$ref" : "#/$defs/BeforeSequenceDef"
+      }, {
+        "$ref" : "#/$defs/TestSetDef"
+      }, {
+        "$ref" : "#/$defs/SessionDef"
+      }, {
+        "$ref" : "#/$defs/DataSetDef"
+      }, {
+        "$ref" : "#/$defs/SleepDef"
+      }, {
+        "$ref" : "#/$defs/TestCaseDef"
+      }, {
+        "$ref" : "#/$defs/AssertDef"
+      }, {
+        "$ref" : "#/$defs/AfterThreadDef"
+      }, {
+        "$ref" : "#/$defs/PlaceholderDef"
+      }, {
+        "$ref" : "#/$defs/IfDef"
+      }, {
+        "$ref" : "#/$defs/ThreadGroupDef"
+      } ]
+    }
+  },
+  "properties" : {
+    "name" : {
+      "type" : "string"
+    },
+    "root" : {
+      "$ref" : "#/$defs/ArtefactDef"
+    }
+  },
+  "required" : [ "name", "root" ],
+  "additionalProperties" : false
+}

@@ -18,15 +18,13 @@
  ******************************************************************************/
 package step.core.serialization;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.github.victools.jsonschema.generator.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.bson.types.ObjectId;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.artefacts.IfBlock;
 import step.core.plans.Plan;
 import step.core.plans.serialization.YamlPlanJsonGenerator;
 import step.core.plans.serialization.YamlPlanSerializer;
@@ -46,6 +44,8 @@ public class YamlPlanSerializerTest {
 	private static final ObjectId STATIC_ID = new ObjectId("644fbe4e38a61e07cc3a4df8") ;
 
 	private final YamlPlanSerializer serializer = new YamlPlanSerializer(() -> STATIC_ID);
+
+	private final ObjectMapper jsonObjectMapper = new ObjectMapper();
 
 	@Test
 	public void readSimplePlanFromYaml() {
@@ -69,9 +69,20 @@ public class YamlPlanSerializerTest {
 	}
 
 	@Test
-	public void generateSchema() throws JsonSchemaPreparationException {
+	public void generateSchema() throws JsonSchemaPreparationException, IOException {
+		// read published json schema
+		// TODO: how to publish schema and how to check it in test?
+		File jsonSchemaFile = new File("src/test/resources/step/core/plans/serialization/simplified-plan-schema-published.json");
+
+		JsonNode publishedSchema = jsonObjectMapper.readTree(jsonSchemaFile);
 		YamlPlanJsonGenerator schemaGenerator = new YamlPlanJsonGenerator("step");
-		JsonNode schema = schemaGenerator.generateJsonSchema();
-		log.info(schema.toPrettyString());
+		JsonNode currentSchema = schemaGenerator.generateJsonSchema();
+
+		log.info("GENERATED SCHEMA:");
+		log.info(currentSchema.toPrettyString());
+
+		String errorMessage = "Published schema doesn't match to the actual one. To fix the test you need to publish " +
+				"the generated schema printed above and actualize the published schema in current test";
+		Assert.assertEquals(errorMessage, publishedSchema, currentSchema);
 	}
 }

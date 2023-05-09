@@ -31,6 +31,7 @@ public class YamlPlanJsonGenerator {
 	private static final String DYNAMIC_VALUE_STRING_DEF = "DynamicValueStringDef";
 	private static final String DYNAMIC_VALUE_NUM_DEF = "DynamicValueNumDef";
 	private static final String DYNAMIC_VALUE_BOOLEAN_DEF = "DynamicValueBooleanDef";
+	private static final String ARTEFACT_DEF = "ArtefactDef";
 
 	private final String targetPackage;
 
@@ -50,6 +51,7 @@ public class YamlPlanJsonGenerator {
 		topLevelBuilder.add("$defs", createDefs());
 		topLevelBuilder.add("properties", createPlanProperties());
 		topLevelBuilder.add("required", jsonProvider.createArrayBuilder().add("name").add("root"));
+		topLevelBuilder.add( "additionalProperties", false);
 
 		try {
 			return fromJakartaToJsonNode(topLevelBuilder);
@@ -61,7 +63,7 @@ public class YamlPlanJsonGenerator {
 	private JsonObjectBuilder createPlanProperties() {
 		JsonObjectBuilder objectBuilder = jsonProvider.createObjectBuilder();
 		objectBuilder.add("name", jsonProvider.createObjectBuilder().add("type", "string"));
-		objectBuilder.add("root", addRef(jsonProvider.createObjectBuilder(), "ArtefactDef"));
+		objectBuilder.add("root", addRef(jsonProvider.createObjectBuilder(), ARTEFACT_DEF));
 		return objectBuilder;
 	}
 
@@ -82,7 +84,7 @@ public class YamlPlanJsonGenerator {
 			defsBuilder.add(artefactImplDef.getKey(), artefactImplDef.getValue());
 		}
 
-		defsBuilder.add("ArtefactDef", createArtefactDef(artefactImplDefs.keySet()));
+		defsBuilder.add(ARTEFACT_DEF, createArtefactDef(artefactImplDefs.keySet()));
 		return defsBuilder;
 	}
 
@@ -90,11 +92,9 @@ public class YamlPlanJsonGenerator {
 		Map<String, JsonObjectBuilder> res = new HashMap<>();
 		Reflections r = new Reflections( new ConfigurationBuilder().forPackage(targetPackage));
 
-		// TODO: analyze all classes
 		List<Class<?>> artefactClasses = r.getTypesAnnotatedWith(Artefact.class)
 				.stream()
 				.filter(c -> !c.getAnnotation(Artefact.class).test())
-				.filter(c -> c.getSimpleName().equals("IfBlock"))
 				.collect(Collectors.toList());
 		log.info("The following {} artefact classes detected: {}", artefactClasses.size(), artefactClasses);
 
@@ -111,14 +111,18 @@ public class YamlPlanJsonGenerator {
 		JsonObjectBuilder res = jsonProvider.createObjectBuilder();
 		res.add("type", "object");
 		JsonObjectBuilder artefactNameProperty = jsonProvider.createObjectBuilder();
+
 		JsonObjectBuilder artefactProperties = jsonProvider.createObjectBuilder();
-		fillArtefactProperties(artefactClass, artefactProperties);
-		artefactNameProperty.add(name, artefactProperties);
+		fillArtefactProperties(artefactClass, artefactProperties, name);
+
+		artefactNameProperty.add(name, jsonProvider.createObjectBuilder().add("type", "object").add("properties", artefactProperties));
 		res.add("properties", artefactNameProperty);
 		return res;
 	}
 
-	private void fillArtefactProperties(Class<?> artefactClass, JsonObjectBuilder artefactProperties) throws JsonSchemaPreparationException {
+	private void fillArtefactProperties(Class<?> artefactClass, JsonObjectBuilder artefactProperties, String artefactName) throws JsonSchemaPreparationException {
+		log.info("Preparing json schema for artefact class {}...", artefactClass);
+
 		List<Class<?>> classHierarchy = new ArrayList<>();
 		Class<?> currentClass = artefactClass;
 		while (currentClass != null) {
@@ -127,7 +131,7 @@ public class YamlPlanJsonGenerator {
 		}
 
 		for (Class<?> c : classHierarchy) {
-			if (!applyCustomPropertiesGenerationForClass(c, artefactProperties)) {
+			if (!applyCustomPropertiesGenerationForClass(c, artefactProperties, artefactName)) {
 				Field[] fields = c.getDeclaredFields();
 
 				// for each field we want either build the json schema via reflection
@@ -136,13 +140,20 @@ public class YamlPlanJsonGenerator {
 						new KeywordJsonSchemaCreator.FieldPropertyProcessor() {
 							@Override
 							public boolean applyCustomProcessing(Field field, JsonObjectBuilder propertiesBuilder) {
-								if (DynamicValue.class.isAssignableFrom(field.getType())) {
+								if(field.getType().isEnum()){
+									JsonArrayBuilder enumArray = jsonProvider.createArrayBuilder();
+									for (Object enumValue : field.getType().getEnumConstants()) {
+										enumArray.add(enumValue.toString());
+									}
+									propertiesBuilder.add("enum", enumArray);
+									return true;
+								} else if (DynamicValue.class.isAssignableFrom(field.getType())) {
 									Type genericType = field.getGenericType();
 									if (genericType instanceof ParameterizedType) {
 										Type[] arguments = ((ParameterizedType) genericType).getActualTypeArguments();
 										Type dynamicValueClass = arguments[0];
 										if (!(dynamicValueClass instanceof Class)) {
-											throw new IllegalArgumentException("Unsupported dynamic value type " + dynamicValueClass);
+											throw new IllegalArgumentException(artefactClass +  ": Unsupported dynamic value type " + dynamicValueClass);
 										}
 										String dynamicValueType = JsonInputConverter.resolveJsonPropertyType((Class<?>) dynamicValueClass);
 										switch (dynamicValueType){
@@ -155,12 +166,16 @@ public class YamlPlanJsonGenerator {
 											case "number":
 												addRef(propertiesBuilder, DYNAMIC_VALUE_NUM_DEF);
 												break;
+											case "object":
+												log.warn(artefactClass + ": Unknown dynamic value type for field " + field.getName());
+												addRef(propertiesBuilder, DYNAMIC_VALUE_STRING_DEF);
+												break;
 											default:
-												throw new IllegalArgumentException("Unsupported dynamic value type: " + dynamicValueType);
+												throw new IllegalArgumentException(artefactClass + ": Unsupported dynamic value type: " + dynamicValueType);
 										}
 
 									} else {
-										throw new IllegalArgumentException("Unsupported dynamic value generic field " + genericType);
+										throw new IllegalArgumentException(artefactClass + ": Unsupported dynamic value generic field " + genericType);
 									}
 									return true;
 								}
@@ -169,7 +184,9 @@ public class YamlPlanJsonGenerator {
 
 							@Override
 							public boolean skipField(Field field) {
-								if (field.isAnnotationPresent(JsonIgnore.class)) {
+								if(field.isSynthetic()){
+									return true;
+								} else if (field.isAnnotationPresent(JsonIgnore.class)) {
 									// just skip all fields with JsonIgnore
 									return true;
 								} else if (field.getType().equals(Object.class)) {
@@ -190,9 +207,17 @@ public class YamlPlanJsonGenerator {
 		}
 	}
 
-	private boolean applyCustomPropertiesGenerationForClass(Class<?> c, JsonObjectBuilder artefactProperties) {
-		// TODO: fill common fields for abstract artifact
+	private boolean applyCustomPropertiesGenerationForClass(Class<?> c, JsonObjectBuilder artefactProperties, String artefactName) {
 		if (c.equals(AbstractArtefact.class)) {
+			artefactProperties.add("description", jsonProvider.createObjectBuilder().add("type", "string"));
+			// use artefact name as default
+			artefactProperties.add("name", jsonProvider.createObjectBuilder().add("type", "string").add("default", artefactName));
+			artefactProperties.add("children",
+					jsonProvider.createObjectBuilder()
+							.add("type", "array")
+							.add("items", addRef(jsonProvider.createObjectBuilder(), ARTEFACT_DEF))
+			);
+
 			return true;
 		}
 		return false;
