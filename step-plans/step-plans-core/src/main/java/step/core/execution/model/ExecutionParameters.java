@@ -36,8 +36,7 @@ import step.core.repositories.RepositoryObjectReference;
 public class ExecutionParameters extends AbstractOrganizableObject implements EnricheableObject {
 	
 	private static final String DEFAULT_DESCRIPTION = "Unnamed";
-	private static final String DEFAULT_USERID = "dummy";
-	
+
 	ExecutionMode mode;
 
 	Plan plan;
@@ -64,15 +63,15 @@ public class ExecutionParameters extends AbstractOrganizableObject implements En
 	}
 	
 	public ExecutionParameters(ExecutionMode mode) {
-		this(mode, null, null, null, null, DEFAULT_USERID, null, false, null);
+		this(mode, null, null, null, null, null, null, false, null);
 	}
 
 	public ExecutionParameters(RepositoryObjectReference repositoryObjectReference, Map<String, String> customParameters) {
-		this(ExecutionMode.RUN, null, repositoryObjectReference, customParameters, null, DEFAULT_USERID, null, false, null);
+		this(ExecutionMode.RUN, null, repositoryObjectReference, customParameters, null, null, null, false, null);
 	}
 	
 	public ExecutionParameters(Plan plan, Map<String, String> customParameters) {
-		this(ExecutionMode.RUN, plan, null, customParameters, defaultDescription(plan), DEFAULT_USERID, null, false, null);
+		this(ExecutionMode.RUN, plan, null, customParameters, defaultDescription(plan), null, null, false, null);
 	}
 
 	public ExecutionParameters(ExecutionMode mode, Plan plan, RepositoryObjectReference repositoryObject,
