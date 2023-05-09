@@ -142,11 +142,10 @@ public class CustomDescriptionStepParser implements StepParser<DescriptionStep> 
 			rootArtefact.getCustomAttributes().remove(FUNCTION_ATTRIBUTES);
 
 			Plan plan = new Plan(rootArtefact);
-			parsingContext.getPlanAccessor().save(plan);
 			
 			CompositeFunction function = new CompositeFunction();
 			function.setId(new ObjectId());
-			function.setPlanId(plan.getId().toString());
+			function.setPlan(plan);
 			function.setAttributes(attributes);
 			function.setSchema(Json.createObjectBuilder().build());
 			FunctionAccessor functionAccessor = parsingContext.getFunctionAccessor();

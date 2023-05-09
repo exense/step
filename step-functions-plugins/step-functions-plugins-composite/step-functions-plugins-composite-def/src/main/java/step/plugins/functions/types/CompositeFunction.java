@@ -18,25 +18,24 @@
  ******************************************************************************/
 package step.plugins.functions.types;
 
-import step.core.entities.EntityManager;
-import step.core.entities.EntityReference;
+import step.core.plans.Plan;
 import step.functions.Function;
+import step.core.functions.ArtefactFunction;
 
-public class CompositeFunction extends Function {
+public class CompositeFunction extends Function implements ArtefactFunction {
 
-	protected String planId;
+	protected Plan plan;
 	
 	public CompositeFunction() {
 		super();
 		executeLocally = true;
 	}
 
-	@EntityReference(type=EntityManager.plans)
-	public String getPlanId() {
-		return planId;
+	public Plan getPlan() {
+		return plan;
 	}
 
-	public void setPlanId(String planId) {
-		this.planId = planId;
+	public void setPlan(Plan plan) {
+		this.plan = plan;
 	}
 }

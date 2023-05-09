@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
+import step.core.plans.PlanAccessor;
 import step.core.scanner.AnnotationScanner;
 import step.functions.Function;
 import step.handlers.javahandler.Keyword;
@@ -31,6 +32,7 @@ import step.junit.runner.StepClassParserResult;
 import step.junit.runners.annotations.Plans;
 import step.plans.nl.RootArtefactType;
 import step.plans.nl.parser.PlanParser;
+import step.plugins.functions.types.CompositeFunctionUtils;
 import step.plugins.java.GeneralScriptFunction;
 
 import java.io.File;
@@ -39,7 +41,6 @@ import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.net.URL;
-import java.nio.file.Path;
 import java.util.*;
 
 public class StepJarParser {
@@ -47,9 +48,11 @@ public class StepJarParser {
     private static final Logger logger = LoggerFactory.getLogger(StepJarParser.class);
 
     private final StepClassParser stepClassParser;
+    private final PlanAccessor planAccessor;
 
-    public StepJarParser() {
-        stepClassParser = new StepClassParser(false);
+    public StepJarParser(PlanAccessor planAccessor) {
+        this.stepClassParser = new StepClassParser(false);
+        this.planAccessor = planAccessor;
     }
 
     private List<Function> getFunctions(AnnotationScanner annotationScanner, File artifact, File libraries) {
@@ -59,28 +62,39 @@ public class StepJarParser {
         for (Method m : methods) {
             Keyword annotation = m.getAnnotation(Keyword.class);
 
-            String functionName = annotation.name().length() > 0 ? annotation.name() : m.getName();
+            Function res;
+            if (annotation.planReference() != null && !annotation.planReference().isBlank()) {
+                try {
+                    res = CompositeFunctionUtils.createCompositeFunction(
+                            annotation, m,
+                            new PlanParser().parseCompositePlanFromPlanReference(m, annotation.planReference())
+                    );
+                } catch (Exception ex) {
+                    throw new RuntimeException("Unable to parse plan from reference", ex);
+                }
+            } else {
+                String functionName = annotation.name().length() > 0 ? annotation.name() : m.getName();
 
-            GeneralScriptFunction function = new GeneralScriptFunction();
-            function.setAttributes(new HashMap<>());
-            function.getAttributes().put(AbstractOrganizableObject.NAME, functionName);
-            function.setScriptFile(new DynamicValue<>(artifact.getAbsolutePath()));
-            if (libraries!=null) {
-                function.setLibrariesFile(new DynamicValue<>(libraries.getAbsolutePath()));
+                GeneralScriptFunction function = new GeneralScriptFunction();
+                function.setAttributes(new HashMap<>());
+                function.getAttributes().put(AbstractOrganizableObject.NAME, functionName);
+                function.setScriptFile(new DynamicValue<>(artifact.getAbsolutePath()));
+                if (libraries != null) {
+                    function.setLibrariesFile(new DynamicValue<>(libraries.getAbsolutePath()));
+                }
+                function.getCallTimeout().setValue(annotation.timeout());
+                function.setDescription(annotation.description());
+                function.setScriptLanguage(new DynamicValue<>("java"));
+                res = function;
             }
 
-            function.getCallTimeout().setValue(annotation.timeout());
-            function.setDescription(annotation.description());
-
-            function.setScriptLanguage(new DynamicValue<>("java"));
-
-            functions.add(function);
+            functions.add(res);
         }
         return functions;
     }
 
-    public List<Plan> getPlansForJar(File artifact, File dependency, String[] includedClasses, String[] includedAnnotations,
-                                     String[] excludedClasses, String[] excludedAnnotations) {
+	public List<Plan> getPlansForJar(File artifact, File dependency, String[] includedClasses, String[] includedAnnotations,
+									 String[] excludedClasses, String[] excludedAnnotations) {
 
         List<Plan> result = new ArrayList<>();
 

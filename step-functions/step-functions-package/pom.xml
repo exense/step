@@ -44,8 +44,29 @@
 		</dependency>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
+			<artifactId>step-functions-plugins-composite-def</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>ch.exense.step</groupId>
+			<artifactId>step-plans-parser</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>ch.exense.step</groupId>
 			<artifactId>step-functions-package-client</artifactId>
 			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>ch.exense.step</groupId>
+			<artifactId>step-api-json-schema</artifactId>
+			<version>${step-api.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.glassfish</groupId>
+					<artifactId>javax.json</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.eclipse.aether</groupId>

@@ -3,31 +3,31 @@ package step.functions.packages.handlers;
 import java.io.File;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.io.StringReader;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Set;
-
-import jakarta.json.Json;
-import jakarta.json.JsonException;
-import jakarta.json.JsonObject;
-import jakarta.json.stream.JsonParsingException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import step.attachments.FileResolver;
 import step.core.accessors.AbstractOrganizableObject;
-import step.core.dynamicbeans.DynamicValue;
 import step.core.scanner.AnnotationScanner;
+import step.functions.Function;
 import step.grid.contextbuilder.ApplicationContextBuilder;
 import step.grid.contextbuilder.LocalFileApplicationContextFactory;
 import step.grid.contextbuilder.LocalFolderApplicationContextFactory;
 import step.handlers.javahandler.Keyword;
+import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
+import step.handlers.javahandler.jsonschema.KeywordJsonSchemaCreator;
+import step.plans.nl.parser.PlanParser;
+import step.plugins.functions.types.CompositeFunctionUtils;
 import step.plugins.java.GeneralScriptFunction;
 import step.resources.LocalResourceManagerImpl;
 
 public class JavaFunctionPackageDaemon extends FunctionPackageUtils {
-	
+
+	private final KeywordJsonSchemaCreator schemaCreator = new KeywordJsonSchemaCreator();
+
 	public JavaFunctionPackageDaemon() {
 		super(new FileResolver(new LocalResourceManagerImpl()));
 	}
@@ -77,52 +77,42 @@ public class JavaFunctionPackageDaemon extends FunctionPackageUtils {
 				Set<Method> methods = annotationScanner.getMethodsWithAnnotation(Keyword.class);
 				for(Method m:methods) {
 					Keyword annotation = m.getAnnotation(Keyword.class);
-					
-					String functionName = annotation.name().length()>0?annotation.name():m.getName();
-					
-					GeneralScriptFunction function = new GeneralScriptFunction();
-					function.setAttributes(new HashMap<>());
-					function.getAttributes().put(AbstractOrganizableObject.NAME, functionName);
-
-					function.getCallTimeout().setValue(annotation.timeout());
-					function.setDescription(annotation.description());
-
-					if(packageLibrariesFile != null) {
-						function.getLibrariesFile().setValue(parameters.getPackageLibrariesLocation());
-					}
-					
-					function.getScriptFile().setValue(parameters.getPackageLocation());
-					function.getScriptLanguage().setValue("java");
-					
-					JsonObject schema;
-					String schemaStr = annotation.schema();
-					if(schemaStr.length()>0) {
-						try {
-							schema = Json.createReader(new StringReader(schemaStr)).readObject();
-						} catch (JsonParsingException e) {
-							functions.exception = "Parsing error in the schema for keyword '"+m.getName()+"'. The error was: "+e.getMessage();
-							functions.functions.clear();
-							return functions;
-						}catch (JsonException e) {
-							functions.exception = "I/O error in the schema for keyword '"+m.getName()+"'. The error was: "+e.getMessage();
-							functions.functions.clear();
-							return functions;
-						}catch (Exception e) {
-							functions.exception = "Unknown error in the schema for keyword '"+m.getName()+"'. The error was: "+e.getMessage();
-							functions.functions.clear();
-							return functions;
-						}
+					Function res;
+					if(annotation.planReference() != null && !annotation.planReference().isBlank()){
+						res = CompositeFunctionUtils.createCompositeFunction(annotation, m, new PlanParser().parseCompositePlanFromPlanReference(m, annotation.planReference()));
 					} else {
-						schema = Json.createObjectBuilder().build();
+						String functionName = annotation.name().length() > 0 ? annotation.name() : m.getName();
+
+						GeneralScriptFunction function = new GeneralScriptFunction();
+						function.setAttributes(new HashMap<>());
+						function.getAttributes().put(AbstractOrganizableObject.NAME, functionName);
+
+						function.getCallTimeout().setValue(annotation.timeout());
+
+						if (packageLibrariesFile != null) {
+							function.getLibrariesFile().setValue(parameters.getPackageLibrariesLocation());
+						}
+
+						function.getScriptFile().setValue(parameters.getPackageLocation());
+						function.getScriptLanguage().setValue("java");
+						res = function;
 					}
-					function.setSchema(schema);
-					String htmlTemplate = function.getAttributes().remove("htmlTemplate");
+					res.setDescription(annotation.description());
+					try {
+						res.setSchema(schemaCreator.createJsonSchemaForKeyword(m));
+					} catch (JsonSchemaPreparationException ex){
+						functions.exception = ex.getMessage();
+						functions.functions.clear();
+						return functions;
+					}
+
+					String htmlTemplate = res.getAttributes().remove("htmlTemplate");
 					if (htmlTemplate != null && !htmlTemplate.isEmpty()) {
-						function.setHtmlTemplate(htmlTemplate);
-						function.setUseCustomTemplate(true);
+						res.setHtmlTemplate(htmlTemplate);
+						res.setUseCustomTemplate(true);
 					}
-					
-					functions.functions.add(function);
+
+					functions.functions.add(res);
 				}
 			}
 		} catch (Throwable e) {
@@ -130,4 +120,5 @@ public class JavaFunctionPackageDaemon extends FunctionPackageUtils {
 		}
 		return functions;
 	}
+
 }
