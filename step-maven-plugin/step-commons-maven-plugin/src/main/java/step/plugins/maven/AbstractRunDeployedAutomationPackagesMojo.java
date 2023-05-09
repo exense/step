@@ -36,7 +36,7 @@ public abstract class AbstractRunDeployedAutomationPackagesMojo extends Abstract
 
 	@Override
 	public void execute() throws MojoExecutionException {
-		getLog().info("Run Step execution for deployed module " + getBuildFinalName() + " (version=" + getProjectVersion() + ")");
+		getLog().info("Run Step execution for deployed module " + getBuildFinalName() + " (version=" + getProjectVersion() + ") on " + getUrl() + " ");
 
 		// empty context here - we just call the execution client according to the  plugin parameters
 		executeBundleOnStep(new HashMap<>());
