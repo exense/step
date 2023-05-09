@@ -86,14 +86,19 @@ public abstract class AbstractRunAutomationPackagesMojo extends AbstractStepPlug
 	protected abstract RepositoryObjectReference prepareExecutionRepositoryObject(Map<String, Object> executionContext);
 
 	private void waitForExecutionFinish(RemoteExecutionManager remoteExecutionManager, String executionId) throws MojoExecutionException {
-		getLog().info("Waiting for execution result from Step...");
+		getLog().info("Waiting for execution result from Step (" + getUrl() + ")...");
 
 		// run the execution and wait until it is finished
 		try {
 			RemoteExecutionFuture executionFuture = remoteExecutionManager.getFuture(executionId).waitForExecutionToTerminate(getExecutionResultTimeoutS() * 1000);
 			Execution endedExecution = executionFuture.getExecution();
 			if (getEnsureExecutionSuccess() && !Objects.equals(endedExecution.getResult(), ReportNodeStatus.PASSED)) {
-				throw new MojoExecutionException("The execution result is NOT OK for execution " + executionId + ". Final status is " + endedExecution.getResult());
+				if (!endedExecution.getImportResult().isSuccessful()) {
+					throw new MojoExecutionException("The execution result is NOT OK for execution " + executionId + ". The following error(s) occurred during import " +
+							endedExecution.getImportResult().getErrors());
+				} else {
+					throw new MojoExecutionException("The execution result is NOT OK for execution " + executionId + ". Final status is " + endedExecution.getResult());
+				}
 			} else {
 				getLog().info("The execution result is OK. Final status is " + endedExecution.getResult());
 			}
