@@ -42,6 +42,7 @@ public class SimpleDynamicValueDeserializer extends JsonDeserializer<DynamicValu
 	public DynamicValue<?> deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException, JacksonException {
 		JsonNode node = jp.getCodec().readTree(jp);
 		JsonNode expressionNode = node.get("expression");
+		// TODO: do we need to use expression
 		JsonNode expressionTypeNode = node.get("expressionType");
 		JsonNode valueNode = node.get("value");
 

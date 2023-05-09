@@ -32,9 +32,9 @@ import org.slf4j.LoggerFactory;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
+import step.handlers.javahandler.jsonschema.JsonInputConverter;
 import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 import step.handlers.javahandler.jsonschema.KeywordJsonSchemaCreator;
-import step.handlers.javahandler.jsonschema.JsonInputConverter;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
@@ -63,14 +63,21 @@ public class SimplifiedPlanJsonSchemaGenerator {
 
 	public JsonNode generateJsonSchema() throws JsonSchemaPreparationException {
 		JsonObjectBuilder topLevelBuilder = jsonProvider.createObjectBuilder();
+
+		// common fields for json schema
 		topLevelBuilder.add("$schema", "https://json-schema.org/draft/2020-12/schema");
 		topLevelBuilder.add("title", "Plan");
 		topLevelBuilder.add("type", "object");
+
+		// prepare definitions to be reused in subschemas (referenced via $ref property)
 		topLevelBuilder.add("$defs", createDefs());
+
+		// add properties for top-level "plan" object
 		topLevelBuilder.add("properties", createPlanProperties());
 		topLevelBuilder.add("required", jsonProvider.createArrayBuilder().add("name").add("root"));
 		topLevelBuilder.add( "additionalProperties", false);
 
+		// convert jakarta objects to jackson JsonNode
 		try {
 			return fromJakartaToJsonNode(topLevelBuilder);
 		} catch (JsonProcessingException e) {
@@ -79,6 +86,7 @@ public class SimplifiedPlanJsonSchemaGenerator {
 	}
 
 	private JsonObjectBuilder createPlanProperties() {
+		// plan only has "name" and the root artifact
 		JsonObjectBuilder objectBuilder = jsonProvider.createObjectBuilder();
 		objectBuilder.add("name", jsonProvider.createObjectBuilder().add("type", "string"));
 		objectBuilder.add("root", addRef(jsonProvider.createObjectBuilder(), ARTEFACT_DEF));
@@ -92,24 +100,29 @@ public class SimplifiedPlanJsonSchemaGenerator {
 	private JsonObjectBuilder createDefs() throws JsonSchemaPreparationException {
 		JsonObjectBuilder defsBuilder = jsonProvider.createObjectBuilder();
 
+		// prepare definitions for generic DynamicValue class
 		Map<String, JsonObjectBuilder> dynamicValueDefs = createDynamicValueImplDefs();
 		for (Map.Entry<String, JsonObjectBuilder> dynamicValueDef : dynamicValueDefs.entrySet()) {
 			defsBuilder.add(dynamicValueDef.getKey(), dynamicValueDef.getValue());
 		}
 
+		// prepare definitions for subclasses annotated with @Artefact
 		Map<String, JsonObjectBuilder> artefactImplDefs = createArtefactImplDefs();
 		for (Map.Entry<String, JsonObjectBuilder> artefactImplDef : artefactImplDefs.entrySet()) {
 			defsBuilder.add(artefactImplDef.getKey(), artefactImplDef.getValue());
 		}
 
+		// add definition for "anyOf" artefact definitions prepared above
 		defsBuilder.add(ARTEFACT_DEF, createArtefactDef(artefactImplDefs.keySet()));
 		return defsBuilder;
 	}
 
 	private Map<String, JsonObjectBuilder> createArtefactImplDefs() throws JsonSchemaPreparationException {
+		// scan all @Artefact classes in classpath and automatically prepare definitions for them
 		Map<String, JsonObjectBuilder> res = new HashMap<>();
 		Reflections r = new Reflections( new ConfigurationBuilder().forPackage(targetPackage));
 
+		// exclude artefacts from test packages
 		List<Class<?>> artefactClasses = r.getTypesAnnotatedWith(Artefact.class)
 				.stream()
 				.filter(c -> !c.getAnnotation(Artefact.class).test())
@@ -117,9 +130,12 @@ public class SimplifiedPlanJsonSchemaGenerator {
 		log.info("The following {} artefact classes detected: {}", artefactClasses.size(), artefactClasses);
 
 		for (Class<?> artefactClass : artefactClasses) {
+			// use the name of artefact as definition name
 			Artefact ann = artefactClass.getAnnotation(Artefact.class);
 			String name = ann.name() == null || ann.name().isEmpty() ? artefactClass.getSimpleName() : ann.name();
 			String defName = name + "Def";
+
+			// scan all fields in artefact class and put them to artefact definition
 			res.put(defName, createArtefactImplDef(name, artefactClass));
 		}
 		return res;
@@ -128,8 +144,11 @@ public class SimplifiedPlanJsonSchemaGenerator {
 	private JsonObjectBuilder createArtefactImplDef(String name, Class<?> artefactClass) throws JsonSchemaPreparationException {
 		JsonObjectBuilder res = jsonProvider.createObjectBuilder();
 		res.add("type", "object");
+
+		// artefact has the top-level property matching the artefact name
 		JsonObjectBuilder artefactNameProperty = jsonProvider.createObjectBuilder();
 
+		// other properties are located in nested object and automatically prepared via reflection
 		JsonObjectBuilder artefactProperties = jsonProvider.createObjectBuilder();
 		fillArtefactProperties(artefactClass, artefactProperties, name);
 
@@ -141,6 +160,7 @@ public class SimplifiedPlanJsonSchemaGenerator {
 	private void fillArtefactProperties(Class<?> artefactClass, JsonObjectBuilder artefactProperties, String artefactName) throws JsonSchemaPreparationException {
 		log.info("Preparing json schema for artefact class {}...", artefactClass);
 
+		// analyze hierarchy of class annotated with @Artefact
 		List<Class<?>> classHierarchy = new ArrayList<>();
 		Class<?> currentClass = artefactClass;
 		while (currentClass != null) {
@@ -149,7 +169,11 @@ public class SimplifiedPlanJsonSchemaGenerator {
 		}
 
 		for (Class<?> c : classHierarchy) {
+			// for some parent classes we want to avoid auto generation via reflection (for instance, for AbstractArtefact we want to skip the most of technical fields)
 			if (!applyCustomPropertiesGenerationForClass(c, artefactProperties, artefactName)) {
+				// the common (not custom logic for some Artefact class
+
+				// get all from fields from the certain class
 				Field[] fields = c.getDeclaredFields();
 
 				// for each field we want either build the json schema via reflection
@@ -166,6 +190,8 @@ public class SimplifiedPlanJsonSchemaGenerator {
 									propertiesBuilder.add("enum", enumArray);
 									return true;
 								} else if (DynamicValue.class.isAssignableFrom(field.getType())) {
+									// for dynamic value we need to reference the definition prepared above
+									// the definition depends on generic type used in dynamic value (string, integer, boolean, etc)
 									Type genericType = field.getGenericType();
 									if (genericType instanceof ParameterizedType) {
 										Type[] arguments = ((ParameterizedType) genericType).getActualTypeArguments();
