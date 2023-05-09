@@ -111,7 +111,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 			} else {
 				createReportSkeleton_(reportNode, artefact);
 			}
-		} catch (Exception e) {
+		} catch (Throwable e) {
 			getListOfArtefactsNotInitialized().add(artefact.getId().toString());
 			failWithException(reportNode, e, false);
 		}
