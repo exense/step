@@ -21,6 +21,7 @@ package step.core.execution;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
@@ -42,6 +43,7 @@ import step.core.repositories.ImportResult;
 import step.core.repositories.RepositoryObjectManager;
 import step.core.repositories.RepositoryObjectReference;
 import step.engine.execution.ExecutionLifecycleManager;
+import step.engine.execution.ExecutionVeto;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 
@@ -69,23 +71,33 @@ public class ExecutionEngineRunner {
 		String executionId = executionContext.getExecutionId();
 		PlanRunnerResult result = result(executionId);
 		try {
-			ExecutionParameters executionParameters = executionContext.getExecutionParameters();
-			Plan plan = executionParameters.getPlan();
-			
-			if(plan == null) {
-				executionLifecycleManager.beforePlanImport();
-				
-				updateStatus(ExecutionStatus.IMPORTING);
-				ImportResult importResult = importPlan(executionContext);
-				
+			Plan plan = null;
+			List<ExecutionVeto> vetoes = executionLifecycleManager.getExecutionVetoes();
+			if (!vetoes.isEmpty()) {
+				logger.info("Execution was vetoed.");
+				ImportResult importResult = new ImportResult();
+				importResult.setSuccessful(false);
+				importResult.setErrors(vetoes.stream().map(v -> v.reason).collect(Collectors.toList()));
 				executionLifecycleManager.afterImport(importResult);
-				
-				if(importResult.isSuccessful()) {
-					PlanAccessor planAccessor = executionContext.getPlanAccessor();
-					plan = planAccessor.get(new ObjectId(importResult.getPlanId()));
+			} else {
+				ExecutionParameters executionParameters = executionContext.getExecutionParameters();
+				plan = executionParameters.getPlan();
+
+				if (plan == null) {
+					executionLifecycleManager.beforePlanImport();
+
+					updateStatus(ExecutionStatus.IMPORTING);
+					ImportResult importResult = importPlan(executionContext);
+
+					executionLifecycleManager.afterImport(importResult);
+
+					if (importResult.isSuccessful()) {
+						PlanAccessor planAccessor = executionContext.getPlanAccessor();
+						plan = planAccessor.get(new ObjectId(importResult.getPlanId()));
+					}
+
 				}
 			}
-			
 			if(plan != null) {
 				executionContext.setPlan(plan);
 				
