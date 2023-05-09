@@ -95,7 +95,7 @@ public abstract class AbstractRunAutomationPackagesMojo extends AbstractStepPlug
 			if (getEnsureExecutionSuccess() && !Objects.equals(endedExecution.getResult(), ReportNodeStatus.PASSED)) {
 				if (!endedExecution.getImportResult().isSuccessful()) {
 					throw new MojoExecutionException("The execution result is NOT OK for execution " + executionId + ". The following error(s) occurred during import " +
-							endedExecution.getImportResult().getErrors());
+							String.join(";", endedExecution.getImportResult().getErrors()));
 				} else {
 					throw new MojoExecutionException("The execution result is NOT OK for execution " + executionId + ". Final status is " + endedExecution.getResult());
 				}
