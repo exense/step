@@ -39,6 +39,7 @@ import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.reports.ReportNode;
 import step.core.deployment.AbstractStepServices;
+import step.core.functions.ArtefactFunction;
 import step.framework.server.security.Secured;
 import step.core.encryption.EncryptionManager;
 import step.core.execution.AbstractExecutionEngineContext;
@@ -225,6 +226,30 @@ public class InteractiveServices extends AbstractStepServices {
 		} else {
 			 throw new RuntimeException("Session doesn't exist or expired.");
 		}
+	}
+
+	@POST
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/{id}/executefunction/{functionid}/{artefactid}")
+	@Secured(right="interactive")
+	public ReportNode executeCompositeFunction(@PathParam("id") String sessionId, @PathParam("functionid") String functionId, @PathParam("artefactid") String artefactId, @Context ContainerRequestContext crc) throws InterruptedException, ExecutionException {
+		InteractiveSession session = getAndTouchSession(sessionId);
+		if(session!=null) {
+			AbstractArtefact artefact = findArtefactInCompositeFunction(functionId, artefactId);
+			Future<ReportNode> future = session.getArtefactQueue().add(artefact);
+			return future.get();
+		} else {
+			 throw new RuntimeException("Session doesn't exist or expired.");
+		}
+	}
+
+	protected AbstractArtefact findArtefactInCompositeFunction(String functionId, String artefactId) {
+		Function function = functionManager.getFunctionById(functionId);
+		if (!(function instanceof ArtefactFunction)) {
+			throw new RuntimeException("Only composite functions can be executed");
+		}
+		return new PlanNavigator(((ArtefactFunction) function).getPlan()).findArtefactById(artefactId);
 	}
 
 	protected AbstractArtefact findArtefactInPlan(String planId, String artefactId) {

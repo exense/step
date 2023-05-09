@@ -1,6 +1,8 @@
 package step.plugins.timeseries;
 
 import ch.exense.commons.app.Configuration;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.MediaType;
 import org.apache.commons.lang3.StringUtils;
 import step.controller.services.async.AsyncTaskManager;
 import step.controller.services.async.AsyncTaskStatus;
@@ -12,6 +14,7 @@ import step.core.collections.inmemory.InMemoryCollection;
 import step.core.deployment.ControllerServiceException;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
+import step.core.ql.OQLFilterBuilder;
 import step.core.timeseries.TimeSeries;
 import step.core.timeseries.TimeSeriesFilterBuilder;
 import step.core.timeseries.TimeSeriesIngestionPipeline;
@@ -22,6 +25,7 @@ import step.core.timeseries.aggregation.TimeSeriesAggregationResponse;
 import step.core.timeseries.bucket.Bucket;
 import step.core.timeseries.bucket.BucketAttributes;
 import step.core.timeseries.query.OQLTimeSeriesFilterBuilder;
+import step.framework.server.security.Secured;
 import step.plugins.measurements.Measurement;
 import step.plugins.measurements.MeasurementPlugin;
 import step.plugins.timeseries.api.*;
@@ -36,6 +40,7 @@ import static step.plugins.timeseries.TimeSeriesExecutionPlugin.TIMESERIES_FLAG;
 
 public class TimeSeriesHandler {
 
+	private static final int FIELDS_SAMPLING_LIMIT = 1_000;
     private static final String ATTRIBUTES_PREFIX = "attributes.";
     private static final String METRIC_TYPE_ATTRIBUTE = "metricType";
     private static final String TIMESTAMP_ATTRIBUTE = "begin";
@@ -141,12 +146,23 @@ public class TimeSeriesHandler {
             try {
                 oqlAttributes = new HashSet<>(OQLTimeSeriesFilterBuilder.getFilterAttributes(oql));
                 hasUnknownFields = !attributesWithPrefix.containsAll(oqlAttributes);
-
+				if (oqlAttributes.isEmpty()) { // there are strings like 'abcd' which is a valid OQL by some reason
+					isValid = false;
+				}
             } catch (IllegalStateException e) {
                 isValid = false;
             }
         }
         return new OQLVerifyResponse(isValid, hasUnknownFields, oqlAttributes);
+    }
+	
+    public Set<String> getMeasurementsAttributes(String oqlFilter) {
+		Filter filter = OQLTimeSeriesFilterBuilder.getFilter(oqlFilter, attributesPrefixRemoval, Collections.emptySet());
+        Set<String> fields = new HashSet<>();
+        measurementCollection.find(filter, null, 0, FIELDS_SAMPLING_LIMIT, 0).forEach(measurement -> {
+            fields.addAll(measurement.keySet());
+        });
+        return fields;
     }
 
     public boolean timeSeriesIsBuilt(String executionId) {

@@ -33,9 +33,10 @@
 		<module>step-functions-plugins-composite-def</module>
 		<module>step-functions-plugins-composite-controller-def</module>
 		<module>step-functions-plugins-composite-handler</module>
+		<module>step-functions-plugins-local-composite</module>
 	</modules>
 	
-	
+
 	<dependencies>
 
 	</dependencies>

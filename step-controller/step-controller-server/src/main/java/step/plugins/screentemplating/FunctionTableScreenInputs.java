@@ -23,7 +23,9 @@ public class FunctionTableScreenInputs {
             if (inputId.startsWith(ATTRIBUTES)) {
                 String attributeKey = inputId.replace(ATTRIBUTES, "");
                 String attributeValue = function.getAttribute(attributeKey);
-                attributes.put(attributeKey, attributeValue);
+                if (attributeValue != null) {
+                    attributes.put(attributeKey, attributeValue);
+                }
             }
         });
         return attributes;

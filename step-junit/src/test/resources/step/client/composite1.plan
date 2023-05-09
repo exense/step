@@ -1,0 +1,4 @@
+Sequence
+Echo "My composite"
+callExisting2
+End

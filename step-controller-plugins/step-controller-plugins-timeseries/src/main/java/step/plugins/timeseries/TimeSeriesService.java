@@ -11,9 +11,11 @@ import step.controller.services.async.AsyncTaskManager;
 import step.controller.services.async.AsyncTaskStatus;
 import step.core.GlobalContext;
 import step.core.collections.Collection;
+import step.core.collections.Filter;
 import step.core.deployment.AbstractStepServices;
 import step.core.entities.EntityManager;
 import step.core.execution.model.ExecutionAccessor;
+import step.core.ql.OQLFilterBuilder;
 import step.core.timeseries.*;
 import step.core.timeseries.aggregation.TimeSeriesAggregationPipeline;
 import step.framework.server.security.Secured;
@@ -86,6 +88,15 @@ public class TimeSeriesService extends AbstractStepServices {
     @Produces(MediaType.APPLICATION_JSON)
     public boolean timeSeriesIsBuilt(@PathParam("executionId") String executionId) {
         return handler.timeSeriesIsBuilt(executionId);
+    }
+	
+	@Secured(right = "execution-read")
+    @GET
+    @Path("/measurements-fields")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Set<String> getMeasurementsAttributes(@QueryParam("filter") String oqlFilter) {
+        return handler.getMeasurementsAttributes(oqlFilter);
     }
 
 }
