@@ -61,7 +61,7 @@
 		<step-api.version>2023.5.8-6459000e38cd392fca3917c8</step-api.version>
 		<!-- external dependencies -->
 		<junit.version>4.13.1</junit.version>
-		<mockito.version>1.9.5</mockito.version>
+		<mockito.version>5.1.1</mockito.version>
 		<groovy.version>3.0.10</groovy.version>
 		<jackson.version>2.13.3</jackson.version>
 		<jersey.version>3.0.4</jersey.version>
@@ -108,6 +108,7 @@
 		<module>../step-plans</module>
 		<module>../step-controller</module>
 		<module>../step-controller-plugins</module>
+		<module>../step-maven-plugin</module>
 		<module>../step-repositories</module>
 		<module>../step-ide</module>
 		<module>../step-junit</module>

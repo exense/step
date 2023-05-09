@@ -43,6 +43,11 @@
 		</dependency>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
+			<artifactId>step-controller-multitenancy-model</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>ch.exense.step</groupId>
 			<artifactId>step-plans-core</artifactId>
 			<version>${project.version}</version>
 		</dependency>

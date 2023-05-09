@@ -219,7 +219,7 @@ public class ArtifactRepository extends AbstractRepository {
     }
 
     private List<Plan> parsePlan(File artifact, File libraries, String[] includedClasses, String[] includedAnnotations, String[] excludedClasses, String[] excludedAnnotations) {
-        return new StepJarParser(planAccessor).getPlansForJar(artifact,libraries,includedClasses,includedAnnotations,excludedClasses,excludedAnnotations);
+        return new StepJarParser().getPlansForJar(artifact,libraries,includedClasses,includedAnnotations,excludedClasses,excludedAnnotations);
     }
 
     private static class FileAndPlan {
