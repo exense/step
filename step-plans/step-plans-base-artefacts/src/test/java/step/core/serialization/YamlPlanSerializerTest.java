@@ -66,10 +66,4 @@ public class YamlPlanSerializerTest {
 		}
 	}
 
-	@Test
-	public void generateSchema() throws JsonSchemaPreparationException {
-		YamlPlanJsonGenerator schemaGenerator = new YamlPlanJsonGenerator("step");
-		JsonNode schema = schemaGenerator.generateJsonSchema();
-		log.info(schema.toPrettyString());
-	}
 }
