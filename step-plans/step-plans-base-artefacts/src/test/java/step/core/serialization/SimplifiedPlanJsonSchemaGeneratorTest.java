@@ -20,6 +20,8 @@ public class SimplifiedPlanJsonSchemaGeneratorTest {
 
 	@Test
 	public void generateJsonSchema() throws IOException, JsonSchemaPreparationException {
+		log.info("Generating actual json schema for simplified plan format");
+
 		// read published json schema
 		// TODO: how to publish schema and how to check it in test?
 		File jsonSchemaFile = new File("src/test/resources/step/core/plans/serialization/simplified-plan-schema-published.json");
