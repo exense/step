@@ -18,15 +18,7 @@
  ******************************************************************************/
 package step.engine.plugins;
 
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import org.bson.types.ObjectId;
-
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.execution.AbstractExecutionEngineContext;
@@ -41,6 +33,9 @@ import step.functions.type.FunctionTypeRegistry;
 import step.handlers.javahandler.Keyword;
 import step.handlers.javahandler.KeywordExecutor;
 import step.plugins.java.handler.KeywordHandler;
+
+import java.lang.reflect.Method;
+import java.util.*;
 
 @Plugin(dependencies= {FunctionPlugin.class})
 public class LocalFunctionPlugin extends AbstractExecutionEnginePlugin {
@@ -59,23 +54,26 @@ public class LocalFunctionPlugin extends AbstractExecutionEnginePlugin {
 			functionAccessor.save(localFunctions);
 		}
 	}
-	
+
 	public List<Function> getLocalFunctions() {
 		List<Function> functions = new ArrayList<Function>();
 
 		Set<Method> methods = CachedAnnotationScanner.getMethodsWithAnnotation(Keyword.class);
-		for(Method m:methods) {
+		for (Method m : methods) {
 			Keyword annotation = m.getAnnotation(Keyword.class);
-			
-			String functionName = annotation.name().length()>0?annotation.name():m.getName();
-			
-			LocalFunction function = new LocalFunction();
-			function.getCallTimeout().setValue(annotation.timeout());
-			function.setAttributes(new HashMap<>());
-			function.getAttributes().put(AbstractOrganizableObject.NAME, functionName);
-			function.setClassName(m.getDeclaringClass().getName());
 
-			functions.add(function);
+			// keywords with plan reference are not local functions but composite functions linked with plan
+			if (annotation.planReference() == null || annotation.planReference().isBlank()) {
+				String functionName = annotation.name().length() > 0 ? annotation.name() : m.getName();
+
+				LocalFunction function = new LocalFunction();
+				function.getCallTimeout().setValue(annotation.timeout());
+				function.setAttributes(new HashMap<>());
+				function.getAttributes().put(AbstractOrganizableObject.NAME, functionName);
+				function.setClassName(m.getDeclaringClass().getName());
+
+				functions.add(function);
+			}
 		}
 		return functions;
 	}

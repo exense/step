@@ -146,7 +146,9 @@ public class TimeSeriesHandler {
             try {
                 oqlAttributes = new HashSet<>(OQLTimeSeriesFilterBuilder.getFilterAttributes(oql));
                 hasUnknownFields = !attributesWithPrefix.containsAll(oqlAttributes);
-
+				if (oqlAttributes.isEmpty()) { // there are strings like 'abcd' which is a valid OQL by some reason
+					isValid = false;
+				}
             } catch (IllegalStateException e) {
                 isValid = false;
             }

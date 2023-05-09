@@ -44,11 +44,13 @@ public class JavaFunctionPackageHandler extends AbstractFunctionPackageHandler {
 
 	@Override
 	protected void configureFunction(Function f, FunctionPackage functionPackage) {
-		GeneralScriptFunction function = (GeneralScriptFunction) f;
-		
-		function.setScriptLanguage(new DynamicValue<>("java"));
-		function.setScriptFile(new DynamicValue<>(functionPackage.getPackageLocation()));
-		function.setLibrariesFile(new DynamicValue<>(functionPackage.getPackageLibrariesLocation()));
+		if (f instanceof GeneralScriptFunction) {
+			GeneralScriptFunction function = (GeneralScriptFunction) f;
+
+			function.setScriptLanguage(new DynamicValue<>("java"));
+			function.setScriptFile(new DynamicValue<>(functionPackage.getPackageLocation()));
+			function.setLibrariesFile(new DynamicValue<>(functionPackage.getPackageLibrariesLocation()));
+		}
 	}
 
 	@Override
