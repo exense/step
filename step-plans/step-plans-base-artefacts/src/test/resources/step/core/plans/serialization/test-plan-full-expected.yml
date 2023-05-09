@@ -64,7 +64,7 @@ root:
         expressionType: ""
       customErrorMessage:
         dynamic: false
-        value: ""
+        value: "my custom error"
         expression: null
         expressionType: null
       id: "644fbe4e38a61e07cc3a4df8"

@@ -19,7 +19,6 @@
 package step.core.serialization;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.bson.types.ObjectId;
 import org.junit.Assert;
 import org.junit.Test;
@@ -42,8 +41,6 @@ public class YamlPlanSerializerTest {
 	private static final ObjectId STATIC_ID = new ObjectId("644fbe4e38a61e07cc3a4df8") ;
 
 	private final YamlPlanSerializer serializer = new YamlPlanSerializer(() -> STATIC_ID);
-
-	private final ObjectMapper jsonObjectMapper = new ObjectMapper();
 
 	@Test
 	public void readSimplePlanFromYaml() {

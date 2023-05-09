@@ -21,6 +21,7 @@ package step.core.plans.serialization;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -28,6 +29,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import org.bson.types.ObjectId;
 import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.artefacts.AbstractArtefact;
+import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
 import step.core.plans.serialization.model.SimpleYamlPlan;
 
@@ -52,6 +54,11 @@ public class YamlPlanSerializer {
 		// Disable native type id to enable conversion to generic Documents
 		factory.disable(YAMLGenerator.Feature.USE_NATIVE_TYPE_ID);
 		this.mapper = DefaultJacksonMapperProvider.getObjectMapper(factory);
+
+		// configure custom deserializers
+		SimpleModule module = new SimpleModule();
+		module.addDeserializer(DynamicValue.class, new SimpleDynamicValueDeserializer());
+		mapper.registerModule(module);
 
 		this.idGenerator = idGenerator;
 	}

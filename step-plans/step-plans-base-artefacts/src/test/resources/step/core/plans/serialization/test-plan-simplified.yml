@@ -22,4 +22,4 @@ root:
             expression: "'ok'"
             expressionType: ""
           customErrorMessage:
-            value: ""
+            value: "my custom error"
