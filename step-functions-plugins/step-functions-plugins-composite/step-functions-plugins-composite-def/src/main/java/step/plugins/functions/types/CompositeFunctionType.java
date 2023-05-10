@@ -18,15 +18,9 @@
  ******************************************************************************/
 package step.plugins.functions.types;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import step.core.AbstractContext;
 import step.core.objectenricher.ObjectHookRegistry;
 import step.core.plans.Plan;
-import step.core.plans.PlanAccessor;
-import step.core.plans.PlanType;
-import step.core.plans.PlanTypeRegistry;
 import step.core.plans.builder.PlanBuilder;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionTypeException;
@@ -35,20 +29,18 @@ import step.grid.filemanager.FileVersionId;
 import step.planbuilder.BaseArtefacts;
 import step.plugins.functions.types.composite.ArtefactFunctionHandler;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class CompositeFunctionType extends AbstractFunctionType<CompositeFunction> {
 
 	protected FileVersionId handlerJar;
 
-	protected final PlanAccessor planAccessor;
-
 	private final ObjectHookRegistry objectHookRegistry;
-	private final PlanTypeRegistry planTypeRegistry;
 
-	public CompositeFunctionType(PlanAccessor planAccessor, ObjectHookRegistry objectHookRegistry, PlanTypeRegistry planTypeRegistry) {
+	public CompositeFunctionType(ObjectHookRegistry objectHookRegistry) {
 		super();
-		this.planAccessor = planAccessor;
 		this.objectHookRegistry = objectHookRegistry;
-		this.planTypeRegistry = planTypeRegistry;
 	}
 
 	@Override
@@ -65,7 +57,7 @@ public class CompositeFunctionType extends AbstractFunctionType<CompositeFunctio
 	@Override
 	public Map<String, String> getHandlerProperties(CompositeFunction function) {
 		Map<String, String> props = new HashMap<>();
-		props.put(ArtefactFunctionHandler.PLANID_KEY, function.getPlanId());
+		props.put(ArtefactFunctionHandler.COMPOSITE_FUNCTION_KEY, function.getId().toString());
 		return props;
 	}
 
@@ -73,10 +65,9 @@ public class CompositeFunctionType extends AbstractFunctionType<CompositeFunctio
 	public void setupFunction(CompositeFunction function) throws SetupFunctionException {
 		super.setupFunction(function);
 
-		// if existing plan is not explicitly selected for the new function, we create a new one
-		if (function.getPlanId() == null) {
-			Plan plan = PlanBuilder.create().startBlock(BaseArtefacts.sequence()).endBlock().build();
-			// hide the plan of the composite keyword
+		// for the new function we need to create a default (empty) plan
+		if (function.getPlan() == null) {
+			Plan plan = PlanBuilder.create().startBlock(BaseArtefacts.sequence()).endBlock().build();;
 			plan.setVisible(false);
 
 			// add same context attributes to plan
@@ -85,41 +76,22 @@ public class CompositeFunctionType extends AbstractFunctionType<CompositeFunctio
 					AbstractContext context = new AbstractContext() {
 					};
 					objectHookRegistry.rebuildContext(context, function);
+
+					// TODO: do we need to call objectEnricher?
 					objectHookRegistry.getObjectEnricher(context).accept(plan);
 				} catch (Exception e) {
 					throw new SetupFunctionException("Error while rebuilding context for function " + function, e);
 				}
 			}
 
-			planAccessor.save(plan);
-			function.setPlanId(plan.getId().toString());
+			// save plan in composite function
+			function.setPlan(plan);
 		}
 	}
 
 	@Override
 	public CompositeFunction copyFunction(CompositeFunction function) throws FunctionTypeException {
-		CompositeFunction copy = super.copyFunction(function);
-
-		// copy plan
-		if (copy.getPlanId() != null) {
-			Plan origPlan = planAccessor.get(copy.getPlanId());
-			if (origPlan != null) {
-				PlanType<Plan> planType = planTypeRegistry != null ? (PlanType<Plan>) planTypeRegistry.getPlanType(origPlan.getClass()) : null;
-				if (planType != null) {
-					Plan copyPlan = planType.clonePlan(origPlan, false);
-					Plan newPlan = planAccessor.save(copyPlan);
-
-					// assign a link to the new plan
-					copy.setPlanId(newPlan.getId().toString());
-				} else {
-					throw new FunctionTypeException("Unable to resolve plan type for class " + origPlan.getClass());
-				}
-			} else {
-				throw new FunctionTypeException("Plan not found: " + copy.getPlanId());
-			}
-		}
-
-		return copy;
+		return super.copyFunction(function);
 	}
 
 	@Override

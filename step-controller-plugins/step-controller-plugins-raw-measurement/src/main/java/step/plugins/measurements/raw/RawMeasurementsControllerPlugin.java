@@ -27,6 +27,9 @@ import step.core.collections.Document;
 import step.core.entities.EntityManager;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
+import step.framework.server.tables.Table;
+import step.framework.server.tables.TableRegistry;
+import step.plugins.measurements.Measurement;
 import step.plugins.measurements.MeasurementPlugin;
 
 @Plugin
@@ -39,14 +42,17 @@ public class RawMeasurementsControllerPlugin extends AbstractControllerPlugin {
 	@Override
 	public void serverStart(GlobalContext context) throws Exception {
 
-        Collection<Document> collection = context.getCollectionFactory().getCollection(EntityManager.measurements, Document.class);
-        collection.createOrUpdateCompoundIndex(MeasurementPlugin.ATTRIBUTE_EXECUTION_ID, MeasurementPlugin.BEGIN);
+		Collection<Document> collection = context.getCollectionFactory().getCollection(EntityManager.measurements, Document.class);
+		collection.createOrUpdateCompoundIndex(MeasurementPlugin.ATTRIBUTE_EXECUTION_ID, MeasurementPlugin.BEGIN);
 		collection.createOrUpdateCompoundIndex(MeasurementPlugin.ATTRIBUTE_EXECUTION_ID, MeasurementPlugin.TYPE, MeasurementPlugin.BEGIN);
 		collection.createOrUpdateCompoundIndex(MeasurementPlugin.PLAN_ID, MeasurementPlugin.BEGIN);
 		collection.createOrUpdateCompoundIndex(MeasurementPlugin.TASK_ID, MeasurementPlugin.BEGIN);
 		collection.createOrUpdateIndex(MeasurementPlugin.BEGIN);
-        accessor = new MeasurementAccessor(collection);
+		accessor = new MeasurementAccessor(collection);
 		context.put(MeasurementAccessor.class, accessor);
+
+		TableRegistry tableRegistry = context.get(TableRegistry.class);
+		tableRegistry.register(EntityManager.measurements, new Table<>(collection, null, false));
 
 		MeasurementPlugin.registerMeasurementHandlers(new RawMeasurementsHandler(accessor));
 	}

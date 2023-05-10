@@ -39,10 +39,12 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.bson.types.ObjectId;
 
+import step.core.access.User;
 import step.core.artefacts.reports.ReportNode;
 import step.core.collections.SearchOrder;
 import step.core.deployment.AbstractStepServices;
 import step.core.deployment.FindByCriteraParam;
+import step.framework.server.Session;
 import step.framework.server.security.Secured;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
@@ -70,7 +72,21 @@ public class ExecutionServices extends AbstractStepServices {
 	@Path("/start")
 	@Secured(right="plan-execute")
 	public String execute(ExecutionParameters executionParams) {
+		applyUserIdFromSession(executionParams);
 		return getScheduler().execute(executionParams);
+	}
+
+	private void applyUserIdFromSession(ExecutionParameters executionParams) {
+		// explicitly defined user id has a priority
+		if (executionParams.getUserID() == null) {
+			Session<User> session = getSession();
+			if (session != null) {
+				User user = session.getUser();
+				if (user != null) {
+					executionParams.setUserID(user.getUsername());
+				}
+			}
+		}
 	}
 
 	@Operation(description = "Returns all executions.")

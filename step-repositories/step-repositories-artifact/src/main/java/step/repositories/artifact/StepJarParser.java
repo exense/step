@@ -1,3 +1,21 @@
+/*******************************************************************************
+ * Copyright (C) 2020, exense GmbH
+ *
+ * This file is part of STEP
+ *
+ * STEP is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * STEP is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
+ ******************************************************************************/
 package step.repositories.artifact;
 
 import org.slf4j.Logger;
@@ -5,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
+import step.core.plans.PlanAccessor;
 import step.core.scanner.AnnotationScanner;
 import step.functions.Function;
 import step.handlers.javahandler.Keyword;
@@ -13,6 +32,7 @@ import step.junit.runner.StepClassParserResult;
 import step.junit.runners.annotations.Plans;
 import step.plans.nl.RootArtefactType;
 import step.plans.nl.parser.PlanParser;
+import step.plugins.functions.types.CompositeFunctionUtils;
 import step.plugins.java.GeneralScriptFunction;
 
 import java.io.File;
@@ -21,7 +41,6 @@ import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.net.URL;
-import java.nio.file.Path;
 import java.util.*;
 
 public class StepJarParser {
@@ -31,7 +50,7 @@ public class StepJarParser {
     private final StepClassParser stepClassParser;
 
     public StepJarParser() {
-        stepClassParser = new StepClassParser(false);
+        this.stepClassParser = new StepClassParser(false);
     }
 
     private List<Function> getFunctions(AnnotationScanner annotationScanner, File artifact, File libraries) {
@@ -41,28 +60,39 @@ public class StepJarParser {
         for (Method m : methods) {
             Keyword annotation = m.getAnnotation(Keyword.class);
 
-            String functionName = annotation.name().length() > 0 ? annotation.name() : m.getName();
+            Function res;
+            if (annotation.planReference() != null && !annotation.planReference().isBlank()) {
+                try {
+                    res = CompositeFunctionUtils.createCompositeFunction(
+                            annotation, m,
+                            new PlanParser().parseCompositePlanFromPlanReference(m, annotation.planReference())
+                    );
+                } catch (Exception ex) {
+                    throw new RuntimeException("Unable to parse plan from reference", ex);
+                }
+            } else {
+                String functionName = annotation.name().length() > 0 ? annotation.name() : m.getName();
 
-            GeneralScriptFunction function = new GeneralScriptFunction();
-            function.setAttributes(new HashMap<>());
-            function.getAttributes().put(AbstractOrganizableObject.NAME, functionName);
-            function.setScriptFile(new DynamicValue<>(artifact.getAbsolutePath()));
-            if (libraries!=null) {
-                function.setLibrariesFile(new DynamicValue<>(libraries.getAbsolutePath()));
+                GeneralScriptFunction function = new GeneralScriptFunction();
+                function.setAttributes(new HashMap<>());
+                function.getAttributes().put(AbstractOrganizableObject.NAME, functionName);
+                function.setScriptFile(new DynamicValue<>(artifact.getAbsolutePath()));
+                if (libraries != null) {
+                    function.setLibrariesFile(new DynamicValue<>(libraries.getAbsolutePath()));
+                }
+                function.getCallTimeout().setValue(annotation.timeout());
+                function.setDescription(annotation.description());
+                function.setScriptLanguage(new DynamicValue<>("java"));
+                res = function;
             }
 
-            function.getCallTimeout().setValue(annotation.timeout());
-            function.setDescription(annotation.description());
-
-            function.setScriptLanguage(new DynamicValue<>("java"));
-
-            functions.add(function);
+            functions.add(res);
         }
         return functions;
     }
 
-    public List<Plan> getPlansForJar(File artifact, File dependency, String[] includedClasses, String[] includedAnnotations,
-                                     String[] excludedClasses, String[] excludedAnnotations) {
+	public List<Plan> getPlansForJar(File artifact, File dependency, String[] includedClasses, String[] includedAnnotations,
+									 String[] excludedClasses, String[] excludedAnnotations) {
 
         List<Plan> result = new ArrayList<>();
 

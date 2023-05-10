@@ -1,3 +1,21 @@
+/*******************************************************************************
+ * Copyright (C) 2020, exense GmbH
+ *
+ * This file is part of STEP
+ *
+ * STEP is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * STEP is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
+ ******************************************************************************/
 package step.repositories.artifact;
 
 import ch.exense.commons.app.Configuration;
@@ -15,15 +33,18 @@ public class ArtifactRepositoryPlugin extends AbstractControllerPlugin {
 
     private static final Logger logger = LoggerFactory.getLogger(ArtifactRepositoryPlugin.class);
 
-    public static final String REPO_ID = "Artifact";
+    public static final String MAVEN_REPO_ID = "Artifact";
+    public static final String RESOURCE_REPO_ID = "ResourceArtifact";
 
     @Override
     public void serverStart(GlobalContext context) throws Exception {
         PlanAccessor planAccessor = context.getPlanAccessor();
         ControllerSettingAccessor controllerSettingAccessor = context.require(ControllerSettingAccessor.class);
         Configuration configuration = context.getConfiguration();
-        ArtifactRepository repository = new ArtifactRepository(planAccessor, controllerSettingAccessor, configuration);
-        context.getRepositoryObjectManager().registerRepository(REPO_ID, repository);
+        MavenArtifactRepository mavenRepository = new MavenArtifactRepository(planAccessor, controllerSettingAccessor, configuration);
+        ResourceArtifactRepository resourceRepository = new ResourceArtifactRepository(planAccessor, context.getResourceManager());
+        context.getRepositoryObjectManager().registerRepository(MAVEN_REPO_ID, mavenRepository);
+        context.getRepositoryObjectManager().registerRepository(RESOURCE_REPO_ID, resourceRepository);
         super.serverStart(context);
     }
 }

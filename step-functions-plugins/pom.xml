@@ -33,7 +33,7 @@
 		<module>step-functions-plugins-node</module>
 		<module>step-functions-plugins-jmeter</module>
 		<module>step-functions-plugins-composite</module>
-	</modules>
+    </modules>
 	
 	<dependencies>
 	</dependencies>
