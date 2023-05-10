@@ -18,6 +18,8 @@
  ******************************************************************************/
 package step.plugins.functions.types;
 
+import step.core.entities.EntityManager;
+import step.core.entities.EntityReference;
 import step.core.plans.Plan;
 import step.functions.Function;
 import step.core.functions.ArtefactFunction;
@@ -31,6 +33,7 @@ public class CompositeFunction extends Function implements ArtefactFunction {
 		executeLocally = true;
 	}
 
+	@EntityReference(type= EntityManager.recursive)
 	public Plan getPlan() {
 		return plan;
 	}
