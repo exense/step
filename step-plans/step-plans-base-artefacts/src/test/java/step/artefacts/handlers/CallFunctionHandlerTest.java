@@ -40,6 +40,7 @@ import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.accessor.InMemoryFunctionAccessorImpl;
 import step.functions.execution.FunctionExecutionService;
+import step.functions.execution.TokenLifecycleInterceptor;
 import step.functions.io.FunctionInput;
 import step.functions.io.Output;
 import step.functions.type.AbstractFunctionType;
@@ -272,7 +273,17 @@ public class CallFunctionHandlerTest extends AbstractArtefactHandlerTest {
 					boolean createSession, TokenWrapperOwner tokenWrapperOwner) {
 				return token;
 			}
-			
+
+			@Override
+			public void registerTokenLifecycleInterceptor(TokenLifecycleInterceptor interceptor) {
+
+			}
+
+			@Override
+			public void unregisterTokenLifecycleInterceptor(TokenLifecycleInterceptor interceptor) {
+
+			}
+
 			@Override
 			public TokenWrapper getLocalTokenHandle() {
 				return null;

@@ -65,22 +65,64 @@ import step.grid.tokenpool.Interest;
 
 public class FunctionExecutionServiceImplTest {
 
-	
+
 	@Test
 	public void testHappyPath() throws FunctionExecutionServiceException {
 		FunctionExecutionService f = getFunctionExecutionServiceForGridClientTest(null, null, null, null);
-		
+
 		TokenWrapper token = f.getTokenHandle(new HashMap<>(), new HashMap<>(), true, new TokenWrapperOwner() {});
 		FunctionInput<JsonObject> i = getDummyInput();
 		Assert.assertFalse(beforeFunctionCallHasBeenCall.get());
 		Output<JsonObject> output = f.callFunction(token.getID(), getFunction(), i, JsonObject.class);
 		Assert.assertNotNull(output);
 		Assert.assertTrue(beforeFunctionCallHasBeenCall.get());
-		
+
 		Assert.assertNull(output.getError());
 		f.returnTokenHandle(token.getID());
 	}
-	
+
+	@Test
+	public void testLifecycleInterceptor() throws FunctionExecutionServiceException {
+		FunctionExecutionService f = getFunctionExecutionServiceForGridClientTest(null, null, null, null);
+
+		TokenLifecycleInterceptor interceptor = new TokenLifecycleInterceptor() {
+			@Override
+			public void onReturnTokenHandle(String tokenHandleId) {
+			}
+
+			@Override
+			public void onGetTokenHandle(String tokenHandleId) throws Exception {
+				throw new RuntimeException("Execution vetoing exception");
+			}
+		};
+		f.registerTokenLifecycleInterceptor(interceptor);
+
+		// first run with interceptor should fail
+		{
+			try {
+				f.getTokenHandle(new HashMap<>(), new HashMap<>(), true, new TokenWrapperOwner() {
+				});
+				Assert.fail("Expected exception to be thrown");
+			} catch (FunctionExecutionServiceException e) {
+				Assert.assertEquals("Error while retrieving agent token: Execution vetoing exception", e.getMessage());
+			}
+		}
+		//second run without interceptor should succeed
+		f.unregisterTokenLifecycleInterceptor(interceptor);
+		{
+			TokenWrapper token = f.getTokenHandle(new HashMap<>(), new HashMap<>(), true, new TokenWrapperOwner() {
+			});
+			FunctionInput<JsonObject> i = getDummyInput();
+			Assert.assertFalse(beforeFunctionCallHasBeenCall.get());
+			Output<JsonObject> output = f.callFunction(token.getID(), getFunction(), i, JsonObject.class);
+			Assert.assertNotNull(output);
+			Assert.assertTrue(beforeFunctionCallHasBeenCall.get());
+
+			Assert.assertNull(output.getError());
+			f.returnTokenHandle(token.getID());
+		}
+	}
+
 	@Test
 	public void testReserveError() {
 		FunctionExecutionService f = getFunctionExecutionServiceForGridClientTest(null, null, new AgentCommunicationException("Reserve error"), null);
