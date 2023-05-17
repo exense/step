@@ -172,17 +172,4 @@ public abstract class AbstractDataPoolTest extends AbstractArtefactHandlerTest {
 		}
 	}
 
-	private DataPoolConfiguration getDataPoolConfiguration() throws IOException {
-		CSVDataPool pool = new CSVDataPool();
-		File file = FileHelper.getClassLoaderResourceAsFile(this.getClass().getClassLoader(), "File.csv");
-		File tempFile = FileHelper.createTempFile();
-		try (OutputStream os = new FileOutputStream(tempFile)) {
-			Files.copy(file.toPath(), os);
-		}
-		pool.setFile(new DynamicValue<String>(tempFile.getAbsolutePath()));
-		return pool;
-	}
-
-
-
 }
