@@ -74,7 +74,7 @@ public class ExecutionEngineRunner {
 			Plan plan = null;
 			List<ExecutionVeto> vetoes = executionLifecycleManager.getExecutionVetoes();
 			if (!vetoes.isEmpty()) {
-				logger.info("Execution was vetoed.");
+				logger.info("Execution {} was vetoed.", executionContext.getExecutionId());
 				ImportResult importResult = new ImportResult();
 				importResult.setSuccessful(false);
 				importResult.setErrors(vetoes.stream().map(v -> v.reason).collect(Collectors.toList()));

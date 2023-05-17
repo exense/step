@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,25 +68,25 @@ import step.grid.tokenpool.Interest;
 public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 
 	private final GridClient gridClient;
-	
+
 	private final FunctionTypeRegistry functionTypeRegistry;
-	
+
 	private final DynamicBeanResolver dynamicBeanResolver;
-	
+
 	private final FileVersionId functionHandlerPackage;
 
 	private final ObjectMapper jakartaMapper;
 	private final ObjectMapper javaxMapper;
-	
+
 	private static final String KEYWORD_NAME_PROP = "$keywordName";
 	private static final String KEYWORD_TIMEOUT_PROP = "$keywordTimeout";
-	
+
 	public FunctionExecutionServiceImpl(GridClient gridClient, FunctionTypeRegistry functionTypeRegistry, DynamicBeanResolver dynamicBeanResolver) throws FunctionExecutionServiceException {
 		super();
 		this.gridClient = gridClient;
 		this.functionTypeRegistry = functionTypeRegistry;
 		this.dynamicBeanResolver = dynamicBeanResolver;
-	
+
 		String functionHandlerResourceName = "step-functions-handler.jar";
 		FileVersion functionHandlerPackageVersionId;
 		try {
@@ -94,7 +95,7 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 		} catch (FileManagerException e) {
 			throw new FunctionExecutionServiceException("Error while registering file "+functionHandlerResourceName+" to the grid", e);
 		}
-		
+
 		functionHandlerPackage = functionHandlerPackageVersionId.getVersionId();
 
 		jakartaMapper = FunctionIOJakartaObjectMapperFactory.createObjectMapper();
@@ -103,21 +104,17 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 
 	private static final Logger logger = LoggerFactory.getLogger(FunctionExecutionServiceImpl.class);
 
-	private final List<TokenLifecycleInterceptor> tokenLifecycleInterceptors = new ArrayList<>();
+	private final List<TokenLifecycleInterceptor> tokenLifecycleInterceptors = new CopyOnWriteArrayList<>();
 
 	@Override
 	public void registerTokenLifecycleInterceptor(TokenLifecycleInterceptor interceptor) {
-		synchronized (tokenLifecycleInterceptors) {
-			tokenLifecycleInterceptors.add(interceptor);
-		}
+		tokenLifecycleInterceptors.add(interceptor);
 	}
 
 
 	@Override
 	public void unregisterTokenLifecycleInterceptor(TokenLifecycleInterceptor interceptor) {
-		synchronized (tokenLifecycleInterceptors) {
-			tokenLifecycleInterceptors.remove(interceptor);
-		}
+		tokenLifecycleInterceptors.remove(interceptor);
 	}
 
 	@Override
@@ -139,7 +136,8 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 		}
 
 		try {
-			for (TokenLifecycleInterceptor interceptor : getTokenLifecycleInterceptors()) {
+            // See TokenLifecycleInterceptor javadoc for more details.
+            for (TokenLifecycleInterceptor interceptor : tokenLifecycleInterceptors) {
 				interceptor.onGetTokenHandle(tokenWrapper.getID());
 			}
 		} catch (Exception e) {
@@ -153,18 +151,15 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 		return tokenWrapper;
 	}
 
-	private List<TokenLifecycleInterceptor> getTokenLifecycleInterceptors() {
-		List<TokenLifecycleInterceptor> interceptors;
-		synchronized (tokenLifecycleInterceptors) {
-			interceptors = new ArrayList<>(tokenLifecycleInterceptors);
-		}
-		return interceptors;
-	}
-
-	@Override
+    @Override
 	public void returnTokenHandle(String tokenHandleId) throws FunctionExecutionServiceException {
-		List<TokenLifecycleInterceptor> interceptors = getTokenLifecycleInterceptors();
-		interceptors.forEach(i -> i.onReturnTokenHandle(tokenHandleId));
+        for (TokenLifecycleInterceptor interceptor : tokenLifecycleInterceptors) {
+            try {
+                interceptor.onReturnTokenHandle(tokenHandleId);
+            } catch (Exception unexpected) {
+                logger.error("Unexpected exception in token handle interceptor " + interceptor +", ignoring", unexpected);
+            }
+        }
 		try {
 			gridClient.returnTokenHandle(tokenHandleId);
 		} catch (AgentCallTimeoutException e) {
@@ -175,15 +170,15 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 			throw new FunctionExecutionServiceException("Communication error between the controller and the agent while releasing the agent token",e);
 		} catch (GridClientException e) {
 			throw new FunctionExecutionServiceException("Unexpected error while releasing the agent token: "+e.getMessage(),e);
-		} 
+		}
 	}
-	
+
 	@Override
-	public <IN,OUT> Output<OUT> callFunction(String tokenHandleId, Function function, FunctionInput<IN> functionInput, Class<OUT> outputClass) {	
+	public <IN,OUT> Output<OUT> callFunction(String tokenHandleId, Function function, FunctionInput<IN> functionInput, Class<OUT> outputClass) {
 		Input<IN> input = new Input<>();
 		input.setPayload(functionInput.getPayload());
 		input.setFunction(function.getAttributes().get(AbstractOrganizableObject.NAME));
-		
+
 		// Build the property map used for the function layer
 		Map<String, String> properties = new HashMap<>();
 		if(functionInput.getProperties() !=null) {
@@ -194,7 +189,7 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 		try {
 			AbstractFunctionType<Function> functionType = functionTypeRegistry.getFunctionTypeByFunction(function);
 			dynamicBeanResolver.evaluate(function, Collections.<String, Object>unmodifiableMap(properties));
-			
+
 			String handlerChain = functionType.getHandlerChain(function);
 			FileVersionId handlerPackage = functionType.getHandlerPackage(function);
 
@@ -204,20 +199,20 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 			if(handlerPackage != null) {
 				inputMessageProperties.putAll(fileVersionIdToMap(FunctionMessageHandler.FUNCTION_HANDLER_PACKAGE_KEY, handlerPackage));
 			}
-			
-			
+
+
 			Map<String, String> handlerProperties = functionType.getHandlerProperties(function);
 			if(handlerProperties!=null) {
-				properties.putAll(handlerProperties);				
+				properties.putAll(handlerProperties);
 			}
-			
+
 			functionType.beforeFunctionCall(function, input, properties);
-			
+
 			input.setProperties(properties);
 
 			int callTimeout = function.getCallTimeout().get();
-			
-			//expose additional properties to the keyword  
+
+			//expose additional properties to the keyword
 			properties.put(KEYWORD_NAME_PROP, input.getFunction());
 			properties.put(KEYWORD_TIMEOUT_PROP, Integer.toString(callTimeout));
 
@@ -230,7 +225,7 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 
 			// Serialize the input object
 			JsonNode node = jakartaMapper.valueToTree(input);
-			
+
 			OutputMessage outputMessage;
 			try {
 				outputMessage = gridClient.call(tokenHandleId, node, FunctionMessageHandler.class.getName(), functionHandlerPackage, inputMessageProperties, callTimeout);
@@ -243,8 +238,8 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 			} catch (AgentCommunicationException e) {
 				attachUnexpectedExceptionToOutput(output, "Communication error between the controller and the agent while calling the agent",e);
 				return output;
-			} 
-			
+			}
+
 			AgentError agentError = outputMessage.getAgentError();
 			if(agentError != null) {
 				AgentErrorCode errorCode = agentError.getErrorCode();
@@ -281,12 +276,12 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 					output = jakartaMapper.readValue(jakartaMapper.treeAsTokens(outputMessage.getPayload()), javaType);
 				}
 			}
-			
+
 			if(outputMessage.getAttachments()!=null) {
 				if(output.getAttachments()==null) {
 					output.setAttachments(outputMessage.getAttachments());
 				} else {
-					output.getAttachments().addAll(outputMessage.getAttachments());					
+					output.getAttachments().addAll(outputMessage.getAttachments());
 				}
 			}
 
@@ -309,12 +304,12 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 	private Error newAgentError(String message) {
 		return new Error(ErrorType.TECHNICAL, "agent", message, 0, true);
 	}
-	
+
 	protected Map<String, String> registerFile(File file, String properyName) throws FileManagerException {
 		FileVersion fileVersion = gridClient.registerFile(file);
 		return fileVersionIdToMap(properyName, fileVersion.getVersionId());
 	}
-	
+
 	protected Map<String, String> fileVersionIdToMap(String propertyName, FileVersionId fileVersionId) {
 		Map<String, String> props = new HashMap<>();
 		props.put(propertyName+".id", fileVersionId.getFileId());
@@ -325,7 +320,7 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 	private void attachUnexpectedExceptionToOutput(Output<?> output, Exception e) {
 		attachUnexpectedExceptionToOutput(output, "Unexpected error while calling keyword: " + e.getClass().getName() + " " + e.getMessage(), e);
 	}
-	
+
 	private void attachUnexpectedExceptionToOutput(Output<?> output, String message, Exception e) {
 		output.setError( new Error(ErrorType.TECHNICAL, "functionClient", message, 0, true));
 		attachExceptionToOutput(output, e);

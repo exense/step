@@ -106,7 +106,6 @@ public class RemoteFunctionExecutionService extends AbstractRemoteClient impleme
 
 	@Override
 	public void registerTokenLifecycleInterceptor(TokenLifecycleInterceptor interceptor) {
-		// FIXME: does this need an implementation?
 	}
 
 	@Override
