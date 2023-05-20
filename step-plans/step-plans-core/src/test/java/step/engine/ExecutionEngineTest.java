@@ -37,6 +37,8 @@ import step.core.plugins.IgnoreDuringAutoDiscovery;
 import step.core.plugins.Plugin;
 import step.core.repositories.*;
 import step.engine.execution.ExecutionLifecycleManager;
+import step.engine.execution.ExecutionVeto;
+import step.engine.execution.ExecutionVetoer;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 
 import java.io.IOException;
@@ -52,6 +54,8 @@ public class ExecutionEngineTest {
 	private static final String REPOSITORY_IMPORT_STATUS = "importStatus";
 	private static final String REPOSITORY_IMPORT_STATUS_ERROR = "error";
 	private static final String REPOSITORY_IMPORT_STATUS_SUCCESS = "success";
+	public static final String VETO_TEST_2 = "VetoTest2";
+	public static final String VETO_TEST_1 = "VetoTest1";
 
 	@Test
 	public void test() throws ExecutionEngineException, IOException {
@@ -171,6 +175,19 @@ public class ExecutionEngineTest {
 		assertEquals(ReportNodeStatus.NORUN, result.getResult());
 	}
 
+	@Test
+	public void testExecutionVeto() throws ExecutionEngineException, IOException {
+		ExecutionEngine executionEngine = ExecutionEngine.builder().withPlugin(new VetoingPlugin()).withPlugin(new TestRepositoryPlugin()).build();
+
+		PlanRunnerResult result = executionEngine.execute(new ExecutionParameters(new RepositoryObjectReference(TEST_REPOSITORY, newSuccessfulRepositoryImport()), null));
+
+		Execution execution = executionEngine.getExecutionEngineContext().getExecutionAccessor().get(result.getExecutionId());
+		ImportResult importResult = execution.getImportResult();
+		Assert.assertFalse(importResult.isSuccessful());
+		Assert.assertEquals(List.of(VETO_TEST_1, VETO_TEST_2), importResult.getErrors());
+		assertEquals(ReportNodeStatus.NORUN, result.getResult());
+	}
+
 	protected HashMap<String, String> newFailingRepositoryImport() {
 		HashMap<String, String> repositoryParameters = new HashMap<>();
 		repositoryParameters.put(REPOSITORY_IMPORT_STATUS, REPOSITORY_IMPORT_STATUS_ERROR);
@@ -267,4 +284,19 @@ public class ExecutionEngineTest {
 			});
 		}
 	}
+
+	@Plugin
+	@IgnoreDuringAutoDiscovery
+	public class VetoingPlugin extends AbstractExecutionEnginePlugin implements ExecutionVetoer {
+		@Override
+		public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
+			executionContext.addExecutionVetoer(this);
+		}
+
+		@Override
+		public List<ExecutionVeto> getExecutionVetoes(ExecutionContext context) {
+			return List.of(new ExecutionVeto(VETO_TEST_1), new ExecutionVeto(VETO_TEST_2));
+		}
+	}
+
 }

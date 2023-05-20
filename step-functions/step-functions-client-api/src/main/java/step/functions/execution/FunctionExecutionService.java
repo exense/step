@@ -29,6 +29,10 @@ import step.grid.tokenpool.Interest;
 
 public interface FunctionExecutionService {
 
+	void registerTokenLifecycleInterceptor(TokenLifecycleInterceptor interceptor);
+
+	void unregisterTokenLifecycleInterceptor(TokenLifecycleInterceptor interceptor);
+
 	TokenWrapper getLocalTokenHandle();
 
 	TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests, boolean createSession, TokenWrapperOwner tokenWrapperOwner) throws FunctionExecutionServiceException;
