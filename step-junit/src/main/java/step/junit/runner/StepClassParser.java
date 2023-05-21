@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.artefacts.AbstractArtefact;
 import step.core.plans.Plan;
+import step.core.plans.serialization.YamlPlanSerializer;
 import step.core.scanner.AnnotationScanner;
 import step.handlers.javahandler.Keyword;
 import step.junit.runners.annotations.Plans;
@@ -39,7 +40,9 @@ public class StepClassParser {
 	private static final Logger logger = LoggerFactory.getLogger(StepClassParser.class);
 
 	private final boolean appendClassnameToPlanName;
+
 	private final PlanParser planParser = new PlanParser();
+	private final YamlPlanSerializer simpleYamlPlanSerializer = new YamlPlanSerializer();
 
 	public StepClassParser(boolean appendClassnameToPlanName) {
 		super();
@@ -90,6 +93,7 @@ public class StepClassParser {
 							throw new IllegalStateException("Missing annotation @Keyword on implicit plan method "+m.getName());
 						}
 					}
+					// TODO: simple yaml support in method annotations? RootArtefactType?
 					plan = planParser.parse(planStr, RootArtefactType.TestCase);
 					setPlanName(plan, planName);
 				} catch (Exception e) {
@@ -109,14 +113,22 @@ public class StepClassParser {
 		Plan plan = null;
 		Exception exception = null;
 		try {
+			ParserMode parserMode = chooseParserModeByFileName(name);
+
 			InputStream stream = klass.getResourceAsStream(name);
 			if (stream == null) {
 				throw new Exception("Plan '" + name + "' was not found for class " + klass.getName());
 			}
 
-			plan = planParser.parse(stream, RootArtefactType.TestCase);
-			logger.debug("plan is:"+ plan+ " for class "+klass.getName());
-			setPlanName(plan, name);
+			if (parserMode == ParserMode.PLAN_PARSER) {
+				plan = planParser.parse(stream, RootArtefactType.TestCase);
+				logger.debug("plan is:" + plan + " for class " + klass.getName());
+				setPlanName(plan, name);
+			} else if (parserMode == ParserMode.SIMPLE_YAML_PARSER) {
+				plan = simpleYamlPlanSerializer.readSimplePlanFromYaml(stream);
+			} else {
+				throw new UnsupportedOperationException("Unable to resolve plan parser " + parserMode);
+			}
 		} catch (Exception e) {
 			exception = e;
 		}
@@ -129,5 +141,19 @@ public class StepClassParser {
 		attributes.put(AbstractArtefact.NAME, name);
 		plan.setAttributes(attributes);
 		plan.getRoot().getAttributes().put(AbstractArtefact.NAME, name);
+	}
+
+	private ParserMode chooseParserModeByFileName(String fileName) {
+		// TODO: maybe add the 'format' property to @Plan annotation instead of checking file extension
+		if (fileName.endsWith(".yaml") || fileName.endsWith(".yml")) {
+			return ParserMode.SIMPLE_YAML_PARSER;
+		} else {
+			return ParserMode.PLAN_PARSER;
+		}
+	}
+
+	private enum ParserMode {
+		PLAN_PARSER,
+		SIMPLE_YAML_PARSER
 	}
 }

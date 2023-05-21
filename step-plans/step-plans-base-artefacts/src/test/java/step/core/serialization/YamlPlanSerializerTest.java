@@ -45,7 +45,7 @@ public class YamlPlanSerializerTest {
 	@Test
 	public void readSimplePlanFromYaml() {
 		// read simplified file
-		File yamlFile = new File("src/test/resources/step/core/plans/serialization/test-plan-simplified.yml");
+		File yamlFile = new File("src/test/resources/step/core/plans/serialization/test-simplified-plan.yml");
 
 		try (FileInputStream is = new FileInputStream(yamlFile); ByteArrayOutputStream os = new ByteArrayOutputStream()) {
 			// convert simplified plan to full plan

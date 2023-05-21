@@ -27,7 +27,6 @@ import step.junit.runners.annotations.ExecutionParameters;
 import step.junit.runners.annotations.Plan;
 import step.junit.runners.annotations.Plans;
 
-// TODO: determine yaml format and use the new deserializer
 @RunWith(Step.class)
 @Plans({"plan2.plan", "plan3.plan"})
 @ExecutionParameters({"PARAM_EXEC","Value","PARAM_EXEC2","Value","PARAM_EXEC3","Value"})

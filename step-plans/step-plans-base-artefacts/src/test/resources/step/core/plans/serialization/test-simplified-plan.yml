@@ -3,20 +3,17 @@ root:
   If:
     name: "IfBlock"
     condition:
-      dynamic: true
       expression: "controllerSettings.getSettingByKey('housekeeping_enabled').getValue()=='true'"
     description: "my description"
     children:
       - Assert:
           name: Assert
           actual:
-            dynamic: true
             expression: "'status'"
           operator: "EQUALS"
           doNegate:
             value: false
           expected:
-            dynamic: true
             expression: "'ok'"
           customErrorMessage:
             value: "my custom error"

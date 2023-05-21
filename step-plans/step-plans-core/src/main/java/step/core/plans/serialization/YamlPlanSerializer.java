@@ -136,7 +136,7 @@ public class YamlPlanSerializer {
 		}
 	}
 
-	private JsonNode convertSimpleArtifactToFull(JsonNode simpleArtifact) {
+	private JsonNode convertSimpleArtifactToFull(JsonNode simpleArtifact) throws JsonSchemaFieldProcessingException {
 		ObjectNode fullArtifact = mapper.createObjectNode();
 
 		// all fields except for 'children' and 'name' will be copied from simple artifact
@@ -149,7 +149,14 @@ public class YamlPlanSerializer {
 
 		// the 'name' field is NOT wrapped into the 'attributes'
 		ObjectNode planAttributesNode = mapper.createObjectNode();
-		planAttributesNode.put("name", artifactData.get("name").asText());
+
+		// name is required attribute in json schema
+		JsonNode name = artifactData.get("name");
+		if(name == null){
+			throw new JsonSchemaFieldProcessingException("Name attribute is not defined for artifact " + shortArtifactClass);
+		}
+
+		planAttributesNode.put("name", name.asText());
 		fullArtifact.set("attributes", planAttributesNode);
 
 		// copy all other fields (parameters)

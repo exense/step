@@ -48,7 +48,7 @@ public class SimpleDynamicValueDeserializer extends JsonDeserializer<DynamicValu
 
 		if (expression != null && !expression.isEmpty()) {
 			// dynamic value
-			return new DynamicValue<>(expression, null);
+			return new DynamicValue<>(expression, "");
 		} else if (valueNode != null) {
 			// static value
 			return new DynamicValue<>(jp.getCodec().treeToValue(valueNode, type.getRawClass()));
