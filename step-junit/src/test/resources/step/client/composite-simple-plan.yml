@@ -7,4 +7,5 @@ root:
   CallKeyword:
     name: CallKeyword
     function:
-      value: callExisting2
+      # TODO: function.value has not friendly json format now
+      value: "{\"name\":\"callExisting2\"}"

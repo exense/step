@@ -143,41 +143,45 @@ public class YamlPlanSerializer {
 		List<String> specialFields = Arrays.asList("children", "name");
 
 		// move artifact class into the '_class' field
-		String shortArtifactClass = simpleArtifact.fieldNames().next();
-		JsonNode artifactData = simpleArtifact.get(shortArtifactClass);
-		fullArtifact.put(Plan.JSON_CLASS_FIELD, shortArtifactClass);
+		Iterator<String> childrenArtifactNames = simpleArtifact.fieldNames();
 
-		// the 'name' field is NOT wrapped into the 'attributes'
-		ObjectNode planAttributesNode = mapper.createObjectNode();
+		while (childrenArtifactNames.hasNext()) {
+			String shortArtifactClass = childrenArtifactNames.next();
 
-		// name is required attribute in json schema
-		JsonNode name = artifactData.get("name");
-		if(name == null){
-			throw new JsonSchemaFieldProcessingException("Name attribute is not defined for artifact " + shortArtifactClass);
-		}
+			JsonNode artifactData = simpleArtifact.get(shortArtifactClass);
+			fullArtifact.put(Plan.JSON_CLASS_FIELD, shortArtifactClass);
 
-		planAttributesNode.put("name", name.asText());
-		fullArtifact.set("attributes", planAttributesNode);
+			// the 'name' field is NOT wrapped into the 'attributes'
+			ObjectNode planAttributesNode = mapper.createObjectNode();
 
-		// copy all other fields (parameters)
-		Iterator<Map.Entry<String, JsonNode>> fields = artifactData.fields();
-		while (fields.hasNext()) {
-			Map.Entry<String, JsonNode> next = fields.next();
-			if (!specialFields.contains(next.getKey())) {
-				fullArtifact.set(next.getKey(), next.getValue().deepCopy());
+			// name is required attribute in json schema
+			JsonNode name = artifactData.get("name");
+			if(name == null){
+				throw new JsonSchemaFieldProcessingException("Name attribute is not defined for artifact " + shortArtifactClass);
+			}
+
+			planAttributesNode.put("name", name.asText());
+			fullArtifact.set("attributes", planAttributesNode);
+
+			// copy all other fields (parameters)
+			Iterator<Map.Entry<String, JsonNode>> fields = artifactData.fields();
+			while (fields.hasNext()) {
+				Map.Entry<String, JsonNode> next = fields.next();
+				if (!specialFields.contains(next.getKey())) {
+					fullArtifact.set(next.getKey(), next.getValue().deepCopy());
+				}
+			}
+
+			// process children recursively
+			JsonNode simpleChildren = artifactData.get("children");
+			if (simpleChildren != null && simpleChildren.isArray()) {
+				ArrayNode childrenResult = mapper.createArrayNode();
+				for (JsonNode simpleChild : simpleChildren) {
+					childrenResult.add(convertSimpleArtifactToFull(simpleChild));
+				}
+				fullArtifact.set("children", childrenResult);
 			}
 		}
-
-		// process children recursively
-		JsonNode simpleChildren = artifactData.get("children");
-		if (simpleChildren != null && simpleChildren.isArray()) {
-			ArrayNode childrenResult = mapper.createArrayNode();
-			for (JsonNode simpleChild : simpleChildren) {
-				childrenResult.add(convertSimpleArtifactToFull(simpleChild));
-			}
-			fullArtifact.set("children", childrenResult);
-		}
-
 		return fullArtifact;
 	}
 
