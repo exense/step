@@ -9,9 +9,6 @@
         "expression" : {
           "type" : "string"
         },
-        "expressionType" : {
-          "type" : "string"
-        },
         "value" : {
           "type" : "number"
         }
@@ -23,9 +20,6 @@
         "expression" : {
           "type" : "string"
         },
-        "expressionType" : {
-          "type" : "string"
-        },
         "value" : {
           "type" : "string"
         }
@@ -35,9 +29,6 @@
       "type" : "object",
       "properties" : {
         "expression" : {
-          "type" : "string"
-        },
-        "expressionType" : {
           "type" : "string"
         },
         "value" : {

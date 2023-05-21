@@ -5,7 +5,6 @@ root:
     condition:
       dynamic: true
       expression: "controllerSettings.getSettingByKey('housekeeping_enabled').getValue()=='true'"
-      expressionType: ""
     description: "my description"
     children:
       - Assert:
@@ -13,13 +12,11 @@ root:
           actual:
             dynamic: true
             expression: "'status'"
-            expressionType: ""
           operator: "EQUALS"
           doNegate:
             value: false
           expected:
             dynamic: true
             expression: "'ok'"
-            expressionType: ""
           customErrorMessage:
             value: "my custom error"

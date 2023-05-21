@@ -32,13 +32,11 @@ import org.slf4j.LoggerFactory;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
-import step.handlers.javahandler.jsonschema.JsonInputConverter;
+import step.handlers.javahandler.jsonschema.JsonSchemaFieldPropertyProcessor;
 import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 import step.handlers.javahandler.jsonschema.KeywordJsonSchemaCreator;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -46,19 +44,50 @@ public class SimplifiedPlanJsonSchemaGenerator {
 
 	private static final Logger log = LoggerFactory.getLogger(SimplifiedPlanJsonSchemaGenerator.class);
 
-	private static final String DYNAMIC_VALUE_STRING_DEF = "DynamicValueStringDef";
-	private static final String DYNAMIC_VALUE_NUM_DEF = "DynamicValueNumDef";
-	private static final String DYNAMIC_VALUE_BOOLEAN_DEF = "DynamicValueBooleanDef";
 	private static final String ARTEFACT_DEF = "ArtefactDef";
 
 	private final String targetPackage;
 
 	private final ObjectMapper objectMapper = new ObjectMapper();
 	private final JsonProvider jsonProvider = JsonProvider.provider();
+
 	private final KeywordJsonSchemaCreator jsonSchemaCreator = new KeywordJsonSchemaCreator();
+	private final SimpleDynamicValueJsonSchemaHelper dynamicValuesHelper = new SimpleDynamicValueJsonSchemaHelper(jsonProvider);
+
+	private final JsonSchemaFieldPropertyProcessor fieldProcessor;
 
 	public SimplifiedPlanJsonSchemaGenerator(String targetPackage) {
 		this.targetPackage = targetPackage;
+
+		// Fields filtering rules
+		List<AggregatedJsonSchemaFieldProcessor.FilterRule> filterRules = List.of(Field::isSynthetic,
+				field -> field.isAnnotationPresent(JsonIgnore.class),
+				field -> field.getType().equals(Object.class),
+				field -> Exception.class.isAssignableFrom(field.getType())
+		);
+
+		// Fields processing rules
+		AggregatedJsonSchemaFieldProcessor.ProcessingRule enumProcessingRule = (field, propertiesBuilder) -> {
+			if (field.getType().isEnum()) {
+				JsonArrayBuilder enumArray = jsonProvider.createArrayBuilder();
+				for (Object enumValue : field.getType().getEnumConstants()) {
+					enumArray.add(enumValue.toString());
+				}
+				propertiesBuilder.add("enum", enumArray);
+				return true;
+			}
+			return false;
+		};
+		AggregatedJsonSchemaFieldProcessor.ProcessingRule dynamicValueProcessingRule = (field, propertiesBuilder) -> {
+			if (DynamicValue.class.isAssignableFrom(field.getType())) {
+				dynamicValuesHelper.applyDynamicValueDefForField(field, propertiesBuilder);
+				return true;
+			}
+			return false;
+		};
+		List<AggregatedJsonSchemaFieldProcessor.ProcessingRule> processingRules = List.of(enumProcessingRule,dynamicValueProcessingRule);
+
+		this.fieldProcessor = new AggregatedJsonSchemaFieldProcessor(filterRules, processingRules);
 	}
 
 	public JsonNode generateJsonSchema() throws JsonSchemaPreparationException {
@@ -93,15 +122,18 @@ public class SimplifiedPlanJsonSchemaGenerator {
 		return objectBuilder;
 	}
 
-	private JsonObjectBuilder addRef(JsonObjectBuilder builder, String refValue){
+	static JsonObjectBuilder addRef(JsonObjectBuilder builder, String refValue){
 		return builder.add("$ref", "#/$defs/" + refValue);
 	}
 
+	/**
+	 * Prepares definitions to be reused in json subschemas
+	 */
 	private JsonObjectBuilder createDefs() throws JsonSchemaPreparationException {
 		JsonObjectBuilder defsBuilder = jsonProvider.createObjectBuilder();
 
 		// prepare definitions for generic DynamicValue class
-		Map<String, JsonObjectBuilder> dynamicValueDefs = createDynamicValueImplDefs();
+		Map<String, JsonObjectBuilder> dynamicValueDefs = dynamicValuesHelper.createDynamicValueImplDefs();
 		for (Map.Entry<String, JsonObjectBuilder> dynamicValueDef : dynamicValueDefs.entrySet()) {
 			defsBuilder.add(dynamicValueDef.getKey(), dynamicValueDef.getValue());
 		}
@@ -178,73 +210,11 @@ public class SimplifiedPlanJsonSchemaGenerator {
 
 				// for each field we want either build the json schema via reflection
 				// or use some predefined schemas for some special classes (like step.core.dynamicbeans.DynamicValue)
-				jsonSchemaCreator.processFields(
-						new KeywordJsonSchemaCreator.FieldPropertyProcessor() {
-							@Override
-							public boolean applyCustomProcessing(Field field, JsonObjectBuilder propertiesBuilder) {
-								if(field.getType().isEnum()){
-									JsonArrayBuilder enumArray = jsonProvider.createArrayBuilder();
-									for (Object enumValue : field.getType().getEnumConstants()) {
-										enumArray.add(enumValue.toString());
-									}
-									propertiesBuilder.add("enum", enumArray);
-									return true;
-								} else if (DynamicValue.class.isAssignableFrom(field.getType())) {
-									// for dynamic value we need to reference the definition prepared above
-									// the definition depends on generic type used in dynamic value (string, integer, boolean, etc)
-									Type genericType = field.getGenericType();
-									if (genericType instanceof ParameterizedType) {
-										Type[] arguments = ((ParameterizedType) genericType).getActualTypeArguments();
-										Type dynamicValueClass = arguments[0];
-										if (!(dynamicValueClass instanceof Class)) {
-											throw new IllegalArgumentException(artefactClass +  ": Unsupported dynamic value type " + dynamicValueClass);
-										}
-										String dynamicValueType = JsonInputConverter.resolveJsonPropertyType((Class<?>) dynamicValueClass);
-										switch (dynamicValueType){
-											case "string":
-												addRef(propertiesBuilder, DYNAMIC_VALUE_STRING_DEF);
-												break;
-											case "boolean":
-												addRef(propertiesBuilder, DYNAMIC_VALUE_BOOLEAN_DEF);
-												break;
-											case "number":
-												addRef(propertiesBuilder, DYNAMIC_VALUE_NUM_DEF);
-												break;
-											case "object":
-												log.warn(artefactClass + ": Unknown dynamic value type for field " + field.getName());
-												addRef(propertiesBuilder, DYNAMIC_VALUE_STRING_DEF);
-												break;
-											default:
-												throw new IllegalArgumentException(artefactClass + ": Unsupported dynamic value type: " + dynamicValueType);
-										}
-
-									} else {
-										throw new IllegalArgumentException(artefactClass + ": Unsupported dynamic value generic field " + genericType);
-									}
-									return true;
-								}
-								return false;
-							}
-
-							@Override
-							public boolean skipField(Field field) {
-								if(field.isSynthetic()){
-									return true;
-								} else if (field.isAnnotationPresent(JsonIgnore.class)) {
-									// just skip all fields with JsonIgnore
-									return true;
-								} else if (field.getType().equals(Object.class)) {
-									return true;
-								} else if (Exception.class.isAssignableFrom(field.getType())) {
-									return true;
-								}
-								return false;
-							}
-						},
-						artefactProperties,
-						new ArrayList<>(),
-						Arrays.stream(fields).collect(Collectors.toList())
-				);
+				try {
+					jsonSchemaCreator.processFields(this.fieldProcessor, artefactProperties, new ArrayList<>(), Arrays.stream(fields).collect(Collectors.toList()));
+				} catch (Exception ex) {
+					throw new JsonSchemaPreparationException("Unable to process artefact " + artefactName, ex);
+				}
 			} else {
 				break;
 			}
@@ -265,25 +235,6 @@ public class SimplifiedPlanJsonSchemaGenerator {
 			return true;
 		}
 		return false;
-	}
-
-	private Map<String, JsonObjectBuilder> createDynamicValueImplDefs() {
-		Map<String, JsonObjectBuilder> res = new HashMap<>();
-		res.put(DYNAMIC_VALUE_STRING_DEF, createDynamicValueDef("string"));
-		res.put(DYNAMIC_VALUE_NUM_DEF, createDynamicValueDef("number"));
-		res.put(DYNAMIC_VALUE_BOOLEAN_DEF, createDynamicValueDef("boolean"));
-		return res;
-	}
-
-	private JsonObjectBuilder createDynamicValueDef(String valueType) {
-		JsonObjectBuilder res = jsonProvider.createObjectBuilder();
-		res.add("type", "object");
-		JsonObjectBuilder properties = jsonProvider.createObjectBuilder();
-		properties.add("expression", jsonProvider.createObjectBuilder().add("type", "string"));
-		properties.add("expressionType", jsonProvider.createObjectBuilder().add("type", "string"));
-		properties.add("value", jsonProvider.createObjectBuilder().add("type", valueType));
-		res.add("properties", properties);
-		return res;
 	}
 
 	private JsonObjectBuilder createArtefactDef(Collection<String> artefactImplReferences) {
