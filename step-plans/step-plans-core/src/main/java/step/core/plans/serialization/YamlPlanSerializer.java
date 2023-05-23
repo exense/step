@@ -36,10 +36,7 @@ import step.core.plans.serialization.model.SimpleYamlPlan;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Supplier;
 
 public class YamlPlanSerializer {
@@ -145,9 +142,19 @@ public class YamlPlanSerializer {
 		// move artifact class into the '_class' field
 		Iterator<String> childrenArtifactNames = simpleArtifact.fieldNames();
 
-		while (childrenArtifactNames.hasNext()) {
-			String shortArtifactClass = childrenArtifactNames.next();
+		List<String> artifactNames = new ArrayList<String>();
+		childrenArtifactNames.forEachRemaining(artifactNames::add);
 
+		String shortArtifactClass = null;
+		if (artifactNames.size() == 0) {
+			throw new JsonSchemaFieldProcessingException("Artifact should have a name");
+		} else if (artifactNames.size() > 1) {
+			throw new JsonSchemaFieldProcessingException("Artifact should have only one name");
+		} else {
+			shortArtifactClass = artifactNames.get(0);
+		}
+
+		if (shortArtifactClass != null) {
 			JsonNode artifactData = simpleArtifact.get(shortArtifactClass);
 			fullArtifact.put(Plan.JSON_CLASS_FIELD, shortArtifactClass);
 
@@ -156,8 +163,8 @@ public class YamlPlanSerializer {
 
 			// name is required attribute in json schema
 			JsonNode name = artifactData.get("name");
-			if(name == null){
-				throw new JsonSchemaFieldProcessingException("Name attribute is not defined for artifact " + shortArtifactClass);
+			if (name == null) {
+				throw new JsonSchemaFieldProcessingException("'name' attribute is not defined for artifact " + shortArtifactClass);
 			}
 
 			planAttributesNode.put("name", name.asText());
