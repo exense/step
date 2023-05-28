@@ -34,6 +34,11 @@
 		</dependency>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
+			<artifactId>step-plans-simple-yaml-parser</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>ch.exense.step</groupId>
 			<artifactId>step-functions-plugins-local-composite</artifactId>
 			<version>${project.version}</version>
 		</dependency>

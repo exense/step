@@ -16,10 +16,10 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.core.plans.serialization;
+package step.plans.simple;
 
 import jakarta.json.JsonObjectBuilder;
-import step.handlers.javahandler.jsonschema.JsonSchemaFieldPropertyProcessor;
+import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
 
 import java.lang.reflect.Field;
 import java.util.List;
@@ -27,7 +27,7 @@ import java.util.List;
 /**
  * Implements the logic to extract json schema for some field in java-class
  */
-public class AggregatedJsonSchemaFieldProcessor implements JsonSchemaFieldPropertyProcessor {
+public class AggregatedJsonSchemaFieldProcessor implements JsonSchemaFieldProcessor {
 
 	private List<FilterRule> filterRules;
 	private List<ProcessingRule> processingRules;

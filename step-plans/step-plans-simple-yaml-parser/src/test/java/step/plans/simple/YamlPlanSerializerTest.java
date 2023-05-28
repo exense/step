@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.core.serialization;
+package step.plans.simple;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.bson.types.ObjectId;
@@ -25,7 +25,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.plans.Plan;
-import step.core.plans.serialization.YamlPlanSerializer;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -33,7 +32,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-// TODO: this test is in step-plans-base-artefact package, because we need all artifact classes loaded (see my-plan.yml)
 public class YamlPlanSerializerTest {
 
 	private static final Logger log = LoggerFactory.getLogger(YamlPlanSerializerTest.class);
@@ -45,7 +43,7 @@ public class YamlPlanSerializerTest {
 	@Test
 	public void readSimplePlanFromYaml() {
 		// read simplified file
-		File yamlFile = new File("src/test/resources/step/core/plans/serialization/test-simplified-plan.yml");
+		File yamlFile = new File("src/test/resources/step/plans/simple/test-simplified-plan.yml");
 
 		try (FileInputStream is = new FileInputStream(yamlFile); ByteArrayOutputStream os = new ByteArrayOutputStream()) {
 			// convert simplified plan to full plan
@@ -56,8 +54,10 @@ public class YamlPlanSerializerTest {
 			log.info(os.toString(StandardCharsets.UTF_8));
 
 			// compare serialized plan with expected data
-			JsonNode expectedFullYaml = serializer.getMapper().readTree(new File("src/test/resources/step/core/plans/serialization/test-plan-full-expected.yml"));
-			Assert.assertEquals(expectedFullYaml, serializer.getMapper().readTree(os.toByteArray()));
+			JsonNode expectedFullYaml = serializer.getMapper().readTree(new File("src/test/resources/step/plans/simple/test-full-expected-plan.yml"));
+			JsonNode actual = serializer.getMapper().readTree(os.toByteArray());
+			log.info("Converted plan: {}", actual.toPrettyString());
+			Assert.assertEquals(expectedFullYaml, actual);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}

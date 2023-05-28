@@ -1,0 +1,22 @@
+name: "test plan"
+root:
+  Sequence:
+    name: Sequence
+    children:
+      - If:
+          name: "IfBlock"
+          condition:
+            expression: "controllerSettings.getSettingByKey('housekeeping_enabled').getValue()=='true'"
+          description: "my description"
+          children:
+            - Assert:
+                name: Assert
+                actual:
+                  expression: "'status'"
+                operator: "EQUALS"
+                doNegate:
+                  value: false
+                expected:
+                  expression: "'ok'"
+                customErrorMessage:
+                  value: "my custom error"

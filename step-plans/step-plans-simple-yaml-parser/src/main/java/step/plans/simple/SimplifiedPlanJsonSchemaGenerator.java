@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.core.plans.serialization;
+package step.plans.simple;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -32,9 +32,10 @@ import org.slf4j.LoggerFactory;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
-import step.handlers.javahandler.jsonschema.JsonSchemaFieldPropertyProcessor;
+import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
 import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 import step.handlers.javahandler.jsonschema.KeywordJsonSchemaCreator;
+import step.plans.nl.RootArtefactType;
 
 import java.lang.reflect.Field;
 import java.util.*;
@@ -45,6 +46,7 @@ public class SimplifiedPlanJsonSchemaGenerator {
 	private static final Logger log = LoggerFactory.getLogger(SimplifiedPlanJsonSchemaGenerator.class);
 
 	private static final String ARTEFACT_DEF = "ArtefactDef";
+	private static final String ROOT_ARTEFACT_DEF = "RootArtefactDef";
 
 	private final String targetPackage;
 
@@ -54,7 +56,7 @@ public class SimplifiedPlanJsonSchemaGenerator {
 	private final KeywordJsonSchemaCreator jsonSchemaCreator = new KeywordJsonSchemaCreator();
 	private final SimpleDynamicValueJsonSchemaHelper dynamicValuesHelper = new SimpleDynamicValueJsonSchemaHelper(jsonProvider);
 
-	private final JsonSchemaFieldPropertyProcessor fieldProcessor;
+	private final JsonSchemaFieldProcessor fieldProcessor;
 
 	public SimplifiedPlanJsonSchemaGenerator(String targetPackage) {
 		this.targetPackage = targetPackage;
@@ -118,7 +120,7 @@ public class SimplifiedPlanJsonSchemaGenerator {
 		// plan only has "name" and the root artifact
 		JsonObjectBuilder objectBuilder = jsonProvider.createObjectBuilder();
 		objectBuilder.add("name", jsonProvider.createObjectBuilder().add("type", "string"));
-		objectBuilder.add("root", addRef(jsonProvider.createObjectBuilder(), ARTEFACT_DEF));
+		objectBuilder.add("root", addRef(jsonProvider.createObjectBuilder(), ROOT_ARTEFACT_DEF));
 		return objectBuilder;
 	}
 
@@ -139,19 +141,21 @@ public class SimplifiedPlanJsonSchemaGenerator {
 		}
 
 		// prepare definitions for subclasses annotated with @Artefact
-		Map<String, JsonObjectBuilder> artefactImplDefs = createArtefactImplDefs();
-		for (Map.Entry<String, JsonObjectBuilder> artefactImplDef : artefactImplDefs.entrySet()) {
+		ArtefactDefinitions artefactImplDefs = createArtefactImplDefs();
+		for (Map.Entry<String, JsonObjectBuilder> artefactImplDef : artefactImplDefs.allArtefactDefs.entrySet()) {
 			defsBuilder.add(artefactImplDef.getKey(), artefactImplDef.getValue());
 		}
 
 		// add definition for "anyOf" artefact definitions prepared above
-		defsBuilder.add(ARTEFACT_DEF, createArtefactDef(artefactImplDefs.keySet()));
+		defsBuilder.add(ARTEFACT_DEF, createArtefactDef(artefactImplDefs.allArtefactDefs.keySet()));
+		defsBuilder.add(ROOT_ARTEFACT_DEF, createArtefactDef(artefactImplDefs.rootArtefactDefs));
 		return defsBuilder;
 	}
 
-	private Map<String, JsonObjectBuilder> createArtefactImplDefs() throws JsonSchemaPreparationException {
+	private ArtefactDefinitions createArtefactImplDefs() throws JsonSchemaPreparationException {
+		ArtefactDefinitions artefactDefinitions = new ArtefactDefinitions();
+
 		// scan all @Artefact classes in classpath and automatically prepare definitions for them
-		Map<String, JsonObjectBuilder> res = new HashMap<>();
 		Reflections r = new Reflections( new ConfigurationBuilder().forPackage(targetPackage));
 
 		// exclude artefacts from test packages
@@ -168,9 +172,17 @@ public class SimplifiedPlanJsonSchemaGenerator {
 			String defName = name + "Def";
 
 			// scan all fields in artefact class and put them to artefact definition
-			res.put(defName, createArtefactImplDef(name, artefactClass));
+			JsonObjectBuilder def = createArtefactImplDef(name, artefactClass);
+			artefactDefinitions.allArtefactDefs.put(defName, def);
+
+			// for root artefacts we only support the subset of all artefact definitions
+			for (RootArtefactType rootArtefactType : RootArtefactType.values()) {
+				if(rootArtefactType.createRootArtefact().getClass().equals(artefactClass)){
+					artefactDefinitions.rootArtefactDefs.add(defName);
+				}
+			}
 		}
-		return res;
+		return artefactDefinitions;
 	}
 
 	private JsonObjectBuilder createArtefactImplDef(String name, Class<?> artefactClass) throws JsonSchemaPreparationException {
@@ -252,4 +264,8 @@ public class SimplifiedPlanJsonSchemaGenerator {
 		return objectMapper.readTree(objectBuilder.build().toString());
 	}
 
+	private static class ArtefactDefinitions {
+		private Map<String, JsonObjectBuilder> allArtefactDefs = new HashMap<>();
+		private Collection<String> rootArtefactDefs = new ArrayList<>();
+	}
 }

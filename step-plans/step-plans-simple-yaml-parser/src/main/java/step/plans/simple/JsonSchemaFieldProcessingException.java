@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.core.plans.serialization;
+package step.plans.simple;
 
 public class JsonSchemaFieldProcessingException extends RuntimeException {
 	public JsonSchemaFieldProcessingException(String message) {

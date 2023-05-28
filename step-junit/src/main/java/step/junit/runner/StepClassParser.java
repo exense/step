@@ -29,12 +29,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.artefacts.AbstractArtefact;
 import step.core.plans.Plan;
-import step.core.plans.serialization.YamlPlanSerializer;
 import step.core.scanner.AnnotationScanner;
 import step.handlers.javahandler.Keyword;
 import step.junit.runners.annotations.Plans;
 import step.plans.nl.RootArtefactType;
 import step.plans.nl.parser.PlanParser;
+import step.plans.simple.YamlPlanSerializer;
 
 public class StepClassParser {
 	private static final Logger logger = LoggerFactory.getLogger(StepClassParser.class);

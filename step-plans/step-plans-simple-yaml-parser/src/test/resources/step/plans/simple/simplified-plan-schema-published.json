@@ -1156,6 +1156,20 @@
       }, {
         "$ref" : "#/$defs/ThreadGroupDef"
       } ]
+    },
+    "RootArtefactDef" : {
+      "type" : "object",
+      "anyOf" : [ {
+        "$ref" : "#/$defs/SequenceDef"
+      }, {
+        "$ref" : "#/$defs/TestCaseDef"
+      }, {
+        "$ref" : "#/$defs/ThreadGroupDef"
+      }, {
+        "$ref" : "#/$defs/TestScenarioDef"
+      }, {
+        "$ref" : "#/$defs/TestSetDef"
+      } ]
     }
   },
   "properties" : {
@@ -1163,7 +1177,7 @@
       "type" : "string"
     },
     "root" : {
-      "$ref" : "#/$defs/ArtefactDef"
+      "$ref" : "#/$defs/RootArtefactDef"
     }
   },
   "required" : [ "name", "root" ],
