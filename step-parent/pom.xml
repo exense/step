@@ -55,8 +55,8 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<!-- internal dependencies -->
-		<exense-commons.version>2023.5.16-646398c038b9c85a673779c7</exense-commons.version>
-		<step-framework.version>2023.5.12-645e191c38cd392fcadff040</step-framework.version>
+		<exense-commons.version>2023.5.24-646dc1ffd86e626ef954c389</exense-commons.version>
+		<step-framework.version>2023.5.24-646dd7b7d86e626ef95b36c9</step-framework.version>
 		<step-grid.version>2023.5.8-6459018138cd392fca3bbaf1</step-grid.version>
 		<!-- TODO: set actual version		-->
 		<step-api.version>1.2.0-SNAPSHOT</step-api.version>
@@ -319,6 +319,34 @@
 			<activation>
 				<activeByDefault>true</activeByDefault>
 			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-surefire-plugin</artifactId>
+						<configuration>
+							<excludedGroups>ch.exense.commons.test.categories.PerformanceTest</excludedGroups>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
+			<id>PerformanceTest</id>
+			<activation>
+				<activeByDefault>false</activeByDefault>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-surefire-plugin</artifactId>
+						<configuration>
+							<groups>ch.exense.commons.test.categories.PerformanceTest</groups>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
 		</profile>
 		<profile>
 			<!-- Skip javadoc generation -->

@@ -1,8 +1,5 @@
 package step.plugins.timeseries;
 
-import ch.exense.commons.app.Configuration;
-import jakarta.ws.rs.*;
-import jakarta.ws.rs.core.MediaType;
 import org.apache.commons.lang3.StringUtils;
 import step.controller.services.async.AsyncTaskManager;
 import step.controller.services.async.AsyncTaskStatus;
@@ -14,7 +11,6 @@ import step.core.collections.inmemory.InMemoryCollection;
 import step.core.deployment.ControllerServiceException;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
-import step.core.ql.OQLFilterBuilder;
 import step.core.timeseries.TimeSeries;
 import step.core.timeseries.TimeSeriesFilterBuilder;
 import step.core.timeseries.TimeSeriesIngestionPipeline;
@@ -25,7 +21,6 @@ import step.core.timeseries.aggregation.TimeSeriesAggregationResponse;
 import step.core.timeseries.bucket.Bucket;
 import step.core.timeseries.bucket.BucketAttributes;
 import step.core.timeseries.query.OQLTimeSeriesFilterBuilder;
-import step.framework.server.security.Secured;
 import step.plugins.measurements.Measurement;
 import step.plugins.measurements.MeasurementPlugin;
 import step.plugins.timeseries.api.*;
@@ -35,7 +30,6 @@ import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static step.plugins.timeseries.TimeSeriesControllerPlugin.RESOLUTION_PERIOD_PROPERTY;
 import static step.plugins.timeseries.TimeSeriesExecutionPlugin.TIMESERIES_FLAG;
 
 public class TimeSeriesHandler {
@@ -86,10 +80,11 @@ public class TimeSeriesHandler {
      * This method fetches and group the RAW measurements into a bucket structure.
      */
     public TimeSeriesAPIResponse getMeasurements(FetchBucketsRequest request, Collection<String> fields) {
+        int resolutionMs = getResolution(request);
         step.core.collections.Collection<Bucket> inmemoryBuckets = new InMemoryCollection<>();
-        TimeSeries timeSeries = new TimeSeries(inmemoryBuckets, Set.of(), resolution);
+        TimeSeries timeSeries = new TimeSeries(inmemoryBuckets, Set.of(), resolutionMs);
 
-        try (TimeSeriesIngestionPipeline ingestionPipeline = timeSeries.newIngestionPipeline(3000)) {
+        try (TimeSeriesIngestionPipeline ingestionPipeline = timeSeries.newIngestionPipeline(30000)) {
             List<String> standardAttributes = new ArrayList<>(timeSeriesAttributes);
             standardAttributes.addAll(fields.stream().map(attributesPrefixRemoval).collect(Collectors.toList()));
             standardAttributes.addAll(request.getGroupDimensions());
@@ -114,11 +109,17 @@ public class TimeSeriesHandler {
             });
         }
 
-        TimeSeriesAggregationPipeline aggregationPipeline = new TimeSeriesAggregationPipeline(inmemoryBuckets, resolution);
+        TimeSeriesAggregationPipeline aggregationPipeline = new TimeSeriesAggregationPipeline(inmemoryBuckets, resolutionMs);
         TimeSeriesAggregationQuery query = mapToQuery(request, aggregationPipeline);
         TimeSeriesAggregationResponse response = query.run();
 
         return mapToApiResponse(request, response);
+    }
+
+    private int getResolution(FetchBucketsRequest request) {
+        int nbBuckets = Math.max(100, request.getNumberOfBuckets());
+        int calculatedResolution = (int) Math.floor((request.getEnd() - request.getStart()) / nbBuckets);
+        return Math.max(resolution, calculatedResolution);
     }
 
     public TimeSeriesAPIResponse getBuckets(FetchBucketsRequest request) {

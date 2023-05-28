@@ -33,9 +33,11 @@ import java.util.concurrent.TimeUnit;
 import javax.script.ScriptException;
 
 import ch.exense.commons.app.Configuration;
+import ch.exense.commons.test.categories.PerformanceTest;
 import org.junit.Assert;
 import org.junit.Test;
 
+import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.accessors.AbstractAccessor;
@@ -95,7 +97,8 @@ public class ParameterManagerTest {
 		params = m.getAllParameterValues(bindings, t -> false);
 		Assert.assertEquals(0, params.size());
 	}
-	
+
+	@Category(PerformanceTest.class)
 	@Test
 	public void testPerf() throws ScriptException {
 		Properties properties = new Properties();
