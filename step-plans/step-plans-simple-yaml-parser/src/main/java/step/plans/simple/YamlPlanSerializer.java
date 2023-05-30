@@ -31,7 +31,8 @@ import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.artefacts.AbstractArtefact;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
-import step.core.plans.serialization.model.SimpleYamlPlan;
+import step.plans.simple.deserializers.SimpleDynamicValueDeserializer;
+import step.plans.simple.model.SimpleYamlPlan;
 
 import java.io.IOException;
 import java.io.InputStream;
