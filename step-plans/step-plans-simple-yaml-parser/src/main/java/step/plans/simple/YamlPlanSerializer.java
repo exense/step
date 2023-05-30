@@ -32,6 +32,7 @@ import step.core.artefacts.AbstractArtefact;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
 import step.plans.simple.deserializers.SimpleDynamicValueDeserializer;
+import step.plans.simple.schema.JsonSchemaFieldProcessingException;
 import step.plans.simple.model.SimpleYamlPlan;
 
 import java.io.IOException;

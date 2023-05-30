@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plans.simple;
+package step.plans.simple.schema;
 
 import jakarta.json.JsonObjectBuilder;
 import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;

@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plans.simple;
+package step.plans.simple.deserializers;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.bson.types.ObjectId;
@@ -25,6 +25,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.plans.Plan;
+import step.plans.simple.YamlPlanSerializer;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
