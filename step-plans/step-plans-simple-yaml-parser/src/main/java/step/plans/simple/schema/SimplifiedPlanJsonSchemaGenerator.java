@@ -96,7 +96,7 @@ public class SimplifiedPlanJsonSchemaGenerator {
 		JsonObjectBuilder topLevelBuilder = jsonProvider.createObjectBuilder();
 
 		// common fields for json schema
-		topLevelBuilder.add("$schema", "https://json-schema.org/draft/2020-12/schema");
+		topLevelBuilder.add("$schema", "http://json-schema.org/draft-07/schema#");
 		topLevelBuilder.add("title", "Plan");
 		topLevelBuilder.add("type", "object");
 
