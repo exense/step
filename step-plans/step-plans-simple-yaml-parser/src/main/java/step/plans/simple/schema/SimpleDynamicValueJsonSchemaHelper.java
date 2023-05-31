@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.plans.simple.schema;
 
+import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObjectBuilder;
 import jakarta.json.spi.JsonProvider;
 import org.slf4j.Logger;
@@ -37,6 +38,10 @@ class SimpleDynamicValueJsonSchemaHelper {
 	private static final String DYNAMIC_VALUE_STRING_DEF = "DynamicValueStringDef";
 	private static final String DYNAMIC_VALUE_NUM_DEF = "DynamicValueNumDef";
 	private static final String DYNAMIC_VALUE_BOOLEAN_DEF = "DynamicValueBooleanDef";
+
+	private static final String SMART_DYNAMIC_VALUE_STRING_DEF = "SmartDynamicValueStringDef";
+	private static final String SMART_DYNAMIC_VALUE_NUM_DEF = "SmartDynamicValueNumDef";
+	private static final String SMART_DYNAMIC_VALUE_BOOLEAN_DEF = "SmartDynamicValueBooleanDef";
 	private final JsonProvider jsonProvider;
 
 	public SimpleDynamicValueJsonSchemaHelper(JsonProvider jsonProvider) {
@@ -48,6 +53,9 @@ class SimpleDynamicValueJsonSchemaHelper {
 		res.put(DYNAMIC_VALUE_STRING_DEF, createDynamicValueDef("string"));
 		res.put(DYNAMIC_VALUE_NUM_DEF, createDynamicValueDef("number"));
 		res.put(DYNAMIC_VALUE_BOOLEAN_DEF, createDynamicValueDef("boolean"));
+		res.put(SMART_DYNAMIC_VALUE_STRING_DEF, createSmartDynamicValueDef(DYNAMIC_VALUE_STRING_DEF, "string"));
+		res.put(SMART_DYNAMIC_VALUE_NUM_DEF, createSmartDynamicValueDef(DYNAMIC_VALUE_NUM_DEF, "number"));
+		res.put(SMART_DYNAMIC_VALUE_BOOLEAN_DEF, createSmartDynamicValueDef(DYNAMIC_VALUE_BOOLEAN_DEF, "boolean"));
 		return res;
 	}
 
@@ -56,8 +64,18 @@ class SimpleDynamicValueJsonSchemaHelper {
 		res.add("type", "object");
 		JsonObjectBuilder properties = jsonProvider.createObjectBuilder();
 		properties.add("expression", jsonProvider.createObjectBuilder().add("type", "string"));
+		// TODO: do we need to support 'value' property, or it is enough to use a 'smart' value?
 		properties.add("value", jsonProvider.createObjectBuilder().add("type", valueType));
 		res.add("properties", properties);
+		return res;
+	}
+
+	private JsonObjectBuilder createSmartDynamicValueDef(String dynamicValueDef, String smartValueType) {
+		JsonObjectBuilder res = jsonProvider.createObjectBuilder();
+		JsonArrayBuilder oneOfArray = jsonProvider.createArrayBuilder();
+		oneOfArray.add(jsonProvider.createObjectBuilder().add("type", smartValueType));
+		oneOfArray.add(SimplifiedPlanJsonSchemaGenerator.addRef(jsonProvider.createObjectBuilder(), dynamicValueDef));
+		res.add("oneOf", oneOfArray);
 		return res;
 	}
 
@@ -77,17 +95,17 @@ class SimpleDynamicValueJsonSchemaHelper {
 			String dynamicValueType = JsonInputConverter.resolveJsonPropertyType((Class<?>) dynamicValueClass);
 			switch (dynamicValueType){
 				case "string":
-					SimplifiedPlanJsonSchemaGenerator.addRef(propertiesBuilder, DYNAMIC_VALUE_STRING_DEF);
+					SimplifiedPlanJsonSchemaGenerator.addRef(propertiesBuilder, SMART_DYNAMIC_VALUE_STRING_DEF);
 					break;
 				case "boolean":
-					SimplifiedPlanJsonSchemaGenerator.addRef(propertiesBuilder, DYNAMIC_VALUE_BOOLEAN_DEF);
+					SimplifiedPlanJsonSchemaGenerator.addRef(propertiesBuilder, SMART_DYNAMIC_VALUE_BOOLEAN_DEF);
 					break;
 				case "number":
-					SimplifiedPlanJsonSchemaGenerator.addRef(propertiesBuilder, DYNAMIC_VALUE_NUM_DEF);
+					SimplifiedPlanJsonSchemaGenerator.addRef(propertiesBuilder, SMART_DYNAMIC_VALUE_NUM_DEF);
 					break;
 				case "object":
 					log.warn("Unknown dynamic value type for field " + field.getName());
-					SimplifiedPlanJsonSchemaGenerator.addRef(propertiesBuilder, DYNAMIC_VALUE_STRING_DEF);
+					SimplifiedPlanJsonSchemaGenerator.addRef(propertiesBuilder, SMART_DYNAMIC_VALUE_STRING_DEF);
 					break;
 				default:
 					throw new IllegalArgumentException("Unsupported dynamic value type: " + dynamicValueType);

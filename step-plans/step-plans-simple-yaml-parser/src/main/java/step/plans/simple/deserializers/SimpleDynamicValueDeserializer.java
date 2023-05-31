@@ -41,19 +41,25 @@ public class SimpleDynamicValueDeserializer extends JsonDeserializer<DynamicValu
 	@Override
 	public DynamicValue<?> deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException, JacksonException {
 		JsonNode node = jp.getCodec().readTree(jp);
-		JsonNode expressionNode = node.get("expression");
-		JsonNode valueNode = node.get("value");
 
-		String expression = expressionNode == null ? null : expressionNode.asText();
+		if (node.isContainerNode()) {
+			JsonNode expressionNode = node.get("expression");
+			JsonNode valueNode = node.get("value");
 
-		if (expression != null && !expression.isEmpty()) {
-			// dynamic value
-			return new DynamicValue<>(expression, "");
-		} else if (valueNode != null) {
-			// static value
-			return new DynamicValue<>(jp.getCodec().treeToValue(valueNode, type.getRawClass()));
+			String expression = expressionNode == null ? null : expressionNode.asText();
+
+			if (expression != null && !expression.isEmpty()) {
+				// dynamic value
+				return new DynamicValue<>(expression, "");
+			} else if (valueNode != null) {
+				// static value
+				return new DynamicValue<>(jp.getCodec().treeToValue(valueNode, type.getRawClass()));
+			} else {
+				throw new IllegalStateException("Either value or expression should be defined for dynamic value");
+			}
 		} else {
-			throw new IllegalStateException("Either value or expression should be defined for dynamic value");
+			// simple 'smart' mode - we can use the value explicitly without nested 'value' node
+			return new DynamicValue<>(jp.getCodec().treeToValue(node, type.getRawClass()));
 		}
 
 	}

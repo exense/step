@@ -14,9 +14,7 @@ root:
                 actual:
                   expression: "'status'"
                 operator: "EQUALS"
-                doNegate:
-                  value: false
+                doNegate: false
                 expected:
                   expression: "'ok'"
-                customErrorMessage:
-                  value: "my custom error"
+                customErrorMessage: "my custom error"
