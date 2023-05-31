@@ -18,13 +18,6 @@
  ******************************************************************************/
 package step.junit.runner;
 
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.artefacts.AbstractArtefact;
@@ -36,13 +29,22 @@ import step.plans.nl.RootArtefactType;
 import step.plans.nl.parser.PlanParser;
 import step.plans.simple.YamlPlanSerializer;
 
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 public class StepClassParser {
 	private static final Logger logger = LoggerFactory.getLogger(StepClassParser.class);
 
 	private final boolean appendClassnameToPlanName;
 
 	private final PlanParser planParser = new PlanParser();
-	private final YamlPlanSerializer simpleYamlPlanSerializer = new YamlPlanSerializer();
+
+	// TODO: pass published schema to validate plans?
+	private final YamlPlanSerializer simpleYamlPlanSerializer = new YamlPlanSerializer(null);
 
 	public StepClassParser(boolean appendClassnameToPlanName) {
 		super();

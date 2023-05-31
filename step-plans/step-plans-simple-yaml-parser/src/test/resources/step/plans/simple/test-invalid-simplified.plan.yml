@@ -1,0 +1,8 @@
+root:
+  Sequence:
+    name: Sequence
+    children:
+      - If:
+          name: "IfBlock"
+          condition: true
+          description: "my description"

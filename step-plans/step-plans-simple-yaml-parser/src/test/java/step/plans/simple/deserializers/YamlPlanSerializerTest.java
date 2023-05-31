@@ -20,6 +20,7 @@ package step.plans.simple.deserializers;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.bson.types.ObjectId;
+import org.everit.json.schema.ValidationException;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -39,12 +40,16 @@ public class YamlPlanSerializerTest {
 
 	private static final ObjectId STATIC_ID = new ObjectId("644fbe4e38a61e07cc3a4df8") ;
 
-	private final YamlPlanSerializer serializer = new YamlPlanSerializer(() -> STATIC_ID);
+	// TODO: use published schema
+	private final YamlPlanSerializer serializer = new YamlPlanSerializer(
+			this.getClass().getClassLoader().getResourceAsStream("step/plans/simple/simplified-plan-schema-published.json"),
+			() -> STATIC_ID
+	);
 
 	@Test
 	public void readSimplePlanFromYaml() {
 		// read simplified file
-		File yamlFile = new File("src/test/resources/step/plans/simple/test-simplified-plan.yml");
+		File yamlFile = new File("src/test/resources/step/plans/simple/test-simplified.plan.yml");
 
 		try (FileInputStream is = new FileInputStream(yamlFile); ByteArrayOutputStream os = new ByteArrayOutputStream()) {
 			// convert simplified plan to full plan
@@ -55,12 +60,28 @@ public class YamlPlanSerializerTest {
 			log.info(os.toString(StandardCharsets.UTF_8));
 
 			// compare serialized plan with expected data
-			JsonNode expectedFullYaml = serializer.getMapper().readTree(new File("src/test/resources/step/plans/simple/test-full-expected-plan.yml"));
-			JsonNode actual = serializer.getMapper().readTree(os.toByteArray());
+			JsonNode expectedFullYaml = serializer.getYamlMapper().readTree(new File("src/test/resources/step/plans/simple/test-full-expected-plan.yml"));
+			JsonNode actual = serializer.getYamlMapper().readTree(os.toByteArray());
 			log.info("Converted plan: {}", actual.toPrettyString());
 			Assert.assertEquals(expectedFullYaml, actual);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
+		}
+	}
+
+	@Test
+	public void readInvalidSimplePlanFromYaml(){
+		// read simplified file
+		File yamlFile = new File("src/test/resources/step/plans/simple/test-invalid-simplified.plan.yml");
+		try (FileInputStream is = new FileInputStream(yamlFile); ByteArrayOutputStream os = new ByteArrayOutputStream()) {
+			// convert simplified plan to full plan
+			serializer.readSimplePlanFromYaml(is);
+
+			Assert.fail("Validation exception should be thrown");
+		} catch (IOException e){
+			throw new RuntimeException(e);
+		} catch (ValidationException ex){
+			log.info("OK - Validation exception caught", ex);
 		}
 	}
 

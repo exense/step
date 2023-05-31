@@ -27,69 +27,80 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import org.bson.types.ObjectId;
+import step.artefacts.handlers.JsonSchemaValidator;
 import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.artefacts.AbstractArtefact;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
 import step.plans.simple.deserializers.SimpleDynamicValueDeserializer;
-import step.plans.simple.schema.JsonSchemaFieldProcessingException;
 import step.plans.simple.model.SimpleYamlPlan;
+import step.plans.simple.schema.JsonSchemaFieldProcessingException;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.Supplier;
 
 public class YamlPlanSerializer {
 
-	private final ObjectMapper mapper;
+	private final ObjectMapper yamlMapper;
 
 	private final Supplier<ObjectId> idGenerator;
+	private InputStream jsonSchemaFile = null;
 
 	// for tests
-	public YamlPlanSerializer(Supplier<ObjectId> idGenerator) {
-		YAMLFactory factory = new YAMLFactory();
+	public YamlPlanSerializer(InputStream jsonSchemaFile, Supplier<ObjectId> idGenerator) {
+		this.jsonSchemaFile = jsonSchemaFile;
+
+		YAMLFactory yamlFactory = new YAMLFactory();
 		// Disable native type id to enable conversion to generic Documents
-		factory.disable(YAMLGenerator.Feature.USE_NATIVE_TYPE_ID);
-		this.mapper = DefaultJacksonMapperProvider.getObjectMapper(factory);
+		yamlFactory.disable(YAMLGenerator.Feature.USE_NATIVE_TYPE_ID);
+		this.yamlMapper = DefaultJacksonMapperProvider.getObjectMapper(yamlFactory);
 
 		// configure custom deserializers
 		SimpleModule module = new SimpleModule();
 		module.addDeserializer(DynamicValue.class, new SimpleDynamicValueDeserializer());
-		mapper.registerModule(module);
+		yamlMapper.registerModule(module);
 
 		this.idGenerator = idGenerator;
 	}
 
-	public YamlPlanSerializer() {
-		this(null);
+	public YamlPlanSerializer(InputStream jsonSchemaFile) {
+		this(jsonSchemaFile, null);
 	}
 
 	/**
 	 * Read the plan from simplified yaml format
 	 *
-	 * @param inputStream yaml data
+	 * @param planYaml yaml data
 	 */
-	public Plan readSimplePlanFromYaml(InputStream inputStream) throws IOException {
-		// TODO: validate using the json schema?
-		SimpleYamlPlan simplePlan = mapper.readValue(inputStream, SimpleYamlPlan.class);
+	public Plan readSimplePlanFromYaml(InputStream planYaml) throws IOException {
+		String bufferedYamlPlan = new String(planYaml.readAllBytes(), StandardCharsets.UTF_8);
+		JsonNode simplePlanJsonNode = yamlMapper.readTree(bufferedYamlPlan);
+		if (jsonSchemaFile != null) {
+			String jsonSchema = new String(jsonSchemaFile.readAllBytes(), StandardCharsets.UTF_8);
+			JsonSchemaValidator.validate(jsonSchema, simplePlanJsonNode.toString());
+		}
+
+		SimpleYamlPlan simplePlan = yamlMapper.treeToValue(simplePlanJsonNode, SimpleYamlPlan.class);
 		return convertSimplePlanToFullPlan(simplePlan);
 	}
 
-	public ObjectMapper getMapper() {
-		return mapper;
+	public ObjectMapper getYamlMapper() {
+		return yamlMapper;
 	}
 
 	private JsonNode convertSimplePlanToFullJson(SimpleYamlPlan simpleYamlPlan) {
 		// apply 'simplified' structure - convert it to the common plan format
-		ObjectNode top = mapper.createObjectNode();
+		ObjectNode top = yamlMapper.createObjectNode();
 
 		// _class field is omitted in simplified format
 		top.put(Plan.JSON_CLASS_FIELD, Plan.class.getName());
 
 		// the 'name' field is NOT wrapped into the 'attributes'
-		ObjectNode planAttributesNode = mapper.createObjectNode();
+		ObjectNode planAttributesNode = yamlMapper.createObjectNode();
 		top.set("attributes", planAttributesNode);
 		planAttributesNode.put("name", simpleYamlPlan.getName());
 
@@ -100,7 +111,7 @@ public class YamlPlanSerializer {
 
 	private Plan convertSimplePlanToFullPlan(SimpleYamlPlan simpleYamlPlan) throws JsonProcessingException {
 		JsonNode fullJson = convertSimplePlanToFullJson(simpleYamlPlan);
-		Plan fullPlan = mapper.treeToValue(fullJson, Plan.class);
+		Plan fullPlan = yamlMapper.treeToValue(fullJson, Plan.class);
 
 		applyDefaultValues(fullPlan);
 
@@ -108,7 +119,6 @@ public class YamlPlanSerializer {
 	}
 
 	private void applyDefaultValues(Plan fullPlan) {
-		// TODO: apply defaults
 		if (this.idGenerator != null) {
 			fullPlan.setId(this.idGenerator.get());
 		}
@@ -136,7 +146,7 @@ public class YamlPlanSerializer {
 	}
 
 	private JsonNode convertSimpleArtifactToFull(JsonNode simpleArtifact) throws JsonSchemaFieldProcessingException {
-		ObjectNode fullArtifact = mapper.createObjectNode();
+		ObjectNode fullArtifact = yamlMapper.createObjectNode();
 
 		// all fields except for 'children' and 'name' will be copied from simple artifact
 		List<String> specialFields = Arrays.asList("children", "name");
@@ -161,7 +171,7 @@ public class YamlPlanSerializer {
 			fullArtifact.put(Plan.JSON_CLASS_FIELD, shortArtifactClass);
 
 			// the 'name' field is NOT wrapped into the 'attributes'
-			ObjectNode planAttributesNode = mapper.createObjectNode();
+			ObjectNode planAttributesNode = yamlMapper.createObjectNode();
 
 			// name is required attribute in json schema
 			JsonNode name = artifactData.get("name");
@@ -184,7 +194,7 @@ public class YamlPlanSerializer {
 			// process children recursively
 			JsonNode simpleChildren = artifactData.get("children");
 			if (simpleChildren != null && simpleChildren.isArray()) {
-				ArrayNode childrenResult = mapper.createArrayNode();
+				ArrayNode childrenResult = yamlMapper.createArrayNode();
 				for (JsonNode simpleChild : simpleChildren) {
 					childrenResult.add(convertSimpleArtifactToFull(simpleChild));
 				}
@@ -198,7 +208,7 @@ public class YamlPlanSerializer {
 	 * Write the plan as YAML
 	 */
 	public void toFullYaml(OutputStream os, Plan plan) throws IOException {
-		mapper.writeValue(os, plan);
+		yamlMapper.writeValue(os, plan);
 	}
 
 }
