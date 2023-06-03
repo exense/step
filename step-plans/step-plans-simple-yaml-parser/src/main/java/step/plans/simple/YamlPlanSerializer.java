@@ -18,12 +18,9 @@
  ******************************************************************************/
 package step.plans.simple;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import org.bson.types.ObjectId;
@@ -33,14 +30,15 @@ import step.core.artefacts.AbstractArtefact;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
 import step.plans.simple.deserializers.SimpleDynamicValueDeserializer;
+import step.plans.simple.deserializers.SimpleRootArtefactDeserializer;
+import step.plans.simple.model.SimpleRootArtefact;
 import step.plans.simple.model.SimpleYamlPlan;
-import step.plans.simple.schema.JsonSchemaFieldProcessingException;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.List;
 import java.util.function.Supplier;
 
 public class YamlPlanSerializer {
@@ -53,18 +51,22 @@ public class YamlPlanSerializer {
 	// for tests
 	public YamlPlanSerializer(InputStream jsonSchemaFile, Supplier<ObjectId> idGenerator) {
 		this.jsonSchemaFile = jsonSchemaFile;
+		this.yamlMapper = createSimplePlanObjectMapper();
+		this.idGenerator = idGenerator;
+	}
 
+	public static ObjectMapper createSimplePlanObjectMapper() {
 		YAMLFactory yamlFactory = new YAMLFactory();
 		// Disable native type id to enable conversion to generic Documents
 		yamlFactory.disable(YAMLGenerator.Feature.USE_NATIVE_TYPE_ID);
-		this.yamlMapper = DefaultJacksonMapperProvider.getObjectMapper(yamlFactory);
+		ObjectMapper yamlMapper = DefaultJacksonMapperProvider.getObjectMapper(yamlFactory);
 
 		// configure custom deserializers
 		SimpleModule module = new SimpleModule();
 		module.addDeserializer(DynamicValue.class, new SimpleDynamicValueDeserializer());
+		module.addDeserializer(SimpleRootArtefact.class, new SimpleRootArtefactDeserializer());
 		yamlMapper.registerModule(module);
-
-		this.idGenerator = idGenerator;
+		return yamlMapper;
 	}
 
 	public YamlPlanSerializer(InputStream jsonSchemaFile) {
@@ -92,29 +94,10 @@ public class YamlPlanSerializer {
 		return yamlMapper;
 	}
 
-	private JsonNode convertSimplePlanToFullJson(SimpleYamlPlan simpleYamlPlan) {
-		// apply 'simplified' structure - convert it to the common plan format
-		ObjectNode top = yamlMapper.createObjectNode();
-
-		// _class field is omitted in simplified format
-		top.put(Plan.JSON_CLASS_FIELD, Plan.class.getName());
-
-		// the 'name' field is NOT wrapped into the 'attributes'
-		ObjectNode planAttributesNode = yamlMapper.createObjectNode();
-		top.set("attributes", planAttributesNode);
-		planAttributesNode.put("name", simpleYamlPlan.getName());
-
-		// apply the simplified format for each artifact in tree
-		top.set("root", convertSimpleArtifactToFull(simpleYamlPlan.getRoot()));
-		return top;
-	}
-
-	private Plan convertSimplePlanToFullPlan(SimpleYamlPlan simpleYamlPlan) throws JsonProcessingException {
-		JsonNode fullJson = convertSimplePlanToFullJson(simpleYamlPlan);
-		Plan fullPlan = yamlMapper.treeToValue(fullJson, Plan.class);
-
+	private Plan convertSimplePlanToFullPlan(SimpleYamlPlan simpleYamlPlan) {
+		Plan fullPlan = new Plan(simpleYamlPlan.getRoot().getAbstractArtefact());
+		fullPlan.addAttribute("name", simpleYamlPlan.getName());
 		applyDefaultValues(fullPlan);
-
 		return fullPlan;
 	}
 
@@ -145,64 +128,6 @@ public class YamlPlanSerializer {
 		}
 	}
 
-	private JsonNode convertSimpleArtifactToFull(JsonNode simpleArtifact) throws JsonSchemaFieldProcessingException {
-		ObjectNode fullArtifact = yamlMapper.createObjectNode();
-
-		// all fields except for 'children' and 'name' will be copied from simple artifact
-		List<String> specialFields = Arrays.asList("children", "name");
-
-		// move artifact class into the '_class' field
-		Iterator<String> childrenArtifactNames = simpleArtifact.fieldNames();
-
-		List<String> artifactNames = new ArrayList<String>();
-		childrenArtifactNames.forEachRemaining(artifactNames::add);
-
-		String shortArtifactClass = null;
-		if (artifactNames.size() == 0) {
-			throw new JsonSchemaFieldProcessingException("Artifact should have a name");
-		} else if (artifactNames.size() > 1) {
-			throw new JsonSchemaFieldProcessingException("Artifact should have only one name");
-		} else {
-			shortArtifactClass = artifactNames.get(0);
-		}
-
-		if (shortArtifactClass != null) {
-			JsonNode artifactData = simpleArtifact.get(shortArtifactClass);
-			fullArtifact.put(Plan.JSON_CLASS_FIELD, shortArtifactClass);
-
-			// the 'name' field is NOT wrapped into the 'attributes'
-			ObjectNode planAttributesNode = yamlMapper.createObjectNode();
-
-			// name is required attribute in json schema
-			JsonNode name = artifactData.get("name");
-			if (name == null) {
-				throw new JsonSchemaFieldProcessingException("'name' attribute is not defined for artifact " + shortArtifactClass);
-			}
-
-			planAttributesNode.put("name", name.asText());
-			fullArtifact.set("attributes", planAttributesNode);
-
-			// copy all other fields (parameters)
-			Iterator<Map.Entry<String, JsonNode>> fields = artifactData.fields();
-			while (fields.hasNext()) {
-				Map.Entry<String, JsonNode> next = fields.next();
-				if (!specialFields.contains(next.getKey())) {
-					fullArtifact.set(next.getKey(), next.getValue().deepCopy());
-				}
-			}
-
-			// process children recursively
-			JsonNode simpleChildren = artifactData.get("children");
-			if (simpleChildren != null && simpleChildren.isArray()) {
-				ArrayNode childrenResult = yamlMapper.createArrayNode();
-				for (JsonNode simpleChild : simpleChildren) {
-					childrenResult.add(convertSimpleArtifactToFull(simpleChild));
-				}
-				fullArtifact.set("children", childrenResult);
-			}
-		}
-		return fullArtifact;
-	}
 
 	/**
 	 * Write the plan as YAML

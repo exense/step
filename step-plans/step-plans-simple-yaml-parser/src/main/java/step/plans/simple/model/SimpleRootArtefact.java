@@ -18,28 +18,20 @@
  ******************************************************************************/
 package step.plans.simple.model;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import step.plans.simple.deserializers.SimpleRootArtefactDeserializer;
+import step.core.artefacts.AbstractArtefact;
 
-public class SimpleYamlPlan {
-	private String name;
+public class SimpleRootArtefact {
+    private AbstractArtefact abstractArtefact;
 
-	@JsonDeserialize(using = SimpleRootArtefactDeserializer.class)
-	private SimpleRootArtefact root;
+    public SimpleRootArtefact(AbstractArtefact abstractArtefact) {
+        this.abstractArtefact = abstractArtefact;
+    }
 
-	public String getName() {
-		return name;
-	}
+    public AbstractArtefact getAbstractArtefact() {
+        return abstractArtefact;
+    }
 
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public SimpleRootArtefact getRoot() {
-		return root;
-	}
-
-	public void setRoot(SimpleRootArtefact root) {
-		this.root = root;
-	}
+    public void setAbstractArtefact(AbstractArtefact abstractArtefact) {
+        this.abstractArtefact = abstractArtefact;
+    }
 }
