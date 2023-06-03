@@ -32,6 +32,28 @@
         "$ref" : "#/$defs/DynamicExpressionDef"
       } ]
     },
+    "DynamicKeywordInputsDef" : {
+      "type" : "array",
+      "items" : {
+        "type" : "object",
+        "properties" : {
+          "key" : {
+            "type" : "string"
+          },
+          "value" : {
+            "oneOf" : [ {
+              "type" : "number"
+            }, {
+              "type" : "boolean"
+            }, {
+              "type" : "string"
+            }, {
+              "$ref" : "#/$defs/DynamicExpressionDef"
+            } ]
+          }
+        }
+      }
+    },
     "AfterSequenceDef" : {
       "type" : "object",
       "properties" : {
@@ -210,14 +232,11 @@
         "CallKeyword" : {
           "type" : "object",
           "properties" : {
-            "ARTEFACT_NAME" : {
-              "type" : "string"
-            },
             "function" : {
               "$ref" : "#/$defs/SmartDynamicValueStringDef"
             },
             "argument" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+              "$ref" : "#/$defs/DynamicKeywordInputsDef"
             },
             "resultMap" : {
               "$ref" : "#/$defs/SmartDynamicValueStringDef"

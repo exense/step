@@ -29,6 +29,7 @@ import org.reflections.Reflections;
 import org.reflections.util.ConfigurationBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.artefacts.CallFunction;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
@@ -38,6 +39,7 @@ import step.handlers.javahandler.jsonschema.KeywordJsonSchemaCreator;
 import step.plans.nl.RootArtefactType;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -65,10 +67,19 @@ public class SimplifiedPlanJsonSchemaGenerator {
 		List<AggregatedJsonSchemaFieldProcessor.FilterRule> filterRules = List.of(Field::isSynthetic,
 				field -> field.isAnnotationPresent(JsonIgnore.class),
 				field -> field.getType().equals(Object.class),
-				field -> Exception.class.isAssignableFrom(field.getType())
+				field -> Exception.class.isAssignableFrom(field.getType()),
+				field -> Modifier.isFinal(field.getModifiers()) || Modifier.isStatic(field.getModifiers())
 		);
 
 		// Fields processing rules
+		AggregatedJsonSchemaFieldProcessor.ProcessingRule keywordInputsFieldProcessingRule = (field, propertiesBuilder) -> {
+			if (field.getDeclaringClass().equals(CallFunction.class) && field.getName().equals("argument")) {
+				SimplifiedPlanJsonSchemaGenerator.addRef(propertiesBuilder, SimpleDynamicValueJsonSchemaHelper.DYNAMIC_KEYWORD_INPUTS_DEF);
+				return true;
+			}
+			return false;
+		};
+
 		AggregatedJsonSchemaFieldProcessor.ProcessingRule enumProcessingRule = (field, propertiesBuilder) -> {
 			if (field.getType().isEnum()) {
 				JsonArrayBuilder enumArray = jsonProvider.createArrayBuilder();
@@ -87,7 +98,11 @@ public class SimplifiedPlanJsonSchemaGenerator {
 			}
 			return false;
 		};
-		List<AggregatedJsonSchemaFieldProcessor.ProcessingRule> processingRules = List.of(enumProcessingRule,dynamicValueProcessingRule);
+		List<AggregatedJsonSchemaFieldProcessor.ProcessingRule> processingRules = List.of(
+				keywordInputsFieldProcessingRule,
+				enumProcessingRule,
+				dynamicValueProcessingRule
+		);
 
 		this.fieldProcessor = new AggregatedJsonSchemaFieldProcessor(filterRules, processingRules);
 	}
@@ -266,7 +281,7 @@ public class SimplifiedPlanJsonSchemaGenerator {
 	}
 
 	private static class ArtefactDefinitions {
-		private Map<String, JsonObjectBuilder> allArtefactDefs = new HashMap<>();
-		private Collection<String> rootArtefactDefs = new ArrayList<>();
+		private final Map<String, JsonObjectBuilder> allArtefactDefs = new HashMap<>();
+		private final Collection<String> rootArtefactDefs = new ArrayList<>();
 	}
 }

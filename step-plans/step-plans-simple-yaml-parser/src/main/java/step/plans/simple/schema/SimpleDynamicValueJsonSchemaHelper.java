@@ -40,6 +40,8 @@ class SimpleDynamicValueJsonSchemaHelper {
 	private static final String SMART_DYNAMIC_VALUE_STRING_DEF = "SmartDynamicValueStringDef";
 	private static final String SMART_DYNAMIC_VALUE_NUM_DEF = "SmartDynamicValueNumDef";
 	private static final String SMART_DYNAMIC_VALUE_BOOLEAN_DEF = "SmartDynamicValueBooleanDef";
+
+	public static final String DYNAMIC_KEYWORD_INPUTS_DEF = "DynamicKeywordInputsDef";
 	private final JsonProvider jsonProvider;
 
 	public SimpleDynamicValueJsonSchemaHelper(JsonProvider jsonProvider) {
@@ -52,6 +54,50 @@ class SimpleDynamicValueJsonSchemaHelper {
 		res.put(SMART_DYNAMIC_VALUE_STRING_DEF, createSmartDynamicValueDef("string"));
 		res.put(SMART_DYNAMIC_VALUE_NUM_DEF, createSmartDynamicValueDef("number"));
 		res.put(SMART_DYNAMIC_VALUE_BOOLEAN_DEF, createSmartDynamicValueDef("boolean"));
+		res.put(DYNAMIC_KEYWORD_INPUTS_DEF, createDynamicKeywordInputsDef());
+		return res;
+	}
+
+	private JsonObjectBuilder createDynamicKeywordInputsDef(){
+//		{
+//		"type" : "array",
+//		 "items" : {
+//			"type": "object",
+//			"properties": {
+//				"key": {
+//					"type": "string"
+//				},
+//				"value": {
+//					"oneOf": [{
+//						"type": "number"
+//					}, {
+//						"type": "string"
+//					}, {
+//						"type": "boolean"
+//					},{
+//						"$ref": "#/$defs/DynamicExpressionDef"
+//					}]
+//				}
+//			}
+//		}
+
+		JsonObjectBuilder res = jsonProvider.createObjectBuilder();
+		res.add("type", "array");
+		JsonObjectBuilder arrayItemDef = jsonProvider.createObjectBuilder();
+		arrayItemDef.add("type", "object");
+		JsonObjectBuilder properties = jsonProvider.createObjectBuilder()
+				.add("key", jsonProvider.createObjectBuilder().add("type", "string"));
+
+		JsonArrayBuilder oneOfArray = jsonProvider.createArrayBuilder()
+				.add(jsonProvider.createObjectBuilder().add("type", "number"))
+		        .add(jsonProvider.createObjectBuilder().add("type", "boolean"))
+				.add(jsonProvider.createObjectBuilder().add("type", "string"))
+				.add(SimplifiedPlanJsonSchemaGenerator.addRef(jsonProvider.createObjectBuilder(), SimpleDynamicValueJsonSchemaHelper.DYNAMIC_EXPRESSION_DEF));
+
+		properties.add("value", jsonProvider.createObjectBuilder().add("oneOf", oneOfArray));
+		arrayItemDef.add("properties", properties);
+
+		res.add("items", arrayItemDef);
 		return res;
 	}
 

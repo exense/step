@@ -60,7 +60,7 @@ public class YamlPlanSerializerTest {
 			log.info(os.toString(StandardCharsets.UTF_8));
 
 			// compare serialized plan with expected data
-			JsonNode expectedFullYaml = serializer.getYamlMapper().readTree(new File("src/test/resources/step/plans/simple/test-full-expected-plan.yml"));
+			JsonNode expectedFullYaml = serializer.getYamlMapper().readTree(new File("src/test/resources/step/plans/simple/test-full-expected-plan.json"));
 			JsonNode actual = serializer.getYamlMapper().readTree(os.toByteArray());
 			log.info("Converted plan: {}", actual.toPrettyString());
 			Assert.assertEquals(expectedFullYaml, actual);
