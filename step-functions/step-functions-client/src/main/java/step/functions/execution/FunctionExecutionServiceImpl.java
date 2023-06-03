@@ -18,30 +18,19 @@
  ******************************************************************************/
 package step.functions.execution;
 
-import java.io.File;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CopyOnWriteArrayList;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.reports.Error;
 import step.core.reports.ErrorType;
 import step.functions.Function;
+import step.functions.handler.FunctionIOJakartaObjectMapperFactory;
 import step.functions.handler.FunctionIOJavaxObjectMapperFactory;
 import step.functions.handler.FunctionMessageHandler;
-import step.functions.handler.FunctionIOJakartaObjectMapperFactory;
 import step.functions.io.FunctionInput;
 import step.functions.io.Input;
 import step.functions.io.Output;
@@ -58,12 +47,14 @@ import step.grid.client.GridClientException;
 import step.grid.filemanager.FileManagerException;
 import step.grid.filemanager.FileVersion;
 import step.grid.filemanager.FileVersionId;
-import step.grid.io.AgentError;
-import step.grid.io.AgentErrorCode;
-import step.grid.io.Attachment;
-import step.grid.io.AttachmentHelper;
-import step.grid.io.OutputMessage;
+import step.grid.io.*;
 import step.grid.tokenpool.Interest;
+
+import java.io.File;
+import java.io.InputStream;
+import java.net.http.HttpResponse;
+import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 
@@ -74,6 +65,7 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 	private final DynamicBeanResolver dynamicBeanResolver;
 
 	private final FileVersionId functionHandlerPackage;
+	private final FileVersionId dockerHandlerPackageVersionId;
 
 	private final ObjectMapper jakartaMapper;
 	private final ObjectMapper javaxMapper;
@@ -87,19 +79,22 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 		this.functionTypeRegistry = functionTypeRegistry;
 		this.dynamicBeanResolver = dynamicBeanResolver;
 
-		String functionHandlerResourceName = "step-functions-handler.jar";
+		functionHandlerPackage = registerClassloaderResource("step-functions-handler.jar");
+		dockerHandlerPackageVersionId = registerClassloaderResource("step-functions-docker-handler.jar");
+
+		jakartaMapper = FunctionIOJakartaObjectMapperFactory.createObjectMapper();
+		javaxMapper = FunctionIOJavaxObjectMapperFactory.createObjectMapper();
+	}
+
+	private FileVersionId registerClassloaderResource(String functionHandlerResourceName) throws FunctionExecutionServiceException {
 		FileVersion functionHandlerPackageVersionId;
 		try {
 			InputStream resourceAsStream = getClass().getClassLoader().getResourceAsStream(functionHandlerResourceName);
 			functionHandlerPackageVersionId = gridClient.registerFile(resourceAsStream, functionHandlerResourceName, false);
 		} catch (FileManagerException e) {
-			throw new FunctionExecutionServiceException("Error while registering file "+functionHandlerResourceName+" to the grid", e);
+			throw new FunctionExecutionServiceException("Error while registering file "+ functionHandlerResourceName +" to the grid", e);
 		}
-
-		functionHandlerPackage = functionHandlerPackageVersionId.getVersionId();
-
-		jakartaMapper = FunctionIOJakartaObjectMapperFactory.createObjectMapper();
-		javaxMapper = FunctionIOJavaxObjectMapperFactory.createObjectMapper();
+		return functionHandlerPackageVersionId.getVersionId();
 	}
 
 	private static final Logger logger = LoggerFactory.getLogger(FunctionExecutionServiceImpl.class);
@@ -226,9 +221,20 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 			// Serialize the input object
 			JsonNode node = jakartaMapper.valueToTree(input);
 
+			boolean inDocker = properties.containsKey("$docker.image");
+
 			OutputMessage outputMessage;
 			try {
-				outputMessage = gridClient.call(tokenHandleId, node, FunctionMessageHandler.class.getName(), functionHandlerPackage, inputMessageProperties, callTimeout);
+				FileVersionId rootHandlerPackage;
+				String handler;
+				if(inDocker) {
+					handler = "step.functions.handler.ProxyMessageHandler";
+					rootHandlerPackage = dockerHandlerPackageVersionId;
+				} else {
+					handler = FunctionMessageHandler.class.getName();
+					rootHandlerPackage = functionHandlerPackage;
+				}
+				outputMessage = gridClient.call(tokenHandleId, node, handler, rootHandlerPackage, inputMessageProperties, callTimeout);
 			} catch (AgentCallTimeoutException e) {
 				attachUnexpectedExceptionToOutput(output, "Timeout after " + callTimeout + "ms while calling the agent. You can increase the call timeout in the configuration screen of the keyword",e );
 				return output;
