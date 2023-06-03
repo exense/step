@@ -59,7 +59,8 @@
             }
           }
         }
-      }
+      },
+      "additionalProperties" : false
     },
     "SetDef" : {
       "type" : "object",
@@ -88,7 +89,8 @@
             }
           }
         }
-      }
+      },
+      "additionalProperties" : false
     },
     "CheckDef" : {
       "type" : "object",
@@ -114,7 +116,8 @@
             }
           }
         }
-      }
+      },
+      "additionalProperties" : false
     },
     "CheckArtefactDef" : {
       "type" : "object",
@@ -141,7 +144,8 @@
             }
           }
         }
-      }
+      },
+      "additionalProperties" : false
     },
     "ScriptDef" : {
       "type" : "object",
@@ -167,7 +171,8 @@
             }
           }
         }
-      }
+      },
+      "additionalProperties" : false
     },
     "SequenceDef" : {
       "type" : "object",
@@ -196,7 +201,8 @@
             }
           }
         }
-      }
+      },
+      "additionalProperties" : false
     },
     "CallKeywordDef" : {
       "type" : "object",
@@ -237,7 +243,8 @@
             }
           }
         }
-      }
+      },
+      "additionalProperties" : false
     },
     "SwitchDef" : {
       "type" : "object",
@@ -263,7 +270,8 @@
             }
           }
         }
-      }
+      },
+      "additionalProperties" : false
     },
     "BeforeThreadDef" : {
       "type" : "object",
@@ -292,7 +300,8 @@
             }
           }
         }
-      }
+      },
+      "additionalProperties" : false
     },
     "ExportDef" : {
       "type" : "object",
@@ -327,7 +336,8 @@
             }
           }
         }
-      }
+      },
+      "additionalProperties" : false
     },
     "StreamingArtefactDef" : {
       "type" : "object",
@@ -350,7 +360,8 @@
             }
           }
         }
-      }
+      },
+      "additionalProperties" : false
     },
     "ForDef" : {
       "type" : "object",
@@ -399,7 +410,8 @@
             }
           }
         }
-      }
+      },
+      "additionalProperties" : false
     },
     "CaseDef" : {
       "type" : "object",
@@ -425,7 +437,8 @@
             }
           }
         }
-      }
+      },
+      "additionalProperties" : false
     },
     "ReturnDef" : {
       "type" : "object",
@@ -451,7 +464,8 @@
             }
           }
         }
-      }
+      },
+      "additionalProperties" : false
     },
     "FailureDef" : {
       "type" : "object",
@@ -480,7 +494,8 @@
             }
           }
         }
-      }
+      },
+      "additionalProperties" : false
     },
     "ForEachDef" : {
       "type" : "object",
@@ -529,7 +544,8 @@
             }
           }
         }
-      }
+      },
+      "additionalProperties" : false
     },
     "RetryIfFailsDef" : {
       "type" : "object",
@@ -567,7 +583,8 @@
             }
           }
         }
-      }
+      },
+      "additionalProperties" : false
     },
     "WhileDef" : {
       "type" : "object",
@@ -605,7 +622,8 @@
             }
           }
         }
-      }
+      },
+      "additionalProperties" : false
     },
     "EchoDef" : {
       "type" : "object",
@@ -631,7 +649,8 @@
             }
           }
         }
-      }
+      },
+      "additionalProperties" : false
     },
     "CallPlanDef" : {
       "type" : "object",
@@ -663,7 +682,8 @@
             }
           }
         }
-      }
+      },
+      "additionalProperties" : false
     },
     "TestScenarioDef" : {
       "type" : "object",
@@ -686,7 +706,8 @@
             }
           }
         }
-      }
+      },
+      "additionalProperties" : false
     },
     "SynchronizedDef" : {
       "type" : "object",
@@ -721,7 +742,8 @@
             }
           }
         }
-      }
+      },
+      "additionalProperties" : false
     },
     "BeforeSequenceDef" : {
       "type" : "object",
@@ -750,7 +772,8 @@
             }
           }
         }
-      }
+      },
+      "additionalProperties" : false
     },
     "TestSetDef" : {
       "type" : "object",
@@ -776,7 +799,8 @@
             }
           }
         }
-      }
+      },
+      "additionalProperties" : false
     },
     "SessionDef" : {
       "type" : "object",
@@ -805,7 +829,8 @@
             }
           }
         }
-      }
+      },
+      "additionalProperties" : false
     },
     "DataSetDef" : {
       "type" : "object",
@@ -857,7 +882,8 @@
             }
           }
         }
-      }
+      },
+      "additionalProperties" : false
     },
     "SleepDef" : {
       "type" : "object",
@@ -889,7 +915,8 @@
             }
           }
         }
-      }
+      },
+      "additionalProperties" : false
     },
     "TestCaseDef" : {
       "type" : "object",
@@ -912,7 +939,8 @@
             }
           }
         }
-      }
+      },
+      "additionalProperties" : false
     },
     "AssertDef" : {
       "type" : "object",
@@ -950,7 +978,8 @@
             }
           }
         }
-      }
+      },
+      "additionalProperties" : false
     },
     "AfterThreadDef" : {
       "type" : "object",
@@ -979,7 +1008,8 @@
             }
           }
         }
-      }
+      },
+      "additionalProperties" : false
     },
     "PlaceholderDef" : {
       "type" : "object",
@@ -1002,7 +1032,8 @@
             }
           }
         }
-      }
+      },
+      "additionalProperties" : false
     },
     "IfDef" : {
       "type" : "object",
@@ -1028,7 +1059,8 @@
             }
           }
         }
-      }
+      },
+      "additionalProperties" : false
     },
     "ThreadGroupDef" : {
       "type" : "object",
@@ -1081,11 +1113,12 @@
             }
           }
         }
-      }
+      },
+      "additionalProperties" : false
     },
     "ArtefactDef" : {
       "type" : "object",
-      "anyOf" : [ {
+      "oneOf" : [ {
         "$ref" : "#/$defs/AfterSequenceDef"
       }, {
         "$ref" : "#/$defs/SetDef"
@@ -1155,7 +1188,7 @@
     },
     "RootArtefactDef" : {
       "type" : "object",
-      "anyOf" : [ {
+      "oneOf" : [ {
         "$ref" : "#/$defs/SequenceDef"
       }, {
         "$ref" : "#/$defs/TestCaseDef"

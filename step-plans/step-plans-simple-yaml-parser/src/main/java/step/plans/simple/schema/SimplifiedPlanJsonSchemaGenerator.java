@@ -198,6 +198,7 @@ public class SimplifiedPlanJsonSchemaGenerator {
 
 		artefactNameProperty.add(name, jsonProvider.createObjectBuilder().add("type", "object").add("properties", artefactProperties));
 		res.add("properties", artefactNameProperty);
+		res.add("additionalProperties", false);
 		return res;
 	}
 
@@ -256,7 +257,7 @@ public class SimplifiedPlanJsonSchemaGenerator {
 		for (String artefactImplReference : artefactImplReferences) {
 			arrayBuilder.add(addRef(jsonProvider.createObjectBuilder(), artefactImplReference));
 		}
-		builder.add("anyOf", arrayBuilder);
+		builder.add("oneOf", arrayBuilder);
 		return builder;
 	}
 
