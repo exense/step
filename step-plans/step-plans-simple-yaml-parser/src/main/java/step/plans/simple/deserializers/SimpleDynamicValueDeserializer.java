@@ -44,18 +44,13 @@ public class SimpleDynamicValueDeserializer extends JsonDeserializer<DynamicValu
 
 		if (node.isContainerNode()) {
 			JsonNode expressionNode = node.get("expression");
-			JsonNode valueNode = node.get("value");
-
 			String expression = expressionNode == null ? null : expressionNode.asText();
 
 			if (expression != null && !expression.isEmpty()) {
 				// dynamic value
 				return new DynamicValue<>(expression, "");
-			} else if (valueNode != null) {
-				// static value
-				return new DynamicValue<>(jp.getCodec().treeToValue(valueNode, type.getRawClass()));
 			} else {
-				throw new IllegalStateException("Either value or expression should be defined for dynamic value");
+				throw new IllegalStateException("Expression should be defined for dynamic value");
 			}
 		} else {
 			// simple 'smart' mode - we can use the value explicitly without nested 'value' node

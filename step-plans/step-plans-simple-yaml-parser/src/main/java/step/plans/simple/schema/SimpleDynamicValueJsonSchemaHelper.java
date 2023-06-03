@@ -35,9 +35,7 @@ class SimpleDynamicValueJsonSchemaHelper {
 
 	private static final Logger log = LoggerFactory.getLogger(SimpleDynamicValueJsonSchemaHelper.class);
 
-	private static final String DYNAMIC_VALUE_STRING_DEF = "DynamicValueStringDef";
-	private static final String DYNAMIC_VALUE_NUM_DEF = "DynamicValueNumDef";
-	private static final String DYNAMIC_VALUE_BOOLEAN_DEF = "DynamicValueBooleanDef";
+	private static final String DYNAMIC_EXPRESSION_DEF = "DynamicExpressionDef";
 
 	private static final String SMART_DYNAMIC_VALUE_STRING_DEF = "SmartDynamicValueStringDef";
 	private static final String SMART_DYNAMIC_VALUE_NUM_DEF = "SmartDynamicValueNumDef";
@@ -50,31 +48,27 @@ class SimpleDynamicValueJsonSchemaHelper {
 
 	public Map<String, JsonObjectBuilder> createDynamicValueImplDefs() {
 		Map<String, JsonObjectBuilder> res = new HashMap<>();
-		res.put(DYNAMIC_VALUE_STRING_DEF, createDynamicValueDef("string"));
-		res.put(DYNAMIC_VALUE_NUM_DEF, createDynamicValueDef("number"));
-		res.put(DYNAMIC_VALUE_BOOLEAN_DEF, createDynamicValueDef("boolean"));
-		res.put(SMART_DYNAMIC_VALUE_STRING_DEF, createSmartDynamicValueDef(DYNAMIC_VALUE_STRING_DEF, "string"));
-		res.put(SMART_DYNAMIC_VALUE_NUM_DEF, createSmartDynamicValueDef(DYNAMIC_VALUE_NUM_DEF, "number"));
-		res.put(SMART_DYNAMIC_VALUE_BOOLEAN_DEF, createSmartDynamicValueDef(DYNAMIC_VALUE_BOOLEAN_DEF, "boolean"));
+		res.put(DYNAMIC_EXPRESSION_DEF, createDynamicValueDef());
+		res.put(SMART_DYNAMIC_VALUE_STRING_DEF, createSmartDynamicValueDef("string"));
+		res.put(SMART_DYNAMIC_VALUE_NUM_DEF, createSmartDynamicValueDef("number"));
+		res.put(SMART_DYNAMIC_VALUE_BOOLEAN_DEF, createSmartDynamicValueDef("boolean"));
 		return res;
 	}
 
-	private JsonObjectBuilder createDynamicValueDef(String valueType) {
+	private JsonObjectBuilder createDynamicValueDef() {
 		JsonObjectBuilder res = jsonProvider.createObjectBuilder();
 		res.add("type", "object");
 		JsonObjectBuilder properties = jsonProvider.createObjectBuilder();
 		properties.add("expression", jsonProvider.createObjectBuilder().add("type", "string"));
-		// TODO: do we need to support 'value' property, or it is enough to use a 'smart' value?
-		properties.add("value", jsonProvider.createObjectBuilder().add("type", valueType));
 		res.add("properties", properties);
 		return res;
 	}
 
-	private JsonObjectBuilder createSmartDynamicValueDef(String dynamicValueDef, String smartValueType) {
+	private JsonObjectBuilder createSmartDynamicValueDef(String smartValueType) {
 		JsonObjectBuilder res = jsonProvider.createObjectBuilder();
 		JsonArrayBuilder oneOfArray = jsonProvider.createArrayBuilder();
 		oneOfArray.add(jsonProvider.createObjectBuilder().add("type", smartValueType));
-		oneOfArray.add(SimplifiedPlanJsonSchemaGenerator.addRef(jsonProvider.createObjectBuilder(), dynamicValueDef));
+		oneOfArray.add(SimplifiedPlanJsonSchemaGenerator.addRef(jsonProvider.createObjectBuilder(), SimpleDynamicValueJsonSchemaHelper.DYNAMIC_EXPRESSION_DEF));
 		res.add("oneOf", oneOfArray);
 		return res;
 	}

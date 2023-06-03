@@ -7,55 +7,30 @@
       "oneOf" : [ {
         "type" : "boolean"
       }, {
-        "$ref" : "#/$defs/DynamicValueBooleanDef"
+        "$ref" : "#/$defs/DynamicExpressionDef"
       } ]
     },
     "SmartDynamicValueStringDef" : {
       "oneOf" : [ {
         "type" : "string"
       }, {
-        "$ref" : "#/$defs/DynamicValueStringDef"
+        "$ref" : "#/$defs/DynamicExpressionDef"
       } ]
+    },
+    "DynamicExpressionDef" : {
+      "type" : "object",
+      "properties" : {
+        "expression" : {
+          "type" : "string"
+        }
+      }
     },
     "SmartDynamicValueNumDef" : {
       "oneOf" : [ {
         "type" : "number"
       }, {
-        "$ref" : "#/$defs/DynamicValueNumDef"
+        "$ref" : "#/$defs/DynamicExpressionDef"
       } ]
-    },
-    "DynamicValueNumDef" : {
-      "type" : "object",
-      "properties" : {
-        "expression" : {
-          "type" : "string"
-        },
-        "value" : {
-          "type" : "number"
-        }
-      }
-    },
-    "DynamicValueStringDef" : {
-      "type" : "object",
-      "properties" : {
-        "expression" : {
-          "type" : "string"
-        },
-        "value" : {
-          "type" : "string"
-        }
-      }
-    },
-    "DynamicValueBooleanDef" : {
-      "type" : "object",
-      "properties" : {
-        "expression" : {
-          "type" : "string"
-        },
-        "value" : {
-          "type" : "boolean"
-        }
-      }
     },
     "AfterSequenceDef" : {
       "type" : "object",
