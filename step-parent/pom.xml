@@ -387,6 +387,13 @@
 			</activation>
 			<build>
 				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-surefire-plugin</artifactId>
+						<configuration>
+							<excludedGroups>ch.exense.commons.test.categories.PerformanceTest</excludedGroups>
+						</configuration>
+					</plugin>
 					<!-- Signature -->
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
