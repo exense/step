@@ -5,9 +5,12 @@ root:
     children:
       - Echo:
           name: Echo
-          text:
-            value: "My composite from simple plan"
+          text: "My composite from simple plan"
       - CallKeyword:
           name: CallKeyword
-          function:
-            value: callExisting2
+          function: callExisting3
+          argument:
+            - key: "stringInput"
+              value: "abc"
+            - key: "intInput"
+              value: 777

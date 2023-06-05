@@ -1,166 +1,238 @@
 {
-  "_class" : "step.core.plans.Plan",
-  "customFields" : null,
-  "attributes" : {
-    "name" : "test plan"
+  "_class": "step.core.plans.Plan",
+  "customFields": null,
+  "attributes": {
+    "name": "test plan"
   },
-  "root" : {
-    "_class" : "Sequence",
-    "customFields" : null,
-    "attributes" : {
-      "name" : "Sequence"
+  "root": {
+    "_class": "Sequence",
+    "customFields": null,
+    "attributes": {
+      "name": "Sequence"
     },
-    "dynamicName" : {
-      "dynamic" : false,
-      "value" : "",
-      "expression" : "",
-      "expressionType" : null
+    "dynamicName": {
+      "dynamic": false,
+      "value": "",
+      "expression": "",
+      "expressionType": null
     },
-    "useDynamicName" : false,
-    "description" : null,
-    "children" : [ {
-      "_class" : "If",
-      "customFields" : null,
-      "attributes" : {
-        "name" : "IfBlock"
-      },
-      "dynamicName" : {
-        "dynamic" : false,
-        "value" : "",
-        "expression" : "",
-        "expressionType" : null
-      },
-      "useDynamicName" : false,
-      "description" : "my description",
-      "children" : [ {
-        "_class" : "Assert",
-        "customFields" : null,
-        "attributes" : {
-          "name" : "Assert"
+    "useDynamicName": false,
+    "description": null,
+    "children": [
+      {
+        "_class": "If",
+        "customFields": null,
+        "attributes": {
+          "name": "IfBlock"
         },
-        "dynamicName" : {
-          "dynamic" : false,
-          "value" : "",
-          "expression" : "",
-          "expressionType" : null
+        "dynamicName": {
+          "dynamic": false,
+          "value": "",
+          "expression": "",
+          "expressionType": null
         },
-        "useDynamicName" : false,
-        "description" : null,
-        "children" : [ ],
-        "customAttributes" : null,
-        "attachments" : null,
-        "persistNode" : true,
-        "skipNode" : {
-          "dynamic" : false,
-          "value" : false,
-          "expression" : null,
-          "expressionType" : null
+        "useDynamicName": false,
+        "description": "my description",
+        "children": [
+          {
+            "_class": "Assert",
+            "customFields": null,
+            "attributes": {
+              "name": "Assert"
+            },
+            "dynamicName": {
+              "dynamic": false,
+              "value": "",
+              "expression": "",
+              "expressionType": null
+            },
+            "useDynamicName": false,
+            "description": null,
+            "children": [],
+            "customAttributes": null,
+            "attachments": null,
+            "persistNode": true,
+            "skipNode": {
+              "dynamic": false,
+              "value": false,
+              "expression": null,
+              "expressionType": null
+            },
+            "instrumentNode": {
+              "dynamic": false,
+              "value": false,
+              "expression": null,
+              "expressionType": null
+            },
+            "continueParentNodeExecutionOnError": {
+              "dynamic": false,
+              "value": false,
+              "expression": null,
+              "expressionType": null
+            },
+            "actual": {
+              "dynamic": true,
+              "value": null,
+              "expression": "'status'",
+              "expressionType": ""
+            },
+            "operator": "EQUALS",
+            "doNegate": {
+              "dynamic": false,
+              "value": false,
+              "expression": null,
+              "expressionType": null
+            },
+            "expected": {
+              "dynamic": true,
+              "value": null,
+              "expression": "'ok'",
+              "expressionType": ""
+            },
+            "customErrorMessage": {
+              "dynamic": false,
+              "value": "my custom error",
+              "expression": null,
+              "expressionType": null
+            },
+            "id": "644fbe4e38a61e07cc3a4df8"
+          },
+          {
+            "_class": "CallKeyword",
+            "customFields": null,
+            "attributes": {
+              "name": "CallKeyword"
+            },
+            "dynamicName": {
+              "dynamic": false,
+              "value": "",
+              "expression": "",
+              "expressionType": null
+            },
+            "useDynamicName": false,
+            "description": null,
+            "children": [],
+            "customAttributes": null,
+            "attachments": null,
+            "persistNode": true,
+            "skipNode": {
+              "dynamic": false,
+              "value": false,
+              "expression": null,
+              "expressionType": null
+            },
+            "instrumentNode": {
+              "dynamic": false,
+              "value": false,
+              "expression": null,
+              "expressionType": null
+            },
+            "continueParentNodeExecutionOnError": {
+              "dynamic": false,
+              "value": false,
+              "expression": null,
+              "expressionType": null
+            },
+            "remote": {
+              "dynamic": false,
+              "value": true,
+              "expression": null,
+              "expressionType": null
+            },
+            "token": {
+              "dynamic": false,
+              "value": "{}",
+              "expression": null,
+              "expressionType": null
+            },
+            "function": {
+              "dynamic": false,
+              "value": "callExisting3",
+              "expression": null,
+              "expressionType": null
+            },
+            "argument": {
+              "dynamic": false,
+              "value": "{\"stringInput\":\"abc\",\"intInput\":777}",
+              "expression": null,
+              "expressionType": null
+            },
+            "resultMap": {
+              "dynamic": false,
+              "value": null,
+              "expression": null,
+              "expressionType": null
+            },
+            "id": "644fbe4e38a61e07cc3a4df8"
+          }
+        ],
+        "customAttributes": null,
+        "attachments": null,
+        "persistNode": true,
+        "skipNode": {
+          "dynamic": false,
+          "value": false,
+          "expression": null,
+          "expressionType": null
         },
-        "instrumentNode" : {
-          "dynamic" : false,
-          "value" : false,
-          "expression" : null,
-          "expressionType" : null
+        "instrumentNode": {
+          "dynamic": false,
+          "value": false,
+          "expression": null,
+          "expressionType": null
         },
-        "continueParentNodeExecutionOnError" : {
-          "dynamic" : false,
-          "value" : false,
-          "expression" : null,
-          "expressionType" : null
+        "continueParentNodeExecutionOnError": {
+          "dynamic": false,
+          "value": false,
+          "expression": null,
+          "expressionType": null
         },
-        "actual" : {
-          "dynamic" : true,
-          "value" : null,
-          "expression" : "'status'",
-          "expressionType" : ""
+        "condition": {
+          "dynamic": true,
+          "value": null,
+          "expression": "controllerSettings.getSettingByKey('housekeeping_enabled').getValue()=='true'",
+          "expressionType": ""
         },
-        "operator" : "EQUALS",
-        "doNegate" : {
-          "dynamic" : false,
-          "value" : false,
-          "expression" : null,
-          "expressionType" : null
-        },
-        "expected" : {
-          "dynamic" : true,
-          "value" : null,
-          "expression" : "'ok'",
-          "expressionType" : ""
-        },
-        "customErrorMessage" : {
-          "dynamic" : false,
-          "value" : "my custom error",
-          "expression" : null,
-          "expressionType" : null
-        },
-        "id" : "644fbe4e38a61e07cc3a4df8"
-      } ],
-      "customAttributes" : null,
-      "attachments" : null,
-      "persistNode" : true,
-      "skipNode" : {
-        "dynamic" : false,
-        "value" : false,
-        "expression" : null,
-        "expressionType" : null
-      },
-      "instrumentNode" : {
-        "dynamic" : false,
-        "value" : false,
-        "expression" : null,
-        "expressionType" : null
-      },
-      "continueParentNodeExecutionOnError" : {
-        "dynamic" : false,
-        "value" : false,
-        "expression" : null,
-        "expressionType" : null
-      },
-      "condition" : {
-        "dynamic" : true,
-        "value" : null,
-        "expression" : "controllerSettings.getSettingByKey('housekeeping_enabled').getValue()=='true'",
-        "expressionType" : ""
-      },
-      "id" : "644fbe4e38a61e07cc3a4df8"
-    } ],
-    "customAttributes" : null,
-    "attachments" : null,
-    "persistNode" : true,
-    "skipNode" : {
-      "dynamic" : false,
-      "value" : false,
-      "expression" : null,
-      "expressionType" : null
+        "id": "644fbe4e38a61e07cc3a4df8"
+      }
+    ],
+    "customAttributes": null,
+    "attachments": null,
+    "persistNode": true,
+    "skipNode": {
+      "dynamic": false,
+      "value": false,
+      "expression": null,
+      "expressionType": null
     },
-    "instrumentNode" : {
-      "dynamic" : false,
-      "value" : false,
-      "expression" : null,
-      "expressionType" : null
+    "instrumentNode": {
+      "dynamic": false,
+      "value": false,
+      "expression": null,
+      "expressionType": null
     },
-    "continueParentNodeExecutionOnError" : {
-      "dynamic" : false,
-      "value" : false,
-      "expression" : null,
-      "expressionType" : null
+    "continueParentNodeExecutionOnError": {
+      "dynamic": false,
+      "value": false,
+      "expression": null,
+      "expressionType": null
     },
-    "continueOnError" : {
-      "dynamic" : false,
-      "value" : false,
-      "expression" : null,
-      "expressionType" : null
+    "continueOnError": {
+      "dynamic": false,
+      "value": false,
+      "expression": null,
+      "expressionType": null
     },
-    "pacing" : {
-      "dynamic" : false,
-      "value" : null,
-      "expression" : null,
-      "expressionType" : null
+    "pacing": {
+      "dynamic": false,
+      "value": null,
+      "expression": null,
+      "expressionType": null
     },
-    "id" : "644fbe4e38a61e07cc3a4df8"
+    "id": "644fbe4e38a61e07cc3a4df8"
   },
-  "functions" : null,
-  "subPlans" : null,
-  "visible" : true,
-  "id" : "644fbe4e38a61e07cc3a4df8"
+  "functions": null,
+  "subPlans": null,
+  "visible": true,
+  "id": "644fbe4e38a61e07cc3a4df8"
 }

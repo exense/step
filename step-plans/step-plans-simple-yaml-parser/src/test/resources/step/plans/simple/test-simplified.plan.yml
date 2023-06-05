@@ -18,3 +18,11 @@ root:
                 expected:
                   expression: "'ok'"
                 customErrorMessage: "my custom error"
+            - CallKeyword:
+                name: CallKeyword
+                function: callExisting3
+                argument:
+                  - key: "stringInput"
+                    value: "abc"
+                  - key: "intInput"
+                    value: 777

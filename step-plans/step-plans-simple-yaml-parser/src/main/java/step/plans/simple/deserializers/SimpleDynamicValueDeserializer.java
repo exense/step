@@ -50,7 +50,7 @@ public class SimpleDynamicValueDeserializer extends JsonDeserializer<DynamicValu
 				// dynamic value
 				return new DynamicValue<>(expression, "");
 			} else {
-				throw new IllegalStateException("Expression should be defined for dynamic value");
+				throw new IllegalStateException("Expression should be defined for dynamic value " + node.toPrettyString());
 			}
 		} else {
 			// simple 'smart' mode - we can use the value explicitly without nested 'value' node

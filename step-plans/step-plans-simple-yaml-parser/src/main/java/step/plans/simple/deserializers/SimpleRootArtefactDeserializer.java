@@ -18,15 +18,16 @@
  ******************************************************************************/
 package step.plans.simple.deserializers;
 
-import com.fasterxml.jackson.core.JacksonException;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.ObjectCodec;
+import com.fasterxml.jackson.core.*;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import step.artefacts.CallFunction;
 import step.core.artefacts.AbstractArtefact;
+import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
 import step.plans.simple.model.SimpleRootArtefact;
 import step.plans.simple.schema.JsonSchemaFieldProcessingException;
@@ -75,6 +76,35 @@ public class SimpleRootArtefactDeserializer extends JsonDeserializer<SimpleRootA
                 return false;
             }
         });
+
+        customFieldProcessors.add((artefactClass, field, output, codec) -> {
+            try {
+                if (artefactClass.equals(CallFunction.ARTEFACT_NAME) && field.getKey().equals("argument")) {
+                    ObjectMapper jsonObjectMapper = new ObjectMapper();
+                    ArrayNode arguments = (ArrayNode) field.getValue();
+                    ObjectNode inputDynamicValues = (ObjectNode) codec.createObjectNode();
+                    Iterator<JsonNode> elements = arguments.elements();
+                    while (elements.hasNext()) {
+                        JsonNode next = elements.next();
+                        String inputName = next.get("key").asText();
+                        JsonNode argumentValue = next.get("value");
+                        if(!argumentValue.isContainerNode()){
+                            inputDynamicValues.set(inputName, argumentValue);
+                        } else {
+                            throw new UnsupportedOperationException("Dynamic values are not yet supported as arguments");
+                        }
+                    }
+                    String argumentsAsJsonString = jsonObjectMapper.writeValueAsString(inputDynamicValues);
+                    output.put(field.getKey(), argumentsAsJsonString);
+                    return true;
+                } else {
+                    return false;
+                }
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException("Unable to deserialize the 'argument' field", e);
+            }
+        });
+
     }
 
     @Override
