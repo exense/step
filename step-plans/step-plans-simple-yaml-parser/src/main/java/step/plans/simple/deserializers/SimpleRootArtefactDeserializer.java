@@ -32,22 +32,60 @@ import step.plans.simple.model.SimpleRootArtefact;
 import step.plans.simple.schema.JsonSchemaFieldProcessingException;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 public class SimpleRootArtefactDeserializer extends JsonDeserializer<SimpleRootArtefact> {
+
+    private final List<SimpleArtefactFieldDeserializationProcessor> customFieldProcessors;
+
+    public SimpleRootArtefactDeserializer() {
+        customFieldProcessors = new ArrayList<>();
+
+        customFieldProcessors.add((artefactClass, field, output, codec) -> {
+            // the 'name' field should be wrapped into the 'attributes'
+            if (field.getKey().equals("name")) {
+                ObjectNode attributesNode = (ObjectNode) output.get("attributes");
+                if(attributesNode == null){
+                    attributesNode = createObjectNode(codec);
+                }
+                attributesNode.put("name", field.getValue().asText());
+                output.set("attributes", attributesNode);
+                return true;
+            } else {
+                return false;
+            }
+        });
+
+        customFieldProcessors.add((artefactClass, field, output, codec) -> {
+            if (field.getKey().equals("children")) {
+                // process children recursively
+                JsonNode simpleChildren = field.getValue();
+                if (simpleChildren != null && simpleChildren.isArray()) {
+                    ArrayNode childrenResult = createArrayNode(codec);
+                    for (JsonNode simpleChild : simpleChildren) {
+                        childrenResult.add(convertSimpleArtifactToFull(simpleChild, codec, customFieldProcessors));
+                    }
+                    output.set("children", childrenResult);
+                }
+                return true;
+            } else {
+                return false;
+            }
+        });
+    }
 
     @Override
     public SimpleRootArtefact deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException, JacksonException {
         JsonNode node = jsonParser.getCodec().readTree(jsonParser);
-        JsonNode fullArtifact = convertSimpleArtifactToFull(node, jsonParser.getCodec());
+        JsonNode fullArtifact = convertSimpleArtifactToFull(node, jsonParser.getCodec(), customFieldProcessors);
         return new SimpleRootArtefact(jsonParser.getCodec().treeToValue(fullArtifact, AbstractArtefact.class));
     }
 
-    private JsonNode convertSimpleArtifactToFull(JsonNode simpleArtifact, ObjectCodec codec) throws JsonSchemaFieldProcessingException {
+    private static JsonNode convertSimpleArtifactToFull(JsonNode simpleArtifact, ObjectCodec codec, List<SimpleArtefactFieldDeserializationProcessor> customFieldProcessors) throws JsonSchemaFieldProcessingException {
         ObjectNode fullArtifact = createObjectNode(codec);
-
-        // all fields except for 'children' and 'name' will be copied from simple artifact
-        List<String> specialFields = Arrays.asList("children", "name");
 
         // move artifact class into the '_class' field
         Iterator<String> childrenArtifactNames = simpleArtifact.fieldNames();
@@ -68,36 +106,30 @@ public class SimpleRootArtefactDeserializer extends JsonDeserializer<SimpleRootA
             JsonNode artifactData = simpleArtifact.get(shortArtifactClass);
             fullArtifact.put(Plan.JSON_CLASS_FIELD, shortArtifactClass);
 
-            // the 'name' field is NOT wrapped into the 'attributes'
-            ObjectNode planAttributesNode = createObjectNode(codec);
-
             // name is required attribute in json schema
             JsonNode name = artifactData.get("name");
             if (name == null) {
                 throw new JsonSchemaFieldProcessingException("'name' attribute is not defined for artifact " + shortArtifactClass);
             }
 
-            planAttributesNode.put("name", name.asText());
-            fullArtifact.set("attributes", planAttributesNode);
-
-            // copy all other fields (parameters)
             Iterator<Map.Entry<String, JsonNode>> fields = artifactData.fields();
             while (fields.hasNext()) {
                 Map.Entry<String, JsonNode> next = fields.next();
-                if (!specialFields.contains(next.getKey())) {
+
+                // process some fields ('name', 'children' etc.) in special way
+                boolean processedAsSpecialField = false;
+                for (SimpleArtefactFieldDeserializationProcessor proc : customFieldProcessors) {
+                    if (proc.deserializeArtefactField(shortArtifactClass, next, fullArtifact, codec)) {
+                        processedAsSpecialField = true;
+                    }
+                }
+
+                // copy all other fields (parameters)
+                if (!processedAsSpecialField) {
                     fullArtifact.set(next.getKey(), next.getValue().deepCopy());
                 }
             }
 
-            // process children recursively
-            JsonNode simpleChildren = artifactData.get("children");
-            if (simpleChildren != null && simpleChildren.isArray()) {
-                ArrayNode childrenResult = createArrayNode(codec);
-                for (JsonNode simpleChild : simpleChildren) {
-                    childrenResult.add(convertSimpleArtifactToFull(simpleChild, codec));
-                }
-                fullArtifact.set("children", childrenResult);
-            }
         }
         return fullArtifact;
     }
@@ -106,7 +138,7 @@ public class SimpleRootArtefactDeserializer extends JsonDeserializer<SimpleRootA
         return (ArrayNode) codec.createArrayNode();
     }
 
-    private ObjectNode createObjectNode(ObjectCodec codec) {
+    private static ObjectNode createObjectNode(ObjectCodec codec) {
         return (ObjectNode) codec.createObjectNode();
     }
 
