@@ -23,6 +23,7 @@ root:
                 function: callExisting3
                 argument:
                   - key: "stringInput"
-                    value: "abc"
+                    value:
+                      expression: "'abc'"
                   - key: "intInput"
                     value: 777

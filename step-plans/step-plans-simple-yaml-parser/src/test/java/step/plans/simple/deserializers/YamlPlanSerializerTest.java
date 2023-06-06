@@ -28,10 +28,7 @@ import org.slf4j.LoggerFactory;
 import step.core.plans.Plan;
 import step.plans.simple.YamlPlanSerializer;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 
 public class YamlPlanSerializerTest {
@@ -57,12 +54,17 @@ public class YamlPlanSerializerTest {
 
 			// serialize plan to full yaml
 			serializer.toFullYaml(os, fullPlan);
+			log.info("Converted full plan -->");
 			log.info(os.toString(StandardCharsets.UTF_8));
 
+			// write yml to another file (to check it manually)
+//			try (FileOutputStream fileOs = new FileOutputStream("src/test/resources/step/plans/simple/test-full-generated-plan.yml")) {
+//				fileOs.write(os.toByteArray());
+//			}
+
 			// compare serialized plan with expected data
-			JsonNode expectedFullYaml = serializer.getYamlMapper().readTree(new File("src/test/resources/step/plans/simple/test-full-expected-plan.json"));
+			JsonNode expectedFullYaml = serializer.getYamlMapper().readTree(new File("src/test/resources/step/plans/simple/test-full-expected-plan.yml"));
 			JsonNode actual = serializer.getYamlMapper().readTree(os.toByteArray());
-			log.info("Converted plan: {}", actual.toPrettyString());
 			Assert.assertEquals(expectedFullYaml, actual);
 		} catch (IOException e) {
 			throw new RuntimeException(e);

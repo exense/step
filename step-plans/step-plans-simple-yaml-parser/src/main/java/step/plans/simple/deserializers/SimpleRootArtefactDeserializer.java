@@ -18,7 +18,10 @@
  ******************************************************************************/
 package step.plans.simple.deserializers;
 
-import com.fasterxml.jackson.core.*;
+import com.fasterxml.jackson.core.JacksonException;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -27,7 +30,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import step.artefacts.CallFunction;
 import step.core.artefacts.AbstractArtefact;
-import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
 import step.plans.simple.model.SimpleRootArtefact;
 import step.plans.simple.schema.JsonSchemaFieldProcessingException;
@@ -41,12 +43,13 @@ import java.util.Map;
 public class SimpleRootArtefactDeserializer extends JsonDeserializer<SimpleRootArtefact> {
 
     private final List<SimpleArtefactFieldDeserializationProcessor> customFieldProcessors;
+    private final ObjectMapper jsonObjectMapper = new ObjectMapper();
 
     public SimpleRootArtefactDeserializer() {
         customFieldProcessors = new ArrayList<>();
 
+        // the 'name' field should be wrapped into the 'attributes'
         customFieldProcessors.add((artefactClass, field, output, codec) -> {
-            // the 'name' field should be wrapped into the 'attributes'
             if (field.getKey().equals("name")) {
                 ObjectNode attributesNode = (ObjectNode) output.get("attributes");
                 if(attributesNode == null){
@@ -60,9 +63,9 @@ public class SimpleRootArtefactDeserializer extends JsonDeserializer<SimpleRootA
             }
         });
 
+        // process children recursively
         customFieldProcessors.add((artefactClass, field, output, codec) -> {
             if (field.getKey().equals("children")) {
-                // process children recursively
                 JsonNode simpleChildren = field.getValue();
                 if (simpleChildren != null && simpleChildren.isArray()) {
                     ArrayNode childrenResult = createArrayNode(codec);
@@ -77,12 +80,13 @@ public class SimpleRootArtefactDeserializer extends JsonDeserializer<SimpleRootA
             }
         });
 
+        // 'argument' field for 'CallKeyword' artifact should contain all input values (dynamic values) as json string
+        // but in simplified format we represent input values as array of key / values
         customFieldProcessors.add((artefactClass, field, output, codec) -> {
             try {
                 if (artefactClass.equals(CallFunction.ARTEFACT_NAME) && field.getKey().equals("argument")) {
-                    ObjectMapper jsonObjectMapper = new ObjectMapper();
                     ArrayNode arguments = (ArrayNode) field.getValue();
-                    ObjectNode inputDynamicValues = (ObjectNode) codec.createObjectNode();
+                    ObjectNode inputDynamicValues = createObjectNode(codec);
                     Iterator<JsonNode> elements = arguments.elements();
                     while (elements.hasNext()) {
                         JsonNode next = elements.next();
@@ -91,7 +95,11 @@ public class SimpleRootArtefactDeserializer extends JsonDeserializer<SimpleRootA
                         if(!argumentValue.isContainerNode()){
                             inputDynamicValues.set(inputName, argumentValue);
                         } else {
-                            throw new UnsupportedOperationException("Dynamic values are not yet supported as arguments");
+                            ObjectNode dynamicValue = createObjectNode(codec);
+                            dynamicValue.put("dynamic", true);
+                            JsonNode expression = argumentValue.get("expression");
+                            dynamicValue.put("expression", expression == null ? "" : expression.asText());
+                            inputDynamicValues.set(inputName, dynamicValue);
                         }
                     }
                     String argumentsAsJsonString = jsonObjectMapper.writeValueAsString(inputDynamicValues);
