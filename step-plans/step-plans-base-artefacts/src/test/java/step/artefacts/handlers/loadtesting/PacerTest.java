@@ -4,10 +4,12 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+import ch.exense.commons.test.categories.PerformanceTest;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.core.execution.ExecutionContext;
+
 import step.core.execution.ExecutionEngine;
 
 public class PacerTest {
@@ -17,6 +19,7 @@ public class PacerTest {
 	long start = 0;
 
 	@Test
+	@Category(PerformanceTest.class)
 	public void test() throws InterruptedException {
 		ExecutionEngine executionEngine = ExecutionEngine.builder().build();
 

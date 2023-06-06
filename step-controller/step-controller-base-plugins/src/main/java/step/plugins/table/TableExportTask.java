@@ -13,6 +13,7 @@ import step.resources.ResourceRevisionContainer;
 import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class TableExportTask implements AsyncTask<Resource> {
 
@@ -43,8 +44,8 @@ public class TableExportTask implements AsyncTask<Resource> {
         fields.forEach(field -> writer.append(field).append(DELIMITER));
         writer.append(END_OF_LINE);
         try {
-            TableResponse response = tableService.request(tableName, exportRequest.getTableRequest(), session);
-            response.getData().forEach(o -> {
+            Stream results = tableService.export(tableName, exportRequest.getTableRequest(), session);
+            results.forEach(o -> {
                 // Write row
                 fields.forEach(field -> {
                     Object property;
