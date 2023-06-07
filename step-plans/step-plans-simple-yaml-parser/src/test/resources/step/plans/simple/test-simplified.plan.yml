@@ -21,7 +21,10 @@ root:
             - CallKeyword:
                 name: CallKeyword
                 function: callExisting3
-                argument:
+                selectionCriteria:
+                  - key: "criteria1"
+                    value: "criteriaValue1"
+                inputs:
                   - key: "stringInput"
                     value:
                       expression: "'abc'"

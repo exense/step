@@ -58,9 +58,9 @@ public class YamlPlanSerializerTest {
 			log.info(os.toString(StandardCharsets.UTF_8));
 
 			// write yml to another file (to check it manually)
-//			try (FileOutputStream fileOs = new FileOutputStream("src/test/resources/step/plans/simple/test-full-generated-plan.yml")) {
-//				fileOs.write(os.toByteArray());
-//			}
+			try (FileOutputStream fileOs = new FileOutputStream("src/test/resources/step/plans/simple/test-full-generated-plan.yml")) {
+				fileOs.write(os.toByteArray());
+			}
 
 			// compare serialized plan with expected data
 			JsonNode expectedFullYaml = serializer.getYamlMapper().readTree(new File("src/test/resources/step/plans/simple/test-full-expected-plan.yml"));

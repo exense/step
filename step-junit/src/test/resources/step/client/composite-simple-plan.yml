@@ -9,7 +9,7 @@ root:
       - CallKeyword:
           name: CallKeyword
           function: callExisting3
-          argument:
+          inputs:
             - key: "stringInput"
               value:
                 expression: "'abc'"

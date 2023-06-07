@@ -30,13 +30,13 @@ import org.reflections.util.ConfigurationBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.artefacts.CallFunction;
+import step.artefacts.TokenSelector;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
-import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
-import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
-import step.handlers.javahandler.jsonschema.KeywordJsonSchemaCreator;
+import step.handlers.javahandler.jsonschema.*;
 import step.plans.nl.RootArtefactType;
+import step.plans.simple.Constants;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -55,15 +55,13 @@ public class SimplifiedPlanJsonSchemaGenerator {
 	private final ObjectMapper objectMapper = new ObjectMapper();
 	private final JsonProvider jsonProvider = JsonProvider.provider();
 
-	private final KeywordJsonSchemaCreator jsonSchemaCreator = new KeywordJsonSchemaCreator();
+	private final JsonSchemaCreator jsonSchemaCreator;
 	private final SimpleDynamicValueJsonSchemaHelper dynamicValuesHelper = new SimpleDynamicValueJsonSchemaHelper(jsonProvider);
-
-	private final JsonSchemaFieldProcessor fieldProcessor;
 
 	public SimplifiedPlanJsonSchemaGenerator(String targetPackage) {
 		this.targetPackage = targetPackage;
 
-		// Fields filtering rules
+		// --- Fields filtering rules
 		List<AggregatedJsonSchemaFieldProcessor.FilterRule> filterRules = List.of(Field::isSynthetic,
 				field -> field.isAnnotationPresent(JsonIgnore.class),
 				field -> field.getType().equals(Object.class),
@@ -71,9 +69,38 @@ public class SimplifiedPlanJsonSchemaGenerator {
 				field -> Modifier.isFinal(field.getModifiers()) || Modifier.isStatic(field.getModifiers())
 		);
 
-		// Fields processing rules
+		// TODO: further we can replace this hardcoded logic for some custom field metadata and processing with some enhanced solution (java annotations?)
+
+		// --- Fields metadata rules
+		FieldMetadataExtractor fieldMetadataExtractor = new FieldMetadataExtractor() {
+
+			private final FieldMetadataExtractor defaultMetadataExtractor = new DefaultFieldMetadataExtractor();
+
+			@Override
+			public FieldMetadata extractMetadata(Field field) {
+				if (field.getDeclaringClass().equals(CallFunction.class) && field.getName().equals("argument")) {
+					// rename 'argument' field to 'inputs'
+					return new FieldMetadata(Constants.CALL_FUNCTION_RENAMED_ARGUMENT_FIELD, null, field.getType(), false);
+				} else if (field.getDeclaringClass().equals(TokenSelector.class) && field.getName().equals("token")) {
+					// rename 'token' field to 'selectionCriteria'
+					return new FieldMetadata(Constants.TOKEN_SELECTOR_RENAMED_TOKEN_FIELD, null, field.getType(), false);
+				} else {
+					return defaultMetadataExtractor.extractMetadata(field);
+				}
+			}
+		};
+
+		// --- Fields processing rules
 		AggregatedJsonSchemaFieldProcessor.ProcessingRule keywordInputsFieldProcessingRule = (field, propertiesBuilder) -> {
 			if (field.getDeclaringClass().equals(CallFunction.class) && field.getName().equals("argument")) {
+				SimplifiedPlanJsonSchemaGenerator.addRef(propertiesBuilder, SimpleDynamicValueJsonSchemaHelper.DYNAMIC_KEYWORD_INPUTS_DEF);
+				return true;
+			}
+			return false;
+		};
+
+		AggregatedJsonSchemaFieldProcessor.ProcessingRule tokenFieldProcessingRule = (field, propertiesBuilder) -> {
+			if (field.getDeclaringClass().equals(TokenSelector.class) && field.getName().equals("token")) {
 				SimplifiedPlanJsonSchemaGenerator.addRef(propertiesBuilder, SimpleDynamicValueJsonSchemaHelper.DYNAMIC_KEYWORD_INPUTS_DEF);
 				return true;
 			}
@@ -100,11 +127,12 @@ public class SimplifiedPlanJsonSchemaGenerator {
 		};
 		List<AggregatedJsonSchemaFieldProcessor.ProcessingRule> processingRules = List.of(
 				keywordInputsFieldProcessingRule,
+				tokenFieldProcessingRule,
 				enumProcessingRule,
 				dynamicValueProcessingRule
 		);
 
-		this.fieldProcessor = new AggregatedJsonSchemaFieldProcessor(filterRules, processingRules);
+		this.jsonSchemaCreator = new JsonSchemaCreator(jsonProvider, new AggregatedJsonSchemaFieldProcessor(filterRules, processingRules), fieldMetadataExtractor);
 	}
 
 	public JsonNode generateJsonSchema() throws JsonSchemaPreparationException {
@@ -239,7 +267,7 @@ public class SimplifiedPlanJsonSchemaGenerator {
 				// for each field we want either build the json schema via reflection
 				// or use some predefined schemas for some special classes (like step.core.dynamicbeans.DynamicValue)
 				try {
-					jsonSchemaCreator.processFields(this.fieldProcessor, artefactProperties, new ArrayList<>(), Arrays.stream(fields).collect(Collectors.toList()));
+					jsonSchemaCreator.processFields(artefactProperties, Arrays.stream(fields).collect(Collectors.toList()), new ArrayList<>());
 				} catch (Exception ex) {
 					throw new JsonSchemaPreparationException("Unable to process artefact " + artefactName, ex);
 				}

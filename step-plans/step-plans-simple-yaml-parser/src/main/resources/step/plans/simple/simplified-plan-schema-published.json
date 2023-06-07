@@ -235,7 +235,7 @@
             "function" : {
               "$ref" : "#/$defs/SmartDynamicValueStringDef"
             },
-            "argument" : {
+            "inputs" : {
               "$ref" : "#/$defs/DynamicKeywordInputsDef"
             },
             "resultMap" : {
@@ -244,8 +244,8 @@
             "remote" : {
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
-            "token" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            "selectionCriteria" : {
+              "$ref" : "#/$defs/DynamicKeywordInputsDef"
             },
             "description" : {
               "type" : "string"
@@ -830,8 +830,8 @@
             "remote" : {
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
-            "token" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            "selectionCriteria" : {
+              "$ref" : "#/$defs/DynamicKeywordInputsDef"
             },
             "description" : {
               "type" : "string"
