@@ -20,6 +20,7 @@ package step.artefacts.handlers;
 
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.OptionalInt;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Consumer;
 
@@ -108,7 +109,7 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 					}
 				};
 			}
-		}, numberOfUsers);
+		}, numberOfUsers, OptionalInt.empty());
 		
 		node.setStatus(reportNodeStatusComposer.getParentStatus());
 	}

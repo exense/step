@@ -20,6 +20,7 @@ package step.artefacts.handlers;
 
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.OptionalInt;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
@@ -152,7 +153,7 @@ public class ForBlockHandler extends AbstractSessionArtefactHandler<AbstractForB
 						}
 					};
 				}
-			}, numberOfThreads);
+			}, numberOfThreads, OptionalInt.empty());
 			
 			node.setErrorCount(failedLoopsCounter.get());
 			node.setCount(loopsCounter.get());
