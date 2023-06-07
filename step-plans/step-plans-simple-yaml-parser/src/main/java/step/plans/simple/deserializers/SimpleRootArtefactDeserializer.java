@@ -18,7 +18,6 @@
  ******************************************************************************/
 package step.plans.simple.deserializers;
 
-import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.ObjectCodec;
@@ -29,8 +28,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import step.artefacts.CallFunction;
+import step.artefacts.FunctionGroup;
 import step.core.artefacts.AbstractArtefact;
 import step.core.plans.Plan;
+import step.plans.simple.Constants;
 import step.plans.simple.model.SimpleRootArtefact;
 import step.plans.simple.schema.JsonSchemaFieldProcessingException;
 
@@ -80,11 +81,24 @@ public class SimpleRootArtefactDeserializer extends JsonDeserializer<SimpleRootA
             }
         });
 
-        // 'argument' field for 'CallKeyword' artifact should contain all input values (dynamic values) as json string
+        // 'argument' field for 'CallKeyword' (as well as 'token' field) artifact should contain all input values (dynamic values) as json string
         // but in simplified format we represent input values as array of key / values
         customFieldProcessors.add((artefactClass, field, output, codec) -> {
             try {
-                if (artefactClass.equals(CallFunction.ARTEFACT_NAME) && field.getKey().equals("argument")) {
+                boolean inputsForCallFunction = artefactClass.equals(CallFunction.ARTEFACT_NAME)
+                        && field.getKey().equals(Constants.CALL_FUNCTION_RENAMED_ARGUMENT_FIELD);
+
+                boolean selectionCriteriaForTokenSelector = ((artefactClass.equals(CallFunction.ARTEFACT_NAME) || artefactClass.equals(FunctionGroup.FUNCTION_GROUP_ARTEFACT_NAME))
+                        && field.getKey().equals(Constants.TOKEN_SELECTOR_RENAMED_TOKEN_FIELD));
+
+                if (inputsForCallFunction || selectionCriteriaForTokenSelector) {
+                    String originalField;
+                    if (inputsForCallFunction) {
+                        originalField = Constants.CALL_FUNCTION_ORIGINAL_ARGUMENT_FIELD;
+                    } else {
+                        originalField = Constants.TOKEN_SELECTOR_ORIGINAL_TOKEN_FIELD;
+                    }
+
                     ArrayNode arguments = (ArrayNode) field.getValue();
                     ObjectNode inputDynamicValues = createObjectNode(codec);
                     Iterator<JsonNode> elements = arguments.elements();
@@ -103,7 +117,7 @@ public class SimpleRootArtefactDeserializer extends JsonDeserializer<SimpleRootA
                         }
                     }
                     String argumentsAsJsonString = jsonObjectMapper.writeValueAsString(inputDynamicValues);
-                    output.put(field.getKey(), argumentsAsJsonString);
+                    output.put(originalField, argumentsAsJsonString);
                     return true;
                 } else {
                     return false;
@@ -116,7 +130,7 @@ public class SimpleRootArtefactDeserializer extends JsonDeserializer<SimpleRootA
     }
 
     @Override
-    public SimpleRootArtefact deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException, JacksonException {
+    public SimpleRootArtefact deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException {
         JsonNode node = jsonParser.getCodec().readTree(jsonParser);
         JsonNode fullArtifact = convertSimpleArtifactToFull(node, jsonParser.getCodec(), customFieldProcessors);
         return new SimpleRootArtefact(jsonParser.getCodec().treeToValue(fullArtifact, AbstractArtefact.class));
