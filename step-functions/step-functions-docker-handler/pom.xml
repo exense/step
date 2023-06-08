@@ -28,6 +28,10 @@
 		<version>0.0.0-SNAPSHOT</version>
 	</parent>
 
+	<properties>
+		<docker-java.version>3.3.0</docker-java.version>
+	</properties>
+
     <!-- Please be very careful with the dependencies you add to this project as step-functions-handler.jar with all
     its dependencies will be loaded by the parent classloader of the keywords/functions. Libraries like guava for instance
     may conflict with the libraries of the keywords  -->
@@ -46,6 +50,16 @@
 			<groupId>ch.exense.step</groupId>
 			<artifactId>step-grid-client</artifactId>
 			<version>${step-grid.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.github.docker-java</groupId>
+			<artifactId>docker-java-core</artifactId>
+			<version>${docker-java.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.github.docker-java</groupId>
+			<artifactId>docker-java-transport-httpclient5</artifactId>
+			<version>${docker-java.version}</version>
 		</dependency>
     </dependencies>
 	

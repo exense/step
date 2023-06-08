@@ -31,6 +31,7 @@ import step.functions.Function;
 import step.functions.handler.FunctionIOJakartaObjectMapperFactory;
 import step.functions.handler.FunctionIOJavaxObjectMapperFactory;
 import step.functions.handler.FunctionMessageHandler;
+import step.functions.handler.ProxyMessageHandler;
 import step.functions.io.FunctionInput;
 import step.functions.io.Input;
 import step.functions.io.Output;
@@ -189,10 +190,10 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 			FileVersionId handlerPackage = functionType.getHandlerPackage(function);
 
 			// Build the property map used for the agent layer
-			Map<String, String> inputMessageProperties = new HashMap<>();
-			inputMessageProperties.put(FunctionMessageHandler.FUNCTION_HANDLER_KEY, handlerChain);
+			Map<String, String> messageProperties = new HashMap<>();
+			messageProperties.put(FunctionMessageHandler.FUNCTION_HANDLER_KEY, handlerChain);
 			if(handlerPackage != null) {
-				inputMessageProperties.putAll(fileVersionIdToMap(FunctionMessageHandler.FUNCTION_HANDLER_PACKAGE_KEY, handlerPackage));
+				messageProperties.putAll(fileVersionIdToMap(FunctionMessageHandler.FUNCTION_HANDLER_PACKAGE_KEY, handlerPackage));
 			}
 
 
@@ -221,20 +222,25 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 			// Serialize the input object
 			JsonNode node = jakartaMapper.valueToTree(input);
 
+			String functionMessageHandler = FunctionMessageHandler.class.getName();
 			boolean inDocker = properties.containsKey("$docker.image");
 
+			String messageHandler;
+			FileVersionId messageHandlerPackage;
 			OutputMessage outputMessage;
 			try {
-				FileVersionId rootHandlerPackage;
-				String handler;
 				if(inDocker) {
-					handler = "step.functions.handler.ProxyMessageHandler";
-					rootHandlerPackage = dockerHandlerPackageVersionId;
+					// Using the proxy message handler in order to forward calls to the sub agent
+					messageHandler = ProxyMessageHandler.class.getName();
+					messageHandlerPackage = dockerHandlerPackageVersionId;
+					messageProperties.put(ProxyMessageHandler.MESSAGE_HANDLER, functionMessageHandler);
+					messageProperties.put(ProxyMessageHandler.MESSAGE_HANDLER_FILE_ID, functionHandlerPackage.getFileId());
+					messageProperties.put(ProxyMessageHandler.MESSAGE_HANDLER_FILE_VERSION, functionHandlerPackage.getVersion());
 				} else {
-					handler = FunctionMessageHandler.class.getName();
-					rootHandlerPackage = functionHandlerPackage;
+					messageHandler = functionMessageHandler;
+					messageHandlerPackage = functionHandlerPackage;
 				}
-				outputMessage = gridClient.call(tokenHandleId, node, handler, rootHandlerPackage, inputMessageProperties, callTimeout);
+				outputMessage = gridClient.call(tokenHandleId, node, messageHandler, messageHandlerPackage, messageProperties, callTimeout);
 			} catch (AgentCallTimeoutException e) {
 				attachUnexpectedExceptionToOutput(output, "Timeout after " + callTimeout + "ms while calling the agent. You can increase the call timeout in the configuration screen of the keyword",e );
 				return output;
