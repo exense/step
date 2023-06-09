@@ -104,9 +104,9 @@ public class ProxyMessageHandler implements MessageHandler {
         StringBuilder stringBuilder = new StringBuilder();
         final StringBuilderLogReader callback = new StringBuilderLogReader(stringBuilder);
 
-        // Copy agent files
+        // TODO find a way to deploy agent : package from existing, download from somewhere ? For testing purpose agent folder is available on the test VM
         dockerClient.copyArchiveToContainerCmd(container.getId())
-                .withHostResource("/tmp/step-enterprise-agent-3.21.3")
+                .withHostResource("/tmp/step-enterprise-agent")
                 .withRemotePath("/home/agent/")
                 .exec();
 
@@ -116,7 +116,7 @@ public class ProxyMessageHandler implements MessageHandler {
                 .withAttachStderr(true)
                 .withUser("root")
                 .withWorkingDir("/home/agent/")
-                .withCmd("bash", "-c", "chown -R agent:agent step-enterprise-agent-3.21.3")
+                .withCmd("bash", "-c", "chown -R agent:agent step-enterprise-agent")
                 .exec();
         dockerClient.execStartCmd(execCreateCmdResponse.getId())
                 .exec(new StringBuilderLogReader(stringBuilder))
@@ -126,7 +126,7 @@ public class ProxyMessageHandler implements MessageHandler {
         execCreateCmdResponse = dockerClient.execCreateCmd(container.getId())
                 .withAttachStdout(true)
                 .withAttachStderr(true)
-                .withWorkingDir("/home/agent/step-enterprise-agent-3.21.3/bin/")
+                .withWorkingDir("/home/agent/step-enterprise-agent/bin/")
                 .withCmd("bash", "-c", "nohup ./startAgent.sh &")
                 .withUser("agent")
                 .exec();
