@@ -30,12 +30,16 @@ public class ProxyMessageHandler implements MessageHandler {
 
     @Override
     public OutputMessage handle(AgentTokenWrapper agentTokenWrapper, InputMessage inputMessage) throws Exception {
+        String containerName = "agent";
         DockerClient dockerClient = initDockerClient("https://docker.exense.ch", "docker-user", "100%BuildPROD", "unix:///var/run/docker.sock");
-        CreateContainerResponse container = startContainer(dockerClient, "agent", "docker.exense.ch/base/agent:11.0.13-jre-slim");
+        CreateContainerResponse container = startContainer(dockerClient, containerName, "docker.exense.ch/base/agent:11.0.13-jre-slim");
         copyAgentMaterialAndStart(dockerClient, container);
 
         FileManagerClient fileManagerClient = agentTokenWrapper.getServices().getFileManagerClient();
         ProxyGridServices.fileManagerClient = fileManagerClient;
+
+        // Get principal Agent properties
+        //agentTokenWrapper.getProperties();
 
         GridImpl grid = new GridImpl(new File("./filemanager"), 8090);
         grid.start();
@@ -62,7 +66,7 @@ public class ProxyMessageHandler implements MessageHandler {
             // Stop the grid
             grid.stop();
 
-            stopContainer(dockerClient, "");
+            stopContainer(dockerClient, containerName);
         }
     }
 
