@@ -45,22 +45,6 @@
 					"URL": "exense https://registry.npmjs.org/"
 				}
 			]
-		},
-		{
-			"ACTION": "PUSH",
-			"TYPE": "MAVEN",
-			"PARAMETERS": [
-				{
-					"URL": "nexus-staging::https://nexus-enterprise.exense.ch/repository/staging-maven/"
-				}
-			],
-			"ACTIONS": [
-				{
-					"ORIGIN": "step-parent/pom.xml",
-					"DESTINATION": "ch.exense.step:step-parent-${BRANCH}:${VERSION}",
-					"PACKAGING": "pom"
-				}
-			]
 		}
 	]
 }
