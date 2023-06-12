@@ -20,6 +20,7 @@ package step.junit.runner;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.core.Version;
 import step.core.artefacts.AbstractArtefact;
 import step.core.plans.Plan;
 import step.core.scanner.AnnotationScanner;
@@ -43,12 +44,13 @@ public class StepClassParser {
 
 	private final PlanParser planParser = new PlanParser();
 
-	// TODO: pass published schema to validate plans?
-	private final YamlPlanSerializer simpleYamlPlanSerializer = new YamlPlanSerializer(null);
+	private final YamlPlanSerializer simpleYamlPlanSerializer;
 
-	public StepClassParser(boolean appendClassnameToPlanName) {
+	public StepClassParser(boolean appendClassnameToPlanName, Version currentVersion) {
 		super();
 		this.appendClassnameToPlanName = appendClassnameToPlanName;
+		// TODO: pass published schema to validate plans?
+		this.simpleYamlPlanSerializer = new YamlPlanSerializer(null, currentVersion);
 	}
 
 	public List<StepClassParserResult> createPlansForClass(Class<?> klass) throws Exception {

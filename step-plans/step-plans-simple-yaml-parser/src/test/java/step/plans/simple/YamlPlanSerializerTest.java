@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plans.simple.deserializers;
+package step.plans.simple;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.bson.types.ObjectId;
@@ -25,8 +25,8 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.core.Version;
 import step.core.plans.Plan;
-import step.plans.simple.YamlPlanSerializer;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -40,35 +40,16 @@ public class YamlPlanSerializerTest {
 	// TODO: use published schema
 	private final YamlPlanSerializer serializer = new YamlPlanSerializer(
 			this.getClass().getClassLoader().getResourceAsStream("step/plans/simple/simplified-plan-schema-published.json"),
-			() -> STATIC_ID
+			() -> STATIC_ID,
+			new Version(3,22,0)
 	);
 
 	@Test
 	public void readSimplePlanFromYaml() {
-		// read simplified file
-		File yamlFile = new File("src/test/resources/step/plans/simple/test-simplified.plan.yml");
-
-		try (FileInputStream is = new FileInputStream(yamlFile); ByteArrayOutputStream os = new ByteArrayOutputStream()) {
-			// convert simplified plan to full plan
-			Plan fullPlan = serializer.readSimplePlanFromYaml(is);
-
-			// serialize plan to full yaml
-			serializer.toFullYaml(os, fullPlan);
-			log.info("Converted full plan -->");
-			log.info(os.toString(StandardCharsets.UTF_8));
-
-			// write yml to another file (to check it manually)
-			try (FileOutputStream fileOs = new FileOutputStream("src/test/resources/step/plans/simple/test-full-generated-plan.yml")) {
-				fileOs.write(os.toByteArray());
-			}
-
-			// compare serialized plan with expected data
-			JsonNode expectedFullYaml = serializer.getYamlMapper().readTree(new File("src/test/resources/step/plans/simple/test-full-expected-plan.yml"));
-			JsonNode actual = serializer.getYamlMapper().readTree(os.toByteArray());
-			Assert.assertEquals(expectedFullYaml, actual);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
+		checkPlanSerializationOk(
+				"src/test/resources/step/plans/simple/test-simplified.plan.yml",
+				"src/test/resources/step/plans/simple/test-full-expected-plan.yml"
+		);
 	}
 
 	@Test
@@ -84,6 +65,41 @@ public class YamlPlanSerializerTest {
 			throw new RuntimeException(e);
 		} catch (ValidationException ex){
 			log.info("OK - Validation exception caught", ex);
+		}
+	}
+
+	@Test
+	public void testSimplePlansMigration(){
+		checkPlanSerializationOk(
+				"src/test/resources/step/plans/simple/test-migration-simplified.plan.yml",
+				"src/test/resources/step/plans/simple/test-full-migration-expected-plan.yml"
+		);
+	}
+
+	private void checkPlanSerializationOk(String simpleYamlPlanFile, String expectedFullPlanFile) {
+		// read simplified file
+		File yamlFile = new File(simpleYamlPlanFile);
+
+		try (FileInputStream is = new FileInputStream(yamlFile); ByteArrayOutputStream os = new ByteArrayOutputStream()) {
+			// convert simplified plan to full plan
+			Plan fullPlan = serializer.readSimplePlanFromYaml(is);
+
+			// serialize plan to full yaml
+			serializer.toFullYaml(os, fullPlan);
+			log.info("Converted full plan -->");
+			log.info(os.toString(StandardCharsets.UTF_8));
+
+			// write yml to another file (to check it manually)
+//			try (FileOutputStream fileOs = new FileOutputStream("src/test/resources/step/plans/simple/test-full-generated-plan.yml")) {
+//				fileOs.write(os.toByteArray());
+//			}
+
+			// compare serialized plan with expected data
+			JsonNode expectedFullYaml = serializer.getYamlMapper().readTree(new File(expectedFullPlanFile));
+			JsonNode actual = serializer.getYamlMapper().readTree(os.toByteArray());
+			Assert.assertEquals(expectedFullYaml, actual);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
 		}
 	}
 

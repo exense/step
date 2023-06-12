@@ -22,6 +22,11 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import step.plans.simple.deserializers.SimpleRootArtefactDeserializer;
 
 public class SimpleYamlPlan {
+
+	// this name should be kept untouched to support the migrations for old versions
+	public static final String VERSION_FIELD_NAME = "version";
+
+	private String version;
 	private String name;
 
 	@JsonDeserialize(using = SimpleRootArtefactDeserializer.class)
@@ -41,5 +46,13 @@ public class SimpleYamlPlan {
 
 	public void setRoot(SimpleRootArtefact root) {
 		this.root = root;
+	}
+
+	public String getVersion() {
+		return version;
+	}
+
+	public void setVersion(String version) {
+		this.version = version;
 	}
 }

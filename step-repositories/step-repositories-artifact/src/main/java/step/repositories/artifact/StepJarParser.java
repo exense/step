@@ -20,6 +20,7 @@ package step.repositories.artifact;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.core.Controller;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
@@ -50,7 +51,7 @@ public class StepJarParser {
     private final StepClassParser stepClassParser;
 
     public StepJarParser() {
-        this.stepClassParser = new StepClassParser(false);
+        this.stepClassParser = new StepClassParser(false, Controller.VERSION);
     }
 
     private List<Function> getFunctions(AnnotationScanner annotationScanner, File artifact, File libraries) {

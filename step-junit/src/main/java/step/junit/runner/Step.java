@@ -25,6 +25,7 @@ import org.junit.runners.ParentRunner;
 import org.junit.runners.model.InitializationError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.core.Version;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
@@ -65,7 +66,11 @@ public class Step extends ParentRunner<StepClassParserResult> {
 					resourceManager = context.getResourceManager();
 				}
 			}).withPluginsFromClasspath().build();
-			StepClassParser classParser = new StepClassParser(false);
+			// TODO: not sure we have the controller version here in context
+			StepClassParser classParser = new StepClassParser(
+					false,
+					executionEngine.getExecutionEngineContext().get(Version.class)
+			);
 			listPlans = classParser.createPlansForClass(klass);
 		} catch (Exception e) {
 			throw new InitializationError(e);

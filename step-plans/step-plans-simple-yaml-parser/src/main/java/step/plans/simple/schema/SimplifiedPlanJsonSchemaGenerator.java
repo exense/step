@@ -160,9 +160,10 @@ public class SimplifiedPlanJsonSchemaGenerator {
 	}
 
 	private JsonObjectBuilder createPlanProperties() {
-		// plan only has "name" and the root artifact
+		// plan only has "name", "version", and the root artifact
 		JsonObjectBuilder objectBuilder = jsonProvider.createObjectBuilder();
 		objectBuilder.add("name", jsonProvider.createObjectBuilder().add("type", "string"));
+		objectBuilder.add("version", jsonProvider.createObjectBuilder().add("type", "string"));
 		objectBuilder.add("root", addRef(jsonProvider.createObjectBuilder(), ROOT_ARTEFACT_DEF));
 		return objectBuilder;
 	}

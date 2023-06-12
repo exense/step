@@ -1221,6 +1221,9 @@
     }
   },
   "properties" : {
+    "version": {
+      "type": "string"
+    },
     "name" : {
       "type" : "string"
     },

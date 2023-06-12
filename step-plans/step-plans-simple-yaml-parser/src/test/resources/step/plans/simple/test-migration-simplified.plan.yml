@@ -1,0 +1,12 @@
+version: "0.0.0"
+name: "test plan"
+root:
+  OldSequence:
+    name: Sequence
+    children:
+      - OldAssert:
+          name: Assert
+          oldOperator: "EQUALS"
+          actual:
+            expression: "'status'"
+          expected: "ok"
