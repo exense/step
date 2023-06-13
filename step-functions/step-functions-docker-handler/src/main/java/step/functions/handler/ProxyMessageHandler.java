@@ -6,6 +6,8 @@ import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
 import com.github.dockerjava.httpclient5.ApacheDockerHttpClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.grid.GridImpl;
 import step.grid.ProxyGridServices;
 import step.grid.TokenWrapper;
@@ -27,13 +29,17 @@ public class ProxyMessageHandler implements MessageHandler {
     public static final String MESSAGE_HANDLER = "$proxy.messageHandler";
     public static final String MESSAGE_HANDLER_FILE_ID = "$proxy.messageHandler.file.id";
     public static final String MESSAGE_HANDLER_FILE_VERSION = "$proxy.messageHandler.file.version";
+    private static final Logger logger = LoggerFactory.getLogger(ProxyMessageHandler.class);
 
     @Override
     public OutputMessage handle(AgentTokenWrapper agentTokenWrapper, InputMessage inputMessage) throws Exception {
+        // TODO below settings location to be brainstormed (session routing, parameters, properties ?)
+        boolean dockerInDocker = agentTokenWrapper.getProperties().containsKey("$docker.in.docker");
+        logger.info("Docker in docker configuration detected : " + dockerInDocker);
         String containerName = "agent";
         DockerClient dockerClient = initDockerClient("https://docker.exense.ch", "docker-user", "100%BuildPROD", "unix:///var/run/docker.sock");
         CreateContainerResponse container = startContainer(dockerClient, containerName, "docker.exense.ch/base/agent:11.0.13-jre-slim");
-        copyAgentMaterialAndStart(dockerClient, container);
+        copyAgentMaterialAndStart(dockerClient, container, dockerInDocker);
 
         FileManagerClient fileManagerClient = agentTokenWrapper.getServices().getFileManagerClient();
         ProxyGridServices.fileManagerClient = fileManagerClient;
@@ -61,11 +67,9 @@ public class ProxyMessageHandler implements MessageHandler {
             // Execute a keyword using the selected token
             OutputMessage outputMessage = gridClient.call(tokenHandle.getID(), inputMessage.getPayload(), messageHandler, messageHandlerFileVersionId, inputMessage.getProperties(), 60000);
             return outputMessage;
-
         } finally {
             // Stop the grid
             grid.stop();
-
             stopContainer(dockerClient, containerName);
         }
     }
@@ -84,8 +88,7 @@ public class ProxyMessageHandler implements MessageHandler {
                 .connectionTimeout(Duration.ofSeconds(30))
                 .responseTimeout(Duration.ofSeconds(45))
                 .build();
-        DockerClient dockerClient = DockerClientImpl.getInstance(config, dockerHttpClient);
-        return dockerClient;
+        return DockerClientImpl.getInstance(config, dockerHttpClient);
     }
 
     private CreateContainerResponse startContainer(DockerClient dockerClient, String name, String image) throws InterruptedException {
@@ -101,10 +104,11 @@ public class ProxyMessageHandler implements MessageHandler {
                 .exec();
         dockerClient.startContainerCmd(container.getId()).exec();
         InspectContainerResponse inspectContainerResponse = dockerClient.inspectContainerCmd(container.getId()).exec();
+        logger.info("Container startup response : " + inspectContainerResponse.toString());
         return container;
     }
 
-    private void copyAgentMaterialAndStart(DockerClient dockerClient, CreateContainerResponse container) throws InterruptedException {
+    private void copyAgentMaterialAndStart(DockerClient dockerClient, CreateContainerResponse container, boolean dockerInDocker) throws InterruptedException {
         StringBuilder stringBuilder = new StringBuilder();
         final StringBuilderLogReader callback = new StringBuilderLogReader(stringBuilder);
 
@@ -126,18 +130,21 @@ public class ProxyMessageHandler implements MessageHandler {
                 .exec(new StringBuilderLogReader(stringBuilder))
                 .awaitCompletion();
 
+        String startupCmd = dockerInDocker ? "nohup ./startAgent.sh -gridHost=http://${POD_IP}:8090 -fileServerHost=http://${POD_IP}:8090/proxy" : "nohup ./startAgent.sh &";
+        logger.info(String.format("Starting sub-agent with command %s", startupCmd));
         // Start the agent
         execCreateCmdResponse = dockerClient.execCreateCmd(container.getId())
                 .withAttachStdout(true)
                 .withAttachStderr(true)
                 .withWorkingDir("/home/agent/step-enterprise-agent/bin/")
-                .withCmd("bash", "-c", "nohup ./startAgent.sh &")
+                .withCmd("bash", "-c", startupCmd)
                 .withUser("agent")
                 .exec();
         dockerClient.execStartCmd(execCreateCmdResponse.getId())
                 .exec(new StringBuilderLogReader(stringBuilder));
 
         String log = callback.builder.toString();
+        logger.info(log);
     }
 
     private void stopContainer(DockerClient dockerClient, String name) {
