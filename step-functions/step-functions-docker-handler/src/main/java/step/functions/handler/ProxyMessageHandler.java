@@ -130,7 +130,15 @@ public class ProxyMessageHandler implements MessageHandler {
                 .exec(new StringBuilderLogReader(stringBuilder))
                 .awaitCompletion();
 
-        String startupCmd = dockerInDocker ? "nohup ./startAgent.sh -gridHost=http://${POD_IP}:8090 -fileServerHost=http://${POD_IP}:8090/proxy" : "nohup ./startAgent.sh &";
+
+
+        String startupCmd;
+        if(dockerInDocker) {
+            String POD_IP = System.getenv("POD_IP");
+            startupCmd = String.format("nohup ./startAgent.sh -gridHost=http://%s:8090 -fileServerHost=http://%s:8090/proxy", POD_IP, POD_IP);
+        } else {
+            startupCmd = "nohup ./startAgent.sh &";
+        }
         logger.info(String.format("Starting sub-agent with command %s", startupCmd));
         // Start the agent
         execCreateCmdResponse = dockerClient.execCreateCmd(container.getId())
