@@ -138,6 +138,7 @@ public class ExecutionEngineRunner {
 			}
 		} catch (Throwable e) {
 			logger.error("An error occurred while running test. Execution ID: " + executionId, e);
+			executionLifecycleManager.updateExecutionResult(executionContext, ReportNodeStatus.TECHNICAL_ERROR);
 		} finally {
 			updateStatus(ExecutionStatus.ENDED);
 			executionLifecycleManager.executionEnded();
