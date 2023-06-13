@@ -128,18 +128,11 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	protected abstract void createReportSkeleton_(REPORT_NODE parentNode, ARTEFACT testArtefact);
 	
 	public ReportNode execute(REPORT_NODE parentReportNode, ARTEFACT artefact, Map<String, Object> newVariables) {
-		//Handle skip node at the beginning to avoid unnecessary processing and persistence
-		try {
-			//We still need to evaluate expressions since it can be defined dynamically in the UI
-			dynamicBeanResolver.evaluate(artefact, getBindings());
-			if (artefact.getSkipNode().get()) {
-				return createSkippedReportNode(parentReportNode, artefact, null);
-			}
-		} catch (Throwable e) {
-			REPORT_NODE finalReportNode = createSkippedReportNode(parentReportNode, artefact, e);
-			//persist the node in case of error
-			saveReportNode(finalReportNode);
-			return finalReportNode;
+		if (artefact.getSkipNode().get()) {
+			REPORT_NODE reportNode = createReportNode(parentReportNode, artefact);
+			reportNode.setStatus(ReportNodeStatus.SKIPPED);
+			reportNode.setExecutionTime(System.currentTimeMillis());
+			return reportNode;
 		}
 
 		// If the artefact hasn't been initialized during createReportSkeleton phase, relaunch the skeleton creation phase for this node
@@ -165,7 +158,8 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 
 		try {
 			context.getExecutionCallbacks().beforeReportNodeExecution(context, reportNode);
-
+			
+			dynamicBeanResolver.evaluate(artefact, getBindings());
 			artefact.setNameDynamically();
 			reportNode.setName(getReportNodeName(artefact));
 			reportNode.setArtefactInstance(artefact);
@@ -382,26 +376,6 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		node.setExecutionID(context.getExecutionId().toString());
 		node.setStatus(ReportNodeStatus.NORUN);
 		return node;
-	}
-
-	private REPORT_NODE createSkippedReportNode(REPORT_NODE parentReportNode, ARTEFACT artefact, Throwable e) {
-		REPORT_NODE reportNode = null;
-		// search for the report node that has been created during skeleton phase
-		reportNode = (REPORT_NODE) reportNodeAccessor.getReportNodeByParentIDAndArtefactID(parentReportNode.getId(), artefact.getId());
-		if (reportNode == null) {
-			reportNode = createReportNode(parentReportNode, artefact);
-		}
-		reportNode.setExecutionTime(System.currentTimeMillis());
-		if (reportNode.getResolvedArtefact() == null) {
-			reportNode.setResolvedArtefact(artefact);
-		}
-		if (e != null) {
-			failWithException(reportNode, e);
-			reportNode.setStatus(ReportNodeStatus.TECHNICAL_ERROR);
-		} else {
-			reportNode.setStatus(ReportNodeStatus.SKIPPED);
-		}
-		return reportNode;
 	}
 
 	private String getReportNodeName(ARTEFACT artefact) {
