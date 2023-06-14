@@ -106,7 +106,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 			artefact.setNameDynamically();
 			reportNode.setName(getReportNodeName(artefact));
 			ArtefactFilter filter = context.getExecutionParameters().getArtefactFilter();
-			if(filter!=null&&!filter.isSelected(artefact)) {
+			if((filter!=null&&!filter.isSelected(artefact)) || artefact.getSkipNode().get()) {
 				reportNode.setStatus(ReportNodeStatus.SKIPPED);
 			} else {
 				createReportSkeleton_(reportNode, artefact);
@@ -128,13 +128,6 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	protected abstract void createReportSkeleton_(REPORT_NODE parentNode, ARTEFACT testArtefact);
 	
 	public ReportNode execute(REPORT_NODE parentReportNode, ARTEFACT artefact, Map<String, Object> newVariables) {
-		if (artefact.getSkipNode().get()) {
-			REPORT_NODE reportNode = createReportNode(parentReportNode, artefact);
-			reportNode.setStatus(ReportNodeStatus.SKIPPED);
-			reportNode.setExecutionTime(System.currentTimeMillis());
-			return reportNode;
-		}
-
 		// If the artefact hasn't been initialized during createReportSkeleton phase, relaunch the skeleton creation phase for this node
 		if(getListOfArtefactsNotInitialized().contains(artefact.getId().toString())) {
 			createReportSkeleton(parentReportNode, artefact, newVariables);
@@ -166,7 +159,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 			reportNode.setResolvedArtefact(artefact);
 			
 			ArtefactFilter filter = context.getExecutionParameters().getArtefactFilter();
-			if((filter!=null&&!filter.isSelected(artefact))) {
+			if((filter!=null&&!filter.isSelected(artefact)) || artefact.getSkipNode().get()) {
 				reportNode.setStatus(ReportNodeStatus.SKIPPED);
 			} else {
 				Object forcePersistBefore = artefact.getCustomAttribute(FORCE_PERSIST_BEFORE);
