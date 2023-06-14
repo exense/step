@@ -31,12 +31,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.artefacts.CallFunction;
 import step.artefacts.TokenSelector;
+import step.core.Version;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
 import step.handlers.javahandler.jsonschema.*;
 import step.plans.nl.RootArtefactType;
-import step.plans.simple.Constants;
+import step.plans.simple.YamlPlanFields;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -52,14 +53,17 @@ public class SimplifiedPlanJsonSchemaGenerator {
 
 	private final String targetPackage;
 
+	private final Version actualVersion;
+
 	private final ObjectMapper objectMapper = new ObjectMapper();
 	private final JsonProvider jsonProvider = JsonProvider.provider();
 
 	private final JsonSchemaCreator jsonSchemaCreator;
 	private final SimpleDynamicValueJsonSchemaHelper dynamicValuesHelper = new SimpleDynamicValueJsonSchemaHelper(jsonProvider);
 
-	public SimplifiedPlanJsonSchemaGenerator(String targetPackage) {
+	public SimplifiedPlanJsonSchemaGenerator(String targetPackage, Version actualVersion) {
 		this.targetPackage = targetPackage;
+		this.actualVersion = actualVersion;
 
 		// --- Fields filtering rules
 		List<AggregatedJsonSchemaFieldProcessor.FilterRule> filterRules = List.of(Field::isSynthetic,
@@ -71,19 +75,22 @@ public class SimplifiedPlanJsonSchemaGenerator {
 
 		// TODO: further we can replace this hardcoded logic for some custom field metadata and processing with some enhanced solution (java annotations?)
 
-		// --- Fields metadata rules
+		// --- Fields metadata rules (renaming)
 		FieldMetadataExtractor fieldMetadataExtractor = new FieldMetadataExtractor() {
 
 			private final FieldMetadataExtractor defaultMetadataExtractor = new DefaultFieldMetadataExtractor();
 
 			@Override
 			public FieldMetadata extractMetadata(Field field) {
-				if (field.getDeclaringClass().equals(CallFunction.class) && field.getName().equals("argument")) {
+				if (field.getDeclaringClass().equals(CallFunction.class) && field.getName().equals(YamlPlanFields.CALL_FUNCTION_ORIGINAL_ARGUMENT_FIELD)) {
 					// rename 'argument' field to 'inputs'
-					return new FieldMetadata(Constants.CALL_FUNCTION_RENAMED_ARGUMENT_FIELD, null, field.getType(), false);
-				} else if (field.getDeclaringClass().equals(TokenSelector.class) && field.getName().equals("token")) {
+					return new FieldMetadata(YamlPlanFields.CALL_FUNCTION_RENAMED_ARGUMENT_FIELD, null, field.getType(), false);
+				} else if (field.getDeclaringClass().equals(TokenSelector.class) && field.getName().equals(YamlPlanFields.TOKEN_SELECTOR_ORIGINAL_TOKEN_FIELD)) {
 					// rename 'token' field to 'selectionCriteria'
-					return new FieldMetadata(Constants.TOKEN_SELECTOR_RENAMED_TOKEN_FIELD, null, field.getType(), false);
+					return new FieldMetadata(YamlPlanFields.TOKEN_SELECTOR_RENAMED_TOKEN_FIELD, null, field.getType(), false);
+				} else if(field.getDeclaringClass().equals(CallFunction.class) && field.getName().equals(YamlPlanFields.CALL_FUNCTION_ORIGINAL_FUNCTION_FIELD)){
+					// rename 'function' field to 'callKeyword'
+					return new FieldMetadata(YamlPlanFields.CALL_FUNCTION_RENAMED_FUNCTION_FIELD, null, field.getType(), false);
 				} else {
 					return defaultMetadataExtractor.extractMetadata(field);
 				}
@@ -92,7 +99,7 @@ public class SimplifiedPlanJsonSchemaGenerator {
 
 		// --- Fields processing rules
 		AggregatedJsonSchemaFieldProcessor.ProcessingRule keywordInputsFieldProcessingRule = (field, propertiesBuilder) -> {
-			if (field.getDeclaringClass().equals(CallFunction.class) && field.getName().equals("argument")) {
+			if (field.getDeclaringClass().equals(CallFunction.class) && field.getName().equals(YamlPlanFields.CALL_FUNCTION_ORIGINAL_ARGUMENT_FIELD)) {
 				SimplifiedPlanJsonSchemaGenerator.addRef(propertiesBuilder, SimpleDynamicValueJsonSchemaHelper.DYNAMIC_KEYWORD_INPUTS_DEF);
 				return true;
 			}
@@ -100,7 +107,7 @@ public class SimplifiedPlanJsonSchemaGenerator {
 		};
 
 		AggregatedJsonSchemaFieldProcessor.ProcessingRule tokenFieldProcessingRule = (field, propertiesBuilder) -> {
-			if (field.getDeclaringClass().equals(TokenSelector.class) && field.getName().equals("token")) {
+			if (field.getDeclaringClass().equals(TokenSelector.class) && field.getName().equals(YamlPlanFields.TOKEN_SELECTOR_ORIGINAL_TOKEN_FIELD)) {
 				SimplifiedPlanJsonSchemaGenerator.addRef(propertiesBuilder, SimpleDynamicValueJsonSchemaHelper.DYNAMIC_KEYWORD_INPUTS_DEF);
 				return true;
 			}
@@ -163,7 +170,7 @@ public class SimplifiedPlanJsonSchemaGenerator {
 		// plan only has "name", "version", and the root artifact
 		JsonObjectBuilder objectBuilder = jsonProvider.createObjectBuilder();
 		objectBuilder.add("name", jsonProvider.createObjectBuilder().add("type", "string"));
-		objectBuilder.add("version", jsonProvider.createObjectBuilder().add("type", "string"));
+		objectBuilder.add("version", jsonProvider.createObjectBuilder().add("type", "string").add("default", actualVersion.toString()));
 		objectBuilder.add("root", addRef(jsonProvider.createObjectBuilder(), ROOT_ARTEFACT_DEF));
 		return objectBuilder;
 	}
@@ -282,7 +289,7 @@ public class SimplifiedPlanJsonSchemaGenerator {
 		if (c.equals(AbstractArtefact.class)) {
 			artefactProperties.add("description", jsonProvider.createObjectBuilder().add("type", "string"));
 			// use artefact name as default
-			artefactProperties.add("name", jsonProvider.createObjectBuilder().add("type", "string").add("default", artefactName));
+			artefactProperties.add(YamlPlanFields.RENAMED_NAME_FIELD, jsonProvider.createObjectBuilder().add("type", "string").add("default", artefactName));
 			artefactProperties.add("children",
 					jsonProvider.createObjectBuilder()
 							.add("type", "array")

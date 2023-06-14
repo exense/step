@@ -25,8 +25,8 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.core.Version;
 import step.core.plans.Plan;
+import step.plans.simple.model.SimpleYamlPlanVersions;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -37,12 +37,20 @@ public class YamlPlanSerializerTest {
 
 	private static final ObjectId STATIC_ID = new ObjectId("644fbe4e38a61e07cc3a4df8") ;
 
-	// TODO: use published schema
-	private final YamlPlanSerializer serializer = new YamlPlanSerializer(
-			this.getClass().getClassLoader().getResourceAsStream("step/plans/simple/simplified-plan-schema-published.json"),
-			() -> STATIC_ID,
-			new Version(3,22,0)
-	);
+	private final YamlPlanSerializer serializer;
+
+	public YamlPlanSerializerTest() throws IOException {
+		String schemaFileLocation = "step/plans/simple/simplified-plan-schema-1.0.json";
+		try(InputStream jsonSchemaInputStream = this.getClass().getClassLoader().getResourceAsStream(schemaFileLocation)){
+			if(jsonSchemaInputStream == null){
+				throw new IllegalStateException("Json schema not found: " + schemaFileLocation);
+			}
+			this.serializer = new YamlPlanSerializer(
+					() -> STATIC_ID,
+					SimpleYamlPlanVersions.ACTUAL_VERSION
+			);
+		}
+	}
 
 	@Test
 	public void readSimplePlanFromYaml() {

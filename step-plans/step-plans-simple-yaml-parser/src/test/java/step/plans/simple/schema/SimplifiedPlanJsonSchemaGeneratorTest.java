@@ -25,6 +25,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
+import step.plans.simple.model.SimpleYamlPlanVersions;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -41,10 +42,10 @@ public class SimplifiedPlanJsonSchemaGeneratorTest {
 
 		// read published json schema
 		// TODO: how to publish schema and how to check it in test?
-		InputStream jsonSchemaFile = this.getClass().getClassLoader().getResourceAsStream("step/plans/simple/simplified-plan-schema-published.json");
+		InputStream jsonSchemaFile = this.getClass().getClassLoader().getResourceAsStream("step/plans/simple/simplified-plan-schema-1.0.json");
 
 		JsonNode publishedSchema = jsonObjectMapper.readTree(jsonSchemaFile);
-		SimplifiedPlanJsonSchemaGenerator schemaGenerator = new SimplifiedPlanJsonSchemaGenerator("step");
+		SimplifiedPlanJsonSchemaGenerator schemaGenerator = new SimplifiedPlanJsonSchemaGenerator("step", SimpleYamlPlanVersions.ACTUAL_VERSION.getVersion());
 		JsonNode currentSchema = schemaGenerator.generateJsonSchema();
 
 		log.info("GENERATED SCHEMA:");

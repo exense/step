@@ -2,10 +2,10 @@ version: "0.0.0"
 name: "test plan"
 root:
   OldSequence:
-    name: Sequence
+    nodeName: Sequence
     children:
       - OldAssert:
-          name: Assert
+          nodeName: Assert
           oldOperator: "EQUALS"
           actual:
             expression: "'status'"

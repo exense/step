@@ -1,0 +1,32 @@
+/*******************************************************************************
+ * Copyright (C) 2020, exense GmbH
+ *
+ * This file is part of STEP
+ *
+ * STEP is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * STEP is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
+ ******************************************************************************/
+package step.plans.simple;
+
+public class YamlPlanFields {
+    public static final String CALL_FUNCTION_ORIGINAL_ARGUMENT_FIELD = "argument";
+    public static final String CALL_FUNCTION_RENAMED_ARGUMENT_FIELD = "inputs";
+
+    public static final String CALL_FUNCTION_ORIGINAL_FUNCTION_FIELD = "function";
+    public static final String CALL_FUNCTION_RENAMED_FUNCTION_FIELD = "keywordName";
+
+    public static final String TOKEN_SELECTOR_ORIGINAL_TOKEN_FIELD = "token";
+    public static final String TOKEN_SELECTOR_RENAMED_TOKEN_FIELD = "selectionCriteria";
+
+    public static final String RENAMED_NAME_FIELD = "nodeName";
+}

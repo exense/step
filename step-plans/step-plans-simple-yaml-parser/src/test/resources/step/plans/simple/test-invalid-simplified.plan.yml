@@ -3,6 +3,6 @@ root:
     name: Sequence
     children:
       - If:
-          name: "IfBlock"
+          nodeName: "IfBlock"
           condition: true
           description: "my description"

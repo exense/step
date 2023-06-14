@@ -69,7 +69,7 @@
             "description" : {
               "type" : "string"
             },
-            "name" : {
+            "nodeName" : {
               "type" : "string",
               "default" : "AfterSequence"
             },
@@ -99,7 +99,7 @@
             "description" : {
               "type" : "string"
             },
-            "name" : {
+            "nodeName" : {
               "type" : "string",
               "default" : "Set"
             },
@@ -126,7 +126,7 @@
             "description" : {
               "type" : "string"
             },
-            "name" : {
+            "nodeName" : {
               "type" : "string",
               "default" : "Check"
             },
@@ -154,7 +154,7 @@
             "description" : {
               "type" : "string"
             },
-            "name" : {
+            "nodeName" : {
               "type" : "string",
               "default" : "CheckArtefact"
             },
@@ -181,7 +181,7 @@
             "description" : {
               "type" : "string"
             },
-            "name" : {
+            "nodeName" : {
               "type" : "string",
               "default" : "Script"
             },
@@ -211,7 +211,7 @@
             "description" : {
               "type" : "string"
             },
-            "name" : {
+            "nodeName" : {
               "type" : "string",
               "default" : "Sequence"
             },
@@ -232,7 +232,7 @@
         "CallKeyword" : {
           "type" : "object",
           "properties" : {
-            "function" : {
+            "keywordName" : {
               "$ref" : "#/$defs/SmartDynamicValueStringDef"
             },
             "inputs" : {
@@ -250,7 +250,7 @@
             "description" : {
               "type" : "string"
             },
-            "name" : {
+            "nodeName" : {
               "type" : "string",
               "default" : "CallKeyword"
             },
@@ -277,7 +277,7 @@
             "description" : {
               "type" : "string"
             },
-            "name" : {
+            "nodeName" : {
               "type" : "string",
               "default" : "Switch"
             },
@@ -307,7 +307,7 @@
             "description" : {
               "type" : "string"
             },
-            "name" : {
+            "nodeName" : {
               "type" : "string",
               "default" : "BeforeThread"
             },
@@ -343,7 +343,7 @@
             "description" : {
               "type" : "string"
             },
-            "name" : {
+            "nodeName" : {
               "type" : "string",
               "default" : "Export"
             },
@@ -367,7 +367,7 @@
             "description" : {
               "type" : "string"
             },
-            "name" : {
+            "nodeName" : {
               "type" : "string",
               "default" : "StreamingArtefact"
             },
@@ -417,7 +417,7 @@
             "description" : {
               "type" : "string"
             },
-            "name" : {
+            "nodeName" : {
               "type" : "string",
               "default" : "For"
             },
@@ -444,7 +444,7 @@
             "description" : {
               "type" : "string"
             },
-            "name" : {
+            "nodeName" : {
               "type" : "string",
               "default" : "Case"
             },
@@ -471,7 +471,7 @@
             "description" : {
               "type" : "string"
             },
-            "name" : {
+            "nodeName" : {
               "type" : "string",
               "default" : "Return"
             },
@@ -501,7 +501,7 @@
             "description" : {
               "type" : "string"
             },
-            "name" : {
+            "nodeName" : {
               "type" : "string",
               "default" : "Failure"
             },
@@ -551,7 +551,7 @@
             "description" : {
               "type" : "string"
             },
-            "name" : {
+            "nodeName" : {
               "type" : "string",
               "default" : "ForEach"
             },
@@ -590,7 +590,7 @@
             "description" : {
               "type" : "string"
             },
-            "name" : {
+            "nodeName" : {
               "type" : "string",
               "default" : "RetryIfFails"
             },
@@ -629,7 +629,7 @@
             "description" : {
               "type" : "string"
             },
-            "name" : {
+            "nodeName" : {
               "type" : "string",
               "default" : "While"
             },
@@ -656,7 +656,7 @@
             "description" : {
               "type" : "string"
             },
-            "name" : {
+            "nodeName" : {
               "type" : "string",
               "default" : "Echo"
             },
@@ -689,7 +689,7 @@
             "description" : {
               "type" : "string"
             },
-            "name" : {
+            "nodeName" : {
               "type" : "string",
               "default" : "CallPlan"
             },
@@ -713,7 +713,7 @@
             "description" : {
               "type" : "string"
             },
-            "name" : {
+            "nodeName" : {
               "type" : "string",
               "default" : "TestScenario"
             },
@@ -749,7 +749,7 @@
             "description" : {
               "type" : "string"
             },
-            "name" : {
+            "nodeName" : {
               "type" : "string",
               "default" : "Synchronized"
             },
@@ -779,7 +779,7 @@
             "description" : {
               "type" : "string"
             },
-            "name" : {
+            "nodeName" : {
               "type" : "string",
               "default" : "BeforeSequence"
             },
@@ -806,7 +806,7 @@
             "description" : {
               "type" : "string"
             },
-            "name" : {
+            "nodeName" : {
               "type" : "string",
               "default" : "TestSet"
             },
@@ -836,7 +836,7 @@
             "description" : {
               "type" : "string"
             },
-            "name" : {
+            "nodeName" : {
               "type" : "string",
               "default" : "Session"
             },
@@ -889,7 +889,7 @@
             "description" : {
               "type" : "string"
             },
-            "name" : {
+            "nodeName" : {
               "type" : "string",
               "default" : "DataSet"
             },
@@ -922,7 +922,7 @@
             "description" : {
               "type" : "string"
             },
-            "name" : {
+            "nodeName" : {
               "type" : "string",
               "default" : "Sleep"
             },
@@ -946,7 +946,7 @@
             "description" : {
               "type" : "string"
             },
-            "name" : {
+            "nodeName" : {
               "type" : "string",
               "default" : "TestCase"
             },
@@ -985,7 +985,7 @@
             "description" : {
               "type" : "string"
             },
-            "name" : {
+            "nodeName" : {
               "type" : "string",
               "default" : "Assert"
             },
@@ -1015,7 +1015,7 @@
             "description" : {
               "type" : "string"
             },
-            "name" : {
+            "nodeName" : {
               "type" : "string",
               "default" : "AfterThread"
             },
@@ -1039,7 +1039,7 @@
             "description" : {
               "type" : "string"
             },
-            "name" : {
+            "nodeName" : {
               "type" : "string",
               "default" : "Placeholder"
             },
@@ -1066,7 +1066,7 @@
             "description" : {
               "type" : "string"
             },
-            "name" : {
+            "nodeName" : {
               "type" : "string",
               "default" : "If"
             },
@@ -1120,7 +1120,7 @@
             "description" : {
               "type" : "string"
             },
-            "name" : {
+            "nodeName" : {
               "type" : "string",
               "default" : "ThreadGroup"
             },
@@ -1221,11 +1221,12 @@
     }
   },
   "properties" : {
-    "version": {
-      "type": "string"
-    },
     "name" : {
       "type" : "string"
+    },
+    "version" : {
+      "type" : "string",
+      "default" : "1.0.0"
     },
     "root" : {
       "$ref" : "#/$defs/RootArtefactDef"

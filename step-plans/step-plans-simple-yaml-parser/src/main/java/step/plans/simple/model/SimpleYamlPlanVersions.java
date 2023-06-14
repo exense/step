@@ -16,12 +16,33 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plans.simple;
+package step.plans.simple.model;
 
-public class Constants {
-    public static final String CALL_FUNCTION_ORIGINAL_ARGUMENT_FIELD = "argument";
-    public static final String CALL_FUNCTION_RENAMED_ARGUMENT_FIELD = "inputs";
+import step.core.Version;
 
-    public static final String TOKEN_SELECTOR_ORIGINAL_TOKEN_FIELD = "token";
-    public static final String TOKEN_SELECTOR_RENAMED_TOKEN_FIELD = "selectionCriteria";
+public class SimpleYamlPlanVersions {
+    public static final YamlPlanVersion VERSION_1 = new YamlPlanVersion(
+            new Version("1.0.0"),
+            "step/plans/simple/simplified-plan-schema-1.0.json"
+    );
+
+    public static final YamlPlanVersion ACTUAL_VERSION = VERSION_1;
+
+    public static class YamlPlanVersion {
+        private final Version version;
+        private final String jsonSchemaPath;
+
+        public YamlPlanVersion(Version version, String jsonSchemaPath) {
+            this.version = version;
+            this.jsonSchemaPath = jsonSchemaPath;
+        }
+
+        public Version getVersion() {
+            return version;
+        }
+
+        public String getJsonSchemaPath() {
+            return jsonSchemaPath;
+        }
+    }
 }

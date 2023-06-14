@@ -46,6 +46,7 @@ import step.plans.simple.deserializers.SimpleRootArtefactDeserializer;
 import step.plans.simple.migrations.AbstractSimplePlanMigrationTask;
 import step.plans.simple.model.SimpleRootArtefact;
 import step.plans.simple.model.SimpleYamlPlan;
+import step.plans.simple.model.SimpleYamlPlanVersions;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -65,26 +66,40 @@ public class YamlPlanSerializer {
 	private final ObjectMapper yamlMapper;
 
 	private final Supplier<ObjectId> idGenerator;
-	private InputStream jsonSchemaFile = null;
 	private final Version currentVersion;
+	private final String jsonSchema;
 	private final MigrationManager migrationManager;
 
 
 	// for tests
-	YamlPlanSerializer(InputStream jsonSchemaFile, Supplier<ObjectId> idGenerator, Version currentVersion) {
-		this.jsonSchemaFile = jsonSchemaFile;
-		this.currentVersion = currentVersion;
+	YamlPlanSerializer( Supplier<ObjectId> idGenerator, SimpleYamlPlanVersions.YamlPlanVersion currentVersion) {
+		this.currentVersion = currentVersion.getVersion();
+		if (currentVersion.getJsonSchemaPath() != null) {
+			this.jsonSchema = readJsonSchema(currentVersion.getJsonSchemaPath());
+		} else {
+			this.jsonSchema = null;
+		}
 		this.yamlMapper = createSimplePlanObjectMapper();
 		this.idGenerator = idGenerator;
 		this.migrationManager = initMigrationManager();
 	}
 
 	/**
-	 * @param jsonSchemaFile the json schema used to validate the simple yaml plan (if null, no validations are performed)
-	 * @param currentVersion the current version of step used to upgrade the old simple plans (if null, no migrations are performed)
+	 * @param currentVersion the current version of step used to upgrade the old simple plans and apply validations according to the json schema
 	 */
-	public YamlPlanSerializer(InputStream jsonSchemaFile, Version currentVersion) {
-		this(jsonSchemaFile, null, currentVersion);
+	public YamlPlanSerializer(SimpleYamlPlanVersions.YamlPlanVersion currentVersion) {
+		this(null, currentVersion);
+	}
+
+	protected String readJsonSchema(String jsonSchemaPath) {
+		try (InputStream jsonSchemaInputStream = this.getClass().getClassLoader().getResourceAsStream(jsonSchemaPath)) {
+			if (jsonSchemaInputStream == null) {
+				throw new IllegalStateException("Json schema not found: " + jsonSchemaPath);
+			}
+			return new String(jsonSchemaInputStream.readAllBytes(), StandardCharsets.UTF_8);
+		} catch (IOException e) {
+			throw new IllegalStateException("Unable to load json schema: " + jsonSchemaPath, e);
+		}
 	}
 
 	/**
@@ -125,8 +140,7 @@ public class YamlPlanSerializer {
 		bufferedYamlPlan = upgradeSimpleYamlIfRequired(bufferedYamlPlan);
 
 		JsonNode simplePlanJsonNode = yamlMapper.readTree(bufferedYamlPlan);
-		if (jsonSchemaFile != null) {
-			String jsonSchema = new String(jsonSchemaFile.readAllBytes(), StandardCharsets.UTF_8);
+		if (jsonSchema != null) {
 			JsonSchemaValidator.validate(jsonSchema, simplePlanJsonNode.toString());
 		}
 

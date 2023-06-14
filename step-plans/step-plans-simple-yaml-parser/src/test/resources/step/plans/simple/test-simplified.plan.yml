@@ -4,13 +4,13 @@ root:
     name: Sequence
     children:
       - If:
-          name: "IfBlock"
+          nodeName: IfBlock
           condition:
             expression: "controllerSettings.getSettingByKey('housekeeping_enabled').getValue()=='true'"
           description: "my description"
           children:
             - Assert:
-                name: Assert
+                nodeName: Assert
                 actual:
                   expression: "'status'"
                 operator: "EQUALS"
@@ -19,8 +19,8 @@ root:
                   expression: "'ok'"
                 customErrorMessage: "my custom error"
             - CallKeyword:
-                name: CallKeyword
-                function: callExisting3
+                nodeName: CallKeyword
+                keywordName: callExisting3
                 selectionCriteria:
                   - key: "criteria1"
                     value: "criteriaValue1"

@@ -29,6 +29,7 @@ import step.junit.runners.annotations.Plans;
 import step.plans.nl.RootArtefactType;
 import step.plans.nl.parser.PlanParser;
 import step.plans.simple.YamlPlanSerializer;
+import step.plans.simple.model.SimpleYamlPlanVersions;
 
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -46,11 +47,10 @@ public class StepClassParser {
 
 	private final YamlPlanSerializer simpleYamlPlanSerializer;
 
-	public StepClassParser(boolean appendClassnameToPlanName, Version currentVersion) {
+	public StepClassParser(boolean appendClassnameToPlanName) {
 		super();
 		this.appendClassnameToPlanName = appendClassnameToPlanName;
-		// TODO: pass published schema to validate plans?
-		this.simpleYamlPlanSerializer = new YamlPlanSerializer(null, currentVersion);
+		this.simpleYamlPlanSerializer = new YamlPlanSerializer(SimpleYamlPlanVersions.ACTUAL_VERSION);
 	}
 
 	public List<StepClassParserResult> createPlansForClass(Class<?> klass) throws Exception {
@@ -97,7 +97,6 @@ public class StepClassParser {
 							throw new IllegalStateException("Missing annotation @Keyword on implicit plan method "+m.getName());
 						}
 					}
-					// TODO: simple yaml support in method annotations? RootArtefactType?
 					plan = planParser.parse(planStr, RootArtefactType.TestCase);
 					setPlanName(plan, planName);
 				} catch (Exception e) {

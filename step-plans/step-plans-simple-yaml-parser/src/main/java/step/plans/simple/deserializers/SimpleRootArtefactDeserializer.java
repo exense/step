@@ -31,7 +31,7 @@ import step.artefacts.CallFunction;
 import step.artefacts.FunctionGroup;
 import step.core.artefacts.AbstractArtefact;
 import step.core.plans.Plan;
-import step.plans.simple.Constants;
+import step.plans.simple.YamlPlanFields;
 import step.plans.simple.model.SimpleRootArtefact;
 import step.plans.simple.schema.JsonSchemaFieldProcessingException;
 
@@ -51,7 +51,7 @@ public class SimpleRootArtefactDeserializer extends JsonDeserializer<SimpleRootA
 
         // the 'name' field should be wrapped into the 'attributes'
         customFieldProcessors.add((artefactClass, field, output, codec) -> {
-            if (field.getKey().equals("name")) {
+            if (field.getKey().equals(YamlPlanFields.RENAMED_NAME_FIELD)) {
                 ObjectNode attributesNode = (ObjectNode) output.get("attributes");
                 if(attributesNode == null){
                     attributesNode = createObjectNode(codec);
@@ -86,17 +86,17 @@ public class SimpleRootArtefactDeserializer extends JsonDeserializer<SimpleRootA
         customFieldProcessors.add((artefactClass, field, output, codec) -> {
             try {
                 boolean inputsForCallFunction = artefactClass.equals(CallFunction.ARTEFACT_NAME)
-                        && field.getKey().equals(Constants.CALL_FUNCTION_RENAMED_ARGUMENT_FIELD);
+                        && field.getKey().equals(YamlPlanFields.CALL_FUNCTION_RENAMED_ARGUMENT_FIELD);
 
                 boolean selectionCriteriaForTokenSelector = ((artefactClass.equals(CallFunction.ARTEFACT_NAME) || artefactClass.equals(FunctionGroup.FUNCTION_GROUP_ARTEFACT_NAME))
-                        && field.getKey().equals(Constants.TOKEN_SELECTOR_RENAMED_TOKEN_FIELD));
+                        && field.getKey().equals(YamlPlanFields.TOKEN_SELECTOR_RENAMED_TOKEN_FIELD));
 
                 if (inputsForCallFunction || selectionCriteriaForTokenSelector) {
                     String originalField;
                     if (inputsForCallFunction) {
-                        originalField = Constants.CALL_FUNCTION_ORIGINAL_ARGUMENT_FIELD;
+                        originalField = YamlPlanFields.CALL_FUNCTION_ORIGINAL_ARGUMENT_FIELD;
                     } else {
-                        originalField = Constants.TOKEN_SELECTOR_ORIGINAL_TOKEN_FIELD;
+                        originalField = YamlPlanFields.TOKEN_SELECTOR_ORIGINAL_TOKEN_FIELD;
                     }
 
                     ArrayNode arguments = (ArrayNode) field.getValue();
@@ -124,6 +124,16 @@ public class SimpleRootArtefactDeserializer extends JsonDeserializer<SimpleRootA
                 }
             } catch (JsonProcessingException e) {
                 throw new RuntimeException("Unable to deserialize the 'argument' field", e);
+            }
+        });
+
+        customFieldProcessors.add((artefactClass, field, output, codec) -> {
+            if (artefactClass.equals(CallFunction.ARTEFACT_NAME)
+                    && field.getKey().equals(YamlPlanFields.CALL_FUNCTION_RENAMED_FUNCTION_FIELD)) {
+                output.set(YamlPlanFields.CALL_FUNCTION_ORIGINAL_FUNCTION_FIELD, field.getValue());
+                return true;
+            } else {
+                return false;
             }
         });
 
@@ -158,11 +168,7 @@ public class SimpleRootArtefactDeserializer extends JsonDeserializer<SimpleRootA
             JsonNode artifactData = simpleArtifact.get(shortArtifactClass);
             fullArtifact.put(Plan.JSON_CLASS_FIELD, shortArtifactClass);
 
-            // name is required attribute in json schema
-            JsonNode name = artifactData.get("name");
-            if (name == null) {
-                throw new JsonSchemaFieldProcessingException("'name' attribute is not defined for artifact " + shortArtifactClass);
-            }
+            fillDefaultValuesForArtifactFields(shortArtifactClass, (ObjectNode) artifactData);
 
             Iterator<Map.Entry<String, JsonNode>> fields = artifactData.fields();
             while (fields.hasNext()) {
@@ -184,6 +190,14 @@ public class SimpleRootArtefactDeserializer extends JsonDeserializer<SimpleRootA
 
         }
         return fullArtifact;
+    }
+
+    private static void fillDefaultValuesForArtifactFields(String shortArtifactClass, ObjectNode artifactData) {
+        // name is required attribute in json schema
+        JsonNode name = artifactData.get(YamlPlanFields.RENAMED_NAME_FIELD);
+        if (name == null) {
+            artifactData.put(YamlPlanFields.RENAMED_NAME_FIELD, shortArtifactClass);
+        }
     }
 
     private static ArrayNode createArrayNode(ObjectCodec codec) {

@@ -1,14 +1,14 @@
 name: "simple yaml plan"
 root:
   Sequence:
-    name: Sequence
+    nodeName: Sequence
     children:
       - Echo:
-          name: Echo
+          nodeName: Echo
           text: "My composite from simple plan"
       - CallKeyword:
-          name: CallKeyword
-          function: callExisting3
+          nodeName: CallKeyword
+          keywordName: callExisting3
           inputs:
             - key: "stringInput"
               value:
