@@ -105,8 +105,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 			dynamicBeanResolver.evaluate(artefact, getBindings());
 			artefact.setNameDynamically();
 			reportNode.setName(getReportNodeName(artefact));
-			ArtefactFilter filter = context.getExecutionParameters().getArtefactFilter();
-			if((filter!=null&&!filter.isSelected(artefact)) || artefact.getSkipNode().get()) {
+			if(filterArtefact(artefact)) {
 				reportNode.setStatus(ReportNodeStatus.SKIPPED);
 			} else {
 				createReportSkeleton_(reportNode, artefact);
@@ -157,9 +156,8 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 			reportNode.setName(getReportNodeName(artefact));
 			reportNode.setArtefactInstance(artefact);
 			reportNode.setResolvedArtefact(artefact);
-			
-			ArtefactFilter filter = context.getExecutionParameters().getArtefactFilter();
-			if((filter!=null&&!filter.isSelected(artefact)) || artefact.getSkipNode().get()) {
+
+			if (filterArtefact(artefact)) {
 				reportNode.setStatus(ReportNodeStatus.SKIPPED);
 			} else {
 				Object forcePersistBefore = artefact.getCustomAttribute(FORCE_PERSIST_BEFORE);
@@ -207,7 +205,12 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		
 		return reportNode;
 	}
-	
+
+	private boolean filterArtefact(ARTEFACT artefact) {
+		ArtefactFilter filter = context.getExecutionParameters().getArtefactFilter();
+		return (filter!=null&&!filter.isSelected(artefact)) || artefact.getSkipNode().get();
+	}
+
 	/**
 	 * Before calling {@link ArtefactHandler#execute_(ReportNode, AbstractArtefact)}
 	 * for an artefact node N this method is called for each child of N which
