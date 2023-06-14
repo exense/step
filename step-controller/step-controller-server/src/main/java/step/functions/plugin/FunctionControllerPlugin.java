@@ -116,7 +116,7 @@ public class FunctionControllerPlugin extends AbstractControllerPlugin {
 		functionTableInputs.forEach(i->{
 			Input input = i.getInput();
 			if(input.getId().equals("attributes.name")) {
-				input.setCustomUIComponents(List.of("functionEntityIcon","functionLink"));
+				input.setCustomUIComponents(List.of("functionLink"));
 				screenInputAccessor.save(i);
 			}
 		});
