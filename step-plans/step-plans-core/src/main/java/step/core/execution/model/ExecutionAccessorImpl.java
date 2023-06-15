@@ -46,6 +46,7 @@ public class ExecutionAccessorImpl extends AbstractAccessor<Execution> implement
 		createOrUpdateIndex("description");
 		createOrUpdateIndex("executionParameters.userID");
 		createOrUpdateIndex("executionTaskID");
+		collectionDriver.createOrUpdateCompoundIndex(Map.of("executionTaskID",1,"endTime",-1));
 	}
 
 	@Override
