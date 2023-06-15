@@ -25,12 +25,16 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.artefacts.reports.ReportNode;
+import step.core.dynamicbeans.DynamicValue;
 
 @Artefact(name="Session")
 public class FunctionGroup extends TokenSelector {
 
 	@JsonIgnore
 	private BiConsumer<AbstractArtefact, ReportNode> consumer;
+
+	// TODO initialize empty
+	private DynamicValue<String> dockerImage = new DynamicValue<>("docker.exense.ch/base/agent:11.0.13-jre-slim");
 
 	/**
 	 * @return an optional {@link BiConsumer} representing an operation to be performed
@@ -44,4 +48,11 @@ public class FunctionGroup extends TokenSelector {
 		this.consumer = consumer;
 	}
 
+	public DynamicValue<String> getDockerImage() {
+		return dockerImage;
+	}
+
+	public void setDockerImage(DynamicValue<String> dockerImage) {
+		this.dockerImage = dockerImage;
+	}
 }

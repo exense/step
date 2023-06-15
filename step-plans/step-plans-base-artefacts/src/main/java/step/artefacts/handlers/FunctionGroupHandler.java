@@ -21,7 +21,9 @@ package step.artefacts.handlers;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.BiConsumer;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import step.artefacts.FunctionGroup;
@@ -31,6 +33,7 @@ import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
+import step.core.dynamicbeans.DynamicValue;
 import step.core.execution.ExecutionContext;
 import step.core.functions.FunctionGroupHandle;
 import step.functions.execution.FunctionExecutionService;
@@ -68,12 +71,19 @@ public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportN
 		TokenWrapper localToken;
 		
 		final Map<String, Interest> additionalSelectionCriteria;
+
+		final Optional<String> dockerImage;
 		
-		private long ownerThreadId = 0; 
+		private long ownerThreadId = 0;
 
 		public FunctionGroupContext(Map<String, Interest> additionalSelectionCriteria) {
+			this(additionalSelectionCriteria, Optional.empty());
+		}
+
+		public FunctionGroupContext(Map<String, Interest> additionalSelectionCriteria, Optional<String> dockerImage) {
 			super();
 			this.additionalSelectionCriteria = additionalSelectionCriteria;
+			this.dockerImage = dockerImage;
 		}
 		
 		public List<TokenWrapper> getTokens() {
@@ -110,7 +120,13 @@ public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportN
 	@Override
 	protected void execute_(ReportNode node, FunctionGroup testArtefact) throws Exception {		
 		Map<String, Interest> additionalSelectionCriteria = tokenSelectorHelper.getTokenSelectionCriteria(testArtefact, getBindings());
-		FunctionGroupContext handle = new FunctionGroupContext(additionalSelectionCriteria);
+		String dockerImage = testArtefact.getDockerImage().get();
+
+		Optional<String> dockerImageOptional = Optional.ofNullable(dockerImage);
+		// TODO switch this to a required criteria
+		dockerImageOptional.ifPresent(image -> additionalSelectionCriteria.put("$docker", new Interest(Pattern.compile("true"), false)));
+
+		FunctionGroupContext handle = new FunctionGroupContext(additionalSelectionCriteria, dockerImageOptional);
 		context.getVariablesManager().putVariable(node, FUNCTION_GROUP_CONTEXT_KEY, handle);
 		context.put(FunctionGroupHandle.class, this);
 		try {

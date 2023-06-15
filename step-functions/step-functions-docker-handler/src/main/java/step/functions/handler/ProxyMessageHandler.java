@@ -24,33 +24,60 @@ import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ProxyMessageHandler implements MessageHandler {
 
+    private static final Logger logger = LoggerFactory.getLogger(ProxyMessageHandler.class);
+
+    // Use a static in order to have a singleton instance of the Grid.
+    // Unfortunately the agent doesn't expose any agent-wide session to store singleton objects
+    private static final ConcurrentHashMap<String, GridImpl> gridMap = new ConcurrentHashMap<>();
+
+    // Constants
+    public static final String GRID = "grid";
+    public static final String CONTAINER_NAME = "agent";
+
+    // Properties passed from the controller via message properties
     public static final String MESSAGE_HANDLER = "$proxy.messageHandler";
     public static final String MESSAGE_HANDLER_FILE_ID = "$proxy.messageHandler.file.id";
     public static final String MESSAGE_HANDLER_FILE_VERSION = "$proxy.messageHandler.file.version";
-    private static final Logger logger = LoggerFactory.getLogger(ProxyMessageHandler.class);
+    public static final String MESSAGE_PROP_DOCKER_REGISTRY_URL = "$docker.registryUrl";
+    public static final String MESSAGE_PROP_DOCKER_REGISTRY_USERNAME = "$docker.registryUsername";
+    public static final String MESSAGE_PROP_DOCKER_REGISTRY_PASSWORD = "$docker.registryPassword";
+    public static final String MESSAGE_PROP_DOCKER_IMAGE = "$docker.image";
+
+    // AgentConf properties
+    public static final String AGENT_CONF_DOCKER_SOCK = "docker.sock";
+    public static final String AGENT_CONF_DOCKER_SOCK_DEFAULT = "unix:///var/run/docker.sock";
+    public static final String AGENT_CONF_DOCKER_IN_DOCKER = "$docker.in.docker";
+    public static final String AGENT_CONF_DOCKER_LOCALGRID_PORT = "docker.localgrid.port";
 
     @Override
     public OutputMessage handle(AgentTokenWrapper agentTokenWrapper, InputMessage inputMessage) throws Exception {
-        // TODO below settings location to be brainstormed (session routing, parameters, properties ?)
-        boolean dockerInDocker = agentTokenWrapper.getProperties().containsKey("$docker.in.docker");
+        Map<String, String> agentProperties = agentTokenWrapper.getProperties();
+        String dockerHost = agentProperties.getOrDefault(AGENT_CONF_DOCKER_SOCK, AGENT_CONF_DOCKER_SOCK_DEFAULT);
+
+        Map<String, String> messageProperties = inputMessage.getProperties();
+        String registryUrl = messageProperties.get(MESSAGE_PROP_DOCKER_REGISTRY_URL);
+        String registryUsername = messageProperties.get(MESSAGE_PROP_DOCKER_REGISTRY_USERNAME);
+        String registryPassword = messageProperties.get(MESSAGE_PROP_DOCKER_REGISTRY_PASSWORD);
+        String dockerImage = messageProperties.get(MESSAGE_PROP_DOCKER_IMAGE);
+        String localGridPortStr = messageProperties.get(AGENT_CONF_DOCKER_LOCALGRID_PORT);
+        int localGridPort = Integer.parseInt(localGridPortStr);
+        boolean dockerInDocker = agentProperties.containsKey(AGENT_CONF_DOCKER_IN_DOCKER);
+
         logger.info("Docker in docker configuration detected : " + dockerInDocker);
-        String containerName = "agent";
-        DockerClient dockerClient = initDockerClient("https://docker.exense.ch", "docker-user", "100%BuildPROD", "unix:///var/run/docker.sock");
-        CreateContainerResponse container = startContainer(dockerClient, containerName, "docker.exense.ch/base/agent:11.0.13-jre-slim");
-        copyAgentMaterialAndStart(dockerClient, container, dockerInDocker);
+
+        DockerClient dockerClient = initDockerClient(registryUrl, registryUsername, registryPassword, dockerHost);
+        CreateContainerResponse container = startContainer(dockerClient, dockerImage);
+        copyAgentMaterialAndStart(dockerClient, container, dockerInDocker, localGridPort);
 
         FileManagerClient fileManagerClient = agentTokenWrapper.getServices().getFileManagerClient();
         ProxyGridServices.fileManagerClient = fileManagerClient;
 
-        // Get principal Agent properties
-        //agentTokenWrapper.getProperties();
-
-        GridImpl grid = new GridImpl(new File("./filemanager"), 8090);
-        grid.start();
-
+        // Use the concurrent hash map to create a grid singleton
+        GridImpl grid = gridMap.computeIfAbsent(GRID, k -> createGrid(localGridPort));
         try {
             // Create a grid client to call keywords on this grid instance
             GridClientConfiguration gridClientConfiguration = new GridClientConfiguration();
@@ -59,20 +86,26 @@ public class ProxyMessageHandler implements MessageHandler {
             LocalGridClientImpl gridClient = new LocalGridClientImpl(gridClientConfiguration, grid);
             // Wait for the token to be available i.e. that the container started
             TokenWrapper tokenHandle = gridClient.getTokenHandle(Map.of(), Map.of(), true);
-
-            String messageHandler = inputMessage.getProperties().get(MESSAGE_HANDLER);
-            String messageHandlerFileId = inputMessage.getProperties().get(MESSAGE_HANDLER_FILE_ID);
-            String messageHandlerFileVersion = inputMessage.getProperties().get(MESSAGE_HANDLER_FILE_VERSION);
+            // Get the initial message handler from the message properties
+            String messageHandler = messageProperties.get(MESSAGE_HANDLER);
+            String messageHandlerFileId = messageProperties.get(MESSAGE_HANDLER_FILE_ID);
+            String messageHandlerFileVersion = messageProperties.get(MESSAGE_HANDLER_FILE_VERSION);
             FileVersionId messageHandlerFileVersionId = new FileVersionId(messageHandlerFileId, messageHandlerFileVersion);
-
             // Execute a keyword using the selected token
-            OutputMessage outputMessage = gridClient.call(tokenHandle.getID(), inputMessage.getPayload(), messageHandler, messageHandlerFileVersionId, inputMessage.getProperties(), 60000);
-            return outputMessage;
+            return gridClient.call(tokenHandle.getID(), inputMessage.getPayload(), messageHandler, messageHandlerFileVersionId, messageProperties, 60000);
         } finally {
-            // Stop the grid
-            grid.stop();
-            stopContainer(dockerClient, containerName);
+            stopContainer(dockerClient);
         }
+    }
+
+    private static GridImpl createGrid(int port) {
+        GridImpl grid = new GridImpl(new File("./filemanager"), port);
+        try {
+            grid.start();
+        } catch (Exception e) {
+            throw new RuntimeException("Error while starting sub-agent grid on port " + port, e);
+        }
+        return grid;
     }
 
     private DockerClient initDockerClient(String registryUrl, String registryUsername, String registryPassword, String dockerHost) {
@@ -92,11 +125,11 @@ public class ProxyMessageHandler implements MessageHandler {
         return DockerClientImpl.getInstance(config, dockerHttpClient);
     }
 
-    private CreateContainerResponse startContainer(DockerClient dockerClient, String name, String image) throws InterruptedException {
+    private CreateContainerResponse startContainer(DockerClient dockerClient, String image) throws InterruptedException {
         PullImageCmd pullImageCmd = dockerClient.pullImageCmd(image);
         pullImageCmd.exec(new PullImageResultCallback()).awaitCompletion();
         CreateContainerResponse container = dockerClient.createContainerCmd(image)
-                .withName(name)
+                .withName(CONTAINER_NAME)
                 //.withExposedPorts(new ExposedPort(input.getInt("exposedPort")))
                 //.withPortBindings(PortBinding.parse(input.getString("portBindings")))
                 .withHostConfig(new HostConfig().withNetworkMode("host")/*.withPortBindings(new PortBinding(Ports.Binding.bindPort(30000), ExposedPort.tcp(30000)))*/)
@@ -109,7 +142,7 @@ public class ProxyMessageHandler implements MessageHandler {
         return container;
     }
 
-    private void copyAgentMaterialAndStart(DockerClient dockerClient, CreateContainerResponse container, boolean dockerInDocker) throws InterruptedException, IOException {
+    private void copyAgentMaterialAndStart(DockerClient dockerClient, CreateContainerResponse container, boolean dockerInDocker, int gridPort) throws InterruptedException, IOException {
         StringBuilder stringBuilder = new StringBuilder();
         final StringBuilderLogReader callback = new StringBuilderLogReader(stringBuilder);
 
@@ -130,13 +163,14 @@ public class ProxyMessageHandler implements MessageHandler {
 
         String startupCmd;
         String gridHost;
-        if(dockerInDocker) {
+        if (dockerInDocker) {
             gridHost = System.getenv("POD_IP");
         } else {
             gridHost = "localhost";
         }
 
-        startupCmd = String.format("nohup ./startAgent.sh -gridHost=http://%s:8090 -fileServerHost=http://%s:8090/proxy", gridHost, gridHost);
+        String subGridUrl = "http://" + gridHost + ":" + gridPort;
+        startupCmd = String.format("nohup ./startAgent.sh -gridHost=%s -fileServerHost=%s/proxy", subGridUrl, subGridUrl);
 
         logger.info(String.format("Starting sub-agent with command %s", startupCmd));
         // Start the agent
@@ -145,7 +179,7 @@ public class ProxyMessageHandler implements MessageHandler {
                 .withAttachStderr(true)
                 .withWorkingDir("/home/agent/step-enterprise-agent/bin/")
                 .withCmd("bash", "-c", startupCmd)
-                .withUser("agent")
+                .withUser(CONTAINER_NAME)
                 .exec();
         dockerClient.execStartCmd(execCreateCmdResponse.getId())
                 .exec(new StringBuilderLogReader(stringBuilder));
@@ -155,17 +189,17 @@ public class ProxyMessageHandler implements MessageHandler {
     }
 
     private static void copyLocalFolderToContainer(DockerClient dockerClient, CreateContainerResponse container, String folderName) throws IOException {
-        String agentLibPath = new File("../"+ folderName).getCanonicalPath();
+        String agentLibPath = new File("../" + folderName).getCanonicalPath();
 
         dockerClient.copyArchiveToContainerCmd(container.getId())
                 .withHostResource(agentLibPath)
-                .withRemotePath("/home/agent/"+ folderName)
+                .withRemotePath("/home/agent/" + folderName)
                 .exec();
     }
 
-    private void stopContainer(DockerClient dockerClient, String name) {
-        dockerClient.stopContainerCmd(name).exec();
-        dockerClient.removeContainerCmd(name).exec();
+    private void stopContainer(DockerClient dockerClient) {
+        dockerClient.stopContainerCmd(CONTAINER_NAME).exec();
+        dockerClient.removeContainerCmd(CONTAINER_NAME).exec();
     }
 
 }

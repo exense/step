@@ -54,6 +54,7 @@ import step.datapool.DataSetHandle;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.execution.FunctionExecutionService;
+import step.functions.execution.FunctionExecutionServiceImpl;
 import step.functions.handler.AbstractFunctionHandler;
 import step.functions.io.FunctionInput;
 import step.functions.io.Output;
@@ -119,12 +120,12 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		validateInput(input, function);
 
 		Output<JsonObject> output;
-		if(!context.isSimulation()) {		
-			Object o = context.getVariablesManager().getVariable(FunctionGroupHandler.FUNCTION_GROUP_CONTEXT_KEY);
-			boolean releaseTokenAfterExecution = (o==null);
+		if(!context.isSimulation()) {
+			FunctionGroupContext functionGroupContext = (FunctionGroupContext) context.getVariablesManager().getVariable(FunctionGroupHandler.FUNCTION_GROUP_CONTEXT_KEY);
+			boolean releaseTokenAfterExecution = (functionGroupContext==null);
 			
 			CallFunctionTokenWrapperOwner tokenWrapperOwner = new CallFunctionTokenWrapperOwner(node.getId().toString(), context.getExecutionId(), context.getExecutionParameters().getDescription());
-			TokenWrapper token = functionRouter.selectToken(testArtefact, function, (FunctionGroupContext)o, getBindings(), tokenWrapperOwner);
+			TokenWrapper token = functionRouter.selectToken(testArtefact, function, functionGroupContext, getBindings(), tokenWrapperOwner);
 			try {
 				Token gridToken = token.getToken();
 				if(gridToken.isLocal()) {
@@ -137,7 +138,11 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				
 				OperationManager.getInstance().enter("Keyword Call", new Object[]{function.getAttributes(), token.getToken(), token.getAgent()},
 						node.getId().toString());
-				
+
+				// Add the docker image if present within the session
+				if(functionGroupContext != null) {
+					functionGroupContext.dockerImage.ifPresent(image -> input.getProperties().put(FunctionExecutionServiceImpl.INPUT_PROPERTY_DOCKER_IMAGE, image));
+				}
 				try {
 					output = functionExecutionService.callFunction(token.getID(), function, input, JsonObject.class);
 				} finally {

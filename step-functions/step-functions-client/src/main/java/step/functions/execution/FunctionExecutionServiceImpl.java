@@ -53,12 +53,12 @@ import step.grid.tokenpool.Interest;
 
 import java.io.File;
 import java.io.InputStream;
-import java.net.http.HttpResponse;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 
+	public static final String INPUT_PROPERTY_DOCKER_IMAGE = "docker.image";
 	private final GridClient gridClient;
 
 	private final FunctionTypeRegistry functionTypeRegistry;
@@ -223,7 +223,7 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 			JsonNode node = jakartaMapper.valueToTree(input);
 
 			String functionMessageHandler = FunctionMessageHandler.class.getName();
-			boolean inDocker = properties.containsKey("$docker.image");
+			boolean inDocker = properties.containsKey(INPUT_PROPERTY_DOCKER_IMAGE);
 
 			String messageHandler;
 			FileVersionId messageHandlerPackage;
@@ -236,6 +236,17 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 					messageProperties.put(ProxyMessageHandler.MESSAGE_HANDLER, functionMessageHandler);
 					messageProperties.put(ProxyMessageHandler.MESSAGE_HANDLER_FILE_ID, functionHandlerPackage.getFileId());
 					messageProperties.put(ProxyMessageHandler.MESSAGE_HANDLER_FILE_VERSION, functionHandlerPackage.getVersion());
+
+					// TODO Read this from the settings
+					DockerConfiguration dockerConfiguration = new DockerConfiguration();
+					dockerConfiguration.registryUrl = "https://docker.exense.ch";
+					dockerConfiguration.registryUsername = "docker-user";
+					dockerConfiguration.registryPassword = "100%BuildPROD";
+
+					messageProperties.put(ProxyMessageHandler.MESSAGE_PROP_DOCKER_REGISTRY_URL, dockerConfiguration.registryUrl);
+					messageProperties.put(ProxyMessageHandler.MESSAGE_PROP_DOCKER_REGISTRY_USERNAME, dockerConfiguration.registryUsername);
+					messageProperties.put(ProxyMessageHandler.MESSAGE_PROP_DOCKER_REGISTRY_PASSWORD, dockerConfiguration.registryPassword);
+					messageProperties.put(ProxyMessageHandler.MESSAGE_PROP_DOCKER_IMAGE, properties.get(INPUT_PROPERTY_DOCKER_IMAGE));
 				} else {
 					messageHandler = functionMessageHandler;
 					messageHandlerPackage = functionHandlerPackage;
