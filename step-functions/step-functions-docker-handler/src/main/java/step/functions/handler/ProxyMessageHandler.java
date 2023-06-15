@@ -21,6 +21,7 @@ import step.grid.io.InputMessage;
 import step.grid.io.OutputMessage;
 
 import java.io.File;
+import java.io.IOException;
 import java.time.Duration;
 import java.util.Map;
 
@@ -108,37 +109,35 @@ public class ProxyMessageHandler implements MessageHandler {
         return container;
     }
 
-    private void copyAgentMaterialAndStart(DockerClient dockerClient, CreateContainerResponse container, boolean dockerInDocker) throws InterruptedException {
+    private void copyAgentMaterialAndStart(DockerClient dockerClient, CreateContainerResponse container, boolean dockerInDocker) throws InterruptedException, IOException {
         StringBuilder stringBuilder = new StringBuilder();
         final StringBuilderLogReader callback = new StringBuilderLogReader(stringBuilder);
 
-        // TODO find a way to deploy agent : package from existing, download from somewhere ? For testing purpose agent folder is available on the test VM
-        dockerClient.copyArchiveToContainerCmd(container.getId())
-                .withHostResource("/tmp/step-enterprise-agent")
-                .withRemotePath("/home/agent/")
-                .exec();
+        copyLocalFolderToContainer(dockerClient, container, "lib");
+        copyLocalFolderToContainer(dockerClient, container, "bin");
+        copyLocalFolderToContainer(dockerClient, container, "conf");
 
         // Files are copied as root, we need to change the ownership
         ExecCreateCmdResponse execCreateCmdResponse = dockerClient.execCreateCmd(container.getId())
                 .withAttachStdout(true)
                 .withAttachStderr(true)
                 .withUser("root")
-                .withWorkingDir("/home/agent/")
-                .withCmd("bash", "-c", "chown -R agent:agent step-enterprise-agent")
+                .withCmd("bash", "-c", "chown -R agent:agent /home/agent")
                 .exec();
         dockerClient.execStartCmd(execCreateCmdResponse.getId())
                 .exec(new StringBuilderLogReader(stringBuilder))
                 .awaitCompletion();
 
-
-
         String startupCmd;
+        String gridHost;
         if(dockerInDocker) {
-            String POD_IP = System.getenv("POD_IP");
-            startupCmd = String.format("nohup ./startAgent.sh -gridHost=http://%s:8090 -fileServerHost=http://%s:8090/proxy", POD_IP, POD_IP);
+            gridHost = System.getenv("POD_IP");
         } else {
-            startupCmd = "nohup ./startAgent.sh &";
+            gridHost = "localhost";
         }
+
+        startupCmd = String.format("nohup ./startAgent.sh -gridHost=http://%s:8090 -fileServerHost=http://%s:8090/proxy", gridHost, gridHost);
+
         logger.info(String.format("Starting sub-agent with command %s", startupCmd));
         // Start the agent
         execCreateCmdResponse = dockerClient.execCreateCmd(container.getId())
@@ -153,6 +152,15 @@ public class ProxyMessageHandler implements MessageHandler {
 
         String log = callback.builder.toString();
         logger.info(log);
+    }
+
+    private static void copyLocalFolderToContainer(DockerClient dockerClient, CreateContainerResponse container, String folderName) throws IOException {
+        String agentLibPath = new File("../"+ folderName).getCanonicalPath();
+
+        dockerClient.copyArchiveToContainerCmd(container.getId())
+                .withHostResource(agentLibPath)
+                .withRemotePath("/home/agent/"+ folderName)
+                .exec();
     }
 
     private void stopContainer(DockerClient dockerClient, String name) {
