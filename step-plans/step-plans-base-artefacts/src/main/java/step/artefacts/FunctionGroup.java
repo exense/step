@@ -33,8 +33,7 @@ public class FunctionGroup extends TokenSelector {
 	@JsonIgnore
 	private BiConsumer<AbstractArtefact, ReportNode> consumer;
 
-	// TODO initialize empty
-	private DynamicValue<String> dockerImage = new DynamicValue<>("docker.exense.ch/base/agent:11.0.13-jre-slim");
+	private DynamicValue<String> dockerImage = new DynamicValue<>();
 
 	/**
 	 * @return an optional {@link BiConsumer} representing an operation to be performed

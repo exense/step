@@ -122,7 +122,13 @@ public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportN
 		Map<String, Interest> additionalSelectionCriteria = tokenSelectorHelper.getTokenSelectionCriteria(testArtefact, getBindings());
 		String dockerImage = testArtefact.getDockerImage().get();
 
-		Optional<String> dockerImageOptional = Optional.ofNullable(dockerImage);
+		Optional<String> dockerImageOptional;
+		if(dockerImage != null && !dockerImage.isEmpty()) {
+			dockerImageOptional = Optional.ofNullable(dockerImage);
+		} else {
+			dockerImageOptional = Optional.empty();
+		}
+
 		// TODO switch this to a required criteria
 		dockerImageOptional.ifPresent(image -> additionalSelectionCriteria.put("$docker", new Interest(Pattern.compile("true"), false)));
 
