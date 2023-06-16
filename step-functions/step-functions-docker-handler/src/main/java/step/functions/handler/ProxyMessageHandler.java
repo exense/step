@@ -146,9 +146,12 @@ public class ProxyMessageHandler implements MessageHandler {
         StringBuilder stringBuilder = new StringBuilder();
         final StringBuilderLogReader callback = new StringBuilderLogReader(stringBuilder);
 
-        copyLocalFolderToContainer(dockerClient, container, "lib");
-        copyLocalFolderToContainer(dockerClient, container, "bin");
+        // Testing a copy of a simple folder
+        copyLocalFolderToContainer(dockerClient, container, "test");
         copyLocalFolderToContainer(dockerClient, container, "conf");
+        copyLocalFolderToContainer(dockerClient, container, "bin");
+        copyLocalFolderToContainer(dockerClient, container, "lib");
+
 
         // Files are copied as root, we need to change the ownership
         ExecCreateCmdResponse execCreateCmdResponse = dockerClient.execCreateCmd(container.getId())
@@ -177,7 +180,7 @@ public class ProxyMessageHandler implements MessageHandler {
         execCreateCmdResponse = dockerClient.execCreateCmd(container.getId())
                 .withAttachStdout(true)
                 .withAttachStderr(true)
-                .withWorkingDir("/home/agent/step-enterprise-agent/bin/")
+                .withWorkingDir("/home/agent/bin/")
                 .withCmd("bash", "-c", startupCmd)
                 .withUser(CONTAINER_NAME)
                 .exec();
