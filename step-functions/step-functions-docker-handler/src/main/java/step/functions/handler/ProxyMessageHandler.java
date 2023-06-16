@@ -63,7 +63,7 @@ public class ProxyMessageHandler implements MessageHandler {
         String registryUsername = messageProperties.get(MESSAGE_PROP_DOCKER_REGISTRY_USERNAME);
         String registryPassword = messageProperties.get(MESSAGE_PROP_DOCKER_REGISTRY_PASSWORD);
         String dockerImage = messageProperties.get(MESSAGE_PROP_DOCKER_IMAGE);
-        String localGridPortStr = messageProperties.get(AGENT_CONF_DOCKER_LOCALGRID_PORT);
+        String localGridPortStr = agentProperties.getOrDefault(AGENT_CONF_DOCKER_LOCALGRID_PORT, "8090");
         int localGridPort = Integer.parseInt(localGridPortStr);
         boolean dockerInDocker = agentProperties.containsKey(AGENT_CONF_DOCKER_IN_DOCKER);
 
