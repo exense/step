@@ -189,10 +189,12 @@ public class ProxyMessageHandler implements MessageHandler {
     }
 
     private static void copyLocalFolderToContainer(DockerClient dockerClient, CreateContainerResponse container, String folderName) throws IOException {
-        String agentLibPath = new File("../" + folderName).getCanonicalPath();
+        String pathToCopy = new File("../" + folderName).getCanonicalPath();
+        System.out.println("Path to copy : " + pathToCopy);
+        logger.info("Path to copy : " + pathToCopy);
 
         dockerClient.copyArchiveToContainerCmd(container.getId())
-                .withHostResource(agentLibPath)
+                .withHostResource(pathToCopy)
                 .withRemotePath("/home/agent/" + folderName)
                 .exec();
     }
