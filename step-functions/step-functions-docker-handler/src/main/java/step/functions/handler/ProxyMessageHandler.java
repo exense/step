@@ -146,8 +146,6 @@ public class ProxyMessageHandler implements MessageHandler {
         StringBuilder stringBuilder = new StringBuilder();
         final StringBuilderLogReader callback = new StringBuilderLogReader(stringBuilder);
 
-        // Testing a copy of a simple folder
-        copyLocalFolderToContainer(dockerClient, container, "test");
         copyLocalFolderToContainer(dockerClient, container, "conf");
         copyLocalFolderToContainer(dockerClient, container, "bin");
         copyLocalFolderToContainer(dockerClient, container, "lib");
@@ -198,7 +196,7 @@ public class ProxyMessageHandler implements MessageHandler {
 
         dockerClient.copyArchiveToContainerCmd(container.getId())
                 .withHostResource(pathToCopy)
-                .withRemotePath("/home/agent/" + folderName)
+                .withRemotePath("/home/agent/")
                 .exec();
     }
 
