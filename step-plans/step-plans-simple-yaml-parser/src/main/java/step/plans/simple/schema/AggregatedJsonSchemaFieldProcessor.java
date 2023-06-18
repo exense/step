@@ -38,9 +38,9 @@ public class AggregatedJsonSchemaFieldProcessor implements JsonSchemaFieldProces
 	}
 
 	@Override
-	public boolean applyCustomProcessing(Field field, JsonObjectBuilder propertiesBuilder) throws JsonSchemaFieldProcessingException {
+	public boolean applyCustomProcessing(Class<?> objectClass, Field field, JsonObjectBuilder propertiesBuilder) throws JsonSchemaFieldProcessingException {
 		for (ProcessingRule processingRule : processingRules) {
-			if(processingRule.applyCustomProcessing(field, propertiesBuilder)) {
+			if(processingRule.applyCustomProcessing(objectClass, field, propertiesBuilder)) {
 				return true;
 			}
 		}
@@ -48,9 +48,9 @@ public class AggregatedJsonSchemaFieldProcessor implements JsonSchemaFieldProces
 	}
 
 	@Override
-	public boolean skipField(Field field) {
+	public boolean skipField(Class<?> objectClass, Field field) {
 		for (FilterRule filterRule : filterRules) {
-			if(filterRule.skipField(field)){
+			if(filterRule.skipField(objectClass, field)){
 				return true;
 			}
 		}
@@ -58,10 +58,10 @@ public class AggregatedJsonSchemaFieldProcessor implements JsonSchemaFieldProces
 	}
 
 	public interface ProcessingRule {
-		boolean applyCustomProcessing(Field field, JsonObjectBuilder propertiesBuilder) throws JsonSchemaFieldProcessingException;
+		boolean applyCustomProcessing(Class<?> objectClass, Field field, JsonObjectBuilder propertiesBuilder) throws JsonSchemaFieldProcessingException;
 	}
 
 	public interface FilterRule {
-		boolean skipField(Field field);
+		boolean skipField(Class<?> objectClass, Field field);
 	}
 }

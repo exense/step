@@ -55,15 +55,23 @@ public class YamlPlanSerializerTest {
 	@Test
 	public void readSimplePlanFromYaml() {
 		checkPlanSerializationOk(
-				"src/test/resources/step/plans/simple/test-simplified.plan.yml",
-				"src/test/resources/step/plans/simple/test-full-expected-plan.yml"
+				"src/test/resources/step/plans/simple/test-simple.plan.yml",
+				"src/test/resources/step/plans/simple/test-expected-full-plan.yml"
+		);
+	}
+
+	@Test
+	public void keywordSelectionCriteria() {
+		checkPlanSerializationOk(
+				"src/test/resources/step/plans/simple/test-keyword-selection-criteria-simple.plan.yml",
+				"src/test/resources/step/plans/simple/test-expected-selection-criteria-full-plan.yml"
 		);
 	}
 
 	@Test
 	public void readInvalidSimplePlanFromYaml(){
 		// read simplified file
-		File yamlFile = new File("src/test/resources/step/plans/simple/test-invalid-simplified.plan.yml");
+		File yamlFile = new File("src/test/resources/step/plans/simple/test-invalid-simple.plan.yml");
 		try (FileInputStream is = new FileInputStream(yamlFile); ByteArrayOutputStream os = new ByteArrayOutputStream()) {
 			// convert simplified plan to full plan
 			serializer.readSimplePlanFromYaml(is);
@@ -77,10 +85,10 @@ public class YamlPlanSerializerTest {
 	}
 
 	@Test
-	public void testSimplePlansMigration(){
+	public void simplePlanMigration(){
 		checkPlanSerializationOk(
-				"src/test/resources/step/plans/simple/test-migration-simplified.plan.yml",
-				"src/test/resources/step/plans/simple/test-full-migration-expected-plan.yml"
+				"src/test/resources/step/plans/simple/test-migration-simple.plan.yml",
+				"src/test/resources/step/plans/simple/test-migration-expected-full-plan.yml"
 		);
 	}
 

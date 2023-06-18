@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.plans.simple.deserializers;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -25,5 +26,5 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.Map;
 
 public interface SimpleArtefactFieldDeserializationProcessor {
-    boolean deserializeArtefactField(String artefactClass, Map.Entry<String, JsonNode> field, ObjectNode output, ObjectCodec codec);
+    boolean deserializeArtefactField(String artefactClass, Map.Entry<String, JsonNode> field, ObjectNode output, ObjectCodec codec) throws JsonProcessingException;
 }

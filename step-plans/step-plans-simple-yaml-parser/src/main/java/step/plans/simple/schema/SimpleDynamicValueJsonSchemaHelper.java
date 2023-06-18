@@ -37,9 +37,9 @@ class SimpleDynamicValueJsonSchemaHelper {
 
 	private static final String DYNAMIC_EXPRESSION_DEF = "DynamicExpressionDef";
 
-	private static final String SMART_DYNAMIC_VALUE_STRING_DEF = "SmartDynamicValueStringDef";
-	private static final String SMART_DYNAMIC_VALUE_NUM_DEF = "SmartDynamicValueNumDef";
-	private static final String SMART_DYNAMIC_VALUE_BOOLEAN_DEF = "SmartDynamicValueBooleanDef";
+	public static final String SMART_DYNAMIC_VALUE_STRING_DEF = "SmartDynamicValueStringDef";
+	public static final String SMART_DYNAMIC_VALUE_NUM_DEF = "SmartDynamicValueNumDef";
+	public static final String SMART_DYNAMIC_VALUE_BOOLEAN_DEF = "SmartDynamicValueBooleanDef";
 
 	public static final String DYNAMIC_KEYWORD_INPUTS_DEF = "DynamicKeywordInputsDef";
 	private final JsonProvider jsonProvider;

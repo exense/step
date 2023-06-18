@@ -19,14 +19,14 @@
 package step.plans.simple;
 
 public class YamlPlanFields {
-    public static final String CALL_FUNCTION_ORIGINAL_ARGUMENT_FIELD = "argument";
-    public static final String CALL_FUNCTION_RENAMED_ARGUMENT_FIELD = "inputs";
+    public static final String CALL_FUNCTION_ARGUMENT_ORIGINAL_FIELD = "argument";
+    public static final String CALL_FUNCTION_ARGUMENT_SIMPLE_FIELD = "inputs";
 
-    public static final String CALL_FUNCTION_ORIGINAL_FUNCTION_FIELD = "function";
-    public static final String CALL_FUNCTION_RENAMED_FUNCTION_FIELD = "keywordName";
+    public static final String CALL_FUNCTION_FUNCTION_ORIGINAL_FIELD = "function";
+    public static final String CALL_FUNCTION_FUNCTION_SIMPLE_FIELD = "keyword";
 
-    public static final String TOKEN_SELECTOR_ORIGINAL_TOKEN_FIELD = "token";
-    public static final String TOKEN_SELECTOR_RENAMED_TOKEN_FIELD = "selectionCriteria";
+    public static final String TOKEN_SELECTOR_TOKEN_ORIGINAL_FIELD = "token";
+    public static final String TOKEN_SELECTOR_TOKEN_SIMPLE_FIELD = "selectionCriteria";
 
-    public static final String RENAMED_NAME_FIELD = "nodeName";
+    public static final String NAME_SIMPLE_FIELD = "nodeName";
 }

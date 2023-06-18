@@ -20,10 +20,8 @@ root:
                 customErrorMessage: "my custom error"
             - CallKeyword:
                 nodeName: CallKeyword
-                keywordName: callExisting3
-                selectionCriteria:
-                  - key: "criteria1"
-                    value: "criteriaValue1"
+                keyword:
+                  name: "callExisting3"
                 inputs:
                   - key: "stringInput"
                     value:

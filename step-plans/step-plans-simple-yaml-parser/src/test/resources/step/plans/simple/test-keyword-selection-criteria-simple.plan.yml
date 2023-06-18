@@ -1,15 +1,14 @@
-name: "simple yaml plan"
+name: "test plan"
 root:
   Sequence:
-    nodeName: Sequence
+    name: Sequence
     children:
-      - Echo:
-          nodeName: Echo
-          text: "My composite from simple plan"
       - CallKeyword:
           nodeName: CallKeyword
           keyword:
-            name: "callExisting3"
+            selectionCriteria:
+              - key: "criteria1"
+                value: "criteriaValue1"
           inputs:
             - key: "stringInput"
               value:

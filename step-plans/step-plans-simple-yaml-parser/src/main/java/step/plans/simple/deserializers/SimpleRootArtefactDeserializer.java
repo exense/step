@@ -41,6 +41,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import static step.plans.simple.YamlPlanFields.CALL_FUNCTION_FUNCTION_SIMPLE_FIELD;
+import static step.plans.simple.YamlPlanFields.TOKEN_SELECTOR_TOKEN_SIMPLE_FIELD;
+
 public class SimpleRootArtefactDeserializer extends JsonDeserializer<SimpleRootArtefact> {
 
     private final List<SimpleArtefactFieldDeserializationProcessor> customFieldProcessors;
@@ -51,7 +54,7 @@ public class SimpleRootArtefactDeserializer extends JsonDeserializer<SimpleRootA
 
         // the 'name' field should be wrapped into the 'attributes'
         customFieldProcessors.add((artefactClass, field, output, codec) -> {
-            if (field.getKey().equals(YamlPlanFields.RENAMED_NAME_FIELD)) {
+            if (field.getKey().equals(YamlPlanFields.NAME_SIMPLE_FIELD)) {
                 ObjectNode attributesNode = (ObjectNode) output.get("attributes");
                 if(attributesNode == null){
                     attributesNode = createObjectNode(codec);
@@ -86,37 +89,19 @@ public class SimpleRootArtefactDeserializer extends JsonDeserializer<SimpleRootA
         customFieldProcessors.add((artefactClass, field, output, codec) -> {
             try {
                 boolean inputsForCallFunction = artefactClass.equals(CallFunction.ARTEFACT_NAME)
-                        && field.getKey().equals(YamlPlanFields.CALL_FUNCTION_RENAMED_ARGUMENT_FIELD);
+                        && field.getKey().equals(YamlPlanFields.CALL_FUNCTION_ARGUMENT_SIMPLE_FIELD);
 
-                boolean selectionCriteriaForTokenSelector = ((artefactClass.equals(CallFunction.ARTEFACT_NAME) || artefactClass.equals(FunctionGroup.FUNCTION_GROUP_ARTEFACT_NAME))
-                        && field.getKey().equals(YamlPlanFields.TOKEN_SELECTOR_RENAMED_TOKEN_FIELD));
+                boolean selectionCriteriaForTokenSelector = (artefactClass.equals(FunctionGroup.FUNCTION_GROUP_ARTEFACT_NAME)
+                        && field.getKey().equals(TOKEN_SELECTOR_TOKEN_SIMPLE_FIELD));
 
                 if (inputsForCallFunction || selectionCriteriaForTokenSelector) {
                     String originalField;
                     if (inputsForCallFunction) {
-                        originalField = YamlPlanFields.CALL_FUNCTION_ORIGINAL_ARGUMENT_FIELD;
+                        originalField = YamlPlanFields.CALL_FUNCTION_ARGUMENT_ORIGINAL_FIELD;
                     } else {
-                        originalField = YamlPlanFields.TOKEN_SELECTOR_ORIGINAL_TOKEN_FIELD;
+                        originalField = YamlPlanFields.TOKEN_SELECTOR_TOKEN_ORIGINAL_FIELD;
                     }
-
-                    ArrayNode arguments = (ArrayNode) field.getValue();
-                    ObjectNode inputDynamicValues = createObjectNode(codec);
-                    Iterator<JsonNode> elements = arguments.elements();
-                    while (elements.hasNext()) {
-                        JsonNode next = elements.next();
-                        String inputName = next.get("key").asText();
-                        JsonNode argumentValue = next.get("value");
-                        if(!argumentValue.isContainerNode()){
-                            inputDynamicValues.set(inputName, argumentValue);
-                        } else {
-                            ObjectNode dynamicValue = createObjectNode(codec);
-                            dynamicValue.put("dynamic", true);
-                            JsonNode expression = argumentValue.get("expression");
-                            dynamicValue.put("expression", expression == null ? "" : expression.asText());
-                            inputDynamicValues.set(inputName, dynamicValue);
-                        }
-                    }
-                    String argumentsAsJsonString = jsonObjectMapper.writeValueAsString(inputDynamicValues);
+                    String argumentsAsJsonString = convertDynamicInputs(codec, (ArrayNode) field.getValue());
                     output.put(originalField, argumentsAsJsonString);
                     return true;
                 } else {
@@ -127,16 +112,47 @@ public class SimpleRootArtefactDeserializer extends JsonDeserializer<SimpleRootA
             }
         });
 
+        // for 'CallFunction' we can use either the `keyword.name` field or the `keyword.selectionCriteria` to define the keyword name
         customFieldProcessors.add((artefactClass, field, output, codec) -> {
-            if (artefactClass.equals(CallFunction.ARTEFACT_NAME)
-                    && field.getKey().equals(YamlPlanFields.CALL_FUNCTION_RENAMED_FUNCTION_FIELD)) {
-                output.set(YamlPlanFields.CALL_FUNCTION_ORIGINAL_FUNCTION_FIELD, field.getValue());
+            if (artefactClass.equals(CallFunction.ARTEFACT_NAME) && field.getKey().equals(CALL_FUNCTION_FUNCTION_SIMPLE_FIELD)) {
+                JsonNode simpleFunctionValue = field.getValue();
+                JsonNode explicitFunctionName = simpleFunctionValue.get("name");
+                JsonNode functionSelectionCriteria = simpleFunctionValue.get(TOKEN_SELECTOR_TOKEN_SIMPLE_FIELD);
+
+                // explicit function name as dynamic value
+                if (explicitFunctionName != null) {
+                    output.set(YamlPlanFields.CALL_FUNCTION_FUNCTION_ORIGINAL_FIELD, explicitFunctionName);
+                } else if (functionSelectionCriteria != null) {
+                    output.put(YamlPlanFields.TOKEN_SELECTOR_TOKEN_ORIGINAL_FIELD, convertDynamicInputs(codec, (ArrayNode) functionSelectionCriteria));
+                } else {
+                    throw new IllegalStateException("Either keyword name or selection criteria should be defined");
+                }
                 return true;
             } else {
                 return false;
             }
         });
 
+    }
+
+    private String convertDynamicInputs(ObjectCodec codec, ArrayNode value) throws JsonProcessingException {
+        ObjectNode inputDynamicValues = createObjectNode(codec);
+        Iterator<JsonNode> elements = value.elements();
+        while (elements.hasNext()) {
+            JsonNode next = elements.next();
+            String inputName = next.get("key").asText();
+            JsonNode argumentValue = next.get("value");
+            if(!argumentValue.isContainerNode()){
+                inputDynamicValues.set(inputName, argumentValue);
+            } else {
+                ObjectNode dynamicValue = createObjectNode(codec);
+                dynamicValue.put("dynamic", true);
+                JsonNode expression = argumentValue.get("expression");
+                dynamicValue.put("expression", expression == null ? "" : expression.asText());
+                inputDynamicValues.set(inputName, dynamicValue);
+            }
+        }
+        return jsonObjectMapper.writeValueAsString(inputDynamicValues);
     }
 
     @Override
@@ -146,7 +162,7 @@ public class SimpleRootArtefactDeserializer extends JsonDeserializer<SimpleRootA
         return new SimpleRootArtefact(jsonParser.getCodec().treeToValue(fullArtifact, AbstractArtefact.class));
     }
 
-    private static JsonNode convertSimpleArtifactToFull(JsonNode simpleArtifact, ObjectCodec codec, List<SimpleArtefactFieldDeserializationProcessor> customFieldProcessors) throws JsonSchemaFieldProcessingException {
+    private static JsonNode convertSimpleArtifactToFull(JsonNode simpleArtifact, ObjectCodec codec, List<SimpleArtefactFieldDeserializationProcessor> customFieldProcessors) throws JsonSchemaFieldProcessingException, JsonProcessingException {
         ObjectNode fullArtifact = createObjectNode(codec);
 
         // move artifact class into the '_class' field
@@ -194,9 +210,9 @@ public class SimpleRootArtefactDeserializer extends JsonDeserializer<SimpleRootA
 
     private static void fillDefaultValuesForArtifactFields(String shortArtifactClass, ObjectNode artifactData) {
         // name is required attribute in json schema
-        JsonNode name = artifactData.get(YamlPlanFields.RENAMED_NAME_FIELD);
+        JsonNode name = artifactData.get(YamlPlanFields.NAME_SIMPLE_FIELD);
         if (name == null) {
-            artifactData.put(YamlPlanFields.RENAMED_NAME_FIELD, shortArtifactClass);
+            artifactData.put(YamlPlanFields.NAME_SIMPLE_FIELD, shortArtifactClass);
         }
     }
 

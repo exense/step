@@ -54,6 +54,25 @@
         }
       }
     },
+    "CallKeywordFunctionNameDef" : {
+      "oneOf" : [ {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "$ref" : "#/$defs/SmartDynamicValueStringDef"
+          }
+        },
+        "additionalProperties" : false
+      }, {
+        "type" : "object",
+        "properties" : {
+          "selectionCriteria" : {
+            "$ref" : "#/$defs/DynamicKeywordInputsDef"
+          }
+        },
+        "additionalProperties" : false
+      } ]
+    },
     "AfterSequenceDef" : {
       "type" : "object",
       "properties" : {
@@ -232,8 +251,8 @@
         "CallKeyword" : {
           "type" : "object",
           "properties" : {
-            "keywordName" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            "keyword" : {
+              "$ref" : "#/$defs/CallKeywordFunctionNameDef"
             },
             "inputs" : {
               "$ref" : "#/$defs/DynamicKeywordInputsDef"
@@ -243,9 +262,6 @@
             },
             "remote" : {
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "selectionCriteria" : {
-              "$ref" : "#/$defs/DynamicKeywordInputsDef"
             },
             "description" : {
               "type" : "string"

@@ -117,7 +117,7 @@ root:
             expressionType: null
           token:
             dynamic: false
-            value: "{\"criteria1\":\"criteriaValue1\"}"
+            value: "{}"
             expression: null
             expressionType: null
           function:
