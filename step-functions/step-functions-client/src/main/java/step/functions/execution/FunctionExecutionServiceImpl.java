@@ -59,6 +59,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 
 	public static final String INPUT_PROPERTY_DOCKER_IMAGE = "docker.image";
+	public static final String INPUT_PROPERTY_CONTAINER_USER = "container.user";
+	public static final String INPUT_PROPERTY_CONTAINER_CMD = "container.cmd";
+
 	private final GridClient gridClient;
 
 	private final FunctionTypeRegistry functionTypeRegistry;
@@ -247,6 +250,8 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 					messageProperties.put(ProxyMessageHandler.MESSAGE_PROP_DOCKER_REGISTRY_USERNAME, dockerConfiguration.registryUsername);
 					messageProperties.put(ProxyMessageHandler.MESSAGE_PROP_DOCKER_REGISTRY_PASSWORD, dockerConfiguration.registryPassword);
 					messageProperties.put(ProxyMessageHandler.MESSAGE_PROP_DOCKER_IMAGE, properties.get(INPUT_PROPERTY_DOCKER_IMAGE));
+					messageProperties.put(ProxyMessageHandler.MESSAGE_PROP_CONTAINER_USER, properties.get(INPUT_PROPERTY_CONTAINER_USER));
+					messageProperties.put(ProxyMessageHandler.MESSAGE_PROP_CONTAINER_CMD, properties.get(INPUT_PROPERTY_CONTAINER_CMD));
 				} else {
 					messageHandler = functionMessageHandler;
 					messageHandlerPackage = functionHandlerPackage;
