@@ -183,6 +183,17 @@ public class ProxyMessageHandler implements MessageHandler {
                 .exec(new StringBuilderLogReader(stringBuilder))
                 .awaitCompletion();
 
+        // Make the startupScript executable
+        execCreateCmdResponse = dockerClient.execCreateCmd(container.getId())
+                .withAttachStdout(true)
+                .withAttachStderr(true)
+                .withUser(containerUser)
+                .withCmd("bash", "-c", String.format("chmod +x /home/%s/bin/startAgent.sh", containerUser))
+                .exec();
+        dockerClient.execStartCmd(execCreateCmdResponse.getId())
+                .exec(new StringBuilderLogReader(stringBuilder))
+                .awaitCompletion();
+
         String startupCmd;
         String gridHost;
         if (dockerInDocker) {
@@ -194,7 +205,7 @@ public class ProxyMessageHandler implements MessageHandler {
         String subGridUrl = "http://" + gridHost + ":" + gridPort;
         startupCmd = String.format("nohup ./startAgent.sh -gridHost=%s -fileServerHost=%s/proxy", subGridUrl, subGridUrl);
 
-        logger.info(String.format("Starting sub-agent with command %s", startupCmd));
+        System.out.printf("Starting sub-agent with command %s%n", startupCmd);
         // Start the agent
         execCreateCmdResponse = dockerClient.execCreateCmd(container.getId())
                 .withAttachStdout(true)
@@ -207,7 +218,7 @@ public class ProxyMessageHandler implements MessageHandler {
                 .exec(new StringBuilderLogReader(stringBuilder));
 
         String log = callback.builder.toString();
-        logger.info(log);
+        System.out.println(log);
     }
 
     private static void copyLocalFileToContainer(DockerClient dockerClient, CreateContainerResponse container, File file, String containerPath) throws IOException {
