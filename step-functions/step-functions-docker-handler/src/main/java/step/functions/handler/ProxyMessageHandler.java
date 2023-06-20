@@ -142,7 +142,7 @@ public class ProxyMessageHandler implements MessageHandler {
                 .withHostConfig(new HostConfig().withNetworkMode("host")/*.withPortBindings(new PortBinding(Ports.Binding.bindPort(30000), ExposedPort.tcp(30000)))*/)
                 // Command used only for testing
                 //.withCmd("bash", "-c", "sleep 300")
-                .withCmd(startCmd)
+                .withCmd(startCmd.split(","))
                 .exec();
         dockerClient.startContainerCmd(container.getId()).exec();
         InspectContainerResponse inspectContainerResponse = dockerClient.inspectContainerCmd(container.getId()).exec();
