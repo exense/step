@@ -243,12 +243,7 @@ public class SimplifiedPlanJsonSchemaGenerator {
 	private JsonObjectBuilder createCallKeywordFunctionNameDef() {
 		JsonObjectBuilder result = jsonProvider.createObjectBuilder();
 
-		JsonObjectBuilder keywordFunctionName = jsonProvider.createObjectBuilder();
-		keywordFunctionName.add("type", "object");
-		keywordFunctionName.add("properties", jsonProvider.createObjectBuilder()
-				.add("name", addRef(jsonProvider.createObjectBuilder(), SimpleDynamicValueJsonSchemaHelper.SMART_DYNAMIC_VALUE_STRING_DEF))
-		);
-		keywordFunctionName.add("additionalProperties", false);
+		JsonObjectBuilder keywordFunctionName = addRef(jsonProvider.createObjectBuilder(), SimpleDynamicValueJsonSchemaHelper.SMART_DYNAMIC_VALUE_STRING_DEF);
 
 		JsonObjectBuilder keywordSelectionCriteria = jsonProvider.createObjectBuilder();
 		keywordSelectionCriteria.add("type", "object");

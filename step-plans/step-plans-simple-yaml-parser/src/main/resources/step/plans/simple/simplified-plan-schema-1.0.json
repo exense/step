@@ -23,7 +23,8 @@
         "expression" : {
           "type" : "string"
         }
-      }
+      },
+      "additionalProperties": false
     },
     "SmartDynamicValueNumDef" : {
       "oneOf" : [ {
@@ -36,11 +37,8 @@
       "type" : "array",
       "items" : {
         "type" : "object",
-        "properties" : {
-          "key" : {
-            "type" : "string"
-          },
-          "value" : {
+        "patternProperties" : {
+          ".*" : {
             "oneOf" : [ {
               "type" : "number"
             }, {
@@ -51,18 +49,13 @@
               "$ref" : "#/$defs/DynamicExpressionDef"
             } ]
           }
-        }
+        },
+        "additionalProperties": false
       }
     },
     "CallKeywordFunctionNameDef" : {
       "oneOf" : [ {
-        "type" : "object",
-        "properties" : {
-          "name" : {
-            "$ref" : "#/$defs/SmartDynamicValueStringDef"
-          }
-        },
-        "additionalProperties" : false
+        "$ref" : "#/$defs/SmartDynamicValueStringDef"
       }, {
         "type" : "object",
         "properties" : {

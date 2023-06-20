@@ -20,11 +20,8 @@ root:
                 customErrorMessage: "my custom error"
             - CallKeyword:
                 nodeName: CallKeyword
-                keyword:
-                  name: "callExisting3"
+                keyword: "callExisting3"
                 inputs:
-                  - key: "stringInput"
-                    value:
+                  - stringInput:
                       expression: "'abc'"
-                  - key: "intInput"
-                    value: 777
+                  - intInput: 777

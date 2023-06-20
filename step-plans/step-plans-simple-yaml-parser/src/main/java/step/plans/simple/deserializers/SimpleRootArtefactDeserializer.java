@@ -112,20 +112,17 @@ public class SimpleRootArtefactDeserializer extends JsonDeserializer<SimpleRootA
             }
         });
 
-        // for 'CallFunction' we can use either the `keyword.name` field or the `keyword.selectionCriteria` to define the keyword name
+        // for 'CallFunction' we can use either the `keyword` (keyword name) field or the `keyword.selectionCriteria` to define the keyword name
         customFieldProcessors.add((artefactClass, field, output, codec) -> {
             if (artefactClass.equals(CallFunction.ARTEFACT_NAME) && field.getKey().equals(CALL_FUNCTION_FUNCTION_SIMPLE_FIELD)) {
                 JsonNode simpleFunctionValue = field.getValue();
-                JsonNode explicitFunctionName = simpleFunctionValue.get("name");
                 JsonNode functionSelectionCriteria = simpleFunctionValue.get(TOKEN_SELECTOR_TOKEN_SIMPLE_FIELD);
 
                 // explicit function name as dynamic value
-                if (explicitFunctionName != null) {
-                    output.set(YamlPlanFields.CALL_FUNCTION_FUNCTION_ORIGINAL_FIELD, explicitFunctionName);
-                } else if (functionSelectionCriteria != null) {
+                if (functionSelectionCriteria != null) {
                     output.put(YamlPlanFields.TOKEN_SELECTOR_TOKEN_ORIGINAL_FIELD, convertDynamicInputs(codec, (ArrayNode) functionSelectionCriteria));
                 } else {
-                    throw new IllegalStateException("Either keyword name or selection criteria should be defined");
+                    output.set(YamlPlanFields.CALL_FUNCTION_FUNCTION_ORIGINAL_FIELD, simpleFunctionValue);
                 }
                 return true;
             } else {
@@ -140,17 +137,21 @@ public class SimpleRootArtefactDeserializer extends JsonDeserializer<SimpleRootA
         Iterator<JsonNode> elements = value.elements();
         while (elements.hasNext()) {
             JsonNode next = elements.next();
-            String inputName = next.get("key").asText();
-            JsonNode argumentValue = next.get("value");
-            if(!argumentValue.isContainerNode()){
-                inputDynamicValues.set(inputName, argumentValue);
-            } else {
-                ObjectNode dynamicValue = createObjectNode(codec);
-                dynamicValue.put("dynamic", true);
-                JsonNode expression = argumentValue.get("expression");
-                dynamicValue.put("expression", expression == null ? "" : expression.asText());
-                inputDynamicValues.set(inputName, dynamicValue);
+            Iterator<String> fieldNames = next.fieldNames();
+            while (fieldNames.hasNext()) {
+                String inputName = fieldNames.next();
+                JsonNode argumentValue = next.get(inputName);
+                if(!argumentValue.isContainerNode()){
+                    inputDynamicValues.set(inputName, argumentValue);
+                } else {
+                    ObjectNode dynamicValue = createObjectNode(codec);
+                    dynamicValue.put("dynamic", true);
+                    JsonNode expression = argumentValue.get("expression");
+                    dynamicValue.put("expression", expression == null ? "" : expression.asText());
+                    inputDynamicValues.set(inputName, dynamicValue);
+                }
             }
+
         }
         return jsonObjectMapper.writeValueAsString(inputDynamicValues);
     }

@@ -60,43 +60,40 @@ class SimpleDynamicValueJsonSchemaHelper {
 
 	private JsonObjectBuilder createDynamicKeywordInputsDef(){
 //		{
-//		"type" : "array",
-//		 "items" : {
-//			"type": "object",
-//			"properties": {
-//				"key": {
-//					"type": "string"
-//				},
-//				"value": {
-//					"oneOf": [{
-//						"type": "number"
+//			"type" : "array",
+//			"items" : {
+//			"type" : "object",
+//					"patternProperties" : {
+//				".*" : {
+//					"oneOf" : [ {
+//						"type" : "number"
 //					}, {
-//						"type": "string"
+//						"type" : "boolean"
 //					}, {
-//						"type": "boolean"
-//					},{
-//						"$ref": "#/$defs/DynamicExpressionDef"
-//					}]
+//						"type" : "string"
+//					}, {
+//						"$ref" : "#/$defs/DynamicExpressionDef"
+//					} ]
 //				}
-//			}
+//			},
+//			"additionalProperties": false
 //		}
-
+//		}
 		JsonObjectBuilder res = jsonProvider.createObjectBuilder();
 		res.add("type", "array");
 		JsonObjectBuilder arrayItemDef = jsonProvider.createObjectBuilder();
 		arrayItemDef.add("type", "object");
-		JsonObjectBuilder properties = jsonProvider.createObjectBuilder()
-				.add("key", jsonProvider.createObjectBuilder().add("type", "string"));
 
 		JsonArrayBuilder oneOfArray = jsonProvider.createArrayBuilder()
 				.add(jsonProvider.createObjectBuilder().add("type", "number"))
-		        .add(jsonProvider.createObjectBuilder().add("type", "boolean"))
+				.add(jsonProvider.createObjectBuilder().add("type", "boolean"))
 				.add(jsonProvider.createObjectBuilder().add("type", "string"))
 				.add(SimplifiedPlanJsonSchemaGenerator.addRef(jsonProvider.createObjectBuilder(), SimpleDynamicValueJsonSchemaHelper.DYNAMIC_EXPRESSION_DEF));
 
-		properties.add("value", jsonProvider.createObjectBuilder().add("oneOf", oneOfArray));
-		arrayItemDef.add("properties", properties);
-
+		JsonObjectBuilder properties = jsonProvider.createObjectBuilder()
+				.add(".*", jsonProvider.createObjectBuilder().add("oneOf", oneOfArray));
+		arrayItemDef.add("patternProperties", properties);
+		arrayItemDef.add("additionalProperties", false);
 		res.add("items", arrayItemDef);
 		return res;
 	}
@@ -107,6 +104,7 @@ class SimpleDynamicValueJsonSchemaHelper {
 		JsonObjectBuilder properties = jsonProvider.createObjectBuilder();
 		properties.add("expression", jsonProvider.createObjectBuilder().add("type", "string"));
 		res.add("properties", properties);
+		res.add("additionalProperties", false);
 		return res;
 	}
 
