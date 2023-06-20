@@ -24,6 +24,10 @@ import step.grid.io.OutputMessage;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -154,13 +158,18 @@ public class ProxyMessageHandler implements MessageHandler {
         StringBuilder stringBuilder = new StringBuilder();
         final StringBuilderLogReader callback = new StringBuilderLogReader(stringBuilder);
 
-        File startupScriptFile = ResourceExtractor.extractResource(ProxyMessageHandler.class.getClassLoader(), "startAgent.sh");
-        File configurationFile = ResourceExtractor.extractResource(ProxyMessageHandler.class.getClassLoader(), "AgentConf.yaml");
+        Path startupScriptTempFilePath = Paths.get(ResourceExtractor.extractResource(ProxyMessageHandler.class.getClassLoader(), "startAgent.sh").getCanonicalPath());
+        Path configurationTempFilePath = Paths.get(ResourceExtractor.extractResource(ProxyMessageHandler.class.getClassLoader(), "AgentConf.yaml").getCanonicalPath());
+        // Creating a copy with a simpler name
+        Path startupScriptFilePath = Paths.get("/tmp/startAgent.sh");
+        Files.copy(startupScriptTempFilePath, startupScriptFilePath, StandardCopyOption.REPLACE_EXISTING);
+        Path configurationFileFilePath = Paths.get("/tmp/AgentConf.yaml");
+        Files.copy(configurationTempFilePath, configurationFileFilePath, StandardCopyOption.REPLACE_EXISTING);
 
         createFolderInContainer(dockerClient, container, String.format("/home/%s/bin", containerUser));
         createFolderInContainer(dockerClient, container, String.format("/home/%s/conf", containerUser));
-        copyLocalFileToContainer(dockerClient, container, startupScriptFile, String.format("/home/%s/bin/startAgent.sh", containerUser));
-        copyLocalFileToContainer(dockerClient, container, configurationFile, String.format("/home/%s/conf/AgentConf.yaml", containerUser));
+        copyLocalFileToContainer(dockerClient, container, startupScriptFilePath.toFile(), String.format("/home/%s/bin/", containerUser));
+        copyLocalFileToContainer(dockerClient, container, configurationFileFilePath.toFile(), String.format("/home/%s/conf/", containerUser));
         copyLocalFolderToContainer(dockerClient, container, "lib", containerUser);
 
         // Files are copied as root, we need to change the ownership
