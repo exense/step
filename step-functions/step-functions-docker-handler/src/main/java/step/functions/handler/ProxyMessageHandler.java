@@ -5,6 +5,7 @@ import com.github.dockerjava.api.command.*;
 import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
+import com.github.dockerjava.core.DockerContextMetaFile;
 import com.github.dockerjava.httpclient5.ApacheDockerHttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,6 +48,8 @@ public class ProxyMessageHandler implements MessageHandler {
     public static final String MESSAGE_PROP_DOCKER_REGISTRY_USERNAME = "$docker.registryUsername";
     public static final String MESSAGE_PROP_DOCKER_REGISTRY_PASSWORD = "$docker.registryPassword";
     public static final String MESSAGE_PROP_DOCKER_IMAGE = "$docker.image";
+    public static final String MESSAGE_PROP_CONTAINER_USER = "$container.user";
+    public static final String MESSAGE_PROP_CONTAINER_CMD = "$container.cmd";
 
     // AgentConf properties
     public static final String AGENT_CONF_DOCKER_SOCK = "docker.sock";
@@ -64,6 +67,8 @@ public class ProxyMessageHandler implements MessageHandler {
         String registryUsername = messageProperties.get(MESSAGE_PROP_DOCKER_REGISTRY_USERNAME);
         String registryPassword = messageProperties.get(MESSAGE_PROP_DOCKER_REGISTRY_PASSWORD);
         String dockerImage = messageProperties.get(MESSAGE_PROP_DOCKER_IMAGE);
+        String containerUser = messageProperties.get(MESSAGE_PROP_CONTAINER_USER);
+        String containerCmd = messageProperties.get(MESSAGE_PROP_CONTAINER_CMD);
         String localGridPortStr = agentProperties.getOrDefault(AGENT_CONF_DOCKER_LOCALGRID_PORT, "8090");
         int localGridPort = Integer.parseInt(localGridPortStr);
         boolean dockerInDocker = agentProperties.containsKey(AGENT_CONF_DOCKER_IN_DOCKER);
@@ -71,8 +76,8 @@ public class ProxyMessageHandler implements MessageHandler {
         logger.info("Docker in docker configuration detected : " + dockerInDocker);
 
         DockerClient dockerClient = initDockerClient(registryUrl, registryUsername, registryPassword, dockerHost);
-        CreateContainerResponse container = startContainer(dockerClient, dockerImage);
-        copyAgentMaterialAndStart(dockerClient, container, dockerInDocker, localGridPort);
+        CreateContainerResponse container = startContainer(dockerClient, dockerImage, containerUser, containerCmd);
+        copyAgentMaterialAndStart(dockerClient, container, dockerInDocker, localGridPort, containerUser);
 
         FileManagerClient fileManagerClient = agentTokenWrapper.getServices().getFileManagerClient();
         ProxyGridServices.fileManagerClient = fileManagerClient;
@@ -126,16 +131,18 @@ public class ProxyMessageHandler implements MessageHandler {
         return DockerClientImpl.getInstance(config, dockerHttpClient);
     }
 
-    private CreateContainerResponse startContainer(DockerClient dockerClient, String image) throws InterruptedException {
+    private CreateContainerResponse startContainer(DockerClient dockerClient, String image, String containerUser, String startCmd) throws InterruptedException {
         PullImageCmd pullImageCmd = dockerClient.pullImageCmd(image);
         pullImageCmd.exec(new PullImageResultCallback()).awaitCompletion();
         CreateContainerResponse container = dockerClient.createContainerCmd(image)
                 .withName(CONTAINER_NAME)
+                .withUser(containerUser)
                 //.withExposedPorts(new ExposedPort(input.getInt("exposedPort")))
                 //.withPortBindings(PortBinding.parse(input.getString("portBindings")))
                 .withHostConfig(new HostConfig().withNetworkMode("host")/*.withPortBindings(new PortBinding(Ports.Binding.bindPort(30000), ExposedPort.tcp(30000)))*/)
                 // Command used only for testing
-                .withCmd("bash", "-c", "sleep 300")
+                //.withCmd("bash", "-c", "sleep 300")
+                .withCmd(startCmd)
                 .exec();
         dockerClient.startContainerCmd(container.getId()).exec();
         InspectContainerResponse inspectContainerResponse = dockerClient.inspectContainerCmd(container.getId()).exec();
@@ -143,27 +150,25 @@ public class ProxyMessageHandler implements MessageHandler {
         return container;
     }
 
-    private void copyAgentMaterialAndStart(DockerClient dockerClient, CreateContainerResponse container, boolean dockerInDocker, int gridPort) throws InterruptedException, IOException {
+    private void copyAgentMaterialAndStart(DockerClient dockerClient, CreateContainerResponse container, boolean dockerInDocker, int gridPort, String containerUser) throws InterruptedException, IOException {
         StringBuilder stringBuilder = new StringBuilder();
         final StringBuilderLogReader callback = new StringBuilderLogReader(stringBuilder);
 
         File startupScriptFile = ResourceExtractor.extractResource(ProxyMessageHandler.class.getClassLoader(), "startAgent.sh");
         File configurationFile = ResourceExtractor.extractResource(ProxyMessageHandler.class.getClassLoader(), "AgentConf.yaml");
-        System.out.println("Startup script path is " + startupScriptFile.getAbsolutePath());
-        System.out.println("Configuration file path is " + configurationFile.getAbsolutePath());
 
-
-        //copyLocalFolderToContainer(dockerClient, container, "conf");
-        //copyLocalFolderToContainer(dockerClient, container, "bin");
-        copyLocalFolderToContainer(dockerClient, container, "lib");
-
+        createFolderInContainer(dockerClient, container, String.format("/home/%s/bin", containerUser));
+        createFolderInContainer(dockerClient, container, String.format("/home/%s/conf", containerUser));
+        copyLocalFileToContainer(dockerClient, container, startupScriptFile, String.format("/home/%s/bin/startAgent.sh", containerUser));
+        copyLocalFileToContainer(dockerClient, container, configurationFile, String.format("/home/%s/conf/AgentConf.yaml", containerUser));
+        copyLocalFolderToContainer(dockerClient, container, "lib", containerUser);
 
         // Files are copied as root, we need to change the ownership
         ExecCreateCmdResponse execCreateCmdResponse = dockerClient.execCreateCmd(container.getId())
                 .withAttachStdout(true)
                 .withAttachStderr(true)
                 .withUser("root")
-                .withCmd("bash", "-c", "chown -R agent:agent /home/agent")
+                .withCmd("bash", "-c", String.format("chown -R %s:%s /home/%s", containerUser, containerUser, containerUser))
                 .exec();
         dockerClient.execStartCmd(execCreateCmdResponse.getId())
                 .exec(new StringBuilderLogReader(stringBuilder))
@@ -185,7 +190,7 @@ public class ProxyMessageHandler implements MessageHandler {
         execCreateCmdResponse = dockerClient.execCreateCmd(container.getId())
                 .withAttachStdout(true)
                 .withAttachStderr(true)
-                .withWorkingDir("/home/agent/bin/")
+                .withWorkingDir(String.format("/home/%s/bin/", containerUser))
                 .withCmd("bash", "-c", startupCmd)
                 .withUser(CONTAINER_NAME)
                 .exec();
@@ -196,15 +201,37 @@ public class ProxyMessageHandler implements MessageHandler {
         logger.info(log);
     }
 
-    private static void copyLocalFolderToContainer(DockerClient dockerClient, CreateContainerResponse container, String folderName) throws IOException {
+    private static void copyLocalFileToContainer(DockerClient dockerClient, CreateContainerResponse container, File file, String containerPath) throws IOException {
+        String fileToCopy = file.getCanonicalPath();
+        System.out.printf("Copying file %s to container %s at path %s%n", fileToCopy, container.getId(), containerPath);
+        dockerClient.copyArchiveToContainerCmd(container.getId())
+                .withHostResource(fileToCopy)
+                .withRemotePath(containerPath)
+                .exec();
+    }
+
+    private static void copyLocalFolderToContainer(DockerClient dockerClient, CreateContainerResponse container, String folderName, String containerUser) throws IOException {
         String pathToCopy = new File("../" + folderName).getCanonicalPath();
         System.out.println("Path to copy : " + pathToCopy);
         logger.info("Path to copy : " + pathToCopy);
 
         dockerClient.copyArchiveToContainerCmd(container.getId())
                 .withHostResource(pathToCopy)
-                .withRemotePath("/home/agent/")
+                .withRemotePath(String.format("/home/%s/", containerUser))
                 .exec();
+    }
+
+    private static void createFolderInContainer(DockerClient dockerClient, CreateContainerResponse container, String containerFolderPath) throws InterruptedException {
+        System.out.printf("Creating path %s in container %s%n", containerFolderPath, container.getId());
+        ExecCreateCmdResponse execCreateCmdResponse = dockerClient.execCreateCmd(container.getId())
+                .withAttachStdout(true)
+                .withAttachStderr(true)
+                .withUser("root")
+                .withCmd("bash", "-c", String.format("mkdir -p %s", containerFolderPath))
+                .exec();
+        dockerClient.execStartCmd(execCreateCmdResponse.getId())
+                .exec(new StringBuilderLogReader(new StringBuilder()))
+                .awaitCompletion();
     }
 
     private void stopContainer(DockerClient dockerClient) {
