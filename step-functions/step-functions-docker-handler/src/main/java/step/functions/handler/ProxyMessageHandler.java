@@ -13,6 +13,7 @@ import step.grid.ProxyGridServices;
 import step.grid.TokenWrapper;
 import step.grid.agent.handler.MessageHandler;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
+import step.grid.bootstrap.ResourceExtractor;
 import step.grid.client.GridClientConfiguration;
 import step.grid.client.LocalGridClientImpl;
 import step.grid.filemanager.FileManagerClient;
@@ -146,8 +147,14 @@ public class ProxyMessageHandler implements MessageHandler {
         StringBuilder stringBuilder = new StringBuilder();
         final StringBuilderLogReader callback = new StringBuilderLogReader(stringBuilder);
 
-        copyLocalFolderToContainer(dockerClient, container, "conf");
-        copyLocalFolderToContainer(dockerClient, container, "bin");
+        File startupScriptFile = ResourceExtractor.extractResource(ProxyMessageHandler.class.getClassLoader(), "startAgent.sh");
+        File configurationFile = ResourceExtractor.extractResource(ProxyMessageHandler.class.getClassLoader(), "AgentConf.yaml");
+        System.out.println("Startup script path is " + startupScriptFile.getAbsolutePath());
+        System.out.println("Configuration file path is " + configurationFile.getAbsolutePath());
+
+
+        //copyLocalFolderToContainer(dockerClient, container, "conf");
+        //copyLocalFolderToContainer(dockerClient, container, "bin");
         copyLocalFolderToContainer(dockerClient, container, "lib");
 
 
