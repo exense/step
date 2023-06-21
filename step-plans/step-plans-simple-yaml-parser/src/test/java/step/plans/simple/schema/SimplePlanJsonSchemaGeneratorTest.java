@@ -30,9 +30,9 @@ import step.plans.simple.model.SimpleYamlPlanVersions;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class SimplifiedPlanJsonSchemaGeneratorTest {
+public class SimplePlanJsonSchemaGeneratorTest {
 
-	private static final Logger log = LoggerFactory.getLogger(SimplifiedPlanJsonSchemaGeneratorTest.class);
+	private static final Logger log = LoggerFactory.getLogger(SimplePlanJsonSchemaGeneratorTest.class);
 
 	private final ObjectMapper jsonObjectMapper = new ObjectMapper();
 
@@ -45,7 +45,7 @@ public class SimplifiedPlanJsonSchemaGeneratorTest {
 		InputStream jsonSchemaFile = this.getClass().getClassLoader().getResourceAsStream("step/plans/simple/simplified-plan-schema-1.0.json");
 
 		JsonNode publishedSchema = jsonObjectMapper.readTree(jsonSchemaFile);
-		SimplifiedPlanJsonSchemaGenerator schemaGenerator = new SimplifiedPlanJsonSchemaGenerator("step", SimpleYamlPlanVersions.ACTUAL_VERSION.getVersion());
+		SimplePlanJsonSchemaGenerator schemaGenerator = new SimplePlanJsonSchemaGenerator("step", SimpleYamlPlanVersions.ACTUAL_VERSION.getVersion());
 		JsonNode currentSchema = schemaGenerator.generateJsonSchema();
 
 		log.info("GENERATED SCHEMA:");

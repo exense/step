@@ -88,7 +88,7 @@ class SimpleDynamicValueJsonSchemaHelper {
 				.add(jsonProvider.createObjectBuilder().add("type", "number"))
 				.add(jsonProvider.createObjectBuilder().add("type", "boolean"))
 				.add(jsonProvider.createObjectBuilder().add("type", "string"))
-				.add(SimplifiedPlanJsonSchemaGenerator.addRef(jsonProvider.createObjectBuilder(), SimpleDynamicValueJsonSchemaHelper.DYNAMIC_EXPRESSION_DEF));
+				.add(SimplePlanJsonSchemaGenerator.addRef(jsonProvider.createObjectBuilder(), SimpleDynamicValueJsonSchemaHelper.DYNAMIC_EXPRESSION_DEF));
 
 		JsonObjectBuilder properties = jsonProvider.createObjectBuilder()
 				.add(".*", jsonProvider.createObjectBuilder().add("oneOf", oneOfArray));
@@ -112,7 +112,7 @@ class SimpleDynamicValueJsonSchemaHelper {
 		JsonObjectBuilder res = jsonProvider.createObjectBuilder();
 		JsonArrayBuilder oneOfArray = jsonProvider.createArrayBuilder();
 		oneOfArray.add(jsonProvider.createObjectBuilder().add("type", smartValueType));
-		oneOfArray.add(SimplifiedPlanJsonSchemaGenerator.addRef(jsonProvider.createObjectBuilder(), SimpleDynamicValueJsonSchemaHelper.DYNAMIC_EXPRESSION_DEF));
+		oneOfArray.add(SimplePlanJsonSchemaGenerator.addRef(jsonProvider.createObjectBuilder(), SimpleDynamicValueJsonSchemaHelper.DYNAMIC_EXPRESSION_DEF));
 		res.add("oneOf", oneOfArray);
 		return res;
 	}
@@ -133,17 +133,17 @@ class SimpleDynamicValueJsonSchemaHelper {
 			String dynamicValueType = JsonInputConverter.resolveJsonPropertyType((Class<?>) dynamicValueClass);
 			switch (dynamicValueType){
 				case "string":
-					SimplifiedPlanJsonSchemaGenerator.addRef(propertiesBuilder, SMART_DYNAMIC_VALUE_STRING_DEF);
+					SimplePlanJsonSchemaGenerator.addRef(propertiesBuilder, SMART_DYNAMIC_VALUE_STRING_DEF);
 					break;
 				case "boolean":
-					SimplifiedPlanJsonSchemaGenerator.addRef(propertiesBuilder, SMART_DYNAMIC_VALUE_BOOLEAN_DEF);
+					SimplePlanJsonSchemaGenerator.addRef(propertiesBuilder, SMART_DYNAMIC_VALUE_BOOLEAN_DEF);
 					break;
 				case "number":
-					SimplifiedPlanJsonSchemaGenerator.addRef(propertiesBuilder, SMART_DYNAMIC_VALUE_NUM_DEF);
+					SimplePlanJsonSchemaGenerator.addRef(propertiesBuilder, SMART_DYNAMIC_VALUE_NUM_DEF);
 					break;
 				case "object":
 					log.warn("Unknown dynamic value type for field " + field.getName());
-					SimplifiedPlanJsonSchemaGenerator.addRef(propertiesBuilder, SMART_DYNAMIC_VALUE_STRING_DEF);
+					SimplePlanJsonSchemaGenerator.addRef(propertiesBuilder, SMART_DYNAMIC_VALUE_STRING_DEF);
 					break;
 				default:
 					throw new IllegalArgumentException("Unsupported dynamic value type: " + dynamicValueType);

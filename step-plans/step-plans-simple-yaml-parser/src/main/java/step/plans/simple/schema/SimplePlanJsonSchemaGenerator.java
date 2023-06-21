@@ -32,6 +32,8 @@ import org.slf4j.LoggerFactory;
 import step.artefacts.CallFunction;
 import step.artefacts.TokenSelector;
 import step.core.Version;
+import step.core.accessors.AbstractIdentifiableObject;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
@@ -44,9 +46,9 @@ import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class SimplifiedPlanJsonSchemaGenerator {
+public class SimplePlanJsonSchemaGenerator {
 
-	private static final Logger log = LoggerFactory.getLogger(SimplifiedPlanJsonSchemaGenerator.class);
+	private static final Logger log = LoggerFactory.getLogger(SimplePlanJsonSchemaGenerator.class);
 
 	private static final String ARTEFACT_DEF = "ArtefactDef";
 	private static final String ROOT_ARTEFACT_DEF = "RootArtefactDef";
@@ -62,23 +64,13 @@ public class SimplifiedPlanJsonSchemaGenerator {
 	private final JsonSchemaCreator jsonSchemaCreator;
 	private final SimpleDynamicValueJsonSchemaHelper dynamicValuesHelper = new SimpleDynamicValueJsonSchemaHelper(jsonProvider);
 
-	public SimplifiedPlanJsonSchemaGenerator(String targetPackage, Version actualVersion) {
+	public SimplePlanJsonSchemaGenerator(String targetPackage, Version actualVersion) {
 		this.targetPackage = targetPackage;
 		this.actualVersion = actualVersion;
 
-		// --- Fields filtering rules
-		List<AggregatedJsonSchemaFieldProcessor.FilterRule> filterRules = List.of(
-				(clazz, field) -> field.isSynthetic(),
-				(clazz, field) -> field.isAnnotationPresent(JsonIgnore.class),
-				(clazz, field) -> field.getType().equals(Object.class),
-				(clazz, field) -> Exception.class.isAssignableFrom(field.getType()),
-				(clazz, field) -> Modifier.isFinal(field.getModifiers()) || Modifier.isStatic(field.getModifiers()),
-				(objectClass, field1) -> objectClass.equals(CallFunction.class) && field1.getName().equals(YamlPlanFields.TOKEN_SELECTOR_TOKEN_ORIGINAL_FIELD) // included inside CallKeywordFunctionNameDef
-		);
-
 		// TODO: further we can replace this hardcoded logic for some custom field metadata and processing with some enhanced solution (java annotations?)
 
-		// --- Fields metadata rules (renaming)
+		// --- Fields metadata rules (fields we want to rename)
 		FieldMetadataExtractor fieldMetadataExtractor = new FieldMetadataExtractor() {
 
 			private final FieldMetadataExtractor defaultMetadataExtractor = new DefaultFieldMetadataExtractor();
@@ -100,50 +92,156 @@ public class SimplifiedPlanJsonSchemaGenerator {
 			}
 		};
 
-		// --- Fields processing rules
-		AggregatedJsonSchemaFieldProcessor.ProcessingRule keywordNameProcessingRule = (clazz, field, propertiesBuilder) -> {
-			if (clazz.equals(CallFunction.class) && field.getName().equals(YamlPlanFields.CALL_FUNCTION_FUNCTION_ORIGINAL_FIELD)) {
-				SimplifiedPlanJsonSchemaGenerator.addRef(propertiesBuilder, CALL_KEYWORD_FUNCTION_NAME_DEF);
-				return true;
+		// --- Fields filtering rules
+		JsonSchemaFieldProcessor commonFieldFilteringRule = new JsonSchemaFieldProcessor() {
+			@Override
+			public boolean applyCustomProcessing(Class<?> objectClass, Field field, FieldMetadata fieldMetadata, JsonObjectBuilder propertiesBuilder, List<String> requiredPropertiesOutput) {
+				// just skip these fields
+				return field.isSynthetic()
+						|| field.isAnnotationPresent(JsonIgnore.class)
+						|| field.getType().equals(Object.class)
+						|| Exception.class.isAssignableFrom(field.getType())
+						|| Modifier.isFinal(field.getModifiers()) || Modifier.isStatic(field.getModifiers());
 			}
-			return false;
 		};
 
-		AggregatedJsonSchemaFieldProcessor.ProcessingRule keywordInputsFieldProcessingRule = (clazz, field, propertiesBuilder) -> {
-			if (clazz.equals(CallFunction.class) && field.getName().equals(YamlPlanFields.CALL_FUNCTION_ARGUMENT_ORIGINAL_FIELD)) {
-				SimplifiedPlanJsonSchemaGenerator.addRef(propertiesBuilder, SimpleDynamicValueJsonSchemaHelper.DYNAMIC_KEYWORD_INPUTS_DEF);
-				return true;
-			}
-			return false;
-		};
-
-		AggregatedJsonSchemaFieldProcessor.ProcessingRule tokenFieldProcessingRule = (clazz, field, propertiesBuilder) -> {
-			if (TokenSelector.class.isAssignableFrom(clazz) && field.getName().equals(YamlPlanFields.TOKEN_SELECTOR_TOKEN_ORIGINAL_FIELD)) {
-				SimplifiedPlanJsonSchemaGenerator.addRef(propertiesBuilder, SimpleDynamicValueJsonSchemaHelper.DYNAMIC_KEYWORD_INPUTS_DEF);
-				return true;
-			}
-			return false;
-		};
-
-		AggregatedJsonSchemaFieldProcessor.ProcessingRule enumProcessingRule = (clazz, field, propertiesBuilder) -> {
-			if (field.getType().isEnum()) {
-				JsonArrayBuilder enumArray = jsonProvider.createArrayBuilder();
-				for (Object enumValue : field.getType().getEnumConstants()) {
-					enumArray.add(enumValue.toString());
+		JsonSchemaFieldProcessor artefactTechnicalFieldsFilteringRule = new JsonSchemaFieldProcessor() {
+			@Override
+			public boolean applyCustomProcessing(Class<?> objectClass, Field field, FieldMetadata fieldMetadata, JsonObjectBuilder propertiesBuilder, List<String> requiredPropertiesOutput) {
+				// ids and technical fields are skipped
+				if (AbstractIdentifiableObject.class.equals(field.getDeclaringClass())) {
+					return true;
+				} else if (AbstractArtefact.class.equals(field.getDeclaringClass())) {
+					Set<String> technicalFields = Set.of(
+							"dynamicName", "useDynamicName",
+							"customAttributes", "persistNode",
+							"instrumentNode", "attachments",
+							"skipNode", "continueParentNodeExecutionOnError"
+					);
+					return technicalFields.contains(fieldMetadata.getFieldName());
 				}
-				propertiesBuilder.add("enum", enumArray);
-				return true;
+				return false;
 			}
-			return false;
 		};
-		AggregatedJsonSchemaFieldProcessor.ProcessingRule dynamicValueProcessingRule = (clazz, field, propertiesBuilder) -> {
-			if (DynamicValue.class.isAssignableFrom(field.getType())) {
-				dynamicValuesHelper.applyDynamicValueDefForField(field, propertiesBuilder);
-				return true;
+
+		JsonSchemaFieldProcessor tokenInCallFunctionFilteringRule = new JsonSchemaFieldProcessor() {
+			@Override
+			public boolean applyCustomProcessing(Class<?> objectClass, Field field, FieldMetadata fieldMetadata, JsonObjectBuilder propertiesBuilder, List<String> requiredPropertiesOutput) {
+				// included inside CallKeywordFunctionNameDef
+				return objectClass.equals(CallFunction.class) && field.getName().equals(YamlPlanFields.TOKEN_SELECTOR_TOKEN_ORIGINAL_FIELD);
 			}
-			return false;
 		};
-		List<AggregatedJsonSchemaFieldProcessor.ProcessingRule> processingRules = List.of(
+
+
+		// --- Fields processing rules
+		JsonSchemaFieldProcessor artefactChildrenProcessingRule = new JsonSchemaFieldProcessor() {
+			@Override
+			public boolean applyCustomProcessing(Class<?> objectClass, Field field, FieldMetadata fieldMetadata, JsonObjectBuilder propertiesBuilder, List<String> requiredPropertiesOutput) throws JsonSchemaPreparationException {
+				if(field.getDeclaringClass().equals(AbstractArtefact.class) && field.getName().equals("children")) {
+					propertiesBuilder.add(fieldMetadata.getFieldName(),
+							jsonProvider.createObjectBuilder()
+									.add("type", "array")
+									.add("items", addRef(jsonProvider.createObjectBuilder(), ARTEFACT_DEF))
+					);
+					return true;
+				} else {
+					return false;
+				}
+			}
+		};
+
+		JsonSchemaFieldProcessor artefactAttributesProcessingRules = new JsonSchemaFieldProcessor() {
+			@Override
+			public boolean applyCustomProcessing(Class<?> objectClass, Field field, FieldMetadata fieldMetadata, JsonObjectBuilder propertiesBuilder, List<String> requiredPropertiesOutput) throws JsonSchemaPreparationException {
+				if(field.getDeclaringClass().equals(AbstractOrganizableObject.class) && field.getName().equals("attributes")) {
+					// use artefact name as default
+					propertiesBuilder.add(YamlPlanFields.NAME_SIMPLE_FIELD, jsonProvider.createObjectBuilder().add("type", "string").add("default", getArtefactName(objectClass)));
+					return true;
+				} else {
+					return false;
+				}
+			}
+		};
+
+		JsonSchemaFieldProcessor keywordNameProcessingRule = new JsonSchemaFieldProcessor() {
+			@Override
+			public boolean applyCustomProcessing(Class<?> objectClass, Field field, FieldMetadata fieldMetadata, JsonObjectBuilder propertiesBuilder, List<String> requiredPropertiesOutput) {
+				if (objectClass.equals(CallFunction.class) && field.getName().equals(YamlPlanFields.CALL_FUNCTION_FUNCTION_ORIGINAL_FIELD)) {
+					JsonObjectBuilder nestedPropertyParamsBuilder = jsonProvider.createObjectBuilder();
+					SimplePlanJsonSchemaGenerator.addRef(nestedPropertyParamsBuilder, CALL_KEYWORD_FUNCTION_NAME_DEF);
+					propertiesBuilder.add(fieldMetadata.getFieldName(), nestedPropertyParamsBuilder);
+					return true;
+				}
+				return false;
+			}
+		};
+
+		JsonSchemaFieldProcessor keywordInputsFieldProcessingRule = new JsonSchemaFieldProcessor() {
+			@Override
+			public boolean applyCustomProcessing(Class<?> objectClass, Field field, FieldMetadata fieldMetadata, JsonObjectBuilder propertiesBuilder, List<String> requiredPropertiesOutput) {
+				if (objectClass.equals(CallFunction.class) && field.getName().equals(YamlPlanFields.CALL_FUNCTION_ARGUMENT_ORIGINAL_FIELD)) {
+					JsonObjectBuilder nestedPropertyParamsBuilder = jsonProvider.createObjectBuilder();
+					SimplePlanJsonSchemaGenerator.addRef(nestedPropertyParamsBuilder, SimpleDynamicValueJsonSchemaHelper.DYNAMIC_KEYWORD_INPUTS_DEF);
+					propertiesBuilder.add(fieldMetadata.getFieldName(), nestedPropertyParamsBuilder);
+					return true;
+				}
+				return false;
+			}
+		};
+
+		JsonSchemaFieldProcessor tokenFieldProcessingRule = new JsonSchemaFieldProcessor() {
+			@Override
+			public boolean applyCustomProcessing(Class<?> objectClass, Field field, FieldMetadata fieldMetadata, JsonObjectBuilder propertiesBuilder, List<String> requiredPropertiesOutput) {
+				if (TokenSelector.class.isAssignableFrom(objectClass) && field.getName().equals(YamlPlanFields.TOKEN_SELECTOR_TOKEN_ORIGINAL_FIELD)) {
+					JsonObjectBuilder nestedPropertyParamsBuilder = jsonProvider.createObjectBuilder();
+					SimplePlanJsonSchemaGenerator.addRef(nestedPropertyParamsBuilder, SimpleDynamicValueJsonSchemaHelper.DYNAMIC_KEYWORD_INPUTS_DEF);
+					propertiesBuilder.add(fieldMetadata.getFieldName(), nestedPropertyParamsBuilder);
+					return true;
+				}
+				return false;
+			}
+		};
+
+		JsonSchemaFieldProcessor enumProcessingRule = new JsonSchemaFieldProcessor() {
+			@Override
+			public boolean applyCustomProcessing(Class<?> objectClass, Field field, FieldMetadata fieldMetadata, JsonObjectBuilder propertiesBuilder, List<String> requiredPropertiesOutput) {
+				if (field.getType().isEnum()) {
+					JsonObjectBuilder nestedPropertyParamsBuilder = jsonProvider.createObjectBuilder();
+
+					JsonArrayBuilder enumArray = jsonProvider.createArrayBuilder();
+					for (Object enumValue : field.getType().getEnumConstants()) {
+						enumArray.add(enumValue.toString());
+					}
+					nestedPropertyParamsBuilder.add("enum", enumArray);
+
+					propertiesBuilder.add(fieldMetadata.getFieldName(), nestedPropertyParamsBuilder);
+					return true;
+				}
+				return false;
+			}
+		};
+
+		JsonSchemaFieldProcessor dynamicValueProcessingRule = new JsonSchemaFieldProcessor() {
+			@Override
+			public boolean applyCustomProcessing(Class<?> objectClass, Field field, FieldMetadata fieldMetadata, JsonObjectBuilder propertiesBuilder, List<String> requiredPropertiesOutput) {
+				if (DynamicValue.class.isAssignableFrom(field.getType())) {
+					JsonObjectBuilder nestedPropertyParamsBuilder = jsonProvider.createObjectBuilder();
+
+					dynamicValuesHelper.applyDynamicValueDefForField(field, nestedPropertyParamsBuilder);
+
+					propertiesBuilder.add(fieldMetadata.getFieldName(), nestedPropertyParamsBuilder);
+					return true;
+				}
+				return false;
+			}
+		};
+
+		List<JsonSchemaFieldProcessor> processingRules = List.of(
+				commonFieldFilteringRule,
+				artefactTechnicalFieldsFilteringRule,
+				tokenInCallFunctionFilteringRule,
+				artefactChildrenProcessingRule,
+				artefactAttributesProcessingRules,
 				keywordNameProcessingRule,
 				keywordInputsFieldProcessingRule,
 				tokenFieldProcessingRule,
@@ -151,7 +249,7 @@ public class SimplifiedPlanJsonSchemaGenerator {
 				dynamicValueProcessingRule
 		);
 
-		this.jsonSchemaCreator = new JsonSchemaCreator(jsonProvider, new AggregatedJsonSchemaFieldProcessor(filterRules, processingRules), fieldMetadataExtractor);
+		this.jsonSchemaCreator = new JsonSchemaCreator(jsonProvider, new AggregatedJsonSchemaFieldProcessor(processingRules), fieldMetadataExtractor);
 	}
 
 	public JsonNode generateJsonSchema() throws JsonSchemaPreparationException {
@@ -271,8 +369,7 @@ public class SimplifiedPlanJsonSchemaGenerator {
 
 		for (Class<?> artefactClass : artefactClasses) {
 			// use the name of artefact as definition name
-			Artefact ann = artefactClass.getAnnotation(Artefact.class);
-			String name = ann.name() == null || ann.name().isEmpty() ? artefactClass.getSimpleName() : ann.name();
+			String name = getArtefactName(artefactClass);
 			String defName = name + "Def";
 
 			// scan all fields in artefact class and put them to artefact definition
@@ -287,6 +384,11 @@ public class SimplifiedPlanJsonSchemaGenerator {
 			}
 		}
 		return artefactDefinitions;
+	}
+
+	private static String getArtefactName(Class<?> artefactClass) {
+		Artefact ann = artefactClass.getAnnotation(Artefact.class);
+		return ann.name() == null || ann.name().isEmpty() ? artefactClass.getSimpleName() : ann.name();
 	}
 
 	private JsonObjectBuilder createArtefactImplDef(String name, Class<?> artefactClass) throws JsonSchemaPreparationException {
@@ -310,48 +412,21 @@ public class SimplifiedPlanJsonSchemaGenerator {
 		log.info("Preparing json schema for artefact class {}...", artefactClass);
 
 		// analyze hierarchy of class annotated with @Artefact
-		List<Class<?>> classHierarchy = new ArrayList<>();
+		List<Field> allFieldsInArtefactHierarchy = new ArrayList<>();
 		Class<?> currentClass = artefactClass;
 		while (currentClass != null) {
-			classHierarchy.add(currentClass);
+			allFieldsInArtefactHierarchy.addAll(List.of(currentClass.getDeclaredFields()));
 			currentClass = currentClass.getSuperclass();
 		}
 
-		for (Class<?> c : classHierarchy) {
-			// for some parent classes we want to avoid auto generation via reflection (for instance, for AbstractArtefact we want to skip the most of technical fields)
-			if (!applyCustomPropertiesGenerationForClass(c, artefactProperties, artefactName)) {
-				// the common (not custom logic for some Artefact class
-
-				// get all from fields from the certain class
-				Field[] fields = c.getDeclaredFields();
-
-				// for each field we want either build the json schema via reflection
-				// or use some predefined schemas for some special classes (like step.core.dynamicbeans.DynamicValue)
-				try {
-					jsonSchemaCreator.processFields(artefactClass, artefactProperties, Arrays.stream(fields).collect(Collectors.toList()), new ArrayList<>());
-				} catch (Exception ex) {
-					throw new JsonSchemaPreparationException("Unable to process artefact " + artefactName, ex);
-				}
-			} else {
-				break;
-			}
+		// for each field we want either build the json schema via reflection
+		// or use some predefined schemas for some special classes (like step.core.dynamicbeans.DynamicValue)
+		try {
+			Collections.reverse(allFieldsInArtefactHierarchy);
+			jsonSchemaCreator.processFields(artefactClass, artefactProperties, allFieldsInArtefactHierarchy, new ArrayList<>());
+		} catch (Exception ex) {
+			throw new JsonSchemaPreparationException("Unable to process artefact " + artefactName, ex);
 		}
-	}
-
-	private boolean applyCustomPropertiesGenerationForClass(Class<?> c, JsonObjectBuilder artefactProperties, String artefactName) {
-		if (c.equals(AbstractArtefact.class)) {
-			artefactProperties.add("description", jsonProvider.createObjectBuilder().add("type", "string"));
-			// use artefact name as default
-			artefactProperties.add(YamlPlanFields.NAME_SIMPLE_FIELD, jsonProvider.createObjectBuilder().add("type", "string").add("default", artefactName));
-			artefactProperties.add("children",
-					jsonProvider.createObjectBuilder()
-							.add("type", "array")
-							.add("items", addRef(jsonProvider.createObjectBuilder(), ARTEFACT_DEF))
-			);
-
-			return true;
-		}
-		return false;
 	}
 
 	private JsonObjectBuilder createArtefactDef(Collection<String> artefactImplReferences) {

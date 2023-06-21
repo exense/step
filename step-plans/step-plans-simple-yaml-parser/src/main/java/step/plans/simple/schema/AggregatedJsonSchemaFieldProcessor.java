@@ -19,7 +19,9 @@
 package step.plans.simple.schema;
 
 import jakarta.json.JsonObjectBuilder;
+import step.handlers.javahandler.jsonschema.FieldMetadata;
 import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
+import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 
 import java.lang.reflect.Field;
 import java.util.List;
@@ -29,39 +31,20 @@ import java.util.List;
  */
 public class AggregatedJsonSchemaFieldProcessor implements JsonSchemaFieldProcessor {
 
-	private List<FilterRule> filterRules;
-	private List<ProcessingRule> processingRules;
+	private final List<JsonSchemaFieldProcessor> processingRules;
 
-	public AggregatedJsonSchemaFieldProcessor(List<FilterRule> filterRules, List<ProcessingRule> processingRules) {
-		this.filterRules = filterRules;
+	public AggregatedJsonSchemaFieldProcessor(List<JsonSchemaFieldProcessor> processingRules) {
 		this.processingRules = processingRules;
 	}
 
 	@Override
-	public boolean applyCustomProcessing(Class<?> objectClass, Field field, JsonObjectBuilder propertiesBuilder) throws JsonSchemaFieldProcessingException {
-		for (ProcessingRule processingRule : processingRules) {
-			if(processingRule.applyCustomProcessing(objectClass, field, propertiesBuilder)) {
+	public boolean applyCustomProcessing(Class<?> objectClass, Field field, FieldMetadata fieldMetadata, JsonObjectBuilder propertiesBuilder, List<String> requiredPropertiesOutput) throws JsonSchemaFieldProcessingException, JsonSchemaPreparationException {
+		for (JsonSchemaFieldProcessor processingRule : processingRules) {
+			if (processingRule.applyCustomProcessing(objectClass, field, fieldMetadata, propertiesBuilder, requiredPropertiesOutput)) {
 				return true;
 			}
 		}
 		return false;
 	}
 
-	@Override
-	public boolean skipField(Class<?> objectClass, Field field) {
-		for (FilterRule filterRule : filterRules) {
-			if(filterRule.skipField(objectClass, field)){
-				return true;
-			}
-		}
-		return false;
-	}
-
-	public interface ProcessingRule {
-		boolean applyCustomProcessing(Class<?> objectClass, Field field, JsonObjectBuilder propertiesBuilder) throws JsonSchemaFieldProcessingException;
-	}
-
-	public interface FilterRule {
-		boolean skipField(Class<?> objectClass, Field field);
-	}
 }
