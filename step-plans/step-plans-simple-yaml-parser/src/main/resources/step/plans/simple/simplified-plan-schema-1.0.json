@@ -24,7 +24,7 @@
           "type" : "string"
         }
       },
-      "additionalProperties": false
+      "additionalProperties" : false
     },
     "SmartDynamicValueNumDef" : {
       "oneOf" : [ {
@@ -50,7 +50,7 @@
             } ]
           }
         },
-        "additionalProperties": false
+        "additionalProperties" : false
       }
     },
     "CallKeywordFunctionNameDef" : {
@@ -72,15 +72,6 @@
         "AfterSequence" : {
           "type" : "object",
           "properties" : {
-            "continueOnError" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "pacing" : {
-              "$ref" : "#/$defs/SmartDynamicValueNumDef"
-            },
-            "description" : {
-              "type" : "string"
-            },
             "nodeName" : {
               "type" : "string",
               "default" : "AfterSequence"
@@ -90,6 +81,15 @@
               "items" : {
                 "$ref" : "#/$defs/ArtefactDef"
               }
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "pacing" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            },
+            "continueOnError" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             }
           }
         }
@@ -102,15 +102,6 @@
         "Set" : {
           "type" : "object",
           "properties" : {
-            "key" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            },
-            "value" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            },
-            "description" : {
-              "type" : "string"
-            },
             "nodeName" : {
               "type" : "string",
               "default" : "Set"
@@ -120,6 +111,15 @@
               "items" : {
                 "$ref" : "#/$defs/ArtefactDef"
               }
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "value" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            },
+            "key" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
             }
           }
         }
@@ -132,12 +132,6 @@
         "Check" : {
           "type" : "object",
           "properties" : {
-            "expression" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "description" : {
-              "type" : "string"
-            },
             "nodeName" : {
               "type" : "string",
               "default" : "Check"
@@ -147,6 +141,12 @@
               "items" : {
                 "$ref" : "#/$defs/ArtefactDef"
               }
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "expression" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             }
           }
         }
@@ -159,13 +159,6 @@
         "CheckArtefact" : {
           "type" : "object",
           "properties" : {
-            "executionRunnable" : {
-              "type" : "object",
-              "properties" : { }
-            },
-            "description" : {
-              "type" : "string"
-            },
             "nodeName" : {
               "type" : "string",
               "default" : "CheckArtefact"
@@ -175,6 +168,13 @@
               "items" : {
                 "$ref" : "#/$defs/ArtefactDef"
               }
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "executionRunnable" : {
+              "type" : "object",
+              "properties" : { }
             }
           }
         }
@@ -187,12 +187,6 @@
         "Script" : {
           "type" : "object",
           "properties" : {
-            "script" : {
-              "type" : "string"
-            },
-            "description" : {
-              "type" : "string"
-            },
             "nodeName" : {
               "type" : "string",
               "default" : "Script"
@@ -202,6 +196,12 @@
               "items" : {
                 "$ref" : "#/$defs/ArtefactDef"
               }
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "script" : {
+              "type" : "string"
             }
           }
         }
@@ -214,15 +214,6 @@
         "Sequence" : {
           "type" : "object",
           "properties" : {
-            "continueOnError" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "pacing" : {
-              "$ref" : "#/$defs/SmartDynamicValueNumDef"
-            },
-            "description" : {
-              "type" : "string"
-            },
             "nodeName" : {
               "type" : "string",
               "default" : "Sequence"
@@ -232,6 +223,15 @@
               "items" : {
                 "$ref" : "#/$defs/ArtefactDef"
               }
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "pacing" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            },
+            "continueOnError" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             }
           }
         }
@@ -244,21 +244,6 @@
         "CallKeyword" : {
           "type" : "object",
           "properties" : {
-            "keyword" : {
-              "$ref" : "#/$defs/CallKeywordFunctionNameDef"
-            },
-            "inputs" : {
-              "$ref" : "#/$defs/DynamicKeywordInputsDef"
-            },
-            "resultMap" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            },
-            "remote" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "description" : {
-              "type" : "string"
-            },
             "nodeName" : {
               "type" : "string",
               "default" : "CallKeyword"
@@ -268,6 +253,21 @@
               "items" : {
                 "$ref" : "#/$defs/ArtefactDef"
               }
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "remote" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "resultMap" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            },
+            "inputs" : {
+              "$ref" : "#/$defs/DynamicKeywordInputsDef"
+            },
+            "keyword" : {
+              "$ref" : "#/$defs/CallKeywordFunctionNameDef"
             }
           }
         }
@@ -280,12 +280,6 @@
         "Switch" : {
           "type" : "object",
           "properties" : {
-            "expression" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            },
-            "description" : {
-              "type" : "string"
-            },
             "nodeName" : {
               "type" : "string",
               "default" : "Switch"
@@ -295,6 +289,12 @@
               "items" : {
                 "$ref" : "#/$defs/ArtefactDef"
               }
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "expression" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
             }
           }
         }
@@ -307,15 +307,6 @@
         "BeforeThread" : {
           "type" : "object",
           "properties" : {
-            "continueOnError" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "pacing" : {
-              "$ref" : "#/$defs/SmartDynamicValueNumDef"
-            },
-            "description" : {
-              "type" : "string"
-            },
             "nodeName" : {
               "type" : "string",
               "default" : "BeforeThread"
@@ -325,6 +316,15 @@
               "items" : {
                 "$ref" : "#/$defs/ArtefactDef"
               }
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "pacing" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            },
+            "continueOnError" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             }
           }
         }
@@ -337,21 +337,6 @@
         "Export" : {
           "type" : "object",
           "properties" : {
-            "value" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            },
-            "file" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            },
-            "prefix" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            },
-            "filter" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            },
-            "description" : {
-              "type" : "string"
-            },
             "nodeName" : {
               "type" : "string",
               "default" : "Export"
@@ -361,6 +346,21 @@
               "items" : {
                 "$ref" : "#/$defs/ArtefactDef"
               }
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "filter" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            },
+            "prefix" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            },
+            "file" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            },
+            "value" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
             }
           }
         }
@@ -373,9 +373,6 @@
         "StreamingArtefact" : {
           "type" : "object",
           "properties" : {
-            "description" : {
-              "type" : "string"
-            },
             "nodeName" : {
               "type" : "string",
               "default" : "StreamingArtefact"
@@ -385,6 +382,9 @@
               "items" : {
                 "$ref" : "#/$defs/ArtefactDef"
               }
+            },
+            "description" : {
+              "type" : "string"
             }
           }
         }
@@ -397,35 +397,6 @@
         "For" : {
           "type" : "object",
           "properties" : {
-            "item" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            },
-            "dataSourceType" : {
-              "type" : "string"
-            },
-            "dataSource" : {
-              "type" : "object",
-              "properties" : {
-                "forWrite" : {
-                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-                }
-              }
-            },
-            "maxFailedLoops" : {
-              "$ref" : "#/$defs/SmartDynamicValueNumDef"
-            },
-            "threads" : {
-              "$ref" : "#/$defs/SmartDynamicValueNumDef"
-            },
-            "globalCounter" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            },
-            "userItem" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            },
-            "description" : {
-              "type" : "string"
-            },
             "nodeName" : {
               "type" : "string",
               "default" : "For"
@@ -435,6 +406,35 @@
               "items" : {
                 "$ref" : "#/$defs/ArtefactDef"
               }
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "userItem" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            },
+            "globalCounter" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            },
+            "threads" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            },
+            "maxFailedLoops" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            },
+            "dataSource" : {
+              "type" : "object",
+              "properties" : {
+                "forWrite" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
+            "dataSourceType" : {
+              "type" : "string"
+            },
+            "item" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
             }
           }
         }
@@ -447,12 +447,6 @@
         "Case" : {
           "type" : "object",
           "properties" : {
-            "value" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            },
-            "description" : {
-              "type" : "string"
-            },
             "nodeName" : {
               "type" : "string",
               "default" : "Case"
@@ -462,6 +456,12 @@
               "items" : {
                 "$ref" : "#/$defs/ArtefactDef"
               }
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "value" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
             }
           }
         }
@@ -474,12 +474,6 @@
         "Return" : {
           "type" : "object",
           "properties" : {
-            "output" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            },
-            "description" : {
-              "type" : "string"
-            },
             "nodeName" : {
               "type" : "string",
               "default" : "Return"
@@ -489,6 +483,12 @@
               "items" : {
                 "$ref" : "#/$defs/ArtefactDef"
               }
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "output" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
             }
           }
         }
@@ -501,15 +501,6 @@
         "Failure" : {
           "type" : "object",
           "properties" : {
-            "message" : {
-              "type" : "string"
-            },
-            "stackTrace" : {
-              "type" : "string"
-            },
-            "description" : {
-              "type" : "string"
-            },
             "nodeName" : {
               "type" : "string",
               "default" : "Failure"
@@ -519,6 +510,15 @@
               "items" : {
                 "$ref" : "#/$defs/ArtefactDef"
               }
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "stackTrace" : {
+              "type" : "string"
+            },
+            "message" : {
+              "type" : "string"
             }
           }
         }
@@ -531,35 +531,6 @@
         "ForEach" : {
           "type" : "object",
           "properties" : {
-            "item" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            },
-            "dataSourceType" : {
-              "type" : "string"
-            },
-            "dataSource" : {
-              "type" : "object",
-              "properties" : {
-                "forWrite" : {
-                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-                }
-              }
-            },
-            "maxFailedLoops" : {
-              "$ref" : "#/$defs/SmartDynamicValueNumDef"
-            },
-            "threads" : {
-              "$ref" : "#/$defs/SmartDynamicValueNumDef"
-            },
-            "globalCounter" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            },
-            "userItem" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            },
-            "description" : {
-              "type" : "string"
-            },
             "nodeName" : {
               "type" : "string",
               "default" : "ForEach"
@@ -569,6 +540,35 @@
               "items" : {
                 "$ref" : "#/$defs/ArtefactDef"
               }
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "userItem" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            },
+            "globalCounter" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            },
+            "threads" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            },
+            "maxFailedLoops" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            },
+            "dataSource" : {
+              "type" : "object",
+              "properties" : {
+                "forWrite" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
+            "dataSourceType" : {
+              "type" : "string"
+            },
+            "item" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
             }
           }
         }
@@ -581,24 +581,6 @@
         "RetryIfFails" : {
           "type" : "object",
           "properties" : {
-            "maxRetries" : {
-              "$ref" : "#/$defs/SmartDynamicValueNumDef"
-            },
-            "gracePeriod" : {
-              "$ref" : "#/$defs/SmartDynamicValueNumDef"
-            },
-            "timeout" : {
-              "$ref" : "#/$defs/SmartDynamicValueNumDef"
-            },
-            "releaseTokens" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "reportLastTryOnly" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "description" : {
-              "type" : "string"
-            },
             "nodeName" : {
               "type" : "string",
               "default" : "RetryIfFails"
@@ -608,6 +590,24 @@
               "items" : {
                 "$ref" : "#/$defs/ArtefactDef"
               }
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "reportLastTryOnly" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "releaseTokens" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "timeout" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            },
+            "gracePeriod" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            },
+            "maxRetries" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
             }
           }
         }
@@ -620,24 +620,6 @@
         "While" : {
           "type" : "object",
           "properties" : {
-            "condition" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "postCondition" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "pacing" : {
-              "$ref" : "#/$defs/SmartDynamicValueNumDef"
-            },
-            "timeout" : {
-              "$ref" : "#/$defs/SmartDynamicValueNumDef"
-            },
-            "maxIterations" : {
-              "$ref" : "#/$defs/SmartDynamicValueNumDef"
-            },
-            "description" : {
-              "type" : "string"
-            },
             "nodeName" : {
               "type" : "string",
               "default" : "While"
@@ -647,6 +629,24 @@
               "items" : {
                 "$ref" : "#/$defs/ArtefactDef"
               }
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "maxIterations" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            },
+            "timeout" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            },
+            "pacing" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            },
+            "postCondition" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "condition" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             }
           }
         }
@@ -659,12 +659,6 @@
         "Echo" : {
           "type" : "object",
           "properties" : {
-            "text" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            },
-            "description" : {
-              "type" : "string"
-            },
             "nodeName" : {
               "type" : "string",
               "default" : "Echo"
@@ -674,6 +668,12 @@
               "items" : {
                 "$ref" : "#/$defs/ArtefactDef"
               }
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "text" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
             }
           }
         }
@@ -686,18 +686,6 @@
         "CallPlan" : {
           "type" : "object",
           "properties" : {
-            "planId" : {
-              "type" : "string"
-            },
-            "selectionAttributes" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            },
-            "input" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            },
-            "description" : {
-              "type" : "string"
-            },
             "nodeName" : {
               "type" : "string",
               "default" : "CallPlan"
@@ -707,6 +695,18 @@
               "items" : {
                 "$ref" : "#/$defs/ArtefactDef"
               }
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "input" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            },
+            "selectionAttributes" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            },
+            "planId" : {
+              "type" : "string"
             }
           }
         }
@@ -719,9 +719,6 @@
         "TestScenario" : {
           "type" : "object",
           "properties" : {
-            "description" : {
-              "type" : "string"
-            },
             "nodeName" : {
               "type" : "string",
               "default" : "TestScenario"
@@ -731,6 +728,9 @@
               "items" : {
                 "$ref" : "#/$defs/ArtefactDef"
               }
+            },
+            "description" : {
+              "type" : "string"
             }
           }
         }
@@ -743,21 +743,6 @@
         "Synchronized" : {
           "type" : "object",
           "properties" : {
-            "lockName" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            },
-            "globalLock" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "continueOnError" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "pacing" : {
-              "$ref" : "#/$defs/SmartDynamicValueNumDef"
-            },
-            "description" : {
-              "type" : "string"
-            },
             "nodeName" : {
               "type" : "string",
               "default" : "Synchronized"
@@ -767,6 +752,21 @@
               "items" : {
                 "$ref" : "#/$defs/ArtefactDef"
               }
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "pacing" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            },
+            "continueOnError" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "globalLock" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "lockName" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
             }
           }
         }
@@ -779,15 +779,6 @@
         "BeforeSequence" : {
           "type" : "object",
           "properties" : {
-            "continueOnError" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "pacing" : {
-              "$ref" : "#/$defs/SmartDynamicValueNumDef"
-            },
-            "description" : {
-              "type" : "string"
-            },
             "nodeName" : {
               "type" : "string",
               "default" : "BeforeSequence"
@@ -797,6 +788,15 @@
               "items" : {
                 "$ref" : "#/$defs/ArtefactDef"
               }
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "pacing" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            },
+            "continueOnError" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             }
           }
         }
@@ -809,12 +809,6 @@
         "TestSet" : {
           "type" : "object",
           "properties" : {
-            "threads" : {
-              "$ref" : "#/$defs/SmartDynamicValueNumDef"
-            },
-            "description" : {
-              "type" : "string"
-            },
             "nodeName" : {
               "type" : "string",
               "default" : "TestSet"
@@ -824,6 +818,12 @@
               "items" : {
                 "$ref" : "#/$defs/ArtefactDef"
               }
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "threads" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
             }
           }
         }
@@ -836,15 +836,6 @@
         "Session" : {
           "type" : "object",
           "properties" : {
-            "remote" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "selectionCriteria" : {
-              "$ref" : "#/$defs/DynamicKeywordInputsDef"
-            },
-            "description" : {
-              "type" : "string"
-            },
             "nodeName" : {
               "type" : "string",
               "default" : "Session"
@@ -854,6 +845,15 @@
               "items" : {
                 "$ref" : "#/$defs/ArtefactDef"
               }
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "selectionCriteria" : {
+              "$ref" : "#/$defs/DynamicKeywordInputsDef"
+            },
+            "remote" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             }
           }
         }
@@ -866,38 +866,6 @@
         "DataSet" : {
           "type" : "object",
           "properties" : {
-            "item" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            },
-            "resetAtEnd" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "dataSourceType" : {
-              "type" : "string"
-            },
-            "dataSource" : {
-              "type" : "object",
-              "properties" : {
-                "forWrite" : {
-                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-                }
-              }
-            },
-            "maxFailedLoops" : {
-              "$ref" : "#/$defs/SmartDynamicValueNumDef"
-            },
-            "threads" : {
-              "$ref" : "#/$defs/SmartDynamicValueNumDef"
-            },
-            "globalCounter" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            },
-            "userItem" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            },
-            "description" : {
-              "type" : "string"
-            },
             "nodeName" : {
               "type" : "string",
               "default" : "DataSet"
@@ -907,6 +875,38 @@
               "items" : {
                 "$ref" : "#/$defs/ArtefactDef"
               }
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "userItem" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            },
+            "globalCounter" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            },
+            "threads" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            },
+            "maxFailedLoops" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            },
+            "dataSource" : {
+              "type" : "object",
+              "properties" : {
+                "forWrite" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
+            "dataSourceType" : {
+              "type" : "string"
+            },
+            "item" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            },
+            "resetAtEnd" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             }
           }
         }
@@ -919,18 +919,6 @@
         "Sleep" : {
           "type" : "object",
           "properties" : {
-            "duration" : {
-              "$ref" : "#/$defs/SmartDynamicValueNumDef"
-            },
-            "unit" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            },
-            "releaseTokens" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "description" : {
-              "type" : "string"
-            },
             "nodeName" : {
               "type" : "string",
               "default" : "Sleep"
@@ -940,6 +928,18 @@
               "items" : {
                 "$ref" : "#/$defs/ArtefactDef"
               }
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "releaseTokens" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "unit" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            },
+            "duration" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
             }
           }
         }
@@ -952,9 +952,6 @@
         "TestCase" : {
           "type" : "object",
           "properties" : {
-            "description" : {
-              "type" : "string"
-            },
             "nodeName" : {
               "type" : "string",
               "default" : "TestCase"
@@ -964,6 +961,9 @@
               "items" : {
                 "$ref" : "#/$defs/ArtefactDef"
               }
+            },
+            "description" : {
+              "type" : "string"
             }
           }
         }
@@ -976,24 +976,6 @@
         "Assert" : {
           "type" : "object",
           "properties" : {
-            "actual" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            },
-            "operator" : {
-              "enum" : [ "EQUALS", "BEGINS_WITH", "ENDS_WITH", "CONTAINS", "MATCHES" ]
-            },
-            "doNegate" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "expected" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            },
-            "customErrorMessage" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            },
-            "description" : {
-              "type" : "string"
-            },
             "nodeName" : {
               "type" : "string",
               "default" : "Assert"
@@ -1003,6 +985,24 @@
               "items" : {
                 "$ref" : "#/$defs/ArtefactDef"
               }
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "customErrorMessage" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            },
+            "expected" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            },
+            "doNegate" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "operator" : {
+              "enum" : [ "EQUALS", "BEGINS_WITH", "ENDS_WITH", "CONTAINS", "MATCHES" ]
+            },
+            "actual" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
             }
           }
         }
@@ -1015,15 +1015,6 @@
         "AfterThread" : {
           "type" : "object",
           "properties" : {
-            "continueOnError" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "pacing" : {
-              "$ref" : "#/$defs/SmartDynamicValueNumDef"
-            },
-            "description" : {
-              "type" : "string"
-            },
             "nodeName" : {
               "type" : "string",
               "default" : "AfterThread"
@@ -1033,6 +1024,15 @@
               "items" : {
                 "$ref" : "#/$defs/ArtefactDef"
               }
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "pacing" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            },
+            "continueOnError" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             }
           }
         }
@@ -1045,9 +1045,6 @@
         "Placeholder" : {
           "type" : "object",
           "properties" : {
-            "description" : {
-              "type" : "string"
-            },
             "nodeName" : {
               "type" : "string",
               "default" : "Placeholder"
@@ -1057,6 +1054,9 @@
               "items" : {
                 "$ref" : "#/$defs/ArtefactDef"
               }
+            },
+            "description" : {
+              "type" : "string"
             }
           }
         }
@@ -1069,12 +1069,6 @@
         "If" : {
           "type" : "object",
           "properties" : {
-            "condition" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "description" : {
-              "type" : "string"
-            },
             "nodeName" : {
               "type" : "string",
               "default" : "If"
@@ -1084,6 +1078,12 @@
               "items" : {
                 "$ref" : "#/$defs/ArtefactDef"
               }
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "condition" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             }
           }
         }
@@ -1096,39 +1096,6 @@
         "ThreadGroup" : {
           "type" : "object",
           "properties" : {
-            "users" : {
-              "$ref" : "#/$defs/SmartDynamicValueNumDef"
-            },
-            "iterations" : {
-              "$ref" : "#/$defs/SmartDynamicValueNumDef"
-            },
-            "rampup" : {
-              "$ref" : "#/$defs/SmartDynamicValueNumDef"
-            },
-            "pack" : {
-              "$ref" : "#/$defs/SmartDynamicValueNumDef"
-            },
-            "pacing" : {
-              "$ref" : "#/$defs/SmartDynamicValueNumDef"
-            },
-            "startOffset" : {
-              "$ref" : "#/$defs/SmartDynamicValueNumDef"
-            },
-            "maxDuration" : {
-              "$ref" : "#/$defs/SmartDynamicValueNumDef"
-            },
-            "item" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            },
-            "localItem" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            },
-            "userItem" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            },
-            "description" : {
-              "type" : "string"
-            },
             "nodeName" : {
               "type" : "string",
               "default" : "ThreadGroup"
@@ -1138,6 +1105,39 @@
               "items" : {
                 "$ref" : "#/$defs/ArtefactDef"
               }
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "userItem" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            },
+            "localItem" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            },
+            "item" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            },
+            "maxDuration" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            },
+            "startOffset" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            },
+            "pacing" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            },
+            "pack" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            },
+            "rampup" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            },
+            "iterations" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            },
+            "users" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
             }
           }
         }
