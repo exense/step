@@ -23,6 +23,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.deser.ContextualDeserializer;
 import step.core.dynamicbeans.DynamicValue;
+import step.plans.simple.YamlPlanFields;
 
 import java.io.IOException;
 
@@ -43,7 +44,7 @@ public class SimpleDynamicValueDeserializer extends JsonDeserializer<DynamicValu
 		JsonNode node = jp.getCodec().readTree(jp);
 
 		if (node.isContainerNode()) {
-			JsonNode expressionNode = node.get("expression");
+			JsonNode expressionNode = node.get(YamlPlanFields.DYN_VALUE_EXPRESSION_FIELD);
 			String expression = expressionNode == null ? null : expressionNode.asText();
 
 			if (expression != null && !expression.isEmpty()) {

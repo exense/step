@@ -16,24 +16,21 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plans.simple.deserializers;
+package step.plans.simple.rules;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.ObjectCodec;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import jakarta.json.spi.JsonProvider;
+import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
+import step.plans.simple.deserializers.SimpleArtefactFieldDeserializationProcessor;
+import step.plans.simple.serializers.SimpleArtefactFieldSerializationProcessor;
 
-import java.util.Map;
-
-public interface SimpleArtefactFieldDeserializationProcessor {
-    boolean deserializeArtefactField(String artefactClass, Map.Entry<String, JsonNode> field, ObjectNode output, ObjectCodec codec) throws JsonProcessingException;
-
-    default ArrayNode createArrayNode(ObjectCodec codec) {
-        return (ArrayNode) codec.createArrayNode();
+public interface ArtefactFieldConversionRule {
+    default JsonSchemaFieldProcessor getJsonSchemaFieldProcessor(JsonProvider jsonProvider){
+        return null;
     }
-
-    default ObjectNode createObjectNode(ObjectCodec codec) {
-        return (ObjectNode) codec.createObjectNode();
+    default SimpleArtefactFieldDeserializationProcessor getArtefactFieldDeserializationProcessor(){
+        return null;
+    }
+    default SimpleArtefactFieldSerializationProcessor getArtefactFieldSerializationProcessor() {
+        return null;
     }
 }

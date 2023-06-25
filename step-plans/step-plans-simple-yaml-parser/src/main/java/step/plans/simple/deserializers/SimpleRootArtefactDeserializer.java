@@ -24,15 +24,15 @@ import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import step.artefacts.CallFunction;
-import step.artefacts.FunctionGroup;
 import step.core.artefacts.AbstractArtefact;
 import step.core.plans.Plan;
 import step.plans.simple.YamlPlanFields;
 import step.plans.simple.model.SimpleRootArtefact;
+import step.plans.simple.rules.KeywordInputsRule;
+import step.plans.simple.rules.KeywordNameRule;
+import step.plans.simple.rules.NodeNameRule;
 import step.plans.simple.schema.JsonSchemaFieldProcessingException;
 
 import java.io.IOException;
@@ -41,31 +41,15 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import static step.plans.simple.YamlPlanFields.CALL_FUNCTION_FUNCTION_SIMPLE_FIELD;
-import static step.plans.simple.YamlPlanFields.TOKEN_SELECTOR_TOKEN_SIMPLE_FIELD;
-
 public class SimpleRootArtefactDeserializer extends JsonDeserializer<SimpleRootArtefact> {
 
     private final List<SimpleArtefactFieldDeserializationProcessor> customFieldProcessors;
-    private final ObjectMapper jsonObjectMapper = new ObjectMapper();
 
     public SimpleRootArtefactDeserializer() {
         customFieldProcessors = new ArrayList<>();
 
         // the 'name' field should be wrapped into the 'attributes'
-        customFieldProcessors.add((artefactClass, field, output, codec) -> {
-            if (field.getKey().equals(YamlPlanFields.NAME_SIMPLE_FIELD)) {
-                ObjectNode attributesNode = (ObjectNode) output.get("attributes");
-                if(attributesNode == null){
-                    attributesNode = createObjectNode(codec);
-                }
-                attributesNode.put("name", field.getValue().asText());
-                output.set("attributes", attributesNode);
-                return true;
-            } else {
-                return false;
-            }
-        });
+        customFieldProcessors.add(new NodeNameRule().getArtefactFieldDeserializationProcessor());
 
         // process children recursively
         customFieldProcessors.add((artefactClass, field, output, codec) -> {
@@ -84,77 +68,17 @@ public class SimpleRootArtefactDeserializer extends JsonDeserializer<SimpleRootA
             }
         });
 
-        // 'argument' field for 'CallKeyword' (as well as 'token' field) artifact should contain all input values (dynamic values) as json string
+        // 'argument' field for 'CallKeyword' artifact should contain all input values (dynamic values) as json string
         // but in simplified format we represent input values as array of key / values
-        customFieldProcessors.add((artefactClass, field, output, codec) -> {
-            try {
-                boolean inputsForCallFunction = artefactClass.equals(CallFunction.ARTEFACT_NAME)
-                        && field.getKey().equals(YamlPlanFields.CALL_FUNCTION_ARGUMENT_SIMPLE_FIELD);
-
-                boolean selectionCriteriaForTokenSelector = (artefactClass.equals(FunctionGroup.FUNCTION_GROUP_ARTEFACT_NAME)
-                        && field.getKey().equals(TOKEN_SELECTOR_TOKEN_SIMPLE_FIELD));
-
-                if (inputsForCallFunction || selectionCriteriaForTokenSelector) {
-                    String originalField;
-                    if (inputsForCallFunction) {
-                        originalField = YamlPlanFields.CALL_FUNCTION_ARGUMENT_ORIGINAL_FIELD;
-                    } else {
-                        originalField = YamlPlanFields.TOKEN_SELECTOR_TOKEN_ORIGINAL_FIELD;
-                    }
-                    String argumentsAsJsonString = convertDynamicInputs(codec, (ArrayNode) field.getValue());
-                    output.put(originalField, argumentsAsJsonString);
-                    return true;
-                } else {
-                    return false;
-                }
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException("Unable to deserialize the 'argument' field", e);
-            }
-        });
+        customFieldProcessors.add(new KeywordInputsRule().getArtefactFieldDeserializationProcessor());
 
         // for 'CallFunction' we can use either the `keyword` (keyword name) field or the `keyword.selectionCriteria` to define the keyword name
-        customFieldProcessors.add((artefactClass, field, output, codec) -> {
-            if (artefactClass.equals(CallFunction.ARTEFACT_NAME) && field.getKey().equals(CALL_FUNCTION_FUNCTION_SIMPLE_FIELD)) {
-                JsonNode simpleFunctionValue = field.getValue();
-                JsonNode functionSelectionCriteria = simpleFunctionValue.get(TOKEN_SELECTOR_TOKEN_SIMPLE_FIELD);
-
-                // explicit function name as dynamic value
-                if (functionSelectionCriteria != null) {
-                    output.put(YamlPlanFields.TOKEN_SELECTOR_TOKEN_ORIGINAL_FIELD, convertDynamicInputs(codec, (ArrayNode) functionSelectionCriteria));
-                } else {
-                    output.set(YamlPlanFields.CALL_FUNCTION_FUNCTION_ORIGINAL_FIELD, simpleFunctionValue);
-                }
-                return true;
-            } else {
-                return false;
-            }
-        });
+        // and 'token' aka 'selectionCriteria' field should contain all input values (dynamic values) as json string
+        //  but in simplified format we represent input values as array of key / values
+        customFieldProcessors.add(new KeywordNameRule().getArtefactFieldDeserializationProcessor());
 
     }
 
-    private String convertDynamicInputs(ObjectCodec codec, ArrayNode value) throws JsonProcessingException {
-        ObjectNode inputDynamicValues = createObjectNode(codec);
-        Iterator<JsonNode> elements = value.elements();
-        while (elements.hasNext()) {
-            JsonNode next = elements.next();
-            Iterator<String> fieldNames = next.fieldNames();
-            while (fieldNames.hasNext()) {
-                String inputName = fieldNames.next();
-                JsonNode argumentValue = next.get(inputName);
-                if(!argumentValue.isContainerNode()){
-                    inputDynamicValues.set(inputName, argumentValue);
-                } else {
-                    ObjectNode dynamicValue = createObjectNode(codec);
-                    dynamicValue.put("dynamic", true);
-                    JsonNode expression = argumentValue.get("expression");
-                    dynamicValue.put("expression", expression == null ? "" : expression.asText());
-                    inputDynamicValues.set(inputName, dynamicValue);
-                }
-            }
-
-        }
-        return jsonObjectMapper.writeValueAsString(inputDynamicValues);
-    }
 
     @Override
     public SimpleRootArtefact deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException {

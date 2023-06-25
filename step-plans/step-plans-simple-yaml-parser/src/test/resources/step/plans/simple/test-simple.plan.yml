@@ -1,7 +1,9 @@
+version: 1.0.0
 name: "test plan"
 root:
   Sequence:
-    name: Sequence
+    nodeName: Sequence
+    continueOnError: false
     children:
       - If:
           nodeName: IfBlock
@@ -21,6 +23,7 @@ root:
             - CallKeyword:
                 nodeName: CallKeyword
                 keyword: "callExisting3"
+                remote: true
                 inputs:
                   - stringInput:
                       expression: "'abc'"

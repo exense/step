@@ -24,6 +24,7 @@ import jakarta.json.spi.JsonProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.handlers.javahandler.jsonschema.JsonInputConverter;
+import step.plans.simple.YamlPlanFields;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
@@ -31,7 +32,7 @@ import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 
-class SimpleDynamicValueJsonSchemaHelper {
+public class SimpleDynamicValueJsonSchemaHelper {
 
 	private static final Logger log = LoggerFactory.getLogger(SimpleDynamicValueJsonSchemaHelper.class);
 
@@ -102,7 +103,7 @@ class SimpleDynamicValueJsonSchemaHelper {
 		JsonObjectBuilder res = jsonProvider.createObjectBuilder();
 		res.add("type", "object");
 		JsonObjectBuilder properties = jsonProvider.createObjectBuilder();
-		properties.add("expression", jsonProvider.createObjectBuilder().add("type", "string"));
+		properties.add(YamlPlanFields.DYN_VALUE_EXPRESSION_FIELD, jsonProvider.createObjectBuilder().add("type", "string"));
 		res.add("properties", properties);
 		res.add("additionalProperties", false);
 		return res;

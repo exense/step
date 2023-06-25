@@ -33,6 +33,7 @@ import step.core.Version;
 import step.core.accessors.AbstractIdentifiableObject;
 import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.artefacts.AbstractArtefact;
+import step.core.artefacts.Artefact;
 import step.core.collections.Collection;
 import step.core.collections.CollectionFactory;
 import step.core.collections.Document;
@@ -47,6 +48,8 @@ import step.plans.simple.migrations.AbstractSimplePlanMigrationTask;
 import step.plans.simple.model.SimpleRootArtefact;
 import step.plans.simple.model.SimpleYamlPlan;
 import step.plans.simple.model.SimpleYamlPlanVersions;
+import step.plans.simple.serializers.SimpleDynamicValueSerializer;
+import step.plans.simple.serializers.SimpleRootArtefactSerializer;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -63,7 +66,8 @@ public class YamlPlanSerializer {
 
 	public static final String SIMPLE_PLANS_COLLECTION_NAME = "simplePlans";
 
-	private final ObjectMapper yamlMapper;
+	private final ObjectMapper simpleYamlMapper;
+	private final ObjectMapper fullYamlMapper;
 
 	private final Supplier<ObjectId> idGenerator;
 	private final Version currentVersion;
@@ -79,7 +83,8 @@ public class YamlPlanSerializer {
 		} else {
 			this.jsonSchema = null;
 		}
-		this.yamlMapper = createSimplePlanObjectMapper();
+		this.simpleYamlMapper = createSimplePlanObjectMapper();
+		this.fullYamlMapper = createFullPlanObjectMapper();
 		this.idGenerator = idGenerator;
 		this.migrationManager = initMigrationManager();
 	}
@@ -89,6 +94,43 @@ public class YamlPlanSerializer {
 	 */
 	public YamlPlanSerializer(SimpleYamlPlanVersions.YamlPlanVersion currentVersion) {
 		this(null, currentVersion);
+	}
+
+	public static ObjectMapper createSimplePlanObjectMapper() {
+		YAMLFactory yamlFactory = new YAMLFactory();
+		// Disable native type id to enable conversion to generic Documents
+		yamlFactory.disable(YAMLGenerator.Feature.USE_NATIVE_TYPE_ID);
+		ObjectMapper yamlMapper = DefaultJacksonMapperProvider.getObjectMapper(yamlFactory);
+
+		// configure custom deserializers
+		SimpleModule module = new SimpleModule();
+		module.addDeserializer(DynamicValue.class, new SimpleDynamicValueDeserializer());
+		module.addDeserializer(SimpleRootArtefact.class, new SimpleRootArtefactDeserializer());
+
+		module.addSerializer(SimpleRootArtefact.class, new SimpleRootArtefactSerializer());
+		module.addSerializer(DynamicValue.class, new SimpleDynamicValueSerializer());
+		yamlMapper.registerModule(module);
+		return yamlMapper;
+	}
+
+	public static ObjectMapper createFullPlanObjectMapper(){
+		YAMLFactory yamlFactory = new YAMLFactory();
+		// Disable native type id to enable conversion to generic Documents
+		yamlFactory.disable(YAMLGenerator.Feature.USE_NATIVE_TYPE_ID);
+		return DefaultJacksonMapperProvider.getObjectMapper(yamlFactory);
+	}
+
+	public static String getArtefactName(Class<?> artefactClass) {
+		Artefact ann = artefactClass.getAnnotation(Artefact.class);
+		return ann.name() == null || ann.name().isEmpty() ? artefactClass.getSimpleName() : ann.name();
+	}
+
+	public ObjectMapper getSimpleYamlMapper() {
+		return simpleYamlMapper;
+	}
+
+	public ObjectMapper getFullYamlMapper() {
+		return fullYamlMapper;
 	}
 
 	protected String readJsonSchema(String jsonSchemaPath) {
@@ -115,19 +157,6 @@ public class YamlPlanSerializer {
 		return migrationManager;
 	}
 
-	public static ObjectMapper createSimplePlanObjectMapper() {
-		YAMLFactory yamlFactory = new YAMLFactory();
-		// Disable native type id to enable conversion to generic Documents
-		yamlFactory.disable(YAMLGenerator.Feature.USE_NATIVE_TYPE_ID);
-		ObjectMapper yamlMapper = DefaultJacksonMapperProvider.getObjectMapper(yamlFactory);
-
-		// configure custom deserializers
-		SimpleModule module = new SimpleModule();
-		module.addDeserializer(DynamicValue.class, new SimpleDynamicValueDeserializer());
-		module.addDeserializer(SimpleRootArtefact.class, new SimpleRootArtefactDeserializer());
-		yamlMapper.registerModule(module);
-		return yamlMapper;
-	}
 
 	/**
 	 * Read the plan from simplified yaml format
@@ -139,18 +168,18 @@ public class YamlPlanSerializer {
 
 		bufferedYamlPlan = upgradeSimpleYamlIfRequired(bufferedYamlPlan);
 
-		JsonNode simplePlanJsonNode = yamlMapper.readTree(bufferedYamlPlan);
+		JsonNode simplePlanJsonNode = simpleYamlMapper.readTree(bufferedYamlPlan);
 		if (jsonSchema != null) {
 			JsonSchemaValidator.validate(jsonSchema, simplePlanJsonNode.toString());
 		}
 
-		SimpleYamlPlan simplePlan = yamlMapper.treeToValue(simplePlanJsonNode, SimpleYamlPlan.class);
+		SimpleYamlPlan simplePlan = simpleYamlMapper.treeToValue(simplePlanJsonNode, SimpleYamlPlan.class);
 		return convertSimplePlanToFullPlan(simplePlan);
 	}
 
 	private String upgradeSimpleYamlIfRequired(String bufferedYamlPlan) throws JsonProcessingException {
 		if (currentVersion != null) {
-			Document simplePlanDocument = yamlMapper.readValue(bufferedYamlPlan, Document.class);
+			Document simplePlanDocument = simpleYamlMapper.readValue(bufferedYamlPlan, Document.class);
 			String planVersionString = simplePlanDocument.getString(SimpleYamlPlan.VERSION_FIELD_NAME);
 
 			// planVersionString == null means than no migration is required (version is actual)
@@ -172,7 +201,7 @@ public class YamlPlanSerializer {
 				migratedDocument.remove(AbstractIdentifiableObject.ID);
 
 				// convert document back to the yaml string
-				bufferedYamlPlan = yamlMapper.writeValueAsString(migratedDocument);
+				bufferedYamlPlan = simpleYamlMapper.writeValueAsString(migratedDocument);
 
 				if(log.isDebugEnabled()){
 					log.debug("Simple plan after migrations: {}", bufferedYamlPlan);
@@ -182,15 +211,19 @@ public class YamlPlanSerializer {
 		return bufferedYamlPlan;
 	}
 
-	public ObjectMapper getYamlMapper() {
-		return yamlMapper;
-	}
-
-	private Plan convertSimplePlanToFullPlan(SimpleYamlPlan simpleYamlPlan) {
+	protected Plan convertSimplePlanToFullPlan(SimpleYamlPlan simpleYamlPlan) {
 		Plan fullPlan = new Plan(simpleYamlPlan.getRoot().getAbstractArtefact());
 		fullPlan.addAttribute("name", simpleYamlPlan.getName());
 		applyDefaultValues(fullPlan);
 		return fullPlan;
+	}
+
+	protected SimpleYamlPlan convertFullPlanToSimplePlan(Plan plan){
+		SimpleYamlPlan simplePlan = new SimpleYamlPlan();
+		simplePlan.setName(plan.getAttribute("name"));
+		simplePlan.setVersion(currentVersion.toString());
+		simplePlan.setRoot(new SimpleRootArtefact(plan.getRoot()));
+		return simplePlan;
 	}
 
 	private void applyDefaultValues(Plan fullPlan) {
@@ -223,8 +256,15 @@ public class YamlPlanSerializer {
 	/**
 	 * Write the full plan as YAML
 	 */
-	public void toFullYaml(OutputStream os, Plan plan) throws IOException {
-		yamlMapper.writeValue(os, plan);
+	public void writeFullYaml(OutputStream os, Plan plan) throws IOException {
+		fullYamlMapper.writeValue(os, plan);
+	}
+
+	/**
+	 * Write the simple plan as YAML
+	 */
+	public void writeSimpleYaml(OutputStream os, SimpleYamlPlan plan) throws IOException {
+		simpleYamlMapper.writeValue(os, plan);
 	}
 
 }

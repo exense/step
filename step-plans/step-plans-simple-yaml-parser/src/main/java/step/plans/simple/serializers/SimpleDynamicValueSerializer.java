@@ -16,24 +16,26 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plans.simple.deserializers;
+package step.plans.simple.serializers;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.ObjectCodec;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import step.core.dynamicbeans.DynamicValue;
+import step.plans.simple.YamlPlanFields;
 
-import java.util.Map;
+import java.io.IOException;
 
-public interface SimpleArtefactFieldDeserializationProcessor {
-    boolean deserializeArtefactField(String artefactClass, Map.Entry<String, JsonNode> field, ObjectNode output, ObjectCodec codec) throws JsonProcessingException;
+public class SimpleDynamicValueSerializer extends JsonSerializer<DynamicValue> {
 
-    default ArrayNode createArrayNode(ObjectCodec codec) {
-        return (ArrayNode) codec.createArrayNode();
-    }
-
-    default ObjectNode createObjectNode(ObjectCodec codec) {
-        return (ObjectNode) codec.createObjectNode();
+    @Override
+    public void serialize(DynamicValue value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+        if(value.isDynamic()){
+            gen.writeStartObject();
+            gen.writeStringField(YamlPlanFields.DYN_VALUE_EXPRESSION_FIELD, value.getExpression());
+            gen.writeEndObject();
+        } else {
+            gen.writeObject(value.getValue());
+        }
     }
 }

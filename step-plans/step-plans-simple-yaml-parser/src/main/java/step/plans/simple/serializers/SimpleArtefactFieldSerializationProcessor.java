@@ -16,24 +16,16 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plans.simple.deserializers;
+package step.plans.simple.serializers;
 
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.ObjectCodec;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import step.core.artefacts.AbstractArtefact;
+import step.handlers.javahandler.jsonschema.FieldMetadata;
 
-import java.util.Map;
+import java.io.IOException;
+import java.lang.reflect.Field;
 
-public interface SimpleArtefactFieldDeserializationProcessor {
-    boolean deserializeArtefactField(String artefactClass, Map.Entry<String, JsonNode> field, ObjectNode output, ObjectCodec codec) throws JsonProcessingException;
-
-    default ArrayNode createArrayNode(ObjectCodec codec) {
-        return (ArrayNode) codec.createArrayNode();
-    }
-
-    default ObjectNode createObjectNode(ObjectCodec codec) {
-        return (ObjectNode) codec.createObjectNode();
-    }
+public interface SimpleArtefactFieldSerializationProcessor {
+    boolean serializeArtefactField(AbstractArtefact artefact, Field field, FieldMetadata fieldMetadata, JsonGenerator gen) throws IOException, IllegalAccessException;
 }
