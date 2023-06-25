@@ -1,0 +1,272 @@
+version: "1.0.0"
+name: "Build"
+root:
+  TestCase:
+    nodeName: "Build"
+    children:
+      - Check:
+          nodeName: "Check BRANCH is given"
+          expression:
+            expression: "binding.hasVariable(\"BRANCH\") && !BRANCH.isBlank()"
+      - Check:
+          nodeName: "Check PROJECT is given"
+          expression:
+            expression: "binding.hasVariable(\"PROJECT\") && !PROJECT.isBlank()"
+      - Check:
+          nodeName: "Check ENVIRONMENT is given"
+          expression:
+            expression: "binding.hasVariable(\"ENVIRONMENT\") && !ENVIRONMENT.isBlank()"
+      - If:
+          nodeName: "If ENVIRONMENT==\"PRODUCTION\""
+          children:
+            - Check:
+                nodeName: "Check VERSION is given when releasing into PRODUCTION"
+                expression:
+                  expression: "binding.hasVariable(\"VERSION\") && !VERSION.isBlank()"
+            - Check:
+                nodeName: "Check VERSION is properly formated"
+                expression:
+                  expression: "VERSION ==~ /\\d+\\.\\d+\\.\\d+/"
+          condition:
+            expression: "ENVIRONMENT==\"PRODUCTION\""
+      - Set:
+          nodeName: "Init SCALEUP"
+          value: ""
+          key: "SCALEUP"
+      - If:
+          nodeName: "If OS==LINUX"
+          children:
+            - CallPlan:
+                nodeName: "Scale Up Build Agents"
+                input: "{}"
+                selectionAttributes: "{}"
+                planId: "6386268253799329484c57ef"
+          condition:
+            expression: "OS==\"LINUX\""
+      - Sequence:
+          nodeName: "Sequence"
+          children:
+            - Session:
+                nodeName: "Session"
+                children:
+                  - Sequence:
+                      nodeName: "Main Sequence"
+                      children:
+                        - BeforeSequence:
+                            nodeName: "BeforeSequence - Init variables"
+                            children:
+                              - Set:
+                                  nodeName: "Init STATUS - FAILED"
+                                  value: "FAILED"
+                                  key: "STATUS"
+                              - Set:
+                                  nodeName: "Init FOLDER"
+                                  value:
+                                    expression: ""
+                                  key: "FOLDER"
+                              - Set:
+                                  nodeName: "Init FTP_FILES"
+                                  description: ""
+                                  value: ""
+                                  key: "FTP_FILES"
+                              - Set:
+                                  nodeName: "Init TESTS"
+                                  description: ""
+                                  value: ""
+                                  key: "TESTS"
+                              - Set:
+                                  nodeName: "Init DEPLOYED_INSTANCES"
+                                  description: ""
+                                  value: ""
+                                  key: "DEPLOYED_INSTANCES"
+                              - Set:
+                                  nodeName: "Set BRANCH_EXIST if not given"
+                                  value:
+                                    expression: "!binding.hasVariable(\"BRANCH_EXIST\")? true\
+                            \ : Boolean.parseBoolean(\"${BRANCH_EXIST}\")"
+                                  key: "BRANCH_EXIST"
+                              - Set:
+                                  nodeName: "Set OS if not given"
+                                  value:
+                                    expression: "!binding.hasVariable(\"OS\")? \"LINUX\" : OS"
+                                  key: "OS"
+                              - Set:
+                                  nodeName: "Set SHOULD_PROPAGATE if not given"
+                                  value:
+                                    expression: "!binding.hasVariable(\"SHOULD_PROPAGATE\")?\
+                            \ true : Boolean.parseBoolean(\"${SHOULD_PROPAGATE}\")"
+                                  key: "SHOULD_PROPAGATE"
+                              - Set:
+                                  nodeName: "Set EMAIL if not given"
+                                  value:
+                                    expression: "!binding.hasVariable(\"EMAIL\")? DEFAULT_EMAIL\
+                            \ : EMAIL"
+                                  key: "EMAIL"
+                              - Set:
+                                  nodeName: "Set AUTHOR if not given"
+                                  value:
+                                    expression: "!binding.hasVariable(\"AUTHOR\")? \"Dev team\"\
+                            \ : AUTHOR"
+                                  key: "AUTHOR"
+                              - Set:
+                                  nodeName: "Set SEND_EMAIL if not given"
+                                  value:
+                                    expression: "!binding.hasVariable(\"SEND_EMAIL\")?true:Boolean.parseBoolean(\"\
+                            ${SEND_EMAIL}\")"
+                                  key: "SEND_EMAIL"
+                              - Set:
+                                  nodeName: "Set VERSION if not given"
+                                  value:
+                                    expression: "(!binding.hasVariable(\"VERSION\") || VERSION.isBlank())?\
+                            \ \"${new Date().format(\"YYYY.M.d\")}-${context.getExecutionId()}\"\
+                            \ : VERSION"
+                                  key: "VERSION"
+                            continueOnError: false
+                        - Echo:
+                            nodeName: "Echo info"
+                            text:
+                              expression: "\"Building ${PROJECT}, for branch ${BRANCH} version\
+                        \ ${VERSION} in environment ${ENVIRONMENT}\""
+                        - CallPlan:
+                            nodeName: "Create unique folder"
+                            input: "{}"
+                            selectionAttributes: "{}"
+                            planId: "618aa49f34603040f758fd12"
+                        - CallPlan:
+                            nodeName: "Checkout git"
+                            input: "{}"
+                            selectionAttributes: "{}"
+                            planId: "63fc7ffd32ed452ab30e0116"
+                        - Set:
+                            nodeName: "Init JSON"
+                            value: ""
+                            key: "JSON"
+                        - CallPlan:
+                            nodeName: "Read JSON"
+                            input: "{}"
+                            selectionAttributes: "{}"
+                            planId: "618aa49f34603040f758fd0b"
+                        - CallPlan:
+                            nodeName: "Run action"
+                            input: "{}"
+                            selectionAttributes: "{}"
+                            planId: "618aa49f34603040f758fd15"
+                        - CallPlan:
+                            nodeName: "Create release"
+                            input: "{}"
+                            selectionAttributes: "{}"
+                            planId: "64145b48d91d580809da608f"
+                        - RetryIfFails:
+                            nodeName: "RetryIfFails"
+                            children:
+                              - CallPlan:
+                                  nodeName: "Set latest version"
+                                  input: "{}"
+                                  selectionAttributes: "{}"
+                                  planId: "63ff232032ed452ab35619aa"
+                            reportLastTryOnly: true
+                            releaseTokens: false
+                            timeout: 0
+                            gracePeriod: 1000
+                            maxRetries: 3
+                        - Set:
+                            nodeName: "Set STATUS at PASSED"
+                            value: "PASSED"
+                            key: "STATUS"
+                        - AfterSequence:
+                            nodeName: "AfterSequence - Set result"
+                            children:
+                              - CallPlan:
+                                  nodeName: "Set build result"
+                                  input: "{}"
+                                  selectionAttributes: "{}"
+                                  planId: "64145bc4d91d580809daa2f1"
+                              - If:
+                                  nodeName: "If ENVIRONMENT==\"PRODUCTION\" && STATUS==\"PASSED\""
+                                  children:
+                                    - Set:
+                                        nodeName: "Set EXEC_ID"
+                                        value:
+                                          expression: "context.getExecutionId()"
+                                        key: "EXEC_ID"
+                                    - CallKeyword:
+                                        nodeName: "Set as \"Retain this execution\""
+                                        description: ""
+                                        remote: true
+                                        inputs:
+                                          - URL:
+                                              expression: "\"${K8S_BUILD_INSTANCE_URL}/rest/housekeeping/execution/${EXEC_ID}/protection\""
+                                          - Method: "POST"
+                                          - Header_content-type: "application/json"
+                                          - Data: "true"
+                                        keyword: "{\"name\":{\"value\":\"HttpRequest\",\"dynamic\"\
+                              :false}}"
+                                  condition:
+                                    expression: "ENVIRONMENT==\"PRODUCTION\" && STATUS==\"PASSED\""
+                            continueOnError: false
+                        - AfterSequence:
+                            nodeName: "AfterSequence - Send email"
+                            children:
+                              - If:
+                                  nodeName: "If SEND_EMAIL"
+                                  children:
+                                    - RetryIfFails:
+                                        nodeName: "RetryIfFails"
+                                        children:
+                                          - CallPlan:
+                                              nodeName: "Send Email"
+                                              input: "{}"
+                                              selectionAttributes: "{}"
+                                              planId: "6229efeaf270a8319dfbee2e"
+                                        reportLastTryOnly: false
+                                        releaseTokens: false
+                                        timeout: 0
+                                        gracePeriod: 1000
+                                        maxRetries: 3
+                                  condition:
+                                    expression: "SEND_EMAIL"
+                            continueOnError: true
+                        - AfterSequence:
+                            nodeName: "AfterSequence - Clean folder"
+                            children:
+                              - CallKeyword:
+                                  nodeName: "Rmdir ${FOLDER}"
+                                  remote: true
+                                  inputs:
+                                    - Folder:
+                                        expression: "FOLDER"
+                                  keyword: "{\"name\":{\"value\":\"Rmdir\",\"dynamic\":false}}"
+                            continueOnError: false
+                        - AfterSequence:
+                            nodeName: "AfterSequence - Propagate build"
+                            children:
+                              - If:
+                                  nodeName: "If SHOULD_PROPAGATE && PASSED"
+                                  children:
+                                    - CallPlan:
+                                        nodeName: "Propagate build - scale down the agent if needed"
+                                        input: "{}"
+                                        selectionAttributes: "{}"
+                                        planId: "63ff47ed32ed452ab35c23d0"
+                                  description: ""
+                                  condition:
+                                    expression: "STATUS.equals(\"PASSED\") &&  SHOULD_PROPAGATE"
+                            continueOnError: false
+                        - AfterSequence:
+                            nodeName: "AfterSequence - Scale down agent if needed"
+                            children:
+                              - If:
+                                  nodeName: "If STATUS is not \"PASSED\" or SHOULD_PROPAGATE\
+                          \ is false"
+                                  children:
+                                    - CallPlan:
+                                        nodeName: "Scale Down Build Agents - After Execution"
+                                        input: "{}"
+                                        selectionAttributes: "{}"
+                                        planId: "6482daa9cdd45e7199acdcac"
+                                  condition:
+                                    expression: "!STATUS.equals(\"PASSED\") || !SHOULD_PROPAGATE"
+                            continueOnError: false
+                      continueOnError: false
+                remote: true
+          continueOnError: true
