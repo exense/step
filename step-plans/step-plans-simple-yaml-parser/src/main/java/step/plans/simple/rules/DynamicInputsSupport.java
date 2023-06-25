@@ -33,6 +33,8 @@ import java.util.Iterator;
 
 public class DynamicInputsSupport {
 
+    private static final String EMPTY_JSON = "{}";
+
     protected final ObjectMapper jsonObjectMapper = new ObjectMapper();
 
     /**
@@ -62,12 +64,12 @@ public class DynamicInputsSupport {
         return jsonObjectMapper.writeValueAsString(inputDynamicValues);
     }
 
-    protected void serializeDynamicInputs(JsonGenerator gen, DynamicValue<String> argumentValue) throws IOException {
+    protected void serializeDynamicInputs(JsonGenerator gen, DynamicValue<String> dynamicInputsValue) throws IOException {
         gen.writeStartArray();
-        if (argumentValue.isDynamic()) {
+        if (dynamicInputsValue.isDynamic()) {
             throw new UnsupportedOperationException("Dynamic arguments are not supported");
         } else {
-            String argumentValueString = argumentValue.getValue();
+            String argumentValueString = dynamicInputsValue.getValue();
             if (argumentValueString != null && !argumentValueString.isEmpty()) {
                 JsonNode argumentsJson = jsonObjectMapper.readTree(argumentValueString);
                 Iterator<String> inputs = argumentsJson.fieldNames();
@@ -91,4 +93,8 @@ public class DynamicInputsSupport {
         gen.writeEndArray();
     }
 
+    protected boolean isEmptyDynamicInputs(DynamicValue<String> dynamicInputsValue) {
+        return (dynamicInputsValue.getValue() != null && !dynamicInputsValue.getValue().isEmpty() && !dynamicInputsValue.getValue().equals(EMPTY_JSON))
+                || (dynamicInputsValue.getExpression() != null && !dynamicInputsValue.getExpression().isEmpty());
+    }
 }

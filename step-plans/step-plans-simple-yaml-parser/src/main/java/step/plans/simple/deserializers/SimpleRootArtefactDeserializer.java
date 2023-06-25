@@ -30,8 +30,9 @@ import step.core.artefacts.AbstractArtefact;
 import step.core.plans.Plan;
 import step.plans.simple.YamlPlanFields;
 import step.plans.simple.model.SimpleRootArtefact;
+import step.plans.simple.rules.FunctionGroupSelectionRule;
 import step.plans.simple.rules.KeywordInputsRule;
-import step.plans.simple.rules.KeywordNameRule;
+import step.plans.simple.rules.KeywordSelectionRule;
 import step.plans.simple.rules.NodeNameRule;
 import step.plans.simple.schema.JsonSchemaFieldProcessingException;
 
@@ -46,13 +47,18 @@ public class SimpleRootArtefactDeserializer extends JsonDeserializer<SimpleRootA
     private final List<SimpleArtefactFieldDeserializationProcessor> customFieldProcessors;
 
     public SimpleRootArtefactDeserializer() {
-        customFieldProcessors = new ArrayList<>();
+        this.customFieldProcessors = prepareFieldProcessors();
+    }
+
+    protected List<SimpleArtefactFieldDeserializationProcessor> prepareFieldProcessors() {
+        List<SimpleArtefactFieldDeserializationProcessor> temp;
+        temp = new ArrayList<>();
 
         // the 'name' field should be wrapped into the 'attributes'
-        customFieldProcessors.add(new NodeNameRule().getArtefactFieldDeserializationProcessor());
+        temp.add(new NodeNameRule().getArtefactFieldDeserializationProcessor());
 
         // process children recursively
-        customFieldProcessors.add((artefactClass, field, output, codec) -> {
+        temp.add((artefactClass, field, output, codec) -> {
             if (field.getKey().equals("children")) {
                 JsonNode simpleChildren = field.getValue();
                 if (simpleChildren != null && simpleChildren.isArray()) {
@@ -70,15 +76,15 @@ public class SimpleRootArtefactDeserializer extends JsonDeserializer<SimpleRootA
 
         // 'argument' field for 'CallKeyword' artifact should contain all input values (dynamic values) as json string
         // but in simplified format we represent input values as array of key / values
-        customFieldProcessors.add(new KeywordInputsRule().getArtefactFieldDeserializationProcessor());
+        temp.add(new KeywordInputsRule().getArtefactFieldDeserializationProcessor());
 
         // for 'CallFunction' we can use either the `keyword` (keyword name) field or the `keyword.selectionCriteria` to define the keyword name
         // and 'token' aka 'selectionCriteria' field should contain all input values (dynamic values) as json string
         //  but in simplified format we represent input values as array of key / values
-        customFieldProcessors.add(new KeywordNameRule().getArtefactFieldDeserializationProcessor());
-
+        temp.add(new KeywordSelectionRule().getArtefactFieldDeserializationProcessor());
+        temp.add(new FunctionGroupSelectionRule().getArtefactFieldDeserializationProcessor());
+        return temp;
     }
-
 
     @Override
     public SimpleRootArtefact deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException {

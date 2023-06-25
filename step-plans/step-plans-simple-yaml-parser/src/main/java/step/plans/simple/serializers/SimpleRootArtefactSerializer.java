@@ -23,7 +23,6 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import step.core.artefacts.AbstractArtefact;
 import step.core.dynamicbeans.DynamicValue;
-import step.handlers.javahandler.jsonschema.FieldMetadata;
 import step.plans.simple.YamlPlanSerializer;
 import step.plans.simple.model.SimpleRootArtefact;
 import step.plans.simple.rules.*;
@@ -40,12 +39,20 @@ public class SimpleRootArtefactSerializer extends JsonSerializer<SimpleRootArtef
     private final ArtefactFieldMetadataExtractor metadataExtractor;
 
     public SimpleRootArtefactSerializer() {
-        this.metadataExtractor = new ArtefactFieldMetadataExtractor();
-        this.customFieldProcessors = new ArrayList<>();
-        this.customFieldProcessors.add(new TechnicalFieldRule().getArtefactFieldSerializationProcessor());
-        this.customFieldProcessors.add(new CommonFilteredFieldRule().getArtefactFieldSerializationProcessor());
-        this.customFieldProcessors.add(new NodeNameRule().getArtefactFieldSerializationProcessor());
-        this.customFieldProcessors.add((artefact, field, fieldMetadata, gen) -> {
+        this.metadataExtractor = prepareMetadataExtractor();
+        this.customFieldProcessors = prepareFieldProcessors();
+    }
+
+    protected ArtefactFieldMetadataExtractor prepareMetadataExtractor() {
+        return new ArtefactFieldMetadataExtractor();
+    }
+
+    protected List<SimpleArtefactFieldSerializationProcessor> prepareFieldProcessors() {
+        List<SimpleArtefactFieldSerializationProcessor> temp =  new ArrayList<>();
+        temp.add(new TechnicalFieldRule().getArtefactFieldSerializationProcessor());
+        temp.add(new CommonFilteredFieldRule().getArtefactFieldSerializationProcessor());
+        temp.add(new NodeNameRule().getArtefactFieldSerializationProcessor());
+        temp.add((artefact, field, fieldMetadata, gen) -> {
             // skip dynamic fields with empty non-dynamic values
             if (DynamicValue.class.isAssignableFrom(field.getType())) {
                 DynamicValue value = (DynamicValue) field.get(artefact);
@@ -53,9 +60,10 @@ public class SimpleRootArtefactSerializer extends JsonSerializer<SimpleRootArtef
             }
             return false;
         });
-        this.customFieldProcessors.add(new KeywordNameRule().getArtefactFieldSerializationProcessor());
-        this.customFieldProcessors.add(new KeywordInputsRule().getArtefactFieldSerializationProcessor());
-        this.customFieldProcessors.add((artefact, field, fieldMetadata, gen) -> {
+        temp.add(new KeywordSelectionRule().getArtefactFieldSerializationProcessor());
+        temp.add(new KeywordInputsRule().getArtefactFieldSerializationProcessor());
+        temp.add(new FunctionGroupSelectionRule().getArtefactFieldSerializationProcessor());
+        temp.add((artefact, field, fieldMetadata, gen) -> {
             if (field.getName().equals("children")) {
                 List<AbstractArtefact> children = (List<AbstractArtefact>) field.get(artefact);
                 if(children != null && !children.isEmpty()) {
@@ -70,6 +78,7 @@ public class SimpleRootArtefactSerializer extends JsonSerializer<SimpleRootArtef
             }
             return false;
         });
+        return temp;
     }
 
     @Override
