@@ -76,6 +76,12 @@
               "type" : "string",
               "default" : "AfterSequence"
             },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
             "children" : {
               "type" : "array",
               "items" : {
@@ -105,6 +111,12 @@
             "nodeName" : {
               "type" : "string",
               "default" : "Set"
+            },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
             "children" : {
               "type" : "array",
@@ -136,6 +148,12 @@
               "type" : "string",
               "default" : "Check"
             },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
             "children" : {
               "type" : "array",
               "items" : {
@@ -162,6 +180,12 @@
             "nodeName" : {
               "type" : "string",
               "default" : "CheckArtefact"
+            },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
             "children" : {
               "type" : "array",
@@ -191,6 +215,12 @@
               "type" : "string",
               "default" : "Script"
             },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
             "children" : {
               "type" : "array",
               "items" : {
@@ -217,6 +247,12 @@
             "nodeName" : {
               "type" : "string",
               "default" : "Sequence"
+            },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
             "children" : {
               "type" : "array",
@@ -247,6 +283,12 @@
             "nodeName" : {
               "type" : "string",
               "default" : "CallKeyword"
+            },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
             "children" : {
               "type" : "array",
@@ -284,6 +326,12 @@
               "type" : "string",
               "default" : "Switch"
             },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
             "children" : {
               "type" : "array",
               "items" : {
@@ -310,6 +358,12 @@
             "nodeName" : {
               "type" : "string",
               "default" : "BeforeThread"
+            },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
             "children" : {
               "type" : "array",
@@ -340,6 +394,12 @@
             "nodeName" : {
               "type" : "string",
               "default" : "Export"
+            },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
             "children" : {
               "type" : "array",
@@ -377,6 +437,12 @@
               "type" : "string",
               "default" : "StreamingArtefact"
             },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
             "children" : {
               "type" : "array",
               "items" : {
@@ -400,6 +466,12 @@
             "nodeName" : {
               "type" : "string",
               "default" : "For"
+            },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
             "children" : {
               "type" : "array",
@@ -451,6 +523,12 @@
               "type" : "string",
               "default" : "Case"
             },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
             "children" : {
               "type" : "array",
               "items" : {
@@ -478,6 +556,12 @@
               "type" : "string",
               "default" : "Return"
             },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
             "children" : {
               "type" : "array",
               "items" : {
@@ -504,6 +588,12 @@
             "nodeName" : {
               "type" : "string",
               "default" : "Failure"
+            },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
             "children" : {
               "type" : "array",
@@ -534,6 +624,12 @@
             "nodeName" : {
               "type" : "string",
               "default" : "ForEach"
+            },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
             "children" : {
               "type" : "array",
@@ -585,6 +681,12 @@
               "type" : "string",
               "default" : "RetryIfFails"
             },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
             "children" : {
               "type" : "array",
               "items" : {
@@ -623,6 +725,12 @@
             "nodeName" : {
               "type" : "string",
               "default" : "While"
+            },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
             "children" : {
               "type" : "array",
@@ -663,6 +771,12 @@
               "type" : "string",
               "default" : "Echo"
             },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
             "children" : {
               "type" : "array",
               "items" : {
@@ -689,6 +803,12 @@
             "nodeName" : {
               "type" : "string",
               "default" : "CallPlan"
+            },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
             "children" : {
               "type" : "array",
@@ -723,6 +843,12 @@
               "type" : "string",
               "default" : "TestScenario"
             },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
             "children" : {
               "type" : "array",
               "items" : {
@@ -746,6 +872,12 @@
             "nodeName" : {
               "type" : "string",
               "default" : "Synchronized"
+            },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
             "children" : {
               "type" : "array",
@@ -783,6 +915,12 @@
               "type" : "string",
               "default" : "BeforeSequence"
             },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
             "children" : {
               "type" : "array",
               "items" : {
@@ -813,6 +951,12 @@
               "type" : "string",
               "default" : "TestSet"
             },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
             "children" : {
               "type" : "array",
               "items" : {
@@ -839,6 +983,12 @@
             "nodeName" : {
               "type" : "string",
               "default" : "Session"
+            },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
             "children" : {
               "type" : "array",
@@ -869,6 +1019,12 @@
             "nodeName" : {
               "type" : "string",
               "default" : "DataSet"
+            },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
             "children" : {
               "type" : "array",
@@ -923,6 +1079,12 @@
               "type" : "string",
               "default" : "Sleep"
             },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
             "children" : {
               "type" : "array",
               "items" : {
@@ -956,6 +1118,12 @@
               "type" : "string",
               "default" : "TestCase"
             },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
             "children" : {
               "type" : "array",
               "items" : {
@@ -979,6 +1147,12 @@
             "nodeName" : {
               "type" : "string",
               "default" : "Assert"
+            },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
             "children" : {
               "type" : "array",
@@ -1019,6 +1193,12 @@
               "type" : "string",
               "default" : "AfterThread"
             },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
             "children" : {
               "type" : "array",
               "items" : {
@@ -1049,6 +1229,12 @@
               "type" : "string",
               "default" : "Placeholder"
             },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
             "children" : {
               "type" : "array",
               "items" : {
@@ -1072,6 +1258,12 @@
             "nodeName" : {
               "type" : "string",
               "default" : "If"
+            },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
             "children" : {
               "type" : "array",
@@ -1099,6 +1291,12 @@
             "nodeName" : {
               "type" : "string",
               "default" : "ThreadGroup"
+            },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
             "children" : {
               "type" : "array",

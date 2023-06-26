@@ -48,8 +48,7 @@ public class TechnicalFieldRule implements ArtefactFieldConversionRule {
             Set<String> technicalFields = Set.of(
                     "dynamicName", "useDynamicName",
                     "customAttributes", "persistNode",
-                    "instrumentNode", "attachments",
-                    "skipNode", "continueParentNodeExecutionOnError"
+                    "attachments", "continueParentNodeExecutionOnError"
             );
             return technicalFields.contains(fieldMetadata.getFieldName());
         }

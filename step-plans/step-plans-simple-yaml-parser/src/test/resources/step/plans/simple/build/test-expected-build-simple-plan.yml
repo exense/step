@@ -1,43 +1,64 @@
+---
 version: "1.0.0"
 name: "Build"
 root:
   TestCase:
     nodeName: "Build"
+    instrumentNode: false
+    skipNode: false
     children:
       - Check:
           nodeName: "Check BRANCH is given"
+          instrumentNode: false
+          skipNode: false
           expression:
             expression: "binding.hasVariable(\"BRANCH\") && !BRANCH.isBlank()"
       - Check:
           nodeName: "Check PROJECT is given"
+          instrumentNode: false
+          skipNode: false
           expression:
             expression: "binding.hasVariable(\"PROJECT\") && !PROJECT.isBlank()"
       - Check:
           nodeName: "Check ENVIRONMENT is given"
+          instrumentNode: false
+          skipNode: false
           expression:
             expression: "binding.hasVariable(\"ENVIRONMENT\") && !ENVIRONMENT.isBlank()"
       - If:
           nodeName: "If ENVIRONMENT==\"PRODUCTION\""
+          instrumentNode: false
+          skipNode: false
           children:
             - Check:
                 nodeName: "Check VERSION is given when releasing into PRODUCTION"
+                instrumentNode: false
+                skipNode: false
                 expression:
                   expression: "binding.hasVariable(\"VERSION\") && !VERSION.isBlank()"
             - Check:
                 nodeName: "Check VERSION is properly formated"
+                instrumentNode: false
+                skipNode: false
                 expression:
                   expression: "VERSION ==~ /\\d+\\.\\d+\\.\\d+/"
           condition:
             expression: "ENVIRONMENT==\"PRODUCTION\""
       - Set:
           nodeName: "Init SCALEUP"
+          instrumentNode: false
+          skipNode: false
           value: ""
           key: "SCALEUP"
       - If:
           nodeName: "If OS==LINUX"
+          instrumentNode: false
+          skipNode: false
           children:
             - CallPlan:
                 nodeName: "Scale Up Build Agents"
+                instrumentNode: false
+                skipNode: false
                 input: "{}"
                 selectionAttributes: "{}"
                 planId: "6386268253799329484c57ef"
@@ -45,77 +66,109 @@ root:
             expression: "OS==\"LINUX\""
       - Sequence:
           nodeName: "Sequence"
+          instrumentNode: false
+          skipNode: false
           children:
             - Session:
                 nodeName: "Session"
+                instrumentNode: false
+                skipNode: false
                 children:
                   - Sequence:
                       nodeName: "Main Sequence"
+                      instrumentNode: false
+                      skipNode: false
                       children:
                         - BeforeSequence:
                             nodeName: "BeforeSequence - Init variables"
+                            instrumentNode: false
+                            skipNode: false
                             children:
                               - Set:
                                   nodeName: "Init STATUS - FAILED"
+                                  instrumentNode: false
+                                  skipNode: false
                                   value: "FAILED"
                                   key: "STATUS"
                               - Set:
                                   nodeName: "Init FOLDER"
+                                  instrumentNode: false
+                                  skipNode: false
                                   value:
                                     expression: ""
                                   key: "FOLDER"
                               - Set:
                                   nodeName: "Init FTP_FILES"
+                                  instrumentNode: false
+                                  skipNode: false
                                   description: ""
                                   value: ""
                                   key: "FTP_FILES"
                               - Set:
                                   nodeName: "Init TESTS"
+                                  instrumentNode: false
+                                  skipNode: false
                                   description: ""
                                   value: ""
                                   key: "TESTS"
                               - Set:
                                   nodeName: "Init DEPLOYED_INSTANCES"
+                                  instrumentNode: false
+                                  skipNode: false
                                   description: ""
                                   value: ""
                                   key: "DEPLOYED_INSTANCES"
                               - Set:
                                   nodeName: "Set BRANCH_EXIST if not given"
+                                  instrumentNode: false
+                                  skipNode: false
                                   value:
                                     expression: "!binding.hasVariable(\"BRANCH_EXIST\")? true\
                             \ : Boolean.parseBoolean(\"${BRANCH_EXIST}\")"
                                   key: "BRANCH_EXIST"
                               - Set:
                                   nodeName: "Set OS if not given"
+                                  instrumentNode: false
+                                  skipNode: false
                                   value:
                                     expression: "!binding.hasVariable(\"OS\")? \"LINUX\" : OS"
                                   key: "OS"
                               - Set:
                                   nodeName: "Set SHOULD_PROPAGATE if not given"
+                                  instrumentNode: false
+                                  skipNode: false
                                   value:
                                     expression: "!binding.hasVariable(\"SHOULD_PROPAGATE\")?\
                             \ true : Boolean.parseBoolean(\"${SHOULD_PROPAGATE}\")"
                                   key: "SHOULD_PROPAGATE"
                               - Set:
                                   nodeName: "Set EMAIL if not given"
+                                  instrumentNode: false
+                                  skipNode: false
                                   value:
                                     expression: "!binding.hasVariable(\"EMAIL\")? DEFAULT_EMAIL\
                             \ : EMAIL"
                                   key: "EMAIL"
                               - Set:
                                   nodeName: "Set AUTHOR if not given"
+                                  instrumentNode: false
+                                  skipNode: false
                                   value:
                                     expression: "!binding.hasVariable(\"AUTHOR\")? \"Dev team\"\
                             \ : AUTHOR"
                                   key: "AUTHOR"
                               - Set:
                                   nodeName: "Set SEND_EMAIL if not given"
+                                  instrumentNode: false
+                                  skipNode: false
                                   value:
                                     expression: "!binding.hasVariable(\"SEND_EMAIL\")?true:Boolean.parseBoolean(\"\
                             ${SEND_EMAIL}\")"
                                   key: "SEND_EMAIL"
                               - Set:
                                   nodeName: "Set VERSION if not given"
+                                  instrumentNode: false
+                                  skipNode: false
                                   value:
                                     expression: "(!binding.hasVariable(\"VERSION\") || VERSION.isBlank())?\
                             \ \"${new Date().format(\"YYYY.M.d\")}-${context.getExecutionId()}\"\
@@ -124,43 +177,61 @@ root:
                             continueOnError: false
                         - Echo:
                             nodeName: "Echo info"
+                            instrumentNode: false
+                            skipNode: false
                             text:
                               expression: "\"Building ${PROJECT}, for branch ${BRANCH} version\
                         \ ${VERSION} in environment ${ENVIRONMENT}\""
                         - CallPlan:
                             nodeName: "Create unique folder"
+                            instrumentNode: false
+                            skipNode: false
                             input: "{}"
                             selectionAttributes: "{}"
                             planId: "618aa49f34603040f758fd12"
                         - CallPlan:
                             nodeName: "Checkout git"
+                            instrumentNode: false
+                            skipNode: false
                             input: "{}"
                             selectionAttributes: "{}"
                             planId: "63fc7ffd32ed452ab30e0116"
                         - Set:
                             nodeName: "Init JSON"
+                            instrumentNode: false
+                            skipNode: false
                             value: ""
                             key: "JSON"
                         - CallPlan:
                             nodeName: "Read JSON"
+                            instrumentNode: false
+                            skipNode: false
                             input: "{}"
                             selectionAttributes: "{}"
                             planId: "618aa49f34603040f758fd0b"
                         - CallPlan:
                             nodeName: "Run action"
+                            instrumentNode: false
+                            skipNode: false
                             input: "{}"
                             selectionAttributes: "{}"
                             planId: "618aa49f34603040f758fd15"
                         - CallPlan:
                             nodeName: "Create release"
+                            instrumentNode: false
+                            skipNode: false
                             input: "{}"
                             selectionAttributes: "{}"
                             planId: "64145b48d91d580809da608f"
                         - RetryIfFails:
                             nodeName: "RetryIfFails"
+                            instrumentNode: false
+                            skipNode: false
                             children:
                               - CallPlan:
                                   nodeName: "Set latest version"
+                                  instrumentNode: false
+                                  skipNode: false
                                   input: "{}"
                                   selectionAttributes: "{}"
                                   planId: "63ff232032ed452ab35619aa"
@@ -171,26 +242,38 @@ root:
                             maxRetries: 3
                         - Set:
                             nodeName: "Set STATUS at PASSED"
+                            instrumentNode: false
+                            skipNode: false
                             value: "PASSED"
                             key: "STATUS"
                         - AfterSequence:
                             nodeName: "AfterSequence - Set result"
+                            instrumentNode: false
+                            skipNode: false
                             children:
                               - CallPlan:
                                   nodeName: "Set build result"
+                                  instrumentNode: false
+                                  skipNode: false
                                   input: "{}"
                                   selectionAttributes: "{}"
                                   planId: "64145bc4d91d580809daa2f1"
                               - If:
                                   nodeName: "If ENVIRONMENT==\"PRODUCTION\" && STATUS==\"PASSED\""
+                                  instrumentNode: false
+                                  skipNode: false
                                   children:
                                     - Set:
                                         nodeName: "Set EXEC_ID"
+                                        instrumentNode: false
+                                        skipNode: false
                                         value:
                                           expression: "context.getExecutionId()"
                                         key: "EXEC_ID"
                                     - CallKeyword:
                                         nodeName: "Set as \"Retain this execution\""
+                                        instrumentNode: false
+                                        skipNode: false
                                         description: ""
                                         remote: true
                                         inputs:
@@ -206,15 +289,23 @@ root:
                             continueOnError: false
                         - AfterSequence:
                             nodeName: "AfterSequence - Send email"
+                            instrumentNode: false
+                            skipNode: false
                             children:
                               - If:
                                   nodeName: "If SEND_EMAIL"
+                                  instrumentNode: false
+                                  skipNode: false
                                   children:
                                     - RetryIfFails:
                                         nodeName: "RetryIfFails"
+                                        instrumentNode: false
+                                        skipNode: false
                                         children:
                                           - CallPlan:
                                               nodeName: "Send Email"
+                                              instrumentNode: false
+                                              skipNode: false
                                               input: "{}"
                                               selectionAttributes: "{}"
                                               planId: "6229efeaf270a8319dfbee2e"
@@ -228,9 +319,13 @@ root:
                             continueOnError: true
                         - AfterSequence:
                             nodeName: "AfterSequence - Clean folder"
+                            instrumentNode: false
+                            skipNode: false
                             children:
                               - CallKeyword:
                                   nodeName: "Rmdir ${FOLDER}"
+                                  instrumentNode: false
+                                  skipNode: false
                                   remote: true
                                   inputs:
                                     - Folder:
@@ -239,12 +334,18 @@ root:
                             continueOnError: false
                         - AfterSequence:
                             nodeName: "AfterSequence - Propagate build"
+                            instrumentNode: false
+                            skipNode: false
                             children:
                               - If:
                                   nodeName: "If SHOULD_PROPAGATE && PASSED"
+                                  instrumentNode: false
+                                  skipNode: false
                                   children:
                                     - CallPlan:
                                         nodeName: "Propagate build - scale down the agent if needed"
+                                        instrumentNode: false
+                                        skipNode: false
                                         input: "{}"
                                         selectionAttributes: "{}"
                                         planId: "63ff47ed32ed452ab35c23d0"
@@ -254,13 +355,19 @@ root:
                             continueOnError: false
                         - AfterSequence:
                             nodeName: "AfterSequence - Scale down agent if needed"
+                            instrumentNode: false
+                            skipNode: false
                             children:
                               - If:
                                   nodeName: "If STATUS is not \"PASSED\" or SHOULD_PROPAGATE\
                           \ is false"
+                                  instrumentNode: false
+                                  skipNode: false
                                   children:
                                     - CallPlan:
                                         nodeName: "Scale Down Build Agents - After Execution"
+                                        instrumentNode: false
+                                        skipNode: false
                                         input: "{}"
                                         selectionAttributes: "{}"
                                         planId: "6482daa9cdd45e7199acdcac"
