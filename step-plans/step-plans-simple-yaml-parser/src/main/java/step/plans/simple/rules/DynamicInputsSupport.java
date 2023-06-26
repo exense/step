@@ -83,9 +83,12 @@ public class DynamicInputsSupport {
                         gen.writeStartObject();
                         gen.writeStringField(YamlPlanFields.DYN_VALUE_EXPRESSION_FIELD, dynamicInput.get(YamlPlanFields.DYN_VALUE_EXPRESSION_FIELD).asText());
                         gen.writeEndObject();
-                    } else {
-                        // simple input
+                    } else if (dynamicInput.isContainerNode()) {
+                        // simple input wrapped in dynamic value
                         gen.writeObjectField(inputName, dynamicInput.get("value"));
+                    } else {
+                        // primitive simple input
+                        gen.writeObjectField(inputName, dynamicInput);
                     }
                     gen.writeEndObject();
                 }

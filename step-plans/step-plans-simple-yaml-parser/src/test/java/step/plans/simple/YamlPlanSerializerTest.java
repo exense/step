@@ -55,24 +55,24 @@ public class YamlPlanSerializerTest {
 	@Test
 	public void readSimplePlanFromYaml() {
 		checkSimplePlanSerializationOk(
-				"src/test/resources/step/plans/simple/test-simple.plan.yml",
-				"src/test/resources/step/plans/simple/test-expected-full-plan.yml"
+				"src/test/resources/step/plans/simple/basic/test-simple.plan.yml",
+				"src/test/resources/step/plans/simple/basic/test-expected-full-plan.yml"
 		);
 	}
 
 	@Test
 	public void keywordSelectionCriteria() {
 		checkSimplePlanSerializationOk(
-				"src/test/resources/step/plans/simple/test-keyword-selection-criteria-simple.plan.yml",
-				"src/test/resources/step/plans/simple/test-expected-selection-criteria-full-plan.yml"
+				"src/test/resources/step/plans/simple/selection-criteria/test-selection-criteria-simple.plan.yml",
+				"src/test/resources/step/plans/simple/selection-criteria/test-expected-selection-criteria-full-plan.yml"
 		);
 	}
 
 	@Test
 	public void readInvalidSimplePlanFromYaml(){
 		// read simplified file
-		File yamlFile = new File("src/test/resources/step/plans/simple/test-invalid-simple.plan.yml");
-		try (FileInputStream is = new FileInputStream(yamlFile); ByteArrayOutputStream os = new ByteArrayOutputStream()) {
+		File yamlFile = new File("src/test/resources/step/plans/simple/invalid/test-invalid-simple.plan.yml");
+		try (FileInputStream is = new FileInputStream(yamlFile)) {
 			// convert simplified plan to full plan
 			serializer.readSimplePlanFromYaml(is);
 
@@ -87,25 +87,25 @@ public class YamlPlanSerializerTest {
 	@Test
 	public void simplePlanMigration(){
 		checkSimplePlanSerializationOk(
-				"src/test/resources/step/plans/simple/test-migration-simple.plan.yml",
-				"src/test/resources/step/plans/simple/test-migration-expected-full-plan.yml"
+				"src/test/resources/step/plans/simple/migration/test-migration-simple.plan.yml",
+				"src/test/resources/step/plans/simple/migration/test-migration-expected-full-plan.yml"
 		);
 	}
 
 	@Test
 	public void checkConversionFromFullPlanToSimple() {
 		checkFullPlanConversionOk(
-				"src/test/resources/step/plans/simple/test-expected-full-plan.yml",
-				"src/test/resources/step/plans/simple/test-simple.plan.yml"
+				"src/test/resources/step/plans/simple/basic/test-expected-full-plan.yml",
+				"src/test/resources/step/plans/simple/basic/test-simple.plan.yml"
 		);
 	}
 
 	@Test
 	public void checkConversionForBuildPlan(){
 		// read full plan
-		File fullYamlFile = new File("src/test/resources/step/plans/simple/test-build-full-plan.yml");
-		File simpleYamlFile = new File("src/test/resources/step/plans/simple/test-expected-build-simple-plan.yml");
-		File fullYamlFileAfterConversion = new File("src/test/resources/step/plans/simple/test-expected-build-full-converted-plan.yml");
+		File fullYamlFile = new File("src/test/resources/step/plans/simple/build/test-build-full-plan.yml");
+		File simpleYamlFile = new File("src/test/resources/step/plans/simple/build/test-expected-build-simple-plan.yml");
+		File fullYamlFileAfterConversion = new File("src/test/resources/step/plans/simple/build/test-expected-build-full-converted-plan.yml");
 		try (FileInputStream is = new FileInputStream(fullYamlFile); ByteArrayOutputStream os = new ByteArrayOutputStream()) {
 			Plan fullPlan = serializer.getFullYamlMapper().readValue(is, Plan.class);
 
