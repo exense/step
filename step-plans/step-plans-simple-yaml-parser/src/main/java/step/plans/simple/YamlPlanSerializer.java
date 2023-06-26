@@ -189,22 +189,25 @@ public class YamlPlanSerializer {
 				// convert yaml plan to document to perform migrations
 				CollectionFactory tempCollectionFactory = new InMemoryCollectionFactory(new Properties());
 				Version planVersion = new Version(planVersionString);
-				Collection<Document> tempCollection = tempCollectionFactory.getCollection(SIMPLE_PLANS_COLLECTION_NAME, Document.class);
-				Document planDocument = tempCollection.save(simplePlanDocument);
 
-				// run migrations (AbstractSimplePlanMigrationTask)
-				migrationManager.migrate(tempCollectionFactory, planVersion, currentVersion);
+				if (planVersion.compareTo(currentVersion) != 0) {
+					Collection<Document> tempCollection = tempCollectionFactory.getCollection(SIMPLE_PLANS_COLLECTION_NAME, Document.class);
+					Document planDocument = tempCollection.save(simplePlanDocument);
 
-				Document migratedDocument = tempCollection.find(Filters.id(planDocument.getId()), null, null, null, 0).findFirst().orElseThrow();
+					// run migrations (AbstractSimplePlanMigrationTask)
+					migrationManager.migrate(tempCollectionFactory, planVersion, currentVersion);
 
-				// remove automatically generated document id
-				migratedDocument.remove(AbstractIdentifiableObject.ID);
+					Document migratedDocument = tempCollection.find(Filters.id(planDocument.getId()), null, null, null, 0).findFirst().orElseThrow();
 
-				// convert document back to the yaml string
-				bufferedYamlPlan = simpleYamlMapper.writeValueAsString(migratedDocument);
+					// remove automatically generated document id
+					migratedDocument.remove(AbstractIdentifiableObject.ID);
 
-				if(log.isDebugEnabled()){
-					log.debug("Simple plan after migrations: {}", bufferedYamlPlan);
+					// convert document back to the yaml string
+					bufferedYamlPlan = simpleYamlMapper.writeValueAsString(migratedDocument);
+
+					if (log.isDebugEnabled()) {
+						log.debug("Simple plan after migrations: {}", bufferedYamlPlan);
+					}
 				}
 			}
 		}

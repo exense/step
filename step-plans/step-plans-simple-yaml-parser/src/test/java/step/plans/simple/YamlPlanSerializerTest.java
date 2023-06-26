@@ -103,23 +103,45 @@ public class YamlPlanSerializerTest {
 	@Test
 	public void checkConversionForBuildPlan(){
 		// read full plan
-		File yamlFile = new File("src/test/resources/step/plans/simple/test-build-full-plan.yml");
-		try (FileInputStream is = new FileInputStream(yamlFile); ByteArrayOutputStream os = new ByteArrayOutputStream()) {
+		File fullYamlFile = new File("src/test/resources/step/plans/simple/test-build-full-plan.yml");
+		File simpleYamlFile = new File("src/test/resources/step/plans/simple/test-expected-build-simple-plan.yml");
+		File fullYamlFileAfterConversion = new File("src/test/resources/step/plans/simple/test-expected-build-full-converted-plan.yml");
+		try (FileInputStream is = new FileInputStream(fullYamlFile); ByteArrayOutputStream os = new ByteArrayOutputStream()) {
 			Plan fullPlan = serializer.getFullYamlMapper().readValue(is, Plan.class);
 
 			// convert full plan to the simple format
 			serializer.writeSimpleYaml(os, serializer.convertFullPlanToSimplePlan(fullPlan));
-			log.info("Converted simple yaml -->");
-			log.info(os.toString(StandardCharsets.UTF_8));
+//			log.info("Converted simple yaml -->");
+//			log.info(os.toString(StandardCharsets.UTF_8));
 
 			// write yml to another file (to check it manually)
 //			try (FileOutputStream fileOs = new FileOutputStream("src/test/resources/step/plans/simple/test-simple-generated-plan.yml")) {
 //				fileOs.write(os.toByteArray());
 //			}
 
-//			JsonNode expectedSimpleYaml = serializer.getSimpleYamlMapper().readTree(new File(expectedSimplePlan));
-//			JsonNode actual = serializer.getSimpleYamlMapper().readTree(os.toByteArray());
-//			Assert.assertEquals(expectedSimpleYaml, actual);
+			JsonNode expectedSimpleYaml = serializer.getSimpleYamlMapper().readTree(simpleYamlFile);
+			JsonNode actual = serializer.getSimpleYamlMapper().readTree(os.toByteArray());
+			Assert.assertEquals(expectedSimpleYaml, actual);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+
+		// convert prepared simple plan back to full format
+		try (FileInputStream is = new FileInputStream(simpleYamlFile); ByteArrayOutputStream os = new ByteArrayOutputStream()) {
+			Plan fullPlan = serializer.readSimplePlanFromYaml(is);
+			serializer.writeFullYaml(os, fullPlan);
+
+//			log.info("Converted full yaml -->");
+//			log.info(os.toString(StandardCharsets.UTF_8));
+
+			// write yml to another file (to check it manually)
+//			try (FileOutputStream fileOs = new FileOutputStream("src/test/resources/step/plans/simple/test-expected-build-full-converted-plan.yml")) {
+//				fileOs.write(os.toByteArray());
+//			}
+
+			JsonNode expectedFullYaml = serializer.getFullYamlMapper().readTree(fullYamlFileAfterConversion);
+			JsonNode actual = serializer.getFullYamlMapper().readTree(os.toByteArray());
+			Assert.assertEquals(expectedFullYaml, actual);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -134,8 +156,8 @@ public class YamlPlanSerializerTest {
 
 			// convert full plan to the simple format
 			serializer.writeSimpleYaml(os, serializer.convertFullPlanToSimplePlan(fullPlan));
-			log.info("Converted simple yaml -->");
-			log.info(os.toString(StandardCharsets.UTF_8));
+//			log.info("Converted simple yaml -->");
+//			log.info(os.toString(StandardCharsets.UTF_8));
 
 			// write yml to another file (to check it manually)
 //			try (FileOutputStream fileOs = new FileOutputStream("src/test/resources/step/plans/simple/test-simple-generated-plan.yml")) {
@@ -160,11 +182,11 @@ public class YamlPlanSerializerTest {
 
 			// serialize plan to full yaml
 			serializer.writeFullYaml(os, fullPlan);
-			log.info("Converted full plan -->");
-			log.info(os.toString(StandardCharsets.UTF_8));
+//			log.info("Converted full plan -->");
+//			log.info(os.toString(StandardCharsets.UTF_8));
 
 			// write yml to another file (to check it manually)
-//			try (FileOutputStream fileOs = new FileOutputStream("src/test/resources/step/plans/simple/test-full-generated-plan.yml")) {
+//			try (FileOutputStream fileOs = new FileOutputStream("src/test/resources/step/plans/simple/test-expected-build-full-converted-plan.yml")) {
 //				fileOs.write(os.toByteArray());
 //			}
 

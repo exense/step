@@ -47,7 +47,7 @@ public class SimpleDynamicValueDeserializer extends JsonDeserializer<DynamicValu
 			JsonNode expressionNode = node.get(YamlPlanFields.DYN_VALUE_EXPRESSION_FIELD);
 			String expression = expressionNode == null ? null : expressionNode.asText();
 
-			if (expression != null && !expression.isEmpty()) {
+			if (expression != null) {
 				// dynamic value
 				return new DynamicValue<>(expression, "");
 			} else {
