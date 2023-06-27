@@ -110,7 +110,7 @@ public class YamlPlanSerializerTest {
 			Plan fullPlan = serializer.getFullYamlMapper().readValue(is, Plan.class);
 
 			// convert full plan to the simple format
-			serializer.writeSimpleYaml(os, serializer.convertFullPlanToSimplePlan(fullPlan));
+			serializer.writePlanInSimpleFormat(os, fullPlan);
 //			log.info("Converted simple yaml -->");
 //			log.info(os.toString(StandardCharsets.UTF_8));
 
@@ -129,7 +129,7 @@ public class YamlPlanSerializerTest {
 		// convert prepared simple plan back to full format
 		try (FileInputStream is = new FileInputStream(simpleYamlFile); ByteArrayOutputStream os = new ByteArrayOutputStream()) {
 			Plan fullPlan = serializer.readSimplePlanFromYaml(is);
-			serializer.writeFullYaml(os, fullPlan);
+			serializer.writePlanInFullFormat(os, fullPlan);
 
 //			log.info("Converted full yaml -->");
 //			log.info(os.toString(StandardCharsets.UTF_8));
@@ -155,7 +155,7 @@ public class YamlPlanSerializerTest {
 			Plan fullPlan = serializer.getFullYamlMapper().readValue(is, Plan.class);
 
 			// convert full plan to the simple format
-			serializer.writeSimpleYaml(os, serializer.convertFullPlanToSimplePlan(fullPlan));
+			serializer.writePlanInSimpleFormat(os, fullPlan);
 			log.info("Converted simple yaml -->");
 			log.info(os.toString(StandardCharsets.UTF_8));
 
@@ -181,7 +181,7 @@ public class YamlPlanSerializerTest {
 			Plan fullPlan = serializer.readSimplePlanFromYaml(is);
 
 			// serialize plan to full yaml
-			serializer.writeFullYaml(os, fullPlan);
+			serializer.writePlanInFullFormat(os, fullPlan);
 //			log.info("Converted full plan -->");
 //			log.info(os.toString(StandardCharsets.UTF_8));
 

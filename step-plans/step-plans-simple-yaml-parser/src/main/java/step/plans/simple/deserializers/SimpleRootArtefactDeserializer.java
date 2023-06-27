@@ -51,14 +51,13 @@ public class SimpleRootArtefactDeserializer extends JsonDeserializer<SimpleRootA
     }
 
     protected List<SimpleArtefactFieldDeserializationProcessor> prepareFieldProcessors() {
-        List<SimpleArtefactFieldDeserializationProcessor> temp;
-        temp = new ArrayList<>();
+        List<SimpleArtefactFieldDeserializationProcessor> res = new ArrayList<>();
 
         // the 'name' field should be wrapped into the 'attributes'
-        temp.add(new NodeNameRule().getArtefactFieldDeserializationProcessor());
+        res.add(new NodeNameRule().getArtefactFieldDeserializationProcessor());
 
         // process children recursively
-        temp.add((artefactClass, field, output, codec) -> {
+        res.add((artefactClass, field, output, codec) -> {
             if (field.getKey().equals("children")) {
                 JsonNode simpleChildren = field.getValue();
                 if (simpleChildren != null && simpleChildren.isArray()) {
@@ -76,14 +75,14 @@ public class SimpleRootArtefactDeserializer extends JsonDeserializer<SimpleRootA
 
         // 'argument' field for 'CallKeyword' artifact should contain all input values (dynamic values) as json string
         // but in simplified format we represent input values as array of key / values
-        temp.add(new KeywordInputsRule().getArtefactFieldDeserializationProcessor());
+        res.add(new KeywordInputsRule().getArtefactFieldDeserializationProcessor());
 
         // for 'CallFunction' we can use either the `keyword` (keyword name) field or the `keyword.selectionCriteria` to define the keyword name
         // and 'token' aka 'selectionCriteria' field should contain all input values (dynamic values) as json string
         //  but in simplified format we represent input values as array of key / values
-        temp.add(new KeywordSelectionRule().getArtefactFieldDeserializationProcessor());
-        temp.add(new FunctionGroupSelectionRule().getArtefactFieldDeserializationProcessor());
-        return temp;
+        res.add(new KeywordSelectionRule().getArtefactFieldDeserializationProcessor());
+        res.add(new FunctionGroupSelectionRule().getArtefactFieldDeserializationProcessor());
+        return res;
     }
 
     @Override

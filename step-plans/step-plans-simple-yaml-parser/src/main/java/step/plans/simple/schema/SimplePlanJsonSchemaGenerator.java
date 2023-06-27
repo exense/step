@@ -250,7 +250,7 @@ public class SimplePlanJsonSchemaGenerator {
 
 		for (Class<?> artefactClass : artefactClasses) {
 			// use the name of artefact as definition name
-			String name = YamlPlanSerializer.getArtefactName(artefactClass);
+			String name = AbstractArtefact.getArtefactName((Class<? extends AbstractArtefact>) artefactClass);
 			String defName = name + "Def";
 
 			// scan all fields in artefact class and put them to artefact definition

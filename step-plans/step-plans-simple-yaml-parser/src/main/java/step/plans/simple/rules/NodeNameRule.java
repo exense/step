@@ -23,9 +23,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.json.spi.JsonProvider;
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.artefacts.AbstractArtefact;
 import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
 import step.plans.simple.YamlPlanFields;
-import step.plans.simple.YamlPlanSerializer;
 import step.plans.simple.deserializers.SimpleArtefactFieldDeserializationProcessor;
 import step.plans.simple.serializers.SimpleArtefactFieldSerializationProcessor;
 
@@ -42,7 +42,9 @@ public class NodeNameRule implements ArtefactFieldConversionRule {
                 // use artefact name as default
                 propertiesBuilder.add(
                         YamlPlanFields.NAME_SIMPLE_FIELD,
-                        jsonProvider.createObjectBuilder().add("type", "string").add("default", YamlPlanSerializer.getArtefactName(objectClass))
+                        jsonProvider.createObjectBuilder()
+                                .add("type", "string")
+                                .add("default", AbstractArtefact.getArtefactName((Class<? extends AbstractArtefact>) objectClass))
                 );
                 return true;
             } else {

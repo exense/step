@@ -95,7 +95,7 @@ public class SimpleRootArtefactSerializer extends JsonSerializer<SimpleRootArtef
 
     private void processArtefact(JsonGenerator gen, AbstractArtefact artefact) throws IOException, IllegalAccessException {
         gen.writeStartObject();
-        String artefactName = YamlPlanSerializer.getArtefactName(artefact.getClass());
+        String artefactName = AbstractArtefact.getArtefactName(artefact.getClass());
         gen.writeFieldName(artefactName);
         gen.writeStartObject();
         serializeArtefactFields(artefact, gen);

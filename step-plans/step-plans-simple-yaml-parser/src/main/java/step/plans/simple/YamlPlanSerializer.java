@@ -96,68 +96,6 @@ public class YamlPlanSerializer {
 		this(null, currentVersion);
 	}
 
-	public static ObjectMapper createSimplePlanObjectMapper() {
-		YAMLFactory yamlFactory = new YAMLFactory();
-		// Disable native type id to enable conversion to generic Documents
-		yamlFactory.disable(YAMLGenerator.Feature.USE_NATIVE_TYPE_ID);
-		ObjectMapper yamlMapper = DefaultJacksonMapperProvider.getObjectMapper(yamlFactory);
-
-		// configure custom deserializers
-		SimpleModule module = new SimpleModule();
-		module.addDeserializer(DynamicValue.class, new SimpleDynamicValueDeserializer());
-		module.addDeserializer(SimpleRootArtefact.class, new SimpleRootArtefactDeserializer());
-
-		module.addSerializer(SimpleRootArtefact.class, new SimpleRootArtefactSerializer());
-		module.addSerializer(DynamicValue.class, new SimpleDynamicValueSerializer());
-		yamlMapper.registerModule(module);
-		return yamlMapper;
-	}
-
-	public static ObjectMapper createFullPlanObjectMapper(){
-		YAMLFactory yamlFactory = new YAMLFactory();
-		// Disable native type id to enable conversion to generic Documents
-		yamlFactory.disable(YAMLGenerator.Feature.USE_NATIVE_TYPE_ID);
-		return DefaultJacksonMapperProvider.getObjectMapper(yamlFactory);
-	}
-
-	public static String getArtefactName(Class<?> artefactClass) {
-		Artefact ann = artefactClass.getAnnotation(Artefact.class);
-		return ann.name() == null || ann.name().isEmpty() ? artefactClass.getSimpleName() : ann.name();
-	}
-
-	public ObjectMapper getSimpleYamlMapper() {
-		return simpleYamlMapper;
-	}
-
-	public ObjectMapper getFullYamlMapper() {
-		return fullYamlMapper;
-	}
-
-	protected String readJsonSchema(String jsonSchemaPath) {
-		try (InputStream jsonSchemaInputStream = this.getClass().getClassLoader().getResourceAsStream(jsonSchemaPath)) {
-			if (jsonSchemaInputStream == null) {
-				throw new IllegalStateException("Json schema not found: " + jsonSchemaPath);
-			}
-			return new String(jsonSchemaInputStream.readAllBytes(), StandardCharsets.UTF_8);
-		} catch (IOException e) {
-			throw new IllegalStateException("Unable to load json schema: " + jsonSchemaPath, e);
-		}
-	}
-
-	/**
-	 * Initialized the migration manager with specific migrations used for simple plan format
-	 */
-	private MigrationManager initMigrationManager() {
-		final MigrationManager migrationManager = new MigrationManager();
-		Reflections migrationsReflections = new Reflections("step.plans.simple");
-		Set<Class<? extends AbstractSimplePlanMigrationTask>> migrations = migrationsReflections.getSubTypesOf(AbstractSimplePlanMigrationTask.class);
-		for (Class<? extends AbstractSimplePlanMigrationTask> migration : migrations) {
-			migrationManager.register(migration);
-		}
-		return migrationManager;
-	}
-
-
 	/**
 	 * Read the plan from simplified yaml format
 	 *
@@ -175,6 +113,84 @@ public class YamlPlanSerializer {
 
 		SimpleYamlPlan simplePlan = simpleYamlMapper.treeToValue(simplePlanJsonNode, SimpleYamlPlan.class);
 		return convertSimplePlanToFullPlan(simplePlan);
+	}
+
+	/**
+	 * Write the full plan as YAML
+	 */
+	public void writePlanInFullFormat(OutputStream os, Plan plan) throws IOException {
+		fullYamlMapper.writeValue(os, plan);
+	}
+
+	/**
+	 * Write the simple plan as YAML
+	 */
+	public void writePlanInSimpleFormat(OutputStream os, Plan plan) throws IOException {
+		simpleYamlMapper.writeValue(os, convertFullPlanToSimplePlan(plan));
+	}
+
+	protected ObjectMapper createSimplePlanObjectMapper() {
+		YAMLFactory yamlFactory = new YAMLFactory();
+		// Disable native type id to enable conversion to generic Documents
+		yamlFactory.disable(YAMLGenerator.Feature.USE_NATIVE_TYPE_ID);
+		ObjectMapper yamlMapper = DefaultJacksonMapperProvider.getObjectMapper(yamlFactory);
+
+		// configure custom deserializers
+		SimpleModule module = new SimpleModule();
+		module.addDeserializer(DynamicValue.class, new SimpleDynamicValueDeserializer());
+		module.addDeserializer(SimpleRootArtefact.class, createRootArtefactDeserializer());
+
+		module.addSerializer(DynamicValue.class, new SimpleDynamicValueSerializer());
+		module.addSerializer(SimpleRootArtefact.class, createRootArtefactSerializer());
+		yamlMapper.registerModule(module);
+		return yamlMapper;
+	}
+
+	protected SimpleRootArtefactSerializer createRootArtefactSerializer() {
+		return new SimpleRootArtefactSerializer();
+	}
+
+	protected SimpleRootArtefactDeserializer createRootArtefactDeserializer() {
+		return new SimpleRootArtefactDeserializer();
+	}
+
+	protected ObjectMapper createFullPlanObjectMapper(){
+		YAMLFactory yamlFactory = new YAMLFactory();
+		// Disable native type id to enable conversion to generic Documents
+		yamlFactory.disable(YAMLGenerator.Feature.USE_NATIVE_TYPE_ID);
+		return DefaultJacksonMapperProvider.getObjectMapper(yamlFactory);
+	}
+
+	protected ObjectMapper getSimpleYamlMapper() {
+		return simpleYamlMapper;
+	}
+
+	protected ObjectMapper getFullYamlMapper() {
+		return fullYamlMapper;
+	}
+
+	protected String readJsonSchema(String jsonSchemaPath) {
+		try (InputStream jsonSchemaInputStream = this.getClass().getClassLoader().getResourceAsStream(jsonSchemaPath)) {
+			if (jsonSchemaInputStream == null) {
+				throw new IllegalStateException("Json schema not found: " + jsonSchemaPath);
+			}
+			return new String(jsonSchemaInputStream.readAllBytes(), StandardCharsets.UTF_8);
+		} catch (IOException e) {
+			throw new IllegalStateException("Unable to load json schema: " + jsonSchemaPath, e);
+		}
+	}
+
+	/**
+	 * Initialized the migration manager with specific migrations used for simple plan format
+	 */
+	protected MigrationManager initMigrationManager() {
+		final MigrationManager migrationManager = new MigrationManager();
+		Reflections migrationsReflections = new Reflections("step.plans.simple");
+		Set<Class<? extends AbstractSimplePlanMigrationTask>> migrations = migrationsReflections.getSubTypesOf(AbstractSimplePlanMigrationTask.class);
+		for (Class<? extends AbstractSimplePlanMigrationTask> migration : migrations) {
+			migrationManager.register(migration);
+		}
+		return migrationManager;
 	}
 
 	private String upgradeSimpleYamlIfRequired(String bufferedYamlPlan) throws JsonProcessingException {
@@ -254,20 +270,6 @@ public class YamlPlanSerializer {
 				applyDefaultValuesForArtifact(child);
 			}
 		}
-	}
-
-	/**
-	 * Write the full plan as YAML
-	 */
-	public void writeFullYaml(OutputStream os, Plan plan) throws IOException {
-		fullYamlMapper.writeValue(os, plan);
-	}
-
-	/**
-	 * Write the simple plan as YAML
-	 */
-	public void writeSimpleYaml(OutputStream os, SimpleYamlPlan plan) throws IOException {
-		simpleYamlMapper.writeValue(os, plan);
 	}
 
 }
