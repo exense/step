@@ -23,6 +23,7 @@ import step.plugins.timeseries.api.*;
 import java.util.*;
 
 import static step.plugins.timeseries.TimeSeriesControllerPlugin.RESOLUTION_PERIOD_PROPERTY;
+import static step.plugins.timeseries.TimeSeriesControllerPlugin.TIME_SERIES_SAMPLING_LIMIT;
 
 @Singleton
 @Path("/time-series")
@@ -43,7 +44,8 @@ public class TimeSeriesService extends AbstractStepServices {
         TimeSeries timeSeries = context.require(TimeSeries.class);
         ExecutionAccessor executionAccessor = context.getExecutionAccessor();
         int resolution = configuration.getPropertyAsInteger(RESOLUTION_PERIOD_PROPERTY, 1000);
-        this.handler = new TimeSeriesHandler(resolution, timeSeriesAttributes, measurementCollection, executionAccessor, timeSeries, aggregationPipeline, asyncTaskManager);
+        int fieldsSamplingLimit = configuration.getPropertyAsInteger(TIME_SERIES_SAMPLING_LIMIT, 1000);
+        this.handler = new TimeSeriesHandler(resolution, timeSeriesAttributes, measurementCollection, executionAccessor, timeSeries, aggregationPipeline, asyncTaskManager, fieldsSamplingLimit);
     }
 
     @Secured(right = "execution-read")
@@ -87,8 +89,8 @@ public class TimeSeriesService extends AbstractStepServices {
     public boolean timeSeriesIsBuilt(@PathParam("executionId") String executionId) {
         return handler.timeSeriesIsBuilt(executionId);
     }
-	
-	@Secured(right = "execution-read")
+
+    @Secured(right = "execution-read")
     @GET
     @Path("/measurements-fields")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -96,28 +98,28 @@ public class TimeSeriesService extends AbstractStepServices {
     public Set<String> getMeasurementsAttributes(@QueryParam("filter") String oqlFilter) {
         return handler.getMeasurementsAttributes(oqlFilter);
     }
-	
-	@Secured(right = "execution-read")
+
+    @Secured(right = "execution-read")
     @GET
     @Path("/raw-measurements")
-	@Consumes(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-	public List<Measurement> discoverMeasurements(
-			@QueryParam("filter") String oqlFilter, 
-			@QueryParam("limit") int limit, 
-			@QueryParam("skip") int skip
-	) {
-		return handler.getRawMeasurements(oqlFilter, skip, limit);
-	}
-	
-	@Secured(right = "execution-read")
+    public List<Measurement> discoverMeasurements(
+            @QueryParam("filter") String oqlFilter,
+            @QueryParam("limit") int limit,
+            @QueryParam("skip") int skip
+    ) {
+        return handler.getRawMeasurements(oqlFilter, skip, limit);
+    }
+
+    @Secured(right = "execution-read")
     @GET
     @Path("/raw-measurements/stats")
-	@Consumes(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-	public MeasurementsStats getRawMeasurementsStats(@QueryParam("filter") String oqlFilter) {
-		return handler.getRawMeasurementsStats(oqlFilter);
-	}
-	
+    public MeasurementsStats getRawMeasurementsStats(@QueryParam("filter") String oqlFilter) {
+        return handler.getRawMeasurementsStats(oqlFilter);
+    }
+
 
 }

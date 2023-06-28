@@ -23,6 +23,7 @@ import java.util.Set;
 public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 
     public static String RESOLUTION_PERIOD_PROPERTY = "plugins.timeseries.resolution.period";
+    public static String TIME_SERIES_SAMPLING_LIMIT = "plugins.timeseries.sampling.limit";
     public static String TIME_SERIES_COLLECTION_PROPERTY = "timeseries";
 
     public static String TIME_SERIES_ATTRIBUTES_PROPERTY = "plugins.timeseries.attributes";

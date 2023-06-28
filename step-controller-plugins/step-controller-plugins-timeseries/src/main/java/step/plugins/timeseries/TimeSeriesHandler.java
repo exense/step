@@ -35,7 +35,6 @@ import static step.plugins.timeseries.TimeSeriesExecutionPlugin.TIMESERIES_FLAG;
 
 public class TimeSeriesHandler {
 
-    private static final int FIELDS_SAMPLING_LIMIT = 1_000;
     private static final String ATTRIBUTES_PREFIX = "attributes.";
     private static final String METRIC_TYPE_ATTRIBUTE = "metricType";
     private static final String TIMESTAMP_ATTRIBUTE = "begin";
@@ -56,6 +55,7 @@ public class TimeSeriesHandler {
     private final ExecutionAccessor executionAccessor;
     private final TimeSeries timeSeries;
     private final int resolution;
+    private final int samplingLimit;
 
     public TimeSeriesHandler(int resolution,
                              List<String> timeSeriesAttributes,
@@ -63,7 +63,8 @@ public class TimeSeriesHandler {
                              ExecutionAccessor executionAccessor,
                              TimeSeries timeSeries,
                              TimeSeriesAggregationPipeline aggregationPipeline,
-                             AsyncTaskManager asyncTaskManager) {
+                             AsyncTaskManager asyncTaskManager,
+                             int samplingLimit) {
         this.resolution = resolution;
         this.timeSeriesAttributes = timeSeriesAttributes;
         this.measurementCollection = measurementCollection;
@@ -71,6 +72,7 @@ public class TimeSeriesHandler {
         this.executionAccessor = executionAccessor;
         this.asyncTaskManager = asyncTaskManager;
         this.timeSeries = timeSeries;
+        this.samplingLimit = samplingLimit;
         this.attributesWithPrefix = this.timeSeriesAttributes
                 .stream()
                 .map(x -> ATTRIBUTES_PREFIX + x)
@@ -129,7 +131,7 @@ public class TimeSeriesHandler {
         AtomicInteger totalCount = new AtomicInteger();
 
         Filter filter = OQLTimeSeriesFilterBuilder.getFilter(oqlFilter, attributesPrefixRemoval, MEASUREMENTS_FILTER_IGNORE_ATTRIBUTES);
-        measurementCollection.find(filter, null, 0, FIELDS_SAMPLING_LIMIT, 0).forEach(m -> {
+        measurementCollection.find(filter, null, 0, samplingLimit, 0).forEach(m -> {
             m.forEach((key, value) -> {
                 if (Objects.equals(key, MeasurementPlugin.BEGIN)
                         || Objects.equals(key, MeasurementPlugin.VALUE)
@@ -206,7 +208,7 @@ public class TimeSeriesHandler {
     public Set<String> getMeasurementsAttributes(String oqlFilter) {
         Filter filter = OQLTimeSeriesFilterBuilder.getFilter(oqlFilter, attributesPrefixRemoval, Collections.emptySet());
         Set<String> fields = new HashSet<>();
-        measurementCollection.find(filter, null, 0, FIELDS_SAMPLING_LIMIT, 0).forEach(measurement -> {
+        measurementCollection.find(filter, null, 0, samplingLimit, 0).forEach(measurement -> {
             fields.addAll(measurement.keySet());
         });
         return fields;

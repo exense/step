@@ -29,6 +29,7 @@ public class TimeSeriesHandlerTest {
 
     private static final int BUCKET_RESOLUTION = 200;
     private static final long BUCKET_DURATION = 500;
+    private static final int SAMPLING_LIMIT = 1000;
     private static final List<String> TS_ATTRIBUTES = Arrays.asList("key", "field1", "field2", "field3");
     private static TimeSeriesHandler handler;
 
@@ -44,7 +45,7 @@ public class TimeSeriesHandlerTest {
         TimeSeries timeSeries = new TimeSeries(bucketsCollection, Set.of(), (int) BUCKET_RESOLUTION);
         TimeSeriesAggregationPipeline aggregationPipeline = timeSeries.getAggregationPipeline();
         AsyncTaskManager asyncTaskManager = new AsyncTaskManager();
-        handler = new TimeSeriesHandler(BUCKET_RESOLUTION, TS_ATTRIBUTES, measurementsCollection, executionAccessor, timeSeries, aggregationPipeline, asyncTaskManager);
+        handler = new TimeSeriesHandler(BUCKET_RESOLUTION, TS_ATTRIBUTES, measurementsCollection, executionAccessor, timeSeries, aggregationPipeline, asyncTaskManager, SAMPLING_LIMIT);
     }
 
     @Test
