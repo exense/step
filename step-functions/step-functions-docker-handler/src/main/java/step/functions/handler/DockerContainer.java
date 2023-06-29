@@ -127,21 +127,29 @@ public class DockerContainer implements Closeable {
             gridHost = "localhost";
         }
         String subGridUrl = "http://" + gridHost + ":" + gridPort;
-        executeContainerCmd(containerUser, String.format("nohup ./startAgent.sh -gridHost=%s -fileServerHost=%s/proxy", subGridUrl, subGridUrl));
+        executeContainerCmd(containerUser, String.format("nohup ./startAgent.sh -gridHost=%s -fileServerHost=%s/proxy", subGridUrl, subGridUrl),
+                String.format("/home/%s/bin/", containerUser));
     }
 
     private void executeContainerCmd(String containerUser, String command) throws InterruptedException {
+        executeContainerCmd(containerUser, command, null);
+    }
+
+    private void executeContainerCmd(String containerUser, String command, String workingDir) throws InterruptedException {
         StringBuilder stringBuilder = new StringBuilder();
         StringBuilderLogReader callback = new StringBuilderLogReader(stringBuilder);
         ExecCreateCmdResponse execCreateCmdResponse;
         logger.debug("Making the startup script executable");
         String[] bashCommandArray = {"bash", "-c", command};
-        execCreateCmdResponse = dockerClient.execCreateCmd(container.getId())
+        ExecCreateCmd builder = dockerClient.execCreateCmd(container.getId())
                 .withAttachStdout(true)
                 .withAttachStderr(true)
                 .withUser(containerUser)
-                .withCmd(bashCommandArray)
-                .exec();
+                .withCmd(bashCommandArray);
+        if (workingDir != null) {
+            builder.withWorkingDir(workingDir);
+        }
+        execCreateCmdResponse = builder.exec();
         dockerClient.execStartCmd(execCreateCmdResponse.getId())
                 .exec(new StringBuilderLogReader(stringBuilder))
                 .awaitCompletion();
