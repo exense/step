@@ -29,7 +29,6 @@ public class ProxyMessageHandler implements MessageHandler {
 
     // Constants
     public static final String GRID = "grid";
-    public static final String CONTAINER_NAME = "agent";
 
     // Properties passed from the controller via message properties
     public static final String MESSAGE_HANDLER = "$proxy.messageHandler";

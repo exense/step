@@ -39,6 +39,9 @@ public class DockerContainer implements Closeable {
     public static final String AGENT_CONF_DOCKER_SOCK_DEFAULT = "unix:///var/run/docker.sock";
     public static final String AGENT_CONF_DOCKER_IN_DOCKER = "docker.in.docker";
 
+    // Constant
+    public static final String CONTAINER_NAME = "agent";
+
     private static final Logger logger = LoggerFactory.getLogger(DockerContainer.class);
 
     DockerContainer(Map<String, String> agentProperties, Map<String, String> messageProperties, int localGridPort) throws InterruptedException, IOException {
@@ -79,7 +82,7 @@ public class DockerContainer implements Closeable {
         PullImageCmd pullImageCmd = dockerClient.pullImageCmd(image);
         pullImageCmd.exec(new PullImageResultCallback()).awaitCompletion();
         CreateContainerResponse container = dockerClient.createContainerCmd(image)
-                .withName(ProxyMessageHandler.CONTAINER_NAME)
+                .withName(CONTAINER_NAME)
                 .withUser(containerUser)
                 //.withExposedPorts(new ExposedPort(input.getInt("exposedPort")))
                 //.withPortBindings(PortBinding.parse(input.getString("portBindings")))
@@ -142,7 +145,9 @@ public class DockerContainer implements Closeable {
         dockerClient.execStartCmd(execCreateCmdResponse.getId())
                 .exec(new StringBuilderLogReader(stringBuilder))
                 .awaitCompletion();
-        logger.debug("Executed command '" + String.join(" ", Arrays.asList(command)) + "'. Output: " + callback.builder.toString());
+        String message = "Executed command '" + String.join(" ", Arrays.asList(command)) + "'. Output: " + callback.builder.toString();
+        logger.debug(message);
+        System.out.println(message);
     }
 
     private void copyLocalFileToContainer(File localFile, String remotePath) throws IOException {
@@ -160,8 +165,8 @@ public class DockerContainer implements Closeable {
     }
 
     private void stopContainer() {
-        dockerClient.stopContainerCmd(ProxyMessageHandler.CONTAINER_NAME).exec();
-        dockerClient.removeContainerCmd(ProxyMessageHandler.CONTAINER_NAME).exec();
+        dockerClient.stopContainerCmd(CONTAINER_NAME).exec();
+        dockerClient.removeContainerCmd(CONTAINER_NAME).exec();
     }
 
 
