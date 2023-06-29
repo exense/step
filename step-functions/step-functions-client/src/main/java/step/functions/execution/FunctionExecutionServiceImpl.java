@@ -28,10 +28,7 @@ import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.reports.Error;
 import step.core.reports.ErrorType;
 import step.functions.Function;
-import step.functions.handler.FunctionIOJakartaObjectMapperFactory;
-import step.functions.handler.FunctionIOJavaxObjectMapperFactory;
-import step.functions.handler.FunctionMessageHandler;
-import step.functions.handler.ProxyMessageHandler;
+import step.functions.handler.*;
 import step.functions.io.FunctionInput;
 import step.functions.io.Input;
 import step.functions.io.Output;
@@ -246,12 +243,12 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 					dockerConfiguration.registryUsername = "docker-user";
 					dockerConfiguration.registryPassword = "100%BuildPROD";
 
-					messageProperties.put(ProxyMessageHandler.MESSAGE_PROP_DOCKER_REGISTRY_URL, dockerConfiguration.registryUrl);
-					messageProperties.put(ProxyMessageHandler.MESSAGE_PROP_DOCKER_REGISTRY_USERNAME, dockerConfiguration.registryUsername);
-					messageProperties.put(ProxyMessageHandler.MESSAGE_PROP_DOCKER_REGISTRY_PASSWORD, dockerConfiguration.registryPassword);
-					messageProperties.put(ProxyMessageHandler.MESSAGE_PROP_DOCKER_IMAGE, properties.get(INPUT_PROPERTY_DOCKER_IMAGE));
-					messageProperties.put(ProxyMessageHandler.MESSAGE_PROP_CONTAINER_USER, properties.get(INPUT_PROPERTY_CONTAINER_USER));
-					messageProperties.put(ProxyMessageHandler.MESSAGE_PROP_CONTAINER_CMD, properties.get(INPUT_PROPERTY_CONTAINER_CMD));
+					messageProperties.put(DockerContainer.MESSAGE_PROP_DOCKER_REGISTRY_URL, dockerConfiguration.registryUrl);
+					messageProperties.put(DockerContainer.MESSAGE_PROP_DOCKER_REGISTRY_USERNAME, dockerConfiguration.registryUsername);
+					messageProperties.put(DockerContainer.MESSAGE_PROP_DOCKER_REGISTRY_PASSWORD, dockerConfiguration.registryPassword);
+					messageProperties.put(DockerContainer.MESSAGE_PROP_DOCKER_IMAGE, properties.get(INPUT_PROPERTY_DOCKER_IMAGE));
+					messageProperties.put(DockerContainer.MESSAGE_PROP_CONTAINER_USER, properties.get(INPUT_PROPERTY_CONTAINER_USER));
+					messageProperties.put(DockerContainer.MESSAGE_PROP_CONTAINER_CMD, properties.get(INPUT_PROPERTY_CONTAINER_CMD));
 				} else {
 					messageHandler = functionMessageHandler;
 					messageHandlerPackage = functionHandlerPackage;
