@@ -43,6 +43,19 @@ public class DockerContainer implements Closeable {
     public static final String CONTAINER_NAME = "agent";
 
     private static final Logger logger = LoggerFactory.getLogger(DockerContainer.class);
+    private Path startupScriptFilePath;
+    private Path configurationFileFilePath;
+
+    {
+        // Extracting start script and agent configuration
+        Path startupScriptTempFilePath = Paths.get(ResourceExtractor.extractResource(ProxyMessageHandler.class.getClassLoader(), "startAgent.sh").getCanonicalPath());
+        Path configurationTempFilePath = Paths.get(ResourceExtractor.extractResource(ProxyMessageHandler.class.getClassLoader(), "AgentConf.yaml").getCanonicalPath());
+        // Creating a copy with a simpler name
+        startupScriptFilePath = Paths.get("/tmp/startAgent.sh");
+        Files.copy(startupScriptTempFilePath, startupScriptFilePath, StandardCopyOption.REPLACE_EXISTING);
+        configurationFileFilePath = Paths.get("/tmp/AgentConf.yaml");
+        Files.copy(configurationTempFilePath, configurationFileFilePath, StandardCopyOption.REPLACE_EXISTING);
+    }
 
     DockerContainer(Map<String, String> agentProperties, Map<String, String> messageProperties, int localGridPort) throws InterruptedException, IOException {
         String dockerSock = agentProperties.getOrDefault(AGENT_CONF_DOCKER_SOCK, AGENT_CONF_DOCKER_SOCK_DEFAULT);
@@ -84,29 +97,17 @@ public class DockerContainer implements Closeable {
         CreateContainerResponse container = dockerClient.createContainerCmd(image)
                 .withName(CONTAINER_NAME)
                 .withUser(containerUser)
-                //.withExposedPorts(new ExposedPort(input.getInt("exposedPort")))
-                //.withPortBindings(PortBinding.parse(input.getString("portBindings")))
-                .withHostConfig(new HostConfig().withNetworkMode("host")/*.withPortBindings(new PortBinding(Ports.Binding.bindPort(30000), ExposedPort.tcp(30000)))*/)
-                // Command used only for testing
-                //.withCmd("bash", "-c", "sleep 300")
+                .withHostConfig(new HostConfig().withNetworkMode("host"))
                 .withCmd(startCmd.split(","))
                 .exec();
         dockerClient.startContainerCmd(container.getId()).exec();
         InspectContainerResponse inspectContainerResponse = dockerClient.inspectContainerCmd(container.getId()).exec();
-        logger.info("Container startup response : " + inspectContainerResponse.toString());
+        logger.debug("Container startup response : " + inspectContainerResponse.toString());
         return container;
     }
 
     private void copyAgentMaterialAndStart(boolean dockerInDocker, int gridPort, String containerUser) throws InterruptedException, IOException {
-        // Extracting start script and agent configuration
-        Path startupScriptTempFilePath = Paths.get(ResourceExtractor.extractResource(ProxyMessageHandler.class.getClassLoader(), "startAgent.sh").getCanonicalPath());
-        Path configurationTempFilePath = Paths.get(ResourceExtractor.extractResource(ProxyMessageHandler.class.getClassLoader(), "AgentConf.yaml").getCanonicalPath());
-        // Creating a copy with a simpler name
-        Path startupScriptFilePath = Paths.get("/tmp/startAgent.sh");
-        Files.copy(startupScriptTempFilePath, startupScriptFilePath, StandardCopyOption.REPLACE_EXISTING);
-        Path configurationFileFilePath = Paths.get("/tmp/AgentConf.yaml");
-        Files.copy(configurationTempFilePath, configurationFileFilePath, StandardCopyOption.REPLACE_EXISTING);
-
+        // Copy agent material to container
         createFolderInContainer(String.format("/home/%s/bin", containerUser));
         createFolderInContainer(String.format("/home/%s/conf", containerUser));
         copyLocalFileToContainer(startupScriptFilePath.toFile(), String.format("/home/%s/bin/", containerUser));
@@ -128,14 +129,14 @@ public class DockerContainer implements Closeable {
         }
         String subGridUrl = "http://" + gridHost + ":" + gridPort;
         executeContainerCmd(containerUser, String.format("nohup ./startAgent.sh -gridHost=%s -fileServerHost=%s/proxy", subGridUrl, subGridUrl),
-                String.format("/home/%s/bin/", containerUser));
+                String.format("/home/%s/bin/", containerUser), false);
     }
 
     private void executeContainerCmd(String containerUser, String command) throws InterruptedException {
-        executeContainerCmd(containerUser, command, null);
+        executeContainerCmd(containerUser, command, null, true);
     }
 
-    private void executeContainerCmd(String containerUser, String command, String workingDir) throws InterruptedException {
+    private void executeContainerCmd(String containerUser, String command, String workingDir, boolean awaitCompletion) throws InterruptedException {
         StringBuilder stringBuilder = new StringBuilder();
         StringBuilderLogReader callback = new StringBuilderLogReader(stringBuilder);
         ExecCreateCmdResponse execCreateCmdResponse;
@@ -150,12 +151,15 @@ public class DockerContainer implements Closeable {
             builder.withWorkingDir(workingDir);
         }
         execCreateCmdResponse = builder.exec();
-        dockerClient.execStartCmd(execCreateCmdResponse.getId())
-                .exec(new StringBuilderLogReader(stringBuilder))
-                .awaitCompletion();
-        String message = "Executed command '" + String.join(" ", Arrays.asList(command)) + "'. Output: " + callback.builder.toString();
-        logger.debug(message);
-        System.out.println(message);
+        StringBuilderLogReader exec = dockerClient.execStartCmd(execCreateCmdResponse.getId()).exec(new StringBuilderLogReader(stringBuilder));
+        if (awaitCompletion) {
+            exec.awaitCompletion();
+            String message = "Executed command '" + String.join(" ", Arrays.asList(command)) + "'. Output: " + callback.builder.toString();
+            logger.debug(message);
+            System.out.println(message);
+        } else {
+            logger.debug("Started command '" + String.join(" ", Arrays.asList(command)) + "'");
+        }
     }
 
     private void copyLocalFileToContainer(File localFile, String remotePath) throws IOException {
