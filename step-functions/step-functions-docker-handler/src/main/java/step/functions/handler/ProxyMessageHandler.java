@@ -64,15 +64,23 @@ public class ProxyMessageHandler implements MessageHandler {
         // Configure the selection timeout (this should be higher than the start time of the container
         gridClientConfiguration.setNoMatchExistsTimeout(60000);
         LocalGridClientImpl gridClient = new LocalGridClientImpl(gridClientConfiguration, grid);
-        // Wait for the token to be available i.e. that the container started
-        TokenWrapper tokenHandle = gridClient.getTokenHandle(Map.of(), Map.of(), true);
+
+        // Get the previously reserved token from the session if any
+        DockerAgentToken token = tokenReservationSession.get(DockerAgentToken.class);
+        if(token == null) {
+            // Wait for the token to be available i.e. that the container started
+            TokenWrapper tokenHandle = gridClient.getTokenHandle(Map.of(), Map.of(), true);
+            // Add the token to the session. It will be returned to the pool after session release
+            tokenReservationSession.put(new DockerAgentToken(gridClient, tokenHandle));
+        }
+
         // Get the initial message handler from the message properties
         String messageHandler = messageProperties.get(MESSAGE_HANDLER);
         String messageHandlerFileId = messageProperties.get(MESSAGE_HANDLER_FILE_ID);
         String messageHandlerFileVersion = messageProperties.get(MESSAGE_HANDLER_FILE_VERSION);
         FileVersionId messageHandlerFileVersionId = new FileVersionId(messageHandlerFileId, messageHandlerFileVersion);
         // Execute a keyword using the selected token
-        return gridClient.call(tokenHandle.getID(), inputMessage.getPayload(), messageHandler, messageHandlerFileVersionId, messageProperties, 60000);
+        return gridClient.call(token.getTokenHandle().getID(), inputMessage.getPayload(), messageHandler, messageHandlerFileVersionId, messageProperties, 60000);
     }
 
     private static GridImpl createGrid(int port) {
