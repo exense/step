@@ -8,6 +8,7 @@ import step.grid.TokenWrapper;
 import step.grid.agent.handler.MessageHandler;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
 import step.grid.agent.tokenpool.TokenReservationSession;
+import step.grid.client.GridClient;
 import step.grid.client.GridClientConfiguration;
 import step.grid.client.LocalGridClientImpl;
 import step.grid.filemanager.FileManagerClient;
@@ -25,7 +26,7 @@ public class ProxyMessageHandler implements MessageHandler {
 
     // Use a static in order to have a singleton instance of the Grid.
     // Unfortunately the agent doesn't expose any agent-wide session to store singleton objects
-    private static final ConcurrentHashMap<String, GridImpl> gridMap = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, Object> gridMap = new ConcurrentHashMap<>();
 
     // Constants
     public static final String GRID = "grid";
@@ -57,13 +58,15 @@ public class ProxyMessageHandler implements MessageHandler {
         FileManagerClient fileManagerClient = agentTokenWrapper.getServices().getFileManagerClient();
         ProxyGridServices.fileManagerClient = fileManagerClient;
 
-        // Use a concurrent hash map to create a grid singleton
-        GridImpl grid = gridMap.computeIfAbsent(GRID, k -> createGrid(localGridPort));
-        // Create a grid client to call keywords on this grid instance
-        GridClientConfiguration gridClientConfiguration = new GridClientConfiguration();
-        // Configure the selection timeout (this should be higher than the start time of the container
-        gridClientConfiguration.setNoMatchExistsTimeout(60000);
-        LocalGridClientImpl gridClient = new LocalGridClientImpl(gridClientConfiguration, grid);
+        // Use a concurrent hash map to create singleton
+        GridImpl grid = (GridImpl) gridMap.computeIfAbsent(GRID, k -> createGrid(localGridPort));
+        GridClient gridClient = (GridClient) gridMap.computeIfAbsent("gridClient", k -> {
+            // Create a grid client to call keywords on this grid instance
+            GridClientConfiguration gridClientConfiguration = new GridClientConfiguration();
+            // Configure the selection timeout (this should be higher than the start time of the container
+            gridClientConfiguration.setNoMatchExistsTimeout(60000);
+            return new LocalGridClientImpl(gridClientConfiguration, grid);
+        });
 
         // Get the previously reserved token from the session if any
         DockerAgentToken token = tokenReservationSession.get(DockerAgentToken.class);

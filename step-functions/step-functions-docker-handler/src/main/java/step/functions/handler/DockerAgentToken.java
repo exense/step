@@ -2,18 +2,18 @@ package step.functions.handler;
 
 import step.grid.TokenWrapper;
 import step.grid.client.AbstractGridClientImpl;
+import step.grid.client.GridClient;
 import step.grid.client.GridClientException;
-import step.grid.client.LocalGridClientImpl;
 
 import java.io.Closeable;
 import java.io.IOException;
 
 public class DockerAgentToken implements Closeable {
 
-    private final LocalGridClientImpl gridClient;
+    private final GridClient gridClient;
     private final TokenWrapper tokenHandle;
 
-    public DockerAgentToken(LocalGridClientImpl gridClient, TokenWrapper tokenHandle) {
+    public DockerAgentToken(GridClient gridClient, TokenWrapper tokenHandle) {
         this.gridClient = gridClient;
         this.tokenHandle = tokenHandle;
     }
