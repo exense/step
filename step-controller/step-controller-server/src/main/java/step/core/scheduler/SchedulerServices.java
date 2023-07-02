@@ -107,6 +107,7 @@ public class SchedulerServices extends AbstractEntityServices<ExecutiontTaskPara
     @Path("/{id}/execute")
     @Secured(right = "plan-execute")
     public String executeTask(@PathParam("id") String executionTaskID) {
+        // TODO: on behalf of?
         Session<User> session = getSession();
         return scheduler.executeExecutionTask(executionTaskID, session.getUser().getUsername());
     }

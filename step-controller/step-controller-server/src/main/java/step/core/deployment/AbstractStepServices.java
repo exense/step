@@ -30,6 +30,8 @@ import step.core.objectenricher.ObjectFilter;
 import step.core.objectenricher.ObjectHookRegistry;
 import step.core.scheduler.ExecutionScheduler;
 import step.framework.server.AbstractServices;
+import step.framework.server.Session;
+import step.framework.server.access.AuthorizationManager;
 
 public abstract class AbstractStepServices extends AbstractServices<User> {
 
@@ -71,5 +73,16 @@ public abstract class AbstractStepServices extends AbstractServices<User> {
 
 	protected ObjectFilter getObjectFilter() {
 		return objectHookRegistry.getObjectFilter(getSession());
+	}
+
+	protected AuthorizationManager<User, Session<User>> getAuthorizationManager(){
+		return getContext().get(AuthorizationManager.class);
+	}
+
+	protected void checkRightsOnBehalfOf(String right, String userOnBehalfOf) {
+		Session<User> session = getSession();
+		if (!getAuthorizationManager().checkRightInContext(session, right, userOnBehalfOf)) {
+			throw new AuthorizationException("User " + session.getUser() + " has no permission on '" + right + "' (on behalf of " + userOnBehalfOf + ")");
+		}
 	}
 }
