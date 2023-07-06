@@ -82,6 +82,10 @@ public class SchedulerServices extends AbstractEntityServices<ExecutiontTaskPara
         // This is for instance needed to run the execution within the same project as
         // the scheduler task
         getObjectEnricher().accept(schedule.getExecutionsParameters());
+
+        // when create/update the execution task, we need to check that user defined in execution parameters have rights to execute it
+        checkRightsOnBehalfOf("plan-execute", schedule.getExecutionsParameters().getUserID());
+
         scheduler.addExecutionTask(schedule);
         return schedule;
     }
@@ -107,7 +111,6 @@ public class SchedulerServices extends AbstractEntityServices<ExecutiontTaskPara
     @Path("/{id}/execute")
     @Secured(right = "plan-execute")
     public String executeTask(@PathParam("id") String executionTaskID) {
-        // TODO: on behalf of?
         Session<User> session = getSession();
         return scheduler.executeExecutionTask(executionTaskID, session.getUser().getUsername());
     }
