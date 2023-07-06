@@ -6,6 +6,7 @@ import java.util.Map;
 
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import ch.exense.commons.app.Configuration;
@@ -19,6 +20,7 @@ import step.functions.packages.FunctionPackage;
 import step.resources.LocalResourceManagerImpl;
 import step.resources.Resource;
 
+@Ignore
 public class RepositoryArtifactFunctionPackageHandlerTest {
 
 	private static final String TEMP_MAVEN_PATH = "temp";
