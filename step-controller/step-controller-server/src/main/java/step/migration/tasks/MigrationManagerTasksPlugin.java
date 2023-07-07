@@ -45,6 +45,7 @@ public class MigrationManagerTasksPlugin extends AbstractControllerPlugin {
 		migrationManager.register(ScreenInputHtmlTemplateMigrationTask.class);
 		migrationManager.register(MigrateLogicFlowFunctions.class);
 		migrationManager.register(ParameterPriorityScreenInputMigrationTask.class);
+		migrationManager.register(ScreenEntityIconMigrationTask.class);
 	}
 
 	@Override
