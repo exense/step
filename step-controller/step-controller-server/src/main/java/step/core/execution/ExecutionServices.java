@@ -70,7 +70,7 @@ public class ExecutionServices extends AbstractStepServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.TEXT_PLAIN)
 	@Path("/start")
-	@Secured(right = "plan-execute")
+	@Secured(right="plan-execute")
 	public String execute(ExecutionParameters executionParams) {
 		checkRightsOnBehalfOf("plan-execute", executionParams.getUserID());
 		applyUserIdFromSession(executionParams);
