@@ -23,6 +23,7 @@ import jakarta.json.JsonObject;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.PathNotFoundException;
 
+import jakarta.json.JsonValue;
 import step.artefacts.Assert;
 import step.artefacts.Assert.AssertOperator;
 import step.artefacts.reports.AssertReportNode;
@@ -30,11 +31,23 @@ import step.artefacts.reports.CallFunctionReportNode;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
-import step.core.reports.Error;
-import step.core.reports.ErrorType;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class AssertHandler extends ArtefactHandler<Assert, AssertReportNode> {
-	
+
+	private final Map<AssertOperator, OperatorHandler> operatorHandlers;
+
+	public AssertHandler() {
+		this.operatorHandlers = new HashMap<>();
+		this.operatorHandlers.put(AssertOperator.EQUALS, new EqualsOperatorHandler());
+		this.operatorHandlers.put(AssertOperator.CONTAINS, new ContainsOperatorHandler());
+		this.operatorHandlers.put(AssertOperator.BEGINS_WITH, new BeginsWithOperatorHandler());
+		this.operatorHandlers.put(AssertOperator.ENDS_WITH, new EndsWithOperatorHandler());
+		this.operatorHandlers.put(AssertOperator.MATCHES, new MatchesOperatorHandler());
+	}
+
 	@Override
 	protected void createReportSkeleton_(AssertReportNode parentNode, Assert artefact) {
 
@@ -50,78 +63,33 @@ public class AssertHandler extends ArtefactHandler<Assert, AssertReportNode> {
 		if(callFunctionReport.getStatus()==ReportNodeStatus.PASSED) {			
 			JsonObject outputJson = callFunctionReport.getOutputObject();
 			String key = artefact.getActual().get();
+			AssertOperator operator = artefact.getOperator();
 			node.setKey(key);
-			
+
+			ValueResolvingResult valueResolvingResult = resolveValue(outputJson, key, operator);
+
 			boolean passed = false;
-			String message = null;
-			
-			String actual = null;
-			boolean actualResolved = false;
-			if(key.startsWith("$")) {
-				try {
-					Object result = JsonPath.parse(outputJson.toString()).read(key);
-					if(result instanceof String) {
-						actual = (String) result;
-						actualResolved = true;
-					} else {
-						passed = false;
-						message = "The json path '"+key+"' return an object of type "+result.getClass()+" which is not supported.";
-					}					
-				} catch(PathNotFoundException e) {
-					passed = false;
-					message = e.getMessage();
-				}
- 			} else {
-				if(outputJson.containsKey(key)) {	
-					actual = outputJson.getString(key);				
-					actualResolved = true;
-				} else {
-					passed = false;
-					message = "Unable to execute assertion. The keyword output doesn't contain the attribute '"+key+"'";
-				}
-			}
-			
-			if(actualResolved) {
-				node.setActual(actual);
+			if(valueResolvingResult.actualResolved) {
+				node.setActual(valueResolvingResult.actual == null ? null : valueResolvingResult.actual.toString());
 				
 				Object expectedValueObject = artefact.getExpected().get();
 				String expectedValue = expectedValueObject!=null?expectedValueObject.toString():null;
 				node.setExpected(expectedValue);
 
 				//boolean negate = artefact.isNegate();
-				boolean negate= artefact.getDoNegate().get();
-				String not = negate?" not ":" ";
-				
-				String description = "";
-				AssertOperator operator = artefact.getOperator();
-				if(operator == AssertOperator.EQUALS) {
-					//passed = artefact.isNegate()^expectedValue.equals(actual);
-					passed = negate^expectedValue.equals(actual);
-					message = "'"+key + "' expected" + not + "to be equal to '"+expectedValue+"' "+(passed?"and":"but")+ " was '"+actual+"'";
-					description = key + (negate?" !":" ") + "= '" +  expectedValue + "'" ;
-				} else if(operator == AssertOperator.CONTAINS) {
-					passed = negate^actual.contains(expectedValue);
-					message = "'"+key + "' expected" + not + "to contain '"+expectedValue+ "' "+(passed?"and":"but")+ " was '"+actual+"'";
-					description = key + not + "contains '" +  expectedValue + "'" ;
-				} else if(operator == AssertOperator.BEGINS_WITH) {
-					passed = negate^actual.startsWith(expectedValue);
-					message = "'"+key + "' expected" + not + "to begin with '"+expectedValue+ "' "+(passed?"and":"but")+ " was '"+actual+"'";
-					description = key + not + "begins with '" +  expectedValue + "'" ;
-				} else if(operator == AssertOperator.ENDS_WITH) {
-					passed = negate^actual.endsWith(expectedValue);
-					message = "'"+key + "' expected" + not + "to end with '"+expectedValue+ "' "+(passed?"and":"but")+ " was '"+actual+"'";
-					description = key + not + "ends with '" +  expectedValue + "'" ;
-				} else if(operator == AssertOperator.MATCHES) {
-					passed = negate^actual.matches(expectedValue);
-					message = "'"+key + "' expected" + not + "to match regular expression '"+expectedValue+ "' "+(passed?"and":"but")+ " was '"+actual+"'";
-					description = key + not + "matches '" +  expectedValue + "'" ;
-				} else {
-					throw new RuntimeException("Unsupported operator "+operator);
-				}
-				node.setDescription(description);
+				boolean negate = artefact.getDoNegate().get();
+
+				AssertResult assertResult = applyOperator(key, valueResolvingResult.actual, expectedValue, negate, operator);
+
+				node.setDescription(assertResult.description);
+				node.setMessage(assertResult.message);
+				node.setStatus(assertResult.passed ? ReportNodeStatus.PASSED : ReportNodeStatus.FAILED);
+
+				passed = assertResult.passed;
+			} else {
+				node.setMessage(valueResolvingResult.message);
+				node.setStatus(ReportNodeStatus.FAILED);
 			}
-			node.setMessage(message);			
-			node.setStatus(passed?ReportNodeStatus.PASSED:ReportNodeStatus.FAILED);
 			
 			if(!passed) {
 				String customErrorMessage = artefact.getCustomErrorMessage().get();
@@ -134,8 +102,207 @@ public class AssertHandler extends ArtefactHandler<Assert, AssertReportNode> {
 		}
 	}
 
+	private ValueResolvingResult resolveValue(JsonObject outputJson, String key, AssertOperator operator) {
+		if(key.startsWith("$")) {
+			return resolveJsonPathValue(outputJson, key, operator);
+		} else {
+			return resolveSimpleValue(outputJson, key, operator);
+		}
+	}
+
+	private ValueResolvingResult resolveJsonPathValue(JsonObject outputJson, String key, AssertOperator operator) {
+		ValueResolvingResult valueResolvingResult = new ValueResolvingResult();
+		try {
+			Object result = JsonPath.parse(outputJson.toString()).read(key);
+			if (getOperatorHandler(operator).isSupported(result)) {
+				valueResolvingResult.actual = result;
+				valueResolvingResult.actualResolved = true;
+			} else {
+				valueResolvingResult.actualResolved = false;
+				valueResolvingResult.message = "The json path '" + key + "' return an object of type "
+						+ (result == null ? "null" : result.getClass().getSimpleName()) + " which is not supported for operator " + operator.name();
+			}
+		} catch (PathNotFoundException e) {
+			valueResolvingResult.message = e.getMessage();
+		}
+		return valueResolvingResult;
+	}
+
+	private ValueResolvingResult resolveSimpleValue(JsonObject outputJson, String key, AssertOperator operator) {
+		ValueResolvingResult result = new ValueResolvingResult();
+		if (outputJson.containsKey(key)) {
+			JsonValue jsonValue = outputJson.get(key);
+			if (jsonValue == null) {
+				result.actual = null;
+				result.actualResolved = true;
+			} else if (jsonValue.getValueType() == JsonValue.ValueType.STRING) {
+				result.actual = outputJson.getString(key);
+				result.actualResolved = true;
+			} else if (jsonValue.getValueType() == JsonValue.ValueType.NUMBER) {
+				result.actual = outputJson.getJsonNumber(key).numberValue();
+				result.actualResolved = true;
+			} else if (jsonValue.getValueType() == JsonValue.ValueType.FALSE || jsonValue.getValueType() == JsonValue.ValueType.TRUE) {
+				result.actual = outputJson.getBoolean(key);
+				result.actualResolved = true;
+			} else {
+				result.message = "Type of " + key + " (" + jsonValue.getValueType() + ") is not supported";
+				result.actualResolved = false;
+			}
+
+			if(result.actualResolved){
+				if(!getOperatorHandler(operator).isSupported(result.actual)) {
+					result.message = "Type of " + key + " ("
+							+ (result.actual == null ? "null" : result.actual.getClass().getSimpleName())
+							+ ") is not supported for operator " + operator;
+					result.actualResolved = false;
+				}
+			}
+
+		} else {
+			result.message = "Unable to execute assertion. The keyword output doesn't contain the attribute '" + key + "'";
+		}
+		return result;
+	}
+
+	private AssertResult applyOperator(String key, Object actual, String expectedValueString, boolean negate, AssertOperator operator) {
+		return getOperatorHandler(operator).apply(key, actual, expectedValueString, negate);
+	}
+
 	@Override
 	public AssertReportNode createReportNode_(ReportNode parentNode, Assert artefact) {
 		return new AssertReportNode();
+	}
+
+	private OperatorHandler getOperatorHandler(AssertOperator operator) {
+		OperatorHandler handler = operatorHandlers.get(operator);
+		if (handler == null) {
+			throw new IllegalStateException("Handler is not defined for operator " + operator);
+		}
+		return handler;
+	}
+
+	private static class ValueResolvingResult {
+		private Object actual = null;
+		private boolean actualResolved = false;
+		private String message = null;
+	}
+
+	private static class AssertResult {
+		private boolean passed;
+		private String message;
+		private String description = "";
+	}
+
+	private interface OperatorHandler {
+		boolean isSupported(Object value);
+
+		AssertResult apply(String key, Object actual, String expectedValueString, boolean negate);
+
+	}
+
+	private abstract static class AbstractOperatorHandler implements OperatorHandler {
+		protected String not(boolean negate){
+			return negate ?" not ":" ";
+		}
+
+		protected boolean isNumber(Object value) {
+			return value instanceof Number;
+		}
+
+		protected boolean isBoolean(Object value) {
+			return value instanceof Boolean;
+		}
+
+		protected boolean isString(Object value) {
+			return value instanceof String;
+		}
+
+		protected boolean isNull(Object value) {
+			return value == null;
+		}
+	}
+
+	private static class EqualsOperatorHandler extends AbstractOperatorHandler {
+
+		@Override
+		public boolean isSupported(Object value) {
+			return isBoolean(value) || isString(value) || isNumber(value);
+		}
+
+		@Override
+		public AssertResult apply(String key, Object actual, String expectedValueString, boolean negate) {
+			AssertResult assertResult = new AssertResult();
+			assertResult.passed = negate ^ expectedValueString.equals(actual);
+			assertResult.message = "'" + key + "' expected" + not(negate) + "to be equal to '" + expectedValueString + "' " + (assertResult.passed ? "and" : "but") + " was '" + actual + "'";
+			assertResult.description = key + (negate ? " !" : " ") + "= '" + expectedValueString + "'";
+			return assertResult;
+		}
+	}
+
+	private static class ContainsOperatorHandler extends AbstractOperatorHandler {
+		@Override
+		public boolean isSupported(Object value) {
+			return isString(value);
+		}
+
+		@Override
+		public AssertResult apply(String key, Object actual, String expectedValueString, boolean negate) {
+			AssertResult assertResult = new AssertResult();
+			assertResult.passed = negate ^ ((String) actual).contains(expectedValueString);
+			assertResult.message = "'" + key + "' expected" + not(negate) + "to contain '" + expectedValueString + "' " + (assertResult.passed ? "and" : "but") + " was '" + actual + "'";
+			assertResult.description = key + not(negate) + "contains '" + expectedValueString + "'";
+			return assertResult;
+
+		}
+	}
+
+	private static class BeginsWithOperatorHandler extends AbstractOperatorHandler {
+
+		@Override
+		public boolean isSupported(Object value) {
+			return isString(value);
+		}
+
+		@Override
+		public AssertResult apply(String key, Object actual, String expectedValueString, boolean negate) {
+			AssertResult assertResult = new AssertResult();
+			assertResult.passed = negate ^ ((String) actual).startsWith(expectedValueString);
+			assertResult.message = "'"+ key + "' expected" + not(negate) + "to begin with '"+ expectedValueString + "' "+(assertResult.passed ?"and":"but")+ " was '"+ actual +"'";
+			assertResult.description = key + not(negate) + "begins with '" + expectedValueString + "'" ;
+			return assertResult;
+		}
+	}
+
+	private static class EndsWithOperatorHandler extends AbstractOperatorHandler {
+
+		@Override
+		public boolean isSupported(Object value) {
+			return isString(value);
+		}
+
+		@Override
+		public AssertResult apply(String key, Object actual, String expectedValueString, boolean negate) {
+			AssertResult assertResult = new AssertResult();
+			assertResult.passed = negate ^ ((String) actual).endsWith(expectedValueString);
+			assertResult.message = "'" + key + "' expected" + not(negate) + "to end with '" + expectedValueString + "' " + (assertResult.passed ? "and" : "but") + " was '" + actual + "'";
+			assertResult.description = key + not(negate) + "ends with '" + expectedValueString + "'";
+			return assertResult;
+		}
+	}
+
+	private static class MatchesOperatorHandler extends AbstractOperatorHandler {
+		@Override
+		public boolean isSupported(Object value) {
+			return isString(value);
+		}
+
+		@Override
+		public AssertResult apply(String key, Object actual, String expectedValueString, boolean negate) {
+			AssertResult assertResult = new AssertResult();
+			assertResult.passed = negate ^ ((String)actual).matches(expectedValueString);
+			assertResult.message = "'"+ key + "' expected" + not(negate) + "to match regular expression '"+ expectedValueString + "' "+(assertResult.passed ?"and":"but")+ " was '"+ actual +"'";
+			assertResult.description = key + not(negate) + "matches '" + expectedValueString + "'" ;
+			return assertResult;
+		}
 	}
 }
