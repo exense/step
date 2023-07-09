@@ -18,6 +18,8 @@
  ******************************************************************************/
 package step.artefacts.handlers.asserts;
 
+import java.math.BigDecimal;
+
 public abstract class AbstractOperatorHandler implements AssertOperatorHandler {
     protected String not(boolean negate) {
         return negate ? " not " : " ";
@@ -37,5 +39,21 @@ public abstract class AbstractOperatorHandler implements AssertOperatorHandler {
 
     protected boolean isNull(Object value) {
         return value == null;
+    }
+
+    protected int compareNumeric(Object actual, String expectedValueString) {
+        if (actual instanceof Integer) {
+            return ((Integer) actual).compareTo(Integer.valueOf(expectedValueString));
+        } else if (actual instanceof Long) {
+            return ((Long) actual).compareTo(Long.valueOf(expectedValueString));
+        } else if (actual instanceof Double) {
+            return ((Double) actual).compareTo(Double.valueOf(expectedValueString));
+        } else if(actual instanceof BigDecimal){
+            return ((BigDecimal) actual).compareTo(BigDecimal.valueOf(Double.parseDouble(expectedValueString)));
+        } else if(actual instanceof Float){
+            return ((Float) actual).compareTo(Float.valueOf(expectedValueString));
+        } else {
+            throw new IllegalArgumentException("Not supported value: " + actual.getClass().getName());
+        }
     }
 }

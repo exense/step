@@ -71,6 +71,37 @@ public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 		assertEquals("777", child.getExpected());
 		assertEquals("777", child.getActual());
 		assertEquals("keyInt = '777'", child.getDescription());
+
+		setupPassed();
+		a = new Assert();
+		a.setActual(new DynamicValue<String>("keyDouble"));
+		a.setExpected(new DynamicValue<String>("777.77"));
+		a.setOperator(AssertOperator.EQUALS);
+
+		execute(a);
+
+		child = (AssertReportNode) getFirstReportNode();
+		assertEquals(child.getStatus(), ReportNodeStatus.PASSED);
+		assertEquals("'keyDouble' expected to be equal to '777.77' and was '777.77'", child.getMessage());
+		assertEquals("777.77", child.getExpected());
+		assertEquals("777.77", child.getActual());
+		assertEquals("keyDouble = '777.77'", child.getDescription());
+
+		// Test boolean value
+		setupPassed();
+		a = new Assert();
+		a.setActual(new DynamicValue<String>("keyBool"));
+		a.setExpected(new DynamicValue<String>("true"));
+		a.setOperator(AssertOperator.EQUALS);
+
+		execute(a);
+
+		child = (AssertReportNode) getFirstReportNode();
+		assertEquals(child.getStatus(), ReportNodeStatus.PASSED);
+		assertEquals("'keyBool' expected to be equal to 'true' and was 'true'", child.getMessage());
+		assertEquals("true", child.getExpected());
+		assertEquals("true", child.getActual());
+		assertEquals("keyBool = 'true'", child.getDescription());
 	}
 	
 	@Test
@@ -266,6 +297,33 @@ public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 		child = (AssertReportNode) getFirstReportNode();
 		assertEquals(child.getStatus(), ReportNodeStatus.FAILED);
 		assertEquals("'keyInt' expected to be greater than '778' but was '777'", child.getMessage());
+
+		// big decimal
+		setupPassed();
+
+		a = new Assert();
+		a.setActual(new DynamicValue<String>("keyDouble"));
+		a.setExpected(new DynamicValue<String>("777.76"));
+		a.setOperator(AssertOperator.GREATER_THAN);
+
+		execute(a);
+
+		child = (AssertReportNode) getFirstReportNode();
+		assertEquals(child.getStatus(), ReportNodeStatus.PASSED);
+		assertEquals("'keyDouble' expected to be greater than '777.76' and was '777.77'", child.getMessage());
+
+		setupPassed();
+
+		a = new Assert();
+		a.setActual(new DynamicValue<String>("keyDouble"));
+		a.setExpected(new DynamicValue<String>("777.78"));
+		a.setOperator(AssertOperator.GREATER_THAN);
+
+		execute(a);
+
+		child = (AssertReportNode) getFirstReportNode();
+		assertEquals(child.getStatus(), ReportNodeStatus.FAILED);
+		assertEquals("'keyDouble' expected to be greater than '777.78' but was '777.77'", child.getMessage());
 	}
 
 	@Test
@@ -312,6 +370,33 @@ public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 		child = (AssertReportNode) getFirstReportNode();
 		assertEquals(child.getStatus(), ReportNodeStatus.FAILED);
 		assertEquals("'keyInt' expected to be less than '776' but was '777'", child.getMessage());
+
+		// big decimal
+		setupPassed();
+
+		a = new Assert();
+		a.setActual(new DynamicValue<String>("keyDouble"));
+		a.setExpected(new DynamicValue<String>("777.78"));
+		a.setOperator(AssertOperator.LESS_THAN);
+
+		execute(a);
+
+		child = (AssertReportNode) getFirstReportNode();
+		assertEquals(child.getStatus(), ReportNodeStatus.PASSED);
+		assertEquals("'keyDouble' expected to be less than '777.78' and was '777.77'", child.getMessage());
+
+		setupPassed();
+
+		a = new Assert();
+		a.setActual(new DynamicValue<String>("keyDouble"));
+		a.setExpected(new DynamicValue<String>("777.76"));
+		a.setOperator(AssertOperator.LESS_THAN);
+
+		execute(a);
+
+		child = (AssertReportNode) getFirstReportNode();
+		assertEquals(child.getStatus(), ReportNodeStatus.FAILED);
+		assertEquals("'keyDouble' expected to be less than '777.76' but was '777.77'", child.getMessage());
 	}
 
 	@Test
@@ -367,6 +452,7 @@ public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 	
 	@Test
 	public void testJsonpath() {
+		// string value
 		setupPassed();
 		
 		Assert a = new Assert();
@@ -383,6 +469,60 @@ public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 		assertEquals("val21", child.getExpected());
 		assertEquals("val21", child.getActual());
 		assertEquals("$.key2.key21 = 'val21'", child.getDescription());
+
+		// int value
+		setupPassed();
+
+		a = new Assert();
+		a.setActual(new DynamicValue<String>("$.key2.key2Int"));
+		a.setExpected(new DynamicValue<String>("888"));
+		a.setOperator(AssertOperator.EQUALS);
+
+		execute(a);
+
+		child = (AssertReportNode) getFirstReportNode();
+		assertEquals(ReportNodeStatus.PASSED, child.getStatus());
+		assertEquals("'$.key2.key2Int' expected to be equal to '888' and was '888'", child.getMessage());
+
+		assertEquals("888", child.getExpected());
+		assertEquals("888", child.getActual());
+		assertEquals("$.key2.key2Int = '888'", child.getDescription());
+
+		// big decimal value
+		setupPassed();
+
+		a = new Assert();
+		a.setActual(new DynamicValue<String>("$.key2.key2Double"));
+		a.setExpected(new DynamicValue<String>("888.88"));
+		a.setOperator(AssertOperator.EQUALS);
+
+		execute(a);
+
+		child = (AssertReportNode) getFirstReportNode();
+		assertEquals(ReportNodeStatus.PASSED, child.getStatus());
+		assertEquals("'$.key2.key2Double' expected to be equal to '888.88' and was '888.88'", child.getMessage());
+
+		assertEquals("888.88", child.getExpected());
+		assertEquals("888.88", child.getActual());
+		assertEquals("$.key2.key2Double = '888.88'", child.getDescription());
+
+		// boolean value
+		setupPassed();
+
+		a = new Assert();
+		a.setActual(new DynamicValue<String>("$.key2.key2Bool"));
+		a.setExpected(new DynamicValue<String>("true"));
+		a.setOperator(AssertOperator.EQUALS);
+
+		execute(a);
+
+		child = (AssertReportNode) getFirstReportNode();
+		assertEquals(ReportNodeStatus.PASSED, child.getStatus());
+		assertEquals("'$.key2.key2Bool' expected to be equal to 'true' and was 'true'", child.getMessage());
+
+		assertEquals("true", child.getExpected());
+		assertEquals("true", child.getActual());
+		assertEquals("$.key2.key2Bool = 'true'", child.getDescription());
 	}
 	
 	@Test
@@ -405,7 +545,12 @@ public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 		setupContext();
 		
 		CallFunctionReportNode callNode = new CallFunctionReportNode();
-		JsonObject o = Json.createReader(new StringReader("{\"key1\":\"value1\",\"key2\":{\"key21\":\"val21\",\"key22\":\"val22\"}, \"keyInt\":777}")).readObject();
+		String json = "{\"key1\":\"value1\"," +
+				"\"key2\":{\"key21\":\"val21\",\"key22\":\"val22\",\"key2Int\":888,\"key2Bool\":true,\"key2Double\":888.88}, " +
+				"\"keyInt\":777, " +
+				"\"keyBool\":true, " +
+				"\"keyDouble\":777.77}";
+		JsonObject o = Json.createReader(new StringReader(json)).readObject();
 		callNode.setStatus(ReportNodeStatus.PASSED);
 		callNode.setOutputObject(o);
 		context.getVariablesManager().putVariable(context.getReport(),"callReport", callNode);

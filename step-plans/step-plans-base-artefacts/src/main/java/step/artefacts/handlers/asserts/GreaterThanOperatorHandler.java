@@ -33,15 +33,8 @@ public class GreaterThanOperatorHandler extends AbstractOperatorHandler {
         return assertResult;
     }
 
-    private boolean compare(Object actual, String expectedValueString) {
-        if (actual instanceof Integer) {
-            return ((Integer) actual).compareTo(Integer.valueOf(expectedValueString)) > 0;
-        } else if (actual instanceof Long) {
-            return ((Long) actual).compareTo(Long.valueOf(expectedValueString)) > 0;
-        } else if (actual instanceof Double) {
-            return ((Double) actual).compareTo(Double.valueOf(expectedValueString)) > 0;
-        } else {
-            return false;
-        }
+    private boolean compare(Object actual, String expectedValueString){
+        return compareNumeric(actual, expectedValueString) > 0;
     }
+
 }

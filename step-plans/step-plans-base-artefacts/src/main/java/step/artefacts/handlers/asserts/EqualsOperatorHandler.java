@@ -28,9 +28,18 @@ public class EqualsOperatorHandler extends AbstractOperatorHandler {
     @Override
     public AssertResult apply(String key, Object actual, String expectedValueString, boolean negate) {
         AssertResult assertResult = new AssertResult();
-        assertResult.setPassed(negate ^ expectedValueString.equals(actual.toString()));
+        assertResult.setPassed(negate ^ checkEquals(actual, expectedValueString));
         assertResult.setMessage("'" + key + "' expected" + not(negate) + "to be equal to '" + expectedValueString + "' " + (assertResult.isPassed() ? "and" : "but") + " was '" + actual + "'");
         assertResult.setDescription(key + (negate ? " !" : " ") + "= '" + expectedValueString + "'");
         return assertResult;
+    }
+
+    private boolean checkEquals(Object actual, String expectedValueString) {
+        if (actual instanceof Boolean) {
+            // case-insensitive comparison for boolean
+            return Boolean.valueOf(expectedValueString) == actual;
+        } else {
+            return expectedValueString.equals(actual.toString());
+        }
     }
 }
