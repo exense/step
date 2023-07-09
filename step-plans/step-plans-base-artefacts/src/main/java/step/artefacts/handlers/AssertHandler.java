@@ -26,6 +26,7 @@ import com.jayway.jsonpath.PathNotFoundException;
 import jakarta.json.JsonValue;
 import step.artefacts.Assert;
 import step.artefacts.Assert.AssertOperator;
+import step.artefacts.handlers.asserts.*;
 import step.artefacts.reports.AssertReportNode;
 import step.artefacts.reports.CallFunctionReportNode;
 import step.core.artefacts.handlers.ArtefactHandler;
@@ -37,7 +38,7 @@ import java.util.Map;
 
 public class AssertHandler extends ArtefactHandler<Assert, AssertReportNode> {
 
-	private final Map<AssertOperator, OperatorHandler> operatorHandlers;
+	private final Map<AssertOperator, AssertOperatorHandler> operatorHandlers;
 
 	public AssertHandler() {
 		this.operatorHandlers = new HashMap<>();
@@ -46,6 +47,8 @@ public class AssertHandler extends ArtefactHandler<Assert, AssertReportNode> {
 		this.operatorHandlers.put(AssertOperator.BEGINS_WITH, new BeginsWithOperatorHandler());
 		this.operatorHandlers.put(AssertOperator.ENDS_WITH, new EndsWithOperatorHandler());
 		this.operatorHandlers.put(AssertOperator.MATCHES, new MatchesOperatorHandler());
+		this.operatorHandlers.put(AssertOperator.GREATER_THAN, new GreaterThanOperatorHandler());
+		this.operatorHandlers.put(AssertOperator.LESS_THAN, new LessThanOperatorHandler());
 	}
 
 	@Override
@@ -72,8 +75,7 @@ public class AssertHandler extends ArtefactHandler<Assert, AssertReportNode> {
 			if(valueResolvingResult.actualResolved) {
 				node.setActual(valueResolvingResult.actual == null ? null : valueResolvingResult.actual.toString());
 				
-				Object expectedValueObject = artefact.getExpected().get();
-				String expectedValue = expectedValueObject!=null?expectedValueObject.toString():null;
+				String expectedValue = artefact.getExpected().get();
 				node.setExpected(expectedValue);
 
 				//boolean negate = artefact.isNegate();
@@ -81,11 +83,11 @@ public class AssertHandler extends ArtefactHandler<Assert, AssertReportNode> {
 
 				AssertResult assertResult = applyOperator(key, valueResolvingResult.actual, expectedValue, negate, operator);
 
-				node.setDescription(assertResult.description);
-				node.setMessage(assertResult.message);
-				node.setStatus(assertResult.passed ? ReportNodeStatus.PASSED : ReportNodeStatus.FAILED);
+				node.setDescription(assertResult.getDescription());
+				node.setMessage(assertResult.getMessage());
+				node.setStatus(assertResult.isPassed() ? ReportNodeStatus.PASSED : ReportNodeStatus.FAILED);
 
-				passed = assertResult.passed;
+				passed = assertResult.isPassed();
 			} else {
 				node.setMessage(valueResolvingResult.message);
 				node.setStatus(ReportNodeStatus.FAILED);
@@ -173,8 +175,8 @@ public class AssertHandler extends ArtefactHandler<Assert, AssertReportNode> {
 		return new AssertReportNode();
 	}
 
-	private OperatorHandler getOperatorHandler(AssertOperator operator) {
-		OperatorHandler handler = operatorHandlers.get(operator);
+	private AssertOperatorHandler getOperatorHandler(AssertOperator operator) {
+		AssertOperatorHandler handler = operatorHandlers.get(operator);
 		if (handler == null) {
 			throw new IllegalStateException("Handler is not defined for operator " + operator);
 		}
@@ -187,122 +189,4 @@ public class AssertHandler extends ArtefactHandler<Assert, AssertReportNode> {
 		private String message = null;
 	}
 
-	private static class AssertResult {
-		private boolean passed;
-		private String message;
-		private String description = "";
-	}
-
-	private interface OperatorHandler {
-		boolean isSupported(Object value);
-
-		AssertResult apply(String key, Object actual, String expectedValueString, boolean negate);
-
-	}
-
-	private abstract static class AbstractOperatorHandler implements OperatorHandler {
-		protected String not(boolean negate){
-			return negate ?" not ":" ";
-		}
-
-		protected boolean isNumber(Object value) {
-			return value instanceof Number;
-		}
-
-		protected boolean isBoolean(Object value) {
-			return value instanceof Boolean;
-		}
-
-		protected boolean isString(Object value) {
-			return value instanceof String;
-		}
-
-		protected boolean isNull(Object value) {
-			return value == null;
-		}
-	}
-
-	private static class EqualsOperatorHandler extends AbstractOperatorHandler {
-
-		@Override
-		public boolean isSupported(Object value) {
-			return isBoolean(value) || isString(value) || isNumber(value);
-		}
-
-		@Override
-		public AssertResult apply(String key, Object actual, String expectedValueString, boolean negate) {
-			AssertResult assertResult = new AssertResult();
-			assertResult.passed = negate ^ expectedValueString.equals(actual);
-			assertResult.message = "'" + key + "' expected" + not(negate) + "to be equal to '" + expectedValueString + "' " + (assertResult.passed ? "and" : "but") + " was '" + actual + "'";
-			assertResult.description = key + (negate ? " !" : " ") + "= '" + expectedValueString + "'";
-			return assertResult;
-		}
-	}
-
-	private static class ContainsOperatorHandler extends AbstractOperatorHandler {
-		@Override
-		public boolean isSupported(Object value) {
-			return isString(value);
-		}
-
-		@Override
-		public AssertResult apply(String key, Object actual, String expectedValueString, boolean negate) {
-			AssertResult assertResult = new AssertResult();
-			assertResult.passed = negate ^ ((String) actual).contains(expectedValueString);
-			assertResult.message = "'" + key + "' expected" + not(negate) + "to contain '" + expectedValueString + "' " + (assertResult.passed ? "and" : "but") + " was '" + actual + "'";
-			assertResult.description = key + not(negate) + "contains '" + expectedValueString + "'";
-			return assertResult;
-
-		}
-	}
-
-	private static class BeginsWithOperatorHandler extends AbstractOperatorHandler {
-
-		@Override
-		public boolean isSupported(Object value) {
-			return isString(value);
-		}
-
-		@Override
-		public AssertResult apply(String key, Object actual, String expectedValueString, boolean negate) {
-			AssertResult assertResult = new AssertResult();
-			assertResult.passed = negate ^ ((String) actual).startsWith(expectedValueString);
-			assertResult.message = "'"+ key + "' expected" + not(negate) + "to begin with '"+ expectedValueString + "' "+(assertResult.passed ?"and":"but")+ " was '"+ actual +"'";
-			assertResult.description = key + not(negate) + "begins with '" + expectedValueString + "'" ;
-			return assertResult;
-		}
-	}
-
-	private static class EndsWithOperatorHandler extends AbstractOperatorHandler {
-
-		@Override
-		public boolean isSupported(Object value) {
-			return isString(value);
-		}
-
-		@Override
-		public AssertResult apply(String key, Object actual, String expectedValueString, boolean negate) {
-			AssertResult assertResult = new AssertResult();
-			assertResult.passed = negate ^ ((String) actual).endsWith(expectedValueString);
-			assertResult.message = "'" + key + "' expected" + not(negate) + "to end with '" + expectedValueString + "' " + (assertResult.passed ? "and" : "but") + " was '" + actual + "'";
-			assertResult.description = key + not(negate) + "ends with '" + expectedValueString + "'";
-			return assertResult;
-		}
-	}
-
-	private static class MatchesOperatorHandler extends AbstractOperatorHandler {
-		@Override
-		public boolean isSupported(Object value) {
-			return isString(value);
-		}
-
-		@Override
-		public AssertResult apply(String key, Object actual, String expectedValueString, boolean negate) {
-			AssertResult assertResult = new AssertResult();
-			assertResult.passed = negate ^ ((String)actual).matches(expectedValueString);
-			assertResult.message = "'"+ key + "' expected" + not(negate) + "to match regular expression '"+ expectedValueString + "' "+(assertResult.passed ?"and":"but")+ " was '"+ actual +"'";
-			assertResult.description = key + not(negate) + "matches '" + expectedValueString + "'" ;
-			return assertResult;
-		}
-	}
 }

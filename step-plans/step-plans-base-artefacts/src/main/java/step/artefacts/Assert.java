@@ -103,8 +103,12 @@ public class Assert extends AbstractArtefact {
 		ENDS_WITH,
 		
 		CONTAINS,
-		
-		MATCHES;
+
+		MATCHES,
+
+		LESS_THAN,
+
+		GREATER_THAN;
 	}
 
 }

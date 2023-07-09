@@ -38,9 +38,10 @@ import step.core.dynamicbeans.DynamicValue;
 public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 	
 	@Test
-	public void test() {
+	public void testEquals() {
 		setupPassed();
-		
+
+		// Test string value
 		Assert a = new Assert();
 		a.setActual(new DynamicValue<String>("key1"));
 		a.setExpected(new DynamicValue<String>("value1"));
@@ -55,11 +56,26 @@ public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 		assertEquals("value1", child.getActual());
 		assertEquals("key1 = 'value1'", child.getDescription());
 
-		
+		// Test numeric value
+		setupPassed();
+		a = new Assert();
+		a.setActual(new DynamicValue<String>("keyInt"));
+		a.setExpected(new DynamicValue<String>("777"));
+		a.setOperator(AssertOperator.EQUALS);
+
+		execute(a);
+
+		child = (AssertReportNode) getFirstReportNode();
+		assertEquals(child.getStatus(), ReportNodeStatus.PASSED);
+		assertEquals("'keyInt' expected to be equal to '777' and was '777'", child.getMessage());
+		assertEquals("777", child.getExpected());
+		assertEquals("777", child.getActual());
+		assertEquals("keyInt = '777'", child.getDescription());
 	}
 	
 	@Test
 	public void testNotEquals() {
+		// Test string value
 		setupPassed();
 		
 		Assert a = new Assert();
@@ -77,6 +93,23 @@ public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 		assertEquals("value1", child.getExpected());
 		assertEquals("value1", child.getActual());
 		assertEquals("key1 != 'value1'", child.getDescription());
+
+		// Test numeric value
+		setupPassed();
+		a = new Assert();
+		a.setActual(new DynamicValue<String>("keyInt"));
+		a.setExpected(new DynamicValue<String>("777"));
+		a.setOperator(AssertOperator.EQUALS);
+		a.setDoNegate(new DynamicValue<Boolean>(true));
+
+		execute(a);
+
+		child = (AssertReportNode) getFirstReportNode();
+		assertEquals(child.getStatus(), ReportNodeStatus.FAILED);
+		assertEquals("'keyInt' expected not to be equal to '777' but was '777'", child.getMessage());
+		assertEquals("777", child.getExpected());
+		assertEquals("777", child.getActual());
+		assertEquals("keyInt != '777'", child.getDescription());
 	}
 	
 	@Test
@@ -205,7 +238,100 @@ public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 		assertEquals(child.getStatus(), ReportNodeStatus.FAILED);
 		assertEquals("'key1' expected not to match regular expression '.*al.*' but was 'value1'", child.getMessage());
 	}
-	
+
+	@Test
+	public void testGreaterThan() {
+		setupPassed();
+
+		Assert a = new Assert();
+		a.setActual(new DynamicValue<String>("keyInt"));
+		a.setExpected(new DynamicValue<String>("776"));
+		a.setOperator(AssertOperator.GREATER_THAN);
+
+		execute(a);
+
+		AssertReportNode child = (AssertReportNode) getFirstReportNode();
+		assertEquals(child.getStatus(), ReportNodeStatus.PASSED);
+		assertEquals("'keyInt' expected to be greater than '776' and was '777'", child.getMessage());
+
+		setupPassed();
+
+		a = new Assert();
+		a.setActual(new DynamicValue<String>("keyInt"));
+		a.setExpected(new DynamicValue<String>("778"));
+		a.setOperator(AssertOperator.GREATER_THAN);
+
+		execute(a);
+
+		child = (AssertReportNode) getFirstReportNode();
+		assertEquals(child.getStatus(), ReportNodeStatus.FAILED);
+		assertEquals("'keyInt' expected to be greater than '778' but was '777'", child.getMessage());
+	}
+
+	@Test
+	public void testNotGreaterThan() {
+		setupPassed();
+
+		Assert a = new Assert();
+		a.setActual(new DynamicValue<String>("keyInt"));
+		a.setExpected(new DynamicValue<String>("776"));
+		a.setOperator(AssertOperator.GREATER_THAN);
+		a.setDoNegate(new DynamicValue<>(true));
+
+		execute(a);
+
+		AssertReportNode child = (AssertReportNode) getFirstReportNode();
+		assertEquals(child.getStatus(), ReportNodeStatus.FAILED);
+		assertEquals("'keyInt' expected not to be greater than '776' but was '777'", child.getMessage());
+	}
+
+	@Test
+	public void testLessThan() {
+		setupPassed();
+
+		Assert a = new Assert();
+		a.setActual(new DynamicValue<String>("keyInt"));
+		a.setExpected(new DynamicValue<String>("778"));
+		a.setOperator(AssertOperator.LESS_THAN);
+
+		execute(a);
+
+		AssertReportNode child = (AssertReportNode) getFirstReportNode();
+		assertEquals(child.getStatus(), ReportNodeStatus.PASSED);
+		assertEquals("'keyInt' expected to be less than '778' and was '777'", child.getMessage());
+
+		setupPassed();
+
+		a = new Assert();
+		a.setActual(new DynamicValue<String>("keyInt"));
+		a.setExpected(new DynamicValue<String>("776"));
+		a.setOperator(AssertOperator.LESS_THAN);
+
+		execute(a);
+
+		child = (AssertReportNode) getFirstReportNode();
+		assertEquals(child.getStatus(), ReportNodeStatus.FAILED);
+		assertEquals("'keyInt' expected to be less than '776' but was '777'", child.getMessage());
+	}
+
+	@Test
+	public void testNotLessThan() {
+		setupPassed();
+
+		Assert a = new Assert();
+		a.setActual(new DynamicValue<String>("keyInt"));
+		a.setExpected(new DynamicValue<String>("778"));
+		a.setOperator(AssertOperator.LESS_THAN);
+		a.setDoNegate(new DynamicValue<>(true));
+
+		execute(a);
+
+		AssertReportNode child = (AssertReportNode) getFirstReportNode();
+		assertEquals(child.getStatus(), ReportNodeStatus.FAILED);
+		assertEquals("'keyInt' expected not to be less than '778' but was '777'", child.getMessage());
+	}
+
+
 	@Test
 	public void testKeyDoesntExist() {
 		setupPassed();
@@ -279,7 +405,7 @@ public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 		setupContext();
 		
 		CallFunctionReportNode callNode = new CallFunctionReportNode();
-		JsonObject o = Json.createReader(new StringReader("{\"key1\":\"value1\",\"key2\":{\"key21\":\"val21\",\"key22\":\"val22\"}}")).readObject();
+		JsonObject o = Json.createReader(new StringReader("{\"key1\":\"value1\",\"key2\":{\"key21\":\"val21\",\"key22\":\"val22\"}, \"keyInt\":777}")).readObject();
 		callNode.setStatus(ReportNodeStatus.PASSED);
 		callNode.setOutputObject(o);
 		context.getVariablesManager().putVariable(context.getReport(),"callReport", callNode);
