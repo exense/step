@@ -63,6 +63,8 @@ public class SimpleRootArtefactSerializer extends JsonSerializer<SimpleRootArtef
         temp.add(new KeywordSelectionRule().getArtefactFieldSerializationProcessor());
         temp.add(new KeywordInputsRule().getArtefactFieldSerializationProcessor());
         temp.add(new FunctionGroupSelectionRule().getArtefactFieldSerializationProcessor());
+        temp.add(new CheckExpressionRule().getArtefactFieldSerializationProcessor());
+
         temp.add((artefact, field, fieldMetadata, gen) -> {
             if (field.getName().equals("children")) {
                 List<AbstractArtefact> children = (List<AbstractArtefact>) field.get(artefact);

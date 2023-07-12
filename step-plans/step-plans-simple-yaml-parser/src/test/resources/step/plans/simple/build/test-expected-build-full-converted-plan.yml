@@ -16,130 +16,10 @@ root:
   useDynamicName: false
   description: null
   children:
-  - _class: "Check"
-    customFields: null
-    attributes:
-      name: "Check BRANCH is given"
-    dynamicName:
-      dynamic: false
-      value: ""
-      expression: ""
-      expressionType: null
-    useDynamicName: false
-    description: null
-    children: []
-    customAttributes: null
-    attachments: null
-    persistNode: true
-    skipNode:
-      dynamic: false
-      value: false
-      expression: null
-      expressionType: null
-    instrumentNode:
-      dynamic: false
-      value: false
-      expression: null
-      expressionType: null
-    continueParentNodeExecutionOnError:
-      dynamic: false
-      value: false
-      expression: null
-      expressionType: null
-    expression:
-      dynamic: true
-      value: null
-      expression: "binding.hasVariable(\"BRANCH\") && !BRANCH.isBlank()"
-      expressionType: ""
-    id: "644fbe4e38a61e07cc3a4df8"
-  - _class: "Check"
-    customFields: null
-    attributes:
-      name: "Check PROJECT is given"
-    dynamicName:
-      dynamic: false
-      value: ""
-      expression: ""
-      expressionType: null
-    useDynamicName: false
-    description: null
-    children: []
-    customAttributes: null
-    attachments: null
-    persistNode: true
-    skipNode:
-      dynamic: false
-      value: false
-      expression: null
-      expressionType: null
-    instrumentNode:
-      dynamic: false
-      value: false
-      expression: null
-      expressionType: null
-    continueParentNodeExecutionOnError:
-      dynamic: false
-      value: false
-      expression: null
-      expressionType: null
-    expression:
-      dynamic: true
-      value: null
-      expression: "binding.hasVariable(\"PROJECT\") && !PROJECT.isBlank()"
-      expressionType: ""
-    id: "644fbe4e38a61e07cc3a4df8"
-  - _class: "Check"
-    customFields: null
-    attributes:
-      name: "Check ENVIRONMENT is given"
-    dynamicName:
-      dynamic: false
-      value: ""
-      expression: ""
-      expressionType: null
-    useDynamicName: false
-    description: null
-    children: []
-    customAttributes: null
-    attachments: null
-    persistNode: true
-    skipNode:
-      dynamic: false
-      value: false
-      expression: null
-      expressionType: null
-    instrumentNode:
-      dynamic: false
-      value: false
-      expression: null
-      expressionType: null
-    continueParentNodeExecutionOnError:
-      dynamic: false
-      value: false
-      expression: null
-      expressionType: null
-    expression:
-      dynamic: true
-      value: null
-      expression: "binding.hasVariable(\"ENVIRONMENT\") && !ENVIRONMENT.isBlank()"
-      expressionType: ""
-    id: "644fbe4e38a61e07cc3a4df8"
-  - _class: "If"
-    customFields: null
-    attributes:
-      name: "If ENVIRONMENT==\"PRODUCTION\""
-    dynamicName:
-      dynamic: false
-      value: ""
-      expression: ""
-      expressionType: null
-    useDynamicName: false
-    description: null
-    children:
     - _class: "Check"
       customFields: null
       attributes:
-        name: "Check VERSION is given when releasing into PRODUCTION"
+        name: "Check BRANCH is given"
       dynamicName:
         dynamic: false
         value: ""
@@ -169,13 +49,13 @@ root:
       expression:
         dynamic: true
         value: null
-        expression: "binding.hasVariable(\"VERSION\") && !VERSION.isBlank()"
+        expression: "binding.hasVariable(\"BRANCH\") && !BRANCH.isBlank()"
         expressionType: ""
       id: "644fbe4e38a61e07cc3a4df8"
     - _class: "Check"
       customFields: null
       attributes:
-        name: "Check VERSION is properly formated"
+        name: "Check PROJECT is given"
       dynamicName:
         dynamic: false
         value: ""
@@ -205,90 +85,13 @@ root:
       expression:
         dynamic: true
         value: null
-        expression: "VERSION ==~ /\\d+\\.\\d+\\.\\d+/"
+        expression: "binding.hasVariable(\"PROJECT\") && !PROJECT.isBlank()"
         expressionType: ""
       id: "644fbe4e38a61e07cc3a4df8"
-    customAttributes: null
-    attachments: null
-    persistNode: true
-    skipNode:
-      dynamic: false
-      value: false
-      expression: null
-      expressionType: null
-    instrumentNode:
-      dynamic: false
-      value: false
-      expression: null
-      expressionType: null
-    continueParentNodeExecutionOnError:
-      dynamic: false
-      value: false
-      expression: null
-      expressionType: null
-    condition:
-      dynamic: true
-      value: null
-      expression: "ENVIRONMENT==\"PRODUCTION\""
-      expressionType: ""
-    id: "644fbe4e38a61e07cc3a4df8"
-  - _class: "Set"
-    customFields: null
-    attributes:
-      name: "Init SCALEUP"
-    dynamicName:
-      dynamic: false
-      value: ""
-      expression: ""
-      expressionType: null
-    useDynamicName: false
-    description: null
-    children: []
-    customAttributes: null
-    attachments: null
-    persistNode: true
-    skipNode:
-      dynamic: false
-      value: false
-      expression: null
-      expressionType: null
-    instrumentNode:
-      dynamic: false
-      value: false
-      expression: null
-      expressionType: null
-    continueParentNodeExecutionOnError:
-      dynamic: false
-      value: false
-      expression: null
-      expressionType: null
-    key:
-      dynamic: false
-      value: "SCALEUP"
-      expression: null
-      expressionType: null
-    value:
-      dynamic: false
-      value: ""
-      expression: null
-      expressionType: null
-    id: "644fbe4e38a61e07cc3a4df8"
-  - _class: "If"
-    customFields: null
-    attributes:
-      name: "If OS==LINUX"
-    dynamicName:
-      dynamic: false
-      value: ""
-      expression: ""
-      expressionType: null
-    useDynamicName: false
-    description: null
-    children:
-    - _class: "CallPlan"
+    - _class: "Check"
       customFields: null
       attributes:
-        name: "Scale Up Build Agents"
+        name: "Check ENVIRONMENT is given"
       dynamicName:
         dynamic: false
         value: ""
@@ -315,58 +118,16 @@ root:
         value: false
         expression: null
         expressionType: null
-      planId: "6386268253799329484c57ef"
-      selectionAttributes:
-        dynamic: false
-        value: "{}"
-        expression: null
-        expressionType: null
-      input:
-        dynamic: false
-        value: "{}"
-        expression: null
-        expressionType: null
+      expression:
+        dynamic: true
+        value: null
+        expression: "binding.hasVariable(\"ENVIRONMENT\") && !ENVIRONMENT.isBlank()"
+        expressionType: ""
       id: "644fbe4e38a61e07cc3a4df8"
-    customAttributes: null
-    attachments: null
-    persistNode: true
-    skipNode:
-      dynamic: false
-      value: false
-      expression: null
-      expressionType: null
-    instrumentNode:
-      dynamic: false
-      value: false
-      expression: null
-      expressionType: null
-    continueParentNodeExecutionOnError:
-      dynamic: false
-      value: false
-      expression: null
-      expressionType: null
-    condition:
-      dynamic: true
-      value: null
-      expression: "OS==\"LINUX\""
-      expressionType: ""
-    id: "644fbe4e38a61e07cc3a4df8"
-  - _class: "Sequence"
-    customFields: null
-    attributes:
-      name: "Sequence"
-    dynamicName:
-      dynamic: false
-      value: ""
-      expression: ""
-      expressionType: null
-    useDynamicName: false
-    description: null
-    children:
-    - _class: "Session"
+    - _class: "If"
       customFields: null
       attributes:
-        name: "Session"
+        name: "If ENVIRONMENT==\"PRODUCTION\""
       dynamicName:
         dynamic: false
         value: ""
@@ -375,560 +136,10 @@ root:
       useDynamicName: false
       description: null
       children:
-      - _class: "Sequence"
-        customFields: null
-        attributes:
-          name: "Main Sequence"
-        dynamicName:
-          dynamic: false
-          value: ""
-          expression: ""
-          expressionType: null
-        useDynamicName: false
-        description: null
-        children:
-        - _class: "BeforeSequence"
+        - _class: "Check"
           customFields: null
           attributes:
-            name: "BeforeSequence - Init variables"
-          dynamicName:
-            dynamic: false
-            value: ""
-            expression: ""
-            expressionType: null
-          useDynamicName: false
-          description: null
-          children:
-          - _class: "Set"
-            customFields: null
-            attributes:
-              name: "Init STATUS - FAILED"
-            dynamicName:
-              dynamic: false
-              value: ""
-              expression: ""
-              expressionType: null
-            useDynamicName: false
-            description: null
-            children: []
-            customAttributes: null
-            attachments: null
-            persistNode: true
-            skipNode:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            instrumentNode:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            continueParentNodeExecutionOnError:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            key:
-              dynamic: false
-              value: "STATUS"
-              expression: null
-              expressionType: null
-            value:
-              dynamic: false
-              value: "FAILED"
-              expression: null
-              expressionType: null
-            id: "644fbe4e38a61e07cc3a4df8"
-          - _class: "Set"
-            customFields: null
-            attributes:
-              name: "Init FOLDER"
-            dynamicName:
-              dynamic: false
-              value: ""
-              expression: ""
-              expressionType: null
-            useDynamicName: false
-            description: null
-            children: []
-            customAttributes: null
-            attachments: null
-            persistNode: true
-            skipNode:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            instrumentNode:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            continueParentNodeExecutionOnError:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            key:
-              dynamic: false
-              value: "FOLDER"
-              expression: null
-              expressionType: null
-            value:
-              dynamic: true
-              value: null
-              expression: ""
-              expressionType: ""
-            id: "644fbe4e38a61e07cc3a4df8"
-          - _class: "Set"
-            customFields: null
-            attributes:
-              name: "Init FTP_FILES"
-            dynamicName:
-              dynamic: false
-              value: ""
-              expression: ""
-              expressionType: null
-            useDynamicName: false
-            description: ""
-            children: []
-            customAttributes: null
-            attachments: null
-            persistNode: true
-            skipNode:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            instrumentNode:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            continueParentNodeExecutionOnError:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            key:
-              dynamic: false
-              value: "FTP_FILES"
-              expression: null
-              expressionType: null
-            value:
-              dynamic: false
-              value: ""
-              expression: null
-              expressionType: null
-            id: "644fbe4e38a61e07cc3a4df8"
-          - _class: "Set"
-            customFields: null
-            attributes:
-              name: "Init TESTS"
-            dynamicName:
-              dynamic: false
-              value: ""
-              expression: ""
-              expressionType: null
-            useDynamicName: false
-            description: ""
-            children: []
-            customAttributes: null
-            attachments: null
-            persistNode: true
-            skipNode:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            instrumentNode:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            continueParentNodeExecutionOnError:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            key:
-              dynamic: false
-              value: "TESTS"
-              expression: null
-              expressionType: null
-            value:
-              dynamic: false
-              value: ""
-              expression: null
-              expressionType: null
-            id: "644fbe4e38a61e07cc3a4df8"
-          - _class: "Set"
-            customFields: null
-            attributes:
-              name: "Init DEPLOYED_INSTANCES"
-            dynamicName:
-              dynamic: false
-              value: ""
-              expression: ""
-              expressionType: null
-            useDynamicName: false
-            description: ""
-            children: []
-            customAttributes: null
-            attachments: null
-            persistNode: true
-            skipNode:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            instrumentNode:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            continueParentNodeExecutionOnError:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            key:
-              dynamic: false
-              value: "DEPLOYED_INSTANCES"
-              expression: null
-              expressionType: null
-            value:
-              dynamic: false
-              value: ""
-              expression: null
-              expressionType: null
-            id: "644fbe4e38a61e07cc3a4df8"
-          - _class: "Set"
-            customFields: null
-            attributes:
-              name: "Set BRANCH_EXIST if not given"
-            dynamicName:
-              dynamic: false
-              value: ""
-              expression: ""
-              expressionType: null
-            useDynamicName: false
-            description: null
-            children: []
-            customAttributes: null
-            attachments: null
-            persistNode: true
-            skipNode:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            instrumentNode:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            continueParentNodeExecutionOnError:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            key:
-              dynamic: false
-              value: "BRANCH_EXIST"
-              expression: null
-              expressionType: null
-            value:
-              dynamic: true
-              value: null
-              expression: "!binding.hasVariable(\"BRANCH_EXIST\")? true : Boolean.parseBoolean(\"\
-                ${BRANCH_EXIST}\")"
-              expressionType: ""
-            id: "644fbe4e38a61e07cc3a4df8"
-          - _class: "Set"
-            customFields: null
-            attributes:
-              name: "Set OS if not given"
-            dynamicName:
-              dynamic: false
-              value: ""
-              expression: ""
-              expressionType: null
-            useDynamicName: false
-            description: null
-            children: []
-            customAttributes: null
-            attachments: null
-            persistNode: true
-            skipNode:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            instrumentNode:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            continueParentNodeExecutionOnError:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            key:
-              dynamic: false
-              value: "OS"
-              expression: null
-              expressionType: null
-            value:
-              dynamic: true
-              value: null
-              expression: "!binding.hasVariable(\"OS\")? \"LINUX\" : OS"
-              expressionType: ""
-            id: "644fbe4e38a61e07cc3a4df8"
-          - _class: "Set"
-            customFields: null
-            attributes:
-              name: "Set SHOULD_PROPAGATE if not given"
-            dynamicName:
-              dynamic: false
-              value: ""
-              expression: ""
-              expressionType: null
-            useDynamicName: false
-            description: null
-            children: []
-            customAttributes: null
-            attachments: null
-            persistNode: true
-            skipNode:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            instrumentNode:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            continueParentNodeExecutionOnError:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            key:
-              dynamic: false
-              value: "SHOULD_PROPAGATE"
-              expression: null
-              expressionType: null
-            value:
-              dynamic: true
-              value: null
-              expression: "!binding.hasVariable(\"SHOULD_PROPAGATE\")? true : Boolean.parseBoolean(\"\
-                ${SHOULD_PROPAGATE}\")"
-              expressionType: ""
-            id: "644fbe4e38a61e07cc3a4df8"
-          - _class: "Set"
-            customFields: null
-            attributes:
-              name: "Set EMAIL if not given"
-            dynamicName:
-              dynamic: false
-              value: ""
-              expression: ""
-              expressionType: null
-            useDynamicName: false
-            description: null
-            children: []
-            customAttributes: null
-            attachments: null
-            persistNode: true
-            skipNode:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            instrumentNode:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            continueParentNodeExecutionOnError:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            key:
-              dynamic: false
-              value: "EMAIL"
-              expression: null
-              expressionType: null
-            value:
-              dynamic: true
-              value: null
-              expression: "!binding.hasVariable(\"EMAIL\")? DEFAULT_EMAIL : EMAIL"
-              expressionType: ""
-            id: "644fbe4e38a61e07cc3a4df8"
-          - _class: "Set"
-            customFields: null
-            attributes:
-              name: "Set AUTHOR if not given"
-            dynamicName:
-              dynamic: false
-              value: ""
-              expression: ""
-              expressionType: null
-            useDynamicName: false
-            description: null
-            children: []
-            customAttributes: null
-            attachments: null
-            persistNode: true
-            skipNode:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            instrumentNode:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            continueParentNodeExecutionOnError:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            key:
-              dynamic: false
-              value: "AUTHOR"
-              expression: null
-              expressionType: null
-            value:
-              dynamic: true
-              value: null
-              expression: "!binding.hasVariable(\"AUTHOR\")? \"Dev team\" : AUTHOR"
-              expressionType: ""
-            id: "644fbe4e38a61e07cc3a4df8"
-          - _class: "Set"
-            customFields: null
-            attributes:
-              name: "Set SEND_EMAIL if not given"
-            dynamicName:
-              dynamic: false
-              value: ""
-              expression: ""
-              expressionType: null
-            useDynamicName: false
-            description: null
-            children: []
-            customAttributes: null
-            attachments: null
-            persistNode: true
-            skipNode:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            instrumentNode:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            continueParentNodeExecutionOnError:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            key:
-              dynamic: false
-              value: "SEND_EMAIL"
-              expression: null
-              expressionType: null
-            value:
-              dynamic: true
-              value: null
-              expression: "!binding.hasVariable(\"SEND_EMAIL\")?true:Boolean.parseBoolean(\"\
-                ${SEND_EMAIL}\")"
-              expressionType: ""
-            id: "644fbe4e38a61e07cc3a4df8"
-          - _class: "Set"
-            customFields: null
-            attributes:
-              name: "Set VERSION if not given"
-            dynamicName:
-              dynamic: false
-              value: ""
-              expression: ""
-              expressionType: null
-            useDynamicName: false
-            description: null
-            children: []
-            customAttributes: null
-            attachments: null
-            persistNode: true
-            skipNode:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            instrumentNode:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            continueParentNodeExecutionOnError:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            key:
-              dynamic: false
-              value: "VERSION"
-              expression: null
-              expressionType: null
-            value:
-              dynamic: true
-              value: null
-              expression: "(!binding.hasVariable(\"VERSION\") || VERSION.isBlank())?\
-                \ \"${new Date().format(\"YYYY.M.d\")}-${context.getExecutionId()}\"\
-                \ : VERSION"
-              expressionType: ""
-            id: "644fbe4e38a61e07cc3a4df8"
-          customAttributes: null
-          attachments: null
-          persistNode: true
-          skipNode:
-            dynamic: false
-            value: false
-            expression: null
-            expressionType: null
-          instrumentNode:
-            dynamic: false
-            value: false
-            expression: null
-            expressionType: null
-          continueParentNodeExecutionOnError:
-            dynamic: false
-            value: false
-            expression: null
-            expressionType: null
-          continueOnError:
-            dynamic: false
-            value: false
-            expression: null
-            expressionType: null
-          pacing:
-            dynamic: false
-            value: null
-            expression: null
-            expressionType: null
-          id: "644fbe4e38a61e07cc3a4df8"
-        - _class: "Echo"
-          customFields: null
-          attributes:
-            name: "Echo info"
+            name: "Check VERSION is given when releasing into PRODUCTION"
           dynamicName:
             dynamic: false
             value: ""
@@ -955,17 +166,16 @@ root:
             value: false
             expression: null
             expressionType: null
-          text:
+          expression:
             dynamic: true
             value: null
-            expression: "\"Building ${PROJECT}, for branch ${BRANCH} version ${VERSION}\
-              \ in environment ${ENVIRONMENT}\""
+            expression: "binding.hasVariable(\"VERSION\") && !VERSION.isBlank()"
             expressionType: ""
           id: "644fbe4e38a61e07cc3a4df8"
-        - _class: "CallPlan"
+        - _class: "Check"
           customFields: null
           attributes:
-            name: "Create unique folder"
+            name: "Check VERSION is properly formated"
           dynamicName:
             dynamic: false
             value: ""
@@ -992,1123 +202,12 @@ root:
             value: false
             expression: null
             expressionType: null
-          planId: "618aa49f34603040f758fd12"
-          selectionAttributes:
-            dynamic: false
-            value: "{}"
-            expression: null
-            expressionType: null
-          input:
-            dynamic: false
-            value: "{}"
-            expression: null
-            expressionType: null
-          id: "644fbe4e38a61e07cc3a4df8"
-        - _class: "CallPlan"
-          customFields: null
-          attributes:
-            name: "Checkout git"
-          dynamicName:
-            dynamic: false
-            value: ""
-            expression: ""
-            expressionType: null
-          useDynamicName: false
-          description: null
-          children: []
-          customAttributes: null
-          attachments: null
-          persistNode: true
-          skipNode:
-            dynamic: false
-            value: false
-            expression: null
-            expressionType: null
-          instrumentNode:
-            dynamic: false
-            value: false
-            expression: null
-            expressionType: null
-          continueParentNodeExecutionOnError:
-            dynamic: false
-            value: false
-            expression: null
-            expressionType: null
-          planId: "63fc7ffd32ed452ab30e0116"
-          selectionAttributes:
-            dynamic: false
-            value: "{}"
-            expression: null
-            expressionType: null
-          input:
-            dynamic: false
-            value: "{}"
-            expression: null
-            expressionType: null
-          id: "644fbe4e38a61e07cc3a4df8"
-        - _class: "Set"
-          customFields: null
-          attributes:
-            name: "Init JSON"
-          dynamicName:
-            dynamic: false
-            value: ""
-            expression: ""
-            expressionType: null
-          useDynamicName: false
-          description: null
-          children: []
-          customAttributes: null
-          attachments: null
-          persistNode: true
-          skipNode:
-            dynamic: false
-            value: false
-            expression: null
-            expressionType: null
-          instrumentNode:
-            dynamic: false
-            value: false
-            expression: null
-            expressionType: null
-          continueParentNodeExecutionOnError:
-            dynamic: false
-            value: false
-            expression: null
-            expressionType: null
-          key:
-            dynamic: false
-            value: "JSON"
-            expression: null
-            expressionType: null
-          value:
-            dynamic: false
-            value: ""
-            expression: null
-            expressionType: null
-          id: "644fbe4e38a61e07cc3a4df8"
-        - _class: "CallPlan"
-          customFields: null
-          attributes:
-            name: "Read JSON"
-          dynamicName:
-            dynamic: false
-            value: ""
-            expression: ""
-            expressionType: null
-          useDynamicName: false
-          description: null
-          children: []
-          customAttributes: null
-          attachments: null
-          persistNode: true
-          skipNode:
-            dynamic: false
-            value: false
-            expression: null
-            expressionType: null
-          instrumentNode:
-            dynamic: false
-            value: false
-            expression: null
-            expressionType: null
-          continueParentNodeExecutionOnError:
-            dynamic: false
-            value: false
-            expression: null
-            expressionType: null
-          planId: "618aa49f34603040f758fd0b"
-          selectionAttributes:
-            dynamic: false
-            value: "{}"
-            expression: null
-            expressionType: null
-          input:
-            dynamic: false
-            value: "{}"
-            expression: null
-            expressionType: null
-          id: "644fbe4e38a61e07cc3a4df8"
-        - _class: "CallPlan"
-          customFields: null
-          attributes:
-            name: "Run action"
-          dynamicName:
-            dynamic: false
-            value: ""
-            expression: ""
-            expressionType: null
-          useDynamicName: false
-          description: null
-          children: []
-          customAttributes: null
-          attachments: null
-          persistNode: true
-          skipNode:
-            dynamic: false
-            value: false
-            expression: null
-            expressionType: null
-          instrumentNode:
-            dynamic: false
-            value: false
-            expression: null
-            expressionType: null
-          continueParentNodeExecutionOnError:
-            dynamic: false
-            value: false
-            expression: null
-            expressionType: null
-          planId: "618aa49f34603040f758fd15"
-          selectionAttributes:
-            dynamic: false
-            value: "{}"
-            expression: null
-            expressionType: null
-          input:
-            dynamic: false
-            value: "{}"
-            expression: null
-            expressionType: null
-          id: "644fbe4e38a61e07cc3a4df8"
-        - _class: "CallPlan"
-          customFields: null
-          attributes:
-            name: "Create release"
-          dynamicName:
-            dynamic: false
-            value: ""
-            expression: ""
-            expressionType: null
-          useDynamicName: false
-          description: null
-          children: []
-          customAttributes: null
-          attachments: null
-          persistNode: true
-          skipNode:
-            dynamic: false
-            value: false
-            expression: null
-            expressionType: null
-          instrumentNode:
-            dynamic: false
-            value: false
-            expression: null
-            expressionType: null
-          continueParentNodeExecutionOnError:
-            dynamic: false
-            value: false
-            expression: null
-            expressionType: null
-          planId: "64145b48d91d580809da608f"
-          selectionAttributes:
-            dynamic: false
-            value: "{}"
-            expression: null
-            expressionType: null
-          input:
-            dynamic: false
-            value: "{}"
-            expression: null
-            expressionType: null
-          id: "644fbe4e38a61e07cc3a4df8"
-        - _class: "RetryIfFails"
-          customFields: null
-          attributes:
-            name: "RetryIfFails"
-          dynamicName:
-            dynamic: false
-            value: ""
-            expression: ""
-            expressionType: null
-          useDynamicName: false
-          description: null
-          children:
-          - _class: "CallPlan"
-            customFields: null
-            attributes:
-              name: "Set latest version"
-            dynamicName:
-              dynamic: false
-              value: ""
-              expression: ""
-              expressionType: null
-            useDynamicName: false
-            description: null
-            children: []
-            customAttributes: null
-            attachments: null
-            persistNode: true
-            skipNode:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            instrumentNode:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            continueParentNodeExecutionOnError:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            planId: "63ff232032ed452ab35619aa"
-            selectionAttributes:
-              dynamic: false
-              value: "{}"
-              expression: null
-              expressionType: null
-            input:
-              dynamic: false
-              value: "{}"
-              expression: null
-              expressionType: null
-            id: "644fbe4e38a61e07cc3a4df8"
-          customAttributes: null
-          attachments: null
-          persistNode: true
-          skipNode:
-            dynamic: false
-            value: false
-            expression: null
-            expressionType: null
-          instrumentNode:
-            dynamic: false
-            value: false
-            expression: null
-            expressionType: null
-          continueParentNodeExecutionOnError:
-            dynamic: false
-            value: false
-            expression: null
-            expressionType: null
-          maxRetries:
-            dynamic: false
-            value: 3
-            expression: null
-            expressionType: null
-          gracePeriod:
-            dynamic: false
-            value: 1000
-            expression: null
-            expressionType: null
-          timeout:
-            dynamic: false
-            value: 0
-            expression: null
-            expressionType: null
-          releaseTokens:
-            dynamic: false
-            value: false
-            expression: null
-            expressionType: null
-          reportLastTryOnly:
-            dynamic: false
-            value: true
-            expression: null
-            expressionType: null
-          id: "644fbe4e38a61e07cc3a4df8"
-        - _class: "Set"
-          customFields: null
-          attributes:
-            name: "Set STATUS at PASSED"
-          dynamicName:
-            dynamic: false
-            value: ""
-            expression: ""
-            expressionType: null
-          useDynamicName: false
-          description: null
-          children: []
-          customAttributes: null
-          attachments: null
-          persistNode: true
-          skipNode:
-            dynamic: false
-            value: false
-            expression: null
-            expressionType: null
-          instrumentNode:
-            dynamic: false
-            value: false
-            expression: null
-            expressionType: null
-          continueParentNodeExecutionOnError:
-            dynamic: false
-            value: false
-            expression: null
-            expressionType: null
-          key:
-            dynamic: false
-            value: "STATUS"
-            expression: null
-            expressionType: null
-          value:
-            dynamic: false
-            value: "PASSED"
-            expression: null
-            expressionType: null
-          id: "644fbe4e38a61e07cc3a4df8"
-        - _class: "AfterSequence"
-          customFields: null
-          attributes:
-            name: "AfterSequence - Set result"
-          dynamicName:
-            dynamic: false
-            value: ""
-            expression: ""
-            expressionType: null
-          useDynamicName: false
-          description: null
-          children:
-          - _class: "CallPlan"
-            customFields: null
-            attributes:
-              name: "Set build result"
-            dynamicName:
-              dynamic: false
-              value: ""
-              expression: ""
-              expressionType: null
-            useDynamicName: false
-            description: null
-            children: []
-            customAttributes: null
-            attachments: null
-            persistNode: true
-            skipNode:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            instrumentNode:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            continueParentNodeExecutionOnError:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            planId: "64145bc4d91d580809daa2f1"
-            selectionAttributes:
-              dynamic: false
-              value: "{}"
-              expression: null
-              expressionType: null
-            input:
-              dynamic: false
-              value: "{}"
-              expression: null
-              expressionType: null
-            id: "644fbe4e38a61e07cc3a4df8"
-          - _class: "If"
-            customFields: null
-            attributes:
-              name: "If ENVIRONMENT==\"PRODUCTION\" && STATUS==\"PASSED\""
-            dynamicName:
-              dynamic: false
-              value: ""
-              expression: ""
-              expressionType: null
-            useDynamicName: false
-            description: null
-            children:
-            - _class: "Set"
-              customFields: null
-              attributes:
-                name: "Set EXEC_ID"
-              dynamicName:
-                dynamic: false
-                value: ""
-                expression: ""
-                expressionType: null
-              useDynamicName: false
-              description: null
-              children: []
-              customAttributes: null
-              attachments: null
-              persistNode: true
-              skipNode:
-                dynamic: false
-                value: false
-                expression: null
-                expressionType: null
-              instrumentNode:
-                dynamic: false
-                value: false
-                expression: null
-                expressionType: null
-              continueParentNodeExecutionOnError:
-                dynamic: false
-                value: false
-                expression: null
-                expressionType: null
-              key:
-                dynamic: false
-                value: "EXEC_ID"
-                expression: null
-                expressionType: null
-              value:
-                dynamic: true
-                value: null
-                expression: "context.getExecutionId()"
-                expressionType: ""
-              id: "644fbe4e38a61e07cc3a4df8"
-            - _class: "CallKeyword"
-              customFields: null
-              attributes:
-                name: "Set as \"Retain this execution\""
-              dynamicName:
-                dynamic: false
-                value: ""
-                expression: ""
-                expressionType: null
-              useDynamicName: false
-              description: ""
-              children: []
-              customAttributes: null
-              attachments: null
-              persistNode: true
-              skipNode:
-                dynamic: false
-                value: false
-                expression: null
-                expressionType: null
-              instrumentNode:
-                dynamic: false
-                value: false
-                expression: null
-                expressionType: null
-              continueParentNodeExecutionOnError:
-                dynamic: false
-                value: false
-                expression: null
-                expressionType: null
-              remote:
-                dynamic: false
-                value: true
-                expression: null
-                expressionType: null
-              token:
-                dynamic: false
-                value: "{}"
-                expression: null
-                expressionType: null
-              function:
-                dynamic: false
-                value: "{\"name\":{\"value\":\"HttpRequest\",\"dynamic\":false}}"
-                expression: null
-                expressionType: null
-              argument:
-                dynamic: false
-                value: "{\"URL\":{\"dynamic\":true,\"expression\":\"\\\"${K8S_BUILD_INSTANCE_URL}/rest/housekeeping/execution/${EXEC_ID}/protection\\\
-                  \"\"},\"Method\":\"POST\",\"Header_content-type\":\"application/json\"\
-                  ,\"Data\":\"true\"}"
-                expression: null
-                expressionType: null
-              resultMap:
-                dynamic: false
-                value: null
-                expression: null
-                expressionType: null
-              id: "644fbe4e38a61e07cc3a4df8"
-            customAttributes: null
-            attachments: null
-            persistNode: true
-            skipNode:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            instrumentNode:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            continueParentNodeExecutionOnError:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            condition:
-              dynamic: true
-              value: null
-              expression: "ENVIRONMENT==\"PRODUCTION\" && STATUS==\"PASSED\""
-              expressionType: ""
-            id: "644fbe4e38a61e07cc3a4df8"
-          customAttributes: null
-          attachments: null
-          persistNode: true
-          skipNode:
-            dynamic: false
-            value: false
-            expression: null
-            expressionType: null
-          instrumentNode:
-            dynamic: false
-            value: false
-            expression: null
-            expressionType: null
-          continueParentNodeExecutionOnError:
-            dynamic: false
-            value: false
-            expression: null
-            expressionType: null
-          continueOnError:
-            dynamic: false
-            value: false
-            expression: null
-            expressionType: null
-          pacing:
-            dynamic: false
+          expression:
+            dynamic: true
             value: null
-            expression: null
-            expressionType: null
+            expression: "VERSION ==~ /\\d+\\.\\d+\\.\\d+/"
+            expressionType: ""
           id: "644fbe4e38a61e07cc3a4df8"
-        - _class: "AfterSequence"
-          customFields: null
-          attributes:
-            name: "AfterSequence - Send email"
-          dynamicName:
-            dynamic: false
-            value: ""
-            expression: ""
-            expressionType: null
-          useDynamicName: false
-          description: null
-          children:
-          - _class: "If"
-            customFields: null
-            attributes:
-              name: "If SEND_EMAIL"
-            dynamicName:
-              dynamic: false
-              value: ""
-              expression: ""
-              expressionType: null
-            useDynamicName: false
-            description: null
-            children:
-            - _class: "RetryIfFails"
-              customFields: null
-              attributes:
-                name: "RetryIfFails"
-              dynamicName:
-                dynamic: false
-                value: ""
-                expression: ""
-                expressionType: null
-              useDynamicName: false
-              description: null
-              children:
-              - _class: "CallPlan"
-                customFields: null
-                attributes:
-                  name: "Send Email"
-                dynamicName:
-                  dynamic: false
-                  value: ""
-                  expression: ""
-                  expressionType: null
-                useDynamicName: false
-                description: null
-                children: []
-                customAttributes: null
-                attachments: null
-                persistNode: true
-                skipNode:
-                  dynamic: false
-                  value: false
-                  expression: null
-                  expressionType: null
-                instrumentNode:
-                  dynamic: false
-                  value: false
-                  expression: null
-                  expressionType: null
-                continueParentNodeExecutionOnError:
-                  dynamic: false
-                  value: false
-                  expression: null
-                  expressionType: null
-                planId: "6229efeaf270a8319dfbee2e"
-                selectionAttributes:
-                  dynamic: false
-                  value: "{}"
-                  expression: null
-                  expressionType: null
-                input:
-                  dynamic: false
-                  value: "{}"
-                  expression: null
-                  expressionType: null
-                id: "644fbe4e38a61e07cc3a4df8"
-              customAttributes: null
-              attachments: null
-              persistNode: true
-              skipNode:
-                dynamic: false
-                value: false
-                expression: null
-                expressionType: null
-              instrumentNode:
-                dynamic: false
-                value: false
-                expression: null
-                expressionType: null
-              continueParentNodeExecutionOnError:
-                dynamic: false
-                value: false
-                expression: null
-                expressionType: null
-              maxRetries:
-                dynamic: false
-                value: 3
-                expression: null
-                expressionType: null
-              gracePeriod:
-                dynamic: false
-                value: 1000
-                expression: null
-                expressionType: null
-              timeout:
-                dynamic: false
-                value: 0
-                expression: null
-                expressionType: null
-              releaseTokens:
-                dynamic: false
-                value: false
-                expression: null
-                expressionType: null
-              reportLastTryOnly:
-                dynamic: false
-                value: false
-                expression: null
-                expressionType: null
-              id: "644fbe4e38a61e07cc3a4df8"
-            customAttributes: null
-            attachments: null
-            persistNode: true
-            skipNode:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            instrumentNode:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            continueParentNodeExecutionOnError:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            condition:
-              dynamic: true
-              value: null
-              expression: "SEND_EMAIL"
-              expressionType: ""
-            id: "644fbe4e38a61e07cc3a4df8"
-          customAttributes: null
-          attachments: null
-          persistNode: true
-          skipNode:
-            dynamic: false
-            value: false
-            expression: null
-            expressionType: null
-          instrumentNode:
-            dynamic: false
-            value: false
-            expression: null
-            expressionType: null
-          continueParentNodeExecutionOnError:
-            dynamic: false
-            value: false
-            expression: null
-            expressionType: null
-          continueOnError:
-            dynamic: false
-            value: true
-            expression: null
-            expressionType: null
-          pacing:
-            dynamic: false
-            value: null
-            expression: null
-            expressionType: null
-          id: "644fbe4e38a61e07cc3a4df8"
-        - _class: "AfterSequence"
-          customFields: null
-          attributes:
-            name: "AfterSequence - Clean folder"
-          dynamicName:
-            dynamic: false
-            value: ""
-            expression: ""
-            expressionType: null
-          useDynamicName: false
-          description: null
-          children:
-          - _class: "CallKeyword"
-            customFields: null
-            attributes:
-              name: "Rmdir ${FOLDER}"
-            dynamicName:
-              dynamic: false
-              value: ""
-              expression: ""
-              expressionType: null
-            useDynamicName: false
-            description: null
-            children: []
-            customAttributes: null
-            attachments: null
-            persistNode: true
-            skipNode:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            instrumentNode:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            continueParentNodeExecutionOnError:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            remote:
-              dynamic: false
-              value: true
-              expression: null
-              expressionType: null
-            token:
-              dynamic: false
-              value: "{}"
-              expression: null
-              expressionType: null
-            function:
-              dynamic: false
-              value: "{\"name\":{\"value\":\"Rmdir\",\"dynamic\":false}}"
-              expression: null
-              expressionType: null
-            argument:
-              dynamic: false
-              value: "{\"Folder\":{\"dynamic\":true,\"expression\":\"FOLDER\"}}"
-              expression: null
-              expressionType: null
-            resultMap:
-              dynamic: false
-              value: null
-              expression: null
-              expressionType: null
-            id: "644fbe4e38a61e07cc3a4df8"
-          customAttributes: null
-          attachments: null
-          persistNode: true
-          skipNode:
-            dynamic: false
-            value: false
-            expression: null
-            expressionType: null
-          instrumentNode:
-            dynamic: false
-            value: false
-            expression: null
-            expressionType: null
-          continueParentNodeExecutionOnError:
-            dynamic: false
-            value: false
-            expression: null
-            expressionType: null
-          continueOnError:
-            dynamic: false
-            value: false
-            expression: null
-            expressionType: null
-          pacing:
-            dynamic: false
-            value: null
-            expression: null
-            expressionType: null
-          id: "644fbe4e38a61e07cc3a4df8"
-        - _class: "AfterSequence"
-          customFields: null
-          attributes:
-            name: "AfterSequence - Propagate build"
-          dynamicName:
-            dynamic: false
-            value: ""
-            expression: ""
-            expressionType: null
-          useDynamicName: false
-          description: null
-          children:
-          - _class: "If"
-            customFields: null
-            attributes:
-              name: "If SHOULD_PROPAGATE && PASSED"
-            dynamicName:
-              dynamic: false
-              value: ""
-              expression: ""
-              expressionType: null
-            useDynamicName: false
-            description: ""
-            children:
-            - _class: "CallPlan"
-              customFields: null
-              attributes:
-                name: "Propagate build - scale down the agent if needed"
-              dynamicName:
-                dynamic: false
-                value: ""
-                expression: ""
-                expressionType: null
-              useDynamicName: false
-              description: null
-              children: []
-              customAttributes: null
-              attachments: null
-              persistNode: true
-              skipNode:
-                dynamic: false
-                value: false
-                expression: null
-                expressionType: null
-              instrumentNode:
-                dynamic: false
-                value: false
-                expression: null
-                expressionType: null
-              continueParentNodeExecutionOnError:
-                dynamic: false
-                value: false
-                expression: null
-                expressionType: null
-              planId: "63ff47ed32ed452ab35c23d0"
-              selectionAttributes:
-                dynamic: false
-                value: "{}"
-                expression: null
-                expressionType: null
-              input:
-                dynamic: false
-                value: "{}"
-                expression: null
-                expressionType: null
-              id: "644fbe4e38a61e07cc3a4df8"
-            customAttributes: null
-            attachments: null
-            persistNode: true
-            skipNode:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            instrumentNode:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            continueParentNodeExecutionOnError:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            condition:
-              dynamic: true
-              value: null
-              expression: "STATUS.equals(\"PASSED\") &&  SHOULD_PROPAGATE"
-              expressionType: ""
-            id: "644fbe4e38a61e07cc3a4df8"
-          customAttributes: null
-          attachments: null
-          persistNode: true
-          skipNode:
-            dynamic: false
-            value: false
-            expression: null
-            expressionType: null
-          instrumentNode:
-            dynamic: false
-            value: false
-            expression: null
-            expressionType: null
-          continueParentNodeExecutionOnError:
-            dynamic: false
-            value: false
-            expression: null
-            expressionType: null
-          continueOnError:
-            dynamic: false
-            value: false
-            expression: null
-            expressionType: null
-          pacing:
-            dynamic: false
-            value: null
-            expression: null
-            expressionType: null
-          id: "644fbe4e38a61e07cc3a4df8"
-        - _class: "AfterSequence"
-          customFields: null
-          attributes:
-            name: "AfterSequence - Scale down agent if needed"
-          dynamicName:
-            dynamic: false
-            value: ""
-            expression: ""
-            expressionType: null
-          useDynamicName: false
-          description: null
-          children:
-          - _class: "If"
-            customFields: null
-            attributes:
-              name: "If STATUS is not \"PASSED\" or SHOULD_PROPAGATE is false"
-            dynamicName:
-              dynamic: false
-              value: ""
-              expression: ""
-              expressionType: null
-            useDynamicName: false
-            description: null
-            children:
-            - _class: "CallPlan"
-              customFields: null
-              attributes:
-                name: "Scale Down Build Agents - After Execution"
-              dynamicName:
-                dynamic: false
-                value: ""
-                expression: ""
-                expressionType: null
-              useDynamicName: false
-              description: null
-              children: []
-              customAttributes: null
-              attachments: null
-              persistNode: true
-              skipNode:
-                dynamic: false
-                value: false
-                expression: null
-                expressionType: null
-              instrumentNode:
-                dynamic: false
-                value: false
-                expression: null
-                expressionType: null
-              continueParentNodeExecutionOnError:
-                dynamic: false
-                value: false
-                expression: null
-                expressionType: null
-              planId: "6482daa9cdd45e7199acdcac"
-              selectionAttributes:
-                dynamic: false
-                value: "{}"
-                expression: null
-                expressionType: null
-              input:
-                dynamic: false
-                value: "{}"
-                expression: null
-                expressionType: null
-              id: "644fbe4e38a61e07cc3a4df8"
-            customAttributes: null
-            attachments: null
-            persistNode: true
-            skipNode:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            instrumentNode:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            continueParentNodeExecutionOnError:
-              dynamic: false
-              value: false
-              expression: null
-              expressionType: null
-            condition:
-              dynamic: true
-              value: null
-              expression: "!STATUS.equals(\"PASSED\") || !SHOULD_PROPAGATE"
-              expressionType: ""
-            id: "644fbe4e38a61e07cc3a4df8"
-          customAttributes: null
-          attachments: null
-          persistNode: true
-          skipNode:
-            dynamic: false
-            value: false
-            expression: null
-            expressionType: null
-          instrumentNode:
-            dynamic: false
-            value: false
-            expression: null
-            expressionType: null
-          continueParentNodeExecutionOnError:
-            dynamic: false
-            value: false
-            expression: null
-            expressionType: null
-          continueOnError:
-            dynamic: false
-            value: false
-            expression: null
-            expressionType: null
-          pacing:
-            dynamic: false
-            value: null
-            expression: null
-            expressionType: null
-          id: "644fbe4e38a61e07cc3a4df8"
-        customAttributes: null
-        attachments: null
-        persistNode: true
-        skipNode:
-          dynamic: false
-          value: false
-          expression: null
-          expressionType: null
-        instrumentNode:
-          dynamic: false
-          value: false
-          expression: null
-          expressionType: null
-        continueParentNodeExecutionOnError:
-          dynamic: false
-          value: false
-          expression: null
-          expressionType: null
-        continueOnError:
-          dynamic: false
-          value: false
-          expression: null
-          expressionType: null
-        pacing:
-          dynamic: false
-          value: null
-          expression: null
-          expressionType: null
-        id: "644fbe4e38a61e07cc3a4df8"
       customAttributes: null
       attachments: null
       persistNode: true
@@ -2127,46 +226,1947 @@ root:
         value: false
         expression: null
         expressionType: null
-      remote:
+      condition:
+        dynamic: true
+        value: null
+        expression: "ENVIRONMENT==\"PRODUCTION\""
+        expressionType: ""
+      id: "644fbe4e38a61e07cc3a4df8"
+    - _class: "Set"
+      customFields: null
+      attributes:
+        name: "Init SCALEUP"
+      dynamicName:
+        dynamic: false
+        value: ""
+        expression: ""
+        expressionType: null
+      useDynamicName: false
+      description: null
+      children: []
+      customAttributes: null
+      attachments: null
+      persistNode: true
+      skipNode:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      instrumentNode:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      key:
+        dynamic: false
+        value: "SCALEUP"
+        expression: null
+        expressionType: null
+      value:
+        dynamic: false
+        value: ""
+        expression: null
+        expressionType: null
+      id: "644fbe4e38a61e07cc3a4df8"
+    - _class: "If"
+      customFields: null
+      attributes:
+        name: "If OS==LINUX"
+      dynamicName:
+        dynamic: false
+        value: ""
+        expression: ""
+        expressionType: null
+      useDynamicName: false
+      description: null
+      children:
+        - _class: "CallPlan"
+          customFields: null
+          attributes:
+            name: "Scale Up Build Agents"
+          dynamicName:
+            dynamic: false
+            value: ""
+            expression: ""
+            expressionType: null
+          useDynamicName: false
+          description: null
+          children: []
+          customAttributes: null
+          attachments: null
+          persistNode: true
+          skipNode:
+            dynamic: false
+            value: false
+            expression: null
+            expressionType: null
+          instrumentNode:
+            dynamic: false
+            value: false
+            expression: null
+            expressionType: null
+          continueParentNodeExecutionOnError:
+            dynamic: false
+            value: false
+            expression: null
+            expressionType: null
+          planId: "6386268253799329484c57ef"
+          selectionAttributes:
+            dynamic: false
+            value: "{}"
+            expression: null
+            expressionType: null
+          input:
+            dynamic: false
+            value: "{}"
+            expression: null
+            expressionType: null
+          id: "644fbe4e38a61e07cc3a4df8"
+      customAttributes: null
+      attachments: null
+      persistNode: true
+      skipNode:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      instrumentNode:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      condition:
+        dynamic: true
+        value: null
+        expression: "OS==\"LINUX\""
+        expressionType: ""
+      id: "644fbe4e38a61e07cc3a4df8"
+    - _class: "Sequence"
+      customFields: null
+      attributes:
+        name: "Sequence"
+      dynamicName:
+        dynamic: false
+        value: ""
+        expression: ""
+        expressionType: null
+      useDynamicName: false
+      description: null
+      children:
+        - _class: "Session"
+          customFields: null
+          attributes:
+            name: "Session"
+          dynamicName:
+            dynamic: false
+            value: ""
+            expression: ""
+            expressionType: null
+          useDynamicName: false
+          description: null
+          children:
+            - _class: "Sequence"
+              customFields: null
+              attributes:
+                name: "Main Sequence"
+              dynamicName:
+                dynamic: false
+                value: ""
+                expression: ""
+                expressionType: null
+              useDynamicName: false
+              description: null
+              children:
+                - _class: "BeforeSequence"
+                  customFields: null
+                  attributes:
+                    name: "BeforeSequence - Init variables"
+                  dynamicName:
+                    dynamic: false
+                    value: ""
+                    expression: ""
+                    expressionType: null
+                  useDynamicName: false
+                  description: null
+                  children:
+                    - _class: "Set"
+                      customFields: null
+                      attributes:
+                        name: "Init STATUS - FAILED"
+                      dynamicName:
+                        dynamic: false
+                        value: ""
+                        expression: ""
+                        expressionType: null
+                      useDynamicName: false
+                      description: null
+                      children: []
+                      customAttributes: null
+                      attachments: null
+                      persistNode: true
+                      skipNode:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      instrumentNode:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      continueParentNodeExecutionOnError:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      key:
+                        dynamic: false
+                        value: "STATUS"
+                        expression: null
+                        expressionType: null
+                      value:
+                        dynamic: false
+                        value: "FAILED"
+                        expression: null
+                        expressionType: null
+                      id: "644fbe4e38a61e07cc3a4df8"
+                    - _class: "Set"
+                      customFields: null
+                      attributes:
+                        name: "Init FOLDER"
+                      dynamicName:
+                        dynamic: false
+                        value: ""
+                        expression: ""
+                        expressionType: null
+                      useDynamicName: false
+                      description: null
+                      children: []
+                      customAttributes: null
+                      attachments: null
+                      persistNode: true
+                      skipNode:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      instrumentNode:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      continueParentNodeExecutionOnError:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      key:
+                        dynamic: false
+                        value: "FOLDER"
+                        expression: null
+                        expressionType: null
+                      value:
+                        dynamic: true
+                        value: null
+                        expression: ""
+                        expressionType: ""
+                      id: "644fbe4e38a61e07cc3a4df8"
+                    - _class: "Set"
+                      customFields: null
+                      attributes:
+                        name: "Init FTP_FILES"
+                      dynamicName:
+                        dynamic: false
+                        value: ""
+                        expression: ""
+                        expressionType: null
+                      useDynamicName: false
+                      description: ""
+                      children: []
+                      customAttributes: null
+                      attachments: null
+                      persistNode: true
+                      skipNode:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      instrumentNode:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      continueParentNodeExecutionOnError:
+                        dynamic: false
+                        value: true
+                        expression: null
+                        expressionType: null
+                      key:
+                        dynamic: false
+                        value: "FTP_FILES"
+                        expression: null
+                        expressionType: null
+                      value:
+                        dynamic: false
+                        value: ""
+                        expression: null
+                        expressionType: null
+                      id: "644fbe4e38a61e07cc3a4df8"
+                    - _class: "Set"
+                      customFields: null
+                      attributes:
+                        name: "Init TESTS"
+                      dynamicName:
+                        dynamic: false
+                        value: ""
+                        expression: ""
+                        expressionType: null
+                      useDynamicName: false
+                      description: ""
+                      children: []
+                      customAttributes: null
+                      attachments: null
+                      persistNode: true
+                      skipNode:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      instrumentNode:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      continueParentNodeExecutionOnError:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      key:
+                        dynamic: false
+                        value: "TESTS"
+                        expression: null
+                        expressionType: null
+                      value:
+                        dynamic: false
+                        value: ""
+                        expression: null
+                        expressionType: null
+                      id: "644fbe4e38a61e07cc3a4df8"
+                    - _class: "Set"
+                      customFields: null
+                      attributes:
+                        name: "Init DEPLOYED_INSTANCES"
+                      dynamicName:
+                        dynamic: false
+                        value: ""
+                        expression: ""
+                        expressionType: null
+                      useDynamicName: false
+                      description: ""
+                      children: []
+                      customAttributes: null
+                      attachments: null
+                      persistNode: true
+                      skipNode:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      instrumentNode:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      continueParentNodeExecutionOnError:
+                        dynamic: false
+                        value: true
+                        expression: null
+                        expressionType: null
+                      key:
+                        dynamic: false
+                        value: "DEPLOYED_INSTANCES"
+                        expression: null
+                        expressionType: null
+                      value:
+                        dynamic: false
+                        value: ""
+                        expression: null
+                        expressionType: null
+                      id: "644fbe4e38a61e07cc3a4df8"
+                    - _class: "Set"
+                      customFields: null
+                      attributes:
+                        name: "Set BRANCH_EXIST if not given"
+                      dynamicName:
+                        dynamic: false
+                        value: ""
+                        expression: ""
+                        expressionType: null
+                      useDynamicName: false
+                      description: null
+                      children: []
+                      customAttributes: null
+                      attachments: null
+                      persistNode: true
+                      skipNode:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      instrumentNode:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      continueParentNodeExecutionOnError:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      key:
+                        dynamic: false
+                        value: "BRANCH_EXIST"
+                        expression: null
+                        expressionType: null
+                      value:
+                        dynamic: true
+                        value: null
+                        expression: "!binding.hasVariable(\"BRANCH_EXIST\")? true : Boolean.parseBoolean(\"\
+                ${BRANCH_EXIST}\")"
+                        expressionType: ""
+                      id: "644fbe4e38a61e07cc3a4df8"
+                    - _class: "Set"
+                      customFields: null
+                      attributes:
+                        name: "Set OS if not given"
+                      dynamicName:
+                        dynamic: false
+                        value: ""
+                        expression: ""
+                        expressionType: null
+                      useDynamicName: false
+                      description: null
+                      children: []
+                      customAttributes: null
+                      attachments: null
+                      persistNode: true
+                      skipNode:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      instrumentNode:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      continueParentNodeExecutionOnError:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      key:
+                        dynamic: false
+                        value: "OS"
+                        expression: null
+                        expressionType: null
+                      value:
+                        dynamic: true
+                        value: null
+                        expression: "!binding.hasVariable(\"OS\")? \"LINUX\" : OS"
+                        expressionType: ""
+                      id: "644fbe4e38a61e07cc3a4df8"
+                    - _class: "Set"
+                      customFields: null
+                      attributes:
+                        name: "Set SHOULD_PROPAGATE if not given"
+                      dynamicName:
+                        dynamic: false
+                        value: ""
+                        expression: ""
+                        expressionType: null
+                      useDynamicName: false
+                      description: null
+                      children: []
+                      customAttributes: null
+                      attachments: null
+                      persistNode: true
+                      skipNode:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      instrumentNode:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      continueParentNodeExecutionOnError:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      key:
+                        dynamic: false
+                        value: "SHOULD_PROPAGATE"
+                        expression: null
+                        expressionType: null
+                      value:
+                        dynamic: true
+                        value: null
+                        expression: "!binding.hasVariable(\"SHOULD_PROPAGATE\")? true : Boolean.parseBoolean(\"\
+                ${SHOULD_PROPAGATE}\")"
+                        expressionType: ""
+                      id: "644fbe4e38a61e07cc3a4df8"
+                    - _class: "Set"
+                      customFields: null
+                      attributes:
+                        name: "Set EMAIL if not given"
+                      dynamicName:
+                        dynamic: false
+                        value: ""
+                        expression: ""
+                        expressionType: null
+                      useDynamicName: false
+                      description: null
+                      children: []
+                      customAttributes: null
+                      attachments: null
+                      persistNode: true
+                      skipNode:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      instrumentNode:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      continueParentNodeExecutionOnError:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      key:
+                        dynamic: false
+                        value: "EMAIL"
+                        expression: null
+                        expressionType: null
+                      value:
+                        dynamic: true
+                        value: null
+                        expression: "!binding.hasVariable(\"EMAIL\")? DEFAULT_EMAIL : EMAIL"
+                        expressionType: ""
+                      id: "644fbe4e38a61e07cc3a4df8"
+                    - _class: "Set"
+                      customFields: null
+                      attributes:
+                        name: "Set AUTHOR if not given"
+                      dynamicName:
+                        dynamic: false
+                        value: ""
+                        expression: ""
+                        expressionType: null
+                      useDynamicName: false
+                      description: null
+                      children: []
+                      customAttributes: null
+                      attachments: null
+                      persistNode: true
+                      skipNode:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      instrumentNode:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      continueParentNodeExecutionOnError:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      key:
+                        dynamic: false
+                        value: "AUTHOR"
+                        expression: null
+                        expressionType: null
+                      value:
+                        dynamic: true
+                        value: null
+                        expression: "!binding.hasVariable(\"AUTHOR\")? \"Dev team\" : AUTHOR"
+                        expressionType: ""
+                      id: "644fbe4e38a61e07cc3a4df8"
+                    - _class: "Set"
+                      customFields: null
+                      attributes:
+                        name: "Set SEND_EMAIL if not given"
+                      dynamicName:
+                        dynamic: false
+                        value: ""
+                        expression: ""
+                        expressionType: null
+                      useDynamicName: false
+                      description: null
+                      children: []
+                      customAttributes: null
+                      attachments: null
+                      persistNode: true
+                      skipNode:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      instrumentNode:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      continueParentNodeExecutionOnError:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      key:
+                        dynamic: false
+                        value: "SEND_EMAIL"
+                        expression: null
+                        expressionType: null
+                      value:
+                        dynamic: true
+                        value: null
+                        expression: "!binding.hasVariable(\"SEND_EMAIL\")?true:Boolean.parseBoolean(\"\
+                ${SEND_EMAIL}\")"
+                        expressionType: ""
+                      id: "644fbe4e38a61e07cc3a4df8"
+                    - _class: "Set"
+                      customFields: null
+                      attributes:
+                        name: "Set VERSION if not given"
+                      dynamicName:
+                        dynamic: false
+                        value: ""
+                        expression: ""
+                        expressionType: null
+                      useDynamicName: false
+                      description: null
+                      children: []
+                      customAttributes: null
+                      attachments: null
+                      persistNode: true
+                      skipNode:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      instrumentNode:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      continueParentNodeExecutionOnError:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      key:
+                        dynamic: false
+                        value: "VERSION"
+                        expression: null
+                        expressionType: null
+                      value:
+                        dynamic: true
+                        value: null
+                        expression: "(!binding.hasVariable(\"VERSION\") || VERSION.isBlank())?\
+                \ \"${new Date().format(\"YYYY.M.d\")}-${context.getExecutionId()}\"\
+                \ : VERSION"
+                        expressionType: ""
+                      id: "644fbe4e38a61e07cc3a4df8"
+                  customAttributes: null
+                  attachments: null
+                  persistNode: true
+                  skipNode:
+                    dynamic: false
+                    value: false
+                    expression: null
+                    expressionType: null
+                  instrumentNode:
+                    dynamic: false
+                    value: false
+                    expression: null
+                    expressionType: null
+                  continueParentNodeExecutionOnError:
+                    dynamic: false
+                    value: false
+                    expression: null
+                    expressionType: null
+                  continueOnError:
+                    dynamic: false
+                    value: false
+                    expression: null
+                    expressionType: null
+                  pacing:
+                    dynamic: false
+                    value: null
+                    expression: null
+                    expressionType: null
+                  id: "644fbe4e38a61e07cc3a4df8"
+                - _class: "Echo"
+                  customFields: null
+                  attributes:
+                    name: "Echo info"
+                  dynamicName:
+                    dynamic: false
+                    value: ""
+                    expression: ""
+                    expressionType: null
+                  useDynamicName: false
+                  description: null
+                  children: []
+                  customAttributes: null
+                  attachments: null
+                  persistNode: true
+                  skipNode:
+                    dynamic: false
+                    value: false
+                    expression: null
+                    expressionType: null
+                  instrumentNode:
+                    dynamic: false
+                    value: false
+                    expression: null
+                    expressionType: null
+                  continueParentNodeExecutionOnError:
+                    dynamic: false
+                    value: false
+                    expression: null
+                    expressionType: null
+                  text:
+                    dynamic: true
+                    value: null
+                    expression: "\"Building ${PROJECT}, for branch ${BRANCH} version ${VERSION}\
+              \ in environment ${ENVIRONMENT}\""
+                    expressionType: ""
+                  id: "644fbe4e38a61e07cc3a4df8"
+                - _class: "CallPlan"
+                  customFields: null
+                  attributes:
+                    name: "Create unique folder"
+                  dynamicName:
+                    dynamic: false
+                    value: ""
+                    expression: ""
+                    expressionType: null
+                  useDynamicName: false
+                  description: null
+                  children: []
+                  customAttributes: null
+                  attachments: null
+                  persistNode: true
+                  skipNode:
+                    dynamic: false
+                    value: false
+                    expression: null
+                    expressionType: null
+                  instrumentNode:
+                    dynamic: false
+                    value: false
+                    expression: null
+                    expressionType: null
+                  continueParentNodeExecutionOnError:
+                    dynamic: false
+                    value: false
+                    expression: null
+                    expressionType: null
+                  planId: "618aa49f34603040f758fd12"
+                  selectionAttributes:
+                    dynamic: false
+                    value: "{}"
+                    expression: null
+                    expressionType: null
+                  input:
+                    dynamic: false
+                    value: "{}"
+                    expression: null
+                    expressionType: null
+                  id: "644fbe4e38a61e07cc3a4df8"
+                - _class: "CallPlan"
+                  customFields: null
+                  attributes:
+                    name: "Checkout git"
+                  dynamicName:
+                    dynamic: false
+                    value: ""
+                    expression: ""
+                    expressionType: null
+                  useDynamicName: false
+                  description: null
+                  children: []
+                  customAttributes: null
+                  attachments: null
+                  persistNode: true
+                  skipNode:
+                    dynamic: false
+                    value: false
+                    expression: null
+                    expressionType: null
+                  instrumentNode:
+                    dynamic: false
+                    value: false
+                    expression: null
+                    expressionType: null
+                  continueParentNodeExecutionOnError:
+                    dynamic: false
+                    value: false
+                    expression: null
+                    expressionType: null
+                  planId: "63fc7ffd32ed452ab30e0116"
+                  selectionAttributes:
+                    dynamic: false
+                    value: "{}"
+                    expression: null
+                    expressionType: null
+                  input:
+                    dynamic: false
+                    value: "{}"
+                    expression: null
+                    expressionType: null
+                  id: "644fbe4e38a61e07cc3a4df8"
+                - _class: "Set"
+                  customFields: null
+                  attributes:
+                    name: "Init JSON"
+                  dynamicName:
+                    dynamic: false
+                    value: ""
+                    expression: ""
+                    expressionType: null
+                  useDynamicName: false
+                  description: null
+                  children: []
+                  customAttributes: null
+                  attachments: null
+                  persistNode: true
+                  skipNode:
+                    dynamic: false
+                    value: false
+                    expression: null
+                    expressionType: null
+                  instrumentNode:
+                    dynamic: false
+                    value: false
+                    expression: null
+                    expressionType: null
+                  continueParentNodeExecutionOnError:
+                    dynamic: false
+                    value: false
+                    expression: null
+                    expressionType: null
+                  key:
+                    dynamic: false
+                    value: "JSON"
+                    expression: null
+                    expressionType: null
+                  value:
+                    dynamic: false
+                    value: ""
+                    expression: null
+                    expressionType: null
+                  id: "644fbe4e38a61e07cc3a4df8"
+                - _class: "CallPlan"
+                  customFields: null
+                  attributes:
+                    name: "Read JSON"
+                  dynamicName:
+                    dynamic: false
+                    value: ""
+                    expression: ""
+                    expressionType: null
+                  useDynamicName: false
+                  description: null
+                  children: []
+                  customAttributes: null
+                  attachments: null
+                  persistNode: true
+                  skipNode:
+                    dynamic: false
+                    value: false
+                    expression: null
+                    expressionType: null
+                  instrumentNode:
+                    dynamic: false
+                    value: false
+                    expression: null
+                    expressionType: null
+                  continueParentNodeExecutionOnError:
+                    dynamic: false
+                    value: false
+                    expression: null
+                    expressionType: null
+                  planId: "618aa49f34603040f758fd0b"
+                  selectionAttributes:
+                    dynamic: false
+                    value: "{}"
+                    expression: null
+                    expressionType: null
+                  input:
+                    dynamic: false
+                    value: "{}"
+                    expression: null
+                    expressionType: null
+                  id: "644fbe4e38a61e07cc3a4df8"
+                - _class: "CallPlan"
+                  customFields: null
+                  attributes:
+                    name: "Run action"
+                  dynamicName:
+                    dynamic: false
+                    value: ""
+                    expression: ""
+                    expressionType: null
+                  useDynamicName: false
+                  description: null
+                  children: []
+                  customAttributes: null
+                  attachments: null
+                  persistNode: true
+                  skipNode:
+                    dynamic: false
+                    value: false
+                    expression: null
+                    expressionType: null
+                  instrumentNode:
+                    dynamic: false
+                    value: false
+                    expression: null
+                    expressionType: null
+                  continueParentNodeExecutionOnError:
+                    dynamic: false
+                    value: false
+                    expression: null
+                    expressionType: null
+                  planId: "618aa49f34603040f758fd15"
+                  selectionAttributes:
+                    dynamic: false
+                    value: "{}"
+                    expression: null
+                    expressionType: null
+                  input:
+                    dynamic: false
+                    value: "{}"
+                    expression: null
+                    expressionType: null
+                  id: "644fbe4e38a61e07cc3a4df8"
+                - _class: "CallPlan"
+                  customFields: null
+                  attributes:
+                    name: "Create release"
+                  dynamicName:
+                    dynamic: false
+                    value: ""
+                    expression: ""
+                    expressionType: null
+                  useDynamicName: false
+                  description: null
+                  children: []
+                  customAttributes: null
+                  attachments: null
+                  persistNode: true
+                  skipNode:
+                    dynamic: false
+                    value: false
+                    expression: null
+                    expressionType: null
+                  instrumentNode:
+                    dynamic: false
+                    value: false
+                    expression: null
+                    expressionType: null
+                  continueParentNodeExecutionOnError:
+                    dynamic: false
+                    value: false
+                    expression: null
+                    expressionType: null
+                  planId: "64145b48d91d580809da608f"
+                  selectionAttributes:
+                    dynamic: false
+                    value: "{}"
+                    expression: null
+                    expressionType: null
+                  input:
+                    dynamic: false
+                    value: "{}"
+                    expression: null
+                    expressionType: null
+                  id: "644fbe4e38a61e07cc3a4df8"
+                - _class: "RetryIfFails"
+                  customFields: null
+                  attributes:
+                    name: "RetryIfFails"
+                  dynamicName:
+                    dynamic: false
+                    value: ""
+                    expression: ""
+                    expressionType: null
+                  useDynamicName: false
+                  description: null
+                  children:
+                    - _class: "CallPlan"
+                      customFields: null
+                      attributes:
+                        name: "Set latest version"
+                      dynamicName:
+                        dynamic: false
+                        value: ""
+                        expression: ""
+                        expressionType: null
+                      useDynamicName: false
+                      description: null
+                      children: []
+                      customAttributes: null
+                      attachments: null
+                      persistNode: true
+                      skipNode:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      instrumentNode:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      continueParentNodeExecutionOnError:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      planId: "63ff232032ed452ab35619aa"
+                      selectionAttributes:
+                        dynamic: false
+                        value: "{}"
+                        expression: null
+                        expressionType: null
+                      input:
+                        dynamic: false
+                        value: "{}"
+                        expression: null
+                        expressionType: null
+                      id: "644fbe4e38a61e07cc3a4df8"
+                  customAttributes: null
+                  attachments: null
+                  persistNode: true
+                  skipNode:
+                    dynamic: false
+                    value: false
+                    expression: null
+                    expressionType: null
+                  instrumentNode:
+                    dynamic: false
+                    value: false
+                    expression: null
+                    expressionType: null
+                  continueParentNodeExecutionOnError:
+                    dynamic: false
+                    value: false
+                    expression: null
+                    expressionType: null
+                  maxRetries:
+                    dynamic: false
+                    value: 3
+                    expression: null
+                    expressionType: null
+                  gracePeriod:
+                    dynamic: false
+                    value: 1000
+                    expression: null
+                    expressionType: null
+                  timeout:
+                    dynamic: false
+                    value: 0
+                    expression: null
+                    expressionType: null
+                  releaseTokens:
+                    dynamic: false
+                    value: false
+                    expression: null
+                    expressionType: null
+                  reportLastTryOnly:
+                    dynamic: false
+                    value: true
+                    expression: null
+                    expressionType: null
+                  id: "644fbe4e38a61e07cc3a4df8"
+                - _class: "Set"
+                  customFields: null
+                  attributes:
+                    name: "Set STATUS at PASSED"
+                  dynamicName:
+                    dynamic: false
+                    value: ""
+                    expression: ""
+                    expressionType: null
+                  useDynamicName: false
+                  description: null
+                  children: []
+                  customAttributes: null
+                  attachments: null
+                  persistNode: true
+                  skipNode:
+                    dynamic: false
+                    value: false
+                    expression: null
+                    expressionType: null
+                  instrumentNode:
+                    dynamic: false
+                    value: false
+                    expression: null
+                    expressionType: null
+                  continueParentNodeExecutionOnError:
+                    dynamic: false
+                    value: false
+                    expression: null
+                    expressionType: null
+                  key:
+                    dynamic: false
+                    value: "STATUS"
+                    expression: null
+                    expressionType: null
+                  value:
+                    dynamic: false
+                    value: "PASSED"
+                    expression: null
+                    expressionType: null
+                  id: "644fbe4e38a61e07cc3a4df8"
+                - _class: "AfterSequence"
+                  customFields: null
+                  attributes:
+                    name: "AfterSequence - Set result"
+                  dynamicName:
+                    dynamic: false
+                    value: ""
+                    expression: ""
+                    expressionType: null
+                  useDynamicName: false
+                  description: null
+                  children:
+                    - _class: "CallPlan"
+                      customFields: null
+                      attributes:
+                        name: "Set build result"
+                      dynamicName:
+                        dynamic: false
+                        value: ""
+                        expression: ""
+                        expressionType: null
+                      useDynamicName: false
+                      description: null
+                      children: []
+                      customAttributes: null
+                      attachments: null
+                      persistNode: true
+                      skipNode:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      instrumentNode:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      continueParentNodeExecutionOnError:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      planId: "64145bc4d91d580809daa2f1"
+                      selectionAttributes:
+                        dynamic: false
+                        value: "{}"
+                        expression: null
+                        expressionType: null
+                      input:
+                        dynamic: false
+                        value: "{}"
+                        expression: null
+                        expressionType: null
+                      id: "644fbe4e38a61e07cc3a4df8"
+                    - _class: "If"
+                      customFields: null
+                      attributes:
+                        name: "If ENVIRONMENT==\"PRODUCTION\" && STATUS==\"PASSED\""
+                      dynamicName:
+                        dynamic: false
+                        value: ""
+                        expression: ""
+                        expressionType: null
+                      useDynamicName: false
+                      description: null
+                      children:
+                        - _class: "Set"
+                          customFields: null
+                          attributes:
+                            name: "Set EXEC_ID"
+                          dynamicName:
+                            dynamic: false
+                            value: ""
+                            expression: ""
+                            expressionType: null
+                          useDynamicName: false
+                          description: null
+                          children: []
+                          customAttributes: null
+                          attachments: null
+                          persistNode: true
+                          skipNode:
+                            dynamic: false
+                            value: false
+                            expression: null
+                            expressionType: null
+                          instrumentNode:
+                            dynamic: false
+                            value: false
+                            expression: null
+                            expressionType: null
+                          continueParentNodeExecutionOnError:
+                            dynamic: false
+                            value: false
+                            expression: null
+                            expressionType: null
+                          key:
+                            dynamic: false
+                            value: "EXEC_ID"
+                            expression: null
+                            expressionType: null
+                          value:
+                            dynamic: true
+                            value: null
+                            expression: "context.getExecutionId()"
+                            expressionType: ""
+                          id: "644fbe4e38a61e07cc3a4df8"
+                        - _class: "CallKeyword"
+                          customFields: null
+                          attributes:
+                            name: "Set as \"Retain this execution\""
+                          dynamicName:
+                            dynamic: false
+                            value: ""
+                            expression: ""
+                            expressionType: null
+                          useDynamicName: false
+                          description: ""
+                          children: []
+                          customAttributes: null
+                          attachments: null
+                          persistNode: true
+                          skipNode:
+                            dynamic: false
+                            value: false
+                            expression: null
+                            expressionType: null
+                          instrumentNode:
+                            dynamic: false
+                            value: false
+                            expression: null
+                            expressionType: null
+                          continueParentNodeExecutionOnError:
+                            dynamic: false
+                            value: false
+                            expression: null
+                            expressionType: null
+                          remote:
+                            dynamic: false
+                            value: true
+                            expression: null
+                            expressionType: null
+                          token:
+                            dynamic: false
+                            value: "{}"
+                            expression: null
+                            expressionType: null
+                          function:
+                            dynamic: false
+                            value: "{\"name\":{\"value\":\"HttpRequest\",\"dynamic\":false}}"
+                            expression: null
+                            expressionType: null
+                          argument:
+                            dynamic: false
+                            value: "{\"URL\":{\"dynamic\":true,\"expression\":\"\\\"${K8S_BUILD_INSTANCE_URL}/rest/housekeeping/execution/${EXEC_ID}/protection\\\
+                  \"\"},\"Method\":\"POST\",\"Header_content-type\":\"application/json\"\
+                  ,\"Data\":\"true\"}"
+                            expression: null
+                            expressionType: null
+                          resultMap:
+                            dynamic: false
+                            value: null
+                            expression: null
+                            expressionType: null
+                          id: "644fbe4e38a61e07cc3a4df8"
+                      customAttributes: null
+                      attachments: null
+                      persistNode: true
+                      skipNode:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      instrumentNode:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      continueParentNodeExecutionOnError:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      condition:
+                        dynamic: true
+                        value: null
+                        expression: "ENVIRONMENT==\"PRODUCTION\" && STATUS==\"PASSED\""
+                        expressionType: ""
+                      id: "644fbe4e38a61e07cc3a4df8"
+                  customAttributes: null
+                  attachments: null
+                  persistNode: true
+                  skipNode:
+                    dynamic: false
+                    value: false
+                    expression: null
+                    expressionType: null
+                  instrumentNode:
+                    dynamic: false
+                    value: false
+                    expression: null
+                    expressionType: null
+                  continueParentNodeExecutionOnError:
+                    dynamic: false
+                    value: false
+                    expression: null
+                    expressionType: null
+                  continueOnError:
+                    dynamic: false
+                    value: false
+                    expression: null
+                    expressionType: null
+                  pacing:
+                    dynamic: false
+                    value: null
+                    expression: null
+                    expressionType: null
+                  id: "644fbe4e38a61e07cc3a4df8"
+                - _class: "AfterSequence"
+                  customFields: null
+                  attributes:
+                    name: "AfterSequence - Send email"
+                  dynamicName:
+                    dynamic: false
+                    value: ""
+                    expression: ""
+                    expressionType: null
+                  useDynamicName: false
+                  description: null
+                  children:
+                    - _class: "If"
+                      customFields: null
+                      attributes:
+                        name: "If SEND_EMAIL"
+                      dynamicName:
+                        dynamic: false
+                        value: ""
+                        expression: ""
+                        expressionType: null
+                      useDynamicName: false
+                      description: null
+                      children:
+                        - _class: "RetryIfFails"
+                          customFields: null
+                          attributes:
+                            name: "RetryIfFails"
+                          dynamicName:
+                            dynamic: false
+                            value: ""
+                            expression: ""
+                            expressionType: null
+                          useDynamicName: false
+                          description: null
+                          children:
+                            - _class: "CallPlan"
+                              customFields: null
+                              attributes:
+                                name: "Send Email"
+                              dynamicName:
+                                dynamic: false
+                                value: ""
+                                expression: ""
+                                expressionType: null
+                              useDynamicName: false
+                              description: null
+                              children: []
+                              customAttributes: null
+                              attachments: null
+                              persistNode: true
+                              skipNode:
+                                dynamic: false
+                                value: false
+                                expression: null
+                                expressionType: null
+                              instrumentNode:
+                                dynamic: false
+                                value: false
+                                expression: null
+                                expressionType: null
+                              continueParentNodeExecutionOnError:
+                                dynamic: false
+                                value: false
+                                expression: null
+                                expressionType: null
+                              planId: "6229efeaf270a8319dfbee2e"
+                              selectionAttributes:
+                                dynamic: false
+                                value: "{}"
+                                expression: null
+                                expressionType: null
+                              input:
+                                dynamic: false
+                                value: "{}"
+                                expression: null
+                                expressionType: null
+                              id: "644fbe4e38a61e07cc3a4df8"
+                          customAttributes: null
+                          attachments: null
+                          persistNode: true
+                          skipNode:
+                            dynamic: false
+                            value: false
+                            expression: null
+                            expressionType: null
+                          instrumentNode:
+                            dynamic: false
+                            value: false
+                            expression: null
+                            expressionType: null
+                          continueParentNodeExecutionOnError:
+                            dynamic: false
+                            value: false
+                            expression: null
+                            expressionType: null
+                          maxRetries:
+                            dynamic: false
+                            value: 3
+                            expression: null
+                            expressionType: null
+                          gracePeriod:
+                            dynamic: false
+                            value: 1000
+                            expression: null
+                            expressionType: null
+                          timeout:
+                            dynamic: false
+                            value: 0
+                            expression: null
+                            expressionType: null
+                          releaseTokens:
+                            dynamic: false
+                            value: false
+                            expression: null
+                            expressionType: null
+                          reportLastTryOnly:
+                            dynamic: false
+                            value: false
+                            expression: null
+                            expressionType: null
+                          id: "644fbe4e38a61e07cc3a4df8"
+                      customAttributes: null
+                      attachments: null
+                      persistNode: true
+                      skipNode:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      instrumentNode:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      continueParentNodeExecutionOnError:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      condition:
+                        dynamic: true
+                        value: null
+                        expression: "SEND_EMAIL"
+                        expressionType: ""
+                      id: "644fbe4e38a61e07cc3a4df8"
+                  customAttributes: null
+                  attachments: null
+                  persistNode: true
+                  skipNode:
+                    dynamic: false
+                    value: false
+                    expression: null
+                    expressionType: null
+                  instrumentNode:
+                    dynamic: false
+                    value: false
+                    expression: null
+                    expressionType: null
+                  continueParentNodeExecutionOnError:
+                    dynamic: false
+                    value: false
+                    expression: null
+                    expressionType: null
+                  continueOnError:
+                    dynamic: false
+                    value: true
+                    expression: null
+                    expressionType: null
+                  pacing:
+                    dynamic: false
+                    value: null
+                    expression: null
+                    expressionType: null
+                  id: "644fbe4e38a61e07cc3a4df8"
+                - _class: "AfterSequence"
+                  customFields: null
+                  attributes:
+                    name: "AfterSequence - Clean folder"
+                  dynamicName:
+                    dynamic: false
+                    value: ""
+                    expression: ""
+                    expressionType: null
+                  useDynamicName: false
+                  description: null
+                  children:
+                    - _class: "CallKeyword"
+                      customFields: null
+                      attributes:
+                        name: "Rmdir ${FOLDER}"
+                      dynamicName:
+                        dynamic: false
+                        value: ""
+                        expression: ""
+                        expressionType: null
+                      useDynamicName: false
+                      description: null
+                      children: []
+                      customAttributes: null
+                      attachments: null
+                      persistNode: true
+                      skipNode:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      instrumentNode:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      continueParentNodeExecutionOnError:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      remote:
+                        dynamic: false
+                        value: true
+                        expression: null
+                        expressionType: null
+                      token:
+                        dynamic: false
+                        value: "{}"
+                        expression: null
+                        expressionType: null
+                      function:
+                        dynamic: false
+                        value: "{\"name\":{\"value\":\"Rmdir\",\"dynamic\":false}}"
+                        expression: null
+                        expressionType: null
+                      argument:
+                        dynamic: false
+                        value: "{\"Folder\":{\"dynamic\":true,\"expression\":\"FOLDER\"}}"
+                        expression: null
+                        expressionType: null
+                      resultMap:
+                        dynamic: false
+                        value: null
+                        expression: null
+                        expressionType: null
+                      id: "644fbe4e38a61e07cc3a4df8"
+                  customAttributes: null
+                  attachments: null
+                  persistNode: true
+                  skipNode:
+                    dynamic: false
+                    value: false
+                    expression: null
+                    expressionType: null
+                  instrumentNode:
+                    dynamic: false
+                    value: false
+                    expression: null
+                    expressionType: null
+                  continueParentNodeExecutionOnError:
+                    dynamic: false
+                    value: false
+                    expression: null
+                    expressionType: null
+                  continueOnError:
+                    dynamic: false
+                    value: false
+                    expression: null
+                    expressionType: null
+                  pacing:
+                    dynamic: false
+                    value: null
+                    expression: null
+                    expressionType: null
+                  id: "644fbe4e38a61e07cc3a4df8"
+                - _class: "AfterSequence"
+                  customFields: null
+                  attributes:
+                    name: "AfterSequence - Propagate build"
+                  dynamicName:
+                    dynamic: false
+                    value: ""
+                    expression: ""
+                    expressionType: null
+                  useDynamicName: false
+                  description: null
+                  children:
+                    - _class: "If"
+                      customFields: null
+                      attributes:
+                        name: "If SHOULD_PROPAGATE && PASSED"
+                      dynamicName:
+                        dynamic: false
+                        value: ""
+                        expression: ""
+                        expressionType: null
+                      useDynamicName: false
+                      description: ""
+                      children:
+                        - _class: "CallPlan"
+                          customFields: null
+                          attributes:
+                            name: "Propagate build - scale down the agent if needed"
+                          dynamicName:
+                            dynamic: false
+                            value: ""
+                            expression: ""
+                            expressionType: null
+                          useDynamicName: false
+                          description: null
+                          children: []
+                          customAttributes: null
+                          attachments: null
+                          persistNode: true
+                          skipNode:
+                            dynamic: false
+                            value: false
+                            expression: null
+                            expressionType: null
+                          instrumentNode:
+                            dynamic: false
+                            value: false
+                            expression: null
+                            expressionType: null
+                          continueParentNodeExecutionOnError:
+                            dynamic: false
+                            value: false
+                            expression: null
+                            expressionType: null
+                          planId: "63ff47ed32ed452ab35c23d0"
+                          selectionAttributes:
+                            dynamic: false
+                            value: "{}"
+                            expression: null
+                            expressionType: null
+                          input:
+                            dynamic: false
+                            value: "{}"
+                            expression: null
+                            expressionType: null
+                          id: "644fbe4e38a61e07cc3a4df8"
+                      customAttributes: null
+                      attachments: null
+                      persistNode: true
+                      skipNode:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      instrumentNode:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      continueParentNodeExecutionOnError:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      condition:
+                        dynamic: true
+                        value: null
+                        expression: "STATUS.equals(\"PASSED\") &&  SHOULD_PROPAGATE"
+                        expressionType: ""
+                      id: "644fbe4e38a61e07cc3a4df8"
+                  customAttributes: null
+                  attachments: null
+                  persistNode: true
+                  skipNode:
+                    dynamic: false
+                    value: false
+                    expression: null
+                    expressionType: null
+                  instrumentNode:
+                    dynamic: false
+                    value: false
+                    expression: null
+                    expressionType: null
+                  continueParentNodeExecutionOnError:
+                    dynamic: false
+                    value: false
+                    expression: null
+                    expressionType: null
+                  continueOnError:
+                    dynamic: false
+                    value: false
+                    expression: null
+                    expressionType: null
+                  pacing:
+                    dynamic: false
+                    value: null
+                    expression: null
+                    expressionType: null
+                  id: "644fbe4e38a61e07cc3a4df8"
+                - _class: "AfterSequence"
+                  customFields: null
+                  attributes:
+                    name: "AfterSequence - Scale down agent if needed"
+                  dynamicName:
+                    dynamic: false
+                    value: ""
+                    expression: ""
+                    expressionType: null
+                  useDynamicName: false
+                  description: null
+                  children:
+                    - _class: "If"
+                      customFields: null
+                      attributes:
+                        name: "If STATUS is not \"PASSED\" or SHOULD_PROPAGATE is false"
+                      dynamicName:
+                        dynamic: false
+                        value: ""
+                        expression: ""
+                        expressionType: null
+                      useDynamicName: false
+                      description: null
+                      children:
+                        - _class: "CallPlan"
+                          customFields: null
+                          attributes:
+                            name: "Scale Down Build Agents - After Execution"
+                          dynamicName:
+                            dynamic: false
+                            value: ""
+                            expression: ""
+                            expressionType: null
+                          useDynamicName: false
+                          description: null
+                          children: []
+                          customAttributes: null
+                          attachments: null
+                          persistNode: true
+                          skipNode:
+                            dynamic: false
+                            value: false
+                            expression: null
+                            expressionType: null
+                          instrumentNode:
+                            dynamic: false
+                            value: false
+                            expression: null
+                            expressionType: null
+                          continueParentNodeExecutionOnError:
+                            dynamic: false
+                            value: false
+                            expression: null
+                            expressionType: null
+                          planId: "6482daa9cdd45e7199acdcac"
+                          selectionAttributes:
+                            dynamic: false
+                            value: "{}"
+                            expression: null
+                            expressionType: null
+                          input:
+                            dynamic: false
+                            value: "{}"
+                            expression: null
+                            expressionType: null
+                          id: "644fbe4e38a61e07cc3a4df8"
+                      customAttributes: null
+                      attachments: null
+                      persistNode: true
+                      skipNode:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      instrumentNode:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      continueParentNodeExecutionOnError:
+                        dynamic: false
+                        value: false
+                        expression: null
+                        expressionType: null
+                      condition:
+                        dynamic: true
+                        value: null
+                        expression: "!STATUS.equals(\"PASSED\") || !SHOULD_PROPAGATE"
+                        expressionType: ""
+                      id: "644fbe4e38a61e07cc3a4df8"
+                  customAttributes: null
+                  attachments: null
+                  persistNode: true
+                  skipNode:
+                    dynamic: false
+                    value: false
+                    expression: null
+                    expressionType: null
+                  instrumentNode:
+                    dynamic: false
+                    value: false
+                    expression: null
+                    expressionType: null
+                  continueParentNodeExecutionOnError:
+                    dynamic: false
+                    value: false
+                    expression: null
+                    expressionType: null
+                  continueOnError:
+                    dynamic: false
+                    value: false
+                    expression: null
+                    expressionType: null
+                  pacing:
+                    dynamic: false
+                    value: null
+                    expression: null
+                    expressionType: null
+                  id: "644fbe4e38a61e07cc3a4df8"
+              customAttributes: null
+              attachments: null
+              persistNode: true
+              skipNode:
+                dynamic: false
+                value: false
+                expression: null
+                expressionType: null
+              instrumentNode:
+                dynamic: false
+                value: false
+                expression: null
+                expressionType: null
+              continueParentNodeExecutionOnError:
+                dynamic: false
+                value: false
+                expression: null
+                expressionType: null
+              continueOnError:
+                dynamic: false
+                value: false
+                expression: null
+                expressionType: null
+              pacing:
+                dynamic: false
+                value: null
+                expression: null
+                expressionType: null
+              id: "644fbe4e38a61e07cc3a4df8"
+          customAttributes: null
+          attachments: null
+          persistNode: true
+          skipNode:
+            dynamic: false
+            value: false
+            expression: null
+            expressionType: null
+          instrumentNode:
+            dynamic: false
+            value: false
+            expression: null
+            expressionType: null
+          continueParentNodeExecutionOnError:
+            dynamic: false
+            value: false
+            expression: null
+            expressionType: null
+          remote:
+            dynamic: false
+            value: true
+            expression: null
+            expressionType: null
+          token:
+            dynamic: false
+            value: "{}"
+            expression: null
+            expressionType: null
+          id: "644fbe4e38a61e07cc3a4df8"
+      customAttributes: null
+      attachments: null
+      persistNode: true
+      skipNode:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      instrumentNode:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      continueOnError:
         dynamic: false
         value: true
         expression: null
         expressionType: null
-      token:
+      pacing:
         dynamic: false
-        value: "{}"
+        value: null
         expression: null
         expressionType: null
       id: "644fbe4e38a61e07cc3a4df8"
-    customAttributes: null
-    attachments: null
-    persistNode: true
-    skipNode:
-      dynamic: false
-      value: false
-      expression: null
-      expressionType: null
-    instrumentNode:
-      dynamic: false
-      value: false
-      expression: null
-      expressionType: null
-    continueParentNodeExecutionOnError:
-      dynamic: false
-      value: false
-      expression: null
-      expressionType: null
-    continueOnError:
-      dynamic: false
-      value: true
-      expression: null
-      expressionType: null
-    pacing:
-      dynamic: false
-      value: null
-      expression: null
-      expressionType: null
-    id: "644fbe4e38a61e07cc3a4df8"
   customAttributes: null
   attachments: null
   persistNode: true

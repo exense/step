@@ -27,9 +27,17 @@ public interface ArtefactFieldConversionRule {
     default JsonSchemaFieldProcessor getJsonSchemaFieldProcessor(JsonProvider jsonProvider){
         return null;
     }
+
+    /**
+     * Converter from simple artefact field (simple yaml) to full artefact (full yaml)
+     */
     default SimpleArtefactFieldDeserializationProcessor getArtefactFieldDeserializationProcessor(){
         return null;
     }
+
+    /**
+     * Converter from full artefact field (java object) to simple representation (yaml)
+     */
     default SimpleArtefactFieldSerializationProcessor getArtefactFieldSerializationProcessor() {
         return null;
     }

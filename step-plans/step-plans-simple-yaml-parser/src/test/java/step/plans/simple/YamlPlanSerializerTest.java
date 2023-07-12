@@ -39,6 +39,9 @@ public class YamlPlanSerializerTest {
 
 	private final YamlPlanSerializer serializer;
 
+	// DEV flag to store test results in local files
+	private boolean writeResultsToLocalFiles = false;
+
 	public YamlPlanSerializerTest() throws IOException {
 		String schemaFileLocation = "step/plans/simple/simplified-plan-schema-1.0.json";
 		try(InputStream jsonSchemaInputStream = this.getClass().getClassLoader().getResourceAsStream(schemaFileLocation)){
@@ -54,7 +57,7 @@ public class YamlPlanSerializerTest {
 
 	@Test
 	public void readSimplePlanFromYaml() {
-		checkSimplePlanSerializationOk(
+		convertFromSimplePlanToFull(
 				"src/test/resources/step/plans/simple/basic/test-simple.plan.yml",
 				"src/test/resources/step/plans/simple/basic/test-expected-full-plan.yml"
 		);
@@ -62,9 +65,24 @@ public class YamlPlanSerializerTest {
 
 	@Test
 	public void keywordSelectionCriteria() {
-		checkSimplePlanSerializationOk(
+		convertFromSimplePlanToFull(
 				"src/test/resources/step/plans/simple/selection-criteria/test-selection-criteria-simple.plan.yml",
 				"src/test/resources/step/plans/simple/selection-criteria/test-expected-selection-criteria-full-plan.yml"
+		);
+	}
+
+	@Test
+	public void checkArtefactExpression(){
+		// test expressions in 'Check' artefact - convert from simple format to full format
+		convertFromSimplePlanToFull(
+				"src/test/resources/step/plans/simple/check/test-check-simple.plan.yml",
+				"src/test/resources/step/plans/simple/check/test-expected-check-full-plan.yml"
+		);
+
+		// convert from full format to simple format
+		convertFromFullPlanToSimple(
+				"src/test/resources/step/plans/simple/check/test-expected-check-full-plan.yml",
+				"src/test/resources/step/plans/simple/check/test-converted-from-full-check-simple.plan.yml"
 		);
 	}
 
@@ -86,7 +104,7 @@ public class YamlPlanSerializerTest {
 
 	@Test
 	public void simplePlanMigration(){
-		checkSimplePlanSerializationOk(
+		convertFromSimplePlanToFull(
 				"src/test/resources/step/plans/simple/migration/test-migration-simple.plan.yml",
 				"src/test/resources/step/plans/simple/migration/test-migration-expected-full-plan.yml"
 		);
@@ -94,7 +112,7 @@ public class YamlPlanSerializerTest {
 
 	@Test
 	public void checkConversionFromFullPlanToSimple() {
-		checkFullPlanConversionOk(
+		convertFromFullPlanToSimple(
 				"src/test/resources/step/plans/simple/basic/test-expected-full-plan.yml",
 				"src/test/resources/step/plans/simple/basic/test-converted-from-full-simple.plan.yml"
 		);
@@ -115,8 +133,10 @@ public class YamlPlanSerializerTest {
 //			log.info(os.toString(StandardCharsets.UTF_8));
 
 			// write yml to another file (to check it manually)
-			try (FileOutputStream fileOs = new FileOutputStream("src/test/resources/step/plans/simple/test-simple-generated-plan.yml")) {
-				fileOs.write(os.toByteArray());
+			if(writeResultsToLocalFiles) {
+				try (FileOutputStream fileOs = new FileOutputStream("src/test/resources/step/plans/simple/test-simple-generated-plan.yml")) {
+					fileOs.write(os.toByteArray());
+				}
 			}
 
 			JsonNode expectedSimpleYaml = serializer.getSimpleYamlMapper().readTree(simpleYamlFile);
@@ -134,10 +154,12 @@ public class YamlPlanSerializerTest {
 //			log.info("Converted full yaml -->");
 //			log.info(os.toString(StandardCharsets.UTF_8));
 
-			// write yml to another file (to check it manually)
-//			try (FileOutputStream fileOs = new FileOutputStream("src/test/resources/step/plans/simple/test-expected-build-full-converted-plan.yml")) {
-//				fileOs.write(os.toByteArray());
-//			}
+			if (writeResultsToLocalFiles) {
+				// write yml to another file (to check it manually)
+				try (FileOutputStream fileOs = new FileOutputStream("src/test/resources/step/plans/simple/test-expected-build-full-converted-plan.yml")) {
+					fileOs.write(os.toByteArray());
+				}
+			}
 
 			JsonNode expectedFullYaml = serializer.getFullYamlMapper().readTree(fullYamlFileAfterConversion);
 			JsonNode actual = serializer.getFullYamlMapper().readTree(os.toByteArray());
@@ -147,7 +169,7 @@ public class YamlPlanSerializerTest {
 		}
 	}
 
-	private void checkFullPlanConversionOk(String fullPlanFile, String expectedSimplePlan) {
+	private void convertFromFullPlanToSimple(String fullPlanFile, String expectedSimplePlan) {
 		// read full plan
 		File yamlFile = new File(fullPlanFile);
 
@@ -160,9 +182,11 @@ public class YamlPlanSerializerTest {
 			log.info(os.toString(StandardCharsets.UTF_8));
 
 			// write yml to another file (to check it manually)
-//			try (FileOutputStream fileOs = new FileOutputStream("src/test/resources/step/plans/simple/test-simple-generated-plan.yml")) {
-//				fileOs.write(os.toByteArray());
-//			}
+			if(writeResultsToLocalFiles) {
+				try (FileOutputStream fileOs = new FileOutputStream("src/test/resources/step/plans/simple/test-simple-generated-plan.yml")) {
+					fileOs.write(os.toByteArray());
+				}
+			}
 
 			JsonNode expectedSimpleYaml = serializer.getSimpleYamlMapper().readTree(new File(expectedSimplePlan));
 			JsonNode actual = serializer.getSimpleYamlMapper().readTree(os.toByteArray());
@@ -172,7 +196,7 @@ public class YamlPlanSerializerTest {
 		}
 	}
 
-	private void checkSimplePlanSerializationOk(String simpleYamlPlanFile, String expectedFullPlanFile) {
+	private void convertFromSimplePlanToFull(String simpleYamlPlanFile, String expectedFullPlanFile) {
 		// read simplified file
 		File yamlFile = new File(simpleYamlPlanFile);
 
@@ -186,9 +210,11 @@ public class YamlPlanSerializerTest {
 //			log.info(os.toString(StandardCharsets.UTF_8));
 
 			// write yml to another file (to check it manually)
-//			try (FileOutputStream fileOs = new FileOutputStream("src/test/resources/step/plans/simple/test-expected-build-full-converted-plan.yml")) {
-//				fileOs.write(os.toByteArray());
-//			}
+			if (writeResultsToLocalFiles) {
+				try (FileOutputStream fileOs = new FileOutputStream("src/test/resources/step/plans/simple/test-expected-build-full-converted-plan.yml")) {
+					fileOs.write(os.toByteArray());
+				}
+			}
 
 			// compare serialized plan with expected data
 			JsonNode expectedFullYaml = serializer.getSimpleYamlMapper().readTree(new File(expectedFullPlanFile));

@@ -28,6 +28,8 @@ public class YamlPlanFields {
     public static final String TOKEN_SELECTOR_TOKEN_ORIGINAL_FIELD = "token";
     public static final String TOKEN_SELECTOR_TOKEN_SIMPLE_FIELD = "selectionCriteria";
 
+    public static final String CHECK_EXPRESSION_ORIGINAL_FIELD = "expression";
+
     public static final String NAME_SIMPLE_FIELD = "nodeName";
 
     public static final String DYN_VALUE_EXPRESSION_FIELD = "expression";

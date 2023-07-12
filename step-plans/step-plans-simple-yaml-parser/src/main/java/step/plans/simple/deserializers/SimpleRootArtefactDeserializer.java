@@ -30,10 +30,7 @@ import step.core.artefacts.AbstractArtefact;
 import step.core.plans.Plan;
 import step.plans.simple.YamlPlanFields;
 import step.plans.simple.model.SimpleRootArtefact;
-import step.plans.simple.rules.FunctionGroupSelectionRule;
-import step.plans.simple.rules.KeywordInputsRule;
-import step.plans.simple.rules.KeywordSelectionRule;
-import step.plans.simple.rules.NodeNameRule;
+import step.plans.simple.rules.*;
 import step.plans.simple.schema.JsonSchemaFieldProcessingException;
 
 import java.io.IOException;
@@ -82,6 +79,9 @@ public class SimpleRootArtefactDeserializer extends JsonDeserializer<SimpleRootA
         //  but in simplified format we represent input values as array of key / values
         res.add(new KeywordSelectionRule().getArtefactFieldDeserializationProcessor());
         res.add(new FunctionGroupSelectionRule().getArtefactFieldDeserializationProcessor());
+
+        // for 'Check' we always use the dynamic expression for 'expression' field (static value is not supported)
+        res.add(new CheckExpressionRule().getArtefactFieldDeserializationProcessor());
         return res;
     }
 

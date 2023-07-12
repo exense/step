@@ -4,16 +4,19 @@ name: "test plan"
 root:
   Sequence:
     nodeName: "Sequence"
+    continueParentNodeExecutionOnError: false
     instrumentNode: false
     skipNode: false
     children:
       - If:
           nodeName: "IfBlock"
+          continueParentNodeExecutionOnError: false
           instrumentNode: false
           skipNode: false
           children:
             - Assert:
                 nodeName: "Assert"
+                continueParentNodeExecutionOnError: false
                 instrumentNode: false
                 skipNode: false
                 customErrorMessage: "my custom error"
@@ -25,6 +28,7 @@ root:
                   expression: "'status'"
             - CallKeyword:
                 nodeName: "CallKeyword"
+                continueParentNodeExecutionOnError: false
                 instrumentNode: false
                 skipNode: false
                 remote: true

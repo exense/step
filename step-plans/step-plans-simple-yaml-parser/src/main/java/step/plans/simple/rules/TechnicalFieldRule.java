@@ -44,11 +44,10 @@ public class TechnicalFieldRule implements ArtefactFieldConversionRule {
         if (AbstractIdentifiableObject.class.equals(field.getDeclaringClass())) {
             return true;
         } else if (AbstractArtefact.class.equals(field.getDeclaringClass())) {
-            // TODO: need to add some of these fields to JSON Schema (as optional fields)
             Set<String> technicalFields = Set.of(
                     "dynamicName", "useDynamicName",
                     "customAttributes", "persistNode",
-                    "attachments", "continueParentNodeExecutionOnError"
+                    "attachments"
             );
             return technicalFields.contains(fieldMetadata.getFieldName());
         }

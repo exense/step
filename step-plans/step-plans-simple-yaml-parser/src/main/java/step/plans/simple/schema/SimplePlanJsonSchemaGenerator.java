@@ -115,6 +115,7 @@ public class SimplePlanJsonSchemaGenerator {
 		};
 
 		JsonSchemaFieldProcessor dynamicValueProcessingRule = new DynamicFieldRule().getJsonSchemaFieldProcessor(jsonProvider);
+		JsonSchemaFieldProcessor checkExpressionRule = new CheckExpressionRule().getJsonSchemaFieldProcessor(jsonProvider);
 
 		return List.of(
 				commonFieldFilteringRule,
@@ -124,6 +125,7 @@ public class SimplePlanJsonSchemaGenerator {
 				keywordSelectionRule,
 				keywordInputsRule,
 				functionGroupSelectionRule,
+				checkExpressionRule,
 				enumRule,
 				dynamicValueProcessingRule
 		);
@@ -161,7 +163,8 @@ public class SimplePlanJsonSchemaGenerator {
 		// plan only has "name", "version", and the root artifact
 		JsonObjectBuilder objectBuilder = jsonProvider.createObjectBuilder();
 		objectBuilder.add("name", jsonProvider.createObjectBuilder().add("type", "string"));
-		objectBuilder.add("version", jsonProvider.createObjectBuilder().add("type", "string").add("default", actualVersion.toString()));
+		// in 'version' we should either explicitly specify the current json schema version or skip this field
+		objectBuilder.add("version", jsonProvider.createObjectBuilder().add("const", actualVersion.toString()));
 		objectBuilder.add("root", addRef(jsonProvider.createObjectBuilder(), ROOT_ARTEFACT_DEF));
 		return objectBuilder;
 	}

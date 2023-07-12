@@ -19,7 +19,6 @@
 package step.plans.simple.serializers;
 
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import step.core.artefacts.AbstractArtefact;
 import step.handlers.javahandler.jsonschema.FieldMetadata;
 
