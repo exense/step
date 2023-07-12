@@ -140,7 +140,7 @@ public class ThreadPool implements Closeable {
 	public <WORK_ITEM> void consumeWork(Iterator<WORK_ITEM> workItemIterator,
 										WorkerItemConsumerFactory<WORK_ITEM> workItemConsumerFactory,
 										int specifiedNumberOfThreads) {
-		consumeWork(workItemIterator, workItemConsumerFactory, specifiedNumberOfThreads);
+		consumeWork(workItemIterator, workItemConsumerFactory, specifiedNumberOfThreads, OptionalInt.empty());
 	}
 
 	public <WORK_ITEM> void consumeWork(Iterator<WORK_ITEM> workItemIterator,

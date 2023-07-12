@@ -20,7 +20,6 @@ package step.artefacts.handlers;
 
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.OptionalInt;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
