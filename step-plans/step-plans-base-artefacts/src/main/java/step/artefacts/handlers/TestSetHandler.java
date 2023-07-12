@@ -20,6 +20,7 @@ package step.artefacts.handlers;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.OptionalInt;
 import java.util.function.Consumer;
 
 import step.artefacts.TestSet;
@@ -72,7 +73,7 @@ public class TestSetHandler extends ArtefactHandler<TestSet, ReportNode> {
 					}
 				};
 			}
-		}, numberOfThreads);
+		}, numberOfThreads, OptionalInt.of(children.size()));
 		
 		ReportNodeStatus status = reportNodeStatusComposer.getParentStatus();
 		node.setStatus(status);
