@@ -71,31 +71,16 @@ public class ReferenceFinderServices extends AbstractStepServices {
         // Find composite keywords containing requested usages; composite KWs are really just plans in disguise :-)
         FunctionAccessor functionAccessor = (FunctionAccessor) entityManager.getEntityByName(EntityManager.functions).getAccessor();
 
-        // we don't have access to the composite functions plugin from here, so we use class names and reflection.
-        List<Plan> plansInComposites = new ArrayList<>();
-
         functionAccessor.stream().forEach(function -> {
-            String planId = getPlanIdForCompositeFunction(function);
-            if (planId != null) {
-                Plan plan = planAccessor.get(planId);
-                if (plan != null) {
-                    plansInComposites.add(plan);
-                    List<Object> matchingObjects = getReferencedObjectsMatchingRequest(EntityManager.plans, plan, request);
-                    if (!matchingObjects.isEmpty()) {
-                        results.add(new FindReferencesResponse(function));
-                    }
-                }
-            } else {
-                    List<Object> matchingObjects = getReferencedObjectsMatchingRequest(EntityManager.functions, function, request);
-                    if (!matchingObjects.isEmpty()) {
-                        results.add(new FindReferencesResponse(function));
-                    }
+            List<Object> matchingObjects = getReferencedObjectsMatchingRequest(EntityManager.functions, function, request);
+            if (!matchingObjects.isEmpty()) {
+                results.add(new FindReferencesResponse(function));
             }
         });
 
         // Find plans containing usages
         Stream<Plan> stream = (request.includeHiddenPlans) ? planAccessor.stream() : planAccessor.getVisiblePlans();
-        stream.filter(p -> !plansInComposites.contains(p)).forEach( plan -> {
+        stream.forEach( plan -> {
             List<Object> matchingObjects = getReferencedObjectsMatchingRequest(EntityManager.plans, plan, request);
             if (!matchingObjects.isEmpty()) {
                 results.add(new FindReferencesResponse(plan));
@@ -105,15 +90,6 @@ public class ReferenceFinderServices extends AbstractStepServices {
         // Sort the results by name
         results.sort(Comparator.comparing(f -> f.name));
         return results;
-    }
-
-    private String getPlanIdForCompositeFunction(Function composite) {
-        try {
-            Method m = composite.getClass().getMethod("getPlanId");
-            return (String) m.invoke(composite);
-        } catch (Exception e) {
-            return null;
-        }
     }
 
     private List<Object> getReferencedObjectsMatchingRequest(String entityType, AbstractOrganizableObject object, FindReferencesRequest request) {

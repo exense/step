@@ -76,8 +76,8 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 	}
 
 	private static String parseQueryForTable(String query) {
-		Pattern p = Pattern.compile("(^|\\s)select.+?from (.+?)(\\s|$)");
-		Matcher m = p.matcher(query.toLowerCase());
+		Pattern p = Pattern.compile("(^|\\s)select.+?from (.+?)(\\s|$)", Pattern.CASE_INSENSITIVE);
+		Matcher m = p.matcher(query);
 		if((!m.find()) || (m.groupCount() <3))
 			throw new RuntimeException("Could not parse query :" + query);
 		else

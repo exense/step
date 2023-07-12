@@ -55,14 +55,13 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<!-- internal dependencies -->
-		<exense-commons.version>2.0.4</exense-commons.version>
-		<step-framework.version>2.0.7</step-framework.version>
+		<exense-commons.version>2.0.5</exense-commons.version>
+		<step-framework.version>2.0.8</step-framework.version>
 		<step-grid.version>2.0.1</step-grid.version>
-		<step-api.version>1.1.11</step-api.version>
-		<rtm.version>3.0.0</rtm.version>
+		<step-api.version>1.2.0</step-api.version>
 		<!-- external dependencies -->
 		<junit.version>4.13.1</junit.version>
-		<mockito.version>1.9.5</mockito.version>
+		<mockito.version>5.1.1</mockito.version>
 		<groovy.version>3.0.10</groovy.version>
 		<jackson.version>2.13.3</jackson.version>
 		<jersey.version>3.0.4</jersey.version>
@@ -109,6 +108,7 @@
 		<module>../step-plans</module>
 		<module>../step-controller</module>
 		<module>../step-controller-plugins</module>
+		<module>../step-maven-plugin</module>
 		<module>../step-repositories</module>
 		<module>../step-ide</module>
 		<module>../step-junit</module>
@@ -313,11 +313,60 @@
 
 	<profiles>
 		<profile>
+			<!-- Local compilation - no signature -->
 			<id>LocalBuild</id>
 			<activation>
 				<activeByDefault>true</activeByDefault>
 			</activation>
-			<!-- Local compilation - no signature -->
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-surefire-plugin</artifactId>
+						<configuration>
+							<excludedGroups>ch.exense.commons.test.categories.PerformanceTest</excludedGroups>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
+			<id>PerformanceTest</id>
+			<activation>
+				<activeByDefault>false</activeByDefault>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-surefire-plugin</artifactId>
+						<configuration>
+							<groups>ch.exense.commons.test.categories.PerformanceTest</groups>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
+			<!-- Skip javadoc generation -->
+			<id>SkipJavadoc</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+			<properties>
+				<maven.javadoc.skip>true</maven.javadoc.skip>
+			</properties>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-surefire-plugin</artifactId>
+						<configuration>
+							<excludedGroups>ch.exense.commons.test.categories.PerformanceTest</excludedGroups>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
 		</profile>
 		<profile>
 			<id>DependencyCheck</id>
@@ -349,6 +398,13 @@
 			</activation>
 			<build>
 				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-surefire-plugin</artifactId>
+						<configuration>
+							<excludedGroups>ch.exense.commons.test.categories.PerformanceTest</excludedGroups>
+						</configuration>
+					</plugin>
 					<!-- Signature -->
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>

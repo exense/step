@@ -1,0 +1,6 @@
+Sequence
+Echo "Testing Plan3"
+MyCompoInPackage
+Echo "${PARAM_EXEC} exists"
+Check Expression = true
+End

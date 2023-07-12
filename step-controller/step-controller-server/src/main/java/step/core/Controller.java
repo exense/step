@@ -50,7 +50,6 @@ import step.core.plugins.PluginManager;
 import step.core.repositories.RepositoryObjectManager;
 import step.core.scheduler.ExecutionTaskAccessorImpl;
 import step.core.scheduler.ExecutiontTaskParameters;
-import step.dashboards.DashboardSession;
 import step.engine.execution.ExecutionManagerImpl;
 import step.expressions.ExpressionHandler;
 import step.framework.server.ServerPluginManager;
@@ -69,7 +68,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class Controller {
 
-	public static final Version VERSION = new Version(3,21,2);
+	public static final Version VERSION = new Version(3,22,0);
 
 	public static String USER_ACTIVITY_MAP_KEY = "userActivityMap";
 	private Configuration configuration;
@@ -131,7 +130,7 @@ public class Controller {
 				collectionFactory.getCollection("executions", Execution.class));
 		context.setExecutionAccessor(executionAccessor);		
 		context.setExecutionManager(new ExecutionManagerImpl(executionAccessor));
-
+		
 		PlanAccessorImpl plans = new PlanAccessorImpl(collectionFactory.getCollection("plans", Plan.class));
 		context.setPlanAccessor(plans);
 
@@ -173,14 +172,9 @@ public class Controller {
 				.register(new Entity<>(EntityManager.tasks, context.getScheduleAccessor(), ExecutiontTaskParameters.class))
 				.register(new Entity<>(EntityManager.users, context.getUserAccessor(), User.class))
 				.register(new ResourceEntity(resourceAccessor, resourceManager, fileResolver, entityManager))
-				.register(new Entity<>(EntityManager.resourceRevisions, resourceRevisionAccessor, ResourceRevision.class))
-				.register(new Entity<>("sessions",
-						new AbstractAccessor<>(
-								collectionFactory.getCollection("sessions", DashboardSession.class)),
-						DashboardSession.class));
+				.register(new Entity<>(EntityManager.resourceRevisions, resourceRevisionAccessor, ResourceRevision.class));
 		
 		entityManager.registerImportHook(new ResourceImporter(context.getResourceManager()));
-		entityManager.getEntityByName("sessions").setByPassObjectPredicate(true);
 
 		context.put(WebApplicationConfigurationManager.class, new WebApplicationConfigurationManager());
 

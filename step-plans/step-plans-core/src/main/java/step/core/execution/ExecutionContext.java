@@ -31,6 +31,10 @@ import step.core.plans.Plan;
 import step.core.plugins.ExecutionCallbacks;
 import step.core.resolvers.Resolver;
 import step.core.variables.VariablesManager;
+import step.engine.execution.ExecutionVetoer;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public class ExecutionContext extends AbstractExecutionEngineContext  {
 
@@ -48,6 +52,8 @@ public class ExecutionContext extends AbstractExecutionEngineContext  {
 
 	private ObjectEnricher objectEnricher;
 	private ObjectPredicate objectPredicate;
+
+	private final Set<ExecutionVetoer> executionVetoers = new HashSet<>();
 	
 	// Mutable fields
 	private volatile ExecutionStatus status;
@@ -197,5 +203,13 @@ public class ExecutionContext extends AbstractExecutionEngineContext  {
 
 	public Resolver getResolver() {
 		return resolver;
+	}
+
+	public Set<ExecutionVetoer> getExecutionVetoers() {
+		return new HashSet<>(executionVetoers);
+	}
+
+	public void addExecutionVetoer(ExecutionVetoer executionVetoer) {
+		this.executionVetoers.add(executionVetoer);
 	}
 }

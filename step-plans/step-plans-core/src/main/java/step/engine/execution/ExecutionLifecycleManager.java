@@ -18,14 +18,15 @@
  ******************************************************************************/
 package step.engine.execution;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
 import step.core.execution.model.ExecutionStatus;
 import step.core.plugins.ExecutionCallbacks;
 import step.core.repositories.ImportResult;
+
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class ExecutionLifecycleManager {
 	
@@ -34,9 +35,7 @@ public class ExecutionLifecycleManager {
 	private final ExecutionManager executionManager;
 	
 	private final ExecutionCallbacks executionCallbacks;
-	
-	private static final Logger logger = LoggerFactory.getLogger(ExecutionLifecycleManager.class);
-	
+
 	public ExecutionLifecycleManager(ExecutionContext context) {
 		super();
 		this.context = context;
@@ -74,5 +73,11 @@ public class ExecutionLifecycleManager {
 	public void updateExecutionResult(ExecutionContext context, ReportNodeStatus resultStatus) {
 		executionManager.updateExecutionResult(context, resultStatus);
 	}
-	
+
+	public List<ExecutionVeto> getExecutionVetoes() {
+		return context.getExecutionVetoers().stream()
+				.map(v -> v.getExecutionVetoes(context))
+				.filter(Objects::nonNull).flatMap(List::stream)
+				.collect(Collectors.toList());
+	}
 }

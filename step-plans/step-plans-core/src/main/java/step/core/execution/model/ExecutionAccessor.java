@@ -44,6 +44,6 @@ public interface ExecutionAccessor extends Accessor<Execution> {
 
 	Iterable<Execution> findLastEnded(int limit);
 
-	List<Execution> getLastExecutionsBySchedulerTaskID(String schedulerTaskID, int limit);
+	List<Execution> getLastEndedExecutionsBySchedulerTaskID(String schedulerTaskID, int limit);
 
 }
