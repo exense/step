@@ -153,7 +153,7 @@ public class ForBlockHandler extends AbstractSessionArtefactHandler<AbstractForB
 						}
 					};
 				}
-			}, numberOfThreads, OptionalInt.empty());
+			}, numberOfThreads);
 			
 			node.setErrorCount(failedLoopsCounter.get());
 			node.setCount(loopsCounter.get());

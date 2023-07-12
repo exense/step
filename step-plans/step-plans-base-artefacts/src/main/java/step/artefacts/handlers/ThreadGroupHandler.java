@@ -109,7 +109,7 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 					}
 				};
 			}
-		}, numberOfUsers, OptionalInt.empty());
+		}, numberOfUsers);
 		
 		node.setStatus(reportNodeStatusComposer.getParentStatus());
 	}
