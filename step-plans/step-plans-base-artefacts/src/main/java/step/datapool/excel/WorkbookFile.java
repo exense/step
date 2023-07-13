@@ -106,7 +106,7 @@ class WorkbookFile implements AutoCloseable {
 	
 	void checkFileSize(File file, Integer maxWorkbookSize) {
 		if(maxWorkbookSize!=null && file.length()>maxWorkbookSize) {
-			throw new RuntimeException("The size of the workbook '" + file.getName() + "' exceeds the max size " + maxWorkbookSize + "bytes.");
+			throw new RuntimeException("The size of the workbook '" + file.getName() + "' exceeds the max size " + maxWorkbookSize + " bytes.");
 		}
 	}
 	

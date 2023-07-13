@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.OptionalInt;
 import java.util.Stack;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -41,6 +42,8 @@ import step.core.execution.ExecutionContext;
 public class ThreadPool implements Closeable {
 	
 	private static final String EXECUTION_THREADS_AUTO = "execution_threads_auto";
+
+	private static final String EXECUTION_THREADS_AUTO_CONSUMED = "$execution_threads_auto_consumed";
 
 	private static final Logger logger = LoggerFactory.getLogger(ThreadPool.class);
 
@@ -135,7 +138,14 @@ public class ThreadPool implements Closeable {
 	}
 
 	public <WORK_ITEM> void consumeWork(Iterator<WORK_ITEM> workItemIterator,
-			WorkerItemConsumerFactory<WORK_ITEM> workItemConsumerFactory, int numberOfThreads) {
+										WorkerItemConsumerFactory<WORK_ITEM> workItemConsumerFactory,
+										int specifiedNumberOfThreads) {
+		consumeWork(workItemIterator, workItemConsumerFactory, specifiedNumberOfThreads, OptionalInt.empty());
+	}
+
+	public <WORK_ITEM> void consumeWork(Iterator<WORK_ITEM> workItemIterator,
+			WorkerItemConsumerFactory<WORK_ITEM> workItemConsumerFactory, int specifiedNumberOfThreads,
+										OptionalInt requiredNumberOfThreads) {
 		// Wrapping the iterator to avoid concurrency issues as iterators aren't ThreadSafe 
 		Iterator<WORK_ITEM> threadSafeIterator = new Iterator<WORK_ITEM>() {
 			@Override
@@ -153,23 +163,24 @@ public class ThreadPool implements Closeable {
 		
 		Integer autoNumberOfThreads = getAutoNumberOfThreads();
 		if (autoNumberOfThreads != null) {
-			if(!isReentrantThread()) {
+			if(!isAutoNumberOfThreadsConsumed() && requiredNumberOfThreads.orElse(Integer.MAX_VALUE) > 1) {
 				// Forcing the number of threads to the required autoNumberOfThreads for the 
 				// first Artefact using the ThreadPool (Level = 1)
-				numberOfThreads = autoNumberOfThreads;
+				specifiedNumberOfThreads = autoNumberOfThreads;
+				consumeAutoNumberOfThreads();
 			} else {
 				// Avoid parallelism for the artefacts that are children of an artefact 
 				// already using the ThreadPool (Level > 1)
-				numberOfThreads = 1;
+				specifiedNumberOfThreads = 1;
 			}
 		}
 		
-		final BatchContext batchContext = new BatchContext(executionContext, numberOfThreads>1);
+		final BatchContext batchContext = new BatchContext(executionContext, specifiedNumberOfThreads>1);
 		
 		WorkerController<WORK_ITEM> workerController = new WorkerController<>(batchContext);
 		Consumer<WORK_ITEM> workItemConsumer = workItemConsumerFactory.createWorkItemConsumer(workerController);
 		
-		if(numberOfThreads == 1) {
+		if(specifiedNumberOfThreads == 1) {
 			// No parallelism, run the worker in the current thread
 			createWorkerAndRun(batchContext, workItemConsumer, threadSafeIterator, 0);
 		} else {
@@ -177,7 +188,7 @@ public class ThreadPool implements Closeable {
 			List<Future<?>> futures = new ArrayList<>();
 			long parentThreadId = Thread.currentThread().getId();
 			// Create one worker for each "thread"
-			for (int i = 0; i < numberOfThreads; i++) {
+			for (int i = 0; i < specifiedNumberOfThreads; i++) {
 				int workerId = i;
 				futures.add(executorService.submit(() -> {
 					executionContext.associateThread(parentThreadId, currentReportNode);
@@ -212,6 +223,15 @@ public class ThreadPool implements Closeable {
 			return null;
 		}
 		
+	}
+
+	protected boolean isAutoNumberOfThreadsConsumed() {
+		Object autoNumberOfThreads = executionContext.getVariablesManager().getVariableAsString(EXECUTION_THREADS_AUTO_CONSUMED, "false");
+		return Boolean.parseBoolean(autoNumberOfThreads.toString());
+	}
+
+	protected void consumeAutoNumberOfThreads() {
+		executionContext.getVariablesManager().putVariable(executionContext.getCurrentReportNode(), EXECUTION_THREADS_AUTO_CONSUMED, "true");
 	}
 	
 	private <WORK_ITEM> void createWorkerAndRun(BatchContext batchContext, Consumer<WORK_ITEM> workItemConsumer, Iterator<WORK_ITEM> workItemIterator, int workerId) {

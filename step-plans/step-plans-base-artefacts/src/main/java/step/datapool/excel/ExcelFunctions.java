@@ -30,16 +30,22 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Locale;
 
+import ch.exense.commons.app.Configuration;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellReference;
+import org.apache.poi.util.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ch.exense.commons.app.Configuration;
 import step.datapool.excel.CellIndexParser.CellIndex;
 
 public class ExcelFunctions {
-	
+
+	public static class ConfigKeys {
+		public static final String MAXEXCELSIZE = "tec.maxexcelsize";
+		public static final String POI_BYTEARRAYMAXOVERRIDE = "tec.poibytearraymaxoverride";
+	}
+
 	private static Logger logger = LoggerFactory.getLogger(ExcelFunctions.class);
 	
 	private static DecimalFormat customDecimalFormat = null;
@@ -62,7 +68,8 @@ public class ExcelFunctions {
 		return getCell(workBookFile, sheetName, cellIndex);
 	}
 		
-	public static String getCell(File workBookFile, String sheetName, String cellIndex) {		
+	public static String getCell(File workBookFile, String sheetName, String cellIndex) {
+		IOUtils.setByteArrayMaxOverride(getPoiByteArrayMaxOverride());
 		try (WorkbookSet workbookSet = new WorkbookSet(workBookFile, getMaxExcelSize(), false, false)) {
 			Sheet sheet = getSheet(workbookSet, sheetName, false); 
 			
@@ -297,7 +304,11 @@ public class ExcelFunctions {
 	}
 
 	public static int getMaxExcelSize() {
-		return configuration.getPropertyAsInteger("tec.maxexcelsize", 10000000);
+		return configuration.getPropertyAsInteger(ConfigKeys.MAXEXCELSIZE, 10000000);
+	}
+
+	public static int getPoiByteArrayMaxOverride() {
+		return configuration.getPropertyAsInteger(ConfigKeys.POI_BYTEARRAYMAXOVERRIDE, -1);
 	}
 
 	public static void setConfiguration(Configuration configuration) {
