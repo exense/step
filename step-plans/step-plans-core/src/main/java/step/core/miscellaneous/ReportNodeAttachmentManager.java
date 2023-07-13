@@ -63,7 +63,7 @@ public class ReportNodeAttachmentManager {
 		this.resourceManager = resourceManager;
 	}
 
-	private boolean checkAndUpateAttachmentQuota() {
+	private boolean checkAndUpdateAttachmentQuota() {
 		synchronized (context) {
 			VariablesManager varManager = context.getVariablesManager();
 			
@@ -115,7 +115,7 @@ public class ReportNodeAttachmentManager {
 	}
 	
 	public AttachmentMeta createAttachment(byte[] content, String filename) throws AttachmentQuotaException {
-		if(checkAndUpateAttachmentQuota()) {
+		if(checkAndUpdateAttachmentQuota()) {
 			return createAttachmentWithoutQuotaCheck(content, filename);
 		} else {
 			logger.debug(context.getExecutionId().toString() + ". Skipping attachment \"" + filename + "\"");
