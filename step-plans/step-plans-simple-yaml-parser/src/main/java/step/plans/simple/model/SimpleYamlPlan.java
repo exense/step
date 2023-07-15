@@ -29,7 +29,6 @@ public class SimpleYamlPlan {
 	private String version;
 	private String name;
 
-	@JsonDeserialize(using = SimpleRootArtefactDeserializer.class)
 	private SimpleRootArtefact root;
 
 	public String getName() {

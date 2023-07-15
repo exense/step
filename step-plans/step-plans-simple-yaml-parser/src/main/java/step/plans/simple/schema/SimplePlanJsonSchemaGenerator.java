@@ -36,7 +36,6 @@ import step.handlers.javahandler.jsonschema.JsonSchemaCreator;
 import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
 import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 import step.plans.nl.RootArtefactType;
-import step.plans.simple.YamlPlanSerializer;
 import step.plans.simple.rules.*;
 
 import java.lang.reflect.Field;
@@ -51,15 +50,15 @@ public class SimplePlanJsonSchemaGenerator {
 	private static final String ROOT_ARTEFACT_DEF = "RootArtefactDef";
 	public static final String CALL_KEYWORD_FUNCTION_NAME_DEF = "CallKeywordFunctionNameDef";
 
-	private final String targetPackage;
+	protected final String targetPackage;
 
-	private final Version actualVersion;
+	protected final Version actualVersion;
 
-	private final ObjectMapper objectMapper = new ObjectMapper();
-	private final JsonProvider jsonProvider = JsonProvider.provider();
+	protected final ObjectMapper objectMapper = new ObjectMapper();
+	protected final JsonProvider jsonProvider = JsonProvider.provider();
 
-	private final JsonSchemaCreator jsonSchemaCreator;
-	private final SimpleDynamicValueJsonSchemaHelper dynamicValuesHelper = new SimpleDynamicValueJsonSchemaHelper(jsonProvider);
+	protected final JsonSchemaCreator jsonSchemaCreator;
+	protected final SimpleDynamicValueJsonSchemaHelper dynamicValuesHelper = new SimpleDynamicValueJsonSchemaHelper(jsonProvider);
 
 	public SimplePlanJsonSchemaGenerator(String targetPackage, Version actualVersion) {
 		this.targetPackage = targetPackage;
