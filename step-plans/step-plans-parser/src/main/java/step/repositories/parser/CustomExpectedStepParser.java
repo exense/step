@@ -115,6 +115,10 @@ public class CustomExpectedStepParser implements StepParser<ExpectedStep> {
 				assert_.setOperator(AssertOperator.BEGINS_WITH);
 			} else if(operator.equals("endsWith")) {
 				assert_.setOperator(AssertOperator.ENDS_WITH);
+			} else if(operator.equals("<")){
+				assert_.setOperator(AssertOperator.LESS_THAN);
+			} else if(operator.equals(">")) {
+				assert_.setOperator(AssertOperator.GREATER_THAN);
 			}
 			
 			parsingContext.addArtefactToCurrentParent(assert_);

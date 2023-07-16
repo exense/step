@@ -98,10 +98,7 @@ public class CustomExpectedStepParserTest extends AbstractStepParserTest {
 		
 		AbstractArtefact root = parse(steps);
 		step.artefacts.Assert check1 = (step.artefacts.Assert ) getChildren(root).get(0);
-		Assert.assertEquals("\"Value1\"",check1.getExpected().getExpression());
-		Assert.assertEquals("Key1",check1.getActual().get());
-		Assert.assertEquals(AssertOperator.CONTAINS,check1.getOperator());
-		Assert.assertFalse(check1.getDoNegate().get());
+		checkAssert(check1, "\"Value1\"", "Key1", AssertOperator.CONTAINS, false);
 	}
 	
 	@Test
@@ -111,12 +108,64 @@ public class CustomExpectedStepParserTest extends AbstractStepParserTest {
 		
 		AbstractArtefact root = parse(steps);
 		step.artefacts.Assert check1 = (step.artefacts.Assert ) getChildren(root).get(0);
-		Assert.assertEquals("\"Value1\"",check1.getExpected().getExpression());
-		Assert.assertEquals("Key1",check1.getActual().get());
-		Assert.assertEquals(AssertOperator.BEGINS_WITH,check1.getOperator());
-		Assert.assertFalse(check1.getDoNegate().get());
+		checkAssert(check1, "\"Value1\"", "Key1", AssertOperator.BEGINS_WITH, false);
 	}
-	
+
+	@Test
+	public void testLessThan() throws ParsingException {
+		List<AbstractStep> steps = new ArrayList<>();
+		steps.add(step("Key1 < 777"));
+
+		AbstractArtefact root = parse(steps);
+		checkAssert((step.artefacts.Assert) getChildren(root).get(0), "777", "Key1", AssertOperator.LESS_THAN, false);
+
+		steps.clear();
+		steps.add(step("Key1 < 777.77"));
+
+		root = parse(steps);
+		checkAssert((step.artefacts.Assert) getChildren(root).get(0), "777.77", "Key1", AssertOperator.LESS_THAN, false);
+
+		steps.clear();
+		steps.add(step("Key1 < -777.77"));
+
+		root = parse(steps);
+		checkAssert((step.artefacts.Assert) getChildren(root).get(0), "-777.77", "Key1", AssertOperator.LESS_THAN, false);
+	}
+
+	@Test
+	public void testGreaterThan() throws ParsingException {
+		List<AbstractStep> steps = new ArrayList<>();
+		steps.add(step("Key1 > 777"));
+
+		AbstractArtefact root = parse(steps);
+		checkAssert((step.artefacts.Assert) getChildren(root).get(0), "777", "Key1", AssertOperator.GREATER_THAN, false);
+
+		steps.clear();
+		steps.add(step("Key1 > 777.77"));
+
+		root = parse(steps);
+		checkAssert((step.artefacts.Assert) getChildren(root).get(0), "777.77", "Key1", AssertOperator.GREATER_THAN, false);
+
+		steps.clear();
+		steps.add(step("Key1 > -777.77"));
+
+		root = parse(steps);
+		checkAssert((step.artefacts.Assert) getChildren(root).get(0), "-777.77", "Key1", AssertOperator.GREATER_THAN, false);
+	}
+
+	private void checkAssert(step.artefacts.Assert check, String expectedExpression, String expectedName, AssertOperator expectedOperator, Boolean expectedDoNegate) {
+		Assert.assertEquals(expectedExpression, check.getExpected().getExpression());
+		Assert.assertEquals(expectedName, check.getActual().get());
+		Assert.assertEquals(expectedOperator, check.getOperator());
+		if(expectedDoNegate != null) {
+			if (!expectedDoNegate) {
+				Assert.assertFalse(check.getDoNegate().get());
+			} else {
+				Assert.assertTrue(check.getDoNegate().get());
+			}
+		}
+	}
+
 	@Test
 	public void testJsonPath() throws ParsingException {
 		List<AbstractStep> steps = new ArrayList<>();
@@ -124,10 +173,7 @@ public class CustomExpectedStepParserTest extends AbstractStepParserTest {
 		
 		AbstractArtefact root = parse(steps);
 		step.artefacts.Assert check1 = (step.artefacts.Assert ) getChildren(root).get(0);
-		Assert.assertEquals("\"Value1\"",check1.getExpected().getExpression());
-		Assert.assertEquals("$.key1['key2']",check1.getActual().get());
-		Assert.assertEquals(AssertOperator.BEGINS_WITH,check1.getOperator());
-		Assert.assertFalse(check1.getDoNegate().get());
+		checkAssert(check1, "\"Value1\"", "$.key1['key2']", AssertOperator.BEGINS_WITH, false);
 	}
 	
 	@Test
