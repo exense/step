@@ -18,31 +18,29 @@
  ******************************************************************************/
 package step.plans.simple.rules;
 
+import jakarta.json.JsonArrayBuilder;
+import jakarta.json.JsonObjectBuilder;
 import jakarta.json.spi.JsonProvider;
 import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
-import step.plans.simple.deserializers.SimpleArtefactFieldDeserializationProcessor;
-import step.plans.simple.serializers.SimpleArtefactFieldSerializationProcessor;
 
-public interface ArtefactFieldConversionRule {
+public class EnumFieldRule implements ArtefactFieldConversionRule {
+    @Override
+    public JsonSchemaFieldProcessor getJsonSchemaFieldProcessor(JsonProvider jsonProvider) {
+        return (objectClass, field, fieldMetadata, propertiesBuilder, requiredPropertiesOutput) -> {
+            if (field.getType().isEnum()) {
+                JsonObjectBuilder nestedPropertyParamsBuilder = jsonProvider.createObjectBuilder();
 
-    /**
-     * Prepares the field representation in json schema
-     */
-    default JsonSchemaFieldProcessor getJsonSchemaFieldProcessor(JsonProvider jsonProvider){
-        return null;
+                JsonArrayBuilder enumArray = jsonProvider.createArrayBuilder();
+                for (Object enumValue : field.getType().getEnumConstants()) {
+                    enumArray.add(enumValue.toString());
+                }
+                nestedPropertyParamsBuilder.add("enum", enumArray);
+
+                propertiesBuilder.add(fieldMetadata.getFieldName(), nestedPropertyParamsBuilder);
+                return true;
+            }
+            return false;
+        };
     }
 
-    /**
-     * Converter from simple artefact field (simple yaml) to full artefact (full yaml)
-     */
-    default SimpleArtefactFieldDeserializationProcessor getArtefactFieldDeserializationProcessor(){
-        return null;
-    }
-
-    /**
-     * Converter from full artefact field (java object) to simple representation (yaml)
-     */
-    default SimpleArtefactFieldSerializationProcessor getArtefactFieldSerializationProcessor() {
-        return null;
-    }
 }

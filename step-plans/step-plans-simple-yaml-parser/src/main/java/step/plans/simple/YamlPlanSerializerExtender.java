@@ -16,33 +16,26 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plans.simple.rules;
+package step.plans.simple;
 
-import jakarta.json.spi.JsonProvider;
 import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
 import step.plans.simple.deserializers.SimpleArtefactFieldDeserializationProcessor;
 import step.plans.simple.serializers.SimpleArtefactFieldSerializationProcessor;
 
-public interface ArtefactFieldConversionRule {
+import java.util.ArrayList;
+import java.util.List;
 
-    /**
-     * Prepares the field representation in json schema
-     */
-    default JsonSchemaFieldProcessor getJsonSchemaFieldProcessor(JsonProvider jsonProvider){
-        return null;
+public interface YamlPlanSerializerExtender {
+
+    default List<SimpleArtefactFieldSerializationProcessor> getSerializationExtensions(){
+        return new ArrayList<>();
     }
 
-    /**
-     * Converter from simple artefact field (simple yaml) to full artefact (full yaml)
-     */
-    default SimpleArtefactFieldDeserializationProcessor getArtefactFieldDeserializationProcessor(){
-        return null;
+    default List<SimpleArtefactFieldDeserializationProcessor> getDeserializationExtensions(){
+        return new ArrayList<>();
     }
 
-    /**
-     * Converter from full artefact field (java object) to simple representation (yaml)
-     */
-    default SimpleArtefactFieldSerializationProcessor getArtefactFieldSerializationProcessor() {
-        return null;
+    default List<JsonSchemaFieldProcessor> getJsonSchemaExtensions() {
+        return new ArrayList<>();
     }
 }

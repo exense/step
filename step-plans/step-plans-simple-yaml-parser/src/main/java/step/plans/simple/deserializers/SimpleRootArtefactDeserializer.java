@@ -28,7 +28,10 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import step.core.artefacts.AbstractArtefact;
 import step.core.plans.Plan;
+import step.core.scanner.CachedAnnotationScanner;
 import step.plans.simple.YamlPlanFields;
+import step.plans.simple.YamlPlanSerializerExtender;
+import step.plans.simple.YamlPlanSerializerExtension;
 import step.plans.simple.model.SimpleRootArtefact;
 import step.plans.simple.rules.*;
 import step.plans.simple.schema.JsonSchemaFieldProcessingException;
@@ -38,6 +41,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
+import static step.core.scanner.Classes.newInstanceAs;
 
 public class SimpleRootArtefactDeserializer extends JsonDeserializer<SimpleRootArtefact> {
 
@@ -49,6 +54,8 @@ public class SimpleRootArtefactDeserializer extends JsonDeserializer<SimpleRootA
 
     protected List<SimpleArtefactFieldDeserializationProcessor> prepareFieldProcessors() {
         List<SimpleArtefactFieldDeserializationProcessor> res = new ArrayList<>();
+
+        // -- BASIC PROCESSING RULES
 
         // the 'name' field should be wrapped into the 'attributes'
         res.add(new NodeNameRule().getArtefactFieldDeserializationProcessor());
@@ -70,6 +77,11 @@ public class SimpleRootArtefactDeserializer extends JsonDeserializer<SimpleRootA
             }
         });
 
+        // -- RULES FROM EXTENSIONS HAVE LESS PRIORITY THAN BASIC RULES, BUT MORE PRIORITY THAN OTHER RULES
+        res.addAll(getExtensions());
+
+        // -- RULES FOR OS ARTEFACTS
+
         // 'argument' field for 'CallKeyword' artifact should contain all input values (dynamic values) as json string
         // but in simplified format we represent input values as array of key / values
         res.add(new KeywordInputsRule().getArtefactFieldDeserializationProcessor());
@@ -83,6 +95,13 @@ public class SimpleRootArtefactDeserializer extends JsonDeserializer<SimpleRootA
         // for 'Check' we always use the dynamic expression for 'expression' field (static value is not supported)
         res.add(new CheckExpressionRule().getArtefactFieldDeserializationProcessor());
         return res;
+    }
+
+    protected List<SimpleArtefactFieldDeserializationProcessor> getExtensions() {
+        List<SimpleArtefactFieldDeserializationProcessor> extensions = new ArrayList<>();
+        CachedAnnotationScanner.getClassesWithAnnotation(YamlPlanSerializerExtension.class).stream()
+                .map(newInstanceAs(YamlPlanSerializerExtender.class)).forEach(e -> extensions.addAll(e.getDeserializationExtensions()));
+        return extensions;
     }
 
     @Override

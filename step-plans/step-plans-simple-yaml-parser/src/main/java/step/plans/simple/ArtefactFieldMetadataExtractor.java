@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plans.simple.rules;
+package step.plans.simple;
 
 import step.artefacts.CallFunction;
 import step.artefacts.TokenSelector;

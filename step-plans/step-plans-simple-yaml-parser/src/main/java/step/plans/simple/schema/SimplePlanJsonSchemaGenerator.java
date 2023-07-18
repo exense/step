@@ -31,22 +31,28 @@ import org.slf4j.LoggerFactory;
 import step.core.Version;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
+import step.core.scanner.CachedAnnotationScanner;
 import step.handlers.javahandler.jsonschema.FieldMetadataExtractor;
 import step.handlers.javahandler.jsonschema.JsonSchemaCreator;
 import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
 import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 import step.plans.nl.RootArtefactType;
+import step.plans.simple.ArtefactFieldMetadataExtractor;
+import step.plans.simple.YamlPlanSerializerExtender;
+import step.plans.simple.YamlPlanSerializerExtension;
 import step.plans.simple.rules.*;
 
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static step.core.scanner.Classes.newInstanceAs;
+
 public class SimplePlanJsonSchemaGenerator {
 
 	private static final Logger log = LoggerFactory.getLogger(SimplePlanJsonSchemaGenerator.class);
 
-	private static final String ARTEFACT_DEF = "ArtefactDef";
+	public static final String ARTEFACT_DEF = "ArtefactDef";
 	private static final String ROOT_ARTEFACT_DEF = "RootArtefactDef";
 	public static final String CALL_KEYWORD_FUNCTION_NAME_DEF = "CallKeywordFunctionNameDef";
 
@@ -74,11 +80,12 @@ public class SimplePlanJsonSchemaGenerator {
 	}
 
 	protected List<JsonSchemaFieldProcessor> prepareFieldProcessors() {
-		// --- Fields filtering rules
-		JsonSchemaFieldProcessor commonFieldFilteringRule = new CommonFilteredFieldRule().getJsonSchemaFieldProcessor(jsonProvider);
-		JsonSchemaFieldProcessor artefactTechnicalFieldsFilteringRule = new TechnicalFieldRule().getJsonSchemaFieldProcessor(jsonProvider);
+		List<JsonSchemaFieldProcessor> result = new ArrayList<>();
 
-		// --- Fields processing rules
+		// -- BASIC PROCESSING RULES
+		result.add(new CommonFilteredFieldRule().getJsonSchemaFieldProcessor(jsonProvider));
+		result.add(new TechnicalFieldRule().getJsonSchemaFieldProcessor(jsonProvider));
+
 		JsonSchemaFieldProcessor artefactChildrenProcessingRule = (objectClass, field, fieldMetadata, propertiesBuilder, requiredPropertiesOutput) -> {
 			if(field.getDeclaringClass().equals(AbstractArtefact.class) && field.getName().equals("children")) {
 				propertiesBuilder.add(fieldMetadata.getFieldName(),
@@ -91,43 +98,30 @@ public class SimplePlanJsonSchemaGenerator {
 				return false;
 			}
 		};
+		result.add(artefactChildrenProcessingRule);
 
-		JsonSchemaFieldProcessor artefactNameRule = new NodeNameRule().getJsonSchemaFieldProcessor(jsonProvider);
-		JsonSchemaFieldProcessor keywordSelectionRule = new KeywordSelectionRule().getJsonSchemaFieldProcessor(jsonProvider);
-		JsonSchemaFieldProcessor keywordInputsRule = new KeywordInputsRule().getJsonSchemaFieldProcessor(jsonProvider);
-		JsonSchemaFieldProcessor functionGroupSelectionRule = new FunctionGroupSelectionRule().getJsonSchemaFieldProcessor(jsonProvider);
+		// -- RULES FROM EXTENSIONS HAVE LESS PRIORITY THAN BASIC RULES, BUT MORE PRIORITY THAN OTHER RULES
+		result.addAll(getExtensions());
 
-		JsonSchemaFieldProcessor enumRule = (objectClass, field, fieldMetadata, propertiesBuilder, requiredPropertiesOutput) -> {
-			if (field.getType().isEnum()) {
-				JsonObjectBuilder nestedPropertyParamsBuilder = jsonProvider.createObjectBuilder();
+		// -- RULES FOR OS ARTEFACTS
+		result.add(new NodeNameRule().getJsonSchemaFieldProcessor(jsonProvider));
+		result.add(new KeywordSelectionRule().getJsonSchemaFieldProcessor(jsonProvider));
+		result.add(new KeywordInputsRule().getJsonSchemaFieldProcessor(jsonProvider));
+		result.add(new FunctionGroupSelectionRule().getJsonSchemaFieldProcessor(jsonProvider));
+		result.add(new CheckExpressionRule().getJsonSchemaFieldProcessor(jsonProvider));
 
-				JsonArrayBuilder enumArray = jsonProvider.createArrayBuilder();
-				for (Object enumValue : field.getType().getEnumConstants()) {
-					enumArray.add(enumValue.toString());
-				}
-				nestedPropertyParamsBuilder.add("enum", enumArray);
+		// -- SOME DEFAULT RULES FOR ENUMS AND DYNAMIC FIELDS
+		result.add(new DynamicFieldRule().getJsonSchemaFieldProcessor(jsonProvider));
+		result.add(new EnumFieldRule().getJsonSchemaFieldProcessor(jsonProvider));
 
-				propertiesBuilder.add(fieldMetadata.getFieldName(), nestedPropertyParamsBuilder);
-				return true;
-			}
-			return false;
-		};
+		return result;
+	}
 
-		JsonSchemaFieldProcessor dynamicValueProcessingRule = new DynamicFieldRule().getJsonSchemaFieldProcessor(jsonProvider);
-		JsonSchemaFieldProcessor checkExpressionRule = new CheckExpressionRule().getJsonSchemaFieldProcessor(jsonProvider);
-
-		return List.of(
-				commonFieldFilteringRule,
-				artefactTechnicalFieldsFilteringRule,
-				artefactChildrenProcessingRule,
-				artefactNameRule,
-				keywordSelectionRule,
-				keywordInputsRule,
-				functionGroupSelectionRule,
-				checkExpressionRule,
-				enumRule,
-				dynamicValueProcessingRule
-		);
+	protected List<JsonSchemaFieldProcessor> getExtensions() {
+		List<JsonSchemaFieldProcessor> extensions = new ArrayList<>();
+		CachedAnnotationScanner.getClassesWithAnnotation(YamlPlanSerializerExtension.class).stream()
+				.map(newInstanceAs(YamlPlanSerializerExtender.class)).forEach(e -> extensions.addAll(e.getJsonSchemaExtensions()));
+		return extensions;
 	}
 
 	protected ArtefactFieldMetadataExtractor prepareMetadataExtractor() {

@@ -25,6 +25,17 @@ import step.handlers.javahandler.jsonschema.FieldMetadata;
 import java.io.IOException;
 import java.lang.reflect.Field;
 
+/**
+ * Serialized the artefact field from {@link step.core.plans.Plan} object to the simple yaml format
+ */
 public interface SimpleArtefactFieldSerializationProcessor {
+
+    /**
+     * @param artefact      the artefact object
+     * @param field         the field to be serialized
+     * @param fieldMetadata the field metadata to be used in simple format (the field name in simple format, the default value etc)
+     * @param gen           the output yaml generator
+     * @return true if this processor is applicable for the artefact field, false otherwise
+     */
     boolean serializeArtefactField(AbstractArtefact artefact, Field field, FieldMetadata fieldMetadata, JsonGenerator gen) throws IOException, IllegalAccessException;
 }

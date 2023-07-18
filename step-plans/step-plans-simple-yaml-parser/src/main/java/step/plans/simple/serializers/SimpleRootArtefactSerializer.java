@@ -23,7 +23,10 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import step.core.artefacts.AbstractArtefact;
 import step.core.dynamicbeans.DynamicValue;
-import step.plans.simple.YamlPlanSerializer;
+import step.core.scanner.CachedAnnotationScanner;
+import step.plans.simple.ArtefactFieldMetadataExtractor;
+import step.plans.simple.YamlPlanSerializerExtender;
+import step.plans.simple.YamlPlanSerializerExtension;
 import step.plans.simple.model.SimpleRootArtefact;
 import step.plans.simple.rules.*;
 
@@ -32,6 +35,8 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import static step.core.scanner.Classes.newInstanceAs;
 
 public class SimpleRootArtefactSerializer extends JsonSerializer<SimpleRootArtefact> {
 
@@ -48,24 +53,14 @@ public class SimpleRootArtefactSerializer extends JsonSerializer<SimpleRootArtef
     }
 
     protected List<SimpleArtefactFieldSerializationProcessor> prepareFieldProcessors() {
-        List<SimpleArtefactFieldSerializationProcessor> temp =  new ArrayList<>();
-        temp.add(new TechnicalFieldRule().getArtefactFieldSerializationProcessor());
-        temp.add(new CommonFilteredFieldRule().getArtefactFieldSerializationProcessor());
-        temp.add(new NodeNameRule().getArtefactFieldSerializationProcessor());
-        temp.add((artefact, field, fieldMetadata, gen) -> {
-            // skip dynamic fields with empty non-dynamic values
-            if (DynamicValue.class.isAssignableFrom(field.getType())) {
-                DynamicValue value = (DynamicValue) field.get(artefact);
-                return value == null || (!value.isDynamic() && value.getValue() == null);
-            }
-            return false;
-        });
-        temp.add(new KeywordSelectionRule().getArtefactFieldSerializationProcessor());
-        temp.add(new KeywordInputsRule().getArtefactFieldSerializationProcessor());
-        temp.add(new FunctionGroupSelectionRule().getArtefactFieldSerializationProcessor());
-        temp.add(new CheckExpressionRule().getArtefactFieldSerializationProcessor());
+        List<SimpleArtefactFieldSerializationProcessor> result =  new ArrayList<>();
 
-        temp.add((artefact, field, fieldMetadata, gen) -> {
+        // -- BASIC PROCESSING RULES
+
+        result.add(new TechnicalFieldRule().getArtefactFieldSerializationProcessor());
+        result.add(new CommonFilteredFieldRule().getArtefactFieldSerializationProcessor());
+        result.add(new NodeNameRule().getArtefactFieldSerializationProcessor());
+        result.add((artefact, field, fieldMetadata, gen) -> {
             if (field.getName().equals("children")) {
                 List<AbstractArtefact> children = (List<AbstractArtefact>) field.get(artefact);
                 if(children != null && !children.isEmpty()) {
@@ -80,7 +75,33 @@ public class SimpleRootArtefactSerializer extends JsonSerializer<SimpleRootArtef
             }
             return false;
         });
-        return temp;
+
+        result.add((artefact, field, fieldMetadata, gen) -> {
+            // skip dynamic fields with empty non-dynamic values
+            if (DynamicValue.class.isAssignableFrom(field.getType())) {
+                DynamicValue value = (DynamicValue) field.get(artefact);
+                return value == null || (!value.isDynamic() && value.getValue() == null);
+            }
+            return false;
+        });
+
+        // -- RULES FROM EXTENSIONS HAVE LESS PRIORITY THAN BASIC RULES, BUT MORE PRIORITY THAN OTHER RULES
+        result.addAll(getExtensions());
+
+        // -- RULES FOR OS ARTEFACTS
+        result.add(new KeywordSelectionRule().getArtefactFieldSerializationProcessor());
+        result.add(new KeywordInputsRule().getArtefactFieldSerializationProcessor());
+        result.add(new FunctionGroupSelectionRule().getArtefactFieldSerializationProcessor());
+        result.add(new CheckExpressionRule().getArtefactFieldSerializationProcessor());
+
+        return result;
+    }
+
+    protected List<SimpleArtefactFieldSerializationProcessor> getExtensions() {
+        List<SimpleArtefactFieldSerializationProcessor> extensions = new ArrayList<>();
+        CachedAnnotationScanner.getClassesWithAnnotation(YamlPlanSerializerExtension.class).stream()
+                .map(newInstanceAs(YamlPlanSerializerExtender.class)).forEach(e -> extensions.addAll(e.getSerializationExtensions()));
+        return extensions;
     }
 
     @Override

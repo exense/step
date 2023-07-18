@@ -50,7 +50,6 @@ public class StepClassParser {
 	public StepClassParser(boolean appendClassnameToPlanName) {
 		super();
 		this.appendClassnameToPlanName = appendClassnameToPlanName;
-		// TODO: for EE we should use extended class here
 		this.simpleYamlPlanSerializer = new YamlPlanSerializer(SimpleYamlPlanVersions.ACTUAL_VERSION);
 	}
 

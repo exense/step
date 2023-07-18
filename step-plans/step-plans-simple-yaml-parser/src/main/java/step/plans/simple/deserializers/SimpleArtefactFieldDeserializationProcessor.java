@@ -26,7 +26,18 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.util.Map;
 
+/**
+ * Deserializes the artefact field from simple yaml format to the full format
+ */
 public interface SimpleArtefactFieldDeserializationProcessor {
+
+    /**
+     * @param artefactClass the name of artefact
+     * @param field the field name/value in simple yaml format
+     * @param output the output json node (full format)
+     * @param codec the codec to create json elements
+     * @return true if this processor is applicable for the artefact field, false otherwise
+     */
     boolean deserializeArtefactField(String artefactClass, Map.Entry<String, JsonNode> field, ObjectNode output, ObjectCodec codec) throws JsonProcessingException;
 
     default ArrayNode createArrayNode(ObjectCodec codec) {
