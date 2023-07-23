@@ -41,17 +41,17 @@ public abstract class AbstractOperatorHandler implements AssertOperatorHandler {
         return value == null;
     }
 
-    protected int compareNumeric(Object actual, String expectedValueString) {
+    protected int compareNumeric(Object actual, Object expectedValue) {
         if (actual instanceof Integer) {
-            return ((Integer) actual).compareTo(Integer.valueOf(expectedValueString));
+            return ((Integer) actual).compareTo(isString(expectedValue) ? Integer.valueOf((String) expectedValue) : (Integer) expectedValue);
         } else if (actual instanceof Long) {
-            return ((Long) actual).compareTo(Long.valueOf(expectedValueString));
+            return ((Long) actual).compareTo(isString(expectedValue) ? Long.valueOf((String) expectedValue) : (Long) expectedValue);
         } else if (actual instanceof Double) {
-            return ((Double) actual).compareTo(Double.valueOf(expectedValueString));
-        } else if(actual instanceof BigDecimal){
-            return ((BigDecimal) actual).compareTo(BigDecimal.valueOf(Double.parseDouble(expectedValueString)));
-        } else if(actual instanceof Float){
-            return ((Float) actual).compareTo(Float.valueOf(expectedValueString));
+            return ((Double) actual).compareTo(isString(expectedValue) ? Double.valueOf((String) expectedValue) : (Double) expectedValue);
+        } else if (actual instanceof BigDecimal) {
+            return ((BigDecimal) actual).compareTo(isString(expectedValue) ? BigDecimal.valueOf(Double.parseDouble((String) expectedValue)) : (BigDecimal) expectedValue);
+        } else if (actual instanceof Float) {
+            return ((Float) actual).compareTo(isString(expectedValue) ? Float.valueOf((String) expectedValue) : (Float) expectedValue);
         } else {
             throw new IllegalArgumentException("Not supported value: " + actual.getClass().getName());
         }

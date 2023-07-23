@@ -21,25 +21,26 @@ package step.artefacts.handlers.asserts;
 public class EqualsOperatorHandler extends AbstractOperatorHandler {
 
     @Override
-    public boolean isSupported(Object value) {
-        return isBoolean(value) || isString(value) || isNumber(value);
+    public boolean isSupported(Object value, Object expectedValue) {
+        return (isBoolean(value) || isString(value) || isNumber(value))
+                && (isBoolean(expectedValue) || isString(expectedValue) || isNumber(expectedValue));
     }
 
     @Override
-    public AssertResult apply(String key, Object actual, String expectedValueString, boolean negate) {
+    public AssertResult apply(String key, Object actual, Object expectedValue, boolean negate) {
         AssertResult assertResult = new AssertResult();
-        assertResult.setPassed(negate ^ checkEquals(actual, expectedValueString));
-        assertResult.setMessage("'" + key + "' expected" + not(negate) + "to be equal to '" + expectedValueString + "' " + (assertResult.isPassed() ? "and" : "but") + " was '" + actual + "'");
-        assertResult.setDescription(key + (negate ? " !" : " ") + "= '" + expectedValueString + "'");
+        assertResult.setPassed(negate ^ checkEquals(actual, expectedValue));
+        assertResult.setMessage("'" + key + "' expected" + not(negate) + "to be equal to '" + expectedValue + "' " + (assertResult.isPassed() ? "and" : "but") + " was '" + actual + "'");
+        assertResult.setDescription(key + (negate ? " !" : " ") + "= '" + expectedValue + "'");
         return assertResult;
     }
 
-    private boolean checkEquals(Object actual, String expectedValueString) {
-        if (actual instanceof Boolean) {
+    private boolean checkEquals(Object actual, Object expectedValue) {
+        if (actual instanceof Boolean && expectedValue instanceof String) {
             // case-insensitive comparison for boolean
-            return Boolean.valueOf(expectedValueString) == actual;
+            return Boolean.valueOf((String) expectedValue) == actual;
         } else {
-            return expectedValueString.equals(actual.toString());
+            return expectedValue.equals(actual.toString());
         }
     }
 }

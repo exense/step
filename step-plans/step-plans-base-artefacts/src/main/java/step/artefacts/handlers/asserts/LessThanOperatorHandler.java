@@ -20,20 +20,20 @@ package step.artefacts.handlers.asserts;
 
 public class LessThanOperatorHandler extends AbstractOperatorHandler {
     @Override
-    public boolean isSupported(Object value) {
-        return isNumber(value);
+    public boolean isSupported(Object value, Object expectedValue) {
+        return isNumber(value) && (isNumber(expectedValue) || isString(expectedValue));
     }
 
     @Override
-    public AssertResult apply(String key, Object actual, String expectedValueString, boolean negate) {
+    public AssertResult apply(String key, Object actual, Object expectedValue, boolean negate) {
         AssertResult assertResult = new AssertResult();
-        assertResult.setPassed(negate ^ compare(actual, expectedValueString));
-        assertResult.setMessage("'" + key + "' expected" + not(negate) + "to be less than '" + expectedValueString + "' " + (assertResult.isPassed() ? "and" : "but") + " was '" + actual + "'");
-        assertResult.setDescription(key + not(negate) + "is less than '" + expectedValueString + "'");
+        assertResult.setPassed(negate ^ compare(actual, expectedValue));
+        assertResult.setMessage("'" + key + "' expected" + not(negate) + "to be less than '" + expectedValue + "' " + (assertResult.isPassed() ? "and" : "but") + " was '" + actual + "'");
+        assertResult.setDescription(key + not(negate) + "is less than '" + expectedValue + "'");
         return assertResult;
     }
 
-    private boolean compare(Object actual, String expectedValueString) {
+    private boolean compare(Object actual, Object expectedValueString) {
         return compareNumeric(actual, expectedValueString) < 0;
     }
 }

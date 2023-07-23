@@ -211,7 +211,6 @@ public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 		//a.setNegate(true);
 		a.setDoNegate(new DynamicValue<Boolean>(true));
 
-
 		execute(a);
 		
 		AssertReportNode child = (AssertReportNode) getFirstReportNode();
@@ -400,6 +399,75 @@ public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 	}
 
 	@Test
+	public void testCustomErrorMessage() {
+		setupPassed();
+
+		Assert a = new Assert();
+		a.setActual(new DynamicValue<>("key1"));
+		a.setExpected(new DynamicValue<>("value1"));
+		a.setOperator(AssertOperator.EQUALS);
+		a.setDoNegate(new DynamicValue<>(true));
+		a.setCustomErrorMessage(new DynamicValue<>("Test custom message"));
+
+		execute(a);
+
+		AssertReportNode child = (AssertReportNode) getFirstReportNode();
+		assertEquals(child.getStatus(), ReportNodeStatus.FAILED);
+		assertEquals("Test custom message", child.getMessage());
+		assertEquals("value1", child.getExpected());
+		assertEquals("value1", child.getActual());
+		assertEquals("key1 != 'value1'", child.getDescription());
+	}
+
+	@Test
+	public void testArgumentTypeMismatch(){
+		setupPassed();
+
+		// try to compare string with number
+		Assert a = new Assert();
+		a.setActual(new DynamicValue<>("key1"));
+		a.setExpected(new DynamicValue<>("777"));
+		a.setOperator(AssertOperator.LESS_THAN);
+		a.setDoNegate(new DynamicValue<>(true));
+
+		execute(a);
+
+		AssertReportNode child = (AssertReportNode) getFirstReportNode();
+		assertEquals(child.getStatus(), ReportNodeStatus.FAILED);
+		assertEquals("Type of key1 (String) is not supported for operator LESS_THAN", child.getMessage());
+
+		// null-value
+		setupPassed();
+
+		a = new Assert();
+		a.setActual(new DynamicValue<>("keyNull"));
+		a.setExpected(new DynamicValue<>("777"));
+		a.setOperator(AssertOperator.LESS_THAN);
+		a.setDoNegate(new DynamicValue<>(true));
+
+		execute(a);
+
+		child = (AssertReportNode) getFirstReportNode();
+		assertEquals(child.getStatus(), ReportNodeStatus.FAILED);
+		assertEquals("Type of keyNull (null) is not supported for operator LESS_THAN", child.getMessage());
+
+		// arrays
+		setupPassed();
+
+		a = new Assert();
+		a.setActual(new DynamicValue<>("keyArray"));
+		a.setExpected(new DynamicValue<>("777"));
+		a.setOperator(AssertOperator.LESS_THAN);
+		a.setDoNegate(new DynamicValue<>(true));
+
+		execute(a);
+
+		child = (AssertReportNode) getFirstReportNode();
+		assertEquals(child.getStatus(), ReportNodeStatus.FAILED);
+		assertEquals("Type of keyArray (ARRAY) is not supported", child.getMessage());
+	}
+
+	@Test
 	public void testNotLessThan() {
 		setupPassed();
 
@@ -523,6 +591,20 @@ public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 		assertEquals("true", child.getExpected());
 		assertEquals("true", child.getActual());
 		assertEquals("$.key2.key2Bool = 'true'", child.getDescription());
+
+		// not supported operator ("less than" for string value)
+		setupPassed();
+
+		a = new Assert();
+		a.setActual(new DynamicValue<String>("$.key2.key21"));
+		a.setExpected(new DynamicValue<String>("11"));
+		a.setOperator(AssertOperator.LESS_THAN);
+
+		execute(a);
+
+		child = (AssertReportNode) getFirstReportNode();
+		assertEquals(ReportNodeStatus.FAILED, child.getStatus());
+		assertEquals("The json path '$.key2.key21' returns an object of type String which is not supported for operator LESS_THAN", child.getMessage());
 	}
 	
 	@Test
@@ -549,7 +631,9 @@ public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 				"\"key2\":{\"key21\":\"val21\",\"key22\":\"val22\",\"key2Int\":888,\"key2Bool\":true,\"key2Double\":888.88}, " +
 				"\"keyInt\":777, " +
 				"\"keyBool\":true, " +
-				"\"keyDouble\":777.77}";
+				"\"keyDouble\":777.77, " +
+				"\"keyNull\":null," +
+				"\"keyArray\":[\"a\", \"b\"]}";
 		JsonObject o = Json.createReader(new StringReader(json)).readObject();
 		callNode.setStatus(ReportNodeStatus.PASSED);
 		callNode.setOutputObject(o);

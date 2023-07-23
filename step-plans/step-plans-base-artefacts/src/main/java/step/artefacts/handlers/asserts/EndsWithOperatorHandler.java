@@ -21,16 +21,16 @@ package step.artefacts.handlers.asserts;
 public class EndsWithOperatorHandler extends AbstractOperatorHandler {
 
     @Override
-    public boolean isSupported(Object value) {
-        return isString(value);
+    public boolean isSupported(Object value, Object expectedValue) {
+        return isString(value) && isString(expectedValue);
     }
 
     @Override
-    public AssertResult apply(String key, Object actual, String expectedValueString, boolean negate) {
+    public AssertResult apply(String key, Object actual, Object expectedValue, boolean negate) {
         AssertResult assertResult = new AssertResult();
-        assertResult.setPassed(negate ^ ((String) actual).endsWith(expectedValueString));
-        assertResult.setMessage("'" + key + "' expected" + not(negate) + "to end with '" + expectedValueString + "' " + (assertResult.isPassed() ? "and" : "but") + " was '" + actual + "'");
-        assertResult.setDescription(key + not(negate) + "ends with '" + expectedValueString + "'");
+        assertResult.setPassed(negate ^ ((String) actual).endsWith((String) expectedValue));
+        assertResult.setMessage("'" + key + "' expected" + not(negate) + "to end with '" + expectedValue + "' " + (assertResult.isPassed() ? "and" : "but") + " was '" + actual + "'");
+        assertResult.setDescription(key + not(negate) + "ends with '" + expectedValue + "'");
         return assertResult;
     }
 }

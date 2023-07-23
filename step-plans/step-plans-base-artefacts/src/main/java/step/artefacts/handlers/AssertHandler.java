@@ -59,23 +59,25 @@ public class AssertHandler extends ArtefactHandler<Assert, AssertReportNode> {
 	@Override
 	protected void execute_(AssertReportNode node, Assert artefact) {
 		CallFunctionReportNode callFunctionReport = (CallFunctionReportNode) context.getVariablesManager().getVariable("callReport");
-		if(callFunctionReport==null) {
+		if (callFunctionReport == null) {
 			// TODO externalize error messages and use error codes at this place.
 			throw new RuntimeException("Keyword report unreachable. Asserts should be wrapped in Keyword nodes in the test plan.");
 		}
-		if(callFunctionReport.getStatus()==ReportNodeStatus.PASSED) {			
+		if (callFunctionReport.getStatus() == ReportNodeStatus.PASSED) {
 			JsonObject outputJson = callFunctionReport.getOutputObject();
 			String key = artefact.getActual().get();
 			AssertOperator operator = artefact.getOperator();
 			node.setKey(key);
 
-			ValueResolvingResult valueResolvingResult = resolveValue(outputJson, key, operator);
+			// Expected value has a String generic type, but in fact it can be resolved to Boolean or Number
+			// so here we use Object type for expected value
+			Object expectedValue = artefact.getExpected().get();
+
+			ValueResolvingResult valueResolvingResult = resolveValue(outputJson, key, operator, expectedValue);
 
 			boolean passed = false;
-			if(valueResolvingResult.actualResolved) {
+			if (valueResolvingResult.actualResolved) {
 				node.setActual(valueResolvingResult.actual == null ? null : valueResolvingResult.actual.toString());
-				
-				String expectedValue = artefact.getExpected().get();
 				node.setExpected(expectedValue);
 
 				//boolean negate = artefact.isNegate();
@@ -92,10 +94,10 @@ public class AssertHandler extends ArtefactHandler<Assert, AssertReportNode> {
 				node.setMessage(valueResolvingResult.message);
 				node.setStatus(ReportNodeStatus.FAILED);
 			}
-			
-			if(!passed) {
+
+			if (!passed) {
 				String customErrorMessage = artefact.getCustomErrorMessage().get();
-				if(customErrorMessage != null && !customErrorMessage.isEmpty()) {
+				if (customErrorMessage != null && !customErrorMessage.isEmpty()) {
 					node.setMessage(customErrorMessage);
 				}
 			}
@@ -104,24 +106,24 @@ public class AssertHandler extends ArtefactHandler<Assert, AssertReportNode> {
 		}
 	}
 
-	private ValueResolvingResult resolveValue(JsonObject outputJson, String key, AssertOperator operator) {
+	private ValueResolvingResult resolveValue(JsonObject outputJson, String key, AssertOperator operator, Object expectedValue) {
 		if(key.startsWith("$")) {
-			return resolveJsonPathValue(outputJson, key, operator);
+			return resolveJsonPathValue(outputJson, key, operator, expectedValue);
 		} else {
-			return resolveSimpleValue(outputJson, key, operator);
+			return resolveSimpleValue(outputJson, key, operator, expectedValue);
 		}
 	}
 
-	private ValueResolvingResult resolveJsonPathValue(JsonObject outputJson, String key, AssertOperator operator) {
+	private ValueResolvingResult resolveJsonPathValue(JsonObject outputJson, String key, AssertOperator operator, Object expectedValue) {
 		ValueResolvingResult valueResolvingResult = new ValueResolvingResult();
 		try {
 			Object result = JsonPath.parse(outputJson.toString()).read(key);
-			if (getOperatorHandler(operator).isSupported(result)) {
+			if (getOperatorHandler(operator).isSupported(result, expectedValue)) {
 				valueResolvingResult.actual = result;
 				valueResolvingResult.actualResolved = true;
 			} else {
 				valueResolvingResult.actualResolved = false;
-				valueResolvingResult.message = "The json path '" + key + "' return an object of type "
+				valueResolvingResult.message = "The json path '" + key + "' returns an object of type "
 						+ (result == null ? "null" : result.getClass().getSimpleName()) + " which is not supported for operator " + operator.name();
 			}
 		} catch (PathNotFoundException e) {
@@ -130,11 +132,11 @@ public class AssertHandler extends ArtefactHandler<Assert, AssertReportNode> {
 		return valueResolvingResult;
 	}
 
-	private ValueResolvingResult resolveSimpleValue(JsonObject outputJson, String key, AssertOperator operator) {
+	private ValueResolvingResult resolveSimpleValue(JsonObject outputJson, String key, AssertOperator operator, Object expectedValue) {
 		ValueResolvingResult result = new ValueResolvingResult();
 		if (outputJson.containsKey(key)) {
 			JsonValue jsonValue = outputJson.get(key);
-			if (jsonValue == null) {
+			if (jsonValue == null || jsonValue.getValueType() == JsonValue.ValueType.NULL) {
 				result.actual = null;
 				result.actualResolved = true;
 			} else if (jsonValue.getValueType() == JsonValue.ValueType.STRING) {
@@ -152,7 +154,7 @@ public class AssertHandler extends ArtefactHandler<Assert, AssertReportNode> {
 			}
 
 			if(result.actualResolved){
-				if(!getOperatorHandler(operator).isSupported(result.actual)) {
+				if(!getOperatorHandler(operator).isSupported(result.actual, expectedValue)) {
 					result.message = "Type of " + key + " ("
 							+ (result.actual == null ? "null" : result.actual.getClass().getSimpleName())
 							+ ") is not supported for operator " + operator;
@@ -166,8 +168,8 @@ public class AssertHandler extends ArtefactHandler<Assert, AssertReportNode> {
 		return result;
 	}
 
-	private AssertResult applyOperator(String key, Object actual, String expectedValueString, boolean negate, AssertOperator operator) {
-		return getOperatorHandler(operator).apply(key, actual, expectedValueString, negate);
+	private AssertResult applyOperator(String key, Object actual, Object expectedValue, boolean negate, AssertOperator operator) {
+		return getOperatorHandler(operator).apply(key, actual, expectedValue, negate);
 	}
 
 	@Override
