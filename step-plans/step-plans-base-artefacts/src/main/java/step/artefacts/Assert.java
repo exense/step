@@ -108,7 +108,9 @@ public class Assert extends AbstractArtefact {
 
 		LESS_THAN,
 
-		GREATER_THAN;
+		GREATER_THAN,
+
+		IS_NULL;
 	}
 
 }

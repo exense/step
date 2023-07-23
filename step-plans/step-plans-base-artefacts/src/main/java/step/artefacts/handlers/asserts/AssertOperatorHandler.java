@@ -19,7 +19,9 @@
 package step.artefacts.handlers.asserts;
 
 public interface AssertOperatorHandler {
-    boolean isSupported(Object value, Object expectedValue);
+    boolean isActualValueSupported(Object value);
+
+    boolean isExpectedValueSupported(Object expectedValue);
 
     AssertResult apply(String key, Object actual, Object expectedValue, boolean negate);
 

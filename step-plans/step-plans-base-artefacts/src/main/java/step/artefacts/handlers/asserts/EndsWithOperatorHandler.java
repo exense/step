@@ -21,8 +21,8 @@ package step.artefacts.handlers.asserts;
 public class EndsWithOperatorHandler extends AbstractOperatorHandler {
 
     @Override
-    public boolean isSupported(Object value, Object expectedValue) {
-        return isString(value) && isString(expectedValue);
+    public boolean isActualValueSupported(Object value) {
+        return isString(value);
     }
 
     @Override

@@ -21,6 +21,13 @@ package step.artefacts.handlers.asserts;
 import java.math.BigDecimal;
 
 public abstract class AbstractOperatorHandler implements AssertOperatorHandler {
+
+    @Override
+    public boolean isExpectedValueSupported(Object expectedValue) {
+        // by default the expected value have the same restrictions as the value
+        return isActualValueSupported(expectedValue);
+    }
+
     protected String not(boolean negate) {
         return negate ? " not " : " ";
     }

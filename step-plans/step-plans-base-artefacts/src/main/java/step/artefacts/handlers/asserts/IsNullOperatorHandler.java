@@ -18,18 +18,25 @@
  ******************************************************************************/
 package step.artefacts.handlers.asserts;
 
-public class MatchesOperatorHandler extends AbstractOperatorHandler {
+public class IsNullOperatorHandler extends AbstractOperatorHandler {
+
     @Override
     public boolean isActualValueSupported(Object value) {
-        return isString(value);
+        return true;
+    }
+
+    @Override
+    public boolean isExpectedValueSupported(Object expectedValue) {
+        // expected value is ignored in 'notNull' operator
+        return true;
     }
 
     @Override
     public AssertResult apply(String key, Object actual, Object expectedValue, boolean negate) {
         AssertResult assertResult = new AssertResult();
-        assertResult.setPassed(negate ^ ((String) actual).matches((String) expectedValue));
-        assertResult.setMessage("'" + key + "' expected" + not(negate) + "to match regular expression '" + expectedValue + "' " + (assertResult.isPassed() ? "and" : "but") + " was '" + actual + "'");
-        assertResult.setDescription(key + not(negate) + "matches '" + expectedValue + "'");
+        assertResult.setPassed(negate ^ isNull(actual));
+        assertResult.setMessage("'" + key + "' expected" + not(negate) + "to be null");
+        assertResult.setDescription(key + (negate ? " !" : " ") + "= null");
         return assertResult;
     }
 }

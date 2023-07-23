@@ -20,8 +20,13 @@ package step.artefacts.handlers.asserts;
 
 public class LessThanOperatorHandler extends AbstractOperatorHandler {
     @Override
-    public boolean isSupported(Object value, Object expectedValue) {
-        return isNumber(value) && (isNumber(expectedValue) || isString(expectedValue));
+    public boolean isActualValueSupported(Object value) {
+        return isNumber(value);
+    }
+
+    @Override
+    public boolean isExpectedValueSupported(Object expectedValue) {
+        return isNumber(expectedValue) || isString(expectedValue);
     }
 
     @Override

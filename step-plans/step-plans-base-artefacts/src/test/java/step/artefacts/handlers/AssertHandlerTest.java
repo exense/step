@@ -420,6 +420,180 @@ public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 	}
 
 	@Test
+	public void testIsNull(){
+		// check null value
+		setupPassed();
+
+		Assert a = new Assert();
+		a.setActual(new DynamicValue<>("keyNull"));
+		a.setOperator(AssertOperator.IS_NULL);
+		a.setDoNegate(new DynamicValue<>(false));
+
+		execute(a);
+
+		AssertReportNode child = (AssertReportNode) getFirstReportNode();
+		assertEquals(child.getMessage(), child.getStatus(), ReportNodeStatus.PASSED);
+		assertEquals("'keyNull' expected to be null", child.getMessage());
+
+		// check not existing value
+		setupPassed();
+
+		a = new Assert();
+		a.setActual(new DynamicValue<>("notExistingKey"));
+		a.setOperator(AssertOperator.IS_NULL);
+		a.setDoNegate(new DynamicValue<>(false));
+
+		execute(a);
+
+		child = (AssertReportNode) getFirstReportNode();
+		assertEquals(child.getMessage(), child.getStatus(), ReportNodeStatus.PASSED);
+		assertEquals("'notExistingKey' expected to be null", child.getMessage());
+
+		// check notNull value
+		setupPassed();
+
+		a = new Assert();
+		a.setActual(new DynamicValue<>("key1"));
+		a.setOperator(AssertOperator.IS_NULL);
+		a.setDoNegate(new DynamicValue<>(false));
+
+		execute(a);
+
+		child = (AssertReportNode) getFirstReportNode();
+		assertEquals(child.getMessage(), child.getStatus(), ReportNodeStatus.FAILED);
+		assertEquals("'key1' expected to be null", child.getMessage());
+
+		// check null in json path
+		setupPassed();
+
+		a = new Assert();
+		a.setActual(new DynamicValue<String>("$.key2.keyNull"));
+		a.setOperator(AssertOperator.IS_NULL);
+		a.setDoNegate(new DynamicValue<>(false));
+
+		execute(a);
+
+		child = (AssertReportNode) getFirstReportNode();
+		assertEquals(child.getMessage(), child.getStatus(), ReportNodeStatus.PASSED);
+		assertEquals("'$.key2.keyNull' expected to be null", child.getMessage());
+
+		// check missing nested field in json path
+		setupPassed();
+
+		a = new Assert();
+		a.setActual(new DynamicValue<String>("$.key2.notExistingKey"));
+		a.setOperator(AssertOperator.IS_NULL);
+		a.setDoNegate(new DynamicValue<>(false));
+
+		execute(a);
+
+		child = (AssertReportNode) getFirstReportNode();
+		assertEquals(child.getMessage(), child.getStatus(), ReportNodeStatus.PASSED);
+		assertEquals("'$.key2.notExistingKey' expected to be null", child.getMessage());
+
+		// check existing field in json path
+		setupPassed();
+
+		a = new Assert();
+		a.setActual(new DynamicValue<String>("$.key2.key21"));
+		a.setOperator(AssertOperator.IS_NULL);
+		a.setDoNegate(new DynamicValue<>(false));
+
+		execute(a);
+
+		child = (AssertReportNode) getFirstReportNode();
+		assertEquals(child.getMessage(), child.getStatus(), ReportNodeStatus.FAILED);
+		assertEquals("'$.key2.key21' expected to be null", child.getMessage());
+	}
+
+	@Test
+	public void testIsNotNull(){
+		// check for null value
+		setupPassed();
+
+		Assert a = new Assert();
+		a.setActual(new DynamicValue<>("keyNull"));
+		a.setOperator(AssertOperator.IS_NULL);
+		a.setDoNegate(new DynamicValue<>(true));
+
+		execute(a);
+
+		AssertReportNode child = (AssertReportNode) getFirstReportNode();
+		assertEquals(child.getMessage(), child.getStatus(), ReportNodeStatus.FAILED);
+		assertEquals("'keyNull' expected not to be null", child.getMessage());
+
+		// check for not existing value
+		setupPassed();
+
+		a = new Assert();
+		a.setActual(new DynamicValue<>("notExistingKey"));
+		a.setOperator(AssertOperator.IS_NULL);
+		a.setDoNegate(new DynamicValue<>(true));
+
+		execute(a);
+
+		child = (AssertReportNode) getFirstReportNode();
+		assertEquals(child.getMessage(), child.getStatus(), ReportNodeStatus.FAILED);
+		assertEquals("'notExistingKey' expected not to be null", child.getMessage());
+
+		// check notNull value
+		setupPassed();
+
+		a = new Assert();
+		a.setActual(new DynamicValue<>("key1"));
+		a.setOperator(AssertOperator.IS_NULL);
+		a.setDoNegate(new DynamicValue<>(true));
+
+		execute(a);
+
+		child = (AssertReportNode) getFirstReportNode();
+		assertEquals(child.getMessage(), child.getStatus(), ReportNodeStatus.PASSED);
+		assertEquals("'key1' expected not to be null", child.getMessage());
+
+		// check null in json path
+		setupPassed();
+
+		a = new Assert();
+		a.setActual(new DynamicValue<String>("$.key2.keyNull"));
+		a.setOperator(AssertOperator.IS_NULL);
+		a.setDoNegate(new DynamicValue<>(true));
+
+		execute(a);
+
+		child = (AssertReportNode) getFirstReportNode();
+		assertEquals(child.getMessage(), child.getStatus(), ReportNodeStatus.FAILED);
+		assertEquals("'$.key2.keyNull' expected not to be null", child.getMessage());
+
+		// check missing nested field in json path
+		setupPassed();
+
+		a = new Assert();
+		a.setActual(new DynamicValue<String>("$.key2.notExistingKey"));
+		a.setOperator(AssertOperator.IS_NULL);
+		a.setDoNegate(new DynamicValue<>(true));
+
+		execute(a);
+
+		child = (AssertReportNode) getFirstReportNode();
+		assertEquals(child.getMessage(), child.getStatus(), ReportNodeStatus.FAILED);
+		assertEquals("'$.key2.notExistingKey' expected not to be null", child.getMessage());
+
+		// check existing field in json path
+		setupPassed();
+
+		a = new Assert();
+		a.setActual(new DynamicValue<String>("$.key2.key21"));
+		a.setOperator(AssertOperator.IS_NULL);
+		a.setDoNegate(new DynamicValue<>(true));
+
+		execute(a);
+
+		child = (AssertReportNode) getFirstReportNode();
+		assertEquals(child.getMessage(), child.getStatus(), ReportNodeStatus.PASSED);
+		assertEquals("'$.key2.key21' expected not to be null", child.getMessage());
+	}
+
+	@Test
 	public void testArgumentTypeMismatch(){
 		setupPassed();
 
@@ -449,7 +623,7 @@ public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 
 		child = (AssertReportNode) getFirstReportNode();
 		assertEquals(child.getStatus(), ReportNodeStatus.FAILED);
-		assertEquals("Type of keyNull (null) is not supported for operator LESS_THAN", child.getMessage());
+		assertEquals("Unable to execute assertion. The keyword output doesn't contain the attribute 'keyNull'", child.getMessage());
 
 		// arrays
 		setupPassed();
@@ -499,7 +673,7 @@ public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 		AssertReportNode child = (AssertReportNode) getFirstReportNode();
 		assertEquals(child.getStatus(), ReportNodeStatus.FAILED);
 		assertEquals("Unable to execute assertion. The keyword output doesn't contain the attribute 'notExistingKey'", child.getMessage());
-		assertNull(child.getExpected());
+		assertEquals(".*al.*", child.getExpected());
 		assertNull(child.getActual());
 		assertNull(child.getDescription());
 	}
@@ -628,7 +802,7 @@ public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 		
 		CallFunctionReportNode callNode = new CallFunctionReportNode();
 		String json = "{\"key1\":\"value1\"," +
-				"\"key2\":{\"key21\":\"val21\",\"key22\":\"val22\",\"key2Int\":888,\"key2Bool\":true,\"key2Double\":888.88}, " +
+				"\"key2\":{\"key21\":\"val21\",\"key22\":\"val22\",\"key2Int\":888,\"key2Bool\":true,\"key2Double\":888.88, \"key2Null\": null}, " +
 				"\"keyInt\":777, " +
 				"\"keyBool\":true, " +
 				"\"keyDouble\":777.77, " +

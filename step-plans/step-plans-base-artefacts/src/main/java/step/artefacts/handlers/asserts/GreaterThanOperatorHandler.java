@@ -20,8 +20,14 @@ package step.artefacts.handlers.asserts;
 
 public class GreaterThanOperatorHandler extends AbstractOperatorHandler {
     @Override
-    public boolean isSupported(Object value, Object expectedValue) {
-        return isNumber(value) && (isString(expectedValue) || isNumber(expectedValue));
+    public boolean isActualValueSupported(Object value) {
+        return isNumber(value);
+    }
+
+    @Override
+    public boolean isExpectedValueSupported(Object expectedValue) {
+        // expected value can be defined as string convertable to number
+        return isString(expectedValue) || isNumber(expectedValue);
     }
 
     @Override
