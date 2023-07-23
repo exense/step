@@ -26,6 +26,7 @@ public class LessThanOperatorHandler extends AbstractOperatorHandler {
 
     @Override
     public boolean isExpectedValueSupported(Object expectedValue) {
+        // expected value may be a number represented as string
         return isNumber(expectedValue) || isString(expectedValue);
     }
 

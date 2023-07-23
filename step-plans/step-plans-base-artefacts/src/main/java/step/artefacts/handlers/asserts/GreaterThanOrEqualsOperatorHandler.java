@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.artefacts.handlers.asserts;
 
-public class GreaterThanOperatorHandler extends AbstractOperatorHandler {
+public class GreaterThanOrEqualsOperatorHandler extends AbstractOperatorHandler {
     @Override
     public boolean isActualValueSupported(Object value) {
         return isNumber(value);
@@ -34,13 +34,13 @@ public class GreaterThanOperatorHandler extends AbstractOperatorHandler {
     public AssertResult apply(String key, Object actual, Object expectedValue, boolean negate) {
         AssertResult assertResult = new AssertResult();
         assertResult.setPassed(negate ^ compare(actual, expectedValue));
-        assertResult.setMessage("'" + key + "' expected" + not(negate) + "to be greater than '" + expectedValue + "' " + (assertResult.isPassed() ? "and" : "but") + " was '" + actual + "'");
-        assertResult.setDescription(key + not(negate) + "is greater than '" + expectedValue + "'");
+        assertResult.setMessage("'" + key + "' expected" + not(negate) + "to be greater than or equal to '" + expectedValue + "' " + (assertResult.isPassed() ? "and" : "but") + " was '" + actual + "'");
+        assertResult.setDescription(key + not(negate) + "is greater than or equal to '" + expectedValue + "'");
         return assertResult;
     }
 
     private boolean compare(Object actual, Object expectedValue) {
-        return compareNumeric(actual, expectedValue) > 0;
+        return compareNumeric(actual, expectedValue) >= 0;
     }
 
 }

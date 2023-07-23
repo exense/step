@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.artefacts.handlers.asserts;
 
-public class GreaterThanOperatorHandler extends AbstractOperatorHandler {
+public class LessThanOrEqualsOperatorHandler extends AbstractOperatorHandler {
     @Override
     public boolean isActualValueSupported(Object value) {
         return isNumber(value);
@@ -27,20 +27,19 @@ public class GreaterThanOperatorHandler extends AbstractOperatorHandler {
     @Override
     public boolean isExpectedValueSupported(Object expectedValue) {
         // expected value may be a number represented as string
-        return isString(expectedValue) || isNumber(expectedValue);
+        return isNumber(expectedValue) || isString(expectedValue);
     }
 
     @Override
     public AssertResult apply(String key, Object actual, Object expectedValue, boolean negate) {
         AssertResult assertResult = new AssertResult();
         assertResult.setPassed(negate ^ compare(actual, expectedValue));
-        assertResult.setMessage("'" + key + "' expected" + not(negate) + "to be greater than '" + expectedValue + "' " + (assertResult.isPassed() ? "and" : "but") + " was '" + actual + "'");
-        assertResult.setDescription(key + not(negate) + "is greater than '" + expectedValue + "'");
+        assertResult.setMessage("'" + key + "' expected" + not(negate) + "to be less than or equal to '" + expectedValue + "' " + (assertResult.isPassed() ? "and" : "but") + " was '" + actual + "'");
+        assertResult.setDescription(key + not(negate) + "is less than or equal to '" + expectedValue + "'");
         return assertResult;
     }
 
-    private boolean compare(Object actual, Object expectedValue) {
-        return compareNumeric(actual, expectedValue) > 0;
+    private boolean compare(Object actual, Object expectedValueString) {
+        return compareNumeric(actual, expectedValueString) <= 0;
     }
-
 }

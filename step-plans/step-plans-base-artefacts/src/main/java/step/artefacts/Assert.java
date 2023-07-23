@@ -94,7 +94,7 @@ public class Assert extends AbstractArtefact {
 
 
 
-	public static enum AssertOperator {
+	public enum AssertOperator {
 		
 		EQUALS,
 		
@@ -108,7 +108,11 @@ public class Assert extends AbstractArtefact {
 
 		LESS_THAN,
 
+		LESS_THAN_OR_EQUALS,
+
 		GREATER_THAN,
+
+		GREATER_THAN_OR_EQUALS,
 
 		IS_NULL;
 	}

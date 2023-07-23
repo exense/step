@@ -326,6 +326,51 @@ public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 	}
 
 	@Test
+	public void testGreaterThanOrEquals() {
+		// test greater than
+		setupPassed();
+
+		Assert a = new Assert();
+		a.setActual(new DynamicValue<String>("keyDouble"));
+		a.setExpected(new DynamicValue<String>("777.76"));
+		a.setOperator(AssertOperator.GREATER_THAN_OR_EQUALS);
+
+		execute(a);
+
+		AssertReportNode child = (AssertReportNode) getFirstReportNode();
+		assertEquals(child.getMessage(), child.getStatus(), ReportNodeStatus.PASSED);
+		assertEquals("'keyDouble' expected to be greater than or equal to '777.76' and was '777.77'", child.getMessage());
+
+		// test equals
+		setupPassed();
+
+		a = new Assert();
+		a.setActual(new DynamicValue<String>("keyDouble"));
+		a.setExpected(new DynamicValue<String>("777.77"));
+		a.setOperator(AssertOperator.GREATER_THAN_OR_EQUALS);
+
+		execute(a);
+
+		child = (AssertReportNode) getFirstReportNode();
+		assertEquals(child.getMessage(), child.getStatus(), ReportNodeStatus.PASSED);
+		assertEquals("'keyDouble' expected to be greater than or equal to '777.77' and was '777.77'", child.getMessage());
+
+		// test less than
+		setupPassed();
+
+		a = new Assert();
+		a.setActual(new DynamicValue<String>("keyDouble"));
+		a.setExpected(new DynamicValue<String>("777.78"));
+		a.setOperator(AssertOperator.GREATER_THAN_OR_EQUALS);
+
+		execute(a);
+
+		child = (AssertReportNode) getFirstReportNode();
+		assertEquals(child.getMessage(), child.getStatus(), ReportNodeStatus.FAILED);
+		assertEquals("'keyDouble' expected to be greater than or equal to '777.78' but was '777.77'", child.getMessage());
+	}
+
+	@Test
 	public void testNotGreaterThan() {
 		setupPassed();
 
@@ -340,6 +385,54 @@ public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 		AssertReportNode child = (AssertReportNode) getFirstReportNode();
 		assertEquals(child.getStatus(), ReportNodeStatus.FAILED);
 		assertEquals("'keyInt' expected not to be greater than '776' but was '777'", child.getMessage());
+	}
+
+	@Test
+	public void testNotGreaterThanOrEquals(){
+		// test greater than
+		setupPassed();
+
+		Assert a = new Assert();
+		a.setActual(new DynamicValue<String>("keyDouble"));
+		a.setExpected(new DynamicValue<String>("777.76"));
+		a.setDoNegate(new DynamicValue<>(true));
+		a.setOperator(AssertOperator.GREATER_THAN_OR_EQUALS);
+
+		execute(a);
+
+		AssertReportNode child = (AssertReportNode) getFirstReportNode();
+		assertEquals(child.getMessage(), child.getStatus(), ReportNodeStatus.FAILED);
+		assertEquals("'keyDouble' expected not to be greater than or equal to '777.76' but was '777.77'", child.getMessage());
+
+		// test equals
+		setupPassed();
+
+		a = new Assert();
+		a.setActual(new DynamicValue<String>("keyDouble"));
+		a.setExpected(new DynamicValue<String>("777.77"));
+		a.setDoNegate(new DynamicValue<>(true));
+		a.setOperator(AssertOperator.GREATER_THAN_OR_EQUALS);
+
+		execute(a);
+
+		child = (AssertReportNode) getFirstReportNode();
+		assertEquals(child.getMessage(), child.getStatus(), ReportNodeStatus.FAILED);
+		assertEquals("'keyDouble' expected not to be greater than or equal to '777.77' but was '777.77'", child.getMessage());
+
+		// test less than
+		setupPassed();
+
+		a = new Assert();
+		a.setActual(new DynamicValue<String>("keyDouble"));
+		a.setExpected(new DynamicValue<String>("777.78"));
+		a.setDoNegate(new DynamicValue<>(true));
+		a.setOperator(AssertOperator.GREATER_THAN_OR_EQUALS);
+
+		execute(a);
+
+		child = (AssertReportNode) getFirstReportNode();
+		assertEquals(child.getMessage(), child.getStatus(), ReportNodeStatus.PASSED);
+		assertEquals("'keyDouble' expected not to be greater than or equal to '777.78' and was '777.77'", child.getMessage());
 	}
 
 	@Test
@@ -396,6 +489,99 @@ public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 		child = (AssertReportNode) getFirstReportNode();
 		assertEquals(child.getStatus(), ReportNodeStatus.FAILED);
 		assertEquals("'keyDouble' expected to be less than '777.76' but was '777.77'", child.getMessage());
+	}
+
+	@Test
+	public void testLessThanOrEquals() {
+		// less
+		setupPassed();
+
+		Assert a = new Assert();
+		a.setActual(new DynamicValue<String>("keyDouble"));
+		a.setExpected(new DynamicValue<String>("777.78"));
+		a.setOperator(AssertOperator.LESS_THAN_OR_EQUALS);
+
+		execute(a);
+
+		AssertReportNode child = (AssertReportNode) getFirstReportNode();
+		assertEquals(child.getMessage(), child.getStatus(), ReportNodeStatus.PASSED);
+		assertEquals("'keyDouble' expected to be less than or equal to '777.78' and was '777.77'", child.getMessage());
+
+		// equals
+		setupPassed();
+
+		a = new Assert();
+		a.setActual(new DynamicValue<String>("keyDouble"));
+		a.setExpected(new DynamicValue<String>("777.77"));
+		a.setOperator(AssertOperator.LESS_THAN_OR_EQUALS);
+
+		execute(a);
+
+		child = (AssertReportNode) getFirstReportNode();
+		assertEquals(child.getMessage(), child.getStatus(), ReportNodeStatus.PASSED);
+		assertEquals("'keyDouble' expected to be less than or equal to '777.77' and was '777.77'", child.getMessage());
+
+		// greater
+		setupPassed();
+
+		a = new Assert();
+		a.setActual(new DynamicValue<String>("keyDouble"));
+		a.setExpected(new DynamicValue<String>("777.76"));
+		a.setOperator(AssertOperator.LESS_THAN_OR_EQUALS);
+
+		execute(a);
+
+		child = (AssertReportNode) getFirstReportNode();
+		assertEquals(child.getMessage(), child.getStatus(), ReportNodeStatus.FAILED);
+		assertEquals("'keyDouble' expected to be less than or equal to '777.76' but was '777.77'", child.getMessage());
+	}
+
+	@Test
+	public void testNotLessThanOrEquals() {
+		// less
+		setupPassed();
+
+		Assert a = new Assert();
+		a.setActual(new DynamicValue<String>("keyDouble"));
+		a.setExpected(new DynamicValue<String>("777.78"));
+		a.setDoNegate(new DynamicValue<>(true));
+		a.setOperator(AssertOperator.LESS_THAN_OR_EQUALS);
+
+		execute(a);
+
+		AssertReportNode child = (AssertReportNode) getFirstReportNode();
+		assertEquals(child.getMessage(), child.getStatus(), ReportNodeStatus.FAILED);
+		assertEquals("'keyDouble' expected not to be less than or equal to '777.78' but was '777.77'", child.getMessage());
+
+		// equals
+		setupPassed();
+
+		a = new Assert();
+		a.setActual(new DynamicValue<String>("keyDouble"));
+		a.setExpected(new DynamicValue<String>("777.77"));
+		a.setDoNegate(new DynamicValue<>(true));
+		a.setOperator(AssertOperator.LESS_THAN_OR_EQUALS);
+
+		execute(a);
+
+		child = (AssertReportNode) getFirstReportNode();
+		assertEquals(child.getMessage(), child.getStatus(), ReportNodeStatus.FAILED);
+		assertEquals("'keyDouble' expected not to be less than or equal to '777.77' but was '777.77'", child.getMessage());
+
+		// greater
+		setupPassed();
+
+		a = new Assert();
+		a.setActual(new DynamicValue<String>("keyDouble"));
+		a.setExpected(new DynamicValue<String>("777.76"));
+		a.setDoNegate(new DynamicValue<>(true));
+		a.setOperator(AssertOperator.LESS_THAN_OR_EQUALS);
+
+		execute(a);
+
+		child = (AssertReportNode) getFirstReportNode();
+		assertEquals(child.getMessage(), child.getStatus(), ReportNodeStatus.PASSED);
+		assertEquals("'keyDouble' expected not to be less than or equal to '777.76' and was '777.77'", child.getMessage());
 	}
 
 	@Test
