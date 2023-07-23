@@ -20,6 +20,7 @@ package step.plans.simple;
 
 import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
 import step.plans.simple.deserializers.SimpleArtefactFieldDeserializationProcessor;
+import step.plans.simple.model.SimpleYamlPlanVersions;
 import step.plans.simple.serializers.SimpleArtefactFieldSerializationProcessor;
 
 import java.util.ArrayList;
@@ -37,5 +38,27 @@ public interface YamlPlanSerializerExtender {
 
     default List<JsonSchemaFieldProcessor> getJsonSchemaExtensions() {
         return new ArrayList<>();
+    }
+
+    default ExtendedYamlPlanVersion getYamlPlanVersion() {
+        return null;
+    }
+
+    class ExtendedYamlPlanVersion {
+        private final int priority;
+        private final SimpleYamlPlanVersions.YamlPlanVersion version;
+
+        public ExtendedYamlPlanVersion(int priority, SimpleYamlPlanVersions.YamlPlanVersion version) {
+            this.priority = priority;
+            this.version = version;
+        }
+
+        public int getPriority() {
+            return priority;
+        }
+
+        public SimpleYamlPlanVersions.YamlPlanVersion getVersion() {
+            return version;
+        }
     }
 }

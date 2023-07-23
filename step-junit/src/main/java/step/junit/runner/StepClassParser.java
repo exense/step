@@ -50,7 +50,7 @@ public class StepClassParser {
 	public StepClassParser(boolean appendClassnameToPlanName) {
 		super();
 		this.appendClassnameToPlanName = appendClassnameToPlanName;
-		this.simpleYamlPlanSerializer = new YamlPlanSerializer(SimpleYamlPlanVersions.ACTUAL_VERSION);
+		this.simpleYamlPlanSerializer = new YamlPlanSerializer();
 	}
 
 	public List<StepClassParserResult> createPlansForClass(Class<?> klass) throws Exception {

@@ -33,7 +33,6 @@ import step.core.Version;
 import step.core.accessors.AbstractIdentifiableObject;
 import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.artefacts.AbstractArtefact;
-import step.core.artefacts.Artefact;
 import step.core.collections.Collection;
 import step.core.collections.CollectionFactory;
 import step.core.collections.Document;
@@ -41,6 +40,7 @@ import step.core.collections.Filters;
 import step.core.collections.inmemory.InMemoryCollectionFactory;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
+import step.core.scanner.CachedAnnotationScanner;
 import step.migration.MigrationManager;
 import step.plans.simple.deserializers.SimpleDynamicValueDeserializer;
 import step.plans.simple.deserializers.SimpleRootArtefactDeserializer;
@@ -55,10 +55,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Supplier;
+
+import static step.core.scanner.Classes.newInstanceAs;
 
 public class YamlPlanSerializer {
 
@@ -70,18 +70,27 @@ public class YamlPlanSerializer {
 	private final ObjectMapper fullYamlMapper;
 
 	private final Supplier<ObjectId> idGenerator;
-	private final Version currentVersion;
-	private final String jsonSchema;
+	private Version currentVersion;
+	private String jsonSchema;
 	private final MigrationManager migrationManager;
 
-
 	// for tests
-	YamlPlanSerializer( Supplier<ObjectId> idGenerator, SimpleYamlPlanVersions.YamlPlanVersion currentVersion) {
-		this.currentVersion = currentVersion.getVersion();
-		if (currentVersion.getJsonSchemaPath() != null) {
-			this.jsonSchema = readJsonSchema(currentVersion.getJsonSchemaPath());
+	YamlPlanSerializer(Supplier<ObjectId> idGenerator, SimpleYamlPlanVersions.YamlPlanVersion currentVersion) {
+		if (currentVersion != null) {
+			setCurrentVersion(currentVersion);
 		} else {
-			this.jsonSchema = null;
+			// resolve version and schema automatically
+			YamlPlanSerializerExtender.ExtendedYamlPlanVersion versionFromExtensions = CachedAnnotationScanner.getClassesWithAnnotation(YamlPlanSerializerExtension.class).stream()
+					.map(newInstanceAs(YamlPlanSerializerExtender.class))
+					.map(YamlPlanSerializerExtender::getYamlPlanVersion)
+					.filter(Objects::nonNull).min(Comparator.comparingInt(YamlPlanSerializerExtender.ExtendedYamlPlanVersion::getPriority))
+					.orElse(null);
+
+			if(versionFromExtensions != null){
+				setCurrentVersion(versionFromExtensions.getVersion());
+			} else {
+				setCurrentVersion(SimpleYamlPlanVersions.ACTUAL_VERSION);
+			}
 		}
 		this.simpleYamlMapper = createSimplePlanObjectMapper();
 		this.fullYamlMapper = createFullPlanObjectMapper();
@@ -90,10 +99,24 @@ public class YamlPlanSerializer {
 	}
 
 	/**
-	 * @param currentVersion the current version of step used to upgrade the old simple plans and apply validations according to the json schema
+	 * Creates the new yaml plan serializer for the specified current version (json schema)
+	 * @param currentVersion the current simple format version (and json schema)
 	 */
 	public YamlPlanSerializer(SimpleYamlPlanVersions.YamlPlanVersion currentVersion) {
 		this(null, currentVersion);
+	}
+
+	private void setCurrentVersion(SimpleYamlPlanVersions.YamlPlanVersion currentVersion) {
+		this.currentVersion = currentVersion.getVersion();
+		if (currentVersion.getJsonSchemaPath() != null) {
+			this.jsonSchema = readJsonSchema(currentVersion.getJsonSchemaPath());
+		} else {
+			this.jsonSchema = null;
+		}
+	}
+
+	public YamlPlanSerializer() {
+		this(null, null);
 	}
 
 	/**
