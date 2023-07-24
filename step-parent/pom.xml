@@ -345,9 +345,6 @@
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-surefire-plugin</artifactId>
-						<configuration>
-							<groups>ch.exense.commons.test.categories.PerformanceTest</groups>
-						</configuration>
 					</plugin>
 				</plugins>
 			</build>
