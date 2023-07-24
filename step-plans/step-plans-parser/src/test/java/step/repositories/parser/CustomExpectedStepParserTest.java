@@ -121,10 +121,31 @@ public class CustomExpectedStepParserTest extends AbstractStepParserTest {
 		checkAssert((step.artefacts.Assert) getChildren(root).get(0), "Key1", "777.77", AssertOperator.LESS_THAN, false);
 
 		steps.clear();
-		steps.add(step("Key1 < -777.77"));
+		steps.add(step("Key1 not < -777.77"));
 
 		root = parse(steps);
-		checkAssert((step.artefacts.Assert) getChildren(root).get(0), "Key1", "-777.77", AssertOperator.LESS_THAN, false);
+		checkAssert((step.artefacts.Assert) getChildren(root).get(0), "Key1", "-777.77", AssertOperator.LESS_THAN, true);
+	}
+
+	@Test
+	public void testLessThanOrEquals() throws ParsingException {
+		List<AbstractStep> steps = new ArrayList<>();
+		steps.add(step("Key1 <= 777"));
+
+		AbstractArtefact root = parse(steps);
+		checkAssert((step.artefacts.Assert) getChildren(root).get(0), "Key1", "777", AssertOperator.LESS_THAN_OR_EQUALS, false);
+
+		steps.clear();
+		steps.add(step("Key1 <= 777.77"));
+
+		root = parse(steps);
+		checkAssert((step.artefacts.Assert) getChildren(root).get(0), "Key1", "777.77", AssertOperator.LESS_THAN_OR_EQUALS, false);
+
+		steps.clear();
+		steps.add(step("Key1 not <= -777.77"));
+
+		root = parse(steps);
+		checkAssert((step.artefacts.Assert) getChildren(root).get(0), "Key1", "-777.77", AssertOperator.LESS_THAN_OR_EQUALS, true);
 	}
 
 	@Test
@@ -142,10 +163,46 @@ public class CustomExpectedStepParserTest extends AbstractStepParserTest {
 		checkAssert((step.artefacts.Assert) getChildren(root).get(0), "Key1", "777.77", AssertOperator.GREATER_THAN, false);
 
 		steps.clear();
-		steps.add(step("Key1 > -777.77"));
+		steps.add(step("Key1 not > -777.77"));
 
 		root = parse(steps);
-		checkAssert((step.artefacts.Assert) getChildren(root).get(0), "Key1", "-777.77", AssertOperator.GREATER_THAN, false);
+		checkAssert((step.artefacts.Assert) getChildren(root).get(0), "Key1", "-777.77", AssertOperator.GREATER_THAN, true);
+	}
+
+	@Test
+	public void testGreaterThanOrEquals() throws ParsingException {
+		List<AbstractStep> steps = new ArrayList<>();
+		steps.add(step("Key1 >= 777"));
+
+		AbstractArtefact root = parse(steps);
+		checkAssert((step.artefacts.Assert) getChildren(root).get(0), "Key1", "777", AssertOperator.GREATER_THAN_OR_EQUALS, false);
+
+		steps.clear();
+		steps.add(step("Key1 >= 777.77"));
+
+		root = parse(steps);
+		checkAssert((step.artefacts.Assert) getChildren(root).get(0), "Key1", "777.77", AssertOperator.GREATER_THAN_OR_EQUALS, false);
+
+		steps.clear();
+		steps.add(step("Key1 not >= -777.77"));
+
+		root = parse(steps);
+		checkAssert((step.artefacts.Assert) getChildren(root).get(0), "Key1", "-777.77", AssertOperator.GREATER_THAN_OR_EQUALS, true);
+	}
+
+	@Test
+	public void testIsNull() throws ParsingException {
+		List<AbstractStep> steps = new ArrayList<>();
+		steps.add(step("Key1 isNull"));
+
+		AbstractArtefact root = parse(steps);
+		checkAssert((step.artefacts.Assert) getChildren(root).get(0), "Key1", null, AssertOperator.IS_NULL, false);
+
+		steps.clear();
+		steps.add(step("Key1 not isNull"));
+
+		root = parse(steps);
+		checkAssert((step.artefacts.Assert) getChildren(root).get(0), "Key1", null, AssertOperator.IS_NULL, true);
 	}
 
 	@Test
