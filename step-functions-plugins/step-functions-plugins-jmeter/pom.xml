@@ -33,6 +33,7 @@
 		<module>step-functions-plugins-jmeter-local-handler</module>
 		<module>step-functions-plugins-jmeter-handler</module>
 		<module>step-functions-plugins-jmeter-def</module>
+		<module>step-functions-plugins-jmeter-controller-def</module>
 	</modules>
 	
 	

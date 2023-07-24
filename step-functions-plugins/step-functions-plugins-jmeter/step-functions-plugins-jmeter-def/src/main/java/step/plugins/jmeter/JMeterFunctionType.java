@@ -28,8 +28,7 @@ import step.grid.filemanager.FileVersionId;
 
 public class JMeterFunctionType extends AbstractFunctionType<JMeterFunction> {
 
-	FileVersionId handlerJar;
-	
+	private FileVersionId handlerJar;
 	protected final Configuration configuration;
 	
 	public JMeterFunctionType(Configuration configuration) {

@@ -25,7 +25,7 @@ import step.functions.Function;
 
 public class JMeterFunction extends Function {
 
-	DynamicValue<String> jmeterTestplan = new DynamicValue<>();
+	private DynamicValue<String> jmeterTestplan = new DynamicValue<>();
 
 	@EntityReference(type=EntityManager.resources)
 	public DynamicValue<String> getJmeterTestplan() {
