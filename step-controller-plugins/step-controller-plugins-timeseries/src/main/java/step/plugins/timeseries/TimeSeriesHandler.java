@@ -26,6 +26,7 @@ import step.plugins.measurements.MeasurementPlugin;
 import step.plugins.timeseries.api.*;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -34,7 +35,6 @@ import static step.plugins.timeseries.TimeSeriesExecutionPlugin.TIMESERIES_FLAG;
 
 public class TimeSeriesHandler {
 
-	private static final int FIELDS_SAMPLING_LIMIT = 1_000;
     private static final String ATTRIBUTES_PREFIX = "attributes.";
     private static final String METRIC_TYPE_ATTRIBUTE = "metricType";
     private static final String TIMESTAMP_ATTRIBUTE = "begin";
@@ -55,6 +55,7 @@ public class TimeSeriesHandler {
     private final ExecutionAccessor executionAccessor;
     private final TimeSeries timeSeries;
     private final int resolution;
+    private final int samplingLimit;
 
     public TimeSeriesHandler(int resolution,
                              List<String> timeSeriesAttributes,
@@ -62,7 +63,8 @@ public class TimeSeriesHandler {
                              ExecutionAccessor executionAccessor,
                              TimeSeries timeSeries,
                              TimeSeriesAggregationPipeline aggregationPipeline,
-                             AsyncTaskManager asyncTaskManager) {
+                             AsyncTaskManager asyncTaskManager,
+                             int samplingLimit) {
         this.resolution = resolution;
         this.timeSeriesAttributes = timeSeriesAttributes;
         this.measurementCollection = measurementCollection;
@@ -70,6 +72,7 @@ public class TimeSeriesHandler {
         this.executionAccessor = executionAccessor;
         this.asyncTaskManager = asyncTaskManager;
         this.timeSeries = timeSeries;
+        this.samplingLimit = samplingLimit;
         this.attributesWithPrefix = this.timeSeriesAttributes
                 .stream()
                 .map(x -> ATTRIBUTES_PREFIX + x)
@@ -116,6 +119,51 @@ public class TimeSeriesHandler {
         return mapToApiResponse(request, response);
     }
 
+    public List<Measurement> getRawMeasurements(String oqlFilter, int skip, int limit) {
+        Filter filter = OQLTimeSeriesFilterBuilder.getFilter(oqlFilter, attributesPrefixRemoval, MEASUREMENTS_FILTER_IGNORE_ATTRIBUTES);
+        return measurementCollection.find(filter, null, skip, limit, 0)
+                .collect(Collectors.toList());
+    }
+
+    public MeasurementsStats getRawMeasurementsStats(String oqlFilter) {
+        Map<String, AttributeValuesStats> distinctAttributesStats = new HashMap<>();
+
+        AtomicInteger totalCount = new AtomicInteger();
+
+        Filter filter = OQLTimeSeriesFilterBuilder.getFilter(oqlFilter, attributesPrefixRemoval, MEASUREMENTS_FILTER_IGNORE_ATTRIBUTES);
+        measurementCollection.find(filter, null, 0, samplingLimit, 0).forEach(m -> {
+            m.forEach((key, value) -> {
+                if (Objects.equals(key, MeasurementPlugin.BEGIN)
+                        || Objects.equals(key, MeasurementPlugin.VALUE)
+                        || Objects.equals(key, "_id")) {
+                    return;
+                }
+                AttributeValuesStats fieldStats = distinctAttributesStats.computeIfAbsent(key, k -> new AttributeValuesStats());
+                fieldStats.getValuesCount().computeIfAbsent(value, v -> new AtomicInteger()).incrementAndGet();
+                fieldStats.incrementTotalCount();
+            });
+            totalCount.incrementAndGet();
+
+        });
+        Map<String, List<AttributeStats>> topValues = new HashMap<>();
+
+        for (Map.Entry<String, AttributeValuesStats> entry : distinctAttributesStats.entrySet()) {
+            String attribute = entry.getKey();
+            AttributeValuesStats stats = entry.getValue();
+            Map<Object, AtomicInteger> valueCounts = stats.getValuesCount();
+
+            List<AttributeStats> percentages = valueCounts.entrySet().stream()
+                    .map(e -> new AbstractMap.SimpleEntry<>(e.getKey(), 100.0 * e.getValue().get() / stats.getTotalCount()))
+                    .sorted(Map.Entry.<Object, Double>comparingByValue().reversed())
+                    .map(e -> new AttributeStats(e.getKey().toString(), e.getValue()))
+                    .limit(20)
+                    .collect(Collectors.toList());
+
+            topValues.put(attribute, percentages);
+        }
+        return new MeasurementsStats(totalCount.get(), topValues.keySet(), topValues);
+    }
+
     private int getResolution(FetchBucketsRequest request) {
         int nbBuckets = Math.max(100, request.getNumberOfBuckets());
         int calculatedResolution = (int) Math.floor((request.getEnd() - request.getStart()) / nbBuckets);
@@ -147,20 +195,20 @@ public class TimeSeriesHandler {
             try {
                 oqlAttributes = new HashSet<>(OQLTimeSeriesFilterBuilder.getFilterAttributes(oql));
                 hasUnknownFields = !attributesWithPrefix.containsAll(oqlAttributes);
-				if (oqlAttributes.isEmpty()) { // there are strings like 'abcd' which is a valid OQL by some reason
-					isValid = false;
-				}
+                if (oqlAttributes.isEmpty()) { // there are strings like 'abcd' which is a valid OQL by some reason
+                    isValid = false;
+                }
             } catch (IllegalStateException e) {
                 isValid = false;
             }
         }
         return new OQLVerifyResponse(isValid, hasUnknownFields, oqlAttributes);
     }
-	
+
     public Set<String> getMeasurementsAttributes(String oqlFilter) {
-		Filter filter = OQLTimeSeriesFilterBuilder.getFilter(oqlFilter, attributesPrefixRemoval, Collections.emptySet());
+        Filter filter = OQLTimeSeriesFilterBuilder.getFilter(oqlFilter, attributesPrefixRemoval, Collections.emptySet());
         Set<String> fields = new HashSet<>();
-        measurementCollection.find(filter, null, 0, FIELDS_SAMPLING_LIMIT, 0).forEach(measurement -> {
+        measurementCollection.find(filter, null, 0, samplingLimit, 0).forEach(measurement -> {
             fields.addAll(measurement.keySet());
         });
         return fields;
@@ -279,4 +327,21 @@ public class TimeSeriesHandler {
         }
     }
 
+}
+
+class AttributeValuesStats {
+    private Map<Object, AtomicInteger> valuesCount = new HashMap<>();
+    private int totalCount;
+
+    public Map<Object, AtomicInteger> getValuesCount() {
+        return valuesCount;
+    }
+
+    public void incrementTotalCount() {
+        totalCount++;
+    }
+
+    public int getTotalCount() {
+        return totalCount;
+    }
 }
