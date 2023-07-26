@@ -28,7 +28,7 @@ public class AssertReportNode extends ReportNode {
 	
 	String key;
 	
-	String actual;
+	Object actual;
 	
 	Object expected;
 
@@ -56,11 +56,11 @@ public class AssertReportNode extends ReportNode {
 		this.description = description;
 	}
 
-	public String getActual() {
+	public Object getActual() {
 		return actual;
 	}
 
-	public void setActual(String actual) {
+	public void setActual(Object actual) {
 		this.actual = actual;
 	}
 

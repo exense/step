@@ -18,6 +18,8 @@
  ******************************************************************************/
 package step.artefacts.handlers.asserts;
 
+import java.util.Objects;
+
 public class EqualsOperatorHandler extends AbstractOperatorHandler {
 
     @Override
@@ -35,11 +37,18 @@ public class EqualsOperatorHandler extends AbstractOperatorHandler {
     }
 
     private boolean checkEquals(Object actual, Object expectedValue) {
+        // convert actual and expected values to string representation and compare
+        String stringActual;
+        String stringExpectedValue;
+
         if (actual instanceof Boolean && expectedValue instanceof String) {
             // case-insensitive comparison for boolean
-            return Boolean.valueOf((String) expectedValue) == actual;
+            stringExpectedValue =  ((String) expectedValue).toLowerCase();
+            stringActual = actual.toString().toLowerCase();
         } else {
-            return expectedValue.equals(actual.toString());
+            stringActual = actual == null ? null : actual.toString();
+            stringExpectedValue = expectedValue == null ? null : expectedValue.toString();
         }
+        return Objects.equals(stringActual, stringExpectedValue);
     }
 }
