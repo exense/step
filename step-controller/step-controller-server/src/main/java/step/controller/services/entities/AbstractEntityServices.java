@@ -34,6 +34,7 @@ import java.util.stream.StreamSupport;
 
 public abstract class AbstractEntityServices<T extends AbstractIdentifiableObject> extends AbstractStepServices {
 
+    public static String CUSTOM_FIELD_LOCKED = "locked";
     private final String entityName;
     private Accessor<T> accessor;
     private TableService tableService;
@@ -227,5 +228,37 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
     @Path("{id}/restore/{versionId}")
     public T restoreVersion(@PathParam("id") String id, @PathParam("versionId") String versionId) {
         return accessor.restoreVersion(new ObjectId(id), new ObjectId(versionId));
+    }
+
+    @Operation(operationId = "is{Entity}Locked", description = "Get entity locking state")
+    @GET
+    @Path("/{id}/locked")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Secured(right = "{entity}-read")
+    public boolean isLocked(@PathParam("id") String id) {
+        T t = getEntity(id);
+        Boolean locked = t.getCustomField(CUSTOM_FIELD_LOCKED, Boolean.class);
+        return (locked != null && locked);
+    }
+
+    @Operation(operationId = "lock{Entity}", description = "Lock this entity")
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Secured(right = "{entity}-write")
+    @Path("{id}/locked")
+    public void setLocked(@PathParam("id") String id, Boolean locked) {
+        T t = getEntity(id);
+        t.addCustomField(CUSTOM_FIELD_LOCKED, locked);
+        accessor.save(t);
+    }
+
+    private T getEntity(String id) {
+        T t = accessor.get(id);
+        if (t == null) {
+            throw new ControllerServiceException("Entity with id '" + id + "' does not exists.");
+        } else {
+            return t;
+        }
     }
 }
