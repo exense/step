@@ -69,7 +69,8 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 	private TableService tableService;
 	
 	@PostConstruct
-	public void init() {
+	public void init() throws Exception {
+		super.init();
 		executionAccessor = getContext().getExecutionAccessor();
 		tableService = getContext().require(TableService.class);
 	}
@@ -202,7 +203,7 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 		executionAccessor.remove(new ObjectId(id));
 	}
 
-	@Operation(operationId = "start{Entity}s", description = "Start multiple executions according to the provided parameters.")
+	@Operation(description = "Start multiple executions according to the provided parameters.")
 	@POST
 	@Path("/bulk/start")
 	@Consumes(MediaType.APPLICATION_JSON)
@@ -221,7 +222,7 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 				tableService.performBulkOperation(EntityManager.executions, request, consumer, getSession()));
 	}
 
-	@Operation(operationId = "clone{Entity}s", description = "Stop multiple executions according to the provided parameters.")
+	@Operation(description = "Stop multiple executions according to the provided parameters.")
 	@POST
 	@Path("/bulk/stop")
 	@Consumes(MediaType.APPLICATION_JSON)
