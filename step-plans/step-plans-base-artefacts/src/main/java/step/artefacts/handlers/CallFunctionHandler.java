@@ -140,6 +140,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				
 				try {
 					output = functionExecutionService.callFunction(token.getID(), function, input, JsonObject.class);
+					output.setPayload(new UserFriendlyJsonObject(output.getPayload()));
 				} finally {
 					OperationManager.getInstance().exit();
 				}
@@ -189,7 +190,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 			}
 		} else {
 			output = new Output<>();
-			output.setPayload(JsonProviderCache.createObjectBuilder().build());
+			output.setPayload(new UserFriendlyJsonObject(JsonProviderCache.createObjectBuilder().build()));
 			node.setOutputObject(output.getPayload());
 			node.setOutput(output.getPayload().toString());
 			node.setStatus(ReportNodeStatus.PASSED);
