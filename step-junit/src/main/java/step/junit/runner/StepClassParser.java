@@ -20,7 +20,6 @@ package step.junit.runner;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.core.Version;
 import step.core.artefacts.AbstractArtefact;
 import step.core.plans.Plan;
 import step.core.scanner.AnnotationScanner;
@@ -28,8 +27,7 @@ import step.handlers.javahandler.Keyword;
 import step.junit.runners.annotations.Plans;
 import step.plans.nl.RootArtefactType;
 import step.plans.nl.parser.PlanParser;
-import step.plans.simple.YamlPlanSerializer;
-import step.plans.simple.model.SimpleYamlPlanVersions;
+import step.plans.parser.yaml.YamlPlanReader;
 
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -45,12 +43,12 @@ public class StepClassParser {
 
 	private final PlanParser planParser = new PlanParser();
 
-	private final YamlPlanSerializer simpleYamlPlanSerializer;
+	private final YamlPlanReader simpleYamlPlanReader;
 
 	public StepClassParser(boolean appendClassnameToPlanName) {
 		super();
 		this.appendClassnameToPlanName = appendClassnameToPlanName;
-		this.simpleYamlPlanSerializer = new YamlPlanSerializer();
+		this.simpleYamlPlanReader = new YamlPlanReader();
 	}
 
 	public List<StepClassParserResult> createPlansForClass(Class<?> klass) throws Exception {
@@ -128,7 +126,7 @@ public class StepClassParser {
 				logger.debug("plan is:" + plan + " for class " + klass.getName());
 				setPlanName(plan, name);
 			} else if (parserMode == ParserMode.SIMPLE_YAML_PARSER) {
-				plan = simpleYamlPlanSerializer.readSimplePlanFromYaml(stream);
+				plan = simpleYamlPlanReader.readYamlPlan(stream);
 			} else {
 				throw new UnsupportedOperationException("Unable to resolve plan parser " + parserMode);
 			}

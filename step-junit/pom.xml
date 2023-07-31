@@ -34,7 +34,7 @@
 		</dependency>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
-			<artifactId>step-plans-simple-yaml-parser</artifactId>
+			<artifactId>step-plans-yaml-parser</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
