@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.artefacts.handlers.asserts;
 
+import java.math.BigDecimal;
 import java.util.Objects;
 
 public class EqualsOperatorHandler extends AbstractOperatorHandler {
@@ -37,18 +38,15 @@ public class EqualsOperatorHandler extends AbstractOperatorHandler {
     }
 
     private boolean checkEquals(Object actual, Object expectedValue) {
-        // convert actual and expected values to string representation and compare
-        String stringActual;
-        String stringExpectedValue;
-
-        if (actual instanceof Boolean && expectedValue instanceof String) {
-            // case-insensitive comparison for boolean
-            stringExpectedValue =  ((String) expectedValue).toLowerCase();
-            stringActual = actual.toString().toLowerCase();
+        Class<?> targetClass = resolveTargetClass(actual, expectedValue);
+        Object actualConvertedToTarget = convert(actual, targetClass);
+        Object expectedConvertedToTarget = convert(expectedValue, targetClass);
+        if (actualConvertedToTarget instanceof BigDecimal && expectedConvertedToTarget instanceof BigDecimal) {
+            // compare instead of equals to avoid scaling mismatch in actual and expected values
+            return ((BigDecimal) actualConvertedToTarget).compareTo((BigDecimal) expectedConvertedToTarget) == 0;
         } else {
-            stringActual = actual == null ? null : actual.toString();
-            stringExpectedValue = expectedValue == null ? null : expectedValue.toString();
+            return Objects.equals(actualConvertedToTarget, expectedConvertedToTarget);
         }
-        return Objects.equals(stringActual, stringExpectedValue);
     }
+
 }

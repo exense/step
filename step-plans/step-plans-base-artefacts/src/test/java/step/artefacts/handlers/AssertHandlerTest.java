@@ -71,25 +71,26 @@ public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 		assertEquals(child.getMessage(), child.getStatus(), ReportNodeStatus.PASSED);
 		assertEquals("'keyInt' expected to be equal to '777' and was '777'", child.getMessage());
 		assertEquals(777, child.getExpected());
-		assertEquals(777, child.getActual());
+		assertEquals("777", child.getActual());
 		assertEquals("keyInt = '777'", child.getDescription());
 
+		// double value with extended precision
 		setupPassed();
 		a = new Assert();
 		a.setActual(new DynamicValue<String>("keyDouble"));
-		a.setExpected(new DynamicValue<String>("777.77"));
+		a.setExpected(new DynamicValue<String>("777.7700"));
 		a.setOperator(AssertOperator.EQUALS);
 
 		execute(a);
 
 		child = (AssertReportNode) getFirstReportNode();
 		assertEquals(child.getMessage(), child.getStatus(), ReportNodeStatus.PASSED);
-		assertEquals("'keyDouble' expected to be equal to '777.77' and was '777.77'", child.getMessage());
-		assertEquals("777.77", child.getExpected());
-		assertEquals("777.77", child.getActual().toString()); // big decimal here
-		assertEquals("keyDouble = '777.77'", child.getDescription());
+		assertEquals("'keyDouble' expected to be equal to '777.7700' and was '777.77'", child.getMessage());
+		assertEquals("777.7700", child.getExpected());
+		assertEquals("777.77", child.getActual());
+		assertEquals("keyDouble = '777.7700'", child.getDescription());
 
-		// Test boolean value
+		// Test boolean value (case-insensitive)
 		setupPassed();
 		a = new Assert();
 		a.setActual(new DynamicValue<String>("keyBool"));
@@ -102,7 +103,7 @@ public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 		assertEquals(child.getMessage(), child.getStatus(), ReportNodeStatus.PASSED);
 		assertEquals("'keyBool' expected to be equal to 'true' and was 'true'", child.getMessage());
 		assertEquals("true", child.getExpected());
-		assertEquals(true, child.getActual());
+		assertEquals("true", child.getActual());
 		assertEquals("keyBool = 'true'", child.getDescription());
 	}
 	
@@ -986,7 +987,7 @@ public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 		assertEquals("'$.key2.key2Bool' expected to be equal to 'true' and was 'true'", child.getMessage());
 
 		assertEquals("true", child.getExpected());
-		assertEquals(true, child.getActual());
+		assertEquals("true", child.getActual());
 		assertEquals("$.key2.key2Bool = 'true'", child.getDescription());
 
 		// not supported operator ("less than" for string value)

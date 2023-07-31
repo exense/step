@@ -48,19 +48,43 @@ public abstract class AbstractOperatorHandler implements AssertOperatorHandler {
         return value == null;
     }
 
+    protected boolean isAnyNumeric(Object value){
+        return value instanceof Integer || value instanceof Long || value instanceof Double || value instanceof  BigDecimal || value instanceof Float;
+    }
+
     protected int compareNumeric(Object actual, Object expectedValue) {
-        if (actual instanceof Integer) {
-            return ((Integer) actual).compareTo(isString(expectedValue) ? Integer.valueOf((String) expectedValue) : (Integer) expectedValue);
-        } else if (actual instanceof Long) {
-            return ((Long) actual).compareTo(isString(expectedValue) ? Long.valueOf((String) expectedValue) : (Long) expectedValue);
-        } else if (actual instanceof Double) {
-            return ((Double) actual).compareTo(isString(expectedValue) ? Double.valueOf((String) expectedValue) : (Double) expectedValue);
-        } else if (actual instanceof BigDecimal) {
-            return ((BigDecimal) actual).compareTo(isString(expectedValue) ? BigDecimal.valueOf(Double.parseDouble((String) expectedValue)) : (BigDecimal) expectedValue);
-        } else if (actual instanceof Float) {
-            return ((Float) actual).compareTo(isString(expectedValue) ? Float.valueOf((String) expectedValue) : (Float) expectedValue);
+        // use big decimal to compare, for instance, Integer with Float
+        return new BigDecimal(actual.toString()).compareTo(new BigDecimal(expectedValue.toString()));
+    }
+
+    /**
+     * Resolve the target class to which both actual and expected values can be converted
+     */
+    protected Class<?> resolveTargetClass(Object actual, Object expectedValue) {
+        // all numeric values we convert to BigDecimal
+        if (actual.getClass().equals(expectedValue.getClass())) {
+            return actual.getClass();
+        } else if (expectedValue instanceof String) {
+            return isAnyNumeric(actual) ? BigDecimal.class : actual.getClass();
+        } else if (actual instanceof String) {
+            return isAnyNumeric(expectedValue) ? BigDecimal.class : expectedValue.getClass();
         } else {
-            throw new IllegalArgumentException("Not supported value: " + actual.getClass().getName());
+            throw new IllegalArgumentException("Non-convertible types: " + actual.getClass().getSimpleName() + " and " + expectedValue.getClass().getSimpleName());
         }
     }
+
+    protected Object convert(Object value, Class<?> convertTo) {
+        if (value.getClass().isAssignableFrom(convertTo)) {
+            return value;
+        } else if (BigDecimal.class.isAssignableFrom(convertTo)) {
+            return new BigDecimal(value.toString());
+        } else if (Boolean.class.isAssignableFrom(convertTo)) {
+            return Boolean.parseBoolean(value.toString());
+        } else if (String.class.isAssignableFrom(convertTo)) {
+            return value.toString();
+        } else {
+            throw new IllegalArgumentException(value.getClass().getSimpleName() + " is not convertible to " + convertTo);
+        }
+    }
+
 }
