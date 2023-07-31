@@ -67,7 +67,6 @@ public class YamlPlanReader {
 	public static final String YAML_PLANS_COLLECTION_NAME = "yamlPlans";
 
 	private final ObjectMapper yamlMapper;
-	private final ObjectMapper technicalPlanMapper;
 
 	private final Supplier<ObjectId> idGenerator;
 	private Version currentVersion;
@@ -93,7 +92,6 @@ public class YamlPlanReader {
 			}
 		}
 		this.yamlMapper = createYamlPlanObjectMapper();
-		this.technicalPlanMapper = createTechnicalPlanObjectMapper();
 		this.idGenerator = idGenerator;
 		this.migrationManager = initMigrationManager();
 	}
@@ -122,31 +120,24 @@ public class YamlPlanReader {
 	/**
 	 * Read the plan from Yaml
 	 *
-	 * @param yamlPlan yaml data
+	 * @param yamlPlanStream yaml data
 	 */
-	public Plan readYamlPlan(InputStream yamlPlan) throws IOException {
-		String bufferedYamlPlan = new String(yamlPlan.readAllBytes(), StandardCharsets.UTF_8);
+	public Plan readYamlPlan(InputStream yamlPlanStream) throws IOException {
+		String bufferedYamlPlan = new String(yamlPlanStream.readAllBytes(), StandardCharsets.UTF_8);
 
 		bufferedYamlPlan = upgradeYamlPlanIfRequired(bufferedYamlPlan);
 
-		JsonNode simplePlanJsonNode = yamlMapper.readTree(bufferedYamlPlan);
+		JsonNode yamlPlanJsonNode = yamlMapper.readTree(bufferedYamlPlan);
 		if (jsonSchema != null) {
-			JsonSchemaValidator.validate(jsonSchema, simplePlanJsonNode.toString());
+			JsonSchemaValidator.validate(jsonSchema, yamlPlanJsonNode.toString());
 		}
 
-		YamlPlan simplePlan = yamlMapper.treeToValue(simplePlanJsonNode, YamlPlan.class);
-		return yamlPlanToPlan(simplePlan);
+		YamlPlan yamlPlan = yamlMapper.treeToValue(yamlPlanJsonNode, YamlPlan.class);
+		return yamlPlanToPlan(yamlPlan);
 	}
 
 	/**
-	 * Write the full plan as technical YAML (full serialization)
-	 */
-	public void writePlanInTechnicalFormat(OutputStream os, Plan plan) throws IOException {
-		technicalPlanMapper.writeValue(os, plan);
-	}
-
-	/**
-	 * Write the plan as YAML
+	 * Writes the plan as YAML
 	 */
 	public void writeYamlPlan(OutputStream os, Plan plan) throws IOException {
 		yamlMapper.writeValue(os, planToYamlPlan(plan));
@@ -177,19 +168,8 @@ public class YamlPlanReader {
 		return new YamlRootArtefactDeserializer();
 	}
 
-	protected ObjectMapper createTechnicalPlanObjectMapper(){
-		YAMLFactory yamlFactory = new YAMLFactory();
-		// Disable native type id to enable conversion to generic Documents
-		yamlFactory.disable(YAMLGenerator.Feature.USE_NATIVE_TYPE_ID);
-		return DefaultJacksonMapperProvider.getObjectMapper(yamlFactory);
-	}
-
 	protected ObjectMapper getYamlMapper() {
 		return yamlMapper;
-	}
-
-	protected ObjectMapper getTechnicalPlanMapper() {
-		return technicalPlanMapper;
 	}
 
 	protected String readJsonSchema(String jsonSchemaPath) {
@@ -204,7 +184,7 @@ public class YamlPlanReader {
 	}
 
 	/**
-	 * Initialized the migration manager with specific migrations used for simple plan format
+	 * Initializes the migration manager with specific migrations used for yaml plan format
 	 */
 	protected MigrationManager initMigrationManager() {
 		final MigrationManager migrationManager = new MigrationManager();
@@ -218,12 +198,12 @@ public class YamlPlanReader {
 
 	private String upgradeYamlPlanIfRequired(String bufferedYamlPlan) throws JsonProcessingException {
 		if (currentVersion != null) {
-			Document simplePlanDocument = yamlMapper.readValue(bufferedYamlPlan, Document.class);
-			String planVersionString = simplePlanDocument.getString(YamlPlan.VERSION_FIELD_NAME);
+			Document yamlPlanDocument = yamlMapper.readValue(bufferedYamlPlan, Document.class);
+			String planVersionString = yamlPlanDocument.getString(YamlPlan.VERSION_FIELD_NAME);
 
 			// planVersionString == null means than no migration is required (version is actual)
 			if (planVersionString != null) {
-				log.info("Migrating simple plan from version {} to {}", planVersionString, currentVersion);
+				log.info("Migrating yaml plan from version {} to {}", planVersionString, currentVersion);
 
 				// convert yaml plan to document to perform migrations
 				CollectionFactory tempCollectionFactory = new InMemoryCollectionFactory(new Properties());
@@ -231,9 +211,9 @@ public class YamlPlanReader {
 
 				if (planVersion.compareTo(currentVersion) != 0) {
 					Collection<Document> tempCollection = tempCollectionFactory.getCollection(YAML_PLANS_COLLECTION_NAME, Document.class);
-					Document planDocument = tempCollection.save(simplePlanDocument);
+					Document planDocument = tempCollection.save(yamlPlanDocument);
 
-					// run migrations (AbstractSimplePlanMigrationTask)
+					// run migrations (AbstractYamlPlanMigrationTask)
 					migrationManager.migrate(tempCollectionFactory, planVersion, currentVersion);
 
 					Document migratedDocument = tempCollection.find(Filters.id(planDocument.getId()), null, null, null, 0).findFirst().orElseThrow();
@@ -245,7 +225,7 @@ public class YamlPlanReader {
 					bufferedYamlPlan = yamlMapper.writeValueAsString(migratedDocument);
 
 					if (log.isDebugEnabled()) {
-						log.debug("Simple plan after migrations: {}", bufferedYamlPlan);
+						log.debug("Yaml plan after migrations: {}", bufferedYamlPlan);
 					}
 				}
 			}
@@ -268,12 +248,12 @@ public class YamlPlanReader {
 		return yamlPlan;
 	}
 
-	private void applyDefaultValues(Plan fullPlan) {
+	private void applyDefaultValues(Plan plan) {
 		if (this.idGenerator != null) {
-			fullPlan.setId(this.idGenerator.get());
+			plan.setId(this.idGenerator.get());
 		}
 
-		AbstractArtefact root = fullPlan.getRoot();
+		AbstractArtefact root = plan.getRoot();
 		if (root != null) {
 			applyDefaultValuesForArtifact(root);
 		}

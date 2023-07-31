@@ -33,14 +33,14 @@ public interface ArtefactFieldConversionRule {
     }
 
     /**
-     * Converter from simple artefact field (simple yaml) to full artefact (full yaml)
+     * Converter from yaml artefact field to technical step artefact
      */
     default YamlArtefactFieldDeserializationProcessor getArtefactFieldDeserializationProcessor(){
         return null;
     }
 
     /**
-     * Converter from full artefact field (java object) to simple representation (yaml)
+     * Converter from step artefact field (java object) to yaml
      */
     default YamlArtefactFieldSerializationProcessor getArtefactFieldSerializationProcessor() {
         return null;

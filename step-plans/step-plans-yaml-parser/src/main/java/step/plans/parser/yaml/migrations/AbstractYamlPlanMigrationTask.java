@@ -37,6 +37,6 @@ public abstract class AbstractYamlPlanMigrationTask extends MigrationTask {
 
     @Override
     public void runDowngradeScript() {
-        throw new UnsupportedOperationException("Simple plan downgrading is not supported");
+        throw new UnsupportedOperationException("Yaml plan downgrading is not supported");
     }
 }

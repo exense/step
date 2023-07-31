@@ -20,17 +20,17 @@ package step.plans.parser.yaml;
 
 public class YamlPlanFields {
     public static final String CALL_FUNCTION_ARGUMENT_ORIGINAL_FIELD = "argument";
-    public static final String CALL_FUNCTION_ARGUMENT_SIMPLE_FIELD = "inputs";
+    public static final String CALL_FUNCTION_ARGUMENT_YAML_FIELD = "inputs";
 
     public static final String CALL_FUNCTION_FUNCTION_ORIGINAL_FIELD = "function";
-    public static final String CALL_FUNCTION_FUNCTION_SIMPLE_FIELD = "keyword";
+    public static final String CALL_FUNCTION_FUNCTION_YAML_FIELD = "keyword";
 
     public static final String TOKEN_SELECTOR_TOKEN_ORIGINAL_FIELD = "token";
-    public static final String TOKEN_SELECTOR_TOKEN_SIMPLE_FIELD = "selectionCriteria";
+    public static final String TOKEN_SELECTOR_TOKEN_YAML_FIELD = "selectionCriteria";
 
     public static final String CHECK_EXPRESSION_ORIGINAL_FIELD = "expression";
 
-    public static final String NAME_SIMPLE_FIELD = "nodeName";
+    public static final String NAME_YAML_FIELD = "nodeName";
 
     public static final String DYN_VALUE_EXPRESSION_FIELD = "expression";
 }

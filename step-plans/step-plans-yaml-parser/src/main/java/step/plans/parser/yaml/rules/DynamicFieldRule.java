@@ -49,5 +49,5 @@ public class DynamicFieldRule implements ArtefactFieldConversionRule {
         };
     }
 
-    // SERIALIZER/DESERIALIZER IS NOT REQUIRED, BECAUSE THIS LOGIC IS INCLUDED in SimpleDynamicValueSerializer/SimpleDynamicValueDeserializer
+    // SERIALIZER/DESERIALIZER IS NOT REQUIRED, BECAUSE THIS LOGIC IS INCLUDED in YamlDynamicValueSerializer/YamlDynamicValueDeserializer
 }

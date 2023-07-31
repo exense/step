@@ -48,7 +48,7 @@ public class FunctionGroupSelectionRule extends DynamicInputsSupport implements 
     @Override
     public YamlArtefactFieldDeserializationProcessor getArtefactFieldDeserializationProcessor() {
         return (artefactClass, field, output, codec) -> {
-            if ((artefactClass.equals(FunctionGroup.FUNCTION_GROUP_ARTEFACT_NAME) && field.getKey().equals(YamlPlanFields.TOKEN_SELECTOR_TOKEN_SIMPLE_FIELD))) {
+            if ((artefactClass.equals(FunctionGroup.FUNCTION_GROUP_ARTEFACT_NAME) && field.getKey().equals(YamlPlanFields.TOKEN_SELECTOR_TOKEN_YAML_FIELD))) {
                 // 'token' aka 'selectionCriteria' field  should contain all input values (dynamic values) as json string
                 //  but in simplified format we represent input values as array of key / values
                 String argumentsAsJsonString = deserializeDynamicInputs(codec, (ArrayNode) field.getValue());
@@ -66,7 +66,7 @@ public class FunctionGroupSelectionRule extends DynamicInputsSupport implements 
                 // convert token to 'selectionCriteria' format
                 DynamicValue<String> token = (DynamicValue<String>) field.get(artefact);
                 if (!isEmptyDynamicInputs(token)) {
-                    gen.writeFieldName(YamlPlanFields.TOKEN_SELECTOR_TOKEN_SIMPLE_FIELD);
+                    gen.writeFieldName(YamlPlanFields.TOKEN_SELECTOR_TOKEN_YAML_FIELD);
                     serializeDynamicInputs(gen, token);
                 }
                 return true;

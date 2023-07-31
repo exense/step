@@ -56,15 +56,15 @@ public class KeywordSelectionRule extends DynamicInputsSupport implements Artefa
     public YamlArtefactFieldDeserializationProcessor getArtefactFieldDeserializationProcessor() {
         return (artefactClass, field, output, codec) -> {
             // for 'CallFunction' we can use either the `keyword` (keyword name) field or the `keyword.selectionCriteria` to define the keyword name
-            if (artefactClass.equals(CallFunction.ARTEFACT_NAME) && field.getKey().equals(YamlPlanFields.CALL_FUNCTION_FUNCTION_SIMPLE_FIELD)) {
-                JsonNode simpleFunctionValue = field.getValue();
-                JsonNode functionSelectionCriteria = simpleFunctionValue.get(YamlPlanFields.TOKEN_SELECTOR_TOKEN_SIMPLE_FIELD);
+            if (artefactClass.equals(CallFunction.ARTEFACT_NAME) && field.getKey().equals(YamlPlanFields.CALL_FUNCTION_FUNCTION_YAML_FIELD)) {
+                JsonNode yamlFunctionValue = field.getValue();
+                JsonNode functionSelectionCriteria = yamlFunctionValue.get(YamlPlanFields.TOKEN_SELECTOR_TOKEN_YAML_FIELD);
 
                 // explicit function name as dynamic value
                 if (functionSelectionCriteria != null) {
                     output.put(YamlPlanFields.TOKEN_SELECTOR_TOKEN_ORIGINAL_FIELD, deserializeDynamicInputs(codec, (ArrayNode) functionSelectionCriteria));
                 } else {
-                    output.set(YamlPlanFields.CALL_FUNCTION_FUNCTION_ORIGINAL_FIELD, simpleFunctionValue);
+                    output.set(YamlPlanFields.CALL_FUNCTION_FUNCTION_ORIGINAL_FIELD, yamlFunctionValue);
                 }
                 return true;
             } else {
@@ -83,12 +83,12 @@ public class KeywordSelectionRule extends DynamicInputsSupport implements Artefa
 
                     boolean useSelectionCriteria = isEmptyDynamicInputs(token);
 
-                    gen.writeFieldName(YamlPlanFields.CALL_FUNCTION_FUNCTION_SIMPLE_FIELD);
+                    gen.writeFieldName(YamlPlanFields.CALL_FUNCTION_FUNCTION_YAML_FIELD);
                     if (!useSelectionCriteria) {
                         gen.writeObject(function);
                     } else {
                         gen.writeStartObject();
-                        gen.writeFieldName(YamlPlanFields.TOKEN_SELECTOR_TOKEN_SIMPLE_FIELD);
+                        gen.writeFieldName(YamlPlanFields.TOKEN_SELECTOR_TOKEN_YAML_FIELD);
                         serializeDynamicInputs(gen, token);
                         gen.writeEndObject();
                     }

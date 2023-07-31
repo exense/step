@@ -78,7 +78,7 @@ public class CheckExpressionRule implements ArtefactFieldConversionRule {
             if (Check.class.isAssignableFrom(artefact.getClass()) && field.getName().equals(YamlPlanFields.CHECK_EXPRESSION_ORIGINAL_FIELD)) {
                 DynamicValue<Boolean> value = (DynamicValue<Boolean>) field.get(artefact);
                 if (!value.isDynamic()){
-                    log.warn("Static values are not supported in simple plan format for " + field.getName() + " in " + artefact.getClass().getSimpleName());
+                    log.warn("Static values are not supported in yaml plan format for " + field.getName() + " in " + artefact.getClass().getSimpleName());
                 } else {
                     gen.writeStringField(YamlPlanFields.CHECK_EXPRESSION_ORIGINAL_FIELD, value.getExpression());
                 }

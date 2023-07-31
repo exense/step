@@ -54,7 +54,7 @@ public class YamlDynamicValueDeserializer extends JsonDeserializer<DynamicValue<
 				throw new IllegalStateException("Expression should be defined for dynamic value " + node.toPrettyString());
 			}
 		} else {
-			// simple 'smart' mode - we can use the value explicitly without nested 'value' node
+			// 'smart' mode - we can use the value explicitly without nested 'value' node
 			return new DynamicValue<>(jp.getCodec().treeToValue(node, type.getRawClass()));
 		}
 

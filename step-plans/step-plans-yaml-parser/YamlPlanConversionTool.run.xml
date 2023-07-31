@@ -5,7 +5,7 @@
     <option name="PROGRAM_PARAMETERS" value="C://projects//step/plans" />
     <extension name="coverage">
       <pattern>
-        <option name="PATTERN" value="step.plans.simple.*" />
+        <option name="PATTERN" value="step.plans.parser.*" />
         <option name="ENABLED" value="true" />
       </pattern>
     </extension>

@@ -121,11 +121,11 @@ public class StepClassParser {
 				throw new Exception("Plan '" + name + "' was not found for class " + klass.getName());
 			}
 
-			if (parserMode == ParserMode.PLAN_PARSER) {
+			if (parserMode == ParserMode.PLAIN_TEXT_PARSER) {
 				plan = planParser.parse(stream, RootArtefactType.TestCase);
 				logger.debug("plan is:" + plan + " for class " + klass.getName());
 				setPlanName(plan, name);
-			} else if (parserMode == ParserMode.SIMPLE_YAML_PARSER) {
+			} else if (parserMode == ParserMode.YAML_PARSER) {
 				plan = simpleYamlPlanReader.readYamlPlan(stream);
 			} else {
 				throw new UnsupportedOperationException("Unable to resolve plan parser " + parserMode);
@@ -147,14 +147,14 @@ public class StepClassParser {
 	private ParserMode chooseParserModeByFileName(String fileName) {
 		// TODO: maybe add the 'format' property to @Plan annotation instead of checking file extension
 		if (fileName.endsWith(".yaml") || fileName.endsWith(".yml")) {
-			return ParserMode.SIMPLE_YAML_PARSER;
+			return ParserMode.YAML_PARSER;
 		} else {
-			return ParserMode.PLAN_PARSER;
+			return ParserMode.PLAIN_TEXT_PARSER;
 		}
 	}
 
 	private enum ParserMode {
-		PLAN_PARSER,
-		SIMPLE_YAML_PARSER
+		PLAIN_TEXT_PARSER,
+		YAML_PARSER
 	}
 }

@@ -41,7 +41,7 @@ public class NodeNameRule implements ArtefactFieldConversionRule {
             if (isAttributesField(field)) {
                 // use artefact name as default
                 propertiesBuilder.add(
-                        YamlPlanFields.NAME_SIMPLE_FIELD,
+                        YamlPlanFields.NAME_YAML_FIELD,
                         jsonProvider.createObjectBuilder()
                                 .add("type", "string")
                                 .add("default", AbstractArtefact.getArtefactName((Class<? extends AbstractArtefact>) objectClass))
@@ -58,7 +58,7 @@ public class NodeNameRule implements ArtefactFieldConversionRule {
         return (artefact, field, fieldMetadata, gen) -> {
             if (isAttributesField(field)) {
                 Map<String, String> attributes = (Map<String, String>) field.get(artefact);
-                gen.writeStringField(YamlPlanFields.NAME_SIMPLE_FIELD, attributes.get("name"));
+                gen.writeStringField(YamlPlanFields.NAME_YAML_FIELD, attributes.get("name"));
                 return true;
             }
             return false;
@@ -70,7 +70,7 @@ public class NodeNameRule implements ArtefactFieldConversionRule {
         return new YamlArtefactFieldDeserializationProcessor() {
             @Override
             public boolean deserializeArtefactField(String artefactClass, Map.Entry<String, JsonNode> field, ObjectNode output, ObjectCodec codec) {
-                if (field.getKey().equals(YamlPlanFields.NAME_SIMPLE_FIELD)) {
+                if (field.getKey().equals(YamlPlanFields.NAME_YAML_FIELD)) {
                     ObjectNode attributesNode = (ObjectNode) output.get("attributes");
                     if (attributesNode == null) {
                         attributesNode = createObjectNode(codec);

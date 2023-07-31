@@ -63,11 +63,11 @@ public class YamlRootArtefactDeserializer extends JsonDeserializer<YamlRootArtef
         // process children recursively
         res.add((artefactClass, field, output, codec) -> {
             if (field.getKey().equals("children")) {
-                JsonNode simpleChildren = field.getValue();
-                if (simpleChildren != null && simpleChildren.isArray()) {
+                JsonNode yamlChildren = field.getValue();
+                if (yamlChildren != null && yamlChildren.isArray()) {
                     ArrayNode childrenResult = createArrayNode(codec);
-                    for (JsonNode simpleChild : simpleChildren) {
-                        childrenResult.add(convertSimpleArtifactToFull(simpleChild, codec, customFieldProcessors));
+                    for (JsonNode yamlChild : yamlChildren) {
+                        childrenResult.add(convertYamlArtefact(yamlChild, codec, customFieldProcessors));
                     }
                     output.set("children", childrenResult);
                 }
@@ -107,15 +107,15 @@ public class YamlRootArtefactDeserializer extends JsonDeserializer<YamlRootArtef
     @Override
     public YamlRootArtefact deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException {
         JsonNode node = jsonParser.getCodec().readTree(jsonParser);
-        JsonNode fullArtifact = convertSimpleArtifactToFull(node, jsonParser.getCodec(), customFieldProcessors);
-        return new YamlRootArtefact(jsonParser.getCodec().treeToValue(fullArtifact, AbstractArtefact.class));
+        JsonNode techArtefact = convertYamlArtefact(node, jsonParser.getCodec(), customFieldProcessors);
+        return new YamlRootArtefact(jsonParser.getCodec().treeToValue(techArtefact, AbstractArtefact.class));
     }
 
-    private static JsonNode convertSimpleArtifactToFull(JsonNode simpleArtifact, ObjectCodec codec, List<YamlArtefactFieldDeserializationProcessor> customFieldProcessors) throws JsonSchemaFieldProcessingException, JsonProcessingException {
-        ObjectNode fullArtifact = createObjectNode(codec);
+    private static JsonNode convertYamlArtefact(JsonNode yamlArtefact, ObjectCodec codec, List<YamlArtefactFieldDeserializationProcessor> customFieldProcessors) throws JsonSchemaFieldProcessingException, JsonProcessingException {
+        ObjectNode techArtefact = createObjectNode(codec);
 
         // move artifact class into the '_class' field
-        Iterator<String> childrenArtifactNames = simpleArtifact.fieldNames();
+        Iterator<String> childrenArtifactNames = yamlArtefact.fieldNames();
 
         List<String> artifactNames = new ArrayList<String>();
         childrenArtifactNames.forEachRemaining(artifactNames::add);
@@ -130,8 +130,8 @@ public class YamlRootArtefactDeserializer extends JsonDeserializer<YamlRootArtef
         }
 
         if (shortArtifactClass != null) {
-            JsonNode artifactData = simpleArtifact.get(shortArtifactClass);
-            fullArtifact.put(Plan.JSON_CLASS_FIELD, shortArtifactClass);
+            JsonNode artifactData = yamlArtefact.get(shortArtifactClass);
+            techArtefact.put(Plan.JSON_CLASS_FIELD, shortArtifactClass);
 
             fillDefaultValuesForArtifactFields(shortArtifactClass, (ObjectNode) artifactData);
 
@@ -142,26 +142,26 @@ public class YamlRootArtefactDeserializer extends JsonDeserializer<YamlRootArtef
                 // process some fields ('name', 'children' etc.) in special way
                 boolean processedAsSpecialField = false;
                 for (YamlArtefactFieldDeserializationProcessor proc : customFieldProcessors) {
-                    if (proc.deserializeArtefactField(shortArtifactClass, next, fullArtifact, codec)) {
+                    if (proc.deserializeArtefactField(shortArtifactClass, next, techArtefact, codec)) {
                         processedAsSpecialField = true;
                     }
                 }
 
                 // copy all other fields (parameters)
                 if (!processedAsSpecialField) {
-                    fullArtifact.set(next.getKey(), next.getValue().deepCopy());
+                    techArtefact.set(next.getKey(), next.getValue().deepCopy());
                 }
             }
 
         }
-        return fullArtifact;
+        return techArtefact;
     }
 
     private static void fillDefaultValuesForArtifactFields(String shortArtifactClass, ObjectNode artifactData) {
         // name is required attribute in json schema
-        JsonNode name = artifactData.get(YamlPlanFields.NAME_SIMPLE_FIELD);
+        JsonNode name = artifactData.get(YamlPlanFields.NAME_YAML_FIELD);
         if (name == null) {
-            artifactData.put(YamlPlanFields.NAME_SIMPLE_FIELD, shortArtifactClass);
+            artifactData.put(YamlPlanFields.NAME_YAML_FIELD, shortArtifactClass);
         }
     }
 

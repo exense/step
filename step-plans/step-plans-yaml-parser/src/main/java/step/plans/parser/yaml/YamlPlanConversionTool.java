@@ -54,17 +54,17 @@ public class YamlPlanConversionTool {
 
             writer.write("Converting plans in " + inputFolder.getAbsolutePath() + " ...\n");
 
-            File[] fullPlans = inputFolder.listFiles((dir, name) -> name.matches(".*\\.plan"));
-            if (fullPlans == null || fullPlans.length == 0) {
+            File[] plainTextPlans = inputFolder.listFiles((dir, name) -> name.matches(".*\\.plan"));
+            if (plainTextPlans == null || plainTextPlans.length == 0) {
                 writer.write("No plans have been found\n");
                 return;
             }
-            writer.write(fullPlans.length + " plan(s) will be converted to the simple format\n");
+            writer.write(plainTextPlans.length + " plan(s) will be converted to the yaml format\n");
 
-            for (File fullPlan : fullPlans) {
-                File outFile = new File(outputFolder, fullPlan.getName() + ".yml");
-                try (FileInputStream fis = new FileInputStream(fullPlan); FileOutputStream fos = new FileOutputStream(outFile)) {
-                    writer.write("Converting " + fullPlan.getName() + " ...\n");
+            for (File plainTextPlan : plainTextPlans) {
+                File outFile = new File(outputFolder, plainTextPlan.getName() + ".yml");
+                try (FileInputStream fis = new FileInputStream(plainTextPlan); FileOutputStream fos = new FileOutputStream(outFile)) {
+                    writer.write("Converting " + plainTextPlan.getName() + " ...\n");
 
                     // read plan from plain text format
                     // TODO: always TestCase?
@@ -75,7 +75,7 @@ public class YamlPlanConversionTool {
 
                     writer.write("SUCCESS: " + outFile.getAbsolutePath() + "\n");
                 } catch (Exception e) {
-                    writer.write("ERROR: " + fullPlan.getName() + " hasn't been converted!\n");
+                    writer.write("ERROR: " + plainTextPlan.getName() + " hasn't been converted!\n");
                     e.printStackTrace();
                 }
             }

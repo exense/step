@@ -34,13 +34,13 @@ public class ArtefactFieldMetadataExtractor implements FieldMetadataExtractor {
     public FieldMetadata extractMetadata(Field field) {
         if (field.getDeclaringClass().equals(CallFunction.class) && field.getName().equals(YamlPlanFields.CALL_FUNCTION_ARGUMENT_ORIGINAL_FIELD)) {
             // rename 'argument' field to 'inputs'
-            return new FieldMetadata(YamlPlanFields.CALL_FUNCTION_ARGUMENT_SIMPLE_FIELD, null, field.getType(), false);
+            return new FieldMetadata(YamlPlanFields.CALL_FUNCTION_ARGUMENT_YAML_FIELD, null, field.getType(), false);
         } else if (field.getDeclaringClass().equals(TokenSelector.class) && field.getName().equals(YamlPlanFields.TOKEN_SELECTOR_TOKEN_ORIGINAL_FIELD)) {
             // rename 'token' field to 'selectionCriteria'
-            return new FieldMetadata(YamlPlanFields.TOKEN_SELECTOR_TOKEN_SIMPLE_FIELD, null, field.getType(), false);
+            return new FieldMetadata(YamlPlanFields.TOKEN_SELECTOR_TOKEN_YAML_FIELD, null, field.getType(), false);
         } else if (field.getDeclaringClass().equals(CallFunction.class) && field.getName().equals(YamlPlanFields.CALL_FUNCTION_FUNCTION_ORIGINAL_FIELD)) {
             // rename 'function' field to 'keyword'
-            return new FieldMetadata(YamlPlanFields.CALL_FUNCTION_FUNCTION_SIMPLE_FIELD, null, field.getType(), false);
+            return new FieldMetadata(YamlPlanFields.CALL_FUNCTION_FUNCTION_YAML_FIELD, null, field.getType(), false);
         } else {
             return defaultMetadataExtractor.extractMetadata(field);
         }
