@@ -80,7 +80,7 @@ public class SchedulerPlugin extends AbstractControllerPlugin {
 		ScreenInputAccessor screenInputAccessor = context.get(ScreenInputAccessor.class);
 		List<ScreenInput> screenInputsByScreenId = screenInputAccessor.getScreenInputsByScreenId(SCHEDULER_TABLE);
 		Input nameInput = new Input(InputType.TEXT, "attributes.name", "Name", null, null);
-		nameInput.setCustomUIComponents(List.of("taskEntityIcon","schedulerTaskLink"));
+		nameInput.setCustomUIComponents(List.of("schedulerTaskLink"));
 		AtomicBoolean inputExists = new AtomicBoolean(false);
 		// Force content of input 'attributes.name'
 		screenInputsByScreenId.forEach(i->{

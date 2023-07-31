@@ -97,6 +97,6 @@ public class WorkbookSetTest {
 			ex = e;
 		}
 		
-		Assert.assertTrue(ex!=null && "The size of the workbook 'Excel1.xlsx' exceeds the max size 1bytes.".equals(ex.getMessage()));
+		Assert.assertTrue(ex!=null && "The size of the workbook 'Excel1.xlsx' exceeds the max size 1 bytes.".equals(ex.getMessage()));
 	}
 }

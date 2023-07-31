@@ -24,6 +24,7 @@ import static org.junit.Assert.fail;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.OptionalInt;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
@@ -201,6 +202,90 @@ public class ThreadPoolTest {
 					fail("The item "+concatenatedItem+" hasn't been processed");
 				}
 				
+			}
+		}
+	}
+
+	@Test
+	public void testAutoModeForTestSetWithSingleTestcase() {
+		ExecutionContext context = newExecutionContext();
+		ReportNode rootReportNode = context.getReport();
+		context.getReportNodeCache().put(rootReportNode);
+		context.getVariablesManager().putVariable(rootReportNode, "execution_threads_auto", 2);
+
+		ThreadPool threadPool = new ThreadPool(context);
+
+		List<String> itemList = new ArrayList<>();
+		for(int i=0; i<100; i++) {
+			itemList.add("Item"+i);
+		}
+
+		List<String> itemList2 = new ArrayList<>();
+		for(int i=0; i<100; i++) {
+			itemList2.add(Integer.toString(i));
+		}
+
+		List<String> itemList3 = new ArrayList<>();
+		for(int i=0; i<100; i++) {
+			itemList3.add(Integer.toString(i));
+		}
+
+		List<String> processedItems = new CopyOnWriteArrayList<>();
+
+		CountDownLatch countDownLatch = new CountDownLatch(2);
+
+		AtomicInteger workers1 = new AtomicInteger(0);
+		AtomicInteger workers2 = new AtomicInteger(0);
+		AtomicInteger workers3 = new AtomicInteger(0);
+		threadPool.consumeWork(itemList.iterator(), new WorkerItemConsumerFactory<String>() {
+			@Override
+			public Consumer<String> createWorkItemConsumer(WorkerController<String> control) {
+				return item1 -> {
+					ReportNode childReportNode1 = new ReportNode();
+					context.getReportNodeCache().put(childReportNode1);
+					childReportNode1.setParentID(rootReportNode.getId());
+					context.setCurrentReportNode(childReportNode1);
+					workers1.updateAndGet(x -> x < control.getWorkerId() ? control.getWorkerId() : x);
+					waitForOtherWorkersToStart(countDownLatch);
+					threadPool.consumeWork(itemList2.iterator(), new WorkerItemConsumerFactory<String>() {
+						@Override
+						public Consumer<String> createWorkItemConsumer(WorkerController<String> control) {
+							return item2 -> {
+								ReportNode childReportNode2 = new ReportNode();
+								childReportNode2.setParentID(childReportNode1.getId());
+								context.getReportNodeCache().put(childReportNode2);
+								context.setCurrentReportNode(childReportNode2);
+								workers2.updateAndGet(x -> x < control.getWorkerId() ? control.getWorkerId() : x);
+								processedItems.add(item1+item2);
+								threadPool.consumeWork(itemList3.iterator(), new WorkerItemConsumerFactory<String>() {
+									@Override
+									public Consumer<String> createWorkItemConsumer(WorkerController<String> control) {
+										return item3 -> {
+											ReportNode childReportNode3 = new ReportNode();
+											childReportNode3.setParentID(childReportNode3.getId());
+											context.getReportNodeCache().put(childReportNode3);
+											context.setCurrentReportNode(childReportNode3);
+											workers3.updateAndGet(x -> x < control.getWorkerId() ? control.getWorkerId() : x);
+										};
+									}
+								}, 4);
+							};
+						}
+					}, 4);
+				};
+			}
+		}, 4, OptionalInt.of(1));
+
+		Assert.assertEquals(0, workers1.get());
+		Assert.assertEquals(1, workers2.get());
+		Assert.assertEquals(0, workers3.get());
+		for (String item : itemList) {
+			for (String item2 : itemList2) {
+				String concatenatedItem = item+item2;
+				if(!processedItems.contains(concatenatedItem)) {
+					fail("The item "+concatenatedItem+" hasn't been processed");
+				}
+
 			}
 		}
 	}

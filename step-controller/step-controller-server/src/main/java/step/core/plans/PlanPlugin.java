@@ -94,7 +94,7 @@ public class PlanPlugin extends AbstractControllerPlugin {
 		ScreenInputAccessor screenInputAccessor = context.get(ScreenInputAccessor.class);
 		List<ScreenInput> screenInputsByScreenId = screenInputAccessor.getScreenInputsByScreenId("planTable");
 		Input nameInput = new Input(InputType.TEXT, "attributes.name", "Name", null, null);
-		nameInput.setCustomUIComponents(List.of("planEntityIcon","planLink"));
+		nameInput.setCustomUIComponents(List.of("planLink"));
 		AtomicBoolean inputExists = new AtomicBoolean(false);
 		// Force content of input 'attributes.name'
 		screenInputsByScreenId.forEach(i->{
