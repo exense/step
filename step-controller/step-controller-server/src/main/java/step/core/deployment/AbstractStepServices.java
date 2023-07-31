@@ -76,7 +76,7 @@ public abstract class AbstractStepServices extends AbstractServices<User> {
 	}
 
 	protected AuthorizationManager<User, Session<User>> getAuthorizationManager(){
-		return getContext().get(AuthorizationManager.class);
+		return getContext().require(AuthorizationManager.class);
 	}
 
 	protected void checkRightsOnBehalfOf(String right, String userOnBehalfOf) {
