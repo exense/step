@@ -73,12 +73,6 @@
 			<groupId>ch.exense.step</groupId>
 			<artifactId>step-api-function</artifactId>
 			<version>${step-api.version}</version>
-			<exclusions>
-				<exclusion>
-					<groupId>org.glassfish</groupId>
-					<artifactId>javax.json</artifactId>
-				</exclusion>
-			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
