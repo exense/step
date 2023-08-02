@@ -203,12 +203,12 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 		executionAccessor.remove(new ObjectId(id));
 	}
 
-	@Operation(description = "Start multiple executions according to the provided parameters.")
+	@Operation(description = "Restart multiple executions according to the provided parameters.")
 	@POST
-	@Path("/bulk/start")
+	@Path("/bulk/restart")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Secured(right="plan-execute")
-	public AsyncTaskStatus<TableBulkOperationReport> startExecutions(TableBulkOperationRequest request) {
+	public AsyncTaskStatus<TableBulkOperationReport> restartExecutions(TableBulkOperationRequest request) {
 		Consumer<String> consumer = t -> {
 			try {
 				ExecutionParameters executionParameters = executionAccessor.get(t).getExecutionParameters();
