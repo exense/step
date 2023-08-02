@@ -72,7 +72,12 @@ public class GridPlugin extends AbstractControllerPlugin {
 		Map<String, String> tokenAffinityEvaluatorProperties = configuration.getPropertyNames().stream().filter(p->(p instanceof String && p.toString().startsWith("grid.tokens.affinityevaluator")))
 			.collect(Collectors.toMap(p->p.toString().replace("grid.tokens.affinityevaluator.", ""), p->configuration.getProperty(p.toString())));
 		gridConfig.setTokenAffinityEvaluatorProperties(tokenAffinityEvaluatorProperties);
-		
+
+		GridImpl.GridImplConfigModifiers modifiers = context.get(GridImpl.GridImplConfigModifiers.class);
+		if (modifiers != null) {
+			modifiers.forEach(m -> m.modifyConfig(gridConfig));
+		}
+
 		grid = new GridImpl(new File(fileManagerPath), gridPort, gridConfig);
         try {
             grid.start();
