@@ -33,8 +33,8 @@ import step.plans.parser.yaml.YamlPlanFields;
 import step.plans.parser.yaml.model.YamlRootArtefact;
 import step.plans.parser.yaml.rules.*;
 import step.plans.parser.yaml.schema.JsonSchemaFieldProcessingException;
-import step.plans.parser.yaml.YamlPlanSerializerExtender;
-import step.plans.parser.yaml.YamlPlanSerializerExtension;
+import step.plans.parser.yaml.YamlPlanReaderExtender;
+import step.plans.parser.yaml.YamlPlanReaderExtension;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -99,8 +99,8 @@ public class YamlRootArtefactDeserializer extends JsonDeserializer<YamlRootArtef
 
     protected List<YamlArtefactFieldDeserializationProcessor> getExtensions() {
         List<YamlArtefactFieldDeserializationProcessor> extensions = new ArrayList<>();
-        CachedAnnotationScanner.getClassesWithAnnotation(YamlPlanSerializerExtension.class).stream()
-                .map(newInstanceAs(YamlPlanSerializerExtender.class)).forEach(e -> extensions.addAll(e.getDeserializationExtensions()));
+        CachedAnnotationScanner.getClassesWithAnnotation(YamlPlanReaderExtension.class).stream()
+                .map(newInstanceAs(YamlPlanReaderExtender.class)).forEach(e -> extensions.addAll(e.getDeserializationExtensions()));
         return extensions;
     }
 

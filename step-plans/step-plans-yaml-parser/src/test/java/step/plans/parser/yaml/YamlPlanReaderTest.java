@@ -23,7 +23,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import org.bson.types.ObjectId;
-import org.everit.json.schema.ValidationException;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -31,6 +30,7 @@ import org.slf4j.LoggerFactory;
 import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.plans.Plan;
 import step.plans.parser.yaml.model.YamlPlanVersions;
+import step.plans.parser.yaml.schema.YamlPlanValidationException;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -78,7 +78,7 @@ public class YamlPlanReaderTest {
 	}
 
 	@Test
-	public void readPlanFromYaml() {
+	public void readPlanFromYaml() throws YamlPlanValidationException {
 		convertFromYamlToPlan(
 				"src/test/resources/step/plans/parser/yaml/basic/test.plan.yml",
 				"src/test/resources/step/plans/parser/yaml/basic/test-expected-tech-plan.yml"
@@ -86,7 +86,7 @@ public class YamlPlanReaderTest {
 	}
 
 	@Test
-	public void keywordSelectionCriteria() {
+	public void keywordSelectionCriteria() throws YamlPlanValidationException {
 		convertFromYamlToPlan(
 				"src/test/resources/step/plans/parser/yaml/selection-criteria/test-selection-criteria-plan.yml",
 				"src/test/resources/step/plans/parser/yaml/selection-criteria/test-expected-selection-criteria-tech-plan.yml"
@@ -98,7 +98,7 @@ public class YamlPlanReaderTest {
 	}
 
 	@Test
-	public void checkArtefactExpression(){
+	public void checkArtefactExpression() throws YamlPlanValidationException {
 		// test expressions in 'Check' artefact - convert from yaml format to technical format
 		convertFromYamlToPlan(
 				"src/test/resources/step/plans/parser/yaml/check/test-check-plan.yml",
@@ -113,23 +113,32 @@ public class YamlPlanReaderTest {
 	}
 
 	@Test
-	public void readInvalidYamlPlan(){
+	public void readInvalidYamlPlan() throws IOException {
 		// read simplified file
-		File yamlFile = new File("src/test/resources/step/plans/parser/yaml/invalid/test-invalid-plan.yml");
-		try (FileInputStream is = new FileInputStream(yamlFile)) {
+		File yamlFile = new File("src/test/resources/step/plans/parser/yaml/invalid/test-invalid-plan-1.yml");
+		File yamlFile2 = new File("src/test/resources/step/plans/parser/yaml/invalid/test-invalid-plan-2.yml");
+		try (FileInputStream is = new FileInputStream(yamlFile); FileInputStream is2 = new FileInputStream(yamlFile2)) {
 			// convert yaml plan to technical format
-			serializer.readYamlPlan(is);
+			try {
+				serializer.readYamlPlan(is);
 
-			Assert.fail("Validation exception should be thrown");
-		} catch (IOException e){
-			throw new RuntimeException(e);
-		} catch (ValidationException ex){
-			log.info("OK - Validation exception caught", ex);
+				Assert.fail("Validation exception should be thrown");
+			} catch (YamlPlanValidationException ex) {
+				Assert.assertEquals("#: required key [name] not found", ex.getMessage());
+				log.info("OK - Validation exception caught", ex);
+			}
+
+			try {
+				serializer.readYamlPlan(is2);
+				Assert.fail("Validation exception should be thrown");
+			} catch (YamlPlanValidationException ex) {
+				log.info("OK - Validation exception caught", ex);
+			}
 		}
 	}
 
 	@Test
-	public void yamlPlanMigration(){
+	public void yamlPlanMigration() throws YamlPlanValidationException {
 		convertFromYamlToPlan(
 				"src/test/resources/step/plans/parser/yaml/migration/test-migration-plan.yml",
 				"src/test/resources/step/plans/parser/yaml/migration/test-migration-expected-tech-plan.yml"
@@ -145,7 +154,7 @@ public class YamlPlanReaderTest {
 	}
 
 	@Test
-	public void checkConversionForBuildPlan(){
+	public void checkConversionForBuildPlan() throws YamlPlanValidationException {
 		// read plan
 		File technicalPlanFile = new File("src/test/resources/step/plans/parser/yaml/build/test-build-tech-plan.yml");
 		File yamlPlanFile = new File("src/test/resources/step/plans/parser/yaml/build/test-expected-build-plan.yml");
@@ -222,7 +231,7 @@ public class YamlPlanReaderTest {
 		}
 	}
 
-	private void convertFromYamlToPlan(String yamlPlanFile, String expectedTechnialPlanFile) {
+	private void convertFromYamlToPlan(String yamlPlanFile, String expectedTechnicalPlanFile) throws YamlPlanValidationException {
 		// read yaml file
 		File yamlFile = new File(yamlPlanFile);
 
@@ -243,7 +252,7 @@ public class YamlPlanReaderTest {
 			}
 
 			// compare serialized plan with expected data
-			JsonNode expectedTechnicalYaml = serializer.getYamlMapper().readTree(new File(expectedTechnialPlanFile));
+			JsonNode expectedTechnicalYaml = serializer.getYamlMapper().readTree(new File(expectedTechnicalPlanFile));
 			JsonNode actual = serializer.getYamlMapper().readTree(os.toByteArray());
 			Assert.assertEquals(expectedTechnicalYaml, actual);
 		} catch (IOException e) {

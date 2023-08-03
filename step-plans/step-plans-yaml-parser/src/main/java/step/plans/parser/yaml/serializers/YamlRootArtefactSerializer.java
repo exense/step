@@ -25,8 +25,8 @@ import step.core.artefacts.AbstractArtefact;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.scanner.CachedAnnotationScanner;
 import step.plans.parser.yaml.ArtefactFieldMetadataExtractor;
-import step.plans.parser.yaml.YamlPlanSerializerExtender;
-import step.plans.parser.yaml.YamlPlanSerializerExtension;
+import step.plans.parser.yaml.YamlPlanReaderExtender;
+import step.plans.parser.yaml.YamlPlanReaderExtension;
 import step.plans.parser.yaml.model.YamlRootArtefact;
 import step.plans.parser.yaml.rules.*;
 
@@ -99,8 +99,8 @@ public class YamlRootArtefactSerializer extends JsonSerializer<YamlRootArtefact>
 
     protected List<YamlArtefactFieldSerializationProcessor> getExtensions() {
         List<YamlArtefactFieldSerializationProcessor> extensions = new ArrayList<>();
-        CachedAnnotationScanner.getClassesWithAnnotation(YamlPlanSerializerExtension.class).stream()
-                .map(newInstanceAs(YamlPlanSerializerExtender.class)).forEach(e -> extensions.addAll(e.getSerializationExtensions()));
+        CachedAnnotationScanner.getClassesWithAnnotation(YamlPlanReaderExtension.class).stream()
+                .map(newInstanceAs(YamlPlanReaderExtender.class)).forEach(e -> extensions.addAll(e.getSerializationExtensions()));
         return extensions;
     }
 

@@ -39,8 +39,8 @@ import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 import step.plans.nl.RootArtefactType;
 import step.plans.parser.yaml.rules.*;
 import step.plans.parser.yaml.ArtefactFieldMetadataExtractor;
-import step.plans.parser.yaml.YamlPlanSerializerExtender;
-import step.plans.parser.yaml.YamlPlanSerializerExtension;
+import step.plans.parser.yaml.YamlPlanReaderExtender;
+import step.plans.parser.yaml.YamlPlanReaderExtension;
 
 import java.lang.reflect.Field;
 import java.util.*;
@@ -119,8 +119,8 @@ public class YamlPlanJsonSchemaGenerator {
 
 	protected List<JsonSchemaFieldProcessor> getExtensions() {
 		List<JsonSchemaFieldProcessor> extensions = new ArrayList<>();
-		CachedAnnotationScanner.getClassesWithAnnotation(YamlPlanSerializerExtension.class).stream()
-				.map(newInstanceAs(YamlPlanSerializerExtender.class)).forEach(e -> extensions.addAll(e.getJsonSchemaExtensions()));
+		CachedAnnotationScanner.getClassesWithAnnotation(YamlPlanReaderExtension.class).stream()
+				.map(newInstanceAs(YamlPlanReaderExtender.class)).forEach(e -> extensions.addAll(e.getJsonSchemaExtensions()));
 		return extensions;
 	}
 

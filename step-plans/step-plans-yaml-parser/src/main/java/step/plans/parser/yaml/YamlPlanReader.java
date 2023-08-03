@@ -49,6 +49,7 @@ import step.plans.parser.yaml.deserializers.YamlRootArtefactDeserializer;
 import step.plans.parser.yaml.migrations.AbstractYamlPlanMigrationTask;
 import step.plans.parser.yaml.model.YamlRootArtefact;
 import step.plans.parser.yaml.model.YamlPlanVersions;
+import step.plans.parser.yaml.schema.YamlPlanValidationException;
 import step.plans.parser.yaml.serializers.YamlDynamicValueSerializer;
 import step.plans.parser.yaml.serializers.YamlRootArtefactSerializer;
 
@@ -58,6 +59,7 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import static step.core.scanner.Classes.newInstanceAs;
 
@@ -80,14 +82,17 @@ public class YamlPlanReader {
 			setCurrentVersion(currentVersion);
 		} else {
 			// resolve version and schema automatically
-			YamlPlanSerializerExtender.ExtendedYamlPlanVersion versionFromExtensions = CachedAnnotationScanner.getClassesWithAnnotation(YamlPlanSerializerExtension.class).stream()
-					.map(newInstanceAs(YamlPlanSerializerExtender.class))
-					.map(YamlPlanSerializerExtender::getYamlPlanVersion)
-					.filter(Objects::nonNull).min(Comparator.comparingInt(YamlPlanSerializerExtender.ExtendedYamlPlanVersion::getPriority))
-					.orElse(null);
+			List<YamlPlanVersions.YamlPlanVersion> versionFromExtensions = CachedAnnotationScanner.getClassesWithAnnotation(YamlPlanReaderExtension.class).stream()
+					.map(newInstanceAs(YamlPlanReaderExtender.class))
+					.map(YamlPlanReaderExtender::getYamlPlanVersion)
+					.filter(Objects::nonNull)
+					.collect(Collectors.toList());
 
-			if(versionFromExtensions != null){
-				setCurrentVersion(versionFromExtensions.getVersion());
+			if (!versionFromExtensions.isEmpty()) {
+				if (versionFromExtensions.size() > 1) {
+					throw new IllegalArgumentException("Ambiguous json schema is defined in project: " + versionFromExtensions);
+				}
+				setCurrentVersion(versionFromExtensions.get(0));
 			} else {
 				setCurrentVersion(YamlPlanVersions.ACTUAL_VERSION);
 			}
@@ -123,14 +128,18 @@ public class YamlPlanReader {
 	 *
 	 * @param yamlPlanStream yaml data
 	 */
-	public Plan readYamlPlan(InputStream yamlPlanStream) throws IOException {
+	public Plan readYamlPlan(InputStream yamlPlanStream) throws IOException, YamlPlanValidationException {
 		String bufferedYamlPlan = new String(yamlPlanStream.readAllBytes(), StandardCharsets.UTF_8);
 
 		bufferedYamlPlan = upgradeYamlPlanIfRequired(bufferedYamlPlan);
 
 		JsonNode yamlPlanJsonNode = yamlMapper.readTree(bufferedYamlPlan);
 		if (jsonSchema != null) {
-			JsonSchemaValidator.validate(jsonSchema, yamlPlanJsonNode.toString());
+			try {
+				JsonSchemaValidator.validate(jsonSchema, yamlPlanJsonNode.toString());
+			} catch (Exception ex){
+				throw new YamlPlanValidationException(ex.getMessage(), ex);
+			}
 		}
 
 		YamlPlan yamlPlan = yamlMapper.treeToValue(yamlPlanJsonNode, YamlPlan.class);

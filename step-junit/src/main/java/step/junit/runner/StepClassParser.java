@@ -145,7 +145,6 @@ public class StepClassParser {
 	}
 
 	private ParserMode chooseParserModeByFileName(String fileName) {
-		// TODO: maybe add the 'format' property to @Plan annotation instead of checking file extension
 		if (fileName.endsWith(".yaml") || fileName.endsWith(".yml")) {
 			return ParserMode.YAML_PARSER;
 		} else {

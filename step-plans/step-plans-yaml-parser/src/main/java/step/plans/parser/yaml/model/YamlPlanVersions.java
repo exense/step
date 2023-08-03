@@ -44,5 +44,13 @@ public class YamlPlanVersions {
         public String getJsonSchemaPath() {
             return jsonSchemaPath;
         }
+
+        @Override
+        public String toString() {
+            return "YamlPlanVersion{" +
+                    "version=" + version +
+                    ", jsonSchemaPath='" + jsonSchemaPath + '\'' +
+                    '}';
+        }
     }
 }
