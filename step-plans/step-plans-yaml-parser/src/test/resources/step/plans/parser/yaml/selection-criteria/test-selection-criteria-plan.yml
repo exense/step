@@ -12,3 +12,6 @@ root:
             - stringInput:
                 expression: "'abc'"
             - intInput: 777
+      - CallKeyword:
+          nodeName: CallKeyword2
+          keyword: "myKeyword"

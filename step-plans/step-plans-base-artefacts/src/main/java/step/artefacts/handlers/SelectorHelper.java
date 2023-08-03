@@ -50,19 +50,11 @@ public class SelectorHelper {
 		}
 		return dynamicJsonObjectResolver.evaluate(query, bindings);
 	}
-	
-	public Map<String, String> buildSelectionAttributesMap(String jsonStrOrName, Map<String, Object> bindings) {
+
+	public Map<String, String> buildSelectionAttributesMap(String jsonStr, Map<String, Object> bindings) {
+		JsonObject json = parseAndResolveJson(jsonStr, bindings);
 		Map<String, String> attributes = new HashMap<>();
-
-		// we can either use a json string to define several selection attributes
-		// or pass the simple string and use it as 'name' attribute
-		if (jsonStrOrName != null && jsonStrOrName.trim().length() > 0 && !jsonStrOrName.startsWith("{")) {
-			attributes.put("name", jsonStrOrName);
-		} else {
-			JsonObject json = parseAndResolveJson(jsonStrOrName, bindings);
-			json.forEach((key, value) -> attributes.put(key, json.getString(key)));
-		}
-
+		json.forEach((key,value)->attributes.put(key, json.getString(key)));
 		return attributes;
 	}
 }

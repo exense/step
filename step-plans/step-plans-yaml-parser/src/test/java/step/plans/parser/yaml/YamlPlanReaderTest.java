@@ -91,6 +91,10 @@ public class YamlPlanReaderTest {
 				"src/test/resources/step/plans/parser/yaml/selection-criteria/test-selection-criteria-plan.yml",
 				"src/test/resources/step/plans/parser/yaml/selection-criteria/test-expected-selection-criteria-tech-plan.yml"
 		);
+
+		convertPlanToYaml("src/test/resources/step/plans/parser/yaml/selection-criteria/test-expected-selection-criteria-tech-plan.yml",
+				"src/test/resources/step/plans/parser/yaml/selection-criteria/test-selection-criteria-converted-plan.yml"
+		);
 	}
 
 	@Test
@@ -156,7 +160,7 @@ public class YamlPlanReaderTest {
 
 			// write yml to another file (to check it manually)
 			if(writeResultsToLocalFiles) {
-				try (FileOutputStream fileOs = new FileOutputStream("src/test/resources/step/plans/parser/yaml/test-generated-plan.yml")) {
+				try (FileOutputStream fileOs = new FileOutputStream("src/test/resources/step/plans/parser/yaml/test-selection-criteria-converted-plan.yml")) {
 					fileOs.write(os.toByteArray());
 				}
 			}
@@ -205,7 +209,7 @@ public class YamlPlanReaderTest {
 
 			// write yml to another file (to check it manually)
 			if(writeResultsToLocalFiles) {
-				try (FileOutputStream fileOs = new FileOutputStream("src/test/resources/step/plans/parser/yaml/test-generated-plan.yml")) {
+				try (FileOutputStream fileOs = new FileOutputStream("src/test/resources/step/plans/parser/yaml/test-selection-criteria-converted-plan.yml")) {
 					fileOs.write(os.toByteArray());
 				}
 			}

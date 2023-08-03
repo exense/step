@@ -35,7 +35,11 @@ public class DynamicInputsSupport {
 
     private static final String EMPTY_JSON = "{}";
 
-    protected final ObjectMapper jsonObjectMapper = new ObjectMapper();
+    protected final ObjectMapper jsonObjectMapper;
+
+    public DynamicInputsSupport() {
+        jsonObjectMapper = new ObjectMapper();
+    }
 
     /**
      * @return dynamic input values as json string

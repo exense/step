@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import step.artefacts.handlers.JsonSchemaValidator;
 import step.core.Version;
 import step.core.accessors.AbstractIdentifiableObject;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.artefacts.AbstractArtefact;
 import step.core.collections.Collection;
@@ -235,14 +236,14 @@ public class YamlPlanReader {
 
 	protected Plan yamlPlanToPlan(YamlPlan yamlPlan) {
 		Plan plan = new Plan(yamlPlan.getRoot().getAbstractArtefact());
-		plan.addAttribute("name", yamlPlan.getName());
+		plan.addAttribute(AbstractOrganizableObject.NAME, yamlPlan.getName());
 		applyDefaultValues(plan);
 		return plan;
 	}
 
 	protected YamlPlan planToYamlPlan(Plan plan){
 		YamlPlan yamlPlan = new YamlPlan();
-		yamlPlan.setName(plan.getAttribute("name"));
+		yamlPlan.setName(plan.getAttribute(AbstractOrganizableObject.NAME));
 		yamlPlan.setVersion(currentVersion.toString());
 		yamlPlan.setRoot(new YamlRootArtefact(plan.getRoot()));
 		return yamlPlan;

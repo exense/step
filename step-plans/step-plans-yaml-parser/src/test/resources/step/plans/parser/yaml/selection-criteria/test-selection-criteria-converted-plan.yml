@@ -1,0 +1,32 @@
+---
+version: "1.0.0"
+name: "test plan"
+root:
+  Sequence:
+    nodeName: "Sequence"
+    continueParentNodeExecutionOnError: false
+    instrumentNode: false
+    skipNode: false
+    children:
+    - CallKeyword:
+        nodeName: "CallKeyword"
+        continueParentNodeExecutionOnError: false
+        instrumentNode: false
+        skipNode: false
+        remote: true
+        inputs:
+        - stringInput:
+            expression: "'abc'"
+        - intInput: 777
+        keyword:
+          selectionCriteria:
+          - criteria1: "criteriaValue1"
+    - CallKeyword:
+        nodeName: "CallKeyword2"
+        continueParentNodeExecutionOnError: false
+        instrumentNode: false
+        skipNode: false
+        remote: true
+        inputs: []
+        keyword: "myKeyword"
+    continueOnError: false
