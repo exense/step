@@ -1501,7 +1501,8 @@ root:
                             expressionType: null
                           function:
                             dynamic: false
-                            value: "{\"name\":{\"value\":\"HttpRequest\",\"dynamic\":false}}"
+                            value: "{\"name\":{\"dynamic\":false,\"value\":\"HttpRequest\",\"\
+                  expression\":null,\"expressionType\":null}}"
                             expression: null
                             expressionType: null
                           argument:
@@ -1799,7 +1800,8 @@ root:
                         expressionType: null
                       function:
                         dynamic: false
-                        value: "{\"name\":{\"value\":\"Rmdir\",\"dynamic\":false}}"
+                        value: "{\"name\":{\"dynamic\":false,\"value\":\"Rmdir\",\"expression\"\
+                :null,\"expressionType\":null}}"
                         expression: null
                         expressionType: null
                       argument:

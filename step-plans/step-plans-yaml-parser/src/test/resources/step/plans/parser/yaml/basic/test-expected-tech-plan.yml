@@ -122,7 +122,8 @@ root:
             expressionType: null
           function:
             dynamic: false
-            value: "callExisting3"
+            value: "{\"name\":{\"dynamic\":false,\"value\":\"callExisting3\",\"expression\"\
+          :null,\"expressionType\":null}}"
             expression: null
             expressionType: null
           argument:

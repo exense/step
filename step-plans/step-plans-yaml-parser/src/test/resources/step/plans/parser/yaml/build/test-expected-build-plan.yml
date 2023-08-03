@@ -318,8 +318,7 @@ root:
                                           - Method: "POST"
                                           - Header_content-type: "application/json"
                                           - Data: "true"
-                                        keyword: "{\"name\":{\"value\":\"HttpRequest\",\"dynamic\"\
-                              :false}}"
+                                        keyword: "HttpRequest"
                                   condition:
                                     expression: "ENVIRONMENT==\"PRODUCTION\" && STATUS==\"PASSED\""
                             continueOnError: false
@@ -372,7 +371,7 @@ root:
                                   inputs:
                                     - Folder:
                                         expression: "FOLDER"
-                                  keyword: "{\"name\":{\"value\":\"Rmdir\",\"dynamic\":false}}"
+                                  keyword: "Rmdir"
                             continueOnError: false
                         - AfterSequence:
                             nodeName: "AfterSequence - Propagate build"

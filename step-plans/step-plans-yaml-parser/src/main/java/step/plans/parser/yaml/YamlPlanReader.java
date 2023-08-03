@@ -204,13 +204,13 @@ public class YamlPlanReader {
 
 			// planVersionString == null means than no migration is required (version is actual)
 			if (planVersionString != null) {
-				log.info("Migrating yaml plan from version {} to {}", planVersionString, currentVersion);
-
 				// convert yaml plan to document to perform migrations
 				CollectionFactory tempCollectionFactory = new InMemoryCollectionFactory(new Properties());
 				Version planVersion = new Version(planVersionString);
 
 				if (planVersion.compareTo(currentVersion) != 0) {
+					log.info("Migrating yaml plan from version {} to {}", planVersionString, currentVersion);
+
 					Collection<Document> tempCollection = tempCollectionFactory.getCollection(YAML_PLANS_COLLECTION_NAME, Document.class);
 					Document planDocument = tempCollection.save(yamlPlanDocument);
 
