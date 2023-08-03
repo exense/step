@@ -2,7 +2,7 @@
   <configuration default="false" name="YamlPlanSchemaGenerationTool" type="Application" factoryName="Application" nameIsGenerated="true">
     <option name="MAIN_CLASS_NAME" value="step.plans.parser.yaml.schema.YamlPlanSchemaGenerationTool" />
     <module name="step-plans-yaml-parser" />
-    <option name="PROGRAM_PARAMETERS" value="C:\\temp\\generated-schema.json" />
+    <option name="PROGRAM_PARAMETERS" value="C:\\temp\\step-yaml-plan-schema-os-1.0.json" />
     <extension name="coverage">
       <pattern>
         <option name="PATTERN" value="step.plans.parser.yaml.schema.*" />
