@@ -41,7 +41,6 @@ public class YamlPlanJsonSchemaGeneratorTest {
 		log.info("Generating actual json schema for simplified plan format");
 
 		// read published json schema
-		// TODO: how to publish schema and how to check it in test?
 		InputStream jsonSchemaFile = this.getClass().getClassLoader().getResourceAsStream("step/plans/parser/yaml/yaml-plan-schema-1.0.json");
 
 		JsonNode publishedSchema = jsonObjectMapper.readTree(jsonSchemaFile);

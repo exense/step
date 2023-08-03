@@ -160,7 +160,7 @@ public class YamlPlanReaderTest {
 
 			// write yml to another file (to check it manually)
 			if(writeResultsToLocalFiles) {
-				try (FileOutputStream fileOs = new FileOutputStream("src/test/resources/step/plans/parser/yaml/test-selection-criteria-converted-plan.yml")) {
+				try (FileOutputStream fileOs = new FileOutputStream("src/test/resources/step/plans/parser/yaml/test-expected-build-plan.yml")) {
 					fileOs.write(os.toByteArray());
 				}
 			}
@@ -237,7 +237,7 @@ public class YamlPlanReaderTest {
 
 			// write yml to another file (to check it manually)
 			if (writeResultsToLocalFiles) {
-				try (FileOutputStream fileOs = new FileOutputStream("src/test/resources/step/plans/parser/yaml/test-expected-build-tech-converted-plan.yml")) {
+				try (FileOutputStream fileOs = new FileOutputStream("src/test/resources/step/plans/parser/yaml/test-expected-tech-plan.yml")) {
 					fileOs.write(os.toByteArray());
 				}
 			}
