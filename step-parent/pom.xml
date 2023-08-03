@@ -58,7 +58,7 @@
 		<exense-commons.version>2.0.5</exense-commons.version>
 		<step-framework.version>2.0.9</step-framework.version>
 		<step-grid.version>2.0.1</step-grid.version>
-		<step-api.version>1.2.0</step-api.version>
+		<step-api.version>1.2.1</step-api.version>
 		<!-- external dependencies -->
 		<junit.version>4.13.1</junit.version>
 		<mockito.version>5.1.1</mockito.version>
@@ -345,9 +345,6 @@
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-surefire-plugin</artifactId>
-						<configuration>
-							<groups>ch.exense.commons.test.categories.PerformanceTest</groups>
-						</configuration>
 					</plugin>
 				</plugins>
 			</build>
