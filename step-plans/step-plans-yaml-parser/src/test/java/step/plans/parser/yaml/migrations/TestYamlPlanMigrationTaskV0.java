@@ -33,6 +33,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
+@YamlPlanMigration
 public class TestYamlPlanMigrationTaskV0 extends AbstractYamlPlanMigrationTask {
 
     private static final Logger log = LoggerFactory.getLogger(TestYamlPlanMigrationTaskV0.class);

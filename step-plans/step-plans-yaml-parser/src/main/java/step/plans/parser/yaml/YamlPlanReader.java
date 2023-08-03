@@ -25,7 +25,6 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import org.bson.types.ObjectId;
-import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.artefacts.handlers.JsonSchemaValidator;
@@ -41,8 +40,11 @@ import step.core.collections.Filters;
 import step.core.collections.inmemory.InMemoryCollectionFactory;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
+import step.core.scanner.AnnotationScanner;
 import step.core.scanner.CachedAnnotationScanner;
 import step.migration.MigrationManager;
+import step.migration.MigrationTask;
+import step.plans.parser.yaml.migrations.YamlPlanMigration;
 import step.plans.parser.yaml.model.YamlPlan;
 import step.plans.parser.yaml.deserializers.YamlDynamicValueDeserializer;
 import step.plans.parser.yaml.deserializers.YamlRootArtefactDeserializer;
@@ -198,11 +200,17 @@ public class YamlPlanReader {
 	 */
 	protected MigrationManager initMigrationManager() {
 		final MigrationManager migrationManager = new MigrationManager();
-		Reflections migrationsReflections = new Reflections("step.plans");
-		Set<Class<? extends AbstractYamlPlanMigrationTask>> migrations = migrationsReflections.getSubTypesOf(AbstractYamlPlanMigrationTask.class);
-		for (Class<? extends AbstractYamlPlanMigrationTask> migration : migrations) {
-			migrationManager.register(migration);
+
+		try (AnnotationScanner annotationScanner = AnnotationScanner.forAllClassesFromClassLoader("step.plans", Thread.currentThread().getContextClassLoader())) {
+			Set<Class<?>> migrations = annotationScanner.getClassesWithAnnotation(YamlPlanMigration.class);
+			for (Class<?> migration : migrations) {
+				if (!AbstractYamlPlanMigrationTask.class.isAssignableFrom(migration)) {
+					throw new IllegalArgumentException("Class " + migration + " doesn't extend the " + AbstractYamlPlanMigrationTask.class);
+				}
+				migrationManager.register((Class<? extends AbstractYamlPlanMigrationTask>) migration);
+			}
 		}
+
 		return migrationManager;
 	}
 

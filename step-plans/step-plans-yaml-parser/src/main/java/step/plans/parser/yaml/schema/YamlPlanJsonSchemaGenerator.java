@@ -24,13 +24,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObjectBuilder;
 import jakarta.json.spi.JsonProvider;
-import org.reflections.Reflections;
-import org.reflections.util.ConfigurationBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.Version;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
+import step.core.scanner.AnnotationScanner;
 import step.core.scanner.CachedAnnotationScanner;
 import step.handlers.javahandler.jsonschema.FieldMetadataExtractor;
 import step.handlers.javahandler.jsonschema.JsonSchemaCreator;
@@ -232,35 +231,35 @@ public class YamlPlanJsonSchemaGenerator {
 	}
 
 	private ArtefactDefinitions createArtefactImplDefs() throws JsonSchemaPreparationException {
-		ArtefactDefinitions artefactDefinitions = new ArtefactDefinitions();
+		try (AnnotationScanner annotationScanner = AnnotationScanner.forAllClassesFromContextClassLoader()) {
+			ArtefactDefinitions artefactDefinitions = new ArtefactDefinitions();
 
-		// scan all @Artefact classes in classpath and automatically prepare definitions for them
-		Reflections r = new Reflections( new ConfigurationBuilder().forPackage(targetPackage));
+			// scan all @Artefact classes in classpath and automatically prepare definitions for them
+			List<Class<?>> artefactClasses = annotationScanner.getClassesWithAnnotation(Artefact.class)
+					.stream()
+					.filter(c -> !c.getAnnotation(Artefact.class).test()) // exclude test artefacts
+					.sorted(Comparator.comparing(Class::getSimpleName))
+					.collect(Collectors.toList());
+			log.info("The following {} artefact classes detected: {}", artefactClasses.size(), artefactClasses);
 
-		// exclude artefacts from test packages
-		List<Class<?>> artefactClasses = r.getTypesAnnotatedWith(Artefact.class)
-				.stream()
-				.filter(c -> !c.getAnnotation(Artefact.class).test())
-				.collect(Collectors.toList());
-		log.info("The following {} artefact classes detected: {}", artefactClasses.size(), artefactClasses);
+			for (Class<?> artefactClass : artefactClasses) {
+				// use the name of artefact as definition name
+				String name = AbstractArtefact.getArtefactName((Class<? extends AbstractArtefact>) artefactClass);
+				String defName = name + "Def";
 
-		for (Class<?> artefactClass : artefactClasses) {
-			// use the name of artefact as definition name
-			String name = AbstractArtefact.getArtefactName((Class<? extends AbstractArtefact>) artefactClass);
-			String defName = name + "Def";
+				// scan all fields in artefact class and put them to artefact definition
+				JsonObjectBuilder def = createArtefactImplDef(name, artefactClass);
+				artefactDefinitions.allArtefactDefs.put(defName, def);
 
-			// scan all fields in artefact class and put them to artefact definition
-			JsonObjectBuilder def = createArtefactImplDef(name, artefactClass);
-			artefactDefinitions.allArtefactDefs.put(defName, def);
-
-			// for root artefacts we only support the subset of all artefact definitions
-			for (RootArtefactType rootArtefactType : RootArtefactType.values()) {
-				if(rootArtefactType.createRootArtefact().getClass().equals(artefactClass)){
-					artefactDefinitions.rootArtefactDefs.add(defName);
+				// for root artefacts we only support the subset of all artefact definitions
+				for (RootArtefactType rootArtefactType : RootArtefactType.values()) {
+					if (rootArtefactType.createRootArtefact().getClass().equals(artefactClass)) {
+						artefactDefinitions.rootArtefactDefs.add(defName);
+					}
 				}
 			}
+			return artefactDefinitions;
 		}
-		return artefactDefinitions;
 	}
 
 	private JsonObjectBuilder createArtefactImplDef(String name, Class<?> artefactClass) throws JsonSchemaPreparationException {
