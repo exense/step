@@ -29,7 +29,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.plans.Plan;
-import step.plans.parser.yaml.model.YamlPlanVersions;
 import step.plans.parser.yaml.schema.YamlPlanValidationException;
 
 import java.io.*;
@@ -44,14 +43,16 @@ public class YamlPlanReaderTest {
 	private final YamlPlanReader serializer;
 
 	// DEV flag to store test results in local files
-	private boolean writeResultsToLocalFiles = true;
+	private boolean writeResultsToLocalFiles = false;
 
 	private final ObjectMapper technicalPlanMapper;
 
 	public YamlPlanReaderTest() {
 		this.serializer = new YamlPlanReader(
 				() -> STATIC_ID,
-				YamlPlanVersions.ACTUAL_VERSION
+				null,
+				true,
+				null
 		);
 
 		this.technicalPlanMapper = createTechnicalPlanObjectMapper();

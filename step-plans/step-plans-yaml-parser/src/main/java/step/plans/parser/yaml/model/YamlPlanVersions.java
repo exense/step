@@ -21,36 +21,7 @@ package step.plans.parser.yaml.model;
 import step.core.Version;
 
 public class YamlPlanVersions {
-    public static final YamlPlanVersion VERSION_1 = new YamlPlanVersion(
-            new Version("1.0.0"),
-            "step/plans/parser/yaml/step-yaml-plan-schema-os-1.0.json"
-    );
 
-    public static final YamlPlanVersion ACTUAL_VERSION = VERSION_1;
-
-    public static class YamlPlanVersion {
-        private final Version version;
-        private final String jsonSchemaPath;
-
-        public YamlPlanVersion(Version version, String jsonSchemaPath) {
-            this.version = version;
-            this.jsonSchemaPath = jsonSchemaPath;
-        }
-
-        public Version getVersion() {
-            return version;
-        }
-
-        public String getJsonSchemaPath() {
-            return jsonSchemaPath;
-        }
-
-        @Override
-        public String toString() {
-            return "YamlPlanVersion{" +
-                    "version=" + version +
-                    ", jsonSchemaPath='" + jsonSchemaPath + '\'' +
-                    '}';
-        }
-    }
+    public static final Version ACTUAL_VERSION = new Version("1.0.0");
+    public static final String ACTUAL_JSON_SCHEMA_PATH = "step/plans/parser/yaml/step-yaml-plan-schema-os-1.0.json";
 }

@@ -20,7 +20,6 @@ package step.plans.parser.yaml;
 
 import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
 import step.plans.parser.yaml.deserializers.YamlArtefactFieldDeserializationProcessor;
-import step.plans.parser.yaml.model.YamlPlanVersions;
 import step.plans.parser.yaml.schema.YamlPlanJsonSchemaDefinitionCreator;
 import step.plans.parser.yaml.serializers.YamlArtefactFieldSerializationProcessor;
 
@@ -72,11 +71,11 @@ public interface YamlPlanReaderExtender {
     }
 
     /**
-     * Allows to redefine used Yaml plan version and json schema (for instance, switch used json schema to extended one for Step EE).
+     * Allows to redefine the json schema (for instance, switch used json schema to extended one for Step EE).
      * There should be at max one {@link YamlPlanReaderExtender} annotated with {@link YamlPlanReaderExtension} overriding
-     * the {@link step.plans.parser.yaml.model.YamlPlanVersions.YamlPlanVersion} via this method.
+     * the json schema (returning the non-null string via this method).
      */
-    default YamlPlanVersions.YamlPlanVersion getYamlPlanVersion() {
+    default String getJsonSchemaPath() {
         return null;
     }
 

@@ -44,7 +44,7 @@ public class YamlPlanSchemaGenerationTool {
         outputFilePath = args[0];
 
         try {
-            YamlPlanJsonSchemaGenerator schemaGenerator = new YamlPlanJsonSchemaGenerator("step", YamlPlanVersions.ACTUAL_VERSION.getVersion());
+            YamlPlanJsonSchemaGenerator schemaGenerator = new YamlPlanJsonSchemaGenerator("step", YamlPlanVersions.ACTUAL_VERSION);
             JsonNode currentSchema = schemaGenerator.generateJsonSchema();
 
             try (FileOutputStream fileOs = new FileOutputStream(outputFilePath)) {

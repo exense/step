@@ -43,7 +43,6 @@ import step.core.plans.Plan;
 import step.core.scanner.AnnotationScanner;
 import step.core.scanner.CachedAnnotationScanner;
 import step.migration.MigrationManager;
-import step.migration.MigrationTask;
 import step.plans.parser.yaml.migrations.YamlPlanMigration;
 import step.plans.parser.yaml.model.YamlPlan;
 import step.plans.parser.yaml.deserializers.YamlDynamicValueDeserializer;
@@ -74,55 +73,70 @@ public class YamlPlanReader {
 	private final ObjectMapper yamlMapper;
 
 	private final Supplier<ObjectId> idGenerator;
-	private Version currentVersion;
+	private final Version currentVersion;
 	private String jsonSchema;
 	private final MigrationManager migrationManager;
 
-	// for tests
-	YamlPlanReader(Supplier<ObjectId> idGenerator, YamlPlanVersions.YamlPlanVersion currentVersion) {
+	/**
+	 * To be used in TESTS only
+	 *
+	 * @param idGenerator            the id generator to generate static ids in tests
+	 * @param currentVersion         the fixed yaml format version. If null, the actual version will be used
+	 * @param validateWithJsonSchema if true, the json schema will be used to validate yaml plans
+	 * @param jsonSchemaPath         the fixed path to json schema. If null, the actual json schema will be used
+	 */
+	YamlPlanReader(Supplier<ObjectId> idGenerator, Version currentVersion, boolean validateWithJsonSchema, String jsonSchemaPath) {
 		if (currentVersion != null) {
-			setCurrentVersion(currentVersion);
+			this.currentVersion = currentVersion;
 		} else {
-			// resolve version and schema automatically
-			List<YamlPlanVersions.YamlPlanVersion> versionFromExtensions = CachedAnnotationScanner.getClassesWithAnnotation(YamlPlanReaderExtension.class).stream()
-					.map(newInstanceAs(YamlPlanReaderExtender.class))
-					.map(YamlPlanReaderExtender::getYamlPlanVersion)
-					.filter(Objects::nonNull)
-					.collect(Collectors.toList());
+			this.currentVersion = YamlPlanVersions.ACTUAL_VERSION;
+		}
+		log.info("YAML Plans version: {}", this.currentVersion);
 
-			if (!versionFromExtensions.isEmpty()) {
-				if (versionFromExtensions.size() > 1) {
-					throw new IllegalArgumentException("Ambiguous json schema is defined in project: " + versionFromExtensions);
-				}
-				setCurrentVersion(versionFromExtensions.get(0));
+		if (validateWithJsonSchema) {
+			if (jsonSchemaPath != null) {
+				this.jsonSchema = readJsonSchema(jsonSchemaPath);
 			} else {
-				setCurrentVersion(YamlPlanVersions.ACTUAL_VERSION);
+				// resolve the json schema to use
+				List<String> jsonSchemasFromExtensions = CachedAnnotationScanner.getClassesWithAnnotation(YamlPlanReaderExtension.class).stream()
+						.map(newInstanceAs(YamlPlanReaderExtender.class))
+						.map(YamlPlanReaderExtender::getJsonSchemaPath)
+						.filter(Objects::nonNull)
+						.collect(Collectors.toList());
+
+				String resolvedJsonSchemaPath;
+
+				if (!jsonSchemasFromExtensions.isEmpty()) {
+					if (jsonSchemasFromExtensions.size() > 1) {
+						throw new IllegalArgumentException("Ambiguous json schema is defined in project: " + jsonSchemasFromExtensions);
+					}
+					resolvedJsonSchemaPath = jsonSchemasFromExtensions.get(0);
+				} else {
+					resolvedJsonSchemaPath = YamlPlanVersions.ACTUAL_JSON_SCHEMA_PATH;
+				}
+
+				log.info("The json schema for yaml plans: {}", resolvedJsonSchemaPath);
+				this.jsonSchema = readJsonSchema(resolvedJsonSchemaPath);
 			}
 		}
+
 		this.yamlMapper = createYamlPlanObjectMapper();
 		this.idGenerator = idGenerator;
 		this.migrationManager = initMigrationManager();
 	}
 
 	/**
-	 * Creates the new Yaml plan serializer for the specified current version (json schema)
-	 * @param currentVersion the current Yaml format version (and json schema)
+	 * Creates the new Yaml plan serializer for the specified current version and json schema
 	 */
-	public YamlPlanReader(YamlPlanVersions.YamlPlanVersion currentVersion) {
-		this(null, currentVersion);
+	public YamlPlanReader(Version currentVersion, String jsonSchemaPath) {
+		this(null, currentVersion, true, jsonSchemaPath);
 	}
 
-	private void setCurrentVersion(YamlPlanVersions.YamlPlanVersion currentVersion) {
-		this.currentVersion = currentVersion.getVersion();
-		if (currentVersion.getJsonSchemaPath() != null) {
-			this.jsonSchema = readJsonSchema(currentVersion.getJsonSchemaPath());
-		} else {
-			this.jsonSchema = null;
-		}
-	}
-
-	public YamlPlanReader() {
-		this(null, null);
+	/**
+	 * Creates the new Yaml plan reader with actual version and json schema
+	 */
+	public YamlPlanReader(){
+		this(null, null, true, null);
 	}
 
 	/**
