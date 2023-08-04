@@ -21,6 +21,7 @@ package step.plans.parser.yaml;
 import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
 import step.plans.parser.yaml.deserializers.YamlArtefactFieldDeserializationProcessor;
 import step.plans.parser.yaml.model.YamlPlanVersions;
+import step.plans.parser.yaml.schema.YamlPlanJsonSchemaDefinitionCreator;
 import step.plans.parser.yaml.serializers.YamlArtefactFieldSerializationProcessor;
 
 import java.util.ArrayList;
@@ -59,7 +60,14 @@ public interface YamlPlanReaderExtender {
      * Defines the additional list of JsonSchemaFieldProcessor to be used during the json schema preparation. This allows
      * to add some custom json schema parts for Step EE artefacts (see {@link step.plans.parser.yaml.schema.YamlPlanSchemaGenerationTool}).
      */
-    default List<JsonSchemaFieldProcessor> getJsonSchemaExtensions() {
+    default List<JsonSchemaFieldProcessor> getJsonSchemaFieldProcessingExtensions() {
+        return new ArrayList<>();
+    }
+
+    /**
+     * Defines the additional list of YamlPlanJsonSchemaDefinitionCreator to be used to add some type reusable definitions (sub-schemas) to json the schema
+     */
+    default List<YamlPlanJsonSchemaDefinitionCreator> getJsonSchemaDefinitionsExtensions(){
         return new ArrayList<>();
     }
 

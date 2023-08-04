@@ -8,25 +8,47 @@ root:
     instrumentNode: false
     skipNode: false
     children:
-    - CallKeyword:
-        nodeName: "CallKeyword"
-        continueParentNodeExecutionOnError: false
-        instrumentNode: false
-        skipNode: false
-        remote: true
-        inputs:
-        - stringInput:
-            expression: "'abc'"
-        - intInput: 777
-        keyword:
-          selectionCriteria:
-          - criteria1: "criteriaValue1"
-    - CallKeyword:
-        nodeName: "CallKeyword2"
-        continueParentNodeExecutionOnError: false
-        instrumentNode: false
-        skipNode: false
-        remote: true
-        inputs: []
-        keyword: "myKeyword"
+      - CallKeyword:
+          nodeName: "CallKeyword"
+          continueParentNodeExecutionOnError: false
+          instrumentNode: false
+          skipNode: false
+          remote: true
+          inputs: []
+          keyword: "myKeyword"
+      - CallKeyword:
+          nodeName: "CallKeyword2"
+          continueParentNodeExecutionOnError: false
+          instrumentNode: false
+          skipNode: false
+          remote: true
+          inputs: []
+          keyword:
+            expression: "'myKeyword2'"
+      - CallKeyword:
+          nodeName: "CallKeyword3"
+          continueParentNodeExecutionOnError: false
+          instrumentNode: false
+          skipNode: false
+          remote: true
+          inputs: []
+          keyword:
+            name: "myKeyword3"
+            routing:
+              - criteria1: "criteriaValue1"
+      - CallKeyword:
+          nodeName: "CallKeyword4"
+          continueParentNodeExecutionOnError: false
+          instrumentNode: false
+          skipNode: false
+          remote: true
+          inputs:
+            - stringInput:
+                expression: "'abc'"
+            - intInput: 777
+          keyword:
+            name:
+              expression: "'myKeyword4'"
+            routing:
+              - criteria1: "criteriaValue1"
     continueOnError: false

@@ -23,7 +23,7 @@ import step.core.Version;
 public class YamlPlanVersions {
     public static final YamlPlanVersion VERSION_1 = new YamlPlanVersion(
             new Version("1.0.0"),
-            "step/plans/parser/yaml/yaml-plan-schema-1.0.json"
+            "step/plans/parser/yaml/step-yaml-plan-schema-os-1.0.json"
     );
 
     public static final YamlPlanVersion ACTUAL_VERSION = VERSION_1;

@@ -44,21 +44,15 @@ public class YamlPlanReaderTest {
 	private final YamlPlanReader serializer;
 
 	// DEV flag to store test results in local files
-	private boolean writeResultsToLocalFiles = false;
+	private boolean writeResultsToLocalFiles = true;
 
 	private final ObjectMapper technicalPlanMapper;
 
-	public YamlPlanReaderTest() throws IOException {
-		String schemaFileLocation = "step/plans/parser/yaml/yaml-plan-schema-1.0.json";
-		try(InputStream jsonSchemaInputStream = this.getClass().getClassLoader().getResourceAsStream(schemaFileLocation)){
-			if(jsonSchemaInputStream == null){
-				throw new IllegalStateException("Json schema not found: " + schemaFileLocation);
-			}
-			this.serializer = new YamlPlanReader(
-					() -> STATIC_ID,
-					YamlPlanVersions.ACTUAL_VERSION
-			);
-		}
+	public YamlPlanReaderTest() {
+		this.serializer = new YamlPlanReader(
+				() -> STATIC_ID,
+				YamlPlanVersions.ACTUAL_VERSION
+		);
 
 		this.technicalPlanMapper = createTechnicalPlanObjectMapper();
 	}

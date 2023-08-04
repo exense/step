@@ -5,13 +5,25 @@ root:
     children:
       - CallKeyword:
           nodeName: CallKeyword
+          keyword: "myKeyword"
+      - CallKeyword:
+          nodeName: CallKeyword2
           keyword:
-            selectionCriteria:
+            expression: "'myKeyword2'"
+      - CallKeyword:
+          nodeName: CallKeyword3
+          keyword:
+            name: "myKeyword3"
+            routing:
+              - criteria1: "criteriaValue1"
+      - CallKeyword:
+          nodeName: CallKeyword4
+          keyword:
+            name:
+              expression: "'myKeyword4'"
+            routing:
               - criteria1: "criteriaValue1"
           inputs:
             - stringInput:
                 expression: "'abc'"
             - intInput: 777
-      - CallKeyword:
-          nodeName: CallKeyword2
-          keyword: "myKeyword"

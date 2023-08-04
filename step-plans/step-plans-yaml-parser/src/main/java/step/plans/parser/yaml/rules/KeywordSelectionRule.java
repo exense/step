@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.plans.parser.yaml.rules;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -39,7 +40,7 @@ public class KeywordSelectionRule extends DynamicInputsSupport implements Artefa
 
     @Override
     public JsonSchemaFieldProcessor getJsonSchemaFieldProcessor(JsonProvider jsonProvider) {
-        // combines 'keyword' (keyword name) and 'selection' criteria
+        // combines 'keyword' (keyword name) and 'routing' (token selector)
         return (objectClass, field, fieldMetadata, propertiesBuilder, requiredPropertiesOutput) -> {
             boolean isCallFunction = CallFunction.class.isAssignableFrom(objectClass);
             if (isCallFunction) {
@@ -49,7 +50,7 @@ public class KeywordSelectionRule extends DynamicInputsSupport implements Artefa
                     propertiesBuilder.add(fieldMetadata.getFieldName(), nestedPropertyParamsBuilder);
                     return true;
                 } else if (field.getName().equals(YamlPlanFields.TOKEN_SELECTOR_TOKEN_ORIGINAL_FIELD)) {
-                    // token is included in 'sectionCriteria' in 'keyword' -> just skip it in schema
+                    // token is included in 'routing' in 'keyword' -> just skip it in schema
                     return true;
                 }
             }
@@ -60,24 +61,31 @@ public class KeywordSelectionRule extends DynamicInputsSupport implements Artefa
     @Override
     public YamlArtefactFieldDeserializationProcessor getArtefactFieldDeserializationProcessor() {
         return (artefactClass, field, output, codec) -> {
-            // for 'CallFunction' we can use either the `keyword` (keyword name) field or the `keyword.selectionCriteria` to define the keyword name
+            // for 'CallFunction' we can use either the `keyword` (keyword name) field or the `keyword.routing` to define the keyword name
             if (artefactClass.equals(CallFunction.ARTEFACT_NAME) && field.getKey().equals(YamlPlanFields.CALL_FUNCTION_FUNCTION_YAML_FIELD)) {
                 JsonNode yamlFunctionValue = field.getValue();
-                JsonNode functionSelectionCriteria = yamlFunctionValue.get(YamlPlanFields.TOKEN_SELECTOR_TOKEN_YAML_FIELD);
+                JsonNode functionRouting = yamlFunctionValue.get(YamlPlanFields.TOKEN_SELECTOR_TOKEN_YAML_FIELD);
+                JsonNode nestedFunctionName = yamlFunctionValue.get(YamlPlanFields.CALL_FUNCTION_FUNCTION_NAME_YAML_FIELD);
 
-                if (functionSelectionCriteria != null) {
-                    output.put(YamlPlanFields.TOKEN_SELECTOR_TOKEN_ORIGINAL_FIELD, deserializeDynamicInputs(codec, (ArrayNode) functionSelectionCriteria));
-                } else {
-                    // we need to prepare the following structure:
-                    /*
+                // 'simple' function name means function name is defined explicitly in keyword field (but not in nested keyword.name field together with keyword.routing field)
+                boolean isSimpleFunctionName = nestedFunctionName == null && functionRouting == null;
+
+                // for function name we need to prepare the following output:
+                /*
                     "function": {
                         "dynamic": false,
                         "value": "{\"name\":{\"value\":\"MyKeyword1\",\"dynamic\":false}}"
                     }
-                    */
+                */
+                DynamicValue<String> keywordName = null;
+                if (isSimpleFunctionName) {
+                    keywordName = getDynamicKeywordName(yamlFunctionValue);
+                } else if (nestedFunctionName != null) {
+                    keywordName = getDynamicKeywordName(nestedFunctionName);
+                }
 
+                if (keywordName != null) {
                     Map<String, DynamicValue<String>> keywordFunctionCriteria = new HashMap<>();
-                    DynamicValue<String> keywordName = new DynamicValue<>(yamlFunctionValue.asText());
 
                     // "{\"name\":{\"value\":\"MyKeyword1\",\"dynamic\":false}}"
                     keywordFunctionCriteria.put(AbstractOrganizableObject.NAME, keywordName);
@@ -85,11 +93,26 @@ public class KeywordSelectionRule extends DynamicInputsSupport implements Artefa
                     DynamicValue<String> functionDynamicValue = new DynamicValue<>(jsonObjectMapper.writeValueAsString(keywordFunctionCriteria));
                     output.putPOJO(YamlPlanFields.CALL_FUNCTION_FUNCTION_ORIGINAL_FIELD, functionDynamicValue);
                 }
+
+                // store routing
+                if (functionRouting instanceof ArrayNode) {
+                    output.put(YamlPlanFields.TOKEN_SELECTOR_TOKEN_ORIGINAL_FIELD, deserializeDynamicInputs(codec, (ArrayNode) functionRouting));
+                }
                 return true;
             } else {
                 return false;
             }
         };
+    }
+
+    private DynamicValue<String> getDynamicKeywordName(JsonNode yamlFunctionValue) {
+        DynamicValue<String> keywordName;
+        if(yamlFunctionValue.isContainerNode() && yamlFunctionValue.get(YamlPlanFields.DYN_VALUE_EXPRESSION_FIELD) != null){
+            keywordName = new DynamicValue<>(yamlFunctionValue.get(YamlPlanFields.DYN_VALUE_EXPRESSION_FIELD).asText(), "");
+        } else {
+            keywordName = new DynamicValue<>(yamlFunctionValue.asText());
+        }
+        return keywordName;
     }
 
     @Override
@@ -100,32 +123,27 @@ public class KeywordSelectionRule extends DynamicInputsSupport implements Artefa
                     DynamicValue<String> function = (DynamicValue<String>) field.get(artefact);
                     DynamicValue<String> token = ((CallFunction) artefact).getToken();
 
-                    boolean useSelectionCriteria = isEmptyDynamicInputs(token);
+                    boolean useRouting = isEmptyDynamicInputs(token);
 
                     gen.writeFieldName(YamlPlanFields.CALL_FUNCTION_FUNCTION_YAML_FIELD);
-                    if (!useSelectionCriteria) {
+
+                    DynamicValue<String> functionNameDynamicValue = getFunctionNameDynamicValue(function);
+                    if (!useRouting) {
                         // here we want to write function name simply as 'keyword: "myKeyword"' in YAML
-                        if (function.getValue().trim().length() > 0 && function.getValue().startsWith("{")) {
-                            TypeReference<HashMap<String, DynamicValue<String>>> typeRef = new TypeReference<>() {
-                            };
-                            HashMap<String, DynamicValue<String>> functionNameAsMap = jsonObjectMapper.readValue(function.getValue(), typeRef);
-                            if (functionNameAsMap.size() != 1) {
-                                throw new IllegalArgumentException("Invalid function. Function selector for yaml only supports search by function name, but was: " + function.getValue());
-                            }
-                            DynamicValue<String> functionNameDynamicValue = functionNameAsMap.get(AbstractOrganizableObject.NAME);
-                            if (functionNameDynamicValue == null) {
-                                throw new IllegalArgumentException("Invalid function. Function selector for yaml only supports search by function name, but was: " + function.getValue());
-                            }
-                            if (functionNameDynamicValue.isDynamic()) {
-                                throw new IllegalArgumentException("Invalid function. Function selector for yaml only supports static function names, but was: " + function.getValue());
-                            }
-                            gen.writeObject(functionNameDynamicValue.get());
-                        } else {
-                            throw new IllegalArgumentException("Invalid function. Function selector for yaml only supports function selectors as jsons, but was: " + function.getValue());
+                        if (functionNameDynamicValue != null) {
+                            gen.writeObject(functionNameDynamicValue);
+                        }
+                    } else {
+                        // if routing rules are defined, we put function name and routing as nested fields
+                        gen.writeStartObject();
+
+                        // write function name
+                        if (functionNameDynamicValue != null) {
+                            gen.writeFieldName(YamlPlanFields.CALL_FUNCTION_FUNCTION_NAME_YAML_FIELD);
+                            gen.writeObject(functionNameDynamicValue);
                         }
 
-                    } else {
-                        gen.writeStartObject();
+                        // write routing
                         gen.writeFieldName(YamlPlanFields.TOKEN_SELECTOR_TOKEN_YAML_FIELD);
                         serializeDynamicInputs(gen, token);
                         gen.writeEndObject();
@@ -139,6 +157,35 @@ public class KeywordSelectionRule extends DynamicInputsSupport implements Artefa
             }
             return false;
         };
+    }
+
+    private DynamicValue<String> getFunctionNameDynamicValue(DynamicValue<String> function) throws JsonProcessingException {
+        if (function.getValue().trim().length() > 0) {
+            if (function.getValue().startsWith("{")) {
+                TypeReference<HashMap<String, DynamicValue<String>>> typeRef = new TypeReference<>() {
+                };
+                HashMap<String, DynamicValue<String>> functionNameAsMap = jsonObjectMapper.readValue(function.getValue(), typeRef);
+                if (functionNameAsMap.isEmpty()) {
+                    return null;
+                }
+                if (functionNameAsMap.size() > 1) {
+                    throw new IllegalArgumentException("Invalid function. Function selector for yaml only supports search by function name, but was: " + function.getValue());
+                }
+                DynamicValue<String> functionNameDynamicValue = functionNameAsMap.get(AbstractOrganizableObject.NAME);
+                if (functionNameDynamicValue == null) {
+                    throw new IllegalArgumentException("Invalid function. Function selector for yaml only supports search by function name, but was: " + function.getValue());
+                }
+//                if (functionNameDynamicValue.isDynamic()) {
+//                    throw new IllegalArgumentException("Invalid function. Function selector for yaml only supports static function names, but was: " + function.getValue());
+//                }
+                return functionNameDynamicValue;
+            } else {
+                throw new IllegalArgumentException("Invalid function. Function selector for yaml only supports function selectors as jsons, but was: " + function.getValue());
+            }
+
+        } else {
+            return null;
+        }
     }
 
 }

@@ -32,11 +32,12 @@ public class ArtefactFieldMetadataExtractor implements FieldMetadataExtractor {
 
     @Override
     public FieldMetadata extractMetadata(Field field) {
+        // TODO: this logic can be replaced with field-level annotation
         if (field.getDeclaringClass().equals(CallFunction.class) && field.getName().equals(YamlPlanFields.CALL_FUNCTION_ARGUMENT_ORIGINAL_FIELD)) {
             // rename 'argument' field to 'inputs'
             return new FieldMetadata(YamlPlanFields.CALL_FUNCTION_ARGUMENT_YAML_FIELD, null, field.getType(), false);
         } else if (field.getDeclaringClass().equals(TokenSelector.class) && field.getName().equals(YamlPlanFields.TOKEN_SELECTOR_TOKEN_ORIGINAL_FIELD)) {
-            // rename 'token' field to 'selectionCriteria'
+            // rename 'token' field to 'routing'
             return new FieldMetadata(YamlPlanFields.TOKEN_SELECTOR_TOKEN_YAML_FIELD, null, field.getType(), false);
         } else if (field.getDeclaringClass().equals(CallFunction.class) && field.getName().equals(YamlPlanFields.CALL_FUNCTION_FUNCTION_ORIGINAL_FIELD)) {
             // rename 'function' field to 'keyword'

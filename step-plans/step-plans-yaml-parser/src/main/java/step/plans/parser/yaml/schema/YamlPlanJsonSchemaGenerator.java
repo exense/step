@@ -36,6 +36,7 @@ import step.handlers.javahandler.jsonschema.JsonSchemaCreator;
 import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
 import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 import step.plans.nl.RootArtefactType;
+import step.plans.parser.yaml.YamlPlanFields;
 import step.plans.parser.yaml.rules.*;
 import step.plans.parser.yaml.ArtefactFieldMetadataExtractor;
 import step.plans.parser.yaml.YamlPlanReaderExtender;
@@ -100,7 +101,7 @@ public class YamlPlanJsonSchemaGenerator {
 		result.add(artefactChildrenProcessingRule);
 
 		// -- RULES FROM EXTENSIONS HAVE LESS PRIORITY THAN BASIC RULES, BUT MORE PRIORITY THAN OTHER RULES
-		result.addAll(getExtensions());
+		result.addAll(getFieldExtensions());
 
 		// -- RULES FOR OS ARTEFACTS
 		result.add(new NodeNameRule().getJsonSchemaFieldProcessor(jsonProvider));
@@ -116,10 +117,17 @@ public class YamlPlanJsonSchemaGenerator {
 		return result;
 	}
 
-	protected List<JsonSchemaFieldProcessor> getExtensions() {
+	protected List<JsonSchemaFieldProcessor> getFieldExtensions() {
 		List<JsonSchemaFieldProcessor> extensions = new ArrayList<>();
 		CachedAnnotationScanner.getClassesWithAnnotation(YamlPlanReaderExtension.class).stream()
-				.map(newInstanceAs(YamlPlanReaderExtender.class)).forEach(e -> extensions.addAll(e.getJsonSchemaExtensions()));
+				.map(newInstanceAs(YamlPlanReaderExtender.class)).forEach(e -> extensions.addAll(e.getJsonSchemaFieldProcessingExtensions()));
+		return extensions;
+	}
+
+	protected List<YamlPlanJsonSchemaDefinitionCreator> getDefinitionsExtensions() {
+		List<YamlPlanJsonSchemaDefinitionCreator> extensions = new ArrayList<>();
+		CachedAnnotationScanner.getClassesWithAnnotation(YamlPlanReaderExtension.class).stream()
+				.map(newInstanceAs(YamlPlanReaderExtender.class)).forEach(e -> extensions.addAll(e.getJsonSchemaDefinitionsExtensions()));
 		return extensions;
 	}
 
@@ -171,24 +179,38 @@ public class YamlPlanJsonSchemaGenerator {
 	private JsonObjectBuilder createDefs() throws JsonSchemaPreparationException {
 		JsonObjectBuilder defsBuilder = jsonProvider.createObjectBuilder();
 
+		List<YamlPlanJsonSchemaDefinitionCreator> definitionCreators = new ArrayList<>();
+
 		// prepare definitions for generic DynamicValue class
-		Map<String, JsonObjectBuilder> dynamicValueDefs = dynamicValuesHelper.createDynamicValueImplDefs();
-		for (Map.Entry<String, JsonObjectBuilder> dynamicValueDef : dynamicValueDefs.entrySet()) {
-			defsBuilder.add(dynamicValueDef.getKey(), dynamicValueDef.getValue());
-		}
+		definitionCreators.add((defsList) -> {
+			Map<String, JsonObjectBuilder> dynamicValueDefs = dynamicValuesHelper.createDynamicValueImplDefs();
+			for (Map.Entry<String, JsonObjectBuilder> dynamicValueDef : dynamicValueDefs.entrySet()) {
+				defsBuilder.add(dynamicValueDef.getKey(), dynamicValueDef.getValue());
+			}
+		});
 
 		// simplified keyword name for 'CallKeyword' artefact
-		defsBuilder.add(CALL_KEYWORD_FUNCTION_NAME_DEF, createCallKeywordFunctionNameDef());
+		definitionCreators.add((defsList) -> defsBuilder.add(CALL_KEYWORD_FUNCTION_NAME_DEF, createCallKeywordFunctionNameDef()));
 
 		// prepare definitions for subclasses annotated with @Artefact
-		ArtefactDefinitions artefactImplDefs = createArtefactImplDefs();
-		for (Map.Entry<String, JsonObjectBuilder> artefactImplDef : artefactImplDefs.allArtefactDefs.entrySet()) {
-			defsBuilder.add(artefactImplDef.getKey(), artefactImplDef.getValue());
+		definitionCreators.add((defsList) -> {
+			ArtefactDefinitions artefactImplDefs = createArtefactImplDefs();
+			for (Map.Entry<String, JsonObjectBuilder> artefactImplDef : artefactImplDefs.allArtefactDefs.entrySet()) {
+				defsBuilder.add(artefactImplDef.getKey(), artefactImplDef.getValue());
+			}
+
+			// add definition for "anyOf" artefact definitions prepared above
+			defsBuilder.add(ARTEFACT_DEF, createArtefactDef(artefactImplDefs.allArtefactDefs.keySet()));
+			defsBuilder.add(ROOT_ARTEFACT_DEF, createArtefactDef(artefactImplDefs.rootArtefactDefs));
+		});
+
+		// add definitions from extensions (additional definitions for EE artefacts)
+		definitionCreators.addAll(getDefinitionsExtensions());
+
+		for (YamlPlanJsonSchemaDefinitionCreator definitionCreator : definitionCreators) {
+			definitionCreator.addDefinition(defsBuilder);
 		}
 
-		// add definition for "anyOf" artefact definitions prepared above
-		defsBuilder.add(ARTEFACT_DEF, createArtefactDef(artefactImplDefs.allArtefactDefs.keySet()));
-		defsBuilder.add(ROOT_ARTEFACT_DEF, createArtefactDef(artefactImplDefs.rootArtefactDefs));
 		return defsBuilder;
 	}
 
@@ -217,12 +239,16 @@ public class YamlPlanJsonSchemaGenerator {
 	private JsonObjectBuilder createCallKeywordFunctionNameDef() {
 		JsonObjectBuilder result = jsonProvider.createObjectBuilder();
 
+		// simple option - function name only
 		JsonObjectBuilder keywordFunctionName = addRef(jsonProvider.createObjectBuilder(), YamlDynamicValueJsonSchemaHelper.SMART_DYNAMIC_VALUE_STRING_DEF);
 
 		JsonObjectBuilder keywordSelectionCriteria = jsonProvider.createObjectBuilder();
 		keywordSelectionCriteria.add("type", "object");
+
+		// advanced option - function name (dynamic value) + token selection criteria (dynamic inputs)
 		keywordSelectionCriteria.add("properties", jsonProvider.createObjectBuilder()
-				.add("selectionCriteria", addRef(jsonProvider.createObjectBuilder(), YamlDynamicValueJsonSchemaHelper.DYNAMIC_KEYWORD_INPUTS_DEF))
+				.add(YamlPlanFields.CALL_FUNCTION_FUNCTION_NAME_YAML_FIELD, addRef(jsonProvider.createObjectBuilder(), YamlDynamicValueJsonSchemaHelper.SMART_DYNAMIC_VALUE_STRING_DEF))
+				.add(YamlPlanFields.TOKEN_SELECTOR_TOKEN_YAML_FIELD, addRef(jsonProvider.createObjectBuilder(), YamlDynamicValueJsonSchemaHelper.DYNAMIC_KEYWORD_INPUTS_DEF))
 		);
 		keywordSelectionCriteria.add("additionalProperties", false);
 
