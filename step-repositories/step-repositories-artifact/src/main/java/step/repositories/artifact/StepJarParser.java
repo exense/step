@@ -184,13 +184,10 @@ public class StepJarParser {
     private List<StepClassParserResult> getPlanFromPlansAnnotation(Class<?> klass, File artifact) {
         final List<StepClassParserResult> result = new ArrayList<>();
 
-        Exception exception = null;
-        PlanParser planParser = new PlanParser();
-
         Plans plans = klass.getAnnotation(Plans.class);
         if (plans!=null) {
             for (String file : plans.value()) {
-                Plan plan = null;
+                StepClassParserResult parserResult = null;
                 try {
                     URL url = null;
                     if (file.startsWith("/")) {
@@ -203,15 +200,18 @@ public class StepJarParser {
                     InputStream stream = url.openStream();
 
                     if (stream != null) {
-                        plan = planParser.parse(stream, RootArtefactType.TestCase);
+                        // create plan from plain-text or from yaml
+                        parserResult = stepClassParser.createPlan(klass, file, stream);
                     } else {
                         throw new FileNotFoundException(file);
                     }
-                    StepClassParser.setPlanName(plan, file);
+                    if (parserResult.getPlan() != null) {
+                        StepClassParser.setPlanName(parserResult.getPlan(), file);
+                    }
                 } catch (Exception e) {
-                    exception = e;
+                    parserResult = new StepClassParserResult(file, null,  e);
                 }
-                result.add(new StepClassParserResult(file, plan, exception));
+                result.add(parserResult);
             }
         }
         return result;

@@ -110,21 +110,25 @@ public class StepClassParser {
 		}
 	}
 
-	public StepClassParserResult createPlan(Class<?> klass, String name) throws Exception {
+	public StepClassParserResult createPlan(Class<?> klass, String fileName) throws Exception {
+		InputStream stream = klass.getResourceAsStream(fileName);
+		return createPlan(klass, fileName, stream);
+	}
+
+	public StepClassParserResult createPlan(Class<?> klass, String fileName, InputStream stream) {
 		Plan plan = null;
 		Exception exception = null;
 		try {
-			ParserMode parserMode = chooseParserModeByFileName(name);
+			ParserMode parserMode = chooseParserModeByFileName(fileName);
 
-			InputStream stream = klass.getResourceAsStream(name);
 			if (stream == null) {
-				throw new Exception("Plan '" + name + "' was not found for class " + klass.getName());
+				throw new Exception("Plan '" + fileName + "' was not found for class " + klass.getName());
 			}
 
 			if (parserMode == ParserMode.PLAIN_TEXT_PARSER) {
 				plan = planParser.parse(stream, RootArtefactType.TestCase);
 				logger.debug("plan is:" + plan + " for class " + klass.getName());
-				setPlanName(plan, name);
+				setPlanName(plan, fileName);
 			} else if (parserMode == ParserMode.YAML_PARSER) {
 				plan = simpleYamlPlanReader.readYamlPlan(stream);
 			} else {
@@ -134,7 +138,7 @@ public class StepClassParser {
 			exception = e;
 		}
 
-		return new StepClassParserResult(name, plan, exception);
+		return new StepClassParserResult(fileName, plan, exception);
 	}
 
 	public static void setPlanName(Plan plan, String name) {
