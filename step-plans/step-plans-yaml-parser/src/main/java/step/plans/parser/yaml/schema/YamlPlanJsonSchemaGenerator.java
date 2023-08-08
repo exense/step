@@ -47,6 +47,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static step.core.scanner.Classes.newInstanceAs;
+import static step.plans.parser.yaml.YamlPlanFields.ARTEFACT_CHILDREN;
 
 public class YamlPlanJsonSchemaGenerator {
 
@@ -87,7 +88,7 @@ public class YamlPlanJsonSchemaGenerator {
 		result.add(new TechnicalFieldRule().getJsonSchemaFieldProcessor(jsonProvider));
 
 		JsonSchemaFieldProcessor artefactChildrenProcessingRule = (objectClass, field, fieldMetadata, propertiesBuilder, requiredPropertiesOutput) -> {
-			if(field.getDeclaringClass().equals(AbstractArtefact.class) && field.getName().equals("children")) {
+			if(field.getDeclaringClass().equals(AbstractArtefact.class) && field.getName().equals(ARTEFACT_CHILDREN)) {
 				propertiesBuilder.add(fieldMetadata.getFieldName(),
 						jsonProvider.createObjectBuilder()
 								.add("type", "array")

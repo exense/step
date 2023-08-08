@@ -62,14 +62,14 @@ public class YamlRootArtefactDeserializer extends JsonDeserializer<YamlRootArtef
 
         // process children recursively
         res.add((artefactClass, field, output, codec) -> {
-            if (field.getKey().equals("children")) {
+            if (field.getKey().equals(YamlPlanFields.ARTEFACT_CHILDREN)) {
                 JsonNode yamlChildren = field.getValue();
                 if (yamlChildren != null && yamlChildren.isArray()) {
                     ArrayNode childrenResult = createArrayNode(codec);
                     for (JsonNode yamlChild : yamlChildren) {
                         childrenResult.add(convertYamlArtefact(yamlChild, codec, customFieldProcessors));
                     }
-                    output.set("children", childrenResult);
+                    output.set(YamlPlanFields.ARTEFACT_CHILDREN, childrenResult);
                 }
                 return true;
             } else {

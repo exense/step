@@ -35,4 +35,6 @@ public class YamlPlanFields {
 
     public static final String DYN_VALUE_EXPRESSION_FIELD = "expression";
 
+    public static final String ARTEFACT_CHILDREN = "children";
+
 }

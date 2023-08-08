@@ -25,6 +25,7 @@ import step.core.artefacts.AbstractArtefact;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.scanner.CachedAnnotationScanner;
 import step.plans.parser.yaml.ArtefactFieldMetadataExtractor;
+import step.plans.parser.yaml.YamlPlanFields;
 import step.plans.parser.yaml.YamlPlanReaderExtender;
 import step.plans.parser.yaml.YamlPlanReaderExtension;
 import step.plans.parser.yaml.model.YamlRootArtefact;
@@ -61,10 +62,10 @@ public class YamlRootArtefactSerializer extends JsonSerializer<YamlRootArtefact>
         result.add(new CommonFilteredFieldRule().getArtefactFieldSerializationProcessor());
         result.add(new NodeNameRule().getArtefactFieldSerializationProcessor());
         result.add((artefact, field, fieldMetadata, gen) -> {
-            if (field.getName().equals("children")) {
+            if (field.getName().equals(YamlPlanFields.ARTEFACT_CHILDREN)) {
                 List<AbstractArtefact> children = (List<AbstractArtefact>) field.get(artefact);
                 if(children != null && !children.isEmpty()) {
-                    gen.writeFieldName("children");
+                    gen.writeFieldName(YamlPlanFields.ARTEFACT_CHILDREN);
                     gen.writeStartArray();
                     for (AbstractArtefact child : children) {
                         processArtefact(gen, child);
