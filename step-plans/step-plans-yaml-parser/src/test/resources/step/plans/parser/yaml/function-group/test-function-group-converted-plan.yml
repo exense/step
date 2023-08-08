@@ -1,0 +1,20 @@
+---
+version: "1.0.0"
+name: "test plan"
+root:
+  Sequence:
+    nodeName: "Sequence"
+    continueParentNodeExecutionOnError: false
+    instrumentNode: false
+    skipNode: false
+    children:
+      - Session:
+          nodeName: "Session"
+          continueParentNodeExecutionOnError: false
+          instrumentNode: false
+          skipNode: false
+          routing:
+            - criteria1: "criteriaValue1"
+            - criteria2: "criteriaValue2"
+          remote: true
+    continueOnError: false

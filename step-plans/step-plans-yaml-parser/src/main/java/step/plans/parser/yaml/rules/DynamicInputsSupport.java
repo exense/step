@@ -101,7 +101,7 @@ public class DynamicInputsSupport {
         gen.writeEndArray();
     }
 
-    protected boolean isEmptyDynamicInputs(DynamicValue<String> dynamicInputsValue) {
+    protected boolean isNotEmptyDynamicInputs(DynamicValue<String> dynamicInputsValue) {
         return (dynamicInputsValue.getValue() != null && !dynamicInputsValue.getValue().isEmpty() && !dynamicInputsValue.getValue().equals(EMPTY_JSON))
                 || (dynamicInputsValue.getExpression() != null && !dynamicInputsValue.getExpression().isEmpty());
     }

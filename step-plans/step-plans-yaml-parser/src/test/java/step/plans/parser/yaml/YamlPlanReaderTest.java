@@ -43,7 +43,7 @@ public class YamlPlanReaderTest {
 	private final YamlPlanReader serializer;
 
 	// DEV flag to store test results in local files
-	private boolean writeResultsToLocalFiles = false;
+	private boolean writeResultsToLocalFiles = true;
 
 	private final ObjectMapper technicalPlanMapper;
 
@@ -89,6 +89,18 @@ public class YamlPlanReaderTest {
 
 		convertPlanToYaml("src/test/resources/step/plans/parser/yaml/selection-criteria/test-expected-selection-criteria-tech-plan.yml",
 				"src/test/resources/step/plans/parser/yaml/selection-criteria/test-selection-criteria-converted-plan.yml"
+		);
+	}
+
+	@Test
+	public void functionGroup() throws YamlPlanValidationException {
+		convertFromYamlToPlan(
+				"src/test/resources/step/plans/parser/yaml/function-group/test-function-group-plan.yml",
+				"src/test/resources/step/plans/parser/yaml/function-group/test-expected-function-group-tech-plan.yml"
+		);
+
+		convertPlanToYaml("src/test/resources/step/plans/parser/yaml/function-group/test-expected-function-group-tech-plan.yml",
+				"src/test/resources/step/plans/parser/yaml/function-group/test-function-group-converted-plan.yml"
 		);
 	}
 
@@ -213,7 +225,7 @@ public class YamlPlanReaderTest {
 
 			// write yml to another file (to check it manually)
 			if(writeResultsToLocalFiles) {
-				try (FileOutputStream fileOs = new FileOutputStream("src/test/resources/step/plans/parser/yaml/test-selection-criteria-converted-plan.yml")) {
+				try (FileOutputStream fileOs = new FileOutputStream("src/test/resources/step/plans/parser/yaml/test-converted-plan.yml")) {
 					fileOs.write(os.toByteArray());
 				}
 			}

@@ -65,7 +65,7 @@ public class FunctionGroupSelectionRule extends DynamicInputsSupport implements 
             if (FunctionGroup.class.isAssignableFrom(artefact.getClass()) && field.getName().equals(YamlPlanFields.TOKEN_SELECTOR_TOKEN_ORIGINAL_FIELD)) {
                 // convert token to 'selectionCriteria' format
                 DynamicValue<String> token = (DynamicValue<String>) field.get(artefact);
-                if (!isEmptyDynamicInputs(token)) {
+                if (isNotEmptyDynamicInputs(token)) {
                     gen.writeFieldName(YamlPlanFields.TOKEN_SELECTOR_TOKEN_YAML_FIELD);
                     serializeDynamicInputs(gen, token);
                 }

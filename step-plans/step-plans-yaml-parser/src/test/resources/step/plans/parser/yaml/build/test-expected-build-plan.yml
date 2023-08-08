@@ -422,5 +422,9 @@ root:
                                     expression: "!STATUS.equals(\"PASSED\") || !SHOULD_PROPAGATE"
                             continueOnError: false
                       continueOnError: false
+                routing:
+                  - OS:
+                      expression: "OS"
+                  - type: "build"
                 remote: true
           continueOnError: true

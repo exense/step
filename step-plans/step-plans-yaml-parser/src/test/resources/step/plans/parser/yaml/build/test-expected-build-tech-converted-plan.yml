@@ -2136,7 +2136,8 @@ root:
             expressionType: null
           token:
             dynamic: false
-            value: "{}"
+            value: "{\"OS\":{\"dynamic\":true,\"expression\":\"OS\"},\"type\":\"build\"\
+          }"
             expression: null
             expressionType: null
           id: "644fbe4e38a61e07cc3a4df8"

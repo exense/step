@@ -123,7 +123,7 @@ public class KeywordSelectionRule extends DynamicInputsSupport implements Artefa
                     DynamicValue<String> function = (DynamicValue<String>) field.get(artefact);
                     DynamicValue<String> token = ((CallFunction) artefact).getToken();
 
-                    boolean useRouting = isEmptyDynamicInputs(token);
+                    boolean useRouting = isNotEmptyDynamicInputs(token);
 
                     gen.writeFieldName(YamlPlanFields.CALL_FUNCTION_FUNCTION_YAML_FIELD);
 
