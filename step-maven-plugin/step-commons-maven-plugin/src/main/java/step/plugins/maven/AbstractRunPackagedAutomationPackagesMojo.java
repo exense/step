@@ -43,6 +43,11 @@ public abstract class AbstractRunPackagedAutomationPackagesMojo extends Abstract
 		Map<String, Object> executionContext = new HashMap<>();
 		executionContext.put("resourceId", resourceId);
 
+		String libResourceId = getLibraryResourceId();
+		if (libResourceId != null && !libResourceId.isEmpty()) {
+			executionContext.put("libResourceId", libResourceId);
+		}
+
 		// 2. Execute just uploaded artifact in Step
 		executeBundleOnStep(executionContext);
 	}
@@ -78,12 +83,18 @@ public abstract class AbstractRunPackagedAutomationPackagesMojo extends Abstract
 
 	@Override
 	protected RepositoryObjectReference prepareExecutionRepositoryObject(Map<String, Object> executionContext) {
-		return new RepositoryObjectReference("ResourceArtifact", prepareRepositoryParameters((String) executionContext.get("resourceId")));
+		return new RepositoryObjectReference(
+				"ResourceArtifact",
+				prepareRepositoryParameters((String) executionContext.get("resourceId"), (String) executionContext.get("libResourceId"))
+		);
 	}
 
-	private HashMap<String, String> prepareRepositoryParameters(String resourceId) {
+	private HashMap<String, String> prepareRepositoryParameters(String resourceId, String libResourceId) {
 		HashMap<String, String> repoParams = new HashMap<>();
 		repoParams.put("resourceId", resourceId);
+		if (libResourceId != null) {
+			repoParams.put("libResourceId", libResourceId);
+		}
 		return repoParams;
 	}
 

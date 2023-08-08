@@ -48,6 +48,7 @@ public abstract class AbstractRunDeployedAutomationPackagesMojo extends Abstract
 	}
 
 	private HashMap<String, String> prepareRepositoryParameters() {
+		// TODO: pass resource with libraries
 		HashMap<String, String> repoParams = new HashMap<>();
 		repoParams.put(ArtifactConstants.PARAM_GROUP_ID, getGroupId());
 		repoParams.put(ArtifactConstants.PARAM_ARTIFACT_ID, getArtifactId());
