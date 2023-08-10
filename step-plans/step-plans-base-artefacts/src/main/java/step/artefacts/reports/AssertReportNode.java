@@ -30,7 +30,7 @@ public class AssertReportNode extends ReportNode {
 	
 	String actual;
 	
-	Object expected;
+	String expected;
 
 	public String getMessage() {
 		return message;
@@ -64,11 +64,11 @@ public class AssertReportNode extends ReportNode {
 		this.actual = actual;
 	}
 
-	public Object getExpected() {
+	public String getExpected() {
 		return expected;
 	}
 
-	public void setExpected(Object expected) {
+	public void setExpected(String expected) {
 		this.expected = expected;
 	}
 

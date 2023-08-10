@@ -70,7 +70,7 @@ public class AssertHandlerTest extends AbstractArtefactHandlerTest {
 		child = (AssertReportNode) getFirstReportNode();
 		assertEquals(child.getMessage(), child.getStatus(), ReportNodeStatus.PASSED);
 		assertEquals("'keyInt' expected to be equal to '777' and was '777'", child.getMessage());
-		assertEquals(777, child.getExpected());
+		assertEquals("777", child.getExpected());
 		assertEquals("777", child.getActual());
 		assertEquals("keyInt = '777'", child.getDescription());
 

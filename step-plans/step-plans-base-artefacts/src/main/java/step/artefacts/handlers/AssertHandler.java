@@ -81,7 +81,7 @@ public class AssertHandler extends ArtefactHandler<Assert, AssertReportNode> {
 			boolean passed = false;
 			if (valueResolvingResult.actualResolved) {
 				node.setActual(valueToString(valueResolvingResult.actual));
-				node.setExpected(expectedValue);
+				node.setExpected(valueToString(expectedValue));
 
 				//boolean negate = artefact.isNegate();
 				boolean negate = artefact.getDoNegate().get();
