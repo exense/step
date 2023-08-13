@@ -86,7 +86,26 @@ public abstract class AbstractStepPluginMojo extends AbstractMojo {
 		return new ControllerCredentials(getUrl(), null);
 	}
 
-	protected Artifact getArtifactByClassifier(String artifactClassifier, String groupId, String artifactId, String artifactVersion) {
+	protected org.eclipse.aether.artifact.Artifact getRemoteArtifact(String groupId, String artifactId, String artifactVersion, String classifier, String extension) throws MojoExecutionException {
+		ArtifactResult artifactResult;
+		try {
+			List<RemoteRepository> repositories = getProject().getRemoteProjectRepositories();
+			artifactResult = repositorySystem.resolveArtifact(
+					session.getRepositorySession(),
+					new ArtifactRequest(new DefaultArtifact(groupId, artifactId, classifier, extension, artifactVersion), repositories, null)
+			);
+		} catch (ArtifactResolutionException e) {
+			throw logAndThrow("unable to resolve artefact", e);
+		}
+
+		if (artifactResult != null) {
+			return artifactResult.getArtifact();
+		} else {
+			return null;
+		}
+	}
+
+	protected Artifact getProjectArtifact(String artifactClassifier, String groupId, String artifactId, String artifactVersion) {
 		Set<Artifact> allProjectArtifacts = new HashSet<>(getProject().getArtifacts());
 		allProjectArtifacts.add(getProject().getArtifact());
 		allProjectArtifacts.addAll(getProject().getAttachedArtifacts());
