@@ -19,10 +19,18 @@
 package step.plugins.maven;
 
 import org.apache.maven.artifact.Artifact;
+import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
+import org.eclipse.aether.RepositorySystem;
+import org.eclipse.aether.artifact.DefaultArtifact;
+import org.eclipse.aether.repository.RemoteRepository;
+import org.eclipse.aether.resolution.ArtifactRequest;
+import org.eclipse.aether.resolution.ArtifactResolutionException;
+import org.eclipse.aether.resolution.ArtifactResult;
 import step.client.credentials.ControllerCredentials;
 
 import java.util.HashSet;
@@ -44,6 +52,12 @@ public abstract class AbstractStepPluginMojo extends AbstractMojo {
 
 	@Parameter(defaultValue = "${project.version}", readonly = true)
 	private String projectVersion;
+
+	@Parameter(defaultValue = "${session}", readonly = true, required = true)
+	protected MavenSession session;
+
+	@Component
+	protected RepositorySystem repositorySystem;
 
 	public String getUrl() {
 		return url;
