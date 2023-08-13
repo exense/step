@@ -21,6 +21,7 @@ package step.plugins.maven;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugins.annotations.Parameter;
 import step.client.resources.RemoteResourceManager;
 import step.core.repositories.RepositoryObjectReference;
 import step.resources.Resource;
@@ -33,6 +34,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public abstract class AbstractRunPackagedAutomationPackagesMojo extends AbstractRunAutomationPackagesMojo {
+
+	@Parameter(property = "step-run-auto-packages.lib-step-resource-id", required = false)
+	private String libStepResourceId;
 
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
@@ -145,6 +149,14 @@ public abstract class AbstractRunPackagedAutomationPackagesMojo extends Abstract
 		} else {
 			return null;
 		}
+	}
+
+	public String getLibStepResourceId() {
+		return libStepResourceId;
+	}
+
+	public void setLibStepResourceId(String libStepResourceId) {
+		this.libStepResourceId = libStepResourceId;
 	}
 
 }

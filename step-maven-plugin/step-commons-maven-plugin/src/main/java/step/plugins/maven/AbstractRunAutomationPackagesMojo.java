@@ -51,9 +51,6 @@ public abstract class AbstractRunAutomationPackagesMojo extends AbstractStepPlug
 	@Parameter(property = "step-run-auto-packages.ensure-exec-success", defaultValue = "true")
 	private Boolean ensureExecutionSuccess;
 
-	@Parameter(property = "step-run-auto-packages.lib-step-resource-id", required = false)
-	private String libStepResourceId;
-
 	@Parameter(property = "step-run-auto-packages.lib-artifact-group-id")
 	private String libArtifactGroupId;
 
@@ -192,14 +189,6 @@ public abstract class AbstractRunAutomationPackagesMojo extends AbstractStepPlug
 
 	public void setEnsureExecutionSuccess(Boolean ensureExecutionSuccess) {
 		this.ensureExecutionSuccess = ensureExecutionSuccess;
-	}
-
-	public String getLibStepResourceId() {
-		return libStepResourceId;
-	}
-
-	public void setLibStepResourceId(String libStepResourceId) {
-		this.libStepResourceId = libStepResourceId;
 	}
 
 	public String getLibArtifactGroupId() {
