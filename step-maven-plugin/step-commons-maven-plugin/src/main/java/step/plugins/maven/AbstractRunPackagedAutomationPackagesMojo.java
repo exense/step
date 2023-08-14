@@ -35,8 +35,8 @@ import java.util.Map;
 
 public abstract class AbstractRunPackagedAutomationPackagesMojo extends AbstractRunAutomationPackagesMojo {
 
-	@Parameter(property = "step-run-auto-packages.lib-step-resource-id", required = false)
-	private String libStepResourceId;
+	@Parameter(property = "step-run-auto-packages.lib-step-resource-search-criteria")
+	private Map<String, String> libStepResourceSearchCriteria;
 
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
@@ -68,14 +68,15 @@ public abstract class AbstractRunPackagedAutomationPackagesMojo extends Abstract
 	protected String resolveAndUploadLibraryResource() throws MojoExecutionException {
 		// for packaged automation packages we support 2 ways to define library file: by step resource id and as maven artifact
 		String libResourceId = null;
-		if (getLibStepResourceId() != null && !getLibStepResourceId().isEmpty()) {
+		Map<String, String> libStepResourceSearchCriteria = getLibStepResourceSearchCriteria();
+		if (libStepResourceSearchCriteria != null && !libStepResourceSearchCriteria.isEmpty()) {
 			// reference library via resource id explicitly
-			libResourceId = getLibStepResourceId();
+			libResourceId = resolveKeywordLibResourceByCriteria(libStepResourceSearchCriteria);
 		} else if (getLibArtifactId() != null && !getLibArtifactId().isEmpty()) {
 			getLog().info("Using maven artifact " + getLibArtifactGroupId() + ":" + getLibArtifactId() + ":" + getLibArtifactVersion() + " as library file");
 
 			// use deployed artifact as resource
-			org.eclipse.aether.artifact.Artifact remoteLibArtifact = getRemoteArtifact(getLibArtifactGroupId(), getLibArtifactId(), getLibArtifactVersion(),  getLibArtifactClassifier(), "jar");
+			org.eclipse.aether.artifact.Artifact remoteLibArtifact = getRemoteArtifact(getLibArtifactGroupId(), getLibArtifactId(), getLibArtifactVersion(), getLibArtifactClassifier(), "jar");
 			if (remoteLibArtifact == null) {
 				throw new MojoExecutionException("Library artifact is not resolved");
 			}
@@ -151,12 +152,11 @@ public abstract class AbstractRunPackagedAutomationPackagesMojo extends Abstract
 		}
 	}
 
-	public String getLibStepResourceId() {
-		return libStepResourceId;
+	public Map<String, String> getLibStepResourceSearchCriteria() {
+		return libStepResourceSearchCriteria;
 	}
 
-	public void setLibStepResourceId(String libStepResourceId) {
-		this.libStepResourceId = libStepResourceId;
+	public void setLibStepResourceSearchCriteria(Map<String, String> libStepResourceSearchCriteria) {
+		this.libStepResourceSearchCriteria = libStepResourceSearchCriteria;
 	}
-
 }

@@ -31,13 +31,16 @@ import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
 import org.eclipse.aether.resolution.ArtifactResult;
+import step.client.accessors.RemoteAccessors;
+import step.client.collections.remote.RemoteCollectionFactory;
 import step.client.credentials.ControllerCredentials;
+import step.core.accessors.AbstractAccessor;
+import step.core.accessors.AbstractIdentifiableObject;
+import step.resources.Resource;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 public abstract class AbstractStepPluginMojo extends AbstractMojo {
 
@@ -98,6 +101,33 @@ public abstract class AbstractStepPluginMojo extends AbstractMojo {
 
 	protected ControllerCredentials getControllerCredentials() {
 		return new ControllerCredentials(getUrl(), null);
+	}
+
+	protected String resolveKeywordLibResourceByCriteria(Map<String, String> libStepResourceSearchCriteria) throws MojoExecutionException {
+		getLog().info("Using Step resource " + libStepResourceSearchCriteria + " as library file");
+
+		if (libStepResourceSearchCriteria.containsKey("id")) {
+			// just use the specified id
+			return libStepResourceSearchCriteria.get("id");
+		} else {
+			// search resources by attributes except for id
+			Map<String, String> attributes = new HashMap<>(libStepResourceSearchCriteria);
+			attributes.remove("id");
+			AbstractAccessor<Resource> remoteResourcesAccessor = createRemoteResourcesAccessor();
+			List<Resource> foundResources = StreamSupport.stream(remoteResourcesAccessor.findManyByAttributes(attributes), false).collect(Collectors.toList());
+			if (foundResources.isEmpty()) {
+				throw new MojoExecutionException("Library resource is not resolved by attributes: " + attributes);
+			} else if (foundResources.size() > 1) {
+				throw new MojoExecutionException("Ambiguous library resources ( " + foundResources.stream().map(AbstractIdentifiableObject::getId).collect(Collectors.toList()) + " ) are resolved by attributes: " + attributes);
+			} else {
+				return foundResources.get(0).getId().toString();
+			}
+		}
+	}
+
+	protected AbstractAccessor<Resource> createRemoteResourcesAccessor() {
+		RemoteAccessors remoteAccessors = new RemoteAccessors(new RemoteCollectionFactory(getControllerCredentials()));
+		return remoteAccessors.getAbstractAccessor("resources", Resource.class);
 	}
 
 	protected org.eclipse.aether.artifact.Artifact getRemoteArtifact(String groupId, String artifactId, String artifactVersion, String classifier, String extension) throws MojoExecutionException {

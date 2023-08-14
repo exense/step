@@ -53,8 +53,8 @@ public abstract class AbstractUploadKeywordsPackageMojo extends AbstractStepPlug
 	@Parameter(property = "step-upload-keywords.tracking-attr", required = false)
 	private String trackingAttribute;
 
-	@Parameter(property = "step-upload-keywords.lib-step-resource-id")
-	private String libStepResourceId;
+	@Parameter(property = "step-upload-keywords.lib-step-resource-search-criteria")
+	private Map<String, String> libStepResourceSearchCriteria;
 
 	@Parameter(property = "step-upload-keywords.lib-artifact-group-id")
 	private String libArtifactGroupId;
@@ -129,9 +129,9 @@ public abstract class AbstractUploadKeywordsPackageMojo extends AbstractStepPlug
 	}
 
 	protected LibFileReference resolveLibFile() throws MojoExecutionException {
-		if (getLibStepResourceId() != null && !getLibStepResourceId().isEmpty()) {
-			getLog().info("Using Step resource " + getLibStepResourceId() + " as library file");
-			return LibFileReference.resourceId(getLibStepResourceId());
+		Map<String, String> libStepResourceSearchCriteria = getLibStepResourceSearchCriteria();
+		if (libStepResourceSearchCriteria != null && !libStepResourceSearchCriteria.isEmpty()) {
+			return LibFileReference.resourceId(resolveKeywordLibResourceByCriteria(libStepResourceSearchCriteria));
 		} else if (getLibArtifactId() != null && !getLibArtifactId().isEmpty()) {
 			getLog().info("Using maven artifact " + getLibArtifactGroupId() + ":" + getLibArtifactId() + ":" + getLibArtifactVersion() + " as library file");
 			org.eclipse.aether.artifact.Artifact remoteLibArtifact = getRemoteArtifact(getLibArtifactGroupId(), getLibArtifactId(), getLibArtifactVersion(), getLibArtifactClassifier(), "jar");
@@ -215,12 +215,12 @@ public abstract class AbstractUploadKeywordsPackageMojo extends AbstractStepPlug
 		this.artifactVersion = artifactVersion;
 	}
 
-	public String getLibStepResourceId() {
-		return libStepResourceId;
+	public Map<String, String> getLibStepResourceSearchCriteria() {
+		return libStepResourceSearchCriteria;
 	}
 
-	public void setLibStepResourceId(String libStepResourceId) {
-		this.libStepResourceId = libStepResourceId;
+	public void setLibStepResourceSearchCriteria(Map<String, String> libStepResourceSearchCriteria) {
+		this.libStepResourceSearchCriteria = libStepResourceSearchCriteria;
 	}
 
 	public String getLibArtifactGroupId() {
