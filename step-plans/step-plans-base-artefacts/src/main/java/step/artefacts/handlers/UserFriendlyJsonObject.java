@@ -20,36 +20,58 @@ package step.artefacts.handlers;
 
 import jakarta.json.*;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
-import java.util.function.Function;
+import java.util.*;
 
-public class UserFriendlyJsonObject implements JsonObject {
+public class UserFriendlyJsonObject implements OutputJsonObject {
 
-    private JsonObject wrapped;
+    private final JsonObject wrapped;
 
-    private Map<String, JsonValue> extendedMap;
+    private final Map<String, Object> unwrappedValues;
 
     public UserFriendlyJsonObject(JsonObject wrapped) {
         this.wrapped = wrapped;
-        // TODO: probably it is better to generate extended map on the fly
-        this.extendedMap = new HashMap<>(wrapped);
-        this.extendedMap.put("$", prepareValues());
+        this.unwrappedValues = unwrapJsonObject(wrapped);
     }
 
-    public UserFriendlyJsonValues prepareValues(){
+    public Map<String, Object> unwrapJsonObject(JsonObject jsonObject){
         Map<String, Object> simpleValues = new HashMap<>();
-        for (Entry<String, JsonValue> nestedField : wrapped.entrySet()) {
-            if(nestedField.getValue().getValueType() == ValueType.STRING){
-                simpleValues.put(nestedField.getKey(), wrapped.getJsonString(nestedField.getKey()).getString());
-            }
-            // TODO: same conversion for another types and for nested objects
+        for (Entry<String, JsonValue> nestedField : jsonObject.entrySet()) {
+            String fieldName = nestedField.getKey();
+            JsonValue fieldValue = nestedField.getValue();
+            Object simpleValue = unwrapSimpleValue(jsonObject, fieldName, fieldValue);
+            simpleValues.put(nestedField.getKey(), simpleValue);
         }
-        return new UserFriendlyJsonValues(simpleValues);
+        return simpleValues;
+    }
+
+    private Object unwrapSimpleValue(JsonObject jsonObject, String fieldName, JsonValue fieldValue) {
+        Object simpleValue;
+
+        if (fieldValue.getValueType() == ValueType.OBJECT) {
+            simpleValue = unwrapJsonObject(fieldValue.asJsonObject());
+        } else if (fieldValue.getValueType() == ValueType.STRING) {
+            simpleValue = jsonObject.getJsonString(fieldName).getString();
+        } else if (fieldValue.getValueType() == ValueType.NULL) {
+            simpleValue = null;
+        } else if (fieldValue.getValueType() == ValueType.NUMBER) {
+            // TODO: check big decimals in groovy
+            simpleValue = jsonObject.getJsonNumber(fieldName).bigDecimalValue();
+        } else if (fieldValue.getValueType() == ValueType.FALSE) {
+            simpleValue = false;
+        } else if (fieldValue.getValueType() == ValueType.TRUE) {
+            simpleValue = true;
+        } else if (fieldValue.getValueType() == ValueType.ARRAY) {
+            // TODO: check arrays
+            JsonArray jsonArray = fieldValue.asJsonArray();
+            List<Object> list = new ArrayList<>();
+            for (JsonValue jsonValue : jsonArray) {
+                list.add(unwrapSimpleValue(jsonObject, fieldName, jsonValue));
+            }
+            simpleValue = list;
+        } else {
+            throw new UnsupportedOperationException(fieldValue.getValueType() + " is not supported");
+        }
+        return simpleValue;
     }
 
     @Override
@@ -134,126 +156,73 @@ public class UserFriendlyJsonObject implements JsonObject {
 
     @Override
     public int size() {
-        return extendedMap.size();
+        return unwrappedValues.size();
     }
 
     @Override
     public boolean isEmpty() {
-        return extendedMap.isEmpty();
+        return unwrappedValues.isEmpty();
     }
 
     @Override
     public boolean containsKey(Object key) {
-        return extendedMap.containsKey(key);
+        return unwrappedValues.containsKey(key);
     }
 
     @Override
     public boolean containsValue(Object value) {
-        return extendedMap.containsValue(value);
+        return unwrappedValues.containsValue(value);
     }
 
     @Override
-    public JsonValue get(Object key) {
-        return extendedMap.get(key);
+    public Object get(Object key) {
+        return unwrappedValues.get(key);
     }
 
     @Override
-    public JsonValue put(String key, JsonValue value) {
-        return extendedMap.put(key, value);
+    public Object put(String key, Object value) {
+        throw new UnsupportedOperationException();
     }
 
     @Override
-    public JsonValue remove(Object key) {
-        return extendedMap.remove(key);
+    public Object remove(Object key) {
+        throw new UnsupportedOperationException();
     }
 
     @Override
-    public void putAll(Map<? extends String, ? extends JsonValue> m) {
-        extendedMap.putAll(m);
+    public void putAll(Map<? extends String, ? extends Object> m) {
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void clear() {
-        extendedMap.clear();
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public Set<String> keySet() {
-        return extendedMap.keySet();
+        return unwrappedValues.keySet();
     }
 
     @Override
-    public Collection<JsonValue> values() {
-        return extendedMap.values();
+    public Collection<Object> values() {
+        return unwrappedValues.values();
     }
 
     @Override
-    public Set<Entry<String, JsonValue>> entrySet() {
-        return extendedMap.entrySet();
+    public Set<Entry<String, Object>> entrySet() {
+        return unwrappedValues.entrySet();
     }
 
     @Override
     public boolean equals(Object o) {
-        return extendedMap.equals(o);
+        return unwrappedValues.equals(o);
     }
 
     @Override
     public int hashCode() {
-        return extendedMap.hashCode();
+        return unwrappedValues.hashCode();
     }
 
-    @Override
-    public JsonValue getOrDefault(Object key, JsonValue defaultValue) {
-        return extendedMap.getOrDefault(key, defaultValue);
-    }
 
-    @Override
-    public void forEach(BiConsumer<? super String, ? super JsonValue> action) {
-        extendedMap.forEach(action);
-    }
-
-    @Override
-    public void replaceAll(BiFunction<? super String, ? super JsonValue, ? extends JsonValue> function) {
-        extendedMap.replaceAll(function);
-    }
-
-    @Override
-    public JsonValue putIfAbsent(String key, JsonValue value) {
-        return extendedMap.putIfAbsent(key, value);
-    }
-
-    @Override
-    public boolean remove(Object key, Object value) {
-        return extendedMap.remove(key, value);
-    }
-
-    @Override
-    public boolean replace(String key, JsonValue oldValue, JsonValue newValue) {
-        return extendedMap.replace(key, oldValue, newValue);
-    }
-
-    @Override
-    public JsonValue replace(String key, JsonValue value) {
-        return extendedMap.replace(key, value);
-    }
-
-    @Override
-    public JsonValue computeIfAbsent(String key, Function<? super String, ? extends JsonValue> mappingFunction) {
-        return extendedMap.computeIfAbsent(key, mappingFunction);
-    }
-
-    @Override
-    public JsonValue computeIfPresent(String key, BiFunction<? super String, ? super JsonValue, ? extends JsonValue> remappingFunction) {
-        return extendedMap.computeIfPresent(key, remappingFunction);
-    }
-
-    @Override
-    public JsonValue compute(String key, BiFunction<? super String, ? super JsonValue, ? extends JsonValue> remappingFunction) {
-        return extendedMap.compute(key, remappingFunction);
-    }
-
-    @Override
-    public JsonValue merge(String key, JsonValue value, BiFunction<? super JsonValue, ? super JsonValue, ? extends JsonValue> remappingFunction) {
-        return extendedMap.merge(key, value, remappingFunction);
-    }
 }
