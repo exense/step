@@ -33,39 +33,40 @@ public class UserFriendlyJsonObject implements OutputJsonObject {
         this.unwrappedValues = unwrapJsonObject(wrapped);
     }
 
-    public Map<String, Object> unwrapJsonObject(JsonObject jsonObject){
+    protected Map<String, Object> unwrapJsonObject(JsonObject jsonObject) {
         Map<String, Object> simpleValues = new HashMap<>();
         for (Entry<String, JsonValue> nestedField : jsonObject.entrySet()) {
-            String fieldName = nestedField.getKey();
-            JsonValue fieldValue = nestedField.getValue();
-            Object simpleValue = unwrapSimpleValue(jsonObject, fieldName, fieldValue);
+            Object simpleValue = unwrapSimpleValue(nestedField.getValue());
             simpleValues.put(nestedField.getKey(), simpleValue);
         }
         return simpleValues;
     }
 
-    private Object unwrapSimpleValue(JsonObject jsonObject, String fieldName, JsonValue fieldValue) {
+    private Object unwrapSimpleValue(JsonValue fieldValue) {
         Object simpleValue;
 
         if (fieldValue.getValueType() == ValueType.OBJECT) {
             simpleValue = unwrapJsonObject(fieldValue.asJsonObject());
         } else if (fieldValue.getValueType() == ValueType.STRING) {
-            simpleValue = jsonObject.getJsonString(fieldName).getString();
+            simpleValue = ((JsonString) fieldValue).getString();
         } else if (fieldValue.getValueType() == ValueType.NULL) {
             simpleValue = null;
         } else if (fieldValue.getValueType() == ValueType.NUMBER) {
-            // TODO: check big decimals in groovy
-            simpleValue = jsonObject.getJsonNumber(fieldName).bigDecimalValue();
+            JsonNumber numberValue = (JsonNumber) fieldValue;
+            if (numberValue.isIntegral()) {
+                simpleValue = numberValue.intValue();
+            } else {
+                simpleValue = numberValue.doubleValue();
+            }
         } else if (fieldValue.getValueType() == ValueType.FALSE) {
             simpleValue = false;
         } else if (fieldValue.getValueType() == ValueType.TRUE) {
             simpleValue = true;
         } else if (fieldValue.getValueType() == ValueType.ARRAY) {
-            // TODO: check arrays
             JsonArray jsonArray = fieldValue.asJsonArray();
             List<Object> list = new ArrayList<>();
             for (JsonValue jsonValue : jsonArray) {
-                list.add(unwrapSimpleValue(jsonObject, fieldName, jsonValue));
+                list.add(unwrapSimpleValue(jsonValue));
             }
             simpleValue = list;
         } else {
@@ -213,16 +214,5 @@ public class UserFriendlyJsonObject implements OutputJsonObject {
     public Set<Entry<String, Object>> entrySet() {
         return unwrappedValues.entrySet();
     }
-
-    @Override
-    public boolean equals(Object o) {
-        return unwrappedValues.equals(o);
-    }
-
-    @Override
-    public int hashCode() {
-        return unwrappedValues.hashCode();
-    }
-
 
 }
