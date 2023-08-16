@@ -81,9 +81,15 @@ public abstract class AbstractStepServices extends AbstractServices<User> {
 
 	protected void checkRightsOnBehalfOf(String right, String userOnBehalfOf) {
 		Session<User> session = getSession();
-		if (!getAuthorizationManager().checkRightInContext(session, right, userOnBehalfOf)) {
+		try {
+			if (!getAuthorizationManager().checkRightInContext(session, right, userOnBehalfOf)) {
+				User user = session.getUser();
+				throw new AuthorizationException("User " + (user == null ? "" : user.getUsername()) + " has no permission on '" + right + "' (on behalf of " + userOnBehalfOf + ")");
+			}
+		} catch (NotMemberOfProjectException ex){
 			User user = session.getUser();
-			throw new AuthorizationException("User " + (user == null ? "" : user.getUsername()) + " has no permission on '" + right + "' (on behalf of " + userOnBehalfOf + ")");
+			throw new AuthorizationException(ex.getMessage());
+
 		}
 	}
 }
