@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
@@ -39,11 +40,13 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.bson.types.ObjectId;
 
+import step.controller.services.async.AsyncTaskStatus;
 import step.core.access.User;
 import step.core.artefacts.reports.ReportNode;
 import step.core.collections.SearchOrder;
-import step.core.deployment.AbstractStepServices;
+import step.core.deployment.AbstractStepAsyncServices;
 import step.core.deployment.FindByCriteraParam;
+import step.core.entities.EntityManager;
 import step.framework.server.Session;
 import step.framework.server.security.Secured;
 import step.core.execution.model.Execution;
@@ -52,17 +55,24 @@ import step.core.execution.model.ExecutionAccessorImpl;
 import step.core.execution.model.ExecutionParameters;
 import step.core.repositories.RepositoryObjectReference;
 import step.engine.execution.ExecutionLifecycleManager;
+import step.framework.server.tables.service.TableService;
+import step.framework.server.tables.service.bulk.TableBulkOperationReport;
+import step.framework.server.tables.service.bulk.TableBulkOperationRequest;
 
 @Singleton
 @Path("executions")
 @Tag(name = "Executions")
-public class ExecutionServices extends AbstractStepServices {
+public class ExecutionServices extends AbstractStepAsyncServices {
 
 	protected ExecutionAccessor executionAccessor;
+
+	private TableService tableService;
 	
 	@PostConstruct
-	public void init() {
+	public void init() throws Exception {
+		super.init();
 		executionAccessor = getContext().getExecutionAccessor();
+		tableService = getContext().require(TableService.class);
 	}
 
 	@Operation(description = "Starts an execution with the given parameters.")
@@ -192,4 +202,41 @@ public class ExecutionServices extends AbstractStepServices {
 	public void deleteExecution(@PathParam("id") String id) {
 		executionAccessor.remove(new ObjectId(id));
 	}
+
+	@Operation(description = "Restart multiple executions according to the provided parameters.")
+	@POST
+	@Path("/bulk/restart")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Secured(right="plan-execute")
+	public AsyncTaskStatus<TableBulkOperationReport> restartExecutions(TableBulkOperationRequest request) {
+		Consumer<String> consumer = t -> {
+			try {
+				ExecutionParameters executionParameters = executionAccessor.get(t).getExecutionParameters();
+				applyUserIdFromSession(executionParameters);
+				execute(executionParameters);
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		};
+		return scheduleAsyncTaskWithinSessionContext(h ->
+				tableService.performBulkOperation(EntityManager.executions, request, consumer, getSession()));
+	}
+
+	@Operation(description = "Stop multiple executions according to the provided parameters.")
+	@POST
+	@Path("/bulk/stop")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Secured(right="plan-execute")
+	public AsyncTaskStatus<TableBulkOperationReport> stopExecutions(TableBulkOperationRequest request) {
+		Consumer<String> consumer = t -> {
+			try {
+				abort(t);
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		};
+		return scheduleAsyncTaskWithinSessionContext(h ->
+				tableService.performBulkOperation(EntityManager.executions, request, consumer, getSession()));
+	}
+
 }

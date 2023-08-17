@@ -13,3 +13,4 @@ bower_components/
 .DS_Store
 /step-agent-3.9.1-SNAPSHOT.zip
 /step-controller-3.9.1-SNAPSHOT.zip
+step-controller/step-controller-base-plugins/resources/
