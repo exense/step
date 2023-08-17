@@ -121,6 +121,11 @@ public class ScreenTemplateManagerTest {
 			}
 
 			@Override
+			public Stream<ScreenInput> streamCloseable() {
+				return null;
+			}
+
+			@Override
 			public Spliterator<ScreenInput> findManyByAttributes(Map<String, String> attributes) {
 				return null;
 			}

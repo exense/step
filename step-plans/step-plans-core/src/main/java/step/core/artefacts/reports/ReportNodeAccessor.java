@@ -21,6 +21,7 @@ package step.core.artefacts.reports;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import org.bson.types.ObjectId;
 
@@ -36,9 +37,9 @@ public interface ReportNodeAccessor extends Accessor<ReportNode>, ReportTreeAcce
 
 	Iterator<ReportNode> getChildren(ObjectId parentID, int skip, int limit);
 
-	Iterator<ReportNode> getReportNodesByExecutionID(String executionID);
+	Stream<ReportNode> getReportNodesByExecutionID(String executionID);
 
-	Iterator<ReportNode> getReportNodesByExecutionIDAndClass(String executionID, String class_);
+	Stream<ReportNode> getReportNodesByExecutionIDAndClass(String executionID, String class_);
 
 	Iterator<ReportNode> getReportNodesByExecutionIDAndCustomAttribute(String executionID,
 			Map<String, String> customAttributes);

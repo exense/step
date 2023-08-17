@@ -23,6 +23,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
@@ -173,14 +175,13 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 		List<ReportNode> result = new ArrayList<>();
 		Iterator<ReportNode> iterator;
 		if(reportNodeClass!=null) {
-			iterator =  getContext().getReportAccessor().getReportNodesByExecutionIDAndClass(executionID, reportNodeClass);
+			try (Stream<ReportNode> reportNodesByExecutionID = getContext().getReportAccessor().getReportNodesByExecutionIDAndClass(executionID, reportNodeClass)) {
+				result = reportNodesByExecutionID.limit(limit).collect(Collectors.toList());
+			}
 		} else {
-			iterator =  getContext().getReportAccessor().getReportNodesByExecutionID(executionID);
-		}
-		int i = 0;
-		while(iterator.hasNext()&&i<limit) {
-			i++;
-			result.add(iterator.next());
+			try (Stream<ReportNode> reportNodesByExecutionID = getContext().getReportAccessor().getReportNodesByExecutionID(executionID)) {
+				result = reportNodesByExecutionID.limit(limit).collect(Collectors.toList());
+			}
 		}
 		return result;
 	}

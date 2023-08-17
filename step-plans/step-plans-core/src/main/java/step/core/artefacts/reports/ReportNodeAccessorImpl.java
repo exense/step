@@ -23,6 +23,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import org.bson.types.ObjectId;
 
@@ -78,18 +79,18 @@ public class ReportNodeAccessorImpl extends AbstractAccessor<ReportNode> impleme
     }
     
 	@Override
-	public Iterator<ReportNode> getReportNodesByExecutionID(String executionID) {
+	public Stream<ReportNode> getReportNodesByExecutionID(String executionID) {
 		assert executionID != null;
-		return collectionDriver.find(Filters.equals("executionID", executionID), new SearchOrder("executionTime", 1), null, null, 0).iterator();
+		return collectionDriver.findCloseableStream(Filters.equals("executionID", executionID), new SearchOrder("executionTime", 1), null, null, 0);
 	}
 	
 	@Override
-	public Iterator<ReportNode> getReportNodesByExecutionIDAndClass(String executionID, String class_) {
+	public Stream<ReportNode> getReportNodesByExecutionIDAndClass(String executionID, String class_) {
 		assert executionID != null;
-		return collectionDriver.find(
+		return collectionDriver.findCloseableStream(
 				Filters.and(List.of(Filters.equals("executionID", executionID),
 						Filters.equals("_class", class_))),
-				new SearchOrder("executionTime", 1), null, null, 0).iterator();
+				new SearchOrder("executionTime", 1), null, null, 0);
 	}
 	
 	@Override

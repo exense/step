@@ -66,7 +66,12 @@ public class RemoteCollection<T> implements Collection<T> {
         return StreamSupport.stream(iterable.spliterator(), false);
     }
 
-	private GenericType<List<T>> genericTypeForEntityList() {
+    @Override
+    public Stream<T> findCloseableStream(Filter filter, SearchOrder order, Integer skip, Integer limit, int maxTime) {
+        return find(filter, order, skip, limit, maxTime);
+    }
+
+    private GenericType<List<T>> genericTypeForEntityList() {
 		ParameterizedType parameterizedGenericType = getParametrizedTypeForEntityList();
 
         GenericType<List<T>> genericType = new GenericType<List<T>>(
