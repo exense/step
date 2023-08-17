@@ -121,7 +121,7 @@ public class ScreenTemplateManagerTest {
 			}
 
 			@Override
-			public Stream<ScreenInput> fetchStream() {
+			public Stream<ScreenInput> streamLazy() {
 				return null;
 			}
 

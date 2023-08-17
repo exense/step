@@ -71,7 +71,7 @@ public class ReferenceFinderServices extends AbstractStepServices {
         // Find composite keywords containing requested usages; composite KWs are really just plans in disguise :-)
         FunctionAccessor functionAccessor = (FunctionAccessor) entityManager.getEntityByName(EntityManager.functions).getAccessor();
 
-        try (Stream<Function> functionStream = functionAccessor.fetchStream()) {
+        try (Stream<Function> functionStream = functionAccessor.streamLazy()) {
             functionStream.forEach(function -> {
                 List<Object> matchingObjects = getReferencedObjectsMatchingRequest(EntityManager.functions, function, request);
                 if (!matchingObjects.isEmpty()) {
@@ -81,7 +81,7 @@ public class ReferenceFinderServices extends AbstractStepServices {
         }
 
         // Find plans containing usages
-        try (Stream<Plan> stream = (request.includeHiddenPlans) ? planAccessor.fetchStream() : planAccessor.getVisiblePlans()) {
+        try (Stream<Plan> stream = (request.includeHiddenPlans) ? planAccessor.streamLazy() : planAccessor.getVisiblePlans()) {
             stream.forEach(plan -> {
                 List<Object> matchingObjects = getReferencedObjectsMatchingRequest(EntityManager.plans, plan, request);
                 if (!matchingObjects.isEmpty()) {

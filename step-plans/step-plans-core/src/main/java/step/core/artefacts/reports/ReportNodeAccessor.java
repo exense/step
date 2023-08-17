@@ -37,11 +37,28 @@ public interface ReportNodeAccessor extends Accessor<ReportNode>, ReportTreeAcce
 
 	Iterator<ReportNode> getChildren(ObjectId parentID, int skip, int limit);
 
+	/**
+	 * Warning: this method must be used within a try-with-resources statement or similar control structure to ensure that the stream's I/O resources are closed promptly after the stream's operations have completed.
+	 * @param executionID the id of the execution
+	 * @return a {@link Stream} with all report nodes of this execution
+	 */
 	Stream<ReportNode> getReportNodesByExecutionID(String executionID);
 
+	/**
+	 * Warning: this method must be used within a try-with-resources statement or similar control structure to ensure that the stream's I/O resources are closed promptly after the stream's operations have completed.
+	 * @param executionID the id of the execution
+	 * @param class_ the _class of the report node
+	 * @return a {@link Stream} with all report nodes of this execution with type class_
+	 */
 	Stream<ReportNode> getReportNodesByExecutionIDAndClass(String executionID, String class_);
 
-	Iterator<ReportNode> getReportNodesByExecutionIDAndCustomAttribute(String executionID,
+	/**
+	 * Warning: this method must be used within a try-with-resources statement or similar control structure to ensure that the stream's I/O resources are closed promptly after the stream's operations have completed.
+	 * @param executionID the id of the execution
+	 * @param customAttributes filter on customer attributes
+	 * @return a {@link Stream} with all report nodes of this execution matching provided custom attributes
+	 */
+	Stream<ReportNode> getReportNodesByExecutionIDAndCustomAttribute(String executionID,
 			Map<String, String> customAttributes);
 
 	ReportNode getReportNodeByParentIDAndArtefactID(ObjectId parentID, ObjectId artefactID);
