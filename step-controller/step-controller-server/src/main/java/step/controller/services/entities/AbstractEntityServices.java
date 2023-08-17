@@ -5,18 +5,14 @@ import jakarta.annotation.PostConstruct;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import org.bson.types.ObjectId;
-import step.controller.services.async.AsyncTask;
-import step.controller.services.async.AsyncTaskManager;
 import step.controller.services.async.AsyncTaskStatus;
 import step.core.GlobalContext;
-import step.core.access.User;
 import step.core.accessors.AbstractIdentifiableObject;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.Accessor;
-import step.core.deployment.AbstractStepServices;
+import step.core.deployment.AbstractStepAsyncServices;
 import step.core.deployment.ControllerServiceException;
 import step.core.entities.Entity;
-import step.framework.server.Session;
 import step.framework.server.security.Secured;
 import step.framework.server.tables.service.TableRequest;
 import step.framework.server.tables.service.TableResponse;
@@ -32,17 +28,11 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-public abstract class AbstractEntityServices<T extends AbstractIdentifiableObject> extends AbstractStepServices {
+public abstract class AbstractEntityServices<T extends AbstractIdentifiableObject> extends AbstractStepAsyncServices {
 
     private final String entityName;
     private Accessor<T> accessor;
     private TableService tableService;
-    /**
-     * Associates {@link Session} to threads. This is used by requests that are executed
-     * outside the Jetty scope like for {@link AsyncTaskManager}
-     */
-    private static final ThreadLocal<Session<User>> sessions = new ThreadLocal<>();
-    private AsyncTaskManager asyncTaskManager;
 
     public AbstractEntityServices(String entityName) {
         this.entityName = entityName;
@@ -55,28 +45,9 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
         Entity<T, Accessor<T>> entityType = (Entity<T, Accessor<T>>) context.getEntityManager().getEntityByName(entityName);
         accessor = entityType.getAccessor();
         tableService = context.require(TableService.class);
-        asyncTaskManager = context.require(AsyncTaskManager.class);
     }
 
-    /**
-     * Set the current {@link Session} for the current thread. This is useful for request that are processed
-     * outside the Jetty scope like for {@link AsyncTaskManager}
-     *
-     * @param session the current {@link Session}
-     */
-    protected static void setCurrentSession(Session<User> session) {
-        sessions.set(session);
-    }
 
-    @Override
-    protected Session<User> getSession() {
-        Session<User> userSession = sessions.get();
-        if (userSession != null) {
-            return userSession;
-        } else {
-            return super.getSession();
-        }
-    }
 
     @Operation(operationId = "get{Entity}ById", description = "Retrieves an entity by its Id")
     @GET
@@ -174,18 +145,6 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
         };
         return scheduleAsyncTaskWithinSessionContext(h ->
                 tableService.performBulkOperation(entityName, request, consumer, getSession()));
-    }
-
-    protected <R> AsyncTaskStatus<R> scheduleAsyncTaskWithinSessionContext(AsyncTask<R> asyncTask) {
-        Session<User> session = getSession();
-        return asyncTaskManager.scheduleAsyncTask(t -> {
-            setCurrentSession(session);
-            try {
-                return asyncTask.apply(t);
-            } finally {
-                setCurrentSession(null);
-            }
-        });
     }
 
     @Operation(operationId = "get{Entity}Table", description = "Get the table view according to provided request")
