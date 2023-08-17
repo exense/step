@@ -66,7 +66,13 @@ public class RemoteCollection<T> implements Collection<T> {
         return StreamSupport.stream(iterable.spliterator(), false);
     }
 
-	private GenericType<List<T>> genericTypeForEntityList() {
+    @Override
+    public Stream<T> findLazy(Filter filter, SearchOrder searchOrder, Integer integer, Integer integer1, int i) {
+        // TODO: implement
+        throw new UnsupportedOperationException();
+    }
+
+    private GenericType<List<T>> genericTypeForEntityList() {
 		ParameterizedType parameterizedGenericType = getParametrizedTypeForEntityList();
 
         GenericType<List<T>> genericType = new GenericType<List<T>>(

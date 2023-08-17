@@ -19,6 +19,7 @@
 package step.plugins.screentemplating;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 import step.core.accessors.Accessor;
 
@@ -26,4 +27,9 @@ public interface ScreenInputAccessor extends Accessor<ScreenInput> {
 
 	List<ScreenInput> getScreenInputsByScreenId(String screenId);
 
+	@Override
+	default Stream<ScreenInput> streamLazy(){
+		// TODO: implement
+		throw new UnsupportedOperationException();
+	}
 }
