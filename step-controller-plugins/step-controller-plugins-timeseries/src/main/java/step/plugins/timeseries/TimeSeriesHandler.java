@@ -107,8 +107,8 @@ public class TimeSeriesHandler {
             ));
             SearchOrder searchOrder = new SearchOrder(TIMESTAMP_ATTRIBUTE, 1);
             // Iterate over each measurement and ingest it again
-            try (Stream<Measurement> closeableStream = measurementCollection.findCloseableStream(filter, searchOrder, null, null, 0)) {
-                closeableStream.forEach(measurement -> {
+            try (Stream<Measurement> stream = measurementCollection.findLazy(filter, searchOrder, null, null, 0)) {
+                stream.forEach(measurement -> {
                     count.increment();
                     timeSeriesBucketingHandler.ingestExistingMeasurement(measurement);
                 });
@@ -249,8 +249,8 @@ public class TimeSeriesHandler {
                         LongAdder count = new LongAdder();
                         SearchOrder searchOrder = new SearchOrder("begin", 1);
                         // Iterate over each measurement and ingest it again
-                        try (Stream<Measurement> closeableStream = measurementCollection.findCloseableStream(measurementFilter, searchOrder, null, null, 0)) {
-                            closeableStream.forEach(measurement -> {
+                        try (Stream<Measurement> stream = measurementCollection.findLazy(measurementFilter, searchOrder, null, null, 0)) {
+                            stream.forEach(measurement -> {
                                 count.increment();
                                 timeSeriesBucketingHandler.ingestExistingMeasurement(measurement);
                             });

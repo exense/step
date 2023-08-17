@@ -121,7 +121,7 @@ public class ScreenTemplateManagerTest {
 			}
 
 			@Override
-			public Stream<ScreenInput> streamCloseable() {
+			public Stream<ScreenInput> fetchStream() {
 				return null;
 			}
 

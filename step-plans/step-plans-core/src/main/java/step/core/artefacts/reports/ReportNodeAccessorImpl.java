@@ -81,13 +81,13 @@ public class ReportNodeAccessorImpl extends AbstractAccessor<ReportNode> impleme
 	@Override
 	public Stream<ReportNode> getReportNodesByExecutionID(String executionID) {
 		assert executionID != null;
-		return collectionDriver.findCloseableStream(Filters.equals("executionID", executionID), new SearchOrder("executionTime", 1), null, null, 0);
+		return collectionDriver.findLazy(Filters.equals("executionID", executionID), new SearchOrder("executionTime", 1), null, null, 0);
 	}
 	
 	@Override
 	public Stream<ReportNode> getReportNodesByExecutionIDAndClass(String executionID, String class_) {
 		assert executionID != null;
-		return collectionDriver.findCloseableStream(
+		return collectionDriver.findLazy(
 				Filters.and(List.of(Filters.equals("executionID", executionID),
 						Filters.equals("_class", class_))),
 				new SearchOrder("executionTime", 1), null, null, 0);

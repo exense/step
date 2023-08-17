@@ -17,7 +17,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
-import java.lang.reflect.Method;
+
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -71,7 +71,7 @@ public class ReferenceFinderServices extends AbstractStepServices {
         // Find composite keywords containing requested usages; composite KWs are really just plans in disguise :-)
         FunctionAccessor functionAccessor = (FunctionAccessor) entityManager.getEntityByName(EntityManager.functions).getAccessor();
 
-        try (Stream<Function> functionStream = functionAccessor.streamCloseable()) {
+        try (Stream<Function> functionStream = functionAccessor.fetchStream()) {
             functionStream.forEach(function -> {
                 List<Object> matchingObjects = getReferencedObjectsMatchingRequest(EntityManager.functions, function, request);
                 if (!matchingObjects.isEmpty()) {
@@ -81,7 +81,7 @@ public class ReferenceFinderServices extends AbstractStepServices {
         }
 
         // Find plans containing usages
-        try (Stream<Plan> stream = (request.includeHiddenPlans) ? planAccessor.streamCloseable() : planAccessor.getVisiblePlans()) {
+        try (Stream<Plan> stream = (request.includeHiddenPlans) ? planAccessor.fetchStream() : planAccessor.getVisiblePlans()) {
             stream.forEach(plan -> {
                 List<Object> matchingObjects = getReferencedObjectsMatchingRequest(EntityManager.plans, plan, request);
                 if (!matchingObjects.isEmpty()) {

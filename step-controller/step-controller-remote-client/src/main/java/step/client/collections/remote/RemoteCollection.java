@@ -67,7 +67,7 @@ public class RemoteCollection<T> implements Collection<T> {
     }
 
     @Override
-    public Stream<T> findCloseableStream(Filter filter, SearchOrder order, Integer skip, Integer limit, int maxTime) {
+    public Stream<T> findLazy(Filter filter, SearchOrder order, Integer skip, Integer limit, int maxTime) {
         return find(filter, order, skip, limit, maxTime);
     }
 
