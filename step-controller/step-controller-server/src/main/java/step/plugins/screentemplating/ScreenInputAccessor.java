@@ -27,9 +27,4 @@ public interface ScreenInputAccessor extends Accessor<ScreenInput> {
 
 	List<ScreenInput> getScreenInputsByScreenId(String screenId);
 
-	@Override
-	default Stream<ScreenInput> streamLazy(){
-		// TODO: implement
-		throw new UnsupportedOperationException();
-	}
 }
