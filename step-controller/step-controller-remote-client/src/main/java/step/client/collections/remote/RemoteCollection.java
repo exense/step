@@ -67,9 +67,8 @@ public class RemoteCollection<T> implements Collection<T> {
     }
 
     @Override
-    public Stream<T> findLazy(Filter filter, SearchOrder searchOrder, Integer integer, Integer integer1, int i) {
-        // TODO: implement
-        throw new UnsupportedOperationException();
+    public Stream<T> findLazy(Filter filter, SearchOrder order, Integer skip, Integer limit, int maxTime) {
+        return find(filter, order, skip, limit, maxTime);
     }
 
     private GenericType<List<T>> genericTypeForEntityList() {
