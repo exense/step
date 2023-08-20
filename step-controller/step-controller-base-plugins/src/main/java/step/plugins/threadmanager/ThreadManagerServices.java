@@ -21,6 +21,7 @@ package step.plugins.threadmanager;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Stream;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.ws.rs.GET;
@@ -70,14 +71,17 @@ public class ThreadManagerServices extends AbstractStepServices {
 				// TODO implement this in a generic way
 				if(TestSetExecutionType.NAME.equals(executionType)) {
 					// in case of test set, get operations by test case
-					Iterator<ReportNode> iterator = getContext().getReportAccessor().getReportNodesByExecutionIDAndClass(executionId, 
-							TestCaseReportNode.class.getName());
-					iterator.forEachRemaining(e->{
-						String testcase = e.getName();
-						threadManager.getCurrentOperationsByReportNodeId(e.getId().toString()).forEach(op->{
-							operationListDetails.add(new OperationDetails(executionId, planId, planName, testcase, op));
+					try (Stream<ReportNode> reportNodesByExecutionIDAndClass =
+								 getContext().getReportAccessor().getReportNodesByExecutionIDAndClass(executionId,
+							TestCaseReportNode.class.getName())) {
+						Iterator<ReportNode> iterator = reportNodesByExecutionIDAndClass.iterator();
+						iterator.forEachRemaining(e -> {
+							String testcase = e.getName();
+							threadManager.getCurrentOperationsByReportNodeId(e.getId().toString()).forEach(op -> {
+								operationListDetails.add(new OperationDetails(executionId, planId, planName, testcase, op));
+							});
 						});
-					});
+					}
 				} else {
 					threadManager.getCurrentOperations(executionContext).forEach(op->{
 						operationListDetails.add(new OperationDetails(executionId, planId, planName, "", op));
