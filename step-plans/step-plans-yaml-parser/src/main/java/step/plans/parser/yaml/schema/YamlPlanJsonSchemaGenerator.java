@@ -125,8 +125,8 @@ public class YamlPlanJsonSchemaGenerator {
 		return extensions;
 	}
 
-	protected List<YamlPlanJsonSchemaDefinitionCreator> getDefinitionsExtensions() {
-		List<YamlPlanJsonSchemaDefinitionCreator> extensions = new ArrayList<>();
+	protected List<JsonSchemaDefinitionCreator> getDefinitionsExtensions() {
+		List<JsonSchemaDefinitionCreator> extensions = new ArrayList<>();
 		CachedAnnotationScanner.getClassesWithAnnotation(YamlPlanReaderExtension.class).stream()
 				.map(newInstanceAs(YamlPlanReaderExtender.class)).forEach(e -> extensions.addAll(e.getJsonSchemaDefinitionsExtensions()));
 		return extensions;
@@ -180,7 +180,7 @@ public class YamlPlanJsonSchemaGenerator {
 	private JsonObjectBuilder createDefs() throws JsonSchemaPreparationException {
 		JsonObjectBuilder defsBuilder = jsonProvider.createObjectBuilder();
 
-		List<YamlPlanJsonSchemaDefinitionCreator> definitionCreators = new ArrayList<>();
+		List<JsonSchemaDefinitionCreator> definitionCreators = new ArrayList<>();
 
 		// prepare definitions for generic DynamicValue class
 		definitionCreators.add((defsList) -> {
@@ -208,7 +208,7 @@ public class YamlPlanJsonSchemaGenerator {
 		// add definitions from extensions (additional definitions for EE artefacts)
 		definitionCreators.addAll(getDefinitionsExtensions());
 
-		for (YamlPlanJsonSchemaDefinitionCreator definitionCreator : definitionCreators) {
+		for (JsonSchemaDefinitionCreator definitionCreator : definitionCreators) {
 			definitionCreator.addDefinition(defsBuilder);
 		}
 

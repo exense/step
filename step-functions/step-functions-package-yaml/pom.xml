@@ -1,0 +1,152 @@
+<!--
+  Copyright (C) 2020, exense GmbH
+  
+  This file is part of STEP Enterprise
+  
+  STEP Enterprise can not be copied and/or distributed without the express permission of exense GmbH
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	
+	<artifactId>step-functions-package-yaml</artifactId>
+	<packaging>jar</packaging>
+
+	<parent>
+		<groupId>ch.exense.step</groupId>
+		<artifactId>step-functions</artifactId>
+		<version>0.0.0-SNAPSHOT</version>
+	</parent>
+	
+	<properties>
+		<aether.version>1.1.0</aether.version>
+	</properties>
+
+	<dependencies>
+		<dependency>
+			<groupId>ch.exense.step</groupId>
+			<artifactId>step-controller-server</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>ch.exense.step</groupId>
+			<artifactId>step-controller-base-plugins</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>ch.exense.step</groupId>
+			<artifactId>step-functions-plugins-java-controller-def</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>ch.exense.step</groupId>
+			<artifactId>step-functions-plugins-java-def</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>ch.exense.step</groupId>
+			<artifactId>step-functions-plugins-composite-def</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>ch.exense.step</groupId>
+			<artifactId>step-plans-parser</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<!-- To reuse the logic to prepare json schema for yamls -->
+		<dependency>
+			<groupId>ch.exense.step</groupId>
+			<artifactId>step-plans-yaml-parser</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>ch.exense.step</groupId>
+			<artifactId>step-functions-package-client</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>ch.exense.step</groupId>
+			<artifactId>step-api-json-schema</artifactId>
+			<version>${step-api.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.glassfish</groupId>
+					<artifactId>javax.json</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>org.eclipse.aether</groupId>
+			<artifactId>aether-api</artifactId>
+			<version>${aether.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.eclipse.aether</groupId>
+			<artifactId>aether-spi</artifactId>
+			<version>${aether.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.eclipse.aether</groupId>
+			<artifactId>aether-impl</artifactId>
+			<version>${aether.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.eclipse.aether</groupId>
+			<artifactId>aether-connector-basic</artifactId>
+			<version>${aether.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.eclipse.aether</groupId>
+			<artifactId>aether-transport-file</artifactId>
+			<version>${aether.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.eclipse.aether</groupId>
+			<artifactId>aether-transport-http</artifactId>
+			<version>${aether.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.maven</groupId>
+			<artifactId>maven-aether-provider</artifactId>
+			<version>3.3.9</version>
+		</dependency>
+		<dependency>
+		    <groupId>com.fasterxml.jackson.dataformat</groupId>
+		    <artifactId>jackson-dataformat-xml</artifactId>
+		    <version>2.10.0</version>
+		</dependency>
+	</dependencies>
+	
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>copy-test</id>
+						<phase>validate</phase>
+						<goals>
+							<goal>copy</goal>
+						</goals>
+						<configuration>
+							<artifactItems>
+								<artifactItem>
+									<groupId>ch.exense.step</groupId>
+									<artifactId>step-functions-plugins-java-handler-test</artifactId>
+									<version>${project.version}</version>
+									<classifier>jar-with-dependencies</classifier>
+									<type>jar</type>
+									<overWrite>false</overWrite>
+									<outputDirectory>${project.basedir}/src/test/resources/local</outputDirectory>
+									<destFileName>java-plugin-handler-test.jar</destFileName>
+								</artifactItem>
+							</artifactItems>
+							<overWriteReleases>true</overWriteReleases>
+							<overWriteSnapshots>true</overWriteSnapshots>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>		
+		</plugins>
+	</build>
+</project>

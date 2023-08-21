@@ -21,7 +21,7 @@ package step.plans.parser.yaml.schema;
 import jakarta.json.JsonObjectBuilder;
 import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 
-public interface YamlPlanJsonSchemaDefinitionCreator {
+public interface JsonSchemaDefinitionCreator {
 
     /**
      * Adds the entry to 'definitions' section in json schema

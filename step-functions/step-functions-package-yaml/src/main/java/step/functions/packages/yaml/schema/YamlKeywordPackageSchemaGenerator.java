@@ -1,0 +1,197 @@
+/*******************************************************************************
+ * Copyright (C) 2020, exense GmbH
+ *
+ * This file is part of STEP
+ *
+ * STEP is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * STEP is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
+ ******************************************************************************/
+package step.functions.packages.yaml.schema;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.json.JsonArrayBuilder;
+import jakarta.json.JsonObjectBuilder;
+import jakarta.json.spi.JsonProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import step.core.Version;
+import step.handlers.javahandler.jsonschema.*;
+import step.plans.parser.yaml.rules.CommonFilteredFieldRule;
+import step.plans.parser.yaml.rules.DynamicFieldRule;
+import step.plans.parser.yaml.rules.EnumFieldRule;
+import step.plans.parser.yaml.schema.AggregatedJsonSchemaFieldProcessor;
+import step.plans.parser.yaml.schema.JsonSchemaDefinitionCreator;
+import step.plans.parser.yaml.schema.YamlDynamicValueJsonSchemaHelper;
+
+import java.util.*;
+
+public class YamlKeywordPackageSchemaGenerator {
+    private static final Logger log = LoggerFactory.getLogger(YamlKeywordPackageSchemaGenerator.class);
+
+    private static final String KEYWORD_DEF = "KeywordDef";
+
+    protected final String targetPackage;
+
+    protected final Version actualVersion;
+
+    protected final ObjectMapper objectMapper = new ObjectMapper();
+    protected final JsonProvider jsonProvider = JsonProvider.provider();
+
+    protected final JsonSchemaCreator jsonSchemaCreator;
+    protected final YamlDynamicValueJsonSchemaHelper dynamicValuesHelper = new YamlDynamicValueJsonSchemaHelper(jsonProvider);
+
+    public YamlKeywordPackageSchemaGenerator(String targetPackage, Version actualVersion) {
+        this.targetPackage = targetPackage;
+        this.actualVersion = actualVersion;
+
+        // TODO: further we can replace this hardcoded logic for some custom field metadata and processing with some enhanced solution (java annotations?)
+
+        // --- Fields metadata rules (fields we want to rename)
+        FieldMetadataExtractor fieldMetadataExtractor = prepareMetadataExtractor();
+
+        List<JsonSchemaFieldProcessor> processingRules = prepareFieldProcessors();
+        this.jsonSchemaCreator = new JsonSchemaCreator(jsonProvider, new AggregatedJsonSchemaFieldProcessor(processingRules), fieldMetadataExtractor);
+    }
+
+    protected FieldMetadataExtractor prepareMetadataExtractor() {
+        // TODO: create extended keyword package metadata extractor if required
+        return new DefaultFieldMetadataExtractor();
+    }
+
+    protected List<JsonSchemaFieldProcessor> prepareFieldProcessors() {
+        List<JsonSchemaFieldProcessor> result = new ArrayList<>();
+
+        // -- BASIC PROCESSING RULES
+        result.add(new CommonFilteredFieldRule().getJsonSchemaFieldProcessor(jsonProvider));
+
+        // -- RULES FROM EXTENSIONS HAVE LESS PRIORITY THAN BASIC RULES, BUT MORE PRIORITY THAN OTHER RULES
+        result.addAll(getFieldExtensions());
+
+        // -- RULES FOR OS KEYWORDS
+
+        // -- SOME DEFAULT RULES FOR ENUMS AND DYNAMIC FIELDS
+        result.add(new DynamicFieldRule().getJsonSchemaFieldProcessor(jsonProvider));
+        result.add(new EnumFieldRule().getJsonSchemaFieldProcessor(jsonProvider));
+
+        return result;
+    }
+
+    protected List<JsonSchemaFieldProcessor> getFieldExtensions() {
+        List<JsonSchemaFieldProcessor> extensions = new ArrayList<>();
+        // TODO: add special annotation for extensions
+        return extensions;
+    }
+
+    protected List<JsonSchemaDefinitionCreator> getDefinitionsExtensions() {
+        List<JsonSchemaDefinitionCreator> extensions = new ArrayList<>();
+        // TODO: add special annotation for extensions
+        return extensions;
+    }
+
+    public JsonNode generateJsonSchema() throws JsonSchemaPreparationException {
+        JsonObjectBuilder topLevelBuilder = jsonProvider.createObjectBuilder();
+
+        // common fields for json schema
+        topLevelBuilder.add("$schema", "http://json-schema.org/draft-07/schema#");
+        topLevelBuilder.add("title", "Step Keyword Package");
+        topLevelBuilder.add("type", "object");
+
+        // prepare definitions to be reused in subschemas (referenced via $ref property)
+        topLevelBuilder.add("$defs", createDefs());
+
+        // add properties for top-level
+        topLevelBuilder.add("properties", createPackageProperties());
+        topLevelBuilder.add("required", jsonProvider.createArrayBuilder().add("keywords"));
+        topLevelBuilder.add( "additionalProperties", false);
+
+        // convert jakarta objects to jackson JsonNode
+        try {
+            return fromJakartaToJsonNode(topLevelBuilder);
+        } catch (JsonProcessingException e) {
+            throw new JsonSchemaPreparationException("Unable to convert json to jackson jsonNode", e);
+        }
+    }
+
+    private JsonObjectBuilder createPackageProperties() {
+        JsonObjectBuilder objectBuilder = jsonProvider.createObjectBuilder();
+        // in 'version' we should either explicitly specify the current json schema version or skip this field
+        objectBuilder.add("version", jsonProvider.createObjectBuilder().add("const", actualVersion.toString()));
+        objectBuilder.add("keywords",
+                jsonProvider.createObjectBuilder().add("type", "array").add("items", addRef(jsonProvider.createObjectBuilder(), KEYWORD_DEF)));
+        return objectBuilder;
+    }
+
+    public static JsonObjectBuilder addRef(JsonObjectBuilder builder, String refValue){
+        return builder.add("$ref", "#/$defs/" + refValue);
+    }
+
+    private JsonNode fromJakartaToJsonNode(JsonObjectBuilder objectBuilder) throws JsonProcessingException {
+        return objectMapper.readTree(objectBuilder.build().toString());
+    }
+
+    /**
+     * Prepares definitions to be reused in json subschemas
+     */
+    private JsonObjectBuilder createDefs() throws JsonSchemaPreparationException {
+        JsonObjectBuilder defsBuilder = jsonProvider.createObjectBuilder();
+
+        List<JsonSchemaDefinitionCreator> definitionCreators = new ArrayList<>();
+
+        // prepare definitions for generic DynamicValue class
+        definitionCreators.add((defsList) -> {
+            Map<String, JsonObjectBuilder> dynamicValueDefs = dynamicValuesHelper.createDynamicValueImplDefs();
+            for (Map.Entry<String, JsonObjectBuilder> dynamicValueDef : dynamicValueDefs.entrySet()) {
+                defsBuilder.add(dynamicValueDef.getKey(), dynamicValueDef.getValue());
+            }
+        });
+
+        // prepare definitions for subclasses annotated with @Artefact
+        definitionCreators.add((defsList) -> {
+            Map<String, JsonObjectBuilder> keywordImplDefs = createKeywordImplDefs();
+            for (Map.Entry<String, JsonObjectBuilder> artefactImplDef : keywordImplDefs.entrySet()) {
+                defsBuilder.add(artefactImplDef.getKey(), artefactImplDef.getValue());
+            }
+
+            // add definition for "anyOf" artefact definitions prepared above
+            defsBuilder.add(KEYWORD_DEF, createKeywordDef(keywordImplDefs.keySet()));
+        });
+
+        // add definitions from extensions (additional definitions for EE artefacts)
+        definitionCreators.addAll(getDefinitionsExtensions());
+
+        for (JsonSchemaDefinitionCreator definitionCreator : definitionCreators) {
+            definitionCreator.addDefinition(defsBuilder);
+        }
+
+        return defsBuilder;
+    }
+
+    protected JsonObjectBuilder createKeywordDef(Set<String> keywordDefsReferences) {
+        JsonObjectBuilder builder = jsonProvider.createObjectBuilder();
+        builder.add("type", "object");
+        JsonArrayBuilder arrayBuilder = jsonProvider.createArrayBuilder();
+        for (String artefactImplReference : keywordDefsReferences) {
+            arrayBuilder.add(addRef(jsonProvider.createObjectBuilder(), artefactImplReference));
+        }
+        builder.add("oneOf", arrayBuilder);
+        return builder;
+    }
+
+    protected Map<String, JsonObjectBuilder> createKeywordImplDefs(){
+        // TODO: implement
+        return new HashMap<>();
+    }
+
+}
