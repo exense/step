@@ -17,7 +17,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
-import java.lang.reflect.Method;
+
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -71,21 +71,24 @@ public class ReferenceFinderServices extends AbstractStepServices {
         // Find composite keywords containing requested usages; composite KWs are really just plans in disguise :-)
         FunctionAccessor functionAccessor = (FunctionAccessor) entityManager.getEntityByName(EntityManager.functions).getAccessor();
 
-        functionAccessor.stream().forEach(function -> {
-            List<Object> matchingObjects = getReferencedObjectsMatchingRequest(EntityManager.functions, function, request);
-            if (!matchingObjects.isEmpty()) {
-                results.add(new FindReferencesResponse(function));
-            }
-        });
+        try (Stream<Function> functionStream = functionAccessor.streamLazy()) {
+            functionStream.forEach(function -> {
+                List<Object> matchingObjects = getReferencedObjectsMatchingRequest(EntityManager.functions, function, request);
+                if (!matchingObjects.isEmpty()) {
+                    results.add(new FindReferencesResponse(function));
+                }
+            });
+        }
 
         // Find plans containing usages
-        Stream<Plan> stream = (request.includeHiddenPlans) ? planAccessor.stream() : planAccessor.getVisiblePlans();
-        stream.forEach( plan -> {
-            List<Object> matchingObjects = getReferencedObjectsMatchingRequest(EntityManager.plans, plan, request);
-            if (!matchingObjects.isEmpty()) {
-                results.add(new FindReferencesResponse(plan));
-            }
-        });
+        try (Stream<Plan> stream = (request.includeHiddenPlans) ? planAccessor.streamLazy() : planAccessor.getVisiblePlans()) {
+            stream.forEach(plan -> {
+                List<Object> matchingObjects = getReferencedObjectsMatchingRequest(EntityManager.plans, plan, request);
+                if (!matchingObjects.isEmpty()) {
+                    results.add(new FindReferencesResponse(plan));
+                }
+            });
+        }
         
         // Sort the results by name
         results.sort(Comparator.comparing(f -> f.name));
