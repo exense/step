@@ -167,7 +167,7 @@ public class ResourceServices extends AbstractStepServices {
 		String mimeType = context.getMimeType(resourceName);
 		if (mimeType == null) {
 			if(resourceName.endsWith(".log")) {
-				mimeType = "text/plain";
+				mimeType = "text/plain; charset=utf-8";
 			} else {
 				mimeType = "application/octet-stream";
 			}

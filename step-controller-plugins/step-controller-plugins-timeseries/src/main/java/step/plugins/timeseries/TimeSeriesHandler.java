@@ -30,6 +30,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static step.plugins.timeseries.TimeSeriesExecutionPlugin.TIMESERIES_FLAG;
 
@@ -106,10 +107,12 @@ public class TimeSeriesHandler {
             ));
             SearchOrder searchOrder = new SearchOrder(TIMESTAMP_ATTRIBUTE, 1);
             // Iterate over each measurement and ingest it again
-            measurementCollection.find(filter, searchOrder, null, null, 0).forEach(measurement -> {
-                count.increment();
-                timeSeriesBucketingHandler.ingestExistingMeasurement(measurement);
-            });
+            try (Stream<Measurement> stream = measurementCollection.findLazy(filter, searchOrder, null, null, 0)) {
+                stream.forEach(measurement -> {
+                    count.increment();
+                    timeSeriesBucketingHandler.ingestExistingMeasurement(measurement);
+                });
+            }
         }
 
         TimeSeriesAggregationPipeline aggregationPipeline = new TimeSeriesAggregationPipeline(inmemoryBuckets, resolutionMs);
@@ -246,10 +249,12 @@ public class TimeSeriesHandler {
                         LongAdder count = new LongAdder();
                         SearchOrder searchOrder = new SearchOrder("begin", 1);
                         // Iterate over each measurement and ingest it again
-                        measurementCollection.find(measurementFilter, searchOrder, null, null, 0).forEach(measurement -> {
-                            count.increment();
-                            timeSeriesBucketingHandler.ingestExistingMeasurement(measurement);
-                        });
+                        try (Stream<Measurement> stream = measurementCollection.findLazy(measurementFilter, searchOrder, null, null, 0)) {
+                            stream.forEach(measurement -> {
+                                count.increment();
+                                timeSeriesBucketingHandler.ingestExistingMeasurement(measurement);
+                            });
+                        }
                         return new TimeSeriesRebuildResponse(count.longValue());
                     }
                 });
