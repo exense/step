@@ -87,9 +87,8 @@ public abstract class AbstractStepServices extends AbstractServices<User> {
 				throw new AuthorizationException("User " + (user == null ? "" : user.getUsername()) + " has no permission on '" + right + "' (on behalf of " + userOnBehalfOf + ")");
 			}
 		} catch (NotMemberOfProjectException ex){
-			User user = session.getUser();
+			// if 'userOnBehalf' is not a member of the project, we want to return 'access denied' error
 			throw new AuthorizationException(ex.getMessage());
-
 		}
 	}
 }
