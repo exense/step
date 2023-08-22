@@ -24,7 +24,9 @@ import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Parameter;
 import step.client.resources.RemoteResourceManager;
 import step.core.repositories.RepositoryObjectReference;
+import step.repositories.ArtifactRepositoryConstants;
 import step.resources.Resource;
+import step.resources.ResourceManager;
 import step.resources.SimilarResourceExistingException;
 
 import java.io.File;
@@ -37,6 +39,9 @@ public abstract class AbstractRunPackagedAutomationPackagesMojo extends Abstract
 
 	@Parameter(property = "step-run-auto-packages.lib-step-resource-search-criteria")
 	private Map<String, String> libStepResourceSearchCriteria;
+
+	protected static final String PLUGIN_CTX_RESOURCE_ID = "resourceId";
+	protected static final String PLUGIN_CTX_LIB_RESOURCE_ID = "libResourceId";
 
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
@@ -52,13 +57,13 @@ public abstract class AbstractRunPackagedAutomationPackagesMojo extends Abstract
 			throw logAndThrow("Unable to upload automation package to Step", new MojoExecutionException("Unable to run automation package"));
 		}
 		Map<String, Object> executionContext = new HashMap<>();
-		executionContext.put("resourceId", resourceId);
+		executionContext.put(PLUGIN_CTX_RESOURCE_ID, resourceId);
 
 		// 2. Resolve additional library if required
 		String libResourceId = resolveAndUploadLibraryResource();
 		if (libResourceId != null) {
 			// add lib resource id
-			executionContext.put("libResourceId", libResourceId);
+			executionContext.put(PLUGIN_CTX_LIB_RESOURCE_ID, libResourceId);
 		}
 
 		// 3. Execute just uploaded artifact in Step
@@ -104,7 +109,7 @@ public abstract class AbstractRunPackagedAutomationPackagesMojo extends Abstract
 			} else {
 				getLog().info("Artifact is detected for upload to Step: " + fileToUpload.getName());
 
-				Resource uploaded = resourceManager.createResource("temp", new FileInputStream(fileToUpload), fileToUpload.getName(), checkForDuplicates, null);
+				Resource uploaded = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, new FileInputStream(fileToUpload), fileToUpload.getName(), checkForDuplicates, null);
 				if(uploaded == null){
 					throw logAndThrow("Uploaded resource is null", getDefaultMojoException());
 				} else {
@@ -128,16 +133,16 @@ public abstract class AbstractRunPackagedAutomationPackagesMojo extends Abstract
 	@Override
 	protected RepositoryObjectReference prepareExecutionRepositoryObject(Map<String, Object> executionContext) {
 		return new RepositoryObjectReference(
-				"ResourceArtifact",
-				prepareRepositoryParameters((String) executionContext.get("resourceId"), (String) executionContext.get("libResourceId"))
+				ArtifactRepositoryConstants.RESOURCE_REPO_ID,
+				prepareRepositoryParameters((String) executionContext.get(PLUGIN_CTX_RESOURCE_ID), (String) executionContext.get(PLUGIN_CTX_LIB_RESOURCE_ID))
 		);
 	}
 
 	private HashMap<String, String> prepareRepositoryParameters(String resourceId, String libResourceId) {
 		HashMap<String, String> repoParams = new HashMap<>();
-		repoParams.put("resourceId", resourceId);
+		repoParams.put(ArtifactRepositoryConstants.RESOURCE_PARAM_RESOURCE_ID, resourceId);
 		if (libResourceId != null) {
-			repoParams.put("libResourceId", libResourceId);
+			repoParams.put(ArtifactRepositoryConstants.RESOURCE_PARAM_LIB_RESOURCE_ID, libResourceId);
 		}
 		return repoParams;
 	}

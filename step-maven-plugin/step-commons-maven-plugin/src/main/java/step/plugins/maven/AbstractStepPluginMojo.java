@@ -36,6 +36,7 @@ import step.client.collections.remote.RemoteCollectionFactory;
 import step.client.credentials.ControllerCredentials;
 import step.core.accessors.AbstractAccessor;
 import step.core.accessors.AbstractIdentifiableObject;
+import step.core.entities.EntityManager;
 import step.resources.Resource;
 
 import java.util.*;
@@ -61,6 +62,8 @@ public abstract class AbstractStepPluginMojo extends AbstractMojo {
 
 	@Component
 	protected RepositorySystem repositorySystem;
+
+	protected static final String ID_FIELD = AbstractIdentifiableObject.ID;
 
 	public String getUrl() {
 		return url;
@@ -106,13 +109,13 @@ public abstract class AbstractStepPluginMojo extends AbstractMojo {
 	protected String resolveKeywordLibResourceByCriteria(Map<String, String> libStepResourceSearchCriteria) throws MojoExecutionException {
 		getLog().info("Using Step resource " + libStepResourceSearchCriteria + " as library file");
 
-		if (libStepResourceSearchCriteria.containsKey("id")) {
+		if (libStepResourceSearchCriteria.containsKey(ID_FIELD)) {
 			// just use the specified id
-			return libStepResourceSearchCriteria.get("id");
+			return libStepResourceSearchCriteria.get(ID_FIELD);
 		} else {
 			// search resources by attributes except for id
 			Map<String, String> attributes = new HashMap<>(libStepResourceSearchCriteria);
-			attributes.remove("id");
+			attributes.remove(ID_FIELD);
 			AbstractAccessor<Resource> remoteResourcesAccessor = createRemoteResourcesAccessor();
 			List<Resource> foundResources = StreamSupport.stream(remoteResourcesAccessor.findManyByAttributes(attributes), false).collect(Collectors.toList());
 			if (foundResources.isEmpty()) {
@@ -127,7 +130,7 @@ public abstract class AbstractStepPluginMojo extends AbstractMojo {
 
 	protected AbstractAccessor<Resource> createRemoteResourcesAccessor() {
 		RemoteAccessors remoteAccessors = new RemoteAccessors(new RemoteCollectionFactory(getControllerCredentials()));
-		return remoteAccessors.getAbstractAccessor("resources", Resource.class);
+		return remoteAccessors.getAbstractAccessor(EntityManager.resources, Resource.class);
 	}
 
 	protected org.eclipse.aether.artifact.Artifact getRemoteArtifact(String groupId, String artifactId, String artifactVersion, String classifier, String extension) throws MojoExecutionException {
