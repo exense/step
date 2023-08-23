@@ -2,12 +2,12 @@
 version: "1.0.0"
 name: "test plan"
 root:
-  Sequence:
+  sequence:
     continueParentNodeExecutionOnError: false
     instrumentNode: false
     skipNode: false
     children:
-      - Session:
+      - session:
           continueParentNodeExecutionOnError: false
           instrumentNode: false
           skipNode: false

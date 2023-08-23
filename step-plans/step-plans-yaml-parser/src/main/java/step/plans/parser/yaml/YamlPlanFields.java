@@ -18,6 +18,8 @@
  ******************************************************************************/
 package step.plans.parser.yaml;
 
+import com.google.common.base.CaseFormat;
+
 public class YamlPlanFields {
     public static final String CALL_FUNCTION_ARGUMENT_ORIGINAL_FIELD = "argument";
     public static final String CALL_FUNCTION_ARGUMENT_YAML_FIELD = "inputs";
@@ -36,5 +38,13 @@ public class YamlPlanFields {
     public static final String DYN_VALUE_EXPRESSION_FIELD = "expression";
 
     public static final String ARTEFACT_CHILDREN = "children";
+
+    public static String javaArtefactNameToYaml(String javaArtefactName) {
+        return CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_CAMEL, javaArtefactName);
+    }
+
+    public static String yamlArtefactNameToJava(String yamlArtefactName) {
+        return CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_CAMEL, yamlArtefactName);
+    }
 
 }

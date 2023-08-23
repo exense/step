@@ -2,18 +2,18 @@
 version: "1.0.0"
 name: "test plan"
 root:
-  Sequence:
+  sequence:
     continueParentNodeExecutionOnError: false
     instrumentNode: false
     skipNode: false
     children:
-      - If:
+      - if:
           nodeName: "IfBlock"
           continueParentNodeExecutionOnError: false
           instrumentNode: false
           skipNode: false
           children:
-            - Assert:
+            - assert:
                 continueParentNodeExecutionOnError: false
                 instrumentNode: false
                 skipNode: false
@@ -24,7 +24,7 @@ root:
                 operator: "EQUALS"
                 actual:
                   expression: "'status'"
-            - CallKeyword:
+            - callKeyword:
                 continueParentNodeExecutionOnError: false
                 instrumentNode: false
                 skipNode: false

@@ -21,6 +21,7 @@ package step.plans.parser.yaml.serializers;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
+import org.apache.commons.text.CaseUtils;
 import step.core.artefacts.AbstractArtefact;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.scanner.CachedAnnotationScanner;
@@ -121,7 +122,7 @@ public class YamlRootArtefactSerializer extends JsonSerializer<YamlRootArtefact>
     private void processArtefact(JsonGenerator gen, AbstractArtefact artefact) throws IOException, IllegalAccessException {
         gen.writeStartObject();
         String artefactName = AbstractArtefact.getArtefactName(artefact.getClass());
-        gen.writeFieldName(artefactName);
+        gen.writeFieldName(YamlPlanFields.javaArtefactNameToYaml(artefactName));
         gen.writeStartObject();
         serializeArtefactFields(artefact, gen);
         gen.writeEndObject();

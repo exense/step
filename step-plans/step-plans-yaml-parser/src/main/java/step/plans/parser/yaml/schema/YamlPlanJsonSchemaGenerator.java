@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObjectBuilder;
 import jakarta.json.spi.JsonProvider;
+import org.apache.commons.text.CaseUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.Version;
@@ -255,7 +256,8 @@ public class YamlPlanJsonSchemaGenerator {
 		JsonObjectBuilder artefactProperties = jsonProvider.createObjectBuilder();
 		fillArtefactProperties(artefactClass, artefactProperties, name);
 
-		artefactNameProperty.add(name, jsonProvider.createObjectBuilder().add("type", "object").add("properties", artefactProperties));
+		// use camelCase for artefact names in yaml
+		artefactNameProperty.add(YamlPlanFields.javaArtefactNameToYaml(name), jsonProvider.createObjectBuilder().add("type", "object").add("properties", artefactProperties));
 		res.add("properties", artefactNameProperty);
 		res.add("additionalProperties", false);
 		return res;

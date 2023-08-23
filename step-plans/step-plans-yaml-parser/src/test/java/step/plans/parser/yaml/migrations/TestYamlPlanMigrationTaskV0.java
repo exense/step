@@ -80,10 +80,10 @@ public class TestYamlPlanMigrationTaskV0 extends AbstractYamlPlanMigrationTask {
 
     private String renameArtifact(String oldName) {
         // test migration - rename artifact
-        if(Objects.equals(oldName, "OldSequence")){
-            return "Sequence";
-        } else if (Objects.equals(oldName, "OldAssert")) {
-            return "Assert";
+        if(Objects.equals(oldName, "oldSequence")){
+            return "sequence";
+        } else if (Objects.equals(oldName, "oldAssert")) {
+            return "assert";
         }
         return null;
     }

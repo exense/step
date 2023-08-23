@@ -2,19 +2,19 @@
 version: "1.0.0"
 name: "test plan"
 root:
-  Sequence:
+  sequence:
     continueParentNodeExecutionOnError: false
     instrumentNode: false
     skipNode: false
     children:
-      - CallKeyword:
+      - callKeyword:
           continueParentNodeExecutionOnError: false
           instrumentNode: false
           skipNode: false
           remote: true
           inputs: [ ]
           keyword: "myKeyword"
-      - CallKeyword:
+      - callKeyword:
           nodeName: "CallKeyword2"
           continueParentNodeExecutionOnError: false
           instrumentNode: false
@@ -23,7 +23,7 @@ root:
           inputs: [ ]
           keyword:
             expression: "'myKeyword2'"
-      - CallKeyword:
+      - callKeyword:
           nodeName: "CallKeyword3"
           continueParentNodeExecutionOnError: false
           instrumentNode: false
@@ -33,7 +33,7 @@ root:
           remote: true
           inputs: [ ]
           keyword: "myKeyword3"
-      - CallKeyword:
+      - callKeyword:
           nodeName: "CallKeyword4"
           continueParentNodeExecutionOnError: false
           instrumentNode: false

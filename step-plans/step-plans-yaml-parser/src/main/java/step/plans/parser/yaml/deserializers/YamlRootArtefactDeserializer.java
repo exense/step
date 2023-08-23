@@ -121,20 +121,22 @@ public class YamlRootArtefactDeserializer extends JsonDeserializer<YamlRootArtef
         List<String> artifactNames = new ArrayList<String>();
         childrenArtifactNames.forEachRemaining(artifactNames::add);
 
-        String shortArtifactClass = null;
+        String yamlArtifactClass = null;
         if (artifactNames.size() == 0) {
             throw new JsonSchemaFieldProcessingException("Artifact should have a name");
         } else if (artifactNames.size() > 1) {
             throw new JsonSchemaFieldProcessingException("Artifact should have only one name");
         } else {
-            shortArtifactClass = artifactNames.get(0);
+            yamlArtifactClass = artifactNames.get(0);
         }
 
-        if (shortArtifactClass != null) {
-            JsonNode artifactData = yamlArtefact.get(shortArtifactClass);
-            techArtefact.put(Plan.JSON_CLASS_FIELD, shortArtifactClass);
+        if (yamlArtifactClass != null) {
+            // java artifact has UpperCamelCase, but in Yaml we use lowerCamelCase
+            String javaArtifactClass = YamlPlanFields.yamlArtefactNameToJava(yamlArtifactClass);
+            JsonNode artifactData = yamlArtefact.get(yamlArtifactClass);
+            techArtefact.put(Plan.JSON_CLASS_FIELD, javaArtifactClass);
 
-            fillDefaultValuesForArtifactFields(shortArtifactClass, (ObjectNode) artifactData);
+            fillDefaultValuesForArtifactFields(javaArtifactClass, (ObjectNode) artifactData);
 
             Iterator<Map.Entry<String, JsonNode>> fields = artifactData.fields();
             while (fields.hasNext()) {
@@ -143,7 +145,7 @@ public class YamlRootArtefactDeserializer extends JsonDeserializer<YamlRootArtef
                 // process some fields ('name', 'children' etc.) in special way
                 boolean processedAsSpecialField = false;
                 for (YamlArtefactFieldDeserializationProcessor proc : customFieldProcessors) {
-                    if (proc.deserializeArtefactField(shortArtifactClass, next, techArtefact, codec)) {
+                    if (proc.deserializeArtefactField(javaArtifactClass, next, techArtefact, codec)) {
                         processedAsSpecialField = true;
                     }
                 }
@@ -158,11 +160,11 @@ public class YamlRootArtefactDeserializer extends JsonDeserializer<YamlRootArtef
         return techArtefact;
     }
 
-    private static void fillDefaultValuesForArtifactFields(String shortArtifactClass, ObjectNode artifactData) {
+    private static void fillDefaultValuesForArtifactFields(String javaArtifactClass, ObjectNode artifactData) {
         // name is required attribute in json schema
         JsonNode name = artifactData.get(YamlPlanFields.NAME_YAML_FIELD);
         if (name == null) {
-            artifactData.put(YamlPlanFields.NAME_YAML_FIELD, shortArtifactClass);
+            artifactData.put(YamlPlanFields.NAME_YAML_FIELD, javaArtifactClass);
         }
     }
 
