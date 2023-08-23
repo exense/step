@@ -21,7 +21,6 @@ package step.plans.parser.yaml.serializers;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
-import org.apache.commons.text.CaseUtils;
 import step.core.artefacts.AbstractArtefact;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.scanner.CachedAnnotationScanner;

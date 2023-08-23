@@ -24,7 +24,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObjectBuilder;
 import jakarta.json.spi.JsonProvider;
-import org.apache.commons.text.CaseUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.Version;
