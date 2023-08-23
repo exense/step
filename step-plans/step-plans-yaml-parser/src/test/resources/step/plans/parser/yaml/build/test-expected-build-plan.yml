@@ -70,13 +70,11 @@ root:
           condition:
             expression: "OS==\"LINUX\""
       - Sequence:
-          nodeName: "Sequence"
           continueParentNodeExecutionOnError: false
           instrumentNode: false
           skipNode: false
           children:
             - Session:
-                nodeName: "Session"
                 continueParentNodeExecutionOnError: false
                 instrumentNode: false
                 skipNode: false
@@ -252,7 +250,6 @@ root:
                             selectionAttributes: "{}"
                             planId: "64145b48d91d580809da608f"
                         - RetryIfFails:
-                            nodeName: "RetryIfFails"
                             continueParentNodeExecutionOnError: false
                             instrumentNode: false
                             skipNode: false
@@ -335,7 +332,6 @@ root:
                                   skipNode: false
                                   children:
                                     - RetryIfFails:
-                                        nodeName: "RetryIfFails"
                                         continueParentNodeExecutionOnError: false
                                         instrumentNode: false
                                         skipNode: false

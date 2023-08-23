@@ -3,7 +3,6 @@ version: "1.0.0"
 name: "test plan"
 root:
   Sequence:
-    nodeName: "Sequence"
     continueParentNodeExecutionOnError: false
     instrumentNode: false
     skipNode: false
@@ -15,7 +14,6 @@ root:
           skipNode: false
           children:
             - Assert:
-                nodeName: "Assert"
                 continueParentNodeExecutionOnError: false
                 instrumentNode: false
                 skipNode: false
@@ -27,7 +25,6 @@ root:
                 actual:
                   expression: "'status'"
             - CallKeyword:
-                nodeName: "CallKeyword"
                 continueParentNodeExecutionOnError: false
                 instrumentNode: false
                 skipNode: false

@@ -31,6 +31,7 @@ import step.plans.parser.yaml.serializers.YamlArtefactFieldSerializationProcesso
 
 import java.lang.reflect.Field;
 import java.util.Map;
+import java.util.Objects;
 
 public class NodeNameRule implements ArtefactFieldConversionRule {
 
@@ -44,7 +45,7 @@ public class NodeNameRule implements ArtefactFieldConversionRule {
                         YamlPlanFields.NAME_YAML_FIELD,
                         jsonProvider.createObjectBuilder()
                                 .add("type", "string")
-                                .add("default", AbstractArtefact.getArtefactName((Class<? extends AbstractArtefact>) objectClass))
+                                .add("default", defaultArtefactName((Class<? extends AbstractArtefact>) objectClass))
                 );
                 return true;
             } else {
@@ -53,12 +54,21 @@ public class NodeNameRule implements ArtefactFieldConversionRule {
         };
     }
 
+    private String defaultArtefactName(Class<? extends AbstractArtefact> objectClass) {
+        return AbstractArtefact.getArtefactName(objectClass);
+    }
+
     @Override
     public YamlArtefactFieldSerializationProcessor getArtefactFieldSerializationProcessor() {
         return (artefact, field, fieldMetadata, gen) -> {
             if (isAttributesField(field)) {
                 Map<String, String> attributes = (Map<String, String>) field.get(artefact);
-                gen.writeStringField(YamlPlanFields.NAME_YAML_FIELD, attributes.get("name"));
+                String name = attributes.get("name");
+
+                // don't serialize default artefact name to YAML
+                if (!Objects.equals(name, defaultArtefactName(artefact.getClass()))) {
+                    gen.writeStringField(YamlPlanFields.NAME_YAML_FIELD, name);
+                }
                 return true;
             }
             return false;

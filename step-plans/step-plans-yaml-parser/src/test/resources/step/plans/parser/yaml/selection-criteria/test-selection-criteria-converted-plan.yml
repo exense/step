@@ -3,18 +3,16 @@ version: "1.0.0"
 name: "test plan"
 root:
   Sequence:
-    nodeName: "Sequence"
     continueParentNodeExecutionOnError: false
     instrumentNode: false
     skipNode: false
     children:
       - CallKeyword:
-          nodeName: "CallKeyword"
           continueParentNodeExecutionOnError: false
           instrumentNode: false
           skipNode: false
           remote: true
-          inputs: []
+          inputs: [ ]
           keyword: "myKeyword"
       - CallKeyword:
           nodeName: "CallKeyword2"
@@ -22,7 +20,7 @@ root:
           instrumentNode: false
           skipNode: false
           remote: true
-          inputs: []
+          inputs: [ ]
           keyword:
             expression: "'myKeyword2'"
       - CallKeyword:
@@ -30,16 +28,18 @@ root:
           continueParentNodeExecutionOnError: false
           instrumentNode: false
           skipNode: false
-          remote: true
-          inputs: []
-          keyword: "myKeyword3"
           routing:
             - criteria1: "criteriaValue1"
+          remote: true
+          inputs: [ ]
+          keyword: "myKeyword3"
       - CallKeyword:
           nodeName: "CallKeyword4"
           continueParentNodeExecutionOnError: false
           instrumentNode: false
           skipNode: false
+          routing:
+            - criteria1: "criteriaValue1"
           remote: true
           inputs:
             - stringInput:
@@ -47,6 +47,4 @@ root:
             - intInput: 777
           keyword:
             expression: "'myKeyword4'"
-          routing:
-            - criteria1: "criteriaValue1"
     continueOnError: false
