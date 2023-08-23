@@ -26,7 +26,6 @@ public class YamlPlanFields {
 
     public static final String CALL_FUNCTION_FUNCTION_ORIGINAL_FIELD = "function";
     public static final String CALL_FUNCTION_FUNCTION_YAML_FIELD = "keyword";
-    public static final String CALL_FUNCTION_FUNCTION_NAME_YAML_FIELD = "name";
 
     public static final String TOKEN_SELECTOR_TOKEN_ORIGINAL_FIELD = "token";
     public static final String TOKEN_SELECTOR_TOKEN_YAML_FIELD = "routing";
