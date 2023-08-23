@@ -12,17 +12,15 @@ root:
             expression: "'myKeyword2'"
       - CallKeyword:
           nodeName: CallKeyword3
-          keyword:
-            name: "myKeyword3"
-            routing:
-              - criteria1: "criteriaValue1"
+          keyword: "myKeyword3"
+          routing:
+            - criteria1: "criteriaValue1"
       - CallKeyword:
           nodeName: CallKeyword4
           keyword:
-            name:
-              expression: "'myKeyword4'"
-            routing:
-              - criteria1: "criteriaValue1"
+            expression: "'myKeyword4'"
+          routing:
+            - criteria1: "criteriaValue1"
           inputs:
             - stringInput:
                 expression: "'abc'"

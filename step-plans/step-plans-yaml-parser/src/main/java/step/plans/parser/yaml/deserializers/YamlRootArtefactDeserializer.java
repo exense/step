@@ -90,6 +90,7 @@ public class YamlRootArtefactDeserializer extends JsonDeserializer<YamlRootArtef
         // and 'token' aka 'selectionCriteria' field should contain all input values (dynamic values) as json string
         //  but in simplified format we represent input values as array of key / values
         res.add(new KeywordSelectionRule().getArtefactFieldDeserializationProcessor());
+        res.add(new KeywordRoutingRule().getArtefactFieldDeserializationProcessor());
         res.add(new FunctionGroupSelectionRule().getArtefactFieldDeserializationProcessor());
 
         // for 'Check' we always use the dynamic expression for 'expression' field (static value is not supported)

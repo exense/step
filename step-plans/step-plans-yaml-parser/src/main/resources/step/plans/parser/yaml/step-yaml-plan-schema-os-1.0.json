@@ -53,22 +53,6 @@
         "additionalProperties" : false
       }
     },
-    "CallKeywordFunctionNameDef" : {
-      "oneOf" : [ {
-        "$ref" : "#/$defs/SmartDynamicValueStringDef"
-      }, {
-        "type" : "object",
-        "properties" : {
-          "name" : {
-            "$ref" : "#/$defs/SmartDynamicValueStringDef"
-          },
-          "routing" : {
-            "$ref" : "#/$defs/DynamicKeywordInputsDef"
-          }
-        },
-        "additionalProperties" : false
-      } ]
-    },
     "AfterSequenceDef" : {
       "type" : "object",
       "properties" : {
@@ -323,6 +307,9 @@
             "description" : {
               "type" : "string"
             },
+            "routing" : {
+              "$ref" : "#/$defs/DynamicKeywordInputsDef"
+            },
             "remote" : {
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
@@ -333,7 +320,7 @@
               "$ref" : "#/$defs/DynamicKeywordInputsDef"
             },
             "keyword" : {
-              "$ref" : "#/$defs/CallKeywordFunctionNameDef"
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
             }
           }
         }

@@ -21,7 +21,7 @@ package step.plans.parser.yaml.rules;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.json.JsonObjectBuilder;
 import jakarta.json.spi.JsonProvider;
 import step.artefacts.CallFunction;
@@ -30,27 +30,31 @@ import step.core.dynamicbeans.DynamicValue;
 import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
 import step.plans.parser.yaml.YamlPlanFields;
 import step.plans.parser.yaml.deserializers.YamlArtefactFieldDeserializationProcessor;
+import step.plans.parser.yaml.schema.YamlDynamicValueJsonSchemaHelper;
 import step.plans.parser.yaml.schema.YamlPlanJsonSchemaGenerator;
 import step.plans.parser.yaml.serializers.YamlArtefactFieldSerializationProcessor;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class KeywordSelectionRule extends DynamicInputsSupport implements ArtefactFieldConversionRule {
+public class KeywordSelectionRule implements ArtefactFieldConversionRule {
+
+    protected final ObjectMapper jsonObjectMapper;
+
+    public KeywordSelectionRule() {
+        jsonObjectMapper = new ObjectMapper();
+    }
 
     @Override
     public JsonSchemaFieldProcessor getJsonSchemaFieldProcessor(JsonProvider jsonProvider) {
-        // combines 'keyword' (keyword name) and 'routing' (token selector)
+        // special syntax for 'keyword' field
         return (objectClass, field, fieldMetadata, propertiesBuilder, requiredPropertiesOutput) -> {
             boolean isCallFunction = CallFunction.class.isAssignableFrom(objectClass);
             if (isCallFunction) {
                 if (field.getName().equals(YamlPlanFields.CALL_FUNCTION_FUNCTION_ORIGINAL_FIELD)) {
                     JsonObjectBuilder nestedPropertyParamsBuilder = jsonProvider.createObjectBuilder();
-                    YamlPlanJsonSchemaGenerator.addRef(nestedPropertyParamsBuilder, YamlPlanJsonSchemaGenerator.CALL_KEYWORD_FUNCTION_NAME_DEF);
+                    YamlPlanJsonSchemaGenerator.addRef(nestedPropertyParamsBuilder, YamlDynamicValueJsonSchemaHelper.SMART_DYNAMIC_VALUE_STRING_DEF);
                     propertiesBuilder.add(fieldMetadata.getFieldName(), nestedPropertyParamsBuilder);
-                    return true;
-                } else if (field.getName().equals(YamlPlanFields.TOKEN_SELECTOR_TOKEN_ORIGINAL_FIELD)) {
-                    // token is included in 'routing' in 'keyword' -> just skip it in schema
                     return true;
                 }
             }
@@ -64,11 +68,6 @@ public class KeywordSelectionRule extends DynamicInputsSupport implements Artefa
             // for 'CallFunction' we can use either the `keyword` (keyword name) field or the `keyword.routing` to define the keyword name
             if (artefactClass.equals(CallFunction.ARTEFACT_NAME) && field.getKey().equals(YamlPlanFields.CALL_FUNCTION_FUNCTION_YAML_FIELD)) {
                 JsonNode yamlFunctionValue = field.getValue();
-                JsonNode functionRouting = yamlFunctionValue.get(YamlPlanFields.TOKEN_SELECTOR_TOKEN_YAML_FIELD);
-                JsonNode nestedFunctionName = yamlFunctionValue.get(YamlPlanFields.CALL_FUNCTION_FUNCTION_NAME_YAML_FIELD);
-
-                // 'simple' function name means function name is defined explicitly in keyword field (but not in nested keyword.name field together with keyword.routing field)
-                boolean isSimpleFunctionName = nestedFunctionName == null && functionRouting == null;
 
                 // for function name we need to prepare the following output:
                 /*
@@ -77,27 +76,15 @@ public class KeywordSelectionRule extends DynamicInputsSupport implements Artefa
                         "value": "{\"name\":{\"value\":\"MyKeyword1\",\"dynamic\":false}}"
                     }
                 */
-                DynamicValue<String> keywordName = null;
-                if (isSimpleFunctionName) {
-                    keywordName = getDynamicKeywordName(yamlFunctionValue);
-                } else if (nestedFunctionName != null) {
-                    keywordName = getDynamicKeywordName(nestedFunctionName);
-                }
+                DynamicValue<String> keywordName = getDynamicKeywordName(yamlFunctionValue);
+                Map<String, DynamicValue<String>> keywordFunctionCriteria = new HashMap<>();
 
-                if (keywordName != null) {
-                    Map<String, DynamicValue<String>> keywordFunctionCriteria = new HashMap<>();
+                // "{\"name\":{\"value\":\"MyKeyword1\",\"dynamic\":false}}"
+                keywordFunctionCriteria.put(AbstractOrganizableObject.NAME, keywordName);
 
-                    // "{\"name\":{\"value\":\"MyKeyword1\",\"dynamic\":false}}"
-                    keywordFunctionCriteria.put(AbstractOrganizableObject.NAME, keywordName);
+                DynamicValue<String> functionDynamicValue = new DynamicValue<>(jsonObjectMapper.writeValueAsString(keywordFunctionCriteria));
+                output.putPOJO(YamlPlanFields.CALL_FUNCTION_FUNCTION_ORIGINAL_FIELD, functionDynamicValue);
 
-                    DynamicValue<String> functionDynamicValue = new DynamicValue<>(jsonObjectMapper.writeValueAsString(keywordFunctionCriteria));
-                    output.putPOJO(YamlPlanFields.CALL_FUNCTION_FUNCTION_ORIGINAL_FIELD, functionDynamicValue);
-                }
-
-                // store routing
-                if (functionRouting instanceof ArrayNode) {
-                    output.put(YamlPlanFields.TOKEN_SELECTOR_TOKEN_ORIGINAL_FIELD, deserializeDynamicInputs(codec, (ArrayNode) functionRouting));
-                }
                 return true;
             } else {
                 return false;
@@ -121,39 +108,17 @@ public class KeywordSelectionRule extends DynamicInputsSupport implements Artefa
             if (CallFunction.class.isAssignableFrom(artefact.getClass())) {
                 if ((field.getName().equals(YamlPlanFields.CALL_FUNCTION_FUNCTION_ORIGINAL_FIELD))) {
                     DynamicValue<String> function = (DynamicValue<String>) field.get(artefact);
-                    DynamicValue<String> token = ((CallFunction) artefact).getToken();
-
-                    boolean useRouting = isNotEmptyDynamicInputs(token);
 
                     gen.writeFieldName(YamlPlanFields.CALL_FUNCTION_FUNCTION_YAML_FIELD);
 
                     DynamicValue<String> functionNameDynamicValue = getFunctionNameDynamicValue(function);
-                    if (!useRouting) {
-                        // here we want to write function name simply as 'keyword: "myKeyword"' in YAML
-                        if (functionNameDynamicValue != null) {
-                            gen.writeObject(functionNameDynamicValue);
-                        }
-                    } else {
-                        // if routing rules are defined, we put function name and routing as nested fields
-                        gen.writeStartObject();
 
-                        // write function name
-                        if (functionNameDynamicValue != null) {
-                            gen.writeFieldName(YamlPlanFields.CALL_FUNCTION_FUNCTION_NAME_YAML_FIELD);
-                            gen.writeObject(functionNameDynamicValue);
-                        }
-
-                        // write routing
-                        gen.writeFieldName(YamlPlanFields.TOKEN_SELECTOR_TOKEN_YAML_FIELD);
-                        serializeDynamicInputs(gen, token);
-                        gen.writeEndObject();
+                    // here we want to write function name simply as 'keyword: "myKeyword"' in YAML
+                    if (functionNameDynamicValue != null) {
+                        gen.writeObject(functionNameDynamicValue);
                     }
                     return true;
-                } else if (field.getName().equals(YamlPlanFields.TOKEN_SELECTOR_TOKEN_ORIGINAL_FIELD)) {
-                    // token is analyzed together with 'function' field
-                    return true;
                 }
-
             }
             return false;
         };

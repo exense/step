@@ -32,10 +32,9 @@ root:
           skipNode: false
           remote: true
           inputs: []
-          keyword:
-            name: "myKeyword3"
-            routing:
-              - criteria1: "criteriaValue1"
+          keyword: "myKeyword3"
+          routing:
+            - criteria1: "criteriaValue1"
       - CallKeyword:
           nodeName: "CallKeyword4"
           continueParentNodeExecutionOnError: false
@@ -47,8 +46,7 @@ root:
                 expression: "'abc'"
             - intInput: 777
           keyword:
-            name:
-              expression: "'myKeyword4'"
-            routing:
-              - criteria1: "criteriaValue1"
+            expression: "'myKeyword4'"
+          routing:
+            - criteria1: "criteriaValue1"
     continueOnError: false

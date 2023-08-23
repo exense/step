@@ -55,7 +55,6 @@ public class YamlPlanJsonSchemaGenerator {
 
 	public static final String ARTEFACT_DEF = "ArtefactDef";
 	private static final String ROOT_ARTEFACT_DEF = "RootArtefactDef";
-	public static final String CALL_KEYWORD_FUNCTION_NAME_DEF = "CallKeywordFunctionNameDef";
 
 	protected final String targetPackage;
 
@@ -107,6 +106,7 @@ public class YamlPlanJsonSchemaGenerator {
 		// -- RULES FOR OS ARTEFACTS
 		result.add(new NodeNameRule().getJsonSchemaFieldProcessor(jsonProvider));
 		result.add(new KeywordSelectionRule().getJsonSchemaFieldProcessor(jsonProvider));
+		result.add(new KeywordRoutingRule().getJsonSchemaFieldProcessor(jsonProvider));
 		result.add(new KeywordInputsRule().getJsonSchemaFieldProcessor(jsonProvider));
 		result.add(new FunctionGroupSelectionRule().getJsonSchemaFieldProcessor(jsonProvider));
 		result.add(new CheckExpressionRule().getJsonSchemaFieldProcessor(jsonProvider));
@@ -190,9 +190,6 @@ public class YamlPlanJsonSchemaGenerator {
 			}
 		});
 
-		// simplified keyword name for 'CallKeyword' artefact
-		definitionCreators.add((defsList) -> defsBuilder.add(CALL_KEYWORD_FUNCTION_NAME_DEF, createCallKeywordFunctionNameDef()));
-
 		// prepare definitions for subclasses annotated with @Artefact
 		definitionCreators.add((defsList) -> {
 			ArtefactDefinitions artefactImplDefs = createArtefactImplDefs();
@@ -213,48 +210,6 @@ public class YamlPlanJsonSchemaGenerator {
 		}
 
 		return defsBuilder;
-	}
-
-	/**
-	 * "oneOf": [
-	 *  {
-	 *    "type": "object",
-	 *    "properties": {
-	 *      "name": {
-	 *        "$ref": "#/$defs/SmartDynamicValueStringDef"
-	 *      }
-	 *    },
-	 *    "additionalProperties": false
-	 *  },
-	 *  {
-	 *    "type": "object",
-	 *    "properties": {
-	 *      "selectionCriteria": {
-	 *        "$ref" : "#/$defs/DynamicKeywordInputsDef"
-	 *      }
-	 *    },
-	 *    "additionalProperties": false
-	 *  }
-	 *]
-	 */
-	private JsonObjectBuilder createCallKeywordFunctionNameDef() {
-		JsonObjectBuilder result = jsonProvider.createObjectBuilder();
-
-		// simple option - function name only
-		JsonObjectBuilder keywordFunctionName = addRef(jsonProvider.createObjectBuilder(), YamlDynamicValueJsonSchemaHelper.SMART_DYNAMIC_VALUE_STRING_DEF);
-
-		JsonObjectBuilder keywordSelectionCriteria = jsonProvider.createObjectBuilder();
-		keywordSelectionCriteria.add("type", "object");
-
-		// advanced option - function name (dynamic value) + token selection criteria (dynamic inputs)
-		keywordSelectionCriteria.add("properties", jsonProvider.createObjectBuilder()
-				.add(YamlPlanFields.CALL_FUNCTION_FUNCTION_NAME_YAML_FIELD, addRef(jsonProvider.createObjectBuilder(), YamlDynamicValueJsonSchemaHelper.SMART_DYNAMIC_VALUE_STRING_DEF))
-				.add(YamlPlanFields.TOKEN_SELECTOR_TOKEN_YAML_FIELD, addRef(jsonProvider.createObjectBuilder(), YamlDynamicValueJsonSchemaHelper.DYNAMIC_KEYWORD_INPUTS_DEF))
-		);
-		keywordSelectionCriteria.add("additionalProperties", false);
-
-		result.add("oneOf", jsonProvider.createArrayBuilder().add(keywordFunctionName).add(keywordSelectionCriteria));
-		return result;
 	}
 
 	private ArtefactDefinitions createArtefactImplDefs() throws JsonSchemaPreparationException {
