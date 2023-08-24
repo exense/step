@@ -8,33 +8,34 @@ root:
     skipNode: false
     children:
       - callKeyword:
+          nodeName: "myKeyword"
           continueParentNodeExecutionOnError: false
           instrumentNode: false
           skipNode: false
           remote: true
-          inputs: [ ]
+          inputs: []
           keyword: "myKeyword"
       - callKeyword:
-          nodeName: "CallKeyword2"
+          nodeName: "myKeyword2"
           continueParentNodeExecutionOnError: false
           instrumentNode: false
           skipNode: false
           remote: true
-          inputs: [ ]
+          inputs: []
           keyword:
             expression: "'myKeyword2'"
       - callKeyword:
-          nodeName: "CallKeyword3"
+          nodeName: "myKeyword3"
           continueParentNodeExecutionOnError: false
           instrumentNode: false
           skipNode: false
           routing:
             - criteria1: "criteriaValue1"
           remote: true
-          inputs: [ ]
+          inputs: []
           keyword: "myKeyword3"
       - callKeyword:
-          nodeName: "CallKeyword4"
+          nodeName: "myKeyword4"
           continueParentNodeExecutionOnError: false
           instrumentNode: false
           skipNode: false

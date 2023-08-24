@@ -26,15 +26,16 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import step.artefacts.CallFunction;
 import step.core.artefacts.AbstractArtefact;
 import step.core.plans.Plan;
 import step.core.scanner.CachedAnnotationScanner;
 import step.plans.parser.yaml.YamlPlanFields;
+import step.plans.parser.yaml.YamlPlanReaderExtender;
+import step.plans.parser.yaml.YamlPlanReaderExtension;
 import step.plans.parser.yaml.model.YamlRootArtefact;
 import step.plans.parser.yaml.rules.*;
 import step.plans.parser.yaml.schema.JsonSchemaFieldProcessingException;
-import step.plans.parser.yaml.YamlPlanReaderExtender;
-import step.plans.parser.yaml.YamlPlanReaderExtension;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -161,10 +162,23 @@ public class YamlRootArtefactDeserializer extends JsonDeserializer<YamlRootArtef
     }
 
     private static void fillDefaultValuesForArtifactFields(String javaArtifactClass, ObjectNode artifactData) {
-        // name is required attribute in json schema
+        // if artefact name (nodeName) is not defined in YAML, we use the artefact class as default value
+        // but for CallFunction we use the keyword name as default
         JsonNode name = artifactData.get(YamlPlanFields.NAME_YAML_FIELD);
         if (name == null) {
-            artifactData.put(YamlPlanFields.NAME_YAML_FIELD, javaArtifactClass);
+            if(!javaArtifactClass.equals(CallFunction.ARTEFACT_NAME)) {
+                artifactData.put(YamlPlanFields.NAME_YAML_FIELD, javaArtifactClass);
+            } else {
+                JsonNode functionNode = artifactData.get(YamlPlanFields.CALL_FUNCTION_FUNCTION_YAML_FIELD);
+                if(functionNode != null && !functionNode.isContainerNode()){
+                    String staticFunctionName = functionNode.asText();
+                    if(!staticFunctionName.isEmpty()){
+                        artifactData.put(YamlPlanFields.NAME_YAML_FIELD, staticFunctionName);
+                    } else {
+                        artifactData.put(YamlPlanFields.NAME_YAML_FIELD, javaArtifactClass);
+                    }
+                }
+            }
         }
     }
 

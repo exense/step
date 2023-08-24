@@ -63,7 +63,7 @@ public class NodeNameRule implements ArtefactFieldConversionRule {
         return (artefact, field, fieldMetadata, gen) -> {
             if (isAttributesField(field)) {
                 Map<String, String> attributes = (Map<String, String>) field.get(artefact);
-                String name = attributes.get("name");
+                String name = attributes.get(AbstractArtefact.NAME);
 
                 // don't serialize default artefact name to YAML
                 if (!Objects.equals(name, defaultArtefactName(artefact.getClass()))) {
@@ -85,7 +85,7 @@ public class NodeNameRule implements ArtefactFieldConversionRule {
                     if (attributesNode == null) {
                         attributesNode = createObjectNode(codec);
                     }
-                    attributesNode.put("name", field.getValue().asText());
+                    attributesNode.put(AbstractArtefact.NAME, field.getValue().asText());
                     output.set("attributes", attributesNode);
                     return true;
                 } else {

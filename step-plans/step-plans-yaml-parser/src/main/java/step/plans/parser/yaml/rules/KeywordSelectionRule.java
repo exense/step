@@ -140,9 +140,6 @@ public class KeywordSelectionRule implements ArtefactFieldConversionRule {
                 if (functionNameDynamicValue == null) {
                     throw new IllegalArgumentException("Invalid function. Function selector for yaml only supports search by function name, but was: " + function.getValue());
                 }
-//                if (functionNameDynamicValue.isDynamic()) {
-//                    throw new IllegalArgumentException("Invalid function. Function selector for yaml only supports static function names, but was: " + function.getValue());
-//                }
                 return functionNameDynamicValue;
             } else {
                 throw new IllegalArgumentException("Invalid function. Function selector for yaml only supports function selectors as jsons, but was: " + function.getValue());

@@ -1,22 +1,19 @@
 name: "test plan"
 root:
   sequence:
-    name: Sequence
     children:
       - callKeyword:
-          nodeName: CallKeyword
           keyword: "myKeyword"
       - callKeyword:
-          nodeName: CallKeyword2
+          nodeName: "myKeyword2"
           keyword:
             expression: "'myKeyword2'"
       - callKeyword:
-          nodeName: CallKeyword3
           keyword: "myKeyword3"
           routing:
             - criteria1: "criteriaValue1"
       - callKeyword:
-          nodeName: CallKeyword4
+          nodeName: "myKeyword4"
           keyword:
             expression: "'myKeyword4'"
           routing:

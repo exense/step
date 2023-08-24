@@ -19,7 +19,7 @@ root:
     - _class: "CallKeyword"
       customFields: null
       attributes:
-        name: "CallKeyword"
+        name: "myKeyword"
       dynamicName:
         dynamic: false
         value: ""
@@ -76,7 +76,7 @@ root:
     - _class: "CallKeyword"
       customFields: null
       attributes:
-        name: "CallKeyword2"
+        name: "myKeyword2"
       dynamicName:
         dynamic: false
         value: ""
@@ -133,7 +133,7 @@ root:
     - _class: "CallKeyword"
       customFields: null
       attributes:
-        name: "CallKeyword3"
+        name: "myKeyword3"
       dynamicName:
         dynamic: false
         value: ""
@@ -190,7 +190,7 @@ root:
     - _class: "CallKeyword"
       customFields: null
       attributes:
-        name: "CallKeyword4"
+        name: "myKeyword4"
       dynamicName:
         dynamic: false
         value: ""

@@ -25,6 +25,7 @@ root:
                 actual:
                   expression: "'status'"
             - callKeyword:
+                nodeName: "callExisting3"
                 continueParentNodeExecutionOnError: false
                 instrumentNode: false
                 skipNode: false
