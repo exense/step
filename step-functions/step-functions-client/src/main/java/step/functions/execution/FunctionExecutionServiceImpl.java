@@ -59,6 +59,11 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 	public static final String INPUT_PROPERTY_CONTAINER_USER = "container.user";
 	public static final String INPUT_PROPERTY_CONTAINER_CMD = "container.cmd";
 
+	public static final String INPUT_PROPERTY_DOCKER_REGISTRY_URL = "docker.registryUrl";
+	public static final String INPUT_PROPERTY_DOCKER_REGISTRY_USERNAME = "docker.registryUsername";
+	public static final String INPUT_PROPERTY_DOCKER_REGISTRY_PASSWORD = "docker.registryPassword";
+
+
 	private final GridClient gridClient;
 
 	private final FunctionTypeRegistry functionTypeRegistry;
@@ -239,9 +244,9 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 
 					// TODO Read this from the settings
 					DockerConfiguration dockerConfiguration = new DockerConfiguration();
-					dockerConfiguration.registryUrl = "https://docker.exense.ch";
-					dockerConfiguration.registryUsername = "docker-user";
-					dockerConfiguration.registryPassword = "100%BuildPROD";
+					dockerConfiguration.registryUrl = properties.getOrDefault(INPUT_PROPERTY_DOCKER_REGISTRY_URL,"https://docker.exense.ch");
+					dockerConfiguration.registryUsername = properties.getOrDefault(INPUT_PROPERTY_DOCKER_REGISTRY_USERNAME,"docker-user");
+					dockerConfiguration.registryPassword = properties.getOrDefault(INPUT_PROPERTY_DOCKER_REGISTRY_PASSWORD, "100%BuildPROD");
 
 					messageProperties.put(DockerContainer.MESSAGE_PROP_DOCKER_REGISTRY_URL, dockerConfiguration.registryUrl);
 					messageProperties.put(DockerContainer.MESSAGE_PROP_DOCKER_REGISTRY_USERNAME, dockerConfiguration.registryUsername);
