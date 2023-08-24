@@ -16,18 +16,31 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.constants;
+package step.functions.packages.client;
 
-public class ArtifactConstants {
-	public static final String PARAM_ARTIFACT_ID = "artifactId";
-	public static final String PARAM_VERSION = "version";
-	public static final String PARAM_GROUP_ID = "groupId";
-	public static final String PARAM_CLASSIFIER = "classifier";
+import java.io.File;
 
-	public static final String PARAM_LIB_ARTIFACT_ID = "libArtifactId";
-	public static final String PARAM_LIB_VERSION = "libVersion";
-	public static final String PARAM_LIB_GROUP_ID = "libGroupId";
-	public static final String PARAM_LIB_CLASSIFIER = "libClassifier";
+public class LibFileReference {
+    private File file;
+    private String resourceId;
 
-	public static final String PARAM_MAVEN_SETTINGS = "mavenSettings";
+    public static LibFileReference file(File file) {
+        LibFileReference res = new LibFileReference();
+        res.file = file;
+        return res;
+    }
+
+    public static LibFileReference resourceId(String resourceId) {
+        LibFileReference res = new LibFileReference();
+        res.resourceId = resourceId;
+        return res;
+    }
+
+    public File getFile() {
+        return file;
+    }
+
+    public String getResourceId() {
+        return resourceId;
+    }
 }
