@@ -73,7 +73,7 @@ public class DockerContainer implements Closeable {
             container = startContainer(dockerImage, containerUser, containerCmd);
             copyAgentMaterialAndStart(dockerInDocker, localGridPort, containerUser);
         } catch (Exception e) {
-            stopContainer();
+            dockerClient.removeContainerCmd(CONTAINER_NAME).withRemoveVolumes(true).withForce(true).exec();
             throw e;
         }
 
