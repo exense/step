@@ -69,8 +69,14 @@ public class DockerContainer implements Closeable {
         String containerCmd = messageProperties.get(MESSAGE_PROP_CONTAINER_CMD);
 
         dockerClient = initDockerClient(registryUrl, registryUsername, registryPassword, dockerSock);
-        container = startContainer(dockerImage, containerUser, containerCmd);
-        copyAgentMaterialAndStart(dockerInDocker, localGridPort, containerUser);
+        try {
+            container = startContainer(dockerImage, containerUser, containerCmd);
+            copyAgentMaterialAndStart(dockerInDocker, localGridPort, containerUser);
+        } catch (Exception e) {
+            stopContainer();
+            throw e;
+        }
+
     }
 
 
