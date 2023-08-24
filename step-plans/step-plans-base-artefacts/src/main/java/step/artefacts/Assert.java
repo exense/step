@@ -35,7 +35,7 @@ public class Assert extends AbstractArtefact {
 	DynamicValue<Boolean> doNegate = new DynamicValue<Boolean>(false);
 
 	
-	private DynamicValue<String> expected = new DynamicValue<>("");
+	private DynamicValue<?> expected = new DynamicValue<>("");
 	
 	private DynamicValue<String> customErrorMessage = new DynamicValue<>("");
 
@@ -67,11 +67,11 @@ public class Assert extends AbstractArtefact {
 		this.operator = operator;
 	}
 
-	public DynamicValue<String> getExpected() {
+	public DynamicValue<?> getExpected() {
 		return expected;
 	}
 
-	public void setExpected(DynamicValue<String> expected) {
+	public void setExpected(DynamicValue<?> expected) {
 		this.expected = expected;
 	}
 
