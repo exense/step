@@ -2,6 +2,7 @@ package step.functions.handler;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.*;
+import com.github.dockerjava.api.exception.DockerException;
 import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
@@ -72,7 +73,7 @@ public class DockerContainer implements Closeable {
         try {
             container = startContainer(dockerImage, containerUser, containerCmd);
             copyAgentMaterialAndStart(dockerInDocker, localGridPort, containerUser);
-        } catch (Exception e) {
+        } catch (DockerException e) {
             dockerClient.removeContainerCmd(CONTAINER_NAME).withRemoveVolumes(true).withForce(true).exec();
             throw e;
         }
