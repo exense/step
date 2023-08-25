@@ -78,6 +78,7 @@ public class ProxyMessageHandler implements MessageHandler {
             // Add the token to the session. It will be returned to the pool after session release
             token = new DockerAgentToken(gridClient, tokenHandle);
             tokenReservationSession.put(token);
+            System.out.println("Token is null, retrieving it after container started");
         }
 
         // Get the initial message handler from the message properties
