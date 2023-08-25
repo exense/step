@@ -167,11 +167,13 @@ public class DockerContainer implements Closeable {
         StringBuilderLogReader exec = dockerClient.execStartCmd(execCreateCmdResponse.getId()).exec(new StringBuilderLogReader(stringBuilder));
         if (awaitCompletion) {
             exec.awaitCompletion();
-            String message = "Executed command '" + String.join(" ", Arrays.asList(command)) + "'. Output: " + callback.builder.toString();
+            String message = "Executed command '" + String.join(" ", Arrays.asList(command)) + "'. Output: " + exec.builder.toString();
             logger.debug(message);
             System.out.println(message);
         } else {
-            logger.debug("Started command '" + String.join(" ", Arrays.asList(command)) + "'");
+            String message = "Started command '" + String.join(" ", Arrays.asList(command)) + "'. Output: " + exec.builder.toString();
+            logger.debug(message);
+            System.out.println(message);
         }
     }
 
