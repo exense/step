@@ -46,16 +46,21 @@ public class DockerContainer implements Closeable {
     private static final Logger logger = LoggerFactory.getLogger(DockerContainer.class);
     private Path startupScriptFilePath;
     private Path configurationFileFilePath;
+    private Path logbackConfigurationFilePath;
 
     {
-        // Extracting start script and agent configuration
+        // Extracting start script, agent configuration and logback configuration
         Path startupScriptTempFilePath = Paths.get(ResourceExtractor.extractResource(ProxyMessageHandler.class.getClassLoader(), "startAgent.sh").getCanonicalPath());
         Path configurationTempFilePath = Paths.get(ResourceExtractor.extractResource(ProxyMessageHandler.class.getClassLoader(), "AgentConf.yaml").getCanonicalPath());
+        Path logbackConfigurationTempFilePath = Paths.get(ResourceExtractor.extractResource(ProxyMessageHandler.class.getClassLoader(), "logback.xml").getCanonicalPath());
+
         // Creating a copy with a simpler name
         startupScriptFilePath = Paths.get("/tmp/startAgent.sh");
         Files.copy(startupScriptTempFilePath, startupScriptFilePath, StandardCopyOption.REPLACE_EXISTING);
         configurationFileFilePath = Paths.get("/tmp/AgentConf.yaml");
         Files.copy(configurationTempFilePath, configurationFileFilePath, StandardCopyOption.REPLACE_EXISTING);
+        logbackConfigurationFilePath = Paths.get("/tmp/logback.xml");
+        Files.copy(logbackConfigurationTempFilePath, logbackConfigurationFilePath, StandardCopyOption.REPLACE_EXISTING);
     }
 
     DockerContainer(Map<String, String> agentProperties, Map<String, String> messageProperties, int localGridPort) throws InterruptedException, IOException {
@@ -119,6 +124,7 @@ public class DockerContainer implements Closeable {
         createFolderInContainer(String.format("/home/%s/conf", containerUser));
         copyLocalFileToContainer(startupScriptFilePath.toFile(), String.format("/home/%s/bin/", containerUser));
         copyLocalFileToContainer(configurationFileFilePath.toFile(), String.format("/home/%s/conf/", containerUser));
+        copyLocalFileToContainer(logbackConfigurationFilePath.toFile(), String.format("/home/%s/bin/", containerUser));
         copyLocalFileToContainer(new File("../lib"), String.format("/home/%s/", containerUser));
 
         // Files are copied as root, we need to change the ownership
