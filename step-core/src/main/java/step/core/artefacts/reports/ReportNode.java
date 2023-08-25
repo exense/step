@@ -54,6 +54,8 @@ public class ReportNode extends AbstractIdentifiableObject {
 	protected ReportNodeStatus status;
 		
 	protected Error error;
+
+	protected List<ObjectId> errorSources;
 	
 	protected Map<String, String> customAttributes;
 	
@@ -140,7 +142,15 @@ public class ReportNode extends AbstractIdentifiableObject {
 	public void setError(Error error) {
 		this.error = error;
 	}
-	
+
+	public List<ObjectId> getErrorSources() {
+		return errorSources;
+	}
+
+	public void setErrorSources(List<ObjectId> errorSources) {
+		this.errorSources = errorSources;
+	}
+
 	public AbstractArtefact getResolvedArtefact() {
 		return resolvedArtefact;
 	}

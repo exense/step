@@ -28,8 +28,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.IOUtils;
+import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +41,7 @@ import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.artefacts.reports.ReportTreeAccessor;
 import step.core.artefacts.reports.ReportTreeVisitor;
 import step.core.artefacts.reports.ReportTreeVisitor.ReportNodeEvent;
+import step.core.reports.Error;
 import step.reporting.ReportWriter;
 import step.resources.Resource;
 import step.resources.ResourceManager;
@@ -72,13 +75,31 @@ public class PlanRunnerResult {
 	}
 	
 	public ReportNodeStatus getResult() {
-		ReportNode rootReportNode = reportTreeAccessor.get(rootReportNodeId);
+		ReportNode rootReportNode = getRootReportNode();
 		if(rootReportNode != null) {
 			ReportNodeStatus status = rootReportNode.getStatus();
 			return status;
 		} else {
 			return ReportNodeStatus.NORUN;
 		}
+	}
+
+	private ReportNode getRootReportNode() {
+		return reportTreeAccessor.get(rootReportNodeId);
+	}
+
+	public List<Error> getErrors() {
+		ReportNode firstReportNode = getReportTreeAccessor().getChildren(rootReportNodeId).next();
+		List<ObjectId> errorSources = firstReportNode.getErrorSources();
+		if (errorSources != null) {
+			return errorSources.stream().map(id -> getReportTreeAccessor().get(id.toString()).getError()).collect(Collectors.toList());
+		} else {
+			return List.of();
+		}
+	}
+
+	public String getErrorsAsString() {
+		return getErrors().stream().map(Error::getMsg).collect(Collectors.joining(";"));
 	}
 
 	public String getExecutionId() {

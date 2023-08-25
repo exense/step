@@ -172,15 +172,15 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 				
 				execute_(reportNode, artefact);
 				
-				AtomicReportNodeStatusComposer reportNodeStatusComposer = new AtomicReportNodeStatusComposer(reportNode.getStatus());
+				AtomicReportNodeStatusComposer reportNodeStatusComposer = new AtomicReportNodeStatusComposer(reportNode);
 				// Execute property children. Property artefact remain attached to their parent
 				// and are executed after their parents. (Phase 2). This allow for instance some
 				// validation after the execution of the parent
 				propertyChildren.forEach(p->{
 					ReportNode propertyReportNode = artefactHandlerManager.execute(p, reportNode);
-					reportNodeStatusComposer.addStatusAndRecompose(propertyReportNode.getStatus());
+					reportNodeStatusComposer.addStatusAndRecompose(propertyReportNode);
 				});
-				reportNode.setStatus(reportNodeStatusComposer.getParentStatus());
+				reportNodeStatusComposer.applyComposedStatusToParentNode(reportNode);
 			}
 		} catch (Throwable e) {
 			failWithException(reportNode, e);
