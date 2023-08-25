@@ -53,7 +53,6 @@ public class ProxyMessageHandler implements MessageHandler {
             container = new DockerContainer(agentProperties, messageProperties, localGridPort);
             // Add the container to the session. It will be closed automatically at session release
             tokenReservationSession.put(container);
-            System.out.println("Container created and added to token reservation session");
         }
 
         FileManagerClient fileManagerClient = agentTokenWrapper.getServices().getFileManagerClient();
@@ -66,8 +65,6 @@ public class ProxyMessageHandler implements MessageHandler {
             GridClientConfiguration gridClientConfiguration = new GridClientConfiguration();
             // Configure the selection timeout (this should be higher than the start time of the container
             gridClientConfiguration.setNoMatchExistsTimeout(60000);
-            gridClientConfiguration.setReserveSessionTimeout(60000);
-            gridClientConfiguration.setReadTimeoutOffset(30000);
             return new LocalGridClientImpl(gridClientConfiguration, grid);
         });
 
@@ -79,7 +76,6 @@ public class ProxyMessageHandler implements MessageHandler {
             // Add the token to the session. It will be returned to the pool after session release
             token = new DockerAgentToken(gridClient, tokenHandle);
             tokenReservationSession.put(token);
-            System.out.println("Token is null, retrieving it after container started");
         }
 
         // Get the initial message handler from the message properties

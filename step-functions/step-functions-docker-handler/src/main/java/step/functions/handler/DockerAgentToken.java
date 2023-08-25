@@ -25,6 +25,7 @@ public class DockerAgentToken implements Closeable {
     @Override
     public void close() throws IOException {
         try {
+            gridClient.markTokenAsFailing(tokenHandle.getID(), "Failing", new Exception("Failing"));
             gridClient.returnTokenHandle(tokenHandle.getID());
         } catch (GridClientException e) {
             throw new RuntimeException(e);
