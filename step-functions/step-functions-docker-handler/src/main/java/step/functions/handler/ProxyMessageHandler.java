@@ -53,6 +53,7 @@ public class ProxyMessageHandler implements MessageHandler {
             container = new DockerContainer(agentProperties, messageProperties, localGridPort);
             // Add the container to the session. It will be closed automatically at session release
             tokenReservationSession.put(container);
+            System.out.println("Container created and added to token reservation session");
         }
 
         FileManagerClient fileManagerClient = agentTokenWrapper.getServices().getFileManagerClient();
