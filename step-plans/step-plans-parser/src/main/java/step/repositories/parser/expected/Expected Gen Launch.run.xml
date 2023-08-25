@@ -1,0 +1,11 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Expected Gen Launch" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="org.antlr.v4.Tool" />
+    <module name="step-plans-parser" />
+    <option name="PROGRAM_PARAMETERS" value="ExpectedStep.g4 -visitor" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/step-plans/step-plans-parser/src/main/java/step/repositories/parser/expected" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
