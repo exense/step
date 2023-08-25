@@ -18,11 +18,16 @@
  ******************************************************************************/
 package step.core.access;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.commons.codec.digest.DigestUtils;
 
+import org.bson.types.ObjectId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.core.accessors.AbstractAccessor;
 import step.core.collections.Collection;
 import step.core.collections.Filters;
@@ -30,15 +35,50 @@ import step.core.collections.filters.Equals;
 
 public class UserAccessorImpl extends AbstractAccessor<User> implements UserAccessor {
 
+	private static final Logger logger = LoggerFactory.getLogger(UserAccessorImpl.class);
+	private final List<Function<User, Void>> saveHooks = new ArrayList<>();
+	private final List<Function<User, Void>> removeHooks = new ArrayList<>();
+
 	public UserAccessorImpl(Collection<User> collectionDriver) {
 		super(collectionDriver);
 	}
 
 	@Override
 	public void remove(String username) {
-		collectionDriver.remove(byName(username));
+		User user = this.getByUsername(username);
+		removeUser(user);
 	}
-	
+
+	@Override
+	public void remove(ObjectId id) {
+		User user = this.get(id);
+		removeUser(user);
+	}
+
+	private void removeUser(User user){
+		super.remove(user.getId());
+		removeHooks.forEach(h -> {
+			try {
+				h.apply(user);
+			} catch (Exception e) {
+				logger.error("Hook execution while removing user failed.", e);
+			}
+		});
+	}
+
+	@Override
+	public User save(User user) {
+		//Hooks are executed before saving and will stop on error (required for licensing)
+		saveHooks.forEach( h -> h.apply(user));
+		return super.save(user);
+	}
+
+	@Override
+	public void save(Iterable<User> entities) {
+		// Not used anywhere
+		throw new UnsupportedOperationException();
+	}
+
 	@Override
 	public List<User> getAllUsers() {
 		return collectionDriver.find(Filters.empty(), null, null, null, 0).collect(Collectors.toList());
@@ -48,6 +88,16 @@ public class UserAccessorImpl extends AbstractAccessor<User> implements UserAcce
 	public User getByUsername(String username) {
 		assert username != null;
 		return collectionDriver.find(byName(username), null, null, null, 0).findFirst().orElse(null);
+	}
+
+	@Override
+	public void registerOnSaveHook(Function<User, Void> f) {
+		saveHooks.add(f);
+	}
+
+	@Override
+	public void registerOnRemoveHook(Function<User, Void> f) {
+		removeHooks.add(f);
 	}
 
 	private Equals byName(String username) {

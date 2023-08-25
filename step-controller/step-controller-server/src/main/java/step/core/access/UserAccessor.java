@@ -19,6 +19,7 @@
 package step.core.access;
 
 import java.util.List;
+import java.util.function.Function;
 
 import step.core.accessors.Accessor;
 
@@ -30,4 +31,15 @@ public interface UserAccessor extends Accessor<User> {
 
 	User getByUsername(String username);
 
+	/**
+	 * Register hooks to be executed before saving a User, any thrown exception will abort saving the user
+	 * @param f the function to execute
+	 */
+	void registerOnSaveHook(Function<User, Void> f);
+
+	/**
+	 * Register hooks to be executed after removing a User, thrown exception don't stop the execution of next hooks
+	 * @param f the function to execute
+	 */
+	void registerOnRemoveHook(Function<User, Void> f);
 }
