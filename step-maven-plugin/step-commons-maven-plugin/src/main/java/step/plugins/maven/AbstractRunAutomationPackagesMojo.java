@@ -51,6 +51,18 @@ public abstract class AbstractRunAutomationPackagesMojo extends AbstractStepPlug
 	@Parameter(property = "step-run-auto-packages.ensure-exec-success", defaultValue = "true")
 	private Boolean ensureExecutionSuccess;
 
+	@Parameter(property = "step-run-auto-packages.lib-artifact-group-id")
+	private String libArtifactGroupId;
+
+	@Parameter(property = "step-run-auto-packages.lib-artifact-id")
+	private String libArtifactId;
+
+	@Parameter(property = "step-run-auto-packages.lib-artifact-version")
+	private String libArtifactVersion;
+
+	@Parameter(property = "step-run-auto-packages.lib-artifact-classifier")
+	private String libArtifactClassifier;
+
 	protected void executeBundleOnStep(Map<String, Object> executionContext) throws MojoExecutionException {
 		String executionId = null;
 		try (RemoteExecutionManager remoteExecutionManager = createRemoteExecutionManager()) {
@@ -177,6 +189,38 @@ public abstract class AbstractRunAutomationPackagesMojo extends AbstractStepPlug
 
 	public void setEnsureExecutionSuccess(Boolean ensureExecutionSuccess) {
 		this.ensureExecutionSuccess = ensureExecutionSuccess;
+	}
+
+	public String getLibArtifactGroupId() {
+		return libArtifactGroupId;
+	}
+
+	public void setLibArtifactGroupId(String libArtifactGroupId) {
+		this.libArtifactGroupId = libArtifactGroupId;
+	}
+
+	public String getLibArtifactId() {
+		return libArtifactId;
+	}
+
+	public void setLibArtifactId(String libArtifactId) {
+		this.libArtifactId = libArtifactId;
+	}
+
+	public String getLibArtifactVersion() {
+		return libArtifactVersion;
+	}
+
+	public void setLibArtifactVersion(String libArtifactVersion) {
+		this.libArtifactVersion = libArtifactVersion;
+	}
+
+	public String getLibArtifactClassifier() {
+		return libArtifactClassifier;
+	}
+
+	public void setLibArtifactClassifier(String libArtifactClassifier) {
+		this.libArtifactClassifier = libArtifactClassifier;
 	}
 
 }
