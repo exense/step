@@ -1,0 +1,8 @@
+Sequence
+Echo "Testing Asserts"
+planWithAssert
+Assert key = "value"
+Assert key beginsWith "value"
+Assert key not beginsWith "value2"
+Assert missingKey isNull
+End

@@ -45,6 +45,56 @@ public class MyKeywordLibrary extends AbstractKeyword {
 			});
 		}
 	}
+
+	@Keyword(schema = "{\n" +
+			"  \"properties\": {\n" +
+			"    \"number\": {\n" +
+			"      \"type\": \"number\",\n" +
+			"      \"default\": 1.1\n" +
+			"    },\n" +
+			"    \"boolean\": {\n" +
+			"      \"type\": \"boolean\",\n" +
+			"      \"default\": true\n" +
+			"    },\n" +
+			"    \"enum\": {\n" +
+			"      \"enum\": [\n" +
+			"        \"val1\",\n" +
+			"        \"val2\",\n" +
+			"        \"val3\"\n" +
+			"      ],\n" +
+			"      \"default\": \"val1\"\n" +
+			"    },\n" +
+			"    \"text\": {\n" +
+			"      \"type\": \"string\",\n" +
+			"      \"default\": \"some text input\"\n" +
+			"    },\n" +
+			"    \"array\": {\n" +
+			"      \"type\": \"array\",\n" +
+			"      \"default\": [\n" +
+			"        \"val1\",\n" +
+			"        \"val2\",\n" +
+			"        \"val3\"\n" +
+			"      ]\n" +
+			"    },\n" +
+			"    \"object\": {\n" +
+			"      \"type\": \"object\",\n" +
+			"      \"default\": {\n" +
+			"        \"key1\": \"val1\"\n" +
+			"      }\n" +
+			"    }\n" +
+			"  },\n" +
+			"  \"required\": [\n" +
+			"    \"number\",\n" +
+			"    \"boolean\",\n" +
+			"    \"enum\",\n" +
+			"    \"text\",\n" +
+			"    \"array\",\n" +
+			"    \"object\"\n" +
+			"  ]\n" +
+			"}")
+	public void MyKeywordCopyDefaultValues() {
+		output.setPayloadJson(input.toString());
+	}
 	
 	@Keyword
 	public void TestClassloader() {
