@@ -107,7 +107,7 @@ public class CustomExpectedStepParser implements StepParser<ExpectedStep> {
 			if(ctx.attributeValue() != null) {
 				// can be null for 'isNull' operator
 				assert_.getExpected().setExpression(ctx.attributeValue().getText());
-			} else{
+			} else {
 				assert_.getExpected().setDynamic(false);
 				assert_.getExpected().setValue(null);
 			}
