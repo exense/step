@@ -19,6 +19,7 @@ import step.core.plans.PlanAccessor;
 import step.core.plans.builder.PlanBuilder;
 import step.core.repositories.*;
 import step.functions.Function;
+import step.repositories.ArtifactRepositoryConstants;
 
 import java.io.File;
 import java.util.*;
@@ -30,15 +31,15 @@ public class ArtifactRepository extends AbstractRepository {
 
     private static final Logger logger = LoggerFactory.getLogger(ArtifactRepository.class);
 
-    protected static final String PARAM_ARTIFACT_ID = "artifactId";
-    protected static final String PARAM_VERSION = "version";
-    protected static final String PARAM_GROUP_ID = "groupId";
-    protected static final String PARAM_CLASSIFIER = "classifier";
+    protected static final String PARAM_ARTIFACT_ID = ArtifactRepositoryConstants.ARTIFACT_PARAM_ARTIFACT_ID;
+    protected static final String PARAM_VERSION = ArtifactRepositoryConstants.ARTIFACT_PARAM_VERSION;
+    protected static final String PARAM_GROUP_ID = ArtifactRepositoryConstants.ARTIFACT_PARAM_GROUP_ID;
+    protected static final String PARAM_CLASSIFIER = ArtifactRepositoryConstants.ARTIFACT_PARAM_CLASSIFIER;
 
-    protected static final String PARAM_LIB_ARTIFACT_ID = "libArtifactId";
-    protected static final String PARAM_LIB_VERSION = "libVersion";
-    protected static final String PARAM_LIB_GROUP_ID = "libGroupId";
-    protected static final String PARAM_LIB_CLASSIFIER = "libClassifier";
+    protected static final String PARAM_LIB_ARTIFACT_ID = ArtifactRepositoryConstants.ARTIFACT_PARAM_LIB_ARTIFACT_ID;
+    protected static final String PARAM_LIB_VERSION = ArtifactRepositoryConstants.ARTIFACT_PARAM_LIB_VERSION;
+    protected static final String PARAM_LIB_GROUP_ID = ArtifactRepositoryConstants.ARTIFACT_PARAM_LIB_GROUP_ID;
+    protected static final String PARAM_LIB_CLASSIFIER = ArtifactRepositoryConstants.ARTIFACT_PARAM_LIB_CLASSIFIER;
 
     protected static final String PARAM_MAVEN_SETTINGS = "mavenSettings";
     private static final String PARAM_THREAD_NUMBER = "threads";

@@ -82,7 +82,8 @@ public class UploadKeywordsPackageMojoOSTest extends AbstractMojoTest {
 		ArgumentCaptor<FunctionPackage> oldPackageCaptor = ArgumentCaptor.forClass(FunctionPackage.class);
 		ArgumentCaptor<File> uploadedFileCaptor = ArgumentCaptor.forClass(File.class);
 		ArgumentCaptor<Map<String, String>> uploadedPackageAttributesCaptor = ArgumentCaptor.forClass(Map.class);
-		Mockito.verify(remoteFunctionManagerMock, Mockito.times(1)).updateKeywordPackageById(
+
+		Mockito.verify(remoteFunctionManagerMock, Mockito.times(1)).updateKeywordPackageWithLibReference(
 				oldPackageCaptor.capture(),
 				Mockito.isNull(),
 				uploadedFileCaptor.capture(),
@@ -134,6 +135,7 @@ public class UploadKeywordsPackageMojoOSTest extends AbstractMojoTest {
 
 	private RemoteFunctionPackageClientImpl createRemoteFunctionManagerMock() throws IOException {
 		RemoteFunctionPackageClientImpl remoteFunctionPackageClient = Mockito.mock(RemoteFunctionPackageClientImpl.class);
+
 		Mockito.when(remoteFunctionPackageClient.updateKeywordPackageById(
 				Mockito.any(),
 				Mockito.isNull(),
@@ -141,6 +143,15 @@ public class UploadKeywordsPackageMojoOSTest extends AbstractMojoTest {
 				Mockito.any(),
 				Mockito.any())
 		).thenReturn(UPDATED_PACKAGE);
+
+		Mockito.when(remoteFunctionPackageClient.updateKeywordPackageWithLibReference(
+				Mockito.any(),
+				Mockito.any(),
+				Mockito.any(),
+				Mockito.any(),
+				Mockito.any())
+		).thenReturn(UPDATED_PACKAGE);
+
 		return remoteFunctionPackageClient;
 	}
 
