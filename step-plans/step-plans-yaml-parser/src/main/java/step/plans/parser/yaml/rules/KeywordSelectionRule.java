@@ -127,21 +127,27 @@ public class KeywordSelectionRule implements ArtefactFieldConversionRule {
     private DynamicValue<String> getFunctionNameDynamicValue(DynamicValue<String> function) throws JsonProcessingException {
         if (function.getValue().trim().length() > 0) {
             if (function.getValue().startsWith("{")) {
-                TypeReference<HashMap<String, DynamicValue<String>>> typeRef = new TypeReference<>() {
+                TypeReference<HashMap<String, JsonNode>> functionValueTypeRef = new TypeReference<>() {
                 };
-                HashMap<String, DynamicValue<String>> functionNameAsMap = jsonObjectMapper.readValue(function.getValue(), typeRef);
+                HashMap<String, JsonNode> functionNameAsMap = jsonObjectMapper.readValue(function.getValue(), functionValueTypeRef);
                 if (functionNameAsMap.isEmpty()) {
                     return null;
                 }
                 if (functionNameAsMap.size() > 1) {
                     throw new IllegalArgumentException("Invalid function. Function selector for yaml only supports search by function name, but was: " + function.getValue());
                 }
-                DynamicValue<String> functionNameDynamicValue = functionNameAsMap.get(AbstractOrganizableObject.NAME);
-                if (functionNameDynamicValue == null) {
+                JsonNode functionName = functionNameAsMap.get(AbstractOrganizableObject.NAME);
+                if (functionName == null) {
                     throw new IllegalArgumentException("Invalid function. Function selector for yaml only supports search by function name, but was: " + function.getValue());
                 }
-                return functionNameDynamicValue;
-            } else {
+
+                // function name can be either the dynamic value or the simple string (if converted from the plain-text format)
+                if (functionName.isContainerNode()) {
+                    return jsonObjectMapper.treeToValue(functionName, DynamicValue.class);
+                } else {
+                    return new DynamicValue<>(functionName.asText());
+                }
+           } else {
                 throw new IllegalArgumentException("Invalid function. Function selector for yaml only supports function selectors as jsons, but was: " + function.getValue());
             }
 

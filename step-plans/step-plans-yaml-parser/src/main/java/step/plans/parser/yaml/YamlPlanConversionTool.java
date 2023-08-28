@@ -67,7 +67,6 @@ public class YamlPlanConversionTool {
                     writer.write("Converting " + plainTextPlan.getName() + " ...\n");
 
                     // read plan from plain text format
-                    // TODO: always TestCase?
                     Plan planFromPlainText = plainTextPlanParser.parse(fis, RootArtefactType.TestCase);
 
                     // convert to simple yaml and save in output file
