@@ -18,12 +18,16 @@
  ******************************************************************************/
 package step.plans.parser.yaml.rules;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.json.spi.JsonProvider;
+import step.artefacts.CallFunction;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
+import step.core.dynamicbeans.DynamicValue;
 import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
 import step.plans.parser.yaml.YamlPlanFields;
 import step.plans.parser.yaml.deserializers.YamlArtefactFieldDeserializationProcessor;
@@ -35,6 +39,8 @@ import java.util.Objects;
 
 public class NodeNameRule implements ArtefactFieldConversionRule {
 
+    protected final ObjectMapper jsonObjectMapper = new ObjectMapper();
+
     @Override
     public JsonSchemaFieldProcessor getJsonSchemaFieldProcessor(JsonProvider jsonProvider) {
         return (objectClass, field, fieldMetadata, propertiesBuilder, requiredPropertiesOutput) -> {
@@ -45,7 +51,7 @@ public class NodeNameRule implements ArtefactFieldConversionRule {
                         YamlPlanFields.NAME_YAML_FIELD,
                         jsonProvider.createObjectBuilder()
                                 .add("type", "string")
-                                .add("default", defaultArtefactName((Class<? extends AbstractArtefact>) objectClass))
+                                .add("default", defaultNodeName((Class<? extends AbstractArtefact>) objectClass))
                 );
                 return true;
             } else {
@@ -54,8 +60,22 @@ public class NodeNameRule implements ArtefactFieldConversionRule {
         };
     }
 
-    private String defaultArtefactName(Class<? extends AbstractArtefact> objectClass) {
-        return AbstractArtefact.getArtefactName(objectClass);
+    private String defaultNodeName(AbstractArtefact artefact) throws JsonProcessingException {
+        if (artefact instanceof CallFunction) {
+            // for CallFunction the default name is function name
+            DynamicValue<String> function = ((CallFunction) artefact).getFunction();
+            if (function != null) {
+                DynamicValue<String> functionName = KeywordSelectionRule.getFunctionNameDynamicValue(function, jsonObjectMapper);
+                if (functionName != null && !functionName.isDynamic()) {
+                    return functionName.getValue();
+                }
+            }
+        }
+        return defaultNodeName(artefact.getClass());
+    }
+
+    private String defaultNodeName(Class<? extends AbstractArtefact> artefactClass) {
+        return AbstractArtefact.getArtefactName(artefactClass);
     }
 
     @Override
@@ -66,7 +86,7 @@ public class NodeNameRule implements ArtefactFieldConversionRule {
                 String name = attributes.get(AbstractArtefact.NAME);
 
                 // don't serialize default artefact name to YAML
-                if (!Objects.equals(name, defaultArtefactName(artefact.getClass()))) {
+                if (!Objects.equals(name, defaultNodeName(artefact))) {
                     gen.writeStringField(YamlPlanFields.NAME_YAML_FIELD, name);
                 }
                 return true;

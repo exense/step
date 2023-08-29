@@ -8,7 +8,6 @@ root:
     skipNode: false
     children:
       - callKeyword:
-          nodeName: "myKeyword"
           continueParentNodeExecutionOnError: false
           instrumentNode: false
           skipNode: false
@@ -25,7 +24,6 @@ root:
           keyword:
             expression: "'myKeyword2'"
       - callKeyword:
-          nodeName: "myKeyword3"
           continueParentNodeExecutionOnError: false
           instrumentNode: false
           skipNode: false

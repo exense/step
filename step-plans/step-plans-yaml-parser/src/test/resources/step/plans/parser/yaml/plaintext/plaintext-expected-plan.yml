@@ -46,6 +46,7 @@ root:
           skipNode: false
           expression: "key.toString().equals('value with space')"
       - callKeyword:
+          nodeName: CallKeyword
           continueParentNodeExecutionOnError: false
           instrumentNode: false
           skipNode: false

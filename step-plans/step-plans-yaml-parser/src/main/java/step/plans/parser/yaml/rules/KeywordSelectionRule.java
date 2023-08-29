@@ -111,7 +111,7 @@ public class KeywordSelectionRule implements ArtefactFieldConversionRule {
 
                     gen.writeFieldName(YamlPlanFields.CALL_FUNCTION_FUNCTION_YAML_FIELD);
 
-                    DynamicValue<String> functionNameDynamicValue = getFunctionNameDynamicValue(function);
+                    DynamicValue<String> functionNameDynamicValue = getFunctionNameDynamicValue(function, jsonObjectMapper);
 
                     // here we want to write function name simply as 'keyword: "myKeyword"' in YAML
                     if (functionNameDynamicValue != null) {
@@ -124,7 +124,7 @@ public class KeywordSelectionRule implements ArtefactFieldConversionRule {
         };
     }
 
-    private DynamicValue<String> getFunctionNameDynamicValue(DynamicValue<String> function) throws JsonProcessingException {
+    public static DynamicValue<String> getFunctionNameDynamicValue(DynamicValue<String> function, ObjectMapper jsonObjectMapper) throws JsonProcessingException {
         if (function.getValue().trim().length() > 0) {
             if (function.getValue().startsWith("{")) {
                 TypeReference<HashMap<String, JsonNode>> functionValueTypeRef = new TypeReference<>() {
