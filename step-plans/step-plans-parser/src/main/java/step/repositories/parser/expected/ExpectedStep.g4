@@ -27,7 +27,7 @@ controlParameter : attributeName EQ setValue;
 outputAttributeName : (WORD|STRING);
 attributeName : WORD;
 setValue : (attributeName|STRING);
-attributeValue : (NUM|STRING);
+attributeValue : (NUM|STRING|BOOL);
 
 NOT : ('not'|'!');
    
@@ -44,6 +44,8 @@ IS_NULL : 'isNull';
 
 NUM : [+\-]?(DIGIT*[.])?DIGIT+ ;
 fragment DIGIT : [0-9] ;
+
+BOOL : 'true' | 'false' ;
 
 WORD: (~[="\t\r\n \u00A0])+ ;
 

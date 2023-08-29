@@ -55,6 +55,7 @@ public class StepRunnerWithPlansAnnotationTest extends AbstractKeyword {
 	public void planWithAssert() {
 		output.add("key","value");
 		output.add("intKey", 77);
+		output.add("boolKey", true);
 	}
 
 	@Plan
