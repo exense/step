@@ -22,9 +22,9 @@ import jakarta.json.JsonObjectBuilder;
 import jakarta.json.spi.JsonProvider;
 import step.core.dynamicbeans.DynamicValue;
 import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
-import step.plans.parser.yaml.deserializers.YamlDynamicValueDeserializer;
+import step.core.yaml.deserializers.YamlDynamicValueDeserializer;
 import step.plans.parser.yaml.schema.YamlDynamicValueJsonSchemaHelper;
-import step.plans.parser.yaml.serializers.YamlDynamicValueSerializer;
+import step.core.yaml.serializers.YamlDynamicValueSerializer;
 
 /**
  * @see YamlDynamicValueDeserializer

@@ -16,26 +16,13 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plans.parser.yaml.serializers;
+package step.automationpacks.handlers;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import step.core.dynamicbeans.DynamicValue;
-import step.plans.parser.yaml.YamlPlanFields;
+import step.automationpacks.model.AbstractAutomationPackKeyword;
+import step.functions.Function;
 
-import java.io.IOException;
+import java.io.File;
 
-public class YamlDynamicValueSerializer extends JsonSerializer<DynamicValue> {
-
-    @Override
-    public void serialize(DynamicValue value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
-        if(value.isDynamic()){
-            gen.writeStartObject();
-            gen.writeStringField(YamlPlanFields.DYN_VALUE_EXPRESSION_FIELD, value.getExpression());
-            gen.writeEndObject();
-        } else {
-            gen.writeObject(value.getValue());
-        }
-    }
+public interface AutomationPackKeywordHandler<K extends Function> {
+    K prepareKeyword(AbstractAutomationPackKeyword automationPackKeyword, File automationPack);
 }

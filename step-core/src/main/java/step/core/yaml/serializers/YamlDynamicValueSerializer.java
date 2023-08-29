@@ -16,25 +16,26 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plans.parser.yaml;
+package step.core.yaml.serializers;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.YamlFields;
 
-public class YamlPlanFields extends YamlFields {
-    public static final String CALL_FUNCTION_ARGUMENT_ORIGINAL_FIELD = "argument";
-    public static final String CALL_FUNCTION_ARGUMENT_YAML_FIELD = "inputs";
+import java.io.IOException;
 
-    public static final String CALL_FUNCTION_FUNCTION_ORIGINAL_FIELD = "function";
-    public static final String CALL_FUNCTION_FUNCTION_YAML_FIELD = "keyword";
-    public static final String CALL_FUNCTION_FUNCTION_NAME_YAML_FIELD = "name";
+public class YamlDynamicValueSerializer extends JsonSerializer<DynamicValue> {
 
-    public static final String TOKEN_SELECTOR_TOKEN_ORIGINAL_FIELD = "token";
-    public static final String TOKEN_SELECTOR_TOKEN_YAML_FIELD = "routing";
-
-    public static final String CHECK_EXPRESSION_ORIGINAL_FIELD = "expression";
-
-    public static final String NAME_YAML_FIELD = "nodeName";
-
-    public static final String ARTEFACT_CHILDREN = "children";
-
+    @Override
+    public void serialize(DynamicValue value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+        if(value.isDynamic()){
+            gen.writeStartObject();
+            gen.writeStringField(YamlFields.DYN_VALUE_EXPRESSION_FIELD, value.getExpression());
+            gen.writeEndObject();
+        } else {
+            gen.writeObject(value.getValue());
+        }
+    }
 }

@@ -27,6 +27,7 @@ import jakarta.json.spi.JsonProvider;
 import step.artefacts.CallFunction;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.yaml.YamlFields;
 import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
 import step.plans.parser.yaml.YamlPlanFields;
 import step.plans.parser.yaml.deserializers.YamlArtefactFieldDeserializationProcessor;
@@ -107,8 +108,8 @@ public class KeywordSelectionRule extends DynamicInputsSupport implements Artefa
 
     private DynamicValue<String> getDynamicKeywordName(JsonNode yamlFunctionValue) {
         DynamicValue<String> keywordName;
-        if(yamlFunctionValue.isContainerNode() && yamlFunctionValue.get(YamlPlanFields.DYN_VALUE_EXPRESSION_FIELD) != null){
-            keywordName = new DynamicValue<>(yamlFunctionValue.get(YamlPlanFields.DYN_VALUE_EXPRESSION_FIELD).asText(), "");
+        if(yamlFunctionValue.isContainerNode() && yamlFunctionValue.get(YamlFields.DYN_VALUE_EXPRESSION_FIELD) != null){
+            keywordName = new DynamicValue<>(yamlFunctionValue.get(YamlFields.DYN_VALUE_EXPRESSION_FIELD).asText(), "");
         } else {
             keywordName = new DynamicValue<>(yamlFunctionValue.asText());
         }

@@ -16,14 +16,14 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plans.parser.yaml.deserializers;
+package step.core.yaml.deserializers;
 
 import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.deser.ContextualDeserializer;
 import step.core.dynamicbeans.DynamicValue;
-import step.plans.parser.yaml.YamlPlanFields;
+import step.core.yaml.YamlFields;
 
 import java.io.IOException;
 
@@ -44,7 +44,7 @@ public class YamlDynamicValueDeserializer extends JsonDeserializer<DynamicValue<
 		JsonNode node = jp.getCodec().readTree(jp);
 
 		if (node.isContainerNode()) {
-			JsonNode expressionNode = node.get(YamlPlanFields.DYN_VALUE_EXPRESSION_FIELD);
+			JsonNode expressionNode = node.get(YamlFields.DYN_VALUE_EXPRESSION_FIELD);
 			String expression = expressionNode == null ? null : expressionNode.asText();
 
 			if (expression != null) {

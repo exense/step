@@ -45,13 +45,13 @@ import step.core.scanner.CachedAnnotationScanner;
 import step.migration.MigrationManager;
 import step.plans.parser.yaml.migrations.YamlPlanMigration;
 import step.plans.parser.yaml.model.YamlPlan;
-import step.plans.parser.yaml.deserializers.YamlDynamicValueDeserializer;
+import step.core.yaml.deserializers.YamlDynamicValueDeserializer;
 import step.plans.parser.yaml.deserializers.YamlRootArtefactDeserializer;
 import step.plans.parser.yaml.migrations.AbstractYamlPlanMigrationTask;
 import step.plans.parser.yaml.model.YamlRootArtefact;
 import step.plans.parser.yaml.model.YamlPlanVersions;
 import step.plans.parser.yaml.schema.YamlPlanValidationException;
-import step.plans.parser.yaml.serializers.YamlDynamicValueSerializer;
+import step.core.yaml.serializers.YamlDynamicValueSerializer;
 import step.plans.parser.yaml.serializers.YamlRootArtefactSerializer;
 
 import java.io.IOException;

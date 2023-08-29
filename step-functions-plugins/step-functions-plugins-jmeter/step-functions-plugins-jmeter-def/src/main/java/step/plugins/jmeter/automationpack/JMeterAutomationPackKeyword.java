@@ -16,25 +16,20 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plans.parser.yaml;
+package step.plugins.jmeter.automationpack;
 
-import step.core.yaml.YamlFields;
+import step.automationpacks.AutomationPackageKeyword;
+import step.automationpacks.model.AbstractAutomationPackKeyword;
 
-public class YamlPlanFields extends YamlFields {
-    public static final String CALL_FUNCTION_ARGUMENT_ORIGINAL_FIELD = "argument";
-    public static final String CALL_FUNCTION_ARGUMENT_YAML_FIELD = "inputs";
+@AutomationPackageKeyword
+public class JMeterAutomationPackKeyword extends AbstractAutomationPackKeyword {
+    private String jmeterTestPlan;
 
-    public static final String CALL_FUNCTION_FUNCTION_ORIGINAL_FIELD = "function";
-    public static final String CALL_FUNCTION_FUNCTION_YAML_FIELD = "keyword";
-    public static final String CALL_FUNCTION_FUNCTION_NAME_YAML_FIELD = "name";
+    public String getJmeterTestPlan() {
+        return jmeterTestPlan;
+    }
 
-    public static final String TOKEN_SELECTOR_TOKEN_ORIGINAL_FIELD = "token";
-    public static final String TOKEN_SELECTOR_TOKEN_YAML_FIELD = "routing";
-
-    public static final String CHECK_EXPRESSION_ORIGINAL_FIELD = "expression";
-
-    public static final String NAME_YAML_FIELD = "nodeName";
-
-    public static final String ARTEFACT_CHILDREN = "children";
-
+    public void setJmeterTestPlan(String jmeterTestPlan) {
+        this.jmeterTestPlan = jmeterTestPlan;
+    }
 }

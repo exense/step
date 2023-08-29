@@ -23,8 +23,8 @@ import jakarta.json.JsonObjectBuilder;
 import jakarta.json.spi.JsonProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.core.yaml.YamlFields;
 import step.handlers.javahandler.jsonschema.JsonInputConverter;
-import step.plans.parser.yaml.YamlPlanFields;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
@@ -103,7 +103,7 @@ public class YamlDynamicValueJsonSchemaHelper {
 		JsonObjectBuilder res = jsonProvider.createObjectBuilder();
 		res.add("type", "object");
 		JsonObjectBuilder properties = jsonProvider.createObjectBuilder();
-		properties.add(YamlPlanFields.DYN_VALUE_EXPRESSION_FIELD, jsonProvider.createObjectBuilder().add("type", "string"));
+		properties.add(YamlFields.DYN_VALUE_EXPRESSION_FIELD, jsonProvider.createObjectBuilder().add("type", "string"));
 		res.add("properties", properties);
 		res.add("additionalProperties", false);
 		return res;
