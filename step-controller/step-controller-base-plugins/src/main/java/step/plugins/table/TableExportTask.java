@@ -44,28 +44,29 @@ public class TableExportTask implements AsyncTask<Resource> {
         fields.forEach(field -> writer.append(field).append(DELIMITER));
         writer.append(END_OF_LINE);
         try {
-            Stream results = tableService.export(tableName, exportRequest.getTableRequest(), session);
-            results.forEach(o -> {
-                // Write row
-                fields.forEach(field -> {
-                    Object property;
-                    String formattedValue;
-                    try {
-                        property = PropertyUtils.getProperty(o, field);
-                        if (property != null) {
-                            formattedValue = property.toString();
-                        } else {
+            try (Stream results = tableService.export(tableName, exportRequest.getTableRequest(), session)) {
+                results.forEach(o -> {
+                    // Write row
+                    fields.forEach(field -> {
+                        Object property;
+                        String formattedValue;
+                        try {
+                            property = PropertyUtils.getProperty(o, field);
+                            if (property != null) {
+                                formattedValue = property.toString();
+                            } else {
+                                formattedValue = "";
+                            }
+                        } catch (NoSuchMethodException e) {
                             formattedValue = "";
+                        } catch (IllegalAccessException | InvocationTargetException e) {
+                            throw new RuntimeException("Error while writing column " + field, e);
                         }
-                    } catch (NoSuchMethodException e) {
-                        formattedValue = "";
-                    } catch (IllegalAccessException | InvocationTargetException e) {
-                        throw new RuntimeException("Error while writing column " + field, e);
-                    }
-                    writer.append(formattedValue).append(DELIMITER);
+                        writer.append(formattedValue).append(DELIMITER);
+                    });
+                    writer.append(END_OF_LINE);
                 });
-                writer.append(END_OF_LINE);
-            });
+            }
         } finally {
             writer.close();
             resourceContainer.save(null);

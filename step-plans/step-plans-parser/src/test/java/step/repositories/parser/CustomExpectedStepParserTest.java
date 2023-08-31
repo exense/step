@@ -49,18 +49,15 @@ public class CustomExpectedStepParserTest extends AbstractStepParserTest {
 		Assert.assertEquals(3,getChildren(root).size());
 		
 		step.artefacts.Assert check1 = (step.artefacts.Assert ) getChildren(root).get(0);
-		Assert.assertEquals("\"Value1\"",check1.getExpected().getExpression());
-		Assert.assertEquals(AssertOperator.EQUALS,check1.getOperator());
+		checkAssert(check1, "Key1", "\"Value1\"", AssertOperator.EQUALS, false);
 		Assert.assertEquals("Key1=\"Value1\"", check1.getCustomAttribute("check"));
 		
 		step.artefacts.Assert check2 = (step.artefacts.Assert ) getChildren(root).get(1);
-		Assert.assertEquals("\"Value 2\"",check2.getExpected().getExpression());
+		checkAssert(check2, "Key2", "\"Value 2\"", AssertOperator.EQUALS, false);
 		Assert.assertEquals("Key2=\"Value 2\"", check2.getCustomAttribute("check"));
 
-		
 		step.artefacts.Assert check3 = (step.artefacts.Assert ) getChildren(root).get(2);
-		Assert.assertEquals("\".*\"",check3.getExpected().getExpression());
-		Assert.assertEquals(AssertOperator.MATCHES,check3.getOperator());
+		checkAssert(check3, "Key1", "\".*\"", AssertOperator.MATCHES, false);
 	}
 	
 	@Test
@@ -70,11 +67,11 @@ public class CustomExpectedStepParserTest extends AbstractStepParserTest {
 		
 		AbstractArtefact root = parse(steps);
 		Assert.assertEquals(1,getChildren(root).size());
-		
-		step.artefacts.Assert check1 = (step.artefacts.Assert ) getChildren(root).get(0);
-		Assert.assertEquals("\"Value1\"",check1.getExpected().getExpression());
-		Assert.assertEquals(AssertOperator.EQUALS,check1.getOperator());
-		Assert.assertTrue(check1.getDoNegate().get());
+
+		checkAssert(
+				(step.artefacts.Assert) getChildren(root).get(0),
+				"Key1", "\"Value1\"", AssertOperator.EQUALS, true
+		);
 	}
 	
 	@Test
@@ -84,11 +81,11 @@ public class CustomExpectedStepParserTest extends AbstractStepParserTest {
 		
 		AbstractArtefact root = parse(steps);
 		Assert.assertEquals(1,getChildren(root).size());
-		
-		step.artefacts.Assert check1 = (step.artefacts.Assert ) getChildren(root).get(0);
-		Assert.assertEquals("\"Value1\"",check1.getExpected().getExpression());
-		Assert.assertEquals(AssertOperator.BEGINS_WITH,check1.getOperator());
-		Assert.assertTrue(check1.getDoNegate().get());
+
+		checkAssert(
+				(step.artefacts.Assert ) getChildren(root).get(0),
+				"Key1", "\"Value1\"", AssertOperator.BEGINS_WITH, true
+		);
 	}
 	
 	@Test
@@ -97,11 +94,7 @@ public class CustomExpectedStepParserTest extends AbstractStepParserTest {
 		steps.add(step("Key1 contains \"Value1\""));
 		
 		AbstractArtefact root = parse(steps);
-		step.artefacts.Assert check1 = (step.artefacts.Assert ) getChildren(root).get(0);
-		Assert.assertEquals("\"Value1\"",check1.getExpected().getExpression());
-		Assert.assertEquals("Key1",check1.getActual().get());
-		Assert.assertEquals(AssertOperator.CONTAINS,check1.getOperator());
-		Assert.assertFalse(check1.getDoNegate().get());
+		checkAssert((step.artefacts.Assert ) getChildren(root).get(0), "Key1", "\"Value1\"", AssertOperator.CONTAINS, false);
 	}
 	
 	@Test
@@ -110,13 +103,108 @@ public class CustomExpectedStepParserTest extends AbstractStepParserTest {
 		steps.add(step("Key1 beginsWith \"Value1\""));
 		
 		AbstractArtefact root = parse(steps);
-		step.artefacts.Assert check1 = (step.artefacts.Assert ) getChildren(root).get(0);
-		Assert.assertEquals("\"Value1\"",check1.getExpected().getExpression());
-		Assert.assertEquals("Key1",check1.getActual().get());
-		Assert.assertEquals(AssertOperator.BEGINS_WITH,check1.getOperator());
-		Assert.assertFalse(check1.getDoNegate().get());
+		checkAssert((step.artefacts.Assert ) getChildren(root).get(0), "Key1", "\"Value1\"", AssertOperator.BEGINS_WITH, false);
 	}
-	
+
+	@Test
+	public void testLessThan() throws ParsingException {
+		List<AbstractStep> steps = new ArrayList<>();
+		steps.add(step("Key1 < 777"));
+
+		AbstractArtefact root = parse(steps);
+		checkAssert((step.artefacts.Assert) getChildren(root).get(0), "Key1", "777", AssertOperator.LESS_THAN, false);
+
+		steps.clear();
+		steps.add(step("Key1 < 777.77"));
+
+		root = parse(steps);
+		checkAssert((step.artefacts.Assert) getChildren(root).get(0), "Key1", "777.77", AssertOperator.LESS_THAN, false);
+
+		steps.clear();
+		steps.add(step("Key1 not < -777.77"));
+
+		root = parse(steps);
+		checkAssert((step.artefacts.Assert) getChildren(root).get(0), "Key1", "-777.77", AssertOperator.LESS_THAN, true);
+	}
+
+	@Test
+	public void testLessThanOrEquals() throws ParsingException {
+		List<AbstractStep> steps = new ArrayList<>();
+		steps.add(step("Key1 <= 777"));
+
+		AbstractArtefact root = parse(steps);
+		checkAssert((step.artefacts.Assert) getChildren(root).get(0), "Key1", "777", AssertOperator.LESS_THAN_OR_EQUALS, false);
+
+		steps.clear();
+		steps.add(step("Key1 <= 777.77"));
+
+		root = parse(steps);
+		checkAssert((step.artefacts.Assert) getChildren(root).get(0), "Key1", "777.77", AssertOperator.LESS_THAN_OR_EQUALS, false);
+
+		steps.clear();
+		steps.add(step("Key1 not <= -777.77"));
+
+		root = parse(steps);
+		checkAssert((step.artefacts.Assert) getChildren(root).get(0), "Key1", "-777.77", AssertOperator.LESS_THAN_OR_EQUALS, true);
+	}
+
+	@Test
+	public void testGreaterThan() throws ParsingException {
+		List<AbstractStep> steps = new ArrayList<>();
+		steps.add(step("Key1 > 777"));
+
+		AbstractArtefact root = parse(steps);
+		checkAssert((step.artefacts.Assert) getChildren(root).get(0), "Key1", "777", AssertOperator.GREATER_THAN, false);
+
+		steps.clear();
+		steps.add(step("Key1 > 777.77"));
+
+		root = parse(steps);
+		checkAssert((step.artefacts.Assert) getChildren(root).get(0), "Key1", "777.77", AssertOperator.GREATER_THAN, false);
+
+		steps.clear();
+		steps.add(step("Key1 not > -777.77"));
+
+		root = parse(steps);
+		checkAssert((step.artefacts.Assert) getChildren(root).get(0), "Key1", "-777.77", AssertOperator.GREATER_THAN, true);
+	}
+
+	@Test
+	public void testGreaterThanOrEquals() throws ParsingException {
+		List<AbstractStep> steps = new ArrayList<>();
+		steps.add(step("Key1 >= 777"));
+
+		AbstractArtefact root = parse(steps);
+		checkAssert((step.artefacts.Assert) getChildren(root).get(0), "Key1", "777", AssertOperator.GREATER_THAN_OR_EQUALS, false);
+
+		steps.clear();
+		steps.add(step("Key1 >= 777.77"));
+
+		root = parse(steps);
+		checkAssert((step.artefacts.Assert) getChildren(root).get(0), "Key1", "777.77", AssertOperator.GREATER_THAN_OR_EQUALS, false);
+
+		steps.clear();
+		steps.add(step("Key1 not >= -777.77"));
+
+		root = parse(steps);
+		checkAssert((step.artefacts.Assert) getChildren(root).get(0), "Key1", "-777.77", AssertOperator.GREATER_THAN_OR_EQUALS, true);
+	}
+
+	@Test
+	public void testIsNull() throws ParsingException {
+		List<AbstractStep> steps = new ArrayList<>();
+		steps.add(step("Key1 isNull"));
+
+		AbstractArtefact root = parse(steps);
+		checkAssert((step.artefacts.Assert) getChildren(root).get(0), "Key1", null, AssertOperator.IS_NULL, false);
+
+		steps.clear();
+		steps.add(step("Key1 not isNull"));
+
+		root = parse(steps);
+		checkAssert((step.artefacts.Assert) getChildren(root).get(0), "Key1", null, AssertOperator.IS_NULL, true);
+	}
+
 	@Test
 	public void testJsonPath() throws ParsingException {
 		List<AbstractStep> steps = new ArrayList<>();
@@ -124,10 +212,7 @@ public class CustomExpectedStepParserTest extends AbstractStepParserTest {
 		
 		AbstractArtefact root = parse(steps);
 		step.artefacts.Assert check1 = (step.artefacts.Assert ) getChildren(root).get(0);
-		Assert.assertEquals("\"Value1\"",check1.getExpected().getExpression());
-		Assert.assertEquals("$.key1['key2']",check1.getActual().get());
-		Assert.assertEquals(AssertOperator.BEGINS_WITH,check1.getOperator());
-		Assert.assertFalse(check1.getDoNegate().get());
+		checkAssert(check1, "$.key1['key2']", "\"Value1\"", AssertOperator.BEGINS_WITH, false);
 	}
 	
 	@Test
@@ -138,16 +223,16 @@ public class CustomExpectedStepParserTest extends AbstractStepParserTest {
 		
 		AbstractArtefact root = parse(steps);
 		Assert.assertEquals(2,getChildren(root).size());
-		
-		step.artefacts.Assert check1 = (step.artefacts.Assert ) getChildren(root).get(0);
-		Assert.assertEquals("\"Value1\"",check1.getExpected().getExpression());
-		Assert.assertEquals("Key with space",check1.getActual().getValue());
-		Assert.assertEquals(AssertOperator.EQUALS,check1.getOperator());
-		
-		step.artefacts.Assert check2 = (step.artefacts.Assert ) getChildren(root).get(1);
-		Assert.assertEquals("\"Value1\"",check2.getExpected().getExpression());
-		Assert.assertEquals("key1WithoutSpaceBetweenQuotes",check2.getActual().getValue());
-		Assert.assertEquals(AssertOperator.EQUALS,check2.getOperator());
+
+		checkAssert(
+				(step.artefacts.Assert) getChildren(root).get(0),
+				"Key with space", "\"Value1\"", AssertOperator.EQUALS, null
+		);
+
+		checkAssert(
+				(step.artefacts.Assert ) getChildren(root).get(1),
+				"key1WithoutSpaceBetweenQuotes", "\"Value1\"", AssertOperator.EQUALS, null
+		);
 	}
 
 	@Test
@@ -191,18 +276,13 @@ public class CustomExpectedStepParserTest extends AbstractStepParserTest {
 		Assert.assertEquals(3,getChildren(root).size());
 		
 		step.artefacts.Assert check1 = (step.artefacts.Assert ) getChildren(root).get(0);
-		Assert.assertEquals("\"Value1\"",check1.getExpected().getExpression());
-		Assert.assertEquals("Key1",check1.getActual().get());
-		Assert.assertEquals(AssertOperator.EQUALS,check1.getOperator());
+		checkAssert(check1, "Key1", "\"Value1\"", AssertOperator.EQUALS, null);
 
 		Set set1 = (Set) getChildren(root).get(1);
 		Assert.assertEquals("output.getString('Value1')",set1.getValue().getExpression());
 		
 		step.artefacts.Assert check2 = (step.artefacts.Assert ) getChildren(root).get(2);
-		Assert.assertEquals("\"\"",check2.getExpected().getExpression());
-		Assert.assertEquals("Key2",check2.getActual().get());
-		Assert.assertEquals(AssertOperator.EQUALS,check2.getOperator());
-		Assert.assertTrue(check2.getDoNegate().get());
+		checkAssert(check2, "Key2", "\"\"", AssertOperator.EQUALS, true);
 	}
 	
 	@Test
@@ -218,6 +298,19 @@ public class CustomExpectedStepParserTest extends AbstractStepParserTest {
 		
 		Set set1 = (Set) getChildren(root).get(1);
 		Assert.assertEquals("output.getString('Value1')",set1.getValue().getExpression());
+	}
+
+	private void checkAssert(step.artefacts.Assert check, String expectedName, String expectedExpression, AssertOperator expectedOperator, Boolean expectedDoNegate) {
+		Assert.assertEquals(expectedExpression, check.getExpected().getExpression());
+		Assert.assertEquals(expectedName, check.getActual().get());
+		Assert.assertEquals(expectedOperator, check.getOperator());
+		if(expectedDoNegate != null) {
+			if (!expectedDoNegate) {
+				Assert.assertFalse(check.getDoNegate().get());
+			} else {
+				Assert.assertTrue(check.getDoNegate().get());
+			}
+		}
 	}
 	
 	private ExpectedStep step(String input) {

@@ -20,6 +20,7 @@ package step.artefacts.handlers;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.OptionalInt;
 import java.util.function.Consumer;
 
 import step.artefacts.TestScenario;
@@ -56,7 +57,7 @@ public class TestScenarioHandler extends ArtefactHandler<TestScenario, ReportNod
 					reportNodeStatusComposer.addStatusAndRecompose(childReportNode.getStatus());
 				};
 			}
-		}, artefacts.size());
+		}, artefacts.size(), OptionalInt.of(artefacts.size()));
 		
 		node.setStatus(reportNodeStatusComposer.getParentStatus());
 	}
