@@ -15,14 +15,18 @@ import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.collections.inmemory.InMemoryCollectionFactory;
 import step.core.deployment.WebApplicationConfigurationManager;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
 import step.core.execution.model.Execution;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
 import step.core.plans.runner.PlanRunnerResult;
 import step.core.timeseries.TimeSeriesFilterBuilder;
+import step.core.timeseries.TimeSeriesIngestionPipeline;
 import step.core.timeseries.aggregation.TimeSeriesAggregationPipeline;
 import step.core.timeseries.aggregation.TimeSeriesAggregationResponse;
+import step.core.views.ViewPlugin;
+import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.engine.plugins.FunctionPlugin;
 import step.engine.plugins.LocalFunctionPlugin;
 import step.framework.server.ServiceRegistrationCallback;
@@ -85,12 +89,22 @@ public class TimeSeriesExecutionPluginTest extends AbstractKeyword {
 		tsPlugin = new TimeSeriesControllerPlugin();
 		tsPlugin.serverStart(globalContext);
 		timeSeriesAggregationPipeline = globalContext.get(TimeSeriesAggregationPipeline.class);
-		engine = ExecutionEngine.builder().withPlugin(new MeasurementPlugin(GaugeCollectorRegistry.getInstance()))
+		TimeSeriesIngestionPipeline timeSeriesIngestionPipeline = globalContext.get(TimeSeriesIngestionPipeline.class);
+		engine = ExecutionEngine.builder()
+				.withPlugin(new AbstractExecutionEnginePlugin() {
+					@Override
+					public void executionStart(ExecutionContext context) {
+						// The TimeSeriesExecutionPlugin requires the TimeSeriesIngestionPipeline. Add it here to the context
+						context.put(TimeSeriesIngestionPipeline.class, timeSeriesIngestionPipeline);
+					}
+				})
+				.withPlugin(new MeasurementPlugin(GaugeCollectorRegistry.getInstance()))
 				.withPlugin(new FunctionPlugin())
                 .withPlugin(new ThreadPoolPlugin())
 				.withPlugin(new LocalFunctionPlugin())
                 .withPlugin(new BaseArtefactPlugin())
                 .withPlugin(new TimeSeriesExecutionPlugin())
+				.withPlugin(new ViewPlugin())
 				.build();
 
 	}
