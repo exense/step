@@ -26,6 +26,7 @@ import jakarta.json.JsonObjectBuilder;
 import jakarta.json.spi.JsonProvider;
 import step.artefacts.CallFunction;
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.dynamicbeans.DynamicValue;
 import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
 import step.plans.parser.yaml.YamlPlanFields;
@@ -42,7 +43,7 @@ public class KeywordSelectionRule implements ArtefactFieldConversionRule {
     protected final ObjectMapper jsonObjectMapper;
 
     public KeywordSelectionRule() {
-        jsonObjectMapper = new ObjectMapper();
+        jsonObjectMapper = DefaultJacksonMapperProvider.getObjectMapper();
     }
 
     @Override

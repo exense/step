@@ -27,6 +27,7 @@ import jakarta.json.spi.JsonProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.Version;
+import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.scanner.AnnotationScanner;
@@ -60,7 +61,7 @@ public class YamlPlanJsonSchemaGenerator {
 
 	protected final Version actualVersion;
 
-	protected final ObjectMapper objectMapper = new ObjectMapper();
+	protected final ObjectMapper objectMapper = DefaultJacksonMapperProvider.getObjectMapper();
 	protected final JsonProvider jsonProvider = JsonProvider.provider();
 
 	protected final JsonSchemaCreator jsonSchemaCreator;
