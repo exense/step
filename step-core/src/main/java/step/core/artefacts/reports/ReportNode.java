@@ -18,45 +18,33 @@
  ******************************************************************************/
 package step.core.artefacts.reports;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.bson.types.ObjectId;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
-
+import org.bson.types.ObjectId;
 import step.attachments.AttachmentMeta;
 import step.core.accessors.AbstractIdentifiableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.reports.Error;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 @JsonTypeInfo(use=Id.CLASS,property="_class")
 public class ReportNode extends AbstractIdentifiableObject {
 	
 	protected ObjectId parentID;
-		
 	protected String name;
-	
 	protected String executionID;
-
 	protected ObjectId artefactID;
-		
 	protected long executionTime;
-	
 	protected Integer duration;
-		
 	protected List<AttachmentMeta> attachments = new ArrayList<>();
-		
 	protected ReportNodeStatus status;
-		
 	protected Error error;
-
-	protected List<ObjectId> errorSources;
-	
+	protected Boolean isContributingError;
 	protected Map<String, String> customAttributes;
 	
 	@JsonIgnore
@@ -141,14 +129,25 @@ public class ReportNode extends AbstractIdentifiableObject {
 
 	public void setError(Error error) {
 		this.error = error;
+		this.isContributingError = error != null && error.isRoot();
 	}
 
-	public List<ObjectId> getErrorSources() {
-		return errorSources;
+	/**
+	 * @return true if the error associated with this node ({@link ReportNode#getError()}) is marked as a contributing error.
+	 * An error is marked as contributing when it is responsible for the status ({@link ReportNode#getStatus()}) of its parents to be failed.
+	 *
+	 * This method returns null when no error is associated with this node
+	 */
+	public Boolean getContributingError() {
+		return isContributingError;
 	}
 
-	public void setErrorSources(List<ObjectId> errorSources) {
-		this.errorSources = errorSources;
+	public void setContributingError(Boolean contributingError) {
+		isContributingError = contributingError;
+	}
+
+	public void setCustomAttributes(Map<String, String> customAttributes) {
+		this.customAttributes = customAttributes;
 	}
 
 	public AbstractArtefact getResolvedArtefact() {
@@ -158,17 +157,13 @@ public class ReportNode extends AbstractIdentifiableObject {
 	public void setResolvedArtefact(AbstractArtefact resolvedArtefact) {
 		this.resolvedArtefact = resolvedArtefact;
 	}
-	
-	public boolean persistNode() {
-		return (resolvedArtefact == null || resolvedArtefact.isPersistNode()); 
-	}
 
 	public void setError(String errorMessage, int errorCode, boolean isRoot) {
 		Error errorObject = new Error();
 		errorObject.setMsg(errorMessage);
 		errorObject.setRoot(isRoot);
-		errorObject.setCode(0);
-		this.error = errorObject;
+		errorObject.setCode(errorCode);
+		setError(errorObject);
 	}
 	
 	public void addError(String error) {

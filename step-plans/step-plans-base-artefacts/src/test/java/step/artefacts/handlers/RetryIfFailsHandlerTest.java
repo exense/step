@@ -18,172 +18,204 @@
  ******************************************************************************/
 package step.artefacts.handlers;
 
-import static junit.framework.Assert.assertEquals;
-
-import java.util.List;
-
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
-
-import step.artefacts.IfBlock;
 import step.artefacts.RetryIfFails;
-import step.artefacts.Set;
 import step.artefacts.reports.RetryIfFailsReportNode;
 import step.core.artefacts.CheckArtefact;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.execution.ExecutionContext;
+import step.core.plans.Plan;
+import step.core.plans.builder.PlanBuilder;
+import step.core.plans.runner.PlanRunnerResult;
+import step.core.views.ViewManager;
+import step.plugins.views.functions.ErrorDistribution;
 
-public class RetryIfFailsHandlerTest extends AbstractArtefactHandlerTest {
-	
-	@Test
-	public void testSuccess() {
+import java.io.IOException;
+import java.util.List;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
+
+import static org.junit.Assert.assertEquals;
+import static step.plugins.views.functions.ErrorDistributionView.ERROR_DISTRIBUTION_VIEW;
+
+public class RetryIfFailsHandlerTest extends AbstractPlanTest {
+
+	@Before
+	public void before() {
 		setupContext();
-		
-		RetryIfFails block = new RetryIfFails();
-		block.setMaxRetries(new DynamicValue<Integer>(2));
-		
-		CheckArtefact check1 = new CheckArtefact(c->context.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED));
-		block.addChild(check1);
-		
-		execute(block);
-		
-		ReportNode child = getFirstReportNode();
-		assertEquals(child.getStatus(), ReportNodeStatus.PASSED);
-		
-		assertEquals(1, getChildren(child).size());
 	}
-	
+
+	@Test
+	public void testSuccess() throws IOException {
+		RetryIfFails block = new RetryIfFails();
+		block.setMaxRetries(new DynamicValue<>(2));
+
+		CheckArtefact check1 = new CheckArtefact(withPassedReportNode);
+
+		Plan plan = PlanBuilder.create().startBlock(block).add(check1).endBlock().build();
+		PlanRunnerResult result = executePlan(plan);
+
+		assertEquals("RetryIfFails:PASSED:\n" +
+				" Iteration1:PASSED:\n" +
+				"  CheckArtefact:PASSED:\n", result.getTreeAsString());
+		assertEquals("", result.getErrorSummary());
+
+		ErrorDistribution viewModel = (ErrorDistribution) context.get(ViewManager.class).queryView(ERROR_DISTRIBUTION_VIEW, result.getExecutionId());
+		assertEquals(0, viewModel.getCount());
+		assertEquals(0, viewModel.getErrorCount());
+	}
+
 	@Test
 	public void testMaxRetry() {
-		setupContext();
-		
 		RetryIfFails block = new RetryIfFails();
-		block.setMaxRetries(new DynamicValue<Integer>(3));
-		block.setGracePeriod(new DynamicValue<Integer>(1000));
-		
-		CheckArtefact check1 = new CheckArtefact(c->context.getCurrentReportNode().setStatus(ReportNodeStatus.FAILED));
-		block.addChild(check1);		
-		
-		execute(block);
-		
+		block.setMaxRetries(new DynamicValue<>(3));
+		block.setGracePeriod(new DynamicValue<>(1000));
+		block.addChild(new CheckArtefact(withFailedReportNode));
+
+		PlanRunnerResult result = executeArtefact(block);
+
 		ReportNode child = getFirstReportNode();
 		Assert.assertTrue(child.getDuration()>=2000);
 		assertEquals(child.getStatus(), ReportNodeStatus.FAILED);
-		
+		assertEquals("myError", result.getErrorSummary());
+
 		assertEquals(3, getChildren(child).size());
+
+		ErrorDistribution viewModel = (ErrorDistribution) context.get(ViewManager.class).queryView(ERROR_DISTRIBUTION_VIEW, result.getExecutionId());
+		assertEquals(0, viewModel.getCount());
+		// Ensure that the total error count is 1 and not 3 and thus that the RetryIfFailsHandler
+		// properly removed the errors of the failed iterations
+		assertEquals(1, viewModel.getErrorCount());
+		assertEquals(1, (int) viewModel.getCountByErrorCode().get("1"));
+
+		// Ensure that the error of the last iteration is the only contributing error
+		List<ReportNode> reportNodesWithContributingErrors = result.getReportNodesWithErrors().collect(Collectors.toList());
+		assertEquals(1, reportNodesWithContributingErrors.size());
+		ReportNode parentNode = context.getReportNodeAccessor().get(reportNodesWithContributingErrors.get(0).getParentID());
+		assertEquals("Iteration3", parentNode.getName());
+
 	}
-	
+
 	@Test
 	public void testReportLastNodeOnly() {
-		setupContext();
-		
 		RetryIfFails block = new RetryIfFails();
-		block.setMaxRetries(new DynamicValue<Integer>(3));
-		block.setGracePeriod(new DynamicValue<Integer>(1000));
-		block.setReportLastTryOnly(new DynamicValue<Boolean>(true));
-		
-		CheckArtefact check1 = new CheckArtefact(c->{
-			context.getCurrentReportNode().setStatus(ReportNodeStatus.FAILED);
-		});
-		block.addChild(check1);		
-		
-		execute(block);
-		
+		block.setMaxRetries(new DynamicValue<>(3));
+		block.setGracePeriod(new DynamicValue<>(1000));
+		block.setReportLastTryOnly(new DynamicValue<>(true));
+		block.addChild(new CheckArtefact(withFailedReportNode));
+
+		PlanRunnerResult result = executeArtefact(block);
+
 		ReportNode child = getFirstReportNode();
 		Assert.assertTrue(child.getDuration()>=2000);
 		assertEquals(child.getStatus(), ReportNodeStatus.FAILED);
+		assertEquals("myError", result.getErrorSummary());
 		
 		assertEquals(1, getChildren(child).size());
+
+		ErrorDistribution viewModel = (ErrorDistribution) context.get(ViewManager.class).queryView(ERROR_DISTRIBUTION_VIEW, result.getExecutionId());
+		assertEquals(0, viewModel.getCount());
+		// Ensure that the total error count is 1 and not 3 and thus that the RetryIfFailsHandler
+		// properly removed the errors of the failed iterations
+		assertEquals(1, viewModel.getErrorCount());
+		assertEquals(1, (int) viewModel.getCountByErrorCode().get("1"));
 	}
-	
+
 	@Test
 	public void testReportLastNodeOnlySuccess() {
-		setupContext();
-		
 		RetryIfFails block = new RetryIfFails();
-		block.setMaxRetries(new DynamicValue<Integer>(3));
-		block.setGracePeriod(new DynamicValue<Integer>(1000));
-		block.setReportLastTryOnly(new DynamicValue<Boolean>(true));
-		
-		CheckArtefact check1 = new CheckArtefact(c->{
-			context.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED);
-		});
-		block.addChild(check1);		
-		
-		execute(block);
-		
+		block.setMaxRetries(new DynamicValue<>(3));
+		block.setGracePeriod(new DynamicValue<>(1000));
+		block.setReportLastTryOnly(new DynamicValue<>(true));
+		block.addChild(new CheckArtefact(withPassedReportNode));
+
+		PlanRunnerResult result = executeArtefact(block);
+		assertEquals("", result.getErrorSummary());
+
 		ReportNode child = getFirstReportNode();
 		List<ReportNode> children = getChildren(child);
 		assertEquals(child.getStatus(), ReportNodeStatus.PASSED);		
-		assertEquals(1, getChildren(child).size());
+		assertEquals(1, children.size());
+
+		ErrorDistribution viewModel = (ErrorDistribution) context.get(ViewManager.class).queryView(ERROR_DISTRIBUTION_VIEW, result.getExecutionId());
+		assertEquals(0, viewModel.getCount());
+		assertEquals(0, viewModel.getErrorCount());
 	}
-	
+
 	@Test
 	public void testReportLastNodeOnlyTimeout() {
-		setupContext();
-		
 		RetryIfFails block = new RetryIfFails();
-		block.setMaxRetries(new DynamicValue<Integer>(3));
-		block.setGracePeriod(new DynamicValue<Integer>(1000));
-		block.setReportLastTryOnly(new DynamicValue<Boolean>(true));
-		block.setTimeout(new DynamicValue<Integer>(500));
-		
-		CheckArtefact check1 = new CheckArtefact(c->{
-			context.getCurrentReportNode().setStatus(ReportNodeStatus.FAILED);
-		});
-		block.addChild(check1);		
-		
-		execute(block);
-		
+		block.setMaxRetries(new DynamicValue<>(3));
+		block.setGracePeriod(new DynamicValue<>(1000));
+		block.setReportLastTryOnly(new DynamicValue<>(true));
+		block.setTimeout(new DynamicValue<>(500));
+		block.addChild(new CheckArtefact(withFailedReportNode));
+
+		PlanRunnerResult result = executeArtefact(block);
+
+		assertEquals(ReportNodeStatus.FAILED, result.getResult());
+		assertEquals("myError", result.getErrorSummary());
+
 		ReportNode child = getFirstReportNode();
 		System.out.println("Assert child.getDuration()<=2000 with value: " + child.getDuration());
 		Assert.assertTrue(child.getDuration()<2000);
 		Assert.assertTrue(child instanceof RetryIfFailsReportNode);
 		RetryIfFailsReportNode retryIfFailsReportNode = (RetryIfFailsReportNode) child;
-		Assert.assertEquals(2, retryIfFailsReportNode.getTries());
-		Assert.assertEquals(1, retryIfFailsReportNode.getSkipped());
+		assertEquals(2, retryIfFailsReportNode.getTries());
+		assertEquals(1, retryIfFailsReportNode.getSkipped());
 		assertEquals(child.getStatus(), ReportNodeStatus.FAILED);
 		
 		assertEquals(1, getChildren(child).size());
+
+		ErrorDistribution viewModel = (ErrorDistribution) context.get(ViewManager.class).queryView(ERROR_DISTRIBUTION_VIEW, result.getExecutionId());
+		assertEquals(0, viewModel.getCount());
+		// Ensure that the total error count is 1 and not 3 and thus that the RetryIfFailsHandler
+		// properly removed the errors of the failed iterations
+		assertEquals(1, viewModel.getErrorCount());
+		assertEquals(1, (int) viewModel.getCountByErrorCode().get("1"));
 	}
-	
+
 	@Test
 	public void testTimeout() {
-		setupContext();
-		
 		RetryIfFails block = new RetryIfFails();
-		block.setTimeout(new DynamicValue<Integer>(200));
-		block.setGracePeriod(new DynamicValue<Integer>(50));
-		
-		CheckArtefact check1 = new CheckArtefact(c-> {
-				try {
-					Thread.sleep(300);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-		});
-		block.addChild(check1);		
-		
-		execute(block);
-		
+		block.setTimeout(new DynamicValue<>(200));
+		block.setGracePeriod(new DynamicValue<>(50));
+
+		CheckArtefact check1 = new CheckArtefact(withTimeout);
+		block.addChild(check1);
+
+		PlanRunnerResult result = executeArtefact(block);
+
 		ReportNode child = getFirstReportNode();
 		Assert.assertTrue(child.getDuration()>=250);
 		assertEquals(child.getStatus(), ReportNodeStatus.FAILED);
-	}
-	
-	@Test
-	public void testFalse() {
-		setupContext();
-		
-		IfBlock block = new IfBlock("false");
-		block.addChild(new Set());
+		// No error is reported by the consumer "withTimeout"
+		assertEquals("", result.getErrorSummary());
 
-		execute(block);
-		
-		ReportNode child = getFirstReportNode();
-		assertEquals(child.getStatus(), ReportNodeStatus.PASSED);	
-		assertEquals(0, getChildren(child).size());
+		ErrorDistribution viewModel = (ErrorDistribution) context.get(ViewManager.class).queryView(ERROR_DISTRIBUTION_VIEW, result.getExecutionId());
+		assertEquals(0, viewModel.getCount());
+		assertEquals(0, viewModel.getErrorCount());
 	}
+
+	private final Consumer<ExecutionContext> withFailedReportNode = context -> {
+		ReportNode currentReportNode = context.getCurrentReportNode();
+		currentReportNode.setError("myError", 1, true);
+		currentReportNode.setStatus(ReportNodeStatus.FAILED);
+	};
+
+	private final Consumer<ExecutionContext> withPassedReportNode = context ->
+			context.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED);
+
+	private final Consumer<ExecutionContext> withTimeout = c -> {
+		try {
+			Thread.sleep(300);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	};
 }
 

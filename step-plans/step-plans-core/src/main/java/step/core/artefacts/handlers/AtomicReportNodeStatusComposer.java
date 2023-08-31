@@ -18,29 +18,21 @@
  ******************************************************************************/
 package step.core.artefacts.handlers;
 
-import org.bson.types.ObjectId;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
-import step.core.reports.Error;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class AtomicReportNodeStatusComposer {
 
     protected ReportNodeStatus parentStatus;
-    protected List<ObjectId> parentErrorSources;
 
     public AtomicReportNodeStatusComposer(ReportNodeStatus initialStatus) {
         super();
         this.parentStatus = initialStatus;
-        this.parentErrorSources = null;
     }
 
     public AtomicReportNodeStatusComposer(ReportNode initialNode) {
         super();
         this.parentStatus = initialNode.getStatus();
-        this.parentErrorSources = initialNode.getErrorSources();
     }
 
     public synchronized void addStatusAndRecompose(ReportNode reportNode) {
@@ -48,34 +40,9 @@ public class AtomicReportNodeStatusComposer {
         if (parentStatus == null || reportNodeStatus.ordinal() < parentStatus.ordinal()) {
             parentStatus = reportNodeStatus;
         }
-        // Propagate the error of the node if any
-        Error error = reportNode.getError();
-        if (error != null) {
-            doIfParentErrorSourcesSizeBelowLimit(() -> parentErrorSources.add(reportNode.getId()));
-        }
-        // Propagate the errors of the children nodes if any
-        List<ObjectId> errorSources = reportNode.getErrorSources();
-        if (errorSources != null) {
-            doIfParentErrorSourcesSizeBelowLimit(() -> parentErrorSources.addAll(errorSources));
-        }
-
-    }
-
-    private void doIfParentErrorSourcesSizeBelowLimit(Runnable runnable) {
-        initializeParentErrorSourcesIfNull();
-        if (parentErrorSources.size() < 10) {
-            runnable.run();
-        }
-    }
-
-    private void initializeParentErrorSourcesIfNull() {
-        if (parentErrorSources == null) {
-            parentErrorSources = new ArrayList<>();
-        }
     }
 
     public void applyComposedStatusToParentNode(ReportNode parentNode) {
         parentNode.setStatus(parentStatus);
-        parentNode.setErrorSources(parentErrorSources);
     }
 }

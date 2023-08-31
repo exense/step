@@ -65,6 +65,14 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
             @Override
             public void executionStart(ExecutionContext context) {
                 context.put(TimeSeriesAggregationPipeline.class, aggregationPipeline);
+                context.put(TimeSeriesIngestionPipeline.class, mainIngestionPipeline);
+            }
+
+            @Override
+            public void afterExecutionEnd(ExecutionContext context) {
+                // Ensure that all measurements have been flushed before the execution ends
+                // This is critical for the SchedulerTaskAssertions to work properly
+                mainIngestionPipeline.flush();
             }
         };
     }

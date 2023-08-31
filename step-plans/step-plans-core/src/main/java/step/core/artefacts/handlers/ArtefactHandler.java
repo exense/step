@@ -18,18 +18,9 @@
  ******************************************************************************/
 package step.core.artefacts.handlers;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.stream.Collectors;
-
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.ArtefactFilter;
 import step.core.artefacts.WorkArtefactFactory;
@@ -46,6 +37,14 @@ import step.core.miscellaneous.ReportNodeAttachmentManager;
 import step.core.miscellaneous.ValidationException;
 import step.core.variables.VariablesManager;
 import step.resources.ResourceManager;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_NODE extends ReportNode> {
 
@@ -161,7 +160,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 				reportNode.setStatus(ReportNodeStatus.SKIPPED);
 			} else {
 				Object forcePersistBefore = artefact.getCustomAttribute(FORCE_PERSIST_BEFORE);
-				if(persistBefore && artefact.isPersistNode() || Boolean.TRUE.equals(forcePersistBefore)) {
+				if(persistBefore || Boolean.TRUE.equals(forcePersistBefore)) {
 					saveReportNode(reportNode);					
 				}
 		
@@ -189,7 +188,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		
 		reportNode.setDuration((int)duration);
 
-		if(persistAfter && artefact.isPersistNode()) {
+		if(persistAfter) {
 			if(!persistOnlyNonPassed){
 				saveReportNode(reportNode);
 			} else {
@@ -356,11 +355,35 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 			return reportNodeAccessor.save(reportNode);
 		}
 	}
-	
-	protected void removeReportNode(ReportNode node) {
-		reportNodeAccessor.getChildren(node.getId()).forEachRemaining(e->removeReportNode(e));
-		reportNodeAccessor.remove(node.getId());
-		context.getExecutionCallbacks().rollbackReportNode(context, node);
+
+	/**
+	 * Mark all errors of the branch starting from the provided reportNode as non-contributing.
+	 * See {@link ReportNode#getContributingError()} for more details about error contribution
+	 * @param reportNode the root node of the branch
+	 */
+	protected void removeErrorContributionsInReportBranch(ReportNode reportNode) {
+		reportNodeAccessor.getChildren(reportNode.getId()).forEachRemaining(this::removeErrorContributionsInReportBranch);
+
+		context.getExecutionCallbacks().onErrorContributionRemoval(context, reportNode);
+
+		Boolean contributingError = reportNode.getContributingError();
+		if(contributingError != null && contributingError) {
+			reportNode.setContributingError(false);
+			reportNodeAccessor.save(reportNode);
+		}
+
+	}
+
+	/**
+	 * Prune the branch of the report tree starting from the provided reportNode.
+	 * This will remove the provided report node and all its children
+	 * @param reportNode the report node to be pruned
+	 */
+	protected void pruneReportBranch(ReportNode reportNode) {
+		ObjectId reportNodeId = reportNode.getId();
+		reportNodeAccessor.getChildren(reportNodeId).forEachRemaining(this::pruneReportBranch);
+		reportNodeAccessor.remove(reportNodeId);
+		context.getExecutionCallbacks().onReportNodeRemoval(context, reportNode);
 	}
 
 	private REPORT_NODE createReportNode(ReportNode parentReportNode, ARTEFACT artefact) {
