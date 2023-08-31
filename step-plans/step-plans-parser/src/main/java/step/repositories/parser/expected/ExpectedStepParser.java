@@ -21,7 +21,7 @@ public class ExpectedStepParser extends Parser {
 	public static final int
 		T__0=1, T__1=2, NOT=3, EQ=4, REGEX=5, CONTAINS=6, BEGINS=7, ENDS=8, GREATER_THAN_OR_EQUALS=9, 
 		GREATER_THAN=10, LESS_THAN_OR_EQUALS=11, LESS_THAN=12, IS_NULL=13, NUM=14, 
-		WORD=15, STRING=16, SPACE=17;
+		BOOL=15, WORD=16, STRING=17, SPACE=18;
 	public static final int
 		RULE_parse = 0, RULE_expr = 1, RULE_checkExpression = 2, RULE_setExpression = 3, 
 		RULE_assignment = 4, RULE_exportExpression = 5, RULE_controlParameter = 6, 
@@ -40,7 +40,7 @@ public class ExpectedStepParser extends Parser {
 	private static final String[] _SYMBOLIC_NAMES = {
 		null, null, null, "NOT", "EQ", "REGEX", "CONTAINS", "BEGINS", "ENDS", 
 		"GREATER_THAN_OR_EQUALS", "GREATER_THAN", "LESS_THAN_OR_EQUALS", "LESS_THAN", 
-		"IS_NULL", "NUM", "WORD", "STRING", "SPACE"
+		"IS_NULL", "NUM", "BOOL", "WORD", "STRING", "SPACE"
 	};
 	public static final Vocabulary VOCABULARY = new VocabularyImpl(_LITERAL_NAMES, _SYMBOLIC_NAMES);
 
@@ -720,6 +720,7 @@ public class ExpectedStepParser extends Parser {
 	public static class AttributeValueContext extends ParserRuleContext {
 		public TerminalNode NUM() { return getToken(ExpectedStepParser.NUM, 0); }
 		public TerminalNode STRING() { return getToken(ExpectedStepParser.STRING, 0); }
+		public TerminalNode BOOL() { return getToken(ExpectedStepParser.BOOL, 0); }
 		public AttributeValueContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
@@ -748,7 +749,7 @@ public class ExpectedStepParser extends Parser {
 			{
 			setState(69);
 			_la = _input.LA(1);
-			if ( !(_la==NUM || _la==STRING) ) {
+			if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << NUM) | (1L << BOOL) | (1L << STRING))) != 0)) ) {
 			_errHandler.recoverInline(this);
 			} else {
 				consume();
@@ -767,13 +768,13 @@ public class ExpectedStepParser extends Parser {
 	}
 
 	public static final String _serializedATN =
-		"\3\u0430\ud6d1\u8206\uad2d\u4417\uaef1\u8d80\uaadd\3\23J\4\2\t\2\4\3\t"+
+		"\3\u0430\ud6d1\u8206\uad2d\u4417\uaef1\u8d80\uaadd\3\24J\4\2\t\2\4\3\t"+
 		"\3\4\4\t\4\4\5\t\5\4\6\t\6\4\7\t\7\4\b\t\b\4\t\t\t\4\n\t\n\4\13\t\13\4"+
 		"\f\t\f\3\2\3\2\3\2\3\3\3\3\3\3\7\3\37\n\3\f\3\16\3\"\13\3\3\4\3\4\5\4"+
 		"&\n\4\3\4\3\4\5\4*\n\4\3\5\3\5\6\5.\n\5\r\5\16\5/\3\6\3\6\3\6\3\6\3\7"+
 		"\3\7\6\78\n\7\r\7\16\79\3\b\3\b\3\b\3\b\3\t\3\t\3\n\3\n\3\13\3\13\5\13"+
-		"F\n\13\3\f\3\f\3\f\2\2\r\2\4\6\b\n\f\16\20\22\24\26\2\5\3\2\6\17\3\2\21"+
-		"\22\4\2\20\20\22\22F\2\30\3\2\2\2\4 \3\2\2\2\6#\3\2\2\2\b+\3\2\2\2\n\61"+
+		"F\n\13\3\f\3\f\3\f\2\2\r\2\4\6\b\n\f\16\20\22\24\26\2\5\3\2\6\17\3\2\22"+
+		"\23\4\2\20\21\23\23F\2\30\3\2\2\2\4 \3\2\2\2\6#\3\2\2\2\b+\3\2\2\2\n\61"+
 		"\3\2\2\2\f\65\3\2\2\2\16;\3\2\2\2\20?\3\2\2\2\22A\3\2\2\2\24E\3\2\2\2"+
 		"\26G\3\2\2\2\30\31\5\4\3\2\31\32\7\2\2\3\32\3\3\2\2\2\33\37\5\6\4\2\34"+
 		"\37\5\b\5\2\35\37\5\f\7\2\36\33\3\2\2\2\36\34\3\2\2\2\36\35\3\2\2\2\37"+
@@ -783,7 +784,7 @@ public class ExpectedStepParser extends Parser {
 		"\2/\60\3\2\2\2\60\t\3\2\2\2\61\62\5\22\n\2\62\63\7\6\2\2\63\64\5\24\13"+
 		"\2\64\13\3\2\2\2\65\67\7\4\2\2\668\5\16\b\2\67\66\3\2\2\289\3\2\2\29\67"+
 		"\3\2\2\29:\3\2\2\2:\r\3\2\2\2;<\5\22\n\2<=\7\6\2\2=>\5\24\13\2>\17\3\2"+
-		"\2\2?@\t\3\2\2@\21\3\2\2\2AB\7\21\2\2B\23\3\2\2\2CF\5\22\n\2DF\7\22\2"+
+		"\2\2?@\t\3\2\2@\21\3\2\2\2AB\7\22\2\2B\23\3\2\2\2CF\5\22\n\2DF\7\23\2"+
 		"\2EC\3\2\2\2ED\3\2\2\2F\25\3\2\2\2GH\t\4\2\2H\27\3\2\2\2\t\36 %)/9E";
 	public static final ATN _ATN =
 		new ATNDeserializer().deserialize(_serializedATN.toCharArray());
