@@ -27,14 +27,15 @@ import step.core.controller.ControllerSettingPlugin;
 import step.core.plans.PlanAccessor;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
+import step.repositories.ArtifactRepositoryConstants;
 
 @Plugin(dependencies = {ControllerSettingPlugin.class})
 public class ArtifactRepositoryPlugin extends AbstractControllerPlugin {
 
     private static final Logger logger = LoggerFactory.getLogger(ArtifactRepositoryPlugin.class);
 
-    public static final String MAVEN_REPO_ID = "Artifact";
-    public static final String RESOURCE_REPO_ID = "ResourceArtifact";
+    public static final String MAVEN_REPO_ID = ArtifactRepositoryConstants.MAVEN_REPO_ID;
+    public static final String RESOURCE_REPO_ID = ArtifactRepositoryConstants.RESOURCE_REPO_ID;
 
     @Override
     public void serverStart(GlobalContext context) throws Exception {

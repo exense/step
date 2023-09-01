@@ -191,16 +191,20 @@ public class FunctionPackageManager implements Closeable {
 			}
 
 			// cleanup library resource
-			if (previousFunctionPackage.getPackageLibrariesLocation() != null
-					&& newFunctionPackage.getPackageLibrariesLocation() != null) {
-				String previousResourceId = getLibraryResourceId(previousFunctionPackage);
-				String newResourceId = getLibraryResourceId(newFunctionPackage);
-				if (previousResourceId != null && !previousResourceId.equals(newResourceId)) {
-					if (resourceManager.resourceExists(previousResourceId)) {
-						resourceManager.deleteResource(previousResourceId);
-					}
-				}
-			}
+
+			// in SED-2341 we decided to remove cleanup of linked libraries,
+			// because normally these libraries can be shared between several keyword packages
+
+//			if (previousFunctionPackage.getPackageLibrariesLocation() != null
+//					&& newFunctionPackage.getPackageLibrariesLocation() != null) {
+//				String previousResourceId = getLibraryResourceId(previousFunctionPackage);
+//				String newResourceId = getLibraryResourceId(newFunctionPackage);
+//				if (previousResourceId != null && !previousResourceId.equals(newResourceId)) {
+//					if (resourceManager.resourceExists(previousResourceId)) {
+//						resourceManager.deleteResource(previousResourceId);
+//					}
+//				}
+//			}
 		}
 	}
 

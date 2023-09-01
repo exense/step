@@ -19,17 +19,29 @@
 package step.plugins.maven;
 
 import org.apache.maven.artifact.Artifact;
+import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
+import org.eclipse.aether.RepositorySystem;
+import org.eclipse.aether.artifact.DefaultArtifact;
+import org.eclipse.aether.repository.RemoteRepository;
+import org.eclipse.aether.resolution.ArtifactRequest;
+import org.eclipse.aether.resolution.ArtifactResolutionException;
+import org.eclipse.aether.resolution.ArtifactResult;
+import step.client.accessors.RemoteAccessors;
+import step.client.collections.remote.RemoteCollectionFactory;
 import step.client.credentials.ControllerCredentials;
+import step.core.accessors.AbstractAccessor;
+import step.core.accessors.AbstractIdentifiableObject;
+import step.core.entities.EntityManager;
+import step.resources.Resource;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 public abstract class AbstractStepPluginMojo extends AbstractMojo {
 
@@ -44,6 +56,14 @@ public abstract class AbstractStepPluginMojo extends AbstractMojo {
 
 	@Parameter(defaultValue = "${project.version}", readonly = true)
 	private String projectVersion;
+
+	@Parameter(defaultValue = "${session}", readonly = true, required = true)
+	protected MavenSession session;
+
+	@Component
+	protected RepositorySystem repositorySystem;
+
+	protected static final String ID_FIELD = AbstractIdentifiableObject.ID;
 
 	public String getUrl() {
 		return url;
@@ -86,7 +106,53 @@ public abstract class AbstractStepPluginMojo extends AbstractMojo {
 		return new ControllerCredentials(getUrl(), null);
 	}
 
-	protected Artifact getArtifactByClassifier(String artifactClassifier, String groupId, String artifactId, String artifactVersion) {
+	protected String resolveKeywordLibResourceByCriteria(Map<String, String> libStepResourceSearchCriteria) throws MojoExecutionException {
+		getLog().info("Using Step resource " + libStepResourceSearchCriteria + " as library file");
+
+		if (libStepResourceSearchCriteria.containsKey(ID_FIELD)) {
+			// just use the specified id
+			return libStepResourceSearchCriteria.get(ID_FIELD);
+		} else {
+			// search resources by attributes except for id
+			Map<String, String> attributes = new HashMap<>(libStepResourceSearchCriteria);
+			attributes.remove(ID_FIELD);
+			AbstractAccessor<Resource> remoteResourcesAccessor = createRemoteResourcesAccessor();
+			List<Resource> foundResources = StreamSupport.stream(remoteResourcesAccessor.findManyByAttributes(attributes), false).collect(Collectors.toList());
+			if (foundResources.isEmpty()) {
+				throw new MojoExecutionException("Library resource is not resolved by attributes: " + attributes);
+			} else if (foundResources.size() > 1) {
+				throw new MojoExecutionException("Ambiguous library resources ( " + foundResources.stream().map(AbstractIdentifiableObject::getId).collect(Collectors.toList()) + " ) are resolved by attributes: " + attributes);
+			} else {
+				return foundResources.get(0).getId().toString();
+			}
+		}
+	}
+
+	protected AbstractAccessor<Resource> createRemoteResourcesAccessor() {
+		RemoteAccessors remoteAccessors = new RemoteAccessors(new RemoteCollectionFactory(getControllerCredentials()));
+		return remoteAccessors.getAbstractAccessor(EntityManager.resources, Resource.class);
+	}
+
+	protected org.eclipse.aether.artifact.Artifact getRemoteArtifact(String groupId, String artifactId, String artifactVersion, String classifier, String extension) throws MojoExecutionException {
+		ArtifactResult artifactResult;
+		try {
+			List<RemoteRepository> repositories = getProject().getRemoteProjectRepositories();
+			artifactResult = repositorySystem.resolveArtifact(
+					session.getRepositorySession(),
+					new ArtifactRequest(new DefaultArtifact(groupId, artifactId, classifier, extension, artifactVersion), repositories, null)
+			);
+		} catch (ArtifactResolutionException e) {
+			throw logAndThrow("unable to resolve artefact", e);
+		}
+
+		if (artifactResult != null) {
+			return artifactResult.getArtifact();
+		} else {
+			return null;
+		}
+	}
+
+	protected Artifact getProjectArtifact(String artifactClassifier, String groupId, String artifactId, String artifactVersion) {
 		Set<Artifact> allProjectArtifacts = new HashSet<>(getProject().getArtifacts());
 		allProjectArtifacts.add(getProject().getArtifact());
 		allProjectArtifacts.addAll(getProject().getAttachedArtifacts());

@@ -20,8 +20,8 @@ package step.plugins.maven;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Parameter;
-import step.constants.ArtifactConstants;
 import step.core.repositories.RepositoryObjectReference;
+import step.repositories.ArtifactRepositoryConstants;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -30,6 +30,7 @@ public abstract class AbstractRunDeployedAutomationPackagesMojo extends Abstract
 
 	@Parameter(property = "step-run-auto-packages.step-maven-settings", required = false)
 	private String stepMavenSettings;
+
 
 	public AbstractRunDeployedAutomationPackagesMojo() {
 	}
@@ -44,19 +45,33 @@ public abstract class AbstractRunDeployedAutomationPackagesMojo extends Abstract
 
 	@Override
 	protected RepositoryObjectReference prepareExecutionRepositoryObject(Map<String, Object> executionContext) {
-		return new RepositoryObjectReference("Artifact", prepareRepositoryParameters());
+		return new RepositoryObjectReference(ArtifactRepositoryConstants.MAVEN_REPO_ID, prepareRepositoryParameters());
 	}
 
 	private HashMap<String, String> prepareRepositoryParameters() {
 		HashMap<String, String> repoParams = new HashMap<>();
-		repoParams.put(ArtifactConstants.PARAM_GROUP_ID, getGroupId());
-		repoParams.put(ArtifactConstants.PARAM_ARTIFACT_ID, getArtifactId());
-		repoParams.put(ArtifactConstants.PARAM_VERSION, getArtifactVersion());
+		repoParams.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_GROUP_ID, getGroupId());
+		repoParams.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_ARTIFACT_ID, getArtifactId());
+		repoParams.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_VERSION, getArtifactVersion());
 		if (getArtifactClassifier() != null && !getArtifactClassifier().isEmpty()) {
-			repoParams.put(ArtifactConstants.PARAM_CLASSIFIER, getArtifactClassifier());
+			repoParams.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_CLASSIFIER, getArtifactClassifier());
 		}
+
+		if (getLibArtifactGroupId() != null && !getLibArtifactGroupId().isEmpty()) {
+			repoParams.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_LIB_GROUP_ID, getLibArtifactGroupId());
+		}
+		if (getLibArtifactId() != null && !getLibArtifactId().isEmpty()) {
+			repoParams.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_LIB_ARTIFACT_ID, getLibArtifactId());
+		}
+		if (getLibArtifactVersion() != null && !getLibArtifactVersion().isEmpty()) {
+			repoParams.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_LIB_VERSION, getLibArtifactVersion());
+		}
+		if (getLibArtifactClassifier() != null && !getLibArtifactClassifier().isEmpty()) {
+			repoParams.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_LIB_CLASSIFIER, getArtifactClassifier());
+		}
+
 		if (getStepMavenSettings() != null && !getStepMavenSettings().isEmpty()) {
-			repoParams.put(ArtifactConstants.PARAM_MAVEN_SETTINGS, getStepMavenSettings());
+			repoParams.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_MAVEN_SETTINGS, getStepMavenSettings());
 		}
 		return repoParams;
 	}
@@ -68,5 +83,4 @@ public abstract class AbstractRunDeployedAutomationPackagesMojo extends Abstract
 	public void setStepMavenSettings(String stepMavenSettings) {
 		this.stepMavenSettings = stepMavenSettings;
 	}
-
 }
