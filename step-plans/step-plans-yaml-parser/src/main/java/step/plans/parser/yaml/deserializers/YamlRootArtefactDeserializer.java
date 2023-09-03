@@ -26,15 +26,16 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import step.artefacts.CallFunction;
 import step.core.artefacts.AbstractArtefact;
 import step.core.plans.Plan;
 import step.core.scanner.CachedAnnotationScanner;
 import step.plans.parser.yaml.YamlPlanFields;
+import step.plans.parser.yaml.YamlPlanReaderExtender;
+import step.plans.parser.yaml.YamlPlanReaderExtension;
 import step.plans.parser.yaml.model.YamlRootArtefact;
 import step.plans.parser.yaml.rules.*;
 import step.plans.parser.yaml.schema.JsonSchemaFieldProcessingException;
-import step.plans.parser.yaml.YamlPlanReaderExtender;
-import step.plans.parser.yaml.YamlPlanReaderExtension;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -90,6 +91,7 @@ public class YamlRootArtefactDeserializer extends JsonDeserializer<YamlRootArtef
         // and 'token' aka 'selectionCriteria' field should contain all input values (dynamic values) as json string
         //  but in simplified format we represent input values as array of key / values
         res.add(new KeywordSelectionRule().getArtefactFieldDeserializationProcessor());
+        res.add(new KeywordRoutingRule().getArtefactFieldDeserializationProcessor());
         res.add(new FunctionGroupSelectionRule().getArtefactFieldDeserializationProcessor());
 
         // for 'Check' we always use the dynamic expression for 'expression' field (static value is not supported)
@@ -120,20 +122,22 @@ public class YamlRootArtefactDeserializer extends JsonDeserializer<YamlRootArtef
         List<String> artifactNames = new ArrayList<String>();
         childrenArtifactNames.forEachRemaining(artifactNames::add);
 
-        String shortArtifactClass = null;
+        String yamlArtifactClass = null;
         if (artifactNames.size() == 0) {
             throw new JsonSchemaFieldProcessingException("Artifact should have a name");
         } else if (artifactNames.size() > 1) {
             throw new JsonSchemaFieldProcessingException("Artifact should have only one name");
         } else {
-            shortArtifactClass = artifactNames.get(0);
+            yamlArtifactClass = artifactNames.get(0);
         }
 
-        if (shortArtifactClass != null) {
-            JsonNode artifactData = yamlArtefact.get(shortArtifactClass);
-            techArtefact.put(Plan.JSON_CLASS_FIELD, shortArtifactClass);
+        if (yamlArtifactClass != null) {
+            // java artifact has UpperCamelCase, but in Yaml we use lowerCamelCase
+            String javaArtifactClass = YamlPlanFields.yamlArtefactNameToJava(yamlArtifactClass);
+            JsonNode artifactData = yamlArtefact.get(yamlArtifactClass);
+            techArtefact.put(Plan.JSON_CLASS_FIELD, javaArtifactClass);
 
-            fillDefaultValuesForArtifactFields(shortArtifactClass, (ObjectNode) artifactData);
+            fillDefaultValuesForArtifactFields(javaArtifactClass, (ObjectNode) artifactData);
 
             Iterator<Map.Entry<String, JsonNode>> fields = artifactData.fields();
             while (fields.hasNext()) {
@@ -142,7 +146,7 @@ public class YamlRootArtefactDeserializer extends JsonDeserializer<YamlRootArtef
                 // process some fields ('name', 'children' etc.) in special way
                 boolean processedAsSpecialField = false;
                 for (YamlArtefactFieldDeserializationProcessor proc : customFieldProcessors) {
-                    if (proc.deserializeArtefactField(shortArtifactClass, next, techArtefact, codec)) {
+                    if (proc.deserializeArtefactField(javaArtifactClass, next, techArtefact, codec)) {
                         processedAsSpecialField = true;
                     }
                 }
@@ -157,11 +161,24 @@ public class YamlRootArtefactDeserializer extends JsonDeserializer<YamlRootArtef
         return techArtefact;
     }
 
-    private static void fillDefaultValuesForArtifactFields(String shortArtifactClass, ObjectNode artifactData) {
-        // name is required attribute in json schema
+    private static void fillDefaultValuesForArtifactFields(String javaArtifactClass, ObjectNode artifactData) {
+        // if artefact name (nodeName) is not defined in YAML, we use the artefact class as default value
+        // but for CallFunction we use the keyword name as default
         JsonNode name = artifactData.get(YamlPlanFields.NAME_YAML_FIELD);
         if (name == null) {
-            artifactData.put(YamlPlanFields.NAME_YAML_FIELD, shortArtifactClass);
+            if(!javaArtifactClass.equals(CallFunction.ARTEFACT_NAME)) {
+                artifactData.put(YamlPlanFields.NAME_YAML_FIELD, javaArtifactClass);
+            } else {
+                JsonNode functionNode = artifactData.get(YamlPlanFields.CALL_FUNCTION_FUNCTION_YAML_FIELD);
+                if(functionNode != null && !functionNode.isContainerNode()){
+                    String staticFunctionName = functionNode.asText();
+                    if(!staticFunctionName.isEmpty()){
+                        artifactData.put(YamlPlanFields.NAME_YAML_FIELD, staticFunctionName);
+                    } else {
+                        artifactData.put(YamlPlanFields.NAME_YAML_FIELD, javaArtifactClass);
+                    }
+                }
+            }
         }
     }
 

@@ -1,18 +1,16 @@
 version: 1.0.0
 name: "test plan"
 root:
-  Sequence:
-    nodeName: Sequence
+  sequence:
     continueOnError: false
     children:
-      - If:
+      - if:
           nodeName: IfBlock
           condition:
             expression: "controllerSettings.getSettingByKey('housekeeping_enabled').getValue()=='true'"
           description: "my description"
           children:
-            - Assert:
-                nodeName: Assert
+            - assert:
                 actual:
                   expression: "'status'"
                 operator: "EQUALS"
@@ -20,8 +18,7 @@ root:
                 expected:
                   expression: "'ok'"
                 customErrorMessage: "my custom error"
-            - CallKeyword:
-                nodeName: CallKeyword
+            - callKeyword:
                 keyword: "callExisting3"
                 remote: true
                 inputs:

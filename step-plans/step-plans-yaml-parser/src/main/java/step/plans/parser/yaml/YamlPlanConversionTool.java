@@ -18,10 +18,6 @@
  ******************************************************************************/
 package step.plans.parser.yaml;
 
-import step.core.plans.Plan;
-import step.plans.nl.RootArtefactType;
-import step.plans.nl.parser.PlanParser;
-
 import java.io.*;
 
 public class YamlPlanConversionTool {
@@ -31,7 +27,6 @@ public class YamlPlanConversionTool {
         try (OutputStreamWriter writer = new OutputStreamWriter(System.out)) {
             writer.write("\n ---- STEP PLAN CONVERSION TOOL - STARTED ----\n");
             YamlPlanReader yamlPlanReader = new YamlPlanReader();
-            PlanParser plainTextPlanParser = new PlanParser();
 
             if (folder == null || folder.isEmpty()) {
                 writer.write("ERROR: Input folder is not specified in program arguments\n");
@@ -66,12 +61,10 @@ public class YamlPlanConversionTool {
                 try (FileInputStream fis = new FileInputStream(plainTextPlan); FileOutputStream fos = new FileOutputStream(outFile)) {
                     writer.write("Converting " + plainTextPlan.getName() + " ...\n");
 
-                    // read plan from plain text format
-                    // TODO: always TestCase?
-                    Plan planFromPlainText = plainTextPlanParser.parse(fis, RootArtefactType.TestCase);
-
                     // convert to simple yaml and save in output file
-                    yamlPlanReader.writeYamlPlan(fos, planFromPlainText);
+                    String fileName = plainTextPlan.getName();
+                    int extensionIndex = fileName.lastIndexOf(".plan");
+                    yamlPlanReader.convertFromPlainTextToYaml(extensionIndex > 0 ? fileName.substring(0, extensionIndex) : fileName, fis, fos);
 
                     writer.write("SUCCESS: " + outFile.getAbsolutePath() + "\n");
                 } catch (Exception e) {

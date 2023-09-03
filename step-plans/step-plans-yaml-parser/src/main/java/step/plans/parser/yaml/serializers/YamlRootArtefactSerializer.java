@@ -91,6 +91,7 @@ public class YamlRootArtefactSerializer extends JsonSerializer<YamlRootArtefact>
 
         // -- RULES FOR OS ARTEFACTS
         result.add(new KeywordSelectionRule().getArtefactFieldSerializationProcessor());
+        result.add(new KeywordRoutingRule().getArtefactFieldSerializationProcessor());
         result.add(new KeywordInputsRule().getArtefactFieldSerializationProcessor());
         result.add(new FunctionGroupSelectionRule().getArtefactFieldSerializationProcessor());
         result.add(new CheckExpressionRule().getArtefactFieldSerializationProcessor());
@@ -120,7 +121,7 @@ public class YamlRootArtefactSerializer extends JsonSerializer<YamlRootArtefact>
     private void processArtefact(JsonGenerator gen, AbstractArtefact artefact) throws IOException, IllegalAccessException {
         gen.writeStartObject();
         String artefactName = AbstractArtefact.getArtefactName(artefact.getClass());
-        gen.writeFieldName(artefactName);
+        gen.writeFieldName(YamlPlanFields.javaArtefactNameToYaml(artefactName));
         gen.writeStartObject();
         serializeArtefactFields(artefact, gen);
         gen.writeEndObject();

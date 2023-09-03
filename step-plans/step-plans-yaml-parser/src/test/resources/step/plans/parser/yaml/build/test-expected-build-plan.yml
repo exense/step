@@ -2,43 +2,43 @@
 version: "1.0.0"
 name: "Build"
 root:
-  TestCase:
+  testCase:
     nodeName: "Build"
     continueParentNodeExecutionOnError: false
     instrumentNode: false
     skipNode: false
     children:
-      - Check:
+      - check:
           nodeName: "Check BRANCH is given"
           continueParentNodeExecutionOnError: false
           instrumentNode: false
           skipNode: false
           expression: "binding.hasVariable(\"BRANCH\") && !BRANCH.isBlank()"
-      - Check:
+      - check:
           nodeName: "Check PROJECT is given"
           continueParentNodeExecutionOnError: false
           instrumentNode: false
           skipNode: false
           expression: "binding.hasVariable(\"PROJECT\") && !PROJECT.isBlank()"
-      - Check:
+      - check:
           nodeName: "Check ENVIRONMENT is given"
           continueParentNodeExecutionOnError: false
           instrumentNode: false
           skipNode: false
           expression: "binding.hasVariable(\"ENVIRONMENT\") && !ENVIRONMENT.isBlank()"
-      - If:
+      - if:
           nodeName: "If ENVIRONMENT==\"PRODUCTION\""
           continueParentNodeExecutionOnError: false
           instrumentNode: false
           skipNode: false
           children:
-            - Check:
+            - check:
                 nodeName: "Check VERSION is given when releasing into PRODUCTION"
                 continueParentNodeExecutionOnError: false
                 instrumentNode: false
                 skipNode: false
                 expression: "binding.hasVariable(\"VERSION\") && !VERSION.isBlank()"
-            - Check:
+            - check:
                 nodeName: "Check VERSION is properly formated"
                 continueParentNodeExecutionOnError: false
                 instrumentNode: false
@@ -46,20 +46,20 @@ root:
                 expression: "VERSION ==~ /\\d+\\.\\d+\\.\\d+/"
           condition:
             expression: "ENVIRONMENT==\"PRODUCTION\""
-      - Set:
+      - set:
           nodeName: "Init SCALEUP"
           continueParentNodeExecutionOnError: false
           instrumentNode: false
           skipNode: false
           value: ""
           key: "SCALEUP"
-      - If:
+      - if:
           nodeName: "If OS==LINUX"
           continueParentNodeExecutionOnError: false
           instrumentNode: false
           skipNode: false
           children:
-            - CallPlan:
+            - callPlan:
                 nodeName: "Scale Up Build Agents"
                 continueParentNodeExecutionOnError: false
                 instrumentNode: false
@@ -69,38 +69,36 @@ root:
                 planId: "6386268253799329484c57ef"
           condition:
             expression: "OS==\"LINUX\""
-      - Sequence:
-          nodeName: "Sequence"
+      - sequence:
           continueParentNodeExecutionOnError: false
           instrumentNode: false
           skipNode: false
           children:
-            - Session:
-                nodeName: "Session"
+            - session:
                 continueParentNodeExecutionOnError: false
                 instrumentNode: false
                 skipNode: false
                 children:
-                  - Sequence:
+                  - sequence:
                       nodeName: "Main Sequence"
                       continueParentNodeExecutionOnError: false
                       instrumentNode: false
                       skipNode: false
                       children:
-                        - BeforeSequence:
+                        - beforeSequence:
                             nodeName: "BeforeSequence - Init variables"
                             continueParentNodeExecutionOnError: false
                             instrumentNode: false
                             skipNode: false
                             children:
-                              - Set:
+                              - set:
                                   nodeName: "Init STATUS - FAILED"
                                   continueParentNodeExecutionOnError: false
                                   instrumentNode: false
                                   skipNode: false
                                   value: "FAILED"
                                   key: "STATUS"
-                              - Set:
+                              - set:
                                   nodeName: "Init FOLDER"
                                   continueParentNodeExecutionOnError: false
                                   instrumentNode: false
@@ -108,7 +106,7 @@ root:
                                   value:
                                     expression: ""
                                   key: "FOLDER"
-                              - Set:
+                              - set:
                                   nodeName: "Init FTP_FILES"
                                   continueParentNodeExecutionOnError: true
                                   instrumentNode: false
@@ -116,7 +114,7 @@ root:
                                   description: ""
                                   value: ""
                                   key: "FTP_FILES"
-                              - Set:
+                              - set:
                                   nodeName: "Init TESTS"
                                   continueParentNodeExecutionOnError: false
                                   instrumentNode: false
@@ -124,7 +122,7 @@ root:
                                   description: ""
                                   value: ""
                                   key: "TESTS"
-                              - Set:
+                              - set:
                                   nodeName: "Init DEPLOYED_INSTANCES"
                                   continueParentNodeExecutionOnError: true
                                   instrumentNode: false
@@ -132,7 +130,7 @@ root:
                                   description: ""
                                   value: ""
                                   key: "DEPLOYED_INSTANCES"
-                              - Set:
+                              - set:
                                   nodeName: "Set BRANCH_EXIST if not given"
                                   continueParentNodeExecutionOnError: false
                                   instrumentNode: false
@@ -141,7 +139,7 @@ root:
                                     expression: "!binding.hasVariable(\"BRANCH_EXIST\")? true\
                             \ : Boolean.parseBoolean(\"${BRANCH_EXIST}\")"
                                   key: "BRANCH_EXIST"
-                              - Set:
+                              - set:
                                   nodeName: "Set OS if not given"
                                   continueParentNodeExecutionOnError: false
                                   instrumentNode: false
@@ -149,7 +147,7 @@ root:
                                   value:
                                     expression: "!binding.hasVariable(\"OS\")? \"LINUX\" : OS"
                                   key: "OS"
-                              - Set:
+                              - set:
                                   nodeName: "Set SHOULD_PROPAGATE if not given"
                                   continueParentNodeExecutionOnError: false
                                   instrumentNode: false
@@ -158,7 +156,7 @@ root:
                                     expression: "!binding.hasVariable(\"SHOULD_PROPAGATE\")?\
                             \ true : Boolean.parseBoolean(\"${SHOULD_PROPAGATE}\")"
                                   key: "SHOULD_PROPAGATE"
-                              - Set:
+                              - set:
                                   nodeName: "Set EMAIL if not given"
                                   continueParentNodeExecutionOnError: false
                                   instrumentNode: false
@@ -167,7 +165,7 @@ root:
                                     expression: "!binding.hasVariable(\"EMAIL\")? DEFAULT_EMAIL\
                             \ : EMAIL"
                                   key: "EMAIL"
-                              - Set:
+                              - set:
                                   nodeName: "Set AUTHOR if not given"
                                   continueParentNodeExecutionOnError: false
                                   instrumentNode: false
@@ -176,7 +174,7 @@ root:
                                     expression: "!binding.hasVariable(\"AUTHOR\")? \"Dev team\"\
                             \ : AUTHOR"
                                   key: "AUTHOR"
-                              - Set:
+                              - set:
                                   nodeName: "Set SEND_EMAIL if not given"
                                   continueParentNodeExecutionOnError: false
                                   instrumentNode: false
@@ -185,7 +183,7 @@ root:
                                     expression: "!binding.hasVariable(\"SEND_EMAIL\")?true:Boolean.parseBoolean(\"\
                             ${SEND_EMAIL}\")"
                                   key: "SEND_EMAIL"
-                              - Set:
+                              - set:
                                   nodeName: "Set VERSION if not given"
                                   continueParentNodeExecutionOnError: false
                                   instrumentNode: false
@@ -196,7 +194,7 @@ root:
                             \ : VERSION"
                                   key: "VERSION"
                             continueOnError: false
-                        - Echo:
+                        - echo:
                             nodeName: "Echo info"
                             continueParentNodeExecutionOnError: false
                             instrumentNode: false
@@ -204,7 +202,7 @@ root:
                             text:
                               expression: "\"Building ${PROJECT}, for branch ${BRANCH} version\
                         \ ${VERSION} in environment ${ENVIRONMENT}\""
-                        - CallPlan:
+                        - callPlan:
                             nodeName: "Create unique folder"
                             continueParentNodeExecutionOnError: false
                             instrumentNode: false
@@ -212,7 +210,7 @@ root:
                             input: "{}"
                             selectionAttributes: "{}"
                             planId: "618aa49f34603040f758fd12"
-                        - CallPlan:
+                        - callPlan:
                             nodeName: "Checkout git"
                             continueParentNodeExecutionOnError: false
                             instrumentNode: false
@@ -220,14 +218,14 @@ root:
                             input: "{}"
                             selectionAttributes: "{}"
                             planId: "63fc7ffd32ed452ab30e0116"
-                        - Set:
+                        - set:
                             nodeName: "Init JSON"
                             continueParentNodeExecutionOnError: false
                             instrumentNode: false
                             skipNode: false
                             value: ""
                             key: "JSON"
-                        - CallPlan:
+                        - callPlan:
                             nodeName: "Read JSON"
                             continueParentNodeExecutionOnError: false
                             instrumentNode: false
@@ -235,7 +233,7 @@ root:
                             input: "{}"
                             selectionAttributes: "{}"
                             planId: "618aa49f34603040f758fd0b"
-                        - CallPlan:
+                        - callPlan:
                             nodeName: "Run action"
                             continueParentNodeExecutionOnError: false
                             instrumentNode: false
@@ -243,7 +241,7 @@ root:
                             input: "{}"
                             selectionAttributes: "{}"
                             planId: "618aa49f34603040f758fd15"
-                        - CallPlan:
+                        - callPlan:
                             nodeName: "Create release"
                             continueParentNodeExecutionOnError: false
                             instrumentNode: false
@@ -251,13 +249,12 @@ root:
                             input: "{}"
                             selectionAttributes: "{}"
                             planId: "64145b48d91d580809da608f"
-                        - RetryIfFails:
-                            nodeName: "RetryIfFails"
+                        - retryIfFails:
                             continueParentNodeExecutionOnError: false
                             instrumentNode: false
                             skipNode: false
                             children:
-                              - CallPlan:
+                              - callPlan:
                                   nodeName: "Set latest version"
                                   continueParentNodeExecutionOnError: false
                                   instrumentNode: false
@@ -270,20 +267,20 @@ root:
                             timeout: 0
                             gracePeriod: 1000
                             maxRetries: 3
-                        - Set:
+                        - set:
                             nodeName: "Set STATUS at PASSED"
                             continueParentNodeExecutionOnError: false
                             instrumentNode: false
                             skipNode: false
                             value: "PASSED"
                             key: "STATUS"
-                        - AfterSequence:
+                        - afterSequence:
                             nodeName: "AfterSequence - Set result"
                             continueParentNodeExecutionOnError: false
                             instrumentNode: false
                             skipNode: false
                             children:
-                              - CallPlan:
+                              - callPlan:
                                   nodeName: "Set build result"
                                   continueParentNodeExecutionOnError: false
                                   instrumentNode: false
@@ -291,13 +288,13 @@ root:
                                   input: "{}"
                                   selectionAttributes: "{}"
                                   planId: "64145bc4d91d580809daa2f1"
-                              - If:
+                              - if:
                                   nodeName: "If ENVIRONMENT==\"PRODUCTION\" && STATUS==\"PASSED\""
                                   continueParentNodeExecutionOnError: false
                                   instrumentNode: false
                                   skipNode: false
                                   children:
-                                    - Set:
+                                    - set:
                                         nodeName: "Set EXEC_ID"
                                         continueParentNodeExecutionOnError: false
                                         instrumentNode: false
@@ -305,7 +302,7 @@ root:
                                         value:
                                           expression: "context.getExecutionId()"
                                         key: "EXEC_ID"
-                                    - CallKeyword:
+                                    - callKeyword:
                                         nodeName: "Set as \"Retain this execution\""
                                         continueParentNodeExecutionOnError: false
                                         instrumentNode: false
@@ -322,25 +319,24 @@ root:
                                   condition:
                                     expression: "ENVIRONMENT==\"PRODUCTION\" && STATUS==\"PASSED\""
                             continueOnError: false
-                        - AfterSequence:
+                        - afterSequence:
                             nodeName: "AfterSequence - Send email"
                             continueParentNodeExecutionOnError: false
                             instrumentNode: false
                             skipNode: false
                             children:
-                              - If:
+                              - if:
                                   nodeName: "If SEND_EMAIL"
                                   continueParentNodeExecutionOnError: false
                                   instrumentNode: false
                                   skipNode: false
                                   children:
-                                    - RetryIfFails:
-                                        nodeName: "RetryIfFails"
+                                    - retryIfFails:
                                         continueParentNodeExecutionOnError: false
                                         instrumentNode: false
                                         skipNode: false
                                         children:
-                                          - CallPlan:
+                                          - callPlan:
                                               nodeName: "Send Email"
                                               continueParentNodeExecutionOnError: false
                                               instrumentNode: false
@@ -356,13 +352,13 @@ root:
                                   condition:
                                     expression: "SEND_EMAIL"
                             continueOnError: true
-                        - AfterSequence:
+                        - afterSequence:
                             nodeName: "AfterSequence - Clean folder"
                             continueParentNodeExecutionOnError: false
                             instrumentNode: false
                             skipNode: false
                             children:
-                              - CallKeyword:
+                              - callKeyword:
                                   nodeName: "Rmdir ${FOLDER}"
                                   continueParentNodeExecutionOnError: false
                                   instrumentNode: false
@@ -373,19 +369,19 @@ root:
                                         expression: "FOLDER"
                                   keyword: "Rmdir"
                             continueOnError: false
-                        - AfterSequence:
+                        - afterSequence:
                             nodeName: "AfterSequence - Propagate build"
                             continueParentNodeExecutionOnError: false
                             instrumentNode: false
                             skipNode: false
                             children:
-                              - If:
+                              - if:
                                   nodeName: "If SHOULD_PROPAGATE && PASSED"
                                   continueParentNodeExecutionOnError: false
                                   instrumentNode: false
                                   skipNode: false
                                   children:
-                                    - CallPlan:
+                                    - callPlan:
                                         nodeName: "Propagate build - scale down the agent if needed"
                                         continueParentNodeExecutionOnError: false
                                         instrumentNode: false
@@ -397,20 +393,20 @@ root:
                                   condition:
                                     expression: "STATUS.equals(\"PASSED\") &&  SHOULD_PROPAGATE"
                             continueOnError: false
-                        - AfterSequence:
+                        - afterSequence:
                             nodeName: "AfterSequence - Scale down agent if needed"
                             continueParentNodeExecutionOnError: false
                             instrumentNode: false
                             skipNode: false
                             children:
-                              - If:
+                              - if:
                                   nodeName: "If STATUS is not \"PASSED\" or SHOULD_PROPAGATE\
                           \ is false"
                                   continueParentNodeExecutionOnError: false
                                   instrumentNode: false
                                   skipNode: false
                                   children:
-                                    - CallPlan:
+                                    - callPlan:
                                         nodeName: "Scale Down Build Agents - After Execution"
                                         continueParentNodeExecutionOnError: false
                                         instrumentNode: false

@@ -1,8 +1,8 @@
 version: "1.0.0"
 name: "test plan"
 root:
-   Sequence:
+   sequence:
      nodeName: Sequence
      children:
-       - WrongArtefact:
+       - wrongArtefact:
            nodeName: "wrong"

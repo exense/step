@@ -1,9 +1,9 @@
 name: "test plan"
 root:
-  Sequence:
+  sequence:
     name: Sequence
     children:
-      - Session:
+      - session:
           nodeName: Session
           routing:
             - criteria1: "criteriaValue1"

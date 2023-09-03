@@ -53,26 +53,10 @@
         "additionalProperties" : false
       }
     },
-    "CallKeywordFunctionNameDef" : {
-      "oneOf" : [ {
-        "$ref" : "#/$defs/SmartDynamicValueStringDef"
-      }, {
-        "type" : "object",
-        "properties" : {
-          "name" : {
-            "$ref" : "#/$defs/SmartDynamicValueStringDef"
-          },
-          "routing" : {
-            "$ref" : "#/$defs/DynamicKeywordInputsDef"
-          }
-        },
-        "additionalProperties" : false
-      } ]
-    },
     "AfterSequenceDef" : {
       "type" : "object",
       "properties" : {
-        "AfterSequence" : {
+        "afterSequence" : {
           "type" : "object",
           "properties" : {
             "nodeName" : {
@@ -111,7 +95,7 @@
     "SetDef" : {
       "type" : "object",
       "properties" : {
-        "Set" : {
+        "set" : {
           "type" : "object",
           "properties" : {
             "nodeName" : {
@@ -150,7 +134,7 @@
     "CheckDef" : {
       "type" : "object",
       "properties" : {
-        "Check" : {
+        "check" : {
           "type" : "object",
           "properties" : {
             "nodeName" : {
@@ -186,7 +170,7 @@
     "CheckArtefactDef" : {
       "type" : "object",
       "properties" : {
-        "CheckArtefact" : {
+        "checkArtefact" : {
           "type" : "object",
           "properties" : {
             "nodeName" : {
@@ -223,7 +207,7 @@
     "ScriptDef" : {
       "type" : "object",
       "properties" : {
-        "Script" : {
+        "script" : {
           "type" : "object",
           "properties" : {
             "nodeName" : {
@@ -259,7 +243,7 @@
     "BeforeThreadDef" : {
       "type" : "object",
       "properties" : {
-        "BeforeThread" : {
+        "beforeThread" : {
           "type" : "object",
           "properties" : {
             "nodeName" : {
@@ -298,7 +282,7 @@
     "CallKeywordDef" : {
       "type" : "object",
       "properties" : {
-        "CallKeyword" : {
+        "callKeyword" : {
           "type" : "object",
           "properties" : {
             "nodeName" : {
@@ -323,6 +307,9 @@
             "description" : {
               "type" : "string"
             },
+            "routing" : {
+              "$ref" : "#/$defs/DynamicKeywordInputsDef"
+            },
             "remote" : {
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
@@ -333,7 +320,7 @@
               "$ref" : "#/$defs/DynamicKeywordInputsDef"
             },
             "keyword" : {
-              "$ref" : "#/$defs/CallKeywordFunctionNameDef"
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
             }
           }
         }
@@ -343,7 +330,7 @@
     "ExportDef" : {
       "type" : "object",
       "properties" : {
-        "Export" : {
+        "export" : {
           "type" : "object",
           "properties" : {
             "nodeName" : {
@@ -388,7 +375,7 @@
     "SequenceDef" : {
       "type" : "object",
       "properties" : {
-        "Sequence" : {
+        "sequence" : {
           "type" : "object",
           "properties" : {
             "nodeName" : {
@@ -427,7 +414,7 @@
     "SwitchDef" : {
       "type" : "object",
       "properties" : {
-        "Switch" : {
+        "switch" : {
           "type" : "object",
           "properties" : {
             "nodeName" : {
@@ -463,7 +450,7 @@
     "StreamingArtefactDef" : {
       "type" : "object",
       "properties" : {
-        "StreamingArtefact" : {
+        "streamingArtefact" : {
           "type" : "object",
           "properties" : {
             "nodeName" : {
@@ -496,7 +483,7 @@
     "ForDef" : {
       "type" : "object",
       "properties" : {
-        "For" : {
+        "for" : {
           "type" : "object",
           "properties" : {
             "nodeName" : {
@@ -555,7 +542,7 @@
     "CaseDef" : {
       "type" : "object",
       "properties" : {
-        "Case" : {
+        "case" : {
           "type" : "object",
           "properties" : {
             "nodeName" : {
@@ -591,7 +578,7 @@
     "FailureDef" : {
       "type" : "object",
       "properties" : {
-        "Failure" : {
+        "failure" : {
           "type" : "object",
           "properties" : {
             "nodeName" : {
@@ -630,7 +617,7 @@
     "ReturnDef" : {
       "type" : "object",
       "properties" : {
-        "Return" : {
+        "return" : {
           "type" : "object",
           "properties" : {
             "nodeName" : {
@@ -666,7 +653,7 @@
     "ForEachDef" : {
       "type" : "object",
       "properties" : {
-        "ForEach" : {
+        "forEach" : {
           "type" : "object",
           "properties" : {
             "nodeName" : {
@@ -725,7 +712,7 @@
     "RetryIfFailsDef" : {
       "type" : "object",
       "properties" : {
-        "RetryIfFails" : {
+        "retryIfFails" : {
           "type" : "object",
           "properties" : {
             "nodeName" : {
@@ -773,7 +760,7 @@
     "WhileDef" : {
       "type" : "object",
       "properties" : {
-        "While" : {
+        "while" : {
           "type" : "object",
           "properties" : {
             "nodeName" : {
@@ -821,7 +808,7 @@
     "CallPlanDef" : {
       "type" : "object",
       "properties" : {
-        "CallPlan" : {
+        "callPlan" : {
           "type" : "object",
           "properties" : {
             "nodeName" : {
@@ -863,7 +850,7 @@
     "EchoDef" : {
       "type" : "object",
       "properties" : {
-        "Echo" : {
+        "echo" : {
           "type" : "object",
           "properties" : {
             "nodeName" : {
@@ -899,7 +886,7 @@
     "TestScenarioDef" : {
       "type" : "object",
       "properties" : {
-        "TestScenario" : {
+        "testScenario" : {
           "type" : "object",
           "properties" : {
             "nodeName" : {
@@ -932,7 +919,7 @@
     "SynchronizedDef" : {
       "type" : "object",
       "properties" : {
-        "Synchronized" : {
+        "synchronized" : {
           "type" : "object",
           "properties" : {
             "nodeName" : {
@@ -977,7 +964,7 @@
     "BeforeSequenceDef" : {
       "type" : "object",
       "properties" : {
-        "BeforeSequence" : {
+        "beforeSequence" : {
           "type" : "object",
           "properties" : {
             "nodeName" : {
@@ -1016,7 +1003,7 @@
     "TestSetDef" : {
       "type" : "object",
       "properties" : {
-        "TestSet" : {
+        "testSet" : {
           "type" : "object",
           "properties" : {
             "nodeName" : {
@@ -1052,7 +1039,7 @@
     "SessionDef" : {
       "type" : "object",
       "properties" : {
-        "Session" : {
+        "session" : {
           "type" : "object",
           "properties" : {
             "nodeName" : {
@@ -1091,7 +1078,7 @@
     "DataSetDef" : {
       "type" : "object",
       "properties" : {
-        "DataSet" : {
+        "dataSet" : {
           "type" : "object",
           "properties" : {
             "nodeName" : {
@@ -1153,7 +1140,7 @@
     "SleepDef" : {
       "type" : "object",
       "properties" : {
-        "Sleep" : {
+        "sleep" : {
           "type" : "object",
           "properties" : {
             "nodeName" : {
@@ -1195,7 +1182,7 @@
     "AssertDef" : {
       "type" : "object",
       "properties" : {
-        "Assert" : {
+        "assert" : {
           "type" : "object",
           "properties" : {
             "nodeName" : {
@@ -1230,7 +1217,7 @@
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
             "operator" : {
-              "enum" : [ "EQUALS", "BEGINS_WITH", "ENDS_WITH", "CONTAINS", "MATCHES" ]
+              "enum" : [ "EQUALS", "BEGINS_WITH", "ENDS_WITH", "CONTAINS", "MATCHES", "LESS_THAN", "LESS_THAN_OR_EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUALS", "IS_NULL" ]
             },
             "actual" : {
               "$ref" : "#/$defs/SmartDynamicValueStringDef"
@@ -1243,7 +1230,7 @@
     "TestCaseDef" : {
       "type" : "object",
       "properties" : {
-        "TestCase" : {
+        "testCase" : {
           "type" : "object",
           "properties" : {
             "nodeName" : {
@@ -1276,7 +1263,7 @@
     "AfterThreadDef" : {
       "type" : "object",
       "properties" : {
-        "AfterThread" : {
+        "afterThread" : {
           "type" : "object",
           "properties" : {
             "nodeName" : {
@@ -1315,7 +1302,7 @@
     "PlaceholderDef" : {
       "type" : "object",
       "properties" : {
-        "Placeholder" : {
+        "placeholder" : {
           "type" : "object",
           "properties" : {
             "nodeName" : {
@@ -1348,7 +1335,7 @@
     "IfDef" : {
       "type" : "object",
       "properties" : {
-        "If" : {
+        "if" : {
           "type" : "object",
           "properties" : {
             "nodeName" : {
@@ -1384,7 +1371,7 @@
     "ThreadGroupDef" : {
       "type" : "object",
       "properties" : {
-        "ThreadGroup" : {
+        "threadGroup" : {
           "type" : "object",
           "properties" : {
             "nodeName" : {

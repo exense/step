@@ -19,6 +19,7 @@
 package step.repositories.artifact;
 
 import step.core.plans.PlanAccessor;
+import step.repositories.ArtifactRepositoryConstants;
 import step.resources.ResourceManager;
 import step.resources.ResourceRevisionFileHandle;
 
@@ -28,8 +29,8 @@ import java.util.Set;
 
 public class ResourceArtifactRepository extends AbstractArtifactRepository {
 
-	protected static final String PARAM_RESOURCE_ID = "resourceId";
-	protected static final String PARAM_LIB_RESOURCE_ID = "libResourceId";
+	protected static final String PARAM_RESOURCE_ID = ArtifactRepositoryConstants.RESOURCE_PARAM_RESOURCE_ID;
+	protected static final String PARAM_LIB_RESOURCE_ID = ArtifactRepositoryConstants.RESOURCE_PARAM_LIB_RESOURCE_ID;
 
 	private final ResourceManager resourceManager;
 

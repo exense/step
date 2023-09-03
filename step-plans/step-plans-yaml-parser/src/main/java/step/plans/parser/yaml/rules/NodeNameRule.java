@@ -18,12 +18,17 @@
  ******************************************************************************/
 package step.plans.parser.yaml.rules;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.json.spi.JsonProvider;
+import step.artefacts.CallFunction;
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.artefacts.AbstractArtefact;
+import step.core.dynamicbeans.DynamicValue;
 import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
 import step.plans.parser.yaml.YamlPlanFields;
 import step.plans.parser.yaml.deserializers.YamlArtefactFieldDeserializationProcessor;
@@ -31,8 +36,11 @@ import step.plans.parser.yaml.serializers.YamlArtefactFieldSerializationProcesso
 
 import java.lang.reflect.Field;
 import java.util.Map;
+import java.util.Objects;
 
 public class NodeNameRule implements ArtefactFieldConversionRule {
+
+    protected final ObjectMapper jsonObjectMapper = DefaultJacksonMapperProvider.getObjectMapper();
 
     @Override
     public JsonSchemaFieldProcessor getJsonSchemaFieldProcessor(JsonProvider jsonProvider) {
@@ -44,7 +52,7 @@ public class NodeNameRule implements ArtefactFieldConversionRule {
                         YamlPlanFields.NAME_YAML_FIELD,
                         jsonProvider.createObjectBuilder()
                                 .add("type", "string")
-                                .add("default", AbstractArtefact.getArtefactName((Class<? extends AbstractArtefact>) objectClass))
+                                .add("default", artefactClassNodeName((Class<? extends AbstractArtefact>) objectClass))
                 );
                 return true;
             } else {
@@ -53,12 +61,35 @@ public class NodeNameRule implements ArtefactFieldConversionRule {
         };
     }
 
+    public static String defaultNodeName(AbstractArtefact artefact, ObjectMapper jsonObjectMapper) throws JsonProcessingException {
+        if (artefact instanceof CallFunction) {
+            // for CallFunction the default name is function name
+            DynamicValue<String> function = ((CallFunction) artefact).getFunction();
+            if (function != null) {
+                DynamicValue<String> functionName = KeywordSelectionRule.getFunctionNameDynamicValue(function, jsonObjectMapper);
+                if (functionName != null && !functionName.isDynamic()) {
+                    return functionName.getValue();
+                }
+            }
+        }
+        return artefactClassNodeName(artefact.getClass());
+    }
+
+    private static String artefactClassNodeName(Class<? extends AbstractArtefact> artefactClass) {
+        return AbstractArtefact.getArtefactName(artefactClass);
+    }
+
     @Override
     public YamlArtefactFieldSerializationProcessor getArtefactFieldSerializationProcessor() {
         return (artefact, field, fieldMetadata, gen) -> {
             if (isAttributesField(field)) {
                 Map<String, String> attributes = (Map<String, String>) field.get(artefact);
-                gen.writeStringField(YamlPlanFields.NAME_YAML_FIELD, attributes.get("name"));
+                String name = attributes.get(AbstractArtefact.NAME);
+
+                // don't serialize default artefact name to YAML
+                if (!Objects.equals(name, defaultNodeName(artefact, jsonObjectMapper))) {
+                    gen.writeStringField(YamlPlanFields.NAME_YAML_FIELD, name);
+                }
                 return true;
             }
             return false;
@@ -75,7 +106,7 @@ public class NodeNameRule implements ArtefactFieldConversionRule {
                     if (attributesNode == null) {
                         attributesNode = createObjectNode(codec);
                     }
-                    attributesNode.put("name", field.getValue().asText());
+                    attributesNode.put(AbstractArtefact.NAME, field.getValue().asText());
                     output.set("attributes", attributesNode);
                     return true;
                 } else {

@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
 import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.plans.Plan;
 import step.plans.parser.yaml.schema.YamlPlanValidationException;
+import step.repositories.parser.StepsParser;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -40,7 +41,7 @@ public class YamlPlanReaderTest {
 
 	private static final ObjectId STATIC_ID = new ObjectId("644fbe4e38a61e07cc3a4df8") ;
 
-	private final YamlPlanReader serializer;
+	private final YamlPlanReader yamlReader;
 
 	// DEV flag to store test results in local files
 	private boolean writeResultsToLocalFiles = false;
@@ -48,7 +49,7 @@ public class YamlPlanReaderTest {
 	private final ObjectMapper technicalPlanMapper;
 
 	public YamlPlanReaderTest() {
-		this.serializer = new YamlPlanReader(
+		this.yamlReader = new YamlPlanReader(
 				() -> STATIC_ID,
 				null,
 				true,
@@ -127,7 +128,7 @@ public class YamlPlanReaderTest {
 		try (FileInputStream is = new FileInputStream(yamlFile); FileInputStream is2 = new FileInputStream(yamlFile2)) {
 			// convert yaml plan to technical format
 			try {
-				serializer.readYamlPlan(is);
+				yamlReader.readYamlPlan(is);
 
 				Assert.fail("Validation exception should be thrown");
 			} catch (YamlPlanValidationException ex) {
@@ -136,7 +137,7 @@ public class YamlPlanReaderTest {
 			}
 
 			try {
-				serializer.readYamlPlan(is2);
+				yamlReader.readYamlPlan(is2);
 				Assert.fail("Validation exception should be thrown");
 			} catch (YamlPlanValidationException ex) {
 				log.info("OK - Validation exception caught", ex);
@@ -170,7 +171,7 @@ public class YamlPlanReaderTest {
 			Plan plan = technicalPlanMapper.readValue(is, Plan.class);
 
 			// convert plan to the yaml format
-			serializer.writeYamlPlan(os, plan);
+			yamlReader.writeYamlPlan(os, plan);
 //			log.info("Converted yaml -->");
 //			log.info(os.toString(StandardCharsets.UTF_8));
 
@@ -181,8 +182,8 @@ public class YamlPlanReaderTest {
 				}
 			}
 
-			JsonNode expectedYaml = serializer.getYamlMapper().readTree(yamlPlanFile);
-			JsonNode actual = serializer.getYamlMapper().readTree(os.toByteArray());
+			JsonNode expectedYaml = yamlReader.getYamlMapper().readTree(yamlPlanFile);
+			JsonNode actual = yamlReader.getYamlMapper().readTree(os.toByteArray());
 			Assert.assertEquals(expectedYaml, actual);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
@@ -190,7 +191,7 @@ public class YamlPlanReaderTest {
 
 		// convert prepared yaml plan back to technical format
 		try (FileInputStream is = new FileInputStream(yamlPlanFile); ByteArrayOutputStream os = new ByteArrayOutputStream()) {
-			Plan plan = serializer.readYamlPlan(is);
+			Plan plan = yamlReader.readYamlPlan(is);
 			writePlanInTechnicalFormat(os, plan);
 
 //			log.info("Converted yaml -->");
@@ -211,6 +212,29 @@ public class YamlPlanReaderTest {
 		}
 	}
 
+	@Test
+	public void convertFromPlainTextToYaml() throws StepsParser.ParsingException {
+		File plainTextPlan = new File("src/test/resources/step/plans/parser/yaml/plaintext/plaintext.plan");
+		File expectedYamlFile = new File("src/test/resources/step/plans/parser/yaml/plaintext/plaintext-expected-plan.yml");
+
+		try (FileInputStream is = new FileInputStream(plainTextPlan); ByteArrayOutputStream os = new ByteArrayOutputStream()) {
+			yamlReader.convertFromPlainTextToYaml("converted plaintext plan", is, os);
+
+			if (writeResultsToLocalFiles) {
+				// write yml to another file (to check it manually)
+				try (FileOutputStream fileOs = new FileOutputStream("src/test/resources/step/plans/parser/yaml/test-converted-plan.yml")) {
+					fileOs.write(os.toByteArray());
+				}
+			}
+
+			JsonNode expectedTechnicalYaml = technicalPlanMapper.readTree(expectedYamlFile);
+			JsonNode actual = technicalPlanMapper.readTree(os.toByteArray());
+			Assert.assertEquals(expectedTechnicalYaml, actual);
+		} catch (IOException ex){
+			throw new RuntimeException(ex);
+		}
+	}
+
 	private void convertPlanToYaml(String technicalPlanFilePath, String expectedYamlPlan) {
 		// read plan
 		File techYamlFile = new File(technicalPlanFilePath);
@@ -219,7 +243,7 @@ public class YamlPlanReaderTest {
 			Plan plan = technicalPlanMapper.readValue(is, Plan.class);
 
 			// convert plan to the yaml format
-			serializer.writeYamlPlan(os, plan);
+			yamlReader.writeYamlPlan(os, plan);
 			log.info("Converted yaml -->");
 			log.info(os.toString(StandardCharsets.UTF_8));
 
@@ -230,8 +254,8 @@ public class YamlPlanReaderTest {
 				}
 			}
 
-			JsonNode expectedYaml = serializer.getYamlMapper().readTree(new File(expectedYamlPlan));
-			JsonNode actual = serializer.getYamlMapper().readTree(os.toByteArray());
+			JsonNode expectedYaml = yamlReader.getYamlMapper().readTree(new File(expectedYamlPlan));
+			JsonNode actual = yamlReader.getYamlMapper().readTree(os.toByteArray());
 			Assert.assertEquals(expectedYaml, actual);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
@@ -244,7 +268,7 @@ public class YamlPlanReaderTest {
 
 		try (FileInputStream is = new FileInputStream(yamlFile); ByteArrayOutputStream os = new ByteArrayOutputStream()) {
 			// convert yaml plan
-			Plan plan = serializer.readYamlPlan(is);
+			Plan plan = yamlReader.readYamlPlan(is);
 
 			// serialize plan
 			writePlanInTechnicalFormat(os, plan);
@@ -259,8 +283,8 @@ public class YamlPlanReaderTest {
 			}
 
 			// compare serialized plan with expected data
-			JsonNode expectedTechnicalYaml = serializer.getYamlMapper().readTree(new File(expectedTechnicalPlanFile));
-			JsonNode actual = serializer.getYamlMapper().readTree(os.toByteArray());
+			JsonNode expectedTechnicalYaml = yamlReader.getYamlMapper().readTree(new File(expectedTechnicalPlanFile));
+			JsonNode actual = yamlReader.getYamlMapper().readTree(os.toByteArray());
 			Assert.assertEquals(expectedTechnicalYaml, actual);
 		} catch (IOException e) {
 			throw new RuntimeException(e);

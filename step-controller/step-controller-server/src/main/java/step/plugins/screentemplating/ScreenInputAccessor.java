@@ -19,6 +19,7 @@
 package step.plugins.screentemplating;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 import step.core.accessors.Accessor;
 

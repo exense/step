@@ -19,14 +19,15 @@
 package step.plans.parser.yaml;
 
 import step.core.yaml.YamlFields;
+import com.google.common.base.CaseFormat;
 
 public class YamlPlanFields extends YamlFields {
+
     public static final String CALL_FUNCTION_ARGUMENT_ORIGINAL_FIELD = "argument";
     public static final String CALL_FUNCTION_ARGUMENT_YAML_FIELD = "inputs";
 
     public static final String CALL_FUNCTION_FUNCTION_ORIGINAL_FIELD = "function";
     public static final String CALL_FUNCTION_FUNCTION_YAML_FIELD = "keyword";
-    public static final String CALL_FUNCTION_FUNCTION_NAME_YAML_FIELD = "name";
 
     public static final String TOKEN_SELECTOR_TOKEN_ORIGINAL_FIELD = "token";
     public static final String TOKEN_SELECTOR_TOKEN_YAML_FIELD = "routing";
@@ -36,5 +37,13 @@ public class YamlPlanFields extends YamlFields {
     public static final String NAME_YAML_FIELD = "nodeName";
 
     public static final String ARTEFACT_CHILDREN = "children";
+
+    public static String javaArtefactNameToYaml(String javaArtefactName) {
+        return CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_CAMEL, javaArtefactName);
+    }
+
+    public static String yamlArtefactNameToJava(String yamlArtefactName) {
+        return CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_CAMEL, yamlArtefactName);
+    }
 
 }

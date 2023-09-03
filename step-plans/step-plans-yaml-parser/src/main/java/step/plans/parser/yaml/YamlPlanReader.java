@@ -43,16 +43,20 @@ import step.core.plans.Plan;
 import step.core.scanner.AnnotationScanner;
 import step.core.scanner.CachedAnnotationScanner;
 import step.migration.MigrationManager;
-import step.plans.parser.yaml.migrations.YamlPlanMigration;
-import step.plans.parser.yaml.model.YamlPlan;
+import step.plans.nl.RootArtefactType;
+import step.plans.nl.parser.PlanParser;
 import step.core.yaml.deserializers.YamlDynamicValueDeserializer;
 import step.plans.parser.yaml.deserializers.YamlRootArtefactDeserializer;
 import step.plans.parser.yaml.migrations.AbstractYamlPlanMigrationTask;
-import step.plans.parser.yaml.model.YamlRootArtefact;
+import step.plans.parser.yaml.migrations.YamlPlanMigration;
+import step.plans.parser.yaml.model.YamlPlan;
 import step.plans.parser.yaml.model.YamlPlanVersions;
+import step.plans.parser.yaml.model.YamlRootArtefact;
+import step.plans.parser.yaml.rules.NodeNameRule;
 import step.plans.parser.yaml.schema.YamlPlanValidationException;
 import step.core.yaml.serializers.YamlDynamicValueSerializer;
 import step.plans.parser.yaml.serializers.YamlRootArtefactSerializer;
+import step.repositories.parser.StepsParser;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -72,10 +76,13 @@ public class YamlPlanReader {
 
 	private final ObjectMapper yamlMapper;
 
+	private final ObjectMapper simpleJsonObjectMapper = DefaultJacksonMapperProvider.getObjectMapper();
+
 	private final Supplier<ObjectId> idGenerator;
 	private final Version currentVersion;
 	private String jsonSchema;
 	private final MigrationManager migrationManager;
+	private final PlanParser plainTextPlanParser;
 
 	/**
 	 * To be used in TESTS only
@@ -123,6 +130,7 @@ public class YamlPlanReader {
 		this.yamlMapper = createYamlPlanObjectMapper();
 		this.idGenerator = idGenerator;
 		this.migrationManager = initMigrationManager();
+		this.plainTextPlanParser = new PlanParser();
 	}
 
 	/**
@@ -167,6 +175,37 @@ public class YamlPlanReader {
 	 */
 	public void writeYamlPlan(OutputStream os, Plan plan) throws IOException {
 		yamlMapper.writeValue(os, planToYamlPlan(plan));
+	}
+
+	public void convertFromPlainTextToYaml(String planName, InputStream planTextInputStream, OutputStream yamlOutputStream) throws IOException, StepsParser.ParsingException {
+		// read plan from plain text format
+		Plan planFromPlainText = plainTextPlanParser.parse(planTextInputStream, RootArtefactType.TestCase);
+
+		// set file name as plan name
+		Map<String, String> attributes = new HashMap<>();
+		attributes.put(AbstractArtefact.NAME, planName);
+		planFromPlainText.setAttributes(attributes);
+		planFromPlainText.getRoot().getAttributes().put(AbstractArtefact.NAME, planName);
+
+		// apply default values for plain text artefact
+		applyDefaultValuesForPlainTextArtefact(planFromPlainText.getRoot());
+
+		// convert to simple yaml and save in output file
+		writeYamlPlan(yamlOutputStream, planFromPlainText);
+	}
+
+	private void applyDefaultValuesForPlainTextArtefact(AbstractArtefact plainTextArtefact) throws JsonProcessingException {
+		String artefactClassName = AbstractArtefact.getArtefactName(plainTextArtefact.getClass());
+
+		// if artefact name is default (filled by plainTextPlanParser), we replace the value with default in terms of yaml format
+		// (for example, use a keyword name as artefact name)
+		if (Objects.equals(plainTextArtefact.getAttribute(AbstractArtefact.NAME), artefactClassName)) {
+			plainTextArtefact.addAttribute(AbstractOrganizableObject.NAME, NodeNameRule.defaultNodeName(plainTextArtefact, simpleJsonObjectMapper));
+		}
+
+		for (AbstractArtefact child : plainTextArtefact.getChildren()) {
+			applyDefaultValuesForPlainTextArtefact(child);
+		}
 	}
 
 	protected ObjectMapper createYamlPlanObjectMapper() {
