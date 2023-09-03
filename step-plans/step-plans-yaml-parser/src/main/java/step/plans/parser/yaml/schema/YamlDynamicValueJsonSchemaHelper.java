@@ -128,10 +128,14 @@ public class YamlDynamicValueJsonSchemaHelper {
 		if (genericType instanceof ParameterizedType) {
 			Type[] arguments = ((ParameterizedType) genericType).getActualTypeArguments();
 			Type dynamicValueClass = arguments[0];
+
+			String dynamicValueType;
 			if (!(dynamicValueClass instanceof Class)) {
-				throw new IllegalArgumentException("Unsupported dynamic value type " + dynamicValueClass);
+				// for undefined type or for generic parameter types like "?"
+				dynamicValueType = "object";
+			} else {
+				dynamicValueType = JsonInputConverter.resolveJsonPropertyType((Class<?>) dynamicValueClass);
 			}
-			String dynamicValueType = JsonInputConverter.resolveJsonPropertyType((Class<?>) dynamicValueClass);
 			switch (dynamicValueType){
 				case "string":
 					YamlPlanJsonSchemaGenerator.addRef(propertiesBuilder, SMART_DYNAMIC_VALUE_STRING_DEF);

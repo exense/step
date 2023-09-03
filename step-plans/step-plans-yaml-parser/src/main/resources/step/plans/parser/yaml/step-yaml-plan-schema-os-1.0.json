@@ -1217,7 +1217,7 @@
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
             "operator" : {
-              "enum" : [ "EQUALS", "BEGINS_WITH", "ENDS_WITH", "CONTAINS", "MATCHES" ]
+              "enum" : [ "EQUALS", "BEGINS_WITH", "ENDS_WITH", "CONTAINS", "MATCHES", "LESS_THAN", "LESS_THAN_OR_EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUALS", "IS_NULL" ]
             },
             "actual" : {
               "$ref" : "#/$defs/SmartDynamicValueStringDef"
