@@ -25,11 +25,12 @@ import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
 import step.core.scanner.AnnotationScanner;
 import step.functions.Function;
+import step.functions.packages.yaml.AutomationPackageKeywordsExtractor;
+import step.functions.packages.yaml.model.AutomationPackageReadingException;
 import step.handlers.javahandler.Keyword;
 import step.junit.runner.StepClassParser;
 import step.junit.runner.StepClassParserResult;
 import step.junit.runners.annotations.Plans;
-import step.plans.nl.RootArtefactType;
 import step.plans.nl.parser.PlanParser;
 import step.plugins.functions.types.CompositeFunctionUtils;
 import step.plugins.java.GeneralScriptFunction;
@@ -47,9 +48,11 @@ public class StepJarParser {
     private static final Logger logger = LoggerFactory.getLogger(StepJarParser.class);
 
     private final StepClassParser stepClassParser;
+    private final AutomationPackageKeywordsExtractor automationPackageKeywordsExtractor;
 
     public StepJarParser() {
         this.stepClassParser = new StepClassParser(false);
+        this.automationPackageKeywordsExtractor = new AutomationPackageKeywordsExtractor();
     }
 
     private List<Function> getFunctions(AnnotationScanner annotationScanner, File artifact, File libraries) {
@@ -87,6 +90,14 @@ public class StepJarParser {
 
             functions.add(res);
         }
+
+        try {
+            // add functions from automation package
+            functions.addAll(automationPackageKeywordsExtractor.extractKeywordsFromAutomationPackage(artifact));
+        } catch (AutomationPackageReadingException e) {
+            throw new RuntimeException("Unable to process automation package", e);
+        }
+
         return functions;
     }
 

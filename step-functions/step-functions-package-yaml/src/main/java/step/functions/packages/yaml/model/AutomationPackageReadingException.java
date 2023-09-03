@@ -16,17 +16,14 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automationpacks;
+package step.functions.packages.yaml.model;
 
-import step.automationpacks.model.AbstractAutomationPackKeyword;
+public class AutomationPackageReadingException extends Exception {
+    public AutomationPackageReadingException(String message) {
+        super(message);
+    }
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-public @interface KeywordHandlerMarker {
-    Class<? extends AbstractAutomationPackKeyword> automationPackKeyword();
+    public AutomationPackageReadingException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

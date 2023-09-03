@@ -16,36 +16,27 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automationpacks.model;
+package step.functions.packages.yaml;
 
+import org.junit.Test;
+import step.functions.Function;
+import step.functions.packages.yaml.model.AutomationPackageReadingException;
+
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
-public class AutomationPackMetadata {
-    private String version;
-    private String name;
-    private List<? extends AbstractAutomationPackKeyword> keywords;
+import static org.junit.Assert.assertEquals;
 
-    public String getVersion() {
-        return version;
+public class AutomationPackageKeywordsExtractorTest {
+
+    private final AutomationPackageKeywordsExtractor extractor = new AutomationPackageKeywordsExtractor();
+
+    @Test
+    public void testFunctionExtraction() throws AutomationPackageReadingException, IOException {
+        File automationPackageJar = new File("src/test/resources/step/functions/packages/yaml/testpack.jar");
+        List<Function> keywords = extractor.extractKeywordsFromAutomationPackage(automationPackageJar);
+        assertEquals(0, keywords.size());
     }
 
-    public void setVersion(String version) {
-        this.version = version;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public List<? extends AbstractAutomationPackKeyword> getKeywords() {
-        return keywords;
-    }
-
-    public void setKeywords(List<? extends AbstractAutomationPackKeyword> keywords) {
-        this.keywords = keywords;
-    }
 }

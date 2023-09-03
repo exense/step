@@ -16,14 +16,39 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automationpacks;
+package step.functions.packages.yaml.model;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+public class AutomationPackageMetadata {
 
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-public @interface AutomationPackageKeyword {
+    // this name should be kept untouched to support the migrations for old versions
+    public static final String VERSION_FIELD_NAME = "version";
+
+    private String version;
+    private String name;
+
+    private YamlKeywords keywords;
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public YamlKeywords getKeywords() {
+        return keywords;
+    }
+
+    public void setKeywords(YamlKeywords keywords) {
+        this.keywords = keywords;
+    }
+
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
+    }
 }

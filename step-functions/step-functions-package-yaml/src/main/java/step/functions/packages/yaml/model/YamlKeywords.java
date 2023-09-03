@@ -16,13 +16,21 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automationpacks.handlers;
+package step.functions.packages.yaml.model;
 
-import step.automationpacks.model.AbstractAutomationPackKeyword;
 import step.functions.Function;
 
-import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
-public interface AutomationPackKeywordHandler<K extends Function> {
-    K prepareKeyword(AbstractAutomationPackKeyword automationPackKeyword, File automationPack);
+public class YamlKeywords {
+    private List<Function> keywords = new ArrayList<>();
+
+    public List<Function> getKeywords() {
+        return keywords;
+    }
+
+    public void setKeywords(List<Function> keywords) {
+        this.keywords = keywords;
+    }
 }
