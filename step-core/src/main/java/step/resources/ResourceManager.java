@@ -76,6 +76,12 @@ public interface ResourceManager {
 	String getResourcesRootPath();
 
 	/**
+	 * Creates a new resource or reuses the existing (with the same hash sum) resource
+	 * @return the created resource or the suitable existing resource (with the same hash sum)
+	 */
+	Resource createOrReuseResource(String resourceType, InputStream resourceStream, String resourceFileName, ObjectEnricher objectEnricher) throws IOException, InvalidResourceFormatException;
+
+	/**
 	 * Save the content provided as stream to an existing resource.
 	 * This creates a new {@link ResourceRevision} for the {@link Resource}
 	 * and saves the content provided as stream under this revision.

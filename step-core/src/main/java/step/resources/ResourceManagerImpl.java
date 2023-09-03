@@ -32,10 +32,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ResourceManagerImpl implements ResourceManager {
@@ -358,5 +355,24 @@ public class ResourceManagerImpl implements ResourceManager {
 	@Override
 	public String getResourcesRootPath() {
 		return resourceRootFolder.getPath();
+	}
+
+	@Override
+	public Resource createOrReuseResource(String resourceType, InputStream resourceStream, String resourceFileName, ObjectEnricher objectEnricher) throws IOException, InvalidResourceFormatException {
+		try {
+			return this.createResource(resourceType, resourceStream, resourceFileName, true, objectEnricher);
+		} catch (SimilarResourceExistingException e) {
+			// reuse similar resource without throwing exception
+			if (e.getSimilarResources() != null && !e.getSimilarResources().isEmpty()) {
+				Resource res = e.getSimilarResources().get(0);
+				if (e.getResource() != null && !Objects.equals(e.getResource().getId(), res.getId())) {
+					// cleanup just created resource
+					deleteResource(e.getResource().getId().toString());
+				}
+				return res;
+			} else {
+				return e.getResource();
+			}
+		}
 	}
 }

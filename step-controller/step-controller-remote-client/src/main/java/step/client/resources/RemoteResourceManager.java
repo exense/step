@@ -26,6 +26,7 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.client.Invocation.Builder;
@@ -140,6 +141,23 @@ public class RemoteResourceManager extends AbstractRemoteClient implements Resou
 		StreamDataBodyPart bodyPart = new StreamDataBodyPart("file", resourceStream, resourceFileName);
 		ResourceUploadResponse upload = upload(bodyPart, resourceType, isDirectory, checkForDuplicates);
 		return upload.getResource();
+	}
+
+	@Override
+	public Resource createOrReuseResource(String resourceType, InputStream resourceStream, String resourceFileName, ObjectEnricher objectEnricher) {
+		StreamDataBodyPart bodyPart = new StreamDataBodyPart("file", resourceStream, resourceFileName);
+		ResourceUploadResponse upload = upload(bodyPart, resourceType, false, true);
+		Resource res = null;
+		if (upload.getSimilarResources() != null && !upload.getSimilarResources().isEmpty()) {
+			// we reuse the existing resource, but also we need to delete the just created resource
+			res = upload.getSimilarResources().get(0);
+			if (upload.getResource() != null && !Objects.equals(res.getId().toString(), upload.getResourceId())) {
+				deleteResource(upload.getResourceId());
+			}
+		} else {
+			res = upload.getResource();
+		}
+		return res;
 	}
 
 	@Override

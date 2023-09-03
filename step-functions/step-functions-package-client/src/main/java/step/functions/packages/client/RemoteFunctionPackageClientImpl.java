@@ -42,8 +42,8 @@ public class RemoteFunctionPackageClientImpl extends AbstractRemoteClient implem
 		if (packageLibraryFile != null) {
 			Resource packageLibraryResource = null;
 			if (packageLibraryFile.getFile() != null) {
-				// upload new file as library
-				packageLibraryResource = upload(packageLibraryFile.getFile());
+				// upload new file as library (or reuse the existing resource with the same has sum)
+				packageLibraryResource = uploadOrReuseExistingFile(packageLibraryFile.getFile());
 			} else if (packageLibraryFile.getResourceId() != null && !packageLibraryFile.getResourceId().isEmpty()) {
 				// reuse existing resource as package library
 				packageLibraryResource = remoteResourceManager.getResource(packageLibraryFile.getResourceId());
@@ -126,6 +126,10 @@ public class RemoteFunctionPackageClientImpl extends AbstractRemoteClient implem
 		} catch (SimilarResourceExistingException e) {
 			throw new RuntimeException("Unexpected similar resource error. This should never occur.", e);
 		}
+	}
+
+	protected Resource uploadOrReuseExistingFile(File file) throws IOException {
+		return remoteResourceManager.createOrReuseResource("functions", new FileInputStream(file), file.getName(), null);
 	}
 
 	@Override
