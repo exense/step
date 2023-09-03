@@ -36,7 +36,7 @@ public class AutomationPackageKeywordsExtractorTest {
     public void testFunctionExtraction() throws AutomationPackageReadingException, IOException {
         File automationPackageJar = new File("src/test/resources/step/functions/packages/yaml/testpack.jar");
         List<Function> keywords = extractor.extractKeywordsFromAutomationPackage(automationPackageJar);
-        assertEquals(0, keywords.size());
+        assertEquals(1, keywords.size());
     }
 
 }

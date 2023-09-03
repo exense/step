@@ -30,14 +30,18 @@ import step.core.dynamicbeans.DynamicValue;
 import step.core.json.JsonProviderCache;
 import step.core.objectenricher.EnricheableObject;
 
+import static step.functions.Function.JSON_CLASS_FIELD;
+
 /**
  * This class encapsulates all the configuration parameters of functions (aka Keywords)
  * which can also be defined on the configuration dialog of Keywords in the UI 
  *
  */
-@JsonTypeInfo(use=Id.CLASS,property="type")
+@JsonTypeInfo(use=Id.CLASS, property= JSON_CLASS_FIELD)
 public class Function extends AbstractOrganizableObject implements EnricheableObject {
-	
+
+	public final static String JSON_CLASS_FIELD = "type";
+
 	protected DynamicValue<Integer> callTimeout = new DynamicValue<>(180000);
 	protected JsonObject schema = JsonProviderCache.createObjectBuilder().build();
 	

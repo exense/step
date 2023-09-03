@@ -23,6 +23,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
+import org.reflections.Reflections;
+import org.reflections.util.ClasspathHelper;
+import org.reflections.util.ConfigurationBuilder;
+import org.reflections.util.FilterBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.accessors.DefaultJacksonMapperProvider;
@@ -47,6 +51,9 @@ public class AutomationPackageKeywordsExtractor {
     private static final Logger log = LoggerFactory.getLogger(AutomationPackageKeywordsExtractor.class);
 
     private static final List<String> METADATA_FILES = List.of("metadata.yml", "metadata.yaml");
+
+    private final Reflections functionReflections = new Reflections(new ConfigurationBuilder()
+            .setUrls(ClasspathHelper.forPackage("step")));
 
     public List<Function> extractKeywordsFromAutomationPackage(File automationPackageJar) throws AutomationPackageReadingException {
         try (InputStream is = new FileInputStream(automationPackageJar)) {
@@ -88,7 +95,7 @@ public class AutomationPackageKeywordsExtractor {
         // configure custom deserializers
         SimpleModule module = new SimpleModule();
         module.addDeserializer(DynamicValue.class, new YamlDynamicValueDeserializer());
-        module.addDeserializer(YamlKeywords.class, new YamlKeywordsDeserializer(unzippedFile));
+        module.addDeserializer(YamlKeywords.class, new YamlKeywordsDeserializer(unzippedFile, functionReflections));
         yamlMapper.registerModule(module);
 
         return yamlMapper;

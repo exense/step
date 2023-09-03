@@ -21,6 +21,7 @@ public class YamlKeywordPackageSchemaGeneratorTest {
 
     private final ObjectMapper jsonObjectMapper = new ObjectMapper();
 
+    // TODO: fix test
     @Ignore
     @Test
     public void generateJsonSchema() throws IOException, JsonSchemaPreparationException {

@@ -16,28 +16,24 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.functions.packages.yaml.model;
+package step.functions.packages.yaml;
 
+import com.google.common.base.CaseFormat;
+import com.google.common.reflect.Reflection;
+import org.reflections.Reflections;
 import step.functions.Function;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Set;
 
-public class YamlKeywords {
-    private List<Function> keywords = new ArrayList<>();
+public class YamlKeywordFields {
 
-    public YamlKeywords() {
-    }
-
-    public YamlKeywords(List<Function> keywords) {
-        this.keywords = keywords;
-    }
-
-    public List<Function> getKeywords() {
-        return keywords;
-    }
-
-    public void setKeywords(List<Function> keywords) {
-        this.keywords = keywords;
+    public static String yamlKeywordClassToJava(String yamlKeywordClass, Reflections reflections) {
+        Set<Class<? extends Function>> functionImpls = reflections.getSubTypesOf(Function.class);
+        for (Class<? extends Function> functionImpl : functionImpls) {
+            if(functionImpl.getSimpleName().equalsIgnoreCase(yamlKeywordClass)){
+                return functionImpl.getName();
+            }
+        }
+        return null;
     }
 }
