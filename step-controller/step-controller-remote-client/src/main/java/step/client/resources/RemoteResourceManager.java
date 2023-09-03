@@ -137,8 +137,11 @@ public class RemoteResourceManager extends AbstractRemoteClient implements Resou
 
 	@Override
 	public Resource createResource(String resourceType, boolean isDirectory, InputStream resourceStream, String resourceFileName,
-								   boolean checkForDuplicates, ObjectEnricher objectEnricher) throws IOException, SimilarResourceExistingException {
+								   boolean checkForDuplicates, ObjectEnricher objectEnricher) {
 		StreamDataBodyPart bodyPart = new StreamDataBodyPart("file", resourceStream, resourceFileName);
+
+		// !!! in fact, 'checkForDuplicates' parameter is ignored, because the list of found duplicated resources (with the same hash sums)
+		// is located in ResourceUploadResponse.similarResources, but we ignore this list here and just take the uploaded resource
 		ResourceUploadResponse upload = upload(bodyPart, resourceType, isDirectory, checkForDuplicates);
 		return upload.getResource();
 	}

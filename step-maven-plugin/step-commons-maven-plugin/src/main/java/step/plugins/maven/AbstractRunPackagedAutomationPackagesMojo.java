@@ -102,14 +102,21 @@ public abstract class AbstractRunPackagedAutomationPackagesMojo extends Abstract
 		return libResourceId;
 	}
 
-	protected String uploadResourceToStep(File fileToUpload, boolean checkForDuplicates) throws MojoExecutionException, SimilarResourceExistingException {
+	protected String uploadResourceToStep(File fileToUpload, boolean reuseExisting) throws MojoExecutionException, SimilarResourceExistingException {
 		try (RemoteResourceManager resourceManager = createRemoteResourceManager()) {
 			if(fileToUpload == null){
 				throw logAndThrow("Unable to detect an artifact to upload", getDefaultMojoException());
 			} else {
 				getLog().info("Artifact is detected for upload to Step: " + fileToUpload.getName());
 
-				Resource uploaded = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, new FileInputStream(fileToUpload), fileToUpload.getName(), checkForDuplicates, null);
+				Resource uploaded;
+
+				if (!reuseExisting) {
+					uploaded = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, new FileInputStream(fileToUpload), fileToUpload.getName(), false, null);
+				} else {
+					uploaded = resourceManager.createOrReuseResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, new FileInputStream(fileToUpload), fileToUpload.getName(), null);
+				}
+
 				if(uploaded == null){
 					throw logAndThrow("Uploaded resource is null", getDefaultMojoException());
 				} else {
