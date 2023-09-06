@@ -206,7 +206,7 @@ public class SynchronizedHandlerTest {
 		Assert.assertEquals(100, iterations.get());
 	}
 	
-	@Artefact()
+	@Artefact(test = true)
 	public static class TestArtefact extends AbstractArtefact {
 		
 		private AtomicInteger iterations;

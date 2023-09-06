@@ -30,8 +30,10 @@ import step.core.entities.EntityReference;
 import step.core.objectenricher.EnricheableObject;
 import step.functions.Function;
 
-@JsonTypeInfo(use=Id.CLASS,property="_class")
+@JsonTypeInfo(use=Id.CLASS,property= Plan.JSON_CLASS_FIELD)
 public class Plan extends AbstractOrganizableObject implements EnricheableObject {
+
+	public static final String JSON_CLASS_FIELD = "_class";
 
 	protected AbstractArtefact root;
 	
