@@ -1,0 +1,11 @@
+Set key="value with space"
+Set key2="value2"
+//works
+Check Expression = key2.toString().equals('value2')
+//compile error
+Check key2.toString().equals("value2")
+//compile error
+Check key.toString().equals('value with space')
+Check Expression = |key.toString().equals('value with space')|
+GroovyCheck
+  Assert isSendSuccess="true"

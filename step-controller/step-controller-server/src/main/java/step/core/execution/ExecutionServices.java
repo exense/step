@@ -84,6 +84,7 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 	@Path("/start")
 	@Secured(right="plan-execute")
 	public String execute(ExecutionParameters executionParams) {
+		checkRightsOnBehalfOf("plan-execute", executionParams.getUserID());
 		applyUserIdFromSession(executionParams);
 		return getScheduler().execute(executionParams);
 	}
