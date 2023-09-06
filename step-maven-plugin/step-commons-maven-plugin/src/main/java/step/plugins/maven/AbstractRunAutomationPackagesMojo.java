@@ -63,7 +63,7 @@ public abstract class AbstractRunAutomationPackagesMojo extends AbstractStepPlug
 	@Parameter(property = "step-run-auto-packages.lib-artifact-classifier")
 	private String libArtifactClassifier;
 
-	@Parameter(property = "step-upload-keywords.lib-tracking-attr", required = false)
+	@Parameter(property = "step-run-auto-packages.lib-tracking-attr", required = false)
 	private String libTrackingAttr;
 
 	protected void executeBundleOnStep(Map<String, Object> executionContext) throws MojoExecutionException {
