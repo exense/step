@@ -79,8 +79,6 @@ public abstract class AbstractRunPackagedAutomationPackagesMojo extends Abstract
 			// reference library via resource id explicitly
 			libResourceId = resolveKeywordLibResourceByCriteria(libStepResourceSearchCriteria);
 		} else if (getLibArtifactId() != null && !getLibArtifactId().isEmpty()) {
-			getLog().info("Using maven artifact " + getLibArtifactGroupId() + ":" + getLibArtifactId() + ":" + getLibArtifactVersion() + " as library file");
-
 			// use deployed artifact as resource
 			org.eclipse.aether.artifact.Artifact remoteLibArtifact = getRemoteArtifact(getLibArtifactGroupId(), getLibArtifactId(), getLibArtifactVersion(), getLibArtifactClassifier(), "jar");
 			if (remoteLibArtifact == null) {
