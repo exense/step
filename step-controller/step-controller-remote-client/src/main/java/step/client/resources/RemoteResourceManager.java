@@ -18,6 +18,24 @@
  ******************************************************************************/
 package step.client.resources;
 
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.client.Invocation.Builder;
+import jakarta.ws.rs.core.GenericType;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
+import org.glassfish.jersey.media.multipart.MultiPart;
+import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
+import org.glassfish.jersey.media.multipart.file.StreamDataBodyPart;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import step.client.AbstractRemoteClient;
+import step.client.credentials.ControllerCredentials;
+import step.core.objectenricher.ObjectEnricher;
+import step.grid.io.Attachment;
+import step.grid.io.AttachmentHelper;
+import step.resources.*;
+
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -25,35 +43,8 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-
-import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.client.Invocation.Builder;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
-
-import org.glassfish.jersey.media.multipart.FormDataBodyPart;
-import org.glassfish.jersey.media.multipart.MultiPart;
-import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
-import org.glassfish.jersey.media.multipart.file.StreamDataBodyPart;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import step.client.AbstractRemoteClient;
-import step.client.credentials.ControllerCredentials;
-import step.core.objectenricher.ObjectEnricher;
-import step.grid.io.Attachment;
-import step.grid.io.AttachmentHelper;
-import step.resources.Resource;
-import step.resources.ResourceManager;
-import step.resources.ResourceRevision;
-import step.resources.ResourceRevisionContainer;
-import step.resources.ResourceRevisionContent;
-import step.resources.ResourceRevisionContentImpl;
-import step.resources.ResourceRevisionFileHandle;
-import step.resources.ResourceUploadResponse;
-import step.resources.SimilarResourceExistingException;
 
 /**
  * This class provides an API to upload resources (compiled code of a keyword, etc) to the controller 
@@ -95,10 +86,10 @@ public class RemoteResourceManager extends AbstractRemoteClient implements Resou
 	}
 
 	protected ResourceUploadResponse upload(FormDataBodyPart bodyPart) {
-		return upload(bodyPart, ResourceManager.RESOURCE_TYPE_STAGING_CONTEXT_FILES, false, true);
+		return upload(bodyPart, ResourceManager.RESOURCE_TYPE_STAGING_CONTEXT_FILES, false, true, null);
 	}
 	
-	protected ResourceUploadResponse upload(FormDataBodyPart bodyPart, String type, boolean isDirectory, boolean checkForDuplicates) {
+	protected ResourceUploadResponse upload(FormDataBodyPart bodyPart, String type, boolean isDirectory, boolean checkForDuplicates, String trackingAttribute) {
 		MultiPart multiPart = new MultiPart();
         multiPart.setMediaType(MediaType.MULTIPART_FORM_DATA_TYPE);
         multiPart.bodyPart(bodyPart);
@@ -107,6 +98,9 @@ public class RemoteResourceManager extends AbstractRemoteClient implements Resou
         params.put("type", type);
 		params.put("directory", Boolean.toString(isDirectory));
         params.put("duplicateCheck", Boolean.toString(checkForDuplicates));
+		if (trackingAttribute != null) {
+			params.put("trackingAttribute", trackingAttribute);
+		}
         Builder b = requestBuilder("/rest/resources/content", params);
         return executeRequest(()->b.post(Entity.entity(multiPart, multiPart.getMediaType()), ResourceUploadResponse.class));
 	}
@@ -138,29 +132,17 @@ public class RemoteResourceManager extends AbstractRemoteClient implements Resou
 	@Override
 	public Resource createResource(String resourceType, boolean isDirectory, InputStream resourceStream, String resourceFileName,
 								   boolean checkForDuplicates, ObjectEnricher objectEnricher) {
+		return createResource(resourceType, isDirectory, resourceStream, resourceFileName, checkForDuplicates, objectEnricher, null);
+	}
+
+	@Override
+	public Resource createResource(String resourceType, boolean isDirectory, InputStream resourceStream, String resourceFileName, boolean checkForDuplicates, ObjectEnricher objectEnricher, String trackingAttribute) {
 		StreamDataBodyPart bodyPart = new StreamDataBodyPart("file", resourceStream, resourceFileName);
 
 		// !!! in fact, 'checkForDuplicates' parameter is ignored, because the list of found duplicated resources (with the same hash sums)
 		// is located in ResourceUploadResponse.similarResources, but we ignore this list here and just take the uploaded resource
-		ResourceUploadResponse upload = upload(bodyPart, resourceType, isDirectory, checkForDuplicates);
+		ResourceUploadResponse upload = upload(bodyPart, resourceType, isDirectory, checkForDuplicates, trackingAttribute);
 		return upload.getResource();
-	}
-
-	@Override
-	public Resource createOrReuseResource(String resourceType, InputStream resourceStream, String resourceFileName, ObjectEnricher objectEnricher) {
-		StreamDataBodyPart bodyPart = new StreamDataBodyPart("file", resourceStream, resourceFileName);
-		ResourceUploadResponse upload = upload(bodyPart, resourceType, false, true);
-		Resource res = null;
-		if (upload.getSimilarResources() != null && !upload.getSimilarResources().isEmpty()) {
-			// we reuse the existing resource, but also we need to delete the just created resource
-			res = upload.getSimilarResources().get(0);
-			if (upload.getResource() != null && !Objects.equals(res.getId().toString(), upload.getResourceId())) {
-				deleteResource(upload.getResourceId());
-			}
-		} else {
-			res = upload.getResource();
-		}
-		return res;
 	}
 
 	@Override
@@ -174,6 +156,13 @@ public class RemoteResourceManager extends AbstractRemoteClient implements Resou
 	public void deleteResource(String resourceId) {
 		Builder b = requestBuilder("/rest/resources/"+resourceId);
 		executeRequest(()-> b.delete());
+	}
+
+	@Override
+	public List<Resource> findManyByAttributes(Map<String, String> attributes) {
+		Builder b = requestBuilder("/rest/resources/find");
+		Entity<Map<String, String>> entity = Entity.entity(attributes, MediaType.APPLICATION_JSON);
+		return executeRequest(() -> b.post(entity, new GenericType<List<Resource>>() {}));
 	}
 
 	@Override

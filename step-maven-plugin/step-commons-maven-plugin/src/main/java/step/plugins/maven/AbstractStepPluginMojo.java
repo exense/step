@@ -34,11 +34,17 @@ import org.eclipse.aether.resolution.ArtifactResult;
 import step.client.accessors.RemoteAccessors;
 import step.client.collections.remote.RemoteCollectionFactory;
 import step.client.credentials.ControllerCredentials;
+import step.client.resources.RemoteResourceManager;
 import step.core.accessors.AbstractAccessor;
 import step.core.accessors.AbstractIdentifiableObject;
 import step.core.entities.EntityManager;
+import step.functions.packages.FunctionPackage;
+import step.functions.packages.client.LibFileReference;
 import step.resources.Resource;
+import step.resources.ResourceManager;
 
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -183,11 +189,68 @@ public abstract class AbstractStepPluginMojo extends AbstractMojo {
 		return applicableArtifact;
 	}
 
-	private String artifactToString(Artifact artifact) {
+	/**
+	 * Tries to find the existing step resource with the specified tracking attribute and use this resource as library file for keyword package.
+	 * Otherwise, uploads the remote artifact to Step and uses this just uploaded resource as library file
+	 */
+	protected LibFileReference prepareLibraryFileReferenceForMavenArtifact(org.eclipse.aether.artifact.Artifact remoteLibArtifact,
+																		   String trackingAttribute) throws MojoExecutionException {
+		getLog().info("Using maven artifact " + remoteLibArtifact.getGroupId() + ":" + remoteLibArtifact.getArtifactId() + ":" + remoteLibArtifact.getVersion() + " as library file");
+
+		try (RemoteResourceManager resourceManager = createResourceManager()) {
+
+			String actualTrackingAttribute = (trackingAttribute == null || trackingAttribute.isEmpty()) ? artifactToString(remoteLibArtifact) : trackingAttribute;
+
+			Map<String, String> sarchAttributes = new HashMap<>();
+			sarchAttributes.put(FunctionPackage.TRACKING_FIELD, actualTrackingAttribute);
+
+			getLog().info("Search for library resource with tracking value: " + sarchAttributes);
+
+			// TODO: where is a correct place to store the tracking attribute: in the 'attributes' field or in 'customFields'
+			Resource previousResource = resourceManager.findManyByAttributes(sarchAttributes).stream().findFirst().orElse(null);
+			if (previousResource != null) {
+				// TODO: do we need to re-upload (actualize) the content of found resource?
+				getLog().info("Existing library resource will be reused: " + previousResource.getId().toString());
+				return LibFileReference.resourceId(previousResource.getId().toString());
+			} else {
+				try (FileInputStream is = new FileInputStream(remoteLibArtifact.getFile())) {
+					Resource created = resourceManager.createResource(
+							ResourceManager.RESOURCE_TYPE_FUNCTIONS,
+							false,
+							is,
+							remoteLibArtifact.getFile().getName(),
+							false, null,
+							actualTrackingAttribute
+					);
+					getLog().info("Library resource has been created: " + created.getId().toString());
+					return LibFileReference.resourceId(created.getId().toString());
+				} catch (IOException e) {
+					throw new MojoExecutionException("Library file IO exception", e);
+				}
+			}
+		} catch (IOException e) {
+			throw new MojoExecutionException("Resource manager IO Exception", e);
+		}
+	}
+
+	protected RemoteResourceManager createResourceManager() {
+		return new RemoteResourceManager(getControllerCredentials());
+	}
+
+	protected String artifactToString(Artifact artifact) {
 		String s = artifact.getGroupId() + ":" + artifact.getArtifactId() + ":" + artifact.getVersion();
-		if (artifact.getClassifier() != null) {
+		if (artifact.getClassifier() != null && !artifact.getClassifier().isEmpty()) {
 			s = s + ":" + artifact.getClassifier();
 		}
 		return s;
 	}
+
+	protected String artifactToString(org.eclipse.aether.artifact.Artifact artifact) {
+		String s = artifact.getGroupId() + ":" + artifact.getArtifactId() + ":" + artifact.getVersion();
+		if (artifact.getClassifier() != null && !artifact.getClassifier().isEmpty()) {
+			s = s + ":" + artifact.getClassifier();
+		}
+		return s;
+	}
+
 }

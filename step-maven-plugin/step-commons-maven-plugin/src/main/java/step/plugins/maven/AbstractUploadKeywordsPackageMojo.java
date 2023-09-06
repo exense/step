@@ -68,6 +68,9 @@ public abstract class AbstractUploadKeywordsPackageMojo extends AbstractStepPlug
 	@Parameter(property = "step-upload-keywords.lib-artifact-classifier", defaultValue = "")
 	private String libArtifactClassifier;
 
+	@Parameter(property = "step-upload-keywords.lib-tracking-attr", required = false)
+	private String libTrackingAttr;
+
 	protected AbstractUploadKeywordsPackageMojo() {
 	}
 
@@ -133,12 +136,11 @@ public abstract class AbstractUploadKeywordsPackageMojo extends AbstractStepPlug
 		if (libStepResourceSearchCriteria != null && !libStepResourceSearchCriteria.isEmpty()) {
 			return LibFileReference.resourceId(resolveKeywordLibResourceByCriteria(libStepResourceSearchCriteria));
 		} else if (getLibArtifactId() != null && !getLibArtifactId().isEmpty()) {
-			getLog().info("Using maven artifact " + getLibArtifactGroupId() + ":" + getLibArtifactId() + ":" + getLibArtifactVersion() + " as library file");
 			org.eclipse.aether.artifact.Artifact remoteLibArtifact = getRemoteArtifact(getLibArtifactGroupId(), getLibArtifactId(), getLibArtifactVersion(), getLibArtifactClassifier(), "jar");
 			if (remoteLibArtifact == null) {
 				throw new MojoExecutionException("Library artifact is not resolved");
 			}
-			return LibFileReference.file(remoteLibArtifact.getFile());
+			return prepareLibraryFileReferenceForMavenArtifact(remoteLibArtifact, getLibTrackingAttr());
 		} else {
 			return null;
 		}
@@ -253,5 +255,13 @@ public abstract class AbstractUploadKeywordsPackageMojo extends AbstractStepPlug
 
 	public void setLibArtifactClassifier(String libArtifactClassifier) {
 		this.libArtifactClassifier = libArtifactClassifier;
+	}
+
+	public String getLibTrackingAttr() {
+		return libTrackingAttr;
+	}
+
+	public void setLibTrackingAttr(String libTrackingAttr) {
+		this.libTrackingAttr = libTrackingAttr;
 	}
 }
