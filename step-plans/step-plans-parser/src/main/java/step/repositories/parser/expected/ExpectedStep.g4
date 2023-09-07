@@ -13,8 +13,8 @@ expr
  ;
  
 checkExpression
- : outputAttributeName NOT? op=(EQ|REGEX|CONTAINS|BEGINS|ENDS) attributeValue		#checkExpr
- ;    
+ : outputAttributeName NOT? op=(EQ|REGEX|CONTAINS|BEGINS|ENDS|GREATER_THAN_OR_EQUALS|GREATER_THAN|LESS_THAN_OR_EQUALS|LESS_THAN|IS_NULL) attributeValue?		#checkExpr
+ ;
 
 setExpression : 'Set' assignment+;
 
@@ -27,7 +27,7 @@ controlParameter : attributeName EQ setValue;
 outputAttributeName : (WORD|STRING);
 attributeName : WORD;
 setValue : (attributeName|STRING);
-attributeValue : STRING;  
+attributeValue : (NUM|STRING|BOOL);
 
 NOT : ('not'|'!');
    
@@ -36,6 +36,16 @@ REGEX : '~';
 CONTAINS : 'contains';
 BEGINS : 'beginsWith';
 ENDS : 'endsWith';
+GREATER_THAN_OR_EQUALS : '>=';
+GREATER_THAN : '>';
+LESS_THAN_OR_EQUALS : '<=';
+LESS_THAN : '<';
+IS_NULL : 'isNull';
+
+NUM : [+\-]?(DIGIT*[.])?DIGIT+ ;
+fragment DIGIT : [0-9] ;
+
+BOOL : 'true' | 'false' ;
 
 WORD: (~[="\t\r\n \u00A0])+ ;
 

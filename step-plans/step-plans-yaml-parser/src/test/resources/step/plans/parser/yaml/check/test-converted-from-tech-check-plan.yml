@@ -1,0 +1,15 @@
+---
+version: "1.0.0"
+name: "test check artefact"
+root:
+  sequence:
+    continueParentNodeExecutionOnError: false
+    instrumentNode: false
+    skipNode: false
+    children:
+      - check:
+          continueParentNodeExecutionOnError: false
+          instrumentNode: false
+          skipNode: false
+          expression: "'true'"
+    continueOnError: false

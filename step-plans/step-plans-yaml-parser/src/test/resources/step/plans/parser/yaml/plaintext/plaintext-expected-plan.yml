@@ -1,0 +1,65 @@
+---
+version: "1.0.0"
+name: "converted plaintext plan"
+root:
+  testCase:
+    nodeName: "converted plaintext plan"
+    continueParentNodeExecutionOnError: false
+    instrumentNode: false
+    skipNode: false
+    children:
+      - set:
+          continueParentNodeExecutionOnError: false
+          instrumentNode: false
+          skipNode: false
+          value:
+            expression: "\"value with space\""
+          key: "key"
+      - set:
+          continueParentNodeExecutionOnError: false
+          instrumentNode: false
+          skipNode: false
+          value:
+            expression: "\"value2\""
+          key: "key2"
+      - check:
+          nodeName: "works"
+          continueParentNodeExecutionOnError: false
+          instrumentNode: false
+          skipNode: false
+          expression: "key2.toString().equals('value2')"
+      - check:
+          nodeName: "compile error"
+          continueParentNodeExecutionOnError: false
+          instrumentNode: false
+          skipNode: false
+          expression: "key2.toString().equals(\"value2\")"
+      - check:
+          nodeName: "compile error"
+          continueParentNodeExecutionOnError: false
+          instrumentNode: false
+          skipNode: false
+          expression: "key.toString().equals('value with space')"
+      - check:
+          continueParentNodeExecutionOnError: false
+          instrumentNode: false
+          skipNode: false
+          expression: "key.toString().equals('value with space')"
+      - callKeyword:
+          continueParentNodeExecutionOnError: false
+          instrumentNode: false
+          skipNode: false
+          children:
+            - assert:
+                continueParentNodeExecutionOnError: false
+                instrumentNode: false
+                skipNode: false
+                customErrorMessage: ""
+                expected:
+                  expression: "\"true\""
+                doNegate: false
+                operator: "EQUALS"
+                actual: "isSendSuccess"
+          remote: true
+          inputs: []
+          keyword: "GroovyCheck"

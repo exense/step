@@ -34,4 +34,9 @@ public @interface Artefact {
 
 	boolean useAsTemplate() default false;
 
+	/**
+	 * Marks the artefact as test (used in unit tests) to avoid inclusion in json schema for Yaml format
+	 */
+	boolean test() default false;
+
 }

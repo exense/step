@@ -50,7 +50,7 @@ public class SelectorHelper {
 		}
 		return dynamicJsonObjectResolver.evaluate(query, bindings);
 	}
-	
+
 	public Map<String, String> buildSelectionAttributesMap(String jsonStr, Map<String, Object> bindings) {
 		JsonObject json = parseAndResolveJson(jsonStr, bindings);
 		Map<String, String> attributes = new HashMap<>();

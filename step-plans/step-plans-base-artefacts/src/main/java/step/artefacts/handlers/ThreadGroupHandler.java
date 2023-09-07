@@ -118,7 +118,7 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 		return new ReportNode();
 	}
 	
-	@Artefact()
+	@Artefact(test = true)
 	public static class Thread extends AbstractArtefact {
 		
 		@JsonIgnore

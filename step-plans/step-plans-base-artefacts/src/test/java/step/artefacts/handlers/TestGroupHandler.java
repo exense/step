@@ -80,7 +80,7 @@ public class TestGroupHandler {
 		
 	}
 	
-	@Artefact()
+	@Artefact(test = true)
 	public static class TestArtefact extends AbstractArtefact {
 		
 		AtomicInteger iterations;

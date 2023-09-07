@@ -16,18 +16,20 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.constants;
+package step.artefacts.handlers.asserts;
 
-public class ArtifactConstants {
-	public static final String PARAM_ARTIFACT_ID = "artifactId";
-	public static final String PARAM_VERSION = "version";
-	public static final String PARAM_GROUP_ID = "groupId";
-	public static final String PARAM_CLASSIFIER = "classifier";
+public class MatchesOperatorHandler extends AbstractOperatorHandler {
+    @Override
+    public boolean isActualValueSupported(Object value) {
+        return isString(value);
+    }
 
-	public static final String PARAM_LIB_ARTIFACT_ID = "libArtifactId";
-	public static final String PARAM_LIB_VERSION = "libVersion";
-	public static final String PARAM_LIB_GROUP_ID = "libGroupId";
-	public static final String PARAM_LIB_CLASSIFIER = "libClassifier";
-
-	public static final String PARAM_MAVEN_SETTINGS = "mavenSettings";
+    @Override
+    public AssertResult apply(String key, Object actual, Object expectedValue, boolean negate) {
+        AssertResult assertResult = new AssertResult();
+        assertResult.setPassed(negate ^ ((String) actual).matches((String) expectedValue));
+        assertResult.setMessage("'" + key + "' expected" + not(negate) + "to match regular expression '" + expectedValue + "' " + (assertResult.isPassed() ? "and" : "but") + " was '" + actual + "'");
+        assertResult.setDescription(key + not(negate) + "matches '" + expectedValue + "'");
+        return assertResult;
+    }
 }

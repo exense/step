@@ -79,22 +79,22 @@ public class ReportNodeAccessorImpl extends AbstractAccessor<ReportNode> impleme
     }
     
 	@Override
-	public Iterator<ReportNode> getReportNodesByExecutionID(String executionID) {
+	public Stream<ReportNode> getReportNodesByExecutionID(String executionID) {
 		assert executionID != null;
-		return collectionDriver.find(Filters.equals("executionID", executionID), new SearchOrder("executionTime", 1), null, null, 0).iterator();
+		return collectionDriver.findLazy(Filters.equals("executionID", executionID), new SearchOrder("executionTime", 1), null, null, 0);
 	}
 	
 	@Override
-	public Iterator<ReportNode> getReportNodesByExecutionIDAndClass(String executionID, String class_) {
+	public Stream<ReportNode> getReportNodesByExecutionIDAndClass(String executionID, String class_) {
 		assert executionID != null;
-		return collectionDriver.find(
+		return collectionDriver.findLazy(
 				Filters.and(List.of(Filters.equals("executionID", executionID),
 						Filters.equals("_class", class_))),
-				new SearchOrder("executionTime", 1), null, null, 0).iterator();
+				new SearchOrder("executionTime", 1), null, null, 0);
 	}
 	
 	@Override
-	public Iterator<ReportNode> getReportNodesByExecutionIDAndCustomAttribute(String executionID, Map<String, String> customAttributes) {
+	public Stream<ReportNode> getReportNodesByExecutionIDAndCustomAttribute(String executionID, Map<String, String> customAttributes) {
 		assert executionID != null;
 		
 		List<Filter> filters = new ArrayList<>();
@@ -103,8 +103,7 @@ public class ReportNodeAccessorImpl extends AbstractAccessor<ReportNode> impleme
 		if(customAttributes!=null) {
 			customAttributes.forEach((k, v)->filters.add(Filters.equals("customAttributes."+k, v)));
 		}
-		return collectionDriver.find(Filters.and(filters), new SearchOrder("executionTime", 1), null, null, 0)
-				.iterator();
+		return collectionDriver.findLazy(Filters.and(filters), new SearchOrder("executionTime", 1), null, null, 0);
 	}
 	
 	@Override
