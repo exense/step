@@ -116,6 +116,6 @@ public interface ResourceManager {
 	 */
 	void deleteResource(String resourceId);
 
-	List<Resource> findManyByAttributes(Map<String, String> criteria);
+	List<Resource> findManyByCriteria(Map<String, String> criteria);
 
 }

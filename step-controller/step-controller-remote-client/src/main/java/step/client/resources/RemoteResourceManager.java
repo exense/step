@@ -159,9 +159,9 @@ public class RemoteResourceManager extends AbstractRemoteClient implements Resou
 	}
 
 	@Override
-	public List<Resource> findManyByAttributes(Map<String, String> attributes) {
+	public List<Resource> findManyByCriteria(Map<String, String> criteria) {
 		Builder b = requestBuilder("/rest/resources/find");
-		Entity<Map<String, String>> entity = Entity.entity(attributes, MediaType.APPLICATION_JSON);
+		Entity<Map<String, String>> entity = Entity.entity(criteria, MediaType.APPLICATION_JSON);
 		return executeRequest(() -> b.post(entity, new GenericType<List<Resource>>() {}));
 	}
 

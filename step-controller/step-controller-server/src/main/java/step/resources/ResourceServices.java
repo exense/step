@@ -152,9 +152,8 @@ public class ResourceServices extends AbstractStepServices {
 	@Path("/find")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
-	public List<Resource> findManyByAttributes(Map<String, String> attributes) {
-		Spliterator<Resource> manyByAttributes = resourceAccessor.findManyByAttributes(attributes);
-		return StreamSupport.stream(manyByAttributes, false).collect(Collectors.toList());
+	public List<Resource> findManyByCriteria(Map<String, String> criteria) {
+		return resourceAccessor.findManyByCriteria(criteria).collect(Collectors.toList());
 	}
 	
 	@jakarta.ws.rs.core.Context 

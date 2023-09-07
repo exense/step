@@ -86,7 +86,7 @@ public abstract class AbstractRunPackagedAutomationPackagesMojo extends Abstract
 			}
 
 			// upload the maven artifact to Step or reuse the existing step resource with the same tracking attribute
-			LibFileReference libFileReference = prepareLibraryFileReferenceForMavenArtifact(remoteLibArtifact, getLibTrackingAttr());
+			LibFileReference libFileReference = prepareLibraryFileReferenceForMavenArtifact(remoteLibArtifact);
 			libResourceId = libFileReference.getResourceId();
 		}
 		if (libResourceId != null) {

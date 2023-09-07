@@ -172,7 +172,7 @@ public class ResourceManagerImpl implements ResourceManager {
 	}
 
 	@Override
-	public List<Resource> findManyByAttributes(Map<String, String> attributes) {
+	public List<Resource> findManyByCriteria(Map<String, String> attributes) {
 		return StreamSupport.stream(resourceAccessor.findManyByAttributes(attributes), false).collect(Collectors.toList());
 	}
 
@@ -336,12 +336,12 @@ public class ResourceManagerImpl implements ResourceManager {
 		resource.setDirectory(isDirectory);
 
 		if (trackingAttribute != null && !trackingAttribute.isEmpty()) {
-			Map<String, String> attributes = resource.getAttributes();
-			if (attributes == null) {
-				attributes = new HashMap<>();
-				resource.setAttributes(attributes);
+			Map<String, Object> customFields = resource.getCustomFields();
+			if (customFields == null) {
+				customFields = new HashMap<>();
+				resource.setCustomFields(customFields);
 			}
-			attributes.put(Resource.TRACKING_FIELD, trackingAttribute);
+			customFields.put(Resource.TRACKING_FIELD, trackingAttribute);
 		}
 
 		return resource;

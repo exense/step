@@ -68,9 +68,6 @@ public abstract class AbstractUploadKeywordsPackageMojo extends AbstractStepPlug
 	@Parameter(property = "step-upload-keywords.lib-artifact-classifier", defaultValue = "")
 	private String libArtifactClassifier;
 
-	@Parameter(property = "step-upload-keywords.lib-tracking-attr", required = false)
-	private String libTrackingAttr;
-
 	protected AbstractUploadKeywordsPackageMojo() {
 	}
 
@@ -140,7 +137,7 @@ public abstract class AbstractUploadKeywordsPackageMojo extends AbstractStepPlug
 			if (remoteLibArtifact == null) {
 				throw new MojoExecutionException("Library artifact is not resolved");
 			}
-			return prepareLibraryFileReferenceForMavenArtifact(remoteLibArtifact, getLibTrackingAttr());
+			return prepareLibraryFileReferenceForMavenArtifact(remoteLibArtifact);
 		} else {
 			return null;
 		}
@@ -257,11 +254,4 @@ public abstract class AbstractUploadKeywordsPackageMojo extends AbstractStepPlug
 		this.libArtifactClassifier = libArtifactClassifier;
 	}
 
-	public String getLibTrackingAttr() {
-		return libTrackingAttr;
-	}
-
-	public void setLibTrackingAttr(String libTrackingAttr) {
-		this.libTrackingAttr = libTrackingAttr;
-	}
 }
