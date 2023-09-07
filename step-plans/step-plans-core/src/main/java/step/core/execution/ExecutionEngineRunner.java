@@ -79,7 +79,7 @@ public class ExecutionEngineRunner {
 				importResult.setSuccessful(false);
 				importResult.setErrors(vetoes.stream().map(v -> v.reason).collect(Collectors.toList()));
 				executionLifecycleManager.afterImport(importResult);
-				saveFailureReportWithStatus(ReportNodeStatus.VETOED);
+				executionLifecycleManager.updateExecutionResult(executionContext, ReportNodeStatus.VETOED);
 			} else {
 				ExecutionParameters executionParameters = executionContext.getExecutionParameters();
 				plan = executionParameters.getPlan();
@@ -96,7 +96,7 @@ public class ExecutionEngineRunner {
 						PlanAccessor planAccessor = executionContext.getPlanAccessor();
 						plan = planAccessor.get(new ObjectId(importResult.getPlanId()));
 					} else {
-						saveFailureReportWithStatus(ReportNodeStatus.IMPORT_ERROR);
+						executionLifecycleManager.updateExecutionResult(executionContext, ReportNodeStatus.IMPORT_ERROR);
 					}
 
 				}
@@ -111,7 +111,7 @@ public class ExecutionEngineRunner {
 				
 				ReportNode rootReportNode = executionContext.getReport();
 				executionContext.setCurrentReportNode(rootReportNode);
-				executionContext.getReportNodeAccessor().save(rootReportNode);
+				persistReportNode(rootReportNode);
 
 				executionLifecycleManager.executionStarted();
 				
@@ -120,7 +120,7 @@ public class ExecutionEngineRunner {
 				if(planReportNode!=null && planReportNode.getStatus() != null) {
 					ReportNodeStatus resultStatus = planReportNode.getStatus();
 					rootReportNode.setStatus(resultStatus);
-					executionContext.getReportNodeAccessor().save(rootReportNode);
+					persistReportNode(rootReportNode);
 				}
 				
 				result.waitForExecutionToTerminate();
@@ -213,27 +213,12 @@ public class ExecutionEngineRunner {
 		}
 	}
 
+	private void persistReportNode(ReportNode rootReportNode) {
+		executionContext.getReportNodeAccessor().save(rootReportNode);
+	}
+
 	private void updateStatus(ExecutionStatus newStatus) {
 		executionLifecycleManager.updateStatus(newStatus);
 	}
 
-	private void saveFailureReportWithStatus(ReportNodeStatus status) {
-		ReportNode contextReport = executionContext.getReport();
-		contextReport.setStatus(status);
-		executionContext.getReportNodeAccessor().save(contextReport);
-		// there must be at least one child element to the (context) report.
-		ReportNode rootReport = new ReportNode();
-		rootReport.setExecutionID(contextReport.getExecutionID());
-		rootReport.setParentID(contextReport.getId());
-		rootReport.setStatus(status);
-		try {
-			// This needs to be done like this -- it will work at runtime, but
-			// would create a compile-time cyclic dependency between modules if the dependencies were setup "correctly" in pom.xml
-			AbstractArtefact failure = (AbstractArtefact) Class.forName("step.artefacts.Failure").newInstance();
-			rootReport.setResolvedArtefact(failure);
-		} catch (Exception ignored) {}
-
-		executionContext.getReportNodeAccessor().save(rootReport);
-		executionLifecycleManager.updateExecutionResult(executionContext, status);
-	}
 }
