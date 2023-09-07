@@ -32,6 +32,7 @@ public enum ReportNodeStatus {
 	
 	NORUN,
 	
-	RUNNING;
-	
+	RUNNING,
+	IMPORT_ERROR,
+	VETOED;
 }
