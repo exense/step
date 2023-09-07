@@ -79,7 +79,7 @@ public class ExecutionEngineRunner {
 				importResult.setSuccessful(false);
 				importResult.setErrors(vetoes.stream().map(v -> v.reason).collect(Collectors.toList()));
 				executionLifecycleManager.afterImport(importResult);
-				executionLifecycleManager.updateExecutionResult(executionContext, ReportNodeStatus.VETOED);
+				saveFailureReportWithResult(ReportNodeStatus.VETOED);
 			} else {
 				ExecutionParameters executionParameters = executionContext.getExecutionParameters();
 				plan = executionParameters.getPlan();
@@ -96,7 +96,7 @@ public class ExecutionEngineRunner {
 						PlanAccessor planAccessor = executionContext.getPlanAccessor();
 						plan = planAccessor.get(new ObjectId(importResult.getPlanId()));
 					} else {
-						executionLifecycleManager.updateExecutionResult(executionContext, ReportNodeStatus.IMPORT_ERROR);
+						saveFailureReportWithResult(ReportNodeStatus.IMPORT_ERROR);
 					}
 
 				}
@@ -219,6 +219,13 @@ public class ExecutionEngineRunner {
 
 	private void updateStatus(ExecutionStatus newStatus) {
 		executionLifecycleManager.updateStatus(newStatus);
+	}
+
+	private void saveFailureReportWithResult(ReportNodeStatus status) {
+		ReportNode report = executionContext.getReport();
+		report.setStatus(status);
+		persistReportNode(report);
+		executionLifecycleManager.updateExecutionResult(executionContext, status);
 	}
 
 }
