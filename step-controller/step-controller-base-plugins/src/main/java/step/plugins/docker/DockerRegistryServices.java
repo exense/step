@@ -9,6 +9,8 @@ import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.deployment.AbstractStepServices;
+import step.core.docker.DockerRegistryConfiguration;
+import step.core.docker.DockerRegistryConfigurationAccessor;
 
 import java.util.ArrayList;
 import java.util.List;

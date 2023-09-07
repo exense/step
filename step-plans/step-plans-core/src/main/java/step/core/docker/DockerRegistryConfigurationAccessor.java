@@ -1,4 +1,4 @@
-package step.plugins.docker;
+package step.core.docker;
 
 import step.core.accessors.AbstractAccessor;
 import step.core.collections.Collection;

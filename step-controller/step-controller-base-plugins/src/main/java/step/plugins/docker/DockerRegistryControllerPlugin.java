@@ -1,8 +1,14 @@
 package step.plugins.docker;
 
 import step.core.GlobalContext;
+import step.core.docker.DockerRegistryConfiguration;
+import step.core.docker.DockerRegistryConfigurationAccessor;
+import step.core.execution.ExecutionContext;
+import step.core.execution.ExecutionEngineContext;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
+import step.engine.plugins.AbstractExecutionEnginePlugin;
+import step.engine.plugins.ExecutionEnginePlugin;
 
 @Plugin
 public class DockerRegistryControllerPlugin extends AbstractControllerPlugin {
@@ -16,5 +22,16 @@ public class DockerRegistryControllerPlugin extends AbstractControllerPlugin {
                 .getCollectionFactory().getCollection("dockerRegistries", DockerRegistryConfiguration.class));
         context.put(DockerRegistryConfigurationAccessor.class, dockerRegistryConfigurationAccessor);
         context.getServiceRegistrationCallback().registerService(DockerRegistryServices.class);
+    }
+
+    @Override
+    public ExecutionEnginePlugin getExecutionEnginePlugin() {
+        return new AbstractExecutionEnginePlugin() {
+            @Override
+            public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
+                super.initializeExecutionContext(executionEngineContext, executionContext);
+                executionContext.put(DockerRegistryConfigurationAccessor.class, dockerRegistryConfigurationAccessor);
+            }
+        };
     }
 }

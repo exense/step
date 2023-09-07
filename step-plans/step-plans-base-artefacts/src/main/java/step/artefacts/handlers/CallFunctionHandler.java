@@ -18,17 +18,11 @@
  ******************************************************************************/
 package step.artefacts.handlers;
 
-import java.io.StringReader;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
-
 import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonValue;
 import jakarta.json.JsonValue.ValueType;
 import jakarta.json.stream.JsonParsingException;
-
 import step.artefacts.CallFunction;
 import step.artefacts.handlers.FunctionGroupHandler.FunctionGroupContext;
 import step.artefacts.reports.CallFunctionReportNode;
@@ -38,6 +32,8 @@ import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
+import step.core.docker.DockerRegistryConfiguration;
+import step.core.docker.DockerRegistryConfigurationAccessor;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.execution.ExecutionContext;
@@ -63,6 +59,13 @@ import step.grid.TokenWrapper;
 import step.grid.agent.tokenpool.TokenReservationSession;
 import step.grid.io.Attachment;
 import step.grid.io.AttachmentHelper;
+
+import java.io.StringReader;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunctionReportNode> {
 
@@ -141,7 +144,23 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 
 				// Add the docker image if present within the session
 				if(functionGroupContext != null) {
-					functionGroupContext.dockerImage.ifPresent(image -> input.getProperties().put(FunctionExecutionServiceImpl.INPUT_PROPERTY_DOCKER_IMAGE, image));
+					functionGroupContext.dockerImage.ifPresent(image -> {
+						DockerRegistryConfigurationAccessor dockerRegistryConfigurationAccessor = context.require(DockerRegistryConfigurationAccessor.class);
+						DockerRegistryConfiguration dockerRegistryConfiguration = dockerRegistryConfigurationAccessor
+								.stream()
+								.filter(registryConfiguration -> {
+											try {
+												return image.contains(new URL(registryConfiguration.getUrl()).getAuthority());
+											} catch (MalformedURLException e) {
+												throw new RuntimeException(e);
+											}
+										})
+								.findFirst().orElseThrow();
+						input.getProperties().put(FunctionExecutionServiceImpl.INPUT_PROPERTY_DOCKER_IMAGE, image);
+						input.getProperties().put(FunctionExecutionServiceImpl.INPUT_PROPERTY_DOCKER_REGISTRY_URL, dockerRegistryConfiguration.getUrl());
+						input.getProperties().put(FunctionExecutionServiceImpl.INPUT_PROPERTY_DOCKER_REGISTRY_USERNAME, dockerRegistryConfiguration.getUsername());
+						input.getProperties().put(FunctionExecutionServiceImpl.INPUT_PROPERTY_DOCKER_REGISTRY_PASSWORD, dockerRegistryConfiguration.getPassword());
+					});
 				}
 				try {
 					output = functionExecutionService.callFunction(token.getID(), function, input, JsonObject.class);

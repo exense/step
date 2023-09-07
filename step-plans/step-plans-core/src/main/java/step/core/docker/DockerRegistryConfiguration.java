@@ -1,4 +1,4 @@
-package step.plugins.docker;
+package step.core.docker;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import step.core.accessors.AbstractIdentifiableObject;

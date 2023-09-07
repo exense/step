@@ -242,15 +242,9 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 					messageProperties.put(ProxyMessageHandler.MESSAGE_HANDLER_FILE_ID, functionHandlerPackage.getFileId());
 					messageProperties.put(ProxyMessageHandler.MESSAGE_HANDLER_FILE_VERSION, functionHandlerPackage.getVersion());
 
-					// TODO Read this from the settings
-					DockerConfiguration dockerConfiguration = new DockerConfiguration();
-					dockerConfiguration.registryUrl = properties.getOrDefault(INPUT_PROPERTY_DOCKER_REGISTRY_URL,"https://docker.exense.ch");
-					dockerConfiguration.registryUsername = properties.getOrDefault(INPUT_PROPERTY_DOCKER_REGISTRY_USERNAME,"docker-user");
-					dockerConfiguration.registryPassword = properties.getOrDefault(INPUT_PROPERTY_DOCKER_REGISTRY_PASSWORD, "100%BuildPROD");
-
-					messageProperties.put(DockerContainer.MESSAGE_PROP_DOCKER_REGISTRY_URL, dockerConfiguration.registryUrl);
-					messageProperties.put(DockerContainer.MESSAGE_PROP_DOCKER_REGISTRY_USERNAME, dockerConfiguration.registryUsername);
-					messageProperties.put(DockerContainer.MESSAGE_PROP_DOCKER_REGISTRY_PASSWORD, dockerConfiguration.registryPassword);
+					messageProperties.put(DockerContainer.MESSAGE_PROP_DOCKER_REGISTRY_URL, properties.get(INPUT_PROPERTY_DOCKER_REGISTRY_URL));
+					messageProperties.put(DockerContainer.MESSAGE_PROP_DOCKER_REGISTRY_USERNAME, properties.get(INPUT_PROPERTY_DOCKER_REGISTRY_USERNAME));
+					messageProperties.put(DockerContainer.MESSAGE_PROP_DOCKER_REGISTRY_PASSWORD, properties.get(INPUT_PROPERTY_DOCKER_REGISTRY_PASSWORD));
 					messageProperties.put(DockerContainer.MESSAGE_PROP_DOCKER_IMAGE, properties.get(INPUT_PROPERTY_DOCKER_IMAGE));
 					messageProperties.put(DockerContainer.MESSAGE_PROP_CONTAINER_USER, properties.get(INPUT_PROPERTY_CONTAINER_USER));
 					messageProperties.put(DockerContainer.MESSAGE_PROP_CONTAINER_CMD, properties.get(INPUT_PROPERTY_CONTAINER_CMD));
