@@ -19,7 +19,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.Duration;
-import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 public class DockerContainer implements Closeable {
@@ -114,7 +114,7 @@ public class DockerContainer implements Closeable {
                 .exec();
         dockerClient.startContainerCmd(container.getId()).exec();
         InspectContainerResponse inspectContainerResponse = dockerClient.inspectContainerCmd(container.getId()).exec();
-        logger.debug("Container startup response : " + inspectContainerResponse.toString());
+        logger.info("Container " + CONTAINER_NAME + " startup response : " + inspectContainerResponse.toString());
         return container;
     }
 
@@ -153,7 +153,6 @@ public class DockerContainer implements Closeable {
         StringBuilder stringBuilder = new StringBuilder();
         StringBuilderLogReader callback = new StringBuilderLogReader(stringBuilder);
         ExecCreateCmdResponse execCreateCmdResponse;
-        logger.debug("Making the startup script executable");
         String[] bashCommandArray = {"bash", "-c", command};
         ExecCreateCmd builder = dockerClient.execCreateCmd(container.getId())
                 .withAttachStdout(true)
@@ -167,19 +166,17 @@ public class DockerContainer implements Closeable {
         StringBuilderLogReader exec = dockerClient.execStartCmd(execCreateCmdResponse.getId()).exec(new StringBuilderLogReader(stringBuilder));
         if (awaitCompletion) {
             exec.awaitCompletion();
-            String message = "Executed command '" + String.join(" ", Arrays.asList(command)) + "'. Output: " + exec.builder.toString();
-            logger.debug(message);
-            System.out.println(message);
+            String message = "Executed command '" + String.join(" ", List.of(command)) + "'. Output: " + exec.builder.toString();
+            logger.info(message);
         } else {
-            String message = "Started command '" + String.join(" ", Arrays.asList(command)) + "'. Output: " + exec.builder.toString();
-            logger.debug(message);
-            System.out.println(message);
+            String message = "Started command '" + String.join(" ", List.of(command)) + "'. Output: " + exec.builder.toString();
+            logger.info(message);
         }
     }
 
     private void copyLocalFileToContainer(File localFile, String remotePath) throws IOException {
         String pathToCopy = localFile.getCanonicalPath();
-        logger.debug("Copying local file %s to container %s at path %s%n", pathToCopy, container.getId(), remotePath);
+        logger.info(String.format("Copying local file %s to container %s at path %s%n", pathToCopy, container.getId(), remotePath));
         dockerClient.copyArchiveToContainerCmd(container.getId())
                 .withHostResource(pathToCopy)
                 .withRemotePath(remotePath)
@@ -187,7 +184,7 @@ public class DockerContainer implements Closeable {
     }
 
     private void createFolderInContainer(String containerFolderPath) throws InterruptedException {
-        logger.debug("Creating path %s in container %s%n", containerFolderPath, container.getId());
+        logger.info(String.format("Creating path %s in container %s%n", containerFolderPath, container.getId()));
         executeContainerCmd("root", String.format("mkdir -p %s", containerFolderPath));
     }
 
