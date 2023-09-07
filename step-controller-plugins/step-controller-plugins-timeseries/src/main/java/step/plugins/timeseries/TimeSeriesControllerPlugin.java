@@ -20,6 +20,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static step.plugins.timeseries.TimeSeriesExecutionPlugin.*;
+
 @Plugin
 public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 
@@ -27,7 +29,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
     public static String TIME_SERIES_SAMPLING_LIMIT = "plugins.timeseries.sampling.limit";
     public static String TIME_SERIES_COLLECTION_PROPERTY = "timeseries";
     public static String TIME_SERIES_ATTRIBUTES_PROPERTY = "plugins.timeseries.attributes";
-    public static String TIME_SERIES_ATTRIBUTES_DEFAULT = "eId,taskId,planId,metricType,origin,name,rnStatus,project,type";
+    public static String TIME_SERIES_ATTRIBUTES_DEFAULT = EXECUTION_ID + "," + TASK_ID + "," + PLAN_ID + ",metricType,origin,name,rnStatus,project,type";
 
     private TimeSeriesIngestionPipeline mainIngestionPipeline;
     private TimeSeriesAggregationPipeline aggregationPipeline;

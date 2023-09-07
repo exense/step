@@ -21,6 +21,10 @@ public class TimeSeriesExecutionPlugin extends AbstractExecutionEnginePlugin {
 
 	public static String TIMESERIES_FLAG = "hasTimeSeries";
 
+	public static final String EXECUTION_ID = "eId";
+	public static final String TASK_ID = "taskId";
+	public static final String PLAN_ID = "planId";
+
 	@Override
 	public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
 		super.initializeExecutionContext(executionEngineContext, executionContext);
@@ -38,10 +42,10 @@ public class TimeSeriesExecutionPlugin extends AbstractExecutionEnginePlugin {
 		TimeSeriesIngestionPipeline ingestionPipeline = context.require(TimeSeriesIngestionPipeline.class);
 		ViewManager viewManager = context.require(ViewManager.class);
 
-		boolean passed = execution.getResult() != ReportNodeStatus.PASSED;
+		boolean executionPassed = execution.getResult() == ReportNodeStatus.PASSED;
 
 		ingestionPipeline.ingestPoint(withExecutionAttributes(execution, Map.of("metricType", "executions/count")), execution.getStartTime(), 1);
-		ingestionPipeline.ingestPoint(withExecutionAttributes(execution, Map.of("metricType", "executions/failure-percentage")), execution.getStartTime(), passed ? 0 : 1);
+		ingestionPipeline.ingestPoint(withExecutionAttributes(execution, Map.of("metricType", "executions/failure-percentage")), execution.getStartTime(), executionPassed ? 0 : 100);
 
 		ErrorDistribution errorDistribution = (ErrorDistribution) viewManager.queryView(ErrorDistributionView.ERROR_DISTRIBUTION_VIEW, context.getExecutionId());
 
@@ -54,11 +58,12 @@ public class TimeSeriesExecutionPlugin extends AbstractExecutionEnginePlugin {
 
 	private BucketAttributes withExecutionAttributes(Execution execution, Map<String, Object> attributes) {
 		HashMap<String, Object> result = new HashMap<>(attributes);
-		result.put("executionId", execution.getId().toString());
+		result.put(EXECUTION_ID, execution.getId().toString());
 		String executionTaskID = execution.getExecutionTaskID();
 		if (executionTaskID != null) {
-			result.put("taskId", executionTaskID);
+			result.put(TASK_ID, executionTaskID);
 		}
+		result.put(PLAN_ID, execution.getPlanId());
 		return new BucketAttributes(result);
 	}
 }
