@@ -142,7 +142,7 @@ public class DockerContainer implements Closeable {
         }
         String subGridUrl = "http://" + gridHost + ":" + gridPort;
         executeContainerCmd(containerUser, String.format("nohup ./startAgent.sh -gridHost=%s -fileServerHost=%s/proxy &", subGridUrl, subGridUrl),
-                String.format("/home/%s/bin/", containerUser), true);
+                String.format("/home/%s/bin/", containerUser), false);
     }
 
     private void executeContainerCmd(String containerUser, String command) throws InterruptedException {
