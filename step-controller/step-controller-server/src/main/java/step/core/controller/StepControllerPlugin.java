@@ -86,8 +86,10 @@ public class StepControllerPlugin extends AbstractControllerPlugin implements Co
 	@Override
 	public void postShutdownHook(GlobalContext context) {
 		try {
-			controller.postShutdownHook();
-			logger.info("Collection factory shutdown");
+			if (controller != null) {
+				controller.postShutdownHook();
+				logger.info("Collection factory shutdown");
+			}
 		} catch (IOException e) {
 			logger.error("Unable to gracefully shutdown the collection factory.",e);
 		}
