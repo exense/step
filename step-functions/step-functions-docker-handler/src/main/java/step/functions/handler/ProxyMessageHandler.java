@@ -49,10 +49,12 @@ public class ProxyMessageHandler implements MessageHandler {
         TokenReservationSession tokenReservationSession = agentTokenWrapper.getTokenReservationSession();
         DockerContainer container = tokenReservationSession.get(DockerContainer.class);
         if (container == null) {
+            logger.info("Creating new container");
             // Create a new docker container
             container = new DockerContainer(agentProperties, messageProperties, localGridPort);
             // Add the container to the session. It will be closed automatically at session release
             tokenReservationSession.put(container);
+            logger.info("Container has been put to the tokenReservationSession");
         }
 
         FileManagerClient fileManagerClient = agentTokenWrapper.getServices().getFileManagerClient();

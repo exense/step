@@ -181,7 +181,7 @@ public class DockerContainer implements Closeable {
 
     private void copyLocalFileToContainer(File localFile, String remotePath) throws IOException {
         String pathToCopy = localFile.getCanonicalPath();
-        logger.info(String.format("Copying local file %s to container %s at path %s%n", pathToCopy, container.getId(), remotePath));
+        logger.info(String.format("Copying local file %s to container %s at path %s", pathToCopy, container.getId(), remotePath));
         dockerClient.copyArchiveToContainerCmd(container.getId())
                 .withHostResource(pathToCopy)
                 .withRemotePath(remotePath)
@@ -189,7 +189,7 @@ public class DockerContainer implements Closeable {
     }
 
     private void createFolderInContainer(String containerFolderPath) throws InterruptedException {
-        logger.info(String.format("Creating path %s in container %s%n", containerFolderPath, container.getId()));
+        logger.info(String.format("Creating path %s in container %s", containerFolderPath, container.getId()));
         executeContainerCmd("root", String.format("mkdir -p %s", containerFolderPath));
     }
 
