@@ -21,6 +21,7 @@ import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public class DockerContainer implements Closeable {
 
@@ -163,14 +164,18 @@ public class DockerContainer implements Closeable {
             builder.withWorkingDir(workingDir);
         }
         execCreateCmdResponse = builder.exec();
-        StringBuilderLogReader exec = dockerClient.execStartCmd(execCreateCmdResponse.getId()).exec(new StringBuilderLogReader(stringBuilder));
+        StringBuilderLogReader exec = dockerClient.execStartCmd(execCreateCmdResponse.getId()).exec(callback);
         if (awaitCompletion) {
             exec.awaitCompletion();
-            String message = "Executed command '" + String.join(" ", List.of(command)) + "'. Output: " + exec.builder.toString();
+            String message = "Executed command '" + String.join(" ", List.of(command)) + "'";
             logger.info(message);
+            callback.awaitCompletion(5, TimeUnit.SECONDS);
+            logger.info(stringBuilder.toString());
         } else {
-            String message = "Started command '" + String.join(" ", List.of(command)) + "'. Output: " + exec.builder.toString();
+            String message = "Started command '" + String.join(" ", List.of(command)) + "'";
             logger.info(message);
+            callback.awaitCompletion(5, TimeUnit.SECONDS);
+            logger.info(stringBuilder.toString());
         }
     }
 
