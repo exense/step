@@ -194,8 +194,12 @@ public class DockerContainer implements Closeable {
     }
 
     private void stopContainer() {
+        logger.info("Stopping container");
         dockerClient.stopContainerCmd(CONTAINER_NAME).exec();
+        logger.info("Container stopped");
+        logger.info("Removing container");
         dockerClient.removeContainerCmd(CONTAINER_NAME).exec();
+        logger.info("Container removed");
     }
 
 
