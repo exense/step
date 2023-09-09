@@ -24,5 +24,5 @@ import step.functions.Function;
 import java.util.Map;
 
 public interface SpecialKeywordAttributesExtractor {
-    void extractSpecialAttributes(JsonNode yamlKeyword, Function draftKeywordObject, Map<String, Object> specialAttributesCollector);
+    void extractSpecialAttributes(JsonNode yamlKeywordFields, Function draftKeywordObject, Map<String, Object> specialAttributesCollector);
 }

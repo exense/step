@@ -6,7 +6,8 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import org.junit.Assert;
 import org.junit.Test;
-import step.automation.packages.yaml.model.AutomationPackageReadingException;
+import step.automation.packages.AutomationPackageFile;
+import step.automation.packages.AutomationPackageReadingException;
 import step.core.accessors.DefaultJacksonMapperProvider;
 
 import java.io.File;

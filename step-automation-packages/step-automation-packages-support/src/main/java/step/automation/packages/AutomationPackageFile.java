@@ -16,11 +16,10 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.yaml;
+package step.automation.packages;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.automation.packages.yaml.model.AutomationPackageReadingException;
 
 import java.io.File;
 import java.io.InputStream;
@@ -62,6 +61,13 @@ public class AutomationPackageFile {
             }
         }
         return null;
+    }
+
+    public InputStream getResourceAsStream(String resourcePath){
+        return classLoader.getResourceAsStream(resourcePath);
+    }
+    public URL getResource(String resourcePath){
+        return classLoader.getResource(resourcePath);
     }
 
 }

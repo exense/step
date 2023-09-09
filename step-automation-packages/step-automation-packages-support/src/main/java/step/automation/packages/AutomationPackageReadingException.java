@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.yaml.model;
+package step.automation.packages;
 
 public class AutomationPackageReadingException extends Exception {
     public AutomationPackageReadingException(String message) {

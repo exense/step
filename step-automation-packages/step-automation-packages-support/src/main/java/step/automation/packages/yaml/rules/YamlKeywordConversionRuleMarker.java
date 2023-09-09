@@ -29,5 +29,5 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Retention(RUNTIME)
 @Target(ElementType.TYPE)
 public @interface YamlKeywordConversionRuleMarker {
-    Class<? extends Function> function() default Function.class;
+    Class<? extends Function>[] functions() default Function.class;
 }

@@ -19,12 +19,12 @@
 package step.automation.packages.yaml;
 
 import org.junit.Test;
-import step.automation.packages.yaml.AutomationPackageKeywordsExtractor;
+import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.yaml.model.AutomationPackageKeyword;
-import step.automation.packages.yaml.model.AutomationPackageReadingException;
+import step.plugins.jmeter.JMeterFunction;
+import step.plugins.jmeter.automation.JMeterFunctionTestplanConversionRule;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -34,10 +34,16 @@ public class AutomationPackageKeywordsExtractorTest {
     private final AutomationPackageKeywordsExtractor extractor = new AutomationPackageKeywordsExtractor();
 
     @Test
-    public void testFunctionExtraction() throws AutomationPackageReadingException, IOException {
+    public void testFunctionExtraction() throws AutomationPackageReadingException {
         File automationPackageJar = new File("src/test/resources/step/functions/packages/yaml/testpack.jar");
         List<AutomationPackageKeyword> keywords = extractor.extractKeywordsFromAutomationPackage(automationPackageJar);
         assertEquals(1, keywords.size());
+        AutomationPackageKeyword automationPackageKeyword = keywords.get(0);
+        assertEquals(JMeterFunction.class, automationPackageKeyword.getDraftKeyword().getClass());
+        assertEquals(
+                "jmeterProject1/jmeterProject1.xml",
+                automationPackageKeyword.getSpecialAttributes().get(JMeterFunctionTestplanConversionRule.JMETER_TESTPLAN_ATTR)
+        );
     }
 
 }

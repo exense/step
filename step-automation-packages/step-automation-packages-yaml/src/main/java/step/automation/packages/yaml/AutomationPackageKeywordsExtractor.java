@@ -25,11 +25,12 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import org.reflections.Reflections;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
+import step.automation.packages.AutomationPackageFile;
 import step.automation.packages.yaml.deserialization.YamlKeywordsDeserializer;
 import step.automation.packages.yaml.model.AutomationPackageDescriptor;
 import step.automation.packages.yaml.model.AutomationPackageKeyword;
 import step.automation.packages.yaml.model.AutomationPackageKeywords;
-import step.automation.packages.yaml.model.AutomationPackageReadingException;
+import step.automation.packages.AutomationPackageReadingException;
 import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.deserializers.YamlDynamicValueDeserializer;
@@ -42,11 +43,10 @@ import java.util.List;
 
 public class AutomationPackageKeywordsExtractor {
 
-    private final Reflections functionReflections = new Reflections(new ConfigurationBuilder()
-            .setUrls(ClasspathHelper.forPackage("step")));
-
+    private final ObjectMapper yamlObjectMapper;
 
     public AutomationPackageKeywordsExtractor() {
+        this.yamlObjectMapper = createYamlObjectMapper();
     }
 
     public List<AutomationPackageKeyword> extractKeywordsFromAutomationPackage(AutomationPackageFile automationPackageFile) throws AutomationPackageReadingException {
@@ -56,13 +56,12 @@ public class AutomationPackageKeywordsExtractor {
             }
 
             try (InputStream yamlInputStream = automationPackageFile.getDescriptorYaml()) {
-                ObjectMapper objectMapper = createYamlObjectMapper();
-                AutomationPackageDescriptor metadata = objectMapper.readValue(yamlInputStream, AutomationPackageDescriptor.class);
+                AutomationPackageDescriptor metadata = yamlObjectMapper.readValue(yamlInputStream, AutomationPackageDescriptor.class);
 
                 return metadata.getKeywords().getKeywords();
             }
         } catch (IOException ex) {
-            throw new AutomationPackageReadingException("Unable to read the automation packakge", ex);
+            throw new AutomationPackageReadingException("Unable to read the automation package", ex);
         }
     }
 
@@ -80,7 +79,7 @@ public class AutomationPackageKeywordsExtractor {
         // configure custom deserializers
         SimpleModule module = new SimpleModule();
         module.addDeserializer(DynamicValue.class, new YamlDynamicValueDeserializer());
-        module.addDeserializer(AutomationPackageKeywords.class, new YamlKeywordsDeserializer(functionReflections));
+        module.addDeserializer(AutomationPackageKeywords.class, new YamlKeywordsDeserializer());
         yamlMapper.registerModule(module);
 
         return yamlMapper;

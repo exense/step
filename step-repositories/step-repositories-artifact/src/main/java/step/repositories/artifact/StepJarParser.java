@@ -28,7 +28,7 @@ import step.functions.Function;
 import step.automation.packages.yaml.AutomationPackageKeywordsAttributesApplier;
 import step.automation.packages.yaml.AutomationPackageKeywordsExtractor;
 import step.automation.packages.yaml.model.AutomationPackageKeyword;
-import step.automation.packages.yaml.model.AutomationPackageReadingException;
+import step.automation.packages.AutomationPackageReadingException;
 import step.handlers.javahandler.Keyword;
 import step.junit.runner.StepClassParser;
 import step.junit.runner.StepClassParserResult;
@@ -43,7 +43,6 @@ import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.*;
 
 public class StepJarParser {
