@@ -25,7 +25,9 @@ import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
 import step.core.scanner.AnnotationScanner;
 import step.functions.Function;
+import step.functions.packages.yaml.AutomationPackageKeywordsAttributesApplier;
 import step.functions.packages.yaml.AutomationPackageKeywordsExtractor;
+import step.functions.packages.yaml.model.AutomationPackageKeyword;
 import step.functions.packages.yaml.model.AutomationPackageReadingException;
 import step.handlers.javahandler.Keyword;
 import step.junit.runner.StepClassParser;
@@ -49,10 +51,12 @@ public class StepJarParser {
 
     private final StepClassParser stepClassParser;
     private final AutomationPackageKeywordsExtractor automationPackageKeywordsExtractor;
+    private final AutomationPackageKeywordsAttributesApplier automationPackagesKeywordAttributesAppler;
 
     public StepJarParser() {
         this.stepClassParser = new StepClassParser(false);
         this.automationPackageKeywordsExtractor = new AutomationPackageKeywordsExtractor();
+        this.automationPackagesKeywordAttributesAppler = new AutomationPackageKeywordsAttributesApplier();
     }
 
     private List<Function> getFunctions(AnnotationScanner annotationScanner, File artifact, File libraries) {
@@ -93,7 +97,10 @@ public class StepJarParser {
 
         try {
             // add functions from automation package
-            functions.addAll(automationPackageKeywordsExtractor.extractKeywordsFromAutomationPackage(artifact));
+            List<AutomationPackageKeyword> automationPackageKeywords = automationPackageKeywordsExtractor.extractKeywordsFromAutomationPackage(artifact);
+            for (AutomationPackageKeyword automationPackageKeyword : automationPackageKeywords) {
+                functions.add(automationPackagesKeywordAttributesAppler.applySpecialAttributesToKeyword(automationPackageKeyword));
+            }
         } catch (AutomationPackageReadingException e) {
             throw new RuntimeException("Unable to process automation package", e);
         }

@@ -120,6 +120,7 @@
 		<module>../step-ide</module>
 		<module>../step-junit</module>
 		<module>../step-libs-maven-client</module>
+		<module>../step-automation-packages</module>
 	</modules>
 
     <build>
