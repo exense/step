@@ -18,10 +18,6 @@
  ******************************************************************************/
 package step.plugins.jmeter.automation;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.ObjectCodec;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import step.automation.packages.yaml.deserialization.SpecialKeywordAttributesApplier;
 import step.automation.packages.yaml.deserialization.SpecialKeywordAttributesExtractor;
 import step.automation.packages.yaml.deserialization.YamlKeywordFieldDeserializationProcessor;
@@ -32,8 +28,6 @@ import step.core.dynamicbeans.DynamicValue;
 import step.plugins.jmeter.JMeterFunction;
 import step.resources.Resource;
 import step.resources.ResourceManager;
-
-import java.util.Map;
 
 @YamlKeywordConversionRuleMarker(functions = JMeterFunction.class)
 public class JMeterFunctionTestplanConversionRule implements YamlKeywordConversionRule {

@@ -18,9 +18,7 @@
  ******************************************************************************/
 package step.automation.packages.yaml;
 
-import org.reflections.Reflections;
-import org.reflections.util.ClasspathHelper;
-import org.reflections.util.ConfigurationBuilder;
+import step.automation.packages.AutomationPackageKeyword;
 import step.automation.packages.yaml.rules.YamlKeywordConversionRule;
 import step.automation.packages.yaml.rules.YamlKeywordConversionRuleMarker;
 import step.core.scanner.CachedAnnotationScanner;
@@ -34,16 +32,22 @@ import static step.core.scanner.Classes.newInstanceAs;
 
 public class YamlKeywordsLookuper {
 
-    private final Reflections functionReflections = new Reflections(new ConfigurationBuilder().setUrls(ClasspathHelper.forPackage("step")));
-
     public YamlKeywordsLookuper() {
     }
 
     public String yamlKeywordClassToJava(String yamlKeywordClass) {
-        Set<Class<? extends Function>> functionImpls = functionReflections.getSubTypesOf(Function.class);
-        for (Class<? extends Function> functionImpl : functionImpls) {
-            if (functionImpl.getSimpleName().equalsIgnoreCase(yamlKeywordClass)) {
-                return functionImpl.getName();
+        Set<Class<?>> annotatedFunctions = CachedAnnotationScanner.getClassesWithAnnotation(AutomationPackageKeyword.class);
+        for (Class<?> annotatedFunction : annotatedFunctions) {
+            AutomationPackageKeyword ann = annotatedFunction.getAnnotation(AutomationPackageKeyword.class);
+            String expectedYamlName;
+            if (ann.name() != null && !ann.name().isEmpty()) {
+                expectedYamlName = ann.name();
+            } else {
+                expectedYamlName = annotatedFunction.getSimpleName();
+            }
+
+            if (yamlKeywordClass.equalsIgnoreCase(expectedYamlName)) {
+                return annotatedFunction.getName();
             }
         }
         return null;

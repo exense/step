@@ -1,8 +1,8 @@
 version: 1.0.0
 name: "My package"
 keywords:
-  - JMeterFunction:
-      description: "JMeter function 1"
+  - JMeter:
+      description: "JMeter keyword 1"
       executeLocally: false
       useCustomTemplate: true
       managed: true
