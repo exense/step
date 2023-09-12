@@ -20,6 +20,7 @@ import step.core.plans.builder.PlanBuilder;
 import step.core.repositories.*;
 import step.functions.Function;
 import step.repositories.ArtifactRepositoryConstants;
+import step.resources.ResourceManager;
 
 import java.io.File;
 import java.util.*;
@@ -59,12 +60,14 @@ public class ArtifactRepository extends AbstractRepository {
                     "</settings>\n";
 
     private final PlanAccessor planAccessor;
+    private final ResourceManager resourceManager;
     private final ControllerSettingAccessor controllerSettingAccessor;
     private final File localRepository;
 
-    public ArtifactRepository(PlanAccessor planAccessor, ControllerSettingAccessor controllerSettingAccessor, Configuration configuration) {
+    public ArtifactRepository(PlanAccessor planAccessor, ResourceManager resourceManager, ControllerSettingAccessor controllerSettingAccessor, Configuration configuration) {
         super(Set.of(PARAM_GROUP_ID, PARAM_ARTIFACT_ID, PARAM_VERSION));
         localRepository = configuration.getPropertyAsFile(CONFIGURATION_MAVEN_FOLDER, new File(DEFAULT_MAVEN_FOLDER));
+        this.resourceManager = resourceManager;
         this.planAccessor = planAccessor;
         this.controllerSettingAccessor = controllerSettingAccessor;
     }
@@ -220,7 +223,7 @@ public class ArtifactRepository extends AbstractRepository {
     }
 
     private List<Plan> parsePlan(File artifact, File libraries, String[] includedClasses, String[] includedAnnotations, String[] excludedClasses, String[] excludedAnnotations) {
-        return new StepJarParser().getPlansForJar(artifact,libraries,includedClasses,includedAnnotations,excludedClasses,excludedAnnotations);
+        return new StepJarParser(resourceManager).getPlansForJar(artifact,libraries,includedClasses,includedAnnotations,excludedClasses,excludedAnnotations);
     }
 
     private static class FileAndPlan {

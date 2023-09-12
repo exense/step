@@ -20,15 +20,16 @@ package step.repositories.artifact;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.automation.packages.AutomationPackageFile;
+import step.automation.packages.AutomationPackageReadingException;
+import step.automation.packages.yaml.AutomationPackageKeywordsAttributesApplier;
+import step.automation.packages.yaml.AutomationPackageKeywordsExtractor;
+import step.automation.packages.yaml.model.AutomationPackageKeyword;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
 import step.core.scanner.AnnotationScanner;
 import step.functions.Function;
-import step.automation.packages.yaml.AutomationPackageKeywordsAttributesApplier;
-import step.automation.packages.yaml.AutomationPackageKeywordsExtractor;
-import step.automation.packages.yaml.model.AutomationPackageKeyword;
-import step.automation.packages.AutomationPackageReadingException;
 import step.handlers.javahandler.Keyword;
 import step.junit.runner.StepClassParser;
 import step.junit.runner.StepClassParserResult;
@@ -36,6 +37,7 @@ import step.junit.runners.annotations.Plans;
 import step.plans.nl.parser.PlanParser;
 import step.plugins.functions.types.CompositeFunctionUtils;
 import step.plugins.java.GeneralScriptFunction;
+import step.resources.ResourceManager;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -52,11 +54,17 @@ public class StepJarParser {
     private final StepClassParser stepClassParser;
     private final AutomationPackageKeywordsExtractor automationPackageKeywordsExtractor;
     private final AutomationPackageKeywordsAttributesApplier automationPackagesKeywordAttributesAppler;
+    private final ResourceManager resourceManager;
 
     public StepJarParser() {
+        this(null);
+    }
+
+    public StepJarParser(ResourceManager resourceManager) {
+        this.resourceManager = resourceManager;
         this.stepClassParser = new StepClassParser(false);
         this.automationPackageKeywordsExtractor = new AutomationPackageKeywordsExtractor();
-        this.automationPackagesKeywordAttributesAppler = new AutomationPackageKeywordsAttributesApplier();
+        this.automationPackagesKeywordAttributesAppler = new AutomationPackageKeywordsAttributesApplier(resourceManager);
     }
 
     private List<Function> getFunctions(AnnotationScanner annotationScanner, File artifact, File libraries) {
@@ -98,8 +106,11 @@ public class StepJarParser {
         try {
             // add functions from automation package
             List<AutomationPackageKeyword> automationPackageKeywords = automationPackageKeywordsExtractor.extractKeywordsFromAutomationPackage(artifact);
-            for (AutomationPackageKeyword automationPackageKeyword : automationPackageKeywords) {
-                functions.add(automationPackagesKeywordAttributesAppler.applySpecialAttributesToKeyword(automationPackageKeyword));
+            if (!automationPackageKeywords.isEmpty()) {
+                AutomationPackageFile automationPackageFile = new AutomationPackageFile(artifact);
+                for (AutomationPackageKeyword automationPackageKeyword : automationPackageKeywords) {
+                    automationPackagesKeywordAttributesAppler.applySpecialAttributesToKeyword(automationPackageKeyword, automationPackageFile);
+                }
             }
         } catch (AutomationPackageReadingException e) {
             throw new RuntimeException("Unable to process automation package", e);

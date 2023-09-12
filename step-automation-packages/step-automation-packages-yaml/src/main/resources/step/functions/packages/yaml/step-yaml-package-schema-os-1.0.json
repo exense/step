@@ -87,6 +87,9 @@
     "version" : {
       "const" : "1.0.0"
     },
+    "name": {
+      "type": "string"
+    },
     "keywords" : {
       "type": "array",
       "items": {

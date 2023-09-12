@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -63,11 +64,17 @@ public class AutomationPackageFile {
         return null;
     }
 
-    public InputStream getResourceAsStream(String resourcePath){
-        return classLoader.getResourceAsStream(resourcePath);
+    public InputStream getResourceAsStream(String resourcePath) throws IOException {
+        URL url = getResource(resourcePath);
+        return url.openStream();
     }
-    public URL getResource(String resourcePath){
-        return classLoader.getResource(resourcePath);
+
+    public URL getResource(String resourcePath) {
+        URL resource = classLoader.getResource(resourcePath);
+        if (log.isDebugEnabled()) {
+            log.debug("Obtain resource from automation package: {}", resource);
+        }
+        return resource;
     }
 
 }

@@ -26,6 +26,7 @@ import step.core.controller.ControllerSetting;
 import step.core.controller.ControllerSettingAccessor;
 import step.core.plans.PlanAccessor;
 import step.repositories.ArtifactRepositoryConstants;
+import step.resources.ResourceManager;
 
 import java.io.File;
 import java.util.Map;
@@ -58,8 +59,8 @@ public class MavenArtifactRepository extends AbstractArtifactRepository {
     private final ControllerSettingAccessor controllerSettingAccessor;
     private final File localRepository;
 
-    public MavenArtifactRepository(PlanAccessor planAccessor, ControllerSettingAccessor controllerSettingAccessor, Configuration configuration) {
-        super(Set.of(PARAM_GROUP_ID, PARAM_ARTIFACT_ID, PARAM_VERSION), planAccessor);
+    public MavenArtifactRepository(PlanAccessor planAccessor, ResourceManager resourceManager, ControllerSettingAccessor controllerSettingAccessor, Configuration configuration) {
+        super(Set.of(PARAM_GROUP_ID, PARAM_ARTIFACT_ID, PARAM_VERSION), planAccessor, resourceManager);
         localRepository = configuration.getPropertyAsFile(CONFIGURATION_MAVEN_FOLDER, new File(DEFAULT_MAVEN_FOLDER));
         this.controllerSettingAccessor = controllerSettingAccessor;
     }

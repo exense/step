@@ -18,22 +18,20 @@
  ******************************************************************************/
 package step.automation.packages.yaml.rules;
 
-import step.automation.packages.yaml.deserialization.SpecialKeywordAttributesApplier;
-import step.automation.packages.yaml.deserialization.SpecialKeywordAttributesExtractor;
-import step.automation.packages.yaml.deserialization.YamlKeywordFieldDeserializationProcessor;
-import step.core.AbstractStepContext;
+import step.resources.ResourceManager;
 
-public interface YamlKeywordConversionRule {
+public class AutomationPackageAttributesApplyingContext {
+    private ResourceManager resourceManager;
 
-    default SpecialKeywordAttributesExtractor getSpecialAttributesExtractor() {
-        return null;
+    public AutomationPackageAttributesApplyingContext(ResourceManager resourceManager) {
+        this.resourceManager = resourceManager;
     }
 
-    default SpecialKeywordAttributesApplier getSpecialKeywordAttributesApplier(AutomationPackageAttributesApplyingContext context) {
-        return null;
+    public ResourceManager getResourceManager() {
+        return resourceManager;
     }
 
-    default YamlKeywordFieldDeserializationProcessor getDeserializationProcessor() {
-        return null;
+    public void setResourceManager(ResourceManager resourceManager) {
+        this.resourceManager = resourceManager;
     }
 }

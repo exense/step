@@ -6,14 +6,19 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.automation.packages.AutomationPackageFile;
 import step.automation.packages.AutomationPackageReadingException;
 import step.core.accessors.DefaultJacksonMapperProvider;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 
 public class AutomationPackageFileManagerTest {
+
+    private static final Logger log = LoggerFactory.getLogger(AutomationPackageFileManagerTest.class);
 
     private ObjectMapper yamlObjectMapper;
 
@@ -34,6 +39,14 @@ public class AutomationPackageFileManagerTest {
         Assert.assertEquals(expectedDescriptor, actualDescriptor);
 
         Assert.assertFalse(new AutomationPackageFile(malformedPackageJar).isAutomationPackage());
+        URL resource = validPackage.getResource("jmeterProject1/jmeterProject1.xml");
+        log.info("Resource url: {}", resource.toString());
+        Assert.assertNotNull(resource);
+
+        try(InputStream is = validPackage.getResourceAsStream("jmeterProject1/jmeterProject1.xml")){
+            Assert.assertNotNull(is);
+            log.info("Resource: {}", new String(is.readAllBytes(), StandardCharsets.UTF_8));
+        }
     }
 
     protected ObjectMapper createYamlObjectMapper() {

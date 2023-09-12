@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.List;
+import java.util.Map;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -13,11 +14,12 @@ import ch.exense.commons.processes.ManagedProcess;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.attachments.FileResolver;
+import step.automation.packages.AutomationPackageFile;
+import step.automation.packages.AutomationPackageReadingException;
 import step.core.objectenricher.ObjectEnricher;
 import step.functions.Function;
 import step.functions.packages.FunctionPackage;
 import step.functions.packages.FunctionPackageHandler;
-import step.functions.packages.FunctionPackageManager;
 
 public abstract class AbstractFunctionPackageHandler extends FunctionPackageUtils implements FunctionPackageHandler {
 
@@ -33,7 +35,7 @@ public abstract class AbstractFunctionPackageHandler extends FunctionPackageUtil
 	@Override
 	public abstract List<Function> buildFunctions(FunctionPackage functionPackage, boolean preview, ObjectEnricher objectEnricher) throws Exception;
 
-	protected List<Function> getFunctionsFromDaemon(FunctionPackage functionPackage, ManagedProcess discovererDeamon)
+	protected List<Function> getFunctionsFromDaemon(FunctionPackage functionPackage, ManagedProcess discovererDeamon, boolean preview)
 			throws Exception {
 
 		File packageFile = resolveMandatoryFile(functionPackage.getPackageLocation());
@@ -76,7 +78,16 @@ public abstract class AbstractFunctionPackageHandler extends FunctionPackageUtil
 		if (list.exception == null) {
 			List<Function> functions = list.getFunctions();
 			functions.forEach(f -> {
-				configureFunction(f, functionPackage);
+				AutomationPackageFile automationPackageFile = null;
+				if (list.getAutomationPackageAttributes().get(f.getId().toString()) != null) {
+					// the function was included in automation package
+					try {
+						automationPackageFile = new AutomationPackageFile(packageFile);
+					} catch (AutomationPackageReadingException e) {
+						throw new RuntimeException(e);
+					}
+				}
+				configureFunction(f, functionPackage, preview, list.getAutomationPackageAttributes().get(f.getId().toString()), automationPackageFile);
 			});
 			return list.getFunctions();
 		} else {
@@ -84,5 +95,7 @@ public abstract class AbstractFunctionPackageHandler extends FunctionPackageUtil
 		}
 	}
 
-	protected abstract void configureFunction(Function f, FunctionPackage functionPackage);
+	protected abstract void configureFunction(Function f, FunctionPackage functionPackage,
+											  boolean preview, Map<String, Object> specialAutomationPackageAttributes,
+											  AutomationPackageFile automationPackageFile);
 }

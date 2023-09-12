@@ -18,14 +18,43 @@
  ******************************************************************************/
 package step.automation.packages.yaml;
 
+import step.automation.packages.AutomationPackageFile;
+import step.automation.packages.yaml.deserialization.SpecialKeywordAttributesApplier;
+import step.automation.packages.yaml.rules.AutomationPackageAttributesApplyingContext;
+import step.automation.packages.yaml.rules.YamlKeywordConversionRule;
 import step.functions.Function;
 import step.automation.packages.yaml.model.AutomationPackageKeyword;
+import step.resources.ResourceManager;
+
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class AutomationPackageKeywordsAttributesApplier {
 
-    public Function applySpecialAttributesToKeyword(AutomationPackageKeyword keyword){
-        // TODO: apply special fields
-        return keyword.getDraftKeyword();
+    private final YamlKeywordsLookuper lookuper = new YamlKeywordsLookuper();
+    private final ResourceManager resourceManager;
+
+    public AutomationPackageKeywordsAttributesApplier(ResourceManager resourceManager) {
+        this.resourceManager = resourceManager;
+    }
+
+    public void applySpecialAttributesToKeyword(AutomationPackageKeyword keyword,
+                                                AutomationPackageFile automationPackageFile){
+        List<YamlKeywordConversionRule> conversionRules = lookuper.getConversionRulesForKeyword(keyword.getDraftKeyword());
+        List<SpecialKeywordAttributesApplier> appliers = conversionRules.stream()
+                .map(r -> r.getSpecialKeywordAttributesApplier(prepareContext()))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
+        for (SpecialKeywordAttributesApplier applier : appliers) {
+            applier.applySpecialAttributesToKeyword(keyword, automationPackageFile);
+        }
+
+    }
+
+    protected AutomationPackageAttributesApplyingContext prepareContext() {
+        return new AutomationPackageAttributesApplyingContext(resourceManager);
     }
 
 }

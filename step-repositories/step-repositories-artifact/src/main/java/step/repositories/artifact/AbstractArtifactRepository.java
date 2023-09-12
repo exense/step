@@ -31,6 +31,7 @@ import step.core.plans.PlanAccessor;
 import step.core.plans.builder.PlanBuilder;
 import step.core.repositories.*;
 import step.functions.Function;
+import step.resources.ResourceManager;
 
 import java.io.File;
 import java.util.*;
@@ -48,10 +49,12 @@ public abstract class AbstractArtifactRepository extends AbstractRepository {
 	private static final String PARAM_EXCLUDE_CLASSES = "excludeClasses";
 	private static final String PARAM_EXCLUDE_ANNOTATIONS = "excludeAnnotations";
 	protected final PlanAccessor planAccessor;
+	protected final ResourceManager resourceManager;
 
-	public AbstractArtifactRepository(Set<String> canonicalRepositoryParameters, PlanAccessor planAccessor) {
+	public AbstractArtifactRepository(Set<String> canonicalRepositoryParameters, PlanAccessor planAccessor, ResourceManager resourceManager) {
 		super(canonicalRepositoryParameters);
 		this.planAccessor = planAccessor;
+		this.resourceManager = resourceManager;
 	}
 
 	protected static String getMandatoryRepositoryParameter(Map<String, String> repositoryParameters, String paramKey) {
@@ -160,7 +163,7 @@ public abstract class AbstractArtifactRepository extends AbstractRepository {
 	}
 
 	private List<Plan> parsePlan(File artifact, File libraries, String[] includedClasses, String[] includedAnnotations, String[] excludedClasses, String[] excludedAnnotations) {
-		return new StepJarParser().getPlansForJar(artifact,libraries,includedClasses,includedAnnotations,excludedClasses,excludedAnnotations);
+		return new StepJarParser(resourceManager).getPlansForJar(artifact,libraries,includedClasses,includedAnnotations,excludedClasses,excludedAnnotations);
 	}
 
 	private static class FileAndPlan {

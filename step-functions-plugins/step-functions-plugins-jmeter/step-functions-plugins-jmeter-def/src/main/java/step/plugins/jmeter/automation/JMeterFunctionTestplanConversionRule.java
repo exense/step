@@ -21,13 +21,16 @@ package step.plugins.jmeter.automation;
 import step.automation.packages.yaml.deserialization.SpecialKeywordAttributesApplier;
 import step.automation.packages.yaml.deserialization.SpecialKeywordAttributesExtractor;
 import step.automation.packages.yaml.deserialization.YamlKeywordFieldDeserializationProcessor;
+import step.automation.packages.yaml.rules.AutomationPackageAttributesApplyingContext;
 import step.automation.packages.yaml.rules.YamlKeywordConversionRule;
 import step.automation.packages.yaml.rules.YamlKeywordConversionRuleMarker;
-import step.core.AbstractStepContext;
 import step.core.dynamicbeans.DynamicValue;
 import step.plugins.jmeter.JMeterFunction;
 import step.resources.Resource;
 import step.resources.ResourceManager;
+
+import java.io.File;
+import java.net.URL;
 
 @YamlKeywordConversionRuleMarker(functions = JMeterFunction.class)
 public class JMeterFunctionTestplanConversionRule implements YamlKeywordConversionRule {
@@ -40,7 +43,7 @@ public class JMeterFunctionTestplanConversionRule implements YamlKeywordConversi
     }
 
     @Override
-    public SpecialKeywordAttributesApplier getSpecialKeywordAttributesApplier(AbstractStepContext context) {
+    public SpecialKeywordAttributesApplier getSpecialKeywordAttributesApplier(AutomationPackageAttributesApplyingContext context) {
         return (keyword, automationPackageFile) -> {
             JMeterFunction draftKeyword = (JMeterFunction) keyword.getDraftKeyword();
             String testplanPath = (String) keyword.getSpecialAttributes().get(JMETER_TESTPLAN_ATTR);
@@ -48,10 +51,14 @@ public class JMeterFunctionTestplanConversionRule implements YamlKeywordConversi
                 ResourceManager resourceManager = context.getResourceManager();
 
                 try {
+                    // TODO: to prepare ResourceRevisionContainer we need to have a valid file created for resource?
+                    // TODO: valid resource type to use here?
+                    URL resourceUrl = automationPackageFile.getResource(testplanPath);
+                    File resourceFile = new File(resourceUrl.getFile());
                     Resource resource = resourceManager.createResource(
                             ResourceManager.RESOURCE_TYPE_FUNCTIONS,
                             automationPackageFile.getResourceAsStream(testplanPath),
-                            automationPackageFile.getResource(testplanPath).getFile(),
+                            resourceFile.getName(),
                             false, null
                     );
                     draftKeyword.setJmeterTestplan(new DynamicValue<>(resource.getId().toString()));
@@ -65,7 +72,6 @@ public class JMeterFunctionTestplanConversionRule implements YamlKeywordConversi
     @Override
     public YamlKeywordFieldDeserializationProcessor getDeserializationProcessor() {
         return (keywordClass, field, output, codec) -> {
-            // TODO: classname or yaml classname?
             if (keywordClass.equalsIgnoreCase(JMeterFunction.class.getName()) && field.getKey().equals(JMETER_TESTPLAN_ATTR)) {
                 // ignore the jmeterTestplan attribute - it will be applied via SpecialKeywordAttributesExtractor
                 return true;

@@ -35,7 +35,7 @@ public class ResourceArtifactRepository extends AbstractArtifactRepository {
 	private final ResourceManager resourceManager;
 
 	public ResourceArtifactRepository(PlanAccessor planAccessor, ResourceManager resourceManager) {
-		super(Set.of(PARAM_RESOURCE_ID), planAccessor); // artifact_id = resource_id
+		super(Set.of(PARAM_RESOURCE_ID), planAccessor, resourceManager); // artifact_id = resource_id
 		this.resourceManager = resourceManager;
 	}
 
