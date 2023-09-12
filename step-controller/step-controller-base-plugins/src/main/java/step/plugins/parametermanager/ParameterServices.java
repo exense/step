@@ -98,11 +98,7 @@ public class ParameterServices extends AbstractEntityServices<Parameter> {
 	private Parameter save(Parameter newParameter, Parameter sourceParameter) {
 		assertRights(newParameter);
 
-		if(sourceParameter == null){
-			// new parameter. setting initial value of protected value.
-			// values that contains password are protected
-			newParameter.setProtectedValue(isPassword(newParameter));
-		} else {
+		if(sourceParameter != null) {
 			// the parameter has been updated but the value hasn't been changed
 			String newParameterValue = newParameter.getValue();
 			if(newParameterValue != null && newParameterValue.equals(PROTECTED_VALUE)) {
@@ -112,8 +108,6 @@ public class ParameterServices extends AbstractEntityServices<Parameter> {
 			if(isProtected(sourceParameter)) {
 				// protected value should not be changed
 				newParameter.setProtectedValue(true);
-			} else {
-				newParameter.setProtectedValue(isPassword(newParameter));
 			}
 		}
 
@@ -170,14 +164,6 @@ public class ParameterServices extends AbstractEntityServices<Parameter> {
 	}
 
 	public static final String PROTECTED_VALUE = "******";
-
-	public static boolean isPassword(Parameter parameter) {
-		return parameter!=null && isPassword(parameter.getKey());
-	}
-
-	public static boolean isPassword(String key) {
-		return key!=null && (key.contains("pwd")||key.contains("password"));
-	}
 
 	@Override
 	public Parameter get(String id) {

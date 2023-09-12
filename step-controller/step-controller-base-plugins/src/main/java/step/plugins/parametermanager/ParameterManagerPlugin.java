@@ -151,7 +151,7 @@ public class ParameterManagerPlugin extends AbstractExecutionEnginePlugin {
 			if(scopeValueSpecificParameters != null) {
 				scopeValueSpecificParameters.forEach(p->{
 					if((isProtected(p) && includeProtectedParameters) || (!isProtected(p) && includeNonProtectedParameters)) {
-						varMan.putVariable(node, VariableType.IMMUTABLE, p.getKey(), getValue(p));
+						varMan.putVariable(node, VariableType.IMMUTABLE, p.getKey(), getParameterValue(p));
 					}
 				});
 			}
@@ -183,25 +183,6 @@ public class ParameterManagerPlugin extends AbstractExecutionEnginePlugin {
 	private boolean isProtected(Parameter p) {
 		Boolean isProtectedValue = p.getProtectedValue();
 		return isProtectedValue != null && isProtectedValue;
-	}
-
-	private String getValue(Parameter p) {
-		String encryptedValue = p.getEncryptedValue();
-		String value;
-		if(encryptedValue != null) {
-			if(encryptionManager != null) {
-				try {
-					value = encryptionManager.decrypt(encryptedValue);
-				} catch (EncryptionManagerException e) {
-					throw new PluginCriticalException("Error while decrypting value of parameter "+p.getKey(), e);
-				}
-			} else {
-				throw new PluginCriticalException("Unable to decrypt value of parameter "+p.getKey()+". No encryption manager available");
-			}
-		} else {
-			value = p.getValue();
-		}
-		return value;
 	}
 
 	private String getParameterValue(Parameter p) {
