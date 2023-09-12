@@ -54,14 +54,12 @@ public class StepJarParser {
     private final StepClassParser stepClassParser;
     private final AutomationPackageKeywordsExtractor automationPackageKeywordsExtractor;
     private final AutomationPackageKeywordsAttributesApplier automationPackagesKeywordAttributesAppler;
-    private final ResourceManager resourceManager;
 
     public StepJarParser() {
         this(null);
     }
 
     public StepJarParser(ResourceManager resourceManager) {
-        this.resourceManager = resourceManager;
         this.stepClassParser = new StepClassParser(false);
         this.automationPackageKeywordsExtractor = new AutomationPackageKeywordsExtractor();
         this.automationPackagesKeywordAttributesAppler = new AutomationPackageKeywordsAttributesApplier(resourceManager);

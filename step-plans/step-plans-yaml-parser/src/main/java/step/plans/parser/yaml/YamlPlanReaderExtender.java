@@ -20,7 +20,7 @@ package step.plans.parser.yaml;
 
 import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
 import step.plans.parser.yaml.deserializers.YamlArtefactFieldDeserializationProcessor;
-import step.plans.parser.yaml.schema.JsonSchemaDefinitionCreator;
+import step.core.yaml.schema.JsonSchemaDefinitionCreator;
 import step.plans.parser.yaml.serializers.YamlArtefactFieldSerializationProcessor;
 
 import java.util.ArrayList;

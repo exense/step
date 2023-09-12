@@ -22,20 +22,19 @@ import step.automation.packages.yaml.deserialization.SpecialKeywordAttributesApp
 import step.automation.packages.yaml.deserialization.SpecialKeywordAttributesExtractor;
 import step.automation.packages.yaml.deserialization.YamlKeywordFieldDeserializationProcessor;
 import step.automation.packages.yaml.rules.AutomationPackageAttributesApplyingContext;
+import step.automation.packages.yaml.rules.AutomationPackageResourceUploader;
 import step.automation.packages.yaml.rules.YamlKeywordConversionRule;
 import step.automation.packages.yaml.rules.YamlKeywordConversionRuleMarker;
 import step.core.dynamicbeans.DynamicValue;
 import step.plugins.jmeter.JMeterFunction;
 import step.resources.Resource;
-import step.resources.ResourceManager;
-
-import java.io.File;
-import java.net.URL;
 
 @YamlKeywordConversionRuleMarker(functions = JMeterFunction.class)
 public class JMeterFunctionTestplanConversionRule implements YamlKeywordConversionRule {
 
     public static final String JMETER_TESTPLAN_ATTR = "jmeterTestplan";
+
+    private final AutomationPackageResourceUploader resourceUploader = new AutomationPackageResourceUploader();
 
     @Override
     public SpecialKeywordAttributesExtractor getSpecialAttributesExtractor() {
@@ -47,24 +46,10 @@ public class JMeterFunctionTestplanConversionRule implements YamlKeywordConversi
         return (keyword, automationPackageFile) -> {
             JMeterFunction draftKeyword = (JMeterFunction) keyword.getDraftKeyword();
             String testplanPath = (String) keyword.getSpecialAttributes().get(JMETER_TESTPLAN_ATTR);
-            if (testplanPath != null && !testplanPath.isEmpty()) {
-                ResourceManager resourceManager = context.getResourceManager();
+            Resource resource = resourceUploader.uploadResourceFromAutomationPackage(automationPackageFile, testplanPath, context);
 
-                try {
-                    // TODO: to prepare ResourceRevisionContainer we need to have a valid file created for resource?
-                    // TODO: valid resource type to use here?
-                    URL resourceUrl = automationPackageFile.getResource(testplanPath);
-                    File resourceFile = new File(resourceUrl.getFile());
-                    Resource resource = resourceManager.createResource(
-                            ResourceManager.RESOURCE_TYPE_FUNCTIONS,
-                            automationPackageFile.getResourceAsStream(testplanPath),
-                            resourceFile.getName(),
-                            false, null
-                    );
-                    draftKeyword.setJmeterTestplan(new DynamicValue<>(resource.getId().toString()));
-                } catch (Exception e) {
-                    throw new RuntimeException("Unable to apply jmeter testplan", e);
-                }
+            if (resource != null) {
+                draftKeyword.setJmeterTestplan(new DynamicValue<>(resource.getId().toString()));
             }
         };
     }

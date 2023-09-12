@@ -1,6 +1,6 @@
 {
   "$schema" : "http://json-schema.org/draft-07/schema#",
-  "title" : "Step keyword package schema",
+  "title" : "Step automation package schema",
   "type" : "object",
   "$defs" : {
     "SmartDynamicValueBooleanDef" : {

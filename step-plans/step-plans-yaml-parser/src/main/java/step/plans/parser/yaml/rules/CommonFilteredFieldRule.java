@@ -18,34 +18,21 @@
  ******************************************************************************/
 package step.plans.parser.yaml.rules;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.json.spi.JsonProvider;
+import step.core.yaml.schema.CommonFilteredFieldProcessor;
 import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
 import step.plans.parser.yaml.serializers.YamlArtefactFieldSerializationProcessor;
-
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 
 public class CommonFilteredFieldRule implements ArtefactFieldConversionRule {
 
     @Override
     public JsonSchemaFieldProcessor getJsonSchemaFieldProcessor(JsonProvider jsonProvider) {
-        return (objectClass, field, fieldMetadata, propertiesBuilder, requiredPropertiesOutput) -> {
-            // just skip these fields
-            return isIgnoredField(field);
-        };
+        return new CommonFilteredFieldProcessor();
     }
 
     @Override
     public YamlArtefactFieldSerializationProcessor getArtefactFieldSerializationProcessor() {
-        return (artefact, field, fieldMetadata, gen) -> isIgnoredField(field);
+        return (artefact, field, fieldMetadata, gen) -> CommonFilteredFieldProcessor.isIgnoredField(field);
     }
 
-    private boolean isIgnoredField(Field field) {
-        return field.isSynthetic()
-                || field.isAnnotationPresent(JsonIgnore.class)
-                || field.getType().equals(Object.class)
-                || Exception.class.isAssignableFrom(field.getType())
-                || Modifier.isFinal(field.getModifiers()) || Modifier.isStatic(field.getModifiers());
-    }
 }

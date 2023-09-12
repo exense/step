@@ -16,16 +16,14 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plans.parser.yaml.rules;
+package step.core.yaml.schema;
 
-import jakarta.json.spi.JsonProvider;
-import step.core.yaml.schema.EnumFieldProcessor;
-import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
+public class JsonSchemaFieldProcessingException extends RuntimeException {
+	public JsonSchemaFieldProcessingException(String message) {
+		super(message);
+	}
 
-public class EnumFieldRule implements ArtefactFieldConversionRule {
-    @Override
-    public JsonSchemaFieldProcessor getJsonSchemaFieldProcessor(JsonProvider jsonProvider) {
-        return new EnumFieldProcessor(jsonProvider);
-    }
-
+	public JsonSchemaFieldProcessingException(String message, Throwable cause) {
+		super(message, cause);
+	}
 }

@@ -18,12 +18,6 @@
 	</parent>
 
 	<dependencies>
-		<!-- TODO: fix dependencies - extract common classes for yaml support -->
-		<dependency>
-			<groupId>ch.exense.step</groupId>
-			<artifactId>step-plans-yaml-parser</artifactId>
-			<version>${project.version}</version>
-		</dependency>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
 			<artifactId>step-automation-packages-support</artifactId>

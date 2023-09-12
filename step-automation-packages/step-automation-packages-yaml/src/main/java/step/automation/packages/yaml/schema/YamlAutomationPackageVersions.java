@@ -16,15 +16,11 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plans.parser.yaml.schema;
+package step.automation.packages.yaml.schema;
 
-import jakarta.json.JsonObjectBuilder;
-import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
+import step.core.Version;
 
-public interface JsonSchemaDefinitionCreator {
-
-    /**
-     * Adds the entry to 'definitions' section in json schema
-     */
-    void addDefinition(JsonObjectBuilder defsList) throws JsonSchemaPreparationException;
+public class YamlAutomationPackageVersions {
+    public static final Version ACTUAL_VERSION = new Version("1.0.0");
+    public static final String ACTUAL_JSON_SCHEMA_PATH = "step/functions/packages/yaml/step-yaml-package-schema-os-1.0.json";
 }

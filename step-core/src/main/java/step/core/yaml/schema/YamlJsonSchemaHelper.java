@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plans.parser.yaml.schema;
+package step.core.yaml.schema;
 
 import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObjectBuilder;
@@ -32,9 +32,9 @@ import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 
-public class YamlDynamicValueJsonSchemaHelper {
+public class YamlJsonSchemaHelper {
 
-	private static final Logger log = LoggerFactory.getLogger(YamlDynamicValueJsonSchemaHelper.class);
+	private static final Logger log = LoggerFactory.getLogger(YamlJsonSchemaHelper.class);
 
 	private static final String DYNAMIC_EXPRESSION_DEF = "DynamicExpressionDef";
 
@@ -45,7 +45,7 @@ public class YamlDynamicValueJsonSchemaHelper {
 	public static final String DYNAMIC_KEYWORD_INPUTS_DEF = "DynamicKeywordInputsDef";
 	private final JsonProvider jsonProvider;
 
-	public YamlDynamicValueJsonSchemaHelper(JsonProvider jsonProvider) {
+	public YamlJsonSchemaHelper(JsonProvider jsonProvider) {
 		this.jsonProvider = jsonProvider;
 	}
 
@@ -89,7 +89,7 @@ public class YamlDynamicValueJsonSchemaHelper {
 				.add(jsonProvider.createObjectBuilder().add("type", "number"))
 				.add(jsonProvider.createObjectBuilder().add("type", "boolean"))
 				.add(jsonProvider.createObjectBuilder().add("type", "string"))
-				.add(YamlPlanJsonSchemaGenerator.addRef(jsonProvider.createObjectBuilder(), YamlDynamicValueJsonSchemaHelper.DYNAMIC_EXPRESSION_DEF));
+				.add(addRef(jsonProvider.createObjectBuilder(), YamlJsonSchemaHelper.DYNAMIC_EXPRESSION_DEF));
 
 		JsonObjectBuilder properties = jsonProvider.createObjectBuilder()
 				.add(".*", jsonProvider.createObjectBuilder().add("oneOf", oneOfArray));
@@ -113,7 +113,7 @@ public class YamlDynamicValueJsonSchemaHelper {
 		JsonObjectBuilder res = jsonProvider.createObjectBuilder();
 		JsonArrayBuilder oneOfArray = jsonProvider.createArrayBuilder();
 		oneOfArray.add(jsonProvider.createObjectBuilder().add("type", smartValueType));
-		oneOfArray.add(YamlPlanJsonSchemaGenerator.addRef(jsonProvider.createObjectBuilder(), YamlDynamicValueJsonSchemaHelper.DYNAMIC_EXPRESSION_DEF));
+		oneOfArray.add(addRef(jsonProvider.createObjectBuilder(), YamlJsonSchemaHelper.DYNAMIC_EXPRESSION_DEF));
 		res.add("oneOf", oneOfArray);
 		return res;
 	}
@@ -138,17 +138,17 @@ public class YamlDynamicValueJsonSchemaHelper {
 			}
 			switch (dynamicValueType){
 				case "string":
-					YamlPlanJsonSchemaGenerator.addRef(propertiesBuilder, SMART_DYNAMIC_VALUE_STRING_DEF);
+					addRef(propertiesBuilder, SMART_DYNAMIC_VALUE_STRING_DEF);
 					break;
 				case "boolean":
-					YamlPlanJsonSchemaGenerator.addRef(propertiesBuilder, SMART_DYNAMIC_VALUE_BOOLEAN_DEF);
+					addRef(propertiesBuilder, SMART_DYNAMIC_VALUE_BOOLEAN_DEF);
 					break;
 				case "number":
-					YamlPlanJsonSchemaGenerator.addRef(propertiesBuilder, SMART_DYNAMIC_VALUE_NUM_DEF);
+					addRef(propertiesBuilder, SMART_DYNAMIC_VALUE_NUM_DEF);
 					break;
 				case "object":
 					log.warn("Unknown dynamic value type for field " + field.getName());
-					YamlPlanJsonSchemaGenerator.addRef(propertiesBuilder, SMART_DYNAMIC_VALUE_STRING_DEF);
+					addRef(propertiesBuilder, SMART_DYNAMIC_VALUE_STRING_DEF);
 					break;
 				default:
 					throw new IllegalArgumentException("Unsupported dynamic value type: " + dynamicValueType);
@@ -159,4 +159,7 @@ public class YamlDynamicValueJsonSchemaHelper {
 		}
 	}
 
+	public static JsonObjectBuilder addRef(JsonObjectBuilder builder, String refValue){
+		return builder.add("$ref", "#/$defs/" + refValue);
+	}
 }

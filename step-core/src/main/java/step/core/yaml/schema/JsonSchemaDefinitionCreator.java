@@ -16,14 +16,15 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plans.parser.yaml.schema;
+package step.core.yaml.schema;
 
-public class JsonSchemaFieldProcessingException extends RuntimeException {
-	public JsonSchemaFieldProcessingException(String message) {
-		super(message);
-	}
+import jakarta.json.JsonObjectBuilder;
+import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 
-	public JsonSchemaFieldProcessingException(String message, Throwable cause) {
-		super(message, cause);
-	}
+public interface JsonSchemaDefinitionCreator {
+
+    /**
+     * Adds the entry to 'definitions' section in json schema
+     */
+    void addDefinition(JsonObjectBuilder defsList) throws JsonSchemaPreparationException;
 }

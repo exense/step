@@ -8,7 +8,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
-import step.plans.parser.yaml.model.YamlPlanVersions;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,7 +27,7 @@ public class YamlAutomationPackageSchemaGeneratorTest {
         InputStream jsonSchemaFile = this.getClass().getClassLoader().getResourceAsStream("step/functions/packages/yaml/step-yaml-package-schema-os-1.0.json");
 
         JsonNode publishedSchema = jsonObjectMapper.readTree(jsonSchemaFile);
-        YamlAutomationPackageSchemaGenerator schemaGenerator = new YamlAutomationPackageSchemaGenerator("step", YamlPlanVersions.ACTUAL_VERSION);
+        YamlAutomationPackageSchemaGenerator schemaGenerator = new YamlAutomationPackageSchemaGenerator("step", YamlAutomationPackageVersions.ACTUAL_VERSION);
         JsonNode currentSchema = schemaGenerator.generateJsonSchema();
 
         log.info("GENERATED SCHEMA:");

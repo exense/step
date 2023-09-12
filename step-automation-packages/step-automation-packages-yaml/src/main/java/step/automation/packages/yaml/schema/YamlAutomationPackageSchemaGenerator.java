@@ -27,13 +27,8 @@ import jakarta.json.spi.JsonProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.Version;
+import step.core.yaml.schema.*;
 import step.handlers.javahandler.jsonschema.*;
-import step.plans.parser.yaml.rules.CommonFilteredFieldRule;
-import step.plans.parser.yaml.rules.DynamicFieldRule;
-import step.plans.parser.yaml.rules.EnumFieldRule;
-import step.plans.parser.yaml.schema.AggregatedJsonSchemaFieldProcessor;
-import step.plans.parser.yaml.schema.JsonSchemaDefinitionCreator;
-import step.plans.parser.yaml.schema.YamlDynamicValueJsonSchemaHelper;
 
 import java.util.*;
 
@@ -50,7 +45,7 @@ public class YamlAutomationPackageSchemaGenerator {
     protected final JsonProvider jsonProvider = JsonProvider.provider();
 
     protected final JsonSchemaCreator jsonSchemaCreator;
-    protected final YamlDynamicValueJsonSchemaHelper dynamicValuesHelper = new YamlDynamicValueJsonSchemaHelper(jsonProvider);
+    protected final YamlJsonSchemaHelper dynamicValuesHelper = new YamlJsonSchemaHelper(jsonProvider);
 
     public YamlAutomationPackageSchemaGenerator(String targetPackage, Version actualVersion) {
         this.targetPackage = targetPackage;
@@ -74,7 +69,7 @@ public class YamlAutomationPackageSchemaGenerator {
         List<JsonSchemaFieldProcessor> result = new ArrayList<>();
 
         // -- BASIC PROCESSING RULES
-        result.add(new CommonFilteredFieldRule().getJsonSchemaFieldProcessor(jsonProvider));
+        result.add(new CommonFilteredFieldProcessor());
 
         // -- RULES FROM EXTENSIONS HAVE LESS PRIORITY THAN BASIC RULES, BUT MORE PRIORITY THAN OTHER RULES
         result.addAll(getFieldExtensions());
@@ -82,8 +77,8 @@ public class YamlAutomationPackageSchemaGenerator {
         // -- RULES FOR OS KEYWORDS
 
         // -- SOME DEFAULT RULES FOR ENUMS AND DYNAMIC FIELDS
-        result.add(new DynamicFieldRule().getJsonSchemaFieldProcessor(jsonProvider));
-        result.add(new EnumFieldRule().getJsonSchemaFieldProcessor(jsonProvider));
+        result.add(new DynamicValueFieldProcessor(jsonProvider));
+        result.add(new EnumFieldProcessor(jsonProvider));
 
         return result;
     }

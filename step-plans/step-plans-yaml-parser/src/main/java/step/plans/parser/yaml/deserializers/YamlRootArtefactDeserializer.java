@@ -35,7 +35,7 @@ import step.plans.parser.yaml.YamlPlanReaderExtender;
 import step.plans.parser.yaml.YamlPlanReaderExtension;
 import step.plans.parser.yaml.model.YamlRootArtefact;
 import step.plans.parser.yaml.rules.*;
-import step.plans.parser.yaml.schema.JsonSchemaFieldProcessingException;
+import step.core.yaml.schema.JsonSchemaFieldProcessingException;
 
 import java.io.IOException;
 import java.util.ArrayList;

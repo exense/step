@@ -32,6 +32,9 @@ import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.scanner.AnnotationScanner;
 import step.core.scanner.CachedAnnotationScanner;
+import step.core.yaml.schema.AggregatedJsonSchemaFieldProcessor;
+import step.core.yaml.schema.JsonSchemaDefinitionCreator;
+import step.core.yaml.schema.YamlJsonSchemaHelper;
 import step.handlers.javahandler.jsonschema.FieldMetadataExtractor;
 import step.handlers.javahandler.jsonschema.JsonSchemaCreator;
 import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
@@ -65,7 +68,7 @@ public class YamlPlanJsonSchemaGenerator {
 	protected final JsonProvider jsonProvider = JsonProvider.provider();
 
 	protected final JsonSchemaCreator jsonSchemaCreator;
-	protected final YamlDynamicValueJsonSchemaHelper dynamicValuesHelper = new YamlDynamicValueJsonSchemaHelper(jsonProvider);
+	protected final YamlJsonSchemaHelper dynamicValuesHelper = new YamlJsonSchemaHelper(jsonProvider);
 
 	public YamlPlanJsonSchemaGenerator(String targetPackage, Version actualVersion) {
 		this.targetPackage = targetPackage;
@@ -92,7 +95,7 @@ public class YamlPlanJsonSchemaGenerator {
 				propertiesBuilder.add(fieldMetadata.getFieldName(),
 						jsonProvider.createObjectBuilder()
 								.add("type", "array")
-								.add("items", addRef(jsonProvider.createObjectBuilder(), ARTEFACT_DEF))
+								.add("items", YamlJsonSchemaHelper.addRef(jsonProvider.createObjectBuilder(), ARTEFACT_DEF))
 				);
 				return true;
 			} else {
@@ -167,12 +170,8 @@ public class YamlPlanJsonSchemaGenerator {
 		objectBuilder.add("name", jsonProvider.createObjectBuilder().add("type", "string"));
 		// in 'version' we should either explicitly specify the current json schema version or skip this field
 		objectBuilder.add("version", jsonProvider.createObjectBuilder().add("const", actualVersion.toString()));
-		objectBuilder.add("root", addRef(jsonProvider.createObjectBuilder(), ROOT_ARTEFACT_DEF));
+		objectBuilder.add("root", YamlJsonSchemaHelper.addRef(jsonProvider.createObjectBuilder(), ROOT_ARTEFACT_DEF));
 		return objectBuilder;
-	}
-
-	public static JsonObjectBuilder addRef(JsonObjectBuilder builder, String refValue){
-		return builder.add("$ref", "#/$defs/" + refValue);
 	}
 
 	/**
@@ -289,7 +288,7 @@ public class YamlPlanJsonSchemaGenerator {
 		builder.add("type", "object");
 		JsonArrayBuilder arrayBuilder = jsonProvider.createArrayBuilder();
 		for (String artefactImplReference : artefactImplReferences) {
-			arrayBuilder.add(addRef(jsonProvider.createObjectBuilder(), artefactImplReference));
+			arrayBuilder.add(YamlJsonSchemaHelper.addRef(jsonProvider.createObjectBuilder(), artefactImplReference));
 		}
 		builder.add("oneOf", arrayBuilder);
 		return builder;
