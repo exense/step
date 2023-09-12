@@ -68,6 +68,9 @@ public abstract class AbstractOperatorHandler implements AssertOperatorHandler {
             return isAnyNumeric(actual) ? BigDecimal.class : actual.getClass();
         } else if (actual instanceof String) {
             return isAnyNumeric(expectedValue) ? BigDecimal.class : expectedValue.getClass();
+        } else if (isAnyNumeric(actual) && isAnyNumeric(expectedValue)) {
+            // for instance, if actual is Integer and expected is Long
+            return BigDecimal.class;
         } else {
             throw new IllegalArgumentException("Non-convertible types: " + actual.getClass().getSimpleName() + " and " + expectedValue.getClass().getSimpleName());
         }

@@ -38,6 +38,7 @@ import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.execution.model.ExecutionStatus;
+import step.core.repositories.ImportResult;
 import step.resources.Resource;
 import step.resources.SimilarResourceExistingException;
 
@@ -94,6 +95,12 @@ public class RunPackagedAutomationPackagesMojoEETest extends AbstractMojoTest {
 		Mockito.when(remoteExecutionFuture.getExecution()).thenReturn(execution);
 		Mockito.when(execution.getStatus()).thenReturn(ExecutionStatus.ENDED);
 		Mockito.when(execution.getResult()).thenReturn(resultStatus);
+		ImportResult t = new ImportResult();
+		t.setErrors(new ArrayList<>());
+		if(resultStatus.equals(ReportNodeStatus.PASSED)){
+			t.setSuccessful(true);
+		}
+		Mockito.when(execution.getImportResult()).thenReturn(t);
 
 		Mockito.when(remoteExecutionManagerMock.getFuture("exec-id-1")).thenReturn(remoteExecutionFuture);
 		return remoteExecutionManagerMock;

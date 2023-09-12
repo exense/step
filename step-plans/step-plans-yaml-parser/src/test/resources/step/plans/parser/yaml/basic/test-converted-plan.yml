@@ -1,0 +1,40 @@
+---
+version: "1.0.0"
+name: "test plan"
+root:
+  sequence:
+    continueParentNodeExecutionOnError: false
+    instrumentNode: false
+    skipNode: false
+    children:
+      - if:
+          nodeName: "IfBlock"
+          continueParentNodeExecutionOnError: false
+          instrumentNode: false
+          skipNode: false
+          children:
+            - assert:
+                continueParentNodeExecutionOnError: false
+                instrumentNode: false
+                skipNode: false
+                customErrorMessage: "my custom error"
+                expected:
+                  expression: "'ok'"
+                doNegate: false
+                operator: "EQUALS"
+                actual:
+                  expression: "'status'"
+            - callKeyword:
+                continueParentNodeExecutionOnError: false
+                instrumentNode: false
+                skipNode: false
+                remote: true
+                inputs:
+                  - stringInput:
+                      expression: "'abc'"
+                  - intInput: 777
+                keyword: "callExisting3"
+          description: "my description"
+          condition:
+            expression: "controllerSettings.getSettingByKey('housekeeping_enabled').getValue()=='true'"
+    continueOnError: false

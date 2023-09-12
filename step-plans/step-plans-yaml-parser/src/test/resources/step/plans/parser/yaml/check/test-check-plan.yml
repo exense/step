@@ -1,0 +1,8 @@
+name: "test check artefact"
+root:
+  sequence:
+    name: Sequence
+    children:
+      - check:
+          nodeName: Check
+          expression: "'true'"
