@@ -5,11 +5,16 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.lang.reflect.Method;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import step.attachments.FileResolver;
+import step.automation.packages.AutomationPackageReadingException;
+import step.automation.packages.yaml.AutomationPackageKeywordsExtractor;
+import step.automation.packages.yaml.model.AutomationPackageKeyword;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.scanner.AnnotationScanner;
 import step.functions.Function;
@@ -27,6 +32,7 @@ import step.resources.LocalResourceManagerImpl;
 public class JavaFunctionPackageDaemon extends FunctionPackageUtils {
 
 	private final KeywordJsonSchemaCreator schemaCreator = new KeywordJsonSchemaCreator();
+	private final AutomationPackageKeywordsExtractor automationPackageKeywordsExtractor = new AutomationPackageKeywordsExtractor();
 
 	public JavaFunctionPackageDaemon() {
 		super(new FileResolver(new LocalResourceManagerImpl()));
@@ -115,10 +121,29 @@ public class JavaFunctionPackageDaemon extends FunctionPackageUtils {
 					functions.functions.add(res);
 				}
 			}
+
+			try {
+				// add functions from automation package
+				List<AutomationPackageKeyword> automationPackageKeywords = automationPackageKeywordsExtractor.extractKeywordsFromAutomationPackage(packageFile);
+				addAutomationPackageKeywordsToFunctionList(automationPackageKeywords, functions);
+			} catch (AutomationPackageReadingException e) {
+				throw new RuntimeException("Unable to process automation package", e);
+			}
 		} catch (Throwable e) {
 			functions.exception = e.getClass().getName() + ": " + e.getMessage();
 		}
 		return functions;
+	}
+
+	protected void addAutomationPackageKeywordsToFunctionList(List<AutomationPackageKeyword> automationPackageKeywords, FunctionList functionList) {
+		for (AutomationPackageKeyword automationPackageKeyword : automationPackageKeywords) {
+			functionList.getFunctions().add(automationPackageKeyword.getDraftKeyword());
+			// TODO: send to output as Map<String, Object>?
+			functionList.getAutomationPackageAttributes().put(
+					automationPackageKeyword.getDraftKeyword().getId().toString(),
+					automationPackageKeyword.getSpecialAttributes()
+			);
+		}
 	}
 
 }

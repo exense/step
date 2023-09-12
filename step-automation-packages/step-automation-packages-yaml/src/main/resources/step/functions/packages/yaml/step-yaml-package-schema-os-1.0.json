@@ -39,9 +39,13 @@
     "JMeterFunctionDef" : {
       "type" : "object",
       "properties" : {
-        "JMeterFunction" : {
+        "JMeter" : {
           "type" : "object",
           "properties" : {
+            "name" : {
+              "type": "string",
+              "default": "JMeter"
+            },
             "description" : {
               "type" : "string"
             },

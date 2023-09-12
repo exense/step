@@ -29,6 +29,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import step.automation.packages.yaml.YamlKeywordsLookuper;
 import step.automation.packages.yaml.model.AutomationPackageKeyword;
 import step.automation.packages.yaml.model.AutomationPackageKeywords;
+import step.automation.packages.yaml.rules.KeywordNameRule;
 import step.automation.packages.yaml.rules.YamlKeywordConversionRule;
 import step.functions.Function;
 
@@ -136,8 +137,12 @@ public class YamlKeywordsDeserializer extends JsonDeserializer<AutomationPackage
     private List<YamlKeywordFieldDeserializationProcessor> deserializationProcessors() {
         List<YamlKeywordFieldDeserializationProcessor> processors = new ArrayList<>();
 
-        List<YamlKeywordConversionRule> allConversionRules = keywordsLookuper.getAllConversionRules();
-        for (YamlKeywordConversionRule rule : allConversionRules) {
+        // default rules
+        // TODO: apply default keyword name in case of missing value in yaml!!!
+        processors.add(new KeywordNameRule().getDeserializationProcessor());
+
+        List<YamlKeywordConversionRule> additionalRules = keywordsLookuper.getAllConversionRules();
+        for (YamlKeywordConversionRule rule : additionalRules) {
             YamlKeywordFieldDeserializationProcessor deserializationProcessor = rule.getDeserializationProcessor();
             if (deserializationProcessor != null) {
                 processors.add(deserializationProcessor);

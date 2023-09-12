@@ -63,6 +63,11 @@
 			<version>${step-api.version}</version>
 		</dependency>
 		<dependency>
+			<groupId>ch.exense.step</groupId>
+			<artifactId>step-automation-packages-yaml</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
 			<groupId>org.eclipse.aether</groupId>
 			<artifactId>aether-api</artifactId>
 			<version>${aether.version}</version>
