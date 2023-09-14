@@ -153,11 +153,7 @@ public class ExportManager {
 		resourceRef.forEach(r -> {
 			File file = resourceManager.getResourceFile(r).getResourceFile();
 			if (file.exists()) {
-				try {
-					FileHelper.zipFile(zos, file, resourceManager.getResourcesRootPath());
-				} catch (IOException e) {
-					throw new RuntimeException("Unable to add resource file to the archive", e);
-				}
+				FileHelper.zipFile(zos, file, resourceManager.getResourcesRootPath());
 			} else {
 				references.addReferenceNotFoundWarning(
 						"Resource file with id '" + r + "' and name" + file.getName() + "' is missing");
