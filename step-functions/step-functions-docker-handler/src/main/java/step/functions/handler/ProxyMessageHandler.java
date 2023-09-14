@@ -68,7 +68,8 @@ public class ProxyMessageHandler implements MessageHandler {
             // Configure the selection timeout (this should be higher than the start time of the container
             gridClientConfiguration.setNoMatchExistsTimeout(300_000);
             gridClientConfiguration.setMatchExistsTimeout(300_000);
-            gridClientConfiguration.setReserveSessionTimeout(60000);
+            gridClientConfiguration.setReserveSessionTimeout(300_000);
+            gridClientConfiguration.setReadTimeoutOffset(60000);
             return new LocalGridClientImpl(gridClientConfiguration, grid);
         });
 
