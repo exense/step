@@ -26,7 +26,7 @@ public class AutomationPackageDescriptor {
     private String version;
     private String name;
 
-    private AutomationPackageKeywords keywords;
+    private AutomationPackageKeywords keywords = new AutomationPackageKeywords();
 
     public String getName() {
         return name;

@@ -125,7 +125,9 @@ public class JavaFunctionPackageDaemon extends FunctionPackageUtils {
 			try {
 				// add functions from automation package
 				List<AutomationPackageKeyword> automationPackageKeywords = automationPackageKeywordsExtractor.extractKeywordsFromAutomationPackage(packageFile);
-				addAutomationPackageKeywordsToFunctionList(automationPackageKeywords, functions);
+				if(automationPackageKeywords != null) {
+					addAutomationPackageKeywordsToFunctionList(automationPackageKeywords, functions);
+				}
 			} catch (AutomationPackageReadingException e) {
 				throw new RuntimeException("Unable to process automation package", e);
 			}

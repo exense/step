@@ -65,6 +65,19 @@ public class AutomationPackageKeywordsExtractorTest {
             assertTrue(k.isManaged());
             assertEquals((Integer) 1000, k.getCallTimeout().get());
             assertNotNull("Person", k.getSchema().getJsonString("title").getString());
+
+            assertEquals("jmeterProject1/jmeterProject1.xml", jmeterKeyword.getSpecialAttributes().get(JMeterFunctionTestplanConversionRule.JMETER_TESTPLAN_ATTR));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    public void emptyKeywordExtractionTest() throws AutomationPackageReadingException {
+        File descriptor = new File("src/test/resources/step/functions/packages/yaml/descriptors/emptyKeywordDescriptor.yml");
+        try (InputStream is = new FileInputStream(descriptor)) {
+            List<AutomationPackageKeyword> keywords = extractor.extractKeywordsFromDescriptor(is);
+            assertEquals(0, keywords.size());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

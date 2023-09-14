@@ -62,6 +62,10 @@ public class AutomationPackageKeywordsExtractor {
 
     List<AutomationPackageKeyword> extractKeywordsFromDescriptor(InputStream yamlDescriptor) throws IOException {
         AutomationPackageDescriptor metadata = yamlObjectMapper.readValue(yamlDescriptor, AutomationPackageDescriptor.class);
+        // if yaml contains empty "keywords" section, jackson deserializes it as null-value
+        if (metadata.getKeywords() == null) {
+            metadata.setKeywords(new AutomationPackageKeywords());
+        }
         return metadata.getKeywords().getKeywords();
     }
 
