@@ -18,7 +18,9 @@
  ******************************************************************************/
 package step.client;
 
+import org.junit.Assert;
 import step.handlers.javahandler.AbstractKeyword;
+import step.handlers.javahandler.Input;
 import step.handlers.javahandler.Keyword;
 
 public class StepRunnerTestKeywords extends AbstractKeyword {
@@ -31,6 +33,15 @@ public class StepRunnerTestKeywords extends AbstractKeyword {
 	@Keyword
 	public void callExisting2() {
 		System.out.println("My second keyword is called from composite!");
+	}
+
+	@Keyword
+	public void callExisting3(@Input(name = "stringInput") String stringInput, @Input(name = "intInput") Integer intInput) {
+		System.out.println("My third keyword is called with inputs: " + stringInput + ", " + intInput);
+
+		// assert input values used in tests
+		Assert.assertEquals("abc", stringInput);
+		Assert.assertEquals(Integer.valueOf(777), intInput);
 	}
 
 	@Keyword(planReference = "composite1.plan", schema = "{ \"properties\": { "

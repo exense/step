@@ -55,10 +55,10 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<!-- internal dependencies -->
-		<exense-commons.version>2.0.5</exense-commons.version>
-		<step-framework.version>2023.9.14-650230e0687c2a6a42b455a8</step-framework.version>
-		<step-grid.version>2023.9.14-6502b3f8687c2a6a42dc79a7</step-grid.version>
-		<step-api.version>1.2.1</step-api.version>
+		<exense-commons.version>2.0.6</exense-commons.version>
+		<step-framework.version>2.0.10</step-framework.version>
+		<step-grid.version>2023.9.11-64fed6672a3eb976721359ae</step-grid.version>
+		<step-api.version>2023.9.11-64fed7d62a3eb9767214e51b</step-api.version>
 		<!-- external dependencies -->
 		<junit.version>4.13.1</junit.version>
 		<mockito.version>5.1.1</mockito.version>
@@ -120,61 +120,61 @@
 		<module>../step-libs-maven-client</module>
 	</modules>
 
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-enforcer-plugin</artifactId>
-				<version>3.1.0</version>
-				<executions>
-					<execution>
-						<id>enforce-banned-dependencies</id>
-						<goals>
-							<goal>enforce</goal>
-						</goals>
-						<configuration>
-							<rules>
-								<bannedDependencies>
-									<excludes>
-										<exclude>org.junit.jupiter</exclude>
-										<exclude>org.junit.platform</exclude>
-										<exclude>org.testng</exclude>
-									</excludes>
-								</bannedDependencies>
-							</rules>
-							<fail>true</fail>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-deploy-plugin</artifactId>
-			</plugin>
-			<!-- Source -->
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-source-plugin</artifactId>
-				<version>3.0.1</version>
-				<executions>
-					<execution>
-						<id>attach-sources</id>
-						<goals>
-							<goal>jar-no-fork</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-			<!-- Javadoc -->
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>3.3.2</version>
-				<configuration>
-					<header><![CDATA[<meta name='viewport' content='width=device-width, initial-scale=1.0'>]]></header>
-					<!-- detectLinks MUST NOT be set to true in a production context, as it derives random domain names
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>enforce-banned-dependencies</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <bannedDependencies>
+                                    <excludes>
+                                        <exclude>org.junit.jupiter</exclude>
+                                        <exclude>org.junit.platform</exclude>
+                                        <exclude>org.testng</exclude>
+                                    </excludes>
+                                </bannedDependencies>
+                            </rules>
+                            <fail>true</fail>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+            </plugin>
+            <!-- Source -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>3.0.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- Javadoc -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.3.2</version>
+                <configuration>
+                    <header><![CDATA[<meta name='viewport' content='width=device-width, initial-scale=1.0'>]]></header>
+                    <!-- detectLinks MUST NOT be set to true in a production context, as it derives random domain names
                     from package names, then tries to download data from those random URLs. -->
-					<detectLinks>false</detectLinks>
+                    <detectLinks>false</detectLinks>
 
 					<!-- detectOfflineLinks SHOULD also be set to false, because:  -->
 					<!-- a) it cannot generate meaningful links to the javadoc from other projects, anyway -->

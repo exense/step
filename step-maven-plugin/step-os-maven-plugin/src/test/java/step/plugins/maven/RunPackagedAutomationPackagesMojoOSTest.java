@@ -36,6 +36,7 @@ import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.execution.model.ExecutionStatus;
+import step.core.repositories.ImportResult;
 import step.resources.Resource;
 import step.resources.SimilarResourceExistingException;
 
@@ -44,10 +45,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeoutException;
 
 public class RunPackagedAutomationPackagesMojoOSTest extends AbstractMojoTest {
@@ -93,6 +91,12 @@ public class RunPackagedAutomationPackagesMojoOSTest extends AbstractMojoTest {
 		Mockito.when(remoteExecutionFuture.getExecution()).thenReturn(execution);
 		Mockito.when(execution.getStatus()).thenReturn(ExecutionStatus.ENDED);
 		Mockito.when(execution.getResult()).thenReturn(resultStatus);
+		ImportResult t = new ImportResult();
+		t.setErrors(new ArrayList<>());
+		if(resultStatus.equals(ReportNodeStatus.PASSED)){
+			t.setSuccessful(true);
+		}
+		Mockito.when(execution.getImportResult()).thenReturn(t);
 
 		Mockito.when(remoteExecutionManagerMock.getFuture("exec-id-1")).thenReturn(remoteExecutionFuture);
 		return remoteExecutionManagerMock;

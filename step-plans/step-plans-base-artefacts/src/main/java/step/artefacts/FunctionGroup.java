@@ -27,8 +27,12 @@ import step.core.artefacts.Artefact;
 import step.core.artefacts.reports.ReportNode;
 import step.core.dynamicbeans.DynamicValue;
 
-@Artefact(name="Session")
+import static step.artefacts.FunctionGroup.FUNCTION_GROUP_ARTEFACT_NAME;
+
+@Artefact(name=FUNCTION_GROUP_ARTEFACT_NAME)
 public class FunctionGroup extends TokenSelector {
+
+	public static final String FUNCTION_GROUP_ARTEFACT_NAME = "Session";
 
 	@JsonIgnore
 	private BiConsumer<AbstractArtefact, ReportNode> consumer;

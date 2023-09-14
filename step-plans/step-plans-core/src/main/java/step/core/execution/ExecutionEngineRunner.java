@@ -79,6 +79,7 @@ public class ExecutionEngineRunner {
 				importResult.setSuccessful(false);
 				importResult.setErrors(vetoes.stream().map(v -> v.reason).collect(Collectors.toList()));
 				executionLifecycleManager.afterImport(importResult);
+				saveFailureReportWithResult(ReportNodeStatus.VETOED);
 			} else {
 				ExecutionParameters executionParameters = executionContext.getExecutionParameters();
 				plan = executionParameters.getPlan();
@@ -94,6 +95,8 @@ public class ExecutionEngineRunner {
 					if (importResult.isSuccessful()) {
 						PlanAccessor planAccessor = executionContext.getPlanAccessor();
 						plan = planAccessor.get(new ObjectId(importResult.getPlanId()));
+					} else {
+						saveFailureReportWithResult(ReportNodeStatus.IMPORT_ERROR);
 					}
 
 				}
@@ -109,7 +112,7 @@ public class ExecutionEngineRunner {
 				ReportNode rootReportNode = executionContext.getReport();
 				executionContext.setCurrentReportNode(rootReportNode);
 				persistReportNode(rootReportNode);
-				
+
 				executionLifecycleManager.executionStarted();
 				
 				ReportNode planReportNode = execute(plan, rootReportNode);
@@ -117,7 +120,7 @@ public class ExecutionEngineRunner {
 				if(planReportNode!=null && planReportNode.getStatus() != null) {
 					ReportNodeStatus resultStatus = planReportNode.getStatus();
 					rootReportNode.setStatus(resultStatus);
-					executionContext.getReportNodeAccessor().save(rootReportNode);
+					persistReportNode(rootReportNode);
 				}
 				
 				result.waitForExecutionToTerminate();
@@ -164,8 +167,7 @@ public class ExecutionEngineRunner {
 		ArtefactHandlerManager artefactHandlerManager = executionContext.getArtefactHandlerManager();
 		AbstractArtefact root = plan.getRoot();
 		artefactHandlerManager.createReportSkeleton(root, rootReportNode);
-		ReportNode planReportNode = artefactHandlerManager.execute(root, rootReportNode);
-		return planReportNode;
+		return artefactHandlerManager.execute(root, rootReportNode);
 	}
 	
 	protected PlanRunnerResult result(String executionId) {
@@ -211,11 +213,19 @@ public class ExecutionEngineRunner {
 		}
 	}
 
-	private void persistReportNode(ReportNode reportNode) {
-		executionContext.getReportNodeAccessor().save(reportNode);
+	private void persistReportNode(ReportNode rootReportNode) {
+		executionContext.getReportNodeAccessor().save(rootReportNode);
 	}
-	
+
 	private void updateStatus(ExecutionStatus newStatus) {
 		executionLifecycleManager.updateStatus(newStatus);
 	}
+
+	private void saveFailureReportWithResult(ReportNodeStatus status) {
+		ReportNode report = executionContext.getReport();
+		report.setStatus(status);
+		persistReportNode(report);
+		executionLifecycleManager.updateExecutionResult(executionContext, status);
+	}
+
 }
