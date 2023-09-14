@@ -53,13 +53,16 @@ public class AutomationPackageKeywordsExtractor {
             }
 
             try (InputStream yamlInputStream = automationPackageFile.getDescriptorYaml()) {
-                AutomationPackageDescriptor metadata = yamlObjectMapper.readValue(yamlInputStream, AutomationPackageDescriptor.class);
-
-                return metadata.getKeywords().getKeywords();
+                return extractKeywordsFromDescriptor(yamlInputStream);
             }
         } catch (IOException ex) {
             throw new AutomationPackageReadingException("Unable to read the automation package", ex);
         }
+    }
+
+    List<AutomationPackageKeyword> extractKeywordsFromDescriptor(InputStream yamlDescriptor) throws IOException {
+        AutomationPackageDescriptor metadata = yamlObjectMapper.readValue(yamlDescriptor, AutomationPackageDescriptor.class);
+        return metadata.getKeywords().getKeywords();
     }
 
     public List<AutomationPackageKeyword> extractKeywordsFromAutomationPackage(File automationPackageJar) throws AutomationPackageReadingException {

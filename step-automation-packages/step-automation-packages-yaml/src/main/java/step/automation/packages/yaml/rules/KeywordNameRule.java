@@ -22,12 +22,38 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import jakarta.json.spi.JsonProvider;
+import step.automation.packages.yaml.YamlKeywordsLookuper;
 import step.automation.packages.yaml.deserialization.YamlKeywordFieldDeserializationProcessor;
 import step.core.accessors.AbstractOrganizableObject;
+import step.functions.Function;
+import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
 
+import java.lang.reflect.Field;
 import java.util.Map;
 
 public class KeywordNameRule implements YamlKeywordConversionRule {
+
+    private final YamlKeywordsLookuper keywordsLookuper = new YamlKeywordsLookuper();
+
+    @Override
+    public JsonSchemaFieldProcessor getJsonSchemaFieldProcessor(JsonProvider jsonProvider) {
+        return (objectClass, field, fieldMetadata, propertiesBuilder, requiredPropertiesOutput) -> {
+            // TODO: potentially we want to extract mode fields from 'attributes'..
+            if (isAttributesField(field)) {
+                // use artefact name as default
+                propertiesBuilder.add(
+                        AbstractOrganizableObject.NAME,
+                        jsonProvider.createObjectBuilder()
+                                .add("type", "string")
+                                .add("default", keywordsLookuper.getAutomationPackageKeywordName((Class<? extends Function>) objectClass))
+                );
+                return true;
+            } else {
+                return false;
+            }
+        };
+    }
 
     @Override
     public YamlKeywordFieldDeserializationProcessor getDeserializationProcessor() {
@@ -47,5 +73,9 @@ public class KeywordNameRule implements YamlKeywordConversionRule {
                 }
             }
         };
+    }
+
+    private boolean isAttributesField(Field field) {
+        return field.getDeclaringClass().equals(AbstractOrganizableObject.class) && field.getName().equals("attributes");
     }
 }

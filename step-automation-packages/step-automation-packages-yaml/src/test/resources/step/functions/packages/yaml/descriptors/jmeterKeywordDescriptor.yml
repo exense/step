@@ -1,0 +1,22 @@
+version: 1.0.0
+keywords:
+  - JMeter:
+      name: "JMeter keyword from automation package"
+      description: "JMeter keyword 1"
+      executeLocally: false
+      useCustomTemplate: true
+      managed: true
+      callTimeout: 1000
+      jmeterTestplan: "jmeterProject1/jmeterProject1.xml"
+      schema:
+        $id: "https://example.com/person.schema.json"
+        $schema: "https://json-schema.org/draft/2020-12/schema"
+        title: Person
+        type: object
+        properties:
+            firstName:
+              type: string
+              description: The person's first name.
+            lastName:
+              type: string
+              description: The person's last name.

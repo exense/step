@@ -3,7 +3,6 @@ package step.automation.packages.yaml.schema;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,8 +16,6 @@ public class YamlAutomationPackageSchemaGeneratorTest {
 
     private final ObjectMapper jsonObjectMapper = new ObjectMapper();
 
-    // TODO: fix test
-    @Ignore
     @Test
     public void generateJsonSchema() throws IOException, JsonSchemaPreparationException {
         log.info("Generating actual json schema for simplified plan format");

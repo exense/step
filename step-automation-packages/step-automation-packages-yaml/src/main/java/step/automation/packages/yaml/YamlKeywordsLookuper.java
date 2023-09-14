@@ -70,6 +70,26 @@ public class YamlKeywordsLookuper {
         }).collect(Collectors.toList());
     }
 
+    public List<Class<? extends Function>> getAutomationPackageKeywords() {
+        return CachedAnnotationScanner.getClassesWithAnnotation(AutomationPackageKeyword.class).stream()
+                .map(c -> (Class<? extends Function>) c)
+                .collect(Collectors.toList());
+    }
+
+    public String getAutomationPackageKeywordName(Class<? extends Function> keywordClass) {
+        boolean annotationPresent = keywordClass.isAnnotationPresent(AutomationPackageKeyword.class);
+        String keywordAliasFromAnnotation = null;
+        if (annotationPresent) {
+            keywordAliasFromAnnotation = keywordClass.getAnnotation(AutomationPackageKeyword.class).name();
+        }
+
+        if (keywordAliasFromAnnotation == null || keywordAliasFromAnnotation.isEmpty()) {
+            return keywordClass.getSimpleName();
+        } else {
+            return keywordAliasFromAnnotation;
+        }
+    }
+
     public List<YamlKeywordConversionRule> getAllConversionRules() {
         return CachedAnnotationScanner.getClassesWithAnnotation(YamlKeywordConversionRuleMarker.class).stream()
                 .map(newInstanceAs(YamlKeywordConversionRule.class))

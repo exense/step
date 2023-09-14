@@ -26,11 +26,16 @@ import jakarta.json.JsonObjectBuilder;
 import jakarta.json.spi.JsonProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.automation.packages.yaml.YamlKeywordsLookuper;
+import step.automation.packages.yaml.rules.TechnicalFieldRule;
 import step.core.Version;
 import step.core.yaml.schema.*;
+import step.functions.Function;
 import step.handlers.javahandler.jsonschema.*;
 
+import java.lang.reflect.Field;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class YamlAutomationPackageSchemaGenerator {
     private static final Logger log = LoggerFactory.getLogger(YamlAutomationPackageSchemaGenerator.class);
@@ -46,14 +51,13 @@ public class YamlAutomationPackageSchemaGenerator {
 
     protected final JsonSchemaCreator jsonSchemaCreator;
     protected final YamlJsonSchemaHelper dynamicValuesHelper = new YamlJsonSchemaHelper(jsonProvider);
+    protected final YamlKeywordsLookuper yamlKeywordsLookuper = new YamlKeywordsLookuper();
 
     public YamlAutomationPackageSchemaGenerator(String targetPackage, Version actualVersion) {
         this.targetPackage = targetPackage;
         this.actualVersion = actualVersion;
 
-        // TODO: further we can replace this hardcoded logic for some custom field metadata and processing with some enhanced solution (java annotations?)
-
-        // --- Fields metadata rules (fields we want to rename)
+      // --- Fields metadata rules (fields we want to rename)
         FieldMetadataExtractor fieldMetadataExtractor = prepareMetadataExtractor();
 
         List<JsonSchemaFieldProcessor> processingRules = prepareFieldProcessors();
@@ -61,7 +65,6 @@ public class YamlAutomationPackageSchemaGenerator {
     }
 
     protected FieldMetadataExtractor prepareMetadataExtractor() {
-        // TODO: create extended keyword package metadata extractor if required
         return new DefaultFieldMetadataExtractor();
     }
 
@@ -70,8 +73,10 @@ public class YamlAutomationPackageSchemaGenerator {
 
         // -- BASIC PROCESSING RULES
         result.add(new CommonFilteredFieldProcessor());
+        result.add(new TechnicalFieldRule().getJsonSchemaFieldProcessor(jsonProvider));
 
         // -- RULES FROM EXTENSIONS HAVE LESS PRIORITY THAN BASIC RULES, BUT MORE PRIORITY THAN OTHER RULES
+        // TODO: token selection format???
         result.addAll(getFieldExtensions());
 
         // -- RULES FOR OS KEYWORDS
@@ -84,9 +89,10 @@ public class YamlAutomationPackageSchemaGenerator {
     }
 
     protected List<JsonSchemaFieldProcessor> getFieldExtensions() {
-        List<JsonSchemaFieldProcessor> extensions = new ArrayList<>();
-        // TODO: add special annotation for extensions
-        return extensions;
+        return yamlKeywordsLookuper.getAllConversionRules()
+                .stream()
+                .map(r -> r.getJsonSchemaFieldProcessor(jsonProvider))
+                .filter(Objects::nonNull).collect(Collectors.toList());
     }
 
     protected List<JsonSchemaDefinitionCreator> getDefinitionsExtensions() {
@@ -108,7 +114,7 @@ public class YamlAutomationPackageSchemaGenerator {
 
         // add properties for top-level
         topLevelBuilder.add("properties", createPackageProperties());
-        topLevelBuilder.add("required", jsonProvider.createArrayBuilder().add("keywords"));
+        topLevelBuilder.add("required", jsonProvider.createArrayBuilder());
         topLevelBuilder.add( "additionalProperties", false);
 
         // convert jakarta objects to jackson JsonNode
@@ -184,9 +190,54 @@ public class YamlAutomationPackageSchemaGenerator {
         return builder;
     }
 
-    protected Map<String, JsonObjectBuilder> createKeywordImplDefs(){
-        // TODO: implement
-        return new HashMap<>();
+    protected Map<String, JsonObjectBuilder> createKeywordImplDefs() throws JsonSchemaPreparationException {
+        HashMap<String, JsonObjectBuilder> result = new HashMap<>();
+        List<Class<? extends Function>> automationPackageKeywords = yamlKeywordsLookuper.getAutomationPackageKeywords();
+        for (Class<? extends Function> automationPackageKeyword : automationPackageKeywords) {
+            String yamlName = yamlKeywordsLookuper.getAutomationPackageKeywordName(automationPackageKeyword);
+            String defName = yamlName + "Def";
+            result.put(defName, createKeywordImplDef(yamlName, automationPackageKeyword));
+        }
+        return result;
+    }
+
+    private JsonObjectBuilder createKeywordImplDef(String yamlName, Class<? extends Function> keywordClass) throws JsonSchemaPreparationException {
+        JsonObjectBuilder res = jsonProvider.createObjectBuilder();
+        res.add("type", "object");
+
+        // artefact has the top-level property matching the artefact name
+        JsonObjectBuilder artefactNameProperty = jsonProvider.createObjectBuilder();
+
+        // other properties are located in nested object and automatically prepared via reflection
+        JsonObjectBuilder keywordProperties = jsonProvider.createObjectBuilder();
+        fillKeywordProperties(keywordClass, keywordProperties, yamlName);
+
+        // use camelCase for artefact names in yaml
+        artefactNameProperty.add(yamlName, jsonProvider.createObjectBuilder().add("type", "object").add("properties", keywordProperties));
+        res.add("properties", artefactNameProperty);
+        res.add("additionalProperties", false);
+        return res;
+    }
+
+    private void fillKeywordProperties(Class<? extends Function> keywordClass, JsonObjectBuilder keywordProperties, String yamlName) throws JsonSchemaPreparationException {
+        log.info("Preparing json schema for keyword class {}...", keywordClass);
+
+        // analyze hierarchy of class annotated with @Artefact
+        List<Field> allFieldsInHierarchy = new ArrayList<>();
+        Class<?> currentClass = keywordClass;
+        while (currentClass != null) {
+            allFieldsInHierarchy.addAll(List.of(currentClass.getDeclaredFields()));
+            currentClass = currentClass.getSuperclass();
+        }
+        Collections.reverse(allFieldsInHierarchy);
+
+        // for each field we want either build the json schema via reflection
+        // or use some predefined schemas for some special classes (like step.core.dynamicbeans.DynamicValue)
+        try {
+            jsonSchemaCreator.processFields(keywordClass, keywordProperties, allFieldsInHierarchy, new ArrayList<>());
+        } catch (Exception ex) {
+            throw new JsonSchemaPreparationException("Unable to process keyword " + yamlName, ex);
+        }
     }
 
 }

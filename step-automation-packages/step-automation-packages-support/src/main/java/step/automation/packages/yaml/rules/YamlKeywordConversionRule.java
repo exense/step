@@ -18,10 +18,11 @@
  ******************************************************************************/
 package step.automation.packages.yaml.rules;
 
+import jakarta.json.spi.JsonProvider;
 import step.automation.packages.yaml.deserialization.SpecialKeywordAttributesApplier;
 import step.automation.packages.yaml.deserialization.SpecialKeywordAttributesExtractor;
 import step.automation.packages.yaml.deserialization.YamlKeywordFieldDeserializationProcessor;
-import step.core.AbstractStepContext;
+import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
 
 public interface YamlKeywordConversionRule {
 
@@ -36,4 +37,9 @@ public interface YamlKeywordConversionRule {
     default YamlKeywordFieldDeserializationProcessor getDeserializationProcessor() {
         return null;
     }
+
+    default JsonSchemaFieldProcessor getJsonSchemaFieldProcessor(JsonProvider jsonProvider) {
+        return null;
+    }
+
 }

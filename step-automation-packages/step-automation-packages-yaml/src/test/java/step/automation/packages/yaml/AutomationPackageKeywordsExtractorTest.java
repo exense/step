@@ -21,20 +21,24 @@ package step.automation.packages.yaml;
 import org.junit.Test;
 import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.yaml.model.AutomationPackageKeyword;
+import step.functions.Function;
 import step.plugins.jmeter.JMeterFunction;
 import step.plugins.jmeter.automation.JMeterFunctionTestplanConversionRule;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 public class AutomationPackageKeywordsExtractorTest {
 
     private final AutomationPackageKeywordsExtractor extractor = new AutomationPackageKeywordsExtractor();
 
     @Test
-    public void testFunctionExtraction() throws AutomationPackageReadingException {
+    public void testExtractionFromPackage() throws AutomationPackageReadingException {
         File automationPackageJar = new File("src/test/resources/step/functions/packages/yaml/testpack.jar");
         List<AutomationPackageKeyword> keywords = extractor.extractKeywordsFromAutomationPackage(automationPackageJar);
         assertEquals(1, keywords.size());
@@ -44,6 +48,26 @@ public class AutomationPackageKeywordsExtractorTest {
                 "jmeterProject1/jmeterProject1.xml",
                 automationPackageKeyword.getSpecialAttributes().get(JMeterFunctionTestplanConversionRule.JMETER_TESTPLAN_ATTR)
         );
+    }
+
+    @Test
+    public void jmeterKeywordExtractionTest() throws AutomationPackageReadingException {
+        File descriptor = new File("src/test/resources/step/functions/packages/yaml/descriptors/jmeterKeywordDescriptor.yml");
+        try (InputStream is = new FileInputStream(descriptor)) {
+            List<AutomationPackageKeyword> keywords = extractor.extractKeywordsFromDescriptor(is);
+            assertEquals(1, keywords.size());
+            AutomationPackageKeyword jmeterKeyword = keywords.get(0);
+            Function k = jmeterKeyword.getDraftKeyword();
+            assertEquals("JMeter keyword from automation package", k.getAttribute("name"));
+            assertEquals("JMeter keyword 1", k.getDescription());
+            assertFalse(k.isExecuteLocally());
+            assertTrue(k.isUseCustomTemplate());
+            assertTrue(k.isManaged());
+            assertEquals((Integer) 1000, k.getCallTimeout().get());
+            assertNotNull("Person", k.getSchema().getJsonString("title").getString());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }

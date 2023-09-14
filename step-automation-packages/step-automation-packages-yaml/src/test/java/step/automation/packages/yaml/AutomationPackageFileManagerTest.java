@@ -20,7 +20,7 @@ public class AutomationPackageFileManagerTest {
 
     private static final Logger log = LoggerFactory.getLogger(AutomationPackageFileManagerTest.class);
 
-    private ObjectMapper yamlObjectMapper;
+    private final ObjectMapper yamlObjectMapper;
 
     public AutomationPackageFileManagerTest() {
         this.yamlObjectMapper = createYamlObjectMapper();
