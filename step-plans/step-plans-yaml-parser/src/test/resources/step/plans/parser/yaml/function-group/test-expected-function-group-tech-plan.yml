@@ -17,6 +17,11 @@ root:
   description: null
   children:
     - _class: "Session"
+      dockerImage:
+        dynamic: false
+        expression: null
+        expressionType: null
+        value: null
       customFields: null
       attributes:
         name: "Session"

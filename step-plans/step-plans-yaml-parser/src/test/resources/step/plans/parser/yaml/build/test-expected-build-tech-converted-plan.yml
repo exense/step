@@ -2112,6 +2112,11 @@ root:
                 expressionType: null
               id: "644fbe4e38a61e07cc3a4df8"
           customAttributes: null
+          dockerImage:
+            dynamic: false
+            expression: null
+            expressionType: null
+            value: null
           attachments: null
           persistNode: true
           skipNode:
