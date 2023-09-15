@@ -18,8 +18,14 @@
  ******************************************************************************/
 package step.core.artefacts.reports;
 
+// ATTENTION: The order is important here, lower ordinals have higher "importance".
+// Keep RUNNING as the last ine in the definitions.
 public enum ReportNodeStatus {
-	
+
+	VETOED,
+
+	IMPORT_ERROR,
+
 	TECHNICAL_ERROR,
 	
 	FAILED,
@@ -32,6 +38,5 @@ public enum ReportNodeStatus {
 	
 	NORUN,
 	
-	RUNNING;
-	
+	RUNNING,
 }

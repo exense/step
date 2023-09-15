@@ -172,7 +172,7 @@ public class ExecutionEngineTest {
 		Assert.assertFalse(importResult.isSuccessful());
 		String string = importResult.getErrors().get(0);
 		Assert.assertEquals(REPOSITORY_IMPORT_STATUS_ERROR, string);
-		assertEquals(ReportNodeStatus.NORUN, result.getResult());
+		assertEquals(ReportNodeStatus.IMPORT_ERROR, result.getResult());
 	}
 
 	@Test
@@ -185,7 +185,7 @@ public class ExecutionEngineTest {
 		ImportResult importResult = execution.getImportResult();
 		Assert.assertFalse(importResult.isSuccessful());
 		Assert.assertEquals(List.of(VETO_TEST_1, VETO_TEST_2), importResult.getErrors());
-		assertEquals(ReportNodeStatus.NORUN, result.getResult());
+		assertEquals(ReportNodeStatus.VETOED, result.getResult());
 	}
 
 	protected HashMap<String, String> newFailingRepositoryImport() {
