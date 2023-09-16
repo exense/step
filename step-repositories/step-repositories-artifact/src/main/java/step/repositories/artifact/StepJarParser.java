@@ -107,7 +107,7 @@ public class StepJarParser {
             if (!automationPackageKeywords.isEmpty()) {
                 AutomationPackageFile automationPackageFile = new AutomationPackageFile(artifact);
                 for (AutomationPackageKeyword automationPackageKeyword : automationPackageKeywords) {
-                    automationPackagesKeywordAttributesAppler.applySpecialAttributesToKeyword(automationPackageKeyword, automationPackageFile);
+                    functions.add(automationPackagesKeywordAttributesAppler.applySpecialAttributesToKeyword(automationPackageKeyword, automationPackageFile));
                 }
             }
         } catch (AutomationPackageReadingException e) {

@@ -1,0 +1,5 @@
+Sequence
+Echo "Testing Automation package functions"
+JMeterAutomation
+Echo "JMeterAutomation called"
+End

@@ -1,0 +1,11 @@
+version: 1.0.0
+name: "My package"
+keywords:
+  - JMeter:
+      name: "JMeterAutomation"
+      description: "JMeter keyword 1"
+      executeLocally: false
+      useCustomTemplate: true
+      callTimeout: 1000
+      jmeterTestplan: "jmeterProject1/jmeterProject1.xml"
+      

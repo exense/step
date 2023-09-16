@@ -38,5 +38,19 @@
             <artifactId>step-plans-base-artefacts</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>ch.exense.step</groupId>
+            <artifactId>step-junit</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- To test jmeter keyword -->
+        <dependency>
+            <groupId>ch.exense.step</groupId>
+            <artifactId>step-functions-plugins-jmeter-def</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 </project>

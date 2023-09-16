@@ -39,8 +39,8 @@ public class AutomationPackageKeywordsAttributesApplier {
         this.resourceManager = resourceManager;
     }
 
-    public void applySpecialAttributesToKeyword(AutomationPackageKeyword keyword,
-                                                AutomationPackageFile automationPackageFile){
+    public Function applySpecialAttributesToKeyword(AutomationPackageKeyword keyword,
+                                                   AutomationPackageFile automationPackageFile){
         List<YamlKeywordConversionRule> conversionRules = lookuper.getConversionRulesForKeyword(keyword.getDraftKeyword());
         List<SpecialKeywordAttributesApplier> appliers = conversionRules.stream()
                 .map(r -> r.getSpecialKeywordAttributesApplier(prepareContext()))
@@ -50,7 +50,7 @@ public class AutomationPackageKeywordsAttributesApplier {
         for (SpecialKeywordAttributesApplier applier : appliers) {
             applier.applySpecialAttributesToKeyword(keyword, automationPackageFile);
         }
-
+        return keyword.getDraftKeyword();
     }
 
     protected AutomationPackageAttributesApplyingContext prepareContext() {
