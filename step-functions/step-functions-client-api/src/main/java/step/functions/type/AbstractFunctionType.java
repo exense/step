@@ -40,6 +40,7 @@ import step.grid.filemanager.FileManagerException;
 import step.grid.filemanager.FileVersion;
 import step.grid.filemanager.FileVersionId;
 import step.grid.tokenpool.Interest;
+import step.resources.ResourceManager;
 
 public abstract class AbstractFunctionType<T extends Function> {
 	
@@ -71,7 +72,7 @@ public abstract class AbstractFunctionType<T extends Function> {
 	protected void setGridFileServices(GridFileService gridFileServices) {
 		this.gridFileServices = gridFileServices;
 	}
-	
+
 	protected void init() {}
 
 	public Map<String, Interest> getTokenSelectionCriteria(T function) {
@@ -160,6 +161,14 @@ public abstract class AbstractFunctionType<T extends Function> {
 	
 	protected FileVersionId registerFile(String filepath) {
 		return registerFile(new File(filepath));
+	}
+
+	protected ResourceManager getResourceManager() {
+		if (fileResolver != null) {
+			return fileResolver.getResourceManager();
+		} else {
+			return null;
+		}
 	}
 	
 	public void deleteFunction(T function) throws FunctionTypeException {

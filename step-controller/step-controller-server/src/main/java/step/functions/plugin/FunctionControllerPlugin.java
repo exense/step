@@ -73,7 +73,7 @@ public class FunctionControllerPlugin extends AbstractControllerPlugin {
 		functionTypeConfiguration.setFileResolverCacheConcurrencyLevel(configuration.getPropertyAsInteger("functions.fileresolver.cache.concurrencylevel", 4));
 		functionTypeConfiguration.setFileResolverCacheMaximumsize(configuration.getPropertyAsInteger("functions.fileresolver.cache.maximumsize", 1000));
 		functionTypeConfiguration.setFileResolverCacheExpireAfter(configuration.getPropertyAsInteger("functions.fileresolver.cache.expireafter.ms", 500));
-		FunctionTypeRegistry functionTypeRegistry = new FunctionTypeRegistryImpl(fileResolver, gridClient, functionTypeConfiguration);
+		FunctionTypeRegistry functionTypeRegistry = new FunctionTypeRegistryImpl(fileResolver, gridClient);
 
 		Collection<Function> collection = context.getCollectionFactory().getCollection("functions", Function.class);
 		FunctionAccessor functionAccessor = new FunctionAccessorImpl(collection);

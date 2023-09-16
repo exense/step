@@ -23,10 +23,16 @@ import java.util.HashMap;
 import java.util.Map;
 
 import ch.exense.commons.app.Configuration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.functions.type.AbstractFunctionType;
+import step.functions.type.FunctionTypeException;
 import step.grid.filemanager.FileVersionId;
+import step.resources.ResourceManager;
 
 public class JMeterFunctionType extends AbstractFunctionType<JMeterFunction> {
+
+	private static final Logger log = LoggerFactory.getLogger(JMeterFunctionType.class);
 
 	FileVersionId handlerJar;
 	
@@ -73,4 +79,20 @@ public class JMeterFunctionType extends AbstractFunctionType<JMeterFunction> {
 		return new JMeterFunction();
 	}
 
+	@Override
+	public void deleteFunction(JMeterFunction function) throws FunctionTypeException {
+		// if the function is managed by keyword package, we can delete linked resources (these resources aren't reused anywhere)
+		if (function.isManaged()) {
+			String jmeterTestplanResourceId = function.getJmeterTestplan().getValue();
+			if (jmeterTestplanResourceId != null && !jmeterTestplanResourceId.isEmpty()) {
+				ResourceManager resourceManager = getResourceManager();
+				if (resourceManager != null) {
+					resourceManager.deleteResource(jmeterTestplanResourceId);
+				} else {
+					log.warn("Unable to cleanup the jmeter testplan resource for function " + function.getId().toString() + ". Resource manager is not available");
+				}
+			}
+		}
+		super.deleteFunction(function);
+	}
 }
