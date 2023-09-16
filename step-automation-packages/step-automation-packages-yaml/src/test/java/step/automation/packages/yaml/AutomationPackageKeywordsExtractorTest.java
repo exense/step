@@ -51,7 +51,7 @@ public class AutomationPackageKeywordsExtractorTest {
     }
 
     @Test
-    public void jmeterKeywordExtractionTest() throws AutomationPackageReadingException {
+    public void jmeterKeywordExtractionTest() {
         File descriptor = new File("src/test/resources/step/functions/packages/yaml/descriptors/jmeterKeywordDescriptor.yml");
         try (InputStream is = new FileInputStream(descriptor)) {
             List<AutomationPackageKeyword> keywords = extractor.extractKeywordsFromDescriptor(is);
@@ -64,16 +64,19 @@ public class AutomationPackageKeywordsExtractorTest {
             assertTrue(k.isUseCustomTemplate());
             assertTrue(k.isManaged());
             assertEquals((Integer) 1000, k.getCallTimeout().get());
-            assertNotNull("Person", k.getSchema().getJsonString("title").getString());
+            assertNotNull("string", k.getSchema().getJsonObject("properties").getJsonObject("firstName").getJsonString("type"));
 
             assertEquals("jmeterProject1/jmeterProject1.xml", jmeterKeyword.getSpecialAttributes().get(JMeterFunctionTestplanConversionRule.JMETER_TESTPLAN_ATTR));
+
+            assertEquals("valueA", jmeterKeyword.getDraftKeyword().getTokenSelectionCriteria().get("criteriaA"));
+            assertEquals("valueB", jmeterKeyword.getDraftKeyword().getTokenSelectionCriteria().get("criteriaB"));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
     @Test
-    public void emptyKeywordExtractionTest() throws AutomationPackageReadingException {
+    public void emptyKeywordExtractionTest() {
         File descriptor = new File("src/test/resources/step/functions/packages/yaml/descriptors/emptyKeywordDescriptor.yml");
         try (InputStream is = new FileInputStream(descriptor)) {
             List<AutomationPackageKeyword> keywords = extractor.extractKeywordsFromDescriptor(is);

@@ -34,10 +34,10 @@ public class AutomationPackageResourceUploader {
             ResourceManager resourceManager = context.getResourceManager();
 
             try {
-                // TODO: to prepare ResourceRevisionContainer we need to have a valid file created for resource?
-                // TODO: valid resource type to use here?
-                // TODO: check duplicates?
                 URL resourceUrl = automationPackageFile.getResource(resourcePath);
+                if (resourceUrl == null) {
+                    throw new RuntimeException("Resource not found in automation package: " + resourcePath);
+                }
                 File resourceFile = new File(resourceUrl.getFile());
                 return resourceManager.createResource(
                         ResourceManager.RESOURCE_TYPE_FUNCTIONS,

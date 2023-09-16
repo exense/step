@@ -42,6 +42,8 @@ public class Function extends AbstractOrganizableObject implements EnricheableOb
 
 	public final static String JSON_CLASS_FIELD = "type";
 
+	public static final String TOKEN_SELECTION_CRITERIA = "tokenSelectionCriteria";
+
 	protected DynamicValue<Integer> callTimeout = new DynamicValue<>(180000);
 	protected JsonObject schema = JsonProviderCache.createObjectBuilder().build();
 	

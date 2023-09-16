@@ -16,18 +16,30 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.yaml.rules;
+package step.core.yaml.schema;
 
-import step.functions.Function;
+import step.handlers.javahandler.jsonschema.FieldMetadata;
+import step.handlers.javahandler.jsonschema.FieldMetadataExtractor;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
+import java.lang.reflect.Field;
+import java.util.List;
 
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
+public class AggregatingFieldMetadataExtractor implements FieldMetadataExtractor {
 
-@Retention(RUNTIME)
-@Target(ElementType.TYPE)
-public @interface YamlKeywordConversionRuleMarker {
-    Class<? extends Function>[] functions() default Function.class;
+    private final List<FieldMetadataExtractor> extractors;
+
+    public AggregatingFieldMetadataExtractor(List<FieldMetadataExtractor> extractors) {
+        this.extractors = extractors;
+    }
+
+    @Override
+    public FieldMetadata extractMetadata(Field field) {
+        for (FieldMetadataExtractor extractor : extractors) {
+            FieldMetadata fieldMetadata = extractor.extractMetadata(field);
+            if (fieldMetadata != null) {
+                return fieldMetadata;
+            }
+        }
+        return null;
+    }
 }

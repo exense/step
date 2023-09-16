@@ -24,12 +24,12 @@ import step.automation.packages.yaml.deserialization.YamlKeywordFieldDeserializa
 import step.automation.packages.yaml.rules.AutomationPackageAttributesApplyingContext;
 import step.automation.packages.yaml.rules.AutomationPackageResourceUploader;
 import step.automation.packages.yaml.rules.YamlKeywordConversionRule;
-import step.automation.packages.yaml.rules.YamlKeywordConversionRuleMarker;
+import step.automation.packages.yaml.rules.YamlKeywordConversionRuleAddOn;
 import step.core.dynamicbeans.DynamicValue;
 import step.plugins.jmeter.JMeterFunction;
 import step.resources.Resource;
 
-@YamlKeywordConversionRuleMarker(functions = JMeterFunction.class)
+@YamlKeywordConversionRuleAddOn(functions = JMeterFunction.class)
 public class JMeterFunctionTestplanConversionRule implements YamlKeywordConversionRule {
 
     public static final String JMETER_TESTPLAN_ATTR = "jmeterTestplan";

@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.automation.packages.yaml.YamlKeywordsLookuper;
 import step.automation.packages.yaml.rules.TechnicalFieldRule;
+import step.automation.packages.yaml.rules.TokenSelectionCriteriaRule;
 import step.core.Version;
 import step.core.yaml.schema.*;
 import step.functions.Function;
@@ -65,7 +66,12 @@ public class YamlAutomationPackageSchemaGenerator {
     }
 
     protected FieldMetadataExtractor prepareMetadataExtractor() {
-        return new DefaultFieldMetadataExtractor();
+        List<FieldMetadataExtractor> extractors = new ArrayList<>();
+
+        extractors.add(new TokenSelectionCriteriaRule().getFieldMetadataExtractor());
+        extractors.add(new DefaultFieldMetadataExtractor());
+
+        return new AggregatingFieldMetadataExtractor(extractors);
     }
 
     protected List<JsonSchemaFieldProcessor> prepareFieldProcessors() {
@@ -74,9 +80,9 @@ public class YamlAutomationPackageSchemaGenerator {
         // -- BASIC PROCESSING RULES
         result.add(new CommonFilteredFieldProcessor());
         result.add(new TechnicalFieldRule().getJsonSchemaFieldProcessor(jsonProvider));
+        result.add(new TokenSelectionCriteriaRule().getJsonSchemaFieldProcessor(jsonProvider));
 
         // -- RULES FROM EXTENSIONS HAVE LESS PRIORITY THAN BASIC RULES, BUT MORE PRIORITY THAN OTHER RULES
-        // TODO: token selection format???
         result.addAll(getFieldExtensions());
 
         // -- RULES FOR OS KEYWORDS
@@ -129,6 +135,7 @@ public class YamlAutomationPackageSchemaGenerator {
         JsonObjectBuilder objectBuilder = jsonProvider.createObjectBuilder();
         // in 'version' we should either explicitly specify the current json schema version or skip this field
         objectBuilder.add("version", jsonProvider.createObjectBuilder().add("const", actualVersion.toString()));
+        objectBuilder.add("name", jsonProvider.createObjectBuilder().add("type", "string"));
         objectBuilder.add("keywords",
                 jsonProvider.createObjectBuilder().add("type", "array").add("items", addRef(jsonProvider.createObjectBuilder(), KEYWORD_DEF)));
         return objectBuilder;

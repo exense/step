@@ -29,6 +29,7 @@ import step.automation.packages.yaml.YamlKeywordsLookuper;
 import step.automation.packages.yaml.model.AutomationPackageKeyword;
 import step.automation.packages.yaml.model.AutomationPackageKeywords;
 import step.automation.packages.yaml.rules.KeywordNameRule;
+import step.automation.packages.yaml.rules.TokenSelectionCriteriaRule;
 import step.automation.packages.yaml.rules.YamlKeywordConversionRule;
 import step.functions.Function;
 
@@ -139,6 +140,7 @@ public class YamlKeywordsDeserializer extends JsonDeserializer<AutomationPackage
         // default rules
         // TODO: apply default keyword name in case of missing value in yaml!!!
         processors.add(new KeywordNameRule().getDeserializationProcessor());
+        processors.add(new TokenSelectionCriteriaRule().getDeserializationProcessor());
 
         List<YamlKeywordConversionRule> additionalRules = keywordsLookuper.getAllConversionRules();
         for (YamlKeywordConversionRule rule : additionalRules) {

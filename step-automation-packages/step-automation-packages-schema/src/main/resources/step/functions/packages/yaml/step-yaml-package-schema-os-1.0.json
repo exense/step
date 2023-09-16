@@ -65,12 +65,8 @@
             "useCustomTemplate" : {
               "type" : "boolean"
             },
-            "managed" : {
-              "type" : "boolean"
-            },
-            "tokenSelectionCriteria" : {
-              "type" : "object",
-              "properties" : { }
+            "routing" : {
+              "type" : "object"
             },
             "executeLocally" : {
               "type" : "boolean"
@@ -100,6 +96,9 @@
   "properties" : {
     "version" : {
       "const" : "1.0.0"
+    },
+    "name" : {
+      "type" : "string"
     },
     "keywords" : {
       "type" : "array",

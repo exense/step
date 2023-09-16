@@ -32,14 +32,18 @@ import java.util.List;
 public class AutomationPackageFile {
 
     private static final Logger log = LoggerFactory.getLogger(AutomationPackageFile.class);
-    static final List<String> METADATA_FILES = List.of("automation.yml", "automation.yaml");
+    public static final List<String> METADATA_FILES = List.of("automation.yml", "automation.yaml");
 
-    private final URLClassLoader classLoader;
+    private final ClassLoader classLoader;
+
+    public AutomationPackageFile(ClassLoader classLoader) {
+        this.classLoader = classLoader;
+    }
 
     public AutomationPackageFile(File automationPackageJar) throws AutomationPackageReadingException {
         try {
             this.classLoader = new URLClassLoader(new URL[]{automationPackageJar.toURI().toURL()});
-        } catch (MalformedURLException ex){
+        } catch (MalformedURLException ex) {
             throw new AutomationPackageReadingException("Unable to read automation package", ex);
         }
     }

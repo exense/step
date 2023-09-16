@@ -8,15 +8,14 @@ keywords:
       managed: true
       callTimeout: 1000
       jmeterTestplan: "jmeterProject1/jmeterProject1.xml"
+      routing:
+        criteriaA: valueA
+        criteriaB: valueB
       schema:
-        $id: "https://example.com/person.schema.json"
-        $schema: "https://json-schema.org/draft/2020-12/schema"
-        title: Person
         type: object
         properties:
-            firstName:
-              type: string
-              description: The person's first name.
-            lastName:
-              type: string
-              description: The person's last name.
+          firstName:
+            type: string
+          lastName:
+            type: string
+        required: [ "firstName", "lastName" ]

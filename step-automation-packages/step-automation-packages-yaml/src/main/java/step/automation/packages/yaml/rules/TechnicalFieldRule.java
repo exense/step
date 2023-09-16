@@ -41,7 +41,7 @@ public class TechnicalFieldRule implements YamlKeywordConversionRule {
             return true;
         } else if (Function.class.equals(field.getDeclaringClass())) {
             Set<String> technicalFields = Set.of(
-                    "htmlTemplate"
+                    "htmlTemplate", "managed"
             );
             return technicalFields.contains(fieldMetadata.getFieldName());
         }

@@ -20,7 +20,7 @@ package step.automation.packages.yaml;
 
 import step.automation.packages.AutomationPackageKeyword;
 import step.automation.packages.yaml.rules.YamlKeywordConversionRule;
-import step.automation.packages.yaml.rules.YamlKeywordConversionRuleMarker;
+import step.automation.packages.yaml.rules.YamlKeywordConversionRuleAddOn;
 import step.core.scanner.CachedAnnotationScanner;
 import step.functions.Function;
 
@@ -55,7 +55,7 @@ public class YamlKeywordsLookuper {
 
     public List<YamlKeywordConversionRule> getConversionRulesForKeyword(Function function) {
         return getAllConversionRules().stream().filter(r -> {
-            YamlKeywordConversionRuleMarker annotation = r.getClass().getAnnotation(YamlKeywordConversionRuleMarker.class);
+            YamlKeywordConversionRuleAddOn annotation = r.getClass().getAnnotation(YamlKeywordConversionRuleAddOn.class);
             if (annotation != null && annotation.functions() == null) {
                 return true;
             }
@@ -91,7 +91,7 @@ public class YamlKeywordsLookuper {
     }
 
     public List<YamlKeywordConversionRule> getAllConversionRules() {
-        return CachedAnnotationScanner.getClassesWithAnnotation(YamlKeywordConversionRuleMarker.class).stream()
+        return CachedAnnotationScanner.getClassesWithAnnotation(YamlKeywordConversionRuleAddOn.class).stream()
                 .map(newInstanceAs(YamlKeywordConversionRule.class))
                 .collect(Collectors.toList());
     }
