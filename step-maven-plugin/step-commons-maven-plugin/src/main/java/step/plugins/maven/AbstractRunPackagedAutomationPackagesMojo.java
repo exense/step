@@ -24,6 +24,7 @@ import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Parameter;
 import step.client.resources.RemoteResourceManager;
 import step.core.repositories.RepositoryObjectReference;
+import step.functions.packages.client.LibFileReference;
 import step.repositories.ArtifactRepositoryConstants;
 import step.resources.Resource;
 import step.resources.ResourceManager;
@@ -48,7 +49,7 @@ public abstract class AbstractRunPackagedAutomationPackagesMojo extends Abstract
 		// 1. Upload the packaged artifact as resource to Step
 		String resourceId = null;
 		try {
-			resourceId = uploadResourceToStep(getFileToUpload(), false);
+			resourceId = uploadResourceToStep(getFileToUpload());
 		} catch (SimilarResourceExistingException e) {
 			throw logAndThrow("Unable to upload automation package. Similar resources detected", e);
 		}
@@ -78,23 +79,15 @@ public abstract class AbstractRunPackagedAutomationPackagesMojo extends Abstract
 			// reference library via resource id explicitly
 			libResourceId = resolveKeywordLibResourceByCriteria(libStepResourceSearchCriteria);
 		} else if (getLibArtifactId() != null && !getLibArtifactId().isEmpty()) {
-			getLog().info("Using maven artifact " + getLibArtifactGroupId() + ":" + getLibArtifactId() + ":" + getLibArtifactVersion() + " as library file");
-
 			// use deployed artifact as resource
 			org.eclipse.aether.artifact.Artifact remoteLibArtifact = getRemoteArtifact(getLibArtifactGroupId(), getLibArtifactId(), getLibArtifactVersion(), getLibArtifactClassifier(), "jar");
 			if (remoteLibArtifact == null) {
 				throw new MojoExecutionException("Library artifact is not resolved");
 			}
 
-			try {
-				// checkForDuplicates = true to restrict uploading the same library twice
-				libResourceId = uploadResourceToStep(remoteLibArtifact.getFile(), true);
-			} catch (SimilarResourceExistingException e) {
-				if (e.getSimilarResources() != null && !e.getSimilarResources().isEmpty()) {
-					getLog().info("Existing similar library resource is detected and will be reused as library file");
-					libResourceId = e.getSimilarResources().get(0).getId().toString();
-				}
-			}
+			// upload the maven artifact to Step or reuse the existing step resource with the same tracking attribute
+			LibFileReference libFileReference = prepareLibraryFileReferenceForMavenArtifact(remoteLibArtifact);
+			libResourceId = libFileReference.getResourceId();
 		}
 		if (libResourceId != null) {
 			getLog().info("The following Step resource will be used as keyword library: " + libResourceId);
@@ -102,14 +95,17 @@ public abstract class AbstractRunPackagedAutomationPackagesMojo extends Abstract
 		return libResourceId;
 	}
 
-	protected String uploadResourceToStep(File fileToUpload, boolean checkForDuplicates) throws MojoExecutionException, SimilarResourceExistingException {
+	protected String uploadResourceToStep(File fileToUpload) throws MojoExecutionException, SimilarResourceExistingException {
 		try (RemoteResourceManager resourceManager = createRemoteResourceManager()) {
 			if(fileToUpload == null){
 				throw logAndThrow("Unable to detect an artifact to upload", getDefaultMojoException());
 			} else {
 				getLog().info("Artifact is detected for upload to Step: " + fileToUpload.getName());
 
-				Resource uploaded = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, new FileInputStream(fileToUpload), fileToUpload.getName(), checkForDuplicates, null);
+				Resource uploaded;
+
+				uploaded = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, new FileInputStream(fileToUpload), fileToUpload.getName(), false, null);
+
 				if(uploaded == null){
 					throw logAndThrow("Uploaded resource is null", getDefaultMojoException());
 				} else {

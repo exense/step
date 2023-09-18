@@ -42,8 +42,17 @@ public class RemoteFunctionPackageClientImpl extends AbstractRemoteClient implem
 		if (packageLibraryFile != null) {
 			Resource packageLibraryResource = null;
 			if (packageLibraryFile.getFile() != null) {
-				// upload new file as library
-				packageLibraryResource = upload(packageLibraryFile.getFile());
+				// upload new file as library (or reuse the existing resource with the same has sum)
+				File file = packageLibraryFile.getFile();
+				try {
+					// TODO: here we want to protect against uploading duplicated resources (checkForDuplicates=true), but the remoteResourceManager now doesn't support this (should be fixed)
+					remoteResourceManager.createResource("functions", new FileInputStream(file), file.getName(), true, null);
+				} catch (SimilarResourceExistingException e) {
+					// in case of existing resource with the same hash sum we want to use it
+					if (e.getSimilarResources() != null && !e.getSimilarResources().isEmpty()) {
+						packageLibraryResource = e.getSimilarResources().get(0);
+					}
+				}
 			} else if (packageLibraryFile.getResourceId() != null && !packageLibraryFile.getResourceId().isEmpty()) {
 				// reuse existing resource as package library
 				packageLibraryResource = remoteResourceManager.getResource(packageLibraryFile.getResourceId());

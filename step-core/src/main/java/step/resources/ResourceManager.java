@@ -22,6 +22,8 @@ import step.core.objectenricher.ObjectEnricher;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
+import java.util.Map;
 
 public interface ResourceManager {
 
@@ -75,6 +77,14 @@ public interface ResourceManager {
 
 	String getResourcesRootPath();
 
+	Resource createResource(String resourceType,
+							boolean isDirectory,
+							InputStream resourceStream,
+							String resourceFileName,
+							boolean checkForDuplicates,
+							ObjectEnricher objectEnricher,
+							String trackingAttribute) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException;
+
 	/**
 	 * Save the content provided as stream to an existing resource.
 	 * This creates a new {@link ResourceRevision} for the {@link Resource}
@@ -105,5 +115,7 @@ public interface ResourceManager {
 	 * @param resourceId the id of the {@link Resource} to be deleted
 	 */
 	void deleteResource(String resourceId);
+
+	List<Resource> findManyByCriteria(Map<String, String> criteria);
 
 }

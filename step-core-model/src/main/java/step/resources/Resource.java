@@ -25,6 +25,8 @@ import step.core.objectenricher.EnricheableObject;
 
 public class Resource extends AbstractOrganizableObject implements EnricheableObject {
 
+	public static final String TRACKING_FIELD = "tracking";
+
 	protected ObjectId currentRevisionId;
 	
 	protected String resourceType;
