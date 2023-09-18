@@ -21,7 +21,7 @@ public class YamlAutomationPackageSchemaGeneratorTest {
         log.info("Generating actual json schema for simplified plan format");
 
         // read published json schema
-        InputStream jsonSchemaFile = this.getClass().getClassLoader().getResourceAsStream("step/functions/packages/yaml/step-yaml-package-schema-os-1.0.json");
+        InputStream jsonSchemaFile = this.getClass().getClassLoader().getResourceAsStream("step/automation/packages/yaml/step-yaml-package-schema-os-1.0.json");
 
         JsonNode publishedSchema = jsonObjectMapper.readTree(jsonSchemaFile);
         YamlAutomationPackageSchemaGenerator schemaGenerator = new YamlAutomationPackageSchemaGenerator("step", YamlAutomationPackageVersions.ACTUAL_VERSION);
