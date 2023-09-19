@@ -11,6 +11,8 @@ public class FetchBucketsRequest {
     private Integer numberOfBuckets;
     private long intervalSize; // in ms
     private List<Integer> percentiles = Collections.emptyList();
+    private List<String> collectAttributes;
+    private Integer collectValuesLimit;
 
     public Long getStart() {
         return start;
@@ -76,5 +78,21 @@ public class FetchBucketsRequest {
     public FetchBucketsRequest setOqlFilter(String oqlFilter) {
         this.oqlFilter = oqlFilter;
         return this;
+    }
+
+    public List<String> getCollectAttributes() {
+        return collectAttributes;
+    }
+
+    public void setCollectAttributes(List<String> collectAttributes) {
+        this.collectAttributes = collectAttributes;
+    }
+
+    public int getCollectValuesLimit() {
+        return collectValuesLimit;
+    }
+
+    public void setCollectValuesLimit(int collectValuesLimit) {
+        this.collectValuesLimit = collectValuesLimit;
     }
 }
