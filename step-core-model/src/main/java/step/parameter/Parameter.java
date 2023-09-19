@@ -38,8 +38,7 @@ public class Parameter extends AbstractTrackedObject implements ActivableObject,
 	protected Expression activationExpression;
 	
 	protected Integer priority;
-
-	@JsonSetter(nulls = Nulls.SKIP)
+	
 	protected Boolean protectedValue = false;
 	
 	/**
