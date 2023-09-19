@@ -11,8 +11,8 @@ public class FetchBucketsRequest {
     private Integer numberOfBuckets;
     private long intervalSize; // in ms
     private List<Integer> percentiles = Collections.emptyList();
-    private List<String> collectAttributes;
-    private Integer collectValuesLimit;
+    private List<String> collectAttributeKeys;
+    private int collectAttributesValuesLimit;
 
     public Long getStart() {
         return start;
@@ -80,19 +80,19 @@ public class FetchBucketsRequest {
         return this;
     }
 
-    public List<String> getCollectAttributes() {
-        return collectAttributes;
+    public List<String> getCollectAttributeKeys() {
+        return collectAttributeKeys;
     }
 
-    public void setCollectAttributes(List<String> collectAttributes) {
-        this.collectAttributes = collectAttributes;
+    public void setCollectAttributeKeys(List<String> collectAttributeKeys) {
+        this.collectAttributeKeys = collectAttributeKeys;
     }
 
-    public int getCollectValuesLimit() {
-        return collectValuesLimit;
+    public int getCollectAttributesValuesLimit() {
+        return collectAttributesValuesLimit;
     }
 
-    public void setCollectValuesLimit(int collectValuesLimit) {
-        this.collectValuesLimit = collectValuesLimit;
+    public void setCollectAttributesValuesLimit(int collectAttributesValuesLimit) {
+        this.collectAttributesValuesLimit = collectAttributesValuesLimit;
     }
 }

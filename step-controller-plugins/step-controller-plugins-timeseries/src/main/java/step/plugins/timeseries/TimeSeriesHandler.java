@@ -273,7 +273,8 @@ public class TimeSeriesHandler {
                                 TimeSeriesFilterBuilder.buildFilter(request.getParams()))
                 ))
                 .withGroupDimensions(request.getGroupDimensions())
-                .withCollectAttributes(request.getCollectAttributes(), request.getCollectValuesLimit());
+                .withCollectAttributes(request.getCollectAttributeKeys(),
+                        Objects.requireNonNullElse(request.getCollectAttributesValuesLimit(),0));
         if (request.getIntervalSize() > 0) {
             timeSeriesAggregationQuery.window(request.getIntervalSize());
         }
