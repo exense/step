@@ -20,6 +20,7 @@ package step.repositories.artifact;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.artefacts.TestCase;
 import step.artefacts.TestSet;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
@@ -92,7 +93,7 @@ public abstract class AbstractArtifactRepository extends AbstractRepository {
 		String[] excludedClasses = repositoryParameters.getOrDefault(PARAM_EXCLUDE_CLASSES, ",").split(",");
 		String[] excludedAnnotations = repositoryParameters.getOrDefault(PARAM_EXCLUDE_ANNOTATIONS, ",").split(",");
 
-		List<Plan> plans = parsePlan(artifact,libraries,includedClasses,includedAnnotations,excludedClasses,excludedAnnotations);
+		List<Plan> plans = parsePlans(artifact,libraries,includedClasses,includedAnnotations,excludedClasses,excludedAnnotations);
 		return new FileAndPlan(artifact, plans);
 	}
 
@@ -159,8 +160,18 @@ public abstract class AbstractArtifactRepository extends AbstractRepository {
 
 	}
 
-	private List<Plan> parsePlan(File artifact, File libraries, String[] includedClasses, String[] includedAnnotations, String[] excludedClasses, String[] excludedAnnotations) {
-		return new StepJarParser().getPlansForJar(artifact,libraries,includedClasses,includedAnnotations,excludedClasses,excludedAnnotations);
+	private List<Plan> parsePlans(File artifact, File libraries, String[] includedClasses, String[] includedAnnotations, String[] excludedClasses, String[] excludedAnnotations) {
+		List<Plan> plans = new StepJarParser().getPlansForJar(artifact, libraries, includedClasses, includedAnnotations, excludedClasses, excludedAnnotations);
+		for (Plan plan : plans) {
+			AbstractArtefact root = plan.getRoot();
+			if (!(root instanceof TestCase)) {
+				// tricky solution - wrap all plans into TestCase to display all plans, launched while running automation package, in UI
+				TestCase newRoot = new TestCase();
+				newRoot.addChild(root);
+				plan.setRoot(newRoot);
+			}
+		}
+		return plans;
 	}
 
 	private static class FileAndPlan {
