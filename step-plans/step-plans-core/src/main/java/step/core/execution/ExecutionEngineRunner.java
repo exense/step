@@ -131,11 +131,11 @@ public class ExecutionEngineRunner {
 				
 				if(!executionContext.isSimulation()) {
 					updateStatus(ExecutionStatus.EXPORTING);
-					exportExecution(executionContext);				
+					exportExecution(executionContext);
 					logger.info("Test execution ended and reported. Execution ID: " + executionId);
 				} else {
 					logger.info("Test execution simulation ended. Test report isn't reported in simulation mode. Execution ID: " + executionId);
-				}				
+				}
 			} else {
 				updateStatus(ExecutionStatus.ENDED);
 			}
@@ -144,6 +144,7 @@ public class ExecutionEngineRunner {
 			executionLifecycleManager.updateExecutionResult(executionContext, ReportNodeStatus.TECHNICAL_ERROR);
 		} finally {
 			updateStatus(ExecutionStatus.ENDED);
+			postExecution(executionContext);
 			executionLifecycleManager.executionEnded();
 		}
 		return result;
@@ -210,6 +211,15 @@ public class ExecutionEngineRunner {
 		} else {
 			// TODO decide what to do with this error
 			//throw new RuntimeException("Unable to find execution with id "+executionId);
+		}
+	}
+
+	private void postExecution(ExecutionContext context) {
+		String executionId = context.getExecutionId();
+		Execution execution = executionAccessor.get(executionId);
+
+		if (execution != null) {
+			repositoryObjectManager.postExecution(context, execution.getExecutionParameters().getRepositoryObject());
 		}
 	}
 
