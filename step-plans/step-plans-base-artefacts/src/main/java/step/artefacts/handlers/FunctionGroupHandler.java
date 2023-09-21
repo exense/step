@@ -18,14 +18,6 @@
  ******************************************************************************/
 package step.artefacts.handlers;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.function.BiConsumer;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-
 import step.artefacts.FunctionGroup;
 import step.core.AbstractContext;
 import step.core.artefacts.AbstractArtefact;
@@ -33,13 +25,20 @@ import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
-import step.core.dynamicbeans.DynamicValue;
 import step.core.execution.ExecutionContext;
 import step.core.functions.FunctionGroupHandle;
 import step.functions.execution.FunctionExecutionService;
 import step.functions.execution.FunctionExecutionServiceException;
 import step.grid.TokenWrapper;
 import step.grid.tokenpool.Interest;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.BiConsumer;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportNode> implements FunctionGroupHandle {
 	
@@ -73,17 +72,23 @@ public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportN
 		final Map<String, Interest> additionalSelectionCriteria;
 
 		final Optional<String> dockerImage;
+
+		final Optional<String> dockerUser;
+
+		final Optional<String> dockerCommand;
 		
 		private long ownerThreadId = 0;
 
 		public FunctionGroupContext(Map<String, Interest> additionalSelectionCriteria) {
-			this(additionalSelectionCriteria, Optional.empty());
+			this(additionalSelectionCriteria, Optional.empty(), Optional.empty(), Optional.empty());
 		}
 
-		public FunctionGroupContext(Map<String, Interest> additionalSelectionCriteria, Optional<String> dockerImage) {
+		public FunctionGroupContext(Map<String, Interest> additionalSelectionCriteria, Optional<String> dockerImage, Optional<String> dockerUser, Optional<String> dockerCommand) {
 			super();
 			this.additionalSelectionCriteria = additionalSelectionCriteria;
 			this.dockerImage = dockerImage;
+			this.dockerUser = dockerUser;
+			this.dockerCommand = dockerCommand;
 		}
 		
 		public List<TokenWrapper> getTokens() {
@@ -121,6 +126,8 @@ public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportN
 	protected void execute_(ReportNode node, FunctionGroup testArtefact) throws Exception {		
 		Map<String, Interest> additionalSelectionCriteria = tokenSelectorHelper.getTokenSelectionCriteria(testArtefact, getBindings());
 		String dockerImage = testArtefact.getDockerImage().get();
+		String dockerUser = testArtefact.getDockerUser().get();
+		String dockerCommand = testArtefact.getDockerCommand().get();
 
 		Optional<String> dockerImageOptional;
 		if(dockerImage != null && !dockerImage.isEmpty()) {
@@ -129,10 +136,14 @@ public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportN
 			dockerImageOptional = Optional.empty();
 		}
 
+		Optional<String> dockerUserOptional = dockerUser != null && !dockerUser.isEmpty() ? Optional.ofNullable(dockerUser) : Optional.empty();
+		Optional<String> dockerCommandOptional = dockerCommand != null && !dockerCommand.isEmpty() ? Optional.ofNullable(dockerCommand) : Optional.empty();
+
+
 		// TODO switch this to a required criteria
 		dockerImageOptional.ifPresent(image -> additionalSelectionCriteria.put("$docker", new Interest(Pattern.compile("true"), false)));
 
-		FunctionGroupContext handle = new FunctionGroupContext(additionalSelectionCriteria, dockerImageOptional);
+		FunctionGroupContext handle = new FunctionGroupContext(additionalSelectionCriteria, dockerImageOptional,  dockerUserOptional, dockerCommandOptional);
 		context.getVariablesManager().putVariable(node, FUNCTION_GROUP_CONTEXT_KEY, handle);
 		context.put(FunctionGroupHandle.class, this);
 		try {

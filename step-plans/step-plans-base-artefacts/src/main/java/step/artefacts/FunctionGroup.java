@@ -39,6 +39,10 @@ public class FunctionGroup extends TokenSelector {
 
 	private DynamicValue<String> dockerImage = new DynamicValue<>();
 
+	private DynamicValue<String> dockerUser = new DynamicValue<>();
+
+	private DynamicValue<String> dockerCommand = new DynamicValue<>();
+
 	/**
 	 * @return an optional {@link BiConsumer} representing an operation to be performed
 	 * inside the {@link FunctionGroup}
@@ -57,5 +61,21 @@ public class FunctionGroup extends TokenSelector {
 
 	public void setDockerImage(DynamicValue<String> dockerImage) {
 		this.dockerImage = dockerImage;
+	}
+
+	public DynamicValue<String> getDockerUser() {
+		return dockerUser;
+	}
+
+	public void setDockerUser(DynamicValue<String> dockerUser) {
+		this.dockerUser = dockerUser;
+	}
+
+	public DynamicValue<String> getDockerCommand() {
+		return dockerCommand;
+	}
+
+	public void setDockerCommand(DynamicValue<String> dockerCommand) {
+		this.dockerCommand = dockerCommand;
 	}
 }
