@@ -1052,7 +1052,13 @@
             "instrumentNode" : {
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
+            "dockerCommand": {
+              "$ref": "#/$defs/SmartDynamicValueStringDef"
+            },
             "dockerImage": {
+              "$ref": "#/$defs/SmartDynamicValueStringDef"
+            },
+            "dockerUser": {
               "$ref": "#/$defs/SmartDynamicValueStringDef"
             },
             "skipNode" : {

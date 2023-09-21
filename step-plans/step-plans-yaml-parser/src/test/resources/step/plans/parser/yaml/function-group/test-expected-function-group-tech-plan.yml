@@ -22,6 +22,16 @@ root:
         expression: null
         expressionType: null
         value: null
+      dockerUser:
+        dynamic: false
+        expression: null
+        expressionType: null
+        value: null
+      dockerCommand:
+        dynamic: false
+        expression: null
+        expressionType: null
+        value: null
       customFields: null
       attributes:
         name: "Session"
