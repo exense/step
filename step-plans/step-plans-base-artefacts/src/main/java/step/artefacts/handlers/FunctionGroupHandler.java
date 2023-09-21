@@ -73,9 +73,9 @@ public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportN
 
 		final Optional<String> dockerImage;
 
-		final Optional<String> dockerUser;
+		final Optional<String> containerUser;
 
-		final Optional<String> dockerCommand;
+		final Optional<String> containerCommand;
 		
 		private long ownerThreadId = 0;
 
@@ -83,12 +83,12 @@ public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportN
 			this(additionalSelectionCriteria, Optional.empty(), Optional.empty(), Optional.empty());
 		}
 
-		public FunctionGroupContext(Map<String, Interest> additionalSelectionCriteria, Optional<String> dockerImage, Optional<String> dockerUser, Optional<String> dockerCommand) {
+		public FunctionGroupContext(Map<String, Interest> additionalSelectionCriteria, Optional<String> dockerImage, Optional<String> containerUser, Optional<String> containerCommand) {
 			super();
 			this.additionalSelectionCriteria = additionalSelectionCriteria;
 			this.dockerImage = dockerImage;
-			this.dockerUser = dockerUser;
-			this.dockerCommand = dockerCommand;
+			this.containerUser = containerUser;
+			this.containerCommand = containerCommand;
 		}
 		
 		public List<TokenWrapper> getTokens() {
@@ -126,8 +126,8 @@ public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportN
 	protected void execute_(ReportNode node, FunctionGroup testArtefact) throws Exception {		
 		Map<String, Interest> additionalSelectionCriteria = tokenSelectorHelper.getTokenSelectionCriteria(testArtefact, getBindings());
 		String dockerImage = testArtefact.getDockerImage().get();
-		String dockerUser = testArtefact.getDockerUser().get();
-		String dockerCommand = testArtefact.getDockerCommand().get();
+		String containerUser = testArtefact.getContainerUser().get();
+		String containerCommand = testArtefact.getContainerCommand().get();
 
 		Optional<String> dockerImageOptional;
 		if(dockerImage != null && !dockerImage.isEmpty()) {
@@ -136,14 +136,14 @@ public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportN
 			dockerImageOptional = Optional.empty();
 		}
 
-		Optional<String> dockerUserOptional = dockerUser != null && !dockerUser.isEmpty() ? Optional.ofNullable(dockerUser) : Optional.empty();
-		Optional<String> dockerCommandOptional = dockerCommand != null && !dockerCommand.isEmpty() ? Optional.ofNullable(dockerCommand) : Optional.empty();
+		Optional<String> containerUserOptional = containerUser != null && !containerUser.isEmpty() ? Optional.ofNullable(containerUser) : Optional.empty();
+		Optional<String> containerCommandOptional = containerCommand != null && !containerCommand.isEmpty() ? Optional.ofNullable(containerCommand) : Optional.empty();
 
 
 		// TODO switch this to a required criteria
 		dockerImageOptional.ifPresent(image -> additionalSelectionCriteria.put("$docker", new Interest(Pattern.compile("true"), false)));
 
-		FunctionGroupContext handle = new FunctionGroupContext(additionalSelectionCriteria, dockerImageOptional,  dockerUserOptional, dockerCommandOptional);
+		FunctionGroupContext handle = new FunctionGroupContext(additionalSelectionCriteria, dockerImageOptional,  containerUserOptional, containerCommandOptional);
 		context.getVariablesManager().putVariable(node, FUNCTION_GROUP_CONTEXT_KEY, handle);
 		context.put(FunctionGroupHandle.class, this);
 		try {

@@ -2117,12 +2117,12 @@ root:
             expression: null
             expressionType: null
             value: null
-          dockerUser:
+          containerUser:
             dynamic: false
             expression: null
             expressionType: null
             value: null
-          dockerCommand:
+          containerCommand:
             dynamic: false
             expression: null
             expressionType: null

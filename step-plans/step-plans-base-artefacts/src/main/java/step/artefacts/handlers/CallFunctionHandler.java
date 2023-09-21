@@ -157,8 +157,8 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 										})
 								.findFirst().orElseThrow();
 						input.getProperties().put(FunctionExecutionServiceImpl.INPUT_PROPERTY_DOCKER_IMAGE, image);
-						input.getProperties().put(FunctionExecutionServiceImpl.INPUT_PROPERTY_CONTAINER_USER, functionGroupContext.dockerUser.orElseThrow());
-						input.getProperties().put(FunctionExecutionServiceImpl.INPUT_PROPERTY_CONTAINER_CMD, functionGroupContext.dockerCommand.orElse(""));
+						input.getProperties().put(FunctionExecutionServiceImpl.INPUT_PROPERTY_CONTAINER_USER, functionGroupContext.containerUser.orElseThrow());
+						input.getProperties().put(FunctionExecutionServiceImpl.INPUT_PROPERTY_CONTAINER_CMD, functionGroupContext.containerCommand.orElse(""));
 						input.getProperties().put(FunctionExecutionServiceImpl.INPUT_PROPERTY_DOCKER_REGISTRY_URL, dockerRegistryConfiguration.getUrl());
 						input.getProperties().put(FunctionExecutionServiceImpl.INPUT_PROPERTY_DOCKER_REGISTRY_USERNAME, dockerRegistryConfiguration.getUsername());
 						input.getProperties().put(FunctionExecutionServiceImpl.INPUT_PROPERTY_DOCKER_REGISTRY_PASSWORD, dockerRegistryConfiguration.getPassword());
