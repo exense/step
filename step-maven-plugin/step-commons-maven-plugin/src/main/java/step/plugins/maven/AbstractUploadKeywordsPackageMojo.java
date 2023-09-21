@@ -133,12 +133,11 @@ public abstract class AbstractUploadKeywordsPackageMojo extends AbstractStepPlug
 		if (libStepResourceSearchCriteria != null && !libStepResourceSearchCriteria.isEmpty()) {
 			return LibFileReference.resourceId(resolveKeywordLibResourceByCriteria(libStepResourceSearchCriteria));
 		} else if (getLibArtifactId() != null && !getLibArtifactId().isEmpty()) {
-			getLog().info("Using maven artifact " + getLibArtifactGroupId() + ":" + getLibArtifactId() + ":" + getLibArtifactVersion() + " as library file");
 			org.eclipse.aether.artifact.Artifact remoteLibArtifact = getRemoteArtifact(getLibArtifactGroupId(), getLibArtifactId(), getLibArtifactVersion(), getLibArtifactClassifier(), "jar");
 			if (remoteLibArtifact == null) {
 				throw new MojoExecutionException("Library artifact is not resolved");
 			}
-			return LibFileReference.file(remoteLibArtifact.getFile());
+			return prepareLibraryFileReferenceForMavenArtifact(remoteLibArtifact);
 		} else {
 			return null;
 		}
@@ -254,4 +253,5 @@ public abstract class AbstractUploadKeywordsPackageMojo extends AbstractStepPlug
 	public void setLibArtifactClassifier(String libArtifactClassifier) {
 		this.libArtifactClassifier = libArtifactClassifier;
 	}
+
 }

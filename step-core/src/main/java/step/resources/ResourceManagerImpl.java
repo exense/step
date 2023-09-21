@@ -32,11 +32,10 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 public class ResourceManagerImpl implements ResourceManager {
 
@@ -71,7 +70,7 @@ public class ResourceManagerImpl implements ResourceManager {
 
 	@Override
 	public ResourceRevisionContainer createResourceContainer(String resourceType, String resourceFileName) throws IOException {
-		return createResourceContainer(resourceType, resourceFileName, false);
+		return createResourceContainer(resourceType, resourceFileName, false, null);
 	}
 
 	@Override
@@ -81,14 +80,28 @@ public class ResourceManagerImpl implements ResourceManager {
 
 	@Override
 	public Resource createResource(String resourceType, boolean isDirectory, InputStream resourceStream, String resourceFileName, boolean checkForDuplicates, ObjectEnricher objectEnricher) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException {
-		ResourceRevisionContainer resourceContainer = createResourceContainer(resourceType, resourceFileName, isDirectory);
+		ResourceRevisionContainer resourceContainer = createResourceContainer(resourceType, resourceFileName, isDirectory, null);
 		FileHelper.copy(resourceStream, resourceContainer.getOutputStream(), 2048);
 		resourceContainer.save(checkForDuplicates, objectEnricher);
 		return resourceContainer.getResource();
 	}
 
-	private ResourceRevisionContainer createResourceContainer(String resourceType, String resourceFileName, boolean isDirectory) throws IOException {
-		Resource resource = createResource(resourceType, resourceFileName, isDirectory);
+	@Override
+	public Resource createResource(String resourceType,
+								   boolean isDirectory,
+								   InputStream resourceStream,
+								   String resourceFileName,
+								   boolean checkForDuplicates,
+								   ObjectEnricher objectEnricher,
+								   String trackingAttribute) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException {
+		ResourceRevisionContainer resourceContainer = createResourceContainer(resourceType, resourceFileName, isDirectory, trackingAttribute);
+		FileHelper.copy(resourceStream, resourceContainer.getOutputStream(), 2048);
+		resourceContainer.save(checkForDuplicates, objectEnricher);
+		return resourceContainer.getResource();
+	}
+
+	private ResourceRevisionContainer createResourceContainer(String resourceType, String resourceFileName, boolean isDirectory, String trackingAttribute) throws IOException {
+		Resource resource = createResource(resourceType, resourceFileName, isDirectory, trackingAttribute);
 		ResourceRevision revision = createResourceRevisionContainer(resourceFileName, resource);
 		return new ResourceRevisionContainer(resource, revision, this);
 	}
@@ -156,6 +169,11 @@ public class ResourceManagerImpl implements ResourceManager {
 		}
 
 		resourceAccessor.remove(resource.getId());
+	}
+
+	@Override
+	public List<Resource> findManyByCriteria(Map<String, String> attributes) {
+		return StreamSupport.stream(resourceAccessor.findManyByAttributes(attributes), false).collect(Collectors.toList());
 	}
 
 	private List<Resource> getSimilarResources(Resource actualResource, ResourceRevision actualResourceRevision) {
@@ -301,7 +319,7 @@ public class ResourceManagerImpl implements ResourceManager {
 		return com.google.common.io.Files.hash(file, Hashing.md5()).toString();
 	}
 
-	private Resource createResource(String resourceTypeId, String name, boolean isDirectory) {
+	private Resource createResource(String resourceTypeId, String name, boolean isDirectory, String trackingAttribute) {
 		ResourceType resourceType = resourceTypes.get(resourceTypeId);
 		if(resourceType ==  null) {
 			throw new RuntimeException("Unknown resource type "+resourceTypeId);
@@ -316,6 +334,15 @@ public class ResourceManagerImpl implements ResourceManager {
 		resource.setResourceType(resourceTypeId);
 		resource.setEphemeral(resourceType.isEphemeral());
 		resource.setDirectory(isDirectory);
+
+		if (trackingAttribute != null && !trackingAttribute.isEmpty()) {
+			Map<String, Object> customFields = resource.getCustomFields();
+			if (customFields == null) {
+				customFields = new HashMap<>();
+				resource.setCustomFields(customFields);
+			}
+			customFields.put(Resource.TRACKING_FIELD, trackingAttribute);
+		}
 
 		return resource;
 	}
@@ -359,4 +386,5 @@ public class ResourceManagerImpl implements ResourceManager {
 	public String getResourcesRootPath() {
 		return resourceRootFolder.getPath();
 	}
+
 }
