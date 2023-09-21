@@ -39,4 +39,19 @@ public class StepJarParserTest {
 		Assert.assertNotNull("The 'callExisting3' function is not found in composite-simple-plan", function);
 	}
 
+	@Test
+	public void testInvalid() throws Exception {
+		StepJarParser stepJarParser = new StepJarParser();
+		File jarFile = new File("src/test/resources/step/repositories/artifact/step-junit-tests-invalid.jar");
+
+		// jar file is built for tests classes from step-junit module and contains various plans including inline plan and INVALID plan defined in Yaml format
+		try {
+			List<Plan> plansForJar = stepJarParser.getPlansForJar(jarFile, null, new String[]{}, new String[]{}, new String[]{}, new String[]{});
+			Assert.fail("Exception is not thrown");
+		} catch (Exception ex){
+			// ok
+			log.info("Exception caught", ex);
+		}
+	}
+
 }

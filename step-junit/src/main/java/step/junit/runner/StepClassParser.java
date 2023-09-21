@@ -130,7 +130,12 @@ public class StepClassParser {
 				logger.debug("plan is:" + plan + " for class " + klass.getName());
 				setPlanName(plan, fileName);
 			} else if (parserMode == ParserMode.YAML_PARSER) {
-				plan = simpleYamlPlanReader.readYamlPlan(stream);
+				try {
+					plan = simpleYamlPlanReader.readYamlPlan(stream);
+				} catch (Exception e) {
+					// wrap into another exception to include the fileName to error details
+					throw new RuntimeException(fileName + " processing error", e);
+				}
 			} else {
 				throw new UnsupportedOperationException("Unable to resolve plan parser " + parserMode);
 			}
