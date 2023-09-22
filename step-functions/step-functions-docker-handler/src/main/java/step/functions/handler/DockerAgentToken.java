@@ -8,10 +8,7 @@ import step.grid.client.AbstractGridClientImpl;
 import step.grid.client.GridClient;
 import step.grid.client.GridClientException;
 
-import java.io.Closeable;
-import java.io.IOException;
-
-public class DockerAgentToken implements Closeable {
+public class DockerAgentToken {
 
     private final Grid grid;
     private final GridClient gridClient;
@@ -30,18 +27,14 @@ public class DockerAgentToken implements Closeable {
         return tokenHandle;
     }
 
-    @Override
-    public void close() throws IOException {
-        try {
-            logger.info(String.format("Marking tokenHandle %s as Failing", tokenHandle.getID()));
-            gridClient.markTokenAsFailing(tokenHandle.getID(), "Failing", new Exception("Failing"));
-            logger.info(String.format("Returning tokenHandle %s", tokenHandle.getID()));
-            gridClient.returnTokenHandle(tokenHandle.getID());
-            logger.info(String.format("Removing token %s", tokenHandle.getID()));
-            grid.invalidateToken(tokenHandle.getID());
-            logger.info(String.format("TokenHandle %s returned and removed", tokenHandle.getID()));
-        } catch (GridClientException | AbstractGridClientImpl.AgentCommunicationException e) {
-            throw new RuntimeException(e);
-        }
+    public void returnToken() throws GridClientException, AbstractGridClientImpl.AgentCommunicationException {
+        logger.info(String.format("Returning tokenHandle %s", tokenHandle.getID()));
+        gridClient.returnTokenHandle(tokenHandle.getID());
     }
+
+    public void invalidateToken() {
+        logger.info(String.format("Removing token %s", tokenHandle.getID()));
+        grid.invalidateToken(tokenHandle.getID());
+    }
+
 }

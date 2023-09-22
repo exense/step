@@ -47,14 +47,15 @@ public class ProxyMessageHandler implements MessageHandler {
         int localGridPort = Integer.parseInt(localGridPortStr);
 
         TokenReservationSession tokenReservationSession = agentTokenWrapper.getTokenReservationSession();
-        DockerContainer container = tokenReservationSession.get(DockerContainer.class);
+        DockerResourceWrapper dockerResourceWrapper = getDockerResourceWrapper(tokenReservationSession);
+        DockerContainer container = dockerResourceWrapper.getDockerContainer();
         if (container == null) {
             logger.info("Creating new container");
             // Create a new docker container
             container = new DockerContainer(agentProperties, messageProperties, localGridPort);
             // Add the container to the session. It will be closed automatically at session release
-            tokenReservationSession.put(container);
-            logger.info("Container has been put to the tokenReservationSession");
+            dockerResourceWrapper.setDockerContainer(container);
+            logger.debug("Container created");
         }
 
         FileManagerClient fileManagerClient = agentTokenWrapper.getServices().getFileManagerClient();
@@ -74,13 +75,13 @@ public class ProxyMessageHandler implements MessageHandler {
         });
 
         // Get the previously reserved token from the session if any
-        DockerAgentToken token = container.getDockerAgentToken();
+        DockerAgentToken token = dockerResourceWrapper.getDockerAgentToken();
         if(token == null) {
             // Wait for the token to be available i.e. that the container started
             TokenWrapper tokenHandle = gridClient.getTokenHandle(Map.of(), Map.of(), true);
             // Add the token to the session. It will be returned to the pool after session release
             token = new DockerAgentToken(grid, gridClient, tokenHandle);
-            container.setDockerAgentToken(token);
+            dockerResourceWrapper.setDockerAgentToken(token);
         }
 
         // Get the initial message handler from the message properties
@@ -90,6 +91,15 @@ public class ProxyMessageHandler implements MessageHandler {
         FileVersionId messageHandlerFileVersionId = new FileVersionId(messageHandlerFileId, messageHandlerFileVersion);
         // Execute a keyword using the selected token
         return gridClient.call(token.getTokenHandle().getID(), inputMessage.getPayload(), messageHandler, messageHandlerFileVersionId, messageProperties, 60000);
+    }
+
+    private DockerResourceWrapper getDockerResourceWrapper(TokenReservationSession tokenReservationSession) {
+        DockerResourceWrapper dockerResourceWrapper = tokenReservationSession.get(DockerResourceWrapper.class);
+        if (dockerResourceWrapper == null) {
+            dockerResourceWrapper = new DockerResourceWrapper();
+            tokenReservationSession.put(dockerResourceWrapper);
+        }
+        return dockerResourceWrapper;
     }
 
     private static GridImpl createGrid(int port) {

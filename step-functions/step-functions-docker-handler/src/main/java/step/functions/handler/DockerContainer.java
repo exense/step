@@ -48,9 +48,6 @@ public class DockerContainer implements Closeable {
     private Path startupScriptFilePath;
     private Path configurationFileFilePath;
     private Path logbackConfigurationFilePath;
-    //For now with start one container and select on token per session
-    //keeping the reference here to stop the container before removing the docker tokens from the local grid
-    private DockerAgentToken dockerAgentToken;
 
     {
         // Extracting start script, agent configuration and logback configuration
@@ -87,14 +84,6 @@ public class DockerContainer implements Closeable {
             throw e;
         }
 
-    }
-
-    public DockerAgentToken getDockerAgentToken() {
-        return dockerAgentToken;
-    }
-
-    public void setDockerAgentToken(DockerAgentToken dockerAgentToken) {
-        this.dockerAgentToken = dockerAgentToken;
     }
 
     private static DockerClient initDockerClient(String registryUrl, String registryUsername, String registryPassword, String dockerHost) {
@@ -216,6 +205,5 @@ public class DockerContainer implements Closeable {
     @Override
     public void close() throws IOException {
         stopContainer();
-        dockerAgentToken.close();
     }
 }
