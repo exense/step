@@ -1,9 +1,19 @@
 package step.functions.handler;
 
-public class DockerResourceWrapper implements AutoCloseable {
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import step.grid.client.AbstractGridClientImpl;
+import step.grid.client.GridClientException;
+
+import java.io.Closeable;
+import java.io.IOException;
+
+public class DockerResourceWrapper implements Closeable {
 
 	private DockerContainer dockerContainer;
 	private DockerAgentToken dockerAgentToken;
+
+	private static final Logger logger = LoggerFactory.getLogger(DockerResourceWrapper.class);
 
 	public DockerContainer getDockerContainer() {
 		return dockerContainer;
@@ -22,9 +32,13 @@ public class DockerResourceWrapper implements AutoCloseable {
 	}
 
 	@Override
-	public void close() throws Exception {
+	public void close() throws IOException {
 		// return token from grid client and release session on docker agent
-		dockerAgentToken.returnToken();
+		try {
+			dockerAgentToken.returnToken();
+		} catch (GridClientException | AbstractGridClientImpl.AgentCommunicationException e) {
+			logger.error(e.toString());
+		}
 		//Stop the docker container
 		dockerContainer.close();
 		//Remove token from local grid
