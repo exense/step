@@ -46,6 +46,7 @@ public class TimeSeriesExecutionPlugin extends AbstractExecutionEnginePlugin {
 
 		ingestionPipeline.ingestPoint(withExecutionAttributes(execution, Map.of("metricType", "executions/count")), execution.getStartTime(), 1);
 		ingestionPipeline.ingestPoint(withExecutionAttributes(execution, Map.of("metricType", "executions/failure-percentage")), execution.getStartTime(), executionPassed ? 0 : 100);
+		ingestionPipeline.ingestPoint(withExecutionAttributes(execution, Map.of("metricType", "executions/failure-count")), execution.getStartTime(), executionPassed ? 0 : 1);
 
 		ErrorDistribution errorDistribution = (ErrorDistribution) viewManager.queryView(ErrorDistributionView.ERROR_DISTRIBUTION_VIEW, context.getExecutionId());
 
