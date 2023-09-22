@@ -22,7 +22,7 @@ import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
 
-@Artefact(name = "TestSet", validAsRoot = true)
+@Artefact(name = "TestSet", validAsRoot = true, validAsControl = false)
 public class TestSet extends AbstractArtefact {
 
 	private DynamicValue<Integer> threads = new DynamicValue<Integer>(1);
