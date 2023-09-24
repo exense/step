@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.plugins.jmeter.automation;
 
+import step.attachments.FileResolver;
 import step.automation.packages.yaml.deserialization.SpecialKeywordAttributesApplier;
 import step.automation.packages.yaml.deserialization.SpecialKeywordAttributesExtractor;
 import step.automation.packages.yaml.deserialization.YamlKeywordFieldDeserializationProcessor;
@@ -49,7 +50,7 @@ public class JMeterFunctionTestplanConversionRule implements YamlKeywordConversi
             Resource resource = resourceUploader.uploadResourceFromAutomationPackage(automationPackageFile, testplanPath, context);
 
             if (resource != null) {
-                draftKeyword.setJmeterTestplan(new DynamicValue<>(resource.getId().toString()));
+                draftKeyword.setJmeterTestplan(new DynamicValue<>(FileResolver.RESOURCE_PREFIX + resource.getId().toString()));
             }
         };
     }

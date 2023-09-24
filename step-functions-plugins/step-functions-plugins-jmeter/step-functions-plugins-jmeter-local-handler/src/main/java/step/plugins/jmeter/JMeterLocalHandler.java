@@ -18,7 +18,6 @@
  ******************************************************************************/
 package step.plugins.jmeter;
 
-import ch.qos.logback.classic.Logger;
 import org.apache.jmeter.config.Arguments;
 import org.apache.jmeter.engine.StandardJMeterEngine;
 import org.apache.jmeter.save.SaveService;
@@ -26,6 +25,7 @@ import org.apache.jmeter.testelement.TestPlan;
 import org.apache.jmeter.util.JMeterUtils;
 import org.apache.jorphan.collections.HashTree;
 import org.apache.jorphan.collections.HashTreeTraverser;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.functions.handler.JsonBasedFunctionHandler;
 import step.functions.io.Input;
@@ -74,8 +74,9 @@ public class JMeterLocalHandler extends JsonBasedFunctionHandler {
 			context.put("initialized", true);
 		}
 
-		if (rootLogger != null) {
-			appender = new StepAppender(rootLogger);
+		// TODO: slf4j or logback?
+		if (rootLogger != null && rootLogger instanceof ch.qos.logback.classic.Logger) {
+			appender = new StepAppender((ch.qos.logback.classic.Logger) rootLogger);
 		}
 
 		OutputBuilder out = new OutputBuilder();

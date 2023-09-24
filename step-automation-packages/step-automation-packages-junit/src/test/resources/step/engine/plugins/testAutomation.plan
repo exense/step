@@ -1,5 +1,5 @@
-Sequence
+TestCase
 Echo "Testing Automation package functions"
-JMeterAutomation
+JMeterAutomation url="www.exense.ch"
 Echo "JMeterAutomation called"
 End

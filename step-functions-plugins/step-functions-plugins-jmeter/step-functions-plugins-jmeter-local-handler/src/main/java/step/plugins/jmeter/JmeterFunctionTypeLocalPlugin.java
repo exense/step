@@ -16,28 +16,32 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.engine.plugins;
+package step.plugins.jmeter;
 
+import ch.exense.commons.app.Configuration;
 import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionEngineContext;
 import step.core.execution.OperationMode;
 import step.core.plugins.Plugin;
-import step.functions.accessor.FunctionAccessor;
+import step.engine.plugins.AbstractExecutionEnginePlugin;
+import step.engine.plugins.FunctionPlugin;
 import step.functions.type.FunctionTypeRegistry;
-import step.plugins.jmeter.JMeterFunctionType;
 
-@Plugin(dependencies = {LocalFunctionPlugin.class})
-public class JmeterFunctionTypeTestPlugin extends AbstractExecutionEnginePlugin {
-    private FunctionAccessor functionAccessor;
+@Plugin(dependencies= {FunctionPlugin.class})
+public class JmeterFunctionTypeLocalPlugin extends AbstractExecutionEnginePlugin {
     private FunctionTypeRegistry functionTypeRegistry;
 
     @Override
     public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext context) {
-        // TODO: temporary solution for test
-        if (context.getOperationMode() == OperationMode.LOCAL) {
-            functionAccessor = context.require(FunctionAccessor.class);
-            functionTypeRegistry = context.require(FunctionTypeRegistry.class);
+        Configuration config = context.getConfiguration();
 
+        String jMeterHome = System.getenv().get("JMETER_HOME");
+        if (jMeterHome != null) {
+            config.putProperty("plugins.jmeter.home", jMeterHome);
+        }
+
+        if (context.getOperationMode() == OperationMode.LOCAL) {
+            functionTypeRegistry = context.require(FunctionTypeRegistry.class);
             functionTypeRegistry.registerFunctionType(new JMeterFunctionType(context.getConfiguration()));
         }
     }

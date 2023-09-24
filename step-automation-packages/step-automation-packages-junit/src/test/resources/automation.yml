@@ -4,8 +4,8 @@ keywords:
   - JMeter:
       name: "JMeterAutomation"
       description: "JMeter keyword 1"
-      executeLocally: false
+      executeLocally: true
       useCustomTemplate: true
       callTimeout: 1000
-      jmeterTestplan: "jmeterProject1/jmeterProject1.xml"
+      jmeterTestplan: "jmeterProject1/jmeterProject1.jmx"
       

@@ -29,24 +29,21 @@ import step.core.execution.OperationMode;
 import step.core.plugins.Plugin;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
-import step.functions.type.FunctionTypeRegistry;
 import step.resources.ResourceManager;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@Plugin(dependencies = {LocalFunctionPlugin.class})
+@Plugin(dependencies = {FunctionPlugin.class})
 public class AutomationPackageKeywordsPlugin extends AbstractExecutionEnginePlugin {
 
     private FunctionAccessor functionAccessor;
-    private FunctionTypeRegistry functionTypeRegistry;
     private ResourceManager resourceManager;
 
     @Override
     public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext context) {
         if (context.getOperationMode() == OperationMode.LOCAL) {
             functionAccessor = context.require(FunctionAccessor.class);
-            functionTypeRegistry = context.require(FunctionTypeRegistry.class);
             resourceManager = context.getResourceManager();
 
             List<Function> localFunctions = getFunctionsFromAutomationPackage();
