@@ -144,8 +144,8 @@ public class ExecutionEngineRunner {
 			executionLifecycleManager.updateExecutionResult(executionContext, ReportNodeStatus.TECHNICAL_ERROR);
 		} finally {
 			updateStatus(ExecutionStatus.ENDED);
-			postExecution(executionContext);
 			executionLifecycleManager.executionEnded();
+			postExecution(executionContext);
 		}
 		return result;
 	}
