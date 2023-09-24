@@ -34,8 +34,7 @@ public class JMeterFunctionType extends AbstractFunctionType<JMeterFunction> {
 
 	private static final Logger log = LoggerFactory.getLogger(JMeterFunctionType.class);
 
-	FileVersionId handlerJar;
-	
+	private FileVersionId handlerJar;
 	protected final Configuration configuration;
 	
 	public JMeterFunctionType(Configuration configuration) {

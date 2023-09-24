@@ -31,7 +31,7 @@
 	<dependencies>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
-			<artifactId>step-controller-server</artifactId>
+			<artifactId>step-functions-client-api</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
@@ -42,6 +42,12 @@
 		<dependency>
 			<groupId>ch.exense.step</groupId>
 			<artifactId>step-functions-plugins-jmeter-handler</artifactId>
+			<version>${project.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>ch.exense.step</groupId>
+			<artifactId>step-functions-client</artifactId>
 			<version>${project.version}</version>
 			<scope>test</scope>
 		</dependency>
