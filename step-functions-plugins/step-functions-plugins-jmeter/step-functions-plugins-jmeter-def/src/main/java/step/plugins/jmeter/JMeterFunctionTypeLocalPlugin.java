@@ -28,19 +28,19 @@ import step.engine.plugins.FunctionPlugin;
 import step.functions.type.FunctionTypeRegistry;
 
 @Plugin(dependencies= {FunctionPlugin.class})
-public class JmeterFunctionTypeLocalPlugin extends AbstractExecutionEnginePlugin {
+public class JMeterFunctionTypeLocalPlugin extends AbstractExecutionEnginePlugin {
     private FunctionTypeRegistry functionTypeRegistry;
 
     @Override
     public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext context) {
-        Configuration config = context.getConfiguration();
-
-        String jMeterHome = System.getenv().get("JMETER_HOME");
-        if (jMeterHome != null) {
-            config.putProperty("plugins.jmeter.home", jMeterHome);
-        }
-
         if (context.getOperationMode() == OperationMode.LOCAL) {
+            Configuration config = context.getConfiguration();
+
+            String jMeterHome = System.getenv().get("JMETER_HOME");
+            if (jMeterHome != null) {
+                config.putProperty("plugins.jmeter.home", jMeterHome);
+            }
+
             functionTypeRegistry = context.require(FunctionTypeRegistry.class);
             functionTypeRegistry.registerFunctionType(new JMeterFunctionType(context.getConfiguration()));
         }
