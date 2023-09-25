@@ -11,7 +11,7 @@ public class FetchBucketsRequest {
     private Integer numberOfBuckets;
     private long intervalSize; // in ms
     private List<Integer> percentiles = Collections.emptyList();
-    private List<String> collectAttributeKeys;
+    private Set<String> collectAttributeKeys;
     private int collectAttributesValuesLimit;
 
     public Long getStart() {
@@ -80,11 +80,11 @@ public class FetchBucketsRequest {
         return this;
     }
 
-    public List<String> getCollectAttributeKeys() {
+    public Set<String> getCollectAttributeKeys() {
         return collectAttributeKeys;
     }
 
-    public void setCollectAttributeKeys(List<String> collectAttributeKeys) {
+    public void setCollectAttributeKeys(Set<String> collectAttributeKeys) {
         this.collectAttributeKeys = collectAttributeKeys;
     }
 

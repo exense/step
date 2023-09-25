@@ -272,9 +272,11 @@ public class TimeSeriesHandler {
                                 TimeSeriesFilterBuilder.buildFilter(request.getOqlFilter()),
                                 TimeSeriesFilterBuilder.buildFilter(request.getParams()))
                 ))
-                .withGroupDimensions(request.getGroupDimensions())
-                .withCollectAttributes(request.getCollectAttributeKeys(),
-                        Objects.requireNonNullElse(request.getCollectAttributesValuesLimit(),0));
+                .withGroupDimensions(request.getGroupDimensions());
+        if (request.getCollectAttributeKeys() != null && !request.getCollectAttributeKeys().isEmpty()) {
+            timeSeriesAggregationQuery.withCollectAttributes(request.getCollectAttributeKeys(),
+                    Objects.requireNonNullElse(request.getCollectAttributesValuesLimit(), 0));
+        }
         if (request.getIntervalSize() > 0) {
             timeSeriesAggregationQuery.window(request.getIntervalSize());
         }
