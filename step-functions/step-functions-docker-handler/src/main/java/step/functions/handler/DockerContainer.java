@@ -114,7 +114,7 @@ public class DockerContainer implements Closeable {
                 .exec();
         dockerClient.startContainerCmd(container.getId()).exec();
         InspectContainerResponse inspectContainerResponse = dockerClient.inspectContainerCmd(container.getId()).exec();
-        logger.info("Container " + CONTAINER_NAME + " startup response : " + inspectContainerResponse.toString());
+        logger.debug("Container " + CONTAINER_NAME + " startup response : " + inspectContainerResponse.toString());
         return container;
     }
 
@@ -169,18 +169,18 @@ public class DockerContainer implements Closeable {
             String message = "Executed command '" + String.join(" ", List.of(command)) + "'";
             logger.info(message);
             callback.awaitCompletion(5, TimeUnit.SECONDS);
-            logger.info(stringBuilder.toString());
+            logger.debug(stringBuilder.toString());
         } else {
             String message = "Started command '" + String.join(" ", List.of(command)) + "'";
             logger.info(message);
             callback.awaitCompletion(5, TimeUnit.SECONDS);
-            logger.info(stringBuilder.toString());
+            logger.debug(stringBuilder.toString());
         }
     }
 
     private void copyLocalFileToContainer(File localFile, String remotePath) throws IOException {
         String pathToCopy = localFile.getCanonicalPath();
-        logger.info(String.format("Copying local file %s to container %s at path %s", pathToCopy, container.getId(), remotePath));
+        logger.debug(String.format("Copying local file %s to container %s at path %s", pathToCopy, container.getId(), remotePath));
         dockerClient.copyArchiveToContainerCmd(container.getId())
                 .withHostResource(pathToCopy)
                 .withRemotePath(remotePath)
@@ -193,10 +193,10 @@ public class DockerContainer implements Closeable {
     }
 
     private void stopContainer() {
-        logger.info("Stopping container");
+        logger.debug("Stopping container");
         dockerClient.stopContainerCmd(CONTAINER_NAME).exec();
         logger.info("Container stopped");
-        logger.info("Removing container");
+        logger.debug("Removing container");
         dockerClient.removeContainerCmd(CONTAINER_NAME).exec();
         logger.info("Container removed");
     }

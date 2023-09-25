@@ -66,6 +66,7 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunctionReportNode> {
 
@@ -155,7 +156,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 												throw new RuntimeException(e);
 											}
 										})
-								.findFirst().orElseThrow();
+								.findFirst().orElseThrow(()	-> new NoSuchElementException(String.format("No docker registry matching image path %s found, it must first be created", image)));
 						input.getProperties().put(FunctionExecutionServiceImpl.INPUT_PROPERTY_DOCKER_IMAGE, image);
 						input.getProperties().put(FunctionExecutionServiceImpl.INPUT_PROPERTY_CONTAINER_USER, functionGroupContext.containerUser.orElseThrow());
 						input.getProperties().put(FunctionExecutionServiceImpl.INPUT_PROPERTY_CONTAINER_CMD, functionGroupContext.containerCommand.orElse(""));
