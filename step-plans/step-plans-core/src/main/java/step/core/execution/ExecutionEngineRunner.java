@@ -21,6 +21,7 @@ package step.core.execution;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.bson.types.ObjectId;
@@ -217,9 +218,9 @@ public class ExecutionEngineRunner {
 	private void postExecution(ExecutionContext context) {
 		String executionId = context.getExecutionId();
 		Execution execution = executionAccessor.get(executionId);
-
-		if (execution != null) {
-			repositoryObjectManager.postExecution(context, execution.getExecutionParameters().getRepositoryObject());
+		Optional<RepositoryObjectReference> repositoryObjectReference = Optional.ofNullable(execution).map(Execution::getExecutionParameters).map(ExecutionParameters::getRepositoryObject);
+		if (repositoryObjectReference.isPresent()) {
+			repositoryObjectManager.postExecution(context, repositoryObjectReference.get());
 		}
 	}
 

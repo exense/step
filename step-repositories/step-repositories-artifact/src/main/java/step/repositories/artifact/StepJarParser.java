@@ -39,6 +39,7 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.net.JarURLConnection;
 import java.net.URL;
 import java.util.*;
 
@@ -197,16 +198,19 @@ public class StepJarParser {
                                 klass.getPackageName().replace(".", "/") + "/" + file);
                     }
 
-                    InputStream stream = url.openStream();
+                    JarURLConnection jarURLConnection = (JarURLConnection) url.openConnection();
+                    jarURLConnection.setUseCaches(false);
+                    try ( InputStream stream = jarURLConnection.getInputStream()) {
 
-                    if (stream != null) {
-                        // create plan from plain-text or from yaml
-                        parserResult = stepClassParser.createPlan(klass, file, stream);
-                    } else {
-                        throw new FileNotFoundException(file);
-                    }
-                    if (parserResult.getPlan() != null) {
-                        StepClassParser.setPlanName(parserResult.getPlan(), file);
+                        if (stream != null) {
+                            // create plan from plain-text or from yaml
+                            parserResult = stepClassParser.createPlan(klass, file, stream);
+                        } else {
+                            throw new FileNotFoundException(file);
+                        }
+                        if (parserResult.getPlan() != null) {
+                            StepClassParser.setPlanName(parserResult.getPlan(), file);
+                        }
                     }
                 } catch (Exception e) {
                     parserResult = new StepClassParserResult(file, null,  e);
