@@ -33,7 +33,9 @@ public interface FunctionManager {
 	void deleteFunction(String functionId) throws FunctionTypeException;
 
 	Function newFunction(String functionType);
-	
+
+	Function newFunction(String type, Map<String, String> configuration);
+
 	Function getFunctionByAttributes(Map<String, String> attributes);
 	
 	Function getFunctionById(String id);
