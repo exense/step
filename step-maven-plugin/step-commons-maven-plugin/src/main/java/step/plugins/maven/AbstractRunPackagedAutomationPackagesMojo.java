@@ -104,7 +104,7 @@ public abstract class AbstractRunPackagedAutomationPackagesMojo extends Abstract
 
 				Resource uploaded;
 
-				uploaded = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, new FileInputStream(fileToUpload), fileToUpload.getName(), false, null);
+				uploaded = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_TEMP, new FileInputStream(fileToUpload), fileToUpload.getName(), false, null);
 
 				if(uploaded == null){
 					throw logAndThrow("Uploaded resource is null", getDefaultMojoException());

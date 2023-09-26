@@ -33,6 +33,9 @@ public interface Repository {
 
 	void exportExecution(ExecutionContext context, Map<String, String> repositoryParameters) throws Exception;
 
+	default void postExecution(ExecutionContext context, RepositoryObjectReference repositoryObjectReference) throws Exception {
+	}
+
 	/**
 	 * Compares the canonical subset of the repository parameters.
 	 * The canonical subset of the parameters corresponds to the minimal entries that uniquely identify
