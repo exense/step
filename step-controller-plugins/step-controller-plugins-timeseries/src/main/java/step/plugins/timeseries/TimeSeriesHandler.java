@@ -274,7 +274,7 @@ public class TimeSeriesHandler {
                 ))
                 .withGroupDimensions(request.getGroupDimensions());
         if (request.getCollectAttributeKeys() != null && !request.getCollectAttributeKeys().isEmpty()) {
-            timeSeriesAggregationQuery.withCollectAttributes(request.getCollectAttributeKeys(),
+            timeSeriesAggregationQuery.withAttributeCollection(request.getCollectAttributeKeys(),
                     Objects.requireNonNullElse(request.getCollectAttributesValuesLimit(), 0));
         }
         if (request.getIntervalSize() > 0) {
