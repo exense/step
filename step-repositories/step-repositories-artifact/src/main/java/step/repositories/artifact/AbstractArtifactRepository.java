@@ -79,7 +79,7 @@ public abstract class AbstractArtifactRepository extends AbstractRepository {
 		FileAndPlans fileAndPlan = getAndParseArtifact(repositoryParameters);
 
 		TestSetStatusOverview overview = new TestSetStatusOverview();
-		List<TestRunStatus> runs = fileAndPlan.plans.stream()
+		List<TestRunStatus> runs = fileAndPlan.plans.getPlans().stream()
 				.map(plan -> new TestRunStatus(getPlanName(plan), getPlanName(plan), ReportNodeStatus.NORUN)).collect(Collectors.toList());
 		overview.setRuns(runs);
 		return overview;
@@ -94,7 +94,7 @@ public abstract class AbstractArtifactRepository extends AbstractRepository {
 		String[] excludedClasses = repositoryParameters.getOrDefault(PARAM_EXCLUDE_CLASSES, ",").split(",");
 		String[] excludedAnnotations = repositoryParameters.getOrDefault(PARAM_EXCLUDE_ANNOTATIONS, ",").split(",");
 
-		List<Plan> plans = parsePlans(artifact,libraries,includedClasses,includedAnnotations,excludedClasses,excludedAnnotations);
+		StepJarParser.PlansParsingResult plans = parsePlans(artifact,libraries,includedClasses,includedAnnotations,excludedClasses,excludedAnnotations);
 		return new FileAndPlans(artifact, plans);
 	}
 
@@ -127,20 +127,15 @@ public abstract class AbstractArtifactRepository extends AbstractRepository {
 		testSet.addAttribute(AbstractArtefact.NAME, fileAndPlan.artifact.getName());
 
 		planBuilder.startBlock(testSet);
-		List<Function> functions = new ArrayList<>();
-		fileAndPlan.plans.forEach(plan -> {
+		fileAndPlan.plans.getPlans().forEach(plan -> {
 			String name = getPlanName(plan);
 
 			wrapPlanInTestCase(plan, name);
 
 			plan.setVisible(false);
 
-			Collection<Function> testCaseFunctions = plan.getFunctions();
-
-			plan.setFunctions(testCaseFunctions);
-			functions.addAll(testCaseFunctions);
-
-			enrichPlan(context, plan);
+			plan.getFunctions().addAll(fileAndPlan.plans.getFunctions());
+     		enrichPlan(context, plan);
 
 			planAccessor.save(plan);
 			planBuilder.add(callPlan(plan.getId().toString(), name));
@@ -149,7 +144,7 @@ public abstract class AbstractArtifactRepository extends AbstractRepository {
 
 		Plan plan = planBuilder.build();
 		plan.setVisible(false);
-		plan.setFunctions(functions);
+		plan.setFunctions(fileAndPlan.plans.getFunctions());
 		enrichPlan(context, plan);
 		return plan;
 	}
@@ -163,7 +158,7 @@ public abstract class AbstractArtifactRepository extends AbstractRepository {
 
 	}
 
-	private List<Plan> parsePlans(File artifact, File libraries, String[] includedClasses, String[] includedAnnotations, String[] excludedClasses, String[] excludedAnnotations) {
+	protected StepJarParser.PlansParsingResult parsePlans(File artifact, File libraries, String[] includedClasses, String[] includedAnnotations, String[] excludedClasses, String[] excludedAnnotations) {
 		return stepJarParser.getPlansForJar(artifact, libraries, includedClasses, includedAnnotations, excludedClasses, excludedAnnotations);
 	}
 
@@ -180,9 +175,9 @@ public abstract class AbstractArtifactRepository extends AbstractRepository {
 
 	private static class FileAndPlans {
 		private final File artifact;
-		private final List<Plan> plans;
+		private final StepJarParser.PlansParsingResult plans;
 
-		public FileAndPlans(File artifact, List<Plan> plans) {
+		public FileAndPlans(File artifact, StepJarParser.PlansParsingResult plans) {
 
 			this.artifact = artifact;
 			this.plans = plans;

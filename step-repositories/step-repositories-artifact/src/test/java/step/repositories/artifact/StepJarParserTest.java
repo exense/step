@@ -21,8 +21,8 @@ public class StepJarParserTest {
 		File jarFile = new File("src/test/resources/step/repositories/artifact/step-junit-tests.jar");
 
 		// jar file is built for tests classes from step-junit module and contains various plans including inline plan and plan defined in Yaml format
-		List<Plan> plansForJar = stepJarParser.getPlansForJar(jarFile, null, new String[]{}, new String[]{}, new String[]{}, new String[]{});
-		List<String> planNames = plansForJar.stream().map(p -> p.getAttribute("name")).collect(Collectors.toList());
+		StepJarParser.PlansParsingResult plansForJar = stepJarParser.getPlansForJar(jarFile, null, new String[]{}, new String[]{}, new String[]{}, new String[]{});
+		List<String> planNames = plansForJar.getPlans().stream().map(p -> p.getAttribute("name")).collect(Collectors.toList());
 		log.info("Plans parsed in jar: {}", planNames);
 		Assert.assertEquals(7, planNames.size());
 		Assert.assertTrue(planNames.contains("implicitPlanWithWithCustomKeywordName"));
@@ -34,7 +34,7 @@ public class StepJarParserTest {
 		Assert.assertTrue(planNames.contains("composite-simple-plan.yml"));
 
 		// yaml plan (composite-simple-plan) uses the keyword 'callExisting3', and this keyword should be included in plan
-		Plan yamlPlan = plansForJar.stream().filter(p -> p.getAttribute("name").equals("composite-simple-plan.yml")).findFirst().orElseThrow();
+		Plan yamlPlan = plansForJar.getPlans().stream().filter(p -> p.getAttribute("name").equals("composite-simple-plan.yml")).findFirst().orElseThrow();
 		Function function = yamlPlan.getFunctions().stream().filter(f -> f.getAttribute("name").equals("callExisting3")).findFirst().orElse(null);
 		Assert.assertNotNull("The 'callExisting3' function is not found in composite-simple-plan", function);
 	}
@@ -46,7 +46,7 @@ public class StepJarParserTest {
 
 		// jar file is built for tests classes from step-junit module and contains various plans including inline plan and INVALID plan defined in Yaml format
 		try {
-			List<Plan> plansForJar = stepJarParser.getPlansForJar(jarFile, null, new String[]{}, new String[]{}, new String[]{}, new String[]{});
+			stepJarParser.getPlansForJar(jarFile, null, new String[]{}, new String[]{}, new String[]{}, new String[]{});
 			Assert.fail("Exception is not thrown");
 		} catch (Exception ex){
 			// ok
