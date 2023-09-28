@@ -31,7 +31,6 @@ import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
 import step.core.plans.builder.PlanBuilder;
 import step.core.repositories.*;
-import step.functions.Function;
 
 import java.io.File;
 import java.util.*;
@@ -76,16 +75,16 @@ public abstract class AbstractArtifactRepository extends AbstractRepository {
 
 	@Override
 	public TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters) {
-		FileAndPlans fileAndPlan = getAndParseArtifact(repositoryParameters);
+		ParsedArtifact parsedArtifact = getAndParseArtifact(repositoryParameters);
 
 		TestSetStatusOverview overview = new TestSetStatusOverview();
-		List<TestRunStatus> runs = fileAndPlan.plans.getPlans().stream()
+		List<TestRunStatus> runs = parsedArtifact.parsingResult.getPlans().stream()
 				.map(plan -> new TestRunStatus(getPlanName(plan), getPlanName(plan), ReportNodeStatus.NORUN)).collect(Collectors.toList());
 		overview.setRuns(runs);
 		return overview;
 	}
 
-	protected FileAndPlans getAndParseArtifact(Map<String, String> repositoryParameters) {
+	protected ParsedArtifact getAndParseArtifact(Map<String, String> repositoryParameters) {
 		File artifact = getArtifact(repositoryParameters);
 		File libraries = getLibraries(repositoryParameters);
 
@@ -94,8 +93,8 @@ public abstract class AbstractArtifactRepository extends AbstractRepository {
 		String[] excludedClasses = repositoryParameters.getOrDefault(PARAM_EXCLUDE_CLASSES, ",").split(",");
 		String[] excludedAnnotations = repositoryParameters.getOrDefault(PARAM_EXCLUDE_ANNOTATIONS, ",").split(",");
 
-		StepJarParser.PlansParsingResult plans = parsePlans(artifact,libraries,includedClasses,includedAnnotations,excludedClasses,excludedAnnotations);
-		return new FileAndPlans(artifact, plans);
+		StepJarParser.PlansParsingResult parsingResult = parsePlans(artifact,libraries,includedClasses,includedAnnotations,excludedClasses,excludedAnnotations);
+		return new ParsedArtifact(artifact, parsingResult);
 	}
 
 	protected abstract File getLibraries(Map<String, String> repositoryParameters);
@@ -107,8 +106,8 @@ public abstract class AbstractArtifactRepository extends AbstractRepository {
 		ImportResult result = new ImportResult();
 		List<String> errors = new ArrayList<>();
 		try {
-			FileAndPlans fileAndPlan = getAndParseArtifact(repositoryParameters);
-			Plan plan = buildTestSetPlan(context, repositoryParameters, fileAndPlan);
+			ParsedArtifact parsedArtifact = getAndParseArtifact(repositoryParameters);
+			Plan plan = buildTestSetPlan(context, repositoryParameters, parsedArtifact);
 			planAccessor.save(plan);
 			result.setPlanId(plan.getId().toString());
 		} catch (Exception e) {
@@ -120,22 +119,22 @@ public abstract class AbstractArtifactRepository extends AbstractRepository {
 		return result;
 	}
 
-	private Plan buildTestSetPlan(ExecutionContext context, Map<String, String> repositoryParameters, FileAndPlans fileAndPlan) {
+	private Plan buildTestSetPlan(ExecutionContext context, Map<String, String> repositoryParameters, ParsedArtifact parsedArtifact) {
 		PlanBuilder planBuilder = PlanBuilder.create();
 		int numberOfThreads = Integer.parseInt(repositoryParameters.getOrDefault(PARAM_THREAD_NUMBER, "0"));
 		TestSet testSet = new TestSet(numberOfThreads);
-		testSet.addAttribute(AbstractArtefact.NAME, fileAndPlan.artifact.getName());
+		testSet.addAttribute(AbstractArtefact.NAME, parsedArtifact.artifact.getName());
 
 		planBuilder.startBlock(testSet);
-		fileAndPlan.plans.getPlans().forEach(plan -> {
+		parsedArtifact.parsingResult.getPlans().forEach(plan -> {
 			String name = getPlanName(plan);
 
 			wrapPlanInTestCase(plan, name);
 
 			plan.setVisible(false);
 
-			plan.getFunctions().addAll(fileAndPlan.plans.getFunctions());
-     		enrichPlan(context, plan);
+			plan.getFunctions().addAll(parsedArtifact.parsingResult.getFunctions());
+			enrichPlan(context, plan);
 
 			planAccessor.save(plan);
 			planBuilder.add(callPlan(plan.getId().toString(), name));
@@ -144,7 +143,7 @@ public abstract class AbstractArtifactRepository extends AbstractRepository {
 
 		Plan plan = planBuilder.build();
 		plan.setVisible(false);
-		plan.setFunctions(fileAndPlan.plans.getFunctions());
+		plan.setFunctions(parsedArtifact.parsingResult.getFunctions());
 		enrichPlan(context, plan);
 		return plan;
 	}
@@ -173,14 +172,14 @@ public abstract class AbstractArtifactRepository extends AbstractRepository {
 		}
 	}
 
-	private static class FileAndPlans {
+	private static class ParsedArtifact {
 		private final File artifact;
-		private final StepJarParser.PlansParsingResult plans;
+		private final StepJarParser.PlansParsingResult parsingResult;
 
-		public FileAndPlans(File artifact, StepJarParser.PlansParsingResult plans) {
+		public ParsedArtifact(File artifact, StepJarParser.PlansParsingResult parsingResult) {
 
 			this.artifact = artifact;
-			this.plans = plans;
+			this.parsingResult = parsingResult;
 		}
 	}
 }
