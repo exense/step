@@ -94,11 +94,12 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
                 new MetricType()
                         .setName("response-time")
                         .setLabel("Response time")
+                        .setGroupingAttribute("name")
                         .setUnit("ms")
                         .setAttributes(Arrays.asList(taskAttribute, executionAttribute, planAttribute))
         );
         metrics.forEach(m -> {
-            MetricType existingMetric = metricTypeAccessor.findByAttributes(Map.of("name", m.getName()));
+            MetricType existingMetric = metricTypeAccessor.findByCriteria(Map.of("name", m.getName()));
             if (existingMetric != null) {
                 m.setId(existingMetric.getId()); // update the metric
             }
