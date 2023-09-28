@@ -20,6 +20,7 @@ package step.repositories.artifact;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.artefacts.TestCase;
 import step.artefacts.TestSet;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
@@ -48,6 +49,7 @@ public abstract class AbstractArtifactRepository extends AbstractRepository {
 	private static final String PARAM_EXCLUDE_CLASSES = "excludeClasses";
 	private static final String PARAM_EXCLUDE_ANNOTATIONS = "excludeAnnotations";
 	protected final PlanAccessor planAccessor;
+	protected final StepJarParser stepJarParser = new StepJarParser();
 
 	public AbstractArtifactRepository(Set<String> canonicalRepositoryParameters, PlanAccessor planAccessor) {
 		super(canonicalRepositoryParameters);
@@ -74,7 +76,7 @@ public abstract class AbstractArtifactRepository extends AbstractRepository {
 
 	@Override
 	public TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters) {
-		FileAndPlan fileAndPlan = getAndParseArtifact(repositoryParameters);
+		FileAndPlans fileAndPlan = getAndParseArtifact(repositoryParameters);
 
 		TestSetStatusOverview overview = new TestSetStatusOverview();
 		List<TestRunStatus> runs = fileAndPlan.plans.stream()
@@ -83,7 +85,7 @@ public abstract class AbstractArtifactRepository extends AbstractRepository {
 		return overview;
 	}
 
-	protected FileAndPlan getAndParseArtifact(Map<String, String> repositoryParameters) {
+	protected FileAndPlans getAndParseArtifact(Map<String, String> repositoryParameters) {
 		File artifact = getArtifact(repositoryParameters);
 		File libraries = getLibraries(repositoryParameters);
 
@@ -92,8 +94,8 @@ public abstract class AbstractArtifactRepository extends AbstractRepository {
 		String[] excludedClasses = repositoryParameters.getOrDefault(PARAM_EXCLUDE_CLASSES, ",").split(",");
 		String[] excludedAnnotations = repositoryParameters.getOrDefault(PARAM_EXCLUDE_ANNOTATIONS, ",").split(",");
 
-		List<Plan> plans = parsePlan(artifact,libraries,includedClasses,includedAnnotations,excludedClasses,excludedAnnotations);
-		return new FileAndPlan(artifact, plans);
+		List<Plan> plans = parsePlans(artifact,libraries,includedClasses,includedAnnotations,excludedClasses,excludedAnnotations);
+		return new FileAndPlans(artifact, plans);
 	}
 
 	protected abstract File getLibraries(Map<String, String> repositoryParameters);
@@ -105,7 +107,7 @@ public abstract class AbstractArtifactRepository extends AbstractRepository {
 		ImportResult result = new ImportResult();
 		List<String> errors = new ArrayList<>();
 		try {
-			FileAndPlan fileAndPlan = getAndParseArtifact(repositoryParameters);
+			FileAndPlans fileAndPlan = getAndParseArtifact(repositoryParameters);
 			Plan plan = buildTestSetPlan(context, repositoryParameters, fileAndPlan);
 			planAccessor.save(plan);
 			result.setPlanId(plan.getId().toString());
@@ -118,7 +120,7 @@ public abstract class AbstractArtifactRepository extends AbstractRepository {
 		return result;
 	}
 
-	private Plan buildTestSetPlan(ExecutionContext context, Map<String, String> repositoryParameters, FileAndPlan fileAndPlan) {
+	private Plan buildTestSetPlan(ExecutionContext context, Map<String, String> repositoryParameters, FileAndPlans fileAndPlan) {
 		PlanBuilder planBuilder = PlanBuilder.create();
 		int numberOfThreads = Integer.parseInt(repositoryParameters.getOrDefault(PARAM_THREAD_NUMBER, "0"));
 		TestSet testSet = new TestSet(numberOfThreads);
@@ -128,6 +130,8 @@ public abstract class AbstractArtifactRepository extends AbstractRepository {
 		List<Function> functions = new ArrayList<>();
 		fileAndPlan.plans.forEach(plan -> {
 			String name = getPlanName(plan);
+
+			wrapPlanInTestCase(plan, name);
 
 			plan.setVisible(false);
 
@@ -159,15 +163,26 @@ public abstract class AbstractArtifactRepository extends AbstractRepository {
 
 	}
 
-	private List<Plan> parsePlan(File artifact, File libraries, String[] includedClasses, String[] includedAnnotations, String[] excludedClasses, String[] excludedAnnotations) {
-		return new StepJarParser().getPlansForJar(artifact,libraries,includedClasses,includedAnnotations,excludedClasses,excludedAnnotations);
+	private List<Plan> parsePlans(File artifact, File libraries, String[] includedClasses, String[] includedAnnotations, String[] excludedClasses, String[] excludedAnnotations) {
+		return stepJarParser.getPlansForJar(artifact, libraries, includedClasses, includedAnnotations, excludedClasses, excludedAnnotations);
 	}
 
-	private static class FileAndPlan {
+	protected void wrapPlanInTestCase(Plan plan, String testCaseName){
+		AbstractArtefact root = plan.getRoot();
+		if (!(root instanceof TestCase)) {
+			// tricky solution - wrap all plans into TestCase to display all plans, launched while running automation package, in UI
+			TestCase newRoot = new TestCase();
+			newRoot.addAttribute(AbstractArtefact.NAME, testCaseName);
+			newRoot.addChild(root);
+			plan.setRoot(newRoot);
+		}
+	}
+
+	private static class FileAndPlans {
 		private final File artifact;
 		private final List<Plan> plans;
 
-		public FileAndPlan(File artifact, List<Plan> plans) {
+		public FileAndPlans(File artifact, List<Plan> plans) {
 
 			this.artifact = artifact;
 			this.plans = plans;

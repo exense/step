@@ -74,6 +74,15 @@ public class RepositoryObjectManager {
 		}
 		return export;
 	}
+
+	public void postExecution(ExecutionContext context, RepositoryObjectReference report) {
+		String repositoryId = report.getRepositoryID();
+		try {
+			getRepository(repositoryId).postExecution(context, report);
+		} catch (Exception ex) {
+			throw new RuntimeException("Error on post execution hook (execution id: " + context.getExecutionId() + ", repository: " + repositoryId + ")", ex);
+		}
+	}
 	
 	public ArtefactInfo getArtefactInfo(RepositoryObjectReference ref) throws Exception {
 		String respositoryId = ref.getRepositoryID();

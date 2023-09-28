@@ -21,6 +21,7 @@ package step.core.execution;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.bson.types.ObjectId;
@@ -131,11 +132,11 @@ public class ExecutionEngineRunner {
 				
 				if(!executionContext.isSimulation()) {
 					updateStatus(ExecutionStatus.EXPORTING);
-					exportExecution(executionContext);				
+					exportExecution(executionContext);
 					logger.info("Test execution ended and reported. Execution ID: " + executionId);
 				} else {
 					logger.info("Test execution simulation ended. Test report isn't reported in simulation mode. Execution ID: " + executionId);
-				}				
+				}
 			} else {
 				updateStatus(ExecutionStatus.ENDED);
 			}
@@ -145,6 +146,7 @@ public class ExecutionEngineRunner {
 		} finally {
 			updateStatus(ExecutionStatus.ENDED);
 			executionLifecycleManager.executionEnded();
+			postExecution(executionContext);
 		}
 		return result;
 	}
@@ -210,6 +212,15 @@ public class ExecutionEngineRunner {
 		} else {
 			// TODO decide what to do with this error
 			//throw new RuntimeException("Unable to find execution with id "+executionId);
+		}
+	}
+
+	private void postExecution(ExecutionContext context) {
+		String executionId = context.getExecutionId();
+		Execution execution = executionAccessor.get(executionId);
+		Optional<RepositoryObjectReference> repositoryObjectReference = Optional.ofNullable(execution).map(Execution::getExecutionParameters).map(ExecutionParameters::getRepositoryObject);
+		if (repositoryObjectReference.isPresent()) {
+			repositoryObjectManager.postExecution(context, repositoryObjectReference.get());
 		}
 	}
 
