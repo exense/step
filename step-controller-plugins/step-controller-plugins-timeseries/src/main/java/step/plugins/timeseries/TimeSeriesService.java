@@ -10,17 +10,24 @@ import jakarta.ws.rs.core.MediaType;
 import step.controller.services.async.AsyncTaskManager;
 import step.controller.services.async.AsyncTaskStatus;
 import step.core.GlobalContext;
+import step.core.accessors.Accessor;
 import step.core.collections.Collection;
 import step.core.deployment.AbstractStepServices;
 import step.core.entities.EntityManager;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.timeseries.*;
 import step.core.timeseries.aggregation.TimeSeriesAggregationPipeline;
+import step.core.timeseries.metric.MetricType;
+import step.core.timeseries.metric.MetricTypeAccessor;
+import step.core.timeseries.metric.MetricTypeRenderSettings;
 import step.framework.server.security.Secured;
 import step.plugins.measurements.Measurement;
 import step.plugins.timeseries.api.*;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import static step.plugins.timeseries.TimeSeriesControllerPlugin.RESOLUTION_PERIOD_PROPERTY;
 import static step.plugins.timeseries.TimeSeriesControllerPlugin.TIME_SERIES_SAMPLING_LIMIT;
@@ -32,6 +39,8 @@ public class TimeSeriesService extends AbstractStepServices {
 
 
     private TimeSeriesHandler handler;
+    private Collection<MetricType> metricTypesCollection;
+    private Accessor<MetricType> metricTypeAccessor;
 
     @PostConstruct
     public void init() throws Exception {
@@ -41,6 +50,7 @@ public class TimeSeriesService extends AbstractStepServices {
         TimeSeriesAggregationPipeline aggregationPipeline = context.require(TimeSeriesAggregationPipeline.class);
         AsyncTaskManager asyncTaskManager = context.require(AsyncTaskManager.class);
         Collection<Measurement> measurementCollection = context.getCollectionFactory().getCollection(EntityManager.measurements, Measurement.class);
+        metricTypeAccessor = new MetricTypeAccessor(context.getCollectionFactory().getCollection(EntityManager.metricTypes, MetricType.class));
         TimeSeries timeSeries = context.require(TimeSeries.class);
         ExecutionAccessor executionAccessor = context.getExecutionAccessor();
         int resolution = configuration.getPropertyAsInteger(RESOLUTION_PERIOD_PROPERTY, 1000);
@@ -119,6 +129,15 @@ public class TimeSeriesService extends AbstractStepServices {
     @Produces(MediaType.APPLICATION_JSON)
     public MeasurementsStats getRawMeasurementsStats(@QueryParam("filter") String oqlFilter) {
         return handler.getRawMeasurementsStats(oqlFilter);
+    }
+    
+    @Secured(right = "execution-read")
+    @GET
+    @Path("/metric-types")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<MetricType> getMetricTypes() {
+        return metricTypeAccessor.stream().collect(Collectors.toList());
     }
 
 

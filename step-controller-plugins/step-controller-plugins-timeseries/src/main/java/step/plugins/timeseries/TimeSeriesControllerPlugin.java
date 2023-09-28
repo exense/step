@@ -11,6 +11,8 @@ import step.core.plugins.Plugin;
 import step.core.timeseries.TimeSeries;
 import step.core.timeseries.TimeSeriesIngestionPipeline;
 import step.core.timeseries.aggregation.TimeSeriesAggregationPipeline;
+import step.core.timeseries.metric.MetricType;
+import step.core.timeseries.metric.MetricTypeAccessor;
 import step.plugins.measurements.GaugeCollectorRegistry;
 import step.plugins.measurements.MeasurementPlugin;
 
@@ -44,6 +46,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
         context.put(TimeSeries.class, timeSeries);
         mainIngestionPipeline = timeSeries.newIngestionPipeline(flushPeriod);
         TimeSeriesAggregationPipeline aggregationPipeline = timeSeries.getAggregationPipeline();
+        
 
         context.put(TimeSeriesIngestionPipeline.class, mainIngestionPipeline);
         context.put(TimeSeriesAggregationPipeline.class, aggregationPipeline);
