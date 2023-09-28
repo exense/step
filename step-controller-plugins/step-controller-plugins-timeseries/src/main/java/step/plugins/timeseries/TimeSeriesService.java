@@ -10,7 +10,6 @@ import jakarta.ws.rs.core.MediaType;
 import step.controller.services.async.AsyncTaskManager;
 import step.controller.services.async.AsyncTaskStatus;
 import step.core.GlobalContext;
-import step.core.accessors.Accessor;
 import step.core.collections.Collection;
 import step.core.deployment.AbstractStepServices;
 import step.core.entities.EntityManager;
@@ -19,7 +18,6 @@ import step.core.timeseries.*;
 import step.core.timeseries.aggregation.TimeSeriesAggregationPipeline;
 import step.core.timeseries.metric.MetricType;
 import step.core.timeseries.metric.MetricTypeAccessor;
-import step.core.timeseries.metric.MetricTypeRenderSettings;
 import step.framework.server.security.Secured;
 import step.plugins.measurements.Measurement;
 import step.plugins.timeseries.api.*;
@@ -39,8 +37,7 @@ public class TimeSeriesService extends AbstractStepServices {
 
 
     private TimeSeriesHandler handler;
-    private Collection<MetricType> metricTypesCollection;
-    private Accessor<MetricType> metricTypeAccessor;
+    private MetricTypeAccessor metricTypeAccessor;
 
     @PostConstruct
     public void init() throws Exception {
@@ -50,7 +47,7 @@ public class TimeSeriesService extends AbstractStepServices {
         TimeSeriesAggregationPipeline aggregationPipeline = context.require(TimeSeriesAggregationPipeline.class);
         AsyncTaskManager asyncTaskManager = context.require(AsyncTaskManager.class);
         Collection<Measurement> measurementCollection = context.getCollectionFactory().getCollection(EntityManager.measurements, Measurement.class);
-        metricTypeAccessor = new MetricTypeAccessor(context.getCollectionFactory().getCollection(EntityManager.metricTypes, MetricType.class));
+        metricTypeAccessor = context.get(MetricTypeAccessor.class);
         TimeSeries timeSeries = context.require(TimeSeries.class);
         ExecutionAccessor executionAccessor = context.getExecutionAccessor();
         int resolution = configuration.getPropertyAsInteger(RESOLUTION_PERIOD_PROPERTY, 1000);

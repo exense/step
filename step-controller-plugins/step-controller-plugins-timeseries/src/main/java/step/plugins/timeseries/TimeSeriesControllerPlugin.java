@@ -4,13 +4,16 @@ import ch.exense.commons.app.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.GlobalContext;
+import step.core.accessors.Accessor;
 import step.core.collections.CollectionFactory;
 import step.core.deployment.WebApplicationConfigurationManager;
+import step.core.entities.EntityManager;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.core.timeseries.TimeSeries;
 import step.core.timeseries.TimeSeriesIngestionPipeline;
 import step.core.timeseries.aggregation.TimeSeriesAggregationPipeline;
+import step.core.timeseries.metric.MetricAttribute;
 import step.core.timeseries.metric.MetricType;
 import step.core.timeseries.metric.MetricTypeAccessor;
 import step.plugins.measurements.GaugeCollectorRegistry;
@@ -46,10 +49,11 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
         context.put(TimeSeries.class, timeSeries);
         mainIngestionPipeline = timeSeries.newIngestionPipeline(flushPeriod);
         TimeSeriesAggregationPipeline aggregationPipeline = timeSeries.getAggregationPipeline();
-        
+        MetricTypeAccessor metricTypeAccessor = new MetricTypeAccessor(context.getCollectionFactory().getCollection(EntityManager.metricTypes, MetricType.class));
 
         context.put(TimeSeriesIngestionPipeline.class, mainIngestionPipeline);
         context.put(TimeSeriesAggregationPipeline.class, aggregationPipeline);
+        context.put(MetricTypeAccessor.class, metricTypeAccessor);
 
         context.getServiceRegistrationCallback().registerService(TimeSeriesService.class);
         TimeSeriesBucketingHandler handler = new TimeSeriesBucketingHandler(mainIngestionPipeline, attributes);
@@ -59,7 +63,47 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 
         WebApplicationConfigurationManager configurationManager = context.require(WebApplicationConfigurationManager.class);
         configurationManager.registerHook(s -> Map.of(RESOLUTION_PERIOD_PROPERTY, resolutionPeriod.toString()));
+    }
 
+    @Override
+    public void initializeData(GlobalContext context) throws Exception {
+        MetricAttribute taskAttribute = new MetricAttribute().setValue("").setLabel("");
+        MetricAttribute executionAttribute = new MetricAttribute().setValue("").setLabel("");
+        MetricAttribute planAttribute = new MetricAttribute().setValue("").setLabel("");
+
+        MetricTypeAccessor metricTypeAccessor = context.get(MetricTypeAccessor.class);
+        List<MetricType> metrics = Arrays.asList(
+                new MetricType()
+                        .setName("executions/count")
+                        .setLabel("Count")
+                        .setAttributes(Arrays.asList(taskAttribute, executionAttribute, planAttribute)),
+                new MetricType()
+                        .setName("executions/failure-percentage")
+                        .setLabel("Failure percentage")
+                        .setUnit("%")
+                        .setAttributes(Arrays.asList(taskAttribute, executionAttribute, planAttribute)),
+                new MetricType()
+                        .setName("executions/failure-count")
+                        .setLabel("Failure count")
+                        .setAttributes(Arrays.asList(taskAttribute, executionAttribute, planAttribute)),
+                new MetricType()
+                        .setName("executions/failures-count-by-error-code")
+                        .setLabel("Failure by error code")
+                        .setGroupingAttribute("errorCode")
+                        .setAttributes(Arrays.asList(taskAttribute, executionAttribute, planAttribute)),
+                new MetricType()
+                        .setName("response-time")
+                        .setLabel("Response time")
+                        .setUnit("ms")
+                        .setAttributes(Arrays.asList(taskAttribute, executionAttribute, planAttribute))
+        );
+        metrics.forEach(m -> {
+            MetricType existingMetric = metricTypeAccessor.findByAttributes(Map.of("name", m.getName()));
+            if (existingMetric != null) {
+                m.setId(existingMetric.getId()); // update the metric
+            }
+            metricTypeAccessor.save(m);
+        });
     }
 
     @Override
