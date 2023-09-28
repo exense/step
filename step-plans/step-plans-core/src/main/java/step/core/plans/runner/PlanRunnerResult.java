@@ -27,6 +27,7 @@ import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -110,6 +111,14 @@ public class PlanRunnerResult {
 	 */
 	public String getErrorSummary() {
 		return getErrors().map(Error::getMsg).limit(10).collect(Collectors.joining(";"));
+	}
+
+	/**
+	 * @return a {@link Set} containing the error codes of the first n errors where n is set by the limit parameter.
+	 * @param limit the max errors to be scanned
+	 */
+	public Set<Integer> getErrorCodes(int limit) {
+		return getErrors().map(Error::getCode).limit(limit).collect(Collectors.toSet());
 	}
 
 	public String getExecutionId() {

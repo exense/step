@@ -19,6 +19,14 @@ import java.util.Map;
 @Plugin(dependencies= {})
 public class TimeSeriesExecutionPlugin extends AbstractExecutionEnginePlugin {
 
+	// TODO find a better place to define this constant
+	public static final String METRIC_TYPE = "metricType";
+
+	public static final String EXECUTIONS_COUNT = "executions/count";
+	public static final String FAILURE_PERCENTAGE = "executions/failure-percentage";
+	public static final String FAILURE_COUNT = "executions/failure-count";
+	public static final String FAILURES_COUNT_BY_ERROR_CODE = "executions/failures-count-by-error-code";
+	public static final String ERROR_CODE = "errorCode";
 	public static String TIMESERIES_FLAG = "hasTimeSeries";
 
 	public static final String EXECUTION_ID = "eId";
@@ -44,14 +52,14 @@ public class TimeSeriesExecutionPlugin extends AbstractExecutionEnginePlugin {
 
 		boolean executionPassed = execution.getResult() == ReportNodeStatus.PASSED;
 
-		ingestionPipeline.ingestPoint(withExecutionAttributes(execution, Map.of("metricType", "executions/count")), execution.getStartTime(), 1);
-		ingestionPipeline.ingestPoint(withExecutionAttributes(execution, Map.of("metricType", "executions/failure-percentage")), execution.getStartTime(), executionPassed ? 0 : 100);
-		ingestionPipeline.ingestPoint(withExecutionAttributes(execution, Map.of("metricType", "executions/failure-count")), execution.getStartTime(), executionPassed ? 0 : 1);
+		ingestionPipeline.ingestPoint(withExecutionAttributes(execution, Map.of(METRIC_TYPE, EXECUTIONS_COUNT)), execution.getStartTime(), 1);
+		ingestionPipeline.ingestPoint(withExecutionAttributes(execution, Map.of(METRIC_TYPE, FAILURE_PERCENTAGE)), execution.getStartTime(), executionPassed ? 0 : 100);
+		ingestionPipeline.ingestPoint(withExecutionAttributes(execution, Map.of(METRIC_TYPE, FAILURE_COUNT)), execution.getStartTime(), executionPassed ? 0 : 1);
 
 		ErrorDistribution errorDistribution = (ErrorDistribution) viewManager.queryView(ErrorDistributionView.ERROR_DISTRIBUTION_VIEW, context.getExecutionId());
 
 		errorDistribution.getCountByErrorCode().entrySet().forEach(entry -> {
-			ingestionPipeline.ingestPoint(withExecutionAttributes(execution, Map.of("metricType", "executions/failures-count-by-error-code", "errorCode", entry.getKey())), execution.getStartTime(), entry.getValue() > 0 ? 1 : 0);
+			ingestionPipeline.ingestPoint(withExecutionAttributes(execution, Map.of(METRIC_TYPE, FAILURES_COUNT_BY_ERROR_CODE, ERROR_CODE, entry.getKey())), execution.getStartTime(), entry.getValue() > 0 ? 1 : 0);
 		});
 
 		super.afterExecutionEnd(context);
