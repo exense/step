@@ -77,6 +77,7 @@ public class ResourceArtifactRepositoryTest {
 
             Assert.assertNotNull(functions.stream().filter(f -> f.getAttribute(Function.NAME).equals("keyword1")).findFirst().orElse(null));
             Assert.assertNotNull(functions.stream().filter(f -> f.getAttribute(Function.NAME).equals("keyword2")).findFirst().orElseThrow(null));
+            Assert.assertEquals(2, functions.size());
 
             // find the plan having the inner keyword (planWithInnerKeyword.plan)
             List<CallPlan> callPlans = importedPlan.getRoot().getChildren().stream().map(p -> (CallPlan) p).collect(Collectors.toList());
