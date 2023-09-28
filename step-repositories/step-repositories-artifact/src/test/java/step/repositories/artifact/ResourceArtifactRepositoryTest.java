@@ -11,7 +11,6 @@ import step.artefacts.CallPlan;
 import step.artefacts.TestSet;
 import step.core.artefacts.AbstractArtefact;
 import step.core.execution.ExecutionContext;
-import step.core.objectenricher.EnricheableObject;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.plans.InMemoryPlanAccessor;
 import step.core.plans.Plan;
@@ -23,10 +22,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
-
-import static org.junit.Assert.*;
 
 public class ResourceArtifactRepositoryTest {
 
