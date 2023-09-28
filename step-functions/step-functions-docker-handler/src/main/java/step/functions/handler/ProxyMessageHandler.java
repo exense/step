@@ -66,11 +66,11 @@ public class ProxyMessageHandler implements MessageHandler {
         GridClient gridClient = (GridClient) gridMap.computeIfAbsent("gridClient", k -> {
             // Create a grid client to call keywords on this grid instance
             GridClientConfiguration gridClientConfiguration = new GridClientConfiguration();
-            // Configure the selection timeout (this should be higher than the start time of the container
+            // Configure the selection timeout (this should be higher than the start time of the container)
+            // TODO set timeout according to keyword execution timeout
             gridClientConfiguration.setNoMatchExistsTimeout(300_000);
             gridClientConfiguration.setMatchExistsTimeout(300_000);
             gridClientConfiguration.setReserveSessionTimeout(300_000);
-            gridClientConfiguration.setReadTimeoutOffset(60000);
             return new LocalGridClientImpl(gridClientConfiguration, grid);
         });
 

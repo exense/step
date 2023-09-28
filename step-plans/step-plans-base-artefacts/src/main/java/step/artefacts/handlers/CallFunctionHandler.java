@@ -157,12 +157,14 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 											}
 										})
 								.findFirst().orElseThrow(()	-> new NoSuchElementException(String.format("No docker registry matching image path %s found, it must first be created", image)));
-						input.getProperties().put(FunctionExecutionServiceImpl.INPUT_PROPERTY_DOCKER_IMAGE, image);
-						input.getProperties().put(FunctionExecutionServiceImpl.INPUT_PROPERTY_CONTAINER_USER, functionGroupContext.containerUser.orElseThrow());
-						input.getProperties().put(FunctionExecutionServiceImpl.INPUT_PROPERTY_CONTAINER_CMD, functionGroupContext.containerCommand.orElse(""));
-						input.getProperties().put(FunctionExecutionServiceImpl.INPUT_PROPERTY_DOCKER_REGISTRY_URL, dockerRegistryConfiguration.getUrl());
-						input.getProperties().put(FunctionExecutionServiceImpl.INPUT_PROPERTY_DOCKER_REGISTRY_USERNAME, dockerRegistryConfiguration.getUsername());
-						input.getProperties().put(FunctionExecutionServiceImpl.INPUT_PROPERTY_DOCKER_REGISTRY_PASSWORD, dockerRegistryConfiguration.getPassword());
+						Map<String, String> inputProperties = input.getProperties();
+						inputProperties.put(FunctionExecutionServiceImpl.INPUT_PROPERTY_DOCKER_IMAGE, image);
+						inputProperties.put(FunctionExecutionServiceImpl.INPUT_PROPERTY_CONTAINER_USER, functionGroupContext.containerUser.orElseThrow(() -> new NoSuchElementException("No container user has been specified, this is mandatory")));
+						inputProperties.put(FunctionExecutionServiceImpl.INPUT_PROPERTY_CONTAINER_CMD, functionGroupContext.containerCommand.orElse(""));
+						inputProperties.put(FunctionExecutionServiceImpl.INPUT_PROPERTY_DOCKER_REGISTRY_URL, dockerRegistryConfiguration.getUrl());
+						inputProperties.put(FunctionExecutionServiceImpl.INPUT_PROPERTY_DOCKER_REGISTRY_USERNAME, dockerRegistryConfiguration.getUsername());
+						inputProperties.put(FunctionExecutionServiceImpl.INPUT_PROPERTY_DOCKER_REGISTRY_PASSWORD, dockerRegistryConfiguration.getPassword());
+						input.setProperties(inputProperties);
 					});
 				}
 				try {

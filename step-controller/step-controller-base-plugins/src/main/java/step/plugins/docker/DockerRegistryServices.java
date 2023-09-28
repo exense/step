@@ -1,59 +1,58 @@
 package step.plugins.docker;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
-import jakarta.ws.rs.*;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
-import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.core.deployment.AbstractStepServices;
+import step.controller.services.entities.AbstractEntityServices;
+import step.core.GlobalContext;
 import step.core.docker.DockerRegistryConfiguration;
 import step.core.docker.DockerRegistryConfigurationAccessor;
+import step.framework.server.access.AuthorizationManager;
+import step.framework.server.security.Secured;
+import step.framework.server.security.SecuredContext;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Singleton
-@Path("docker")
+@Path("docker/registry")
 @Tag(name = "Docker Registries")
-public class DockerRegistryServices extends AbstractStepServices {
+@Tag(name = "Entity=Docker Registry")
+@SecuredContext(key = "entity", value = "dockerRegistries")
+public class DockerRegistryServices extends AbstractEntityServices<DockerRegistryConfiguration> {
+    private AuthorizationManager authorizationManager;
+
     protected DockerRegistryConfigurationAccessor dockerRegistryConfigurationAccessor;
 
     public static final Logger logger = LoggerFactory.getLogger(DockerRegistryServices.class);
+
+    public DockerRegistryServices() {
+        super(DockerRegistryControllerPlugin.ENTITY_DOCKER_REGISTRIES);
+    }
 
 
     @PostConstruct
     public void init() throws Exception {
         super.init();
-        dockerRegistryConfigurationAccessor = getContext().get(DockerRegistryConfigurationAccessor.class);
+        GlobalContext context = getContext();
+        dockerRegistryConfigurationAccessor = context.get(DockerRegistryConfigurationAccessor.class);
+        authorizationManager = context.get(AuthorizationManager.class);
     }
 
-    @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Path("/registry")
-    public void saveDockerRegistryConfiguration(DockerRegistryConfiguration registryConfiguration) {
-        dockerRegistryConfigurationAccessor.save(registryConfiguration);
-    }
-
+    @Operation(operationId = "list{Entity}", description = "Retrieves all the entities")
     @GET
     @Consumes(MediaType.APPLICATION_JSON)
-    @Path("/registry/{id}")
-    public DockerRegistryConfiguration getDockerRegistryConfiguration(@PathParam("id") String id) {
-        return dockerRegistryConfigurationAccessor.get(id);
-    }
-
-    @DELETE
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Path("/registry/{id}")
-    public void deleteDockerRegistryConfiguration(@PathParam("id") String id) {
-        dockerRegistryConfigurationAccessor.remove(new ObjectId(id));
-    }
-
-    @GET
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Path("/registry/list")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/list")
+    @Secured(right = "{entity}-read")
     public List<DockerRegistryConfiguration> getDockerRegistryConfigurations() {
         List<DockerRegistryConfiguration> result = new ArrayList<>();
         dockerRegistryConfigurationAccessor.getAll().forEachRemaining(result::add);

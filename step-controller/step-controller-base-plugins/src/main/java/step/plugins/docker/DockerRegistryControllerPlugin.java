@@ -3,6 +3,7 @@ package step.plugins.docker;
 import step.core.GlobalContext;
 import step.core.docker.DockerRegistryConfiguration;
 import step.core.docker.DockerRegistryConfigurationAccessor;
+import step.core.entities.Entity;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;
 import step.core.plugins.AbstractControllerPlugin;
@@ -12,6 +13,7 @@ import step.engine.plugins.ExecutionEnginePlugin;
 
 @Plugin
 public class DockerRegistryControllerPlugin extends AbstractControllerPlugin {
+    public static final String ENTITY_DOCKER_REGISTRIES = "dockerRegistries";
     protected DockerRegistryConfigurationAccessor dockerRegistryConfigurationAccessor;
 
     @Override
@@ -19,8 +21,13 @@ public class DockerRegistryControllerPlugin extends AbstractControllerPlugin {
         super.serverStart(context);
 
         dockerRegistryConfigurationAccessor = new DockerRegistryConfigurationAccessor(context
-                .getCollectionFactory().getCollection("dockerRegistries", DockerRegistryConfiguration.class));
+                .getCollectionFactory().getCollection(ENTITY_DOCKER_REGISTRIES, DockerRegistryConfiguration.class));
         context.put(DockerRegistryConfigurationAccessor.class, dockerRegistryConfigurationAccessor);
+        context.getEntityManager().register(new Entity<>(
+                ENTITY_DOCKER_REGISTRIES,
+                dockerRegistryConfigurationAccessor,
+                DockerRegistryConfiguration.class
+        ));
         context.getServiceRegistrationCallback().registerService(DockerRegistryServices.class);
     }
 
