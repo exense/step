@@ -13,6 +13,7 @@ import step.core.plugins.Plugin;
 import step.core.timeseries.TimeSeries;
 import step.core.timeseries.TimeSeriesIngestionPipeline;
 import step.core.timeseries.aggregation.TimeSeriesAggregationPipeline;
+import step.core.timeseries.metric.MetricAggregation;
 import step.core.timeseries.metric.MetricAttribute;
 import step.core.timeseries.metric.MetricType;
 import step.core.timeseries.metric.MetricTypeAccessor;
@@ -76,26 +77,31 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
                 new MetricType()
                         .setName("executions/count")
                         .setLabel("Count")
+                        .setDefaultAggregation(MetricAggregation.SUM)
                         .setAttributes(Arrays.asList(taskAttribute, executionAttribute, planAttribute)),
                 new MetricType()
                         .setName("executions/failure-percentage")
                         .setLabel("Failure percentage")
                         .setUnit("%")
+                        .setDefaultAggregation(MetricAggregation.AVG)
                         .setAttributes(Arrays.asList(taskAttribute, executionAttribute, planAttribute)),
                 new MetricType()
                         .setName("executions/failure-count")
                         .setLabel("Failure count")
-                        .setAttributes(Arrays.asList(taskAttribute, executionAttribute, planAttribute)),
+                        .setAttributes(Arrays.asList(taskAttribute, executionAttribute, planAttribute))
+                        .setDefaultAggregation(MetricAggregation.SUM),
                 new MetricType()
                         .setName("executions/failures-count-by-error-code")
                         .setLabel("Failure by error code")
                         .setGroupingAttribute("errorCode")
+                        .setDefaultAggregation(MetricAggregation.SUM)
                         .setAttributes(Arrays.asList(taskAttribute, executionAttribute, planAttribute)),
                 new MetricType()
                         .setName("response-time")
                         .setLabel("Response time")
                         .setGroupingAttribute("name")
                         .setUnit("ms")
+                        .setDefaultAggregation(MetricAggregation.AVG)
                         .setAttributes(Arrays.asList(taskAttribute, executionAttribute, planAttribute))
         );
         metrics.forEach(m -> {
