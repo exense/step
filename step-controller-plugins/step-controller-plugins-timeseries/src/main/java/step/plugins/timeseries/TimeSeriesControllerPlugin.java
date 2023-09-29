@@ -96,6 +96,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
         MetricAttribute taskAttribute = new MetricAttribute().setValue("taskId").setLabel("Task");
         MetricAttribute executionAttribute = new MetricAttribute().setValue("eId").setLabel("Execution");
         MetricAttribute planAttribute = new MetricAttribute().setValue("planId").setLabel("Plan");
+        MetricAttribute nameAttribute = new MetricAttribute().setValue("name").setLabel("Name");
 
         MetricTypeAccessor metricTypeAccessor = context.get(MetricTypeAccessor.class);
         List<MetricType> metrics = Arrays.asList(
@@ -127,7 +128,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
                         .setGroupingAttribute("name")
                         .setUnit("ms")
                         .setDefaultAggregation(MetricAggregation.AVG)
-                        .setAttributes(Arrays.asList(taskAttribute, executionAttribute, planAttribute))
+                        .setAttributes(Arrays.asList(nameAttribute, taskAttribute, executionAttribute, planAttribute))
         );
         metrics.forEach(m -> {
             MetricType existingMetric = metricTypeAccessor.findByCriteria(Map.of("name", m.getName()));
