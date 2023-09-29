@@ -18,12 +18,6 @@
  ******************************************************************************/
 package step.artefacts.handlers;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.function.BiConsumer;
-import java.util.stream.Collectors;
-
 import step.artefacts.FunctionGroup;
 import step.core.AbstractContext;
 import step.core.artefacts.AbstractArtefact;
@@ -37,6 +31,14 @@ import step.functions.execution.FunctionExecutionService;
 import step.functions.execution.FunctionExecutionServiceException;
 import step.grid.TokenWrapper;
 import step.grid.tokenpool.Interest;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.BiConsumer;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportNode> implements FunctionGroupHandle {
 	
@@ -68,12 +70,25 @@ public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportN
 		TokenWrapper localToken;
 		
 		final Map<String, Interest> additionalSelectionCriteria;
+
+		final Optional<String> dockerImage;
+
+		final Optional<String> containerUser;
+
+		final Optional<String> containerCommand;
 		
-		private long ownerThreadId = 0; 
+		private long ownerThreadId = 0;
 
 		public FunctionGroupContext(Map<String, Interest> additionalSelectionCriteria) {
+			this(additionalSelectionCriteria, Optional.empty(), Optional.empty(), Optional.empty());
+		}
+
+		public FunctionGroupContext(Map<String, Interest> additionalSelectionCriteria, Optional<String> dockerImage, Optional<String> containerUser, Optional<String> containerCommand) {
 			super();
 			this.additionalSelectionCriteria = additionalSelectionCriteria;
+			this.dockerImage = dockerImage;
+			this.containerUser = containerUser;
+			this.containerCommand = containerCommand;
 		}
 		
 		public List<TokenWrapper> getTokens() {
@@ -110,7 +125,24 @@ public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportN
 	@Override
 	protected void execute_(ReportNode node, FunctionGroup testArtefact) throws Exception {		
 		Map<String, Interest> additionalSelectionCriteria = tokenSelectorHelper.getTokenSelectionCriteria(testArtefact, getBindings());
-		FunctionGroupContext handle = new FunctionGroupContext(additionalSelectionCriteria);
+		String dockerImage = testArtefact.getDockerImage().get();
+		String containerUser = testArtefact.getContainerUser().get();
+		String containerCommand = testArtefact.getContainerCommand().get();
+
+		Optional<String> dockerImageOptional;
+		if(dockerImage != null && !dockerImage.isEmpty()) {
+			dockerImageOptional = Optional.ofNullable(dockerImage);
+		} else {
+			dockerImageOptional = Optional.empty();
+		}
+
+		Optional<String> containerUserOptional = containerUser != null && !containerUser.isEmpty() ? Optional.ofNullable(containerUser) : Optional.empty();
+		Optional<String> containerCommandOptional = containerCommand != null && !containerCommand.isEmpty() ? Optional.ofNullable(containerCommand) : Optional.empty();
+
+
+		dockerImageOptional.ifPresent(image -> additionalSelectionCriteria.put("$docker", new Interest(Pattern.compile("true"), true)));
+
+		FunctionGroupContext handle = new FunctionGroupContext(additionalSelectionCriteria, dockerImageOptional,  containerUserOptional, containerCommandOptional);
 		context.getVariablesManager().putVariable(node, FUNCTION_GROUP_CONTEXT_KEY, handle);
 		context.put(FunctionGroupHandle.class, this);
 		try {
