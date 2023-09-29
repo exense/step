@@ -58,7 +58,9 @@ public interface ExecutionCallbacks {
 	
 	public void afterReportNodeExecution(ExecutionContext context, ReportNode node);
 	
-	public void rollbackReportNode(ExecutionContext context, ReportNode node);
+	public void onReportNodeRemoval(ExecutionContext context, ReportNode node);
+
+	public void onErrorContributionRemoval(ExecutionContext context, ReportNode node);
 	
 	public void associateThread(ExecutionContext context, Thread thread);
 	

@@ -30,7 +30,6 @@ root:
       children: []
       customAttributes: null
       attachments: null
-      persistNode: true
       skipNode:
         dynamic: false
         value: false
@@ -66,7 +65,6 @@ root:
       children: []
       customAttributes: null
       attachments: null
-      persistNode: true
       skipNode:
         dynamic: false
         value: false
@@ -102,7 +100,6 @@ root:
       children: []
       customAttributes: null
       attachments: null
-      persistNode: true
       skipNode:
         dynamic: false
         value: false
@@ -150,7 +147,6 @@ root:
           children: []
           customAttributes: null
           attachments: null
-          persistNode: true
           skipNode:
             dynamic: false
             value: false
@@ -186,7 +182,6 @@ root:
           children: []
           customAttributes: null
           attachments: null
-          persistNode: true
           skipNode:
             dynamic: false
             value: false
@@ -210,7 +205,6 @@ root:
           id: "644fbe4e38a61e07cc3a4df8"
       customAttributes: null
       attachments: null
-      persistNode: true
       skipNode:
         dynamic: false
         value: false
@@ -246,7 +240,6 @@ root:
       children: []
       customAttributes: null
       attachments: null
-      persistNode: true
       skipNode:
         dynamic: false
         value: false
@@ -299,7 +292,6 @@ root:
           children: []
           customAttributes: null
           attachments: null
-          persistNode: true
           skipNode:
             dynamic: false
             value: false
@@ -329,7 +321,6 @@ root:
           id: "644fbe4e38a61e07cc3a4df8"
       customAttributes: null
       attachments: null
-      persistNode: true
       skipNode:
         dynamic: false
         value: false
@@ -413,7 +404,6 @@ root:
                       children: []
                       customAttributes: null
                       attachments: null
-                      persistNode: true
                       skipNode:
                         dynamic: false
                         value: false
@@ -454,7 +444,6 @@ root:
                       children: []
                       customAttributes: null
                       attachments: null
-                      persistNode: true
                       skipNode:
                         dynamic: false
                         value: false
@@ -495,7 +484,6 @@ root:
                       children: []
                       customAttributes: null
                       attachments: null
-                      persistNode: true
                       skipNode:
                         dynamic: false
                         value: false
@@ -536,7 +524,6 @@ root:
                       children: []
                       customAttributes: null
                       attachments: null
-                      persistNode: true
                       skipNode:
                         dynamic: false
                         value: false
@@ -577,7 +564,6 @@ root:
                       children: []
                       customAttributes: null
                       attachments: null
-                      persistNode: true
                       skipNode:
                         dynamic: false
                         value: false
@@ -618,7 +604,6 @@ root:
                       children: []
                       customAttributes: null
                       attachments: null
-                      persistNode: true
                       skipNode:
                         dynamic: false
                         value: false
@@ -660,7 +645,6 @@ root:
                       children: []
                       customAttributes: null
                       attachments: null
-                      persistNode: true
                       skipNode:
                         dynamic: false
                         value: false
@@ -701,7 +685,6 @@ root:
                       children: []
                       customAttributes: null
                       attachments: null
-                      persistNode: true
                       skipNode:
                         dynamic: false
                         value: false
@@ -743,7 +726,6 @@ root:
                       children: []
                       customAttributes: null
                       attachments: null
-                      persistNode: true
                       skipNode:
                         dynamic: false
                         value: false
@@ -784,7 +766,6 @@ root:
                       children: []
                       customAttributes: null
                       attachments: null
-                      persistNode: true
                       skipNode:
                         dynamic: false
                         value: false
@@ -825,7 +806,6 @@ root:
                       children: []
                       customAttributes: null
                       attachments: null
-                      persistNode: true
                       skipNode:
                         dynamic: false
                         value: false
@@ -867,7 +847,6 @@ root:
                       children: []
                       customAttributes: null
                       attachments: null
-                      persistNode: true
                       skipNode:
                         dynamic: false
                         value: false
@@ -898,7 +877,6 @@ root:
                       id: "644fbe4e38a61e07cc3a4df8"
                   customAttributes: null
                   attachments: null
-                  persistNode: true
                   skipNode:
                     dynamic: false
                     value: false
@@ -939,7 +917,6 @@ root:
                   children: []
                   customAttributes: null
                   attachments: null
-                  persistNode: true
                   skipNode:
                     dynamic: false
                     value: false
@@ -976,7 +953,6 @@ root:
                   children: []
                   customAttributes: null
                   attachments: null
-                  persistNode: true
                   skipNode:
                     dynamic: false
                     value: false
@@ -1018,7 +994,6 @@ root:
                   children: []
                   customAttributes: null
                   attachments: null
-                  persistNode: true
                   skipNode:
                     dynamic: false
                     value: false
@@ -1060,7 +1035,6 @@ root:
                   children: []
                   customAttributes: null
                   attachments: null
-                  persistNode: true
                   skipNode:
                     dynamic: false
                     value: false
@@ -1101,7 +1075,6 @@ root:
                   children: []
                   customAttributes: null
                   attachments: null
-                  persistNode: true
                   skipNode:
                     dynamic: false
                     value: false
@@ -1143,7 +1116,6 @@ root:
                   children: []
                   customAttributes: null
                   attachments: null
-                  persistNode: true
                   skipNode:
                     dynamic: false
                     value: false
@@ -1185,7 +1157,6 @@ root:
                   children: []
                   customAttributes: null
                   attachments: null
-                  persistNode: true
                   skipNode:
                     dynamic: false
                     value: false
@@ -1239,7 +1210,6 @@ root:
                       children: []
                       customAttributes: null
                       attachments: null
-                      persistNode: true
                       skipNode:
                         dynamic: false
                         value: false
@@ -1269,7 +1239,6 @@ root:
                       id: "644fbe4e38a61e07cc3a4df8"
                   customAttributes: null
                   attachments: null
-                  persistNode: true
                   skipNode:
                     dynamic: false
                     value: false
@@ -1325,7 +1294,6 @@ root:
                   children: []
                   customAttributes: null
                   attachments: null
-                  persistNode: true
                   skipNode:
                     dynamic: false
                     value: false
@@ -1378,7 +1346,6 @@ root:
                       children: []
                       customAttributes: null
                       attachments: null
-                      persistNode: true
                       skipNode:
                         dynamic: false
                         value: false
@@ -1432,7 +1399,6 @@ root:
                           children: []
                           customAttributes: null
                           attachments: null
-                          persistNode: true
                           skipNode:
                             dynamic: false
                             value: false
@@ -1473,7 +1439,6 @@ root:
                           children: []
                           customAttributes: null
                           attachments: null
-                          persistNode: true
                           skipNode:
                             dynamic: false
                             value: false
@@ -1520,7 +1485,6 @@ root:
                           id: "644fbe4e38a61e07cc3a4df8"
                       customAttributes: null
                       attachments: null
-                      persistNode: true
                       skipNode:
                         dynamic: false
                         value: false
@@ -1544,7 +1508,6 @@ root:
                       id: "644fbe4e38a61e07cc3a4df8"
                   customAttributes: null
                   attachments: null
-                  persistNode: true
                   skipNode:
                     dynamic: false
                     value: false
@@ -1621,7 +1584,6 @@ root:
                               children: []
                               customAttributes: null
                               attachments: null
-                              persistNode: true
                               skipNode:
                                 dynamic: false
                                 value: false
@@ -1651,7 +1613,6 @@ root:
                               id: "644fbe4e38a61e07cc3a4df8"
                           customAttributes: null
                           attachments: null
-                          persistNode: true
                           skipNode:
                             dynamic: false
                             value: false
@@ -1695,7 +1656,6 @@ root:
                           id: "644fbe4e38a61e07cc3a4df8"
                       customAttributes: null
                       attachments: null
-                      persistNode: true
                       skipNode:
                         dynamic: false
                         value: false
@@ -1719,7 +1679,6 @@ root:
                       id: "644fbe4e38a61e07cc3a4df8"
                   customAttributes: null
                   attachments: null
-                  persistNode: true
                   skipNode:
                     dynamic: false
                     value: false
@@ -1772,7 +1731,6 @@ root:
                       children: []
                       customAttributes: null
                       attachments: null
-                      persistNode: true
                       skipNode:
                         dynamic: false
                         value: false
@@ -1817,7 +1775,6 @@ root:
                       id: "644fbe4e38a61e07cc3a4df8"
                   customAttributes: null
                   attachments: null
-                  persistNode: true
                   skipNode:
                     dynamic: false
                     value: false
@@ -1882,7 +1839,6 @@ root:
                           children: []
                           customAttributes: null
                           attachments: null
-                          persistNode: true
                           skipNode:
                             dynamic: false
                             value: false
@@ -1912,7 +1868,6 @@ root:
                           id: "644fbe4e38a61e07cc3a4df8"
                       customAttributes: null
                       attachments: null
-                      persistNode: true
                       skipNode:
                         dynamic: false
                         value: false
@@ -1936,7 +1891,6 @@ root:
                       id: "644fbe4e38a61e07cc3a4df8"
                   customAttributes: null
                   attachments: null
-                  persistNode: true
                   skipNode:
                     dynamic: false
                     value: false
@@ -2001,7 +1955,6 @@ root:
                           children: []
                           customAttributes: null
                           attachments: null
-                          persistNode: true
                           skipNode:
                             dynamic: false
                             value: false
@@ -2031,7 +1984,6 @@ root:
                           id: "644fbe4e38a61e07cc3a4df8"
                       customAttributes: null
                       attachments: null
-                      persistNode: true
                       skipNode:
                         dynamic: false
                         value: false
@@ -2055,7 +2007,6 @@ root:
                       id: "644fbe4e38a61e07cc3a4df8"
                   customAttributes: null
                   attachments: null
-                  persistNode: true
                   skipNode:
                     dynamic: false
                     value: false
@@ -2084,7 +2035,6 @@ root:
                   id: "644fbe4e38a61e07cc3a4df8"
               customAttributes: null
               attachments: null
-              persistNode: true
               skipNode:
                 dynamic: false
                 value: false
@@ -2128,7 +2078,6 @@ root:
             expressionType: null
             value: null
           attachments: null
-          persistNode: true
           skipNode:
             dynamic: false
             value: false
@@ -2158,7 +2107,6 @@ root:
           id: "644fbe4e38a61e07cc3a4df8"
       customAttributes: null
       attachments: null
-      persistNode: true
       skipNode:
         dynamic: false
         value: false
@@ -2187,7 +2135,6 @@ root:
       id: "644fbe4e38a61e07cc3a4df8"
   customAttributes: null
   attachments: null
-  persistNode: true
   skipNode:
     dynamic: false
     value: false

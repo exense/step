@@ -67,16 +67,15 @@ public class TestSetHandler extends ArtefactHandler<TestSet, ReportNode> {
 				return workItem -> {
 					if(execution) {
 						ReportNode resultNode = delegateExecute(workItem, node);
-						reportNodeStatusComposer.addStatusAndRecompose(resultNode.getStatus());
+						reportNodeStatusComposer.addStatusAndRecompose(resultNode);
 					} else {
 						delegateCreateReportSkeleton(workItem, node);
 					}
 				};
 			}
 		}, numberOfThreads, OptionalInt.of(children.size()));
-		
-		ReportNodeStatus status = reportNodeStatusComposer.getParentStatus();
-		node.setStatus(status);
+
+		reportNodeStatusComposer.applyComposedStatusToParentNode(node);
 	}
 	
 	@Override

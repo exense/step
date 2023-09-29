@@ -28,6 +28,8 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 
 import step.core.deployment.AbstractStepServices;
+import step.core.views.ViewManager;
+import step.core.views.ViewModel;
 
 @Singleton
 @Path("/views")

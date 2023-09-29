@@ -22,7 +22,7 @@ import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
 
-@Artefact(useAsTemplate = true)
+@Artefact(validAsRoot = true)
 public class ThreadGroup extends AbstractArtefact {
 	
 	DynamicValue<Integer> users = new DynamicValue<Integer>(1);

@@ -20,6 +20,7 @@ package step.artefacts.handlers;
 
 import step.artefacts.TestCase;
 import step.artefacts.reports.TestCaseReportNode;
+import step.core.artefacts.handlers.AtomicReportNodeStatusComposer;
 import step.core.artefacts.handlers.ReportNodeAttributesManager;
 import step.core.artefacts.reports.ReportNode;
 
@@ -41,7 +42,7 @@ public class TestCaseHandler extends AbstractSessionArtefactHandler<TestCase, Re
 			SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
 			scheduler.execute_(sessionReportNode, sessionArtefact);
 		});
-		node.setStatus(resultNode.getStatus());
+		new AtomicReportNodeStatusComposer(resultNode).applyComposedStatusToParentNode(node);
 	}
 	
 	private void addTestCaseNameToCustomAttributes(TestCase testArtefact) {

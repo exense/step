@@ -19,10 +19,10 @@
 package step.core.artefacts.handlers;
 
 import java.lang.reflect.Method;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import jakarta.annotation.PostConstruct;
 
@@ -44,10 +44,6 @@ public class ArtefactHandlerRegistry {
 		return register.put(key, value);
 	}
 
-	public Set<String> getArtefactNames() {
-		return artefactClassesByName.keySet();
-	}
-
 	public Class<? extends AbstractArtefact> getArtefactType(String name) {
 		return artefactClassesByName.get(name);
 	}
@@ -63,13 +59,19 @@ public class ArtefactHandlerRegistry {
 		return sample;
 	}
 
-	public Set<String> getArtefactTemplateNames() {
-		Set<String> templateArtefacts = new HashSet<String>();
-		getArtefactNames().forEach(k -> {
-			if (getArtefactType(k).getAnnotation(Artefact.class).useAsTemplate()) {
-				templateArtefacts.add(k);
-			}
-		});
-		return templateArtefacts;
+	/**
+	 * @return the list of artefacts that can be used as control within Plans
+	 */
+	public Set<String> getControlArtefactNames() {
+		return artefactClassesByName.keySet().stream()
+				.filter(a -> getArtefactType(a).getAnnotation(Artefact.class).validAsControl()).collect(Collectors.toSet());
+	}
+
+	/**
+	 * @return the list of artefacts that can be used as root element of Plans
+	 */
+	public Set<String> getRootArtefactNames() {
+		return artefactClassesByName.keySet().stream().filter(k -> getArtefactType(k).getAnnotation(Artefact.class).validAsRoot())
+				.collect(Collectors.toSet());
 	}
 }

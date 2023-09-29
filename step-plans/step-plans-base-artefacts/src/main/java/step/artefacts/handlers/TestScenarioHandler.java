@@ -43,7 +43,7 @@ public class TestScenarioHandler extends ArtefactHandler<TestScenario, ReportNod
 
 	@Override
 	public void execute_(final ReportNode node, TestScenario testArtefact) {
-		AtomicReportNodeStatusComposer reportNodeStatusComposer = new AtomicReportNodeStatusComposer(node.getStatus());
+		AtomicReportNodeStatusComposer reportNodeStatusComposer = new AtomicReportNodeStatusComposer(node);
 		
 		List<AbstractArtefact> artefacts = getChildren(testArtefact);
 		Iterator<AbstractArtefact> iterator = artefacts.iterator();
@@ -54,12 +54,12 @@ public class TestScenarioHandler extends ArtefactHandler<TestScenario, ReportNod
 			public Consumer<AbstractArtefact> createWorkItemConsumer(WorkerController<AbstractArtefact> control) {
 				return workItem -> {
 					ReportNode childReportNode = delegateExecute(workItem, node);
-					reportNodeStatusComposer.addStatusAndRecompose(childReportNode.getStatus());
+					reportNodeStatusComposer.addStatusAndRecompose(childReportNode);
 				};
 			}
 		}, artefacts.size(), OptionalInt.of(artefacts.size()));
-		
-		node.setStatus(reportNodeStatusComposer.getParentStatus());
+
+		reportNodeStatusComposer.applyComposedStatusToParentNode(node);
 	}
 
 	@Override

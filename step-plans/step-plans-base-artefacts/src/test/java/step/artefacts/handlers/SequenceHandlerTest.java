@@ -473,7 +473,7 @@ public class SequenceHandlerTest extends AbstractArtefactHandlerTest {
 				" BeforeSequence:PASSED:\n" + 
 				"  Echo:PASSED:\n" + 
 				" BeforeSequence:FAILED:\n" + 
-				"  Check:FAILED:\n" + 
+				"  Check:FAILED:The expression 'false' returned false\n" +
 				" AfterSequence:PASSED:\n" + 
 				"  Echo:PASSED:\n" , writer.toString());	
 	}
@@ -508,7 +508,7 @@ public class SequenceHandlerTest extends AbstractArtefactHandlerTest {
 				" BeforeSequence:PASSED:\n" + 
 				"  Check:PASSED:\n" + 
 				" AfterSequence:FAILED:\n" + 
-				"  Check:FAILED:\n" , writer.toString());	
+				"  Check:FAILED:The expression 'false' returned false\n" , writer.toString());
 	}
 	
 	@Test
@@ -535,7 +535,7 @@ public class SequenceHandlerTest extends AbstractArtefactHandlerTest {
 		
 		assertEquals("Sequence:FAILED:\n"
 				+ " Check:PASSED:\n"
-				+ " Check:FAILED:\n"
+				+ " Check:FAILED:The expression 'false' returned false\n"
 				+ " Check:PASSED:\n"
 				+ "" , writer.toString());	
 	}

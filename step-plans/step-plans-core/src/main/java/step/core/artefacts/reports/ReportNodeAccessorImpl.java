@@ -121,43 +121,18 @@ public class ReportNodeAccessorImpl extends AbstractAccessor<ReportNode> impleme
 				Filters.and(List.of(Filters.equals("executionID", executionID), Filters.equals("parentID", (String) null))),
 				null, null, null, 0).findFirst().orElse(null);
 	}
-	
-	public static class ReportNodeStatusReportEntry {
-		
-		public ReportNodeStatusReportEntry() {
-			super();
-		}
-
-		public ReportNodeStatusReportEntry(ReportNodeStatus _id, int sum) {
-			super();
-			this._id = _id;
-			this.sum = sum;
-		}
-
-		ReportNodeStatus _id;
-		
-		int sum;
-
-		public ReportNodeStatus get_id() {
-			return _id;
-		}
-
-		public void set_id(ReportNodeStatus _id) {
-			this._id = _id;
-		}
-
-		public int getSum() {
-			return sum;
-		}
-
-		public void setSum(int sum) {
-			this.sum = sum;
-		}
-	}
 
 	@Override
 	public Iterator<ReportNode> getChildren(String parentID) {
 		return getChildren(new ObjectId(parentID));
+	}
+
+	@Override
+	public Stream<ReportNode> getReportNodesWithContributingErrors(String executionID) {
+		assert executionID != null;
+		return collectionDriver.find(
+				Filters.and(List.of(Filters.equals("executionID", executionID), Filters.equals("contributingError", true))),
+				null, null, null, 0);
 	}
 
 	@Override

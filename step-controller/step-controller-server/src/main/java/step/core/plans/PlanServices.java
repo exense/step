@@ -217,14 +217,14 @@ public class PlanServices extends AbstractEntityServices<Plan> {
 		return artefacts.stream().map(this::cloneArtefact).collect(Collectors.toList());
 	}
 
-	@Operation(description = "Returns the supported artefact types.")
+	@Operation(description = "Returns the list of artefact types that can be used as control within Plans")
 	@GET
 	@Path("/artefact/types")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="{entity}-read")
 	public Set<String> getArtefactTypes() {
-		return artefactHandlerRegistry.getArtefactNames();
+		return artefactHandlerRegistry.getControlArtefactNames();
 	}
 
 	@Operation(description = "Returns the artefact with the given id.")
@@ -237,14 +237,14 @@ public class PlanServices extends AbstractEntityServices<Plan> {
 		return artefactHandlerRegistry.getArtefactTypeInstance(type);
 	}
 
-	@Operation(description = "Returns the names of the supported artefacts.")
+	@Operation(description = "Returns the list of artefact types that can be used as root element of Plans.")
 	@GET
 	@Path("/artefact/templates")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="{entity}-read")
 	public Set<String> getArtefactTemplates() {
-		return new TreeSet<>(artefactHandlerRegistry.getArtefactTemplateNames());
+		return new TreeSet<>(artefactHandlerRegistry.getRootArtefactNames());
 	}
 
 	private void assignNewId(AbstractArtefact artefact) {

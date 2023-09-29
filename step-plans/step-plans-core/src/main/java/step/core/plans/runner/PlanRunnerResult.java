@@ -26,8 +26,12 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -39,6 +43,7 @@ import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.artefacts.reports.ReportTreeAccessor;
 import step.core.artefacts.reports.ReportTreeVisitor;
 import step.core.artefacts.reports.ReportTreeVisitor.ReportNodeEvent;
+import step.core.reports.Error;
 import step.reporting.ReportWriter;
 import step.resources.Resource;
 import step.resources.ResourceManager;
@@ -72,13 +77,48 @@ public class PlanRunnerResult {
 	}
 	
 	public ReportNodeStatus getResult() {
-		ReportNode rootReportNode = reportTreeAccessor.get(rootReportNodeId);
+		ReportNode rootReportNode = getRootReportNode();
 		if(rootReportNode != null) {
-			ReportNodeStatus status = rootReportNode.getStatus();
-			return status;
+			return rootReportNode.getStatus();
 		} else {
 			return ReportNodeStatus.NORUN;
 		}
+	}
+
+	public ReportNode getRootReportNode() {
+		return reportTreeAccessor.get(rootReportNodeId);
+	}
+
+	/**
+	 * @return a stream of all report nodes with errors that caused this execution to fail.
+	 * This returns only the so-called contributing errors according to following definition {@link ReportNode#getContributingError()}
+	 */
+	public Stream<ReportNode> getReportNodesWithErrors() {
+		return getReportTreeAccessor().getReportNodesWithContributingErrors(executionId);
+	}
+
+	/**
+	 * @return a stream of all errors that caused this execution to fail.
+	 * This returns only the so-called contributing errors according to following definition {@link ReportNode#getContributingError()}
+	 */
+	public Stream<Error> getErrors() {
+		return getReportNodesWithErrors().map(ReportNode::getError).filter(Objects::nonNull);
+	}
+
+	/**
+	 * @return a concatenation of the first 10 error messages that caused this execution to fail.
+	 * This considers only the so-called contributing errors according to following definition {@link ReportNode#getContributingError()}
+	 */
+	public String getErrorSummary() {
+		return getErrors().map(Error::getMsg).limit(10).collect(Collectors.joining(";"));
+	}
+
+	/**
+	 * @return a {@link Set} containing the error codes of the first n errors where n is set by the limit parameter.
+	 * @param limit the max errors to be scanned
+	 */
+	public Set<Integer> getErrorCodes(int limit) {
+		return getErrors().map(Error::getCode).limit(limit).collect(Collectors.toSet());
 	}
 
 	public String getExecutionId() {
@@ -91,8 +131,8 @@ public class PlanRunnerResult {
 	
 	/**
 	 * Visits the report tree of the execution using the {@link Consumer} of {@link ReportNode}
-	 * @param consumer
-	 * @return
+	 * @param consumer the visitor
+	 * @return this instance
 	 */
 	public PlanRunnerResult visitReportNodes(Consumer<ReportNode> consumer) {
 		ReportTreeVisitor visitor = getReportTreeVisitor();
@@ -102,8 +142,8 @@ public class PlanRunnerResult {
 	
 	/**
 	 * Visits the report tree of the execution using the {@link Consumer} of {@link ReportNodeEvent}
-	 * @param consumer 
-	 * @return
+	 * @param consumer the visitor
+	 * @return this instance
 	 */
 	public PlanRunnerResult visitReportTree(Consumer<ReportNodeEvent> consumer) {
 		ReportTreeVisitor visitor = getReportTreeVisitor();
@@ -118,7 +158,7 @@ public class PlanRunnerResult {
 	/**
 	 * Wait for an the execution to terminate
 	 * @param timeout the timeout in ms
-	 * @return
+	 * @return this instance
 	 * @throws TimeoutException
 	 * @throws InterruptedException
 	 */
@@ -128,7 +168,7 @@ public class PlanRunnerResult {
 	
 	/**
 	 * Wait indefinitely for an the execution to terminate
-	 * @return
+	 * @return this instance
 	 * @throws TimeoutException
 	 * @throws InterruptedException
 	 */
@@ -138,7 +178,7 @@ public class PlanRunnerResult {
 	
 	/**
 	 * Prints the result tree to the standard output
-	 * @return
+	 * @return this instance
 	 * @throws IOException
 	 */
 	public PlanRunnerResult printTree() throws IOException {
@@ -148,7 +188,7 @@ public class PlanRunnerResult {
 	/**
 	 * Prints the result tree to the {@link Writer} provided as input
 	 * @param writer 
-	 * @return
+	 * @return this instance
 	 * @throws IOException
 	 */
 	public PlanRunnerResult printTree(Writer writer) throws IOException {
@@ -162,7 +202,7 @@ public class PlanRunnerResult {
 	 * @param printAttachments if the attachments of the report nodes have to be
 	 *                         printed out (currently restricted to attachments
 	 *                         called "exception.log")
-	 * @return
+	 * @return this instance
 	 * @throws IOException
 	 */
 	public PlanRunnerResult printTree(Writer writer, boolean printAttachments) throws IOException {
@@ -177,7 +217,7 @@ public class PlanRunnerResult {
 	 * @param printAttachments if the attachments of the report nodes have to be
 	 *                         printed out (currently restricted to attachments
 	 *                         called "exception.log")
-	 * @return
+	 * @return this instance
 	 * @throws IOException
 	 */
 	public PlanRunnerResult printTree(Writer writer, boolean printNodeDetails, boolean printAttachments) throws IOException {
