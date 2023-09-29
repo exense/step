@@ -28,7 +28,6 @@ import java.util.List;
 @Tag(name = "Entity=Docker Registry")
 @SecuredContext(key = "entity", value = "dockerRegistries")
 public class DockerRegistryServices extends AbstractEntityServices<DockerRegistryConfiguration> {
-    private AuthorizationManager authorizationManager;
 
     protected DockerRegistryConfigurationAccessor dockerRegistryConfigurationAccessor;
 
@@ -44,7 +43,6 @@ public class DockerRegistryServices extends AbstractEntityServices<DockerRegistr
         super.init();
         GlobalContext context = getContext();
         dockerRegistryConfigurationAccessor = context.get(DockerRegistryConfigurationAccessor.class);
-        authorizationManager = context.get(AuthorizationManager.class);
     }
 
     @Operation(operationId = "list{Entity}", description = "Retrieves all the entities")
@@ -53,6 +51,7 @@ public class DockerRegistryServices extends AbstractEntityServices<DockerRegistr
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/list")
     @Secured(right = "{entity}-read")
+    @SuppressWarnings("unused")
     public List<DockerRegistryConfiguration> getDockerRegistryConfigurations() {
         List<DockerRegistryConfiguration> result = new ArrayList<>();
         dockerRegistryConfigurationAccessor.getAll().forEachRemaining(result::add);
