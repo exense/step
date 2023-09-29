@@ -6,14 +6,23 @@ import org.slf4j.LoggerFactory;
 import step.core.GlobalContext;
 import step.core.collections.CollectionFactory;
 import step.core.deployment.WebApplicationConfigurationManager;
+import step.core.entities.EntityManager;
 import step.core.execution.ExecutionContext;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.core.timeseries.TimeSeries;
 import step.core.timeseries.TimeSeriesIngestionPipeline;
 import step.core.timeseries.aggregation.TimeSeriesAggregationPipeline;
+import step.core.timeseries.metric.MetricAggregation;
+import step.core.timeseries.metric.MetricAttribute;
+import step.core.timeseries.metric.MetricType;
+import step.core.timeseries.metric.MetricTypeAccessor;
+import step.engine.plugins.AbstractExecutionEnginePlugin;
+import step.engine.plugins.ExecutionEnginePlugin;
 import step.plugins.measurements.GaugeCollectorRegistry;
 import step.plugins.measurements.MeasurementPlugin;
+
+import static step.plugins.timeseries.TimeSeriesExecutionPlugin.*;
 
 import java.util.Arrays;
 import java.util.List;
