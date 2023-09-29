@@ -39,6 +39,7 @@ public class CheckHandler extends ArtefactHandler<Check, CheckReportNode> {
 				node.setStatus(ReportNodeStatus.PASSED);
 			} else {
 				node.setStatus(ReportNodeStatus.FAILED);
+				node.addError("The expression '" + testArtefact.getExpression().getExpression() + "' returned false");
 			}
 		}
 	}

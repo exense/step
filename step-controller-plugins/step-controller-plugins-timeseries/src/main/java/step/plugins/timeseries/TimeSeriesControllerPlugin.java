@@ -4,19 +4,14 @@ import ch.exense.commons.app.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.GlobalContext;
-import step.core.accessors.Accessor;
 import step.core.collections.CollectionFactory;
 import step.core.deployment.WebApplicationConfigurationManager;
-import step.core.entities.EntityManager;
+import step.core.execution.ExecutionContext;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.core.timeseries.TimeSeries;
 import step.core.timeseries.TimeSeriesIngestionPipeline;
 import step.core.timeseries.aggregation.TimeSeriesAggregationPipeline;
-import step.core.timeseries.metric.MetricAggregation;
-import step.core.timeseries.metric.MetricAttribute;
-import step.core.timeseries.metric.MetricType;
-import step.core.timeseries.metric.MetricTypeAccessor;
 import step.plugins.measurements.GaugeCollectorRegistry;
 import step.plugins.measurements.MeasurementPlugin;
 
@@ -33,10 +28,11 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
     public static String TIME_SERIES_COLLECTION_PROPERTY = "timeseries";
 
     public static String TIME_SERIES_ATTRIBUTES_PROPERTY = "plugins.timeseries.attributes";
-    public static String TIME_SERIES_ATTRIBUTES_DEFAULT = "eId,taskId,planId,metricType,origin,name,rnStatus,project,type";
+    public static String TIME_SERIES_ATTRIBUTES_DEFAULT = EXECUTION_ID + "," + TASK_ID + "," + PLAN_ID + ",metricType,origin,name,rnStatus,project,type";
 
     private static final Logger logger = LoggerFactory.getLogger(TimeSeriesControllerPlugin.class);
     private TimeSeriesIngestionPipeline mainIngestionPipeline;
+    private TimeSeriesAggregationPipeline aggregationPipeline;
 
     @Override
     public void serverStart(GlobalContext context) {
@@ -49,6 +45,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
         TimeSeries timeSeries = new TimeSeries(collectionFactory, TIME_SERIES_COLLECTION_PROPERTY, Set.of(), resolutionPeriod);
         context.put(TimeSeries.class, timeSeries);
         mainIngestionPipeline = timeSeries.newIngestionPipeline(flushPeriod);
+        aggregationPipeline = timeSeries.getAggregationPipeline();
         TimeSeriesAggregationPipeline aggregationPipeline = timeSeries.getAggregationPipeline();
         MetricTypeAccessor metricTypeAccessor = new MetricTypeAccessor(context.getCollectionFactory().getCollection(EntityManager.metricTypes, MetricType.class));
 
@@ -64,8 +61,27 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 
         WebApplicationConfigurationManager configurationManager = context.require(WebApplicationConfigurationManager.class);
         configurationManager.registerHook(s -> Map.of(RESOLUTION_PERIOD_PROPERTY, resolutionPeriod.toString()));
-    }
 
+    }
+    
+    @Override
+    public ExecutionEnginePlugin getExecutionEnginePlugin() {
+        return new AbstractExecutionEnginePlugin() {
+            @Override
+            public void executionStart(ExecutionContext context) {
+                context.put(TimeSeriesAggregationPipeline.class, aggregationPipeline);
+                context.put(TimeSeriesIngestionPipeline.class, mainIngestionPipeline);
+            }
+
+            @Override
+            public void afterExecutionEnd(ExecutionContext context) {
+                // Ensure that all measurements have been flushed before the execution ends
+                // This is critical for the SchedulerTaskAssertions to work properly
+                mainIngestionPipeline.flush();
+            }
+        };
+    }
+    
     @Override
     public void initializeData(GlobalContext context) throws Exception {
         MetricAttribute taskAttribute = new MetricAttribute().setValue("").setLabel("");

@@ -273,6 +273,10 @@ public class TimeSeriesHandler {
                                 TimeSeriesFilterBuilder.buildFilter(request.getParams()))
                 ))
                 .withGroupDimensions(request.getGroupDimensions());
+        if (request.getCollectAttributeKeys() != null && !request.getCollectAttributeKeys().isEmpty()) {
+            timeSeriesAggregationQuery.withAttributeCollection(request.getCollectAttributeKeys(),
+                    Objects.requireNonNullElse(request.getCollectAttributesValuesLimit(), 0));
+        }
         if (request.getIntervalSize() > 0) {
             timeSeriesAggregationQuery.window(request.getIntervalSize());
         }
@@ -306,6 +310,7 @@ public class TimeSeriesHandler {
                             .withSum(b.getSum())
                             .withThroughputPerHour(3600 * 1000 * b.getCount() / (b.getEnd() - b.getBegin()))
                             .withPclValues(request.getPercentiles().stream().collect(Collectors.toMap(p -> p, b::getPercentile)))
+                            .withAttributes(b.getAttributes())
                             .build();
                 }
                 bucketResponses.add(bucketResponse);

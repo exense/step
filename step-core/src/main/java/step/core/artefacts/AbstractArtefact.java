@@ -56,9 +56,7 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
 	protected Map<String, Object> customAttributes;
 	
 	protected List<ObjectId> attachments;
-	
-	protected boolean persistNode = true;
-	
+
 	private DynamicValue<Boolean> skipNode = new DynamicValue<>(false);
 	private DynamicValue<Boolean> instrumentNode = new DynamicValue<>(false);
 	private DynamicValue<Boolean> continueParentNodeExecutionOnError = new DynamicValue<>(false);
@@ -68,7 +66,6 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
 		Map<String, String> defaultAttributes = new HashMap<>();
 		defaultAttributes.put("name", getArtefactName(this.getClass()));
 		attributes = defaultAttributes;
-		persistNode = true;
 		dynamicName = new DynamicValue<String>("");
 		//dynamicName.setDynamic(true);
 		dynamicName.setExpression("");
@@ -161,13 +158,27 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
 		return false;
 	}
 
+	/**
+	 * @deprecated
+	 * This field has been deprecated and isn't used anymore.
+	 * The getter and setter have been kept in the model to avoid deserialization issues
+	 * TODO implement a migration task and remove the getter and setter
+	 * @return
+	 */
+	@JsonIgnore
+	@Deprecated
 	public boolean isPersistNode() {
-		return persistNode;
+		return true;
 	}
 
-	public void setPersistNode(boolean persistNode) {
-		this.persistNode = persistNode;
-	}
+	/**
+	 * @deprecated
+	 * This field has been deprecated and isn't used anymore.
+	 * The setter has been kept in the model to avoid deserialization issues
+	 * @param persistNode
+	 */
+	@Deprecated
+	public void setPersistNode(boolean persistNode) {}
 
 	public DynamicValue<Boolean> getSkipNode() {
 		return skipNode;

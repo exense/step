@@ -287,8 +287,8 @@ public class ExecutionEngine {
 	public ExecutionContext newExecutionContext() {
 		return newExecutionContext(new ObjectId().toString(), new ExecutionParameters(), null);
 	}
-	
-	protected ExecutionContext newExecutionContext(String executionId, ExecutionParameters executionParameters, ExecutiontTaskParameters executiontTaskParameters) {
+
+	public ExecutionContext newExecutionContext(String executionId, ExecutionParameters executionParameters, ExecutiontTaskParameters executiontTaskParameters) {
 		ExecutionContext executionContext = new ExecutionContext(executionId, executionParameters);
 		executionContext.useStandardAttributesFromParentContext(executionEngineContext);
 		executionContext.useReportingAttributesFromParentContext(executionEngineContext);

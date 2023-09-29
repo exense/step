@@ -1,0 +1,47 @@
+---
+# The URL of the grid
+gridHost: http://localhost:8081
+fileServerHost: http://localhost:8081/proxy
+# The port this agent should listen on.
+# If not explicitly set the agent will let the system find a free port automatically
+# agentPort: 8080
+# The hostname that should be used by the controller for incoming connections
+# If not explicitly set the agent will try to determine its own hostname automatically
+# agentHost: agent-host.mynetwork.net
+# The URL that should be used by the controller to communicate with this agent
+# You might have to set the agentUrl explicitly if the agent is behind a proxy for instance
+# agentUrl: http://agent-host.mynetwork.net:8080
+# Specifies the interval used by the registration client in ms
+# This should be lower than the grid TTL specified on the grid side 
+registrationPeriod: 1000
+# Specifies how long in ms the agent should wait before throwing a timeout when it opens a connection
+# or read data from the controller (to retrieve keywords jars for instance, etc)
+gridReadTimeout: 20000
+# Specifies the time limit in ms for the agent to complete a graceful shutdown
+# Within this time limit the agent will stop accepting new token reservation and will wait for all reserved token
+# to be released before shutting down
+gracefulShutdownTimeout: 30000
+# The path to the working directory of the agent.
+# This folder is used to store temporary data like keyword jars for instance
+workingDir: ../work
+# If ssl is enabled or not
+ssl: false
+# SSL parameters. Mandatory if SSL is enabled
+#keyStorePath: cert.jks
+#keyStorePassword: '<password>'
+#keyManagerPassword: '<password>'
+# Token groups
+tokenGroups:
+# The number of tokens to be emitted
+- capacity: 1
+  tokenConf:
+    # A list of key-values that identify the agent. 
+    # These attributes can then be used to select a specific agent in the grid
+    attributes:
+#      key: val
+    properties:
+#      prop1 : value 1
+# A list of properties
+properties:
+  # The path to the installation folder of JMeter
+  plugins.jmeter.home: "/path/to/jmeter/home"
