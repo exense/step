@@ -29,7 +29,6 @@ import step.handlers.javahandler.Keyword;
 import step.junit.runner.StepClassParser;
 import step.junit.runner.StepClassParserResult;
 import step.junit.runners.annotations.Plans;
-import step.plans.nl.RootArtefactType;
 import step.plans.nl.parser.PlanParser;
 import step.plugins.functions.types.CompositeFunctionUtils;
 import step.plugins.java.GeneralScriptFunction;
@@ -91,11 +90,11 @@ public class StepJarParser {
         return functions;
     }
 
-	public List<Plan> getPlansForJar(File artifact, File dependency, String[] includedClasses, String[] includedAnnotations,
-									 String[] excludedClasses, String[] excludedAnnotations) {
+    public PlansParsingResult getPlansForJar(File artifact, File dependency, String[] includedClasses, String[] includedAnnotations,
+                                             String[] excludedClasses, String[] excludedAnnotations) {
 
         List<Plan> result = new ArrayList<>();
-
+        List<Function> functions = new ArrayList<>();
         try (AnnotationScanner annotationScanner = AnnotationScanner.forSpecificJar(artifact)) {
             // Find classes containing plans:
             Set<Class<?>> classesWithPlans = new HashSet<>();
@@ -146,13 +145,19 @@ public class StepJarParser {
             classesWithPlans.forEach(c -> result.addAll(getPlansForClass(annotationScanner,c,artifact)));
 
             // Find all keywords
-            List<Function> functions = getFunctions(annotationScanner, artifact, dependency);
-            result.forEach(p -> p.setFunctions(functions));
+            functions = getFunctions(annotationScanner, artifact, dependency);
+
+            // replace null with empty collections to avoid NPEs
+            result.forEach(plan -> {
+                if(plan.getFunctions() == null){
+                    plan.setFunctions(new ArrayList<>());
+                }
+            });
         } catch (Exception e) {
             throw new RuntimeException("Exception when trying to list the plans of jar file '" + artifact.getName() + "'", e);
         }
 
-        return result;
+        return new PlansParsingResult(result, functions);
     }
 
     protected List<Plan> getPlansForClass(AnnotationScanner annotationScanner, Class<?> klass, File artifact) {
@@ -219,5 +224,24 @@ public class StepJarParser {
             }
         }
         return result;
+    }
+
+    public static class PlansParsingResult {
+
+        private final List<Plan> plans;
+        private final List<Function> functions;
+
+        public PlansParsingResult(List<Plan> plans, List<Function> functions) {
+            this.plans = plans;
+            this.functions = functions;
+        }
+
+        public List<Plan> getPlans() {
+            return plans;
+        }
+
+        public List<Function> getFunctions() {
+            return functions;
+        }
     }
 }
