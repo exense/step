@@ -93,9 +93,9 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
     
     @Override
     public void initializeData(GlobalContext context) throws Exception {
-        MetricAttribute taskAttribute = new MetricAttribute().setValue("").setLabel("");
-        MetricAttribute executionAttribute = new MetricAttribute().setValue("").setLabel("");
-        MetricAttribute planAttribute = new MetricAttribute().setValue("").setLabel("");
+        MetricAttribute taskAttribute = new MetricAttribute().setValue("taskId").setLabel("Task");
+        MetricAttribute executionAttribute = new MetricAttribute().setValue("eId").setLabel("Execution");
+        MetricAttribute planAttribute = new MetricAttribute().setValue("planId").setLabel("Plan");
 
         MetricTypeAccessor metricTypeAccessor = context.get(MetricTypeAccessor.class);
         List<MetricType> metrics = Arrays.asList(
