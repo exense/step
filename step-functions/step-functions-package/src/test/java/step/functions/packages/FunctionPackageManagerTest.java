@@ -309,6 +309,10 @@ public class FunctionPackageManagerTest {
 			return null;
 		}
 
+		@Override
+		public Function newFunction(String type, Map<String, String> configuration) {
+			return null;
+		}
 	}
 	
 	@Test

@@ -18,8 +18,11 @@
  ******************************************************************************/
 package step.repositories.artifact;
 
+import step.core.execution.ExecutionContext;
 import step.core.plans.PlanAccessor;
+import step.core.repositories.RepositoryObjectReference;
 import step.repositories.ArtifactRepositoryConstants;
+import step.resources.Resource;
 import step.resources.ResourceManager;
 import step.resources.ResourceRevisionFileHandle;
 
@@ -66,5 +69,19 @@ public class ResourceArtifactRepository extends AbstractArtifactRepository {
 			throw new RuntimeException("Resource not found by id: " + resourceId);
 		}
 		return resourceContent.getResourceFile();
+	}
+
+	@Override
+	public void postExecution(ExecutionContext context, RepositoryObjectReference repositoryObjectReference) throws Exception {
+		if (repositoryObjectReference != null) {
+			String resourceId = repositoryObjectReference.getRepositoryParameters().get(ArtifactRepositoryConstants.RESOURCE_PARAM_RESOURCE_ID);
+			if (resourceId != null) {
+				Resource resource = resourceManager.getResource(resourceId);
+				if (ResourceManager.RESOURCE_TYPE_TEMP.equals(resource.getResourceType())) {
+					resourceManager.deleteResource(resourceId);
+				}
+			}
+		}
+		super.postExecution(context, repositoryObjectReference);
 	}
 }

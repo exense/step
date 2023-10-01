@@ -118,8 +118,7 @@ public class ParameterManager {
 	}
 
 	private boolean isProtected(Parameter p) {
-		Boolean protectedValue = p.getProtectedValue();
-		return protectedValue;
+		return p.getProtectedValue() != null && p.getProtectedValue();
 	}
 	
 	public Parameter encryptParameterValueIfEncryptionManagerAvailable(Parameter parameter) throws EncryptionManagerException {

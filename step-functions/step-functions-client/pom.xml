@@ -46,6 +46,11 @@
 		</dependency>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
+			<artifactId>step-functions-docker-handler</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>ch.exense.step</groupId>
 			<artifactId>step-grid-client</artifactId>
 			<version>${step-grid.version}</version>
 		</dependency>
@@ -84,6 +89,15 @@
 									<overWrite>false</overWrite>
 									<outputDirectory>${project.basedir}/src/main/resources</outputDirectory>
 									<destFileName>step-functions-handler.jar</destFileName>
+								</artifactItem>
+								<artifactItem>
+									<groupId>ch.exense.step</groupId>
+									<artifactId>step-functions-docker-handler</artifactId>
+									<classifier>shaded</classifier>
+									<type>jar</type>
+									<overWrite>false</overWrite>
+									<outputDirectory>${project.basedir}/src/main/resources</outputDirectory>
+									<destFileName>step-functions-docker-handler.jar</destFileName>
 								</artifactItem>
 							</artifactItems>
 							<overWriteReleases>true</overWriteReleases>

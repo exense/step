@@ -18,17 +18,11 @@
  ******************************************************************************/
 package step.artefacts.handlers;
 
-import java.io.StringReader;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
-
 import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonValue;
 import jakarta.json.JsonValue.ValueType;
 import jakarta.json.stream.JsonParsingException;
-
 import step.artefacts.CallFunction;
 import step.artefacts.handlers.FunctionGroupHandler.FunctionGroupContext;
 import step.artefacts.reports.CallFunctionReportNode;
@@ -38,6 +32,8 @@ import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
+import step.core.docker.DockerRegistryConfiguration;
+import step.core.docker.DockerRegistryConfigurationAccessor;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.execution.ExecutionContext;
@@ -54,6 +50,7 @@ import step.datapool.DataSetHandle;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.execution.FunctionExecutionService;
+import step.functions.execution.FunctionExecutionServiceImpl;
 import step.functions.handler.AbstractFunctionHandler;
 import step.functions.io.FunctionInput;
 import step.functions.io.Output;
@@ -62,6 +59,14 @@ import step.grid.TokenWrapper;
 import step.grid.agent.tokenpool.TokenReservationSession;
 import step.grid.io.Attachment;
 import step.grid.io.AttachmentHelper;
+
+import java.io.StringReader;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.NoSuchElementException;
 
 public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunctionReportNode> {
 
@@ -119,12 +124,12 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		validateInput(input, function);
 
 		Output<JsonObject> output;
-		if(!context.isSimulation()) {		
-			Object o = context.getVariablesManager().getVariable(FunctionGroupHandler.FUNCTION_GROUP_CONTEXT_KEY);
-			boolean releaseTokenAfterExecution = (o==null);
+		if(!context.isSimulation()) {
+			FunctionGroupContext functionGroupContext = (FunctionGroupContext) context.getVariablesManager().getVariable(FunctionGroupHandler.FUNCTION_GROUP_CONTEXT_KEY);
+			boolean releaseTokenAfterExecution = (functionGroupContext==null);
 			
 			CallFunctionTokenWrapperOwner tokenWrapperOwner = new CallFunctionTokenWrapperOwner(node.getId().toString(), context.getExecutionId(), context.getExecutionParameters().getDescription());
-			TokenWrapper token = functionRouter.selectToken(testArtefact, function, (FunctionGroupContext)o, getBindings(), tokenWrapperOwner);
+			TokenWrapper token = functionRouter.selectToken(testArtefact, function, functionGroupContext, getBindings(), tokenWrapperOwner);
 			try {
 				Token gridToken = token.getToken();
 				if(gridToken.isLocal()) {
@@ -137,7 +142,31 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				
 				OperationManager.getInstance().enter("Keyword Call", new Object[]{function.getAttributes(), token.getToken(), token.getAgent()},
 						node.getId().toString());
-				
+
+				// Add the docker image if present within the session
+				if(functionGroupContext != null) {
+					functionGroupContext.dockerImage.ifPresent(image -> {
+						DockerRegistryConfigurationAccessor dockerRegistryConfigurationAccessor = context.require(DockerRegistryConfigurationAccessor.class);
+						DockerRegistryConfiguration dockerRegistryConfiguration = dockerRegistryConfigurationAccessor
+								.stream()
+								.filter(registryConfiguration -> {
+											try {
+												return image.contains(new URL(registryConfiguration.getUrl()).getAuthority());
+											} catch (MalformedURLException e) {
+												throw new RuntimeException(e);
+											}
+										})
+								.findFirst().orElseThrow(()	-> new NoSuchElementException(String.format("No docker registry matching image path %s found, it must first be created", image)));
+						Map<String, String> inputProperties = input.getProperties();
+						inputProperties.put(FunctionExecutionServiceImpl.INPUT_PROPERTY_DOCKER_IMAGE, image);
+						inputProperties.put(FunctionExecutionServiceImpl.INPUT_PROPERTY_CONTAINER_USER, functionGroupContext.containerUser.orElseThrow(() -> new NoSuchElementException("No container user has been specified, this is mandatory")));
+						inputProperties.put(FunctionExecutionServiceImpl.INPUT_PROPERTY_CONTAINER_CMD, functionGroupContext.containerCommand.orElse(""));
+						inputProperties.put(FunctionExecutionServiceImpl.INPUT_PROPERTY_DOCKER_REGISTRY_URL, dockerRegistryConfiguration.getUrl());
+						inputProperties.put(FunctionExecutionServiceImpl.INPUT_PROPERTY_DOCKER_REGISTRY_USERNAME, dockerRegistryConfiguration.getUsername());
+						inputProperties.put(FunctionExecutionServiceImpl.INPUT_PROPERTY_DOCKER_REGISTRY_PASSWORD, dockerRegistryConfiguration.getPassword());
+						input.setProperties(inputProperties);
+					});
+				}
 				try {
 					output = functionExecutionService.callFunction(token.getID(), function, input, JsonObject.class);
 				} finally {

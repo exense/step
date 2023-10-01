@@ -18,30 +18,17 @@
  ******************************************************************************/
 package step.functions.execution;
 
-import java.io.File;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CopyOnWriteArrayList;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.reports.Error;
 import step.core.reports.ErrorType;
 import step.functions.Function;
-import step.functions.handler.FunctionIOJavaxObjectMapperFactory;
-import step.functions.handler.FunctionMessageHandler;
-import step.functions.handler.FunctionIOJakartaObjectMapperFactory;
+import step.functions.handler.*;
 import step.functions.io.FunctionInput;
 import step.functions.io.Input;
 import step.functions.io.Output;
@@ -58,14 +45,24 @@ import step.grid.client.GridClientException;
 import step.grid.filemanager.FileManagerException;
 import step.grid.filemanager.FileVersion;
 import step.grid.filemanager.FileVersionId;
-import step.grid.io.AgentError;
-import step.grid.io.AgentErrorCode;
-import step.grid.io.Attachment;
-import step.grid.io.AttachmentHelper;
-import step.grid.io.OutputMessage;
+import step.grid.io.*;
 import step.grid.tokenpool.Interest;
 
+import java.io.File;
+import java.io.InputStream;
+import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
+
 public class FunctionExecutionServiceImpl implements FunctionExecutionService {
+
+	public static final String INPUT_PROPERTY_DOCKER_IMAGE = "docker.image";
+	public static final String INPUT_PROPERTY_CONTAINER_USER = "container.user";
+	public static final String INPUT_PROPERTY_CONTAINER_CMD = "container.cmd";
+
+	public static final String INPUT_PROPERTY_DOCKER_REGISTRY_URL = "docker.registryUrl";
+	public static final String INPUT_PROPERTY_DOCKER_REGISTRY_USERNAME = "docker.registryUsername";
+	public static final String INPUT_PROPERTY_DOCKER_REGISTRY_PASSWORD = "docker.registryPassword";
+
 
 	private final GridClient gridClient;
 
@@ -74,6 +71,7 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 	private final DynamicBeanResolver dynamicBeanResolver;
 
 	private final FileVersionId functionHandlerPackage;
+	private final FileVersionId dockerHandlerPackageVersionId;
 
 	private final ObjectMapper jakartaMapper;
 	private final ObjectMapper javaxMapper;
@@ -87,19 +85,22 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 		this.functionTypeRegistry = functionTypeRegistry;
 		this.dynamicBeanResolver = dynamicBeanResolver;
 
-		String functionHandlerResourceName = "step-functions-handler.jar";
+		functionHandlerPackage = registerClassloaderResource("step-functions-handler.jar");
+		dockerHandlerPackageVersionId = registerClassloaderResource("step-functions-docker-handler.jar");
+
+		jakartaMapper = FunctionIOJakartaObjectMapperFactory.createObjectMapper();
+		javaxMapper = FunctionIOJavaxObjectMapperFactory.createObjectMapper();
+	}
+
+	private FileVersionId registerClassloaderResource(String functionHandlerResourceName) throws FunctionExecutionServiceException {
 		FileVersion functionHandlerPackageVersionId;
 		try {
 			InputStream resourceAsStream = getClass().getClassLoader().getResourceAsStream(functionHandlerResourceName);
 			functionHandlerPackageVersionId = gridClient.registerFile(resourceAsStream, functionHandlerResourceName, false);
 		} catch (FileManagerException e) {
-			throw new FunctionExecutionServiceException("Error while registering file "+functionHandlerResourceName+" to the grid", e);
+			throw new FunctionExecutionServiceException("Error while registering file "+ functionHandlerResourceName +" to the grid", e);
 		}
-
-		functionHandlerPackage = functionHandlerPackageVersionId.getVersionId();
-
-		jakartaMapper = FunctionIOJakartaObjectMapperFactory.createObjectMapper();
-		javaxMapper = FunctionIOJavaxObjectMapperFactory.createObjectMapper();
+		return functionHandlerPackageVersionId.getVersionId();
 	}
 
 	private static final Logger logger = LoggerFactory.getLogger(FunctionExecutionServiceImpl.class);
@@ -194,10 +195,10 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 			FileVersionId handlerPackage = functionType.getHandlerPackage(function);
 
 			// Build the property map used for the agent layer
-			Map<String, String> inputMessageProperties = new HashMap<>();
-			inputMessageProperties.put(FunctionMessageHandler.FUNCTION_HANDLER_KEY, handlerChain);
+			Map<String, String> messageProperties = new HashMap<>();
+			messageProperties.put(FunctionMessageHandler.FUNCTION_HANDLER_KEY, handlerChain);
 			if(handlerPackage != null) {
-				inputMessageProperties.putAll(fileVersionIdToMap(FunctionMessageHandler.FUNCTION_HANDLER_PACKAGE_KEY, handlerPackage));
+				messageProperties.putAll(fileVersionIdToMap(FunctionMessageHandler.FUNCTION_HANDLER_PACKAGE_KEY, handlerPackage));
 			}
 
 
@@ -226,9 +227,32 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 			// Serialize the input object
 			JsonNode node = jakartaMapper.valueToTree(input);
 
+			String functionMessageHandler = FunctionMessageHandler.class.getName();
+			boolean inDocker = properties.containsKey(INPUT_PROPERTY_DOCKER_IMAGE);
+
+			String messageHandler;
+			FileVersionId messageHandlerPackage;
 			OutputMessage outputMessage;
 			try {
-				outputMessage = gridClient.call(tokenHandleId, node, FunctionMessageHandler.class.getName(), functionHandlerPackage, inputMessageProperties, callTimeout);
+				if(inDocker) {
+					// Using the proxy message handler in order to forward calls to the sub agent
+					messageHandler = ProxyMessageHandler.class.getName();
+					messageHandlerPackage = dockerHandlerPackageVersionId;
+					messageProperties.put(ProxyMessageHandler.MESSAGE_HANDLER, functionMessageHandler);
+					messageProperties.put(ProxyMessageHandler.MESSAGE_HANDLER_FILE_ID, functionHandlerPackage.getFileId());
+					messageProperties.put(ProxyMessageHandler.MESSAGE_HANDLER_FILE_VERSION, functionHandlerPackage.getVersion());
+
+					messageProperties.put(DockerContainer.MESSAGE_PROP_DOCKER_REGISTRY_URL, properties.get(INPUT_PROPERTY_DOCKER_REGISTRY_URL));
+					messageProperties.put(DockerContainer.MESSAGE_PROP_DOCKER_REGISTRY_USERNAME, properties.get(INPUT_PROPERTY_DOCKER_REGISTRY_USERNAME));
+					messageProperties.put(DockerContainer.MESSAGE_PROP_DOCKER_REGISTRY_PASSWORD, properties.get(INPUT_PROPERTY_DOCKER_REGISTRY_PASSWORD));
+					messageProperties.put(DockerContainer.MESSAGE_PROP_DOCKER_IMAGE, properties.get(INPUT_PROPERTY_DOCKER_IMAGE));
+					messageProperties.put(DockerContainer.MESSAGE_PROP_CONTAINER_USER, properties.get(INPUT_PROPERTY_CONTAINER_USER));
+					messageProperties.put(DockerContainer.MESSAGE_PROP_CONTAINER_CMD, properties.get(INPUT_PROPERTY_CONTAINER_CMD));
+				} else {
+					messageHandler = functionMessageHandler;
+					messageHandlerPackage = functionHandlerPackage;
+				}
+				outputMessage = gridClient.call(tokenHandleId, node, messageHandler, messageHandlerPackage, messageProperties, callTimeout);
 			} catch (AgentCallTimeoutException e) {
 				attachUnexpectedExceptionToOutput(output, "Timeout after " + callTimeout + "ms while calling the agent. You can increase the call timeout in the configuration screen of the keyword",e );
 				return output;

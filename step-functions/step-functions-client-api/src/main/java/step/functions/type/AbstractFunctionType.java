@@ -94,7 +94,11 @@ public abstract class AbstractFunctionType<T extends Function> {
 	}
 	
 	public abstract T newFunction();
-	
+
+	public T newFunction(Map<String, String> configuration) {
+		return null;
+	}
+
 	public void setupFunction(T function) throws SetupFunctionException {
 		
 	}
@@ -174,4 +178,5 @@ public abstract class AbstractFunctionType<T extends Function> {
 	public void deleteFunction(T function) throws FunctionTypeException {
 
 	}
+
 }

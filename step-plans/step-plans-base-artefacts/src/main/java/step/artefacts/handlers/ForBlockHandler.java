@@ -134,7 +134,7 @@ public class ForBlockHandler extends AbstractSessionArtefactHandler<AbstractForB
 								iterationReportNode = delegateExecute(iterationTestCase, node, newVariable);
 							}
 							
-							reportNodeStatusComposer.addStatusAndRecompose(iterationReportNode.getStatus());
+							reportNodeStatusComposer.addStatusAndRecompose(iterationReportNode);
 							
 							if(iterationReportNode.getStatus()==ReportNodeStatus.TECHNICAL_ERROR || iterationReportNode.getStatus()==ReportNodeStatus.FAILED) {
 								failedLoopsCounter.incrementAndGet();
@@ -156,7 +156,7 @@ public class ForBlockHandler extends AbstractSessionArtefactHandler<AbstractForB
 			
 			node.setErrorCount(failedLoopsCounter.get());
 			node.setCount(loopsCounter.get());
-			node.setStatus(reportNodeStatusComposer.getParentStatus());
+			reportNodeStatusComposer.applyComposedStatusToParentNode(node);
 		} catch(Throwable e) {
 			failWithException(node, e);
 		} finally {

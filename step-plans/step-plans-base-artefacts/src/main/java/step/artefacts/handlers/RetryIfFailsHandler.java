@@ -40,12 +40,16 @@ public class RetryIfFailsHandler extends ArtefactHandler<RetryIfFails, RetryIfFa
 
 	@Override
 	protected void execute_(RetryIfFailsReportNode node, RetryIfFails testArtefact) {
-		
+
+		ReportNode lastReportNode = null;
 		ReportNodeStatus lastStatus = ReportNodeStatus.NORUN;
 		
 		long begin = System.currentTimeMillis();
 		boolean inSession = isInSession();
 		for(int count = 1; count<=testArtefact.getMaxRetries().get();count++) {
+			if(lastReportNode != null) {
+				removeErrorContributionsInReportBranch(lastReportNode);
+			}
 			if (context.isInterrupted()) {
 				break;
 			}
@@ -60,6 +64,7 @@ public class RetryIfFailsHandler extends ArtefactHandler<RetryIfFails, RetryIfFa
 			ReportNode iterationReportNode = delegateExecute(iterationTestCase, node);
 			
 			lastStatus = iterationReportNode.getStatus();
+			lastReportNode = iterationReportNode;
 
 			if (iterationReportNode.getStatus() == ReportNodeStatus.PASSED) {
 				break;
@@ -75,7 +80,7 @@ public class RetryIfFailsHandler extends ArtefactHandler<RetryIfFails, RetryIfFa
 				//Cleanup intermediate results if persist only last results is ON
 				node.incSkipped();
 				context.getEventManager().notifyReportNodeUpdated(node);
-				removeReportNode(iterationReportNode);
+				pruneReportBranch(iterationReportNode);
 			}
 			
 			long duration = testArtefact.getGracePeriod().get();

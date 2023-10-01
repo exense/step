@@ -18,25 +18,28 @@
  ******************************************************************************/
 package step.core.dynamicbeans;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.beans.BeanInfo;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
+import java.lang.reflect.AccessibleObject;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
+import java.lang.reflect.Modifier;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+@SuppressWarnings("rawtypes")
 public class DynamicBeanResolver {
 	
-	private static Logger logger = LoggerFactory.getLogger(DynamicBeanResolver.class);
+	private static final Logger logger = LoggerFactory.getLogger(DynamicBeanResolver.class);
 	
-	DynamicValueResolver valueResolver;
-	
-	Map<Class<?>,BeanInfo> beanInfoCache = new ConcurrentHashMap<>();
+	private final DynamicValueResolver valueResolver;
+
+	private final Map<Class<?>,BeanInfo> beanInfoCache = new ConcurrentHashMap<>();
 
 	public DynamicBeanResolver(DynamicValueResolver valueResolver) {
 		super();
@@ -53,42 +56,64 @@ public class DynamicBeanResolver {
 					beanInfo = Introspector.getBeanInfo(clazz, Object.class);
 					beanInfoCache.put(clazz, beanInfo);
 				}
-				
+
+				// Handle public fields
+				for (Field field:clazz.getFields()) {
+					int modifiers = field.getModifiers();
+					if(!Modifier.isStatic(modifiers) && !Modifier.isFinal(modifiers)) {
+						if(field.getType().equals(DynamicValue.class)) {
+							Object value = field.get(o);
+							evaluateDynamicValue(bindings, (DynamicValue<?>) value);
+						} else if(field.isAnnotationPresent(ContainsDynamicValues.class)) {
+							Object value = field.get(o);
+							recursivelyEvaluateValue(bindings, value);
+						}
+					}
+				}
+
+				// Handle fields with getter / setter
 				for(PropertyDescriptor descriptor:beanInfo.getPropertyDescriptors()) {
 					Method method = descriptor.getReadMethod();
 					if(method!=null) {
 						if(method.getReturnType().equals(DynamicValue.class)) {
 							Object value = method.invoke(o);
-							if(value!=null) {
-								DynamicValue<?> dynamicValue = (DynamicValue<?>) value;
-								valueResolver.evaluate(dynamicValue, bindings);
-								evaluate(dynamicValue.get(), bindings);
-							}
+							evaluateDynamicValue(bindings, (DynamicValue<?>) value);
 						} else if(method.isAnnotationPresent(ContainsDynamicValues.class)) {
 							Object value = method.invoke(o);
-							if (value instanceof  List) {
-								List l = (List) value;
-								l.forEach(v -> evaluate(v, bindings));
-							} else {
-								evaluate(value, bindings);
-							}
+							recursivelyEvaluateValue(bindings, value);
 						}
 					}
 				}
 			} catch (Exception e) {
 				if(logger.isDebugEnabled()) {
-					logger.debug("Error while evaluating object: "+o.toString(), e);
+					logger.debug("Error while evaluating object: "+ o, e);
 				}
 			}			
 		}
 	}
-	
+
+	private void recursivelyEvaluateValue(Map<String, Object> bindings, Object value) {
+		if (value instanceof  List) {
+			List l = (List) value;
+			l.forEach(v -> evaluate(v, bindings));
+		} else {
+			evaluate(value, bindings);
+		}
+	}
+
+	private void evaluateDynamicValue(Map<String, Object> bindings, DynamicValue<?> value) {
+		if(value!=null) {
+			valueResolver.evaluate(value, bindings);
+			evaluate(value.get(), bindings);
+		}
+	}
+
 	public <T> T cloneDynamicValues(T o) {
 		if(o!=null) {
 			try {
-				Class<? extends Object> clazz = o.getClass();
+				Class<?> clazz = o.getClass();
 				@SuppressWarnings("unchecked")
-				T out = (T) clazz.newInstance();
+				T out = (T) clazz.getConstructor().newInstance();
 				if (List.class.isAssignableFrom(clazz)) {
 					List l = (List) o;
 					List outList = (List) out;
@@ -100,38 +125,52 @@ public class DynamicBeanResolver {
 						beanInfoCache.put(clazz, beanInfo);
 					}
 
+					// Handle public fields
+					for (Field field:clazz.getFields()) {
+						int modifiers = field.getModifiers();
+						if(!Modifier.isStatic(modifiers) && !Modifier.isFinal(modifiers)) {
+							Object oldValue = field.get(o);
+							Object newValue = cloneDynamicValue(field, oldValue);
+							field.set(out, newValue);
+						}
+					}
+
+					// Handle fields with getters / setters
 					for (PropertyDescriptor descriptor : beanInfo.getPropertyDescriptors()) {
 						Method method = descriptor.getReadMethod();
 						if (method != null) {
-							Object newValue;
 							Object oldValue = method.invoke(o);
-							if (oldValue != null) {
-								if (oldValue instanceof DynamicValue) {
-									DynamicValue<?> dynamicValue = (DynamicValue<?>) oldValue;
-									newValue = dynamicValue.cloneValue();
-								} else if (method.isAnnotationPresent(ContainsDynamicValues.class)) {
-									newValue = cloneDynamicValues(oldValue);
-								} else {
-									newValue = oldValue;
-								}
-							} else {
-								newValue = null;
-							}
+							Object newValue = cloneDynamicValue(method, oldValue);
 							Method writeMethod = descriptor.getWriteMethod();
 							if (writeMethod != null) {
 								descriptor.getWriteMethod().invoke(out, newValue);
-							} else {
-								//throw new RuntimeException("Unable to clone object "+o.toString()+". No setter found for "+descriptor);
 							}
 						}
 					}
 				}
 				return out;
 			} catch (Exception e) {
-				throw new RuntimeException("Error while cloning object "+o.toString(),e);
+				throw new RuntimeException("Error while cloning object "+ o,e);
 			} 
 		} else {
 			return null;
 		}
+	}
+
+	private Object cloneDynamicValue(AccessibleObject fieldOrMethod, Object oldValue) {
+		Object newValue;
+		if (oldValue != null) {
+			if (oldValue instanceof DynamicValue) {
+				DynamicValue<?> dynamicValue = (DynamicValue<?>) oldValue;
+				newValue = dynamicValue.cloneValue();
+			} else if (fieldOrMethod.isAnnotationPresent(ContainsDynamicValues.class)) {
+				newValue = cloneDynamicValues(oldValue);
+			} else {
+				newValue = oldValue;
+			}
+		} else {
+			newValue = null;
+		}
+		return newValue;
 	}
 }

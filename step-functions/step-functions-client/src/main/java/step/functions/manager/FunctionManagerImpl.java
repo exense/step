@@ -95,7 +95,12 @@ public class FunctionManagerImpl implements FunctionManager {
 	public Function newFunction(String functionType) {
 		return functionTypeRegistry.getFunctionType(functionType).newFunction();
 	}
-	
+
+	@Override
+	public Function newFunction(String functionType, Map<String, String> configuration) {
+		return functionTypeRegistry.getFunctionType(functionType).newFunction(configuration);
+	}
+
 	protected AbstractFunctionType<Function> getFunctionType(Function function) {
 		return functionTypeRegistry.getFunctionTypeByFunction(function);
 	}
