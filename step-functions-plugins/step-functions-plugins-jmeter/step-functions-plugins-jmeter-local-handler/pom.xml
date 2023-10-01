@@ -39,19 +39,19 @@
         <dependency>
             <groupId>org.apache.jmeter</groupId>
             <artifactId>ApacheJMeter_core</artifactId>
-            <version>5.4.3</version>
+            <version>${apache-jmeter.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.jmeter</groupId>
             <artifactId>ApacheJMeter_components</artifactId>
-            <version>5.4.3</version>
+            <version>${apache-jmeter.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.jmeter</groupId>
             <artifactId>ApacheJMeter_http</artifactId>
-            <version>5.4.3</version>
+            <version>${apache-jmeter.version}</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
