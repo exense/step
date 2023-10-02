@@ -47,20 +47,23 @@ public class TimeSeriesExecutionPlugin extends AbstractExecutionEnginePlugin {
 	public void afterExecutionEnd(ExecutionContext context) {
 		ExecutionAccessor executionAccessor = context.getExecutionAccessor();
 		Execution execution = executionAccessor.get(context.getExecutionId());
-		TimeSeriesIngestionPipeline ingestionPipeline = context.require(TimeSeriesIngestionPipeline.class);
-		ViewManager viewManager = context.require(ViewManager.class);
+		TimeSeriesIngestionPipeline ingestionPipeline = context.get(TimeSeriesIngestionPipeline.class);
+		//ingestionPipeline is not in execution context for interactive execution
+		if (ingestionPipeline != null) {
+			ViewManager viewManager = context.require(ViewManager.class);
 
-		boolean executionPassed = execution.getResult() == ReportNodeStatus.PASSED;
+			boolean executionPassed = execution.getResult() == ReportNodeStatus.PASSED;
 
-		ingestionPipeline.ingestPoint(withExecutionAttributes(execution, Map.of(METRIC_TYPE, EXECUTIONS_COUNT)), execution.getStartTime(), 1);
-		ingestionPipeline.ingestPoint(withExecutionAttributes(execution, Map.of(METRIC_TYPE, FAILURE_PERCENTAGE)), execution.getStartTime(), executionPassed ? 0 : 100);
-		ingestionPipeline.ingestPoint(withExecutionAttributes(execution, Map.of(METRIC_TYPE, FAILURE_COUNT)), execution.getStartTime(), executionPassed ? 0 : 1);
+			ingestionPipeline.ingestPoint(withExecutionAttributes(execution, Map.of(METRIC_TYPE, EXECUTIONS_COUNT)), execution.getStartTime(), 1);
+			ingestionPipeline.ingestPoint(withExecutionAttributes(execution, Map.of(METRIC_TYPE, FAILURE_PERCENTAGE)), execution.getStartTime(), executionPassed ? 0 : 100);
+			ingestionPipeline.ingestPoint(withExecutionAttributes(execution, Map.of(METRIC_TYPE, FAILURE_COUNT)), execution.getStartTime(), executionPassed ? 0 : 1);
 
-		ErrorDistribution errorDistribution = (ErrorDistribution) viewManager.queryView(ErrorDistributionView.ERROR_DISTRIBUTION_VIEW, context.getExecutionId());
+			ErrorDistribution errorDistribution = (ErrorDistribution) viewManager.queryView(ErrorDistributionView.ERROR_DISTRIBUTION_VIEW, context.getExecutionId());
 
-		errorDistribution.getCountByErrorCode().entrySet().forEach(entry -> {
-			ingestionPipeline.ingestPoint(withExecutionAttributes(execution, Map.of(METRIC_TYPE, FAILURES_COUNT_BY_ERROR_CODE, ERROR_CODE, entry.getKey())), execution.getStartTime(), entry.getValue() > 0 ? 1 : 0);
-		});
+			errorDistribution.getCountByErrorCode().entrySet().forEach(entry -> {
+				ingestionPipeline.ingestPoint(withExecutionAttributes(execution, Map.of(METRIC_TYPE, FAILURES_COUNT_BY_ERROR_CODE, ERROR_CODE, entry.getKey())), execution.getStartTime(), entry.getValue() > 0 ? 1 : 0);
+			});
+		}
 
 		super.afterExecutionEnd(context);
 	}
