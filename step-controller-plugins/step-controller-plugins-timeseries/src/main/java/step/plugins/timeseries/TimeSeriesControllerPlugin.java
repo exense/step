@@ -4,13 +4,11 @@ import ch.exense.commons.app.Configuration;
 import step.core.GlobalContext;
 import step.core.collections.CollectionFactory;
 import step.core.deployment.WebApplicationConfigurationManager;
-import step.core.execution.ExecutionContext;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.core.timeseries.TimeSeries;
 import step.core.timeseries.TimeSeriesIngestionPipeline;
 import step.core.timeseries.aggregation.TimeSeriesAggregationPipeline;
-import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.engine.plugins.ExecutionEnginePlugin;
 import step.plugins.measurements.GaugeCollectorRegistry;
 import step.plugins.measurements.MeasurementPlugin;
@@ -63,20 +61,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 
     @Override
     public ExecutionEnginePlugin getExecutionEnginePlugin() {
-        return new AbstractExecutionEnginePlugin() {
-            @Override
-            public void executionStart(ExecutionContext context) {
-                context.put(TimeSeriesAggregationPipeline.class, aggregationPipeline);
-                context.put(TimeSeriesIngestionPipeline.class, mainIngestionPipeline);
-            }
-
-            @Override
-            public void afterExecutionEnd(ExecutionContext context) {
-                // Ensure that all measurements have been flushed before the execution ends
-                // This is critical for the SchedulerTaskAssertions to work properly
-                mainIngestionPipeline.flush();
-            }
-        };
+        return new TimeSeriesExecutionPlugin(mainIngestionPipeline, aggregationPipeline);
     }
 
     @Override
