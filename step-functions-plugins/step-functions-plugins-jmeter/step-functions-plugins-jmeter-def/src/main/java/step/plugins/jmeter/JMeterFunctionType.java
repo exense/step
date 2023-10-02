@@ -33,10 +33,11 @@ import step.resources.ResourceManager;
 public class JMeterFunctionType extends AbstractFunctionType<JMeterFunction> {
 
 	private static final Logger log = LoggerFactory.getLogger(JMeterFunctionType.class);
+	public static final String JMETER_HOME_CONFIG_PROPERTY = "plugins.jmeter.home";
 
 	private FileVersionId handlerJar;
 	protected final Configuration configuration;
-	
+
 	public JMeterFunctionType(Configuration configuration) {
 		super();
 		this.configuration = configuration;
@@ -63,7 +64,7 @@ public class JMeterFunctionType extends AbstractFunctionType<JMeterFunction> {
 		Map<String, String> props = new HashMap<>();
 		registerFile(function.getJmeterTestplan(), "$jmeter.testplan.file", props);
 		
-		String home = configuration.getProperty("plugins.jmeter.home");
+		String home = configuration.getProperty(JMETER_HOME_CONFIG_PROPERTY);
 		if(home!=null) {
 			File homeFile = new File(home);
 			registerFile(homeFile, "$jmeter.libraries", props);

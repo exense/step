@@ -74,7 +74,6 @@ public class JMeterLocalHandler extends JsonBasedFunctionHandler {
 			context.put("initialized", true);
 		}
 
-		// TODO: slf4j or logback?
 		if (rootLogger != null && rootLogger instanceof ch.qos.logback.classic.Logger) {
 			appender = new StepAppender((ch.qos.logback.classic.Logger) rootLogger);
 		}

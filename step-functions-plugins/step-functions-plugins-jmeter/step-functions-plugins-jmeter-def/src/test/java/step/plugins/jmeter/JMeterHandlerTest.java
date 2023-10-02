@@ -24,6 +24,7 @@ import org.bson.types.ObjectId;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.accessors.AbstractOrganizableObject;
@@ -45,24 +46,24 @@ public class JMeterHandlerTest {
 
     @Before
     public void before() {
-        jMeterHome = System.getenv().get("JMETER_HOME");
+        jMeterHome = System.getenv().get(JMeterFunctionTypeLocalPlugin.JMETER_HOME_ENV_VAR);
     }
 
+    @Category(step.junit.categories.LocalJMeter.class)
     @Test
     public void test1() {
-        if (jMeterHome != null) {
-            JMeterFunction f = buildTestFunction();
-            Output<JsonObject> output = run(f, "{\"url\":\"www.exense.ch\"}");
-            Assert.assertNull(output.getError());
-            Assert.assertNotNull(output.getPayload().get("samples"));
-        } else {
-            logger.warn("Skipping JMeterHandler test as no JMeter installation could been found");
+        if (jMeterHome == null) {
+            Assert.fail("JMeter home variable is not defined. If you want to skip JMeter tests please active the 'SkipJMeterTests' maven profile");
         }
+        JMeterFunction f = buildTestFunction();
+        Output<JsonObject> output = run(f, "{\"url\":\"www.exense.ch\"}");
+        Assert.assertNull(output.getError());
+        Assert.assertNotNull(output.getPayload().get("samples"));
     }
 
     private Output<JsonObject> run(JMeterFunction f, String inputJson) {
         Configuration configuration = new Configuration();
-        configuration.putProperty("plugins.jmeter.home", jMeterHome);
+        configuration.putProperty(JMeterFunctionType.JMETER_HOME_CONFIG_PROPERTY, jMeterHome);
 
         try (Context context = FunctionRunner.getContext(configuration, new JMeterFunctionType(configuration), new HashMap<>())) {
             return context.run(f, inputJson);

@@ -27,8 +27,10 @@ import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.engine.plugins.FunctionPlugin;
 import step.functions.type.FunctionTypeRegistry;
 
+// TODO: maybe move this class to another package (local)?
 @Plugin(dependencies= {FunctionPlugin.class})
 public class JMeterFunctionTypeLocalPlugin extends AbstractExecutionEnginePlugin {
+    public static final String JMETER_HOME_ENV_VAR = "JMETER_HOME";
     private FunctionTypeRegistry functionTypeRegistry;
 
     @Override
@@ -36,9 +38,9 @@ public class JMeterFunctionTypeLocalPlugin extends AbstractExecutionEnginePlugin
         if (context.getOperationMode() == OperationMode.LOCAL) {
             Configuration config = context.getConfiguration();
 
-            String jMeterHome = System.getenv().get("JMETER_HOME");
+            String jMeterHome = System.getenv().get(JMETER_HOME_ENV_VAR);
             if (jMeterHome != null) {
-                config.putProperty("plugins.jmeter.home", jMeterHome);
+                config.putProperty(JMeterFunctionType.JMETER_HOME_CONFIG_PROPERTY, jMeterHome);
             }
 
             functionTypeRegistry = context.require(FunctionTypeRegistry.class);
