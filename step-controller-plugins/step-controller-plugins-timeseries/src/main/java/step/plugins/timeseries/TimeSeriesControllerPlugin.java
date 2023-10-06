@@ -29,13 +29,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static step.plugins.timeseries.TimeSeriesExecutionPlugin.*;
+
 @Plugin
 public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 
     public static String RESOLUTION_PERIOD_PROPERTY = "plugins.timeseries.resolution.period";
     public static String TIME_SERIES_SAMPLING_LIMIT = "plugins.timeseries.sampling.limit";
     public static String TIME_SERIES_COLLECTION_PROPERTY = "timeseries";
-
     public static String TIME_SERIES_ATTRIBUTES_PROPERTY = "plugins.timeseries.attributes";
     public static String TIME_SERIES_ATTRIBUTES_DEFAULT = EXECUTION_ID + "," + TASK_ID + "," + PLAN_ID + ",metricType,origin,name,rnStatus,project,type";
 
@@ -55,12 +56,9 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
         context.put(TimeSeries.class, timeSeries);
         mainIngestionPipeline = timeSeries.newIngestionPipeline(flushPeriod);
         aggregationPipeline = timeSeries.getAggregationPipeline();
-        TimeSeriesAggregationPipeline aggregationPipeline = timeSeries.getAggregationPipeline();
-        MetricTypeAccessor metricTypeAccessor = new MetricTypeAccessor(context.getCollectionFactory().getCollection(EntityManager.metricTypes, MetricType.class));
 
         context.put(TimeSeriesIngestionPipeline.class, mainIngestionPipeline);
         context.put(TimeSeriesAggregationPipeline.class, aggregationPipeline);
-        context.put(MetricTypeAccessor.class, metricTypeAccessor);
 
         context.getServiceRegistrationCallback().registerService(TimeSeriesService.class);
         TimeSeriesBucketingHandler handler = new TimeSeriesBucketingHandler(mainIngestionPipeline, attributes);
@@ -72,26 +70,13 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
         configurationManager.registerHook(s -> Map.of(RESOLUTION_PERIOD_PROPERTY, resolutionPeriod.toString()));
 
     }
-    
+
     @Override
     public ExecutionEnginePlugin getExecutionEnginePlugin() {
-        return new AbstractExecutionEnginePlugin() {
-            @Override
-            public void executionStart(ExecutionContext context) {
-                context.put(TimeSeriesAggregationPipeline.class, aggregationPipeline);
-                context.put(TimeSeriesIngestionPipeline.class, mainIngestionPipeline);
-            }
-
-            @Override
-            public void afterExecutionEnd(ExecutionContext context) {
-                // Ensure that all measurements have been flushed before the execution ends
-                // This is critical for the SchedulerTaskAssertions to work properly
-                mainIngestionPipeline.flush();
-            }
-        };
+        return new TimeSeriesExecutionPlugin(mainIngestionPipeline, aggregationPipeline);
     }
     
-    @Override
+     @Override
     public void initializeData(GlobalContext context) throws Exception {
         MetricAttribute taskAttribute = new MetricAttribute().setValue("taskId").setLabel("Task");
         MetricAttribute executionAttribute = new MetricAttribute().setValue("eId").setLabel("Execution");
