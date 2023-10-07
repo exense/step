@@ -91,19 +91,12 @@ public class TimeSeriesExecutionPluginTest extends AbstractKeyword {
 		timeSeriesAggregationPipeline = globalContext.get(TimeSeriesAggregationPipeline.class);
 		TimeSeriesIngestionPipeline timeSeriesIngestionPipeline = globalContext.get(TimeSeriesIngestionPipeline.class);
 		engine = ExecutionEngine.builder()
-				.withPlugin(new AbstractExecutionEnginePlugin() {
-					@Override
-					public void executionStart(ExecutionContext context) {
-						// The TimeSeriesExecutionPlugin requires the TimeSeriesIngestionPipeline. Add it here to the context
-						context.put(TimeSeriesIngestionPipeline.class, timeSeriesIngestionPipeline);
-					}
-				})
 				.withPlugin(new MeasurementPlugin(GaugeCollectorRegistry.getInstance()))
 				.withPlugin(new FunctionPlugin())
                 .withPlugin(new ThreadPoolPlugin())
 				.withPlugin(new LocalFunctionPlugin())
                 .withPlugin(new BaseArtefactPlugin())
-                .withPlugin(new TimeSeriesExecutionPlugin())
+                .withPlugin(new TimeSeriesExecutionPlugin(timeSeriesIngestionPipeline, timeSeriesAggregationPipeline))
 				.withPlugin(new ViewPlugin())
 				.build();
 

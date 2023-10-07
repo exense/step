@@ -5,8 +5,10 @@ import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
+import step.core.plugins.IgnoreDuringAutoDiscovery;
 import step.core.plugins.Plugin;
 import step.core.timeseries.TimeSeriesIngestionPipeline;
+import step.core.timeseries.aggregation.TimeSeriesAggregationPipeline;
 import step.core.timeseries.bucket.BucketAttributes;
 import step.core.views.ViewManager;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
@@ -16,6 +18,7 @@ import step.plugins.views.functions.ErrorDistributionView;
 import java.util.HashMap;
 import java.util.Map;
 
+@IgnoreDuringAutoDiscovery
 @Plugin(dependencies= {})
 public class TimeSeriesExecutionPlugin extends AbstractExecutionEnginePlugin {
 
@@ -33,9 +36,21 @@ public class TimeSeriesExecutionPlugin extends AbstractExecutionEnginePlugin {
 	public static final String TASK_ID = "taskId";
 	public static final String PLAN_ID = "planId";
 
+	private final TimeSeriesIngestionPipeline ingestionPipeline;
+	private final TimeSeriesAggregationPipeline aggregationPipeline;
+
+	public TimeSeriesExecutionPlugin(TimeSeriesIngestionPipeline ingestionPipeline, TimeSeriesAggregationPipeline aggregationPipeline) {
+		this.ingestionPipeline = ingestionPipeline;
+		this.aggregationPipeline = aggregationPipeline;
+	}
+
 	@Override
 	public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
 		super.initializeExecutionContext(executionEngineContext, executionContext);
+
+		executionContext.put(TimeSeriesAggregationPipeline.class, aggregationPipeline);
+		executionContext.put(TimeSeriesIngestionPipeline.class, ingestionPipeline);
+
 		Execution execution = executionContext.getExecutionAccessor().get(executionContext.getExecutionId());
 		if (execution != null) {
 			execution.addCustomField(TIMESERIES_FLAG,true);
@@ -47,7 +62,6 @@ public class TimeSeriesExecutionPlugin extends AbstractExecutionEnginePlugin {
 	public void afterExecutionEnd(ExecutionContext context) {
 		ExecutionAccessor executionAccessor = context.getExecutionAccessor();
 		Execution execution = executionAccessor.get(context.getExecutionId());
-		TimeSeriesIngestionPipeline ingestionPipeline = context.require(TimeSeriesIngestionPipeline.class);
 		ViewManager viewManager = context.require(ViewManager.class);
 
 		boolean executionPassed = execution.getResult() == ReportNodeStatus.PASSED;
@@ -61,6 +75,10 @@ public class TimeSeriesExecutionPlugin extends AbstractExecutionEnginePlugin {
 		errorDistribution.getCountByErrorCode().entrySet().forEach(entry -> {
 			ingestionPipeline.ingestPoint(withExecutionAttributes(execution, Map.of(METRIC_TYPE, FAILURES_COUNT_BY_ERROR_CODE, ERROR_CODE, entry.getKey())), execution.getStartTime(), entry.getValue() > 0 ? 1 : 0);
 		});
+
+		// Ensure that all measurements have been flushed before the execution ends
+		// This is critical for the SchedulerTaskAssertions to work properly
+		ingestionPipeline.flush();
 
 		super.afterExecutionEnd(context);
 	}

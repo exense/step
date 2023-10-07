@@ -70,6 +70,7 @@ import java.util.NoSuchElementException;
 
 public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunctionReportNode> {
 
+	private static final String KEYWORD_OUTPUT_LEGACY_FORMAT = "keywords.output.legacy";
 	protected FunctionExecutionService functionExecutionService;
 	
 	protected FunctionAccessor functionAccessor;
@@ -82,6 +83,8 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	private FunctionRouter functionRouter;
 	
 	protected FunctionLocator functionLocator;
+
+	protected boolean useLegacyOutput;
 	
 	@Override
 	public void init(ExecutionContext context) {
@@ -93,6 +96,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));
 		this.selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
 		this.functionLocator = new FunctionLocator(functionAccessor, selectorHelper);
+		this.useLegacyOutput = context.getConfiguration().getPropertyAsBoolean(KEYWORD_OUTPUT_LEGACY_FORMAT, false);
 	}
 
 	@Override
@@ -183,12 +187,13 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				}
 	
 				if(output.getPayload() != null) {
-					context.getVariablesManager().putVariable(node, "output", new UserFriendlyJsonObject(output.getPayload()));
+					Object outputPayload = (useLegacyOutput) ? output.getPayload() : new UserFriendlyJsonObject(output.getPayload());
+					context.getVariablesManager().putVariable(node, "output", outputPayload);
 					node.setOutput(output.getPayload().toString());
 					node.setOutputObject(output.getPayload());
 					ReportNode parentNode = context.getReportNodeCache().get(node.getParentID());
 					if(parentNode!=null) {
-						context.getVariablesManager().putVariable(parentNode, "previous", output.getPayload());					
+						context.getVariablesManager().putVariable(parentNode, "previous", outputPayload);
 					}
 				}
 				
