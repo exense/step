@@ -138,7 +138,6 @@ public class YamlKeywordsDeserializer extends JsonDeserializer<AutomationPackage
         List<YamlKeywordFieldDeserializationProcessor> processors = new ArrayList<>();
 
         // default rules
-        // TODO: apply default keyword name in case of missing value in yaml!!!
         processors.add(new KeywordNameRule().getDeserializationProcessor());
         processors.add(new TokenSelectionCriteriaRule().getDeserializationProcessor());
 

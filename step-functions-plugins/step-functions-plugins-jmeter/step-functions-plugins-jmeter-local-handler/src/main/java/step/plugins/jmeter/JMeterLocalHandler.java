@@ -40,6 +40,8 @@ import java.util.Objects;
 
 public class JMeterLocalHandler extends JsonBasedFunctionHandler {
 
+	private static final Logger log = LoggerFactory.getLogger(JMeterLocalHandler.class);
+
 	public static final String JMETER_TESTPLAN = "$jmeter.testplan.file";
 
 	public static final String JMETER_LIBRARIES = "$jmeter.libraries";
@@ -74,8 +76,12 @@ public class JMeterLocalHandler extends JsonBasedFunctionHandler {
 			context.put("initialized", true);
 		}
 
-		if (rootLogger != null && rootLogger instanceof ch.qos.logback.classic.Logger) {
-			appender = new StepAppender((ch.qos.logback.classic.Logger) rootLogger);
+		if (rootLogger != null) {
+			if (rootLogger instanceof ch.qos.logback.classic.Logger) {
+				appender = new StepAppender((ch.qos.logback.classic.Logger) rootLogger);
+			} else {
+				log.warn("rootLogger is not an instance of {}. Actual logger class is {}. The StepAppender cannot be used", ch.qos.logback.classic.Logger.class, rootLogger.getClass());
+			}
 		}
 
 		OutputBuilder out = new OutputBuilder();
