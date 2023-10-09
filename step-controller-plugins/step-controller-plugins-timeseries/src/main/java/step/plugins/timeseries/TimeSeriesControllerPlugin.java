@@ -13,10 +13,7 @@ import step.core.plugins.Plugin;
 import step.core.timeseries.TimeSeries;
 import step.core.timeseries.TimeSeriesIngestionPipeline;
 import step.core.timeseries.aggregation.TimeSeriesAggregationPipeline;
-import step.core.timeseries.metric.MetricAggregation;
-import step.core.timeseries.metric.MetricAttribute;
-import step.core.timeseries.metric.MetricType;
-import step.core.timeseries.metric.MetricTypeAccessor;
+import step.core.timeseries.metric.*;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.engine.plugins.ExecutionEnginePlugin;
 import step.plugins.measurements.GaugeCollectorRegistry;
@@ -29,14 +26,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static step.plugins.timeseries.TimeSeriesExecutionPlugin.*;
-
 @Plugin
 public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 
     public static String RESOLUTION_PERIOD_PROPERTY = "plugins.timeseries.resolution.period";
     public static String TIME_SERIES_SAMPLING_LIMIT = "plugins.timeseries.sampling.limit";
     public static String TIME_SERIES_COLLECTION_PROPERTY = "timeseries";
+
     public static String TIME_SERIES_ATTRIBUTES_PROPERTY = "plugins.timeseries.attributes";
     public static String TIME_SERIES_ATTRIBUTES_DEFAULT = EXECUTION_ID + "," + TASK_ID + "," + PLAN_ID + ",metricType,origin,name,rnStatus,project,type";
 
@@ -56,9 +52,12 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
         context.put(TimeSeries.class, timeSeries);
         mainIngestionPipeline = timeSeries.newIngestionPipeline(flushPeriod);
         aggregationPipeline = timeSeries.getAggregationPipeline();
+        TimeSeriesAggregationPipeline aggregationPipeline = timeSeries.getAggregationPipeline();
+        MetricTypeAccessor metricTypeAccessor = new MetricTypeAccessor(context.getCollectionFactory().getCollection(EntityManager.metricTypes, MetricType.class));
 
         context.put(TimeSeriesIngestionPipeline.class, mainIngestionPipeline);
         context.put(TimeSeriesAggregationPipeline.class, aggregationPipeline);
+        context.put(MetricTypeAccessor.class, metricTypeAccessor);
 
         context.getServiceRegistrationCallback().registerService(TimeSeriesService.class);
         TimeSeriesBucketingHandler handler = new TimeSeriesBucketingHandler(mainIngestionPipeline, attributes);
@@ -70,50 +69,63 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
         configurationManager.registerHook(s -> Map.of(RESOLUTION_PERIOD_PROPERTY, resolutionPeriod.toString()));
 
     }
-
+    
     @Override
     public ExecutionEnginePlugin getExecutionEnginePlugin() {
         return new TimeSeriesExecutionPlugin(mainIngestionPipeline, aggregationPipeline);
     }
-    
-     @Override
+
+    @Override
     public void initializeData(GlobalContext context) throws Exception {
         MetricAttribute taskAttribute = new MetricAttribute().setValue("taskId").setLabel("Task");
         MetricAttribute executionAttribute = new MetricAttribute().setValue("eId").setLabel("Execution");
         MetricAttribute planAttribute = new MetricAttribute().setValue("planId").setLabel("Plan");
         MetricAttribute nameAttribute = new MetricAttribute().setValue("name").setLabel("Name");
+        MetricAttribute errorCodeAttribute = new MetricAttribute().setValue("errorCode").setLabel("Error Code");
 
         MetricTypeAccessor metricTypeAccessor = context.get(MetricTypeAccessor.class);
         List<MetricType> metrics = Arrays.asList(
                 new MetricType()
-                        .setName("executions/count")
-                        .setLabel("Count")
-                        .setDefaultAggregation(MetricAggregation.SUM)
-                        .setAttributes(Arrays.asList(taskAttribute, executionAttribute, planAttribute)),
-                new MetricType()
-                        .setName("executions/failure-percentage")
-                        .setLabel("Failure percentage")
-                        .setUnit("%")
-                        .setDefaultAggregation(MetricAggregation.AVG)
-                        .setAttributes(Arrays.asList(taskAttribute, executionAttribute, planAttribute)),
-                new MetricType()
-                        .setName("executions/failure-count")
-                        .setLabel("Failure count")
+                        .setKey(EXECUTIONS_COUNT)
+                        .setName("Count")
                         .setAttributes(Arrays.asList(taskAttribute, executionAttribute, planAttribute))
-                        .setDefaultAggregation(MetricAggregation.SUM),
+                        .setRenderingSettings(new MetricRenderingSettings()
+                                .setDefaultAggregation(MetricAggregation.SUM)
+                        ),
                 new MetricType()
-                        .setName("executions/failures-count-by-error-code")
-                        .setLabel("Failure by error code")
-                        .setGroupingAttribute("errorCode")
-                        .setDefaultAggregation(MetricAggregation.SUM)
-                        .setAttributes(Arrays.asList(taskAttribute, executionAttribute, planAttribute)),
+                        // AVG calculation is enough here. the value is either 0 or 100 for each exec.
+                        .setKey(FAILURE_PERCENTAGE)
+                        .setName("Failure percentage")
+                        .setAttributes(Arrays.asList(taskAttribute, executionAttribute, planAttribute))
+                        .setRenderingSettings(new MetricRenderingSettings()
+                                .setUnit(MetricUnit.PERCENTAGE)
+                                .setDefaultAggregation(MetricAggregation.AVG)
+                        ),
                 new MetricType()
-                        .setName("response-time")
-                        .setLabel("Response time")
-                        .setGroupingAttribute("name")
-                        .setUnit("ms")
-                        .setDefaultAggregation(MetricAggregation.AVG)
+                        .setKey(FAILURE_COUNT)
+                        .setName("Failure count")
+                        .setAttributes(Arrays.asList(taskAttribute, executionAttribute, planAttribute))
+                        .setRenderingSettings(new MetricRenderingSettings()
+                                .setDefaultAggregation(MetricAggregation.COUNT)
+                        ),
+                new MetricType()
+                        .setKey(FAILURES_COUNT_BY_ERROR_CODE)
+                        .setName("Failure by error code")
+                        .setAttributes(Arrays.asList(taskAttribute, executionAttribute, planAttribute, errorCodeAttribute))
+                        .setRenderingSettings(new MetricRenderingSettings()
+                                .setDefaultGroupingAttributes(Arrays.asList(errorCodeAttribute.getValue()))
+                                .setDefaultAggregation(MetricAggregation.RATE)
+                        ),
+
+                new MetricType()
+                        .setKey("response-time")
+                        .setName("Response time")
                         .setAttributes(Arrays.asList(nameAttribute, taskAttribute, executionAttribute, planAttribute))
+                        .setRenderingSettings(new MetricRenderingSettings()
+                                .setDefaultGroupingAttributes(Arrays.asList(nameAttribute.getValue()))
+                                .setUnit(MetricUnit.MS)
+                                .setDefaultAggregation(MetricAggregation.AVG)
+                        )
         );
         metrics.forEach(m -> {
             MetricType existingMetric = metricTypeAccessor.findByCriteria(Map.of("name", m.getName()));
