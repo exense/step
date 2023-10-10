@@ -210,4 +210,10 @@ public class ParameterServices extends AbstractEntityServices<Parameter> {
 		}
 		return maskProtectedValues(range.stream());
 	}
+
+	@Override
+	public Parameter restoreVersion(String id, String versionId) {
+		assertRights(parameterAccessor.get(id));
+		return super.restoreVersion(id, versionId);
+	}
 }
