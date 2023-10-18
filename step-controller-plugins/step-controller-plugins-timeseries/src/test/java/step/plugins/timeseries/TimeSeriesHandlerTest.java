@@ -2,7 +2,6 @@ package step.plugins.timeseries;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
-import org.bson.types.ObjectId;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -107,7 +106,7 @@ public class TimeSeriesHandlerTest {
         request.setPercentiles(Arrays.asList(10, 20, 50));
         request.setOqlFilter("");
         request.setParams(Map.of("eId", "abc"));
-        TimeSeriesAPIResponse response = handler.getBuckets(request);
+        TimeSeriesAPIResponse response = handler.getMeasurements(request);
         Assert.assertEquals(0, response.getStart());
         Assert.assertEquals(BUCKET_RESOLUTION, response.getEnd());
         Assert.assertTrue(response.getMatrix().isEmpty());
@@ -129,7 +128,7 @@ public class TimeSeriesHandlerTest {
         request.setOqlFilter("");
         request.setParams(Map.of("key", key));
 
-        TimeSeriesAPIResponse response = handler.getBuckets(request);
+        TimeSeriesAPIResponse response = handler.getMeasurements(request);
         Assert.assertEquals(0, response.getStart());
         Assert.assertEquals(bucketsCount * 1000, response.getEnd());
         Assert.assertEquals(1, response.getMatrix().size());
@@ -164,7 +163,7 @@ public class TimeSeriesHandlerTest {
         request.setPercentiles(Arrays.asList(10, 20, 50));
         request.setOqlFilter("attributes.key = " + key);
 
-        TimeSeriesAPIResponse response = handler.getBuckets(request);
+        TimeSeriesAPIResponse response = handler.getMeasurements(request);
         Assert.assertEquals(0, response.getStart());
         Assert.assertEquals(bucketsCount * 1000, response.getEnd());
         Assert.assertEquals(responseBucketsCount, response.getMatrix().get(0).size());
@@ -203,13 +202,13 @@ public class TimeSeriesHandlerTest {
         request.setPercentiles(Arrays.asList(10, 20, 50));
         request.setOqlFilter("attributes.unknownKey = " + key); // this is not a known field, so it will fall over on RAW data.
 
-        TimeSeriesAPIResponse response = handler.getBuckets(request);
+        TimeSeriesAPIResponse response = handler.getMeasurements(request);
         Assert.assertEquals(0, response.getMatrix().size()); // we don't have measurements with unknown key
         Assert.assertEquals(0, response.getMatrixKeys().size());
 
         List<Measurement> measurements = generateMeasurements(100, "unknownKey", key);
         measurementsCollection.save(measurements);
-        response = handler.getBuckets(request);
+        response = handler.getMeasurements(request);
         Assert.assertEquals(1, response.getMatrix().size()); // w have measurements with unknown key
         Assert.assertEquals(1, response.getMatrixKeys().size());
 
@@ -233,7 +232,7 @@ public class TimeSeriesHandlerTest {
         request.setPercentiles(Arrays.asList(10, 20, 50));
         request.setOqlFilter("attributes.key = " + key);
 
-        TimeSeriesAPIResponse response = handler.getBuckets(request);
+        TimeSeriesAPIResponse response = handler.getMeasurements(request);
         Assert.assertEquals(1, response.getMatrix().size());
         Assert.assertEquals(responseBucketsCount, response.getMatrix().get(0).size());
         Assert.assertEquals(1, response.getMatrixKeys().size());

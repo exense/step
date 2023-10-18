@@ -24,8 +24,6 @@ import step.plugins.timeseries.api.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import static step.plugins.timeseries.TimeSeriesControllerPlugin.RESOLUTION_PERIOD_PROPERTY;
 import static step.plugins.timeseries.TimeSeriesControllerPlugin.TIME_SERIES_SAMPLING_LIMIT;
@@ -57,11 +55,20 @@ public class TimeSeriesService extends AbstractStepServices {
 
     @Secured(right = "execution-read")
     @POST
-    @Path("/buckets")
+    @Path("")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public TimeSeriesAPIResponse getBuckets(FetchBucketsRequest request) {
+    public TimeSeriesAPIResponse getTimeSeries(FetchBucketsRequest request) {
         return handler.getBuckets(request);
+    }
+    
+    @Secured(right = "execution-read")
+    @POST
+    @Path("/measurements")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public TimeSeriesAPIResponse getMeasurements(FetchBucketsRequest request) {
+        return handler.getMeasurements(request);
     }
 
     /**

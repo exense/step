@@ -174,6 +174,12 @@ public class TimeSeriesHandler {
     }
 
     public TimeSeriesAPIResponse getBuckets(FetchBucketsRequest request) {
+        TimeSeriesAggregationQuery query = mapToQuery(request, this.aggregationPipeline);
+        TimeSeriesAggregationResponse response = query.run();
+        return mapToApiResponse(request, response);
+    }
+
+    public TimeSeriesAPIResponse getMeasurements(FetchBucketsRequest request) {
         validateFetchRequest(request);
 
         OQLVerifyResponse oqlVerifyResponse = this.verifyOql(request.getOqlFilter());
@@ -183,9 +189,7 @@ public class TimeSeriesHandler {
             // if the filter has attributes which are not indexed, switch to RAW measurements
             return this.getMeasurements(request, oqlVerifyResponse.getFields());
         } else {
-            TimeSeriesAggregationQuery query = mapToQuery(request, this.aggregationPipeline);
-            TimeSeriesAggregationResponse response = query.run();
-            return mapToApiResponse(request, response);
+            return getBuckets(request);
         }
     }
 
