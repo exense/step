@@ -1,9 +1,8 @@
 package step.functions.packages.handlers;
 
-import java.io.File;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Set;
 
@@ -43,21 +42,20 @@ public class JavaFunctionPackageDaemon extends FunctionPackageUtils {
 				parameter = objectMapper.readValue(reader, DiscovererParameters.class);
 			}
 			FunctionList list = daemon.getFunctions(parameter);
-			
-			try (OutputStreamWriter writer = new OutputStreamWriter(System.out)) {
+			try (OutputStreamWriter writer = new OutputStreamWriter(System.out, StandardCharsets.UTF_8)) {
 				writer.write(READY_STRING+"\n");
 				writer.write(objectMapper.writeValueAsString(list));
 			}
 		} catch (Exception e) {
 			FunctionList list = new FunctionList();
 			list.exception = e.getMessage();
-			try (OutputStreamWriter writer = new OutputStreamWriter(System.out)) {
+			try (OutputStreamWriter writer = new OutputStreamWriter(System.out, StandardCharsets.UTF_8)) {
 				writer.write(READY_STRING);
 				writer.write(objectMapper.writeValueAsString(list));
 			}
 		}
 	}
-	
+
 	protected FunctionList getFunctions(DiscovererParameters parameters) {
 		FunctionList functions = new FunctionList();
 		try {
