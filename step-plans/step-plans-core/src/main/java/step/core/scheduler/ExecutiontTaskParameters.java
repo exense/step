@@ -18,9 +18,12 @@
  ******************************************************************************/
 package step.core.scheduler;
 
+import org.bson.types.ObjectId;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.execution.model.ExecutionParameters;
 import step.core.objectenricher.EnricheableObject;
+
+import java.util.List;
 
 public class ExecutiontTaskParameters extends AbstractOrganizableObject implements EnricheableObject {
 	
@@ -28,8 +31,10 @@ public class ExecutiontTaskParameters extends AbstractOrganizableObject implemen
 	public String name;
 	
 	public ExecutionParameters executionsParameters;
-	
+
 	public String cronExpression;
+
+	private List<CronExclusion> cronExclusions;
 	
 	public boolean active;
 
@@ -77,6 +82,14 @@ public class ExecutiontTaskParameters extends AbstractOrganizableObject implemen
 
 	public void setCronExpression(String cronExpression) {
 		this.cronExpression = cronExpression;
+	}
+
+	public List<CronExclusion> getCronExclusions() {
+		return cronExclusions;
+	}
+
+	public void setCronExclusions(List<CronExclusion> cronExclusions) {
+		this.cronExclusions = cronExclusions;
 	}
 
 	public boolean isActive() {
