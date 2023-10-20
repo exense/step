@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.core.scheduler;
 
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -34,12 +35,15 @@ import org.quartz.SchedulerFactory;
 import org.quartz.Trigger;
 import org.quartz.TriggerBuilder;
 import org.quartz.impl.StdSchedulerFactory;
+import org.quartz.impl.calendar.BaseCalendar;
+import org.quartz.impl.calendar.CronCalendar;
 import org.quartz.impl.matchers.GroupMatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ch.exense.commons.app.Configuration;
 import step.core.GlobalContext;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
 import step.core.execution.OperationMode;
@@ -78,7 +82,11 @@ public class Executor {
 		}
 	}
 
-	public Executor() {
+	protected Executor() {
+	}
+
+	protected Executor(Scheduler scheduler) {
+		this.scheduler = scheduler;
 	}
 
 	private Properties getProperties() {
@@ -114,7 +122,14 @@ public class Executor {
 	}
 	
 	public void validate(ExecutiontTaskParameters task) {
-		CronScheduleBuilder.cronSchedule(task.getCronExpression());
+		try {
+			CronScheduleBuilder.cronSchedule(task.getCronExpression());
+			if (task.getCronExclusions() != null) {
+				task.getCronExclusions().forEach(c-> CronScheduleBuilder.cronSchedule(c.getCronExpression()));
+			}
+		} catch (RuntimeException e) {
+			logAndThrow(e.getMessage(), e);
+		}
 	}
 
 	public boolean schedule(ExecutiontTaskParameters task) {
@@ -127,10 +142,43 @@ public class Executor {
 			logger.error("An error occurred while checking if task exists in scheduler: " + task);
 			throw new RuntimeException(e);
 		}
-		Trigger trigger = TriggerBuilder.newTrigger().withSchedule(CronScheduleBuilder.cronSchedule(task.getCronExpression())).build();
+		//Base calendar allows you to chain calendars.
+		BaseCalendar baseCalendar = new BaseCalendar();
+		if (task.getCronExclusions() != null) {
+			try {
+				for(CronExclusion c : task.getCronExclusions()) {
+					baseCalendar = new CronCalendar(baseCalendar, c.getCronExpression());
+				}
+			} catch (ParseException e) { //such exception should already be caught by validate
+				logAndThrow("One of the cron expressions for the task '" + task.getAttribute(AbstractOrganizableObject.NAME) +
+						"' is invalid.", e);
+			}
+		}
+		//In case exclusions were removed we need to add/replace at least the base calendar
+		try {
+			scheduler.addCalendar("exclusionsCalendar_" + task.getId().toHexString(), baseCalendar, true, false);
+		} catch (SchedulerException e) {//exception throw when adding exclustion calendar
+			logAndThrow("Adding exclusion CRON expressions raised an error for the task '" +
+				task.getAttribute(AbstractOrganizableObject.NAME) + "'.", e);
+		}
+
+		Trigger trigger = TriggerBuilder.newTrigger()
+				.withSchedule(CronScheduleBuilder.cronSchedule(task.getCronExpression()))
+				.modifiedByCalendar("exclusionsCalendar_" + task.getId().toHexString())
+				.build();
 		JobDetail job = buildScheduledJob(task);
-		scheduleJob(trigger, job);
+		try {
+			scheduleJob(trigger, job);
+		} catch (Exception e) {
+			logAndThrow("Unable to schedule task '" + task.getAttribute(AbstractOrganizableObject.NAME) + "'.", e);
+		}
 		return trigger.mayFireAgain();
+	}
+
+	private void logAndThrow(String message, Exception e) {
+		String exMessage = (e.getCause() != null) ? e.getCause().getMessage() : e.getMessage();
+		logger.error(message, e);
+		throw new RuntimeException(message + " Details: " + exMessage);
 	}
 
 	public String execute(ExecutionParameters executionParameters) {
