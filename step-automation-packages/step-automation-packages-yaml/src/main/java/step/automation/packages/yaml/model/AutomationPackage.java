@@ -18,7 +18,12 @@
  ******************************************************************************/
 package step.automation.packages.yaml.model;
 
-public class AutomationPackageDescriptor {
+import step.core.plans.Plan;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class AutomationPackage {
 
     // this name should be kept untouched to support the migrations for old versions
     public static final String VERSION_FIELD_NAME = "version";
@@ -26,7 +31,8 @@ public class AutomationPackageDescriptor {
     private String version;
     private String name;
 
-    private AutomationPackageKeywords keywords = new AutomationPackageKeywords();
+    private List<AutomationPackageKeyword> keywords = new ArrayList<>();
+    private List<Plan> plans = new ArrayList<>();
 
     public String getName() {
         return name;
@@ -36,11 +42,11 @@ public class AutomationPackageDescriptor {
         this.name = name;
     }
 
-    public AutomationPackageKeywords getKeywords() {
+    public List<AutomationPackageKeyword> getKeywords() {
         return keywords;
     }
 
-    public void setKeywords(AutomationPackageKeywords keywords) {
+    public void setKeywords(List<AutomationPackageKeyword> keywords) {
         this.keywords = keywords;
     }
 
@@ -50,5 +56,13 @@ public class AutomationPackageDescriptor {
 
     public void setVersion(String version) {
         this.version = version;
+    }
+
+    public List<Plan> getPlans() {
+        return plans;
+    }
+
+    public void setPlans(List<Plan> plans) {
+        this.plans = plans;
     }
 }

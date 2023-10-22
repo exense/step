@@ -6,14 +6,14 @@ import java.io.OutputStreamWriter;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import step.attachments.FileResolver;
 import step.automation.packages.AutomationPackageReadingException;
-import step.automation.packages.yaml.AutomationPackageKeywordsExtractor;
+import step.automation.packages.yaml.AutomationPackageReader;
+import step.automation.packages.yaml.model.AutomationPackage;
 import step.automation.packages.yaml.model.AutomationPackageKeyword;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.scanner.AnnotationScanner;
@@ -32,7 +32,7 @@ import step.resources.LocalResourceManagerImpl;
 public class JavaFunctionPackageDaemon extends FunctionPackageUtils {
 
 	private final KeywordJsonSchemaCreator schemaCreator = new KeywordJsonSchemaCreator();
-	private final AutomationPackageKeywordsExtractor automationPackageKeywordsExtractor = new AutomationPackageKeywordsExtractor();
+	private final AutomationPackageReader automationPackageReader = new AutomationPackageReader();
 
 	public JavaFunctionPackageDaemon() {
 		super(new FileResolver(new LocalResourceManagerImpl()));
@@ -124,9 +124,12 @@ public class JavaFunctionPackageDaemon extends FunctionPackageUtils {
 
 			try {
 				// add functions from automation package
-				List<AutomationPackageKeyword> automationPackageKeywords = automationPackageKeywordsExtractor.extractKeywordsFromAutomationPackage(packageFile);
-				if(automationPackageKeywords != null) {
-					addAutomationPackageKeywordsToFunctionList(automationPackageKeywords, functions);
+				AutomationPackage automationPackage = automationPackageReader.readAutomationPackageFromJarFile(packageFile);
+				if(automationPackage != null) {
+					List<AutomationPackageKeyword> automationPackageKeywords = automationPackage.getKeywords();
+					if (automationPackageKeywords != null) {
+						addAutomationPackageKeywordsToFunctionList(automationPackageKeywords, functions);
+					}
 				}
 			} catch (AutomationPackageReadingException e) {
 				throw new RuntimeException("Unable to process automation package", e);

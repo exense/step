@@ -63,6 +63,7 @@ public class YamlPlanJsonSchemaGenerator {
 	protected final String targetPackage;
 
 	protected final Version actualVersion;
+	private final String schemaId;
 
 	protected final ObjectMapper objectMapper = DefaultJacksonMapperProvider.getObjectMapper();
 	protected final JsonProvider jsonProvider = JsonProvider.provider();
@@ -70,9 +71,10 @@ public class YamlPlanJsonSchemaGenerator {
 	protected final JsonSchemaCreator jsonSchemaCreator;
 	protected final YamlJsonSchemaHelper dynamicValuesHelper = new YamlJsonSchemaHelper(jsonProvider);
 
-	public YamlPlanJsonSchemaGenerator(String targetPackage, Version actualVersion) {
+	public YamlPlanJsonSchemaGenerator(String targetPackage, Version actualVersion, String schemaId) {
 		this.targetPackage = targetPackage;
 		this.actualVersion = actualVersion;
+		this.schemaId = schemaId;
 
 		// TODO: further we can replace this hardcoded logic for some custom field metadata and processing with some enhanced solution (java annotations?)
 
@@ -145,6 +147,9 @@ public class YamlPlanJsonSchemaGenerator {
 
 		// common fields for json schema
 		topLevelBuilder.add("$schema", "http://json-schema.org/draft-07/schema#");
+		if (this.schemaId != null) {
+			topLevelBuilder.add("$id", this.schemaId);
+		}
 		topLevelBuilder.add("title", "Plan");
 		topLevelBuilder.add("type", "object");
 
@@ -152,7 +157,7 @@ public class YamlPlanJsonSchemaGenerator {
 		topLevelBuilder.add("$defs", createDefs());
 
 		// add properties for top-level "plan" object
-		topLevelBuilder.add("properties", createPlanProperties());
+		topLevelBuilder.add("properties", createYamlPlanProperties());
 		topLevelBuilder.add("required", jsonProvider.createArrayBuilder().add("name").add("root"));
 		topLevelBuilder.add( "additionalProperties", false);
 
@@ -164,7 +169,7 @@ public class YamlPlanJsonSchemaGenerator {
 		}
 	}
 
-	private JsonObjectBuilder createPlanProperties() {
+	public JsonObjectBuilder createYamlPlanProperties() {
 		// plan only has "name", "version", and the root artifact
 		JsonObjectBuilder objectBuilder = jsonProvider.createObjectBuilder();
 		objectBuilder.add("name", jsonProvider.createObjectBuilder().add("type", "string"));
@@ -177,7 +182,7 @@ public class YamlPlanJsonSchemaGenerator {
 	/**
 	 * Prepares definitions to be reused in json subschemas
 	 */
-	private JsonObjectBuilder createDefs() throws JsonSchemaPreparationException {
+	public JsonObjectBuilder createDefs() throws JsonSchemaPreparationException {
 		JsonObjectBuilder defsBuilder = jsonProvider.createObjectBuilder();
 
 		List<JsonSchemaDefinitionCreator> definitionCreators = new ArrayList<>();

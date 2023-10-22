@@ -23,7 +23,8 @@ import org.slf4j.LoggerFactory;
 import step.automation.packages.AutomationPackageFile;
 import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.yaml.AutomationPackageKeywordsAttributesApplier;
-import step.automation.packages.yaml.AutomationPackageKeywordsExtractor;
+import step.automation.packages.yaml.AutomationPackageReader;
+import step.automation.packages.yaml.model.AutomationPackage;
 import step.automation.packages.yaml.model.AutomationPackageKeyword;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
@@ -53,7 +54,7 @@ public class StepJarParser {
     private static final Logger logger = LoggerFactory.getLogger(StepJarParser.class);
 
     private final StepClassParser stepClassParser;
-    private final AutomationPackageKeywordsExtractor automationPackageKeywordsExtractor;
+    private final AutomationPackageReader automationPackageReader;
     private final AutomationPackageKeywordsAttributesApplier automationPackagesKeywordAttributesAppler;
 
     public StepJarParser() {
@@ -62,7 +63,7 @@ public class StepJarParser {
 
     public StepJarParser(ResourceManager resourceManager) {
         this.stepClassParser = new StepClassParser(false);
-        this.automationPackageKeywordsExtractor = new AutomationPackageKeywordsExtractor();
+        this.automationPackageReader = new AutomationPackageReader();
         this.automationPackagesKeywordAttributesAppler = new AutomationPackageKeywordsAttributesApplier(resourceManager);
     }
 
@@ -104,11 +105,14 @@ public class StepJarParser {
 
         try {
             // add functions from automation package
-            List<AutomationPackageKeyword> automationPackageKeywords = automationPackageKeywordsExtractor.extractKeywordsFromAutomationPackage(artifact);
-            if (!automationPackageKeywords.isEmpty()) {
-                AutomationPackageFile automationPackageFile = new AutomationPackageFile(artifact);
-                for (AutomationPackageKeyword automationPackageKeyword : automationPackageKeywords) {
-                    functions.add(automationPackagesKeywordAttributesAppler.applySpecialAttributesToKeyword(automationPackageKeyword, automationPackageFile));
+            AutomationPackage automationPackage = automationPackageReader.readAutomationPackageFromJarFile(artifact);
+            if(automationPackage != null) {
+                List<AutomationPackageKeyword> automationPackageKeywords = automationPackage.getKeywords();
+                if (!automationPackageKeywords.isEmpty()) {
+                    AutomationPackageFile automationPackageFile = new AutomationPackageFile(artifact);
+                    for (AutomationPackageKeyword automationPackageKeyword : automationPackageKeywords) {
+                        functions.add(automationPackagesKeywordAttributesAppler.applySpecialAttributesToKeyword(automationPackageKeyword, automationPackageFile));
+                    }
                 }
             }
         } catch (AutomationPackageReadingException e) {

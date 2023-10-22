@@ -27,6 +27,11 @@
             <artifactId>step-automation-packages-yaml</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>ch.exense.step</groupId>
+            <artifactId>step-plans-yaml-parser</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
         <!-- To include jmeter keyword to schema-->
         <dependency>

@@ -44,7 +44,7 @@ public class YamlPlanJsonSchemaGeneratorTest {
 		InputStream jsonSchemaFile = this.getClass().getClassLoader().getResourceAsStream("step/plans/parser/yaml/step-yaml-plan-schema-os-1.0.json");
 
 		JsonNode publishedSchema = jsonObjectMapper.readTree(jsonSchemaFile);
-		YamlPlanJsonSchemaGenerator schemaGenerator = new YamlPlanJsonSchemaGenerator("step", YamlPlanVersions.ACTUAL_VERSION);
+		YamlPlanJsonSchemaGenerator schemaGenerator = new YamlPlanJsonSchemaGenerator("step", YamlPlanVersions.ACTUAL_VERSION, null);
 		JsonNode currentSchema = schemaGenerator.generateJsonSchema();
 
 		log.info("GENERATED SCHEMA:");

@@ -153,6 +153,11 @@ public class YamlPlanReader {
 	 * @param yamlPlanStream yaml data
 	 */
 	public Plan readYamlPlan(InputStream yamlPlanStream) throws IOException, YamlPlanValidationException {
+		YamlPlan yamlPlan = readYamlPlanFromInputStream(yamlPlanStream);
+		return yamlPlanToPlan(yamlPlan);
+	}
+
+	protected YamlPlan readYamlPlanFromInputStream(InputStream yamlPlanStream) throws IOException, YamlPlanValidationException {
 		String bufferedYamlPlan = new String(yamlPlanStream.readAllBytes(), StandardCharsets.UTF_8);
 
 		bufferedYamlPlan = upgradeYamlPlanIfRequired(bufferedYamlPlan);
@@ -161,13 +166,12 @@ public class YamlPlanReader {
 		if (jsonSchema != null) {
 			try {
 				JsonSchemaValidator.validate(jsonSchema, yamlPlanJsonNode.toString());
-			} catch (Exception ex){
+			} catch (Exception ex) {
 				throw new YamlPlanValidationException(ex.getMessage(), ex);
 			}
 		}
 
-		YamlPlan yamlPlan = yamlMapper.treeToValue(yamlPlanJsonNode, YamlPlan.class);
-		return yamlPlanToPlan(yamlPlan);
+		return yamlMapper.treeToValue(yamlPlanJsonNode, YamlPlan.class);
 	}
 
 	/**

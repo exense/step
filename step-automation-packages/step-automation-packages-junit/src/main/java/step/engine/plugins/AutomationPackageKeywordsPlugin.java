@@ -21,7 +21,8 @@ package step.engine.plugins;
 import step.automation.packages.AutomationPackageFile;
 import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.yaml.AutomationPackageKeywordsAttributesApplier;
-import step.automation.packages.yaml.AutomationPackageKeywordsExtractor;
+import step.automation.packages.yaml.AutomationPackageReader;
+import step.automation.packages.yaml.model.AutomationPackage;
 import step.automation.packages.yaml.model.AutomationPackageKeyword;
 import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionEngineContext;
@@ -58,11 +59,13 @@ public class AutomationPackageKeywordsPlugin extends AbstractExecutionEnginePlug
         AutomationPackageFile automationPackageFile = new AutomationPackageFile(this.getClass().getClassLoader());
         if (automationPackageFile.isAutomationPackage()) {
             try {
-                AutomationPackageKeywordsExtractor keywordsExtractor = new AutomationPackageKeywordsExtractor();
+                AutomationPackageReader keywordsExtractor = new AutomationPackageReader();
                 AutomationPackageKeywordsAttributesApplier attributesApplier = new AutomationPackageKeywordsAttributesApplier(resourceManager);
-                List<AutomationPackageKeyword> foundKeywords = keywordsExtractor.extractKeywordsFromAutomationPackage(automationPackageFile);
-                for (AutomationPackageKeyword foundKeyword : foundKeywords) {
-                    res.add(attributesApplier.applySpecialAttributesToKeyword(foundKeyword, automationPackageFile));
+                AutomationPackage automationPackage = keywordsExtractor.readAutomationPackage(automationPackageFile);
+                if (automationPackage != null) {
+                    for (AutomationPackageKeyword foundKeyword : automationPackage.getKeywords()) {
+                        res.add(attributesApplier.applySpecialAttributesToKeyword(foundKeyword, automationPackageFile));
+                    }
                 }
             } catch (AutomationPackageReadingException e) {
                 throw new RuntimeException("Unable to extract functions from automation package", e);
