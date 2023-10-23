@@ -43,13 +43,14 @@ import org.slf4j.LoggerFactory;
 
 import ch.exense.commons.app.Configuration;
 import step.core.GlobalContext;
-import step.core.accessors.AbstractOrganizableObject;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
 import step.core.execution.OperationMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.objectenricher.ObjectHookRegistry;
 import step.engine.plugins.ExecutionEnginePlugin;
+
+import static step.core.accessors.AbstractOrganizableObject.NAME;
 
 public class Executor {
 	
@@ -115,6 +116,7 @@ public class Executor {
 		JobKey key = new JobKey(task.getId().toString());
 		try {
 			scheduler.deleteJob(key);
+			scheduler.deleteCalendar(getExclusionCalendarName(task));
 		} catch (SchedulerException e) {
 			logger.error("An error occurred while removing task from scheduler: " + task);
 			throw new RuntimeException(e);
@@ -124,8 +126,9 @@ public class Executor {
 	public void validate(ExecutiontTaskParameters task) {
 		try {
 			CronScheduleBuilder.cronSchedule(task.getCronExpression());
-			if (task.getCronExclusions() != null) {
-				task.getCronExclusions().forEach(c-> CronScheduleBuilder.cronSchedule(c.getCronExpression()));
+			List<CronExclusion> cronExclusions = task.getCronExclusions();
+			if (cronExclusions != null) {
+				cronExclusions.forEach(c-> CronScheduleBuilder.cronSchedule(c.getCronExpression()));
 			}
 		} catch (RuntimeException e) {
 			logAndThrow(e.getMessage(), e);
@@ -134,6 +137,7 @@ public class Executor {
 
 	public boolean schedule(ExecutiontTaskParameters task) {
 		JobKey key = new JobKey(task.getId().toString());
+		String taskName = task.getAttribute(NAME);
 		try {
 			if(scheduler.checkExists(key)) {
 				deleteSchedule(task);
@@ -150,29 +154,34 @@ public class Executor {
 					baseCalendar = new CronCalendar(baseCalendar, c.getCronExpression());
 				}
 			} catch (ParseException e) { //such exception should already be caught by validate
-				logAndThrow("One of the cron expressions for the task '" + task.getAttribute(AbstractOrganizableObject.NAME) +
+				logAndThrow("One of the cron expressions for the task '" + taskName +
 						"' is invalid.", e);
 			}
 		}
 		//In case exclusions were removed we need to add/replace at least the base calendar
+		String exclusionCalendarName = getExclusionCalendarName(task);
 		try {
-			scheduler.addCalendar("exclusionsCalendar_" + task.getId().toHexString(), baseCalendar, true, false);
+			scheduler.addCalendar(exclusionCalendarName, baseCalendar, true, false);
 		} catch (SchedulerException e) {//exception throw when adding exclustion calendar
 			logAndThrow("Adding exclusion CRON expressions raised an error for the task '" +
-				task.getAttribute(AbstractOrganizableObject.NAME) + "'.", e);
+					taskName + "'.", e);
 		}
 
 		Trigger trigger = TriggerBuilder.newTrigger()
 				.withSchedule(CronScheduleBuilder.cronSchedule(task.getCronExpression()))
-				.modifiedByCalendar("exclusionsCalendar_" + task.getId().toHexString())
+				.modifiedByCalendar(exclusionCalendarName)
 				.build();
 		JobDetail job = buildScheduledJob(task);
 		try {
 			scheduleJob(trigger, job);
 		} catch (Exception e) {
-			logAndThrow("Unable to schedule task '" + task.getAttribute(AbstractOrganizableObject.NAME) + "'.", e);
+			logAndThrow("Unable to schedule task '" + taskName + "'.", e);
 		}
 		return trigger.mayFireAgain();
+	}
+
+	private String getExclusionCalendarName(ExecutiontTaskParameters task) {
+		return "exclusionsCalendar_" + task.getId().toHexString();
 	}
 
 	private void logAndThrow(String message, Exception e) {
