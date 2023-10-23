@@ -1,15 +1,7 @@
 package step.functions.packages.handlers;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.util.List;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import ch.exense.commons.processes.ManagedProcess;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.attachments.FileResolver;
@@ -17,7 +9,10 @@ import step.core.objectenricher.ObjectEnricher;
 import step.functions.Function;
 import step.functions.packages.FunctionPackage;
 import step.functions.packages.FunctionPackageHandler;
-import step.functions.packages.FunctionPackageManager;
+
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 public abstract class AbstractFunctionPackageHandler extends FunctionPackageUtils implements FunctionPackageHandler {
 
@@ -61,7 +56,7 @@ public abstract class AbstractFunctionPackageHandler extends FunctionPackageUtil
 
 		FunctionList list;
 		try (BufferedReader inputStream = new BufferedReader(
-				new InputStreamReader(discovererDeamon.getProcessInputStream()))) {
+				new InputStreamReader(discovererDeamon.getProcessInputStream(), StandardCharsets.UTF_8))) {
 			String res;
 			do {
 				res = inputStream.readLine();
@@ -75,9 +70,7 @@ public abstract class AbstractFunctionPackageHandler extends FunctionPackageUtil
 
 		if (list.exception == null) {
 			List<Function> functions = list.getFunctions();
-			functions.forEach(f -> {
-				configureFunction(f, functionPackage);
-			});
+			functions.forEach(f -> configureFunction(f, functionPackage));
 			return list.getFunctions();
 		} else {
 			throw new Exception(list.exception);
