@@ -16,17 +16,15 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.yaml.model;
+package step.automation.packages;
 
+import step.automation.packages.yaml.model.AutomationPackageKeyword;
 import step.core.plans.Plan;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class AutomationPackage {
-
-    // this name should be kept untouched to support the migrations for old versions
-    public static final String VERSION_FIELD_NAME = "version";
 
     private String version;
     private String name;

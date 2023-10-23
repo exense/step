@@ -29,18 +29,18 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.List;
 
-public class AutomationPackageFile {
+public class AutomationPackageArchive {
 
-    private static final Logger log = LoggerFactory.getLogger(AutomationPackageFile.class);
+    private static final Logger log = LoggerFactory.getLogger(AutomationPackageArchive.class);
     public static final List<String> METADATA_FILES = List.of("automation.yml", "automation.yaml");
 
     private final ClassLoader classLoader;
 
-    public AutomationPackageFile(ClassLoader classLoader) {
+    public AutomationPackageArchive(ClassLoader classLoader) {
         this.classLoader = classLoader;
     }
 
-    public AutomationPackageFile(File automationPackageJar) throws AutomationPackageReadingException {
+    public AutomationPackageArchive(File automationPackageJar) throws AutomationPackageReadingException {
         try {
             this.classLoader = new URLClassLoader(new URL[]{automationPackageJar.toURI().toURL()});
         } catch (MalformedURLException ex) {

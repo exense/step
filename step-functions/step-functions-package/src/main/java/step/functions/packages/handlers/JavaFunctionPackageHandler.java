@@ -11,7 +11,7 @@ import ch.exense.commons.app.Configuration;
 import ch.exense.commons.processes.ExternalJVMLauncher;
 import ch.exense.commons.processes.ManagedProcess;
 import step.attachments.FileResolver;
-import step.automation.packages.AutomationPackageFile;
+import step.automation.packages.AutomationPackageArchive;
 import step.automation.packages.yaml.AutomationPackageKeywordsAttributesApplier;
 import step.automation.packages.yaml.model.AutomationPackageKeyword;
 import step.core.dynamicbeans.DynamicValue;
@@ -52,7 +52,7 @@ public class JavaFunctionPackageHandler extends AbstractFunctionPackageHandler {
 	}
 
 	@Override
-	protected void configureFunction(Function f, FunctionPackage functionPackage, boolean preview, Map<String, Object> specialAutomationPackageAttributes, AutomationPackageFile automationPackageFile) {
+	protected void configureFunction(Function f, FunctionPackage functionPackage, boolean preview, Map<String, Object> specialAutomationPackageAttributes, AutomationPackageArchive automationPackageArchive) {
 		if (f instanceof GeneralScriptFunction) {
 			GeneralScriptFunction function = (GeneralScriptFunction) f;
 
@@ -63,10 +63,10 @@ public class JavaFunctionPackageHandler extends AbstractFunctionPackageHandler {
 
 		// for automation packages some attributes are not applied during automation package processing (parsing)
 		// here we need to apply them (for instance, save the jmeterTestPlan resource and link this resource with keyword)
-		if (!preview && automationPackageFile != null) {
+		if (!preview && automationPackageArchive != null) {
 			if (specialAutomationPackageAttributes != null && !specialAutomationPackageAttributes.isEmpty()) {
 				AutomationPackageKeyword automationPackageKeyword = new AutomationPackageKeyword(f, specialAutomationPackageAttributes);
-				automationPackageKeywordsAttributesApplier.applySpecialAttributesToKeyword(automationPackageKeyword, automationPackageFile);
+				automationPackageKeywordsAttributesApplier.applySpecialAttributesToKeyword(automationPackageKeyword, automationPackageArchive);
 			}
 		}
 	}

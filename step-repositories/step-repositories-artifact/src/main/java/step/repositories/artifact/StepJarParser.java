@@ -20,11 +20,11 @@ package step.repositories.artifact;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.automation.packages.AutomationPackageFile;
+import step.automation.packages.AutomationPackageArchive;
 import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.yaml.AutomationPackageKeywordsAttributesApplier;
 import step.automation.packages.yaml.AutomationPackageReader;
-import step.automation.packages.yaml.model.AutomationPackage;
+import step.automation.packages.AutomationPackage;
 import step.automation.packages.yaml.model.AutomationPackageKeyword;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
@@ -109,9 +109,9 @@ public class StepJarParser {
             if(automationPackage != null) {
                 List<AutomationPackageKeyword> automationPackageKeywords = automationPackage.getKeywords();
                 if (!automationPackageKeywords.isEmpty()) {
-                    AutomationPackageFile automationPackageFile = new AutomationPackageFile(artifact);
+                    AutomationPackageArchive automationPackageArchive = new AutomationPackageArchive(artifact);
                     for (AutomationPackageKeyword automationPackageKeyword : automationPackageKeywords) {
-                        functions.add(automationPackagesKeywordAttributesAppler.applySpecialAttributesToKeyword(automationPackageKeyword, automationPackageFile));
+                        functions.add(automationPackagesKeywordAttributesAppler.applySpecialAttributesToKeyword(automationPackageKeyword, automationPackageArchive));
                     }
                 }
             }

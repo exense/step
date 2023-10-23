@@ -18,33 +18,30 @@
  ******************************************************************************/
 package step.automation.packages.yaml;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.databind.type.CollectionType;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.automation.packages.AutomationPackageFile;
+import step.automation.packages.AutomationPackage;
+import step.automation.packages.AutomationPackageArchive;
 import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.yaml.deserialization.YamlKeywordDeserializer;
-import step.automation.packages.yaml.model.AutomationPackage;
+import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
 import step.automation.packages.yaml.model.AutomationPackageKeyword;
 import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.dynamicbeans.DynamicValue;
-import step.core.plans.Plan;
 import step.core.yaml.deserializers.YamlDynamicValueDeserializer;
 import step.plans.parser.yaml.YamlPlanReader;
 import step.plans.parser.yaml.model.YamlPlanVersions;
 import step.plans.parser.yaml.schema.YamlPlanValidationException;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class AutomationPackageReader {
 
@@ -54,66 +51,52 @@ public class AutomationPackageReader {
     private final YamlPlanReader planReader;
 
     public AutomationPackageReader() {
-        this.yamlObjectMapper = createYamlObjectMapper();
         this.planReader = new YamlPlanReader(YamlPlanVersions.ACTUAL_VERSION, null);
+        this.yamlObjectMapper = createYamlObjectMapper();
     }
 
-    public AutomationPackage readAutomationPackage(AutomationPackageFile automationPackageFile) throws AutomationPackageReadingException {
+    public AutomationPackage readAutomationPackage(AutomationPackageArchive automationPackageArchive) throws AutomationPackageReadingException {
         try {
-            if (!automationPackageFile.isAutomationPackage()) {
+            if (!automationPackageArchive.isAutomationPackage()) {
                 return null;
             }
 
-            try (InputStream yamlInputStream = automationPackageFile.getDescriptorYaml()) {
-                return readAutomationPackageFromDescriptor(yamlInputStream);
+            try (InputStream yamlInputStream = automationPackageArchive.getDescriptorYaml()) {
+                AutomationPackageDescriptorYaml descriptorYaml = readAutomationPackageDescriptor(yamlInputStream);
+                return buildAutomationPackage(descriptorYaml, automationPackageArchive);
             }
         } catch (IOException ex) {
             throw new AutomationPackageReadingException("Unable to read the automation package", ex);
         }
     }
 
-    public AutomationPackage readAutomationPackageFromJarFile(File automationPackageJar) throws AutomationPackageReadingException {
-        return readAutomationPackage(new AutomationPackageFile(automationPackageJar));
+    protected AutomationPackage buildAutomationPackage(AutomationPackageDescriptorYaml descriptor, AutomationPackageArchive archive){
+        // TODO: merge imports
+        AutomationPackage res = new AutomationPackage();
+        res.setName(descriptor.getName());
+        res.setPlans(descriptor.getPlans().stream().map(planReader::yamlPlanToPlan).collect(Collectors.toList()));
+        res.setKeywords(descriptor.getKeywords());
+        importIntoAutomationPackage(res, descriptor.getImports(), archive);
+        return res;
     }
 
-    public AutomationPackage readAutomationPackageFromDescriptor(InputStream yamlDescriptor) throws AutomationPackageReadingException {
+    public void importIntoAutomationPackage(AutomationPackage targetPackage, List<String> imports, AutomationPackageArchive archive){
+        // TODO: implement
+    }
+
+    public AutomationPackage readAutomationPackageFromJarFile(File automationPackageJar) throws AutomationPackageReadingException {
+        return readAutomationPackage(new AutomationPackageArchive(automationPackageJar));
+    }
+
+    public AutomationPackageDescriptorYaml readAutomationPackageDescriptor(InputStream yamlDescriptor) throws AutomationPackageReadingException {
+        // TODO: validate with json schema
         try {
             log.info("Reading automation package descriptor...");
+            AutomationPackageDescriptorYaml res = yamlObjectMapper.readValue(yamlDescriptor, AutomationPackageDescriptorYaml.class);
 
-            // TODO: validate with json schema
-            JsonNode tree = yamlObjectMapper.readTree(yamlDescriptor);
-
-            AutomationPackage res = new AutomationPackage();
-            if (tree.has("name")) {
-                res.setName(tree.get("name").asText());
-            }
-            if (tree.has("version")) {
-                res.setVersion(tree.get("version").asText());
-            }
-
-            if (tree.has("keywords") && tree.get("keywords").isArray()) {
-                CollectionType javaType = yamlObjectMapper.getTypeFactory().constructCollectionType(List.class, AutomationPackageKeyword.class);
-                List<AutomationPackageKeyword> keywords = yamlObjectMapper.treeToValue(tree.get("keywords"), javaType);
-                res.setKeywords(keywords);
-            } else {
-                res.setKeywords(new ArrayList<>());
-            }
+            // replace default null values with empty arrays
             log.info("{} keyword(s) found in automation package", res.getKeywords().size());
-
-            List<Plan> plans = new ArrayList<>();
-            if (tree.has("plans") && tree.get("plans").isArray()) {
-                for (JsonNode planJsonNode : tree.get("plans")) {
-                    try (InputStream is = new ByteArrayInputStream(planJsonNode.toPrettyString().getBytes())) {
-                        Plan plan = planReader.readYamlPlan(is);
-                        if (plan != null) {
-                            plans.add(plan);
-                        }
-                    }
-                }
-            }
-            res.setPlans(plans);
             log.info("{} plan(s) found in automation package", res.getPlans().size());
-
             return res;
         } catch (IOException | YamlPlanValidationException e) {
             throw new AutomationPackageReadingException("Unable to read the automation package", e);
@@ -129,8 +112,13 @@ public class AutomationPackageReader {
 
         // configure custom deserializers
         SimpleModule module = new SimpleModule();
+
+        // register serializers/deserializers to read yaml plans
+        planReader.registerAllSerializers(module);
+
         module.addDeserializer(DynamicValue.class, new YamlDynamicValueDeserializer());
         module.addDeserializer(AutomationPackageKeyword.class, new YamlKeywordDeserializer());
+
         yamlMapper.registerModule(module);
 
         return yamlMapper;

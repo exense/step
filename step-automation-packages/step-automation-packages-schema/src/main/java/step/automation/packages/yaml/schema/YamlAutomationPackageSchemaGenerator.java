@@ -93,6 +93,12 @@ public class YamlAutomationPackageSchemaGenerator {
                                 .add("properties", planSchemaGenerator.createYamlPlanProperties()))
                                 .add("required", jsonProvider.createArrayBuilder().add("name").add("root"))
         );
+
+        objectBuilder.add("imports",
+                jsonProvider.createObjectBuilder()
+                        .add("type", "array")
+                        .add("items", jsonProvider.createObjectBuilder().add("type", "string"))
+        );
         return objectBuilder;
     }
 

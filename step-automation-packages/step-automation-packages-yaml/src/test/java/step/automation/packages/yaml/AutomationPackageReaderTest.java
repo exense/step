@@ -19,12 +19,12 @@
 package step.automation.packages.yaml;
 
 import org.junit.Test;
+import step.automation.packages.AutomationPackage;
 import step.automation.packages.AutomationPackageReadingException;
-import step.automation.packages.yaml.model.AutomationPackage;
+import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
 import step.automation.packages.yaml.model.AutomationPackageKeyword;
-import step.core.accessors.AbstractOrganizableObject;
-import step.core.plans.Plan;
 import step.functions.Function;
+import step.plans.parser.yaml.model.YamlPlan;
 import step.plugins.jmeter.JMeterFunction;
 import step.plugins.jmeter.automation.JMeterFunctionTestplanConversionRule;
 
@@ -32,6 +32,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.Assert.*;
@@ -59,7 +60,7 @@ public class AutomationPackageReaderTest {
     public void jmeterKeywordExtractionTest() throws AutomationPackageReadingException {
         File descriptor = new File("src/test/resources/step/functions/packages/yaml/descriptors/jmeterKeywordDescriptor.yml");
         try (InputStream is = new FileInputStream(descriptor)) {
-            AutomationPackage automationPackage = extractor.readAutomationPackageFromDescriptor(is);
+            AutomationPackageDescriptorYaml automationPackage = extractor.readAutomationPackageDescriptor(is);
             assertNotNull(automationPackage);
             List<AutomationPackageKeyword> keywords = automationPackage.getKeywords();
             assertEquals(1, keywords.size());
@@ -84,21 +85,23 @@ public class AutomationPackageReaderTest {
 
     @Test
     public void keywordsAndPlansExtractionTest() throws AutomationPackageReadingException {
-        File descriptor = new File("src/test/resources/step/functions/packages/yaml/descriptors/keywordsAndPlansDescriptor.yml");
-        try (InputStream is = new FileInputStream(descriptor)) {
-            AutomationPackage automationPackage = extractor.readAutomationPackageFromDescriptor(is);
-            assertNotNull(automationPackage);
-            List<AutomationPackageKeyword> keywords = automationPackage.getKeywords();
+        File file = new File("src/test/resources/step/functions/packages/yaml/descriptors/keywordsAndPlansDescriptor.yml");
+        try (InputStream is = new FileInputStream(file)) {
+            AutomationPackageDescriptorYaml descriptor = extractor.readAutomationPackageDescriptor(is);
+            assertNotNull(descriptor);
+            List<AutomationPackageKeyword> keywords = descriptor.getKeywords();
             assertEquals(1, keywords.size());
             AutomationPackageKeyword jmeterKeyword = keywords.get(0);
             Function k = jmeterKeyword.getDraftKeyword();
             assertEquals("JMeter keyword from automation package", k.getAttribute("name"));
 
             // check parsed plans
-            List<Plan> plans = automationPackage.getPlans();
+            List<YamlPlan> plans = descriptor.getPlans();
             assertEquals(2, plans.size());
-            assertEquals("First Plan", plans.get(0).getAttribute(AbstractOrganizableObject.NAME));
-            assertEquals("Second Plan", plans.get(1).getAttribute(AbstractOrganizableObject.NAME));
+            assertEquals("First Plan", plans.get(0).getName());
+            assertEquals("Second Plan", plans.get(1).getName());
+
+            assertEquals(Arrays.asList("importPlans.yml", "importKeywords.yml"), descriptor.getImports());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -106,11 +109,11 @@ public class AutomationPackageReaderTest {
 
     @Test
     public void emptyKeywordExtractionTest() throws AutomationPackageReadingException {
-        File descriptor = new File("src/test/resources/step/functions/packages/yaml/descriptors/emptyKeywordDescriptor.yml");
-        try (InputStream is = new FileInputStream(descriptor)) {
-            AutomationPackage automationPackage = extractor.readAutomationPackageFromDescriptor(is);
-            assertNotNull(automationPackage);
-            List<AutomationPackageKeyword> keywords = automationPackage.getKeywords();
+        File file = new File("src/test/resources/step/functions/packages/yaml/descriptors/emptyKeywordDescriptor.yml");
+        try (InputStream is = new FileInputStream(file)) {
+            AutomationPackageDescriptorYaml descriptor = extractor.readAutomationPackageDescriptor(is);
+            assertNotNull(descriptor);
+            List<AutomationPackageKeyword> keywords = descriptor.getKeywords();
             assertEquals(0, keywords.size());
         } catch (IOException e) {
             throw new RuntimeException(e);

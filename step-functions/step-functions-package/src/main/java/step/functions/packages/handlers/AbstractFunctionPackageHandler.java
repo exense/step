@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.attachments.FileResolver;
-import step.automation.packages.AutomationPackageFile;
+import step.automation.packages.AutomationPackageArchive;
 import step.automation.packages.AutomationPackageReadingException;
 import step.core.objectenricher.ObjectEnricher;
 import step.functions.Function;
@@ -73,16 +73,16 @@ public abstract class AbstractFunctionPackageHandler extends FunctionPackageUtil
 		if (list.exception == null) {
 			List<Function> functions = list.getFunctions();
 			functions.forEach(f -> {
-				AutomationPackageFile automationPackageFile = null;
+				AutomationPackageArchive automationPackageArchive = null;
 				if (list.getAutomationPackageAttributes().get(f.getId().toString()) != null) {
 					// the function was included in automation package
 					try {
-						automationPackageFile = new AutomationPackageFile(packageFile);
+						automationPackageArchive = new AutomationPackageArchive(packageFile);
 					} catch (AutomationPackageReadingException e) {
 						throw new RuntimeException(e);
 					}
 				}
-				configureFunction(f, functionPackage, preview, list.getAutomationPackageAttributes().get(f.getId().toString()), automationPackageFile);
+				configureFunction(f, functionPackage, preview, list.getAutomationPackageAttributes().get(f.getId().toString()), automationPackageArchive);
 			});
 			return list.getFunctions();
 		} else {
@@ -92,5 +92,5 @@ public abstract class AbstractFunctionPackageHandler extends FunctionPackageUtil
 
 	protected abstract void configureFunction(Function f, FunctionPackage functionPackage,
 											  boolean preview, Map<String, Object> specialAutomationPackageAttributes,
-											  AutomationPackageFile automationPackageFile);
+											  AutomationPackageArchive automationPackageArchive);
 }

@@ -13,7 +13,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import step.attachments.FileResolver;
 import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.yaml.AutomationPackageReader;
-import step.automation.packages.yaml.model.AutomationPackage;
+import step.automation.packages.AutomationPackage;
 import step.automation.packages.yaml.model.AutomationPackageKeyword;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.scanner.AnnotationScanner;

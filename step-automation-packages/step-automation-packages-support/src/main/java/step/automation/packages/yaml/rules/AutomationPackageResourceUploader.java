@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.automation.packages.yaml.rules;
 
-import step.automation.packages.AutomationPackageFile;
+import step.automation.packages.AutomationPackageArchive;
 import step.resources.Resource;
 import step.resources.ResourceManager;
 
@@ -27,21 +27,21 @@ import java.net.URL;
 
 public class AutomationPackageResourceUploader {
 
-    public Resource uploadResourceFromAutomationPackage(AutomationPackageFile automationPackageFile,
+    public Resource uploadResourceFromAutomationPackage(AutomationPackageArchive automationPackageArchive,
                                                         String resourcePath,
                                                         AutomationPackageAttributesApplyingContext context) {
         if (resourcePath != null && !resourcePath.isEmpty()) {
             ResourceManager resourceManager = context.getResourceManager();
 
             try {
-                URL resourceUrl = automationPackageFile.getResource(resourcePath);
+                URL resourceUrl = automationPackageArchive.getResource(resourcePath);
                 if (resourceUrl == null) {
                     throw new RuntimeException("Resource not found in automation package: " + resourcePath);
                 }
                 File resourceFile = new File(resourceUrl.getFile());
                 return resourceManager.createResource(
                         ResourceManager.RESOURCE_TYPE_FUNCTIONS,
-                        automationPackageFile.getResourceAsStream(resourcePath),
+                        automationPackageArchive.getResourceAsStream(resourcePath),
                         resourceFile.getName(),
                         false, null
                 );

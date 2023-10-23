@@ -18,11 +18,11 @@
  ******************************************************************************/
 package step.engine.plugins;
 
-import step.automation.packages.AutomationPackageFile;
+import step.automation.packages.AutomationPackageArchive;
 import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.yaml.AutomationPackageKeywordsAttributesApplier;
 import step.automation.packages.yaml.AutomationPackageReader;
-import step.automation.packages.yaml.model.AutomationPackage;
+import step.automation.packages.AutomationPackage;
 import step.automation.packages.yaml.model.AutomationPackageKeyword;
 import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionEngineContext;
@@ -56,15 +56,15 @@ public class AutomationPackageKeywordsPlugin extends AbstractExecutionEnginePlug
         ArrayList<Function> res = new ArrayList<>();
 
         // the automation package should be found in current classloader
-        AutomationPackageFile automationPackageFile = new AutomationPackageFile(this.getClass().getClassLoader());
-        if (automationPackageFile.isAutomationPackage()) {
+        AutomationPackageArchive automationPackageArchive = new AutomationPackageArchive(this.getClass().getClassLoader());
+        if (automationPackageArchive.isAutomationPackage()) {
             try {
                 AutomationPackageReader keywordsExtractor = new AutomationPackageReader();
                 AutomationPackageKeywordsAttributesApplier attributesApplier = new AutomationPackageKeywordsAttributesApplier(resourceManager);
-                AutomationPackage automationPackage = keywordsExtractor.readAutomationPackage(automationPackageFile);
+                AutomationPackage automationPackage = keywordsExtractor.readAutomationPackage(automationPackageArchive);
                 if (automationPackage != null) {
                     for (AutomationPackageKeyword foundKeyword : automationPackage.getKeywords()) {
-                        res.add(attributesApplier.applySpecialAttributesToKeyword(foundKeyword, automationPackageFile));
+                        res.add(attributesApplier.applySpecialAttributesToKeyword(foundKeyword, automationPackageArchive));
                     }
                 }
             } catch (AutomationPackageReadingException e) {

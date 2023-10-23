@@ -19,7 +19,6 @@
 package step.plans.parser.yaml;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -27,17 +26,10 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.artefacts.handlers.JsonSchemaValidator;
 import step.core.Version;
-import step.core.accessors.AbstractIdentifiableObject;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.artefacts.AbstractArtefact;
-import step.core.collections.Collection;
-import step.core.collections.CollectionFactory;
-import step.core.collections.Document;
-import step.core.collections.Filters;
-import step.core.collections.inmemory.InMemoryCollectionFactory;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
 import step.core.scanner.AnnotationScanner;
@@ -46,6 +38,7 @@ import step.migration.MigrationManager;
 import step.plans.nl.RootArtefactType;
 import step.plans.nl.parser.PlanParser;
 import step.core.yaml.deserializers.YamlDynamicValueDeserializer;
+import step.plans.parser.yaml.deserializers.UpgradableYamlPlanDeserializer;
 import step.plans.parser.yaml.deserializers.YamlRootArtefactDeserializer;
 import step.plans.parser.yaml.migrations.AbstractYamlPlanMigrationTask;
 import step.plans.parser.yaml.migrations.YamlPlanMigration;
@@ -127,10 +120,11 @@ public class YamlPlanReader {
 			}
 		}
 
-		this.yamlMapper = createYamlPlanObjectMapper();
 		this.idGenerator = idGenerator;
 		this.migrationManager = initMigrationManager();
 		this.plainTextPlanParser = new PlanParser();
+
+		this.yamlMapper = createYamlPlanObjectMapper();
 	}
 
 	/**
@@ -153,25 +147,8 @@ public class YamlPlanReader {
 	 * @param yamlPlanStream yaml data
 	 */
 	public Plan readYamlPlan(InputStream yamlPlanStream) throws IOException, YamlPlanValidationException {
-		YamlPlan yamlPlan = readYamlPlanFromInputStream(yamlPlanStream);
+		YamlPlan yamlPlan = yamlMapper.readValue(yamlPlanStream, YamlPlan.class);
 		return yamlPlanToPlan(yamlPlan);
-	}
-
-	protected YamlPlan readYamlPlanFromInputStream(InputStream yamlPlanStream) throws IOException, YamlPlanValidationException {
-		String bufferedYamlPlan = new String(yamlPlanStream.readAllBytes(), StandardCharsets.UTF_8);
-
-		bufferedYamlPlan = upgradeYamlPlanIfRequired(bufferedYamlPlan);
-
-		JsonNode yamlPlanJsonNode = yamlMapper.readTree(bufferedYamlPlan);
-		if (jsonSchema != null) {
-			try {
-				JsonSchemaValidator.validate(jsonSchema, yamlPlanJsonNode.toString());
-			} catch (Exception ex) {
-				throw new YamlPlanValidationException(ex.getMessage(), ex);
-			}
-		}
-
-		return yamlMapper.treeToValue(yamlPlanJsonNode, YamlPlan.class);
 	}
 
 	/**
@@ -213,20 +190,39 @@ public class YamlPlanReader {
 	}
 
 	protected ObjectMapper createYamlPlanObjectMapper() {
+		ObjectMapper yamlMapper = createDefaultYamlMapper();
+
+		// configure custom deserializers
+		yamlMapper.registerModule(registerAllSerializers(new SimpleModule()));
+		return yamlMapper;
+	}
+
+	private static ObjectMapper createDefaultYamlMapper() {
 		YAMLFactory yamlFactory = new YAMLFactory();
 		// Disable native type id to enable conversion to generic Documents
 		yamlFactory.disable(YAMLGenerator.Feature.USE_NATIVE_TYPE_ID);
-		ObjectMapper yamlMapper = DefaultJacksonMapperProvider.getObjectMapper(yamlFactory);
+		return DefaultJacksonMapperProvider.getObjectMapper(yamlFactory);
+	}
 
-		// configure custom deserializers
+	private SimpleModule createDatabindModuleForNonUpgradablePlans() {
 		SimpleModule module = new SimpleModule();
+		registerBasicSerializers(module);
+		return module;
+	}
+
+	private SimpleModule registerBasicSerializers(SimpleModule module) {
 		module.addDeserializer(DynamicValue.class, new YamlDynamicValueDeserializer());
 		module.addDeserializer(YamlRootArtefact.class, createRootArtefactDeserializer());
 
 		module.addSerializer(DynamicValue.class, new YamlDynamicValueSerializer());
-		module.addSerializer(YamlRootArtefact.class, createRootArtefactSerializer());
-		yamlMapper.registerModule(module);
-		return yamlMapper;
+		return module.addSerializer(YamlRootArtefact.class, createRootArtefactSerializer());
+	}
+
+	public SimpleModule registerAllSerializers(SimpleModule module) {
+		ObjectMapper nonUpgradableYamlMapper = createDefaultYamlMapper().registerModule(createDatabindModuleForNonUpgradablePlans());
+
+		return registerBasicSerializers(module)
+				.addDeserializer(YamlPlan.class, new UpgradableYamlPlanDeserializer(currentVersion, jsonSchema, migrationManager, nonUpgradableYamlMapper));
 	}
 
 	protected YamlRootArtefactSerializer createRootArtefactSerializer() {
@@ -271,44 +267,7 @@ public class YamlPlanReader {
 		return migrationManager;
 	}
 
-	private String upgradeYamlPlanIfRequired(String bufferedYamlPlan) throws JsonProcessingException {
-		if (currentVersion != null) {
-			Document yamlPlanDocument = yamlMapper.readValue(bufferedYamlPlan, Document.class);
-			String planVersionString = yamlPlanDocument.getString(YamlPlan.VERSION_FIELD_NAME);
-
-			// planVersionString == null means than no migration is required (version is actual)
-			if (planVersionString != null) {
-				// convert yaml plan to document to perform migrations
-				CollectionFactory tempCollectionFactory = new InMemoryCollectionFactory(new Properties());
-				Version planVersion = new Version(planVersionString);
-
-				if (planVersion.compareTo(currentVersion) != 0) {
-					log.info("Migrating yaml plan from version {} to {}", planVersionString, currentVersion);
-
-					Collection<Document> tempCollection = tempCollectionFactory.getCollection(YAML_PLANS_COLLECTION_NAME, Document.class);
-					Document planDocument = tempCollection.save(yamlPlanDocument);
-
-					// run migrations (AbstractYamlPlanMigrationTask)
-					migrationManager.migrate(tempCollectionFactory, planVersion, currentVersion);
-
-					Document migratedDocument = tempCollection.find(Filters.id(planDocument.getId()), null, null, null, 0).findFirst().orElseThrow();
-
-					// remove automatically generated document id
-					migratedDocument.remove(AbstractIdentifiableObject.ID);
-
-					// convert document back to the yaml string
-					bufferedYamlPlan = yamlMapper.writeValueAsString(migratedDocument);
-
-					if (log.isDebugEnabled()) {
-						log.debug("Yaml plan after migrations: {}", bufferedYamlPlan);
-					}
-				}
-			}
-		}
-		return bufferedYamlPlan;
-	}
-
-	protected Plan yamlPlanToPlan(YamlPlan yamlPlan) {
+	public Plan yamlPlanToPlan(YamlPlan yamlPlan) {
 		Plan plan = new Plan(yamlPlan.getRoot().getAbstractArtefact());
 		plan.addAttribute(AbstractOrganizableObject.NAME, yamlPlan.getName());
 		applyDefaultValues(plan);

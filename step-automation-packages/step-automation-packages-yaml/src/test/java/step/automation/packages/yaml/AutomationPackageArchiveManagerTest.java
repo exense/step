@@ -8,7 +8,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.automation.packages.AutomationPackageFile;
+import step.automation.packages.AutomationPackageArchive;
 import step.automation.packages.AutomationPackageReadingException;
 import step.core.accessors.DefaultJacksonMapperProvider;
 
@@ -16,13 +16,13 @@ import java.io.*;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
-public class AutomationPackageFileManagerTest {
+public class AutomationPackageArchiveManagerTest {
 
-    private static final Logger log = LoggerFactory.getLogger(AutomationPackageFileManagerTest.class);
+    private static final Logger log = LoggerFactory.getLogger(AutomationPackageArchiveManagerTest.class);
 
     private final ObjectMapper yamlObjectMapper;
 
-    public AutomationPackageFileManagerTest() {
+    public AutomationPackageArchiveManagerTest() {
         this.yamlObjectMapper = createYamlObjectMapper();
     }
 
@@ -31,14 +31,14 @@ public class AutomationPackageFileManagerTest {
         File automationPackageJar = new File("src/test/resources/step/functions/packages/yaml/testpack.jar");
         File malformedPackageJar = new File("src/test/resources/step/functions/packages/yaml/malformedPackage.jar");
 
-        AutomationPackageFile validPackage = new AutomationPackageFile(automationPackageJar);
+        AutomationPackageArchive validPackage = new AutomationPackageArchive(automationPackageJar);
         Assert.assertTrue(validPackage.isAutomationPackage());
 
         JsonNode actualDescriptor = yamlObjectMapper.readTree(validPackage.getDescriptorYaml());
         JsonNode expectedDescriptor = yamlObjectMapper.readTree(new File("src/test/resources/step/functions/packages/yaml/expectedTestpackDescriptor.yml"));
         Assert.assertEquals(expectedDescriptor, actualDescriptor);
 
-        Assert.assertFalse(new AutomationPackageFile(malformedPackageJar).isAutomationPackage());
+        Assert.assertFalse(new AutomationPackageArchive(malformedPackageJar).isAutomationPackage());
         URL resource = validPackage.getResource("jmeterProject1/jmeterProject1.xml");
         log.info("Resource url: {}", resource.toString());
         Assert.assertNotNull(resource);

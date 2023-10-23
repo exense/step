@@ -18,9 +18,9 @@
  ******************************************************************************/
 package step.automation.packages.yaml.deserialization;
 
-import step.automation.packages.AutomationPackageFile;
+import step.automation.packages.AutomationPackageArchive;
 import step.automation.packages.yaml.model.AutomationPackageKeyword;
 
 public interface SpecialKeywordAttributesApplier {
-    void applySpecialAttributesToKeyword(AutomationPackageKeyword keyword, AutomationPackageFile automationPackageFile);
+    void applySpecialAttributesToKeyword(AutomationPackageKeyword keyword, AutomationPackageArchive automationPackageArchive);
 }

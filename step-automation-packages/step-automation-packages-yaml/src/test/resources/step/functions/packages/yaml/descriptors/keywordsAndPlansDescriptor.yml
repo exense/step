@@ -1,4 +1,7 @@
 version: 1.0.0
+imports:
+  - "importPlans.yml"
+  - "importKeywords.yml"
 keywords:
   - JMeter:
       name: "JMeter keyword from automation package"

@@ -23,9 +23,15 @@ import step.functions.Function;
 import java.util.Map;
 
 public class AutomationPackageKeyword {
-    private Function draftKeyword;
-    private Map<String, Object> specialAttributes;
 
+    private final Function draftKeyword;
+    private final Map<String, Object> specialAttributes;
+
+    /**
+     * @param draftKeyword partially filled keywords with data parsed from automation package descriptor
+     * @param specialAttributes additional attributes to be separately applied to the draftKeywords (like the links to resource files,
+     *                          which should be stored in databased as resources)
+     */
     public AutomationPackageKeyword(Function draftKeyword, Map<String, Object> specialAttributes) {
         this.draftKeyword = draftKeyword;
         this.specialAttributes = specialAttributes;
