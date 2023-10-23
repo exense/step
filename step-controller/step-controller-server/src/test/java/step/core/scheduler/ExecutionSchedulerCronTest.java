@@ -11,6 +11,7 @@ import org.quartz.spi.TriggerFiredBundle;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.controller.ControllerSettingAccessor;
 import step.core.controller.InMemoryControllerSettingAccessor;
+import step.core.deployment.ControllerServiceException;
 import step.core.execution.model.ExecutionParameters;
 import step.core.plugins.PluginManager.Builder.CircularDependencyException;
 
@@ -104,6 +105,9 @@ public class ExecutionSchedulerCronTest {
 		CronExclusion cronExclusion3 = executiontTaskParameters4.getCronExclusions().get(0);
 		cronExclusion3.setCronExpression("* * * ? * SAT");
 		assertTrue(executionScheduler.addExecutionTask(executiontTaskParameters4));
+
+		//Delete task
+		executionScheduler.removeExecutionTask(executiontTaskParameters4.getId().toHexString());
 	}
 
 	@Test
@@ -121,16 +125,7 @@ public class ExecutionSchedulerCronTest {
 				RuntimeException.class, () -> executionScheduler.addExecutionTask(executiontTaskParameters));
 
 		//Test with same CRON for scheduling and excluding
-		/* This normally raise a specific error, but kind of take a lot of time
-		final ExecutiontTaskParameters executiontTaskParameters2 = new ExecutiontTaskParameters();
-		executiontTaskParameters2.addAttribute(AbstractOrganizableObject.NAME, "task2");
-		executiontTaskParameters2.setExecutionsParameters(new ExecutionParameters());
-		executiontTaskParameters2.setCronExpression("0 0/1 * * * ?");
-		CronExclusion cronExclusion = new CronExclusion();
-		cronExclusion.setCronExpression("0 0/1 * * * ?");
-		cronExclusion.setDescription("test");
-		executiontTaskParameters2.setCronExclusions(List.of(cronExclusion));
-		assertThrows("", ControllerServiceException.class, ()->executionScheduler.addExecutionTask(executiontTaskParameters2));*/
+		/*Note This normally raise a specific error, but kind of take a lot of time, removed for now*/
 
 		//Test with 1 exclusion
 		final ExecutiontTaskParameters executiontTaskParameters3 = new ExecutiontTaskParameters();
