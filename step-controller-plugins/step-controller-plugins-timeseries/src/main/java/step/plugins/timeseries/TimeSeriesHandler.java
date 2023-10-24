@@ -34,7 +34,7 @@ import java.util.stream.Stream;
 
 import static step.plugins.timeseries.TimeSeriesExecutionPlugin.TIMESERIES_FLAG;
 
-public class TimeSeriesHandler {
+public class TimeSeriesHandler { 
 
     private static final String ATTRIBUTES_PREFIX = "attributes.";
     private static final String METRIC_TYPE_ATTRIBUTE = "metricType";

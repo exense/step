@@ -83,7 +83,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
         MetricAttribute nameAttribute = new MetricAttribute().setValue("name").setLabel("Name");
         MetricAttribute errorCodeAttribute = new MetricAttribute().setValue("errorCode").setLabel("Error Code");
 
-        MetricTypeAccessor metricTypeAccessor = context.get(MetricTypeAccessor.class);
+        MetricTypeAccessor metricTypeAccessor = context.require(MetricTypeAccessor.class);
         List<MetricType> metrics = Arrays.asList(
                 new MetricType()
                         .setKey(EXECUTIONS_COUNT)

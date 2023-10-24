@@ -45,7 +45,7 @@ public class TimeSeriesService extends AbstractStepServices {
         TimeSeriesAggregationPipeline aggregationPipeline = context.require(TimeSeriesAggregationPipeline.class);
         AsyncTaskManager asyncTaskManager = context.require(AsyncTaskManager.class);
         Collection<Measurement> measurementCollection = context.getCollectionFactory().getCollection(EntityManager.measurements, Measurement.class);
-        metricTypeAccessor = context.get(MetricTypeAccessor.class);
+        metricTypeAccessor = context.require(MetricTypeAccessor.class);
         TimeSeries timeSeries = context.require(TimeSeries.class);
         ExecutionAccessor executionAccessor = context.getExecutionAccessor();
         int resolution = configuration.getPropertyAsInteger(RESOLUTION_PERIOD_PROPERTY, 1000);
@@ -126,7 +126,7 @@ public class TimeSeriesService extends AbstractStepServices {
         return handler.getRawMeasurements(oqlFilter, skip, limit);
     }
 
-    @Secured(right = "execution-read")
+    @Secured
     @GET
     @Path("/raw-measurements/stats")
     @Consumes(MediaType.APPLICATION_JSON)
