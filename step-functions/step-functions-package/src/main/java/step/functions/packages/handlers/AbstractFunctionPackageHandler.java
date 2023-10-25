@@ -13,8 +13,8 @@ import step.functions.packages.FunctionPackage;
 import step.functions.packages.FunctionPackageHandler;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Map;
 
 public abstract class AbstractFunctionPackageHandler extends FunctionPackageUtils implements FunctionPackageHandler {
 
@@ -58,7 +58,7 @@ public abstract class AbstractFunctionPackageHandler extends FunctionPackageUtil
 
 		FunctionList list;
 		try (BufferedReader inputStream = new BufferedReader(
-				new InputStreamReader(discovererDeamon.getProcessInputStream()))) {
+				new InputStreamReader(discovererDeamon.getProcessInputStream(), StandardCharsets.UTF_8))) {
 			String res;
 			do {
 				res = inputStream.readLine();

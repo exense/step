@@ -54,6 +54,7 @@ public class EmbeddedFunctionPackageImporterTest {
 		// Assert that the function package contains the attributes defined in the meta file
 		assertEquals("value1", functionPackage.getAttribute("attribute1"));
 		assertEquals("value2", functionPackage.getAttribute("attribute2"));
+		assertEquals("Äöüßêï", functionPackage.getAttribute("attributeI18n"));
 		
 		List<ObjectId> functionIDs = functionPackage.getFunctions();
 		Assert.assertEquals(3, functionIDs.size());
