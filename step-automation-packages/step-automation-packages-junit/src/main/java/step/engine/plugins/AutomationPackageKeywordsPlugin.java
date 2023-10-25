@@ -18,12 +18,9 @@
  ******************************************************************************/
 package step.engine.plugins;
 
-import step.automation.packages.AutomationPackageArchive;
-import step.automation.packages.AutomationPackageReadingException;
-import step.automation.packages.yaml.AutomationPackageKeywordsAttributesApplier;
-import step.automation.packages.yaml.AutomationPackageReader;
-import step.automation.packages.AutomationPackage;
-import step.automation.packages.yaml.model.AutomationPackageKeyword;
+import step.automation.packages.*;
+import step.automation.packages.model.AutomationPackage;
+import step.automation.packages.model.AutomationPackageKeyword;
 import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionEngineContext;
 import step.core.execution.OperationMode;
@@ -59,9 +56,9 @@ public class AutomationPackageKeywordsPlugin extends AbstractExecutionEnginePlug
         AutomationPackageArchive automationPackageArchive = new AutomationPackageArchive(this.getClass().getClassLoader());
         if (automationPackageArchive.isAutomationPackage()) {
             try {
-                AutomationPackageReader keywordsExtractor = new AutomationPackageReader();
+                AutomationPackageReader automationPackageReader = new AutomationPackageReader();
                 AutomationPackageKeywordsAttributesApplier attributesApplier = new AutomationPackageKeywordsAttributesApplier(resourceManager);
-                AutomationPackage automationPackage = keywordsExtractor.readAutomationPackage(automationPackageArchive);
+                AutomationPackage automationPackage = automationPackageReader.readAutomationPackage(automationPackageArchive);
                 if (automationPackage != null) {
                     for (AutomationPackageKeyword foundKeyword : automationPackage.getKeywords()) {
                         res.add(attributesApplier.applySpecialAttributesToKeyword(foundKeyword, automationPackageArchive));

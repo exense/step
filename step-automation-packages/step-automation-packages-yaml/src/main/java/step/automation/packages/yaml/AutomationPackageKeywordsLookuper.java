@@ -30,9 +30,9 @@ import java.util.stream.Collectors;
 
 import static step.core.scanner.Classes.newInstanceAs;
 
-public class YamlKeywordsLookuper {
+public class AutomationPackageKeywordsLookuper {
 
-    public YamlKeywordsLookuper() {
+    public AutomationPackageKeywordsLookuper() {
     }
 
     public String yamlKeywordClassToJava(String yamlKeywordClass) {

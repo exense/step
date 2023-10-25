@@ -16,14 +16,13 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.yaml;
+package step.automation.packages;
 
-import step.automation.packages.AutomationPackageArchive;
+import step.automation.packages.yaml.AutomationPackageKeywordsLookuper;
 import step.automation.packages.yaml.deserialization.SpecialKeywordAttributesApplier;
-import step.automation.packages.AutomationPackageAttributesApplyingContext;
 import step.automation.packages.yaml.rules.YamlKeywordConversionRule;
 import step.functions.Function;
-import step.automation.packages.yaml.model.AutomationPackageKeyword;
+import step.automation.packages.model.AutomationPackageKeyword;
 import step.resources.ResourceManager;
 
 import java.util.List;
@@ -32,7 +31,7 @@ import java.util.stream.Collectors;
 
 public class AutomationPackageKeywordsAttributesApplier {
 
-    private final YamlKeywordsLookuper lookuper = new YamlKeywordsLookuper();
+    private final AutomationPackageKeywordsLookuper lookuper = new AutomationPackageKeywordsLookuper();
     private final ResourceManager resourceManager;
 
     public AutomationPackageKeywordsAttributesApplier(ResourceManager resourceManager) {

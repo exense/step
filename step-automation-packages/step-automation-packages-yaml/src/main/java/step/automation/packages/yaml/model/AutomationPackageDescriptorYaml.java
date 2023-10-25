@@ -18,16 +18,10 @@
  ******************************************************************************/
 package step.automation.packages.yaml.model;
 
-import com.fasterxml.jackson.annotation.JsonSetter;
-import com.fasterxml.jackson.annotation.Nulls;
-import step.plans.parser.yaml.model.YamlPlan;
-
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-public class AutomationPackageDescriptorYaml {
+public class AutomationPackageDescriptorYaml extends AutomationPackageFragmentYaml {
 
     // this name should be kept untouched to support the migrations for old versions
     public static final String VERSION_FIELD_NAME = "version";
@@ -40,12 +34,6 @@ public class AutomationPackageDescriptorYaml {
 
     private String name;
 
-    private List<String> fragments = new ArrayList<>();
-
-    private List<AutomationPackageKeyword> keywords = new ArrayList<>();
-    private List<YamlPlan> plans = new ArrayList<>();
-    private List<AutomationPackageSchedulerTask> scheduler = new ArrayList<>();
-
     public String getName() {
         return name;
     }
@@ -54,48 +42,12 @@ public class AutomationPackageDescriptorYaml {
         this.name = name;
     }
 
-    public List<AutomationPackageKeyword> getKeywords() {
-        return keywords;
-    }
-
-    @JsonSetter(nulls = Nulls.AS_EMPTY)
-    public void setKeywords(List<AutomationPackageKeyword> keywords) {
-        this.keywords = keywords;
-    }
-
     public String getVersion() {
         return version;
     }
 
     public void setVersion(String version) {
         this.version = version;
-    }
-
-    public List<YamlPlan> getPlans() {
-        return plans;
-    }
-
-    @JsonSetter(nulls = Nulls.AS_EMPTY)
-    public void setPlans(List<YamlPlan> plans) {
-        this.plans = plans;
-    }
-
-    public List<String> getFragments() {
-        return fragments;
-    }
-
-    @JsonSetter(nulls = Nulls.AS_EMPTY)
-    public void setFragments(List<String> fragments) {
-        this.fragments = fragments;
-    }
-
-    public List<AutomationPackageSchedulerTask> getScheduler() {
-        return scheduler;
-    }
-
-    @JsonSetter(nulls = Nulls.AS_EMPTY)
-    public void setScheduler(List<AutomationPackageSchedulerTask> scheduler) {
-        this.scheduler = scheduler;
     }
 
     public String getSchemaVersion() {

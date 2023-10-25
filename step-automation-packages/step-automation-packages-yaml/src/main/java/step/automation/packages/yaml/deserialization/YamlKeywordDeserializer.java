@@ -25,8 +25,8 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import step.automation.packages.yaml.YamlKeywordsLookuper;
-import step.automation.packages.yaml.model.AutomationPackageKeyword;
+import step.automation.packages.yaml.AutomationPackageKeywordsLookuper;
+import step.automation.packages.model.AutomationPackageKeyword;
 import step.automation.packages.yaml.rules.KeywordNameRule;
 import step.automation.packages.yaml.rules.TokenSelectionCriteriaRule;
 import step.automation.packages.yaml.rules.YamlKeywordConversionRule;
@@ -37,10 +37,10 @@ import java.util.*;
 
 public class YamlKeywordDeserializer extends JsonDeserializer<AutomationPackageKeyword> {
 
-    private final YamlKeywordsLookuper keywordsLookuper;
+    private final AutomationPackageKeywordsLookuper keywordsLookuper;
 
     public YamlKeywordDeserializer() {
-        this.keywordsLookuper = new YamlKeywordsLookuper();
+        this.keywordsLookuper = new AutomationPackageKeywordsLookuper();
     }
 
     @Override

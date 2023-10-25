@@ -19,7 +19,7 @@
 package step.automation.packages.yaml.deserialization;
 
 import step.automation.packages.AutomationPackageArchive;
-import step.automation.packages.yaml.model.AutomationPackageKeyword;
+import step.automation.packages.model.AutomationPackageKeyword;
 
 public interface SpecialKeywordAttributesApplier {
     void applySpecialAttributesToKeyword(AutomationPackageKeyword keyword, AutomationPackageArchive automationPackageArchive);

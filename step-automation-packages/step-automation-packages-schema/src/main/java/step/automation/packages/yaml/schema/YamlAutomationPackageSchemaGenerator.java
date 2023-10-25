@@ -64,7 +64,7 @@ public class YamlAutomationPackageSchemaGenerator {
 
         // add properties for top-level
         topLevelBuilder.add("properties", createPackageProperties());
-        topLevelBuilder.add("required", jsonProvider.createArrayBuilder().add("name"));
+        topLevelBuilder.add("required", jsonProvider.createArrayBuilder());
         topLevelBuilder.add( "additionalProperties", false);
 
         // convert jakarta objects to jackson JsonNode

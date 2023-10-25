@@ -20,7 +20,7 @@ package step.automation.packages.yaml.schema;
 
 import jakarta.json.JsonObjectBuilder;
 import jakarta.json.spi.JsonProvider;
-import step.automation.packages.yaml.model.AutomationPackageSchedulerTask;
+import step.automation.packages.model.AutomationPackageSchedulerTask;
 import step.core.yaml.schema.AggregatedJsonSchemaFieldProcessor;
 import step.core.yaml.schema.YamlJsonSchemaHelper;
 import step.handlers.javahandler.jsonschema.DefaultFieldMetadataExtractor;

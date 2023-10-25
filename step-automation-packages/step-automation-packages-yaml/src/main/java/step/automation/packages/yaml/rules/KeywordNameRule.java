@@ -23,7 +23,7 @@ import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.json.spi.JsonProvider;
-import step.automation.packages.yaml.YamlKeywordsLookuper;
+import step.automation.packages.yaml.AutomationPackageKeywordsLookuper;
 import step.automation.packages.yaml.deserialization.YamlKeywordFieldDeserializationProcessor;
 import step.core.accessors.AbstractOrganizableObject;
 import step.functions.Function;
@@ -34,7 +34,7 @@ import java.util.Map;
 
 public class KeywordNameRule implements YamlKeywordConversionRule {
 
-    private final YamlKeywordsLookuper keywordsLookuper = new YamlKeywordsLookuper();
+    private final AutomationPackageKeywordsLookuper keywordsLookuper = new AutomationPackageKeywordsLookuper();
 
     @Override
     public JsonSchemaFieldProcessor getJsonSchemaFieldProcessor(JsonProvider jsonProvider) {

@@ -19,14 +19,12 @@
 package step.automation.packages.yaml;
 
 import org.junit.Test;
-import step.automation.packages.AutomationPackage;
 import step.automation.packages.AutomationPackageReadingException;
+import step.automation.packages.model.AutomationPackageKeyword;
+import step.automation.packages.model.AutomationPackageSchedulerTask;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
-import step.automation.packages.yaml.model.AutomationPackageKeyword;
-import step.automation.packages.yaml.model.AutomationPackageSchedulerTask;
 import step.functions.Function;
 import step.plans.parser.yaml.model.YamlPlan;
-import step.plugins.jmeter.JMeterFunction;
 import step.plugins.jmeter.automation.JMeterFunctionTestplanConversionRule;
 
 import java.io.File;
@@ -38,24 +36,11 @@ import java.util.List;
 
 import static org.junit.Assert.*;
 
-public class AutomationPackageReaderTest {
+public class AutomationPackageDescriptorReaderTest {
 
-    private final AutomationPackageReader reader = new AutomationPackageReader();
+    private final AutomationPackageDescriptorReader reader = new AutomationPackageDescriptorReader();
 
-    @Test
-    public void testReadFromPackage() throws AutomationPackageReadingException {
-        File automationPackageJar = new File("src/test/resources/step/automation/packages/yaml/testpack.jar");
-        AutomationPackage automationPackage = reader.readAutomationPackageFromJarFile(automationPackageJar);
-        assertNotNull(automationPackage);
-        List<AutomationPackageKeyword> keywords = automationPackage.getKeywords();
-        assertEquals(1, keywords.size());
-        AutomationPackageKeyword automationPackageKeyword = keywords.get(0);
-        assertEquals(JMeterFunction.class, automationPackageKeyword.getDraftKeyword().getClass());
-        assertEquals(
-                "jmeterProject1/jmeterProject1.xml",
-                automationPackageKeyword.getSpecialAttributes().get(JMeterFunctionTestplanConversionRule.JMETER_TESTPLAN_ATTR)
-        );
-    }
+
 
     @Test
     public void jmeterKeywordReadTest() throws AutomationPackageReadingException {

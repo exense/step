@@ -1,4 +1,4 @@
-package step.automation.packages.yaml;
+package step.automation.packages;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -8,27 +8,25 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.automation.packages.AutomationPackageArchive;
-import step.automation.packages.AutomationPackageReadingException;
 import step.core.accessors.DefaultJacksonMapperProvider;
 
 import java.io.*;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
-public class AutomationPackageArchiveManagerTest {
+public class AutomationPackageArchiveTest {
 
-    private static final Logger log = LoggerFactory.getLogger(AutomationPackageArchiveManagerTest.class);
+    private static final Logger log = LoggerFactory.getLogger(AutomationPackageArchiveTest.class);
 
     private final ObjectMapper yamlObjectMapper;
 
-    public AutomationPackageArchiveManagerTest() {
+    public AutomationPackageArchiveTest() {
         this.yamlObjectMapper = createYamlObjectMapper();
     }
 
     @Test
     public void isAutomationPackage() throws AutomationPackageReadingException, IOException {
-        File automationPackageJar = new File("src/test/resources/step/automation/packages/yaml/testpack.jar");
+        File automationPackageJar = new File("src/test/resources/step/automation/packages/yaml/testPack1.jar");
         File malformedPackageJar = new File("src/test/resources/step/automation/packages/yaml/malformedPackage.jar");
 
         AutomationPackageArchive validPackage = new AutomationPackageArchive(automationPackageJar);

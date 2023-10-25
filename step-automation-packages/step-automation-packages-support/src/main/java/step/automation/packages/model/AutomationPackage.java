@@ -16,9 +16,9 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages;
+package step.automation.packages.model;
 
-import step.automation.packages.yaml.model.AutomationPackageKeyword;
+import step.automation.packages.model.AutomationPackageKeyword;
 import step.core.plans.Plan;
 
 import java.util.ArrayList;

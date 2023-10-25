@@ -1,19 +1,11 @@
 package step.functions.packages.handlers;
 
-import java.io.*;
-import java.lang.reflect.Method;
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import step.attachments.FileResolver;
+import step.automation.packages.AutomationPackageReader;
 import step.automation.packages.AutomationPackageReadingException;
-import step.automation.packages.yaml.AutomationPackageReader;
-import step.automation.packages.AutomationPackage;
-import step.automation.packages.yaml.model.AutomationPackageKeyword;
+import step.automation.packages.model.AutomationPackage;
+import step.automation.packages.model.AutomationPackageKeyword;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.scanner.AnnotationScanner;
 import step.functions.Function;
@@ -27,6 +19,15 @@ import step.plans.nl.parser.PlanParser;
 import step.plugins.functions.types.CompositeFunctionUtils;
 import step.plugins.java.GeneralScriptFunction;
 import step.resources.LocalResourceManagerImpl;
+
+import java.io.File;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
 
 public class JavaFunctionPackageDaemon extends FunctionPackageUtils {
 

@@ -25,12 +25,11 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.artefacts.handlers.JsonSchemaValidator;
-import step.automation.packages.AutomationPackage;
-import step.automation.packages.AutomationPackageArchive;
 import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.yaml.deserialization.YamlKeywordDeserializer;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
-import step.automation.packages.yaml.model.AutomationPackageKeyword;
+import step.automation.packages.model.AutomationPackageKeyword;
+import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
 import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.deserializers.YamlDynamicValueDeserializer;
@@ -38,16 +37,13 @@ import step.plans.parser.yaml.YamlPlanReader;
 import step.plans.parser.yaml.model.YamlPlanVersions;
 import step.plans.parser.yaml.schema.YamlPlanValidationException;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.stream.Collectors;
 
-public class AutomationPackageReader {
+public class AutomationPackageDescriptorReader {
 
-    private static final Logger log = LoggerFactory.getLogger(AutomationPackageReader.class);
+    private static final Logger log = LoggerFactory.getLogger(AutomationPackageDescriptorReader.class);
 
     private final ObjectMapper yamlObjectMapper;
 
@@ -55,7 +51,7 @@ public class AutomationPackageReader {
 
     private String jsonSchema;
 
-    public AutomationPackageReader() {
+    public AutomationPackageDescriptorReader() {
         this.planReader = new YamlPlanReader(YamlPlanVersions.ACTUAL_VERSION, null);
         this.yamlObjectMapper = createYamlObjectMapper();
 
@@ -63,43 +59,19 @@ public class AutomationPackageReader {
         this.jsonSchema = readJsonSchema(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH);
     }
 
-    public AutomationPackage readAutomationPackage(AutomationPackageArchive automationPackageArchive) throws AutomationPackageReadingException {
-        try {
-            if (!automationPackageArchive.isAutomationPackage()) {
-                return null;
-            }
-
-            try (InputStream yamlInputStream = automationPackageArchive.getDescriptorYaml()) {
-                AutomationPackageDescriptorYaml descriptorYaml = readAutomationPackageDescriptor(yamlInputStream);
-                return buildAutomationPackage(descriptorYaml, automationPackageArchive);
-            }
-        } catch (IOException ex) {
-            throw new AutomationPackageReadingException("Unable to read the automation package", ex);
-        }
-    }
-
-    protected AutomationPackage buildAutomationPackage(AutomationPackageDescriptorYaml descriptor, AutomationPackageArchive archive){
-        // TODO: merge imports
-        AutomationPackage res = new AutomationPackage();
-        res.setName(descriptor.getName());
-        res.setPlans(descriptor.getPlans().stream().map(planReader::yamlPlanToPlan).collect(Collectors.toList()));
-        res.setKeywords(descriptor.getKeywords());
-        importIntoAutomationPackage(res, descriptor.getFragments(), archive);
-        return res;
-    }
-
-    public void importIntoAutomationPackage(AutomationPackage targetPackage, List<String> imports, AutomationPackageArchive archive){
-        // TODO: implement
-    }
-
-    public AutomationPackage readAutomationPackageFromJarFile(File automationPackageJar) throws AutomationPackageReadingException {
-        return readAutomationPackage(new AutomationPackageArchive(automationPackageJar));
-    }
-
     public AutomationPackageDescriptorYaml readAutomationPackageDescriptor(InputStream yamlDescriptor) throws AutomationPackageReadingException {
-        // TODO: validate with json schema
+        log.info("Reading automation package descriptor...");
+        return readAutomationPackageYamlFile(yamlDescriptor, AutomationPackageDescriptorYaml.class);
+    }
+
+    public AutomationPackageFragmentYaml readAutomationPackageFragment(InputStream yamlFragment, String fragmentName) throws AutomationPackageReadingException {
+        log.info("Reading automation package descriptor fragment ({})...", fragmentName);
+        return readAutomationPackageYamlFile(yamlFragment, AutomationPackageFragmentYaml.class);
+    }
+
+    protected <T extends AutomationPackageFragmentYaml> T readAutomationPackageYamlFile(InputStream yaml, Class<T> targetClass) throws AutomationPackageReadingException {
         try {
-            String yamlDescriptorString = new String(yamlDescriptor.readAllBytes(), StandardCharsets.UTF_8);
+            String yamlDescriptorString = new String(yaml.readAllBytes(), StandardCharsets.UTF_8);
 
             if (jsonSchema != null) {
                 try {
@@ -109,15 +81,23 @@ public class AutomationPackageReader {
                 }
             }
 
-            log.info("Reading automation package descriptor...");
-            AutomationPackageDescriptorYaml res = yamlObjectMapper.readValue(yamlDescriptorString, AutomationPackageDescriptorYaml.class);
+            T res = yamlObjectMapper.readValue(yamlDescriptorString, targetClass);
 
-            log.info("{} keyword(s) found in automation package", res.getKeywords().size());
-            log.info("{} plan(s) found in automation package", res.getPlans().size());
-            log.info("{} scheduled task(s) found in automation package", res.getScheduler().size());
+            if (!res.getKeywords().isEmpty()) {
+                log.info("{} keyword(s) found in automation package", res.getKeywords().size());
+            }
+            if (!res.getPlans().isEmpty()) {
+                log.info("{} plan(s) found in automation package", res.getPlans().size());
+            }
+            if (!res.getScheduler().isEmpty()) {
+                log.info("{} scheduled task(s) found in automation package", res.getScheduler().size());
+            }
+            if (res.getFragments().isEmpty()) {
+                log.info("{} imported fragment(s) found in automation package", res.getFragments().size());
+            }
             return res;
         } catch (IOException | YamlPlanValidationException e) {
-            throw new AutomationPackageReadingException("Unable to read the automation package", e);
+            throw new AutomationPackageReadingException("Unable to read the automation package yaml", e);
         }
     }
 
@@ -152,5 +132,9 @@ public class AutomationPackageReader {
         yamlMapper.registerModule(module);
 
         return yamlMapper;
+    }
+
+    public YamlPlanReader getPlanReader(){
+        return this.planReader;
     }
 }

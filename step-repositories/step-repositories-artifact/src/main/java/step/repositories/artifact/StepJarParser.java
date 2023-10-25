@@ -20,12 +20,9 @@ package step.repositories.artifact;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.automation.packages.AutomationPackageArchive;
-import step.automation.packages.AutomationPackageReadingException;
-import step.automation.packages.yaml.AutomationPackageKeywordsAttributesApplier;
-import step.automation.packages.yaml.AutomationPackageReader;
-import step.automation.packages.AutomationPackage;
-import step.automation.packages.yaml.model.AutomationPackageKeyword;
+import step.automation.packages.*;
+import step.automation.packages.model.AutomationPackage;
+import step.automation.packages.model.AutomationPackageKeyword;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;

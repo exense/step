@@ -23,7 +23,7 @@ import jakarta.json.JsonObjectBuilder;
 import jakarta.json.spi.JsonProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.automation.packages.yaml.YamlKeywordsLookuper;
+import step.automation.packages.yaml.AutomationPackageKeywordsLookuper;
 import step.automation.packages.yaml.rules.TechnicalFieldRule;
 import step.automation.packages.yaml.rules.TokenSelectionCriteriaRule;
 import step.core.yaml.schema.*;
@@ -43,7 +43,7 @@ public class YamlKeywordSchemaGenerator {
 
     protected final YamlJsonSchemaHelper schemaHelper;
 
-    protected final YamlKeywordsLookuper yamlKeywordsLookuper = new YamlKeywordsLookuper();
+    protected final AutomationPackageKeywordsLookuper automationPackageKeywordsLookuper = new AutomationPackageKeywordsLookuper();
     private final JsonSchemaCreator jsonSchemaCreator;
 
     public YamlKeywordSchemaGenerator(JsonProvider jsonProvider) {
@@ -109,9 +109,9 @@ public class YamlKeywordSchemaGenerator {
 
     protected Map<String, JsonObjectBuilder> createKeywordImplDefs() throws JsonSchemaPreparationException {
         HashMap<String, JsonObjectBuilder> result = new HashMap<>();
-        List<Class<? extends Function>> automationPackageKeywords = yamlKeywordsLookuper.getAutomationPackageKeywords();
+        List<Class<? extends Function>> automationPackageKeywords = automationPackageKeywordsLookuper.getAutomationPackageKeywords();
         for (Class<? extends Function> automationPackageKeyword : automationPackageKeywords) {
-            String yamlName = yamlKeywordsLookuper.getAutomationPackageKeywordName(automationPackageKeyword);
+            String yamlName = automationPackageKeywordsLookuper.getAutomationPackageKeywordName(automationPackageKeyword);
             String defName = yamlName + "Def";
             result.put(defName, createKeywordImplDef(yamlName, automationPackageKeyword));
         }
@@ -177,7 +177,7 @@ public class YamlKeywordSchemaGenerator {
     }
 
     protected List<JsonSchemaFieldProcessor> getFieldExtensions() {
-        return yamlKeywordsLookuper.getAllConversionRules()
+        return automationPackageKeywordsLookuper.getAllConversionRules()
                 .stream()
                 .map(r -> r.getJsonSchemaFieldProcessor(jsonProvider))
                 .filter(Objects::nonNull).collect(Collectors.toList());
