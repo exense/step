@@ -1,4 +1,5 @@
-version: 1.0.0
+schemaVersion: 1.0.0
+name: "jmeter-package"
 keywords:
   - JMeter:
       name: "JMeter keyword from automation package"

@@ -6,6 +6,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 
 import java.io.IOException;

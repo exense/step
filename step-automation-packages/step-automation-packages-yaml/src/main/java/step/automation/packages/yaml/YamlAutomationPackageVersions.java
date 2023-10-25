@@ -16,11 +16,11 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.yaml.schema;
+package step.automation.packages.yaml;
 
 import step.core.Version;
 
 public class YamlAutomationPackageVersions {
     public static final Version ACTUAL_VERSION = new Version("1.0.0");
-    public static final String ACTUAL_JSON_SCHEMA_PATH = "step/functions/packages/yaml/step-automation-package-schema-os-1.0.json";
+    public static final String ACTUAL_JSON_SCHEMA_PATH = "step/automation/packages/yaml/step-automation-package-schema-os-1.0.json";
 }

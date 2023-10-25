@@ -24,6 +24,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.artefacts.handlers.JsonSchemaValidator;
 import step.automation.packages.AutomationPackage;
 import step.automation.packages.AutomationPackageArchive;
 import step.automation.packages.AutomationPackageReadingException;
@@ -40,6 +41,7 @@ import step.plans.parser.yaml.schema.YamlPlanValidationException;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -48,11 +50,17 @@ public class AutomationPackageReader {
     private static final Logger log = LoggerFactory.getLogger(AutomationPackageReader.class);
 
     private final ObjectMapper yamlObjectMapper;
+
     private final YamlPlanReader planReader;
+
+    private String jsonSchema;
 
     public AutomationPackageReader() {
         this.planReader = new YamlPlanReader(YamlPlanVersions.ACTUAL_VERSION, null);
         this.yamlObjectMapper = createYamlObjectMapper();
+
+        // TODO: configurable json schema
+        this.jsonSchema = readJsonSchema(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH);
     }
 
     public AutomationPackage readAutomationPackage(AutomationPackageArchive automationPackageArchive) throws AutomationPackageReadingException {
@@ -76,7 +84,7 @@ public class AutomationPackageReader {
         res.setName(descriptor.getName());
         res.setPlans(descriptor.getPlans().stream().map(planReader::yamlPlanToPlan).collect(Collectors.toList()));
         res.setKeywords(descriptor.getKeywords());
-        importIntoAutomationPackage(res, descriptor.getImports(), archive);
+        importIntoAutomationPackage(res, descriptor.getFragments(), archive);
         return res;
     }
 
@@ -91,8 +99,18 @@ public class AutomationPackageReader {
     public AutomationPackageDescriptorYaml readAutomationPackageDescriptor(InputStream yamlDescriptor) throws AutomationPackageReadingException {
         // TODO: validate with json schema
         try {
+            String yamlDescriptorString = new String(yamlDescriptor.readAllBytes(), StandardCharsets.UTF_8);
+
+            if (jsonSchema != null) {
+                try {
+                    JsonSchemaValidator.validate(jsonSchema, yamlObjectMapper.readTree(yamlDescriptorString).toString());
+                } catch (Exception ex) {
+                    throw new YamlPlanValidationException(ex.getMessage(), ex);
+                }
+            }
+
             log.info("Reading automation package descriptor...");
-            AutomationPackageDescriptorYaml res = yamlObjectMapper.readValue(yamlDescriptor, AutomationPackageDescriptorYaml.class);
+            AutomationPackageDescriptorYaml res = yamlObjectMapper.readValue(yamlDescriptorString, AutomationPackageDescriptorYaml.class);
 
             log.info("{} keyword(s) found in automation package", res.getKeywords().size());
             log.info("{} plan(s) found in automation package", res.getPlans().size());
@@ -100,6 +118,17 @@ public class AutomationPackageReader {
             return res;
         } catch (IOException | YamlPlanValidationException e) {
             throw new AutomationPackageReadingException("Unable to read the automation package", e);
+        }
+    }
+
+    protected String readJsonSchema(String jsonSchemaPath) {
+        try (InputStream jsonSchemaInputStream = this.getClass().getClassLoader().getResourceAsStream(jsonSchemaPath)) {
+            if (jsonSchemaInputStream == null) {
+                throw new IllegalStateException("Json schema not found: " + jsonSchemaPath);
+            }
+            return new String(jsonSchemaInputStream.readAllBytes(), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new IllegalStateException("Unable to load json schema: " + jsonSchemaPath, e);
         }
     }
 
@@ -114,6 +143,7 @@ public class AutomationPackageReader {
         SimpleModule module = new SimpleModule();
 
         // register serializers/deserializers to read yaml plans
+        // TODO: we don't want to use the default upgradable plan serializer, because the plan version is defined via automation package schema version, but not inside the plan...
         planReader.registerAllSerializers(module);
 
         module.addDeserializer(DynamicValue.class, new YamlDynamicValueDeserializer());

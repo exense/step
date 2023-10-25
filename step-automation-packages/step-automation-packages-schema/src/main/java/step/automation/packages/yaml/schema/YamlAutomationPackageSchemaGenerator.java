@@ -23,10 +23,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.json.JsonObjectBuilder;
 import jakarta.json.spi.JsonProvider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import step.core.Version;
-import step.handlers.javahandler.jsonschema.*;
+import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 import step.plans.parser.yaml.model.YamlPlanVersions;
 import step.plans.parser.yaml.schema.YamlPlanJsonSchemaGenerator;
 
@@ -66,7 +64,7 @@ public class YamlAutomationPackageSchemaGenerator {
 
         // add properties for top-level
         topLevelBuilder.add("properties", createPackageProperties());
-        topLevelBuilder.add("required", jsonProvider.createArrayBuilder());
+        topLevelBuilder.add("required", jsonProvider.createArrayBuilder().add("name"));
         topLevelBuilder.add( "additionalProperties", false);
 
         // convert jakarta objects to jackson JsonNode
@@ -79,9 +77,12 @@ public class YamlAutomationPackageSchemaGenerator {
 
     private JsonObjectBuilder createPackageProperties() {
         JsonObjectBuilder objectBuilder = jsonProvider.createObjectBuilder();
-        // in 'version' we should either explicitly specify the current json schema version or skip this field
-        objectBuilder.add("version", jsonProvider.createObjectBuilder().add("const", actualVersion.toString()));
+
+        // in 'schemaVersion' we should either explicitly specify the current json schema version or skip this field
+        objectBuilder.add("schemaVersion", jsonProvider.createObjectBuilder().add("const", actualVersion.toString()));
+        objectBuilder.add("version", jsonProvider.createObjectBuilder().add("type", "string"));
         objectBuilder.add("name", jsonProvider.createObjectBuilder().add("type", "string"));
+        objectBuilder.add("attributes", jsonProvider.createObjectBuilder().add("type", "object"));
 
         // TODO: split keyword and plans definitions
         objectBuilder.add("keywords",
@@ -94,11 +95,11 @@ public class YamlAutomationPackageSchemaGenerator {
                         .add("type", "array")
                         .add("items", jsonProvider.createObjectBuilder()
                                 .add("type", "object")
-                                .add("properties", planSchemaGenerator.createYamlPlanProperties()))
+                                .add("properties", planSchemaGenerator.createYamlPlanProperties(false)))
                                 .add("required", jsonProvider.createArrayBuilder().add("name").add("root"))
         );
 
-        objectBuilder.add("imports",
+        objectBuilder.add("fragments",
                 jsonProvider.createObjectBuilder()
                         .add("type", "array")
                         .add("items", jsonProvider.createObjectBuilder().add("type", "string"))

@@ -1,5 +1,6 @@
-version: 1.0.0
-imports:
+schemaVersion: 1.0.0
+name: "complete-package"
+fragments:
   - "importPlans.yml"
   - "importKeywords.yml"
 keywords:

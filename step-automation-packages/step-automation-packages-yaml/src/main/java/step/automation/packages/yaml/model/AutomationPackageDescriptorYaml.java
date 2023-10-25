@@ -23,7 +23,9 @@ import com.fasterxml.jackson.annotation.Nulls;
 import step.plans.parser.yaml.model.YamlPlan;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class AutomationPackageDescriptorYaml {
 
@@ -31,9 +33,14 @@ public class AutomationPackageDescriptorYaml {
     public static final String VERSION_FIELD_NAME = "version";
 
     private String version;
+
+    private String schemaVersion;
+
+    private Map<String, String> attributes = new HashMap<>();
+
     private String name;
 
-    private List<String> imports = new ArrayList<>();
+    private List<String> fragments = new ArrayList<>();
 
     private List<AutomationPackageKeyword> keywords = new ArrayList<>();
     private List<YamlPlan> plans = new ArrayList<>();
@@ -73,21 +80,37 @@ public class AutomationPackageDescriptorYaml {
         this.plans = plans;
     }
 
-    public List<String> getImports() {
-        return imports;
+    public List<String> getFragments() {
+        return fragments;
     }
 
     @JsonSetter(nulls = Nulls.AS_EMPTY)
-    public void setImports(List<String> imports) {
-        this.imports = imports;
+    public void setFragments(List<String> fragments) {
+        this.fragments = fragments;
     }
 
     public List<AutomationPackageSchedulerTask> getScheduler() {
         return scheduler;
     }
-    
+
     @JsonSetter(nulls = Nulls.AS_EMPTY)
     public void setScheduler(List<AutomationPackageSchedulerTask> scheduler) {
         this.scheduler = scheduler;
+    }
+
+    public String getSchemaVersion() {
+        return schemaVersion;
+    }
+
+    public void setSchemaVersion(String schemaVersion) {
+        this.schemaVersion = schemaVersion;
+    }
+
+    public Map<String, String> getAttributes() {
+        return attributes;
+    }
+
+    public void setAttributes(Map<String, String> attributes) {
+        this.attributes = attributes;
     }
 }

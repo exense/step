@@ -28,14 +28,14 @@ public class AutomationPackageArchiveManagerTest {
 
     @Test
     public void isAutomationPackage() throws AutomationPackageReadingException, IOException {
-        File automationPackageJar = new File("src/test/resources/step/functions/packages/yaml/testpack.jar");
-        File malformedPackageJar = new File("src/test/resources/step/functions/packages/yaml/malformedPackage.jar");
+        File automationPackageJar = new File("src/test/resources/step/automation/packages/yaml/testpack.jar");
+        File malformedPackageJar = new File("src/test/resources/step/automation/packages/yaml/malformedPackage.jar");
 
         AutomationPackageArchive validPackage = new AutomationPackageArchive(automationPackageJar);
         Assert.assertTrue(validPackage.isAutomationPackage());
 
         JsonNode actualDescriptor = yamlObjectMapper.readTree(validPackage.getDescriptorYaml());
-        JsonNode expectedDescriptor = yamlObjectMapper.readTree(new File("src/test/resources/step/functions/packages/yaml/expectedTestpackDescriptor.yml"));
+        JsonNode expectedDescriptor = yamlObjectMapper.readTree(new File("src/test/resources/step/automation/packages/yaml/expectedTestpackDescriptor.yml"));
         Assert.assertEquals(expectedDescriptor, actualDescriptor);
 
         Assert.assertFalse(new AutomationPackageArchive(malformedPackageJar).isAutomationPackage());

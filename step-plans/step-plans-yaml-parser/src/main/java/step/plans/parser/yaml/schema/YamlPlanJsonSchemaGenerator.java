@@ -156,7 +156,7 @@ public class YamlPlanJsonSchemaGenerator {
 		topLevelBuilder.add("$defs", createDefs());
 
 		// add properties for top-level "plan" object
-		topLevelBuilder.add("properties", createYamlPlanProperties());
+		topLevelBuilder.add("properties", createYamlPlanProperties(true));
 		topLevelBuilder.add("required", jsonProvider.createArrayBuilder().add("name").add("root"));
 		topLevelBuilder.add( "additionalProperties", false);
 
@@ -168,12 +168,15 @@ public class YamlPlanJsonSchemaGenerator {
 		}
 	}
 
-	public JsonObjectBuilder createYamlPlanProperties() {
+	public JsonObjectBuilder createYamlPlanProperties(boolean versioned) {
 		// plan only has "name", "version", and the root artifact
 		JsonObjectBuilder objectBuilder = jsonProvider.createObjectBuilder();
 		objectBuilder.add("name", jsonProvider.createObjectBuilder().add("type", "string"));
-		// in 'version' we should either explicitly specify the current json schema version or skip this field
-		objectBuilder.add("version", jsonProvider.createObjectBuilder().add("const", actualVersion.toString()));
+
+		if (versioned) {
+			// in 'version' we should either explicitly specify the current json schema version or skip this field
+			objectBuilder.add("version", jsonProvider.createObjectBuilder().add("const", actualVersion.toString()));
+		}
 		objectBuilder.add("root", YamlJsonSchemaHelper.addRef(jsonProvider.createObjectBuilder(), ROOT_ARTEFACT_DEF));
 		return objectBuilder;
 	}

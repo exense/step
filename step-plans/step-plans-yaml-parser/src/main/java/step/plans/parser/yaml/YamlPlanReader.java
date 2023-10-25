@@ -91,6 +91,8 @@ public class YamlPlanReader {
 		} else {
 			this.currentVersion = YamlPlanVersions.ACTUAL_VERSION;
 		}
+
+		// TODO: several same messages in log on server startup => remove this log?
 		log.info("YAML Plans version: {}", this.currentVersion);
 
 		if (validateWithJsonSchema) {

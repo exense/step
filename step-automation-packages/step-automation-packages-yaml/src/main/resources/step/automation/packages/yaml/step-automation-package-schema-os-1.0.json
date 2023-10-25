@@ -1583,11 +1583,17 @@
     }
   },
   "properties" : {
-    "version" : {
+    "schemaVersion" : {
       "const" : "1.0.0"
+    },
+    "version" : {
+      "type" : "string"
     },
     "name" : {
       "type" : "string"
+    },
+    "attributes" : {
+      "type" : "object"
     },
     "keywords" : {
       "type" : "array",
@@ -1603,9 +1609,6 @@
           "name" : {
             "type" : "string"
           },
-          "version" : {
-            "const" : "1.0.0"
-          },
           "root" : {
             "$ref" : "#/$defs/RootArtefactDef"
           }
@@ -1613,7 +1616,7 @@
       },
       "required" : [ "name", "root" ]
     },
-    "imports" : {
+    "fragments" : {
       "type" : "array",
       "items" : {
         "type" : "string"
@@ -1626,6 +1629,6 @@
       }
     }
   },
-  "required" : [ ],
+  "required" : [ "name" ],
   "additionalProperties" : false
 }

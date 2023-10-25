@@ -1,4 +1,4 @@
-version: 1.0.0
+schemaVersion: 1.0.0
 name: "My package"
 keywords:
   - JMeter:
