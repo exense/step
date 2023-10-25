@@ -1562,6 +1562,24 @@
       }, {
         "$ref" : "#/$defs/ThreadGroupDef"
       } ]
+    },
+    "SchedulerTaskDef" : {
+      "type" : "object",
+      "properties" : {
+        "environment" : {
+          "type" : "string"
+        },
+        "planName" : {
+          "type" : "string"
+        },
+        "cron" : {
+          "type" : "string"
+        },
+        "name" : {
+          "type" : "string"
+        }
+      },
+      "additionalProperties" : false
     }
   },
   "properties" : {
@@ -1599,6 +1617,12 @@
       "type" : "array",
       "items" : {
         "type" : "string"
+      }
+    },
+    "scheduler" : {
+      "type" : "array",
+      "items" : {
+        "$ref" : "#/$defs/SchedulerTaskDef"
       }
     }
   },

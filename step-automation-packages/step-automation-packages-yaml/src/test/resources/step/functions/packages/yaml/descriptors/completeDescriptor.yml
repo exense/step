@@ -48,3 +48,12 @@ plans:
         children:
           - echo:
               text: "Just echo"
+scheduler:
+  - name: "My first task"
+    cron: "*/5 * * * *"
+    environment: "TEST"
+    planName: "First Plan"
+  - name: "My second task"
+    cron: "0 * * * *"
+    environment: "PROD"
+    planName: "Second Plan"

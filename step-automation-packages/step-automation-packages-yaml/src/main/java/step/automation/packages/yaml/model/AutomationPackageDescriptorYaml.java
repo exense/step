@@ -20,7 +20,6 @@ package step.automation.packages.yaml.model;
 
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.Nulls;
-import step.core.plans.Plan;
 import step.plans.parser.yaml.model.YamlPlan;
 
 import java.util.ArrayList;
@@ -38,6 +37,7 @@ public class AutomationPackageDescriptorYaml {
 
     private List<AutomationPackageKeyword> keywords = new ArrayList<>();
     private List<YamlPlan> plans = new ArrayList<>();
+    private List<AutomationPackageSchedulerTask> scheduler = new ArrayList<>();
 
     public String getName() {
         return name;
@@ -80,5 +80,14 @@ public class AutomationPackageDescriptorYaml {
     @JsonSetter(nulls = Nulls.AS_EMPTY)
     public void setImports(List<String> imports) {
         this.imports = imports;
+    }
+
+    public List<AutomationPackageSchedulerTask> getScheduler() {
+        return scheduler;
+    }
+    
+    @JsonSetter(nulls = Nulls.AS_EMPTY)
+    public void setScheduler(List<AutomationPackageSchedulerTask> scheduler) {
+        this.scheduler = scheduler;
     }
 }

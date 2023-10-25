@@ -20,7 +20,7 @@ package step.automation.packages.yaml;
 
 import step.automation.packages.AutomationPackageArchive;
 import step.automation.packages.yaml.deserialization.SpecialKeywordAttributesApplier;
-import step.automation.packages.yaml.rules.AutomationPackageAttributesApplyingContext;
+import step.automation.packages.AutomationPackageAttributesApplyingContext;
 import step.automation.packages.yaml.rules.YamlKeywordConversionRule;
 import step.functions.Function;
 import step.automation.packages.yaml.model.AutomationPackageKeyword;

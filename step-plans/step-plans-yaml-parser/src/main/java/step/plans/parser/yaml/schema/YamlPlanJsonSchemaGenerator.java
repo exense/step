@@ -46,7 +46,6 @@ import step.plans.parser.yaml.ArtefactFieldMetadataExtractor;
 import step.plans.parser.yaml.YamlPlanReaderExtender;
 import step.plans.parser.yaml.YamlPlanReaderExtension;
 
-import java.lang.reflect.Field;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -69,7 +68,7 @@ public class YamlPlanJsonSchemaGenerator {
 	protected final JsonProvider jsonProvider = JsonProvider.provider();
 
 	protected final JsonSchemaCreator jsonSchemaCreator;
-	protected final YamlJsonSchemaHelper dynamicValuesHelper = new YamlJsonSchemaHelper(jsonProvider);
+	protected final YamlJsonSchemaHelper schemaHelper = new YamlJsonSchemaHelper(jsonProvider);
 
 	public YamlPlanJsonSchemaGenerator(String targetPackage, Version actualVersion, String schemaId) {
 		this.targetPackage = targetPackage;
@@ -189,7 +188,7 @@ public class YamlPlanJsonSchemaGenerator {
 
 		// prepare definitions for generic DynamicValue class
 		definitionCreators.add((defsList) -> {
-			Map<String, JsonObjectBuilder> dynamicValueDefs = dynamicValuesHelper.createDynamicValueImplDefs();
+			Map<String, JsonObjectBuilder> dynamicValueDefs = schemaHelper.createDynamicValueImplDefs();
 			for (Map.Entry<String, JsonObjectBuilder> dynamicValueDef : dynamicValueDefs.entrySet()) {
 				defsBuilder.add(dynamicValueDef.getKey(), dynamicValueDef.getValue());
 			}
@@ -268,24 +267,7 @@ public class YamlPlanJsonSchemaGenerator {
 	}
 
 	private void fillArtefactProperties(Class<?> artefactClass, JsonObjectBuilder artefactProperties, String artefactName) throws JsonSchemaPreparationException {
-		log.info("Preparing json schema for artefact class {}...", artefactClass);
-
-		// analyze hierarchy of class annotated with @Artefact
-		List<Field> allFieldsInArtefactHierarchy = new ArrayList<>();
-		Class<?> currentClass = artefactClass;
-		while (currentClass != null) {
-			allFieldsInArtefactHierarchy.addAll(List.of(currentClass.getDeclaredFields()));
-			currentClass = currentClass.getSuperclass();
-		}
-		Collections.reverse(allFieldsInArtefactHierarchy);
-
-		// for each field we want either build the json schema via reflection
-		// or use some predefined schemas for some special classes (like step.core.dynamicbeans.DynamicValue)
-		try {
-			jsonSchemaCreator.processFields(artefactClass, artefactProperties, allFieldsInArtefactHierarchy, new ArrayList<>());
-		} catch (Exception ex) {
-			throw new JsonSchemaPreparationException("Unable to process artefact " + artefactName, ex);
-		}
+		schemaHelper.extractPropertiesFromClass(jsonSchemaCreator, artefactClass, artefactProperties, artefactName);
 	}
 
 	private JsonObjectBuilder createArtefactDef(Collection<String> artefactImplReferences) {

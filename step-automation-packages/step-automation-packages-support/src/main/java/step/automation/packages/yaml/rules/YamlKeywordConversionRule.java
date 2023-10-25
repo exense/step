@@ -19,6 +19,7 @@
 package step.automation.packages.yaml.rules;
 
 import jakarta.json.spi.JsonProvider;
+import step.automation.packages.AutomationPackageAttributesApplyingContext;
 import step.automation.packages.yaml.deserialization.SpecialKeywordAttributesApplier;
 import step.automation.packages.yaml.deserialization.SpecialKeywordAttributesExtractor;
 import step.automation.packages.yaml.deserialization.YamlKeywordFieldDeserializationProcessor;

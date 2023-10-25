@@ -94,9 +94,9 @@ public class AutomationPackageReader {
             log.info("Reading automation package descriptor...");
             AutomationPackageDescriptorYaml res = yamlObjectMapper.readValue(yamlDescriptor, AutomationPackageDescriptorYaml.class);
 
-            // replace default null values with empty arrays
             log.info("{} keyword(s) found in automation package", res.getKeywords().size());
             log.info("{} plan(s) found in automation package", res.getPlans().size());
+            log.info("{} scheduled task(s) found in automation package", res.getScheduler().size());
             return res;
         } catch (IOException | YamlPlanValidationException e) {
             throw new AutomationPackageReadingException("Unable to read the automation package", e);

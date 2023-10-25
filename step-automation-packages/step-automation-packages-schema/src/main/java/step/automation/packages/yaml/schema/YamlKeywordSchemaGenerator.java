@@ -30,7 +30,6 @@ import step.core.yaml.schema.*;
 import step.functions.Function;
 import step.handlers.javahandler.jsonschema.*;
 
-import java.lang.reflect.Field;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -42,14 +41,14 @@ public class YamlKeywordSchemaGenerator {
 
     private final jakarta.json.spi.JsonProvider jsonProvider;
 
-    protected final YamlJsonSchemaHelper dynamicValuesHelper;
+    protected final YamlJsonSchemaHelper schemaHelper;
 
     protected final YamlKeywordsLookuper yamlKeywordsLookuper = new YamlKeywordsLookuper();
     private final JsonSchemaCreator jsonSchemaCreator;
 
     public YamlKeywordSchemaGenerator(JsonProvider jsonProvider) {
         this.jsonProvider = jsonProvider;
-        this.dynamicValuesHelper = new YamlJsonSchemaHelper(jsonProvider);
+        this.schemaHelper = new YamlJsonSchemaHelper(jsonProvider);
 
         // --- Fields metadata rules (fields we want to rename)
         FieldMetadataExtractor fieldMetadataExtractor = prepareMetadataExtractor();
@@ -68,7 +67,7 @@ public class YamlKeywordSchemaGenerator {
 
         // prepare definitions for generic DynamicValue class
         definitionCreators.add((defsList) -> {
-            Map<String, JsonObjectBuilder> dynamicValueDefs = dynamicValuesHelper.createDynamicValueImplDefs();
+            Map<String, JsonObjectBuilder> dynamicValueDefs = schemaHelper.createDynamicValueImplDefs();
             for (Map.Entry<String, JsonObjectBuilder> dynamicValueDef : dynamicValueDefs.entrySet()) {
                 defsBuilder.add(dynamicValueDef.getKey(), dynamicValueDef.getValue());
             }
@@ -145,26 +144,8 @@ public class YamlKeywordSchemaGenerator {
 
 
     private void fillKeywordProperties(Class<? extends Function> keywordClass, JsonObjectBuilder keywordProperties, String yamlName) throws JsonSchemaPreparationException {
-        log.info("Preparing json schema for keyword class {}...", keywordClass);
-
-        // analyze hierarchy of class annotated with @Artefact
-        List<Field> allFieldsInHierarchy = new ArrayList<>();
-        Class<?> currentClass = keywordClass;
-        while (currentClass != null) {
-            allFieldsInHierarchy.addAll(List.of(currentClass.getDeclaredFields()));
-            currentClass = currentClass.getSuperclass();
-        }
-        Collections.reverse(allFieldsInHierarchy);
-
-        // for each field we want either build the json schema via reflection
-        // or use some predefined schemas for some special classes (like step.core.dynamicbeans.DynamicValue)
-        try {
-            jsonSchemaCreator.processFields(keywordClass, keywordProperties, allFieldsInHierarchy, new ArrayList<>());
-        } catch (Exception ex) {
-            throw new JsonSchemaPreparationException("Unable to process keyword " + yamlName, ex);
-        }
+        this.schemaHelper.extractPropertiesFromClass(jsonSchemaCreator, keywordClass, keywordProperties, yamlName);
     }
-
 
     protected FieldMetadataExtractor prepareMetadataExtractor() {
         List<FieldMetadataExtractor> extractors = new ArrayList<>();

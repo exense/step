@@ -31,7 +31,6 @@ import step.plans.parser.yaml.model.YamlPlanVersions;
 import step.plans.parser.yaml.schema.YamlPlanJsonSchemaGenerator;
 
 public class YamlAutomationPackageSchemaGenerator {
-    private static final Logger log = LoggerFactory.getLogger(YamlAutomationPackageSchemaGenerator.class);
 
     protected final String targetPackage;
 
@@ -41,12 +40,14 @@ public class YamlAutomationPackageSchemaGenerator {
     protected final JsonProvider jsonProvider = JsonProvider.provider();
     private final YamlKeywordSchemaGenerator keywordSchemaGenerator;
     private final YamlPlanJsonSchemaGenerator planSchemaGenerator;
+    private final YamlSchedulerSchemaGenerator schedulerSchemaGenerator;
 
     public YamlAutomationPackageSchemaGenerator(String targetPackage, Version actualVersion) {
         this.targetPackage = targetPackage;
         this.actualVersion = actualVersion;
         this.keywordSchemaGenerator = new YamlKeywordSchemaGenerator(jsonProvider);
         this.planSchemaGenerator = new YamlPlanJsonSchemaGenerator("step", YamlPlanVersions.ACTUAL_VERSION, null);
+        this.schedulerSchemaGenerator = new YamlSchedulerSchemaGenerator(jsonProvider);
     }
 
     public JsonNode generateJsonSchema() throws JsonSchemaPreparationException {
@@ -58,7 +59,10 @@ public class YamlAutomationPackageSchemaGenerator {
         topLevelBuilder.add("type", "object");
 
         // prepare definitions to be reused in subschemas (referenced via $ref property)
-        topLevelBuilder.add("$defs", keywordSchemaGenerator.createKeywordDefs().addAll(planSchemaGenerator.createDefs()));
+        JsonObjectBuilder allDefs = keywordSchemaGenerator.createKeywordDefs()
+                .addAll(planSchemaGenerator.createDefs())
+                .addAll(schedulerSchemaGenerator.createSchedulerTaskDefs());
+        topLevelBuilder.add("$defs", allDefs);
 
         // add properties for top-level
         topLevelBuilder.add("properties", createPackageProperties());
@@ -98,6 +102,12 @@ public class YamlAutomationPackageSchemaGenerator {
                 jsonProvider.createObjectBuilder()
                         .add("type", "array")
                         .add("items", jsonProvider.createObjectBuilder().add("type", "string"))
+        );
+
+        objectBuilder.add("scheduler",
+                jsonProvider.createObjectBuilder()
+                        .add("type", "array")
+                        .add("items", schedulerSchemaGenerator.addRef(jsonProvider.createObjectBuilder(), YamlSchedulerSchemaGenerator.SCHEDULER_TASK_DEF))
         );
         return objectBuilder;
     }
