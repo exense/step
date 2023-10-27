@@ -114,7 +114,7 @@ public class ParameterServices extends AbstractEntityServices<Parameter> {
 		try {
 			newParameter = parameterManager.encryptParameterValueIfEncryptionManagerAvailable(newParameter);
 		} catch (EncryptionManagerException e) {
-			throw new ControllerServiceException("Error while encrypting parameter value");
+			throw new ControllerServiceException(e.getMessage());
 		}
 
 		ParameterScope scope = newParameter.getScope();
