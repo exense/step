@@ -111,6 +111,7 @@ public class YamlPlanJsonSchemaGenerator {
 		result.add(new KeywordInputsRule().getJsonSchemaFieldProcessor(jsonProvider));
 		result.add(new FunctionGroupSelectionRule().getJsonSchemaFieldProcessor(jsonProvider));
 		result.add(new CheckExpressionRule().getJsonSchemaFieldProcessor(jsonProvider));
+		result.add(new ForBlockRule().getJsonSchemaFieldProcessor(jsonProvider));
 
 		// -- SOME DEFAULT RULES FOR ENUMS AND DYNAMIC FIELDS
 		result.add(new DynamicFieldRule().getJsonSchemaFieldProcessor(jsonProvider));

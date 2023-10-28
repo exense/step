@@ -1,0 +1,15 @@
+name: "test plan"
+root:
+  sequence:
+    name: Sequence
+    children:
+      - for:
+          description: "test for"
+          start: 10
+          end: 20
+          inc: 5
+          threads: 2
+          maxFailedLoops: 3
+          userItem: "testUserId"
+          globalCounter: "testGCounter"
+          item: "testCounter"

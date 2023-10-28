@@ -520,16 +520,14 @@
             "maxFailedLoops" : {
               "$ref" : "#/$defs/SmartDynamicValueNumDef"
             },
-            "dataSource" : {
-              "type" : "object",
-              "properties" : {
-                "forWrite" : {
-                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-                }
-              }
+            "start" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
             },
-            "dataSourceType" : {
-              "type" : "string"
+            "end" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            },
+            "inc" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
             },
             "item" : {
               "$ref" : "#/$defs/SmartDynamicValueStringDef"
@@ -1052,15 +1050,6 @@
             "instrumentNode" : {
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
-            "containerCommand": {
-              "$ref": "#/$defs/SmartDynamicValueStringDef"
-            },
-            "dockerImage": {
-              "$ref": "#/$defs/SmartDynamicValueStringDef"
-            },
-            "containerUser": {
-              "$ref": "#/$defs/SmartDynamicValueStringDef"
-            },
             "skipNode" : {
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
@@ -1078,6 +1067,15 @@
             },
             "remote" : {
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "containerCommand" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            },
+            "containerUser" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            },
+            "dockerImage" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
             }
           }
         }

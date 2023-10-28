@@ -21,12 +21,17 @@ package step.artefacts;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
 
-@Artefact(name = "For")
+import static step.artefacts.ForBlock.FOR_BLOCK_ARTIFACT_NAME;
+
+@Artefact(name = FOR_BLOCK_ARTIFACT_NAME)
 public class ForBlock extends AbstractForBlock {
+
+	public static final String FOR_BLOCK_ARTIFACT_NAME = "For";
+	public static final String DATA_SOURCE_TYPE = "sequence";
 
 	public ForBlock() {
 		super();
-		this.setDataSourceType("sequence");
+		this.setDataSourceType(DATA_SOURCE_TYPE);
 		this.setItem(new DynamicValue<String>("counter"));
 		this.setThreads(new DynamicValue<Integer>(1));
 	}
