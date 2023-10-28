@@ -124,7 +124,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
                         .setRenderingSettings(new MetricRenderingSettings())
         );
         metrics.forEach(m -> {
-            MetricType existingMetric = metricTypeAccessor.findByCriteria(Map.of("key", m.getName()));
+            MetricType existingMetric = metricTypeAccessor.findByCriteria(Map.of("name", m.getName()));
             if (existingMetric != null) {
                 m.setId(existingMetric.getId()); // update the metric
             }

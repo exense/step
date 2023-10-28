@@ -34,7 +34,7 @@ import java.util.stream.Stream;
 
 import static step.plugins.timeseries.TimeSeriesExecutionPlugin.TIMESERIES_FLAG;
 
-public class TimeSeriesHandler { 
+public class TimeSeriesHandler {
 
     private static final String ATTRIBUTES_PREFIX = "attributes.";
     private static final String METRIC_TYPE_ATTRIBUTE = "metricType";
@@ -83,7 +83,7 @@ public class TimeSeriesHandler {
     /**
      * This method fetches and group the RAW measurements into a bucket structure.
      */
-    public TimeSeriesAPIResponse getMeasurements(FetchBucketsRequest request, Collection<String> fields) {
+    private TimeSeriesAPIResponse getTimeSeriesFromRawMeasurements(FetchBucketsRequest request, Collection<String> fields) {
         int resolutionMs = getResolution(request);
         step.core.collections.Collection<Bucket> inmemoryBuckets = new InMemoryCollection<>();
         TimeSeries timeSeries = new TimeSeries(inmemoryBuckets, Set.of(), resolutionMs);
@@ -173,13 +173,20 @@ public class TimeSeriesHandler {
         return Math.max(resolution, calculatedResolution);
     }
 
-    public TimeSeriesAPIResponse getBuckets(FetchBucketsRequest request) {
+    public TimeSeriesAPIResponse getTimeSeries(FetchBucketsRequest request) {
         TimeSeriesAggregationQuery query = mapToQuery(request, this.aggregationPipeline);
         TimeSeriesAggregationResponse response = query.run();
         return mapToApiResponse(request, response);
     }
 
-    public TimeSeriesAPIResponse getMeasurements(FetchBucketsRequest request) {
+    /**
+     * Gets the time series according to the provided request.
+     * If the time series doesn't exist for the provided request, builds it based on the raw measurements
+     *
+     * @param request
+     * @return
+     */
+    public TimeSeriesAPIResponse getOrBuildTimeSeries(FetchBucketsRequest request) {
         validateFetchRequest(request);
 
         OQLVerifyResponse oqlVerifyResponse = this.verifyOql(request.getOqlFilter());
@@ -187,9 +194,9 @@ public class TimeSeriesHandler {
             throw new ControllerServiceException("Invalid OQL filter");
         } else if (oqlVerifyResponse.hasUnknownFields() || !this.timeSeriesAttributes.containsAll(request.getGroupDimensions())) {
             // if the filter has attributes which are not indexed, switch to RAW measurements
-            return this.getMeasurements(request, oqlVerifyResponse.getFields());
+            return this.getTimeSeriesFromRawMeasurements(request, oqlVerifyResponse.getFields());
         } else {
-            return getBuckets(request);
+            return getTimeSeries(request);
         }
     }
 

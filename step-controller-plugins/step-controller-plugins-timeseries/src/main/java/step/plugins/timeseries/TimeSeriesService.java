@@ -59,7 +59,7 @@ public class TimeSeriesService extends AbstractStepServices {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public TimeSeriesAPIResponse getTimeSeries(FetchBucketsRequest request) {
-        return handler.getBuckets(request);
+        return handler.getTimeSeries(request);
     }
     
     @Secured(right = "execution-read")
@@ -67,8 +67,9 @@ public class TimeSeriesService extends AbstractStepServices {
     @Path("/measurements")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    // TODO this method should be renamed as it doesn't return measurements but a timeseries
     public TimeSeriesAPIResponse getMeasurements(FetchBucketsRequest request) {
-        return handler.getMeasurements(request);
+        return handler.getOrBuildTimeSeries(request);
     }
 
     /**
@@ -126,7 +127,7 @@ public class TimeSeriesService extends AbstractStepServices {
         return handler.getRawMeasurements(oqlFilter, skip, limit);
     }
 
-    @Secured
+    @Secured(right = "execution-read")
     @GET
     @Path("/raw-measurements/stats")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -135,7 +136,7 @@ public class TimeSeriesService extends AbstractStepServices {
         return handler.getRawMeasurementsStats(oqlFilter);
     }
     
-    @Secured(right = "execution-read")
+    @Secured()
     @GET
     @Path("/metric-types")
     @Consumes(MediaType.APPLICATION_JSON)
