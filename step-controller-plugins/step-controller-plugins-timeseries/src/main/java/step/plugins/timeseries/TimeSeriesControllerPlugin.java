@@ -40,7 +40,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
         List<String> attributes = Arrays.asList(configuration.getProperty(TIME_SERIES_ATTRIBUTES_PROPERTY, TIME_SERIES_ATTRIBUTES_DEFAULT).split(","));
         CollectionFactory collectionFactory = context.getCollectionFactory();
 
-        TimeSeries timeSeries = new TimeSeries(collectionFactory, TIME_SERIES_COLLECTION_PROPERTY, Set.of(), resolutionPeriod);
+        TimeSeries timeSeries = new TimeSeries(collectionFactory, TIME_SERIES_COLLECTION_PROPERTY, Set.of("eId"), resolutionPeriod);
         context.put(TimeSeries.class, timeSeries);
         mainIngestionPipeline = timeSeries.newIngestionPipeline(flushPeriod);
         aggregationPipeline = timeSeries.getAggregationPipeline();
