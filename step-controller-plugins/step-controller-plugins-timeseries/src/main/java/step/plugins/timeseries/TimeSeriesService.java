@@ -135,7 +135,8 @@ public class TimeSeriesService extends AbstractStepServices {
     public MeasurementsStats getRawMeasurementsStats(@QueryParam("filter") String oqlFilter) {
         return handler.getRawMeasurementsStats(oqlFilter);
     }
-    
+
+    @Operation(description = "Returns the list of all supported metric types")
     @Secured()
     @GET
     @Path("/metric-types")

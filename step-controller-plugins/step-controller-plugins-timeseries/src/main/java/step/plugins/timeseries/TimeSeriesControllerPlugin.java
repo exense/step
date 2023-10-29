@@ -1,8 +1,6 @@
 package step.plugins.timeseries;
 
 import ch.exense.commons.app.Configuration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import step.core.GlobalContext;
 import step.core.collections.CollectionFactory;
 import step.core.deployment.WebApplicationConfigurationManager;
@@ -17,24 +15,23 @@ import step.engine.plugins.ExecutionEnginePlugin;
 import step.plugins.measurements.GaugeCollectorRegistry;
 import step.plugins.measurements.MeasurementPlugin;
 
-import static step.plugins.timeseries.TimeSeriesExecutionPlugin.*;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static step.plugins.timeseries.TimeSeriesExecutionPlugin.*;
+
 @Plugin
 public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 
-    public static String RESOLUTION_PERIOD_PROPERTY = "plugins.timeseries.resolution.period";
-    public static String TIME_SERIES_SAMPLING_LIMIT = "plugins.timeseries.sampling.limit";
-    public static String TIME_SERIES_COLLECTION_PROPERTY = "timeseries";
+    public static final String PLUGINS_TIMESERIES_FLUSH_PERIOD = "plugins.timeseries.flush.period";
+    public static final String RESOLUTION_PERIOD_PROPERTY = "plugins.timeseries.resolution.period";
+    public static final String TIME_SERIES_SAMPLING_LIMIT = "plugins.timeseries.sampling.limit";
+    public static final String TIME_SERIES_COLLECTION_PROPERTY = "timeseries";
+    public static final String TIME_SERIES_ATTRIBUTES_PROPERTY = "plugins.timeseries.attributes";
+    public static final String TIME_SERIES_ATTRIBUTES_DEFAULT = EXECUTION_ID + "," + TASK_ID + "," + PLAN_ID + ",metricType,origin,name,rnStatus,project,type";
 
-    public static String TIME_SERIES_ATTRIBUTES_PROPERTY = "plugins.timeseries.attributes";
-    public static String TIME_SERIES_ATTRIBUTES_DEFAULT = EXECUTION_ID + "," + TASK_ID + "," + PLAN_ID + ",metricType,origin,name,rnStatus,project,type";
-
-    private static final Logger logger = LoggerFactory.getLogger(TimeSeriesControllerPlugin.class);
     private TimeSeriesIngestionPipeline mainIngestionPipeline;
     private TimeSeriesAggregationPipeline aggregationPipeline;
 
@@ -42,30 +39,29 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
     public void serverStart(GlobalContext context) {
         Configuration configuration = context.getConfiguration();
         Integer resolutionPeriod = configuration.getPropertyAsInteger(RESOLUTION_PERIOD_PROPERTY, 1000);
-        Long flushPeriod = configuration.getPropertyAsLong("plugins.timeseries.flush.period", 1000L);
+        Long flushPeriod = configuration.getPropertyAsLong(PLUGINS_TIMESERIES_FLUSH_PERIOD, 1000L);
         List<String> attributes = Arrays.asList(configuration.getProperty(TIME_SERIES_ATTRIBUTES_PROPERTY, TIME_SERIES_ATTRIBUTES_DEFAULT).split(","));
         CollectionFactory collectionFactory = context.getCollectionFactory();
 
         TimeSeries timeSeries = new TimeSeries(collectionFactory, TIME_SERIES_COLLECTION_PROPERTY, Set.of(), resolutionPeriod);
-        context.put(TimeSeries.class, timeSeries);
         mainIngestionPipeline = timeSeries.newIngestionPipeline(flushPeriod);
         aggregationPipeline = timeSeries.getAggregationPipeline();
         TimeSeriesAggregationPipeline aggregationPipeline = timeSeries.getAggregationPipeline();
         MetricTypeAccessor metricTypeAccessor = new MetricTypeAccessor(context.getCollectionFactory().getCollection(EntityManager.metricTypes, MetricType.class));
+        TimeSeriesBucketingHandler handler = new TimeSeriesBucketingHandler(mainIngestionPipeline, attributes);
 
+        context.put(TimeSeries.class, timeSeries);
         context.put(TimeSeriesIngestionPipeline.class, mainIngestionPipeline);
         context.put(TimeSeriesAggregationPipeline.class, aggregationPipeline);
         context.put(MetricTypeAccessor.class, metricTypeAccessor);
-
-        context.getServiceRegistrationCallback().registerService(TimeSeriesService.class);
-        TimeSeriesBucketingHandler handler = new TimeSeriesBucketingHandler(mainIngestionPipeline, attributes);
         context.put(TimeSeriesBucketingHandler.class, handler);
+        context.getServiceRegistrationCallback().registerService(TimeSeriesService.class);
+
         MeasurementPlugin.registerMeasurementHandlers(handler);
         GaugeCollectorRegistry.getInstance().registerHandler(handler);
 
         WebApplicationConfigurationManager configurationManager = context.require(WebApplicationConfigurationManager.class);
         configurationManager.registerHook(s -> Map.of(RESOLUTION_PERIOD_PROPERTY, resolutionPeriod.toString()));
-
     }
 
     @Override
@@ -81,6 +77,8 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
         MetricAttribute nameAttribute = new MetricAttribute().setName("name").setDisplayName("Name");
         MetricAttribute errorCodeAttribute = new MetricAttribute().setName("errorCode").setDisplayName("Error Code");
 
+        // TODO create a builder for units
+        // TODO metrics shouldn't be defined centrally but in each plugin they belong to. Implement a central registration service
         MetricTypeAccessor metricTypeAccessor = context.require(MetricTypeAccessor.class);
         List<MetricType> metrics = Arrays.asList(
                 new MetricType()
@@ -113,7 +111,6 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
                         .setDefaultAggregation(MetricAggregation.RATE)
                         .setAttributes(Arrays.asList(taskAttribute, executionAttribute, planAttribute, errorCodeAttribute))
                         .setRenderingSettings(new MetricRenderingSettings()),
-
                 new MetricType()
                         .setName("response-time")
                         .setDisplayName("Response time")
