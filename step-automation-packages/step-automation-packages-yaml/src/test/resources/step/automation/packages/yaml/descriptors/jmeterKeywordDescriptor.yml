@@ -6,7 +6,6 @@ keywords:
       description: "JMeter keyword 1"
       executeLocally: false
       useCustomTemplate: true
-      managed: true
       callTimeout: 1000
       jmeterTestplan: "jmeterProject1/jmeterProject1.xml"
       routing:

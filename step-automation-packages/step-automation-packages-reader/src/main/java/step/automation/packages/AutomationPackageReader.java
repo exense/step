@@ -33,8 +33,8 @@ public class AutomationPackageReader {
 
     private final AutomationPackageDescriptorReader descriptorReader;
 
-    public AutomationPackageReader() {
-        this.descriptorReader = new AutomationPackageDescriptorReader();
+    public AutomationPackageReader(String jsonSchema) {
+        this.descriptorReader = new AutomationPackageDescriptorReader(jsonSchema);
     }
 
     public AutomationPackage readAutomationPackage(AutomationPackageArchive automationPackageArchive) throws AutomationPackageReadingException {

@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import step.automation.packages.*;
 import step.automation.packages.model.AutomationPackage;
 import step.automation.packages.model.AutomationPackageKeyword;
+import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
@@ -52,7 +53,7 @@ public class StepJarParser {
 
     private final StepClassParser stepClassParser;
     private final AutomationPackageReader automationPackageReader;
-    private final AutomationPackageKeywordsAttributesApplier automationPackagesKeywordAttributesAppler;
+    private final AutomationPackageKeywordsAttributesApplier automationPackagesKeywordAttributesApplier;
 
     public StepJarParser() {
         this(null);
@@ -60,8 +61,8 @@ public class StepJarParser {
 
     public StepJarParser(ResourceManager resourceManager) {
         this.stepClassParser = new StepClassParser(false);
-        this.automationPackageReader = new AutomationPackageReader();
-        this.automationPackagesKeywordAttributesAppler = new AutomationPackageKeywordsAttributesApplier(resourceManager);
+        this.automationPackageReader = new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH);
+        this.automationPackagesKeywordAttributesApplier = new AutomationPackageKeywordsAttributesApplier(resourceManager);
     }
 
     private List<Function> getFunctions(AnnotationScanner annotationScanner, File artifact, File libraries) {
@@ -108,7 +109,7 @@ public class StepJarParser {
                 if (!automationPackageKeywords.isEmpty()) {
                     AutomationPackageArchive automationPackageArchive = new AutomationPackageArchive(artifact);
                     for (AutomationPackageKeyword automationPackageKeyword : automationPackageKeywords) {
-                        functions.add(automationPackagesKeywordAttributesAppler.applySpecialAttributesToKeyword(automationPackageKeyword, automationPackageArchive));
+                        functions.add(automationPackagesKeywordAttributesApplier.applySpecialAttributesToKeyword(automationPackageKeyword, automationPackageArchive));
                     }
                 }
             }

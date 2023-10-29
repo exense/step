@@ -32,7 +32,9 @@ import java.util.Set;
 public class JavaFunctionPackageDaemon extends FunctionPackageUtils {
 
 	private final KeywordJsonSchemaCreator schemaCreator = new KeywordJsonSchemaCreator();
-	private final AutomationPackageReader automationPackageReader = new AutomationPackageReader();
+
+	// TODO: resolve automation package schema version
+	private final AutomationPackageReader automationPackageReader = new AutomationPackageReader(null);
 
 	public JavaFunctionPackageDaemon() {
 		super(new FileResolver(new LocalResourceManagerImpl()));

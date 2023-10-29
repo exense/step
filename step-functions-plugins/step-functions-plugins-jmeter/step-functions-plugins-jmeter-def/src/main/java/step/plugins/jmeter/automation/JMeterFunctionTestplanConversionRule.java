@@ -39,7 +39,11 @@ public class JMeterFunctionTestplanConversionRule implements YamlKeywordConversi
 
     @Override
     public SpecialKeywordAttributesExtractor getSpecialAttributesExtractor() {
-        return (yamlKeyword, draftKeywordObject, specialAttributesCollector) -> specialAttributesCollector.put(JMETER_TESTPLAN_ATTR, yamlKeyword.get(JMETER_TESTPLAN_ATTR).asText());
+        return (yamlKeyword, draftKeywordObject, specialAttributesCollector) -> {
+            if (yamlKeyword.get(JMETER_TESTPLAN_ATTR) != null) {
+                specialAttributesCollector.put(JMETER_TESTPLAN_ATTR, yamlKeyword.get(JMETER_TESTPLAN_ATTR).asText());
+            }
+        };
     }
 
     @Override

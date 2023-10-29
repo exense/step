@@ -18,7 +18,11 @@
  ******************************************************************************/
 package step.engine.plugins;
 
-import step.automation.packages.*;
+import ch.exense.commons.app.Configuration;
+import step.automation.packages.AutomationPackageArchive;
+import step.automation.packages.AutomationPackageKeywordsAttributesApplier;
+import step.automation.packages.AutomationPackageReader;
+import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.model.AutomationPackage;
 import step.automation.packages.model.AutomationPackageKeyword;
 import step.core.execution.AbstractExecutionEngineContext;
@@ -32,7 +36,7 @@ import step.resources.ResourceManager;
 import java.util.ArrayList;
 import java.util.List;
 
-@Plugin(dependencies = {FunctionPlugin.class})
+@Plugin(dependencies = {FunctionPlugin.class, AutomationPackageJsonSchemaPlugin.class})
 public class AutomationPackageKeywordsPlugin extends AbstractExecutionEnginePlugin {
 
     private FunctionAccessor functionAccessor;
@@ -44,19 +48,19 @@ public class AutomationPackageKeywordsPlugin extends AbstractExecutionEnginePlug
             functionAccessor = context.require(FunctionAccessor.class);
             resourceManager = context.getResourceManager();
 
-            List<Function> localFunctions = getFunctionsFromAutomationPackage();
+            List<Function> localFunctions = getFunctionsFromAutomationPackage(context.getConfiguration());
             functionAccessor.save(localFunctions);
         }
     }
 
-    public List<Function> getFunctionsFromAutomationPackage() {
+    public List<Function> getFunctionsFromAutomationPackage(Configuration configuration) {
         ArrayList<Function> res = new ArrayList<>();
 
         // the automation package should be found in current classloader
         AutomationPackageArchive automationPackageArchive = new AutomationPackageArchive(this.getClass().getClassLoader());
         if (automationPackageArchive.isAutomationPackage()) {
             try {
-                AutomationPackageReader automationPackageReader = new AutomationPackageReader();
+                AutomationPackageReader automationPackageReader = new AutomationPackageReader(getAutomationPackageJsonSchema(configuration));
                 AutomationPackageKeywordsAttributesApplier attributesApplier = new AutomationPackageKeywordsAttributesApplier(resourceManager);
                 AutomationPackage automationPackage = automationPackageReader.readAutomationPackage(automationPackageArchive);
                 if (automationPackage != null) {
@@ -69,5 +73,9 @@ public class AutomationPackageKeywordsPlugin extends AbstractExecutionEnginePlug
             }
         }
         return res;
+    }
+
+    protected String getAutomationPackageJsonSchema(Configuration configuration) {
+        return configuration.getProperty(AutomationPackageJsonSchemaPlugin.PROP_AUTOMATION_PACKAGE_JSON_SCHEMA, null);
     }
 }

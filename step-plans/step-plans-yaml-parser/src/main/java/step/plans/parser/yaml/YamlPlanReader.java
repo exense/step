@@ -85,7 +85,7 @@ public class YamlPlanReader {
 	 * @param validateWithJsonSchema if true, the json schema will be used to validate yaml plans
 	 * @param jsonSchemaPath         the fixed path to json schema. If null, the actual json schema will be used
 	 */
-	YamlPlanReader(Supplier<ObjectId> idGenerator, Version currentVersion, boolean validateWithJsonSchema, String jsonSchemaPath) {
+	public YamlPlanReader(Supplier<ObjectId> idGenerator, Version currentVersion, boolean validateWithJsonSchema, String jsonSchemaPath) {
 		if (currentVersion != null) {
 			this.currentVersion = currentVersion;
 		} else {

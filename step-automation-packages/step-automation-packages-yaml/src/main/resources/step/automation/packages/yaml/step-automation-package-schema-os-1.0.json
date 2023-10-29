@@ -59,6 +59,10 @@
         "JMeter" : {
           "type" : "object",
           "properties" : {
+            "name" : {
+              "type" : "string",
+              "default" : "JMeter"
+            },
             "description" : {
               "type" : "string"
             },
@@ -81,7 +85,8 @@
             "jmeterTestplan" : {
               "$ref" : "#/$defs/SmartDynamicValueStringDef"
             }
-          }
+          },
+          "additionalProperties" : false
         }
       },
       "additionalProperties" : false

@@ -51,12 +51,15 @@ public class AutomationPackageDescriptorReader {
 
     private String jsonSchema;
 
-    public AutomationPackageDescriptorReader() {
-        this.planReader = new YamlPlanReader(YamlPlanVersions.ACTUAL_VERSION, null);
+    public AutomationPackageDescriptorReader(String jsonSchema) {
+        // TODO: we need to find a way to resolve the actual json schema (controller config) depending on running server instance (EE or OS)
+        // TODO: also we have to resolve the json version for plans according to the automation package version!
+        this.planReader = new YamlPlanReader(null, YamlPlanVersions.ACTUAL_VERSION, false, null);
         this.yamlObjectMapper = createYamlObjectMapper();
 
-        // TODO: configurable json schema
-        this.jsonSchema = readJsonSchema(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH);
+        if (jsonSchema != null) {
+            this.jsonSchema = readJsonSchema(jsonSchema);
+        }
     }
 
     public AutomationPackageDescriptorYaml readAutomationPackageDescriptor(InputStream yamlDescriptor) throws AutomationPackageReadingException {

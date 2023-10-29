@@ -38,9 +38,7 @@ import static org.junit.Assert.*;
 
 public class AutomationPackageDescriptorReaderTest {
 
-    private final AutomationPackageDescriptorReader reader = new AutomationPackageDescriptorReader();
-
-
+    private final AutomationPackageDescriptorReader reader = new AutomationPackageDescriptorReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH);
 
     @Test
     public void jmeterKeywordReadTest() throws AutomationPackageReadingException {
@@ -56,7 +54,7 @@ public class AutomationPackageDescriptorReaderTest {
             assertEquals("JMeter keyword 1", k.getDescription());
             assertFalse(k.isExecuteLocally());
             assertTrue(k.isUseCustomTemplate());
-            assertTrue(k.isManaged());
+            assertFalse(k.isManaged());
             assertEquals((Integer) 1000, k.getCallTimeout().get());
             assertNotNull("string", k.getSchema().getJsonObject("properties").getJsonObject("firstName").getJsonString("type"));
 

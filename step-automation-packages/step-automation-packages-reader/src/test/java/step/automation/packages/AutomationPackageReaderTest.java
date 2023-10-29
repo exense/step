@@ -4,6 +4,7 @@ import org.junit.Test;
 import step.artefacts.TestCase;
 import step.automation.packages.model.AutomationPackage;
 import step.automation.packages.model.AutomationPackageKeyword;
+import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.plans.Plan;
 import step.plugins.jmeter.JMeterFunction;
@@ -16,7 +17,7 @@ import static org.junit.Assert.*;
 
 public class AutomationPackageReaderTest {
 
-    private AutomationPackageReader reader = new AutomationPackageReader();
+    private final AutomationPackageReader reader = new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH);
 
     @Test
     public void testReadFromPackage() throws AutomationPackageReadingException {

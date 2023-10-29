@@ -24,6 +24,7 @@ import jakarta.json.spi.JsonProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.automation.packages.yaml.AutomationPackageKeywordsLookuper;
+import step.automation.packages.yaml.rules.KeywordNameRule;
 import step.automation.packages.yaml.rules.TechnicalFieldRule;
 import step.automation.packages.yaml.rules.TokenSelectionCriteriaRule;
 import step.core.yaml.schema.*;
@@ -73,7 +74,7 @@ public class YamlKeywordSchemaGenerator {
             }
         });
 
-        // prepare definitions for subclasses annotated with @Artefact
+        // prepare definitions for subclasses annotated with @AutomationPackageKeyword
         definitionCreators.add((defsList) -> {
             Map<String, JsonObjectBuilder> keywordImplDefs = createKeywordImplDefs();
             for (Map.Entry<String, JsonObjectBuilder> artefactImplDef : keywordImplDefs.entrySet()) {
@@ -84,17 +85,12 @@ public class YamlKeywordSchemaGenerator {
             defsBuilder.add(KEYWORD_DEF, createKeywordDef(keywordImplDefs.keySet()));
         });
 
-        // add definitions from extensions (additional definitions for EE artefacts)
-        definitionCreators.addAll(getDefinitionsExtensions());
-
         for (JsonSchemaDefinitionCreator definitionCreator : definitionCreators) {
             definitionCreator.addDefinition(defsBuilder);
         }
 
         return defsBuilder;
     }
-
-
 
     protected JsonObjectBuilder createKeywordDef(Set<String> keywordDefsReferences) {
         JsonObjectBuilder builder = jsonProvider.createObjectBuilder();
@@ -130,18 +126,11 @@ public class YamlKeywordSchemaGenerator {
         fillKeywordProperties(keywordClass, keywordProperties, yamlName);
 
         // use camelCase for artefact names in yaml
-        artefactNameProperty.add(yamlName, jsonProvider.createObjectBuilder().add("type", "object").add("properties", keywordProperties));
+        artefactNameProperty.add(yamlName, jsonProvider.createObjectBuilder().add("type", "object").add("properties", keywordProperties).add("additionalProperties", false));
         res.add("properties", artefactNameProperty);
         res.add("additionalProperties", false);
         return res;
     }
-
-    protected List<JsonSchemaDefinitionCreator> getDefinitionsExtensions() {
-        List<JsonSchemaDefinitionCreator> extensions = new ArrayList<>();
-        // TODO: add special annotation for extensions
-        return extensions;
-    }
-
 
     private void fillKeywordProperties(Class<? extends Function> keywordClass, JsonObjectBuilder keywordProperties, String yamlName) throws JsonSchemaPreparationException {
         this.schemaHelper.extractPropertiesFromClass(jsonSchemaCreator, keywordClass, keywordProperties, yamlName);
@@ -161,6 +150,7 @@ public class YamlKeywordSchemaGenerator {
 
         // -- BASIC PROCESSING RULES
         result.add(new CommonFilteredFieldProcessor());
+        result.add(new KeywordNameRule().getJsonSchemaFieldProcessor(jsonProvider));
         result.add(new TechnicalFieldRule().getJsonSchemaFieldProcessor(jsonProvider));
         result.add(new TokenSelectionCriteriaRule().getJsonSchemaFieldProcessor(jsonProvider));
 
