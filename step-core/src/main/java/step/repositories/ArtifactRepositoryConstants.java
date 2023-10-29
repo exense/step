@@ -39,4 +39,9 @@ public class ArtifactRepositoryConstants {
     // Parameters in Resource Artifact Repository
     public static final String RESOURCE_PARAM_RESOURCE_ID = "resourceId";
     public static final String RESOURCE_PARAM_LIB_RESOURCE_ID = "libResourceId";
+    public static final String PARAM_THREAD_NUMBER = "threads";
+    public static final String PARAM_INCLUDE_CLASSES = "includeClasses";
+    public static final String PARAM_INCLUDE_ANNOTATIONS = "includeAnnotations";
+    public static final String PARAM_EXCLUDE_CLASSES = "excludeClasses";
+    public static final String PARAM_EXCLUDE_ANNOTATIONS = "excludeAnnotations";
 }

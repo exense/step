@@ -31,7 +31,7 @@ import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
 import step.core.plans.builder.PlanBuilder;
 import step.core.repositories.*;
-import step.functions.Function;
+import step.repositories.ArtifactRepositoryConstants;
 import step.resources.ResourceManager;
 
 import java.io.File;
@@ -44,11 +44,6 @@ public abstract class AbstractArtifactRepository extends AbstractRepository {
 
 	protected static final Logger logger = LoggerFactory.getLogger(MavenArtifactRepository.class);
 
-	private static final String PARAM_THREAD_NUMBER = "threads";
-	private static final String PARAM_INCLUDE_CLASSES = "includeClasses";
-	private static final String PARAM_INCLUDE_ANNOTATIONS = "includeAnnotations";
-	private static final String PARAM_EXCLUDE_CLASSES = "excludeClasses";
-	private static final String PARAM_EXCLUDE_ANNOTATIONS = "excludeAnnotations";
 	protected final PlanAccessor planAccessor;
 	protected final ResourceManager resourceManager;
 	protected final StepJarParser stepJarParser;
@@ -93,10 +88,10 @@ public abstract class AbstractArtifactRepository extends AbstractRepository {
 		File artifact = getArtifact(repositoryParameters);
 		File libraries = getLibraries(repositoryParameters);
 
-		String[] includedClasses = repositoryParameters.getOrDefault(PARAM_INCLUDE_CLASSES, ",").split(",");
-		String[] includedAnnotations = repositoryParameters.getOrDefault(PARAM_INCLUDE_ANNOTATIONS, ",").split(",");
-		String[] excludedClasses = repositoryParameters.getOrDefault(PARAM_EXCLUDE_CLASSES, ",").split(",");
-		String[] excludedAnnotations = repositoryParameters.getOrDefault(PARAM_EXCLUDE_ANNOTATIONS, ",").split(",");
+		String[] includedClasses = repositoryParameters.getOrDefault(ArtifactRepositoryConstants.PARAM_INCLUDE_CLASSES, ",").split(",");
+		String[] includedAnnotations = repositoryParameters.getOrDefault(ArtifactRepositoryConstants.PARAM_INCLUDE_ANNOTATIONS, ",").split(",");
+		String[] excludedClasses = repositoryParameters.getOrDefault(ArtifactRepositoryConstants.PARAM_EXCLUDE_CLASSES, ",").split(",");
+		String[] excludedAnnotations = repositoryParameters.getOrDefault(ArtifactRepositoryConstants.PARAM_EXCLUDE_ANNOTATIONS, ",").split(",");
 
 		StepJarParser.PlansParsingResult parsingResult = parsePlans(artifact,libraries,includedClasses,includedAnnotations,excludedClasses,excludedAnnotations);
 		return new ParsedArtifact(artifact, parsingResult);
@@ -126,7 +121,7 @@ public abstract class AbstractArtifactRepository extends AbstractRepository {
 
 	private Plan buildTestSetPlan(ExecutionContext context, Map<String, String> repositoryParameters, ParsedArtifact parsedArtifact) {
 		PlanBuilder planBuilder = PlanBuilder.create();
-		int numberOfThreads = Integer.parseInt(repositoryParameters.getOrDefault(PARAM_THREAD_NUMBER, "0"));
+		int numberOfThreads = Integer.parseInt(repositoryParameters.getOrDefault(ArtifactRepositoryConstants.PARAM_THREAD_NUMBER, "0"));
 		TestSet testSet = new TestSet(numberOfThreads);
 		testSet.addAttribute(AbstractArtefact.NAME, parsedArtifact.artifact.getName());
 

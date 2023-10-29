@@ -130,12 +130,15 @@ public abstract class AbstractRunPackagedAutomationPackagesMojo extends Abstract
 	protected RepositoryObjectReference prepareExecutionRepositoryObject(Map<String, Object> executionContext) {
 		return new RepositoryObjectReference(
 				ArtifactRepositoryConstants.RESOURCE_REPO_ID,
-				prepareRepositoryParameters((String) executionContext.get(PLUGIN_CTX_RESOURCE_ID), (String) executionContext.get(PLUGIN_CTX_LIB_RESOURCE_ID))
+				prepareRepositoryParameters(executionContext)
 		);
 	}
 
-	private HashMap<String, String> prepareRepositoryParameters(String resourceId, String libResourceId) {
-		HashMap<String, String> repoParams = new HashMap<>();
+	@Override
+	protected HashMap<String, String> prepareRepositoryParameters(Map<String, Object> executionContext) {
+		String resourceId = (String) executionContext.get(PLUGIN_CTX_RESOURCE_ID);
+		String libResourceId = (String) executionContext.get(PLUGIN_CTX_LIB_RESOURCE_ID);
+		HashMap<String, String> repoParams = new HashMap<>(super.prepareRepositoryParameters(executionContext));
 		repoParams.put(ArtifactRepositoryConstants.RESOURCE_PARAM_RESOURCE_ID, resourceId);
 		if (libResourceId != null) {
 			repoParams.put(ArtifactRepositoryConstants.RESOURCE_PARAM_LIB_RESOURCE_ID, libResourceId);
