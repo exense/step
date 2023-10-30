@@ -38,14 +38,14 @@ public class YamlAutomationPackageSchemaGenerator {
     protected final JsonProvider jsonProvider = JsonProvider.provider();
     private final YamlKeywordSchemaGenerator keywordSchemaGenerator;
     private final YamlPlanJsonSchemaGenerator planSchemaGenerator;
-    private final YamlSchedulerSchemaGenerator schedulerSchemaGenerator;
+    private final YamlScheduleSchemaGenerator scheduleSchemaGenerator;
 
     public YamlAutomationPackageSchemaGenerator(String targetPackage, Version actualVersion) {
         this.targetPackage = targetPackage;
         this.actualVersion = actualVersion;
         this.keywordSchemaGenerator = new YamlKeywordSchemaGenerator(jsonProvider);
         this.planSchemaGenerator = new YamlPlanJsonSchemaGenerator("step", YamlPlanVersions.ACTUAL_VERSION, null);
-        this.schedulerSchemaGenerator = new YamlSchedulerSchemaGenerator(jsonProvider);
+        this.scheduleSchemaGenerator = new YamlScheduleSchemaGenerator(jsonProvider);
     }
 
     public JsonNode generateJsonSchema() throws JsonSchemaPreparationException {
@@ -59,7 +59,7 @@ public class YamlAutomationPackageSchemaGenerator {
         // prepare definitions to be reused in subschemas (referenced via $ref property)
         JsonObjectBuilder allDefs = keywordSchemaGenerator.createKeywordDefs()
                 .addAll(planSchemaGenerator.createDefs())
-                .addAll(schedulerSchemaGenerator.createSchedulerTaskDefs());
+                .addAll(scheduleSchemaGenerator.createScheduleDefs());
         topLevelBuilder.add("$defs", allDefs);
 
         // add properties for top-level
@@ -105,10 +105,10 @@ public class YamlAutomationPackageSchemaGenerator {
                         .add("items", jsonProvider.createObjectBuilder().add("type", "string"))
         );
 
-        objectBuilder.add("scheduler",
+        objectBuilder.add("schedules",
                 jsonProvider.createObjectBuilder()
                         .add("type", "array")
-                        .add("items", schedulerSchemaGenerator.addRef(jsonProvider.createObjectBuilder(), YamlSchedulerSchemaGenerator.SCHEDULER_TASK_DEF))
+                        .add("items", scheduleSchemaGenerator.addRef(jsonProvider.createObjectBuilder(), YamlScheduleSchemaGenerator.SCHEDULE_DEF))
         );
         return objectBuilder;
     }

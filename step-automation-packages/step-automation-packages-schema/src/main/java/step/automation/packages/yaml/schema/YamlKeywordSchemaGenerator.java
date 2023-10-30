@@ -118,16 +118,15 @@ public class YamlKeywordSchemaGenerator {
         JsonObjectBuilder res = jsonProvider.createObjectBuilder();
         res.add("type", "object");
 
-        // artefact has the top-level property matching the artefact name
-        JsonObjectBuilder artefactNameProperty = jsonProvider.createObjectBuilder();
+        // on the top level there is a keyword type name only
+        JsonObjectBuilder keywordSchemaBuilder = jsonProvider.createObjectBuilder();
 
         // other properties are located in nested object and automatically prepared via reflection
         JsonObjectBuilder keywordProperties = jsonProvider.createObjectBuilder();
         fillKeywordProperties(keywordClass, keywordProperties, yamlName);
 
-        // use camelCase for artefact names in yaml
-        artefactNameProperty.add(yamlName, jsonProvider.createObjectBuilder().add("type", "object").add("properties", keywordProperties).add("additionalProperties", false));
-        res.add("properties", artefactNameProperty);
+        keywordSchemaBuilder.add(yamlName, jsonProvider.createObjectBuilder().add("type", "object").add("properties", keywordProperties).add("additionalProperties", false));
+        res.add("properties", keywordSchemaBuilder);
         res.add("additionalProperties", false);
         return res;
     }

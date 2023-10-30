@@ -29,6 +29,7 @@ import step.automation.packages.yaml.rules.YamlKeywordConversionRuleAddOn;
 import step.core.dynamicbeans.DynamicValue;
 import step.plugins.jmeter.JMeterFunction;
 import step.resources.Resource;
+import step.resources.ResourceManager;
 
 @YamlKeywordConversionRuleAddOn(functions = JMeterFunction.class)
 public class JMeterFunctionTestplanConversionRule implements YamlKeywordConversionRule {
@@ -51,7 +52,7 @@ public class JMeterFunctionTestplanConversionRule implements YamlKeywordConversi
         return (keyword, automationPackageFile) -> {
             JMeterFunction draftKeyword = (JMeterFunction) keyword.getDraftKeyword();
             String testplanPath = (String) keyword.getSpecialAttributes().get(JMETER_TESTPLAN_ATTR);
-            Resource resource = resourceUploader.uploadResourceFromAutomationPackage(automationPackageFile, testplanPath, context);
+            Resource resource = resourceUploader.uploadResourceFromAutomationPackage(automationPackageFile, testplanPath, ResourceManager.RESOURCE_TYPE_FUNCTIONS, context);
 
             if (resource != null) {
                 draftKeyword.setJmeterTestplan(new DynamicValue<>(FileResolver.RESOURCE_PREFIX + resource.getId().toString()));

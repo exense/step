@@ -20,10 +20,13 @@ package step.repositories.artifact;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.automation.packages.*;
-import step.automation.packages.model.AutomationPackage;
+import step.automation.packages.AutomationPackageArchive;
+import step.automation.packages.AutomationPackageKeywordsAttributesApplier;
+import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.model.AutomationPackageKeyword;
+import step.automation.packages.yaml.AutomationPackageDescriptorReader;
 import step.automation.packages.yaml.YamlAutomationPackageVersions;
+import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
@@ -52,7 +55,7 @@ public class StepJarParser {
     private static final Logger logger = LoggerFactory.getLogger(StepJarParser.class);
 
     private final StepClassParser stepClassParser;
-    private final AutomationPackageReader automationPackageReader;
+    private final AutomationPackageDescriptorReader automationPackageDescriptorReader;
     private final AutomationPackageKeywordsAttributesApplier automationPackagesKeywordAttributesApplier;
 
     public StepJarParser() {
@@ -61,7 +64,7 @@ public class StepJarParser {
 
     public StepJarParser(ResourceManager resourceManager) {
         this.stepClassParser = new StepClassParser(false);
-        this.automationPackageReader = new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH);
+        this.automationPackageDescriptorReader = new AutomationPackageDescriptorReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH);
         this.automationPackagesKeywordAttributesApplier = new AutomationPackageKeywordsAttributesApplier(resourceManager);
     }
 
@@ -103,14 +106,11 @@ public class StepJarParser {
 
         try {
             // add functions from automation package
-            AutomationPackage automationPackage = automationPackageReader.readAutomationPackageFromJarFile(artifact);
-            if(automationPackage != null) {
-                List<AutomationPackageKeyword> automationPackageKeywords = automationPackage.getKeywords();
-                if (!automationPackageKeywords.isEmpty()) {
-                    AutomationPackageArchive automationPackageArchive = new AutomationPackageArchive(artifact);
-                    for (AutomationPackageKeyword automationPackageKeyword : automationPackageKeywords) {
-                        functions.add(automationPackagesKeywordAttributesApplier.applySpecialAttributesToKeyword(automationPackageKeyword, automationPackageArchive));
-                    }
+            AutomationPackageArchive automationPackageArchive = new AutomationPackageArchive(artifact);
+            if(automationPackageArchive.isAutomationPackage()) {
+                AutomationPackageDescriptorYaml descriptor = automationPackageDescriptorReader.readAutomationPackageDescriptor(automationPackageArchive.getDescriptorYaml());
+                for (AutomationPackageKeyword automationPackageKeyword : descriptor.getKeywords()) {
+                    functions.add(automationPackagesKeywordAttributesApplier.applySpecialAttributesToKeyword(automationPackageKeyword, automationPackageArchive));
                 }
             }
         } catch (AutomationPackageReadingException e) {

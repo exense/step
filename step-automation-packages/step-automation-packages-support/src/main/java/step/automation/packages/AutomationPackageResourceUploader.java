@@ -28,6 +28,7 @@ public class AutomationPackageResourceUploader {
 
     public Resource uploadResourceFromAutomationPackage(AutomationPackageArchive automationPackageArchive,
                                                         String resourcePath,
+                                                        String resourceType,
                                                         AutomationPackageAttributesApplyingContext context) {
         if (resourcePath != null && !resourcePath.isEmpty()) {
             ResourceManager resourceManager = context.getResourceManager();
@@ -39,7 +40,7 @@ public class AutomationPackageResourceUploader {
                 }
                 File resourceFile = new File(resourceUrl.getFile());
                 return resourceManager.createResource(
-                        ResourceManager.RESOURCE_TYPE_FUNCTIONS,
+                        resourceType,
                         automationPackageArchive.getResourceAsStream(resourcePath),
                         resourceFile.getName(),
                         false, null

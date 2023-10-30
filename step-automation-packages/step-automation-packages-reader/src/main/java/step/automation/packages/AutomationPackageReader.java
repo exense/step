@@ -26,7 +26,6 @@ import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
 import java.util.stream.Collectors;
 
 public class AutomationPackageReader {
@@ -55,27 +54,24 @@ public class AutomationPackageReader {
     protected AutomationPackage buildAutomationPackage(AutomationPackageDescriptorYaml descriptor, AutomationPackageArchive archive) throws AutomationPackageReadingException {
         AutomationPackage res = new AutomationPackage();
         res.setName(descriptor.getName());
-        // TODO: apply scheduler tasks
-        res.setPlans(descriptor.getPlans().stream().map(p -> descriptorReader.getPlanReader().yamlPlanToPlan(p)).collect(Collectors.toList()));
-        res.setKeywords(descriptor.getKeywords());
-        importIntoAutomationPackage(res, descriptor.getFragments(), archive);
+        // apply imported fragments recursively
+        fillAutomationPackageWithImportedFragments(res, descriptor, archive);
         return res;
     }
 
-    public void importIntoAutomationPackage(AutomationPackage targetPackage, List<String> imports, AutomationPackageArchive archive) throws AutomationPackageReadingException {
-        for (String fragmentReference : imports) {
-            AutomationPackageFragmentYaml fragment;
-            try (InputStream fragmentYamlStream = archive.getResourceAsStream(fragmentReference)) {
-                fragment = descriptorReader.readAutomationPackageFragment(fragmentYamlStream, fragmentReference);
-                targetPackage.getKeywords().addAll(fragment.getKeywords());
-                targetPackage.getPlans().addAll(fragment.getPlans().stream().map(p -> descriptorReader.getPlanReader().yamlPlanToPlan(p)).collect(Collectors.toList()));
-                // TODO: apply scheduler tasks
-            } catch (IOException e) {
-                throw new AutomationPackageReadingException("Unable to read fragment in automation package: " + fragmentReference, e);
-            }
+    public void fillAutomationPackageWithImportedFragments(AutomationPackage targetPackage, AutomationPackageFragmentYaml fragment, AutomationPackageArchive archive) throws AutomationPackageReadingException {
+        targetPackage.getKeywords().addAll(fragment.getKeywords());
+        targetPackage.getPlans().addAll(fragment.getPlans().stream().map(p -> descriptorReader.getPlanReader().yamlPlanToPlan(p)).collect(Collectors.toList()));
+        // TODO: apply scheduler tasks
 
-            if (!fragment.getFragments().isEmpty()) {
-                importIntoAutomationPackage(targetPackage, fragment.getFragments(), archive);
+        if (!fragment.getFragments().isEmpty()) {
+            for (String importedFragmentReference : fragment.getFragments()) {
+                try (InputStream fragmentYamlStream = archive.getResourceAsStream(importedFragmentReference)) {
+                    fragment = descriptorReader.readAutomationPackageFragment(fragmentYamlStream, importedFragmentReference);
+                    fillAutomationPackageWithImportedFragments(targetPackage, fragment, archive);
+                } catch (IOException e) {
+                    throw new AutomationPackageReadingException("Unable to read fragment in automation package: " + importedFragmentReference, e);
+                }
             }
         }
     }

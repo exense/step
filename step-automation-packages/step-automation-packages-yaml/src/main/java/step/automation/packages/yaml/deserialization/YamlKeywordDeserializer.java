@@ -107,10 +107,10 @@ public class YamlKeywordDeserializer extends JsonDeserializer<AutomationPackageK
 
     private String resolveKeywordClass(JsonNode yamlKeyword) {
         // move keyword class into the '_class' field
-        Iterator<String> childrenArtifactNames = yamlKeyword.fieldNames();
+        Iterator<String> childrenKeywordTypesName = yamlKeyword.fieldNames();
 
         List<String> keywordNames = new ArrayList<String>();
-        childrenArtifactNames.forEachRemaining(keywordNames::add);
+        childrenKeywordTypesName.forEachRemaining(keywordNames::add);
 
         String yamlKeywordClass = null;
         if (keywordNames.size() == 0) {

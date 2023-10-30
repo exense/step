@@ -18,7 +18,6 @@
  ******************************************************************************/
 package step.automation.packages.model;
 
-import step.automation.packages.model.AutomationPackageKeyword;
 import step.core.plans.Plan;
 
 import java.util.ArrayList;

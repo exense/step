@@ -1568,7 +1568,7 @@
         "$ref" : "#/$defs/ThreadGroupDef"
       } ]
     },
-    "SchedulerTaskDef" : {
+    "ScheduleDef" : {
       "type" : "object",
       "properties" : {
         "environment" : {
@@ -1627,10 +1627,10 @@
         "type" : "string"
       }
     },
-    "scheduler" : {
+    "schedules" : {
       "type" : "array",
       "items" : {
-        "$ref" : "#/$defs/SchedulerTaskDef"
+        "$ref" : "#/$defs/ScheduleDef"
       }
     }
   },

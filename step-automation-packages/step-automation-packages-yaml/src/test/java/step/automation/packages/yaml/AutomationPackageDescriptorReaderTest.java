@@ -21,7 +21,7 @@ package step.automation.packages.yaml;
 import org.junit.Test;
 import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.model.AutomationPackageKeyword;
-import step.automation.packages.model.AutomationPackageSchedulerTask;
+import step.automation.packages.model.AutomationPackageSchedule;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
 import step.functions.Function;
 import step.plans.parser.yaml.model.YamlPlan;
@@ -86,9 +86,9 @@ public class AutomationPackageDescriptorReaderTest {
             assertEquals("Second Plan", plans.get(1).getName());
 
             // check parsed scheduler
-            List<AutomationPackageSchedulerTask> scheduler = descriptor.getScheduler();
+            List<AutomationPackageSchedule> scheduler = descriptor.getSchedule();
             assertEquals(2, scheduler.size());
-            AutomationPackageSchedulerTask firstTask = scheduler.get(0);
+            AutomationPackageSchedule firstTask = scheduler.get(0);
             assertEquals("My first task", firstTask.getName());
             assertEquals("First Plan", firstTask.getPlanName());
             assertEquals("*/5 * * * *", firstTask.getCron());

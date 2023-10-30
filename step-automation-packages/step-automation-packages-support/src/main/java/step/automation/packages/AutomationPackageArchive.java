@@ -32,7 +32,7 @@ import java.util.List;
 public class AutomationPackageArchive {
 
     private static final Logger log = LoggerFactory.getLogger(AutomationPackageArchive.class);
-    public static final List<String> METADATA_FILES = List.of("automation.yml", "automation.yaml");
+    public static final List<String> METADATA_FILES = List.of("automation-package.yml", "automation-package.yaml");
 
     private final ClassLoader classLoader;
 

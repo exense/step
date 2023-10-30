@@ -18,17 +18,17 @@
  ******************************************************************************/
 package step.automation.packages.model;
 
-public class AutomationPackageSchedulerTask {
+public class AutomationPackageSchedule {
 
     private String name;
     private String cron;
     private String planName;
     private String environment;
 
-    public AutomationPackageSchedulerTask() {
+    public AutomationPackageSchedule() {
     }
 
-    public AutomationPackageSchedulerTask(String name, String cron, String planName, String environment) {
+    public AutomationPackageSchedule(String name, String cron, String planName, String environment) {
         this.name = name;
         this.cron = cron;
         this.planName = planName;

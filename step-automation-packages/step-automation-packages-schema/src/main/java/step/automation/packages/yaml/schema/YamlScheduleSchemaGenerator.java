@@ -20,7 +20,7 @@ package step.automation.packages.yaml.schema;
 
 import jakarta.json.JsonObjectBuilder;
 import jakarta.json.spi.JsonProvider;
-import step.automation.packages.model.AutomationPackageSchedulerTask;
+import step.automation.packages.model.AutomationPackageSchedule;
 import step.core.yaml.schema.AggregatedJsonSchemaFieldProcessor;
 import step.core.yaml.schema.YamlJsonSchemaHelper;
 import step.handlers.javahandler.jsonschema.DefaultFieldMetadataExtractor;
@@ -29,9 +29,9 @@ import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 
 import java.util.ArrayList;
 
-public class YamlSchedulerSchemaGenerator {
+public class YamlScheduleSchemaGenerator {
 
-    public static final String SCHEDULER_TASK_DEF = "SchedulerTaskDef";
+    public static final String SCHEDULE_DEF = "ScheduleDef";
 
     private final jakarta.json.spi.JsonProvider jsonProvider;
 
@@ -39,7 +39,7 @@ public class YamlSchedulerSchemaGenerator {
 
     protected final YamlJsonSchemaHelper schemaHelper;
 
-    public YamlSchedulerSchemaGenerator(JsonProvider jsonProvider) {
+    public YamlScheduleSchemaGenerator(JsonProvider jsonProvider) {
         this.jsonProvider = jsonProvider;
         this.schemaHelper = new YamlJsonSchemaHelper(this.jsonProvider);
         this.jsonSchemaCreator = new JsonSchemaCreator(jsonProvider, new AggregatedJsonSchemaFieldProcessor(new ArrayList<>()), new DefaultFieldMetadataExtractor());
@@ -48,19 +48,19 @@ public class YamlSchedulerSchemaGenerator {
     /**
      * Prepares definitions to be reused in json subschemas
      */
-    public JsonObjectBuilder createSchedulerTaskDefs() throws JsonSchemaPreparationException {
+    public JsonObjectBuilder createScheduleDefs() throws JsonSchemaPreparationException {
         JsonObjectBuilder defsBuilder = jsonProvider.createObjectBuilder();
 
         JsonObjectBuilder res = jsonProvider.createObjectBuilder();
         res.add("type", "object");
 
         JsonObjectBuilder schedulerTaskProperties = jsonProvider.createObjectBuilder();
-        schemaHelper.extractPropertiesFromClass(this.jsonSchemaCreator, AutomationPackageSchedulerTask.class, schedulerTaskProperties, "scheduler");
+        schemaHelper.extractPropertiesFromClass(this.jsonSchemaCreator, AutomationPackageSchedule.class, schedulerTaskProperties, "scheduler");
 
         res.add("properties", schedulerTaskProperties);
         res.add("additionalProperties", false);
 
-        defsBuilder.add(SCHEDULER_TASK_DEF, res);
+        defsBuilder.add(SCHEDULE_DEF, res);
 
         return defsBuilder;
     }
