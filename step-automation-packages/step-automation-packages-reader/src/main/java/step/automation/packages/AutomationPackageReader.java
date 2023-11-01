@@ -77,6 +77,10 @@ public class AutomationPackageReader {
     }
 
     public AutomationPackage readAutomationPackageFromJarFile(File automationPackageJar) throws AutomationPackageReadingException {
-        return readAutomationPackage(new AutomationPackageArchive(automationPackageJar));
+        try (AutomationPackageArchive automationPackageArchive = new AutomationPackageArchive(automationPackageJar)) {
+            return readAutomationPackage(automationPackageArchive);
+        } catch (IOException e) {
+            throw new AutomationPackageReadingException("IO Exception", e);
+        }
     }
 }

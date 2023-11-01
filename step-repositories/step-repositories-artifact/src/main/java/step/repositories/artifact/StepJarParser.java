@@ -43,6 +43,7 @@ import step.resources.ResourceManager;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -104,16 +105,15 @@ public class StepJarParser {
             functions.add(res);
         }
 
-        try {
+        try(AutomationPackageArchive automationPackageArchive = new AutomationPackageArchive(artifact)) {
             // add functions from automation package
-            AutomationPackageArchive automationPackageArchive = new AutomationPackageArchive(artifact);
             if(automationPackageArchive.isAutomationPackage()) {
                 AutomationPackageDescriptorYaml descriptor = automationPackageDescriptorReader.readAutomationPackageDescriptor(automationPackageArchive.getDescriptorYaml());
                 for (AutomationPackageKeyword automationPackageKeyword : descriptor.getKeywords()) {
                     functions.add(automationPackagesKeywordAttributesApplier.applySpecialAttributesToKeyword(automationPackageKeyword, automationPackageArchive));
                 }
             }
-        } catch (AutomationPackageReadingException e) {
+        } catch (AutomationPackageReadingException | IOException e) {
             throw new RuntimeException("Unable to process automation package", e);
         }
 
