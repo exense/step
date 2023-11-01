@@ -86,9 +86,9 @@ public class AutomationPackageDescriptorReaderTest {
             assertEquals("Second Plan", plans.get(1).getName());
 
             // check parsed scheduler
-            List<AutomationPackageSchedule> scheduler = descriptor.getSchedule();
-            assertEquals(2, scheduler.size());
-            AutomationPackageSchedule firstTask = scheduler.get(0);
+            List<AutomationPackageSchedule> schedules = descriptor.getSchedules();
+            assertEquals(2, schedules.size());
+            AutomationPackageSchedule firstTask = schedules.get(0);
             assertEquals("My first task", firstTask.getName());
             assertEquals("First Plan", firstTask.getPlanName());
             assertEquals("*/5 * * * *", firstTask.getCron());

@@ -48,7 +48,7 @@ plans:
         children:
           - echo:
               text: "Just echo"
-scheduler:
+schedules:
   - name: "My first task"
     cron: "*/5 * * * *"
     environment: "TEST"

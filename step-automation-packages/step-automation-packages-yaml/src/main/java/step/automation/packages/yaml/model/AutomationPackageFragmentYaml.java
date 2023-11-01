@@ -31,7 +31,7 @@ public class AutomationPackageFragmentYaml {
     private List<String> fragments = new ArrayList<>();
     private List<AutomationPackageKeyword> keywords = new ArrayList<>();
     private List<YamlPlan> plans = new ArrayList<>();
-    private List<AutomationPackageSchedule> schedule = new ArrayList<>();
+    private List<AutomationPackageSchedule> schedules = new ArrayList<>();
 
     public List<AutomationPackageKeyword> getKeywords() {
         return keywords;
@@ -60,12 +60,12 @@ public class AutomationPackageFragmentYaml {
         this.fragments = fragments;
     }
 
-    public List<AutomationPackageSchedule> getSchedule() {
-        return schedule;
+    public List<AutomationPackageSchedule> getSchedules() {
+        return schedules;
     }
 
     @JsonSetter(nulls = Nulls.AS_EMPTY)
-    public void setSchedule(List<AutomationPackageSchedule> schedule) {
-        this.schedule = schedule;
+    public void setSchedules(List<AutomationPackageSchedule> schedules) {
+        this.schedules = schedules;
     }
 }

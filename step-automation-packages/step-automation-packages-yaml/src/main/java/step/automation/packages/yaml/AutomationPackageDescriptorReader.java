@@ -92,8 +92,8 @@ public class AutomationPackageDescriptorReader {
             if (!res.getPlans().isEmpty()) {
                 log.info("{} plan(s) found in automation package", res.getPlans().size());
             }
-            if (!res.getSchedule().isEmpty()) {
-                log.info("{} schedule(s) found in automation package", res.getSchedule().size());
+            if (!res.getSchedules().isEmpty()) {
+                log.info("{} schedule(s) found in automation package", res.getSchedules().size());
             }
             if (res.getFragments().isEmpty()) {
                 log.info("{} imported fragment(s) found in automation package", res.getFragments().size());

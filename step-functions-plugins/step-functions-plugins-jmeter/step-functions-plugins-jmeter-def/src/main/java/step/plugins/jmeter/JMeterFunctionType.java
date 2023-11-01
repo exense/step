@@ -83,6 +83,7 @@ public class JMeterFunctionType extends AbstractFunctionType<JMeterFunction> {
 	public void deleteFunction(JMeterFunction function) throws FunctionTypeException {
 		// if the function is managed by keyword package, we can delete linked resources (these resources aren't reused anywhere)
 		if (function.isManaged()) {
+			// TODO: if the function is managed by keyword package, we can delete linked resources (these resources aren't reused anywhere)
 			String jmeterTestplanResourceId = function.getJmeterTestplan().getValue();
 			if (jmeterTestplanResourceId != null && !jmeterTestplanResourceId.isEmpty()) {
 				ResourceManager resourceManager = getResourceManager();
