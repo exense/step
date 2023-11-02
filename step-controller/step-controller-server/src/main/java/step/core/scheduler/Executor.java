@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.core.scheduler;
 
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -34,6 +35,8 @@ import org.quartz.SchedulerFactory;
 import org.quartz.Trigger;
 import org.quartz.TriggerBuilder;
 import org.quartz.impl.StdSchedulerFactory;
+import org.quartz.impl.calendar.BaseCalendar;
+import org.quartz.impl.calendar.CronCalendar;
 import org.quartz.impl.matchers.GroupMatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,6 +49,8 @@ import step.core.execution.OperationMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.objectenricher.ObjectHookRegistry;
 import step.engine.plugins.ExecutionEnginePlugin;
+
+import static step.core.accessors.AbstractOrganizableObject.NAME;
 
 public class Executor {
 	
@@ -78,7 +83,11 @@ public class Executor {
 		}
 	}
 
-	public Executor() {
+	protected Executor() {
+	}
+
+	protected Executor(Scheduler scheduler) {
+		this.scheduler = scheduler;
 	}
 
 	private Properties getProperties() {
@@ -107,6 +116,7 @@ public class Executor {
 		JobKey key = new JobKey(task.getId().toString());
 		try {
 			scheduler.deleteJob(key);
+			scheduler.deleteCalendar(getExclusionCalendarName(task));
 		} catch (SchedulerException e) {
 			logger.error("An error occurred while removing task from scheduler: " + task);
 			throw new RuntimeException(e);
@@ -114,11 +124,20 @@ public class Executor {
 	}
 	
 	public void validate(ExecutiontTaskParameters task) {
-		CronScheduleBuilder.cronSchedule(task.getCronExpression());
+		try {
+			CronScheduleBuilder.cronSchedule(task.getCronExpression());
+			List<CronExclusion> cronExclusions = task.getCronExclusions();
+			if (cronExclusions != null) {
+				cronExclusions.forEach(c-> CronScheduleBuilder.cronSchedule(c.getCronExpression()));
+			}
+		} catch (RuntimeException e) {
+			logAndThrow(e.getMessage(), e);
+		}
 	}
 
 	public boolean schedule(ExecutiontTaskParameters task) {
 		JobKey key = new JobKey(task.getId().toString());
+		String taskName = task.getAttribute(NAME);
 		try {
 			if(scheduler.checkExists(key)) {
 				deleteSchedule(task);
@@ -127,10 +146,48 @@ public class Executor {
 			logger.error("An error occurred while checking if task exists in scheduler: " + task);
 			throw new RuntimeException(e);
 		}
-		Trigger trigger = TriggerBuilder.newTrigger().withSchedule(CronScheduleBuilder.cronSchedule(task.getCronExpression())).build();
+		//Base calendar allows you to chain calendars.
+		BaseCalendar baseCalendar = new BaseCalendar();
+		if (task.getCronExclusions() != null) {
+			try {
+				for(CronExclusion c : task.getCronExclusions()) {
+					baseCalendar = new CronCalendar(baseCalendar, c.getCronExpression());
+				}
+			} catch (ParseException e) { //such exception should already be caught by validate
+				logAndThrow("One of the cron expressions for the task '" + taskName +
+						"' is invalid.", e);
+			}
+		}
+		//In case exclusions were removed we need to add/replace at least the base calendar
+		String exclusionCalendarName = getExclusionCalendarName(task);
+		try {
+			scheduler.addCalendar(exclusionCalendarName, baseCalendar, true, false);
+		} catch (SchedulerException e) {//exception throw when adding exclustion calendar
+			logAndThrow("Adding exclusion CRON expressions raised an error for the task '" +
+					taskName + "'.", e);
+		}
+
+		Trigger trigger = TriggerBuilder.newTrigger()
+				.withSchedule(CronScheduleBuilder.cronSchedule(task.getCronExpression()))
+				.modifiedByCalendar(exclusionCalendarName)
+				.build();
 		JobDetail job = buildScheduledJob(task);
-		scheduleJob(trigger, job);
+		try {
+			scheduleJob(trigger, job);
+		} catch (Exception e) {
+			logAndThrow("Unable to schedule task '" + taskName + "'.", e);
+		}
 		return trigger.mayFireAgain();
+	}
+
+	private String getExclusionCalendarName(ExecutiontTaskParameters task) {
+		return "exclusionsCalendar_" + task.getId().toHexString();
+	}
+
+	private void logAndThrow(String message, Exception e) {
+		String exMessage = (e.getCause() != null) ? e.getCause().getMessage() : e.getMessage();
+		logger.error(message, e);
+		throw new RuntimeException(message + " Details: " + exMessage);
 	}
 
 	public String execute(ExecutionParameters executionParameters) {
