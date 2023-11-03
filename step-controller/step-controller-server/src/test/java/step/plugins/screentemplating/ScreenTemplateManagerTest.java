@@ -151,12 +151,12 @@ public class ScreenTemplateManagerTest {
 				return null;
 			}
 
-            @Override
-            public Stream<ScreenInput> findByIds(java.util.Collection<String> collection) {
-                return null;
-            }
+			@Override
+			public Stream<ScreenInput> findByIds(List<String> ids) {
+				return null;
+			}
 
-            @Override
+			@Override
 			public Stream<ScreenInput> findManyByCriteria(Map<String, String> map) {
 				return null;
 			}

@@ -145,7 +145,7 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 		return executionAccessor.findByAttributes(attributes);
 	}
     
-    @Operation(description = "Returns a list of executions by the provided ids.")
+	@Operation(description = "Returns a list of executions by the provided ids.")
 	@POST
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
