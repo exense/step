@@ -99,16 +99,17 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
                         .setRenderingSettings(new MetricRenderingSettings()),
                 new MetricType()
                         .setName(FAILURE_COUNT)
+                        .setUnit("1")
                         .setDisplayName("Execution failure count")
                         .setAttributes(Arrays.asList(taskAttribute, executionAttribute, planAttribute))
-                        .setDefaultAggregation(MetricAggregation.COUNT)
+                        .setDefaultAggregation(MetricAggregation.SUM)
                         .setRenderingSettings(new MetricRenderingSettings()),
                 new MetricType()
                         .setName(FAILURES_COUNT_BY_ERROR_CODE)
                         .setDisplayName("Execution failure count by error code")
                         .setUnit("1")
                         .setDefaultGroupingAttributes(Arrays.asList(errorCodeAttribute.getName()))
-                        .setDefaultAggregation(MetricAggregation.RATE)
+                        .setDefaultAggregation(MetricAggregation.SUM)
                         .setAttributes(Arrays.asList(taskAttribute, executionAttribute, planAttribute, errorCodeAttribute))
                         .setRenderingSettings(new MetricRenderingSettings()),
                 new MetricType()
