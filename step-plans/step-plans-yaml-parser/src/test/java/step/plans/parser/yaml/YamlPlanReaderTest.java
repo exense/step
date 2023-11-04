@@ -118,6 +118,18 @@ public class YamlPlanReaderTest {
 	}
 
 	@Test
+	public void forEachBlock() throws YamlPlanValidationException {
+		convertFromYamlToPlan(
+				"src/test/resources/step/plans/parser/yaml/for-each/test-for-each-plan.yml",
+				"src/test/resources/step/plans/parser/yaml/for-each/test-expected-for-each-tech-plan.yml"
+		);
+
+		convertPlanToYaml("src/test/resources/step/plans/parser/yaml/for-each/test-expected-for-each-tech-plan.yml",
+				"src/test/resources/step/plans/parser/yaml/for-each/test-for-each-converted-plan.yml"
+		);
+	}
+
+	@Test
 	public void checkArtefactExpression() throws YamlPlanValidationException {
 		// test expressions in 'Check' artefact - convert from yaml format to technical format
 		convertFromYamlToPlan(

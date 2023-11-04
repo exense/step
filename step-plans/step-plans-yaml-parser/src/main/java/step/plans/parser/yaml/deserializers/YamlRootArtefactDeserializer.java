@@ -94,6 +94,7 @@ public class YamlRootArtefactDeserializer extends JsonDeserializer<YamlRootArtef
         res.add(new KeywordRoutingRule().getArtefactFieldDeserializationProcessor());
         res.add(new FunctionGroupSelectionRule().getArtefactFieldDeserializationProcessor());
         res.add(new ForBlockRule().getArtefactFieldDeserializationProcessor());
+        res.add(new ForEachBlockRule().getArtefactFieldDeserializationProcessor());
 
         // for 'Check' we always use the dynamic expression for 'expression' field (static value is not supported)
         res.add(new CheckExpressionRule().getArtefactFieldDeserializationProcessor());

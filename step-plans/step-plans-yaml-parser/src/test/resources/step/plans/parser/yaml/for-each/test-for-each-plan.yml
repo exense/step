@@ -1,0 +1,65 @@
+name: "test plan"
+root:
+  sequence:
+    name: Sequence
+    children:
+      - forEach:
+          description: "test1"
+          dataSource:
+            sequence:
+              start: 10
+              end: 20
+              inc: 5
+          threads: 2
+          maxFailedLoops: 3
+          userItem: "testUserId"
+          globalCounter: "testGCounter"
+          item: "testCounter"
+      - forEach:
+          description: "test2"
+          dataSource:
+            excel:
+              file:
+                id: "644fbe4e38a61e07cc3a4df9"
+              headers: true
+              worksheet: "myWorksheet"
+      - forEach:
+          description: "test3"
+          dataSource:
+            csv:
+              file:
+                id: "644fbe4e38a61e07cc3a4df9"
+              delimiter: ";"
+      - forEach:
+          description: "test4"
+          dataSource:
+            folder:
+              folder: "myFolder"
+      - forEach:
+          description: "test5"
+          dataSource:
+            gsheet:
+              fileId: "myFileId"
+              serviceAccountKey:
+                id: "644fbe4e38a61e07cc3a4df9"
+              tabName: "myTabName"
+      - forEach:
+          description: "test6"
+          dataSource:
+            json:
+              json: "{}"
+      - forEach:
+          description: "test7"
+          dataSource:
+            json-array:
+              json: "[{},{}]"
+      - forEach:
+          description: "test8"
+          dataSource:
+            sql:
+              connectionString: "jdbc://"
+              driverClass: "a.b.c"
+              password: "pass"
+              user: "user1"
+              query: "select * from tmp"
+              writePKey: "abc"

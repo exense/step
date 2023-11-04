@@ -42,6 +42,8 @@ public class YamlPlanFields {
 
     public static final String FOR_BLOCK_DATA_SOURCE_ORIGINAL_FIELD = "dataSource";
 
+    public static final String FOR_EACH_BLOCK_DATA_SOURCE_YAML_FIELD = "dataSource";
+
     public static final String FOR_BLOCK_DATA_START_YAML_FIELD = "start";
     public static final String FOR_BLOCK_DATA_START_ORIGINAL_FIELD = "start";
 
@@ -50,6 +52,8 @@ public class YamlPlanFields {
 
     public static final String FOR_BLOCK_DATA_INC_YAML_FIELD = "inc";
     public static final String FOR_BLOCK_DATA_INC_ORIGINAL_FIELD = "inc";
+
+    public static final String FILE_REFERENCE_RESOURCE_ID_FIELD = "id";
 
     public static String javaArtefactNameToYaml(String javaArtefactName) {
         return CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_CAMEL, javaArtefactName);

@@ -18,25 +18,21 @@
  ******************************************************************************/
 package step.plans.parser.yaml.rules;
 
-import com.fasterxml.jackson.core.ObjectCodec;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import jakarta.json.JsonObjectBuilder;
 import jakarta.json.spi.JsonProvider;
 import step.artefacts.ForBlock;
-import step.core.accessors.DefaultJacksonMapperProvider;
-import step.core.dynamicbeans.DynamicValue;
-import step.datapool.DataPoolConfiguration;
-import step.datapool.DataPoolFactory;
-import step.datapool.sequence.IntSequenceDataPool;
+import step.datapool.DataSources;
 import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
 import step.plans.parser.yaml.YamlPlanFields;
 import step.plans.parser.yaml.deserializers.YamlArtefactFieldDeserializationProcessor;
-import step.plans.parser.yaml.schema.YamlDynamicValueJsonSchemaHelper;
-import step.plans.parser.yaml.schema.YamlPlanJsonSchemaGenerator;
 import step.plans.parser.yaml.serializers.YamlArtefactFieldSerializationProcessor;
 
+import java.util.Map;
+
 public class ForBlockRule implements ArtefactFieldConversionRule {
+
+    private final DataSourceFieldsYamlHelper dataSourceFieldsYamlHelper = new DataSourceFieldsYamlHelper();
 
     @Override
     public JsonSchemaFieldProcessor getJsonSchemaFieldProcessor(JsonProvider jsonProvider) {
@@ -47,9 +43,7 @@ public class ForBlockRule implements ArtefactFieldConversionRule {
                     return true;
                 } else if (field.getName().equals(YamlPlanFields.FOR_BLOCK_DATA_SOURCE_ORIGINAL_FIELD)) {
                     // data source parameters are represented as several independent fields in yaml
-                    propertiesBuilder.add(YamlPlanFields.FOR_BLOCK_DATA_START_YAML_FIELD, createDynamicNumReference(jsonProvider));
-                    propertiesBuilder.add(YamlPlanFields.FOR_BLOCK_DATA_END_YAML_FIELD, createDynamicNumReference(jsonProvider));
-                    propertiesBuilder.add(YamlPlanFields.FOR_BLOCK_DATA_INC_YAML_FIELD, createDynamicNumReference(jsonProvider));
+                    dataSourceFieldsYamlHelper.fillDataSourceJsonSchemaParams(ForBlock.DATA_SOURCE_TYPE, jsonProvider, propertiesBuilder);
                     return true;
                 }
             }
@@ -61,28 +55,35 @@ public class ForBlockRule implements ArtefactFieldConversionRule {
     public YamlArtefactFieldDeserializationProcessor getArtefactFieldDeserializationProcessor() {
         return (artefactClass, field, output, codec) -> {
             if (artefactClass.equals(ForBlock.FOR_BLOCK_ARTIFACT_NAME)) {
-                prepareOutputDataSourceSectionIfMissing(output, codec);
-
-                switch (field.getKey()) {
-                    case YamlPlanFields.FOR_BLOCK_DATA_INC_YAML_FIELD: {
-                        ObjectNode jsonNode = (ObjectNode) output.get(YamlPlanFields.FOR_BLOCK_DATA_SOURCE_ORIGINAL_FIELD);
-                        jsonNode.set(YamlPlanFields.FOR_BLOCK_DATA_INC_ORIGINAL_FIELD, field.getValue());
-                        return true;
-                    }
-                    case YamlPlanFields.FOR_BLOCK_DATA_END_ORIGINAL_FIELD: {
-                        ObjectNode jsonNode = (ObjectNode) output.get(YamlPlanFields.FOR_BLOCK_DATA_SOURCE_ORIGINAL_FIELD);
-                        jsonNode.set(YamlPlanFields.FOR_BLOCK_DATA_END_ORIGINAL_FIELD, field.getValue());
-                        return true;
-                    }
-                    case YamlPlanFields.FOR_BLOCK_DATA_START_ORIGINAL_FIELD: {
-                        ObjectNode jsonNode = (ObjectNode) output.get(YamlPlanFields.FOR_BLOCK_DATA_SOURCE_ORIGINAL_FIELD);
-                        jsonNode.set(YamlPlanFields.FOR_BLOCK_DATA_START_ORIGINAL_FIELD, field.getValue());
-                        return true;
-                    }
-                }
+                dataSourceFieldsYamlHelper.prepareOutputDataSourceSectionIfMissing(output, ForBlock.DATA_SOURCE_TYPE);
+                return deserializeDataSourceField(field, output, ForBlock.DATA_SOURCE_TYPE);
             }
             return false;
         };
+    }
+
+    public boolean deserializeDataSourceField(Map.Entry<String, JsonNode> field, ObjectNode output, String dataSourceType) {
+        // move all datasource properties to upper level
+        if (dataSourceType.equals(DataSources.SEQUENCE)) {
+            switch (field.getKey()) {
+                case YamlPlanFields.FOR_BLOCK_DATA_INC_YAML_FIELD: {
+                    ObjectNode jsonNode = (ObjectNode) output.get(YamlPlanFields.FOR_BLOCK_DATA_SOURCE_ORIGINAL_FIELD);
+                    jsonNode.set(YamlPlanFields.FOR_BLOCK_DATA_INC_ORIGINAL_FIELD, field.getValue());
+                    return true;
+                }
+                case YamlPlanFields.FOR_BLOCK_DATA_END_YAML_FIELD: {
+                    ObjectNode jsonNode = (ObjectNode) output.get(YamlPlanFields.FOR_BLOCK_DATA_SOURCE_ORIGINAL_FIELD);
+                    jsonNode.set(YamlPlanFields.FOR_BLOCK_DATA_END_ORIGINAL_FIELD, field.getValue());
+                    return true;
+                }
+                case YamlPlanFields.FOR_BLOCK_DATA_START_YAML_FIELD: {
+                    ObjectNode jsonNode = (ObjectNode) output.get(YamlPlanFields.FOR_BLOCK_DATA_SOURCE_ORIGINAL_FIELD);
+                    jsonNode.set(YamlPlanFields.FOR_BLOCK_DATA_START_ORIGINAL_FIELD, field.getValue());
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     @Override
@@ -90,19 +91,7 @@ public class ForBlockRule implements ArtefactFieldConversionRule {
         return (artefact, field, fieldMetadata, gen) -> {
             if (ForBlock.class.isAssignableFrom(artefact.getClass())) {
                 if (field.getName().equals(YamlPlanFields.FOR_BLOCK_DATA_SOURCE_ORIGINAL_FIELD)) {
-                    IntSequenceDataPool dataSource = (IntSequenceDataPool) field.get(artefact);
-
-                    DynamicValue<Integer> startDyn = dataSource.getStart();
-                    gen.writeFieldName(YamlPlanFields.FOR_BLOCK_DATA_START_YAML_FIELD);
-                    gen.writeObject(startDyn);
-
-                    DynamicValue<Integer> endDyn = dataSource.getEnd();
-                    gen.writeFieldName(YamlPlanFields.FOR_BLOCK_DATA_END_YAML_FIELD);
-                    gen.writeObject(endDyn);
-
-                    DynamicValue<Integer> incDyn = dataSource.getInc();
-                    gen.writeFieldName(YamlPlanFields.FOR_BLOCK_DATA_INC_YAML_FIELD);
-                    gen.writeObject(incDyn);
+                    dataSourceFieldsYamlHelper.serializeDataSourceFields(artefact, field, gen);
                     return true;
                 } else if (field.getName().equals(YamlPlanFields.FOR_BLOCK_DATA_SOURCE_TYPE_ORIGINAL_FIELD)) {
                     return true;
@@ -112,23 +101,4 @@ public class ForBlockRule implements ArtefactFieldConversionRule {
         };
     }
 
-    private void prepareOutputDataSourceSectionIfMissing(ObjectNode output, ObjectCodec codec) {
-        if (!output.has(YamlPlanFields.FOR_BLOCK_DATA_SOURCE_ORIGINAL_FIELD)) {
-            output.put(YamlPlanFields.FOR_BLOCK_DATA_SOURCE_TYPE_ORIGINAL_FIELD, ForBlock.DATA_SOURCE_TYPE);
-
-            DataPoolConfiguration defaultDataPoolConfiguration = DataPoolFactory.getDefaultDataPoolConfiguration(ForBlock.DATA_SOURCE_TYPE);
-
-            output.set(YamlPlanFields.FOR_BLOCK_DATA_SOURCE_ORIGINAL_FIELD, getDefaultObjectMapper().valueToTree(defaultDataPoolConfiguration));
-        }
-    }
-
-    private static ObjectMapper getDefaultObjectMapper() {
-        return DefaultJacksonMapperProvider.getObjectMapper();
-    }
-
-    private static JsonObjectBuilder createDynamicNumReference(JsonProvider jsonProvider) {
-        JsonObjectBuilder dynamicNumRef = jsonProvider.createObjectBuilder();
-        YamlPlanJsonSchemaGenerator.addRef(dynamicNumRef, YamlDynamicValueJsonSchemaHelper.SMART_DYNAMIC_VALUE_NUM_DEF);
-        return dynamicNumRef;
-    }
 }
