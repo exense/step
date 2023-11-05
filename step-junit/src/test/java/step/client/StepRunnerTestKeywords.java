@@ -51,4 +51,11 @@ public class StepRunnerTestKeywords extends AbstractKeyword {
 	public void composite1() {
 
 	}
+
+//	Some new keyword
+//	@Keyword
+//	public void newAddedKeyword() {
+//		System.out.println("NEW!!!");
+//	}
+
 }
