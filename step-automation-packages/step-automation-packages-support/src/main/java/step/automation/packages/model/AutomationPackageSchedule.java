@@ -18,21 +18,23 @@
  ******************************************************************************/
 package step.automation.packages.model;
 
+import java.util.Map;
+
 public class AutomationPackageSchedule {
 
     private String name;
     private String cron;
     private String planName;
-    private String environment;
+    private Map<String, String> executionParameters;
 
     public AutomationPackageSchedule() {
     }
 
-    public AutomationPackageSchedule(String name, String cron, String planName, String environment) {
+    public AutomationPackageSchedule(String name, String cron, String planName, Map<String, String> executionParameters) {
         this.name = name;
         this.cron = cron;
         this.planName = planName;
-        this.environment = environment;
+        this.executionParameters = executionParameters;
     }
 
     public String getCron() {
@@ -47,9 +49,6 @@ public class AutomationPackageSchedule {
         return planName;
     }
 
-    public String getEnvironment() {
-        return environment;
-    }
 
     public void setName(String name) {
         this.name = name;
@@ -63,17 +62,21 @@ public class AutomationPackageSchedule {
         this.planName = planName;
     }
 
-    public void setEnvironment(String environment) {
-        this.environment = environment;
+    public Map<String, String> getExecutionParameters() {
+        return executionParameters;
+    }
+
+    public void setExecutionParameters(Map<String, String> executionParameters) {
+        this.executionParameters = executionParameters;
     }
 
     @Override
     public String toString() {
-        return "AutomationPackageSchedulerTask{" +
+        return "AutomationPackageSchedule{" +
                 "name='" + name + '\'' +
                 ", cron='" + cron + '\'' +
                 ", planName='" + planName + '\'' +
-                ", environment='" + environment + '\'' +
+                ", executionParameters=" + executionParameters +
                 '}';
     }
 }

@@ -51,9 +51,11 @@ plans:
 schedules:
   - name: "My first task"
     cron: "*/5 * * * *"
-    environment: "TEST"
+    executionParameters:
+      environment: "TEST"
     planName: "First Plan"
   - name: "My second task"
     cron: "0 * * * *"
-    environment: "PROD"
+    executionParameters:
+      environment: "PROD"
     planName: "Second Plan"

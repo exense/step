@@ -1571,8 +1571,9 @@
     "ScheduleDef" : {
       "type" : "object",
       "properties" : {
-        "environment" : {
-          "type" : "string"
+        "executionParameters" : {
+          "type" : "object",
+          "properties" : { }
         },
         "planName" : {
           "type" : "string"

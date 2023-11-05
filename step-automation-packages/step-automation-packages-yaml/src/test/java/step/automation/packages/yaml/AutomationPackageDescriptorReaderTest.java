@@ -92,7 +92,7 @@ public class AutomationPackageDescriptorReaderTest {
             assertEquals("My first task", firstTask.getName());
             assertEquals("First Plan", firstTask.getPlanName());
             assertEquals("*/5 * * * *", firstTask.getCron());
-            assertEquals("TEST", firstTask.getEnvironment());
+            assertEquals("TEST", firstTask.getExecutionParameters().get("environment"));
 
             assertEquals(Arrays.asList("importPlans.yml", "importKeywords.yml"), descriptor.getFragments());
         } catch (IOException e) {
