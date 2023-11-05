@@ -27,23 +27,32 @@ public class AutomationPackageArchiveTest {
     @Test
     public void isAutomationPackage() throws AutomationPackageReadingException, IOException {
         File automationPackageJar = new File("src/test/resources/step-automation-packages-sample2.jar");
+
+        try (AutomationPackageArchive validPackage = new AutomationPackageArchive(automationPackageJar)) {
+            Assert.assertTrue(validPackage.isAutomationPackage());
+
+            JsonNode actualDescriptor = yamlObjectMapper.readTree(validPackage.getDescriptorYaml());
+            JsonNode expectedDescriptor = yamlObjectMapper.readTree(new File("src/test/resources/step/automation/packages/yaml/expectedTestpackDescriptor.yml"));
+            Assert.assertEquals(expectedDescriptor, actualDescriptor);
+
+            URL resource = validPackage.getResource("jmeterProject1/jmeterProject1.xml");
+            log.info("Resource url: {}", resource.toString());
+            Assert.assertNotNull(resource);
+
+            try (InputStream is = validPackage.getResourceAsStream("jmeterProject1/jmeterProject1.xml")) {
+                Assert.assertNotNull(is);
+                log.info("Resource: {}", new String(is.readAllBytes(), StandardCharsets.UTF_8));
+            }
+        }
+
         File malformedPackageJar = new File("src/test/resources/step-automation-packages-malformed.jar");
-
-        AutomationPackageArchive validPackage = new AutomationPackageArchive(automationPackageJar);
-        Assert.assertTrue(validPackage.isAutomationPackage());
-
-        JsonNode actualDescriptor = yamlObjectMapper.readTree(validPackage.getDescriptorYaml());
-        JsonNode expectedDescriptor = yamlObjectMapper.readTree(new File("src/test/resources/step/automation/packages/yaml/expectedTestpackDescriptor.yml"));
-        Assert.assertEquals(expectedDescriptor, actualDescriptor);
-
-        Assert.assertFalse(new AutomationPackageArchive(malformedPackageJar).isAutomationPackage());
-        URL resource = validPackage.getResource("jmeterProject1/jmeterProject1.xml");
-        log.info("Resource url: {}", resource.toString());
-        Assert.assertNotNull(resource);
-
-        try(InputStream is = validPackage.getResourceAsStream("jmeterProject1/jmeterProject1.xml")){
-            Assert.assertNotNull(is);
-            log.info("Resource: {}", new String(is.readAllBytes(), StandardCharsets.UTF_8));
+        try (AutomationPackageArchive malformed = new AutomationPackageArchive(malformedPackageJar)) {
+            boolean isAutomationPackage = malformed.isAutomationPackage();
+            if (isAutomationPackage) {
+                JsonNode malformedDescriptor = yamlObjectMapper.readTree(malformed.getDescriptorYaml());
+                log.error("Unexpected descriptor is found in malformed package: {}", malformedDescriptor);
+            }
+            Assert.assertFalse(isAutomationPackage);
         }
     }
 
