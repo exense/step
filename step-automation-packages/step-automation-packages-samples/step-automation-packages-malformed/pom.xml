@@ -19,28 +19,42 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-    <packaging>pom</packaging>
-
     <parent>
+        <artifactId>step-automation-packages-samples</artifactId>
         <groupId>ch.exense.step</groupId>
-        <artifactId>step-parent</artifactId>
         <version>0.0.0-SNAPSHOT</version>
-        <relativePath>../step-parent</relativePath>
     </parent>
+    <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>step-automation-packages</artifactId>
-
-    <modules>
-        <module>step-automation-packages-support</module>
-        <module>step-automation-packages-yaml</module>
-        <module>step-automation-packages-schema</module>
-        <module>step-automation-packages-junit</module>
-        <module>step-automation-packages-reader</module>
-        <module>step-automation-packages-samples</module>
-    </modules>
+    <artifactId>step-automation-packages-malformed</artifactId>
 
     <properties>
     </properties>
+
+    <dependencies>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <configuration>
+                    <appendAssemblyId>true</appendAssemblyId>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>

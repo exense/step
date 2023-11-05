@@ -26,8 +26,8 @@ public class AutomationPackageArchiveTest {
 
     @Test
     public void isAutomationPackage() throws AutomationPackageReadingException, IOException {
-        File automationPackageJar = new File("src/test/resources/step/automation/packages/yaml/testPack1.jar");
-        File malformedPackageJar = new File("src/test/resources/step/automation/packages/yaml/malformedPackage.jar");
+        File automationPackageJar = new File("src/test/resources/step-automation-packages-sample2.jar");
+        File malformedPackageJar = new File("src/test/resources/step-automation-packages-malformed.jar");
 
         AutomationPackageArchive validPackage = new AutomationPackageArchive(automationPackageJar);
         Assert.assertTrue(validPackage.isAutomationPackage());
