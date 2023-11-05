@@ -50,7 +50,11 @@ public class AutomationPackageArchiveTest {
             boolean isAutomationPackage = malformed.isAutomationPackage();
             if (isAutomationPackage) {
                 JsonNode malformedDescriptor = yamlObjectMapper.readTree(malformed.getDescriptorYaml());
-                log.error("Unexpected descriptor is found in malformed package: {}", malformedDescriptor);
+                if (malformedDescriptor != null) {
+                    log.error("Unexpected descriptor is found in malformed package: {}", malformedDescriptor);
+                } else {
+                    log.error("Package without descriptor cannot be used as automation package");
+                }
             }
             Assert.assertFalse(isAutomationPackage);
         }
