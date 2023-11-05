@@ -54,10 +54,10 @@ root:
       dataSource:
         _class: "step.datapool.sequence.IntSequenceDataPool"
         forWrite:
-          dynamic: true
-          value: null
-          expression: "null"
-          expressionType: ""
+          dynamic: false
+          value: false
+          expression: null
+          expressionType: null
         start:
           dynamic: false
           value: 10

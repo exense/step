@@ -4,7 +4,7 @@ root:
     name: Sequence
     children:
       - forEach:
-          description: "test1"
+          description: "test sequence"
           dataSource:
             sequence:
               start: 10
@@ -16,7 +16,7 @@ root:
           globalCounter: "testGCounter"
           item: "testCounter"
       - forEach:
-          description: "test2"
+          description: "test excel"
           dataSource:
             excel:
               file:
@@ -24,19 +24,19 @@ root:
               headers: true
               worksheet: "myWorksheet"
       - forEach:
-          description: "test3"
+          description: "test csv"
           dataSource:
             csv:
               file:
                 id: "644fbe4e38a61e07cc3a4df9"
               delimiter: ";"
       - forEach:
-          description: "test4"
+          description: "test folder"
           dataSource:
             folder:
               folder: "myFolder"
       - forEach:
-          description: "test5"
+          description: "test gsheet"
           dataSource:
             gsheet:
               fileId: "myFileId"
@@ -44,17 +44,17 @@ root:
                 id: "644fbe4e38a61e07cc3a4df9"
               tabName: "myTabName"
       - forEach:
-          description: "test6"
+          description: "test json"
           dataSource:
             json:
               json: "{}"
       - forEach:
-          description: "test7"
+          description: "test json array"
           dataSource:
             json-array:
               json: "[{},{}]"
       - forEach:
-          description: "test8"
+          description: "test sql"
           dataSource:
             sql:
               connectionString: "jdbc://"
@@ -63,3 +63,9 @@ root:
               user: "user1"
               query: "select * from tmp"
               writePKey: "abc"
+      - forEach:
+          description: "test file"
+          dataSource:
+            file:
+              file:
+                id: "644fbe4e38a61e07cc3a4df9"

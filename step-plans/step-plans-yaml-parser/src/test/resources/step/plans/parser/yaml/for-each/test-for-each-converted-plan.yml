@@ -7,17 +7,129 @@ root:
     instrumentNode: false
     skipNode: false
     children:
-      - for:
+      - forEach:
           continueParentNodeExecutionOnError: false
           instrumentNode: false
           skipNode: false
-          description: "test for"
+          description: "test sequence"
           userItem: "testUserId"
           globalCounter: "testGCounter"
           threads: 2
           maxFailedLoops: 3
-          start: 10
-          end: 20
-          inc: 5
+          dataSource:
+            sequence:
+              inc: 5
+              end: 20
+              start: 10
           item: "testCounter"
+      - forEach:
+          continueParentNodeExecutionOnError: false
+          instrumentNode: false
+          skipNode: false
+          description: "test excel"
+          userItem: "userId"
+          globalCounter: "gcounter"
+          threads: 1
+          dataSource:
+            excel:
+              headers: true
+              worksheet: "myWorksheet"
+              file:
+                id: "644fbe4e38a61e07cc3a4df9"
+          item: "row"
+      - forEach:
+          continueParentNodeExecutionOnError: false
+          instrumentNode: false
+          skipNode: false
+          description: "test csv"
+          userItem: "userId"
+          globalCounter: "gcounter"
+          threads: 1
+          dataSource:
+            csv:
+              file:
+                id: "644fbe4e38a61e07cc3a4df9"
+              delimiter: ";"
+          item: "row"
+      - forEach:
+          continueParentNodeExecutionOnError: false
+          instrumentNode: false
+          skipNode: false
+          description: "test folder"
+          userItem: "userId"
+          globalCounter: "gcounter"
+          threads: 1
+          dataSource:
+            folder:
+              folder: "myFolder"
+          item: "row"
+      - forEach:
+          continueParentNodeExecutionOnError: false
+          instrumentNode: false
+          skipNode: false
+          description: "test gsheet"
+          userItem: "userId"
+          globalCounter: "gcounter"
+          threads: 1
+          dataSource:
+            gsheet:
+              tabName: "myTabName"
+              serviceAccountKey:
+                id: "644fbe4e38a61e07cc3a4df9"
+              fileId: "myFileId"
+          item: "row"
+      - forEach:
+          continueParentNodeExecutionOnError: false
+          instrumentNode: false
+          skipNode: false
+          description: "test json"
+          userItem: "userId"
+          globalCounter: "gcounter"
+          threads: 1
+          dataSource:
+            json:
+              json: "{}"
+          item: "row"
+      - forEach:
+          continueParentNodeExecutionOnError: false
+          instrumentNode: false
+          skipNode: false
+          description: "test json array"
+          userItem: "userId"
+          globalCounter: "gcounter"
+          threads: 1
+          dataSource:
+            json-array:
+              json: "[{},{}]"
+          item: "row"
+      - forEach:
+          continueParentNodeExecutionOnError: false
+          instrumentNode: false
+          skipNode: false
+          description: "test sql"
+          userItem: "userId"
+          globalCounter: "gcounter"
+          threads: 1
+          dataSource:
+            sql:
+              driverClass: "a.b.c"
+              writePKey: "abc"
+              password: "pass"
+              user: "user1"
+              query: "select * from tmp"
+              connectionString: "jdbc://"
+          item: "row"
+      - forEach:
+          continueParentNodeExecutionOnError: false
+          instrumentNode: false
+          skipNode: false
+          description: "test file"
+          userItem: "userId"
+          globalCounter: "gcounter"
+          threads: 1
+          dataSource:
+            file:
+              file:
+                id: "644fbe4e38a61e07cc3a4df9"
+          item: "row"
     continueOnError: false

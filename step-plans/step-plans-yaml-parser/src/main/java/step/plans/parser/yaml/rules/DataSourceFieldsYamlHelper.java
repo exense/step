@@ -26,14 +26,16 @@ import com.fasterxml.jackson.databind.node.TextNode;
 import jakarta.json.JsonObjectBuilder;
 import jakarta.json.spi.JsonProvider;
 import step.attachments.FileResolver;
-import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.artefacts.AbstractArtefact;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.entities.EntityManager;
 import step.core.entities.EntityReference;
 import step.datapool.DataPoolConfiguration;
 import step.datapool.DataPoolFactory;
-import step.handlers.javahandler.jsonschema.*;
+import step.handlers.javahandler.jsonschema.DefaultFieldMetadataExtractor;
+import step.handlers.javahandler.jsonschema.JsonSchemaCreator;
+import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
+import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 import step.plans.parser.yaml.YamlPlanFields;
 import step.plans.parser.yaml.schema.AggregatedJsonSchemaFieldProcessor;
 import step.plans.parser.yaml.schema.YamlPlanJsonSchemaGenerator;
@@ -45,11 +47,12 @@ import java.beans.PropertyDescriptor;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 public class DataSourceFieldsYamlHelper {
-
-    private static final ObjectMapper defaultObjectMapper = DefaultJacksonMapperProvider.getObjectMapper();
 
     public DataSourceFieldsYamlHelper() {
     }
@@ -144,13 +147,15 @@ public class DataSourceFieldsYamlHelper {
         return new TextNode(FileResolver.RESOURCE_PREFIX + resourceId.asText());
     }
 
-    public void prepareOutputDataSourceSectionIfMissing(ObjectNode output, String dataSourceType) {
+    public void prepareOutputDataSourceSectionIfMissing(ObjectNode output, String dataSourceType, ObjectMapper stepYamlObjectMapper) {
         if (!output.has(YamlPlanFields.FOR_BLOCK_DATA_SOURCE_ORIGINAL_FIELD)) {
             output.put(YamlPlanFields.FOR_BLOCK_DATA_SOURCE_TYPE_ORIGINAL_FIELD, dataSourceType);
 
             DataPoolConfiguration defaultDataPoolConfiguration = DataPoolFactory.getDefaultDataPoolConfiguration(dataSourceType);
 
-            output.set(YamlPlanFields.FOR_BLOCK_DATA_SOURCE_ORIGINAL_FIELD, defaultObjectMapper.valueToTree(defaultDataPoolConfiguration));
+            // important!!! here we need to use the yaml mapper configured with step serializers (step.plans.parser.yaml.serializers.YamlDynamicValueSerializer)
+            // otherwise we are not able to deserialize the datasource value created here via "valueToTree"
+            output.set(YamlPlanFields.FOR_BLOCK_DATA_SOURCE_ORIGINAL_FIELD, stepYamlObjectMapper.valueToTree(defaultDataPoolConfiguration));
         }
     }
 

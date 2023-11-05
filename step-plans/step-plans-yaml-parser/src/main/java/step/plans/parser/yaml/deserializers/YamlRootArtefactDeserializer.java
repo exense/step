@@ -24,6 +24,7 @@ import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import step.artefacts.CallFunction;
@@ -48,8 +49,10 @@ import static step.core.scanner.Classes.newInstanceAs;
 public class YamlRootArtefactDeserializer extends JsonDeserializer<YamlRootArtefact> {
 
     private final List<YamlArtefactFieldDeserializationProcessor> customFieldProcessors;
+    private ObjectMapper stepYamlObjectMapper;
 
-    public YamlRootArtefactDeserializer() {
+    public YamlRootArtefactDeserializer(ObjectMapper stepYamlObjectMapper) {
+        this.stepYamlObjectMapper = stepYamlObjectMapper;
         this.customFieldProcessors = prepareFieldProcessors();
     }
 
@@ -93,8 +96,8 @@ public class YamlRootArtefactDeserializer extends JsonDeserializer<YamlRootArtef
         res.add(new KeywordSelectionRule().getArtefactFieldDeserializationProcessor());
         res.add(new KeywordRoutingRule().getArtefactFieldDeserializationProcessor());
         res.add(new FunctionGroupSelectionRule().getArtefactFieldDeserializationProcessor());
-        res.add(new ForBlockRule().getArtefactFieldDeserializationProcessor());
-        res.add(new ForEachBlockRule().getArtefactFieldDeserializationProcessor());
+        res.add(new ForBlockRule(stepYamlObjectMapper).getArtefactFieldDeserializationProcessor());
+        res.add(new ForEachBlockRule(stepYamlObjectMapper).getArtefactFieldDeserializationProcessor());
 
         // for 'Check' we always use the dynamic expression for 'expression' field (static value is not supported)
         res.add(new CheckExpressionRule().getArtefactFieldDeserializationProcessor());

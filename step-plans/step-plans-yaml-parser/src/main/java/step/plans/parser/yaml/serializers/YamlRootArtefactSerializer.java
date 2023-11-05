@@ -20,6 +20,7 @@ package step.plans.parser.yaml.serializers;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import step.core.artefacts.AbstractArtefact;
 import step.core.dynamicbeans.DynamicValue;
@@ -43,8 +44,10 @@ public class YamlRootArtefactSerializer extends JsonSerializer<YamlRootArtefact>
 
     private final List<YamlArtefactFieldSerializationProcessor> customFieldProcessors;
     private final ArtefactFieldMetadataExtractor metadataExtractor;
+    private ObjectMapper stepYamlMapper;
 
-    public YamlRootArtefactSerializer() {
+    public YamlRootArtefactSerializer(ObjectMapper stepYamlMapper) {
+        this.stepYamlMapper = stepYamlMapper;
         this.metadataExtractor = prepareMetadataExtractor();
         this.customFieldProcessors = prepareFieldProcessors();
     }
@@ -95,8 +98,8 @@ public class YamlRootArtefactSerializer extends JsonSerializer<YamlRootArtefact>
         result.add(new KeywordInputsRule().getArtefactFieldSerializationProcessor());
         result.add(new FunctionGroupSelectionRule().getArtefactFieldSerializationProcessor());
         result.add(new CheckExpressionRule().getArtefactFieldSerializationProcessor());
-        result.add(new ForBlockRule().getArtefactFieldSerializationProcessor());
-        result.add(new ForEachBlockRule().getArtefactFieldSerializationProcessor());
+        result.add(new ForBlockRule(stepYamlMapper).getArtefactFieldSerializationProcessor());
+        result.add(new ForEachBlockRule(stepYamlMapper).getArtefactFieldSerializationProcessor());
 
         return result;
     }

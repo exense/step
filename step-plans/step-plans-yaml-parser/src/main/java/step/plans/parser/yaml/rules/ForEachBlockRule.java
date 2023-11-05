@@ -19,6 +19,7 @@
 package step.plans.parser.yaml.rules;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObjectBuilder;
@@ -40,6 +41,13 @@ import java.util.Map;
 public class ForEachBlockRule implements ArtefactFieldConversionRule {
 
     private final DataSourceFieldsYamlHelper dataSourceFieldsYamlHelper = new DataSourceFieldsYamlHelper();
+    private final ObjectMapper stepYamlMapper;
+
+    public ForEachBlockRule(ObjectMapper stepYamlMapper) {
+        // TODO: temporary solution (we need to have the yaml object mapper configured with some serializers like step.plans.parser.yaml.serializers.YamlDynamicValueSerializer to process nested data source objects
+        // in fact this mapper is only required for getArtefactFieldDeserializationProcessor()
+        this.stepYamlMapper = stepYamlMapper;
+    }
 
     @Override
     public JsonSchemaFieldProcessor getJsonSchemaFieldProcessor(JsonProvider jsonProvider) {
@@ -94,7 +102,7 @@ public class ForEachBlockRule implements ArtefactFieldConversionRule {
                 if (field.getValue() != null && field.getValue().isContainerNode()) {
                     // the only one element here - object type
                     String dataSourceType = field.getValue().fieldNames().next();
-                    dataSourceFieldsYamlHelper.prepareOutputDataSourceSectionIfMissing(output, dataSourceType);
+                    dataSourceFieldsYamlHelper.prepareOutputDataSourceSectionIfMissing(output, dataSourceType, stepYamlMapper);
 
                     JsonNode dataSourceProperties = field.getValue().get(dataSourceType);
                     if (dataSourceProperties != null && dataSourceProperties.isContainerNode()) {

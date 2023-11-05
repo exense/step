@@ -19,6 +19,7 @@
 package step.plans.parser.yaml.rules;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.json.spi.JsonProvider;
 import step.artefacts.ForBlock;
@@ -33,6 +34,13 @@ import java.util.Map;
 public class ForBlockRule implements ArtefactFieldConversionRule {
 
     private final DataSourceFieldsYamlHelper dataSourceFieldsYamlHelper = new DataSourceFieldsYamlHelper();
+    private final ObjectMapper stepYamlObjectMapper;
+
+    public ForBlockRule(ObjectMapper stepYamlObjectMapper) {
+        // TODO: temporary solution (we need to have the yaml object mapper configured with some serializers like step.plans.parser.yaml.serializers.YamlDynamicValueSerializer to process nested data source objects)
+        // in fact this mapper is only required for getArtefactFieldDeserializationProcessor()
+        this.stepYamlObjectMapper = stepYamlObjectMapper;
+    }
 
     @Override
     public JsonSchemaFieldProcessor getJsonSchemaFieldProcessor(JsonProvider jsonProvider) {
@@ -55,7 +63,7 @@ public class ForBlockRule implements ArtefactFieldConversionRule {
     public YamlArtefactFieldDeserializationProcessor getArtefactFieldDeserializationProcessor() {
         return (artefactClass, field, output, codec) -> {
             if (artefactClass.equals(ForBlock.FOR_BLOCK_ARTIFACT_NAME)) {
-                dataSourceFieldsYamlHelper.prepareOutputDataSourceSectionIfMissing(output, ForBlock.DATA_SOURCE_TYPE);
+                dataSourceFieldsYamlHelper.prepareOutputDataSourceSectionIfMissing(output, ForBlock.DATA_SOURCE_TYPE, stepYamlObjectMapper);
                 return deserializeDataSourceField(field, output, ForBlock.DATA_SOURCE_TYPE);
             }
             return false;
