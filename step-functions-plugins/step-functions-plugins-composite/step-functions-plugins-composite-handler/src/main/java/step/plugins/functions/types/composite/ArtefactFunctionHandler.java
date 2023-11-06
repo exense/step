@@ -82,6 +82,9 @@ public class ArtefactFunctionHandler extends JsonBasedFunctionHandler {
 			}
 
 			AbstractArtefact artefact = ((ArtefactFunction) function).getPlan().getRoot();
+			// Workaround: Create a clone of the root artefact in order to have a different instance of the artefact for each call
+			// This is required to avoid side effects in the ArtefactHandler (See SED-2536)
+			artefact = executionContext.getDynamicBeanResolver().cloneDynamicValues(artefact);
 			
 			executionContext.getVariablesManager().putVariable(parentNode, INPUT, input.getPayload());
 			executionContext.getVariablesManager().putVariable(parentNode, VariableType.IMMUTABLE, OUTPUT, output);
