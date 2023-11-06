@@ -2,6 +2,7 @@ package step.functions.packages.handlers;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.io.FilenameUtils;
@@ -18,6 +19,7 @@ import step.plugins.java.GeneralScriptFunction;
 
 public class JavaFunctionPackageHandler extends AbstractFunctionPackageHandler {
 
+	private final String vmargsConfiguration;
 	private File processLogFolder;
 	private String javaPath;
 	
@@ -28,6 +30,8 @@ public class JavaFunctionPackageHandler extends AbstractFunctionPackageHandler {
 		
 		String logs = "../log/functionDiscoverer_java";
 		processLogFolder = new File(logs);
+
+		vmargsConfiguration = config.getProperty("plugins.FunctionPackagePlugin.discoverer.java.vmargs", "-Xmx128m");
 	}
 	
 	@Override
@@ -35,6 +39,7 @@ public class JavaFunctionPackageHandler extends AbstractFunctionPackageHandler {
 		ExternalJVMLauncher launcher = new ExternalJVMLauncher(javaPath, processLogFolder);
 		
 		List<String> vmargs = new ArrayList<>();
+		Arrays.stream(vmargsConfiguration.split(" ")).forEach(vmargs::add);
 		List<String> progargs = new ArrayList<>();
 		
 		try (ManagedProcess process = launcher.launchExternalJVM("Java Function Discoverer", JavaFunctionPackageDaemon.class, vmargs, progargs, false)){
