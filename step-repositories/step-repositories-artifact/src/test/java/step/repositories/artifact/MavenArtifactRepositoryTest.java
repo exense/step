@@ -13,6 +13,7 @@ import step.core.plans.Plan;
 import step.core.repositories.ArtefactInfo;
 import step.core.repositories.ImportResult;
 import step.core.repositories.TestSetStatusOverview;
+import step.resources.LocalResourceManagerImpl;
 
 import java.util.Map;
 import java.util.Set;
@@ -46,15 +47,17 @@ public class MavenArtifactRepositoryTest {
     private MavenArtifactRepository artifactRepository;
     private ExecutionContext executionContext;
     private InMemoryPlanAccessor planAccessor;
+    private LocalResourceManagerImpl resourceManager;
 
     @Before
     public void before() {
         planAccessor = new InMemoryPlanAccessor();
+        resourceManager = new LocalResourceManagerImpl();
         InMemoryControllerSettingAccessor controllerSettingAccessor = new InMemoryControllerSettingAccessor();
         controllerSettingAccessor.createSettingIfNotExisting("maven_settings_default", MAVEN_SETTINGS_NEXUS);
 
         Configuration configuration = new Configuration();
-        artifactRepository = new MavenArtifactRepository(planAccessor, controllerSettingAccessor, configuration);
+        artifactRepository = new MavenArtifactRepository(planAccessor, resourceManager, controllerSettingAccessor, configuration);
         executionContext = ExecutionEngine.builder().build().newExecutionContext();
     }
 
@@ -113,7 +116,7 @@ public class MavenArtifactRepositoryTest {
         InMemoryControllerSettingAccessor controllerSettingAccessor = new InMemoryControllerSettingAccessor();
         controllerSettingAccessor.createSettingIfNotExisting("maven_settings_default", "settings> </settings>");
         Configuration configuration = new Configuration();
-        MavenArtifactRepository artifactRepository = new MavenArtifactRepository(planAccessor, controllerSettingAccessor, configuration);
+        MavenArtifactRepository artifactRepository = new MavenArtifactRepository(planAccessor, resourceManager, controllerSettingAccessor, configuration);
         ExecutionContext executionContext = ExecutionEngine.builder().build().newExecutionContext();
 
         // getArtefactInfo

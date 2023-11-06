@@ -18,9 +18,11 @@
  ******************************************************************************/
 package step.plans.parser.yaml;
 
+import step.core.yaml.YamlFields;
 import com.google.common.base.CaseFormat;
 
-public class YamlPlanFields {
+public class YamlPlanFields extends YamlFields {
+
     public static final String CALL_FUNCTION_ARGUMENT_ORIGINAL_FIELD = "argument";
     public static final String CALL_FUNCTION_ARGUMENT_YAML_FIELD = "inputs";
 
@@ -33,8 +35,6 @@ public class YamlPlanFields {
     public static final String CHECK_EXPRESSION_ORIGINAL_FIELD = "expression";
 
     public static final String NAME_YAML_FIELD = "nodeName";
-
-    public static final String DYN_VALUE_EXPRESSION_FIELD = "expression";
 
     public static final String ARTEFACT_CHILDREN = "children";
 

@@ -23,15 +23,21 @@ import java.util.HashMap;
 import java.util.Map;
 
 import ch.exense.commons.app.Configuration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.functions.type.AbstractFunctionType;
+import step.functions.type.FunctionTypeException;
 import step.grid.filemanager.FileVersionId;
+import step.resources.ResourceManager;
 
 public class JMeterFunctionType extends AbstractFunctionType<JMeterFunction> {
 
-	FileVersionId handlerJar;
-	
+	private static final Logger log = LoggerFactory.getLogger(JMeterFunctionType.class);
+	public static final String JMETER_HOME_CONFIG_PROPERTY = "plugins.jmeter.home";
+
+	private FileVersionId handlerJar;
 	protected final Configuration configuration;
-	
+
 	public JMeterFunctionType(Configuration configuration) {
 		super();
 		this.configuration = configuration;
@@ -58,7 +64,7 @@ public class JMeterFunctionType extends AbstractFunctionType<JMeterFunction> {
 		Map<String, String> props = new HashMap<>();
 		registerFile(function.getJmeterTestplan(), "$jmeter.testplan.file", props);
 		
-		String home = configuration.getProperty("plugins.jmeter.home");
+		String home = configuration.getProperty(JMETER_HOME_CONFIG_PROPERTY);
 		if(home!=null) {
 			File homeFile = new File(home);
 			registerFile(homeFile, "$jmeter.libraries", props);
@@ -73,4 +79,21 @@ public class JMeterFunctionType extends AbstractFunctionType<JMeterFunction> {
 		return new JMeterFunction();
 	}
 
+	@Override
+	public void deleteFunction(JMeterFunction function) throws FunctionTypeException {
+		// if the function is managed by keyword package, we can delete linked resources (these resources aren't reused anywhere)
+		if (function.isManaged()) {
+			// TODO: if the function is managed by keyword package, we can delete linked resources (these resources aren't reused anywhere)
+			String jmeterTestplanResourceId = function.getJmeterTestplan().getValue();
+			if (jmeterTestplanResourceId != null && !jmeterTestplanResourceId.isEmpty()) {
+				ResourceManager resourceManager = getResourceManager();
+				if (resourceManager != null) {
+					resourceManager.deleteResource(jmeterTestplanResourceId);
+				} else {
+					log.warn("Unable to cleanup the jmeter testplan resource for function " + function.getId().toString() + ". Resource manager is not available");
+				}
+			}
+		}
+		super.deleteFunction(function);
+	}
 }

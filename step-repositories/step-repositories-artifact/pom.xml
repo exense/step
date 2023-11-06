@@ -36,6 +36,11 @@
         </dependency>
         <dependency>
             <groupId>ch.exense.step</groupId>
+            <artifactId>step-automation-packages-reader</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ch.exense.step</groupId>
             <artifactId>step-junit</artifactId>
             <version>${project.version}</version>
         </dependency>

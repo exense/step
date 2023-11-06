@@ -32,6 +32,9 @@ import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.scanner.AnnotationScanner;
 import step.core.scanner.CachedAnnotationScanner;
+import step.core.yaml.schema.AggregatedJsonSchemaFieldProcessor;
+import step.core.yaml.schema.JsonSchemaDefinitionCreator;
+import step.core.yaml.schema.YamlJsonSchemaHelper;
 import step.handlers.javahandler.jsonschema.FieldMetadataExtractor;
 import step.handlers.javahandler.jsonschema.JsonSchemaCreator;
 import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
@@ -43,7 +46,6 @@ import step.plans.parser.yaml.ArtefactFieldMetadataExtractor;
 import step.plans.parser.yaml.YamlPlanReaderExtender;
 import step.plans.parser.yaml.YamlPlanReaderExtension;
 
-import java.lang.reflect.Field;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -60,16 +62,18 @@ public class YamlPlanJsonSchemaGenerator {
 	protected final String targetPackage;
 
 	protected final Version actualVersion;
+	private final String schemaId;
 
 	protected final ObjectMapper objectMapper = DefaultJacksonMapperProvider.getObjectMapper();
 	protected final JsonProvider jsonProvider = JsonProvider.provider();
 
 	protected final JsonSchemaCreator jsonSchemaCreator;
-	protected final YamlDynamicValueJsonSchemaHelper dynamicValuesHelper = new YamlDynamicValueJsonSchemaHelper(jsonProvider);
+	protected final YamlJsonSchemaHelper schemaHelper = new YamlJsonSchemaHelper(jsonProvider);
 
-	public YamlPlanJsonSchemaGenerator(String targetPackage, Version actualVersion) {
+	public YamlPlanJsonSchemaGenerator(String targetPackage, Version actualVersion, String schemaId) {
 		this.targetPackage = targetPackage;
 		this.actualVersion = actualVersion;
+		this.schemaId = schemaId;
 
 		// TODO: further we can replace this hardcoded logic for some custom field metadata and processing with some enhanced solution (java annotations?)
 
@@ -92,7 +96,7 @@ public class YamlPlanJsonSchemaGenerator {
 				propertiesBuilder.add(fieldMetadata.getFieldName(),
 						jsonProvider.createObjectBuilder()
 								.add("type", "array")
-								.add("items", addRef(jsonProvider.createObjectBuilder(), ARTEFACT_DEF))
+								.add("items", YamlJsonSchemaHelper.addRef(jsonProvider.createObjectBuilder(), ARTEFACT_DEF))
 				);
 				return true;
 			} else {
@@ -126,8 +130,8 @@ public class YamlPlanJsonSchemaGenerator {
 		return extensions;
 	}
 
-	protected List<YamlPlanJsonSchemaDefinitionCreator> getDefinitionsExtensions() {
-		List<YamlPlanJsonSchemaDefinitionCreator> extensions = new ArrayList<>();
+	protected List<JsonSchemaDefinitionCreator> getDefinitionsExtensions() {
+		List<JsonSchemaDefinitionCreator> extensions = new ArrayList<>();
 		CachedAnnotationScanner.getClassesWithAnnotation(YamlPlanReaderExtension.class).stream()
 				.map(newInstanceAs(YamlPlanReaderExtender.class)).forEach(e -> extensions.addAll(e.getJsonSchemaDefinitionsExtensions()));
 		return extensions;
@@ -142,6 +146,9 @@ public class YamlPlanJsonSchemaGenerator {
 
 		// common fields for json schema
 		topLevelBuilder.add("$schema", "http://json-schema.org/draft-07/schema#");
+		if (this.schemaId != null) {
+			topLevelBuilder.add("$id", this.schemaId);
+		}
 		topLevelBuilder.add("title", "Plan");
 		topLevelBuilder.add("type", "object");
 
@@ -149,7 +156,7 @@ public class YamlPlanJsonSchemaGenerator {
 		topLevelBuilder.add("$defs", createDefs());
 
 		// add properties for top-level "plan" object
-		topLevelBuilder.add("properties", createPlanProperties());
+		topLevelBuilder.add("properties", createYamlPlanProperties(true));
 		topLevelBuilder.add("required", jsonProvider.createArrayBuilder().add("name").add("root"));
 		topLevelBuilder.add( "additionalProperties", false);
 
@@ -161,31 +168,30 @@ public class YamlPlanJsonSchemaGenerator {
 		}
 	}
 
-	private JsonObjectBuilder createPlanProperties() {
+	public JsonObjectBuilder createYamlPlanProperties(boolean versioned) {
 		// plan only has "name", "version", and the root artifact
 		JsonObjectBuilder objectBuilder = jsonProvider.createObjectBuilder();
 		objectBuilder.add("name", jsonProvider.createObjectBuilder().add("type", "string"));
-		// in 'version' we should either explicitly specify the current json schema version or skip this field
-		objectBuilder.add("version", jsonProvider.createObjectBuilder().add("const", actualVersion.toString()));
-		objectBuilder.add("root", addRef(jsonProvider.createObjectBuilder(), ROOT_ARTEFACT_DEF));
-		return objectBuilder;
-	}
 
-	public static JsonObjectBuilder addRef(JsonObjectBuilder builder, String refValue){
-		return builder.add("$ref", "#/$defs/" + refValue);
+		if (versioned) {
+			// in 'version' we should either explicitly specify the current json schema version or skip this field
+			objectBuilder.add("version", jsonProvider.createObjectBuilder().add("const", actualVersion.toString()));
+		}
+		objectBuilder.add("root", YamlJsonSchemaHelper.addRef(jsonProvider.createObjectBuilder(), ROOT_ARTEFACT_DEF));
+		return objectBuilder;
 	}
 
 	/**
 	 * Prepares definitions to be reused in json subschemas
 	 */
-	private JsonObjectBuilder createDefs() throws JsonSchemaPreparationException {
+	public JsonObjectBuilder createDefs() throws JsonSchemaPreparationException {
 		JsonObjectBuilder defsBuilder = jsonProvider.createObjectBuilder();
 
-		List<YamlPlanJsonSchemaDefinitionCreator> definitionCreators = new ArrayList<>();
+		List<JsonSchemaDefinitionCreator> definitionCreators = new ArrayList<>();
 
 		// prepare definitions for generic DynamicValue class
 		definitionCreators.add((defsList) -> {
-			Map<String, JsonObjectBuilder> dynamicValueDefs = dynamicValuesHelper.createDynamicValueImplDefs();
+			Map<String, JsonObjectBuilder> dynamicValueDefs = schemaHelper.createDynamicValueImplDefs();
 			for (Map.Entry<String, JsonObjectBuilder> dynamicValueDef : dynamicValueDefs.entrySet()) {
 				defsBuilder.add(dynamicValueDef.getKey(), dynamicValueDef.getValue());
 			}
@@ -206,7 +212,7 @@ public class YamlPlanJsonSchemaGenerator {
 		// add definitions from extensions (additional definitions for EE artefacts)
 		definitionCreators.addAll(getDefinitionsExtensions());
 
-		for (YamlPlanJsonSchemaDefinitionCreator definitionCreator : definitionCreators) {
+		for (JsonSchemaDefinitionCreator definitionCreator : definitionCreators) {
 			definitionCreator.addDefinition(defsBuilder);
 		}
 
@@ -264,24 +270,7 @@ public class YamlPlanJsonSchemaGenerator {
 	}
 
 	private void fillArtefactProperties(Class<?> artefactClass, JsonObjectBuilder artefactProperties, String artefactName) throws JsonSchemaPreparationException {
-		log.info("Preparing json schema for artefact class {}...", artefactClass);
-
-		// analyze hierarchy of class annotated with @Artefact
-		List<Field> allFieldsInArtefactHierarchy = new ArrayList<>();
-		Class<?> currentClass = artefactClass;
-		while (currentClass != null) {
-			allFieldsInArtefactHierarchy.addAll(List.of(currentClass.getDeclaredFields()));
-			currentClass = currentClass.getSuperclass();
-		}
-		Collections.reverse(allFieldsInArtefactHierarchy);
-
-		// for each field we want either build the json schema via reflection
-		// or use some predefined schemas for some special classes (like step.core.dynamicbeans.DynamicValue)
-		try {
-			jsonSchemaCreator.processFields(artefactClass, artefactProperties, allFieldsInArtefactHierarchy, new ArrayList<>());
-		} catch (Exception ex) {
-			throw new JsonSchemaPreparationException("Unable to process artefact " + artefactName, ex);
-		}
+		schemaHelper.extractPropertiesFromClass(jsonSchemaCreator, artefactClass, artefactProperties, artefactName);
 	}
 
 	private JsonObjectBuilder createArtefactDef(Collection<String> artefactImplReferences) {
@@ -289,7 +278,7 @@ public class YamlPlanJsonSchemaGenerator {
 		builder.add("type", "object");
 		JsonArrayBuilder arrayBuilder = jsonProvider.createArrayBuilder();
 		for (String artefactImplReference : artefactImplReferences) {
-			arrayBuilder.add(addRef(jsonProvider.createObjectBuilder(), artefactImplReference));
+			arrayBuilder.add(YamlJsonSchemaHelper.addRef(jsonProvider.createObjectBuilder(), artefactImplReference));
 		}
 		builder.add("oneOf", arrayBuilder);
 		return builder;

@@ -27,7 +27,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.dynamicbeans.DynamicValue;
-import step.plans.parser.yaml.YamlPlanFields;
+import step.core.yaml.YamlFields;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -59,8 +59,8 @@ public class DynamicInputsSupport {
                 } else {
                     ObjectNode dynamicValue = (ObjectNode) codec.createObjectNode();
                     dynamicValue.put("dynamic", true);
-                    JsonNode expression = argumentValue.get(YamlPlanFields.DYN_VALUE_EXPRESSION_FIELD);
-                    dynamicValue.put(YamlPlanFields.DYN_VALUE_EXPRESSION_FIELD, expression == null ? "" : expression.asText());
+                    JsonNode expression = argumentValue.get(YamlFields.DYN_VALUE_EXPRESSION_FIELD);
+                    dynamicValue.put(YamlFields.DYN_VALUE_EXPRESSION_FIELD, expression == null ? "" : expression.asText());
                     inputDynamicValues.set(inputName, dynamicValue);
                 }
             }
@@ -86,7 +86,7 @@ public class DynamicInputsSupport {
                         // dynamic input
                         gen.writeFieldName(inputName);
                         gen.writeStartObject();
-                        gen.writeStringField(YamlPlanFields.DYN_VALUE_EXPRESSION_FIELD, dynamicInput.get(YamlPlanFields.DYN_VALUE_EXPRESSION_FIELD).asText());
+                        gen.writeStringField(YamlFields.DYN_VALUE_EXPRESSION_FIELD, dynamicInput.get(YamlFields.DYN_VALUE_EXPRESSION_FIELD).asText());
                         gen.writeEndObject();
                     } else if (dynamicInput.isContainerNode()) {
                         // yaml input wrapped in dynamic value

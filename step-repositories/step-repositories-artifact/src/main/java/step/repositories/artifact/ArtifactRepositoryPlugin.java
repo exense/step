@@ -42,7 +42,7 @@ public class ArtifactRepositoryPlugin extends AbstractControllerPlugin {
         PlanAccessor planAccessor = context.getPlanAccessor();
         ControllerSettingAccessor controllerSettingAccessor = context.require(ControllerSettingAccessor.class);
         Configuration configuration = context.getConfiguration();
-        MavenArtifactRepository mavenRepository = new MavenArtifactRepository(planAccessor, controllerSettingAccessor, configuration);
+        MavenArtifactRepository mavenRepository = new MavenArtifactRepository(planAccessor, context.getResourceManager(), controllerSettingAccessor, configuration);
         ResourceArtifactRepository resourceRepository = new ResourceArtifactRepository(planAccessor, context.getResourceManager());
         context.getRepositoryObjectManager().registerRepository(MAVEN_REPO_ID, mavenRepository);
         context.getRepositoryObjectManager().registerRepository(RESOURCE_REPO_ID, resourceRepository);

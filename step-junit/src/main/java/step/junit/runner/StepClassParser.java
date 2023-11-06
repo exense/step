@@ -43,12 +43,12 @@ public class StepClassParser {
 
 	private final PlanParser planParser = new PlanParser();
 
-	private final YamlPlanReader simpleYamlPlanReader;
+	private YamlPlanReader simpleYamlPlanReader;
 
 	public StepClassParser(boolean appendClassnameToPlanName) {
 		super();
 		this.appendClassnameToPlanName = appendClassnameToPlanName;
-		this.simpleYamlPlanReader = new YamlPlanReader();
+		this.simpleYamlPlanReader = null;
 	}
 
 	public List<StepClassParserResult> createPlansForClass(Class<?> klass) throws Exception {
@@ -131,7 +131,7 @@ public class StepClassParser {
 				setPlanName(plan, fileName);
 			} else if (parserMode == ParserMode.YAML_PARSER) {
 				try {
-					plan = simpleYamlPlanReader.readYamlPlan(stream);
+					plan = initAndGetYamlPlanReader().readYamlPlan(stream);
 				} catch (Exception e) {
 					// wrap into another exception to include the fileName to error details
 					throw new RuntimeException(fileName + " processing error", e);
@@ -159,6 +159,13 @@ public class StepClassParser {
 		} else {
 			return ParserMode.PLAIN_TEXT_PARSER;
 		}
+	}
+
+	private synchronized YamlPlanReader initAndGetYamlPlanReader() {
+		if (simpleYamlPlanReader == null) {
+			this.simpleYamlPlanReader = new YamlPlanReader();
+		}
+		return this.simpleYamlPlanReader;
 	}
 
 	private enum ParserMode {

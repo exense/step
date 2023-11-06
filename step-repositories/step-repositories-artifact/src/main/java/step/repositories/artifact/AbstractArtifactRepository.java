@@ -31,6 +31,8 @@ import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
 import step.core.plans.builder.PlanBuilder;
 import step.core.repositories.*;
+import step.functions.Function;
+import step.resources.ResourceManager;
 
 import java.io.File;
 import java.util.*;
@@ -48,11 +50,14 @@ public abstract class AbstractArtifactRepository extends AbstractRepository {
 	private static final String PARAM_EXCLUDE_CLASSES = "excludeClasses";
 	private static final String PARAM_EXCLUDE_ANNOTATIONS = "excludeAnnotations";
 	protected final PlanAccessor planAccessor;
-	protected final StepJarParser stepJarParser = new StepJarParser();
+	protected final ResourceManager resourceManager;
+	protected final StepJarParser stepJarParser;
 
-	public AbstractArtifactRepository(Set<String> canonicalRepositoryParameters, PlanAccessor planAccessor) {
+	public AbstractArtifactRepository(Set<String> canonicalRepositoryParameters, PlanAccessor planAccessor, ResourceManager resourceManager) {
 		super(canonicalRepositoryParameters);
 		this.planAccessor = planAccessor;
+		this.resourceManager = resourceManager;
+		this.stepJarParser = new StepJarParser(resourceManager);
 	}
 
 	protected static String getMandatoryRepositoryParameter(Map<String, String> repositoryParameters, String paramKey) {

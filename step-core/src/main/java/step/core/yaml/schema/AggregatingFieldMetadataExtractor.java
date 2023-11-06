@@ -16,14 +16,30 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plans.parser.yaml.schema;
+package step.core.yaml.schema;
 
-public class JsonSchemaFieldProcessingException extends RuntimeException {
-	public JsonSchemaFieldProcessingException(String message) {
-		super(message);
-	}
+import step.handlers.javahandler.jsonschema.FieldMetadata;
+import step.handlers.javahandler.jsonschema.FieldMetadataExtractor;
 
-	public JsonSchemaFieldProcessingException(String message, Throwable cause) {
-		super(message, cause);
-	}
+import java.lang.reflect.Field;
+import java.util.List;
+
+public class AggregatingFieldMetadataExtractor implements FieldMetadataExtractor {
+
+    private final List<FieldMetadataExtractor> extractors;
+
+    public AggregatingFieldMetadataExtractor(List<FieldMetadataExtractor> extractors) {
+        this.extractors = extractors;
+    }
+
+    @Override
+    public FieldMetadata extractMetadata(Field field) {
+        for (FieldMetadataExtractor extractor : extractors) {
+            FieldMetadata fieldMetadata = extractor.extractMetadata(field);
+            if (fieldMetadata != null) {
+                return fieldMetadata;
+            }
+        }
+        return null;
+    }
 }
