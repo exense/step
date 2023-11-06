@@ -38,11 +38,11 @@ public class YamlPlanFields {
 
     public static final String ARTEFACT_CHILDREN = "children";
 
-    public static final String FOR_BLOCK_DATA_SOURCE_TYPE_ORIGINAL_FIELD = "dataSourceType";
+    public static final String DATA_SOURCE_TYPE_ORIGINAL_FIELD = "dataSourceType";
 
-    public static final String FOR_BLOCK_DATA_SOURCE_ORIGINAL_FIELD = "dataSource";
+    public static final String DATA_SOURCE_ORIGINAL_FIELD = "dataSource";
 
-    public static final String FOR_EACH_BLOCK_DATA_SOURCE_YAML_FIELD = "dataSource";
+    public static final String DATA_SOURCE_YAML_FIELD = "dataSource";
 
     public static final String FOR_BLOCK_DATA_START_YAML_FIELD = "start";
     public static final String FOR_BLOCK_DATA_START_ORIGINAL_FIELD = "start";

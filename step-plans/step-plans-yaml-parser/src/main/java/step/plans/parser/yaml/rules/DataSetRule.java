@@ -19,25 +19,25 @@
 package step.plans.parser.yaml.rules;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import step.artefacts.ForEachBlock;
+import step.artefacts.DataSetArtefact;
 
-public class ForEachBlockRule extends SelectableDataSourceSupportRule {
+public class DataSetRule extends SelectableDataSourceSupportRule {
 
-    public ForEachBlockRule(ObjectMapper stepYamlMapper) {
+    public DataSetRule(ObjectMapper stepYamlMapper) {
         super(stepYamlMapper);
-        // TODO: temporary solution (we need to have the yaml object mapper configured with some serializers like step.plans.parser.yaml.serializers.YamlDynamicValueSerializer to process nested data source objects
-        // in fact this mapper is only required for getArtefactFieldDeserializationProcessor()
     }
+
     protected boolean applicableClass(Class<?> artefactClass) {
-        return ForEachBlock.class.isAssignableFrom(artefactClass);
+        return DataSetArtefact.class.isAssignableFrom(artefactClass);
     }
 
     protected boolean applicableArtefactName(String artefactClass) {
-        return artefactClass.equals(ForEachBlock.FOR_EACH_BLOCK_ARTIFACT_NAME);
+        return artefactClass.equals(DataSetArtefact.DATA_SET_ARTIFACT_NAME);
     }
 
     @Override
     protected boolean isForWriteEditable() {
-        return false;
+        return true;
     }
+
 }

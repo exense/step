@@ -19,48 +19,19 @@
 package step.artefacts;
 
 import step.core.artefacts.Artefact;
-import step.core.dynamicbeans.ContainsDynamicValues;
 import step.core.dynamicbeans.DynamicValue;
-import step.core.entities.EntityManager;
-import step.core.entities.EntityReference;
-import step.datapool.DataPoolConfiguration;
 
-@Artefact(name="DataSet")
+@Artefact(name= DataSetArtefact.DATA_SET_ARTIFACT_NAME)
 public class DataSetArtefact extends AbstractForBlock {
 
-	private DynamicValue<String> item = new DynamicValue<String>("dataSet");
-	
+	public static final String DATA_SET_ARTIFACT_NAME = "DataSet";
+
 	private DynamicValue<Boolean> resetAtEnd = new DynamicValue<Boolean>(false);
-	
-	private String dataSourceType;
-	
-	private DataPoolConfiguration dataSource;
 
-	public DynamicValue<String> getItem() {
-		return item;
+	public DataSetArtefact() {
+		setItem(new DynamicValue<String>("dataSet"));
 	}
 
-	public void setItem(DynamicValue<String> item) {
-		this.item = item;
-	}
-
-	public String getDataSourceType() {
-		return dataSourceType;
-	}
-
-	public void setDataSourceType(String dataSourceType) {
-		this.dataSourceType = dataSourceType;
-	}
-
-	@ContainsDynamicValues
-	@EntityReference(type= EntityManager.recursive)
-	public DataPoolConfiguration getDataSource() {
-		return dataSource;
-	}
-
-	public void setDataSource(DataPoolConfiguration dataSource) {
-		this.dataSource = dataSource;
-	}
 	public DynamicValue<Boolean> getResetAtEnd() {
 		return resetAtEnd;
 	}

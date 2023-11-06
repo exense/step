@@ -47,17 +47,14 @@ import java.beans.PropertyDescriptor;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class DataSourceFieldsYamlHelper {
 
     public DataSourceFieldsYamlHelper() {
     }
 
-    public void fillDataSourceJsonSchemaParams(String dataSourceType, JsonProvider jsonProvider, JsonObjectBuilder propertiesBuilder) throws JsonSchemaPreparationException {
+    public void fillDataSourceJsonSchemaParams(String dataSourceType, JsonProvider jsonProvider, JsonObjectBuilder propertiesBuilder, boolean isForWriteEditable) throws JsonSchemaPreparationException {
         List<JsonSchemaFieldProcessor> fieldProcessors = new ArrayList<>();
 
         // -- PROCESSING RULES
@@ -66,7 +63,7 @@ public class DataSourceFieldsYamlHelper {
         // skip technical fields from
         fieldProcessors.add((aClass, field, fieldMetadata, jsonObjectBuilder, list) -> {
             if (DataPoolConfiguration.class.isAssignableFrom(aClass)) {
-                return isTechnicalDataPoolField(field);
+                return isTechnicalDataPoolField(field, isForWriteEditable);
             }
             return false;
         });
@@ -97,8 +94,11 @@ public class DataSourceFieldsYamlHelper {
         jsonSchemaCreator.processFields(config.getClass(), propertiesBuilder, getAllFieldsAccessible(config), new ArrayList<>());
     }
 
-    public boolean isTechnicalDataPoolField(Field field) {
-        Set<String> technicalFields = Set.of("forWrite");
+    public boolean isTechnicalDataPoolField(Field field, boolean isForWriteEditable) {
+        Set<String> technicalFields = new HashSet<>();
+        if (!isForWriteEditable) {
+            technicalFields.add("forWrite");
+        }
         return technicalFields.contains(field.getName());
     }
 
@@ -148,23 +148,23 @@ public class DataSourceFieldsYamlHelper {
     }
 
     public void prepareOutputDataSourceSectionIfMissing(ObjectNode output, String dataSourceType, ObjectMapper stepYamlObjectMapper) {
-        if (!output.has(YamlPlanFields.FOR_BLOCK_DATA_SOURCE_ORIGINAL_FIELD)) {
-            output.put(YamlPlanFields.FOR_BLOCK_DATA_SOURCE_TYPE_ORIGINAL_FIELD, dataSourceType);
+        if (!output.has(YamlPlanFields.DATA_SOURCE_ORIGINAL_FIELD)) {
+            output.put(YamlPlanFields.DATA_SOURCE_TYPE_ORIGINAL_FIELD, dataSourceType);
 
             DataPoolConfiguration defaultDataPoolConfiguration = DataPoolFactory.getDefaultDataPoolConfiguration(dataSourceType);
 
             // important!!! here we need to use the yaml mapper configured with step serializers (step.plans.parser.yaml.serializers.YamlDynamicValueSerializer)
             // otherwise we are not able to deserialize the datasource value created here via "valueToTree"
-            output.set(YamlPlanFields.FOR_BLOCK_DATA_SOURCE_ORIGINAL_FIELD, stepYamlObjectMapper.valueToTree(defaultDataPoolConfiguration));
+            output.set(YamlPlanFields.DATA_SOURCE_ORIGINAL_FIELD, stepYamlObjectMapper.valueToTree(defaultDataPoolConfiguration));
         }
     }
 
-    public void serializeDataSourceFields(AbstractArtefact artefact, Field dataSourceField, JsonGenerator gen) throws IllegalAccessException, IOException {
+    public void serializeDataSourceFields(AbstractArtefact artefact, Field dataSourceField, JsonGenerator gen, boolean isForWriteEditable) throws IllegalAccessException, IOException {
         DataPoolConfiguration dataSource = (DataPoolConfiguration) dataSourceField.get(artefact);
         List<Field> allFields = getAllFieldsAccessible(dataSource);
         List<PropertyDescriptor> resourceReferencePropertyDescriptors = getResourceReferencePropertyDescriptors(dataSource.getClass());
         for (Field field : allFields) {
-            if (isTechnicalDataPoolField(field)) {
+            if (isTechnicalDataPoolField(field, isForWriteEditable)) {
                 continue;
             }
 

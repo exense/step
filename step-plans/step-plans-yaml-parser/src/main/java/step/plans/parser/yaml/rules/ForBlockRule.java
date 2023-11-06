@@ -46,12 +46,12 @@ public class ForBlockRule implements ArtefactFieldConversionRule {
     public JsonSchemaFieldProcessor getJsonSchemaFieldProcessor(JsonProvider jsonProvider) {
         return (objectClass, field, fieldMetadata, propertiesBuilder, requiredPropertiesOutput) -> {
             if (ForBlock.class.isAssignableFrom(objectClass)) {
-                if (field.getName().equals(YamlPlanFields.FOR_BLOCK_DATA_SOURCE_TYPE_ORIGINAL_FIELD)) {
+                if (field.getName().equals(YamlPlanFields.DATA_SOURCE_TYPE_ORIGINAL_FIELD)) {
                     // don't use 'dataSourceType' field in yaml
                     return true;
-                } else if (field.getName().equals(YamlPlanFields.FOR_BLOCK_DATA_SOURCE_ORIGINAL_FIELD)) {
+                } else if (field.getName().equals(YamlPlanFields.DATA_SOURCE_ORIGINAL_FIELD)) {
                     // data source parameters are represented as several independent fields in yaml
-                    dataSourceFieldsYamlHelper.fillDataSourceJsonSchemaParams(ForBlock.DATA_SOURCE_TYPE, jsonProvider, propertiesBuilder);
+                    dataSourceFieldsYamlHelper.fillDataSourceJsonSchemaParams(ForBlock.DATA_SOURCE_TYPE, jsonProvider, propertiesBuilder, false);
                     return true;
                 }
             }
@@ -75,17 +75,17 @@ public class ForBlockRule implements ArtefactFieldConversionRule {
         if (dataSourceType.equals(DataSources.SEQUENCE)) {
             switch (field.getKey()) {
                 case YamlPlanFields.FOR_BLOCK_DATA_INC_YAML_FIELD: {
-                    ObjectNode jsonNode = (ObjectNode) output.get(YamlPlanFields.FOR_BLOCK_DATA_SOURCE_ORIGINAL_FIELD);
+                    ObjectNode jsonNode = (ObjectNode) output.get(YamlPlanFields.DATA_SOURCE_ORIGINAL_FIELD);
                     jsonNode.set(YamlPlanFields.FOR_BLOCK_DATA_INC_ORIGINAL_FIELD, field.getValue());
                     return true;
                 }
                 case YamlPlanFields.FOR_BLOCK_DATA_END_YAML_FIELD: {
-                    ObjectNode jsonNode = (ObjectNode) output.get(YamlPlanFields.FOR_BLOCK_DATA_SOURCE_ORIGINAL_FIELD);
+                    ObjectNode jsonNode = (ObjectNode) output.get(YamlPlanFields.DATA_SOURCE_ORIGINAL_FIELD);
                     jsonNode.set(YamlPlanFields.FOR_BLOCK_DATA_END_ORIGINAL_FIELD, field.getValue());
                     return true;
                 }
                 case YamlPlanFields.FOR_BLOCK_DATA_START_YAML_FIELD: {
-                    ObjectNode jsonNode = (ObjectNode) output.get(YamlPlanFields.FOR_BLOCK_DATA_SOURCE_ORIGINAL_FIELD);
+                    ObjectNode jsonNode = (ObjectNode) output.get(YamlPlanFields.DATA_SOURCE_ORIGINAL_FIELD);
                     jsonNode.set(YamlPlanFields.FOR_BLOCK_DATA_START_ORIGINAL_FIELD, field.getValue());
                     return true;
                 }
@@ -98,10 +98,10 @@ public class ForBlockRule implements ArtefactFieldConversionRule {
     public YamlArtefactFieldSerializationProcessor getArtefactFieldSerializationProcessor() {
         return (artefact, field, fieldMetadata, gen) -> {
             if (ForBlock.class.isAssignableFrom(artefact.getClass())) {
-                if (field.getName().equals(YamlPlanFields.FOR_BLOCK_DATA_SOURCE_ORIGINAL_FIELD)) {
-                    dataSourceFieldsYamlHelper.serializeDataSourceFields(artefact, field, gen);
+                if (field.getName().equals(YamlPlanFields.DATA_SOURCE_ORIGINAL_FIELD)) {
+                    dataSourceFieldsYamlHelper.serializeDataSourceFields(artefact, field, gen, false);
                     return true;
-                } else if (field.getName().equals(YamlPlanFields.FOR_BLOCK_DATA_SOURCE_TYPE_ORIGINAL_FIELD)) {
+                } else if (field.getName().equals(YamlPlanFields.DATA_SOURCE_TYPE_ORIGINAL_FIELD)) {
                     return true;
                 }
             }

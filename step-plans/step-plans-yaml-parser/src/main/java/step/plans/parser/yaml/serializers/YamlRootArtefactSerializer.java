@@ -100,6 +100,7 @@ public class YamlRootArtefactSerializer extends JsonSerializer<YamlRootArtefact>
         result.add(new CheckExpressionRule().getArtefactFieldSerializationProcessor());
         result.add(new ForBlockRule(stepYamlMapper).getArtefactFieldSerializationProcessor());
         result.add(new ForEachBlockRule(stepYamlMapper).getArtefactFieldSerializationProcessor());
+        result.add(new DataSetRule(stepYamlMapper).getArtefactFieldSerializationProcessor());
 
         return result;
     }
