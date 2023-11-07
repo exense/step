@@ -31,8 +31,8 @@ public class JavaFunctionPackageHandler extends AbstractFunctionPackageHandler {
 		String logs = "../log/functionDiscoverer_java";
 		processLogFolder = new File(logs);
 
-		String vmargsConfiguration = config.getProperty("plugins.FunctionPackagePlugin.discoverer.java.vmargs", "-Xmx128m");
-		vmargs = Arrays.asList(vmargsConfiguration.split(" "));
+		String vmargsConfiguration = config.getProperty("plugins.FunctionPackagePlugin.discoverer.java.vmargs");
+		vmargs = vmargsConfiguration != null ? Arrays.asList(vmargsConfiguration.split(" ")) : List.of();
 	}
 
 	@Override
