@@ -19,30 +19,26 @@ import step.plugins.java.GeneralScriptFunction;
 
 public class JavaFunctionPackageHandler extends AbstractFunctionPackageHandler {
 
-	private final String vmargsConfiguration;
-	private File processLogFolder;
-	private String javaPath;
-	
+	private final File processLogFolder;
+	private final String javaPath;
+	private final List<String> vmargs;
+
 	public JavaFunctionPackageHandler(FileResolver fileResolver, Configuration config) {
 		super(fileResolver);
-		
-		javaPath = System.getProperty("java.home")+"/bin/java";
-		
+
+		javaPath = System.getProperty("java.home") + "/bin/java";
+
 		String logs = "../log/functionDiscoverer_java";
 		processLogFolder = new File(logs);
 
-		vmargsConfiguration = config.getProperty("plugins.FunctionPackagePlugin.discoverer.java.vmargs", "-Xmx128m");
+		String vmargsConfiguration = config.getProperty("plugins.FunctionPackagePlugin.discoverer.java.vmargs", "-Xmx128m");
+		vmargs = Arrays.asList(vmargsConfiguration.split(" "));
 	}
-	
+
 	@Override
 	public List<Function> buildFunctions(FunctionPackage functionPackage, boolean preview, ObjectEnricher objectEnricher) throws Exception {
 		ExternalJVMLauncher launcher = new ExternalJVMLauncher(javaPath, processLogFolder);
-		
-		List<String> vmargs = new ArrayList<>();
-		Arrays.stream(vmargsConfiguration.split(" ")).forEach(vmargs::add);
-		List<String> progargs = new ArrayList<>();
-		
-		try (ManagedProcess process = launcher.launchExternalJVM("Java Function Discoverer", JavaFunctionPackageDaemon.class, vmargs, progargs, false)){
+		try (ManagedProcess process = launcher.launchExternalJVM("Java Function Discoverer", JavaFunctionPackageDaemon.class, vmargs, List.of(), false)){
 			return getFunctionsFromDaemon(functionPackage, process);
 		}
 	}
@@ -51,7 +47,6 @@ public class JavaFunctionPackageHandler extends AbstractFunctionPackageHandler {
 	protected void configureFunction(Function f, FunctionPackage functionPackage) {
 		if (f instanceof GeneralScriptFunction) {
 			GeneralScriptFunction function = (GeneralScriptFunction) f;
-
 			function.setScriptLanguage(new DynamicValue<>("java"));
 			function.setScriptFile(new DynamicValue<>(functionPackage.getPackageLocation()));
 			function.setLibrariesFile(new DynamicValue<>(functionPackage.getPackageLibrariesLocation()));
