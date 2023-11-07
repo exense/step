@@ -16,8 +16,10 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages;
+package step.automation.packages.reader;
 
+import step.automation.packages.AutomationPackageArchive;
+import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.model.AutomationPackage;
 import step.automation.packages.yaml.AutomationPackageDescriptorReader;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;

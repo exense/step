@@ -2,10 +2,10 @@ package step.functions.packages.handlers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import step.attachments.FileResolver;
-import step.automation.packages.AutomationPackageReader;
 import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.model.AutomationPackage;
 import step.automation.packages.model.AutomationPackageKeyword;
+import step.automation.packages.reader.AutomationPackageReader;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.scanner.AnnotationScanner;
 import step.functions.Function;

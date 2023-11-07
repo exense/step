@@ -1,7 +1,8 @@
-package step.automation.packages;
+package step.automation.packages.reader;
 
 import org.junit.Test;
 import step.artefacts.TestCase;
+import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.model.AutomationPackage;
 import step.automation.packages.model.AutomationPackageKeyword;
 import step.automation.packages.yaml.YamlAutomationPackageVersions;

@@ -64,7 +64,7 @@
 		</dependency>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
-			<artifactId>step-automation-packages-reader</artifactId>
+			<artifactId>step-automation-packages-manage</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>

@@ -20,11 +20,11 @@ package step.engine.plugins;
 
 import ch.exense.commons.app.Configuration;
 import step.automation.packages.AutomationPackageArchive;
-import step.automation.packages.AutomationPackageKeywordsAttributesApplier;
-import step.automation.packages.AutomationPackageReader;
 import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.model.AutomationPackage;
 import step.automation.packages.model.AutomationPackageKeyword;
+import step.automation.packages.reader.AutomationPackageKeywordsAttributesApplier;
+import step.automation.packages.reader.AutomationPackageReader;
 import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionEngineContext;
 import step.core.execution.OperationMode;
