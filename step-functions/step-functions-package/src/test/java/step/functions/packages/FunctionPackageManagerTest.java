@@ -261,7 +261,7 @@ public class FunctionPackageManagerTest {
 	}
 
 	private FunctionPackage createTestPackage(Resource resource, FunctionPackageManager pm, FileResolver resolver) {
-		pm.registerFunctionPackageHandler(new JavaFunctionPackageHandler(resolver, null));
+		pm.registerFunctionPackageHandler(new JavaFunctionPackageHandler(resolver, new Configuration()));
 
 		FunctionPackage fp = new FunctionPackage();
 		fp.setId(new ObjectId());
