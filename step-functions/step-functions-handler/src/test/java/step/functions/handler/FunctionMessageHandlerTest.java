@@ -168,11 +168,11 @@ public class FunctionMessageHandlerTest {
 		AgentTokenServices tokenServices = new AgentTokenServices(new FileManagerClient() {
 
 			@Override
-			public FileVersion requestFileVersion(FileVersionId fileVersionId) throws FileManagerException {
+			public FileVersion requestFileVersion(FileVersionId fileVersionId, boolean cleanable) throws FileManagerException {
 				if(fileVersionId.getFileId().equals(EMPTY_FILE)) {
 					String uid = fileVersionId.getFileId();
 					File file = new File(".");
-					return new FileVersion(file, fileVersionId, false);					
+					return new FileVersion(file, fileVersionId, false, cleanable);
 				} else {
 					return null;
 				}
@@ -183,6 +183,15 @@ public class FunctionMessageHandlerTest {
 				
 			}
 
+			@Override
+			public void cleanupCache() {
+
+			}
+
+			@Override
+			public void close() throws Exception {
+
+			}
 		});
 		tokenServices.setApplicationContextBuilder(new ApplicationContextBuilder());
 		Map<String, String> agentProperties = new HashMap<>();

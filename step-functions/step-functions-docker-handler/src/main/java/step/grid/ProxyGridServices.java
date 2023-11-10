@@ -24,7 +24,7 @@ public class ProxyGridServices {
     @Path("/file/{id}/{version}")
     public Response getFile(@PathParam("id") String id, @PathParam("version") String version) throws IOException, FileManagerException {
         FileVersionId versionId = new FileVersionId(id, version);
-        FileVersion fileVersion = fileManagerClient.requestFileVersion(versionId);
+        FileVersion fileVersion = fileManagerClient.requestFileVersion(versionId, true);
         File file = fileVersion.getFile();
 
         final FileInputStream inputStream = new FileInputStream(file);

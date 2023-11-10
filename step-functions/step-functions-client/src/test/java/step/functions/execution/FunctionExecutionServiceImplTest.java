@@ -368,8 +368,8 @@ public class FunctionExecutionServiceImplTest {
 		return new GridClient() {
 			
 			@Override
-			public FileVersion registerFile(File file) throws FileManagerException {
-				return new FileVersion(null, null, false);
+			public FileVersion registerFile(File file, boolean cleanable) throws FileManagerException {
+				return new FileVersion(null, null, false, cleanable);
 			}
 
 			@Override
@@ -474,9 +474,9 @@ public class FunctionExecutionServiceImplTest {
 			}
 
 			@Override
-			public FileVersion registerFile(InputStream inputStream, String fileName, boolean isDirectory)
+			public FileVersion registerFile(InputStream inputStream, String fileName, boolean isDirectory, boolean cleanable)
 					throws FileManagerException {
-				return new FileVersion(null, null, false);
+				return new FileVersion(null, null, false, cleanable);
 			}
 		};
 	}
