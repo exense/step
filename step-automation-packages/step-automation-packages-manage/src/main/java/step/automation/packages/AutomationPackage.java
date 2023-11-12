@@ -16,15 +16,29 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.accessor;
+package step.automation.packages;
 
-import step.automation.packages.AutomationPackage;
-import step.core.accessors.AbstractAccessor;
-import step.core.collections.Collection;
+import step.core.accessors.AbstractOrganizableObject;
+import step.core.objectenricher.EnricheableObject;
 
-public class AutomationPackageAccessorImpl extends AbstractAccessor<AutomationPackage> implements AutomationPackageAccessor {
+import java.util.Map;
 
-    public AutomationPackageAccessorImpl(Collection<AutomationPackage> collectionDriver) {
-        super(collectionDriver);
+public class AutomationPackage extends AbstractOrganizableObject implements EnricheableObject {
+
+    // TODO: token selection criteria for keywords?
+    public static final String TRACKING_FIELD = "tracking";
+
+    protected Map<String, String> packageAttributes;
+
+    /**
+     * @return the additional attributes that have to be added to the attributes of the functions contained in this package
+     */
+    public Map<String, String> getPackageAttributes() {
+        return packageAttributes;
     }
+
+    public void setPackageAttributes(Map<String, String> packageAttributes) {
+        this.packageAttributes = packageAttributes;
+    }
+
 }

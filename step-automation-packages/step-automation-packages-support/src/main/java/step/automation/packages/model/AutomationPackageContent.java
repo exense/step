@@ -23,13 +23,14 @@ import step.core.plans.Plan;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AutomationPackage {
+public class AutomationPackageContent {
 
     private String version;
     private String name;
 
     private List<AutomationPackageKeyword> keywords = new ArrayList<>();
     private List<Plan> plans = new ArrayList<>();
+    private List<AutomationPackageSchedule> schedules = new ArrayList<>();
 
     public String getName() {
         return name;
@@ -61,5 +62,13 @@ public class AutomationPackage {
 
     public void setPlans(List<Plan> plans) {
         this.plans = plans;
+    }
+
+    public List<AutomationPackageSchedule> getSchedules() {
+        return schedules;
+    }
+
+    public void setSchedules(List<AutomationPackageSchedule> schedules) {
+        this.schedules = schedules;
     }
 }

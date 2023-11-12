@@ -16,11 +16,9 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.reader;
+package step.automation.packages;
 
-import step.automation.packages.AutomationPackageArchive;
-import step.automation.packages.AutomationPackageReadingException;
-import step.automation.packages.model.AutomationPackage;
+import step.automation.packages.model.AutomationPackageContent;
 import step.automation.packages.yaml.AutomationPackageDescriptorReader;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
@@ -38,7 +36,7 @@ public class AutomationPackageReader {
         this.descriptorReader = new AutomationPackageDescriptorReader(jsonSchema);
     }
 
-    public AutomationPackage readAutomationPackage(AutomationPackageArchive automationPackageArchive) throws AutomationPackageReadingException {
+    public AutomationPackageContent readAutomationPackage(AutomationPackageArchive automationPackageArchive) throws AutomationPackageReadingException {
         try {
             if (!automationPackageArchive.isAutomationPackage()) {
                 return null;
@@ -53,18 +51,18 @@ public class AutomationPackageReader {
         }
     }
 
-    protected AutomationPackage buildAutomationPackage(AutomationPackageDescriptorYaml descriptor, AutomationPackageArchive archive) throws AutomationPackageReadingException {
-        AutomationPackage res = new AutomationPackage();
+    protected AutomationPackageContent buildAutomationPackage(AutomationPackageDescriptorYaml descriptor, AutomationPackageArchive archive) throws AutomationPackageReadingException {
+        AutomationPackageContent res = new AutomationPackageContent();
         res.setName(descriptor.getName());
         // apply imported fragments recursively
         fillAutomationPackageWithImportedFragments(res, descriptor, archive);
         return res;
     }
 
-    public void fillAutomationPackageWithImportedFragments(AutomationPackage targetPackage, AutomationPackageFragmentYaml fragment, AutomationPackageArchive archive) throws AutomationPackageReadingException {
+    public void fillAutomationPackageWithImportedFragments(AutomationPackageContent targetPackage, AutomationPackageFragmentYaml fragment, AutomationPackageArchive archive) throws AutomationPackageReadingException {
         targetPackage.getKeywords().addAll(fragment.getKeywords());
         targetPackage.getPlans().addAll(fragment.getPlans().stream().map(p -> descriptorReader.getPlanReader().yamlPlanToPlan(p)).collect(Collectors.toList()));
-        // TODO: apply scheduler tasks
+        fragment.getSchedules().addAll(fragment.getSchedules());
 
         if (!fragment.getFragments().isEmpty()) {
             for (String importedFragmentReference : fragment.getFragments()) {
@@ -78,7 +76,7 @@ public class AutomationPackageReader {
         }
     }
 
-    public AutomationPackage readAutomationPackageFromJarFile(File automationPackageJar) throws AutomationPackageReadingException {
+    public AutomationPackageContent readAutomationPackageFromJarFile(File automationPackageJar) throws AutomationPackageReadingException {
         try (AutomationPackageArchive automationPackageArchive = new AutomationPackageArchive(automationPackageJar)) {
             return readAutomationPackage(automationPackageArchive);
         } catch (IOException e) {

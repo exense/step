@@ -50,7 +50,7 @@ public class AutomationPackageServices extends AbstractStepServices {
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
     @Secured(right = "autopack-read")
-    public AutomationPackagePersistence getAutomationPackage(@PathParam("id") String automationPackageId) {
+    public AutomationPackage getAutomationPackage(@PathParam("id") String automationPackageId) {
         return automationPackageManager.getAutomationPackage(automationPackageId);
     }
 
@@ -62,23 +62,6 @@ public class AutomationPackageServices extends AbstractStepServices {
         automationPackageManager.removeAutomationPackage(automationPackageId);
     }
 
-/*    @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    @Path("/preview")
-    @Secured(right = "autopack-write")
-    public PackagePreview packagePreview(AutomationPackagePersistence automationPackage) {
-        try {
-            AutomationPackagePersistence functions = automationPackageManager.getPackagePreview(automationPackage);
-            return new PackagePreview(functions);
-        } catch (Exception e) {
-            logger.warn("Error while loading package preview for function package " + automationPackage, e);
-            return new PackagePreview(e.getMessage());
-        }
-    }
-    */
-
-
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
@@ -86,7 +69,8 @@ public class AutomationPackageServices extends AbstractStepServices {
     public String createAutomationPackage(@FormDataParam("file") InputStream uploadedInputStream,
                                           @FormDataParam("file") FormDataContentDisposition fileDetail,
                                           @Context UriInfo uriInfo) throws Exception {
-        return automationPackageManager.createAutomationPackage(uploadedInputStream, fileDetail.getFileName());
+        return automationPackageManager.createAutomationPackage(uploadedInputStream, fileDetail.getFileName(), getObjectEnricher());
+
     }
 
     /*
@@ -100,18 +84,11 @@ public class AutomationPackageServices extends AbstractStepServices {
                 "This service has been removed. Use POST /rest/functionpackages/ instead. Lookup by resourceName isn't supported anymore");
     }
 
-    @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    @Path("/{id}/reload")
-    @Secured(right = "autopack-write")
-    public AutomationPackagePersistence reloadPackage(@PathParam("id") String automationPackageId, @Context UriInfo uriInfo) throws Exception {
-        return automationPackageManager.reloadFunctionPackage(automationPackageId);
-    }*/
+    */
 
     public static class PackagePreview {
 
-        public PackagePreview(AutomationPackagePersistence automationPackage) {
+        public PackagePreview(AutomationPackage automationPackage) {
             super();
             this.automationPackage = automationPackage;
         }
@@ -122,7 +99,7 @@ public class AutomationPackageServices extends AbstractStepServices {
         }
 
         private String loadingError;
-        private AutomationPackagePersistence automationPackage;
+        private AutomationPackage automationPackage;
 
         public String getLoadingError() {
             return loadingError;
@@ -132,11 +109,11 @@ public class AutomationPackageServices extends AbstractStepServices {
             this.loadingError = loadingError;
         }
 
-        public AutomationPackagePersistence getFunctions() {
+        public AutomationPackage getFunctions() {
             return automationPackage;
         }
 
-        public void setFunctions(AutomationPackagePersistence automationPackage) {
+        public void setFunctions(AutomationPackage automationPackage) {
             this.automationPackage = automationPackage;
         }
     }

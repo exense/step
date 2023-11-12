@@ -1,9 +1,8 @@
-package step.automation.packages.reader;
+package step.automation.packages;
 
 import org.junit.Test;
 import step.artefacts.TestCase;
-import step.automation.packages.AutomationPackageReadingException;
-import step.automation.packages.model.AutomationPackage;
+import step.automation.packages.model.AutomationPackageContent;
 import step.automation.packages.model.AutomationPackageKeyword;
 import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.core.accessors.AbstractOrganizableObject;
@@ -14,7 +13,8 @@ import step.plugins.jmeter.automation.JMeterFunctionTestplanConversionRule;
 import java.io.File;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 public class AutomationPackageReaderTest {
 
@@ -24,10 +24,10 @@ public class AutomationPackageReaderTest {
     public void testReadFromPackage() throws AutomationPackageReadingException {
         File automationPackageJar = new File("src/test/resources/step-automation-packages-sample1.jar");
 
-        AutomationPackage automationPackage = reader.readAutomationPackageFromJarFile(automationPackageJar);
-        assertNotNull(automationPackage);
+        AutomationPackageContent automationPackageContent = reader.readAutomationPackageFromJarFile(automationPackageJar);
+        assertNotNull(automationPackageContent);
 
-        List<AutomationPackageKeyword> keywords = automationPackage.getKeywords();
+        List<AutomationPackageKeyword> keywords = automationPackageContent.getKeywords();
         assertEquals(1, keywords.size());
         AutomationPackageKeyword automationPackageKeyword = keywords.get(0);
         assertEquals(JMeterFunction.class, automationPackageKeyword.getDraftKeyword().getClass());
@@ -36,7 +36,7 @@ public class AutomationPackageReaderTest {
                 automationPackageKeyword.getSpecialAttributes().get(JMeterFunctionTestplanConversionRule.JMETER_TESTPLAN_ATTR)
         );
 
-        List<Plan> plans = automationPackage.getPlans();
+        List<Plan> plans = automationPackageContent.getPlans();
         assertEquals(1, plans.size());
         assertEquals("Test Plan", plans.get(0).getAttribute(AbstractOrganizableObject.NAME));
         assertEquals(TestCase.class, plans.get(0).getRoot().getClass());

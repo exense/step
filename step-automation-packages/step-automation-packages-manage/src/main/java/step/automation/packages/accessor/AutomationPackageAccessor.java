@@ -18,8 +18,8 @@
  ******************************************************************************/
 package step.automation.packages.accessor;
 
-import step.automation.packages.AutomationPackagePersistence;
+import step.automation.packages.AutomationPackage;
 import step.core.accessors.Accessor;
 
-public interface AutomationPackageAccessor extends Accessor<AutomationPackagePersistence> {
+public interface AutomationPackageAccessor extends Accessor<AutomationPackage> {
 }

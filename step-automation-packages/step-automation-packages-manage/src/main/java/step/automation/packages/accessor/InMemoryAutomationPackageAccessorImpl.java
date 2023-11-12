@@ -18,14 +18,14 @@
  ******************************************************************************/
 package step.automation.packages.accessor;
 
-import step.automation.packages.AutomationPackagePersistence;
+import step.automation.packages.AutomationPackage;
 import step.core.accessors.AbstractAccessor;
 import step.core.collections.Collection;
 import step.core.collections.inmemory.InMemoryCollection;
 
-public class InMemoryAutomationPackageAccessorImpl extends AbstractAccessor<AutomationPackagePersistence> implements AutomationPackageAccessor {
+public class InMemoryAutomationPackageAccessorImpl extends AbstractAccessor<AutomationPackage> implements AutomationPackageAccessor {
 
-    public InMemoryAutomationPackageAccessorImpl(Collection<AutomationPackagePersistence> collectionDriver) {
-        super(new InMemoryCollection<AutomationPackagePersistence>());
+    public InMemoryAutomationPackageAccessorImpl(Collection<AutomationPackage> collectionDriver) {
+        super(new InMemoryCollection<AutomationPackage>());
     }
 }
