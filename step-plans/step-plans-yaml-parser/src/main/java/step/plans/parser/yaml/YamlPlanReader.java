@@ -195,7 +195,7 @@ public class YamlPlanReader {
 		ObjectMapper yamlMapper = createDefaultYamlMapper();
 
 		// configure custom deserializers
-		yamlMapper.registerModule(registerAllSerializers(new SimpleModule()));
+		yamlMapper.registerModule(registerAllSerializers(new SimpleModule(), yamlMapper));
 		return yamlMapper;
 	}
 
@@ -206,24 +206,24 @@ public class YamlPlanReader {
 		return DefaultJacksonMapperProvider.getObjectMapper(yamlFactory);
 	}
 
-	private SimpleModule createDatabindModuleForNonUpgradablePlans() {
+	private SimpleModule createDatabindModuleForNonUpgradablePlans(ObjectMapper resultingMapper) {
 		SimpleModule module = new SimpleModule();
-		registerBasicSerializers(module);
+		registerBasicSerializers(module, resultingMapper);
 		return module;
 	}
 
-	private SimpleModule registerBasicSerializers(SimpleModule module) {
+	private SimpleModule registerBasicSerializers(SimpleModule module, ObjectMapper resultingMapper) {
 		module.addDeserializer(DynamicValue.class, new YamlDynamicValueDeserializer());
-		module.addDeserializer(YamlRootArtefact.class, createRootArtefactDeserializer(yamlMapper));
+		module.addDeserializer(YamlRootArtefact.class, createRootArtefactDeserializer(resultingMapper));
 
 		module.addSerializer(DynamicValue.class, new YamlDynamicValueSerializer());
-		return module.addSerializer(YamlRootArtefact.class, createRootArtefactSerializer(yamlMapper));
+		return module.addSerializer(YamlRootArtefact.class, createRootArtefactSerializer(resultingMapper));
 	}
 
-	public SimpleModule registerAllSerializers(SimpleModule module) {
-		ObjectMapper nonUpgradableYamlMapper = createDefaultYamlMapper().registerModule(createDatabindModuleForNonUpgradablePlans());
+	public SimpleModule registerAllSerializers(SimpleModule module, ObjectMapper resultingMapper) {
+		ObjectMapper nonUpgradableYamlMapper = createDefaultYamlMapper().registerModule(createDatabindModuleForNonUpgradablePlans(resultingMapper));
 
-		return registerBasicSerializers(module)
+		return registerBasicSerializers(module, resultingMapper)
 				.addDeserializer(YamlPlan.class, new UpgradableYamlPlanDeserializer(currentVersion, jsonSchema, migrationManager, nonUpgradableYamlMapper));
 	}
 
