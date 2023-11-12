@@ -84,7 +84,7 @@
 									<classifier>jar-with-dependencies</classifier>
 									<type>jar</type>
 									<overWrite>false</overWrite>
-									<outputDirectory>${project.basedir}/src/test/resources</outputDirectory>
+									<outputDirectory>${project.basedir}/src/test/resources/samples</outputDirectory>
 									<destFileName>step-automation-packages-sample2.jar</destFileName>
 								</artifactItem>
 							</artifactItems>
@@ -107,7 +107,7 @@
 									<classifier>jar-with-dependencies</classifier>
 									<type>jar</type>
 									<overWrite>false</overWrite>
-									<outputDirectory>${project.basedir}/src/test/resources</outputDirectory>
+									<outputDirectory>${project.basedir}/src/test/resources/samples</outputDirectory>
 									<destFileName>step-automation-packages-malformed.jar</destFileName>
 								</artifactItem>
 							</artifactItems>
@@ -116,6 +116,22 @@
 						</configuration>
 					</execution>
 				</executions>
+			</plugin>
+
+			<!-- cleanup copied test samples -->
+			<plugin>
+				<artifactId>maven-clean-plugin</artifactId>
+				<configuration>
+					<filesets>
+						<fileset>
+							<directory>src/test/resources/samples</directory>
+							<includes>
+								<include>**/*</include>
+								<include>**</include>
+							</includes>
+						</fileset>
+					</filesets>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>

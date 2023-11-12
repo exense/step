@@ -1927,6 +1927,9 @@
         "cron" : {
           "type" : "string"
         },
+        "active" : {
+          "type" : "boolean"
+        },
         "name" : {
           "type" : "string"
         }

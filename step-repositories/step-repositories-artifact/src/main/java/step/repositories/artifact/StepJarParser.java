@@ -56,7 +56,7 @@ public class StepJarParser {
     private static final Logger logger = LoggerFactory.getLogger(StepJarParser.class);
 
     private final StepClassParser stepClassParser;
-    private final AutomationPackageDescriptorReader automationPackageDescriptorReader;
+    private AutomationPackageDescriptorReader automationPackageDescriptorReader;
     private final AutomationPackageKeywordsAttributesApplier automationPackagesKeywordAttributesApplier;
 
     public StepJarParser() {
@@ -65,8 +65,17 @@ public class StepJarParser {
 
     public StepJarParser(ResourceManager resourceManager) {
         this.stepClassParser = new StepClassParser(false);
-        this.automationPackageDescriptorReader = new AutomationPackageDescriptorReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH);
         this.automationPackagesKeywordAttributesApplier = new AutomationPackageKeywordsAttributesApplier(resourceManager);
+    }
+
+    /**
+     * Lazy init for automation package descriptor reader (performance optimization)
+     */
+    private synchronized AutomationPackageDescriptorReader initAndGetAutomationPackageDescriptorReader() {
+        if (automationPackageDescriptorReader == null) {
+            automationPackageDescriptorReader = new AutomationPackageDescriptorReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH);
+        }
+        return automationPackageDescriptorReader;
     }
 
     private List<Function> getFunctions(AnnotationScanner annotationScanner, File artifact, File libraries) {
@@ -108,7 +117,7 @@ public class StepJarParser {
         try(AutomationPackageArchive automationPackageArchive = new AutomationPackageArchive(artifact)) {
             // add functions from automation package
             if(automationPackageArchive.isAutomationPackage()) {
-                AutomationPackageDescriptorYaml descriptor = automationPackageDescriptorReader.readAutomationPackageDescriptor(automationPackageArchive.getDescriptorYaml());
+                AutomationPackageDescriptorYaml descriptor = initAndGetAutomationPackageDescriptorReader().readAutomationPackageDescriptor(automationPackageArchive.getDescriptorYaml());
                 for (AutomationPackageKeyword automationPackageKeyword : descriptor.getKeywords()) {
                     functions.add(automationPackagesKeywordAttributesApplier.applySpecialAttributesToKeyword(automationPackageKeyword, automationPackageArchive));
                 }

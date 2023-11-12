@@ -89,7 +89,7 @@ public class AutomationPackageManagerTest {
         SampleUploadingResult r = uploadSample1WithAsserts(true);
 
         // 2. Update the package - some entities are updated, some entities are added
-        String fileName = "step-automation-packages-sample1-extended.jar";
+        String fileName = "samples/step-automation-packages-sample1-extended.jar";
         File automationPackageJar = new File("src/test/resources/" + fileName);
         try (InputStream is = new FileInputStream(automationPackageJar)) {
             String result = manager.updateAutomationPackage(is, fileName, null);
@@ -129,7 +129,10 @@ public class AutomationPackageManagerTest {
             Assert.assertEquals(r.storedTask.getId(), updatedTask.getId());
             Assert.assertEquals(r.storedPlan.getId(), updatedTask.getExecutionsParameters().getPlan().getId());
 
-            Assert.assertNotNull(storedTasks.stream().filter(t -> t.getAttribute(AbstractOrganizableObject.NAME).equals("secondSchedule")).findFirst().orElse(null));
+            // new task is configured as inactive in sample
+            ExecutiontTaskParameters newTask = storedTasks.stream().filter(t -> t.getAttribute(AbstractOrganizableObject.NAME).equals("secondSchedule")).findFirst().orElse(null);
+            Assert.assertNotNull(newTask);
+            Assert.assertFalse(newTask.isActive());
         }
 
         // 3. Upload the original sample again - added plans/functions/tasks from step 2 should be removed
@@ -151,7 +154,7 @@ public class AutomationPackageManagerTest {
     }
 
     private SampleUploadingResult uploadSample1WithAsserts(boolean createNew) throws IOException, FunctionTypeException, SetupFunctionException {
-        String fileName = "step-automation-packages-sample1.jar";
+        String fileName = "samples/step-automation-packages-sample1.jar";
         File automationPackageJar = new File("src/test/resources/" + fileName);
 
         SampleUploadingResult r = new SampleUploadingResult();
@@ -177,6 +180,7 @@ public class AutomationPackageManagerTest {
             r.storedTask = storedTasks.get(0);
             Assert.assertEquals("firstSchedule", r.storedTask.getAttribute(AbstractOrganizableObject.NAME));
             Assert.assertEquals("0 15 10 ? * *", r.storedTask.getCronExpression());
+            Assert.assertTrue(r.storedTask.isActive());
             Assert.assertEquals(r.storedPlan.getId(), r.storedTask.getExecutionsParameters().getPlan().getId());
         }
         return r;

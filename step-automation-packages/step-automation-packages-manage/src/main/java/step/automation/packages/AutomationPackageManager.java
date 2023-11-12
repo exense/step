@@ -182,7 +182,7 @@ public class AutomationPackageManager {
         }
 
         for (ExecutiontTaskParameters execTasksParameter : completeExecTasksParameters) {
-            executionScheduler.addExecutionTask(execTasksParameter);
+            executionScheduler.addExecutionTask(execTasksParameter, false);
         }
 
     }
@@ -240,8 +240,7 @@ public class AutomationPackageManager {
         for (AutomationPackageSchedule schedule : packageContent.getSchedules()) {
             ExecutiontTaskParameters execTaskParameters = new ExecutiontTaskParameters();
 
-            // TODO: add 'active' field to yaml
-            execTaskParameters.setActive(true);
+            execTaskParameters.setActive(schedule.getActive() == null || schedule.getActive());
             execTaskParameters.addAttribute(AbstractOrganizableObject.NAME, schedule.getName());
             execTaskParameters.setCronExpression(schedule.getCron());
 
