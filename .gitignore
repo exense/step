@@ -17,3 +17,6 @@ step-controller/step-controller-base-plugins/resources/
 /step-automation-packages/step-automation-packages-reader/src/test/resources/step-automation-packages-sample1.jar
 /step-automation-packages/step-automation-packages-support/src/test/resources/step-automation-packages-malformed.jar
 /step-automation-packages/step-automation-packages-support/src/test/resources/step-automation-packages-sample2.jar
+/step-automation-packages/step-automation-packages-manage/src/test/resources/step-automation-packages-sample1.jar
+/step-automation-packages/step-automation-packages-manage/src/test/resources/step-automation-packages-sample1-extended.jar
+/step-automation-packages/step-automation-packages-manage/resources/functions/

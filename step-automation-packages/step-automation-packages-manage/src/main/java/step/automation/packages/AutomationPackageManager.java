@@ -95,6 +95,7 @@ public class AutomationPackageManager {
 
         deleteAutomationPackageEntities(automationPackage);
         automationPackageAccessor.remove(automationPackage.getId());
+        log.info("Automation package ({}) has been removed", name);
     }
 
     private void deleteAutomationPackageEntities(AutomationPackage automationPackage) {
@@ -131,7 +132,7 @@ public class AutomationPackageManager {
         // save automation package metadata
         String result =  automationPackageAccessor.save(newPackage).getId().toString();
 
-        log.info("New automation package saved ({}). Plans: {}. Functions: {}. Schedules: {}", result, completePlans.size(), completeFunctions.size(), completeExecTasksParameters.size());
+        log.info("New automation package saved ({}). Plans: {}. Functions: {}. Schedules: {}", newPackage.getAttribute(AbstractOrganizableObject.NAME), completePlans.size(), completeFunctions.size(), completeExecTasksParameters.size());
         return result;
     }
 
@@ -167,7 +168,7 @@ public class AutomationPackageManager {
         // save automation package metadata
         String result =  automationPackageAccessor.save(newPackage).getId().toString();
 
-        log.info("Automation package has been updated ({}). Plans: {}. Functions: {}. Schedules: {}", result, completePlans.size(), completeFunctions.size(), completeExecTasksParameters.size());
+        log.info("Automation package has been updated ({}). Plans: {}. Functions: {}. Schedules: {}", newPackage.getAttribute(AbstractOrganizableObject.NAME), completePlans.size(), completeFunctions.size(), completeExecTasksParameters.size());
         return result;
     }
 

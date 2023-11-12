@@ -34,6 +34,7 @@
 
     <modules>
         <module>step-automation-packages-sample1</module>
+        <module>step-automation-packages-sample1-extended</module>
         <module>step-automation-packages-sample2</module>
         <module>step-automation-packages-malformed</module>
     </modules>

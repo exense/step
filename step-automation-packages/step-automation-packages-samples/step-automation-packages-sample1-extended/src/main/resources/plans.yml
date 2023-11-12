@@ -1,0 +1,13 @@
+plans:
+  - name: Test Plan
+    root:
+      testCase:
+        children:
+          - echo:
+              text: "Just echo"
+  - name: Test Plan 2
+    root:
+      testCase:
+        children:
+          - echo:
+              text: "Just echo"
