@@ -26,8 +26,6 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.UriInfo;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import step.core.deployment.AbstractStepServices;
 import step.framework.server.security.Secured;
 
@@ -37,34 +35,33 @@ import java.io.InputStream;
 @Tag(name = "Automation packages")
 public class AutomationPackageServices extends AbstractStepServices {
 
-    private static final Logger logger = LoggerFactory.getLogger(AutomationPackageServices.class);
-
     protected AutomationPackageManager automationPackageManager;
 
     @PostConstruct
-    public void init() {
+    public void init() throws Exception {
+        super.init();
         automationPackageManager = getContext().get(AutomationPackageManager.class);
     }
 
     @GET
-    @Path("/{id}")
+    @Path("/{name}")
     @Produces(MediaType.APPLICATION_JSON)
     @Secured(right = "autopack-read")
-    public AutomationPackage getAutomationPackage(@PathParam("id") String automationPackageId) {
-        return automationPackageManager.getAutomationPackage(automationPackageId);
+    public AutomationPackage getAutomationPackage(@PathParam("name") String automationPackageName) {
+        return automationPackageManager.getAutomationPackageByName(automationPackageName);
     }
 
     @DELETE
-    @Path("/{id}")
+    @Path("/{name}")
     @Produces(MediaType.APPLICATION_JSON)
     @Secured(right = "autopack-write")
-    public void deleteAutomationPackage(@PathParam("id") String automationPackageId) {
-        automationPackageManager.removeAutomationPackage(automationPackageId);
+    public void deleteAutomationPackage(@PathParam("name") String automationPackageName) {
+        automationPackageManager.removeAutomationPackage(automationPackageName);
     }
 
     @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Produces(MediaType.TEXT_PLAIN)
     @Secured(right = "autopack-write")
     public String createAutomationPackage(@FormDataParam("file") InputStream uploadedInputStream,
                                           @FormDataParam("file") FormDataContentDisposition fileDetail,
@@ -73,48 +70,15 @@ public class AutomationPackageServices extends AbstractStepServices {
 
     }
 
-    /*
-    @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    @Path("/resourcebased")
+    @PUT
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Produces(MediaType.TEXT_PLAIN)
+    @Path("")
     @Secured(right = "autopack-write")
-    public String updateAutomationPackage(AutomationPackagePersistence automationPackage, @Context UriInfo uriInfo) throws Exception {
-        throw new Exception(
-                "This service has been removed. Use POST /rest/functionpackages/ instead. Lookup by resourceName isn't supported anymore");
+    public String updateAutomationPackage(@FormDataParam("file") InputStream uploadedInputStream,
+                                          @FormDataParam("file") FormDataContentDisposition fileDetail,
+                                          @Context UriInfo uriInfo) throws Exception {
+        return automationPackageManager.updateAutomationPackage(uploadedInputStream, fileDetail.getFileName(), getObjectEnricher());
     }
 
-    */
-
-    public static class PackagePreview {
-
-        public PackagePreview(AutomationPackage automationPackage) {
-            super();
-            this.automationPackage = automationPackage;
-        }
-
-        public PackagePreview(String loadingError) {
-            super();
-            this.loadingError = loadingError;
-        }
-
-        private String loadingError;
-        private AutomationPackage automationPackage;
-
-        public String getLoadingError() {
-            return loadingError;
-        }
-
-        public void setLoadingError(String loadingError) {
-            this.loadingError = loadingError;
-        }
-
-        public AutomationPackage getFunctions() {
-            return automationPackage;
-        }
-
-        public void setFunctions(AutomationPackage automationPackage) {
-            this.automationPackage = automationPackage;
-        }
-    }
 }

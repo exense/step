@@ -41,16 +41,10 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
 
     @Override
     public void serverStart(GlobalContext context) throws Exception {
-
+        super.serverStart(context);
         packageAccessor = new AutomationPackageAccessorImpl(
                 context.getCollectionFactory().getCollection(AutomationPackageEntity.entityName, AutomationPackage.class)
         );
-
-        packageManager = new AutomationPackageManager(
-                packageAccessor, context.get(FunctionManager.class), context.get(FunctionAccessor.class), context.getPlanAccessor(), context.getResourceManager(),
-                context.getScheduleAccessor(), context.getScheduler()
-        );
-        context.put(AutomationPackageManager.class, packageManager);
 
         Collection<AutomationPackage> automationPackageCollection = context.getCollectionFactory().getCollection(AutomationPackageEntity.entityName, AutomationPackage.class);
 
@@ -61,5 +55,18 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
         context.getServiceRegistrationCallback().registerService(AutomationPackageServices.class);
 
         context.getEntityManager().register(new AutomationPackageEntity(AutomationPackageEntity.entityName, packageAccessor, context));
+    }
+
+    @Override
+    public void afterInitializeData(GlobalContext context) throws Exception {
+        super.afterInitializeData(context);
+
+        // moved to 'afterInitializeData' to have the schedule accessor in context
+        packageManager = new AutomationPackageManager(
+                packageAccessor, context.get(FunctionManager.class), context.get(FunctionAccessor.class), context.getPlanAccessor(), context.getResourceManager(),
+                context.getScheduleAccessor(), context.getScheduler()
+        );
+        context.put(AutomationPackageManager.class, packageManager);
+
     }
 }
