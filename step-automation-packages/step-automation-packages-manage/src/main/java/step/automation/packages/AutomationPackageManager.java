@@ -60,7 +60,6 @@ public class AutomationPackageManager {
     private final ResourceManager resourceManager;
     private final ExecutionTaskAccessor executionTaskAccessor;
     private final ExecutionScheduler executionScheduler;
-    private final FileResolver fileResolver;
     private final AutomationPackageReader packageReader;
     private final AutomationPackageKeywordsAttributesApplier keywordsAttributesApplier;
 
@@ -70,8 +69,7 @@ public class AutomationPackageManager {
                                     PlanAccessor planAccessor,
                                     ResourceManager resourceManager,
                                     ExecutionTaskAccessor executionTaskAccessor,
-                                    ExecutionScheduler executionScheduler,
-                                    FileResolver fileResolver) {
+                                    ExecutionScheduler executionScheduler) {
         this.automationPackageAccessor = automationPackageAccessor;
         this.functionManager = functionManager;
         this.functionAccessor = functionAccessor;
@@ -81,7 +79,6 @@ public class AutomationPackageManager {
 
         // TODO: avoid using executionScheduler
         this.executionScheduler = executionScheduler;
-        this.fileResolver = fileResolver;
 
         // TODO: actual json schema should be resolved from descriptor
         this.packageReader = new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH);
@@ -128,13 +125,14 @@ public class AutomationPackageManager {
                 execTaskParameters.setCronExpression(schedule.getCron());
 
                 Plan plan = packageContent.getPlans().stream().filter(p -> Objects.equals(p.getAttribute(AbstractOrganizableObject.NAME), schedule.getPlanName())).findFirst().orElse(null);
-                if(plan == null){
+                if (plan == null) {
                     throw new AutomationPackageManagerException("Invalid automation package: " + packageContent.getName() +
                             " No plan with '" + schedule.getCron() + "' name found for schedule " + schedule.getName());
                 }
                 execTaskParameters.setExecutionsParameters(new ExecutionParameters(plan, schedule.getExecutionParameters()));
-                enricher.accept(execTaskParameters);
-
+                if (enricher != null) {
+                    enricher.accept(execTaskParameters);
+                }
                 completeExecTasksParameters.add(execTaskParameters);
             }
 
@@ -143,20 +141,24 @@ public class AutomationPackageManager {
                 // TODO: here want to apply additional attributes to draft function (upload linked files as resources), but we have to refactor the way to do that
                 Function completeFunction = keywordsAttributesApplier.applySpecialAttributesToKeyword(keyword, automationPackageArchive);
                 completeFunction.addCustomField(AutomationPackageEntity.AUTOMATION_PACKAGE_ID, newPackage.getId().toString());
-                enricher.accept(completeFunction);
+                if (enricher != null) {
+                    enricher.accept(completeFunction);
+                }
                 completeFunctions.add(completeFunction);
             }
 
             List<Plan> completePlans = new ArrayList<>();
             for (Plan plan : packageContent.getPlans()) {
                 plan.addCustomField(AutomationPackageEntity.AUTOMATION_PACKAGE_ID, newPackage.getId().toString());
-                enricher.accept(plan);
+                if (enricher != null) {
+                    enricher.accept(plan);
+                }
                 completePlans.add(plan);
             }
 
             // persist all staged entities
             for (Function completeFunction : completeFunctions) {
-               functionManager.saveFunction(completeFunction);
+                functionManager.saveFunction(completeFunction);
             }
 
             for (Plan plan : completePlans) {
@@ -167,7 +169,9 @@ public class AutomationPackageManager {
                 executionScheduler.addExecutionTask(execTasksParameter);
             }
 
-            return automationPackageAccessor.save(newPackage).getId().toString();
+            String result = automationPackageAccessor.save(newPackage).getId().toString();
+            log.info("New automation package saved ({}). Plans: {}. Functions: {}. Schedules: {}", result, completePlans.size(), completeFunctions.size(), completeExecTasksParameters.size());
+            return result;
 
         } catch (Exception e) {
             throw new AutomationPackageManagerException("Unable to read/save automation package", e);
@@ -175,7 +179,7 @@ public class AutomationPackageManager {
     }
 
     // TODO: implement the better way to read automation package from input stream
-    private static File stream2file (InputStream in) throws IOException {
+    private static File stream2file(InputStream in) throws IOException {
         final File tempFile = File.createTempFile("autopack", ".tmp");
         tempFile.deleteOnExit();
         try (FileOutputStream out = new FileOutputStream(tempFile)) {
@@ -207,7 +211,7 @@ public class AutomationPackageManager {
         List<ExecutiontTaskParameters> tasks = getPackageTasks(automationPackage);
         tasks.forEach(task -> {
             try {
-                executionTaskAccessor.remove(task.getId());
+                executionScheduler.removeExecutionTask(task.getId().toString());
             } catch (Exception e) {
                 log.error("Error while deleting task " + task.getId().toString(), e);
             }
@@ -249,7 +253,7 @@ public class AutomationPackageManager {
 
     private static Map<String, String> getAutomationPackageIdCriteria(String automationPackageId) {
         Map<String, String> criteria = new HashMap<>();
-        criteria.put("customField." + AutomationPackageEntity.AUTOMATION_PACKAGE_ID, automationPackageId);
+        criteria.put("customFields." + AutomationPackageEntity.AUTOMATION_PACKAGE_ID, automationPackageId);
         return criteria;
     }
 
@@ -261,17 +265,4 @@ public class AutomationPackageManager {
         return executionTaskAccessor.findManyByCriteria(getAutomationPackageIdCriteria(automationPackage.getId().toString())).collect(Collectors.toList());
     }
 
-    private void deleteResource(String path) {
-        String resolveResourceId = fileResolver.resolveResourceId(path);
-
-        // Is it a resource?
-        if (resolveResourceId != null) {
-            // if yes, delete it
-            try {
-                resourceManager.deleteResource(resolveResourceId);
-            } catch (RuntimeException e) {
-                log.warn("Dirty cleanup of Automation package: an error occured while deleting one of the associated resources.", e);
-            }
-        }
-    }
 }

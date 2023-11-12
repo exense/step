@@ -62,7 +62,7 @@ public class AutomationPackageReader {
     public void fillAutomationPackageWithImportedFragments(AutomationPackageContent targetPackage, AutomationPackageFragmentYaml fragment, AutomationPackageArchive archive) throws AutomationPackageReadingException {
         targetPackage.getKeywords().addAll(fragment.getKeywords());
         targetPackage.getPlans().addAll(fragment.getPlans().stream().map(p -> descriptorReader.getPlanReader().yamlPlanToPlan(p)).collect(Collectors.toList()));
-        fragment.getSchedules().addAll(fragment.getSchedules());
+        targetPackage.getSchedules().addAll(fragment.getSchedules());
 
         if (!fragment.getFragments().isEmpty()) {
             for (String importedFragmentReference : fragment.getFragments()) {

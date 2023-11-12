@@ -3,3 +3,4 @@ name: "My package"
 fragments:
   - "keywords.yml"
   - "plans.yml"
+  - "schedules.yml"

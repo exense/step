@@ -25,20 +25,4 @@ import java.util.Map;
 
 public class AutomationPackage extends AbstractOrganizableObject implements EnricheableObject {
 
-    // TODO: token selection criteria for keywords?
-    public static final String TRACKING_FIELD = "tracking";
-
-    protected Map<String, String> packageAttributes;
-
-    /**
-     * @return the additional attributes that have to be added to the attributes of the functions contained in this package
-     */
-    public Map<String, String> getPackageAttributes() {
-        return packageAttributes;
-    }
-
-    public void setPackageAttributes(Map<String, String> packageAttributes) {
-        this.packageAttributes = packageAttributes;
-    }
-
 }

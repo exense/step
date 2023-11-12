@@ -48,7 +48,7 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
 
         packageManager = new AutomationPackageManager(
                 packageAccessor, context.get(FunctionManager.class), context.get(FunctionAccessor.class), context.getPlanAccessor(), context.getResourceManager(),
-                context.getScheduleAccessor(), context.getScheduler(), context.getFileResolver()
+                context.getScheduleAccessor(), context.getScheduler()
         );
         context.put(AutomationPackageManager.class, packageManager);
 
