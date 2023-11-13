@@ -31,7 +31,7 @@ import step.framework.server.security.Secured;
 
 import java.io.InputStream;
 
-@Path("/autopackages")
+@Path("/automation-packages")
 @Tag(name = "Automation packages")
 public class AutomationPackageServices extends AbstractStepServices {
 
@@ -46,7 +46,7 @@ public class AutomationPackageServices extends AbstractStepServices {
     @GET
     @Path("/{name}")
     @Produces(MediaType.APPLICATION_JSON)
-    @Secured(right = "autopack-read")
+    @Secured(right = "automation-package-read")
     public AutomationPackage getAutomationPackage(@PathParam("name") String automationPackageName) {
         return automationPackageManager.getAutomationPackageByName(automationPackageName);
     }
@@ -54,7 +54,7 @@ public class AutomationPackageServices extends AbstractStepServices {
     @DELETE
     @Path("/{name}")
     @Produces(MediaType.APPLICATION_JSON)
-    @Secured(right = "autopack-write")
+    @Secured(right = "automation-package-delete")
     public void deleteAutomationPackage(@PathParam("name") String automationPackageName) {
         automationPackageManager.removeAutomationPackage(automationPackageName);
     }
@@ -62,7 +62,7 @@ public class AutomationPackageServices extends AbstractStepServices {
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.TEXT_PLAIN)
-    @Secured(right = "autopack-write")
+    @Secured(right = "automation-package-write")
     public String createAutomationPackage(@FormDataParam("file") InputStream uploadedInputStream,
                                           @FormDataParam("file") FormDataContentDisposition fileDetail,
                                           @Context UriInfo uriInfo) throws Exception {
@@ -74,7 +74,7 @@ public class AutomationPackageServices extends AbstractStepServices {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.TEXT_PLAIN)
     @Path("")
-    @Secured(right = "autopack-write")
+    @Secured(right = "automation-package-write")
     public String updateAutomationPackage(@FormDataParam("file") InputStream uploadedInputStream,
                                           @FormDataParam("file") FormDataContentDisposition fileDetail,
                                           @Context UriInfo uriInfo) throws Exception {

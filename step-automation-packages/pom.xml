@@ -37,7 +37,7 @@
         <module>step-automation-packages-schema</module>
         <module>step-automation-packages-junit</module>
         <module>step-automation-packages-samples</module>
-        <module>step-automation-packages-manage</module>
+        <module>step-automation-packages-manager</module>
     </modules>
 
     <properties>

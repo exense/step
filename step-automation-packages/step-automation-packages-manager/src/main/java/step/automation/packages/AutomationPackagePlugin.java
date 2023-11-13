@@ -48,13 +48,12 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
 
         Collection<AutomationPackage> automationPackageCollection = context.getCollectionFactory().getCollection(AutomationPackageEntity.entityName, AutomationPackage.class);
 
-        // TODO: special access right
-        Table<AutomationPackage> collection = new Table<>(automationPackageCollection, "kw-read", true);
+        Table<AutomationPackage> collection = new Table<>(automationPackageCollection, "autopack-read", true);
         context.get(TableRegistry.class).register(AutomationPackageEntity.entityName, collection);
 
         context.getServiceRegistrationCallback().registerService(AutomationPackageServices.class);
 
-        context.getEntityManager().register(new AutomationPackageEntity(AutomationPackageEntity.entityName, packageAccessor, context));
+        context.getEntityManager().register(new AutomationPackageEntity(packageAccessor));
     }
 
     @Override

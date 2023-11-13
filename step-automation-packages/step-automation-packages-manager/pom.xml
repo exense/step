@@ -15,7 +15,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>step-automation-packages-manage</artifactId>
+    <artifactId>step-automation-packages-manager</artifactId>
 
     <properties>
     </properties>

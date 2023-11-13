@@ -27,10 +27,10 @@ public class AutomationPackageEntity extends Entity<AutomationPackage, Automatio
     public static final String AUTOMATION_PACKAGE_ID = "automationPackageId";
     public static final String AUTOMATION_PACKAGE_FILE_NAME = "automationPackageFileName";
 
-    public static final String entityName = "automationPackage";
+    public static final String entityName = "automationPackages";
 
-    public AutomationPackageEntity(String name, AutomationPackageAccessor accessor, GlobalContext context) {
-        super(name, accessor, AutomationPackage.class);
+    public AutomationPackageEntity(AutomationPackageAccessor accessor) {
+        super(entityName, accessor, AutomationPackage.class);
     }
 
 }

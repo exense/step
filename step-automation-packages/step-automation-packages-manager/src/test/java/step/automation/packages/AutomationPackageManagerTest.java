@@ -56,7 +56,7 @@ public class AutomationPackageManagerTest {
         AbstractFunctionType jMeterFunctionType = new JMeterFunctionType(new Configuration());
         Mockito.when(functionTypeRegistry.getFunctionTypeByFunction(Mockito.any())).thenAnswer(invocationOnMock -> {
             Object function = invocationOnMock.getArgument(0);
-            if(function instanceof JMeterFunction){
+            if (function instanceof JMeterFunction) {
                 return jMeterFunctionType;
             } else {
                 return null;
