@@ -1,0 +1,722 @@
+---
+_class: "step.core.plans.Plan"
+customFields: null
+attributes:
+  name: "test plan"
+root:
+  _class: "Sequence"
+  customFields: null
+  attributes:
+    name: "Sequence"
+  dynamicName:
+    dynamic: false
+    value: ""
+    expression: ""
+    expressionType: null
+  useDynamicName: false
+  description: null
+  children:
+    - _class: "ForEach"
+      customFields: null
+      attributes:
+        name: "ForEach"
+      dynamicName:
+        dynamic: false
+        value: ""
+        expression: ""
+        expressionType: null
+      useDynamicName: false
+      description: "test sequence"
+      children: []
+      customAttributes: null
+      attachments: null
+      skipNode:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      instrumentNode:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      item:
+        dynamic: false
+        value: "testCounter"
+        expression: null
+        expressionType: null
+      dataSourceType: "sequence"
+      dataSource:
+        _class: "step.datapool.sequence.IntSequenceDataPool"
+        forWrite:
+          dynamic: false
+          value: false
+          expression: null
+          expressionType: null
+        start:
+          dynamic: false
+          value: 10
+          expression: null
+          expressionType: null
+        end:
+          dynamic: false
+          value: 20
+          expression: null
+          expressionType: null
+        inc:
+          dynamic: false
+          value: 5
+          expression: null
+          expressionType: null
+      maxFailedLoops:
+        dynamic: false
+        value: 3
+        expression: null
+        expressionType: null
+      threads:
+        dynamic: false
+        value: 2
+        expression: null
+        expressionType: null
+      globalCounter:
+        dynamic: false
+        value: "testGCounter"
+        expression: null
+        expressionType: null
+      userItem:
+        dynamic: false
+        value: "testUserId"
+        expression: null
+        expressionType: null
+      id: "644fbe4e38a61e07cc3a4df8"
+    - _class: "ForEach"
+      customFields: null
+      attributes:
+        name: "ForEach"
+      dynamicName:
+        dynamic: false
+        value: ""
+        expression: ""
+        expressionType: null
+      useDynamicName: false
+      description: "test excel"
+      children: []
+      customAttributes: null
+      attachments: null
+      skipNode:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      instrumentNode:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      item:
+        dynamic: false
+        value: "row"
+        expression: null
+        expressionType: null
+      dataSourceType: "excel"
+      dataSource:
+        _class: "step.datapool.excel.ExcelDataPool"
+        forWrite:
+          dynamic: false
+          value: false
+          expression: null
+          expressionType: null
+        file:
+          dynamic: false
+          value: "resource:644fbe4e38a61e07cc3a4df9"
+          expression: null
+          expressionType: null
+        worksheet:
+          dynamic: false
+          value: "myWorksheet"
+          expression: null
+          expressionType: null
+        headers:
+          dynamic: false
+          value: true
+          expression: null
+          expressionType: null
+      maxFailedLoops:
+        dynamic: false
+        value: null
+        expression: null
+        expressionType: null
+      threads:
+        dynamic: false
+        value: 1
+        expression: null
+        expressionType: null
+      globalCounter:
+        dynamic: false
+        value: "gcounter"
+        expression: null
+        expressionType: null
+      userItem:
+        dynamic: false
+        value: "userId"
+        expression: null
+        expressionType: null
+      id: "644fbe4e38a61e07cc3a4df8"
+    - _class: "ForEach"
+      customFields: null
+      attributes:
+        name: "ForEach"
+      dynamicName:
+        dynamic: false
+        value: ""
+        expression: ""
+        expressionType: null
+      useDynamicName: false
+      description: "test csv"
+      children: []
+      customAttributes: null
+      attachments: null
+      skipNode:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      instrumentNode:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      item:
+        dynamic: false
+        value: "row"
+        expression: null
+        expressionType: null
+      dataSourceType: "csv"
+      dataSource:
+        _class: "step.datapool.file.CSVDataPool"
+        forWrite:
+          dynamic: false
+          value: false
+          expression: null
+          expressionType: null
+        file:
+          dynamic: false
+          value: "resource:644fbe4e38a61e07cc3a4df9"
+          expression: null
+          expressionType: null
+        delimiter:
+          dynamic: false
+          value: ";"
+          expression: null
+          expressionType: null
+      maxFailedLoops:
+        dynamic: false
+        value: null
+        expression: null
+        expressionType: null
+      threads:
+        dynamic: false
+        value: 1
+        expression: null
+        expressionType: null
+      globalCounter:
+        dynamic: false
+        value: "gcounter"
+        expression: null
+        expressionType: null
+      userItem:
+        dynamic: false
+        value: "userId"
+        expression: null
+        expressionType: null
+      id: "644fbe4e38a61e07cc3a4df8"
+    - _class: "ForEach"
+      customFields: null
+      attributes:
+        name: "ForEach"
+      dynamicName:
+        dynamic: false
+        value: ""
+        expression: ""
+        expressionType: null
+      useDynamicName: false
+      description: "test folder"
+      children: []
+      customAttributes: null
+      attachments: null
+      skipNode:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      instrumentNode:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      item:
+        dynamic: false
+        value: "row"
+        expression: null
+        expressionType: null
+      dataSourceType: "folder"
+      dataSource:
+        _class: "step.datapool.file.DirectoryDataPool"
+        forWrite:
+          dynamic: false
+          value: false
+          expression: null
+          expressionType: null
+        folder:
+          dynamic: false
+          value: "myFolder"
+          expression: null
+          expressionType: null
+      maxFailedLoops:
+        dynamic: false
+        value: null
+        expression: null
+        expressionType: null
+      threads:
+        dynamic: false
+        value: 1
+        expression: null
+        expressionType: null
+      globalCounter:
+        dynamic: false
+        value: "gcounter"
+        expression: null
+        expressionType: null
+      userItem:
+        dynamic: false
+        value: "userId"
+        expression: null
+        expressionType: null
+      id: "644fbe4e38a61e07cc3a4df8"
+    - _class: "ForEach"
+      customFields: null
+      attributes:
+        name: "ForEach"
+      dynamicName:
+        dynamic: false
+        value: ""
+        expression: ""
+        expressionType: null
+      useDynamicName: false
+      description: "test gsheet"
+      children: []
+      customAttributes: null
+      attachments: null
+      skipNode:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      instrumentNode:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      item:
+        dynamic: false
+        value: "row"
+        expression: null
+        expressionType: null
+      dataSourceType: "gsheet"
+      dataSource:
+        _class: "step.datapool.gsheet.GoogleSheetv4DataPoolConfiguration"
+        forWrite:
+          dynamic: false
+          value: false
+          expression: null
+          expressionType: null
+        fileId:
+          dynamic: false
+          value: "myFileId"
+          expression: null
+          expressionType: null
+        serviceAccountKey:
+          dynamic: false
+          value: "resource:644fbe4e38a61e07cc3a4df9"
+          expression: null
+          expressionType: null
+        tabName:
+          dynamic: false
+          value: "myTabName"
+          expression: null
+          expressionType: null
+      maxFailedLoops:
+        dynamic: false
+        value: null
+        expression: null
+        expressionType: null
+      threads:
+        dynamic: false
+        value: 1
+        expression: null
+        expressionType: null
+      globalCounter:
+        dynamic: false
+        value: "gcounter"
+        expression: null
+        expressionType: null
+      userItem:
+        dynamic: false
+        value: "userId"
+        expression: null
+        expressionType: null
+      id: "644fbe4e38a61e07cc3a4df8"
+    - _class: "ForEach"
+      customFields: null
+      attributes:
+        name: "ForEach"
+      dynamicName:
+        dynamic: false
+        value: ""
+        expression: ""
+        expressionType: null
+      useDynamicName: false
+      description: "test json"
+      children: []
+      customAttributes: null
+      attachments: null
+      skipNode:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      instrumentNode:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      item:
+        dynamic: false
+        value: "row"
+        expression: null
+        expressionType: null
+      dataSourceType: "json"
+      dataSource:
+        _class: "step.datapool.inmemory.JsonStringDataPoolConfiguration"
+        forWrite:
+          dynamic: false
+          value: false
+          expression: null
+          expressionType: null
+        json:
+          dynamic: false
+          value: "{}"
+          expression: null
+          expressionType: null
+      maxFailedLoops:
+        dynamic: false
+        value: null
+        expression: null
+        expressionType: null
+      threads:
+        dynamic: false
+        value: 1
+        expression: null
+        expressionType: null
+      globalCounter:
+        dynamic: false
+        value: "gcounter"
+        expression: null
+        expressionType: null
+      userItem:
+        dynamic: false
+        value: "userId"
+        expression: null
+        expressionType: null
+      id: "644fbe4e38a61e07cc3a4df8"
+    - _class: "ForEach"
+      customFields: null
+      attributes:
+        name: "ForEach"
+      dynamicName:
+        dynamic: false
+        value: ""
+        expression: ""
+        expressionType: null
+      useDynamicName: false
+      description: "test json array"
+      children: []
+      customAttributes: null
+      attachments: null
+      skipNode:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      instrumentNode:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      item:
+        dynamic: false
+        value: "row"
+        expression: null
+        expressionType: null
+      dataSourceType: "json-array"
+      dataSource:
+        _class: "step.datapool.json.JsonArrayDataPoolConfiguration"
+        forWrite:
+          dynamic: false
+          value: false
+          expression: null
+          expressionType: null
+        json:
+          dynamic: false
+          value: "[{},{}]"
+          expression: null
+          expressionType: null
+      maxFailedLoops:
+        dynamic: false
+        value: null
+        expression: null
+        expressionType: null
+      threads:
+        dynamic: false
+        value: 1
+        expression: null
+        expressionType: null
+      globalCounter:
+        dynamic: false
+        value: "gcounter"
+        expression: null
+        expressionType: null
+      userItem:
+        dynamic: false
+        value: "userId"
+        expression: null
+        expressionType: null
+      id: "644fbe4e38a61e07cc3a4df8"
+    - _class: "ForEach"
+      customFields: null
+      attributes:
+        name: "ForEach"
+      dynamicName:
+        dynamic: false
+        value: ""
+        expression: ""
+        expressionType: null
+      useDynamicName: false
+      description: "test sql"
+      children: []
+      customAttributes: null
+      attachments: null
+      skipNode:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      instrumentNode:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      item:
+        dynamic: false
+        value: "row"
+        expression: null
+        expressionType: null
+      dataSourceType: "sql"
+      dataSource:
+        _class: "step.datapool.jdbc.SQLTableDataPoolConfiguration"
+        forWrite:
+          dynamic: false
+          value: false
+          expression: null
+          expressionType: null
+        connectionString:
+          dynamic: false
+          value: "jdbc://"
+          expression: null
+          expressionType: null
+        query:
+          dynamic: false
+          value: "select * from tmp"
+          expression: null
+          expressionType: null
+        user:
+          dynamic: false
+          value: "user1"
+          expression: null
+          expressionType: null
+        password:
+          dynamic: false
+          value: "pass"
+          expression: null
+          expressionType: null
+        writePKey:
+          dynamic: false
+          value: "abc"
+          expression: null
+          expressionType: null
+        driverClass:
+          dynamic: false
+          value: "a.b.c"
+          expression: null
+          expressionType: null
+      maxFailedLoops:
+        dynamic: false
+        value: null
+        expression: null
+        expressionType: null
+      threads:
+        dynamic: false
+        value: 1
+        expression: null
+        expressionType: null
+      globalCounter:
+        dynamic: false
+        value: "gcounter"
+        expression: null
+        expressionType: null
+      userItem:
+        dynamic: false
+        value: "userId"
+        expression: null
+        expressionType: null
+      id: "644fbe4e38a61e07cc3a4df8"
+    - _class: "ForEach"
+      customFields: null
+      attributes:
+        name: "ForEach"
+      dynamicName:
+        dynamic: false
+        value: ""
+        expression: ""
+        expressionType: null
+      useDynamicName: false
+      description: "test file"
+      children: []
+      customAttributes: null
+      attachments: null
+      skipNode:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      instrumentNode:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      item:
+        dynamic: false
+        value: "row"
+        expression: null
+        expressionType: null
+      dataSourceType: "file"
+      dataSource:
+        _class: "step.datapool.file.FileDataPool"
+        forWrite:
+          dynamic: false
+          value: false
+          expression: null
+          expressionType: null
+        file:
+          dynamic: false
+          value: "resource:644fbe4e38a61e07cc3a4df9"
+          expression: null
+          expressionType: null
+      maxFailedLoops:
+        dynamic: false
+        value: null
+        expression: null
+        expressionType: null
+      threads:
+        dynamic: false
+        value: 1
+        expression: null
+        expressionType: null
+      globalCounter:
+        dynamic: false
+        value: "gcounter"
+        expression: null
+        expressionType: null
+      userItem:
+        dynamic: false
+        value: "userId"
+        expression: null
+        expressionType: null
+      id: "644fbe4e38a61e07cc3a4df8"
+  customAttributes: null
+  attachments: null
+  skipNode:
+    dynamic: false
+    value: false
+    expression: null
+    expressionType: null
+  instrumentNode:
+    dynamic: false
+    value: false
+    expression: null
+    expressionType: null
+  continueParentNodeExecutionOnError:
+    dynamic: false
+    value: false
+    expression: null
+    expressionType: null
+  continueOnError:
+    dynamic: false
+    value: false
+    expression: null
+    expressionType: null
+  pacing:
+    dynamic: false
+    value: null
+    expression: null
+    expressionType: null
+  id: "644fbe4e38a61e07cc3a4df8"
+functions: null
+subPlans: null
+visible: true
+id: "644fbe4e38a61e07cc3a4df8"

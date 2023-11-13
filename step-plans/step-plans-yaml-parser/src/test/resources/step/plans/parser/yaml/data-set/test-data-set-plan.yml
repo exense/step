@@ -1,0 +1,14 @@
+name: "test plan"
+root:
+  sequence:
+    name: Sequence
+    children:
+      - dataSet:
+          description: "test excel"
+          dataSource:
+            excel:
+              file:
+                id: "644fbe4e38a61e07cc3a4df9"
+              headers: true
+              worksheet: "myWorksheet"
+              forWrite: true

@@ -1,0 +1,23 @@
+---
+version: "1.0.0"
+name: "test plan"
+root:
+  sequence:
+    continueParentNodeExecutionOnError: false
+    instrumentNode: false
+    skipNode: false
+    children:
+      - for:
+          continueParentNodeExecutionOnError: false
+          instrumentNode: false
+          skipNode: false
+          description: "test for"
+          userItem: "testUserId"
+          globalCounter: "testGCounter"
+          threads: 2
+          maxFailedLoops: 3
+          start: 10
+          end: 20
+          inc: 5
+          item: "testCounter"
+    continueOnError: false
