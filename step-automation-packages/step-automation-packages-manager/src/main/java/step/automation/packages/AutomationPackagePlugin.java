@@ -48,7 +48,7 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
 
         Collection<AutomationPackage> automationPackageCollection = context.getCollectionFactory().getCollection("automationPackages", AutomationPackage.class);
 
-        Table<AutomationPackage> collection = new Table<>(automationPackageCollection, "autopack-read", true);
+        Table<AutomationPackage> collection = new Table<>(automationPackageCollection, "automation-package-read", true);
         context.get(TableRegistry.class).register("automationPackages", collection);
 
         context.getServiceRegistrationCallback().registerService(AutomationPackageServices.class);
