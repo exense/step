@@ -43,13 +43,13 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
     public void serverStart(GlobalContext context) throws Exception {
         super.serverStart(context);
         packageAccessor = new AutomationPackageAccessorImpl(
-                context.getCollectionFactory().getCollection(AutomationPackageEntity.entityName, AutomationPackage.class)
+                context.getCollectionFactory().getCollection("automationPackages", AutomationPackage.class)
         );
 
-        Collection<AutomationPackage> automationPackageCollection = context.getCollectionFactory().getCollection(AutomationPackageEntity.entityName, AutomationPackage.class);
+        Collection<AutomationPackage> automationPackageCollection = context.getCollectionFactory().getCollection("automationPackages", AutomationPackage.class);
 
         Table<AutomationPackage> collection = new Table<>(automationPackageCollection, "autopack-read", true);
-        context.get(TableRegistry.class).register(AutomationPackageEntity.entityName, collection);
+        context.get(TableRegistry.class).register("automationPackages", collection);
 
         context.getServiceRegistrationCallback().registerService(AutomationPackageServices.class);
 
