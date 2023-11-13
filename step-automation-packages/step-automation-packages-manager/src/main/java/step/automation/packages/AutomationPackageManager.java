@@ -71,10 +71,16 @@ public class AutomationPackageManager {
                                     ExecutionTaskAccessor executionTaskAccessor,
                                     ExecutionScheduler executionScheduler) {
         this.automationPackageAccessor = automationPackageAccessor;
+
         this.functionManager = functionManager;
         this.functionAccessor = functionAccessor;
+        this.functionAccessor.createIndexIfNeeded(getAutomationPackageTrackingField());
+
         this.planAccessor = planAccessor;
+        this.planAccessor.createIndexIfNeeded(getAutomationPackageTrackingField());
+
         this.executionTaskAccessor = executionTaskAccessor;
+        this.executionTaskAccessor.createIndexIfNeeded(getAutomationPackageTrackingField());
 
         // TODO: avoid executionScheduler in automation package manager
         this.executionScheduler = executionScheduler;
@@ -319,9 +325,11 @@ public class AutomationPackageManager {
     }
 
     protected Map<String, String> getAutomationPackageIdCriteria(String automationPackageId) {
-        Map<String, String> criteria = new HashMap<>();
-        criteria.put("customFields." + AutomationPackageEntity.AUTOMATION_PACKAGE_ID, automationPackageId);
-        return criteria;
+        return Map.of(getAutomationPackageTrackingField(), automationPackageId);
+    }
+
+    protected String getAutomationPackageTrackingField() {
+        return "customFields." + AutomationPackageEntity.AUTOMATION_PACKAGE_ID;
     }
 
     protected List<Plan> getPackagePlans(AutomationPackage automationPackage) {
