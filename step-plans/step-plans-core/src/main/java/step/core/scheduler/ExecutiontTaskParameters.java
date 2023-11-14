@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -24,16 +24,16 @@ import step.core.execution.model.ExecutionParameters;
 import step.core.objectenricher.EnricheableObject;
 
 public class ExecutiontTaskParameters extends AbstractOrganizableObject implements EnricheableObject {
-	
+
 	// TODO remove this field and create a migration task to also remove it from the DB
 	public String name;
-	
+
 	public ExecutionParameters executionsParameters;
 
 	private ObjectId assertionPlan;
 
 	public String cronExpression;
-	
+
 	public boolean active;
 
 	public ExecutiontTaskParameters() {
@@ -122,7 +122,7 @@ public class ExecutiontTaskParameters extends AbstractOrganizableObject implemen
 			return false;
 		return true;
 	}
-	
-	
+
+
 
 }

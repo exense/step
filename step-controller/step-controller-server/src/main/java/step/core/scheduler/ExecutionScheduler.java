@@ -110,15 +110,19 @@ public class ExecutionScheduler {
 	}
 
 	public boolean addExecutionTask(ExecutiontTaskParameters task) {
+		return addExecutionTask(task, true);
+	}
+
+	public boolean addExecutionTask(ExecutiontTaskParameters task, boolean autoActivateNewTask) {
 		executor.validate(task);
-		if(!taskAlreadyExists(task)) {
+		if (autoActivateNewTask && !taskAlreadyExists(task)) {
 			task.setActive(true);
-		}		
+		}
 		save(task);
-		
-		if(isSchedulerEnabled() && task.isActive()) {
-			return executor.schedule(task);			
-		} else {		
+
+		if (isSchedulerEnabled() && task.isActive()) {
+			return executor.schedule(task);
+		} else {
 			return true;
 		}
 	}

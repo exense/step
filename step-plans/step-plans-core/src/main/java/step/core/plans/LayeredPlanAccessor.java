@@ -21,6 +21,7 @@ package step.core.plans;
 import java.util.List;
 import java.util.stream.Stream;
 
+import step.core.accessors.Accessor;
 import step.core.accessors.LayeredAccessor;
 
 public class LayeredPlanAccessor extends LayeredAccessor<Plan> implements PlanAccessor {
@@ -31,6 +32,14 @@ public class LayeredPlanAccessor extends LayeredAccessor<Plan> implements PlanAc
 
 	public LayeredPlanAccessor(List<PlanAccessor> accessors) {
 		super(accessors);
+	}
+
+	@Override
+	public void createIndexIfNeeded(String fieldName) {
+		Accessor<Plan> accessorForPersistence = getAccessorForPersistence();
+		if (accessorForPersistence instanceof PlanAccessor) {
+			((PlanAccessor) accessorForPersistence).createIndexIfNeeded(fieldName);
+		}
 	}
 
 	@Override

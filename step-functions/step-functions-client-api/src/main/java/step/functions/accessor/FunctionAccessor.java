@@ -22,5 +22,5 @@ import step.core.accessors.Accessor;
 import step.functions.Function;
 
 public interface FunctionAccessor extends Accessor<Function> {
-
+    void createIndexIfNeeded(String fieldName);
 }

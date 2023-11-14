@@ -15,7 +15,6 @@
 		<groupId>ch.exense.step</groupId>
 		<artifactId>step-automation-packages</artifactId>
 		<version>0.0.0-SNAPSHOT</version>
-		<relativePath>../../step-automation-packages</relativePath>
 	</parent>
 
 	<dependencies>
@@ -82,10 +81,10 @@
 									<groupId>ch.exense.step</groupId>
 									<artifactId>step-automation-packages-sample2</artifactId>
 									<version>${project.version}</version>
-									<classifier>jar-with-dependencies</classifier>
+									<classifier></classifier>
 									<type>jar</type>
 									<overWrite>false</overWrite>
-									<outputDirectory>${project.basedir}/src/test/resources</outputDirectory>
+									<outputDirectory>${project.basedir}/src/test/resources/samples</outputDirectory>
 									<destFileName>step-automation-packages-sample2.jar</destFileName>
 								</artifactItem>
 							</artifactItems>
@@ -105,10 +104,10 @@
 									<groupId>ch.exense.step</groupId>
 									<artifactId>step-automation-packages-malformed</artifactId>
 									<version>${project.version}</version>
-									<classifier>jar-with-dependencies</classifier>
+									<classifier></classifier>
 									<type>jar</type>
 									<overWrite>false</overWrite>
-									<outputDirectory>${project.basedir}/src/test/resources</outputDirectory>
+									<outputDirectory>${project.basedir}/src/test/resources/samples</outputDirectory>
 									<destFileName>step-automation-packages-malformed.jar</destFileName>
 								</artifactItem>
 							</artifactItems>
@@ -117,6 +116,22 @@
 						</configuration>
 					</execution>
 				</executions>
+			</plugin>
+
+			<!-- cleanup copied test samples -->
+			<plugin>
+				<artifactId>maven-clean-plugin</artifactId>
+				<configuration>
+					<filesets>
+						<fileset>
+							<directory>src/test/resources/samples</directory>
+							<includes>
+								<include>**/*</include>
+								<include>**</include>
+							</includes>
+						</fileset>
+					</filesets>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>

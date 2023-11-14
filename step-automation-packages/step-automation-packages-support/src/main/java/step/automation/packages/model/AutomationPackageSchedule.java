@@ -23,6 +23,7 @@ import java.util.Map;
 public class AutomationPackageSchedule {
 
     private String name;
+    private Boolean active = true;
     private String cron;
     private String planName;
     private Map<String, String> executionParameters;
@@ -70,10 +71,19 @@ public class AutomationPackageSchedule {
         this.executionParameters = executionParameters;
     }
 
+    public Boolean getActive() {
+        return active;
+    }
+
+    public void setActive(Boolean active) {
+        this.active = active;
+    }
+
     @Override
     public String toString() {
         return "AutomationPackageSchedule{" +
                 "name='" + name + '\'' +
+                ", active=" + active +
                 ", cron='" + cron + '\'' +
                 ", planName='" + planName + '\'' +
                 ", executionParameters=" + executionParameters +

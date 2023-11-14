@@ -15,5 +15,6 @@ bower_components/
 /step-controller-3.9.1-SNAPSHOT.zip
 step-controller/step-controller-base-plugins/resources/
 /step-automation-packages/step-automation-packages-reader/src/test/resources/step-automation-packages-sample1.jar
-/step-automation-packages/step-automation-packages-support/src/test/resources/step-automation-packages-malformed.jar
-/step-automation-packages/step-automation-packages-support/src/test/resources/step-automation-packages-sample2.jar
+/step-automation-packages/step-automation-packages-support/src/test/resources/samples/
+/step-automation-packages/step-automation-packages-manager/resources/
+/step-automation-packages/step-automation-packages-manager/src/test/resources/samples/

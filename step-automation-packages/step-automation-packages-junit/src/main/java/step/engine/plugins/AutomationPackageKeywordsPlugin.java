@@ -23,7 +23,7 @@ import step.automation.packages.AutomationPackageArchive;
 import step.automation.packages.AutomationPackageKeywordsAttributesApplier;
 import step.automation.packages.AutomationPackageReader;
 import step.automation.packages.AutomationPackageReadingException;
-import step.automation.packages.model.AutomationPackage;
+import step.automation.packages.model.AutomationPackageContent;
 import step.automation.packages.model.AutomationPackageKeyword;
 import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionEngineContext;
@@ -62,9 +62,9 @@ public class AutomationPackageKeywordsPlugin extends AbstractExecutionEnginePlug
             try {
                 AutomationPackageReader automationPackageReader = new AutomationPackageReader(getAutomationPackageJsonSchema(configuration));
                 AutomationPackageKeywordsAttributesApplier attributesApplier = new AutomationPackageKeywordsAttributesApplier(resourceManager);
-                AutomationPackage automationPackage = automationPackageReader.readAutomationPackage(automationPackageArchive);
-                if (automationPackage != null) {
-                    for (AutomationPackageKeyword foundKeyword : automationPackage.getKeywords()) {
+                AutomationPackageContent automationPackageContent = automationPackageReader.readAutomationPackage(automationPackageArchive);
+                if (automationPackageContent != null) {
+                    for (AutomationPackageKeyword foundKeyword : automationPackageContent.getKeywords()) {
                         res.add(attributesApplier.applySpecialAttributesToKeyword(foundKeyword, automationPackageArchive));
                     }
                 }

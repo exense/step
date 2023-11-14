@@ -127,7 +127,7 @@ public class AutomationPackageDescriptorReader {
 
         // register serializers/deserializers to read yaml plans
         // TODO: we don't want to use the default upgradable plan serializer, because the plan version is defined via automation package schema version, but not inside the plan...
-        planReader.registerAllSerializers(module);
+        planReader.registerAllSerializers(module, yamlMapper);
 
         module.addDeserializer(DynamicValue.class, new YamlDynamicValueDeserializer());
         module.addDeserializer(AutomationPackageKeyword.class, new YamlKeywordDeserializer());
