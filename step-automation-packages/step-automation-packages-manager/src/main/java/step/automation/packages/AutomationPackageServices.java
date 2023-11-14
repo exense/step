@@ -23,6 +23,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
@@ -75,10 +76,20 @@ public class AutomationPackageServices extends AbstractStepServices {
     @Produces(MediaType.TEXT_PLAIN)
     @Path("")
     @Secured(right = "automation-package-write")
-    public String updateAutomationPackage(@FormDataParam("file") InputStream uploadedInputStream,
+    public Response updateAutomationPackage(@FormDataParam("file") InputStream uploadedInputStream,
                                           @FormDataParam("file") FormDataContentDisposition fileDetail,
                                           @Context UriInfo uriInfo) throws Exception {
-        return automationPackageManager.updateAutomationPackage(uploadedInputStream, fileDetail.getFileName(), getObjectEnricher());
+        AutomationPackageManager.PackageUpdateResult result = automationPackageManager.createOrUpdateAutomationPackage(true, uploadedInputStream, fileDetail.getFileName(), getObjectEnricher());
+        Response.ResponseBuilder responseBuilder;
+        switch (result.getStatus()){
+            case CREATED:
+                responseBuilder = Response.status(201);
+                break;
+            default:
+                responseBuilder = Response.status(200);
+                break;
+        }
+        return responseBuilder.entity(result.getId()).build();
     }
 
 }

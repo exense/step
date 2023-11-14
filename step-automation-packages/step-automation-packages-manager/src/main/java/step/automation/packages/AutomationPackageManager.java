@@ -110,14 +110,10 @@ public class AutomationPackageManager {
     }
 
     public String createAutomationPackage(InputStream packageStream, String fileName, ObjectEnricher enricher) throws FunctionTypeException, SetupFunctionException, AutomationPackageManagerException {
-        return createOrUpdateAutomationPackage(false, packageStream, fileName, enricher);
+        return createOrUpdateAutomationPackage(false, packageStream, fileName, enricher).getId();
     }
 
-    public String updateAutomationPackage(InputStream packageStream, String fileName, ObjectEnricher enricher) throws SetupFunctionException, FunctionTypeException {
-        return createOrUpdateAutomationPackage(true, packageStream, fileName, enricher);
-    }
-
-    protected String createOrUpdateAutomationPackage(boolean update, InputStream packageStream, String fileName, ObjectEnricher enricher) throws SetupFunctionException, FunctionTypeException {
+    public PackageUpdateResult createOrUpdateAutomationPackage(boolean allowUpdate, InputStream packageStream, String fileName, ObjectEnricher enricher) throws SetupFunctionException, FunctionTypeException {
         AutomationPackageArchive automationPackageArchive;
         AutomationPackageContent packageContent;
         try {
@@ -128,14 +124,8 @@ public class AutomationPackageManager {
         }
 
         AutomationPackage oldPackage = getAutomationPackageByName(packageContent.getName());
-        if (update) {
-            if (oldPackage == null) {
-                throw new AutomationPackageManagerException("Automation package '" + packageContent.getName() + "' doesn't exist");
-            }
-        } else {
-            if (oldPackage != null) {
-                throw new AutomationPackageManagerException("Automation package '" + packageContent.getName() + "' already exists");
-            }
+        if (!allowUpdate && oldPackage != null) {
+            throw new AutomationPackageManagerException("Automation package '" + packageContent.getName() + "' already exists");
         }
 
         // keep old package id
@@ -162,7 +152,7 @@ public class AutomationPackageManager {
         } else {
             log.info("New automation package saved ({}). Plans: {}. Functions: {}. Schedules: {}", newPackage.getAttribute(AbstractOrganizableObject.NAME), completePlans.size(), completeFunctions.size(), completeExecTasksParameters.size());
         }
-        return result;
+        return new PackageUpdateResult(oldPackage == null ? PackageUpdateStatus.CREATED : PackageUpdateStatus.UPDATED, result);
     }
 
     private void persistStagedEntities(List<ExecutiontTaskParameters> completeExecTasksParameters, List<Function> completeFunctions, List<Plan> completePlans) throws SetupFunctionException, FunctionTypeException {
@@ -338,6 +328,29 @@ public class AutomationPackageManager {
 
     protected List<ExecutiontTaskParameters> getPackageTasks(AutomationPackage automationPackage) {
         return executionTaskAccessor.findManyByCriteria(getAutomationPackageIdCriteria(automationPackage.getId().toString())).collect(Collectors.toList());
+    }
+
+    public static class PackageUpdateResult {
+        private final PackageUpdateStatus status;
+        private final String id;
+
+        public PackageUpdateResult(PackageUpdateStatus status, String id) {
+            this.status = status;
+            this.id = id;
+        }
+
+        public PackageUpdateStatus getStatus() {
+            return status;
+        }
+
+        public String getId() {
+            return id;
+        }
+    }
+
+    public enum PackageUpdateStatus {
+        CREATED,
+        UPDATED
     }
 
 }

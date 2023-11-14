@@ -92,16 +92,18 @@ public class AutomationPackageManagerTest {
         String fileName = "samples/step-automation-packages-sample1-extended.jar";
         File automationPackageJar = new File("src/test/resources/" + fileName);
         try (InputStream is = new FileInputStream(automationPackageJar)) {
-            String result = manager.updateAutomationPackage(is, fileName, null);
+            AutomationPackageManager.PackageUpdateResult result = manager.createOrUpdateAutomationPackage(true, is, fileName, null);
+            Assert.assertEquals(AutomationPackageManager.PackageUpdateStatus.UPDATED, result.getStatus());
+            String resultId = result.getId();
 
             // id of existing package is returned
-            Assert.assertEquals(r.storedPackage.getId().toString(), result);
+            Assert.assertEquals(r.storedPackage.getId().toString(), resultId);
 
-            r.storedPackage = automationPackageAccessor.get(result);
+            r.storedPackage = automationPackageAccessor.get(resultId);
             Assert.assertEquals("My package", r.storedPackage.getAttribute(AbstractOrganizableObject.NAME));
 
             // 1 plan has been updated, 1 plan has been added
-            List<Plan> storedPlans = planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
+            List<Plan> storedPlans = planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(resultId)).collect(Collectors.toList());
             Assert.assertEquals(2, storedPlans.size());
 
             Plan updatedPlan = storedPlans.stream().filter(p -> p.getAttribute(AbstractOrganizableObject.NAME).equals("Test Plan")).findFirst().orElse(null);
@@ -111,7 +113,7 @@ public class AutomationPackageManagerTest {
             Assert.assertNotNull(storedPlans.stream().filter(p -> p.getAttribute(AbstractOrganizableObject.NAME).equals("Test Plan 2")).findFirst().orElse(null));
 
             // 1 function has been updated, 1 function has been added
-            List<Function> storedFunctions = functionAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
+            List<Function> storedFunctions = functionAccessor.findManyByCriteria(getAutomationPackageIdCriteria(resultId)).collect(Collectors.toList());
             Assert.assertEquals(2, storedFunctions.size());
 
             Function updatedFunction = storedFunctions.stream().filter(f -> f.getAttribute(AbstractOrganizableObject.NAME).equals("JMeter keyword from automation package")).findFirst().orElse(null);
@@ -121,7 +123,7 @@ public class AutomationPackageManagerTest {
             Assert.assertNotNull(storedFunctions.stream().filter(p -> p.getAttribute(AbstractOrganizableObject.NAME).equals("Another JMeter keyword from automation package")).findFirst().orElse(null));
 
             // 1 task has been updated, 1 task has been added
-            List<ExecutiontTaskParameters> storedTasks = executionTaskAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
+            List<ExecutiontTaskParameters> storedTasks = executionTaskAccessor.findManyByCriteria(getAutomationPackageIdCriteria(resultId)).collect(Collectors.toList());
             Assert.assertEquals(2, storedTasks.size());
 
             ExecutiontTaskParameters updatedTask = storedTasks.stream().filter(t -> t.getAttribute(AbstractOrganizableObject.NAME).equals("firstSchedule")).findFirst().orElse(null);
@@ -159,7 +161,14 @@ public class AutomationPackageManagerTest {
 
         SampleUploadingResult r = new SampleUploadingResult();
         try (InputStream is = new FileInputStream(automationPackageJar)) {
-            String result = createNew ? manager.createAutomationPackage(is, fileName, null) : manager.updateAutomationPackage(is, fileName, null);
+            String result;
+            if (createNew) {
+                result = manager.createAutomationPackage(is, fileName, null);
+            } else {
+                AutomationPackageManager.PackageUpdateResult updateResult = manager.createOrUpdateAutomationPackage(true, is, fileName, null);
+                Assert.assertEquals(AutomationPackageManager.PackageUpdateStatus.UPDATED, updateResult.getStatus());
+                result = updateResult.getId();
+            }
 
             r.storedPackage = automationPackageAccessor.get(result);
             Assert.assertEquals("My package", r.storedPackage.getAttribute(AbstractOrganizableObject.NAME));
