@@ -74,7 +74,6 @@ public class AutomationPackageServices extends AbstractStepServices {
     @PUT
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.TEXT_PLAIN)
-    @Path("")
     @Secured(right = "automation-package-write")
     public Response updateAutomationPackage(@FormDataParam("file") InputStream uploadedInputStream,
                                           @FormDataParam("file") FormDataContentDisposition fileDetail,
