@@ -57,6 +57,16 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
     public T get(@PathParam("id") String id) {
         return accessor.get(id);
     }
+    
+    @Operation(operationId = "find{Entity}sByIds", description = "Returns the list of entities matching the provided attributes")
+    @POST
+    @Path("/find/by/ids")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Secured(right = "{entity}-read")
+    public List<T> findByIds(List<String> ids) {
+        return accessor.findByIds(ids).collect(Collectors.toList());
+    }
 
     @Operation(operationId = "find{Entity}sByAttributes", description = "Returns the list of entities matching the provided attributes")
     @POST
