@@ -186,7 +186,7 @@ public class GeneralScriptHandlerTest {
 			@Override
 			public FileVersion requestFileVersion(FileVersionId fileVersionId, boolean cleanable) throws FileManagerException {
 				String file = GeneralScriptHandlerTest.class.getClassLoader().getResource(fileVersionId.getFileId()).getFile();
-				return new FileVersion(new File(file), fileVersionId, false, cleanable);
+				return new FileVersion(new File(file), fileVersionId, false);
 			}
 			
 			@Override

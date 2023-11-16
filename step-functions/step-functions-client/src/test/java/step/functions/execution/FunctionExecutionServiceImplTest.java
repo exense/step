@@ -369,7 +369,7 @@ public class FunctionExecutionServiceImplTest {
 			
 			@Override
 			public FileVersion registerFile(File file, boolean cleanable) throws FileManagerException {
-				return new FileVersion(null, null, false, cleanable);
+				return new FileVersion(null, null, false);
 			}
 
 			@Override
@@ -476,7 +476,7 @@ public class FunctionExecutionServiceImplTest {
 			@Override
 			public FileVersion registerFile(InputStream inputStream, String fileName, boolean isDirectory, boolean cleanable)
 					throws FileManagerException {
-				return new FileVersion(null, null, false, cleanable);
+				return new FileVersion(null, null, false);
 			}
 		};
 	}

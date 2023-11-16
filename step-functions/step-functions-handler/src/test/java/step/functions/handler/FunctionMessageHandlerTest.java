@@ -172,7 +172,7 @@ public class FunctionMessageHandlerTest {
 				if(fileVersionId.getFileId().equals(EMPTY_FILE)) {
 					String uid = fileVersionId.getFileId();
 					File file = new File(".");
-					return new FileVersion(file, fileVersionId, false, cleanable);
+					return new FileVersion(file, fileVersionId, false);
 				} else {
 					return null;
 				}
