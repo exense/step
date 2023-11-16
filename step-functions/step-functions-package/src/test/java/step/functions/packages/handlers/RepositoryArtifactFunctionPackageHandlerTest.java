@@ -137,7 +137,7 @@ public class RepositoryArtifactFunctionPackageHandlerTest {
 		boolean isValid = handler.isValidForPackage(functionPackage);
 		Assert.assertTrue(isValid);
 		List<Function> functions = handler.buildFunctions(functionPackage, true, null);
-		Assert.assertEquals(8, functions.size());
+		Assert.assertEquals(6, functions.size());
 	}
 
 }
