@@ -58,7 +58,7 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
         return accessor.get(id);
     }
     
-    @Operation(operationId = "find{Entity}sByIds", description = "Returns the list of entities matching the provided attributes")
+    @Operation(operationId = "find{Entity}sByIds", description = "Returns the list of entities for the provided list of IDs")
     @POST
     @Path("/find/by/ids")
     @Produces(MediaType.APPLICATION_JSON)
