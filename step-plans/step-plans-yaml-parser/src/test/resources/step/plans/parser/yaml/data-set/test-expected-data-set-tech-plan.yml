@@ -1,0 +1,133 @@
+---
+_class: "step.core.plans.Plan"
+customFields: null
+attributes:
+  name: "test plan"
+root:
+  _class: "Sequence"
+  customFields: null
+  attributes:
+    name: "Sequence"
+  dynamicName:
+    dynamic: false
+    value: ""
+    expression: ""
+    expressionType: null
+  useDynamicName: false
+  description: null
+  children:
+    - _class: "DataSet"
+      customFields: null
+      attributes:
+        name: "DataSet"
+      dynamicName:
+        dynamic: false
+        value: ""
+        expression: ""
+        expressionType: null
+      useDynamicName: false
+      description: "test excel"
+      children: []
+      customAttributes: null
+      attachments: null
+      skipNode:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      instrumentNode:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      item:
+        dynamic: false
+        value: "dataSet"
+        expression: null
+        expressionType: null
+      dataSourceType: "excel"
+      dataSource:
+        _class: "step.datapool.excel.ExcelDataPool"
+        forWrite:
+          dynamic: false
+          value: true
+          expression: null
+          expressionType: null
+        file:
+          dynamic: false
+          value: "resource:644fbe4e38a61e07cc3a4df9"
+          expression: null
+          expressionType: null
+        worksheet:
+          dynamic: false
+          value: "myWorksheet"
+          expression: null
+          expressionType: null
+        headers:
+          dynamic: false
+          value: true
+          expression: null
+          expressionType: null
+      maxFailedLoops:
+        dynamic: false
+        value: null
+        expression: null
+        expressionType: null
+      threads:
+        dynamic: false
+        value: 1
+        expression: null
+        expressionType: null
+      globalCounter:
+        dynamic: false
+        value: "gcounter"
+        expression: null
+        expressionType: null
+      userItem:
+        dynamic: false
+        value: "userId"
+        expression: null
+        expressionType: null
+      resetAtEnd:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      id: "644fbe4e38a61e07cc3a4df8"
+  customAttributes: null
+  attachments: null
+  skipNode:
+    dynamic: false
+    value: false
+    expression: null
+    expressionType: null
+  instrumentNode:
+    dynamic: false
+    value: false
+    expression: null
+    expressionType: null
+  continueParentNodeExecutionOnError:
+    dynamic: false
+    value: false
+    expression: null
+    expressionType: null
+  continueOnError:
+    dynamic: false
+    value: false
+    expression: null
+    expressionType: null
+  pacing:
+    dynamic: false
+    value: null
+    expression: null
+    expressionType: null
+  id: "644fbe4e38a61e07cc3a4df8"
+functions: null
+subPlans: null
+visible: true
+id: "644fbe4e38a61e07cc3a4df8"

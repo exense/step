@@ -217,20 +217,20 @@ public class YamlPlanReader {
 		// configure custom deserializers
 		SimpleModule module = new SimpleModule();
 		module.addDeserializer(DynamicValue.class, new YamlDynamicValueDeserializer());
-		module.addDeserializer(YamlRootArtefact.class, createRootArtefactDeserializer());
+		module.addDeserializer(YamlRootArtefact.class, createRootArtefactDeserializer(yamlMapper));
 
 		module.addSerializer(DynamicValue.class, new YamlDynamicValueSerializer());
-		module.addSerializer(YamlRootArtefact.class, createRootArtefactSerializer());
+		module.addSerializer(YamlRootArtefact.class, createRootArtefactSerializer(yamlMapper));
 		yamlMapper.registerModule(module);
 		return yamlMapper;
 	}
 
-	protected YamlRootArtefactSerializer createRootArtefactSerializer() {
-		return new YamlRootArtefactSerializer();
+	protected YamlRootArtefactSerializer createRootArtefactSerializer(ObjectMapper stepYamlMapper) {
+		return new YamlRootArtefactSerializer(stepYamlMapper);
 	}
 
-	protected YamlRootArtefactDeserializer createRootArtefactDeserializer() {
-		return new YamlRootArtefactDeserializer();
+	protected YamlRootArtefactDeserializer createRootArtefactDeserializer(ObjectMapper stepYamlMapper) {
+		return new YamlRootArtefactDeserializer(stepYamlMapper);
 	}
 
 	protected ObjectMapper getYamlMapper() {
