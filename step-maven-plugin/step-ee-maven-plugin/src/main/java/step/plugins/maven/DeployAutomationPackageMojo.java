@@ -25,6 +25,8 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import step.automation.packages.client.RemoteAutomationPackageClientImpl;
 import step.client.credentials.ControllerCredentials;
+import step.controller.multitenancy.client.MultitenancyClient;
+import step.controller.multitenancy.client.RemoteMultitenancyClientImpl;
 
 import java.io.File;
 
@@ -43,7 +45,6 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
     @Parameter(property = "step-deploy-automation-package.artifact-classifier")
     private String artifactClassifier;
 
-    // TODO: use tenants?
     @Parameter(property = "step.step-project-name")
     private String stepProjectName;
 
@@ -58,7 +59,7 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
-
+        switchTenant();
         try (RemoteAutomationPackageClientImpl automationPackageClient = createRemoteAutomationPackageClient()) {
             File packagedTarget = getFileToUpload();
 
@@ -72,6 +73,23 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
         } catch (Exception e) {
             throw logAndThrow("Unable to upload automation package to Step", e);
         }
+    }
+
+    protected void switchTenant() throws MojoExecutionException {
+        if (getStepProjectName() != null && !getStepProjectName().isEmpty()) {
+            getLog().info("Step project name: " + getStepProjectName());
+
+            new TenantSwitcher() {
+                @Override
+                protected MultitenancyClient createClient() {
+                    return createMultitenancyClient();
+                }
+            }.switchTenant(getStepProjectName(), getLog());
+        }
+    }
+
+    protected MultitenancyClient createMultitenancyClient() {
+        return new RemoteMultitenancyClientImpl(getControllerCredentials());
     }
 
     protected File getFileToUpload() throws MojoExecutionException {
