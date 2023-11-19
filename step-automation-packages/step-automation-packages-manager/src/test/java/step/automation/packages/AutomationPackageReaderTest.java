@@ -22,7 +22,7 @@ public class AutomationPackageReaderTest {
 
     @Test
     public void testReadFromPackage() throws AutomationPackageReadingException {
-        File automationPackageJar = new File("src/test/resources/step-automation-packages-sample1.jar");
+        File automationPackageJar = new File("src/test/resources/samples/step-automation-packages-sample1.jar");
 
         AutomationPackageContent automationPackageContent = reader.readAutomationPackageFromJarFile(automationPackageJar);
         assertNotNull(automationPackageContent);
