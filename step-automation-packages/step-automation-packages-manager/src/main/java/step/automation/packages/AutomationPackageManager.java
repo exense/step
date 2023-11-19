@@ -129,7 +129,7 @@ public class AutomationPackageManager {
         }
 
         // keep old package id
-        AutomationPackage newPackage = createNewInstance(fileName, packageContent, oldPackage);
+        AutomationPackage newPackage = createNewInstance(fileName, packageContent, oldPackage, enricher);
 
         // prepare staging collections
         List<Plan> completePlans = preparePlansStaging(newPackage, packageContent, oldPackage, enricher);
@@ -237,17 +237,20 @@ public class AutomationPackageManager {
         return functionNameToIdMap;
     }
 
-    protected AutomationPackage createNewInstance(String fileName, AutomationPackageContent packageContent, AutomationPackage oldPackage) {
+    protected AutomationPackage createNewInstance(String fileName, AutomationPackageContent packageContent, AutomationPackage oldPackage, ObjectEnricher enricher) {
         AutomationPackage newPackage = new AutomationPackage();
 
         // keep old id
-        if(oldPackage != null){
+        if (oldPackage != null) {
             newPackage.setId(oldPackage.getId());
         }
         newPackage.addAttribute(AbstractOrganizableObject.NAME, packageContent.getName());
         newPackage.addAttribute(AbstractOrganizableObject.VERSION, packageContent.getVersion());
 
         newPackage.addCustomField(AutomationPackageEntity.AUTOMATION_PACKAGE_FILE_NAME, fileName);
+        if (enricher != null) {
+            enricher.accept(newPackage);
+        }
         return newPackage;
     }
 
