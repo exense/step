@@ -70,6 +70,7 @@ public class YamlPlanJsonSchemaGenerator {
 	protected final JsonSchemaCreator jsonSchemaCreator;
 	protected final YamlJsonSchemaHelper schemaHelper = new YamlJsonSchemaHelper(jsonProvider);
 	protected final YamlResourceReferenceJsonSchemaHelper resourceReferenceJsonSchemaHelper = new YamlResourceReferenceJsonSchemaHelper(jsonProvider);
+	protected final YamlResourceReferenceJsonSchemaHelper resourceReferenceJsonSchemaHelper = new YamlResourceReferenceJsonSchemaHelper(jsonProvider);
 
 	public YamlPlanJsonSchemaGenerator(String targetPackage, Version actualVersion, String schemaId) {
 		this.targetPackage = targetPackage;
@@ -196,6 +197,14 @@ public class YamlPlanJsonSchemaGenerator {
 		// prepare definitions for generic DynamicValue class
 		definitionCreators.add((defsList) -> {
 			Map<String, JsonObjectBuilder> dynamicValueDefs = schemaHelper.createDynamicValueImplDefs();
+			for (Map.Entry<String, JsonObjectBuilder> dynamicValueDef : dynamicValueDefs.entrySet()) {
+				defsBuilder.add(dynamicValueDef.getKey(), dynamicValueDef.getValue());
+			}
+		});
+
+		// prepare definitions for referenced resources
+		definitionCreators.add(defsList -> {
+			Map<String, JsonObjectBuilder> dynamicValueDefs = resourceReferenceJsonSchemaHelper.createResourceReferenceDefs();
 			for (Map.Entry<String, JsonObjectBuilder> dynamicValueDef : dynamicValueDefs.entrySet()) {
 				defsBuilder.add(dynamicValueDef.getKey(), dynamicValueDef.getValue());
 			}
