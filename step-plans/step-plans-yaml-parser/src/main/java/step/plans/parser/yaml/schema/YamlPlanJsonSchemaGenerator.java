@@ -70,7 +70,6 @@ public class YamlPlanJsonSchemaGenerator {
 	protected final JsonSchemaCreator jsonSchemaCreator;
 	protected final YamlJsonSchemaHelper schemaHelper = new YamlJsonSchemaHelper(jsonProvider);
 	protected final YamlResourceReferenceJsonSchemaHelper resourceReferenceJsonSchemaHelper = new YamlResourceReferenceJsonSchemaHelper(jsonProvider);
-	protected final YamlResourceReferenceJsonSchemaHelper resourceReferenceJsonSchemaHelper = new YamlResourceReferenceJsonSchemaHelper(jsonProvider);
 
 	public YamlPlanJsonSchemaGenerator(String targetPackage, Version actualVersion, String schemaId) {
 		this.targetPackage = targetPackage;
