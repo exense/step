@@ -27,21 +27,27 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
+import step.automation.packages.execution.AutomationPackageExecutor;
+import step.core.access.User;
 import step.core.deployment.AbstractStepServices;
 import step.framework.server.security.Secured;
 
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.List;
 
 @Path("/automation-packages")
 @Tag(name = "Automation packages")
 public class AutomationPackageServices extends AbstractStepServices {
 
     protected AutomationPackageManager automationPackageManager;
+    protected AutomationPackageExecutor automationPackageExecutor;
 
     @PostConstruct
     public void init() throws Exception {
         super.init();
         automationPackageManager = getContext().get(AutomationPackageManager.class);
+        automationPackageExecutor = getContext().get(AutomationPackageExecutor.class);
     }
 
     @GET
@@ -64,11 +70,31 @@ public class AutomationPackageServices extends AbstractStepServices {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.TEXT_PLAIN)
     @Secured(right = "automation-package-write")
-    public String createAutomationPackage(@FormDataParam("file") InputStream uploadedInputStream,
+    public String createAutomationPackage(@FormDataParam("file") InputStream automationPackageInputStream,
                                           @FormDataParam("file") FormDataContentDisposition fileDetail,
                                           @Context UriInfo uriInfo) throws Exception {
-        return automationPackageManager.createAutomationPackage(uploadedInputStream, fileDetail.getFileName(), getObjectEnricher());
+        return automationPackageManager.createAutomationPackage(automationPackageInputStream, fileDetail.getFileName(), getObjectEnricher());
+    }
 
+    // TODO: add new right to the permission matrix
+    @POST
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/execute")
+    @Secured(right = "automation-package-execute")
+    public List<String> executeAutomationPackage(@FormDataParam("file") InputStream automationPackageInputStream,
+                                                 @FormDataParam("file") FormDataContentDisposition fileDetail,
+                                                 @Context UriInfo uriInfo) throws Exception {
+        // TODO: execution parameters map?
+        // TODO: add filters for plans
+        User user = getSession().getUser();
+        return automationPackageExecutor.runInIsolation(
+                automationPackageInputStream,
+                fileDetail.getFileName(),
+                new HashMap<>(),
+                getObjectEnricher(),
+                user == null ? null : user.getId().toString()
+        );
     }
 
     @PUT

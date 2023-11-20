@@ -16,16 +16,23 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.accessor;
+package step.automation.packages.execution;
 
-import step.automation.packages.AutomationPackage;
-import step.core.accessors.AbstractAccessor;
-import step.core.collections.Collection;
-import step.core.collections.inmemory.InMemoryCollection;
+import step.core.GlobalContext;
+import step.core.plugins.AbstractControllerPlugin;
+import step.core.plugins.Plugin;
 
-public class InMemoryAutomationPackageAccessorImpl extends AbstractAccessor<AutomationPackage> implements AutomationPackageAccessor {
+@Plugin
+public class IsolatedAutomationPackageRepositoryPlugin extends AbstractControllerPlugin {
 
-    public InMemoryAutomationPackageAccessorImpl() {
-        super(new InMemoryCollection<AutomationPackage>());
+    public static final String ISOLATED_AUTOMATION_PACKAGE = "isolatedAutomationPackage";
+
+    @Override
+    public void serverStart(GlobalContext context) throws Exception {
+        super.serverStart(context);
+        IsolatedAutomationPackageRepository repository = new IsolatedAutomationPackageRepository();
+
+        context.getRepositoryObjectManager().registerRepository(ISOLATED_AUTOMATION_PACKAGE, repository);
+        context.put(IsolatedAutomationPackageRepository.class, repository);
     }
 }

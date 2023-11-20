@@ -20,6 +20,8 @@ package step.automation.packages;
 
 import step.automation.packages.accessor.AutomationPackageAccessor;
 import step.automation.packages.accessor.AutomationPackageAccessorImpl;
+import step.automation.packages.execution.AutomationPackageExecutor;
+import step.automation.packages.execution.IsolatedAutomationPackageRepository;
 import step.core.GlobalContext;
 import step.core.collections.Collection;
 import step.core.deployment.ObjectHookControllerPlugin;
@@ -38,6 +40,7 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
 
     private AutomationPackageManager packageManager;
     private AutomationPackageAccessor packageAccessor;
+    private AutomationPackageExecutor packageExecutor;
 
     @Override
     public void serverStart(GlobalContext context) throws Exception {
@@ -62,10 +65,23 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
 
         // moved to 'afterInitializeData' to have the schedule accessor in context
         packageManager = new AutomationPackageManager(
-                packageAccessor, context.get(FunctionManager.class), context.get(FunctionAccessor.class), context.getPlanAccessor(), context.getResourceManager(),
-                context.getScheduleAccessor(), context.getScheduler()
+                packageAccessor,
+                context.get(FunctionManager.class),
+                context.get(FunctionAccessor.class),
+                context.getPlanAccessor(),
+                context.getResourceManager(),
+                context.getScheduleAccessor(),
+                context.getScheduler()
         );
         context.put(AutomationPackageManager.class, packageManager);
+
+        packageExecutor = new AutomationPackageExecutor(
+                context.getScheduler(),
+                context.get(FunctionManager.class),
+                context.get(FunctionAccessor.class),
+                context.get(IsolatedAutomationPackageRepository.class)
+        );
+        context.put(AutomationPackageExecutor.class, packageExecutor);
 
     }
 }
