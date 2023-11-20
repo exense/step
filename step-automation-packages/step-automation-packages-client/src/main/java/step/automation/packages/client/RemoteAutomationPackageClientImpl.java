@@ -40,7 +40,7 @@ public class RemoteAutomationPackageClientImpl extends AbstractRemoteClient impl
     }
 
     @Override
-    public String newAutomationPackage(File automationPackageFile) {
+    public String createAutomationPackage(File automationPackageFile) {
         return uploadPackage(automationPackageFile, multiPartEntity -> {
             Invocation.Builder builder = requestBuilder("/rest/automation-packages");
             return RemoteAutomationPackageClientImpl.this.executeRequest(() -> builder.post(multiPartEntity, String.class));

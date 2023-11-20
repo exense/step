@@ -23,7 +23,7 @@ import java.io.File;
 
 public interface AutomationPackageClient extends Closeable {
 
-    String newAutomationPackage(File automationPackageFile);
+    String createAutomationPackage(File automationPackageFile);
 
     String createOrUpdateAutomationPackage(File automationPackageFile);
 
