@@ -65,24 +65,15 @@ public class UploadKeywordsPackageMojoEE extends AbstractUploadKeywordsPackageMo
 		if (getStepProjectName() != null && !getStepProjectName().isEmpty()) {
 			getLog().info("Step project name: " + getStepProjectName());
 
-			TenantSwitcher tenantSwitcher = new TenantSwitcher() {
+			Tenant currentTenant = new TenantSwitcher() {
 				@Override
 				protected MultitenancyClient createClient() {
 					return createMultitenancyClient();
 				}
-			};
+			}.switchTenant(getStepProjectName());
 
-			try {
-				Tenant currentTenant = tenantSwitcher.switchTenant(getStepProjectName());
-
-				getLog().info("Current tenant: " + currentTenant.getName() + " (" + currentTenant.getProjectId() + "). Is global: " + currentTenant.isGlobal());
-
-				// setup Step project and use it to search fo existing packages
-				searchCriteria.put("attributes.project", currentTenant.getProjectId());
-			} catch (Exception e) {
-				getLog().error("Unable to switch tenant");
-				throw logAndThrow(e.getMessage(), e);
-			}
+			// setup Step project and use it to search fo existing packages
+			searchCriteria.put("attributes.project", currentTenant.getProjectId());
 		}
 	}
 

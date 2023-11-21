@@ -54,21 +54,12 @@ public class RunDeployedAutomationPackagesMojoEE extends AbstractRunDeployedAuto
 		if (getStepProjectName() != null && !getStepProjectName().isEmpty()) {
 			getLog().info("Step project name: " + getStepProjectName());
 
-			TenantSwitcher tenantSwitcher = new TenantSwitcher() {
+			new TenantSwitcher() {
 				@Override
 				protected MultitenancyClient createClient() {
 					return createMultitenancyClient();
 				}
-			};
-
-			try {
-				Tenant currentTenant = tenantSwitcher.switchTenant(getStepProjectName());
-				getLog().info("Current tenant: " + currentTenant.getName() + " (" + currentTenant.getProjectId() + "). Is global: " + currentTenant.isGlobal());
-
-			} catch (MojoExecutionException e) {
-				getLog().error("Unable to switch tenant");
-				throw logAndThrow(e.getMessage(), e);
-			}
+			}.switchTenant(getStepProjectName(), getLog());
 		}
 
 		super.execute();
