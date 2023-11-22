@@ -1,6 +1,7 @@
 package step.automation.packages;
 
 import ch.exense.commons.app.Configuration;
+import org.bson.types.ObjectId;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -94,10 +95,10 @@ public class AutomationPackageManagerTest {
         try (InputStream is = new FileInputStream(automationPackageJar)) {
             AutomationPackageManager.PackageUpdateResult result = manager.createOrUpdateAutomationPackage(true, is, fileName, null);
             Assert.assertEquals(AutomationPackageManager.PackageUpdateStatus.UPDATED, result.getStatus());
-            String resultId = result.getId();
+            ObjectId resultId = result.getId();
 
             // id of existing package is returned
-            Assert.assertEquals(r.storedPackage.getId().toString(), resultId);
+            Assert.assertEquals(r.storedPackage.getId().toString(), resultId.toString());
 
             r.storedPackage = automationPackageAccessor.get(resultId);
             Assert.assertEquals("My package", r.storedPackage.getAttribute(AbstractOrganizableObject.NAME));
@@ -149,7 +150,7 @@ public class AutomationPackageManagerTest {
 
         Assert.assertEquals(0, automationPackageAccessor.stream().count());
 
-        Map<String, String> packageIdCriteria = getAutomationPackageIdCriteria(r2.storedPackage.getId().toString());
+        Map<String, String> packageIdCriteria = getAutomationPackageIdCriteria(r2.storedPackage.getId());
         Assert.assertEquals(0, planAccessor.findManyByCriteria(packageIdCriteria).count());
         Assert.assertEquals(0, functionAccessor.findManyByCriteria(packageIdCriteria).count());
         Assert.assertEquals(0, executionTaskAccessor.findManyByCriteria(packageIdCriteria).count());
@@ -161,7 +162,7 @@ public class AutomationPackageManagerTest {
 
         SampleUploadingResult r = new SampleUploadingResult();
         try (InputStream is = new FileInputStream(automationPackageJar)) {
-            String result;
+            ObjectId result;
             if (createNew) {
                 result = manager.createAutomationPackage(is, fileName, null);
             } else {
@@ -195,9 +196,9 @@ public class AutomationPackageManagerTest {
         return r;
     }
 
-    private static Map<String, String> getAutomationPackageIdCriteria(String automationPackageId) {
+    private static Map<String, String> getAutomationPackageIdCriteria(ObjectId automationPackageId) {
         Map<String, String> criteria = new HashMap<>();
-        criteria.put("customFields." + AutomationPackageEntity.AUTOMATION_PACKAGE_ID, automationPackageId);
+        criteria.put("customFields." + AutomationPackageEntity.AUTOMATION_PACKAGE_ID, automationPackageId.toString());
         return criteria;
     }
 

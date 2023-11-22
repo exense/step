@@ -43,9 +43,13 @@ public abstract class AbstractStepContext extends AbstractContext {
 	}
 
 	protected void useSourceAttributesFromParentContext(AbstractStepContext parentContext) {
-		resourceAccessor = parentContext.getResourceAccessor();
-		resourceManager = parentContext.getResourceManager();
-		fileResolver = parentContext.getFileResolver();
+		LayeredResourceAccessor layeredAccessor = new LayeredResourceAccessor();
+		layeredAccessor.pushAccessor(parentContext.getResourceAccessor());
+		resourceAccessor = layeredAccessor;
+
+		resourceManager = new LayeredResourceManager(parentContext.getResourceManager());
+
+		fileResolver = new FileResolver(resourceManager);
 	}
 
 	protected void useStandardAttributesFromParentContext(AbstractStepContext parentContext) {

@@ -25,6 +25,7 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
+import org.bson.types.ObjectId;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import step.automation.packages.execution.AutomationPackageExecutor;
@@ -73,7 +74,8 @@ public class AutomationPackageServices extends AbstractStepServices {
     public String createAutomationPackage(@FormDataParam("file") InputStream automationPackageInputStream,
                                           @FormDataParam("file") FormDataContentDisposition fileDetail,
                                           @Context UriInfo uriInfo) throws Exception {
-        return automationPackageManager.createAutomationPackage(automationPackageInputStream, fileDetail.getFileName(), getObjectEnricher());
+        ObjectId id = automationPackageManager.createAutomationPackage(automationPackageInputStream, fileDetail.getFileName(), getObjectEnricher());
+        return id == null ? null : id.toString();
     }
 
     // TODO: add new right to the permission matrix
@@ -85,8 +87,8 @@ public class AutomationPackageServices extends AbstractStepServices {
     public List<String> executeAutomationPackage(@FormDataParam("file") InputStream automationPackageInputStream,
                                                  @FormDataParam("file") FormDataContentDisposition fileDetail,
                                                  @Context UriInfo uriInfo) throws Exception {
-        // TODO: execution parameters map?
-        // TODO: add filters for plans
+        //TODO: execution parameters map?
+        //TODO: add filters for plans
         User user = getSession().getUser();
         return automationPackageExecutor.runInIsolation(
                 automationPackageInputStream,

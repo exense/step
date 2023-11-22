@@ -21,11 +21,18 @@ package step.automation.packages.execution;
 import step.automation.packages.AutomationPackage;
 import step.automation.packages.AutomationPackageManager;
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.accessors.LayeredAccessor;
 import step.core.execution.ExecutionContext;
 import step.core.plans.Plan;
+import step.core.plans.PlanAccessor;
 import step.core.repositories.*;
 import step.functions.accessor.FunctionAccessor;
+import step.resources.LayeredResourceAccessor;
+import step.resources.LayeredResourceManager;
+import step.resources.ResourceAccessor;
+import step.resources.ResourceManager;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -47,7 +54,6 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
             return null;
         }
         ArtefactInfo info = new ArtefactInfo();
-        // TODO: type?
         info.setType("automationPackage");
         info.setName(automationPackage.getAttribute(AbstractOrganizableObject.NAME));
         return info;
@@ -69,22 +75,54 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
         AutomationPackage automationPackage = getAutomationPackageForContext(repositoryParameters);
 
         String planId = repositoryParameters.get(RepositoryObjectReference.PLAN_ID);
+        ImportResult result = new ImportResult();
+        result.setPlanId(planId);
 
-        Plan plan = automationPackageManager.getPackagePlans(automationPackage.getId().toString())
+        Plan plan = automationPackageManager.getPackagePlans(automationPackage.getId())
                 .stream()
                 .filter(p -> p.getId().toString().equals(planId)).findFirst().orElse(null);
         if (plan == null) {
-            return null;
+            // failed result
+            result.setErrors(List.of("Automation package " + automationPackage.getAttribute(AbstractOrganizableObject.NAME) + " has no plan with id=" + planId));
+            return result;
+        }
+        enrichPlan(context, plan);
+
+        PlanAccessor planAccessor = context.getPlanAccessor();
+        if (!(planAccessor instanceof LayeredAccessor)) {
+            result.setErrors(List.of(planAccessor.getClass() + " is not layered"));
+            return result;
         }
 
-        enrichPlan(context, plan);
-        context.getPlanAccessor().save(plan);
+        planAccessor.save(plan);
 
-        ImportResult result = new ImportResult();
-        result.setPlanId(plan.getId().toString());
+        FunctionAccessor functionAccessor = context.get(FunctionAccessor.class);
+        if(!(functionAccessor instanceof LayeredAccessor)){
+            result.setErrors(List.of(functionAccessor.getClass() + " is not layered"));
+            return result;
+        }
 
-        plan.getFunctions().iterator().forEachRemaining(f -> (context.get(FunctionAccessor.class)).save(f));
-        automationPackageManager.getPackageFunctions(automationPackage.getId().toString()).forEach(f -> context.get(FunctionAccessor.class).save(f));
+        plan.getFunctions().iterator().forEachRemaining(functionAccessor::save);
+        automationPackageManager.getPackageFunctions(automationPackage.getId()).forEach(functionAccessor::save);
+
+        ResourceManager contextResourceManager = context.getResourceManager();
+        if (!(contextResourceManager instanceof LayeredResourceManager)) {
+            result.setErrors(List.of(contextResourceManager.getClass() + " is not layered"));
+            return result;
+        }
+
+        // import all resources from automation package to execution context by adding the layer to contextResourceManager
+        ((LayeredResourceManager) contextResourceManager).pushManager(automationPackageManager.getResourceManager());
+
+        // push the resource accessor from resource manager to keep consistency between ResourceManager and ResourceAccessor
+        if (automationPackageManager.getResourceManager().getResourceAccessor() != null) {
+            ResourceAccessor contextResourceAccessor = context.getResourceAccessor();
+            if (!(contextResourceAccessor instanceof LayeredResourceAccessor)) {
+                result.setErrors(List.of(contextResourceAccessor.getClass() + " is not layered"));
+                return result;
+            }
+            ((LayeredResourceAccessor) contextResourceAccessor).pushAccessor(automationPackageManager.getResourceManager().getResourceAccessor());
+        }
 
         result.setSuccessful(true);
 
@@ -93,17 +131,14 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
 
     @Override
     public TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters) throws Exception {
-        // TODO: ...
-        return null;
+        return new TestSetStatusOverview();
     }
 
     @Override
     public void exportExecution(ExecutionContext context, Map<String, String> repositoryParameters) throws Exception {
-        // TODO: ...
     }
 
-    public void clearContext(String contextId){
-        // TODO: cleanup resources if needed
+    public void removeContext(String contextId) {
         this.inMemoryPackageManagers.remove(contextId);
     }
 

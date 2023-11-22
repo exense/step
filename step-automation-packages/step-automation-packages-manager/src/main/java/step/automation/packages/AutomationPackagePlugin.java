@@ -18,6 +18,8 @@
  ******************************************************************************/
 package step.automation.packages;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.automation.packages.accessor.AutomationPackageAccessor;
 import step.automation.packages.accessor.AutomationPackageAccessorImpl;
 import step.automation.packages.execution.AutomationPackageExecutor;
@@ -35,8 +37,10 @@ import step.functions.manager.FunctionManager;
 import step.functions.plugin.FunctionControllerPlugin;
 import step.resources.ResourceManagerControllerPlugin;
 
-@Plugin(dependencies= {ObjectHookControllerPlugin.class, ResourceManagerControllerPlugin.class, FunctionControllerPlugin.class, SchedulerPlugin.class})
+@Plugin(dependencies = {ObjectHookControllerPlugin.class, ResourceManagerControllerPlugin.class, FunctionControllerPlugin.class, SchedulerPlugin.class})
 public class AutomationPackagePlugin extends AbstractControllerPlugin {
+
+    private static final Logger log = LoggerFactory.getLogger(AutomationPackagePlugin.class);
 
     private AutomationPackageManager packageManager;
     private AutomationPackageAccessor packageAccessor;
@@ -66,8 +70,8 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
         // moved to 'afterInitializeData' to have the schedule accessor in context
         packageManager = new AutomationPackageManager(
                 packageAccessor,
-                context.get(FunctionManager.class),
-                context.get(FunctionAccessor.class),
+                context.require(FunctionManager.class),
+                context.require(FunctionAccessor.class),
                 context.getPlanAccessor(),
                 context.getResourceManager(),
                 context.getScheduleAccessor(),
@@ -77,11 +81,22 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
 
         packageExecutor = new AutomationPackageExecutor(
                 context.getScheduler(),
-                context.get(FunctionManager.class),
-                context.get(FunctionAccessor.class),
-                context.get(IsolatedAutomationPackageRepository.class)
+                context.require(FunctionManager.class),
+                context.require(FunctionAccessor.class),
+                context.require(IsolatedAutomationPackageRepository.class)
         );
         context.put(AutomationPackageExecutor.class, packageExecutor);
 
+    }
+
+    @Override
+    public void serverStop(GlobalContext context) {
+        super.serverStop(context);
+        try {
+            this.packageExecutor.shutdown();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();  //set the flag back to true
+            log.warn("Interrupted", e);
+        }
     }
 }
