@@ -20,7 +20,8 @@ package step.artefacts;
 
 import step.core.artefacts.Artefact;
 
-@Artefact(name="ForEach")
+@Artefact(name= ForEachBlock.FOR_EACH_BLOCK_ARTIFACT_NAME)
 public class ForEachBlock extends AbstractForBlock {
 
+    public static final String FOR_EACH_BLOCK_ARTIFACT_NAME = "ForEach";
 }

@@ -69,6 +69,7 @@ public class YamlPlanJsonSchemaGenerator {
 
 	protected final JsonSchemaCreator jsonSchemaCreator;
 	protected final YamlJsonSchemaHelper schemaHelper = new YamlJsonSchemaHelper(jsonProvider);
+	protected final YamlResourceReferenceJsonSchemaHelper resourceReferenceJsonSchemaHelper = new YamlResourceReferenceJsonSchemaHelper(jsonProvider);
 
 	public YamlPlanJsonSchemaGenerator(String targetPackage, Version actualVersion, String schemaId) {
 		this.targetPackage = targetPackage;
@@ -115,6 +116,9 @@ public class YamlPlanJsonSchemaGenerator {
 		result.add(new KeywordInputsRule().getJsonSchemaFieldProcessor(jsonProvider));
 		result.add(new FunctionGroupSelectionRule().getJsonSchemaFieldProcessor(jsonProvider));
 		result.add(new CheckExpressionRule().getJsonSchemaFieldProcessor(jsonProvider));
+		result.add(new ForBlockRule(null).getJsonSchemaFieldProcessor(jsonProvider));
+		result.add(new ForEachBlockRule(null).getJsonSchemaFieldProcessor(jsonProvider));
+		result.add(new DataSetRule(null).getJsonSchemaFieldProcessor(jsonProvider));
 
 		// -- SOME DEFAULT RULES FOR ENUMS AND DYNAMIC FIELDS
 		result.add(new DynamicFieldRule().getJsonSchemaFieldProcessor(jsonProvider));
@@ -192,6 +196,14 @@ public class YamlPlanJsonSchemaGenerator {
 		// prepare definitions for generic DynamicValue class
 		definitionCreators.add((defsList) -> {
 			Map<String, JsonObjectBuilder> dynamicValueDefs = schemaHelper.createDynamicValueImplDefs();
+			for (Map.Entry<String, JsonObjectBuilder> dynamicValueDef : dynamicValueDefs.entrySet()) {
+				defsBuilder.add(dynamicValueDef.getKey(), dynamicValueDef.getValue());
+			}
+		});
+
+		// prepare definitions for referenced resources
+		definitionCreators.add(defsList -> {
+			Map<String, JsonObjectBuilder> dynamicValueDefs = resourceReferenceJsonSchemaHelper.createResourceReferenceDefs();
 			for (Map.Entry<String, JsonObjectBuilder> dynamicValueDef : dynamicValueDefs.entrySet()) {
 				defsBuilder.add(dynamicValueDef.getKey(), dynamicValueDef.getValue());
 			}

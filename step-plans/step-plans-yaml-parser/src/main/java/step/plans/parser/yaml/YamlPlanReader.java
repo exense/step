@@ -214,10 +214,10 @@ public class YamlPlanReader {
 
 	private SimpleModule registerBasicSerializers(SimpleModule module) {
 		module.addDeserializer(DynamicValue.class, new YamlDynamicValueDeserializer());
-		module.addDeserializer(YamlRootArtefact.class, createRootArtefactDeserializer());
+		module.addDeserializer(YamlRootArtefact.class, createRootArtefactDeserializer(yamlMapper));
 
 		module.addSerializer(DynamicValue.class, new YamlDynamicValueSerializer());
-		return module.addSerializer(YamlRootArtefact.class, createRootArtefactSerializer());
+		return module.addSerializer(YamlRootArtefact.class, createRootArtefactSerializer(yamlMapper));
 	}
 
 	public SimpleModule registerAllSerializers(SimpleModule module) {
@@ -227,12 +227,12 @@ public class YamlPlanReader {
 				.addDeserializer(YamlPlan.class, new UpgradableYamlPlanDeserializer(currentVersion, jsonSchema, migrationManager, nonUpgradableYamlMapper));
 	}
 
-	protected YamlRootArtefactSerializer createRootArtefactSerializer() {
-		return new YamlRootArtefactSerializer();
+	protected YamlRootArtefactSerializer createRootArtefactSerializer(ObjectMapper stepYamlMapper) {
+		return new YamlRootArtefactSerializer(stepYamlMapper);
 	}
 
-	protected YamlRootArtefactDeserializer createRootArtefactDeserializer() {
-		return new YamlRootArtefactDeserializer();
+	protected YamlRootArtefactDeserializer createRootArtefactDeserializer(ObjectMapper stepYamlMapper) {
+		return new YamlRootArtefactDeserializer(stepYamlMapper);
 	}
 
 	protected ObjectMapper getYamlMapper() {
