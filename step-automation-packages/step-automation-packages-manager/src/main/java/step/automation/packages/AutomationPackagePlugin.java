@@ -27,6 +27,7 @@ import step.automation.packages.execution.IsolatedAutomationPackageRepository;
 import step.core.GlobalContext;
 import step.core.collections.Collection;
 import step.core.deployment.ObjectHookControllerPlugin;
+import step.core.execution.model.ExecutionAccessor;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.core.scheduler.SchedulerPlugin;
@@ -81,6 +82,7 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
 
         packageExecutor = new AutomationPackageExecutor(
                 context.getScheduler(),
+                context.require(ExecutionAccessor.class),
                 context.require(FunctionManager.class),
                 context.require(FunctionAccessor.class),
                 context.require(IsolatedAutomationPackageRepository.class)
@@ -95,7 +97,6 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
         try {
             this.packageExecutor.shutdown();
         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();  //set the flag back to true
             log.warn("Interrupted", e);
         }
     }

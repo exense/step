@@ -21,6 +21,7 @@ package step.automation.packages.execution;
 import step.automation.packages.AutomationPackage;
 import step.automation.packages.AutomationPackageManager;
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.accessors.Accessor;
 import step.core.accessors.LayeredAccessor;
 import step.core.execution.ExecutionContext;
 import step.core.plans.Plan;
@@ -89,7 +90,7 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
         enrichPlan(context, plan);
 
         PlanAccessor planAccessor = context.getPlanAccessor();
-        if (!(planAccessor instanceof LayeredAccessor)) {
+        if (!isLayeredAccessor(planAccessor)) {
             result.setErrors(List.of(planAccessor.getClass() + " is not layered"));
             return result;
         }
@@ -97,7 +98,7 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
         planAccessor.save(plan);
 
         FunctionAccessor functionAccessor = context.get(FunctionAccessor.class);
-        if(!(functionAccessor instanceof LayeredAccessor)){
+        if(!isLayeredAccessor(functionAccessor)){
             result.setErrors(List.of(functionAccessor.getClass() + " is not layered"));
             return result;
         }
@@ -117,7 +118,7 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
         // push the resource accessor from resource manager to keep consistency between ResourceManager and ResourceAccessor
         if (automationPackageManager.getResourceManager().getResourceAccessor() != null) {
             ResourceAccessor contextResourceAccessor = context.getResourceAccessor();
-            if (!(contextResourceAccessor instanceof LayeredResourceAccessor)) {
+            if (!isLayeredAccessor(contextResourceAccessor)) {
                 result.setErrors(List.of(contextResourceAccessor.getClass() + " is not layered"));
                 return result;
             }
@@ -127,6 +128,10 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
         result.setSuccessful(true);
 
         return result;
+    }
+
+    private static boolean isLayeredAccessor(Accessor<?> accessor) {
+        return accessor instanceof LayeredAccessor;
     }
 
     @Override

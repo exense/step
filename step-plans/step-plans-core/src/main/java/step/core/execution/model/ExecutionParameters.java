@@ -21,42 +21,23 @@ package step.core.execution.model;
 import java.util.List;
 import java.util.Map;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-
-import step.core.accessors.AbstractOrganizableObject;
-import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.ArtefactFilter;
-import step.core.collections.serialization.EscapingDottedKeysMapDeserializer;
-import step.core.collections.serialization.EscapingDottedKeysMapSerializer;
-import step.core.objectenricher.EnricheableObject;
 import step.core.plans.Plan;
 import step.core.repositories.RepositoryObjectReference;
 
-public class ExecutionParameters extends AbstractOrganizableObject implements EnricheableObject {
-	
-	private static final String DEFAULT_DESCRIPTION = "Unnamed";
-
-	ExecutionMode mode;
+public class ExecutionParameters extends AutomationPackageExecutionParameters {
 
 	Plan plan;
 	RepositoryObjectReference repositoryObject;
 
-	@JsonSerialize(using = EscapingDottedKeysMapSerializer.class)
-	@JsonDeserialize(using = EscapingDottedKeysMapDeserializer.class)
-	Map<String, String> customParameters;
-	
-	String description;
-	String userID;
-		
-	ArtefactFilter artefactFilter;
-	
 	/**
 	 * @deprecated this field is deprecated and isn't used anymore
 	 */
 	boolean isolatedExecution = false;
 	
 	List<RepositoryObjectReference> exports;
+	ExecutionMode mode;
+	String description;
 
 	public ExecutionParameters() {
 		this((RepositoryObjectReference) null, null);
@@ -77,37 +58,21 @@ public class ExecutionParameters extends AbstractOrganizableObject implements En
 	public ExecutionParameters(ExecutionMode mode, Plan plan, RepositoryObjectReference repositoryObject,
 			Map<String, String> customParameters, String description, String userID, ArtefactFilter artefactFilter,
 			boolean isolatedExecution, List<RepositoryObjectReference> exports) {
-		super();
+		super(customParameters, userID, artefactFilter);
 		this.mode = mode;
 		this.plan = plan;
 		this.repositoryObject = repositoryObject;
-		this.customParameters = customParameters;
 		this.description = description;
-		this.userID = userID;
-		this.artefactFilter = artefactFilter;
 		this.isolatedExecution = isolatedExecution;
 		this.exports = exports;
 	}
-	
-	public static String defaultDescription(Plan plan) {
-		String description;
-		Map<String, String> attributes = plan.getAttributes();
-		if(attributes != null && attributes.containsKey(AbstractArtefact.NAME)) {
-			description = attributes.get(AbstractArtefact.NAME);
-		} else {
-			AbstractArtefact root = plan.getRoot();
-			if(root != null) {
-				attributes = root.getAttributes();
-				if(attributes != null && attributes.containsKey(AbstractArtefact.NAME)) {
-					description = attributes.get(AbstractArtefact.NAME);
-				} else {
-					description = DEFAULT_DESCRIPTION;
-				}
-			} else {
-				description = DEFAULT_DESCRIPTION;
-			}
-		}
-		return description;
+
+	public static ExecutionParameters fromAutomationPackageParams(AutomationPackageExecutionParameters automationPackageExecutionParameters){
+		ExecutionParameters params = new ExecutionParameters(ExecutionMode.RUN);
+		params.setCustomParameters(automationPackageExecutionParameters.getCustomParameters());
+		params.setUserID(automationPackageExecutionParameters.getUserID());
+		params.setArtefactFilter(automationPackageExecutionParameters.getArtefactFilter());
+		return params;
 	}
 
 	public Plan getPlan() {
@@ -126,52 +91,12 @@ public class ExecutionParameters extends AbstractOrganizableObject implements En
 		this.repositoryObject = respositoryObject;
 	}
 
-	public String getDescription() {
-		return description;
-	}
-
-	public void setDescription(String description) {
-		this.description = description;
-	}
-
-	public String getUserID() {
-		return userID;
-	}
-
-	public void setUserID(String userID) {
-		this.userID = userID;
-	}
-
-	public ArtefactFilter getArtefactFilter() {
-		return artefactFilter;
-	}
-
-	public void setArtefactFilter(ArtefactFilter artefactFilter) {
-		this.artefactFilter = artefactFilter;
-	}
-
-	public ExecutionMode getMode() {
-		return mode;
-	}
-
-	public void setMode(ExecutionMode mode) {
-		this.mode = mode;
-	}
-	
 	public List<RepositoryObjectReference> getExports() {
 		return exports;
 	}
 
 	public void setExports(List<RepositoryObjectReference> exports) {
 		this.exports = exports;
-	}
-
-	public Map<String, String> getCustomParameters() {
-		return customParameters;
-	}
-
-	public void setCustomParameters(Map<String, String> customParameters) {
-		this.customParameters = customParameters;
 	}
 
 	/**
@@ -190,4 +115,19 @@ public class ExecutionParameters extends AbstractOrganizableObject implements En
 		this.isolatedExecution = isolatedExecution;
 	}
 
+	public String getDescription() {
+		return description;
+	}
+
+	public ExecutionMode getMode() {
+		return mode;
+	}
+
+	public void setMode(ExecutionMode mode) {
+		this.mode = mode;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
 }

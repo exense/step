@@ -24,10 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.automation.packages.AutomationPackageManager;
 import step.automation.packages.accessor.InMemoryAutomationPackageAccessorImpl;
-import step.core.execution.ExecutionContext;
-import step.core.execution.model.ExecutionMode;
-import step.core.execution.model.ExecutionParameters;
-import step.core.execution.model.ExecutionStatus;
+import step.core.execution.model.*;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.plans.InMemoryPlanAccessor;
 import step.core.plans.Plan;
@@ -45,10 +42,10 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public class AutomationPackageExecutor {
 
@@ -57,21 +54,25 @@ public class AutomationPackageExecutor {
     private final ExecutorService delayedCleanupExecutor = Executors.newFixedThreadPool(5);
 
     private final ExecutionScheduler scheduler;
+    private final ExecutionAccessor executionAccessor;
     private final FunctionManager layeredFunctionManager;
     private final FunctionAccessor layeredFunctionAccessor;
     private final IsolatedAutomationPackageRepository isolatedAutomationPackageRepository;
 
     public AutomationPackageExecutor(ExecutionScheduler scheduler,
+                                     ExecutionAccessor executionAccessor,
                                      FunctionManager layeredFunctionManager,
                                      FunctionAccessor layeredFunctionAccessor,
                                      IsolatedAutomationPackageRepository isolatedAutomationPackageRepository) {
         this.scheduler = scheduler;
+        this.executionAccessor = executionAccessor;
         this.layeredFunctionManager = layeredFunctionManager;
         this.layeredFunctionAccessor = layeredFunctionAccessor;
         this.isolatedAutomationPackageRepository = isolatedAutomationPackageRepository;
     }
 
-    public List<String> runInIsolation(InputStream automationPackage, String fileName, Map<String, String> executionParameters, ObjectEnricher objectEnricher, String userId) throws SetupFunctionException, FunctionTypeException {
+    public List<String> runInIsolation(InputStream automationPackage, String fileName, AutomationPackageExecutionParameters parameters,
+                                       ObjectEnricher objectEnricher, String userId) throws SetupFunctionException, FunctionTypeException {
         ObjectId contextId = new ObjectId();
 
         // prepare the isolated in-memory automation package manager with the only one automation package
@@ -82,21 +83,18 @@ public class AutomationPackageExecutor {
         try {
             isolatedAutomationPackageRepository.putContext(contextId.toString(), inMemoryPackageManager);
 
-            // TODO: filter plans
             for (Plan plan : inMemoryPackageManager.getPackagePlans(packageId)) {
-                ExecutionParameters params = new ExecutionParameters();
+                ExecutionParameters params = ExecutionParameters.fromAutomationPackageParams(parameters);
                 HashMap<String, String> repositoryParameters = new HashMap<>();
                 repositoryParameters.put(IsolatedAutomationPackageRepository.REPOSITORY_PARAM_CONTEXTID, contextId.toString());
                 repositoryParameters.put(RepositoryObjectReference.PLAN_ID, plan.getId().toString());
 
                 params.setRepositoryObject(new RepositoryObjectReference(IsolatedAutomationPackageRepositoryPlugin.ISOLATED_AUTOMATION_PACKAGE, repositoryParameters));
-                params.setMode(ExecutionMode.RUN);
-                params.setDescription(plan.getRoot().getAttributes().get("name"));
+                params.setDescription(AutomationPackageExecutionParameters.defaultDescription(plan));
 
                 if (userId != null) {
                     params.setUserID(userId);
                 }
-                params.setCustomParameters(executionParameters);
 
                 String newExecutionId = this.scheduler.execute(params);
                 if (newExecutionId != null) {
@@ -120,35 +118,7 @@ public class AutomationPackageExecutor {
     protected void cleanupContextAfterAllExecutions(ObjectId contextId, AutomationPackageManager packageManager, List<String> executions, ExecutionScheduler scheduler) {
         // wait for all executions to be finished
         delayedCleanupExecutor.execute(() -> {
-            // TODO: timeouts ?
-            try {
-                Poller.waitFor(() -> {
-                    // continue polling until all executions in current context are ended
-                    List<ExecutionContext> currentExecutions = scheduler.getCurrentExecutions();
-                    boolean activeExecutionFound = false;
-                    for (String executionId : executions) {
-                        for (ExecutionContext currentExecution : currentExecutions) {
-                            if (currentExecution.getExecutionId().equals(executionId)) {
-                                if (!currentExecution.getStatus().equals(ExecutionStatus.ENDED)) {
-                                    activeExecutionFound = true;
-                                }
-                                break;
-                            }
-                        }
-                        if (activeExecutionFound) {
-                            break;
-                        }
-                    }
-
-                    return !activeExecutionFound;
-                }, 60 * 60 * 1000, 5000);
-            } catch (InterruptedException e){
-                Thread.currentThread().interrupt();  //set the flag back to true
-                return;
-            } catch (Throwable e) {
-                log.error("Exception during execution cleanup", e);
-                return;
-            }
+            if (waitForAllExecutionEnded(executions)) return;
 
             // remove stored resources
             packageManager.getResourceManager().cleanup();
@@ -157,6 +127,41 @@ public class AutomationPackageExecutor {
             isolatedAutomationPackageRepository.removeContext(contextId.toString());
         });
 
+    }
+
+    private boolean waitForAllExecutionEnded(List<String> executions) {
+        // TODO: timeouts ?
+        try {
+            Poller.waitFor(() -> {
+                // continue polling until all executions in current context are ended
+                List<Execution> currentExecutions = executionAccessor.findByIds(executions).collect(Collectors.toList());
+                boolean activeExecutionFound = false;
+                for (String executionId : executions) {
+                    for (Execution currentExecution : currentExecutions) {
+                        if (currentExecution.getId().toString().equals(executionId)) {
+                            if (!currentExecution.getStatus().equals(ExecutionStatus.ENDED)) {
+                                activeExecutionFound = true;
+                            }
+                            break;
+                        }
+                        throw new RuntimeException("Execution not found by id: " + executionId);
+                    }
+
+                    if (activeExecutionFound) {
+                        break;
+                    }
+                }
+
+                return !activeExecutionFound;
+            }, 60 * 60 * 1000, 5000);
+        } catch (InterruptedException e) {
+            log.warn("Automation context cleanup interrupted");
+            return true;
+        } catch (Throwable e) {
+            log.error("Exception during execution cleanup", e);
+            return true;
+        }
+        return false;
     }
 
     private AutomationPackageManager createInMemoryAutomationPackageManager(ObjectId contextId) {
