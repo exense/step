@@ -98,12 +98,15 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
         planAccessor.save(plan);
 
         FunctionAccessor functionAccessor = context.get(FunctionAccessor.class);
-        if(!isLayeredAccessor(functionAccessor)){
-            result.setErrors(List.of(functionAccessor.getClass() + " is not layered"));
-            return result;
-        }
+        // Function accessor is layered, but wrapped in CachedFunctionAccessor (step.engine.plugins.FunctionPlugin)
+//        if(!isLayeredAccessor(functionAccessor)){
+//            result.setErrors(List.of(functionAccessor.getClass() + " is not layered"));
+//            return result;
+//        }
 
-        plan.getFunctions().iterator().forEachRemaining(functionAccessor::save);
+        if (plan.getFunctions() != null) {
+            plan.getFunctions().iterator().forEachRemaining(functionAccessor::save);
+        }
         automationPackageManager.getPackageFunctions(automationPackage.getId()).forEach(functionAccessor::save);
 
         ResourceManager contextResourceManager = context.getResourceManager();
