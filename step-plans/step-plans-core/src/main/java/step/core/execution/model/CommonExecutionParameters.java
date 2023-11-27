@@ -28,10 +28,9 @@ import step.core.collections.serialization.EscapingDottedKeysMapSerializer;
 import step.core.objectenricher.EnricheableObject;
 import step.core.plans.Plan;
 
-import java.util.HashMap;
 import java.util.Map;
 
-public class AutomationPackageExecutionParameters extends AbstractOrganizableObject implements EnricheableObject {
+public abstract class CommonExecutionParameters extends AbstractOrganizableObject implements EnricheableObject {
     private static final String DEFAULT_DESCRIPTION = "Unnamed";
 
     @JsonSerialize(using = EscapingDottedKeysMapSerializer.class)
@@ -42,11 +41,11 @@ public class AutomationPackageExecutionParameters extends AbstractOrganizableObj
 
     ArtefactFilter artefactFilter;
 
-    public AutomationPackageExecutionParameters() {
+    public CommonExecutionParameters() {
         super();
     }
 
-    public AutomationPackageExecutionParameters(Map<String, String> customParameters, String userID, ArtefactFilter artefactFilter) {
+    public CommonExecutionParameters(Map<String, String> customParameters, String userID, ArtefactFilter artefactFilter) {
         super();
         this.customParameters = customParameters;
         this.userID = userID;

@@ -29,11 +29,11 @@ import org.bson.types.ObjectId;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
+import step.automation.packages.execution.AutomationPackageExecutionParameters;
 import step.automation.packages.execution.AutomationPackageExecutor;
 import step.core.access.User;
 import step.core.collections.PojoFilter;
 import step.core.deployment.AbstractStepServices;
-import step.core.execution.model.AutomationPackageExecutionParameters;
 import step.core.objectenricher.ObjectFilter;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.ql.OQLFilterBuilder;
@@ -107,7 +107,8 @@ public class AutomationPackageServices extends AbstractStepServices {
                 fileDetail.getFileName(),
                 executionParameters,
                 getObjectEnricher(),
-                user == null ? null : user.getId().toString()
+                user == null ? null : user.getId().toString(),
+                getObjectPredicate()
         );
     }
 

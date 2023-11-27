@@ -25,7 +25,7 @@ import step.core.artefacts.ArtefactFilter;
 import step.core.plans.Plan;
 import step.core.repositories.RepositoryObjectReference;
 
-public class ExecutionParameters extends AutomationPackageExecutionParameters {
+public class ExecutionParameters extends CommonExecutionParameters {
 
 	Plan plan;
 	RepositoryObjectReference repositoryObject;
@@ -65,14 +65,6 @@ public class ExecutionParameters extends AutomationPackageExecutionParameters {
 		this.description = description;
 		this.isolatedExecution = isolatedExecution;
 		this.exports = exports;
-	}
-
-	public static ExecutionParameters fromAutomationPackageParams(AutomationPackageExecutionParameters automationPackageExecutionParameters){
-		ExecutionParameters params = new ExecutionParameters(ExecutionMode.RUN);
-		params.setCustomParameters(automationPackageExecutionParameters.getCustomParameters());
-		params.setUserID(automationPackageExecutionParameters.getUserID());
-		params.setArtefactFilter(automationPackageExecutionParameters.getArtefactFilter());
-		return params;
 	}
 
 	public Plan getPlan() {
