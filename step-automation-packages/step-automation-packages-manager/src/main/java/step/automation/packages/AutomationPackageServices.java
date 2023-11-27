@@ -31,8 +31,12 @@ import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import step.automation.packages.execution.AutomationPackageExecutor;
 import step.core.access.User;
+import step.core.collections.PojoFilter;
 import step.core.deployment.AbstractStepServices;
 import step.core.execution.model.AutomationPackageExecutionParameters;
+import step.core.objectenricher.ObjectFilter;
+import step.core.objectenricher.ObjectPredicate;
+import step.core.ql.OQLFilterBuilder;
 import step.framework.server.security.Secured;
 
 import java.io.InputStream;
@@ -57,7 +61,7 @@ public class AutomationPackageServices extends AbstractStepServices {
     @Produces(MediaType.APPLICATION_JSON)
     @Secured(right = "automation-package-read")
     public AutomationPackage getAutomationPackage(@PathParam("name") String automationPackageName) {
-        return automationPackageManager.getAutomationPackageByName(automationPackageName);
+        return automationPackageManager.getAutomationPackageByName(automationPackageName, getObjectPredicate());
     }
 
     @DELETE
@@ -65,7 +69,7 @@ public class AutomationPackageServices extends AbstractStepServices {
     @Produces(MediaType.APPLICATION_JSON)
     @Secured(right = "automation-package-delete")
     public void deleteAutomationPackage(@PathParam("name") String automationPackageName) {
-        automationPackageManager.removeAutomationPackage(automationPackageName);
+        automationPackageManager.removeAutomationPackage(automationPackageName, getObjectPredicate());
     }
 
     @POST
@@ -75,7 +79,7 @@ public class AutomationPackageServices extends AbstractStepServices {
     public String createAutomationPackage(@FormDataParam("file") InputStream automationPackageInputStream,
                                           @FormDataParam("file") FormDataContentDisposition fileDetail,
                                           @Context UriInfo uriInfo) throws Exception {
-        ObjectId id = automationPackageManager.createAutomationPackage(automationPackageInputStream, fileDetail.getFileName(), getObjectEnricher());
+        ObjectId id = automationPackageManager.createAutomationPackage(automationPackageInputStream, fileDetail.getFileName(), getObjectEnricher(), getObjectPredicate());
         return id == null ? null : id.toString();
     }
 
@@ -110,12 +114,14 @@ public class AutomationPackageServices extends AbstractStepServices {
     @PUT
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.TEXT_PLAIN)
-    @Path("")
     @Secured(right = "automation-package-write")
     public Response updateAutomationPackage(@FormDataParam("file") InputStream uploadedInputStream,
-                                          @FormDataParam("file") FormDataContentDisposition fileDetail,
-                                          @Context UriInfo uriInfo) throws Exception {
-        AutomationPackageManager.PackageUpdateResult result = automationPackageManager.createOrUpdateAutomationPackage(true, uploadedInputStream, fileDetail.getFileName(), getObjectEnricher());
+                                            @FormDataParam("file") FormDataContentDisposition fileDetail,
+                                            @Context UriInfo uriInfo) throws Exception {
+        AutomationPackageManager.PackageUpdateResult result = automationPackageManager.createOrUpdateAutomationPackage(
+                true, uploadedInputStream, fileDetail.getFileName(),
+                getObjectEnricher(), getObjectPredicate()
+        );
         Response.ResponseBuilder responseBuilder;
         switch (result.getStatus()){
             case CREATED:
@@ -128,16 +134,11 @@ public class AutomationPackageServices extends AbstractStepServices {
         return responseBuilder.entity(result.getId()).build();
     }
 
-    public static class MyPojo {
-        private String a;
-
-        public String getA() {
-            return a;
-        }
-
-        public void setA(String a) {
-            this.a = a;
-        }
+    protected ObjectPredicate getObjectPredicate() {
+        ObjectFilter objectFilter = getObjectFilter();
+        String oqlFilter = objectFilter.getOQLFilter();
+        PojoFilter<Object> pojoFilter = OQLFilterBuilder.getPojoFilter(oqlFilter);
+        return pojoFilter::test;
     }
 
 }

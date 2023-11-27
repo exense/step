@@ -93,7 +93,7 @@ public class AutomationPackageManagerTest {
         String fileName = "samples/step-automation-packages-sample1-extended.jar";
         File automationPackageJar = new File("src/test/resources/" + fileName);
         try (InputStream is = new FileInputStream(automationPackageJar)) {
-            AutomationPackageManager.PackageUpdateResult result = manager.createOrUpdateAutomationPackage(true, is, fileName, null);
+            AutomationPackageManager.PackageUpdateResult result = manager.createOrUpdateAutomationPackage(true, is, fileName, null, null);
             Assert.assertEquals(AutomationPackageManager.PackageUpdateStatus.UPDATED, result.getStatus());
             ObjectId resultId = result.getId();
 
@@ -146,7 +146,7 @@ public class AutomationPackageManagerTest {
         Assert.assertEquals(r.storedTask.getId(), r2.storedTask.getId());
 
         // 4. Delete package by name - everything should be removed
-        manager.removeAutomationPackage("My package");
+        manager.removeAutomationPackage("My package", null);
 
         Assert.assertEquals(0, automationPackageAccessor.stream().count());
 
@@ -164,9 +164,9 @@ public class AutomationPackageManagerTest {
         try (InputStream is = new FileInputStream(automationPackageJar)) {
             ObjectId result;
             if (createNew) {
-                result = manager.createAutomationPackage(is, fileName, null);
+                result = manager.createAutomationPackage(is, fileName, null, null);
             } else {
-                AutomationPackageManager.PackageUpdateResult updateResult = manager.createOrUpdateAutomationPackage(true, is, fileName, null);
+                AutomationPackageManager.PackageUpdateResult updateResult = manager.createOrUpdateAutomationPackage(true, is, fileName, null, null);
                 Assert.assertEquals(AutomationPackageManager.PackageUpdateStatus.UPDATED, updateResult.getStatus());
                 result = updateResult.getId();
             }

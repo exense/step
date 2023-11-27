@@ -38,6 +38,7 @@
         <module>step-automation-packages-junit</module>
         <module>step-automation-packages-samples</module>
         <module>step-automation-packages-manager</module>
+        <module>step-automation-packages-client</module>
     </modules>
 
     <properties>

@@ -31,6 +31,7 @@ import step.core.accessors.AbstractOrganizableObject;
 import step.core.execution.model.ExecutionParameters;
 import step.core.objectenricher.EnricheableObject;
 import step.core.objectenricher.ObjectEnricher;
+import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
 import step.core.scheduler.ExecutionScheduler;
@@ -92,8 +93,12 @@ public class AutomationPackageManager {
         this.keywordsAttributesApplier = new AutomationPackageKeywordsAttributesApplier(resourceManager);
     }
 
-    public AutomationPackage getAutomationPackageByName(String name) {
-        return automationPackageAccessor.findByAttributes(Map.of(AbstractOrganizableObject.NAME, name));
+    public AutomationPackage getAutomationPackageByName(String name, ObjectPredicate objectPredicate) {
+        Stream<AutomationPackage> stream = StreamSupport.stream(automationPackageAccessor.findManyByAttributes(Map.of(AbstractOrganizableObject.NAME, name)), false);
+        if (objectPredicate != null) {
+            stream = stream.filter(objectPredicate);
+        }
+        return stream.findFirst().orElse(null);
     }
 
     public Stream<AutomationPackage> getAllAutomationPackages() {
@@ -103,8 +108,8 @@ public class AutomationPackageManager {
         );
     }
 
-    public void removeAutomationPackage(String name) {
-        AutomationPackage automationPackage = getAutomationPackageByName(name);
+    public void removeAutomationPackage(String name, ObjectPredicate objectPredicate) {
+        AutomationPackage automationPackage = getAutomationPackageByName(name, objectPredicate);
         if (automationPackage == null) {
             throw new AutomationPackageManagerException("Automation package not found by name: " + name);
         }
@@ -120,11 +125,11 @@ public class AutomationPackageManager {
         deleteSchedules(automationPackage);
     }
 
-    public ObjectId createAutomationPackage(InputStream packageStream, String fileName, ObjectEnricher enricher) throws FunctionTypeException, SetupFunctionException, AutomationPackageManagerException {
-        return createOrUpdateAutomationPackage(false, packageStream, fileName, enricher).getId();
+    public ObjectId createAutomationPackage(InputStream packageStream, String fileName, ObjectEnricher enricher, ObjectPredicate objectPredicate) throws FunctionTypeException, SetupFunctionException, AutomationPackageManagerException {
+        return createOrUpdateAutomationPackage(false, packageStream, fileName, enricher, objectPredicate).getId();
     }
 
-    public PackageUpdateResult createOrUpdateAutomationPackage(boolean allowUpdate, InputStream packageStream, String fileName, ObjectEnricher enricher) throws SetupFunctionException, FunctionTypeException {
+    public PackageUpdateResult createOrUpdateAutomationPackage(boolean allowUpdate, InputStream packageStream, String fileName, ObjectEnricher enricher, ObjectPredicate objectPredicate) throws SetupFunctionException, FunctionTypeException {
         AutomationPackageArchive automationPackageArchive;
         AutomationPackageContent packageContent;
         try {
@@ -134,13 +139,13 @@ public class AutomationPackageManager {
             throw new AutomationPackageManagerException("Unable to read automation package", e);
         }
 
-        AutomationPackage oldPackage = getAutomationPackageByName(packageContent.getName());
+        AutomationPackage oldPackage = getAutomationPackageByName(packageContent.getName(), objectPredicate);
         if (!allowUpdate && oldPackage != null) {
             throw new AutomationPackageManagerException("Automation package '" + packageContent.getName() + "' already exists");
         }
 
         // keep old package id
-        AutomationPackage newPackage = createNewInstance(fileName, packageContent, oldPackage);
+        AutomationPackage newPackage = createNewInstance(fileName, packageContent, oldPackage, enricher);
 
         // prepare staging collections
         List<Plan> completePlans = preparePlansStaging(newPackage, packageContent, oldPackage, enricher);
@@ -253,7 +258,7 @@ public class AutomationPackageManager {
         return functionNameToIdMap;
     }
 
-    protected AutomationPackage createNewInstance(String fileName, AutomationPackageContent packageContent, AutomationPackage oldPackage) {
+    protected AutomationPackage createNewInstance(String fileName, AutomationPackageContent packageContent, AutomationPackage oldPackage, ObjectEnricher enricher) {
         AutomationPackage newPackage = new AutomationPackage();
 
         // keep old id
@@ -264,6 +269,9 @@ public class AutomationPackageManager {
         newPackage.addAttribute(AbstractOrganizableObject.VERSION, packageContent.getVersion());
 
         newPackage.addCustomField(AutomationPackageEntity.AUTOMATION_PACKAGE_FILE_NAME, fileName);
+        if (enricher != null) {
+            enricher.accept(newPackage);
+        }
         return newPackage;
     }
 
