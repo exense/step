@@ -16,9 +16,11 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.core.plans;
+package step.core.plans.filters;
 
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.plans.Plan;
+import step.core.plans.PlanFilter;
 
 import java.util.ArrayList;
 import java.util.List;

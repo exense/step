@@ -33,9 +33,10 @@ import step.core.plans.PlanFilter;
 import step.core.repositories.RepositoryObjectReference;
 import step.core.scheduler.ExecutionScheduler;
 import step.core.scheduler.InMemoryExecutionTaskAccessor;
-import step.functions.accessor.FunctionAccessor;
-import step.functions.manager.FunctionManager;
+import step.functions.accessor.InMemoryFunctionAccessorImpl;
+import step.functions.manager.FunctionManagerImpl;
 import step.functions.type.FunctionTypeException;
+import step.functions.type.FunctionTypeRegistry;
 import step.functions.type.SetupFunctionException;
 import step.resources.LocalResourceManagerImpl;
 
@@ -61,19 +62,16 @@ public class AutomationPackageExecutor {
 
     private final ExecutionScheduler scheduler;
     private final ExecutionAccessor executionAccessor;
-    private final FunctionManager layeredFunctionManager;
-    private final FunctionAccessor layeredFunctionAccessor;
+    private final FunctionTypeRegistry functionTypeRegistry;
     private final IsolatedAutomationPackageRepository isolatedAutomationPackageRepository;
 
     public AutomationPackageExecutor(ExecutionScheduler scheduler,
                                      ExecutionAccessor executionAccessor,
-                                     FunctionManager layeredFunctionManager,
-                                     FunctionAccessor layeredFunctionAccessor,
+                                     FunctionTypeRegistry functionTypeRegistry,
                                      IsolatedAutomationPackageRepository isolatedAutomationPackageRepository) {
         this.scheduler = scheduler;
         this.executionAccessor = executionAccessor;
-        this.layeredFunctionManager = layeredFunctionManager;
-        this.layeredFunctionAccessor = layeredFunctionAccessor;
+        this.functionTypeRegistry = functionTypeRegistry;
         this.isolatedAutomationPackageRepository = isolatedAutomationPackageRepository;
     }
 
@@ -112,7 +110,7 @@ public class AutomationPackageExecutor {
                 }
             }
         } finally {
-            cleanupContextAfterAllExecutions(contextId, inMemoryPackageManager, executions, scheduler);
+            cleanupContextAfterAllExecutions(contextId, inMemoryPackageManager, executions);
         }
         return executions;
     }
@@ -125,7 +123,7 @@ public class AutomationPackageExecutor {
         }
     }
 
-    protected void cleanupContextAfterAllExecutions(ObjectId contextId, AutomationPackageManager packageManager, List<String> executions, ExecutionScheduler scheduler) {
+    protected void cleanupContextAfterAllExecutions(ObjectId contextId, AutomationPackageManager packageManager, List<String> executions) {
         // wait for all executions to be finished
         delayedCleanupExecutor.execute(() -> {
             if (waitForAllExecutionEnded(executions)) return;
@@ -135,6 +133,8 @@ public class AutomationPackageExecutor {
 
             // remove the context from isolated automation package repository
             isolatedAutomationPackageRepository.removeContext(contextId.toString());
+
+            log.info("Execution finished for automation package.");
         });
 
     }
@@ -174,10 +174,11 @@ public class AutomationPackageExecutor {
     }
 
     private AutomationPackageManager createInMemoryAutomationPackageManager(ObjectId contextId) {
+        InMemoryFunctionAccessorImpl inMemoryFunctionRepository = new InMemoryFunctionAccessorImpl();
         return new AutomationPackageManager(
                 new InMemoryAutomationPackageAccessorImpl(),
-                layeredFunctionManager,
-                layeredFunctionAccessor,
+                new FunctionManagerImpl(inMemoryFunctionRepository, functionTypeRegistry),
+                inMemoryFunctionRepository,
                 new InMemoryPlanAccessor(),
                 new LocalResourceManagerImpl(new File("resources", contextId.toString())),
                 new InMemoryExecutionTaskAccessor(),

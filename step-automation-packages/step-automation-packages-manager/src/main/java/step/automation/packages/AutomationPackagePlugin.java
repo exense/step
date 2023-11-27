@@ -36,6 +36,7 @@ import step.framework.server.tables.TableRegistry;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.manager.FunctionManager;
 import step.functions.plugin.FunctionControllerPlugin;
+import step.functions.type.FunctionTypeRegistry;
 import step.resources.ResourceManagerControllerPlugin;
 
 @Plugin(dependencies = {ObjectHookControllerPlugin.class, ResourceManagerControllerPlugin.class, FunctionControllerPlugin.class, SchedulerPlugin.class})
@@ -83,8 +84,7 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
         packageExecutor = new AutomationPackageExecutor(
                 context.getScheduler(),
                 context.require(ExecutionAccessor.class),
-                context.require(FunctionManager.class),
-                context.require(FunctionAccessor.class),
+                context.require(FunctionTypeRegistry.class),
                 context.require(IsolatedAutomationPackageRepository.class)
         );
         context.put(AutomationPackageExecutor.class, packageExecutor);
