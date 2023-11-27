@@ -1,9 +1,7 @@
 package step.grid;
 
 import ch.exense.commons.io.FileHelper;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.StreamingOutput;
 import step.grid.filemanager.FileManagerClient;
@@ -22,9 +20,9 @@ public class ProxyGridServices {
 
     @GET
     @Path("/file/{id}/{version}")
-    public Response getFile(@PathParam("id") String id, @PathParam("version") String version) throws IOException, FileManagerException {
+    public Response getFile(@PathParam("id") String id, @PathParam("version") String version, @DefaultValue("true") @QueryParam("cleanable") boolean cleanableFromClientCache) throws IOException, FileManagerException {
         FileVersionId versionId = new FileVersionId(id, version);
-        FileVersion fileVersion = fileManagerClient.requestFileVersion(versionId, true);
+        FileVersion fileVersion = fileManagerClient.requestFileVersion(versionId, cleanableFromClientCache);
         File file = fileVersion.getFile();
 
         final FileInputStream inputStream = new FileInputStream(file);
