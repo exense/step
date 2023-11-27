@@ -226,7 +226,7 @@ public class FunctionRouterTest extends AbstractArtefactTest {
 		return new GridClient() {
 			
 			@Override
-			public FileVersion registerFile(File file) throws FileManagerException {
+			public FileVersion registerFile(File file, boolean cleanable) throws FileManagerException {
 				return new FileVersion(null, null, false);
 			}
 
@@ -301,7 +301,7 @@ public class FunctionRouterTest extends AbstractArtefactTest {
 			}
 
 			@Override
-			public FileVersion registerFile(InputStream inputStream, String fileName, boolean isDirectory)
+			public FileVersion registerFile(InputStream inputStream, String fileName, boolean isDirectory, boolean cleanable)
 					throws FileManagerException {
 				return new FileVersion(null, null, false);
 			}
