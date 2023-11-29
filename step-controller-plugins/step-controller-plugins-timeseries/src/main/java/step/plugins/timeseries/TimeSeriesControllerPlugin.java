@@ -14,6 +14,8 @@ import step.core.timeseries.metric.*;
 import step.engine.plugins.ExecutionEnginePlugin;
 import step.plugins.measurements.GaugeCollectorRegistry;
 import step.plugins.measurements.MeasurementPlugin;
+import step.plugins.timeseries.dashboards.model.*;
+import step.plugins.timeseries.dashboards.DashboardAccessor;
 
 import java.util.Arrays;
 import java.util.List;
@@ -49,13 +51,19 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
         TimeSeriesAggregationPipeline aggregationPipeline = timeSeries.getAggregationPipeline();
         MetricTypeAccessor metricTypeAccessor = new MetricTypeAccessor(context.getCollectionFactory().getCollection(EntityManager.metricTypes, MetricType.class));
         TimeSeriesBucketingHandler handler = new TimeSeriesBucketingHandler(mainIngestionPipeline, attributes);
-
+        
         context.put(TimeSeries.class, timeSeries);
         context.put(TimeSeriesIngestionPipeline.class, mainIngestionPipeline);
         context.put(TimeSeriesAggregationPipeline.class, aggregationPipeline);
         context.put(MetricTypeAccessor.class, metricTypeAccessor);
         context.put(TimeSeriesBucketingHandler.class, handler);
         context.getServiceRegistrationCallback().registerService(TimeSeriesService.class);
+        
+        // dashboards
+        DashboardAccessor dashboardsAccessor = new DashboardAccessor(context.getCollectionFactory().getCollection(EntityManager.dashboards, DashboardView.class));
+        context.put(DashboardAccessor.class, dashboardsAccessor);
+        context.getServiceRegistrationCallback().registerService(DashboardsService.class);
+        createSimpleDashboard(dashboardsAccessor);
 
         MeasurementPlugin.registerMeasurementHandlers(handler);
         GaugeCollectorRegistry.getInstance().registerHandler(handler);
@@ -67,6 +75,41 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
     @Override
     public ExecutionEnginePlugin getExecutionEnginePlugin() {
         return new TimeSeriesExecutionPlugin(mainIngestionPipeline, aggregationPipeline);
+    }
+    
+    private void createSimpleDashboard(DashboardAccessor dashboardAccessor) {
+        long existingDashboardsCount = dashboardAccessor.stream().count();
+        DashboardView dashboard = new DashboardView();
+            dashboard
+                    .setName("Initial Dashboard")
+                            .setTimeRange(new TimeRangeSelection()
+                                    .setType(TimeRangeSelectionType.ABSOLUTE)
+                                    .setAbsoluteSelection(new TimeRange().setFrom(1700152446408L).setTo(1700155195285L))
+                            )
+                    .setFilters(Arrays.asList(new ChartFilterItem()
+                            .setAttribute("rnStatus")
+                            .setTextValues(Arrays.asList("PASSED"))
+                            .setExactMatch(true)
+                    ))
+                    .setDashlets(Arrays.asList( new DashboardItem()
+                            .setName("Response times dashlet")
+                            .setType(DashletType.CHART)
+                            .setChartSettings(new ChartSettings()
+                                    .setInheritGlobalFilters(false)
+                                    .setGrouping(Arrays.asList("name"))
+                                    .setPrimaryAxes(new AxesSettings()
+                                            .setMetricKey("response-time")
+                                            .setAggregation(MetricAggregation.AVG)
+                                            .setDisplayType(AxesDisplayType.LINE)
+                                            .setUnit("ms")
+                                    )
+                            )
+                    ))
+            ;
+        if (existingDashboardsCount > 0) {
+            dashboard.setId(dashboardAccessor.stream().findFirst().get().getId());
+        }
+        dashboardAccessor.save(dashboard);
     }
 
     @Override
