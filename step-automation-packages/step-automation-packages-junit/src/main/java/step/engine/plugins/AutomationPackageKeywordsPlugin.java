@@ -62,10 +62,10 @@ public class AutomationPackageKeywordsPlugin extends AbstractExecutionEnginePlug
             try {
                 AutomationPackageReader automationPackageReader = new AutomationPackageReader(getAutomationPackageJsonSchema(configuration));
                 AutomationPackageKeywordsAttributesApplier attributesApplier = new AutomationPackageKeywordsAttributesApplier(resourceManager);
-                AutomationPackageContent automationPackageContent = automationPackageReader.readAutomationPackage(automationPackageArchive);
+                AutomationPackageContent automationPackageContent = automationPackageReader.readAutomationPackage(automationPackageArchive, true);
                 if (automationPackageContent != null) {
                     for (AutomationPackageKeyword foundKeyword : automationPackageContent.getKeywords()) {
-                        res.add(attributesApplier.applySpecialAttributesToKeyword(foundKeyword, automationPackageArchive));
+                        res.add(attributesApplier.applySpecialAttributesToKeyword(foundKeyword, automationPackageArchive, null));
                     }
                 }
             } catch (AutomationPackageReadingException e) {

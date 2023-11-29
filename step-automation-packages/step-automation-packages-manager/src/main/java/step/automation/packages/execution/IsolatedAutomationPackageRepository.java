@@ -63,7 +63,7 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
     private AutomationPackage getAutomationPackageForContext(Map<String, String> repositoryParameters) {
         // we expect, that there is only one automation package stored per context
         AutomationPackageManager automationPackageManager = getContext(repositoryParameters);
-        return automationPackageManager.getAllAutomationPackages().findFirst().orElse(null);
+        return automationPackageManager.getAllAutomationPackages(null).findFirst().orElse(null);
     }
 
     private AutomationPackageManager getContext(Map<String, String> repositoryParameters) {
@@ -98,12 +98,6 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
         planAccessor.save(plan);
 
         FunctionAccessor functionAccessor = context.get(FunctionAccessor.class);
-        // Function accessor is layered, but wrapped in CachedFunctionAccessor (step.engine.plugins.FunctionPlugin)
-//        if(!isLayeredAccessor(functionAccessor)){
-//            result.setErrors(List.of(functionAccessor.getClass() + " is not layered"));
-//            return result;
-//        }
-
         if (plan.getFunctions() != null) {
             plan.getFunctions().iterator().forEachRemaining(functionAccessor::save);
         }

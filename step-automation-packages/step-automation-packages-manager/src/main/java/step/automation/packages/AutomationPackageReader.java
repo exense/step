@@ -19,13 +19,29 @@
 package step.automation.packages;
 
 import step.automation.packages.model.AutomationPackageContent;
+import step.automation.packages.model.AutomationPackageKeyword;
 import step.automation.packages.yaml.AutomationPackageDescriptorReader;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
+import step.core.accessors.AbstractOrganizableObject;
+import step.core.dynamicbeans.DynamicValue;
+import step.core.scanner.CachedAnnotationScanner;
+import step.engine.plugins.LocalFunctionPlugin;
+import step.functions.Function;
+import step.handlers.javahandler.Keyword;
+import step.plans.nl.parser.PlanParser;
+import step.plugins.functions.types.CompositeFunctionUtils;
+import step.plugins.java.GeneralScriptFunction;
+import step.plugins.java.automation.GeneralScriptFunctionConversionRule;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class AutomationPackageReader {
@@ -36,7 +52,7 @@ public class AutomationPackageReader {
         this.descriptorReader = new AutomationPackageDescriptorReader(jsonSchema);
     }
 
-    public AutomationPackageContent readAutomationPackage(AutomationPackageArchive automationPackageArchive) throws AutomationPackageReadingException {
+    public AutomationPackageContent readAutomationPackage(AutomationPackageArchive automationPackageArchive, boolean isLocalPackage) throws AutomationPackageReadingException {
         try {
             if (!automationPackageArchive.isAutomationPackage()) {
                 return null;
@@ -44,19 +60,70 @@ public class AutomationPackageReader {
 
             try (InputStream yamlInputStream = automationPackageArchive.getDescriptorYaml()) {
                 AutomationPackageDescriptorYaml descriptorYaml = descriptorReader.readAutomationPackageDescriptor(yamlInputStream);
-                return buildAutomationPackage(descriptorYaml, automationPackageArchive);
+                return buildAutomationPackage(descriptorYaml, automationPackageArchive, isLocalPackage);
             }
         } catch (IOException ex) {
             throw new AutomationPackageReadingException("Unable to read the automation package", ex);
         }
     }
 
-    protected AutomationPackageContent buildAutomationPackage(AutomationPackageDescriptorYaml descriptor, AutomationPackageArchive archive) throws AutomationPackageReadingException {
+    protected AutomationPackageContent buildAutomationPackage(AutomationPackageDescriptorYaml descriptor, AutomationPackageArchive archive, boolean isLocalPackage) throws AutomationPackageReadingException {
         AutomationPackageContent res = new AutomationPackageContent();
         res.setName(descriptor.getName());
+
+        fillAutomationPackageWithAnnotatedKeywords(res, archive, isLocalPackage);
+
         // apply imported fragments recursively
         fillAutomationPackageWithImportedFragments(res, descriptor, archive);
         return res;
+    }
+
+    private void fillAutomationPackageWithAnnotatedKeywords(AutomationPackageContent res, AutomationPackageArchive archive, boolean isLocalPackage) {
+        // TODO: avoid duplication with StepJarParser
+        Set<Method> methods = CachedAnnotationScanner.getMethodsWithAnnotation(Keyword.class, archive.getClassLoader());
+
+        if (isLocalPackage) {
+            List<Function> functions = LocalFunctionPlugin.getLocalFunctions(methods);
+            for (Function f : functions) {
+                res.getKeywords().add(new AutomationPackageKeyword(f, new HashMap<>()));
+            }
+            // TODO: composite functions
+        } else {
+            for (Method m : methods) {
+                Keyword annotation = m.getAnnotation(Keyword.class);
+                Function f;
+                if (annotation.planReference() != null && !annotation.planReference().isBlank()) {
+                    try {
+                        f = CompositeFunctionUtils.createCompositeFunction(
+                                annotation, m,
+                                new PlanParser().parseCompositePlanFromPlanReference(m, annotation.planReference())
+                        );
+                    } catch (Exception ex) {
+                        throw new RuntimeException("Unable to parse plan from reference", ex);
+                    }
+                } else {
+                    String functionName = annotation.name().length() > 0 ? annotation.name() : m.getName();
+
+                    GeneralScriptFunction function = new GeneralScriptFunction();
+                    function.setAttributes(new HashMap<>());
+                    function.getAttributes().put(AbstractOrganizableObject.NAME, functionName);
+
+                    // to be filled by AutomationPackageKeywordsAttributesApplier
+                    function.setScriptFile(new DynamicValue<>(""));
+
+                    // TODO: libraries?
+//                if (libraries != null) {
+//                    function.setLibrariesFile(new DynamicValue<>(libraries.getAbsolutePath()));
+//                }
+                    function.getCallTimeout().setValue(annotation.timeout());
+                    function.setDescription(annotation.description());
+                    function.setScriptLanguage(new DynamicValue<>("java"));
+                    f = function;
+                }
+
+                res.getKeywords().add(new AutomationPackageKeyword(f, Map.of(GeneralScriptFunctionConversionRule.AUTOMATION_PACKAGE_FILE_REFERENCE, "")));
+            }
+        }
     }
 
     public void fillAutomationPackageWithImportedFragments(AutomationPackageContent targetPackage, AutomationPackageFragmentYaml fragment, AutomationPackageArchive archive) throws AutomationPackageReadingException {
@@ -78,7 +145,7 @@ public class AutomationPackageReader {
 
     public AutomationPackageContent readAutomationPackageFromJarFile(File automationPackageJar) throws AutomationPackageReadingException {
         try (AutomationPackageArchive automationPackageArchive = new AutomationPackageArchive(automationPackageJar)) {
-            return readAutomationPackage(automationPackageArchive);
+            return readAutomationPackage(automationPackageArchive, false);
         } catch (IOException e) {
             throw new AutomationPackageReadingException("IO Exception", e);
         }

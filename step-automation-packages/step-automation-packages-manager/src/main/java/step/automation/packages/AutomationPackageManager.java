@@ -42,6 +42,7 @@ import step.functions.accessor.FunctionAccessor;
 import step.functions.manager.FunctionManager;
 import step.functions.type.FunctionTypeException;
 import step.functions.type.SetupFunctionException;
+import step.resources.Resource;
 import step.resources.ResourceManager;
 
 import java.io.File;
@@ -101,11 +102,14 @@ public class AutomationPackageManager {
         return stream.findFirst().orElse(null);
     }
 
-    public Stream<AutomationPackage> getAllAutomationPackages() {
-        // TODO: multitenancy
-        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(automationPackageAccessor.getAll(), Spliterator.ORDERED),
+    public Stream<AutomationPackage> getAllAutomationPackages(ObjectPredicate objectPredicate) {
+        Stream<AutomationPackage> stream = StreamSupport.stream(Spliterators.spliteratorUnknownSize(automationPackageAccessor.getAll(), Spliterator.ORDERED),
                 false
         );
+        if (objectPredicate != null) {
+            stream = stream.filter(objectPredicate);
+        }
+        return stream;
     }
 
     public void removeAutomationPackage(String name, ObjectPredicate objectPredicate) {
@@ -132,6 +136,9 @@ public class AutomationPackageManager {
     public PackageUpdateResult createOrUpdateAutomationPackage(boolean allowUpdate, InputStream packageStream, String fileName, ObjectEnricher enricher, ObjectPredicate objectPredicate) throws SetupFunctionException, FunctionTypeException {
         AutomationPackageArchive automationPackageArchive;
         AutomationPackageContent packageContent;
+
+        Resource automationPackageResource =
+
         try {
             automationPackageArchive = new AutomationPackageArchive(stream2file(packageStream));
             packageContent = readAutomationPackage(automationPackageArchive);
@@ -218,7 +225,7 @@ public class AutomationPackageManager {
         List<Function> completeFunctions = new ArrayList<>();
         for (AutomationPackageKeyword keyword : packageContent.getKeywords()) {
             // TODO: here want to apply additional attributes to draft function (upload linked files as resources), but we have to refactor the way to do that
-            Function completeFunction = keywordsAttributesApplier.applySpecialAttributesToKeyword(keyword, automationPackageArchive);
+            Function completeFunction = keywordsAttributesApplier.applySpecialAttributesToKeyword(keyword, automationPackageArchive, newPackage.getPackageLocation());
             completeFunctions.add(completeFunction);
         }
 
@@ -277,7 +284,7 @@ public class AutomationPackageManager {
 
     protected AutomationPackageContent readAutomationPackage(AutomationPackageArchive automationPackageArchive) throws AutomationPackageReadingException {
         AutomationPackageContent packageContent;
-        packageContent = packageReader.readAutomationPackage(automationPackageArchive);
+        packageContent = packageReader.readAutomationPackage(automationPackageArchive, false);
         if (packageContent.getName() == null || packageContent.getName().isEmpty()) {
             throw new AutomationPackageManagerException("Automation package name is missing");
         }
