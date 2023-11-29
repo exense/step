@@ -84,6 +84,10 @@ public class AutomationPackageArchive implements Closeable {
         return resource;
     }
 
+    public ClassLoader getClassLoader() {
+        return classLoader;
+    }
+
     @Override
     public void close() throws IOException {
         if (internalClassLoader && this.classLoader instanceof Closeable) {

@@ -66,7 +66,7 @@ public class JavaFunctionPackageHandler extends AbstractFunctionPackageHandler {
 		if (!preview && automationPackageArchive != null) {
 			if (specialAutomationPackageAttributes != null && !specialAutomationPackageAttributes.isEmpty()) {
 				AutomationPackageKeyword automationPackageKeyword = new AutomationPackageKeyword(f, specialAutomationPackageAttributes);
-				automationPackageKeywordsAttributesApplier.applySpecialAttributesToKeyword(automationPackageKeyword, automationPackageArchive);
+				automationPackageKeywordsAttributesApplier.applySpecialAttributesToKeyword(automationPackageKeyword, automationPackageArchive, functionPackage.getPackageLocation());
 			}
 		}
 	}

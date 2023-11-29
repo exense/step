@@ -100,7 +100,8 @@ public class YamlPlanReader {
 				this.jsonSchema = readJsonSchema(jsonSchemaPath);
 			} else {
 				// resolve the json schema to use
-				List<String> jsonSchemasFromExtensions = CachedAnnotationScanner.getClassesWithAnnotation(YamlPlanReaderExtension.class).stream()
+				List<String> jsonSchemasFromExtensions = CachedAnnotationScanner.getClassesWithAnnotation("step.plans", YamlPlanReaderExtension.class, Thread.currentThread().getContextClassLoader())
+						.stream()
 						.map(newInstanceAs(YamlPlanReaderExtender.class))
 						.map(YamlPlanReaderExtender::getJsonSchemaPath)
 						.filter(Objects::nonNull)

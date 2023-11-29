@@ -25,6 +25,7 @@ import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.scanner.AnnotationScanner;
 import step.core.scanner.CachedAnnotationScanner;
 import step.engine.plugins.LocalFunctionPlugin;
 import step.functions.Function;
@@ -38,6 +39,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
+import java.net.URLClassLoader;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -79,49 +81,52 @@ public class AutomationPackageReader {
     }
 
     private void fillAutomationPackageWithAnnotatedKeywords(AutomationPackageContent res, AutomationPackageArchive archive, boolean isLocalPackage) {
-        // TODO: avoid duplication with StepJarParser
-        Set<Method> methods = CachedAnnotationScanner.getMethodsWithAnnotation(Keyword.class, archive.getClassLoader());
+        try (AnnotationScanner annotationScanner = AnnotationScanner.forSpecificJarFromURLClassLoader((URLClassLoader) archive.getClassLoader())) {
+            Set<Method> methods = annotationScanner.getMethodsWithAnnotation(Keyword.class);
 
-        if (isLocalPackage) {
-            List<Function> functions = LocalFunctionPlugin.getLocalFunctions(methods);
-            for (Function f : functions) {
-                res.getKeywords().add(new AutomationPackageKeyword(f, new HashMap<>()));
-            }
-            // TODO: composite functions
-        } else {
-            for (Method m : methods) {
-                Keyword annotation = m.getAnnotation(Keyword.class);
-                Function f;
-                if (annotation.planReference() != null && !annotation.planReference().isBlank()) {
-                    try {
-                        f = CompositeFunctionUtils.createCompositeFunction(
-                                annotation, m,
-                                new PlanParser().parseCompositePlanFromPlanReference(m, annotation.planReference())
-                        );
-                    } catch (Exception ex) {
-                        throw new RuntimeException("Unable to parse plan from reference", ex);
-                    }
-                } else {
-                    String functionName = annotation.name().length() > 0 ? annotation.name() : m.getName();
+            if (isLocalPackage) {
+                List<Function> functions = LocalFunctionPlugin.getLocalFunctions(methods);
+                for (Function f : functions) {
+                    res.getKeywords().add(new AutomationPackageKeyword(f, new HashMap<>()));
+                }
+                // TODO: composite functions?
+            } else {
+                for (Method m : methods) {
+                    // TODO: avoid duplicated code with StepJarParser
+                    // TODO: this doesn't work - annotation class doesn't match
+                    Keyword annotation = m.getAnnotation(Keyword.class);
+                    Function f;
+                    if (annotation.planReference() != null && !annotation.planReference().isBlank()) {
+                        try {
+                            f = CompositeFunctionUtils.createCompositeFunction(
+                                    annotation, m,
+                                    new PlanParser().parseCompositePlanFromPlanReference(m, annotation.planReference())
+                            );
+                        } catch (Exception ex) {
+                            throw new RuntimeException("Unable to parse plan from reference", ex);
+                        }
+                    } else {
+                        String functionName = annotation.name().length() > 0 ? annotation.name() : m.getName();
 
-                    GeneralScriptFunction function = new GeneralScriptFunction();
-                    function.setAttributes(new HashMap<>());
-                    function.getAttributes().put(AbstractOrganizableObject.NAME, functionName);
+                        GeneralScriptFunction function = new GeneralScriptFunction();
+                        function.setAttributes(new HashMap<>());
+                        function.getAttributes().put(AbstractOrganizableObject.NAME, functionName);
 
-                    // to be filled by AutomationPackageKeywordsAttributesApplier
-                    function.setScriptFile(new DynamicValue<>(""));
+                        // to be filled by AutomationPackageKeywordsAttributesApplier
+                        function.setScriptFile(new DynamicValue<>(""));
 
-                    // TODO: libraries?
+                        // TODO: libraries?
 //                if (libraries != null) {
 //                    function.setLibrariesFile(new DynamicValue<>(libraries.getAbsolutePath()));
 //                }
-                    function.getCallTimeout().setValue(annotation.timeout());
-                    function.setDescription(annotation.description());
-                    function.setScriptLanguage(new DynamicValue<>("java"));
-                    f = function;
-                }
+                        function.getCallTimeout().setValue(annotation.timeout());
+                        function.setDescription(annotation.description());
+                        function.setScriptLanguage(new DynamicValue<>("java"));
+                        f = function;
+                    }
 
-                res.getKeywords().add(new AutomationPackageKeyword(f, Map.of(GeneralScriptFunctionConversionRule.AUTOMATION_PACKAGE_FILE_REFERENCE, "")));
+                    res.getKeywords().add(new AutomationPackageKeyword(f, Map.of(GeneralScriptFunctionConversionRule.AUTOMATION_PACKAGE_FILE_REFERENCE, "")));
+                }
             }
         }
     }

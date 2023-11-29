@@ -119,7 +119,9 @@ public class StepJarParser {
             if(automationPackageArchive.isAutomationPackage()) {
                 AutomationPackageDescriptorYaml descriptor = initAndGetAutomationPackageDescriptorReader().readAutomationPackageDescriptor(automationPackageArchive.getDescriptorYaml());
                 for (AutomationPackageKeyword automationPackageKeyword : descriptor.getKeywords()) {
-                    functions.add(automationPackagesKeywordAttributesApplier.applySpecialAttributesToKeyword(automationPackageKeyword, automationPackageArchive));
+                    functions.add(automationPackagesKeywordAttributesApplier.applySpecialAttributesToKeyword(
+                            automationPackageKeyword, automationPackageArchive, artifact.getAbsolutePath())
+                    );
                 }
             }
         } catch (AutomationPackageReadingException | IOException e) {

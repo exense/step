@@ -56,9 +56,12 @@ public class LocalFunctionPlugin extends AbstractExecutionEnginePlugin {
 	}
 
 	public List<Function> getLocalFunctions() {
-		List<Function> functions = new ArrayList<Function>();
-
 		Set<Method> methods = CachedAnnotationScanner.getMethodsWithAnnotation(Keyword.class);
+		return getLocalFunctions(methods);
+	}
+
+	public static List<Function> getLocalFunctions(Set<Method> methods) {
+		List<Function> functions = new ArrayList<Function>();
 		for (Method m : methods) {
 			Keyword annotation = m.getAnnotation(Keyword.class);
 

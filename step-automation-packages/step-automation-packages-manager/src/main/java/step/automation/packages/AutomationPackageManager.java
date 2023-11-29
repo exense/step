@@ -18,10 +18,10 @@
  ******************************************************************************/
 package step.automation.packages;
 
-import com.google.api.client.util.IOUtils;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.attachments.FileResolver;
 import step.automation.packages.accessor.AutomationPackageAccessor;
 import step.automation.packages.model.AutomationPackageContent;
 import step.automation.packages.model.AutomationPackageKeyword;
@@ -45,9 +45,6 @@ import step.functions.type.SetupFunctionException;
 import step.resources.Resource;
 import step.resources.ResourceManager;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -137,45 +134,59 @@ public class AutomationPackageManager {
         AutomationPackageArchive automationPackageArchive;
         AutomationPackageContent packageContent;
 
-        Resource automationPackageResource =
+        // store automation package
+        Resource automationPackageResource = null;
+        try {
+            automationPackageResource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_AUTOMATION_PACKAGE, packageStream, fileName, false, enricher);
+        } catch (Exception ex) {
+            throw new AutomationPackageManagerException("Unable to store automation package file");
+        }
 
         try {
-            automationPackageArchive = new AutomationPackageArchive(stream2file(packageStream));
-            packageContent = readAutomationPackage(automationPackageArchive);
-        } catch (IOException | AutomationPackageReadingException e) {
-            throw new AutomationPackageManagerException("Unable to read automation package", e);
+            try {
+                automationPackageArchive = new AutomationPackageArchive(resourceManager.getResourceFile(automationPackageResource.getId().toString()).getResourceFile());
+                packageContent = readAutomationPackage(automationPackageArchive);
+            } catch (AutomationPackageReadingException e) {
+                throw new AutomationPackageManagerException("Unable to read automation package", e);
+            }
+
+            AutomationPackage oldPackage = getAutomationPackageByName(packageContent.getName(), objectPredicate);
+            if (!allowUpdate && oldPackage != null) {
+                throw new AutomationPackageManagerException("Automation package '" + packageContent.getName() + "' already exists");
+            }
+
+            // keep old package id
+            AutomationPackage newPackage = createNewInstance(fileName, packageContent, oldPackage, automationPackageResource, enricher);
+
+            // prepare staging collections
+            List<Plan> completePlans = preparePlansStaging(newPackage, packageContent, oldPackage, enricher);
+            List<ExecutiontTaskParameters> completeExecTasksParameters = prepareExecutionTasksParamsStaging(newPackage, enricher, packageContent, oldPackage, completePlans);
+            List<Function> completeFunctions = prepareFunctionsStaging(newPackage, automationPackageArchive, packageContent, enricher, oldPackage);
+
+            // delete old package entities
+            if (oldPackage != null) {
+                deleteAutomationPackageEntities(oldPackage);
+            }
+
+            // persist all staged entities
+            persistStagedEntities(completeExecTasksParameters, completeFunctions, completePlans);
+
+            // save automation package metadata
+            ObjectId result = automationPackageAccessor.save(newPackage).getId();
+
+            if (oldPackage != null) {
+                log.info("Automation package has been updated ({}). Plans: {}. Functions: {}. Schedules: {}", newPackage.getAttribute(AbstractOrganizableObject.NAME), completePlans.size(), completeFunctions.size(), completeExecTasksParameters.size());
+            } else {
+                log.info("New automation package saved ({}). Plans: {}. Functions: {}. Schedules: {}", newPackage.getAttribute(AbstractOrganizableObject.NAME), completePlans.size(), completeFunctions.size(), completeExecTasksParameters.size());
+            }
+            return new PackageUpdateResult(oldPackage == null ? PackageUpdateStatus.CREATED : PackageUpdateStatus.UPDATED, result);
+        } catch (Exception ex){
+            // cleanup created resource
+            if(automationPackageResource != null){
+                resourceManager.deleteResource(automationPackageResource.getId().toString());
+            }
+            throw ex;
         }
-
-        AutomationPackage oldPackage = getAutomationPackageByName(packageContent.getName(), objectPredicate);
-        if (!allowUpdate && oldPackage != null) {
-            throw new AutomationPackageManagerException("Automation package '" + packageContent.getName() + "' already exists");
-        }
-
-        // keep old package id
-        AutomationPackage newPackage = createNewInstance(fileName, packageContent, oldPackage, enricher);
-
-        // prepare staging collections
-        List<Plan> completePlans = preparePlansStaging(newPackage, packageContent, oldPackage, enricher);
-        List<ExecutiontTaskParameters> completeExecTasksParameters = prepareExecutionTasksParamsStaging(newPackage, enricher, packageContent, oldPackage, completePlans);
-        List<Function> completeFunctions = prepareFunctionsStaging(newPackage, automationPackageArchive, packageContent, enricher, oldPackage);
-
-        // delete old package entities
-        if (oldPackage != null) {
-            deleteAutomationPackageEntities(oldPackage);
-        }
-
-        // persist all staged entities
-        persistStagedEntities(completeExecTasksParameters, completeFunctions, completePlans);
-
-        // save automation package metadata
-        ObjectId result = automationPackageAccessor.save(newPackage).getId();
-
-        if (oldPackage != null) {
-            log.info("Automation package has been updated ({}). Plans: {}. Functions: {}. Schedules: {}", newPackage.getAttribute(AbstractOrganizableObject.NAME), completePlans.size(), completeFunctions.size(), completeExecTasksParameters.size());
-        } else {
-            log.info("New automation package saved ({}). Plans: {}. Functions: {}. Schedules: {}", newPackage.getAttribute(AbstractOrganizableObject.NAME), completePlans.size(), completeFunctions.size(), completeExecTasksParameters.size());
-        }
-        return new PackageUpdateResult(oldPackage == null ? PackageUpdateStatus.CREATED : PackageUpdateStatus.UPDATED, result);
     }
 
     private void persistStagedEntities(List<ExecutiontTaskParameters> completeExecTasksParameters, List<Function> completeFunctions, List<Plan> completePlans) throws SetupFunctionException, FunctionTypeException {
@@ -265,7 +276,7 @@ public class AutomationPackageManager {
         return functionNameToIdMap;
     }
 
-    protected AutomationPackage createNewInstance(String fileName, AutomationPackageContent packageContent, AutomationPackage oldPackage, ObjectEnricher enricher) {
+    protected AutomationPackage createNewInstance(String fileName, AutomationPackageContent packageContent, AutomationPackage oldPackage, Resource automationPackageResource, ObjectEnricher enricher) {
         AutomationPackage newPackage = new AutomationPackage();
 
         // keep old id
@@ -276,6 +287,7 @@ public class AutomationPackageManager {
         newPackage.addAttribute(AbstractOrganizableObject.VERSION, packageContent.getVersion());
 
         newPackage.addCustomField(AutomationPackageEntity.AUTOMATION_PACKAGE_FILE_NAME, fileName);
+        newPackage.setPackageLocation(FileResolver.RESOURCE_PREFIX + automationPackageResource);
         if (enricher != null) {
             enricher.accept(newPackage);
         }
@@ -289,16 +301,6 @@ public class AutomationPackageManager {
             throw new AutomationPackageManagerException("Automation package name is missing");
         }
         return packageContent;
-    }
-
-    // TODO: find another way to read automation package from input stream
-    private static File stream2file(InputStream in) throws IOException {
-        final File tempFile = File.createTempFile("autopack", ".tmp");
-        tempFile.deleteOnExit();
-        try (FileOutputStream out = new FileOutputStream(tempFile)) {
-            IOUtils.copy(in, out);
-        }
-        return tempFile;
     }
 
     protected List<ExecutiontTaskParameters> deleteSchedules(AutomationPackage automationPackage) {

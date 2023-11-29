@@ -49,7 +49,7 @@ public class JMeterFunctionTestplanConversionRule implements YamlKeywordConversi
 
     @Override
     public SpecialKeywordAttributesApplier getSpecialKeywordAttributesApplier(AutomationPackageAttributesApplyingContext context) {
-        return (keyword, automationPackageFile) -> {
+        return (keyword, automationPackageFile, automationPackage) -> {
             JMeterFunction draftKeyword = (JMeterFunction) keyword.getDraftKeyword();
             String testplanPath = (String) keyword.getSpecialAttributes().get(JMETER_TESTPLAN_ATTR);
             Resource resource = resourceUploader.uploadResourceFromAutomationPackage(automationPackageFile, testplanPath, ResourceManager.RESOURCE_TYPE_FUNCTIONS, context);
