@@ -1,6 +1,6 @@
 package step.plugins.timeseries.dashboards.model;
 
-public class DashboardItem {
+public class DashboardItem { // T = 'ChartSettings'. class: 'ChartSettings' @JsonTypeInfo
 	
 	private String name;
 	private DashletType type;

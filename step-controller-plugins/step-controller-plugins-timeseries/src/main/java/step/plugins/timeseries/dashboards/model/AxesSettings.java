@@ -1,24 +1,16 @@
 package step.plugins.timeseries.dashboards.model;
 
 import step.core.timeseries.metric.MetricAggregation;
+import step.core.timeseries.metric.MetricRenderingSettings;
 
 import java.util.List;
 
 public class AxesSettings {
 
-	private String metricKey;
 	private MetricAggregation aggregation;
 	private AxesDisplayType displayType;
 	private String unit;
-
-	public String getMetricKey() {
-		return metricKey;
-	}
-
-	public AxesSettings setMetricKey(String metricKey) {
-		this.metricKey = metricKey;
-		return this;
-	}
+	private MetricRenderingSettings renderingSettings;
 
 	public MetricAggregation getAggregation() {
 		return aggregation;
@@ -44,6 +36,16 @@ public class AxesSettings {
 
 	public AxesSettings setUnit(String unit) {
 		this.unit = unit;
+		return this;
+	}
+
+
+	public MetricRenderingSettings getRenderingSettings() {
+		return renderingSettings;
+	}
+
+	public AxesSettings setRenderingSettings(MetricRenderingSettings renderingSettings) {
+		this.renderingSettings = renderingSettings;
 		return this;
 	}
 }

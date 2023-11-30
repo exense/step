@@ -5,8 +5,10 @@ import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
+import step.controller.services.entities.AbstractEntityServices;
 import step.core.GlobalContext;
 import step.core.deployment.AbstractStepServices;
+import step.core.entities.EntityManager;
 import step.framework.server.security.Secured;
 import step.plugins.timeseries.dashboards.DashboardAccessor;
 import step.plugins.timeseries.dashboards.model.DashboardView;
@@ -14,16 +16,20 @@ import step.plugins.timeseries.dashboards.model.DashboardView;
 import java.util.List;
 import java.util.stream.Collectors;
 
+
 @Singleton
 @Path("/dashboards")
 @Tag(name = "Dashboards")
-public class DashboardsService extends AbstractStepServices {
+public class DashboardsService extends AbstractEntityServices<DashboardView> { // AbstractEntityServices + init table
 
 	private DashboardAccessor accessor;
-	
+
+	public DashboardsService() {
+		super(EntityManager.dashboards);
+	}
+
 	@PostConstruct
     public void init() throws Exception {
-        super.init();
         GlobalContext context = getContext();
         accessor = context.require(DashboardAccessor.class);
     }
@@ -35,13 +41,6 @@ public class DashboardsService extends AbstractStepServices {
 	public List<DashboardView> getAll() {
 		 return accessor.stream().collect(Collectors.toList());
 	}
-	
-	public void save() {
-		
-	}
-	
-	public void update() {
-		
-	}
+
 
 }

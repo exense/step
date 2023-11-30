@@ -29,6 +29,7 @@ public class TimeSeriesExecutionPlugin extends AbstractExecutionEnginePlugin {
 	public static final String FAILURE_PERCENTAGE = "executions/failure-percentage";
 	public static final String FAILURE_COUNT = "executions/failure-count";
 	public static final String FAILURES_COUNT_BY_ERROR_CODE = "executions/failures-count-by-error-code";
+	public static final String RESPONSE_TIME = "response-time";
 	public static final String ERROR_CODE = "errorCode";
 	public static String TIMESERIES_FLAG = "hasTimeSeries";
 

@@ -1,16 +1,48 @@
 package step.plugins.timeseries.dashboards.model;
 
+import step.core.timeseries.metric.MetricAttribute;
+
 import java.util.List;
 
 public class ChartSettings {
 	
+	private String metricKey;
+	private List<MetricAttribute> attributes;
 	private AxesSettings primaryAxes;
-	private AxesSettings secondaryAxes;
+	private List<ChartFilterItem> filters;
 	private List<String> grouping;
 	private boolean inheritGlobalFilters;
 	private boolean inheritGlobalGrouping;
 	
-	private List<ChartFilterItem> filters;
+	private boolean readonlyGrouping;
+	private boolean readonlyAggregate;
+
+	public List<MetricAttribute> getAttributes() {
+		return attributes;
+	}
+
+	public ChartSettings setAttributes(List<MetricAttribute> attributes) {
+		this.attributes = attributes;
+		return this;
+	}
+
+	public String getMetricKey() {
+		return metricKey;
+	}
+
+	public ChartSettings setMetricKey(String metricKey) {
+		this.metricKey = metricKey;
+		return this;
+	}
+
+	public List<ChartFilterItem> getFilters() {
+		return filters;
+	}
+
+	public ChartSettings setFilters(List<ChartFilterItem> filters) {
+		this.filters = filters;
+		return this;
+	}
 
 	public List<String> getGrouping() {
 		return grouping;
@@ -27,15 +59,6 @@ public class ChartSettings {
 
 	public ChartSettings setPrimaryAxes(AxesSettings primaryAxes) {
 		this.primaryAxes = primaryAxes;
-		return this;
-	}
-
-	public AxesSettings getSecondaryAxes() {
-		return secondaryAxes;
-	}
-
-	public ChartSettings setSecondaryAxes(AxesSettings secondaryAxes) {
-		this.secondaryAxes = secondaryAxes;
 		return this;
 	}
 
@@ -57,12 +80,21 @@ public class ChartSettings {
 		return this;
 	}
 
-	public List<ChartFilterItem> getFilters() {
-		return filters;
+	public boolean isReadonlyGrouping() {
+		return readonlyGrouping;
 	}
 
-	public ChartSettings setFilters(List<ChartFilterItem> filters) {
-		this.filters = filters;
+	public ChartSettings setReadonlyGrouping(boolean readonlyGrouping) {
+		this.readonlyGrouping = readonlyGrouping;
+		return this;
+	}
+
+	public boolean isReadonlyAggregate() {
+		return readonlyAggregate;
+	}
+
+	public ChartSettings setReadonlyAggregate(boolean readonlyAggregate) {
+		this.readonlyAggregate = readonlyAggregate;
 		return this;
 	}
 }
