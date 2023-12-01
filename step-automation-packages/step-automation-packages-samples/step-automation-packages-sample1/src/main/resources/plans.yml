@@ -5,3 +5,5 @@ plans:
         children:
           - echo:
               text: "Just echo"
+          - callKeyword:
+              keyword: "MyKeyword2"

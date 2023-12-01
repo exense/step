@@ -18,12 +18,22 @@
  ******************************************************************************/
 package step.plugins.java.automation;
 
+import step.attachments.FileResolver;
 import step.automation.packages.AutomationPackageAttributesApplyingContext;
 import step.automation.packages.yaml.deserialization.SpecialKeywordAttributesApplier;
 import step.automation.packages.yaml.rules.YamlKeywordConversionRule;
 import step.automation.packages.yaml.rules.YamlKeywordConversionRuleAddOn;
 import step.core.dynamicbeans.DynamicValue;
 import step.plugins.java.GeneralScriptFunction;
+import step.resources.InvalidResourceFormatException;
+import step.resources.Resource;
+import step.resources.ResourceManager;
+import step.resources.SimilarResourceExistingException;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 
 @YamlKeywordConversionRuleAddOn(functions = GeneralScriptFunction.class)
 public class GeneralScriptFunctionConversionRule implements YamlKeywordConversionRule {
@@ -32,11 +42,28 @@ public class GeneralScriptFunctionConversionRule implements YamlKeywordConversio
 
     @Override
     public SpecialKeywordAttributesApplier getSpecialKeywordAttributesApplier(AutomationPackageAttributesApplyingContext context) {
-        return (keyword, automationPackageArchive, automationPackageLocation) -> {
-            if (keyword.getSpecialAttributes().containsKey(AUTOMATION_PACKAGE_FILE_REFERENCE)) {
-                if (automationPackageLocation != null) {
-                    ((GeneralScriptFunction) keyword.getDraftKeyword()).setScriptFile(new DynamicValue<>(automationPackageLocation));
+        return (keyword, automationPackageArchive, automationPackageId, objectEnricher) -> {
+            GeneralScriptFunction generalScriptFunction = (GeneralScriptFunction) keyword.getDraftKeyword();
+            if (generalScriptFunction.getScriptFile().get() == null || generalScriptFunction.getScriptFile().get().isEmpty()) {
+                String uploadedPackageFileResource = context.getUploadedPackageFileResource();
+                if (uploadedPackageFileResource == null) {
+                    File originalFile = automationPackageArchive.getOriginalFile();
+                    if (originalFile == null) {
+                        throw new RuntimeException("General script functions can only be used within automation package archive");
+                    }
+                    try (InputStream is = new FileInputStream(originalFile)) {
+                        Resource resource = context.getResourceManager().createResource(
+                                ResourceManager.RESOURCE_TYPE_FUNCTIONS, is, originalFile.getName(), false, objectEnricher
+                        );
+                        uploadedPackageFileResource = FileResolver.RESOURCE_PREFIX + resource.getId().toString();
+
+                        // fill context with just uploaded resource to upload it only once and reuse it in other general script functions
+                        context.setUploadedPackageFileResource(uploadedPackageFileResource);
+                    } catch (IOException | SimilarResourceExistingException | InvalidResourceFormatException e) {
+                        throw new RuntimeException("General script function cannot be created", e);
+                    }
                 }
+                generalScriptFunction.setScriptFile(new DynamicValue<>(uploadedPackageFileResource));
             }
         };
     }

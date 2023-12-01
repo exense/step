@@ -36,14 +36,17 @@ public class AutomationPackageArchive implements Closeable {
     public static final List<String> METADATA_FILES = List.of("automation-package.yml", "automation-package.yaml");
 
     private final ClassLoader classLoader;
+    private final File originalFile;
     private boolean internalClassLoader = false;
 
     public AutomationPackageArchive(ClassLoader classLoader) {
         this.classLoader = classLoader;
+        this.originalFile = null;
     }
 
     public AutomationPackageArchive(File automationPackageJar) throws AutomationPackageReadingException {
         this.internalClassLoader = true;
+        this.originalFile = automationPackageJar;
         try {
             this.classLoader = new URLClassLoader(new URL[]{automationPackageJar.toURI().toURL()}, null);
         } catch (MalformedURLException ex) {
@@ -86,6 +89,10 @@ public class AutomationPackageArchive implements Closeable {
 
     public ClassLoader getClassLoader() {
         return classLoader;
+    }
+
+    public File getOriginalFile() {
+        return originalFile;
     }
 
     @Override

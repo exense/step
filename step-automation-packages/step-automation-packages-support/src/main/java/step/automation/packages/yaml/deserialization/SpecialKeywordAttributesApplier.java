@@ -18,11 +18,14 @@
  ******************************************************************************/
 package step.automation.packages.yaml.deserialization;
 
+import org.bson.types.ObjectId;
 import step.automation.packages.AutomationPackageArchive;
 import step.automation.packages.model.AutomationPackageKeyword;
+import step.core.objectenricher.ObjectEnricher;
 
 public interface SpecialKeywordAttributesApplier {
     void applySpecialAttributesToKeyword(AutomationPackageKeyword keyword,
                                          AutomationPackageArchive automationPackageArchive,
-                                         String automationPackageLocation);
+                                         ObjectId automationPackageId,
+                                         ObjectEnricher objectEnricher);
 }

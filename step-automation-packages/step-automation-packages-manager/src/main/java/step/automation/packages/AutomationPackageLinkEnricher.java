@@ -18,30 +18,30 @@
  ******************************************************************************/
 package step.automation.packages;
 
-import step.resources.ResourceManager;
+import step.core.accessors.AbstractIdentifiableObject;
+import step.core.objectenricher.EnricheableObject;
+import step.core.objectenricher.ObjectEnricher;
 
-public class AutomationPackageAttributesApplyingContext {
-    private ResourceManager resourceManager;
+import java.util.HashMap;
+import java.util.Map;
 
-    private String uploadedPackageFileResource;
+public class AutomationPackageLinkEnricher implements ObjectEnricher {
 
-    public AutomationPackageAttributesApplyingContext(ResourceManager resourceManager) {
-        this.resourceManager = resourceManager;
+    private String automationPackageId;
+
+    public AutomationPackageLinkEnricher(String automationPackageId) {
+        this.automationPackageId = automationPackageId;
     }
 
-    public ResourceManager getResourceManager() {
-        return resourceManager;
+    @Override
+    public Map<String, String> getAdditionalAttributes() {
+        return new HashMap<>();
     }
 
-    public void setResourceManager(ResourceManager resourceManager) {
-        this.resourceManager = resourceManager;
-    }
-
-    public String getUploadedPackageFileResource() {
-        return uploadedPackageFileResource;
-    }
-
-    public void setUploadedPackageFileResource(String uploadedPackageFileResource) {
-        this.uploadedPackageFileResource = uploadedPackageFileResource;
+    @Override
+    public void accept(EnricheableObject enricheableObject) {
+        if (enricheableObject instanceof AbstractIdentifiableObject) {
+            ((AbstractIdentifiableObject) enricheableObject).addCustomField(AutomationPackageEntity.AUTOMATION_PACKAGE_ID, automationPackageId);
+        }
     }
 }

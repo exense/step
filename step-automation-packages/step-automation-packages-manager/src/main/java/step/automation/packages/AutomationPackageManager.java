@@ -18,10 +18,10 @@
  ******************************************************************************/
 package step.automation.packages;
 
+import org.apache.commons.io.IOUtils;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.attachments.FileResolver;
 import step.automation.packages.accessor.AutomationPackageAccessor;
 import step.automation.packages.model.AutomationPackageContent;
 import step.automation.packages.model.AutomationPackageKeyword;
@@ -31,6 +31,7 @@ import step.core.accessors.AbstractOrganizableObject;
 import step.core.execution.model.ExecutionParameters;
 import step.core.objectenricher.EnricheableObject;
 import step.core.objectenricher.ObjectEnricher;
+import step.core.objectenricher.ObjectEnricherComposer;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
@@ -45,6 +46,9 @@ import step.functions.type.SetupFunctionException;
 import step.resources.Resource;
 import step.resources.ResourceManager;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -134,17 +138,19 @@ public class AutomationPackageManager {
         AutomationPackageArchive automationPackageArchive;
         AutomationPackageContent packageContent;
 
-        // store automation package
-        Resource automationPackageResource = null;
+        AutomationPackage newPackage = null;
+
+        // store automation package into temp file
+        File automationPackageFile = null;
         try {
-            automationPackageResource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_AUTOMATION_PACKAGE, packageStream, fileName, false, enricher);
+            automationPackageFile = stream2file(packageStream);
         } catch (Exception ex) {
             throw new AutomationPackageManagerException("Unable to store automation package file");
         }
 
         try {
             try {
-                automationPackageArchive = new AutomationPackageArchive(resourceManager.getResourceFile(automationPackageResource.getId().toString()).getResourceFile());
+                automationPackageArchive = new AutomationPackageArchive(automationPackageFile);
                 packageContent = readAutomationPackage(automationPackageArchive);
             } catch (AutomationPackageReadingException e) {
                 throw new AutomationPackageManagerException("Unable to read automation package", e);
@@ -156,12 +162,13 @@ public class AutomationPackageManager {
             }
 
             // keep old package id
-            AutomationPackage newPackage = createNewInstance(fileName, packageContent, oldPackage, automationPackageResource, enricher);
+            newPackage = createNewInstance(fileName, packageContent, oldPackage, enricher);
 
             // prepare staging collections
-            List<Plan> completePlans = preparePlansStaging(newPackage, packageContent, oldPackage, enricher);
-            List<ExecutiontTaskParameters> completeExecTasksParameters = prepareExecutionTasksParamsStaging(newPackage, enricher, packageContent, oldPackage, completePlans);
-            List<Function> completeFunctions = prepareFunctionsStaging(newPackage, automationPackageArchive, packageContent, enricher, oldPackage);
+            ObjectEnricher enricherForIncludedEntities = ObjectEnricherComposer.compose(List.of(enricher, new AutomationPackageLinkEnricher(newPackage.getId().toString())));
+            List<Plan> completePlans = preparePlansStaging(packageContent, oldPackage, enricherForIncludedEntities);
+            List<ExecutiontTaskParameters> completeExecTasksParameters = prepareExecutionTasksParamsStaging(enricherForIncludedEntities, packageContent, oldPackage, completePlans);
+            List<Function> completeFunctions = prepareFunctionsStaging(newPackage, automationPackageArchive, packageContent, enricherForIncludedEntities, oldPackage);
 
             // delete old package entities
             if (oldPackage != null) {
@@ -180,10 +187,13 @@ public class AutomationPackageManager {
                 log.info("New automation package saved ({}). Plans: {}. Functions: {}. Schedules: {}", newPackage.getAttribute(AbstractOrganizableObject.NAME), completePlans.size(), completeFunctions.size(), completeExecTasksParameters.size());
             }
             return new PackageUpdateResult(oldPackage == null ? PackageUpdateStatus.CREATED : PackageUpdateStatus.UPDATED, result);
-        } catch (Exception ex){
-            // cleanup created resource
-            if(automationPackageResource != null){
-                resourceManager.deleteResource(automationPackageResource.getId().toString());
+        } catch (Exception ex) {
+            // cleanup created resources
+            if (newPackage != null) {
+                List<Resource> resources = resourceManager.findManyByCriteria(Map.of("customFields." + AutomationPackageEntity.AUTOMATION_PACKAGE_ID, newPackage.getId().toString()));
+                for (Resource resource : resources) {
+                    resourceManager.deleteResource(resource.getId().toString());
+                }
             }
             throw ex;
         }
@@ -209,7 +219,7 @@ public class AutomationPackageManager {
 
     }
 
-    protected <T extends AbstractOrganizableObject & EnricheableObject> void fillEntities(List<T> entities, AutomationPackage newPackage, List<T> oldEntities, ObjectEnricher enricher) {
+    protected <T extends AbstractOrganizableObject & EnricheableObject> void fillEntities(List<T> entities, List<T> oldEntities, ObjectEnricher enricher) {
         Map<String, ObjectId> planNameToIdMap = createNameToIdMap(oldEntities);
 
         for (T e : entities) {
@@ -219,16 +229,15 @@ public class AutomationPackageManager {
                 e.setId(oldId);
             }
 
-            e.addCustomField(AutomationPackageEntity.AUTOMATION_PACKAGE_ID, newPackage.getId().toString());
             if (enricher != null) {
                 enricher.accept(e);
             }
         }
     }
 
-    protected List<Plan> preparePlansStaging(AutomationPackage newPackage, AutomationPackageContent packageContent, AutomationPackage oldPackage, ObjectEnricher enricher) {
+    protected List<Plan> preparePlansStaging(AutomationPackageContent packageContent, AutomationPackage oldPackage, ObjectEnricher enricher) {
         List<Plan> plans = packageContent.getPlans();
-        fillEntities(plans, newPackage, oldPackage != null ? getPackagePlans(oldPackage.getId()) : new ArrayList<>(), enricher);
+        fillEntities(plans, oldPackage != null ? getPackagePlans(oldPackage.getId()) : new ArrayList<>(), enricher);
         return plans;
     }
 
@@ -236,15 +245,15 @@ public class AutomationPackageManager {
         List<Function> completeFunctions = new ArrayList<>();
         for (AutomationPackageKeyword keyword : packageContent.getKeywords()) {
             // TODO: here want to apply additional attributes to draft function (upload linked files as resources), but we have to refactor the way to do that
-            Function completeFunction = keywordsAttributesApplier.applySpecialAttributesToKeyword(keyword, automationPackageArchive, newPackage.getPackageLocation());
+            Function completeFunction = keywordsAttributesApplier.applySpecialAttributesToKeyword(keyword, automationPackageArchive, newPackage.getId(), enricher);
             completeFunctions.add(completeFunction);
         }
 
-        fillEntities(completeFunctions, newPackage, oldPackage != null ? getPackageFunctions(oldPackage.getId()) : new ArrayList<>(), enricher);
+        fillEntities(completeFunctions, oldPackage != null ? getPackageFunctions(oldPackage.getId()) : new ArrayList<>(), enricher);
         return completeFunctions;
     }
 
-    protected List<ExecutiontTaskParameters> prepareExecutionTasksParamsStaging(AutomationPackage newPackage, ObjectEnricher enricher, AutomationPackageContent packageContent, AutomationPackage oldPackage, List<Plan> plansStaging) {
+    protected List<ExecutiontTaskParameters> prepareExecutionTasksParamsStaging(ObjectEnricher enricher, AutomationPackageContent packageContent, AutomationPackage oldPackage, List<Plan> plansStaging) {
         List<ExecutiontTaskParameters> completeExecTasksParameters = new ArrayList<>();
         for (AutomationPackageSchedule schedule : packageContent.getSchedules()) {
             ExecutiontTaskParameters execTaskParameters = new ExecutiontTaskParameters();
@@ -261,22 +270,22 @@ public class AutomationPackageManager {
             execTaskParameters.setExecutionsParameters(new ExecutionParameters(plan, schedule.getExecutionParameters()));
             completeExecTasksParameters.add(execTaskParameters);
         }
-        fillEntities(completeExecTasksParameters, newPackage, oldPackage != null ? getPackageSchedules(oldPackage.getId()) : new ArrayList<>(), enricher);
+        fillEntities(completeExecTasksParameters, oldPackage != null ? getPackageSchedules(oldPackage.getId()) : new ArrayList<>(), enricher);
         return completeExecTasksParameters;
     }
 
     private Map<String, ObjectId> createNameToIdMap(List<? extends AbstractOrganizableObject> objects) {
-        Map<String, ObjectId> functionNameToIdMap = new HashMap<>();
+        Map<String, ObjectId> nameToIdMap = new HashMap<>();
         for (AbstractOrganizableObject o : objects) {
             String name = o.getAttribute(AbstractOrganizableObject.NAME);
             if (name != null) {
-                functionNameToIdMap.put(name, o.getId());
+                nameToIdMap.put(name, o.getId());
             }
         }
-        return functionNameToIdMap;
+        return nameToIdMap;
     }
 
-    protected AutomationPackage createNewInstance(String fileName, AutomationPackageContent packageContent, AutomationPackage oldPackage, Resource automationPackageResource, ObjectEnricher enricher) {
+    protected AutomationPackage createNewInstance(String fileName, AutomationPackageContent packageContent, AutomationPackage oldPackage, ObjectEnricher enricher) {
         AutomationPackage newPackage = new AutomationPackage();
 
         // keep old id
@@ -287,7 +296,6 @@ public class AutomationPackageManager {
         newPackage.addAttribute(AbstractOrganizableObject.VERSION, packageContent.getVersion());
 
         newPackage.addCustomField(AutomationPackageEntity.AUTOMATION_PACKAGE_FILE_NAME, fileName);
-        newPackage.setPackageLocation(FileResolver.RESOURCE_PREFIX + automationPackageResource);
         if (enricher != null) {
             enricher.accept(newPackage);
         }
@@ -381,6 +389,16 @@ public class AutomationPackageManager {
 
     public ExecutionTaskAccessor getExecutionTaskAccessor() {
         return executionTaskAccessor;
+    }
+
+    // TODO: find another way to read automation package from input stream
+    private static File stream2file(InputStream in) throws IOException {
+        final File tempFile = File.createTempFile("autopack", ".tmp");
+        tempFile.deleteOnExit();
+        try (FileOutputStream out = new FileOutputStream(tempFile)) {
+            IOUtils.copy(in, out);
+        }
+        return tempFile;
     }
 
     public static class PackageUpdateResult {

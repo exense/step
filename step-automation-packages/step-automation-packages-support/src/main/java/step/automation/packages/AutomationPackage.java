@@ -19,24 +19,8 @@
 package step.automation.packages;
 
 import step.core.accessors.AbstractOrganizableObject;
-import step.core.entities.EntityManager;
-import step.core.entities.EntityReference;
 import step.core.objectenricher.EnricheableObject;
-import step.resources.Resource;
 
 public class AutomationPackage extends AbstractOrganizableObject implements EnricheableObject {
 
-    protected String packageLocation;
-
-    /**
-     * @return the path to the package file. might be a {@link Resource}
-     */
-    @EntityReference(type = EntityManager.resources)
-    public String getPackageLocation() {
-        return packageLocation;
-    }
-
-    public void setPackageLocation(String packageLocation) {
-        this.packageLocation = packageLocation;
-    }
 }

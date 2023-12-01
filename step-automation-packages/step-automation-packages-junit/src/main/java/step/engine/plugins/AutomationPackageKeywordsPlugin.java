@@ -65,7 +65,7 @@ public class AutomationPackageKeywordsPlugin extends AbstractExecutionEnginePlug
                 AutomationPackageContent automationPackageContent = automationPackageReader.readAutomationPackage(automationPackageArchive, true);
                 if (automationPackageContent != null) {
                     for (AutomationPackageKeyword foundKeyword : automationPackageContent.getKeywords()) {
-                        res.add(attributesApplier.applySpecialAttributesToKeyword(foundKeyword, automationPackageArchive, null));
+                        res.add(attributesApplier.applySpecialAttributesToKeyword(foundKeyword, automationPackageArchive, null, null));
                     }
                 }
             } catch (AutomationPackageReadingException e) {

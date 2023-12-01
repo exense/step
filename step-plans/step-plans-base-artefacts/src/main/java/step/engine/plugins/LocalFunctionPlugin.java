@@ -20,7 +20,6 @@ package step.engine.plugins;
 
 import org.bson.types.ObjectId;
 import step.core.accessors.AbstractOrganizableObject;
-import step.core.dynamicbeans.DynamicValue;
 import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionEngineContext;
 import step.core.execution.OperationMode;
@@ -57,28 +56,29 @@ public class LocalFunctionPlugin extends AbstractExecutionEnginePlugin {
 
 	public List<Function> getLocalFunctions() {
 		Set<Method> methods = CachedAnnotationScanner.getMethodsWithAnnotation(Keyword.class);
-		return getLocalFunctions(methods);
-	}
-
-	public static List<Function> getLocalFunctions(Set<Method> methods) {
 		List<Function> functions = new ArrayList<Function>();
 		for (Method m : methods) {
 			Keyword annotation = m.getAnnotation(Keyword.class);
 
 			// keywords with plan reference are not local functions but composite functions linked with plan
 			if (annotation.planReference() == null || annotation.planReference().isBlank()) {
-				String functionName = annotation.name().length() > 0 ? annotation.name() : m.getName();
-
-				LocalFunction function = new LocalFunction();
-				function.getCallTimeout().setValue(annotation.timeout());
-				function.setAttributes(new HashMap<>());
-				function.getAttributes().put(AbstractOrganizableObject.NAME, functionName);
-				function.setClassName(m.getDeclaringClass().getName());
+				LocalFunction function = createLocalFunction(m, annotation);
 
 				functions.add(function);
 			}
 		}
 		return functions;
+	}
+
+	public static LocalFunction createLocalFunction(Method m, Keyword annotation) {
+		String functionName = annotation.name().length() > 0 ? annotation.name() : m.getName();
+
+		LocalFunction function = new LocalFunction();
+		function.getCallTimeout().setValue(annotation.timeout());
+		function.setAttributes(new HashMap<>());
+		function.getAttributes().put(AbstractOrganizableObject.NAME, functionName);
+		function.setClassName(m.getDeclaringClass().getName());
+		return function;
 	}
 
 	public static class LocalFunction extends Function {

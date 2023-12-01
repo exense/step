@@ -18,6 +18,8 @@
  ******************************************************************************/
 package step.automation.packages;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.automation.packages.model.AutomationPackageContent;
 import step.automation.packages.model.AutomationPackageKeyword;
 import step.automation.packages.yaml.AutomationPackageDescriptorReader;
@@ -26,7 +28,6 @@ import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.scanner.AnnotationScanner;
-import step.core.scanner.CachedAnnotationScanner;
 import step.engine.plugins.LocalFunctionPlugin;
 import step.functions.Function;
 import step.handlers.javahandler.Keyword;
@@ -39,14 +40,12 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
-import java.net.URLClassLoader;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class AutomationPackageReader {
+
+    private static final Logger log = LoggerFactory.getLogger(AutomationPackageReader.class);
 
     private final AutomationPackageDescriptorReader descriptorReader;
 
@@ -81,31 +80,23 @@ public class AutomationPackageReader {
     }
 
     private void fillAutomationPackageWithAnnotatedKeywords(AutomationPackageContent res, AutomationPackageArchive archive, boolean isLocalPackage) {
-        try (AnnotationScanner annotationScanner = AnnotationScanner.forSpecificJarFromURLClassLoader((URLClassLoader) archive.getClassLoader())) {
+        // for file-based packages we create class loader for file, otherwise we just use class loader from archive
+        try (AnnotationScanner annotationScanner = archive.getOriginalFile() != null ? AnnotationScanner.forSpecificJar(archive.getOriginalFile()) : AnnotationScanner.forAllClassesFromClassLoader(archive.getClassLoader())) {
             Set<Method> methods = annotationScanner.getMethodsWithAnnotation(Keyword.class);
 
-            if (isLocalPackage) {
-                List<Function> functions = LocalFunctionPlugin.getLocalFunctions(methods);
-                for (Function f : functions) {
-                    res.getKeywords().add(new AutomationPackageKeyword(f, new HashMap<>()));
+            for (Method m : methods) {
+                // TODO: avoid duplicated code with StepJarParser
+                Keyword annotation = m.getAnnotation(Keyword.class);
+                if (annotation == null) {
+                    log.warn("Keyword annotation is not found for method " + m.getName());
+                    continue;
                 }
-                // TODO: composite functions?
-            } else {
-                for (Method m : methods) {
-                    // TODO: avoid duplicated code with StepJarParser
-                    // TODO: this doesn't work - annotation class doesn't match
-                    Keyword annotation = m.getAnnotation(Keyword.class);
-                    Function f;
-                    if (annotation.planReference() != null && !annotation.planReference().isBlank()) {
-                        try {
-                            f = CompositeFunctionUtils.createCompositeFunction(
-                                    annotation, m,
-                                    new PlanParser().parseCompositePlanFromPlanReference(m, annotation.planReference())
-                            );
-                        } catch (Exception ex) {
-                            throw new RuntimeException("Unable to parse plan from reference", ex);
-                        }
-                    } else {
+
+                Function f;
+                if (isCompositeFunction(annotation)) {
+                    f = createCompositeFunction(m, annotation);
+                } else {
+                    if (!isLocalPackage) {
                         String functionName = annotation.name().length() > 0 ? annotation.name() : m.getName();
 
                         GeneralScriptFunction function = new GeneralScriptFunction();
@@ -115,20 +106,35 @@ public class AutomationPackageReader {
                         // to be filled by AutomationPackageKeywordsAttributesApplier
                         function.setScriptFile(new DynamicValue<>(""));
 
-                        // TODO: libraries?
-//                if (libraries != null) {
-//                    function.setLibrariesFile(new DynamicValue<>(libraries.getAbsolutePath()));
-//                }
                         function.getCallTimeout().setValue(annotation.timeout());
                         function.setDescription(annotation.description());
                         function.setScriptLanguage(new DynamicValue<>("java"));
                         f = function;
+                    } else {
+                        f = LocalFunctionPlugin.createLocalFunction(m, annotation);
                     }
-
-                    res.getKeywords().add(new AutomationPackageKeyword(f, Map.of(GeneralScriptFunctionConversionRule.AUTOMATION_PACKAGE_FILE_REFERENCE, "")));
                 }
+
+                res.getKeywords().add(new AutomationPackageKeyword(f, Map.of(GeneralScriptFunctionConversionRule.AUTOMATION_PACKAGE_FILE_REFERENCE, "")));
             }
         }
+    }
+
+    private static Function createCompositeFunction(Method m, Keyword annotation) {
+        Function f;
+        try {
+            f = CompositeFunctionUtils.createCompositeFunction(
+                    annotation, m,
+                    new PlanParser().parseCompositePlanFromPlanReference(m, annotation.planReference())
+            );
+        } catch (Exception ex) {
+            throw new RuntimeException("Unable to parse plan from reference", ex);
+        }
+        return f;
+    }
+
+    private static boolean isCompositeFunction(Keyword annotation) {
+        return annotation.planReference() != null && !annotation.planReference().isBlank();
     }
 
     public void fillAutomationPackageWithImportedFragments(AutomationPackageContent targetPackage, AutomationPackageFragmentYaml fragment, AutomationPackageArchive archive) throws AutomationPackageReadingException {

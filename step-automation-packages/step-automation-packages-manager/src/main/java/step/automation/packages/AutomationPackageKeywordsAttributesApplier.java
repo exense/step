@@ -18,10 +18,12 @@
  ******************************************************************************/
 package step.automation.packages;
 
+import org.bson.types.ObjectId;
 import step.automation.packages.model.AutomationPackageKeyword;
 import step.automation.packages.yaml.AutomationPackageKeywordsLookuper;
 import step.automation.packages.yaml.deserialization.SpecialKeywordAttributesApplier;
 import step.automation.packages.yaml.rules.YamlKeywordConversionRule;
+import step.core.objectenricher.ObjectEnricher;
 import step.functions.Function;
 import step.resources.ResourceManager;
 
@@ -40,7 +42,8 @@ public class AutomationPackageKeywordsAttributesApplier {
 
     public Function applySpecialAttributesToKeyword(AutomationPackageKeyword keyword,
                                                     AutomationPackageArchive automationPackageArchive,
-                                                    String automationPackageLocation){
+                                                    ObjectId automationPackageId,
+                                                    ObjectEnricher objectEnricher){
         List<YamlKeywordConversionRule> conversionRules = lookuper.getConversionRulesForKeyword(keyword.getDraftKeyword());
         List<SpecialKeywordAttributesApplier> appliers = conversionRules.stream()
                 .map(r -> r.getSpecialKeywordAttributesApplier(prepareContext()))
@@ -48,7 +51,7 @@ public class AutomationPackageKeywordsAttributesApplier {
                 .collect(Collectors.toList());
 
         for (SpecialKeywordAttributesApplier applier : appliers) {
-            applier.applySpecialAttributesToKeyword(keyword, automationPackageArchive, automationPackageLocation);
+            applier.applySpecialAttributesToKeyword(keyword, automationPackageArchive, automationPackageId, objectEnricher);
         }
         return keyword.getDraftKeyword();
     }

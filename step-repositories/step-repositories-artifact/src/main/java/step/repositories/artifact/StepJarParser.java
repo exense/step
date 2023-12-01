@@ -22,11 +22,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.automation.packages.AutomationPackageArchive;
 import step.automation.packages.AutomationPackageKeywordsAttributesApplier;
+import step.automation.packages.AutomationPackageReader;
 import step.automation.packages.AutomationPackageReadingException;
+import step.automation.packages.model.AutomationPackageContent;
 import step.automation.packages.model.AutomationPackageKeyword;
-import step.automation.packages.yaml.AutomationPackageDescriptorReader;
 import step.automation.packages.yaml.YamlAutomationPackageVersions;
-import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
@@ -56,7 +56,7 @@ public class StepJarParser {
     private static final Logger logger = LoggerFactory.getLogger(StepJarParser.class);
 
     private final StepClassParser stepClassParser;
-    private AutomationPackageDescriptorReader automationPackageDescriptorReader;
+    private AutomationPackageReader automationPackageReader;
     private final AutomationPackageKeywordsAttributesApplier automationPackagesKeywordAttributesApplier;
 
     public StepJarParser() {
@@ -71,11 +71,11 @@ public class StepJarParser {
     /**
      * Lazy init for automation package descriptor reader (performance optimization)
      */
-    private synchronized AutomationPackageDescriptorReader initAndGetAutomationPackageDescriptorReader() {
-        if (automationPackageDescriptorReader == null) {
-            automationPackageDescriptorReader = new AutomationPackageDescriptorReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH);
+    private synchronized AutomationPackageReader initAndGetAutomationPackageReader() {
+        if (automationPackageReader == null) {
+            automationPackageReader = new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH);
         }
-        return automationPackageDescriptorReader;
+        return automationPackageReader;
     }
 
     private List<Function> getFunctions(AnnotationScanner annotationScanner, File artifact, File libraries) {
@@ -117,10 +117,11 @@ public class StepJarParser {
         try(AutomationPackageArchive automationPackageArchive = new AutomationPackageArchive(artifact)) {
             // add functions from automation package
             if(automationPackageArchive.isAutomationPackage()) {
-                AutomationPackageDescriptorYaml descriptor = initAndGetAutomationPackageDescriptorReader().readAutomationPackageDescriptor(automationPackageArchive.getDescriptorYaml());
-                for (AutomationPackageKeyword automationPackageKeyword : descriptor.getKeywords()) {
+
+                AutomationPackageContent content = initAndGetAutomationPackageReader().readAutomationPackage(automationPackageArchive, false);
+                for (AutomationPackageKeyword automationPackageKeyword : content.getKeywords()) {
                     functions.add(automationPackagesKeywordAttributesApplier.applySpecialAttributesToKeyword(
-                            automationPackageKeyword, automationPackageArchive, artifact.getAbsolutePath())
+                            automationPackageKeyword, automationPackageArchive, null, null)
                     );
                 }
             }
