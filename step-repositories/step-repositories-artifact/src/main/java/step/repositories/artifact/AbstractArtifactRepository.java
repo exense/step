@@ -27,6 +27,7 @@ import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.deployment.ControllerServiceException;
 import step.core.execution.ExecutionContext;
+import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
 import step.core.plans.builder.PlanBuilder;
@@ -74,7 +75,7 @@ public abstract class AbstractArtifactRepository extends AbstractRepository {
 	protected abstract String resolveArtifactName(Map<String, String> repositoryParameters);
 
 	@Override
-	public TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters) {
+	public TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) {
 		ParsedArtifact parsedArtifact = getAndParseArtifact(repositoryParameters);
 
 		TestSetStatusOverview overview = new TestSetStatusOverview();
