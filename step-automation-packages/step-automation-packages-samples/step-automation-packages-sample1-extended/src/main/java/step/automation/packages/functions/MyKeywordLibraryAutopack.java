@@ -20,8 +20,11 @@ package step.automation.packages.functions;
 
 import step.handlers.javahandler.AbstractKeyword;
 import step.handlers.javahandler.Keyword;
+import step.junit.runners.annotations.Plan;
+import step.junit.runners.annotations.Plans;
 
-public class MyKeywordLibrary2 extends AbstractKeyword {
+@Plans({"plan.plan"})
+public class MyKeywordLibraryAutopack extends AbstractKeyword {
 
 	@Keyword
 	public void MyKeyword2() {
@@ -33,5 +36,9 @@ public class MyKeywordLibrary2 extends AbstractKeyword {
 			});
 		}
 	}
+
+	@Plan("Echo PARAM_EXEC")
+	@Keyword
+	public void inlinePlan() {}
 
 }

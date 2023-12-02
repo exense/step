@@ -32,6 +32,13 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
+            <groupId>ch.exense.step</groupId>
+            <artifactId>step-junit</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- Test dependencies -->
+        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
             <version>${slf4j.version}</version>

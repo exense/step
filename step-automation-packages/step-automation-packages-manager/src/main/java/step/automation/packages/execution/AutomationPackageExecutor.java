@@ -103,7 +103,7 @@ public class AutomationPackageExecutor {
                 }
             }
         } finally {
-            cleanupContextAfterAllExecutions(contextId, inMemoryPackageManager, executions);
+            cleanupContextAfterAllExecutions(contextId, inMemoryPackageManager, executions, fileName);
         }
         return executions;
     }
@@ -116,7 +116,7 @@ public class AutomationPackageExecutor {
         }
     }
 
-    protected void cleanupContextAfterAllExecutions(ObjectId contextId, AutomationPackageManager packageManager, List<String> executions) {
+    protected void cleanupContextAfterAllExecutions(ObjectId contextId, AutomationPackageManager packageManager, List<String> executions, String fileName) {
         // wait for all executions to be finished
         delayedCleanupExecutor.execute(() -> {
             if (waitForAllExecutionEnded(executions)) return;
@@ -127,7 +127,7 @@ public class AutomationPackageExecutor {
             // remove the context from isolated automation package repository
             isolatedAutomationPackageRepository.removeContext(contextId.toString());
 
-            log.info("Execution finished for automation package.");
+            log.info("Execution finished for automation package {}", fileName);
         });
 
     }
@@ -138,14 +138,20 @@ public class AutomationPackageExecutor {
                 // continue polling until all executions in current context are ended
                 List<Execution> currentExecutions = executionAccessor.findByIds(executions).collect(Collectors.toList());
                 boolean activeExecutionFound = false;
+                boolean executionFound = false;
                 for (String executionId : executions) {
                     for (Execution currentExecution : currentExecutions) {
                         if (currentExecution.getId().toString().equals(executionId)) {
                             if (!currentExecution.getStatus().equals(ExecutionStatus.ENDED)) {
                                 activeExecutionFound = true;
                             }
+                            executionFound = true;
                             break;
                         }
+                    }
+
+                    if (!executionFound) {
+                        // unexpected situation - execution accessor didn't return launched execution
                         throw new RuntimeException("Execution not found by id: " + executionId);
                     }
 

@@ -78,7 +78,7 @@ public abstract class AbstractFunctionPackageHandler extends FunctionPackageUtil
 					// some attributes contain links to resources in automation package
 					// we have to apply them
 					try {
-						automationPackageArchive = new AutomationPackageArchive(packageFile);
+						automationPackageArchive = new AutomationPackageArchive(packageFile, packageFile.getName());
 					} catch (AutomationPackageReadingException e) {
 						throw new RuntimeException(e);
 					}

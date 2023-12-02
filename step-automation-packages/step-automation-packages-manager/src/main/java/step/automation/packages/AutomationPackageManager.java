@@ -163,14 +163,14 @@ public class AutomationPackageManager {
         // store automation package into temp file
         File automationPackageFile = null;
         try {
-            automationPackageFile = stream2file(packageStream);
+            automationPackageFile = stream2file(packageStream, fileName);
         } catch (Exception ex) {
             throw new AutomationPackageManagerException("Unable to store automation package file");
         }
 
         try {
             try {
-                automationPackageArchive = new AutomationPackageArchive(automationPackageFile);
+                automationPackageArchive = new AutomationPackageArchive(automationPackageFile, fileName);
                 packageContent = readAutomationPackage(automationPackageArchive);
             } catch (AutomationPackageReadingException e) {
                 throw new AutomationPackageManagerException("Unable to read automation package", e);
@@ -412,8 +412,8 @@ public class AutomationPackageManager {
     }
 
     // TODO: find another way to read automation package from input stream
-    private static File stream2file(InputStream in) throws IOException {
-        final File tempFile = File.createTempFile("autopack", ".tmp");
+    private static File stream2file(InputStream in, String fileName) throws IOException {
+        final File tempFile = File.createTempFile(fileName, ".tmp");
         tempFile.deleteOnExit();
         try (FileOutputStream out = new FileOutputStream(tempFile)) {
             IOUtils.copy(in, out);
