@@ -23,6 +23,7 @@ import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.automation.packages.accessor.AutomationPackageAccessor;
+import step.automation.packages.accessor.InMemoryAutomationPackageAccessorImpl;
 import step.automation.packages.model.AutomationPackageContent;
 import step.automation.packages.model.AutomationPackageKeyword;
 import step.automation.packages.model.AutomationPackageSchedule;
@@ -33,16 +34,22 @@ import step.core.objectenricher.EnricheableObject;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectEnricherComposer;
 import step.core.objectenricher.ObjectPredicate;
+import step.core.plans.InMemoryPlanAccessor;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
 import step.core.scheduler.ExecutionScheduler;
 import step.core.scheduler.ExecutionTaskAccessor;
 import step.core.scheduler.ExecutiontTaskParameters;
+import step.core.scheduler.InMemoryExecutionTaskAccessor;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
+import step.functions.accessor.InMemoryFunctionAccessorImpl;
 import step.functions.manager.FunctionManager;
+import step.functions.manager.FunctionManagerImpl;
 import step.functions.type.FunctionTypeException;
+import step.functions.type.FunctionTypeRegistry;
 import step.functions.type.SetupFunctionException;
+import step.resources.LocalResourceManagerImpl;
 import step.resources.Resource;
 import step.resources.ResourceManager;
 
@@ -93,6 +100,19 @@ public class AutomationPackageManager {
         this.packageReader = new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH);
         this.resourceManager = resourceManager;
         this.keywordsAttributesApplier = new AutomationPackageKeywordsAttributesApplier(resourceManager);
+    }
+
+    public static AutomationPackageManager createIsolatedAutomationPackageManager(ObjectId isolatedContextId, FunctionTypeRegistry functionTypeRegistry){
+        InMemoryFunctionAccessorImpl inMemoryFunctionRepository = new InMemoryFunctionAccessorImpl();
+        return new AutomationPackageManager(
+                new InMemoryAutomationPackageAccessorImpl(),
+                new FunctionManagerImpl(inMemoryFunctionRepository, functionTypeRegistry),
+                inMemoryFunctionRepository,
+                new InMemoryPlanAccessor(),
+                new LocalResourceManagerImpl(new File("resources", isolatedContextId.toString())),
+                new InMemoryExecutionTaskAccessor(),
+                null
+        );
     }
 
     public AutomationPackage getAutomationPackageByName(String name, ObjectPredicate objectPredicate) {
@@ -165,7 +185,7 @@ public class AutomationPackageManager {
             newPackage = createNewInstance(fileName, packageContent, oldPackage, enricher);
 
             // prepare staging collections
-            ObjectEnricher enricherForIncludedEntities = ObjectEnricherComposer.compose(List.of(enricher, new AutomationPackageLinkEnricher(newPackage.getId().toString())));
+            ObjectEnricher enricherForIncludedEntities = ObjectEnricherComposer.compose(Arrays.asList(enricher, new AutomationPackageLinkEnricher(newPackage.getId().toString())));
             List<Plan> completePlans = preparePlansStaging(packageContent, oldPackage, enricherForIncludedEntities);
             List<ExecutiontTaskParameters> completeExecTasksParameters = prepareExecutionTasksParamsStaging(enricherForIncludedEntities, packageContent, oldPackage, completePlans);
             List<Function> completeFunctions = prepareFunctionsStaging(newPackage, automationPackageArchive, packageContent, enricherForIncludedEntities, oldPackage);
@@ -220,11 +240,11 @@ public class AutomationPackageManager {
     }
 
     protected <T extends AbstractOrganizableObject & EnricheableObject> void fillEntities(List<T> entities, List<T> oldEntities, ObjectEnricher enricher) {
-        Map<String, ObjectId> planNameToIdMap = createNameToIdMap(oldEntities);
+        Map<String, ObjectId> nameToIdMap = createNameToIdMap(oldEntities);
 
         for (T e : entities) {
             // keep old id
-            ObjectId oldId = planNameToIdMap.get(e.getAttribute(AbstractOrganizableObject.NAME));
+            ObjectId oldId = nameToIdMap.get(e.getAttribute(AbstractOrganizableObject.NAME));
             if (oldId != null) {
                 e.setId(oldId);
             }

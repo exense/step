@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import step.core.AbstractStepContext;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.SetupFunctionException;
 import step.grid.agent.AgentTypes;
@@ -42,10 +43,15 @@ public class NodeFunctionType extends AbstractFunctionType<NodeFunction> {
 	}
 
 	@Override
-	public Map<String, String> getHandlerProperties(NodeFunction function) {
+	public Map<String, String> getHandlerProperties(NodeFunction function, AbstractStepContext executionContext) {
 		Map<String, String> props = new HashMap<>();
-		registerFile(function.getJsFile(), FILE, props);
+		registerFile(function.getJsFile(), FILE, props, executionContext);
 		return props;
+	}
+
+	@Override
+	public Map<String, String> getHandlerProperties(NodeFunction function) {
+		return getHandlerProperties(function, null);
 	}
 
 	@Override

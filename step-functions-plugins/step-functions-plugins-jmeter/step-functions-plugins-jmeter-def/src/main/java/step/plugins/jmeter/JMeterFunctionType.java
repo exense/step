@@ -25,6 +25,7 @@ import java.util.Map;
 import ch.exense.commons.app.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.core.AbstractStepContext;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionTypeException;
 import step.grid.filemanager.FileVersionId;
@@ -60,18 +61,23 @@ public class JMeterFunctionType extends AbstractFunctionType<JMeterFunction> {
 	}
 
 	@Override
-	public Map<String, String> getHandlerProperties(JMeterFunction function) {
+	public Map<String, String> getHandlerProperties(JMeterFunction function, AbstractStepContext executionContext) {
 		Map<String, String> props = new HashMap<>();
-		registerFile(function.getJmeterTestplan(), "$jmeter.testplan.file", props);
-		
+		registerFile(function.getJmeterTestplan(), "$jmeter.testplan.file", props, executionContext);
+
 		String home = configuration.getProperty(JMETER_HOME_CONFIG_PROPERTY);
-		if(home!=null) {
+		if (home != null) {
 			File homeFile = new File(home);
 			registerFile(homeFile, "$jmeter.libraries", props);
-			return props;			
+			return props;
 		} else {
 			throw new RuntimeException("Property 'plugins.jmeter.home' in step.properties isn't set. Please set it to path of the home folder of JMeter");
 		}
+	}
+
+	@Override
+	public Map<String, String> getHandlerProperties(JMeterFunction function) {
+		return this.getHandlerProperties(function, null);
 	}
 
 	@Override
@@ -86,7 +92,7 @@ public class JMeterFunctionType extends AbstractFunctionType<JMeterFunction> {
 			// TODO: if the function is managed by keyword package, we can delete linked resources (these resources aren't reused anywhere)
 			String jmeterTestplanResourceId = function.getJmeterTestplan().getValue();
 			if (jmeterTestplanResourceId != null && !jmeterTestplanResourceId.isEmpty()) {
-				ResourceManager resourceManager = getResourceManager();
+				ResourceManager resourceManager = getResourceManager(null);
 				if (resourceManager != null) {
 					resourceManager.deleteResource(jmeterTestplanResourceId);
 				} else {

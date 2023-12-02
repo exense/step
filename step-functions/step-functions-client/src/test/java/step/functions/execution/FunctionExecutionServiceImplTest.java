@@ -73,7 +73,7 @@ public class FunctionExecutionServiceImplTest {
 		TokenWrapper token = f.getTokenHandle(new HashMap<>(), new HashMap<>(), true, new TokenWrapperOwner() {});
 		FunctionInput<JsonObject> i = getDummyInput();
 		Assert.assertFalse(beforeFunctionCallHasBeenCall.get());
-		Output<JsonObject> output = f.callFunction(token.getID(), getFunction(), i, JsonObject.class);
+		Output<JsonObject> output = f.callFunction(token.getID(), getFunction(), i, JsonObject.class, null);
 		Assert.assertNotNull(output);
 		Assert.assertTrue(beforeFunctionCallHasBeenCall.get());
 
@@ -114,7 +114,7 @@ public class FunctionExecutionServiceImplTest {
 			});
 			FunctionInput<JsonObject> i = getDummyInput();
 			Assert.assertFalse(beforeFunctionCallHasBeenCall.get());
-			Output<JsonObject> output = f.callFunction(token.getID(), getFunction(), i, JsonObject.class);
+			Output<JsonObject> output = f.callFunction(token.getID(), getFunction(), i, JsonObject.class, null);
 			Assert.assertNotNull(output);
 			Assert.assertTrue(beforeFunctionCallHasBeenCall.get());
 
@@ -267,7 +267,7 @@ public class FunctionExecutionServiceImplTest {
 			throws FunctionExecutionServiceException {
 		TokenWrapper token = f.getTokenHandle(new HashMap<>(), new HashMap<>(), true, new TokenWrapperOwner() {});
 		FunctionInput<JsonObject> i = getDummyInput();
-		Output<JsonObject> output = f.callFunction(token.getID(), getFunction(), i, JsonObject.class);
+		Output<JsonObject> output = f.callFunction(token.getID(), getFunction(), i, JsonObject.class, null);
 		return output;
 	}
 

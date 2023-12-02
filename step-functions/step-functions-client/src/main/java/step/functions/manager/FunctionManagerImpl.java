@@ -56,6 +56,9 @@ public class FunctionManagerImpl implements FunctionManager {
 
 	private void setupFunction(Function function) throws SetupFunctionException {
 		AbstractFunctionType<Function> type = getFunctionType(function);
+		if (type == null) {
+			throw new SetupFunctionException("Function type is not resolved for " + function.getClass());
+		}
 		type.setupFunction(function);
 		functionRepository.save(function);
 	}

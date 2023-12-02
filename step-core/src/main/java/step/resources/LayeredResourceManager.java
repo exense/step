@@ -170,4 +170,8 @@ public class LayeredResourceManager implements ResourceManager {
     public ResourceAccessor getResourceAccessor() {
         return getManagerForPersistence().getResourceAccessor();
     }
+
+    public List<ResourceManager> getResourceManagers() {
+        return resourceManagers;
+    }
 }

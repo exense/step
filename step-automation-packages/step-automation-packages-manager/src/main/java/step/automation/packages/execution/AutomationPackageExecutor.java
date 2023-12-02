@@ -23,24 +23,17 @@ import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.automation.packages.AutomationPackageManager;
-import step.automation.packages.accessor.InMemoryAutomationPackageAccessorImpl;
 import step.core.execution.model.*;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectPredicate;
-import step.core.plans.InMemoryPlanAccessor;
 import step.core.plans.Plan;
 import step.core.plans.PlanFilter;
 import step.core.repositories.RepositoryObjectReference;
 import step.core.scheduler.ExecutionScheduler;
-import step.core.scheduler.InMemoryExecutionTaskAccessor;
-import step.functions.accessor.InMemoryFunctionAccessorImpl;
-import step.functions.manager.FunctionManagerImpl;
 import step.functions.type.FunctionTypeException;
 import step.functions.type.FunctionTypeRegistry;
 import step.functions.type.SetupFunctionException;
-import step.resources.LocalResourceManagerImpl;
 
-import java.io.File;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -80,7 +73,7 @@ public class AutomationPackageExecutor {
         ObjectId contextId = new ObjectId();
 
         // prepare the isolated in-memory automation package manager with the only one automation package
-        AutomationPackageManager inMemoryPackageManager = createInMemoryAutomationPackageManager(contextId);
+        AutomationPackageManager inMemoryPackageManager = AutomationPackageManager.createIsolatedAutomationPackageManager(contextId, functionTypeRegistry);
         ObjectId packageId = inMemoryPackageManager.createAutomationPackage(automationPackage, fileName, objectEnricher, objectPredicate);
 
         List<String> executions = new ArrayList<>();
@@ -173,16 +166,4 @@ public class AutomationPackageExecutor {
         return false;
     }
 
-    private AutomationPackageManager createInMemoryAutomationPackageManager(ObjectId contextId) {
-        InMemoryFunctionAccessorImpl inMemoryFunctionRepository = new InMemoryFunctionAccessorImpl();
-        return new AutomationPackageManager(
-                new InMemoryAutomationPackageAccessorImpl(),
-                new FunctionManagerImpl(inMemoryFunctionRepository, functionTypeRegistry),
-                inMemoryFunctionRepository,
-                new InMemoryPlanAccessor(),
-                new LocalResourceManagerImpl(new File("resources", contextId.toString())),
-                new InMemoryExecutionTaskAccessor(),
-                null
-        );
-    }
 }

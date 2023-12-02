@@ -7,6 +7,7 @@ import step.automation.packages.model.AutomationPackageKeyword;
 import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.plans.Plan;
+import step.plugins.java.GeneralScriptFunction;
 import step.plugins.jmeter.JMeterFunction;
 import step.plugins.jmeter.automation.JMeterFunctionTestplanConversionRule;
 
@@ -27,14 +28,20 @@ public class AutomationPackageReaderTest {
         AutomationPackageContent automationPackageContent = reader.readAutomationPackageFromJarFile(automationPackageJar);
         assertNotNull(automationPackageContent);
 
+        // 2 keywords: one from descriptor and one from java class with @Keyword annotation
         List<AutomationPackageKeyword> keywords = automationPackageContent.getKeywords();
-        assertEquals(1, keywords.size());
-        AutomationPackageKeyword automationPackageKeyword = keywords.get(0);
-        assertEquals(JMeterFunction.class, automationPackageKeyword.getDraftKeyword().getClass());
+        assertEquals(2, keywords.size());
+
+        AutomationPackageKeyword jmeterKeyword = AutomationPackageTestUtils.findKeywordByClass(keywords, JMeterFunction.class);
+        assertNotNull(jmeterKeyword);
         assertEquals(
                 "jmeterProject1/jmeterProject1.xml",
-                automationPackageKeyword.getSpecialAttributes().get(JMeterFunctionTestplanConversionRule.JMETER_TESTPLAN_ATTR)
+                jmeterKeyword.getSpecialAttributes().get(JMeterFunctionTestplanConversionRule.JMETER_TESTPLAN_ATTR)
         );
+
+        AutomationPackageKeyword javaKeyword = AutomationPackageTestUtils.findKeywordByClass(keywords, GeneralScriptFunction.class);
+        assertNotNull(javaKeyword);
+        assertEquals("MyKeyword2", javaKeyword.getDraftKeyword().getAttribute(AbstractOrganizableObject.NAME));
 
         List<Plan> plans = automationPackageContent.getPlans();
         assertEquals(1, plans.size());

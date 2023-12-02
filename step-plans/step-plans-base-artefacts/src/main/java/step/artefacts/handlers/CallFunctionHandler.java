@@ -172,7 +172,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 					});
 				}
 				try {
-					output = functionExecutionService.callFunction(token.getID(), function, input, JsonObject.class);
+					output = functionExecutionService.callFunction(token.getID(), function, input, JsonObject.class, context);
 				} finally {
 					OperationManager.getInstance().exit();
 				}

@@ -23,6 +23,8 @@ import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionTypeException;
 import step.functions.type.FunctionTypeRegistry;
 import step.functions.type.SetupFunctionException;
+import step.plugins.java.GeneralScriptFunction;
+import step.plugins.java.GeneralScriptFunctionType;
 import step.plugins.jmeter.JMeterFunction;
 import step.plugins.jmeter.JMeterFunctionType;
 import step.resources.LocalResourceManagerImpl;
@@ -54,11 +56,16 @@ public class AutomationPackageManagerTest {
 
         FunctionTypeRegistry functionTypeRegistry = Mockito.mock(FunctionTypeRegistry.class);
 
-        AbstractFunctionType jMeterFunctionType = new JMeterFunctionType(new Configuration());
+        Configuration configuration = new Configuration();
+        AbstractFunctionType<?> jMeterFunctionType = new JMeterFunctionType(configuration);
+        AbstractFunctionType<?> generalScriptFunctionType = new GeneralScriptFunctionType(configuration);
+
         Mockito.when(functionTypeRegistry.getFunctionTypeByFunction(Mockito.any())).thenAnswer(invocationOnMock -> {
             Object function = invocationOnMock.getArgument(0);
             if (function instanceof JMeterFunction) {
                 return jMeterFunctionType;
+            } else if (function instanceof GeneralScriptFunction) {
+                return generalScriptFunctionType;
             } else {
                 return null;
             }
@@ -115,11 +122,11 @@ public class AutomationPackageManagerTest {
 
             // 1 function has been updated, 1 function has been added
             List<Function> storedFunctions = functionAccessor.findManyByCriteria(getAutomationPackageIdCriteria(resultId)).collect(Collectors.toList());
-            Assert.assertEquals(2, storedFunctions.size());
+            Assert.assertEquals(3, storedFunctions.size());
 
             Function updatedFunction = storedFunctions.stream().filter(f -> f.getAttribute(AbstractOrganizableObject.NAME).equals("JMeter keyword from automation package")).findFirst().orElse(null);
             Assert.assertNotNull(updatedFunction);
-            Assert.assertEquals(r.storedFunction.getId(), updatedFunction.getId());
+            Assert.assertEquals(AutomationPackageTestUtils.findFunctionByClass(r.storedFunctions, JMeterFunction.class).getId(), updatedFunction.getId());
 
             Assert.assertNotNull(storedFunctions.stream().filter(p -> p.getAttribute(AbstractOrganizableObject.NAME).equals("Another JMeter keyword from automation package")).findFirst().orElse(null));
 
@@ -142,7 +149,7 @@ public class AutomationPackageManagerTest {
         SampleUploadingResult r2 = uploadSample1WithAsserts(false);
         Assert.assertEquals(r.storedPackage.getId(), r2.storedPackage.getId());
         Assert.assertEquals(r.storedPlan.getId(), r2.storedPlan.getId());
-        Assert.assertEquals(r.storedFunction.getId(), r2.storedFunction.getId());
+        Assert.assertEquals(AutomationPackageTestUtils.toIds(r.storedFunctions), AutomationPackageTestUtils.toIds(r2.storedFunctions));
         Assert.assertEquals(r.storedTask.getId(), r2.storedTask.getId());
 
         // 4. Delete package by name - everything should be removed
@@ -180,10 +187,10 @@ public class AutomationPackageManagerTest {
             r.storedPlan = storedPlans.get(0);
             Assert.assertEquals("Test Plan", r.storedPlan.getAttribute(AbstractOrganizableObject.NAME));
 
-            List<Function> storedFunctions = functionAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
-            Assert.assertEquals(1, storedFunctions.size());
-            r.storedFunction = storedFunctions.get(0);
-            Assert.assertEquals("JMeter keyword from automation package", r.storedFunction.getAttribute(AbstractOrganizableObject.NAME));
+            r.storedFunctions = functionAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
+            Assert.assertEquals(2, r.storedFunctions.size());
+            Assert.assertEquals("JMeter keyword from automation package", AutomationPackageTestUtils.findFunctionByClass(r.storedFunctions, JMeterFunction.class).getAttribute(AbstractOrganizableObject.NAME));
+            Assert.assertEquals("MyKeyword2", AutomationPackageTestUtils.findFunctionByClass(r.storedFunctions, GeneralScriptFunction.class).getAttribute(AbstractOrganizableObject.NAME));
 
             List<ExecutiontTaskParameters> storedTasks = executionTaskAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
             Assert.assertEquals(1, storedTasks.size());
@@ -205,7 +212,7 @@ public class AutomationPackageManagerTest {
     private static class SampleUploadingResult {
         private AutomationPackage storedPackage;
         private Plan storedPlan;
-        private Function storedFunction;
+        private List<Function> storedFunctions;
         private ExecutiontTaskParameters storedTask;
     }
 }

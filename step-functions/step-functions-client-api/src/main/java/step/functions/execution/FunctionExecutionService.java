@@ -20,6 +20,7 @@ package step.functions.execution;
 
 import java.util.Map;
 
+import step.core.AbstractStepContext;
 import step.functions.Function;
 import step.functions.io.FunctionInput;
 import step.functions.io.Output;
@@ -39,6 +40,12 @@ public interface FunctionExecutionService {
 	
 	void returnTokenHandle(String tokenHandleId) throws FunctionExecutionServiceException;
 
-	<IN,OUT> Output<OUT> callFunction(String tokenHandleId, Function function, FunctionInput<IN> functionInput, Class<OUT> outputClass);
+	/**
+	 * Call function from while running the execution
+	 */
+	default <IN,OUT> Output<OUT> callFunction(String tokenHandleId, Function function, FunctionInput<IN> functionInput, Class<OUT> outputClass, AbstractStepContext executionContext){
+		return callFunction(tokenHandleId, function, functionInput, outputClass);
+	}
 
+	<IN,OUT> Output<OUT> callFunction(String tokenHandleId, Function function, FunctionInput<IN> functionInput, Class<OUT> outputClass);
 }

@@ -20,6 +20,7 @@ package step.functions.type;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -30,6 +31,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 
 import step.attachments.FileResolver;
+import step.core.AbstractStepContext;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
 import step.functions.Function;
@@ -40,6 +42,7 @@ import step.grid.filemanager.FileManagerException;
 import step.grid.filemanager.FileVersion;
 import step.grid.filemanager.FileVersionId;
 import step.grid.tokenpool.Interest;
+import step.resources.LayeredResourceManager;
 import step.resources.ResourceManager;
 
 public abstract class AbstractFunctionType<T extends Function> {
@@ -88,6 +91,10 @@ public abstract class AbstractFunctionType<T extends Function> {
 	};
 	
 	public abstract Map<String, String> getHandlerProperties(T function);
+
+	public Map<String, String> getHandlerProperties(T function, AbstractStepContext executionContext){
+		return getHandlerProperties(function);
+	}
 	
 	public void beforeFunctionCall(T function, Input<?> input, Map<String, String> properties) throws FunctionExecutionException {
 		
@@ -113,20 +120,60 @@ public abstract class AbstractFunctionType<T extends Function> {
 		return function;
 	}
 	
-	protected void registerFile(DynamicValue<String> dynamicValue, String properyName, Map<String, String> props) {
+	protected void registerFile(DynamicValue<String> dynamicValue, String properyName, Map<String, String> props, AbstractStepContext context) {
 		if(dynamicValue!=null) {
 			String filepath = dynamicValue.get();
 			if(filepath!=null && filepath.trim().length()>0) {
-				File file;
+				File file = null;
 				try {
-					// Using the file resolver cache here to avoid performance issues
-					// This method might be called at every function execution
-					file = fileResolverCache.get(filepath);
+					// in case of isolated execution, the execution context contains temporary in-memory resource manager
+					// we have to use this manager instead of the global one from fileResolver
+					if (context != null) {
+						boolean resolvedFromExecutionContext = false;
+						ResourceManager executionContextResourceManager = getResourceManager(context);
+						if (executionContextResourceManager == getResourceManager(null)) {
+							// if resource manager is the global one, it is better to use fileResolverCache for performance reason
+							file = fileResolverCache.get(filepath);
+						} else if (executionContextResourceManager instanceof LayeredResourceManager) {
+							// performance hack - if the resource manager is layered, but contains the only one resource manager
+							// and this resource manager equals to the global one, we can use cached file resolver
+							ResourceManager unwrappedManager = unwrapResourceManager((LayeredResourceManager) executionContextResourceManager);
+							if (unwrappedManager == getResourceManager(null)) {
+								file = fileResolverCache.get(filepath);
+							} else {
+								resolvedFromExecutionContext = true;
+								file = new FileResolver(executionContextResourceManager).resolve(filepath);
+							}
+						} else {
+							resolvedFromExecutionContext = true;
+							file = new FileResolver(executionContextResourceManager).resolve(filepath);
+						}
+
+						// just a fallback - if the file is not found in execution context, try to use global file resolver
+						if (resolvedFromExecutionContext && file == null) {
+							file = fileResolverCache.get(filepath);
+						}
+					} else {
+						// Using the file resolver cache here to avoid performance issues
+						// This method might be called at every function execution
+						file = fileResolverCache.get(filepath);
+					}
 				} catch (ExecutionException e) {
 					throw new RuntimeException("Error while resolving path "+filepath, e);
 				}
 				registerFile(file, properyName, props);			
 			}			
+		}
+	}
+
+	private ResourceManager unwrapResourceManager(LayeredResourceManager layeredResourceManager) {
+		List<ResourceManager> resourceManagers = layeredResourceManager.getResourceManagers();
+		if (resourceManagers.size() != 1) {
+			return null;
+		} else if (resourceManagers.get(0) instanceof LayeredResourceManager) {
+			return unwrapResourceManager((LayeredResourceManager) resourceManagers.get(0));
+		} else {
+			return resourceManagers.get(0);
 		}
 	}
 	
@@ -167,8 +214,10 @@ public abstract class AbstractFunctionType<T extends Function> {
 		return registerFile(new File(filepath));
 	}
 
-	protected ResourceManager getResourceManager() {
-		if (fileResolver != null) {
+	protected ResourceManager getResourceManager(AbstractStepContext executionContext) {
+		if (executionContext != null && executionContext.getResourceManager() != null) {
+			return executionContext.getResourceManager();
+		} else if (fileResolver != null) {
 			return fileResolver.getResourceManager();
 		} else {
 			return null;
