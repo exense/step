@@ -97,7 +97,7 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 		FileVersion functionHandlerPackageVersionId;
 		try {
 			InputStream resourceAsStream = getClass().getClassLoader().getResourceAsStream(functionHandlerResourceName);
-			functionHandlerPackageVersionId = gridClient.registerFile(resourceAsStream, functionHandlerResourceName, false);
+			functionHandlerPackageVersionId = gridClient.registerFile(resourceAsStream, functionHandlerResourceName, false, false);
 		} catch (FileManagerException e) {
 			throw new FunctionExecutionServiceException("Error while registering file "+ functionHandlerResourceName +" to the grid", e);
 		}
@@ -335,9 +335,18 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 		return new Error(ErrorType.TECHNICAL, "agent", message, 0, true);
 	}
 
-	protected Map<String, String> registerFile(File file, String properyName) throws FileManagerException {
-		FileVersion fileVersion = gridClient.registerFile(file);
-		return fileVersionIdToMap(properyName, fileVersion.getVersionId());
+	/**
+	 * Register the provided file in the grid's file manager
+	 *
+	 * @param file the {@link File} of the resource to be registered
+	 * @param propertyName the name of the property for which we register the file
+	 * @param cleanable if this version of the file can be cleaned-up at runtime
+	 * @return the FileVersionId as a property map of the registered file.
+	 * @throws FileManagerException
+	 */
+	protected Map<String, String> registerFile(File file, String propertyName, boolean cleanable) throws FileManagerException {
+		FileVersion fileVersion = gridClient.registerFile(file, cleanable);
+		return fileVersionIdToMap(propertyName, fileVersion.getVersionId());
 	}
 
 	protected Map<String, String> fileVersionIdToMap(String propertyName, FileVersionId fileVersionId) {
