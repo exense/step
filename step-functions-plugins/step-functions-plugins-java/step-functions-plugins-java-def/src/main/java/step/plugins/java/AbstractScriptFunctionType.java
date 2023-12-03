@@ -62,12 +62,12 @@ public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction
 	public Map<String, String> getHandlerProperties(T function, AbstractStepContext executionContext) {
 		Map<String, String> props = new HashMap<>();
 		props.put(ScriptHandler.SCRIPT_LANGUAGE, function.getScriptLanguage().get());
-		registerFile(function.getLibrariesFile(), ScriptHandler.LIBRARIES_FILE, props, executionContext);
+		registerFile(function.getLibrariesFile(), ScriptHandler.LIBRARIES_FILE, props, true, executionContext);
 		addPluginLibsIfRequired(function.getScriptLanguage().get(), props);
-		registerFile(function.getScriptFile(), ScriptHandler.SCRIPT_FILE, props, executionContext);
-		registerFile(function.getErrorHandlerFile(), ScriptHandler.ERROR_HANDLER_FILE, props, executionContext);
+		registerFile(function.getScriptFile(), ScriptHandler.SCRIPT_FILE, props, true, executionContext);
+		registerFile(function.getErrorHandlerFile(), ScriptHandler.ERROR_HANDLER_FILE, props, true, executionContext);
 
-		if(configuration.getPropertyAsBoolean("plugins.java.validate.properties")) {
+		if (configuration.getPropertyAsBoolean("plugins.java.validate.properties")) {
 			props.put(KeywordExecutor.VALIDATE_PROPERTIES, Boolean.TRUE.toString());
 		}
 

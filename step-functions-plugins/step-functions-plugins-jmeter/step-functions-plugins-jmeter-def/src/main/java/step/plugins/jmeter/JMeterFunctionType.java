@@ -63,7 +63,7 @@ public class JMeterFunctionType extends AbstractFunctionType<JMeterFunction> {
 	@Override
 	public Map<String, String> getHandlerProperties(JMeterFunction function, AbstractStepContext executionContext) {
 		Map<String, String> props = new HashMap<>();
-		registerFile(function.getJmeterTestplan(), "$jmeter.testplan.file", props, executionContext);
+		registerFile(function.getJmeterTestplan(), "$jmeter.testplan.file", props, true, executionContext);
 
 		String home = configuration.getProperty(JMETER_HOME_CONFIG_PROPERTY);
 		if (home != null) {

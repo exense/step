@@ -123,7 +123,7 @@ public abstract class AbstractFunctionType<T extends Function> {
 	/**
 	 * Register the provided file in the grid's file manager for a given property. Enrich the map with the resulting file and version ids.
 	 * @deprecated
-	 * This method register cleanable resource only, use {@link #registerFile(DynamicValue, String, Map, boolean)} instead
+	 * This method register cleanable resource only, use {@link #registerFile(DynamicValue, String, Map, boolean, AbstractStepContext)} instead
 	 * to specifically define whether the registered file can be cleaned up at runtime
 	 *
 	 * @param dynamicValue the {@link DynamicValue} of the file's path to be registered
@@ -132,20 +132,21 @@ public abstract class AbstractFunctionType<T extends Function> {
 	 * @throws RuntimeException
 	 */
 	protected void registerFile(DynamicValue<String> dynamicValue, String propertyName, Map<String, String> props) {
-		registerFile(dynamicValue, propertyName, props, true);
-
+		registerFile(dynamicValue, propertyName, props, true, null);
 	}
 
 	/**
 	 * Register the provided file in the grid's file manager for a given property. Enrich the map with the resulting file and version ids.
 	 *
-	 * @param dynamicValue the {@link DynamicValue} of the file's path to be registered
-	 * @param propertyName the name of the property for which we register the file
-	 * @param props the map will be enriched with the propertyName id and version of the registered file that can be later used to retrieve the file
-	 * @param cleanable whether this version of the file can be cleaned-up at runtime
+	 * @param dynamicValue     the {@link DynamicValue} of the file's path to be registered
+	 * @param propertyName     the name of the property for which we register the file
+	 * @param props            the map will be enriched with the propertyName id and version of the registered file that can be later used to retrieve the file
+	 * @param cleanable        whether this version of the file can be cleaned-up at runtime
+	 * @param executionContext the current execution context (should be defined if the function is executing via ExecutionEngine with
+	 *                         execution-scope resource manager)
 	 * @throws RuntimeException
 	 */
-	protected void registerFile(DynamicValue<String> dynamicValue, String propertyName, Map<String, String> props, boolean cleanable, AbstractStepContext context) {
+	protected void registerFile(DynamicValue<String> dynamicValue, String propertyName, Map<String, String> props, boolean cleanable, AbstractStepContext executionContext) {
 		if(dynamicValue!=null) {
 			String filepath = dynamicValue.get();
 			if(filepath!=null && filepath.trim().length()>0) {
@@ -153,9 +154,9 @@ public abstract class AbstractFunctionType<T extends Function> {
 				try {
 					// in case of isolated execution, the execution context contains temporary in-memory resource manager
 					// we have to use this manager instead of the global one from fileResolver
-					if (context != null) {
+					if (executionContext != null) {
 						boolean resolvedFromExecutionContext = false;
-						ResourceManager executionContextResourceManager = getResourceManager(context);
+						ResourceManager executionContextResourceManager = getResourceManager(executionContext);
 						if (executionContextResourceManager == getResourceManager(null)) {
 							// if resource manager is the global one, it is better to use fileResolverCache for performance reason
 							file = fileResolverCache.get(filepath);
@@ -191,21 +192,6 @@ public abstract class AbstractFunctionType<T extends Function> {
 		}
 	}
 
-	private ResourceManager unwrapResourceManager(LayeredResourceManager layeredResourceManager) {
-		List<ResourceManager> resourceManagers = layeredResourceManager.getResourceManagers();
-		if (resourceManagers.size() != 1) {
-			return null;
-		} else if (resourceManagers.get(0) instanceof LayeredResourceManager) {
-			return unwrapResourceManager((LayeredResourceManager) resourceManagers.get(0));
-		} else {
-			return resourceManagers.get(0);
-		}
-	}
-
-	protected void registerFile(File file, String properyName, Map<String, String> props) {
-		FileVersionId fileVersionId = registerFile(file);
-		registerFileVersionId(properyName, props, fileVersionId);
-
 	/**
 	 * Register the provided file in the grid's file manager for a given property. Enrich the map with the resulting file and version ids.
 	 * @deprecated
@@ -234,6 +220,18 @@ public abstract class AbstractFunctionType<T extends Function> {
 		FileVersionId fileVersionId = registerFile(file, cleanable);
 		registerFileVersionId(propertyName, props, fileVersionId);
 	}
+
+	private ResourceManager unwrapResourceManager(LayeredResourceManager layeredResourceManager) {
+		List<ResourceManager> resourceManagers = layeredResourceManager.getResourceManagers();
+		if (resourceManagers.size() != 1) {
+			return null;
+		} else if (resourceManagers.get(0) instanceof LayeredResourceManager) {
+			return unwrapResourceManager((LayeredResourceManager) resourceManagers.get(0));
+		} else {
+			return resourceManagers.get(0);
+		}
+	}
+
 
 	private void registerFileVersionId(String properyName, Map<String, String> props, FileVersionId fileVersionId) {
 		props.put(properyName +".id", fileVersionId.getFileId());

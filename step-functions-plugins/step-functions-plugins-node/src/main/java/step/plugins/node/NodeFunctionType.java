@@ -45,7 +45,7 @@ public class NodeFunctionType extends AbstractFunctionType<NodeFunction> {
 	@Override
 	public Map<String, String> getHandlerProperties(NodeFunction function, AbstractStepContext executionContext) {
 		Map<String, String> props = new HashMap<>();
-		registerFile(function.getJsFile(), FILE, props, executionContext);
+		registerFile(function.getJsFile(), FILE, props, true, executionContext);
 		return props;
 	}
 
