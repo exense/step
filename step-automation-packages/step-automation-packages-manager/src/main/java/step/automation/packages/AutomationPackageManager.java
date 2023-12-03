@@ -148,6 +148,7 @@ public class AutomationPackageManager {
         deleteFunctions(automationPackage);
         deletePlans(automationPackage);
         deleteSchedules(automationPackage);
+        deleteResources(automationPackage);
     }
 
     public ObjectId createAutomationPackage(InputStream packageStream, String fileName, ObjectEnricher enricher, ObjectPredicate objectPredicate) throws FunctionTypeException, SetupFunctionException, AutomationPackageManagerException {
@@ -341,7 +342,9 @@ public class AutomationPackageManager {
                     executionTaskAccessor.remove(schedule.getId());
                 }
             } catch (Exception e) {
-                log.error("Error while deleting task " + schedule.getId().toString(), e);
+                log.error("Error while deleting task {} for automation package {}",
+                        schedule.getId().toString(), automationPackage.getAttribute(AbstractOrganizableObject.NAME), e
+                );
             }
         });
         return schedules;
@@ -353,22 +356,40 @@ public class AutomationPackageManager {
             try {
                 planAccessor.remove(plan.getId());
             } catch (Exception e) {
-                log.error("Error while deleting plan " + plan.getId().toString(), e);
+                log.error("Error while deleting plan {} for automation package {}",
+                        plan.getId().toString(), automationPackage.getAttribute(AbstractOrganizableObject.NAME), e
+                );
             }
         });
         return plans;
     }
 
     protected List<Function> deleteFunctions(AutomationPackage automationPackage) {
-        List<Function> previousFunctions = getPackageFunctions(automationPackage.getId());
-        previousFunctions.forEach(function -> {
+        List<Function> functions = getPackageFunctions(automationPackage.getId());
+        functions.forEach(function -> {
             try {
                 functionManager.deleteFunction(function.getId().toString());
             } catch (FunctionTypeException e) {
-                log.error("Error while deleting function " + function.getId().toString(), e);
+                log.error("Error while deleting function {} for automation package {}",
+                        function.getId().toString(), automationPackage.getAttribute(AbstractOrganizableObject.NAME), e
+                );
             }
         });
-        return previousFunctions;
+        return functions;
+    }
+
+    protected List<Resource> deleteResources(AutomationPackage automationPackage) {
+        List<Resource> resources = getPackageResources(automationPackage.getId());
+        for (Resource resource : resources) {
+            try {
+                resourceManager.deleteResource(resource.getId().toString());
+            } catch (Exception e) {
+                log.error("Error while deleting resource {} for automation package {}",
+                        resource.getId().toString(), automationPackage.getAttribute(AbstractOrganizableObject.NAME), e
+                );
+            }
+        }
+        return resources;
     }
 
     protected List<Function> getFunctionsByCriteria(Map<String, String> criteria) {
@@ -377,6 +398,14 @@ public class AutomationPackageManager {
 
     public List<Function> getPackageFunctions(ObjectId automationPackageId) {
         return getFunctionsByCriteria(getAutomationPackageIdCriteria(automationPackageId));
+    }
+
+    protected List<Resource> getResourcesByCriteria(Map<String, String> criteria) {
+        return resourceManager.findManyByCriteria(criteria);
+    }
+
+    public List<Resource> getPackageResources(ObjectId automationPackageId){
+        return getResourcesByCriteria(getAutomationPackageIdCriteria(automationPackageId));
     }
 
     protected Map<String, String> getAutomationPackageIdCriteria(ObjectId automationPackageId) {
