@@ -25,6 +25,7 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
+import org.bson.types.ObjectId;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import step.core.collections.PojoFilter;
@@ -49,19 +50,19 @@ public class AutomationPackageServices extends AbstractStepServices {
     }
 
     @GET
-    @Path("/{name}")
+    @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
     @Secured(right = "automation-package-read")
-    public AutomationPackage getAutomationPackage(@PathParam("name") String automationPackageName) {
-        return automationPackageManager.getAutomationPackageByName(automationPackageName, getObjectPredicate());
+    public AutomationPackage getAutomationPackage(@PathParam("id") String id) {
+        return automationPackageManager.getAutomationPackageById(new ObjectId(id), getObjectPredicate());
     }
 
     @DELETE
-    @Path("/{name}")
+    @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
     @Secured(right = "automation-package-delete")
-    public void deleteAutomationPackage(@PathParam("name") String automationPackageName) {
-        automationPackageManager.removeAutomationPackage(automationPackageName, getObjectPredicate());
+    public void deleteAutomationPackage(@PathParam("id") String id) {
+        automationPackageManager.removeAutomationPackage(new ObjectId(id), getObjectPredicate());
     }
 
     @POST
@@ -72,22 +73,37 @@ public class AutomationPackageServices extends AbstractStepServices {
                                           @FormDataParam("file") FormDataContentDisposition fileDetail,
                                           @Context UriInfo uriInfo) throws Exception {
         return automationPackageManager.createAutomationPackage(uploadedInputStream, fileDetail.getFileName(), getObjectEnricher(), getObjectPredicate());
+    }
 
+    @PUT
+    @Path("/{id}")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Produces(MediaType.TEXT_PLAIN)
+    @Secured(right = "automation-package-write")
+    public void updateAutomationPackageById(@PathParam("id") String id,
+                                            @FormDataParam("file") InputStream uploadedInputStream,
+                                            @FormDataParam("file") FormDataContentDisposition fileDetail,
+                                            @Context UriInfo uriInfo) throws Exception {
+        automationPackageManager.createOrUpdateAutomationPackage(
+                true, false, new ObjectId(id),
+                uploadedInputStream, fileDetail.getFileName(),
+                getObjectEnricher(), getObjectPredicate()
+        );
     }
 
     @PUT
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.TEXT_PLAIN)
     @Secured(right = "automation-package-write")
-    public Response updateAutomationPackage(@FormDataParam("file") InputStream uploadedInputStream,
-                                            @FormDataParam("file") FormDataContentDisposition fileDetail,
-                                            @Context UriInfo uriInfo) throws Exception {
+    public Response createOrUpdateAutomationPackage(@FormDataParam("file") InputStream uploadedInputStream,
+                                                    @FormDataParam("file") FormDataContentDisposition fileDetail,
+                                                    @Context UriInfo uriInfo) throws Exception {
         AutomationPackageManager.PackageUpdateResult result = automationPackageManager.createOrUpdateAutomationPackage(
-                true, uploadedInputStream, fileDetail.getFileName(),
+                true, true, null, uploadedInputStream, fileDetail.getFileName(),
                 getObjectEnricher(), getObjectPredicate()
         );
         Response.ResponseBuilder responseBuilder;
-        switch (result.getStatus()){
+        switch (result.getStatus()) {
             case CREATED:
                 responseBuilder = Response.status(201);
                 break;

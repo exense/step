@@ -91,6 +91,14 @@ public class AutomationPackageManager {
         this.keywordsAttributesApplier = new AutomationPackageKeywordsAttributesApplier(resourceManager);
     }
 
+    public AutomationPackage getAutomationPackageById(ObjectId id, ObjectPredicate objectPredicate) {
+        AutomationPackage automationPackage = automationPackageAccessor.get(id);
+        if (objectPredicate != null && !objectPredicate.test(automationPackage)) {
+            automationPackage = null;
+        }
+        return automationPackage;
+    }
+
     public AutomationPackage getAutomationPackageByName(String name, ObjectPredicate objectPredicate) {
         Stream<AutomationPackage> stream = StreamSupport.stream(automationPackageAccessor.findManyByAttributes(Map.of(AbstractOrganizableObject.NAME, name)), false);
         if (objectPredicate != null) {
@@ -99,15 +107,15 @@ public class AutomationPackageManager {
         return stream.findFirst().orElse(null);
     }
 
-    public void removeAutomationPackage(String name, ObjectPredicate objectPredicate) {
-        AutomationPackage automationPackage = getAutomationPackageByName(name, objectPredicate);
+    public void removeAutomationPackage(ObjectId id, ObjectPredicate objectPredicate) {
+        AutomationPackage automationPackage = getAutomationPackageById(id, objectPredicate);
         if (automationPackage == null) {
-            throw new AutomationPackageManagerException("Automation package not found by name: " + name);
+            throw new AutomationPackageManagerException("Automation package not found by name: " + id);
         }
 
         deleteAutomationPackageEntities(automationPackage);
         automationPackageAccessor.remove(automationPackage.getId());
-        log.info("Automation package ({}) has been removed", name);
+        log.info("Automation package ({}) has been removed", id);
     }
 
     private void deleteAutomationPackageEntities(AutomationPackage automationPackage) {
@@ -116,11 +124,37 @@ public class AutomationPackageManager {
         deleteTasks(automationPackage);
     }
 
+    /**
+     * Creates the new automation package. The exception will be thrown, if the package with the same name already exists.
+     *
+     * @param packageStream   the package content
+     * @param fileName        the original name of file with automation package
+     * @param enricher        the enricher used to fill all stored objects (for instance, with product id for multitenant application)
+     * @param objectPredicate the filter for automation package
+     * @return the id of created package
+     * @throws FunctionTypeException
+     * @throws SetupFunctionException
+     * @throws AutomationPackageManagerException
+     */
     public String createAutomationPackage(InputStream packageStream, String fileName, ObjectEnricher enricher, ObjectPredicate objectPredicate) throws FunctionTypeException, SetupFunctionException, AutomationPackageManagerException {
-        return createOrUpdateAutomationPackage(false, packageStream, fileName, enricher, objectPredicate).getId();
+        return createOrUpdateAutomationPackage(false, true, null, packageStream, fileName, enricher, objectPredicate).getId();
     }
 
-    public PackageUpdateResult createOrUpdateAutomationPackage(boolean allowUpdate, InputStream packageStream, String fileName, ObjectEnricher enricher, ObjectPredicate objectPredicate) throws SetupFunctionException, FunctionTypeException {
+    /**
+     * Creates new or updates the existing automation package
+     *
+     * @param allowUpdate     whether update existing package is allowed
+     * @param allowCreate     whether create new package is allowed
+     * @param explicitOldId   the explicit package id to be updated (if null, the id will be automatically resolved by package name from packageStream)
+     * @param packageStream   the package content
+     * @param fileName        the original name of file with automation package
+     * @param enricher        the enricher used to fill all stored objects (for instance, with product id for multitenant application)
+     * @param objectPredicate the filter for automation package
+     * @return the id of created/updated package
+     * @throws SetupFunctionException
+     * @throws FunctionTypeException
+     */
+    public PackageUpdateResult createOrUpdateAutomationPackage(boolean allowUpdate, boolean allowCreate, ObjectId explicitOldId, InputStream packageStream, String fileName, ObjectEnricher enricher, ObjectPredicate objectPredicate) throws SetupFunctionException, FunctionTypeException {
         AutomationPackageArchive automationPackageArchive;
         AutomationPackageContent packageContent;
         try {
@@ -130,9 +164,27 @@ public class AutomationPackageManager {
             throw new AutomationPackageManagerException("Unable to read automation package", e);
         }
 
-        AutomationPackage oldPackage = getAutomationPackageByName(packageContent.getName(), objectPredicate);
+        AutomationPackage oldPackage;
+        if (explicitOldId != null) {
+            oldPackage = getAutomationPackageById(explicitOldId, objectPredicate);
+            if (oldPackage == null) {
+                throw new AutomationPackageManagerException("Automation package hasn't been found by id: " + explicitOldId);
+            }
+
+            String expectedName = packageContent.getName();
+            String actualName = oldPackage.getAttribute(AbstractOrganizableObject.NAME);
+            if (!Objects.equals(expectedName, actualName)) {
+                throw new AutomationPackageManagerException("Automation package name doesn't match. Expected: " + expectedName + ". Actual: " + actualName);
+            }
+        } else {
+            oldPackage = getAutomationPackageByName(packageContent.getName(), objectPredicate);
+        }
+
         if (!allowUpdate && oldPackage != null) {
             throw new AutomationPackageManagerException("Automation package '" + packageContent.getName() + "' already exists");
+        }
+        if (!allowCreate && oldPackage == null) {
+            throw new AutomationPackageManagerException("Automation package '" + packageContent.getName() + "' doesn't exist");
         }
 
         // keep old package id
