@@ -127,14 +127,18 @@ public class AutomationPackageReader {
             }
             res.getKeywords().addAll(scannedKeywords);
 
-            // TODO: don't use file in code below (in getPlanFromPlansAnnotation)?
+            List<Plan> annotatedPlans;
             if (originalFile != null) {
-                List<Plan> annotatedPlans = extractAnnotatedPlans(originalFile, annotationScanner, null, null, null, null);
+                // TODO: don't use file in code below (in getPlanFromPlansAnnotation)?
+                annotatedPlans = extractAnnotatedPlansFromFile(originalFile, annotationScanner, null, null, null, null);
                 if (!annotatedPlans.isEmpty()) {
                     log.info("{} annotated plans found in automation package {}", annotatedPlans.size(), StringUtils.defaultString(archive.getOriginalFileName()));
                 }
-                res.getPlans().addAll(annotatedPlans);
+            } else {
+                // TODO: scan classpath?
+                annotatedPlans = new ArrayList<>();
             }
+            res.getPlans().addAll(annotatedPlans);
         }
     }
 
@@ -226,7 +230,7 @@ public class AutomationPackageReader {
         }
     }
 
-    public List<Plan> extractAnnotatedPlans(File artifact, AnnotationScanner annotationScanner, String[] includedClasses, String[] includedAnnotations, String[] excludedClasses, String[] excludedAnnotations) {
+    public List<Plan> extractAnnotatedPlansFromFile(File artifact, AnnotationScanner annotationScanner, String[] includedClasses, String[] includedAnnotations, String[] excludedClasses, String[] excludedAnnotations) {
         List<Plan> result = new ArrayList<>();
 
         // Find classes containing plans:

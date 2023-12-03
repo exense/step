@@ -156,23 +156,18 @@ public class AutomationPackageManager {
     }
 
     public PackageUpdateResult createOrUpdateAutomationPackage(boolean allowUpdate, InputStream packageStream, String fileName, ObjectEnricher enricher, ObjectPredicate objectPredicate) throws SetupFunctionException, FunctionTypeException {
-        AutomationPackageArchive automationPackageArchive;
-        AutomationPackageContent packageContent;
+        return this.createOrUpdateAutomationPackage(allowUpdate, new AutomationPackageArchiveFromInputStreamProvider(packageStream, fileName), enricher, objectPredicate, false);
+    }
 
+    public PackageUpdateResult createOrUpdateAutomationPackage(boolean allowUpdate, AutomationPackageArchiveProvider archiveProvider, ObjectEnricher enricher, ObjectPredicate objectPredicate, boolean isLocalPackage) throws SetupFunctionException, FunctionTypeException {
         AutomationPackage newPackage = null;
 
-        // store automation package into temp file
-        File automationPackageFile = null;
         try {
-            automationPackageFile = stream2file(packageStream, fileName);
-        } catch (Exception ex) {
-            throw new AutomationPackageManagerException("Unable to store automation package file");
-        }
-
-        try {
+            AutomationPackageArchive automationPackageArchive;
+            AutomationPackageContent packageContent;
             try {
-                automationPackageArchive = new AutomationPackageArchive(automationPackageFile, fileName);
-                packageContent = readAutomationPackage(automationPackageArchive);
+                automationPackageArchive = archiveProvider.getAutomationPackageArchive();
+                packageContent = readAutomationPackage(automationPackageArchive, isLocalPackage);
             } catch (AutomationPackageReadingException e) {
                 throw new AutomationPackageManagerException("Unable to read automation package", e);
             }
@@ -183,7 +178,7 @@ public class AutomationPackageManager {
             }
 
             // keep old package id
-            newPackage = createNewInstance(fileName, packageContent, oldPackage, enricher);
+            newPackage = createNewInstance(automationPackageArchive.getOriginalFileName(), packageContent, oldPackage, enricher);
 
             // prepare staging collections
             ObjectEnricher enricherForIncludedEntities = ObjectEnricherComposer.compose(Arrays.asList(enricher, new AutomationPackageLinkEnricher(newPackage.getId().toString())));
@@ -220,7 +215,7 @@ public class AutomationPackageManager {
         }
     }
 
-    private void persistStagedEntities(List<ExecutiontTaskParameters> completeExecTasksParameters, List<Function> completeFunctions, List<Plan> completePlans) throws SetupFunctionException, FunctionTypeException {
+        private void persistStagedEntities(List<ExecutiontTaskParameters> completeExecTasksParameters, List<Function> completeFunctions, List<Plan> completePlans) throws SetupFunctionException, FunctionTypeException {
         for (Function completeFunction : completeFunctions) {
             functionManager.saveFunction(completeFunction);
         }
@@ -323,9 +318,9 @@ public class AutomationPackageManager {
         return newPackage;
     }
 
-    protected AutomationPackageContent readAutomationPackage(AutomationPackageArchive automationPackageArchive) throws AutomationPackageReadingException {
+    protected AutomationPackageContent readAutomationPackage(AutomationPackageArchive automationPackageArchive, boolean isLocalPackage) throws AutomationPackageReadingException {
         AutomationPackageContent packageContent;
-        packageContent = packageReader.readAutomationPackage(automationPackageArchive, false);
+        packageContent = packageReader.readAutomationPackage(automationPackageArchive, isLocalPackage);
         if (packageContent.getName() == null || packageContent.getName().isEmpty()) {
             throw new AutomationPackageManagerException("Automation package name is missing");
         }
@@ -438,16 +433,6 @@ public class AutomationPackageManager {
 
     public ExecutionTaskAccessor getExecutionTaskAccessor() {
         return executionTaskAccessor;
-    }
-
-    // TODO: find another way to read automation package from input stream
-    private static File stream2file(InputStream in, String fileName) throws IOException {
-        final File tempFile = File.createTempFile(fileName, ".tmp");
-        tempFile.deleteOnExit();
-        try (FileOutputStream out = new FileOutputStream(tempFile)) {
-            IOUtils.copy(in, out);
-        }
-        return tempFile;
     }
 
     public static class PackageUpdateResult {
