@@ -22,12 +22,13 @@ import java.util.Map;
 import java.util.Set;
 
 import step.core.execution.ExecutionContext;
+import step.core.objectenricher.ObjectPredicate;
 
 public interface Repository {
 
 	ArtefactInfo getArtefactInfo(Map<String, String> repositoryParameters) throws Exception;
 
-	TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters) throws Exception;
+	TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) throws Exception;
 
 	ImportResult importArtefact(ExecutionContext context, Map<String, String> repositoryParameters) throws Exception;
 
