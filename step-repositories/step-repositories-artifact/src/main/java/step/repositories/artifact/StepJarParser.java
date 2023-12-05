@@ -135,35 +135,42 @@ public class StepJarParser {
         List<Plan> result = new ArrayList<>();
         List<Function> functions = new ArrayList<>();
         try (AnnotationScanner annotationScanner = AnnotationScanner.forSpecificJar(artifact)) {
-            // Find classes containing plans:
-            Set<Class<?>> classesWithPlans = new HashSet<>();
-            // Classes with @Plans annotation
-            classesWithPlans.addAll(annotationScanner.getClassesWithAnnotation(Plans.class));
-
-            // Classes with @Plan annotation in methods
-            // and filter them
             Set<String> includedA = new HashSet<>(List.of(includedAnnotations));
             Set<String> excludedA = new HashSet<>(List.of(excludedAnnotations));
 
-            for (Method m : annotationScanner.getMethodsWithAnnotation(step.junit.runners.annotations.Plan.class)) {
-                logger.debug("Checking if "+m.getName()+" should be filtered...");
-                boolean filtered=!includedA.isEmpty();
-                for (Annotation a : m.getAnnotations()) {
-                    // if the annotation object is proxy, the toString() is not applicable (the format in this case is like “@step.examples.plugins.StepEETests()”)
-                    // so we need to check the name of annotation type to get the class name
-                    if (excludedA.contains(a.toString()) || excludedA.contains(a.annotationType().getName())) {
-                        logger.debug("Filtering out @Plan method "+m.getName()+" due to excluded annotation "+a);
-                        filtered=true;
-                        break;
-                    } else if (includedA.contains(a.toString()) || includedA.contains(a.annotationType().getName())) {
-                        logger.debug("Including @Plan method "+m.getName()+" due to included annotation "+a);
-                        filtered=false;
-                    }
-                }
-                if (!filtered) {
-                    classesWithPlans.add(m.getDeclaringClass());
+            // Find classes containing plans:
+            Set<Class<?>> excludedByAnnotation = new HashSet<>();
+            Set<Class<?>> classesWithPlans = new HashSet<>();
+
+            // Classes with @Plans annotation
+            Set<Class<?>> classesWithPlansAnnotation = annotationScanner.getClassesWithAnnotation(Plans.class);
+            for (Class<?> aClass : classesWithPlansAnnotation) {
+                logger.debug("Checking if " + aClass.getName() + " should be filtered...");
+                String targetName = "@Plans class " + aClass.getName();
+                FilterResult filtered = isAnnotationFiltered(targetName, includedA, excludedA, aClass.getAnnotations());
+                if (filtered == FilterResult.NOT_FILTERED) {
+                    classesWithPlans.add(aClass);
                 } else {
-                    logger.debug(m.getName()+" has been filtered out");
+                    if (filtered == FilterResult.FILTERED_BY_EXCLUDED) {
+                        // we have to ignore the class while scanning for '@Plan' once it is explicitly excluded
+                        excludedByAnnotation.add(aClass);
+                    }
+                    logger.debug(aClass.getName() + " has been filtered out");
+                }
+            }
+
+            // Classes with @Plan annotation in methods
+            // and filter them
+            for (Method m : annotationScanner.getMethodsWithAnnotation(step.junit.runners.annotations.Plan.class)) {
+                if (!excludedByAnnotation.contains(m.getDeclaringClass()) && !classesWithPlans.contains(m.getDeclaringClass())) {
+                    logger.debug("Checking if " + m.getName() + " should be filtered...");
+                    String targetName = "@Plan method " + m.getName();
+                    FilterResult filtered = isAnnotationFiltered(targetName, includedA, excludedA, m.getAnnotations());
+                    if (filtered == FilterResult.NOT_FILTERED) {
+                        classesWithPlans.add(m.getDeclaringClass());
+                    } else {
+                        logger.debug(m.getName() + " has been filtered out");
+                    }
                 }
             }
 
@@ -199,6 +206,23 @@ public class StepJarParser {
         }
 
         return new PlansParsingResult(result, functions);
+    }
+
+    private FilterResult isAnnotationFiltered(String target, Set<String> includedA, Set<String> excludedA, Annotation[] annotations) {
+        FilterResult filtered = includedA.isEmpty() ? FilterResult.NOT_FILTERED : FilterResult.FILTERED_BY_INCLUDED;
+        for (Annotation a : annotations) {
+            // if the annotation object is proxy, the toString() is not applicable (the format in this case is like “@step.examples.plugins.StepEETests()”)
+            // so we need to check the name of annotation type to get the class name
+            if (excludedA.contains(a.toString()) || excludedA.contains(a.annotationType().getName())) {
+                logger.debug("Filtering out " + target + " due to excluded annotation " + a);
+                filtered = FilterResult.FILTERED_BY_EXCLUDED;
+                break;
+            } else if (includedA.contains(a.toString()) || includedA.contains(a.annotationType().getName())) {
+                logger.debug("Including " + target + " due to included annotation " + a);
+                filtered = FilterResult.NOT_FILTERED;
+            }
+        }
+        return filtered;
     }
 
     protected List<Plan> getPlansForClass(AnnotationScanner annotationScanner, Class<?> klass, File artifact) {
@@ -284,5 +308,11 @@ public class StepJarParser {
         public List<Function> getFunctions() {
             return functions;
         }
+    }
+
+    private enum FilterResult {
+        NOT_FILTERED,
+        FILTERED_BY_INCLUDED,
+        FILTERED_BY_EXCLUDED
     }
 }
