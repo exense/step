@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import step.attachments.FileResolver;
 import step.automation.packages.AutomationPackageReader;
 import step.automation.packages.AutomationPackageReadingException;
-import step.automation.packages.model.AutomationPackage;
+import step.automation.packages.model.AutomationPackageContent;
 import step.automation.packages.model.AutomationPackageKeyword;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.scanner.AnnotationScanner;
@@ -33,6 +33,9 @@ public class JavaFunctionPackageDaemon extends FunctionPackageUtils {
 
 	private final KeywordJsonSchemaCreator schemaCreator = new KeywordJsonSchemaCreator();
 	private final AutomationPackageReader automationPackageReader = new AutomationPackageReader();
+
+	// TODO: resolve automation package schema version
+	private final AutomationPackageReader automationPackageReader = new AutomationPackageReader(null);
 
 	public JavaFunctionPackageDaemon() {
 		super(new FileResolver(new LocalResourceManagerImpl()));
@@ -123,9 +126,9 @@ public class JavaFunctionPackageDaemon extends FunctionPackageUtils {
 
 			try {
 				// add functions from automation package
-				AutomationPackage automationPackage = automationPackageReader.readAutomationPackageFromJarFile(packageFile);
-				if(automationPackage != null) {
-					List<AutomationPackageKeyword> automationPackageKeywords = automationPackage.getKeywords();
+				AutomationPackageContent automationPackageContent = automationPackageReader.readAutomationPackageFromJarFile(packageFile);
+				if(automationPackageContent != null) {
+					List<AutomationPackageKeyword> automationPackageKeywords = automationPackageContent.getKeywords();
 					if (automationPackageKeywords != null) {
 						addAutomationPackageKeywordsToFunctionList(automationPackageKeywords, functions);
 					}

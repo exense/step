@@ -18,11 +18,11 @@
  ******************************************************************************/
 package step.functions.manager;
 
-import java.util.Map;
-
 import step.functions.Function;
 import step.functions.type.FunctionTypeException;
 import step.functions.type.SetupFunctionException;
+
+import java.util.Map;
 
 public interface FunctionManager {
 
@@ -37,7 +37,7 @@ public interface FunctionManager {
 	Function newFunction(String type, Map<String, String> configuration);
 
 	Function getFunctionByAttributes(Map<String, String> attributes);
-	
+
 	Function getFunctionById(String id);
 
 }

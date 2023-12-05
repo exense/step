@@ -21,7 +21,7 @@ package step.automation.packages.yaml;
 import org.junit.Test;
 import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.model.AutomationPackageKeyword;
-import step.automation.packages.model.AutomationPackageSchedulerTask;
+import step.automation.packages.model.AutomationPackageSchedule;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
 import step.functions.Function;
 import step.plans.parser.yaml.model.YamlPlan;
@@ -38,9 +38,7 @@ import static org.junit.Assert.*;
 
 public class AutomationPackageDescriptorReaderTest {
 
-    private final AutomationPackageDescriptorReader reader = new AutomationPackageDescriptorReader();
-
-
+    private final AutomationPackageDescriptorReader reader = new AutomationPackageDescriptorReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH);
 
     @Test
     public void jmeterKeywordReadTest() throws AutomationPackageReadingException {
@@ -56,7 +54,7 @@ public class AutomationPackageDescriptorReaderTest {
             assertEquals("JMeter keyword 1", k.getDescription());
             assertFalse(k.isExecuteLocally());
             assertTrue(k.isUseCustomTemplate());
-            assertTrue(k.isManaged());
+            assertFalse(k.isManaged());
             assertEquals((Integer) 1000, k.getCallTimeout().get());
             assertNotNull("string", k.getSchema().getJsonObject("properties").getJsonObject("firstName").getJsonString("type"));
 
@@ -88,13 +86,13 @@ public class AutomationPackageDescriptorReaderTest {
             assertEquals("Second Plan", plans.get(1).getName());
 
             // check parsed scheduler
-            List<AutomationPackageSchedulerTask> scheduler = descriptor.getScheduler();
-            assertEquals(2, scheduler.size());
-            AutomationPackageSchedulerTask firstTask = scheduler.get(0);
+            List<AutomationPackageSchedule> schedules = descriptor.getSchedules();
+            assertEquals(2, schedules.size());
+            AutomationPackageSchedule firstTask = schedules.get(0);
             assertEquals("My first task", firstTask.getName());
             assertEquals("First Plan", firstTask.getPlanName());
             assertEquals("*/5 * * * *", firstTask.getCron());
-            assertEquals("TEST", firstTask.getEnvironment());
+            assertEquals("TEST", firstTask.getExecutionParameters().get("environment"));
 
             assertEquals(Arrays.asList("importPlans.yml", "importKeywords.yml"), descriptor.getFragments());
         } catch (IOException e) {

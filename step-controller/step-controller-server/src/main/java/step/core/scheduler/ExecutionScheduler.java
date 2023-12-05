@@ -110,13 +110,19 @@ public class ExecutionScheduler {
 	}
 
 	public boolean addExecutionTask(ExecutiontTaskParameters task) {
+		return addExecutionTask(task, true);
+	}
+
+	public boolean addExecutionTask(ExecutiontTaskParameters task, boolean autoActivateNewTask) {
 		executor.validate(task);
-		if(!taskAlreadyExists(task)) {
+		if (autoActivateNewTask && !taskAlreadyExists(task)) {
 			task.setActive(true);
 		}
 		boolean triggerMayFireAgain = true;
-		if(isSchedulerEnabled() && task.isActive()) {
+
+		if (isSchedulerEnabled() && task.isActive()) {
 			triggerMayFireAgain = executor.schedule(task);
+
 		}
 		//Only save task if it could be scheduled
 		save(task);

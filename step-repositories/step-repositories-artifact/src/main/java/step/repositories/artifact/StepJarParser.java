@@ -20,9 +20,13 @@ package step.repositories.artifact;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.automation.packages.*;
-import step.automation.packages.model.AutomationPackage;
+import step.automation.packages.AutomationPackageArchive;
+import step.automation.packages.AutomationPackageKeywordsAttributesApplier;
+import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.model.AutomationPackageKeyword;
+import step.automation.packages.yaml.AutomationPackageDescriptorReader;
+import step.automation.packages.yaml.YamlAutomationPackageVersions;
+import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
@@ -39,6 +43,7 @@ import step.resources.ResourceManager;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -51,8 +56,8 @@ public class StepJarParser {
     private static final Logger logger = LoggerFactory.getLogger(StepJarParser.class);
 
     private final StepClassParser stepClassParser;
-    private final AutomationPackageReader automationPackageReader;
-    private final AutomationPackageKeywordsAttributesApplier automationPackagesKeywordAttributesAppler;
+    private AutomationPackageDescriptorReader automationPackageDescriptorReader;
+    private final AutomationPackageKeywordsAttributesApplier automationPackagesKeywordAttributesApplier;
 
     public StepJarParser() {
         this(null);
@@ -60,8 +65,17 @@ public class StepJarParser {
 
     public StepJarParser(ResourceManager resourceManager) {
         this.stepClassParser = new StepClassParser(false);
-        this.automationPackageReader = new AutomationPackageReader();
-        this.automationPackagesKeywordAttributesAppler = new AutomationPackageKeywordsAttributesApplier(resourceManager);
+        this.automationPackagesKeywordAttributesApplier = new AutomationPackageKeywordsAttributesApplier(resourceManager);
+    }
+
+    /**
+     * Lazy init for automation package descriptor reader (performance optimization)
+     */
+    private synchronized AutomationPackageDescriptorReader initAndGetAutomationPackageDescriptorReader() {
+        if (automationPackageDescriptorReader == null) {
+            automationPackageDescriptorReader = new AutomationPackageDescriptorReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH);
+        }
+        return automationPackageDescriptorReader;
     }
 
     private List<Function> getFunctions(AnnotationScanner annotationScanner, File artifact, File libraries) {
@@ -100,19 +114,15 @@ public class StepJarParser {
             functions.add(res);
         }
 
-        try {
+        try(AutomationPackageArchive automationPackageArchive = new AutomationPackageArchive(artifact)) {
             // add functions from automation package
-            AutomationPackage automationPackage = automationPackageReader.readAutomationPackageFromJarFile(artifact);
-            if(automationPackage != null) {
-                List<AutomationPackageKeyword> automationPackageKeywords = automationPackage.getKeywords();
-                if (!automationPackageKeywords.isEmpty()) {
-                    AutomationPackageArchive automationPackageArchive = new AutomationPackageArchive(artifact);
-                    for (AutomationPackageKeyword automationPackageKeyword : automationPackageKeywords) {
-                        functions.add(automationPackagesKeywordAttributesAppler.applySpecialAttributesToKeyword(automationPackageKeyword, automationPackageArchive));
-                    }
+            if(automationPackageArchive.isAutomationPackage()) {
+                AutomationPackageDescriptorYaml descriptor = initAndGetAutomationPackageDescriptorReader().readAutomationPackageDescriptor(automationPackageArchive.getDescriptorYaml());
+                for (AutomationPackageKeyword automationPackageKeyword : descriptor.getKeywords()) {
+                    functions.add(automationPackagesKeywordAttributesApplier.applySpecialAttributesToKeyword(automationPackageKeyword, automationPackageArchive));
                 }
             }
-        } catch (AutomationPackageReadingException e) {
+        } catch (AutomationPackageReadingException | IOException e) {
             throw new RuntimeException("Unable to process automation package", e);
         }
 

@@ -39,7 +39,6 @@ import step.handlers.javahandler.jsonschema.JsonSchemaCreator;
 import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
 import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 import step.plans.parser.yaml.YamlPlanFields;
-import step.plans.parser.yaml.schema.YamlPlanJsonSchemaGenerator;
 import step.plans.parser.yaml.schema.YamlResourceReferenceJsonSchemaHelper;
 
 import java.beans.IntrospectionException;

@@ -21,6 +21,7 @@ package step.automation.packages;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,20 +30,22 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.List;
 
-public class AutomationPackageArchive {
+public class AutomationPackageArchive implements Closeable {
 
     private static final Logger log = LoggerFactory.getLogger(AutomationPackageArchive.class);
-    public static final List<String> METADATA_FILES = List.of("automation.yml", "automation.yaml");
+    public static final List<String> METADATA_FILES = List.of("automation-package.yml", "automation-package.yaml");
 
     private final ClassLoader classLoader;
+    private boolean internalClassLoader = false;
 
     public AutomationPackageArchive(ClassLoader classLoader) {
         this.classLoader = classLoader;
     }
 
     public AutomationPackageArchive(File automationPackageJar) throws AutomationPackageReadingException {
+        this.internalClassLoader = true;
         try {
-            this.classLoader = new URLClassLoader(new URL[]{automationPackageJar.toURI().toURL()});
+            this.classLoader = new URLClassLoader(new URL[]{automationPackageJar.toURI().toURL()}, null);
         } catch (MalformedURLException ex) {
             throw new AutomationPackageReadingException("Unable to read automation package", ex);
         }
@@ -81,4 +84,10 @@ public class AutomationPackageArchive {
         return resource;
     }
 
+    @Override
+    public void close() throws IOException {
+        if (internalClassLoader && this.classLoader instanceof Closeable) {
+            ((Closeable) this.classLoader).close();
+        }
+    }
 }

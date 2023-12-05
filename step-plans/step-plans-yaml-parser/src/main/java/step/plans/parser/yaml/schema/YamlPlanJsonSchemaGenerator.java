@@ -209,6 +209,14 @@ public class YamlPlanJsonSchemaGenerator {
 			}
 		});
 
+		// prepare definitions for referenced resources
+		definitionCreators.add(defsList -> {
+			Map<String, JsonObjectBuilder> dynamicValueDefs = resourceReferenceJsonSchemaHelper.createResourceReferenceDefs();
+			for (Map.Entry<String, JsonObjectBuilder> dynamicValueDef : dynamicValueDefs.entrySet()) {
+				defsBuilder.add(dynamicValueDef.getKey(), dynamicValueDef.getValue());
+			}
+		});
+
 		// prepare definitions for subclasses annotated with @Artefact
 		definitionCreators.add((defsList) -> {
 			ArtefactDefinitions artefactImplDefs = createArtefactImplDefs();

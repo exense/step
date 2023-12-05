@@ -38,11 +38,10 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
 
-public class UploadKeywordsPackageMojoEETest  extends AbstractMojoTest {
+public class UploadKeywordsPackageMojoEETest extends AbstractMojoTest {
 
 	private static final FunctionPackage OLD_PACKAGE = createOldPackageMock();
 	private static final FunctionPackage UPDATED_PACKAGE = createUpdatedPackageMock();
-
 
 	private static FunctionPackage createOldPackageMock() {
 		FunctionPackage res = Mockito.mock(FunctionPackage.class);
@@ -125,7 +124,6 @@ public class UploadKeywordsPackageMojoEETest  extends AbstractMojoTest {
 
 		mojo.setProject(mockedProject);
 
-		mojo.setUrl("http://localhost:4201");
 		HashMap<String, String> customAttributes = new HashMap<>();
 		customAttributes.put("artifactId", ARTIFACT_ID);
 		customAttributes.put("versionId", VERSION_ID);

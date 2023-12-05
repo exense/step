@@ -9,7 +9,6 @@ keywords:
       description: "JMeter keyword 1"
       executeLocally: false
       useCustomTemplate: true
-      managed: true
       callTimeout: 1000
       jmeterTestplan: "jmeterProject1/jmeterProject1.xml"
       routing:
@@ -49,12 +48,14 @@ plans:
         children:
           - echo:
               text: "Just echo"
-scheduler:
+schedules:
   - name: "My first task"
     cron: "*/5 * * * *"
-    environment: "TEST"
+    executionParameters:
+      environment: "TEST"
     planName: "First Plan"
   - name: "My second task"
     cron: "0 * * * *"
-    environment: "PROD"
+    executionParameters:
+      environment: "PROD"
     planName: "Second Plan"

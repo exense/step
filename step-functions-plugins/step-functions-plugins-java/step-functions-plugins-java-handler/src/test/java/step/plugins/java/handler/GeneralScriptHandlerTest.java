@@ -184,13 +184,23 @@ public class GeneralScriptHandlerTest {
 		FunctionHandlerFactory factory = new FunctionHandlerFactory(applicationContextBuilder, new FileManagerClient() {
 			
 			@Override
-			public FileVersion requestFileVersion(FileVersionId fileVersionId) throws FileManagerException {
+			public FileVersion requestFileVersion(FileVersionId fileVersionId, boolean cleanable) throws FileManagerException {
 				String file = GeneralScriptHandlerTest.class.getClassLoader().getResource(fileVersionId.getFileId()).getFile();
 				return new FileVersion(new File(file), fileVersionId, false);
 			}
 			
 			@Override
 			public void removeFileVersionFromCache(FileVersionId fileVersionId) {
+			}
+
+			@Override
+			public void cleanupCache() {
+
+			}
+
+			@Override
+			public void close() throws Exception {
+
 			}
 		});
 		return factory;

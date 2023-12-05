@@ -59,6 +59,10 @@
         "JMeter" : {
           "type" : "object",
           "properties" : {
+            "name" : {
+              "type" : "string",
+              "default" : "JMeter"
+            },
             "description" : {
               "type" : "string"
             },
@@ -81,7 +85,8 @@
             "jmeterTestplan" : {
               "$ref" : "#/$defs/SmartDynamicValueStringDef"
             }
-          }
+          },
+          "additionalProperties" : false
         }
       },
       "additionalProperties" : false
@@ -1909,17 +1914,21 @@
         "$ref" : "#/$defs/ThreadGroupDef"
       } ]
     },
-    "SchedulerTaskDef" : {
+    "ScheduleDef" : {
       "type" : "object",
       "properties" : {
-        "environment" : {
-          "type" : "string"
+        "executionParameters" : {
+          "type" : "object",
+          "properties" : { }
         },
         "planName" : {
           "type" : "string"
         },
         "cron" : {
           "type" : "string"
+        },
+        "active" : {
+          "type" : "boolean"
         },
         "name" : {
           "type" : "string"
@@ -1968,10 +1977,10 @@
         "type" : "string"
       }
     },
-    "scheduler" : {
+    "schedules" : {
       "type" : "array",
       "items" : {
-        "$ref" : "#/$defs/SchedulerTaskDef"
+        "$ref" : "#/$defs/ScheduleDef"
       }
     }
   },

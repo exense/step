@@ -1,0 +1,4 @@
+schedules:
+  - name: "firstSchedule"
+    cron: "0 15 10 ? * *"
+    planName: "Test Plan"

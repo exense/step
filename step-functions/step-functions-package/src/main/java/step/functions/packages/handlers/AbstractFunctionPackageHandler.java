@@ -72,20 +72,26 @@ public abstract class AbstractFunctionPackageHandler extends FunctionPackageUtil
 		}
 
 		if (list.exception == null) {
-			List<Function> functions = list.getFunctions();
-			functions.forEach(f -> {
-				AutomationPackageArchive automationPackageArchive = null;
-				if (list.getAutomationPackageAttributes().get(f.getId().toString()) != null) {
-					// the function was included in automation package
+			AutomationPackageArchive automationPackageArchive = null;
+			try {
+				if (!list.getAutomationPackageAttributes().isEmpty()) {
+					// some attributes contain links to resources in automation package
+					// we have to apply them
 					try {
 						automationPackageArchive = new AutomationPackageArchive(packageFile);
 					} catch (AutomationPackageReadingException e) {
 						throw new RuntimeException(e);
 					}
 				}
-				configureFunction(f, functionPackage, preview, list.getAutomationPackageAttributes().get(f.getId().toString()), automationPackageArchive);
-			});
-			return list.getFunctions();
+
+				AutomationPackageArchive finalAutomationPackageArchive = automationPackageArchive;
+				((List<Function>) list.getFunctions()).forEach(f -> configureFunction(f, functionPackage, preview, list.getAutomationPackageAttributes().get(f.getId().toString()), finalAutomationPackageArchive));
+				return list.getFunctions();
+			} finally {
+				if (automationPackageArchive != null) {
+					automationPackageArchive.close();
+				}
+			}
 		} else {
 			throw new Exception(list.exception);
 		}
