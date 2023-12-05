@@ -283,14 +283,6 @@ public abstract class AbstractFunctionType<T extends Function> {
 			return null;
 		}
 	}
-
-	protected ResourceManager getResourceManager() {
-		if (fileResolver != null) {
-			return fileResolver.getResourceManager();
-		} else {
-			return null;
-		}
-	}
 	
 	public void deleteFunction(T function) throws FunctionTypeException {
 
