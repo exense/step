@@ -93,10 +93,20 @@ public class AutomationPackageManager {
 
     public AutomationPackage getAutomationPackageById(ObjectId id, ObjectPredicate objectPredicate) {
         AutomationPackage automationPackage = automationPackageAccessor.get(id);
-        if (objectPredicate != null && !objectPredicate.test(automationPackage)) {
-            automationPackage = null;
+        if (automationPackage == null) {
+            throw new AutomationPackageManagerException("Automation package hasn't been found by id: " + id);
         }
+
+        if (objectPredicate != null && !objectPredicate.test(automationPackage)) {
+            // package exists, but is not accessible (linked with another product)
+            throw new AutomationPackageManagerException("Automation package " + id + " is not accessible");
+        }
+
         return automationPackage;
+    }
+
+    public AutomationPackage getAutomatonPackageById(ObjectId id) {
+        return this.getAutomationPackageById(id, null);
     }
 
     public AutomationPackage getAutomationPackageByName(String name, ObjectPredicate objectPredicate) {
@@ -109,10 +119,6 @@ public class AutomationPackageManager {
 
     public void removeAutomationPackage(ObjectId id, ObjectPredicate objectPredicate) {
         AutomationPackage automationPackage = getAutomationPackageById(id, objectPredicate);
-        if (automationPackage == null) {
-            throw new AutomationPackageManagerException("Automation package not found by name: " + id);
-        }
-
         deleteAutomationPackageEntities(automationPackage);
         automationPackageAccessor.remove(automationPackage.getId());
         log.info("Automation package ({}) has been removed", id);
@@ -154,7 +160,7 @@ public class AutomationPackageManager {
      * @throws SetupFunctionException
      * @throws FunctionTypeException
      */
-    public PackageUpdateResult createOrUpdateAutomationPackage(boolean allowUpdate, boolean allowCreate, ObjectId explicitOldId, InputStream packageStream, String fileName, ObjectEnricher enricher, ObjectPredicate objectPredicate) throws SetupFunctionException, FunctionTypeException {
+    public PackageUpdateResult createOrUpdateAutomationPackage(boolean allowUpdate, boolean allowCreate, ObjectId explicitOldId, InputStream packageStream, String fileName, ObjectEnricher enricher, ObjectPredicate objectPredicate) {
         AutomationPackageArchive automationPackageArchive;
         AutomationPackageContent packageContent;
         try {
@@ -167,14 +173,14 @@ public class AutomationPackageManager {
         AutomationPackage oldPackage;
         if (explicitOldId != null) {
             oldPackage = getAutomationPackageById(explicitOldId, objectPredicate);
-            if (oldPackage == null) {
-                throw new AutomationPackageManagerException("Automation package hasn't been found by id: " + explicitOldId);
-            }
 
-            String expectedName = packageContent.getName();
-            String actualName = oldPackage.getAttribute(AbstractOrganizableObject.NAME);
-            if (!Objects.equals(expectedName, actualName)) {
-                throw new AutomationPackageManagerException("Automation package name doesn't match. Expected: " + expectedName + ". Actual: " + actualName);
+            String newName = packageContent.getName();
+            String oldName = oldPackage.getAttribute(AbstractOrganizableObject.NAME);
+            if (!Objects.equals(newName, oldName)) {
+                // the package with the same name shouldn't exist
+                AutomationPackage existingPackageWithSameName = getAutomationPackageByName(newName, objectPredicate);
+                throw new AutomationPackageManagerException("Unable to change the package name to '" + newName
+                        + "'. Package with the same name already exists (" + existingPackageWithSameName.getId().toString() + ")");
             }
         } else {
             oldPackage = getAutomationPackageByName(packageContent.getName(), objectPredicate);
@@ -214,9 +220,13 @@ public class AutomationPackageManager {
         return new PackageUpdateResult(oldPackage == null ? PackageUpdateStatus.CREATED : PackageUpdateStatus.UPDATED, result);
     }
 
-    private void persistStagedEntities(List<ExecutiontTaskParameters> completeExecTasksParameters, List<Function> completeFunctions, List<Plan> completePlans) throws SetupFunctionException, FunctionTypeException {
-        for (Function completeFunction : completeFunctions) {
-            functionManager.saveFunction(completeFunction);
+    private void persistStagedEntities(List<ExecutiontTaskParameters> completeExecTasksParameters, List<Function> completeFunctions, List<Plan> completePlans) {
+        try {
+            for (Function completeFunction : completeFunctions) {
+                functionManager.saveFunction(completeFunction);
+            }
+        } catch (SetupFunctionException | FunctionTypeException e) {
+            throw new AutomationPackageManagerException("Unable to persist a keyword in automation package", e);
         }
 
         for (Plan plan : completePlans) {

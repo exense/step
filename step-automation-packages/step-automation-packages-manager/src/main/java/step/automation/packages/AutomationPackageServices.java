@@ -28,11 +28,7 @@ import jakarta.ws.rs.core.UriInfo;
 import org.bson.types.ObjectId;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
-import step.core.collections.PojoFilter;
 import step.core.deployment.AbstractStepServices;
-import step.core.objectenricher.ObjectFilter;
-import step.core.objectenricher.ObjectPredicate;
-import step.core.ql.OQLFilterBuilder;
 import step.framework.server.security.Secured;
 
 import java.io.InputStream;
@@ -54,7 +50,7 @@ public class AutomationPackageServices extends AbstractStepServices {
     @Produces(MediaType.APPLICATION_JSON)
     @Secured(right = "automation-package-read")
     public AutomationPackage getAutomationPackage(@PathParam("id") String id) {
-        return automationPackageManager.getAutomationPackageById(new ObjectId(id), getObjectPredicate());
+        return automationPackageManager.getAutomatonPackageById(new ObjectId(id));
     }
 
     @DELETE
@@ -112,13 +108,6 @@ public class AutomationPackageServices extends AbstractStepServices {
                 break;
         }
         return responseBuilder.entity(result.getId()).build();
-    }
-
-    protected ObjectPredicate getObjectPredicate() {
-        ObjectFilter objectFilter = getObjectFilter();
-        String oqlFilter = objectFilter.getOQLFilter();
-        PojoFilter<Object> pojoFilter = OQLFilterBuilder.getPojoFilter(oqlFilter);
-        return pojoFilter::test;
     }
 
 }
