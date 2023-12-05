@@ -149,11 +149,13 @@ public class StepJarParser {
                 logger.debug("Checking if "+m.getName()+" should be filtered...");
                 boolean filtered=!includedA.isEmpty();
                 for (Annotation a : m.getAnnotations()) {
-                    if (excludedA.contains(a.toString())) {
+                    // if the annotation object is proxy, the toString() is not applicable (the format in this case is like “@step.examples.plugins.StepEETests()”)
+                    // so we need to check the name of annotation type to get the class name
+                    if (excludedA.contains(a.toString()) || excludedA.contains(a.annotationType().getName())) {
                         logger.debug("Filtering out @Plan method "+m.getName()+" due to excluded annotation "+a);
                         filtered=true;
                         break;
-                    } else if (includedA.contains(a.toString())) {
+                    } else if (includedA.contains(a.toString()) || includedA.contains(a.annotationType().getName())) {
                         logger.debug("Including @Plan method "+m.getName()+" due to included annotation "+a);
                         filtered=false;
                     }
