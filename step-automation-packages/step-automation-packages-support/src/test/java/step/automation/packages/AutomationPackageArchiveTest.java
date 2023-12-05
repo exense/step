@@ -39,11 +39,11 @@ public class AutomationPackageArchiveTest {
             log.info("Resource url: {}", resource.toString());
             Assert.assertNotNull(resource);
 
-        try(InputStream is = validPackage.getResourceAsStream("jmeterProject1/jmeterProject1.xml")){
-            Assert.assertNotNull(is);
-            log.info("Resource: {}", new String(is.readAllBytes(), StandardCharsets.UTF_8));
+            try (InputStream is = validPackage.getResourceAsStream("jmeterProject1/jmeterProject1.xml")) {
+                Assert.assertNotNull(is);
+                log.info("Resource: {}", new String(is.readAllBytes(), StandardCharsets.UTF_8));
+            }
         }
-    }
 
         File malformedPackageJar = new File("src/test/resources/samples/step-automation-packages-malformed.jar");
         try (AutomationPackageArchive malformed = new AutomationPackageArchive(malformedPackageJar)) {

@@ -136,9 +136,9 @@ public abstract class AbstractRunPackagedAutomationPackagesMojo extends Abstract
 
 	@Override
 	protected HashMap<String, String> prepareRepositoryParameters(Map<String, Object> executionContext) {
+		HashMap<String, String> repoParams = new HashMap<>(super.prepareRepositoryParameters(executionContext));
 		String resourceId = (String) executionContext.get(PLUGIN_CTX_RESOURCE_ID);
 		String libResourceId = (String) executionContext.get(PLUGIN_CTX_LIB_RESOURCE_ID);
-		HashMap<String, String> repoParams = new HashMap<>(super.prepareRepositoryParameters(executionContext));
 		repoParams.put(ArtifactRepositoryConstants.RESOURCE_PARAM_RESOURCE_ID, resourceId);
 		if (libResourceId != null) {
 			repoParams.put(ArtifactRepositoryConstants.RESOURCE_PARAM_LIB_RESOURCE_ID, libResourceId);
