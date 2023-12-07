@@ -179,8 +179,11 @@ public class AutomationPackageManager {
             if (!Objects.equals(newName, oldName)) {
                 // the package with the same name shouldn't exist
                 AutomationPackage existingPackageWithSameName = getAutomationPackageByName(newName, objectPredicate);
-                throw new AutomationPackageManagerException("Unable to change the package name to '" + newName
-                        + "'. Package with the same name already exists (" + existingPackageWithSameName.getId().toString() + ")");
+
+                if (existingPackageWithSameName != null) {
+                    throw new AutomationPackageManagerException("Unable to change the package name to '" + newName
+                            + "'. Package with the same name already exists (" + existingPackageWithSameName.getId().toString() + ")");
+                }
             }
         } else {
             oldPackage = getAutomationPackageByName(packageContent.getName(), objectPredicate);
