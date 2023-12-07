@@ -39,6 +39,7 @@ import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.objectenricher.ObjectHookRegistry;
 import step.core.objectenricher.ObjectPredicate;
+import step.core.objectenricher.ObjectPredicateFactory;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
 import step.core.repositories.ArtefactInfo;
@@ -67,6 +68,8 @@ public class ControllerServices extends AbstractStepServices {
 	private long initializationTime;
 	private ObjectHookRegistry objectHooks;
 
+	private ObjectPredicateFactory objectPredicateFactory;
+
 	@PostConstruct
 	public void init() throws Exception {
 		super.init();
@@ -78,6 +81,7 @@ public class ControllerServices extends AbstractStepServices {
 		SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
 		planLocator = new PlanLocator(getContext().getPlanAccessor(), selectorHelper);
 		objectHooks = context.get(ObjectHookRegistry.class);
+		objectPredicateFactory = context.get(ObjectPredicateFactory.class);
 
 		executionAccessor = context.getExecutionAccessor();
 		userActivityMap = (Map<String, Long>) context.get(USER_ACTIVITY_MAP_KEY);
@@ -180,7 +184,8 @@ public class ControllerServices extends AbstractStepServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="execution-read")
 	public TestSetStatusOverview getReport(RepositoryObjectReference report) throws Exception {
-		return getContext().getRepositoryObjectManager().getReport(report);
+		ObjectPredicate objectPredicate = objectPredicateFactory.getObjectPredicate(getSession());
+		return getContext().getRepositoryObjectManager().getReport(report, objectPredicate);
 	}
 
 	@GET

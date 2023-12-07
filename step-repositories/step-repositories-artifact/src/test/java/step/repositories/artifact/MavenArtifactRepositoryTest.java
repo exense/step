@@ -69,7 +69,7 @@ public class MavenArtifactRepositoryTest {
         assertEquals("TestSet", artefactInfo.getType());
 
         // getTestSetStatusOverview
-        TestSetStatusOverview testSetStatusOverview = artifactRepository.getTestSetStatusOverview(REPOSITORY_PARAMETERS);
+        TestSetStatusOverview testSetStatusOverview = artifactRepository.getTestSetStatusOverview(REPOSITORY_PARAMETERS, null);
         assertEquals(Set.of("plan2.plan", "implicitPlanWithWithCustomKeywordName", "explicitPlan", "implicitPlanWithDefaultKeywordName"),
                 testSetStatusOverview.getRuns().stream().map(r -> r.getTestplanName()).collect(Collectors.toSet()));
 
@@ -96,7 +96,7 @@ public class MavenArtifactRepositoryTest {
 
         // getTestSetStatusOverview
         try {
-            artifactRepository.getTestSetStatusOverview(Map.of());
+            artifactRepository.getTestSetStatusOverview(Map.of(), null);
         } catch (Exception e) {
             actualException = e;
         }
@@ -127,7 +127,7 @@ public class MavenArtifactRepositoryTest {
         // getTestSetStatusOverview
         Exception actualException = null;
         try {
-            artifactRepository.getTestSetStatusOverview(REPOSITORY_PARAMETERS);
+            artifactRepository.getTestSetStatusOverview(REPOSITORY_PARAMETERS, null);
         } catch (Exception e) {
             actualException = e;
         }
