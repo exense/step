@@ -33,13 +33,13 @@ public class AutomationPackageExecutionParameters extends CommonExecutionParamet
     public AutomationPackageExecutionParameters() {
     }
 
-    public AutomationPackageExecutionParameters(Map<String, String> customParameters, String userID, ArtefactFilter artefactFilter, PlanFilter planFilter) {
-        super(customParameters, userID, artefactFilter);
+    public AutomationPackageExecutionParameters(Map<String, String> customParameters, String userID, ArtefactFilter artefactFilter, PlanFilter planFilter, ExecutionMode mode) {
+        super(customParameters, userID, artefactFilter, mode);
         this.planFilter = planFilter;
     }
 
     public ExecutionParameters toExecutionParameters(){
-        ExecutionParameters params = new ExecutionParameters(ExecutionMode.RUN);
+        ExecutionParameters params = new ExecutionParameters(getMode());
         params.setCustomParameters(getCustomParameters());
         params.setUserID(getUserID());
         params.setArtefactFilter(getArtefactFilter());

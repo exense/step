@@ -40,16 +40,18 @@ public abstract class CommonExecutionParameters extends AbstractOrganizableObjec
     String userID;
 
     ArtefactFilter artefactFilter;
+    ExecutionMode mode;
 
     public CommonExecutionParameters() {
         super();
     }
 
-    public CommonExecutionParameters(Map<String, String> customParameters, String userID, ArtefactFilter artefactFilter) {
+    public CommonExecutionParameters(Map<String, String> customParameters, String userID, ArtefactFilter artefactFilter, ExecutionMode mode) {
         super();
         this.customParameters = customParameters;
         this.userID = userID;
         this.artefactFilter = artefactFilter;
+        this.mode = mode;
     }
 
     public static String defaultDescription(Plan plan) {
@@ -95,5 +97,13 @@ public abstract class CommonExecutionParameters extends AbstractOrganizableObjec
 
     public void setCustomParameters(Map<String, String> customParameters) {
         this.customParameters = customParameters;
+    }
+
+    public ExecutionMode getMode() {
+        return mode;
+    }
+
+    public void setMode(ExecutionMode mode) {
+        this.mode = mode;
     }
 }

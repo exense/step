@@ -36,7 +36,6 @@ public class ExecutionParameters extends CommonExecutionParameters {
 	boolean isolatedExecution = false;
 	
 	List<RepositoryObjectReference> exports;
-	ExecutionMode mode;
 	String description;
 
 	public ExecutionParameters() {
@@ -58,8 +57,7 @@ public class ExecutionParameters extends CommonExecutionParameters {
 	public ExecutionParameters(ExecutionMode mode, Plan plan, RepositoryObjectReference repositoryObject,
 			Map<String, String> customParameters, String description, String userID, ArtefactFilter artefactFilter,
 			boolean isolatedExecution, List<RepositoryObjectReference> exports) {
-		super(customParameters, userID, artefactFilter);
-		this.mode = mode;
+		super(customParameters, userID, artefactFilter, mode);
 		this.plan = plan;
 		this.repositoryObject = repositoryObject;
 		this.description = description;
@@ -109,14 +107,6 @@ public class ExecutionParameters extends CommonExecutionParameters {
 
 	public String getDescription() {
 		return description;
-	}
-
-	public ExecutionMode getMode() {
-		return mode;
-	}
-
-	public void setMode(ExecutionMode mode) {
-		this.mode = mode;
 	}
 
 	public void setDescription(String description) {
