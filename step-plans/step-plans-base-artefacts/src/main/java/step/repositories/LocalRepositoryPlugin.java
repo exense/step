@@ -29,7 +29,7 @@ public class LocalRepositoryPlugin extends AbstractExecutionEnginePlugin {
 
 	@Override
 	public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext context) {
-		context.getRepositoryObjectManager().registerRepository(RepositoryObjectReference.LOCAL_REPOSITORY_ID, new LocalRepository(context.getPlanAccessor()));
+		context.getRepositoryObjectManager().registerRepository(RepositoryObjectReference.LOCAL_REPOSITORY_ID, new LocalRepository(context.getPlanAccessor(), context.getExpressionHandler()));
 	}
 
 }
