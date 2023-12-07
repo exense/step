@@ -57,7 +57,7 @@
 		<!-- internal dependencies -->
 		<exense-commons.version>2.0.6</exense-commons.version>
 		<step-framework.version>2023.11.13-6551f537478de332cb32c751</step-framework.version>
-		<step-grid.version>2023.12.6-6570a3388da45b6c749a653c</step-grid.version>
+		<step-grid.version>2023.12.7-6571d3fd8da45b6c7477c3c3</step-grid.version>
 		<step-api.version>1.2.2</step-api.version>
 		<!-- external dependencies -->
 		<junit.version>4.13.1</junit.version>
@@ -106,6 +106,7 @@
 	<modules>
 		<module>../step-commons</module>
 		<module>../step-agent</module>
+		<module>../step-grid-proxy-runner</module>
 		<module>../step-core-model</module>
 		<module>../step-core</module>
 		<module>../step-functions</module>
