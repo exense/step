@@ -34,7 +34,7 @@ public class DashboardsService extends AbstractEntityServices<DashboardView> { /
         accessor = context.require(DashboardAccessor.class);
     }
 	
-	@Secured(right = "execution-read")
+	@Secured(right = "dashboard-read")
 	@GET
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
