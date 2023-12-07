@@ -107,7 +107,7 @@ public class YamlRootArtefactDeserializer extends JsonDeserializer<YamlRootArtef
 
     protected List<YamlArtefactFieldDeserializationProcessor> getExtensions() {
         List<YamlArtefactFieldDeserializationProcessor> extensions = new ArrayList<>();
-        CachedAnnotationScanner.getClassesWithAnnotation("step.plans", YamlPlanReaderExtension.class, Thread.currentThread().getContextClassLoader()).stream()
+        CachedAnnotationScanner.getClassesWithAnnotation(YamlPlanReaderExtension.LOCATION, YamlPlanReaderExtension.class, Thread.currentThread().getContextClassLoader()).stream()
                 .map(newInstanceAs(YamlPlanReaderExtender.class)).forEach(e -> extensions.addAll(e.getDeserializationExtensions()));
         return extensions;
     }
