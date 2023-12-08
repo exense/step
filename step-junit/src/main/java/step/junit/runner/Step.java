@@ -111,7 +111,7 @@ public class Step extends ParentRunner<StepClassParserResult> {
 		} finally {
 			if (resourceManager instanceof LocalResourceManagerImpl) {
 				// Cleanup resource manager after execution
-				((LocalResourceManagerImpl) resourceManager).cleanup();
+				resourceManager.cleanup();
 			}
 			childNotifier.fireTestFinished();
 		}

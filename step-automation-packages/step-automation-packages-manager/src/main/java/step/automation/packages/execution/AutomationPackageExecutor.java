@@ -23,6 +23,7 @@ import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.automation.packages.AutomationPackageManager;
+import step.automation.packages.AutomationPackageManagerException;
 import step.core.execution.model.*;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectPredicate;
@@ -34,6 +35,7 @@ import step.functions.type.FunctionTypeException;
 import step.functions.type.FunctionTypeRegistry;
 import step.functions.type.SetupFunctionException;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -73,11 +75,9 @@ public class AutomationPackageExecutor {
         ObjectId contextId = new ObjectId();
 
         // prepare the isolated in-memory automation package manager with the only one automation package
-        AutomationPackageManager inMemoryPackageManager = AutomationPackageManager.createIsolatedAutomationPackageManager(contextId, functionTypeRegistry);
-        ObjectId packageId = inMemoryPackageManager.createAutomationPackage(automationPackage, fileName, objectEnricher, objectPredicate);
-
         List<String> executions = new ArrayList<>();
-        try {
+        try(AutomationPackageManager inMemoryPackageManager = AutomationPackageManager.createIsolatedAutomationPackageManager(contextId, functionTypeRegistry)) {
+            ObjectId packageId = inMemoryPackageManager.createAutomationPackage(automationPackage, fileName, objectEnricher, objectPredicate);
             isolatedAutomationPackageRepository.putContext(contextId.toString(), inMemoryPackageManager);
 
             for (Plan plan : inMemoryPackageManager.getPackagePlans(packageId)) {
@@ -102,8 +102,10 @@ public class AutomationPackageExecutor {
                     }
                 }
             }
+        } catch (IOException e) {
+            throw new AutomationPackageManagerException("Automation package manager exception", e);
         } finally {
-            cleanupContextAfterAllExecutions(contextId, inMemoryPackageManager, executions, fileName);
+            removeIsolatedContextAfterExecution(contextId, executions, fileName);
         }
         return executions;
     }
@@ -116,13 +118,10 @@ public class AutomationPackageExecutor {
         }
     }
 
-    protected void cleanupContextAfterAllExecutions(ObjectId contextId, AutomationPackageManager packageManager, List<String> executions, String fileName) {
+    protected void removeIsolatedContextAfterExecution(ObjectId contextId, List<String> executions, String fileName) {
         // wait for all executions to be finished
         delayedCleanupExecutor.execute(() -> {
             if (waitForAllExecutionEnded(executions)) return;
-
-            // remove stored resources
-            packageManager.getResourceManager().cleanup();
 
             // remove the context from isolated automation package repository
             isolatedAutomationPackageRepository.removeContext(contextId.toString());

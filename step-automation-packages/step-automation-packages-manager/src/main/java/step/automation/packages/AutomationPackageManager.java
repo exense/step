@@ -53,16 +53,13 @@ import step.resources.LocalResourceManagerImpl;
 import step.resources.Resource;
 import step.resources.ResourceManager;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-public class AutomationPackageManager {
+public class AutomationPackageManager implements Closeable {
 
     private static final Logger log = LoggerFactory.getLogger(AutomationPackageManager.class);
 
@@ -210,13 +207,27 @@ public class AutomationPackageManager {
             return new PackageUpdateResult(oldPackage == null ? PackageUpdateStatus.CREATED : PackageUpdateStatus.UPDATED, result);
         } catch (Exception ex) {
             // cleanup created resources
-            if (newPackage != null) {
-                List<Resource> resources = resourceManager.findManyByCriteria(Map.of("customFields." + AutomationPackageEntity.AUTOMATION_PACKAGE_ID, newPackage.getId().toString()));
-                for (Resource resource : resources) {
-                    resourceManager.deleteResource(resource.getId().toString());
+            try {
+                if (newPackage != null) {
+                    List<Resource> resources = resourceManager.findManyByCriteria(Map.of("customFields." + AutomationPackageEntity.AUTOMATION_PACKAGE_ID, newPackage.getId().toString()));
+                    for (Resource resource : resources) {
+                        resourceManager.deleteResource(resource.getId().toString());
+                    }
                 }
+            } catch (Exception e) {
+                log.warn("Cannot cleanup resource", e);
             }
             throw ex;
+        } finally {
+            // cleanup temp file
+            try {
+                boolean deleted = automationPackageFile.delete();
+                if (!deleted) {
+                    log.warn("Cannot cleanup temp file {}", automationPackageFile.getName());
+                }
+            } catch (Exception e) {
+                log.warn("Cannot cleanup temp file {}", automationPackageFile.getName(), e);
+            }
         }
     }
 
@@ -440,7 +451,11 @@ public class AutomationPackageManager {
         return executionTaskAccessor;
     }
 
-    // TODO: find another way to read automation package from input stream
+    @Override
+    public void close() throws IOException {
+        this.resourceManager.cleanup();
+    }
+
     private static File stream2file(InputStream in, String fileName) throws IOException {
         final File tempFile = File.createTempFile(fileName, ".tmp");
         tempFile.deleteOnExit();

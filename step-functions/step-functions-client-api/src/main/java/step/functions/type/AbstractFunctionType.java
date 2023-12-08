@@ -168,11 +168,11 @@ public abstract class AbstractFunctionType<T extends Function> {
 								file = fileResolverCache.get(filepath);
 							} else {
 								resolvedFromExecutionContext = true;
-								file = new FileResolver(executionContextResourceManager).resolve(filepath);
+								file = executionContext.getFileResolver().resolve(filepath);
 							}
 						} else {
 							resolvedFromExecutionContext = true;
-							file = new FileResolver(executionContextResourceManager).resolve(filepath);
+							file = executionContext.getFileResolver().resolve(filepath);
 						}
 
 						// just a fallback - if the file is not found in execution context, try to use global file resolver

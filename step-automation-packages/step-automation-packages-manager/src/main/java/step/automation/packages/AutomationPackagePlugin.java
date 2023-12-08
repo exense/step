@@ -39,6 +39,8 @@ import step.functions.plugin.FunctionControllerPlugin;
 import step.functions.type.FunctionTypeRegistry;
 import step.resources.ResourceManagerControllerPlugin;
 
+import java.io.IOException;
+
 @Plugin(dependencies = {ObjectHookControllerPlugin.class, ResourceManagerControllerPlugin.class, FunctionControllerPlugin.class, SchedulerPlugin.class})
 public class AutomationPackagePlugin extends AbstractControllerPlugin {
 
@@ -94,6 +96,12 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
     @Override
     public void serverStop(GlobalContext context) {
         super.serverStop(context);
+        try {
+            packageManager.close();
+        } catch (IOException e) {
+            log.warn("Unable to finalize automaton package manager");
+        }
+
         try {
             this.packageExecutor.shutdown();
         } catch (InterruptedException e) {
