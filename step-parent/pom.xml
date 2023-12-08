@@ -106,7 +106,6 @@
 	<modules>
 		<module>../step-commons</module>
 		<module>../step-agent</module>
-		<module>../step-grid-proxy-runner</module>
 		<module>../step-core-model</module>
 		<module>../step-core</module>
 		<module>../step-functions</module>
