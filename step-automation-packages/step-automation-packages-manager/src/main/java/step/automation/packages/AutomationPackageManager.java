@@ -59,7 +59,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-public class AutomationPackageManager implements Closeable {
+public class AutomationPackageManager {
 
     private static final Logger log = LoggerFactory.getLogger(AutomationPackageManager.class);
 
@@ -170,11 +170,9 @@ public class AutomationPackageManager implements Closeable {
      * @param enricher        the enricher used to fill all stored objects (for instance, with product id for multitenant application)
      * @param objectPredicate the filter for automation package
      * @return the id of created package
-     * @throws FunctionTypeException
-     * @throws SetupFunctionException
      * @throws AutomationPackageManagerException
      */
-    public ObjectId createAutomationPackage(InputStream packageStream, String fileName, ObjectEnricher enricher, ObjectPredicate objectPredicate) throws FunctionTypeException, SetupFunctionException, AutomationPackageManagerException {
+    public ObjectId createAutomationPackage(InputStream packageStream, String fileName, ObjectEnricher enricher, ObjectPredicate objectPredicate) throws AutomationPackageManagerException {
         return createOrUpdateAutomationPackage(false, true, null, packageStream, fileName, enricher, objectPredicate).getId();
     }
 
@@ -279,9 +277,8 @@ public class AutomationPackageManager implements Closeable {
         } finally {
             // cleanup temp file
             try {
-                boolean deleted = automationPackageFile.delete();
-                if (!deleted) {
-                    log.warn("Cannot cleanup temp file {}", automationPackageFile.getName());
+                if (automationPackageFile.exists()) {
+                    automationPackageFile.delete();
                 }
             } catch (Exception e) {
                 log.warn("Cannot cleanup temp file {}", automationPackageFile.getName(), e);
@@ -513,8 +510,7 @@ public class AutomationPackageManager implements Closeable {
         return executionTaskAccessor;
     }
 
-    @Override
-    public void close() throws IOException {
+    public void cleanup() {
         this.resourceManager.cleanup();
     }
 

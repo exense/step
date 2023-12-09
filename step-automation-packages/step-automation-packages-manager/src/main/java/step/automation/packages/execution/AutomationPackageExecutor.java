@@ -31,11 +31,8 @@ import step.core.plans.Plan;
 import step.core.plans.PlanFilter;
 import step.core.repositories.RepositoryObjectReference;
 import step.core.scheduler.ExecutionScheduler;
-import step.functions.type.FunctionTypeException;
 import step.functions.type.FunctionTypeRegistry;
-import step.functions.type.SetupFunctionException;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -71,12 +68,13 @@ public class AutomationPackageExecutor {
     }
 
     public List<String> runInIsolation(InputStream automationPackage, String fileName, AutomationPackageExecutionParameters parameters,
-                                       ObjectEnricher objectEnricher, String userId, ObjectPredicate objectPredicate) throws SetupFunctionException, FunctionTypeException {
+                                       ObjectEnricher objectEnricher, String userId, ObjectPredicate objectPredicate) throws AutomationPackageManagerException {
         ObjectId contextId = new ObjectId();
 
         // prepare the isolated in-memory automation package manager with the only one automation package
         List<String> executions = new ArrayList<>();
-        try(AutomationPackageManager inMemoryPackageManager = AutomationPackageManager.createIsolatedAutomationPackageManager(contextId, functionTypeRegistry)) {
+        try {
+            AutomationPackageManager inMemoryPackageManager = AutomationPackageManager.createIsolatedAutomationPackageManager(contextId, functionTypeRegistry);
             ObjectId packageId = inMemoryPackageManager.createAutomationPackage(automationPackage, fileName, objectEnricher, objectPredicate);
             isolatedAutomationPackageRepository.putContext(contextId.toString(), inMemoryPackageManager);
 
@@ -102,10 +100,8 @@ public class AutomationPackageExecutor {
                     }
                 }
             }
-        } catch (IOException e) {
-            throw new AutomationPackageManagerException("Automation package manager exception", e);
         } finally {
-            removeIsolatedContextAfterExecution(contextId, executions, fileName);
+            cleanupIsolatedContextAfterExecution(contextId, executions, fileName);
         }
         return executions;
     }
@@ -118,13 +114,13 @@ public class AutomationPackageExecutor {
         }
     }
 
-    protected void removeIsolatedContextAfterExecution(ObjectId contextId, List<String> executions, String fileName) {
+    protected void cleanupIsolatedContextAfterExecution(ObjectId contextId, List<String> executions, String fileName) {
         // wait for all executions to be finished
         delayedCleanupExecutor.execute(() -> {
             if (waitForAllExecutionEnded(executions)) return;
 
             // remove the context from isolated automation package repository
-            isolatedAutomationPackageRepository.removeContext(contextId.toString());
+            isolatedAutomationPackageRepository.cleanupContext(contextId.toString());
 
             log.info("Execution finished for automation package {}", fileName);
         });

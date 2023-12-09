@@ -139,11 +139,19 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
 
     @Override
     public void exportExecution(ExecutionContext context, Map<String, String> repositoryParameters) throws Exception {
-        throw new UnsupportedOperationException("Not supported yet");
+
     }
 
-    public void removeContext(String contextId) {
-        this.inMemoryPackageManagers.remove(contextId);
+    public void cleanupContext(String contextId) {
+        // only after isolated execution is finished we can clean up temporary created resources
+        try {
+            AutomationPackageManager automationPackageManager = this.inMemoryPackageManagers.get(contextId);
+            if (automationPackageManager != null) {
+                automationPackageManager.cleanup();
+            }
+        } finally {
+            this.inMemoryPackageManagers.remove(contextId);
+        }
     }
 
     public void putContext(String contextId, AutomationPackageManager automationPackageManager) {

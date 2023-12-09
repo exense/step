@@ -97,8 +97,8 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
     public void serverStop(GlobalContext context) {
         super.serverStop(context);
         try {
-            packageManager.close();
-        } catch (IOException e) {
+            packageManager.cleanup();
+        } catch (Exception e) {
             log.warn("Unable to finalize automaton package manager");
         }
 
