@@ -2,6 +2,7 @@ package step.core.repositories;
 
 import org.junit.Test;
 import step.core.execution.ExecutionContext;
+import step.core.objectenricher.ObjectPredicate;
 
 import java.util.Map;
 import java.util.Set;
@@ -42,7 +43,7 @@ public class AbstractRepositoryTest {
             }
 
             @Override
-            public TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters) {
+            public TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) {
                 return null;
             }
 

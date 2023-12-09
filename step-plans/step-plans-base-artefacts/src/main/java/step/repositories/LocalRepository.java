@@ -21,13 +21,19 @@ package step.repositories;
 import step.artefacts.CallPlan;
 import step.artefacts.TestCase;
 import step.artefacts.TestSet;
+import step.artefacts.handlers.PlanLocator;
+import step.artefacts.handlers.SelectorHelper;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.reports.ReportNodeStatus;
+import step.core.dynamicbeans.DynamicJsonObjectResolver;
+import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.execution.ExecutionContext;
+import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
 import step.core.repositories.*;
+import step.expressions.ExpressionHandler;
 
 import java.util.List;
 import java.util.Map;
@@ -36,10 +42,14 @@ import java.util.Set;
 public class LocalRepository extends AbstractRepository {
 
 	private final PlanAccessor planAccessor;
+	private final PlanLocator planLocator;
 
-	public LocalRepository(PlanAccessor planAccessor) {
+	public LocalRepository(PlanAccessor planAccessor, ExpressionHandler expressionHandler) {
 		super(Set.of(RepositoryObjectReference.PLAN_ID));
 		this.planAccessor = planAccessor;
+		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(expressionHandler));
+		SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
+		planLocator = new PlanLocator(planAccessor, selectorHelper);
 	}
 
 	@Override
@@ -54,7 +64,7 @@ public class LocalRepository extends AbstractRepository {
 	}
 
 	@Override
-	public TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters) throws Exception {
+	public TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) throws Exception {
 		TestSetStatusOverview testSetStatusOverview = new TestSetStatusOverview();
 
 		String planId = getPlanId(repositoryParameters);
@@ -70,10 +80,12 @@ public class LocalRepository extends AbstractRepository {
 				if(child instanceof TestCase) {
 					addTestRunStatus(testSetStatusOverview.getRuns(), child);
 				} else if(child instanceof CallPlan) {
-					Plan referencedPlan = planAccessor.get(((CallPlan)child).getPlanId());
-					AbstractArtefact root = referencedPlan.getRoot();
-					if(root instanceof TestCase) {
-						addTestRunStatus(testSetStatusOverview.getRuns(), root);
+					Plan referencedPlan = planLocator.selectPlan((CallPlan)child, objectPredicate, null);
+					if (referencedPlan != null) {
+						AbstractArtefact root = referencedPlan.getRoot();
+						if (root instanceof TestCase) {
+							addTestRunStatus(testSetStatusOverview.getRuns(), root);
+						}
 					}
 				}
 			});

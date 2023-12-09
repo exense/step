@@ -33,6 +33,7 @@ import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.execution.model.ExecutionStatus;
 import step.core.repositories.ImportResult;
+import step.repositories.ArtifactRepositoryConstants;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -62,12 +63,20 @@ public class RunDeployedAutomationPackagesMojoEETest extends AbstractMojoTest {
 		Assert.assertEquals("Test description", captured.getDescription());
 		Assert.assertEquals("testUser", captured.getUserID());
 		Assert.assertEquals("Artifact", captured.getRepositoryObject().getRepositoryID());
+
 		Assert.assertEquals(ExecutionMode.RUN, captured.getMode());
 		Assert.assertEquals(ARTIFACT_ID, captured.getRepositoryObject().getRepositoryParameters().get("artifactId"));
 		Assert.assertEquals(VERSION_ID, captured.getRepositoryObject().getRepositoryParameters().get("version"));
 		Assert.assertEquals(GROUP_ID, captured.getRepositoryObject().getRepositoryParameters().get("groupId"));
 		Assert.assertEquals("jar-with-dependencies", captured.getRepositoryObject().getRepositoryParameters().get("classifier"));
 		Assert.assertEquals("default", captured.getRepositoryObject().getRepositoryParameters().get("mavenSettings"));
+
+		Assert.assertEquals("5", captured.getRepositoryObject().getRepositoryParameters().get(ArtifactRepositoryConstants.PARAM_THREAD_NUMBER));
+		Assert.assertEquals(TEST_INCLUDE_CLASSES, captured.getRepositoryObject().getRepositoryParameters().get(ArtifactRepositoryConstants.PARAM_INCLUDE_CLASSES));
+		Assert.assertEquals(TEST_EXCLUDE_CLASSES, captured.getRepositoryObject().getRepositoryParameters().get(ArtifactRepositoryConstants.PARAM_EXCLUDE_CLASSES));
+		Assert.assertEquals(TEST_INCLUDE_ANNOTATIONS, captured.getRepositoryObject().getRepositoryParameters().get(ArtifactRepositoryConstants.PARAM_INCLUDE_ANNOTATIONS));
+		Assert.assertEquals(TEST_EXCLUDE_ANNOTATIONS, captured.getRepositoryObject().getRepositoryParameters().get(ArtifactRepositoryConstants.PARAM_EXCLUDE_ANNOTATIONS));
+
 		Assert.assertEquals(createTestCustomParams(), captured.getCustomParameters());
 	}
 
@@ -128,6 +137,12 @@ public class RunDeployedAutomationPackagesMojoEETest extends AbstractMojoTest {
 		mojo.setUserId("testUser");
 		mojo.setWaitForExecution(true);
 		mojo.setEnsureExecutionSuccess(true);
+
+		mojo.setThreads(5);
+		mojo.setIncludeClasses(TEST_INCLUDE_CLASSES);
+		mojo.setExcludeClasses(TEST_EXCLUDE_CLASSES);
+		mojo.setIncludeAnnotations(TEST_INCLUDE_ANNOTATIONS);
+		mojo.setExcludeAnnotations(TEST_EXCLUDE_ANNOTATIONS);
 
 		Map<String, String> params = createTestCustomParams();
 		mojo.setExecutionParameters(params);

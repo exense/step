@@ -39,6 +39,7 @@ import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.execution.model.ExecutionStatus;
 import step.core.repositories.ImportResult;
+import step.repositories.ArtifactRepositoryConstants;
 import step.resources.Resource;
 import step.resources.SimilarResourceExistingException;
 
@@ -80,7 +81,15 @@ public class RunPackagedAutomationPackagesMojoEETest extends AbstractMojoTest {
 		Assert.assertEquals("testUser", captured.getUserID());
 		Assert.assertEquals("ResourceArtifact", captured.getRepositoryObject().getRepositoryID());
 		Assert.assertEquals(ExecutionMode.RUN, captured.getMode());
-		Assert.assertEquals(resourceMock.getId().toString(), captured.getRepositoryObject().getRepositoryParameters().get("resourceId"));
+
+		Assert.assertEquals(resourceMock.getId().toString(), captured.getRepositoryObject().getRepositoryParameters().get(ArtifactRepositoryConstants.RESOURCE_PARAM_RESOURCE_ID));
+		Assert.assertEquals("5", captured.getRepositoryObject().getRepositoryParameters().get(ArtifactRepositoryConstants.PARAM_THREAD_NUMBER));
+		Assert.assertEquals(TEST_INCLUDE_CLASSES, captured.getRepositoryObject().getRepositoryParameters().get(ArtifactRepositoryConstants.PARAM_INCLUDE_CLASSES));
+		Assert.assertEquals(TEST_EXCLUDE_CLASSES, captured.getRepositoryObject().getRepositoryParameters().get(ArtifactRepositoryConstants.PARAM_EXCLUDE_CLASSES));
+		Assert.assertEquals(TEST_INCLUDE_ANNOTATIONS, captured.getRepositoryObject().getRepositoryParameters().get(ArtifactRepositoryConstants.PARAM_INCLUDE_ANNOTATIONS));
+		Assert.assertEquals(TEST_EXCLUDE_ANNOTATIONS, captured.getRepositoryObject().getRepositoryParameters().get(ArtifactRepositoryConstants.PARAM_EXCLUDE_ANNOTATIONS));
+
+
 		Assert.assertEquals(createTestCustomParams(), captured.getCustomParameters());
 	}
 
@@ -122,6 +131,12 @@ public class RunPackagedAutomationPackagesMojoEETest extends AbstractMojoTest {
 		mojo.setExecutionParameters(params);
 		mojo.setWaitForExecution(true);
 		mojo.setEnsureExecutionSuccess(true);
+
+		mojo.setThreads(5);
+		mojo.setIncludeClasses(TEST_INCLUDE_CLASSES);
+		mojo.setExcludeClasses(TEST_EXCLUDE_CLASSES);
+		mojo.setIncludeAnnotations(TEST_INCLUDE_ANNOTATIONS);
+		mojo.setExcludeAnnotations(TEST_EXCLUDE_ANNOTATIONS);
 
 		MavenProject mockedProject = Mockito.mock(MavenProject.class);
 

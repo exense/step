@@ -112,6 +112,7 @@
 		<module>../step-agent</module>
 		<module>../step-core-model</module>
 		<module>../step-core</module>
+		<module>../step-automation-packages</module>
 		<module>../step-functions</module>
 		<module>../step-functions-plugins</module>
 		<module>../step-plans</module>
@@ -122,7 +123,6 @@
 		<module>../step-ide</module>
 		<module>../step-junit</module>
 		<module>../step-libs-maven-client</module>
-		<module>../step-automation-packages</module>
 	</modules>
 
     <build>

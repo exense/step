@@ -118,4 +118,10 @@ public class StepJarParser {
             return functions;
         }
     }
+
+    private enum FilterResult {
+        NOT_FILTERED,
+        FILTERED_BY_INCLUDED,
+        FILTERED_BY_EXCLUDED
+    }
 }
