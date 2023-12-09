@@ -24,6 +24,7 @@ import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.Accessor;
 import step.core.accessors.LayeredAccessor;
 import step.core.execution.ExecutionContext;
+import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
 import step.core.repositories.*;
@@ -58,6 +59,11 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
         info.setType("automationPackage");
         info.setName(automationPackage.getAttribute(AbstractOrganizableObject.NAME));
         return info;
+    }
+
+    @Override
+    public TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) throws Exception {
+        return new TestSetStatusOverview();
     }
 
     private AutomationPackage getAutomationPackageForContext(Map<String, String> repositoryParameters) {
@@ -132,12 +138,8 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
     }
 
     @Override
-    public TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters) throws Exception {
-        return new TestSetStatusOverview();
-    }
-
-    @Override
     public void exportExecution(ExecutionContext context, Map<String, String> repositoryParameters) throws Exception {
+        throw new UnsupportedOperationException("Not supported yet");
     }
 
     public void removeContext(String contextId) {

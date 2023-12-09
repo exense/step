@@ -119,9 +119,4 @@ public class StepJarParser {
         }
     }
 
-    private enum FilterResult {
-        NOT_FILTERED,
-        FILTERED_BY_INCLUDED,
-        FILTERED_BY_EXCLUDED
-    }
 }
