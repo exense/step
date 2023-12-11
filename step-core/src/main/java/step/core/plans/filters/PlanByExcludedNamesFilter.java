@@ -16,13 +16,36 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages;
+package step.core.plans.filters;
 
 import step.core.accessors.AbstractOrganizableObject;
-import step.core.objectenricher.EnricheableObject;
+import step.core.plans.Plan;
+import step.core.plans.PlanFilter;
 
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
-public class AutomationPackage extends AbstractOrganizableObject implements EnricheableObject {
+public class PlanByExcludedNamesFilter extends PlanFilter {
 
+    private List<String> excludedNames = new ArrayList<>();
+
+    public PlanByExcludedNamesFilter() {
+    }
+
+    public PlanByExcludedNamesFilter(List<String> excludedNames) {
+        this.excludedNames = excludedNames;
+    }
+
+    @Override
+    public boolean isSelected(Plan plan) {
+        return !excludedNames.contains(plan.getAttribute(AbstractOrganizableObject.NAME));
+    }
+
+    public List<String> getExcludedNames() {
+        return excludedNames;
+    }
+
+    public void setExcludedNames(List<String> excludedNames) {
+        this.excludedNames = excludedNames;
+    }
 }

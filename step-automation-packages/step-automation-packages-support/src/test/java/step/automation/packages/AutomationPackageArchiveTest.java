@@ -28,7 +28,7 @@ public class AutomationPackageArchiveTest {
     public void isAutomationPackage() throws AutomationPackageReadingException, IOException {
         File automationPackageJar = new File("src/test/resources/samples/step-automation-packages-sample2.jar");
 
-        try (AutomationPackageArchive validPackage = new AutomationPackageArchive(automationPackageJar)) {
+        try (AutomationPackageArchive validPackage = new AutomationPackageArchive(automationPackageJar, automationPackageJar.getName())) {
             Assert.assertTrue(validPackage.isAutomationPackage());
 
             JsonNode actualDescriptor = yamlObjectMapper.readTree(validPackage.getDescriptorYaml());
@@ -46,7 +46,7 @@ public class AutomationPackageArchiveTest {
         }
 
         File malformedPackageJar = new File("src/test/resources/samples/step-automation-packages-malformed.jar");
-        try (AutomationPackageArchive malformed = new AutomationPackageArchive(malformedPackageJar)) {
+        try (AutomationPackageArchive malformed = new AutomationPackageArchive(malformedPackageJar, malformedPackageJar.getName())) {
             boolean isAutomationPackage = malformed.isAutomationPackage();
             if (isAutomationPackage) {
                 JsonNode malformedDescriptor = yamlObjectMapper.readTree(malformed.getDescriptorYaml());

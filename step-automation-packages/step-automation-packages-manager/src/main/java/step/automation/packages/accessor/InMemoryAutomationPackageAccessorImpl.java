@@ -25,7 +25,7 @@ import step.core.collections.inmemory.InMemoryCollection;
 
 public class InMemoryAutomationPackageAccessorImpl extends AbstractAccessor<AutomationPackage> implements AutomationPackageAccessor {
 
-    public InMemoryAutomationPackageAccessorImpl(Collection<AutomationPackage> collectionDriver) {
+    public InMemoryAutomationPackageAccessorImpl() {
         super(new InMemoryCollection<AutomationPackage>());
     }
 }

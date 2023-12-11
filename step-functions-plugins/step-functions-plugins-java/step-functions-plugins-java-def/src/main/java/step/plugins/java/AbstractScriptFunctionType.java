@@ -30,6 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import ch.exense.commons.app.Configuration;
 import step.attachments.FileResolver;
+import step.core.AbstractStepContext;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
 import step.functions.type.AbstractFunctionType;
@@ -57,19 +58,24 @@ public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction
 		daemonJar = registerResource(getClass().getClassLoader(), "java-plugin-handler.jar", false);
 	}
 
-	public Map<String, String> getHandlerProperties(T function) {
+	@Override
+	public Map<String, String> getHandlerProperties(T function, AbstractStepContext executionContext) {
 		Map<String, String> props = new HashMap<>();
-		props.put(ScriptHandler.SCRIPT_LANGUAGE, function.getScriptLanguage().get());		
-		registerFile(function.getLibrariesFile(), ScriptHandler.LIBRARIES_FILE, props);
+		props.put(ScriptHandler.SCRIPT_LANGUAGE, function.getScriptLanguage().get());
+		registerFile(function.getLibrariesFile(), ScriptHandler.LIBRARIES_FILE, props, true, executionContext);
 		addPluginLibsIfRequired(function.getScriptLanguage().get(), props);
-		registerFile(function.getScriptFile(), ScriptHandler.SCRIPT_FILE, props);
-		registerFile(function.getErrorHandlerFile(), ScriptHandler.ERROR_HANDLER_FILE, props);
-		
-		if(configuration.getPropertyAsBoolean("plugins.java.validate.properties")) {
+		registerFile(function.getScriptFile(), ScriptHandler.SCRIPT_FILE, props, true, executionContext);
+		registerFile(function.getErrorHandlerFile(), ScriptHandler.ERROR_HANDLER_FILE, props, true, executionContext);
+
+		if (configuration.getPropertyAsBoolean("plugins.java.validate.properties")) {
 			props.put(KeywordExecutor.VALIDATE_PROPERTIES, Boolean.TRUE.toString());
 		}
-		
+
 		return props;
+	}
+
+	public Map<String, String> getHandlerProperties(T function) {
+		return this.getHandlerProperties(function, null);
 	}
 
 	protected void addPluginLibsIfRequired(String scriptLanguage, Map<String, String> props) {

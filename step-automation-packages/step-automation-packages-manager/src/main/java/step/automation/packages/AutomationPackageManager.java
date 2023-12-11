@@ -18,11 +18,12 @@
  ******************************************************************************/
 package step.automation.packages;
 
-import com.google.api.client.util.IOUtils;
+import org.apache.commons.io.IOUtils;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.automation.packages.accessor.AutomationPackageAccessor;
+import step.automation.packages.accessor.InMemoryAutomationPackageAccessorImpl;
 import step.automation.packages.model.AutomationPackageContent;
 import step.automation.packages.model.AutomationPackageKeyword;
 import step.automation.packages.model.AutomationPackageSchedule;
@@ -31,23 +32,28 @@ import step.core.accessors.AbstractOrganizableObject;
 import step.core.execution.model.ExecutionParameters;
 import step.core.objectenricher.EnricheableObject;
 import step.core.objectenricher.ObjectEnricher;
+import step.core.objectenricher.ObjectEnricherComposer;
 import step.core.objectenricher.ObjectPredicate;
+import step.core.plans.InMemoryPlanAccessor;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
 import step.core.scheduler.ExecutionScheduler;
 import step.core.scheduler.ExecutionTaskAccessor;
 import step.core.scheduler.ExecutiontTaskParameters;
+import step.core.scheduler.InMemoryExecutionTaskAccessor;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
+import step.functions.accessor.InMemoryFunctionAccessorImpl;
 import step.functions.manager.FunctionManager;
+import step.functions.manager.FunctionManagerImpl;
 import step.functions.type.FunctionTypeException;
+import step.functions.type.FunctionTypeRegistry;
 import step.functions.type.SetupFunctionException;
+import step.resources.LocalResourceManagerImpl;
+import step.resources.Resource;
 import step.resources.ResourceManager;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -65,6 +71,7 @@ public class AutomationPackageManager {
     private final ExecutionScheduler executionScheduler;
     private final AutomationPackageReader packageReader;
     private final AutomationPackageKeywordsAttributesApplier keywordsAttributesApplier;
+    private final ResourceManager resourceManager;
 
     public AutomationPackageManager(AutomationPackageAccessor automationPackageAccessor,
                                     FunctionManager functionManager,
@@ -88,7 +95,21 @@ public class AutomationPackageManager {
         // TODO: avoid executionScheduler in automation package manager
         this.executionScheduler = executionScheduler;
         this.packageReader = new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH);
+        this.resourceManager = resourceManager;
         this.keywordsAttributesApplier = new AutomationPackageKeywordsAttributesApplier(resourceManager);
+    }
+
+    public static AutomationPackageManager createIsolatedAutomationPackageManager(ObjectId isolatedContextId, FunctionTypeRegistry functionTypeRegistry){
+        InMemoryFunctionAccessorImpl inMemoryFunctionRepository = new InMemoryFunctionAccessorImpl();
+        return new AutomationPackageManager(
+                new InMemoryAutomationPackageAccessorImpl(),
+                new FunctionManagerImpl(inMemoryFunctionRepository, functionTypeRegistry),
+                inMemoryFunctionRepository,
+                new InMemoryPlanAccessor(),
+                new LocalResourceManagerImpl(new File("resources", isolatedContextId.toString())),
+                new InMemoryExecutionTaskAccessor(),
+                null
+        );
     }
 
     public AutomationPackage getAutomationPackageById(ObjectId id, ObjectPredicate objectPredicate) {
@@ -117,6 +138,16 @@ public class AutomationPackageManager {
         return stream.findFirst().orElse(null);
     }
 
+    public Stream<AutomationPackage> getAllAutomationPackages(ObjectPredicate objectPredicate) {
+        Stream<AutomationPackage> stream = StreamSupport.stream(Spliterators.spliteratorUnknownSize(automationPackageAccessor.getAll(), Spliterator.ORDERED),
+                false
+        );
+        if (objectPredicate != null) {
+            stream = stream.filter(objectPredicate);
+        }
+        return stream;
+    }
+
     public void removeAutomationPackage(ObjectId id, ObjectPredicate objectPredicate) {
         AutomationPackage automationPackage = getAutomationPackageById(id, objectPredicate);
         deleteAutomationPackageEntities(automationPackage);
@@ -127,7 +158,8 @@ public class AutomationPackageManager {
     private void deleteAutomationPackageEntities(AutomationPackage automationPackage) {
         deleteFunctions(automationPackage);
         deletePlans(automationPackage);
-        deleteTasks(automationPackage);
+        deleteSchedules(automationPackage);
+        deleteResources(automationPackage);
     }
 
     /**
@@ -138,11 +170,9 @@ public class AutomationPackageManager {
      * @param enricher        the enricher used to fill all stored objects (for instance, with product id for multitenant application)
      * @param objectPredicate the filter for automation package
      * @return the id of created package
-     * @throws FunctionTypeException
-     * @throws SetupFunctionException
      * @throws AutomationPackageManagerException
      */
-    public String createAutomationPackage(InputStream packageStream, String fileName, ObjectEnricher enricher, ObjectPredicate objectPredicate) throws FunctionTypeException, SetupFunctionException, AutomationPackageManagerException {
+    public ObjectId createAutomationPackage(InputStream packageStream, String fileName, ObjectEnricher enricher, ObjectPredicate objectPredicate) throws AutomationPackageManagerException {
         return createOrUpdateAutomationPackage(false, true, null, packageStream, fileName, enricher, objectPredicate).getId();
     }
 
@@ -163,14 +193,26 @@ public class AutomationPackageManager {
     public PackageUpdateResult createOrUpdateAutomationPackage(boolean allowUpdate, boolean allowCreate, ObjectId explicitOldId, InputStream packageStream, String fileName, ObjectEnricher enricher, ObjectPredicate objectPredicate) {
         AutomationPackageArchive automationPackageArchive;
         AutomationPackageContent packageContent;
+
+        AutomationPackage newPackage = null;
+
+        // store automation package into temp file
+        File automationPackageFile = null;
         try {
-            automationPackageArchive = new AutomationPackageArchive(stream2file(packageStream));
-            packageContent = readAutomationPackage(automationPackageArchive);
-        } catch (IOException | AutomationPackageReadingException e) {
-            throw new AutomationPackageManagerException("Unable to read automation package", e);
+            automationPackageFile = stream2file(packageStream, fileName);
+        } catch (Exception ex) {
+            throw new AutomationPackageManagerException("Unable to store automation package file");
         }
 
-        AutomationPackage oldPackage;
+        try {
+            try {
+                automationPackageArchive = new AutomationPackageArchive(automationPackageFile, fileName);
+                packageContent = readAutomationPackage(automationPackageArchive);
+            } catch (AutomationPackageReadingException e) {
+                throw new AutomationPackageManagerException("Unable to read automation package", e);
+            }
+
+            AutomationPackage oldPackage;
         if (explicitOldId != null) {
             oldPackage = getAutomationPackageById(explicitOldId, objectPredicate);
 
@@ -187,40 +229,61 @@ public class AutomationPackageManager {
             }
         } else {
             oldPackage = getAutomationPackageByName(packageContent.getName(), objectPredicate);
-        }
-
-        if (!allowUpdate && oldPackage != null) {
-            throw new AutomationPackageManagerException("Automation package '" + packageContent.getName() + "' already exists");
-        }
-        if (!allowCreate && oldPackage == null) {
+            }if (!allowUpdate && oldPackage != null) {
+                throw new AutomationPackageManagerException("Automation package '" + packageContent.getName() + "' already exists");
+            }if (!allowCreate && oldPackage == null) {
             throw new AutomationPackageManagerException("Automation package '" + packageContent.getName() + "' doesn't exist");
         }
 
-        // keep old package id
-        AutomationPackage newPackage = createNewInstance(fileName, packageContent, oldPackage, enricher);
+            // keep old package id
+            newPackage = createNewInstance(fileName, packageContent, oldPackage, enricher);
 
-        // prepare staging collections
-        List<Plan> completePlans = preparePlansStaging(newPackage, packageContent, oldPackage, enricher);
-        List<ExecutiontTaskParameters> completeExecTasksParameters = prepareExecutionTasksParamsStaging(newPackage, enricher, packageContent, oldPackage, completePlans);
-        List<Function> completeFunctions = prepareFunctionsStaging(newPackage, automationPackageArchive, packageContent, enricher, oldPackage);
+            // prepare staging collections
+            ObjectEnricher enricherForIncludedEntities = ObjectEnricherComposer.compose(Arrays.asList(enricher, new AutomationPackageLinkEnricher(newPackage.getId().toString())));
+            List<Plan> completePlans = preparePlansStaging(packageContent, oldPackage, enricherForIncludedEntities);
+            List<ExecutiontTaskParameters> completeExecTasksParameters = prepareExecutionTasksParamsStaging(enricherForIncludedEntities, packageContent, oldPackage, completePlans);
+            List<Function> completeFunctions = prepareFunctionsStaging(newPackage, automationPackageArchive, packageContent, enricherForIncludedEntities, oldPackage);
 
-        // delete old package entities
-        if (oldPackage != null) {
-            deleteAutomationPackageEntities(oldPackage);
+            // delete old package entities
+            if (oldPackage != null) {
+                deleteAutomationPackageEntities(oldPackage);
+            }
+
+            // persist all staged entities
+            persistStagedEntities(completeExecTasksParameters, completeFunctions, completePlans);
+
+            // save automation package metadata
+            ObjectId result = automationPackageAccessor.save(newPackage).getId();
+
+            if (oldPackage != null) {
+                log.info("Automation package has been updated ({}). Plans: {}. Functions: {}. Schedules: {}", newPackage.getAttribute(AbstractOrganizableObject.NAME), completePlans.size(), completeFunctions.size(), completeExecTasksParameters.size());
+            } else {
+                log.info("New automation package saved ({}). Plans: {}. Functions: {}. Schedules: {}", newPackage.getAttribute(AbstractOrganizableObject.NAME), completePlans.size(), completeFunctions.size(), completeExecTasksParameters.size());
+            }
+            return new PackageUpdateResult(oldPackage == null ? PackageUpdateStatus.CREATED : PackageUpdateStatus.UPDATED, result);
+        } catch (Exception ex) {
+            // cleanup created resources
+            try {
+                if (newPackage != null) {
+                    List<Resource> resources = resourceManager.findManyByCriteria(Map.of("customFields." + AutomationPackageEntity.AUTOMATION_PACKAGE_ID, newPackage.getId().toString()));
+                    for (Resource resource : resources) {
+                        resourceManager.deleteResource(resource.getId().toString());
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("Cannot cleanup resource", e);
+            }
+            throw ex;
+        } finally {
+            // cleanup temp file
+            try {
+                if (automationPackageFile.exists()) {
+                    automationPackageFile.delete();
+                }
+            } catch (Exception e) {
+                log.warn("Cannot cleanup temp file {}", automationPackageFile.getName(), e);
+            }
         }
-
-        // persist all staged entities
-        persistStagedEntities(completeExecTasksParameters, completeFunctions, completePlans);
-
-        // save automation package metadata
-        String result =  automationPackageAccessor.save(newPackage).getId().toString();
-
-        if(oldPackage != null) {
-            log.info("Automation package has been updated ({}). Plans: {}. Functions: {}. Schedules: {}", newPackage.getAttribute(AbstractOrganizableObject.NAME), completePlans.size(), completeFunctions.size(), completeExecTasksParameters.size());
-        } else {
-            log.info("New automation package saved ({}). Plans: {}. Functions: {}. Schedules: {}", newPackage.getAttribute(AbstractOrganizableObject.NAME), completePlans.size(), completeFunctions.size(), completeExecTasksParameters.size());
-        }
-        return new PackageUpdateResult(oldPackage == null ? PackageUpdateStatus.CREATED : PackageUpdateStatus.UPDATED, result);
     }
 
     private void persistStagedEntities(List<ExecutiontTaskParameters> completeExecTasksParameters, List<Function> completeFunctions, List<Plan> completePlans) {
@@ -237,31 +300,35 @@ public class AutomationPackageManager {
         }
 
         for (ExecutiontTaskParameters execTasksParameter : completeExecTasksParameters) {
-            executionScheduler.addExecutionTask(execTasksParameter, false);
+            if (executionScheduler != null) {
+                // TODO: move this to a dedicated class as part of SED-2594
+                executionScheduler.addExecutionTask(execTasksParameter, false);
+            } else {
+                executionTaskAccessor.save(execTasksParameter);
+            }
         }
 
     }
 
-    protected <T extends AbstractOrganizableObject & EnricheableObject> void fillEntities(List<T> entities, AutomationPackage newPackage, List<T> oldEntities, ObjectEnricher enricher){
-        Map<String, ObjectId> planNameToIdMap = createNameToIdMap(oldEntities);
+    protected <T extends AbstractOrganizableObject & EnricheableObject> void fillEntities(List<T> entities, List<T> oldEntities, ObjectEnricher enricher) {
+        Map<String, ObjectId> nameToIdMap = createNameToIdMap(oldEntities);
 
         for (T e : entities) {
             // keep old id
-            ObjectId oldId = planNameToIdMap.get(e.getAttribute(AbstractOrganizableObject.NAME));
+            ObjectId oldId = nameToIdMap.get(e.getAttribute(AbstractOrganizableObject.NAME));
             if (oldId != null) {
                 e.setId(oldId);
             }
 
-            e.addCustomField(AutomationPackageEntity.AUTOMATION_PACKAGE_ID, newPackage.getId().toString());
             if (enricher != null) {
                 enricher.accept(e);
             }
         }
     }
 
-    protected List<Plan> preparePlansStaging(AutomationPackage newPackage, AutomationPackageContent packageContent, AutomationPackage oldPackage, ObjectEnricher enricher) {
+    protected List<Plan> preparePlansStaging(AutomationPackageContent packageContent, AutomationPackage oldPackage, ObjectEnricher enricher) {
         List<Plan> plans = packageContent.getPlans();
-        fillEntities(plans, newPackage, oldPackage != null ? getPackagePlans(oldPackage) : new ArrayList<>(), enricher);
+        fillEntities(plans, oldPackage != null ? getPackagePlans(oldPackage.getId()) : new ArrayList<>(), enricher);
         return plans;
     }
 
@@ -269,15 +336,15 @@ public class AutomationPackageManager {
         List<Function> completeFunctions = new ArrayList<>();
         for (AutomationPackageKeyword keyword : packageContent.getKeywords()) {
             // TODO: here want to apply additional attributes to draft function (upload linked files as resources), but we have to refactor the way to do that
-            Function completeFunction = keywordsAttributesApplier.applySpecialAttributesToKeyword(keyword, automationPackageArchive);
+            Function completeFunction = keywordsAttributesApplier.applySpecialAttributesToKeyword(keyword, automationPackageArchive, newPackage.getId(), enricher);
             completeFunctions.add(completeFunction);
         }
 
-        fillEntities(completeFunctions, newPackage, oldPackage != null ? getPackageFunctions(oldPackage) : new ArrayList<>(), enricher);
+        fillEntities(completeFunctions, oldPackage != null ? getPackageFunctions(oldPackage.getId()) : new ArrayList<>(), enricher);
         return completeFunctions;
     }
 
-    protected List<ExecutiontTaskParameters> prepareExecutionTasksParamsStaging(AutomationPackage newPackage, ObjectEnricher enricher, AutomationPackageContent packageContent, AutomationPackage oldPackage, List<Plan> plansStaging) {
+    protected List<ExecutiontTaskParameters> prepareExecutionTasksParamsStaging(ObjectEnricher enricher, AutomationPackageContent packageContent, AutomationPackage oldPackage, List<Plan> plansStaging) {
         List<ExecutiontTaskParameters> completeExecTasksParameters = new ArrayList<>();
         for (AutomationPackageSchedule schedule : packageContent.getSchedules()) {
             ExecutiontTaskParameters execTaskParameters = new ExecutiontTaskParameters();
@@ -294,19 +361,19 @@ public class AutomationPackageManager {
             execTaskParameters.setExecutionsParameters(new ExecutionParameters(plan, schedule.getExecutionParameters()));
             completeExecTasksParameters.add(execTaskParameters);
         }
-        fillEntities(completeExecTasksParameters, newPackage, oldPackage != null ? getPackageTasks(oldPackage) : new ArrayList<>(), enricher);
+        fillEntities(completeExecTasksParameters, oldPackage != null ? getPackageSchedules(oldPackage.getId()) : new ArrayList<>(), enricher);
         return completeExecTasksParameters;
     }
 
     private Map<String, ObjectId> createNameToIdMap(List<? extends AbstractOrganizableObject> objects) {
-        Map<String, ObjectId> functionNameToIdMap = new HashMap<>();
+        Map<String, ObjectId> nameToIdMap = new HashMap<>();
         for (AbstractOrganizableObject o : objects) {
             String name = o.getAttribute(AbstractOrganizableObject.NAME);
             if (name != null) {
-                functionNameToIdMap.put(name, o.getId());
+                nameToIdMap.put(name, o.getId());
             }
         }
-        return functionNameToIdMap;
+        return nameToIdMap;
     }
 
     protected AutomationPackage createNewInstance(String fileName, AutomationPackageContent packageContent, AutomationPackage oldPackage, ObjectEnricher enricher) {
@@ -328,16 +395,127 @@ public class AutomationPackageManager {
 
     protected AutomationPackageContent readAutomationPackage(AutomationPackageArchive automationPackageArchive) throws AutomationPackageReadingException {
         AutomationPackageContent packageContent;
-        packageContent = packageReader.readAutomationPackage(automationPackageArchive);
+        packageContent = packageReader.readAutomationPackage(automationPackageArchive, false);
         if (packageContent.getName() == null || packageContent.getName().isEmpty()) {
             throw new AutomationPackageManagerException("Automation package name is missing");
         }
         return packageContent;
     }
 
-    // TODO: find another way to read automation package from input stream
-    private static File stream2file(InputStream in) throws IOException {
-        final File tempFile = File.createTempFile("autopack", ".tmp");
+    protected List<ExecutiontTaskParameters> deleteSchedules(AutomationPackage automationPackage) {
+        List<ExecutiontTaskParameters> schedules = getPackageSchedules(automationPackage.getId());
+        schedules.forEach(schedule -> {
+            try {
+                if (executionScheduler != null) {
+                    executionScheduler.removeExecutionTask(schedule.getId().toString());
+                } else {
+                    executionTaskAccessor.remove(schedule.getId());
+                }
+            } catch (Exception e) {
+                log.error("Error while deleting task {} for automation package {}",
+                        schedule.getId().toString(), automationPackage.getAttribute(AbstractOrganizableObject.NAME), e
+                );
+            }
+        });
+        return schedules;
+    }
+
+    protected List<Plan> deletePlans(AutomationPackage automationPackage) {
+        List<Plan> plans = getPackagePlans(automationPackage.getId());
+        plans.forEach(plan -> {
+            try {
+                planAccessor.remove(plan.getId());
+            } catch (Exception e) {
+                log.error("Error while deleting plan {} for automation package {}",
+                        plan.getId().toString(), automationPackage.getAttribute(AbstractOrganizableObject.NAME), e
+                );
+            }
+        });
+        return plans;
+    }
+
+    protected List<Function> deleteFunctions(AutomationPackage automationPackage) {
+        List<Function> functions = getPackageFunctions(automationPackage.getId());
+        functions.forEach(function -> {
+            try {
+                functionManager.deleteFunction(function.getId().toString());
+            } catch (FunctionTypeException e) {
+                log.error("Error while deleting function {} for automation package {}",
+                        function.getId().toString(), automationPackage.getAttribute(AbstractOrganizableObject.NAME), e
+                );
+            }
+        });
+        return functions;
+    }
+
+    protected List<Resource> deleteResources(AutomationPackage automationPackage) {
+        List<Resource> resources = getPackageResources(automationPackage.getId());
+        for (Resource resource : resources) {
+            try {
+                resourceManager.deleteResource(resource.getId().toString());
+            } catch (Exception e) {
+                log.error("Error while deleting resource {} for automation package {}",
+                        resource.getId().toString(), automationPackage.getAttribute(AbstractOrganizableObject.NAME), e
+                );
+            }
+        }
+        return resources;
+    }
+
+    protected List<Function> getFunctionsByCriteria(Map<String, String> criteria) {
+        return functionAccessor.findManyByCriteria(criteria).collect(Collectors.toList());
+    }
+
+    public List<Function> getPackageFunctions(ObjectId automationPackageId) {
+        return getFunctionsByCriteria(getAutomationPackageIdCriteria(automationPackageId));
+    }
+
+    protected List<Resource> getResourcesByCriteria(Map<String, String> criteria) {
+        return resourceManager.findManyByCriteria(criteria);
+    }
+
+    public List<Resource> getPackageResources(ObjectId automationPackageId){
+        return getResourcesByCriteria(getAutomationPackageIdCriteria(automationPackageId));
+    }
+
+    protected Map<String, String> getAutomationPackageIdCriteria(ObjectId automationPackageId) {
+        return Map.of(getAutomationPackageTrackingField(), automationPackageId.toString());
+    }
+
+    protected String getAutomationPackageTrackingField() {
+        return "customFields." + AutomationPackageEntity.AUTOMATION_PACKAGE_ID;
+    }
+
+    public List<Plan> getPackagePlans(ObjectId automationPackageId) {
+        return planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(automationPackageId)).collect(Collectors.toList());
+    }
+
+    protected List<ExecutiontTaskParameters> getPackageSchedules(ObjectId automationPackageId) {
+        return executionTaskAccessor.findManyByCriteria(getAutomationPackageIdCriteria(automationPackageId)).collect(Collectors.toList());
+    }
+
+    public PlanAccessor getPlanAccessor() {
+        return planAccessor;
+    }
+
+    public FunctionAccessor getFunctionAccessor() {
+        return functionAccessor;
+    }
+
+    public ResourceManager getResourceManager() {
+        return resourceManager;
+    }
+
+    public ExecutionTaskAccessor getExecutionTaskAccessor() {
+        return executionTaskAccessor;
+    }
+
+    public void cleanup() {
+        this.resourceManager.cleanup();
+    }
+
+    private static File stream2file(InputStream in, String fileName) throws IOException {
+        final File tempFile = File.createTempFile(fileName, ".tmp");
         tempFile.deleteOnExit();
         try (FileOutputStream out = new FileOutputStream(tempFile)) {
             IOUtils.copy(in, out);
@@ -345,71 +523,11 @@ public class AutomationPackageManager {
         return tempFile;
     }
 
-    protected List<ExecutiontTaskParameters> deleteTasks(AutomationPackage automationPackage) {
-        List<ExecutiontTaskParameters> tasks = getPackageTasks(automationPackage);
-        tasks.forEach(task -> {
-            try {
-                executionScheduler.removeExecutionTask(task.getId().toString());
-            } catch (Exception e) {
-                log.error("Error while deleting task " + task.getId().toString(), e);
-            }
-        });
-        return tasks;
-    }
-
-    protected List<Plan> deletePlans(AutomationPackage automationPackage) {
-        List<Plan> plans = getPackagePlans(automationPackage);
-        plans.forEach(plan -> {
-            try {
-                planAccessor.remove(plan.getId());
-            } catch (Exception e) {
-                log.error("Error while deleting plan " + plan.getId().toString(), e);
-            }
-        });
-        return plans;
-    }
-
-    protected List<Function> deleteFunctions(AutomationPackage automationPackage) {
-        List<Function> previousFunctions = getPackageFunctions(automationPackage);
-        previousFunctions.forEach(function -> {
-            try {
-                functionManager.deleteFunction(function.getId().toString());
-            } catch (FunctionTypeException e) {
-                log.error("Error while deleting function " + function.getId().toString(), e);
-            }
-        });
-        return previousFunctions;
-    }
-
-    protected List<Function> getFunctionsByCriteria(Map<String, String> criteria) {
-        return functionAccessor.findManyByCriteria(criteria).collect(Collectors.toList());
-    }
-
-    protected List<Function> getPackageFunctions(AutomationPackage automationPackage) {
-        return getFunctionsByCriteria(getAutomationPackageIdCriteria(automationPackage.getId().toString()));
-    }
-
-    protected Map<String, String> getAutomationPackageIdCriteria(String automationPackageId) {
-        return Map.of(getAutomationPackageTrackingField(), automationPackageId);
-    }
-
-    protected String getAutomationPackageTrackingField() {
-        return "customFields." + AutomationPackageEntity.AUTOMATION_PACKAGE_ID;
-    }
-
-    protected List<Plan> getPackagePlans(AutomationPackage automationPackage) {
-        return planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(automationPackage.getId().toString())).collect(Collectors.toList());
-    }
-
-    protected List<ExecutiontTaskParameters> getPackageTasks(AutomationPackage automationPackage) {
-        return executionTaskAccessor.findManyByCriteria(getAutomationPackageIdCriteria(automationPackage.getId().toString())).collect(Collectors.toList());
-    }
-
     public static class PackageUpdateResult {
         private final PackageUpdateStatus status;
-        private final String id;
+        private final ObjectId id;
 
-        public PackageUpdateResult(PackageUpdateStatus status, String id) {
+        public PackageUpdateResult(PackageUpdateStatus status, ObjectId id) {
             this.status = status;
             this.id = id;
         }
@@ -418,7 +536,7 @@ public class AutomationPackageManager {
             return status;
         }
 
-        public String getId() {
+        public ObjectId getId() {
             return id;
         }
     }

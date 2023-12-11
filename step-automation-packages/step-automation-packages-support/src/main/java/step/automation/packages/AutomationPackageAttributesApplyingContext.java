@@ -23,6 +23,8 @@ import step.resources.ResourceManager;
 public class AutomationPackageAttributesApplyingContext {
     private ResourceManager resourceManager;
 
+    private String uploadedPackageFileResource;
+
     public AutomationPackageAttributesApplyingContext(ResourceManager resourceManager) {
         this.resourceManager = resourceManager;
     }
@@ -33,5 +35,13 @@ public class AutomationPackageAttributesApplyingContext {
 
     public void setResourceManager(ResourceManager resourceManager) {
         this.resourceManager = resourceManager;
+    }
+
+    public String getUploadedPackageFileResource() {
+        return uploadedPackageFileResource;
+    }
+
+    public void setUploadedPackageFileResource(String uploadedPackageFileResource) {
+        this.uploadedPackageFileResource = uploadedPackageFileResource;
     }
 }

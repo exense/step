@@ -18,10 +18,10 @@
  ******************************************************************************/
 package step.resources;
 
+import org.apache.commons.io.FileUtils;
+
 import java.io.File;
 import java.io.IOException;
-
-import org.apache.commons.io.FileUtils;
 
 public class LocalResourceManagerImpl extends ResourceManagerImpl {
 
@@ -38,14 +38,11 @@ public class LocalResourceManagerImpl extends ResourceManagerImpl {
 		super(resourceRootFolder, resourceAccessor, resourceRevisionAccessor);
 	}
 
-	public ResourceAccessor getResourceAccessor() {
-		return resourceAccessor;
-	}
-	
 	public ResourceRevisionAccessor getResourceRevisionAccessor() {
 		return resourceRevisionAccessor;
 	}
-	
+
+	@Override
 	public void cleanup() {
 		if (resourceRootFolder.exists() && resourceRootFolder.isDirectory() && resourceRootFolder.canWrite()) {
 			try {

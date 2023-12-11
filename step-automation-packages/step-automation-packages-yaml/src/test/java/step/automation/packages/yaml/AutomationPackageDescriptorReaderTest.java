@@ -44,7 +44,7 @@ public class AutomationPackageDescriptorReaderTest {
     public void jmeterKeywordReadTest() throws AutomationPackageReadingException {
         File descriptor = new File("src/test/resources/step/automation/packages/yaml/descriptors/jmeterKeywordDescriptor.yml");
         try (InputStream is = new FileInputStream(descriptor)) {
-            AutomationPackageDescriptorYaml automationPackage = reader.readAutomationPackageDescriptor(is);
+            AutomationPackageDescriptorYaml automationPackage = reader.readAutomationPackageDescriptor(is, "");
             assertNotNull(automationPackage);
             List<AutomationPackageKeyword> keywords = automationPackage.getKeywords();
             assertEquals(1, keywords.size());
@@ -71,7 +71,7 @@ public class AutomationPackageDescriptorReaderTest {
     public void completeDescriptorReadTest() throws AutomationPackageReadingException {
         File file = new File("src/test/resources/step/automation/packages/yaml/descriptors/completeDescriptor.yml");
         try (InputStream is = new FileInputStream(file)) {
-            AutomationPackageDescriptorYaml descriptor = reader.readAutomationPackageDescriptor(is);
+            AutomationPackageDescriptorYaml descriptor = reader.readAutomationPackageDescriptor(is, "");
             assertNotNull(descriptor);
             List<AutomationPackageKeyword> keywords = descriptor.getKeywords();
             assertEquals(1, keywords.size());
@@ -104,7 +104,7 @@ public class AutomationPackageDescriptorReaderTest {
     public void emptyKeywordReadTest() throws AutomationPackageReadingException {
         File file = new File("src/test/resources/step/automation/packages/yaml/descriptors/emptyKeywordDescriptor.yml");
         try (InputStream is = new FileInputStream(file)) {
-            AutomationPackageDescriptorYaml descriptor = reader.readAutomationPackageDescriptor(is);
+            AutomationPackageDescriptorYaml descriptor = reader.readAutomationPackageDescriptor(is, "");
             assertNotNull(descriptor);
             List<AutomationPackageKeyword> keywords = descriptor.getKeywords();
             assertEquals(0, keywords.size());

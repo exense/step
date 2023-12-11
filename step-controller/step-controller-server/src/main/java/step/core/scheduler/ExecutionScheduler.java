@@ -18,18 +18,17 @@
  ******************************************************************************/
 package step.core.scheduler;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.controller.ControllerSettingAccessor;
 import step.core.execution.ExecutionContext;
 import step.core.execution.model.ExecutionParameters;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 public class ExecutionScheduler {
 	

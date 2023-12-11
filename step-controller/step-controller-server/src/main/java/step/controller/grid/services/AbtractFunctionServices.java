@@ -232,7 +232,7 @@ public abstract class AbtractFunctionServices extends AbstractEntityServices<Fun
 	@Secured(right="{entity}-execute")
 	public Output<JsonObject> callFunctionById(@PathParam("id") String tokenId, @PathParam("functionId") String functionId, FunctionInput<JsonObject> input) {
 		Function function = functionManager.getFunctionById(functionId);
-		return functionExecutionService.callFunction(tokenId, function, input, JsonObject.class);			
+		return functionExecutionService.callFunction(tokenId, function, input, JsonObject.class, null);
 	}
 
 	@Operation(operationId = "call{Entity}ByAttributes")
@@ -250,6 +250,6 @@ public abstract class AbtractFunctionServices extends AbstractEntityServices<Fun
 		if(function == null) {
 			throw new RuntimeException("No function found matching the attributes "+functionAttributes);
 		}
-		return functionExecutionService.callFunction(tokenId, function, input, JsonObject.class);			
+		return functionExecutionService.callFunction(tokenId, function, input, JsonObject.class, null);
 	}
 }

@@ -18,6 +18,9 @@
  ******************************************************************************/
 package step.core;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import step.attachments.FileResolver;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicValueResolver;
@@ -25,6 +28,7 @@ import step.expressions.ExpressionHandler;
 import step.resources.*;
 
 import java.io.File;
+import java.util.concurrent.TimeUnit;
 
 public abstract class AbstractStepContext extends AbstractContext {
 
@@ -33,19 +37,24 @@ public abstract class AbstractStepContext extends AbstractContext {
 	private ResourceAccessor resourceAccessor;
 	private ResourceManager resourceManager;
 	private FileResolver fileResolver;
+	private LoadingCache<String, File> fileResolverCache;
 
 	protected void setDefaultAttributes() {
 		expressionHandler = new ExpressionHandler();
 		dynamicBeanResolver = new DynamicBeanResolver(new DynamicValueResolver(expressionHandler));
 		resourceAccessor = new InMemoryResourceAccessor();
 		resourceManager = new LocalResourceManagerImpl(new File("resources"), resourceAccessor, new InMemoryResourceRevisionAccessor());
-		fileResolver = new FileResolver(resourceManager);
+		setFileResolver(new FileResolver(resourceManager));
 	}
 
 	protected void useSourceAttributesFromParentContext(AbstractStepContext parentContext) {
-		resourceAccessor = parentContext.getResourceAccessor();
-		resourceManager = parentContext.getResourceManager();
-		fileResolver = parentContext.getFileResolver();
+		LayeredResourceAccessor layeredAccessor = new LayeredResourceAccessor();
+		layeredAccessor.pushAccessor(parentContext.getResourceAccessor());
+		resourceAccessor = layeredAccessor;
+
+		resourceManager = new LayeredResourceManager(parentContext.getResourceManager());
+
+		setFileResolver(new FileResolver(resourceManager));
 	}
 
 	protected void useStandardAttributesFromParentContext(AbstractStepContext parentContext) {
@@ -91,5 +100,18 @@ public abstract class AbstractStepContext extends AbstractContext {
 
 	public void setFileResolver(FileResolver fileResolver) {
 		this.fileResolver = fileResolver;
+
+		this.fileResolverCache = CacheBuilder.newBuilder().concurrencyLevel(4)
+				.maximumSize(1000)
+				.expireAfterWrite(500, TimeUnit.MILLISECONDS)
+				.build(new CacheLoader<String, File>() {
+					public File load(String filepath) {
+						return fileResolver.resolve(filepath);
+					}
+				});
+	}
+
+	public LoadingCache<String, File> getFileResolverCache() {
+		return fileResolverCache;
 	}
 }

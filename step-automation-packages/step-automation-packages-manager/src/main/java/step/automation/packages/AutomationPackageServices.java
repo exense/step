@@ -26,23 +26,30 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 import org.bson.types.ObjectId;
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
+import step.automation.packages.execution.AutomationPackageExecutionParameters;
+import step.automation.packages.execution.AutomationPackageExecutor;
+import step.core.access.User;
 import step.core.deployment.AbstractStepServices;
 import step.framework.server.security.Secured;
 
 import java.io.InputStream;
+import java.util.List;
 
 @Path("/automation-packages")
 @Tag(name = "Automation packages")
 public class AutomationPackageServices extends AbstractStepServices {
 
     protected AutomationPackageManager automationPackageManager;
+    protected AutomationPackageExecutor automationPackageExecutor;
 
     @PostConstruct
     public void init() throws Exception {
         super.init();
         automationPackageManager = getContext().get(AutomationPackageManager.class);
+        automationPackageExecutor = getContext().get(AutomationPackageExecutor.class);
     }
 
     @GET
@@ -65,10 +72,40 @@ public class AutomationPackageServices extends AbstractStepServices {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.TEXT_PLAIN)
     @Secured(right = "automation-package-write")
-    public String createAutomationPackage(@FormDataParam("file") InputStream uploadedInputStream,
+    public String createAutomationPackage(@FormDataParam("file") InputStream automationPackageInputStream,
                                           @FormDataParam("file") FormDataContentDisposition fileDetail,
                                           @Context UriInfo uriInfo) throws Exception {
-        return automationPackageManager.createAutomationPackage(uploadedInputStream, fileDetail.getFileName(), getObjectEnricher(), getObjectPredicate());
+        ObjectId id = automationPackageManager.createAutomationPackage(automationPackageInputStream, fileDetail.getFileName(), getObjectEnricher(), getObjectPredicate());
+        return id == null ? null : id.toString();
+    }
+
+    @POST
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/execute")
+    @Secured(right = "automation-package-execute")
+    public List<String> executeAutomationPackage(@FormDataParam("file") InputStream automationPackageInputStream,
+                                                 @FormDataParam("file") FormDataContentDisposition fileDetail,
+                                                 @FormDataParam("executionParams") FormDataBodyPart executionParamsBodyPart,
+                                                 @Context UriInfo uriInfo) throws Exception {
+        AutomationPackageExecutionParameters executionParameters = null;
+        if (executionParamsBodyPart != null) {
+            // The workaround to parse execution parameters as application/json even if the Content-Type for this part is not explicitly set in request
+            executionParamsBodyPart.setMediaType(MediaType.APPLICATION_JSON_TYPE);
+            executionParameters = executionParamsBodyPart.getValueAs(AutomationPackageExecutionParameters.class);
+        } else {
+            executionParameters = new AutomationPackageExecutionParameters();
+        }
+
+        User user = getSession().getUser();
+        return automationPackageExecutor.runInIsolation(
+                automationPackageInputStream,
+                fileDetail.getFileName(),
+                executionParameters,
+                getObjectEnricher(),
+                user == null ? null : user.getId().toString(),
+                getObjectPredicate()
+        );
     }
 
     @PUT

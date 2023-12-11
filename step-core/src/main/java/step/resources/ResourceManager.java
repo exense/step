@@ -31,11 +31,10 @@ public interface ResourceManager {
 	String RESOURCE_TYPE_SECRET = "secret";
 	String RESOURCE_TYPE_DATASOURCE = "datasource";
 	String RESOURCE_TYPE_FUNCTIONS = "functions";
-	String RESOURCE_TYPE_AUTOMATION_PACKAGE = "automationPackage";
 	String RESOURCE_TYPE_STAGING_CONTEXT_FILES = "stagingContextFiles";
 	String RESOURCE_TYPE_ATTACHMENT = "attachment";
 	String RESOURCE_TYPE_TEMP = "temp";
-	
+
 	/**
 	 * @param resourceType the type of the resource
 	 * @param resourceStream the stream of the resource to be saved
@@ -118,5 +117,12 @@ public interface ResourceManager {
 	void deleteResource(String resourceId);
 
 	List<Resource> findManyByCriteria(Map<String, String> criteria);
+
+	default void cleanup() {
+	}
+
+	default ResourceAccessor getResourceAccessor() {
+		return null;
+	}
 
 }

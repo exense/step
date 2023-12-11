@@ -32,6 +32,13 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
+            <groupId>ch.exense.step</groupId>
+            <artifactId>step-junit</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- Test dependencies -->
+        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
             <version>${slf4j.version}</version>
@@ -96,7 +103,7 @@
                                     <groupId>ch.exense.step</groupId>
                                     <artifactId>step-automation-packages-sample1</artifactId>
                                     <version>${project.version}</version>
-                                    <classifier></classifier>
+                                    <classifier>jar-with-dependencies</classifier>
                                     <type>jar</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${project.basedir}/src/test/resources/samples</outputDirectory>

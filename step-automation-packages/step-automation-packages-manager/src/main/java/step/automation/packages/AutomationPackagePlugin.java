@@ -18,11 +18,16 @@
  ******************************************************************************/
 package step.automation.packages;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.automation.packages.accessor.AutomationPackageAccessor;
 import step.automation.packages.accessor.AutomationPackageAccessorImpl;
+import step.automation.packages.execution.AutomationPackageExecutor;
+import step.automation.packages.execution.IsolatedAutomationPackageRepository;
 import step.core.GlobalContext;
 import step.core.collections.Collection;
 import step.core.deployment.ObjectHookControllerPlugin;
+import step.core.execution.model.ExecutionAccessor;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.core.scheduler.SchedulerPlugin;
@@ -31,13 +36,19 @@ import step.framework.server.tables.TableRegistry;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.manager.FunctionManager;
 import step.functions.plugin.FunctionControllerPlugin;
+import step.functions.type.FunctionTypeRegistry;
 import step.resources.ResourceManagerControllerPlugin;
 
-@Plugin(dependencies= {ObjectHookControllerPlugin.class, ResourceManagerControllerPlugin.class, FunctionControllerPlugin.class, SchedulerPlugin.class})
+import java.io.IOException;
+
+@Plugin(dependencies = {ObjectHookControllerPlugin.class, ResourceManagerControllerPlugin.class, FunctionControllerPlugin.class, SchedulerPlugin.class})
 public class AutomationPackagePlugin extends AbstractControllerPlugin {
+
+    private static final Logger log = LoggerFactory.getLogger(AutomationPackagePlugin.class);
 
     private AutomationPackageManager packageManager;
     private AutomationPackageAccessor packageAccessor;
+    private AutomationPackageExecutor packageExecutor;
 
     @Override
     public void serverStart(GlobalContext context) throws Exception {
@@ -62,10 +73,39 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
 
         // moved to 'afterInitializeData' to have the schedule accessor in context
         packageManager = new AutomationPackageManager(
-                packageAccessor, context.get(FunctionManager.class), context.get(FunctionAccessor.class), context.getPlanAccessor(), context.getResourceManager(),
-                context.getScheduleAccessor(), context.getScheduler()
+                packageAccessor,
+                context.require(FunctionManager.class),
+                context.require(FunctionAccessor.class),
+                context.getPlanAccessor(),
+                context.getResourceManager(),
+                context.getScheduleAccessor(),
+                context.getScheduler()
         );
         context.put(AutomationPackageManager.class, packageManager);
 
+        packageExecutor = new AutomationPackageExecutor(
+                context.getScheduler(),
+                context.require(ExecutionAccessor.class),
+                context.require(FunctionTypeRegistry.class),
+                context.require(IsolatedAutomationPackageRepository.class)
+        );
+        context.put(AutomationPackageExecutor.class, packageExecutor);
+
+    }
+
+    @Override
+    public void serverStop(GlobalContext context) {
+        super.serverStop(context);
+        try {
+            packageManager.cleanup();
+        } catch (Exception e) {
+            log.warn("Unable to finalize automaton package manager");
+        }
+
+        try {
+            this.packageExecutor.shutdown();
+        } catch (InterruptedException e) {
+            log.warn("Interrupted", e);
+        }
     }
 }

@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.automation.packages;
 
+import step.core.objectenricher.ObjectEnricher;
 import step.resources.Resource;
 import step.resources.ResourceManager;
 
@@ -29,7 +30,8 @@ public class AutomationPackageResourceUploader {
     public Resource uploadResourceFromAutomationPackage(AutomationPackageArchive automationPackageArchive,
                                                         String resourcePath,
                                                         String resourceType,
-                                                        AutomationPackageAttributesApplyingContext context) {
+                                                        AutomationPackageAttributesApplyingContext context,
+                                                        ObjectEnricher objectEnricher) {
         if (resourcePath != null && !resourcePath.isEmpty()) {
             ResourceManager resourceManager = context.getResourceManager();
 
@@ -43,7 +45,7 @@ public class AutomationPackageResourceUploader {
                         resourceType,
                         automationPackageArchive.getResourceAsStream(resourcePath),
                         resourceFile.getName(),
-                        false, null
+                        false, objectEnricher
                 );
             } catch (Exception e) {
                 throw new RuntimeException("Unable to upload automation package resource " + resourcePath, e);

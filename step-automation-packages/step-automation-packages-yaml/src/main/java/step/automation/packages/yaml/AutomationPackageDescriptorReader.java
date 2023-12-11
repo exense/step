@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.artefacts.handlers.JsonSchemaValidator;
@@ -62,17 +63,17 @@ public class AutomationPackageDescriptorReader {
         }
     }
 
-    public AutomationPackageDescriptorYaml readAutomationPackageDescriptor(InputStream yamlDescriptor) throws AutomationPackageReadingException {
+    public AutomationPackageDescriptorYaml readAutomationPackageDescriptor(InputStream yamlDescriptor, String packageFileName) throws AutomationPackageReadingException {
         log.info("Reading automation package descriptor...");
-        return readAutomationPackageYamlFile(yamlDescriptor, AutomationPackageDescriptorYaml.class);
+        return readAutomationPackageYamlFile(yamlDescriptor, AutomationPackageDescriptorYaml.class, packageFileName);
     }
 
-    public AutomationPackageFragmentYaml readAutomationPackageFragment(InputStream yamlFragment, String fragmentName) throws AutomationPackageReadingException {
+    public AutomationPackageFragmentYaml readAutomationPackageFragment(InputStream yamlFragment, String fragmentName, String packageFileName) throws AutomationPackageReadingException {
         log.info("Reading automation package descriptor fragment ({})...", fragmentName);
-        return readAutomationPackageYamlFile(yamlFragment, AutomationPackageFragmentYaml.class);
+        return readAutomationPackageYamlFile(yamlFragment, AutomationPackageFragmentYaml.class, packageFileName);
     }
 
-    protected <T extends AutomationPackageFragmentYaml> T readAutomationPackageYamlFile(InputStream yaml, Class<T> targetClass) throws AutomationPackageReadingException {
+    protected <T extends AutomationPackageFragmentYaml> T readAutomationPackageYamlFile(InputStream yaml, Class<T> targetClass, String packageFileName) throws AutomationPackageReadingException {
         try {
             String yamlDescriptorString = new String(yaml.readAllBytes(), StandardCharsets.UTF_8);
 
@@ -87,16 +88,16 @@ public class AutomationPackageDescriptorReader {
             T res = yamlObjectMapper.readValue(yamlDescriptorString, targetClass);
 
             if (!res.getKeywords().isEmpty()) {
-                log.info("{} keyword(s) found in automation package", res.getKeywords().size());
+                log.info("{} keyword(s) found in automation package {}", res.getKeywords().size(), StringUtils.defaultString(packageFileName));
             }
             if (!res.getPlans().isEmpty()) {
-                log.info("{} plan(s) found in automation package", res.getPlans().size());
+                log.info("{} plan(s) found in automation package {}", res.getPlans().size(), StringUtils.defaultString(packageFileName));
             }
             if (!res.getSchedules().isEmpty()) {
-                log.info("{} schedule(s) found in automation package", res.getSchedules().size());
+                log.info("{} schedule(s) found in automation package {}", res.getSchedules().size(), StringUtils.defaultString(packageFileName));
             }
-            if (res.getFragments().isEmpty()) {
-                log.info("{} imported fragment(s) found in automation package", res.getFragments().size());
+            if (!res.getFragments().isEmpty()) {
+                log.info("{} imported fragment(s) found in automation package {}", res.getFragments().size(), StringUtils.defaultString(packageFileName));
             }
             return res;
         } catch (IOException | YamlPlanValidationException e) {

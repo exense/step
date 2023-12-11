@@ -1,6 +1,7 @@
 package step.automation.packages;
 
 import ch.exense.commons.app.Configuration;
+import org.bson.types.ObjectId;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -22,6 +23,8 @@ import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionTypeException;
 import step.functions.type.FunctionTypeRegistry;
 import step.functions.type.SetupFunctionException;
+import step.plugins.java.GeneralScriptFunction;
+import step.plugins.java.GeneralScriptFunctionType;
 import step.plugins.jmeter.JMeterFunction;
 import step.plugins.jmeter.JMeterFunctionType;
 import step.resources.LocalResourceManagerImpl;
@@ -34,6 +37,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import static step.automation.packages.AutomationPackageTestUtils.*;
 
 public class AutomationPackageManagerTest {
 
@@ -53,11 +58,16 @@ public class AutomationPackageManagerTest {
 
         FunctionTypeRegistry functionTypeRegistry = Mockito.mock(FunctionTypeRegistry.class);
 
-        AbstractFunctionType jMeterFunctionType = new JMeterFunctionType(new Configuration());
+        Configuration configuration = new Configuration();
+        AbstractFunctionType<?> jMeterFunctionType = new JMeterFunctionType(configuration);
+        AbstractFunctionType<?> generalScriptFunctionType = new GeneralScriptFunctionType(configuration);
+
         Mockito.when(functionTypeRegistry.getFunctionTypeByFunction(Mockito.any())).thenAnswer(invocationOnMock -> {
             Object function = invocationOnMock.getArgument(0);
             if (function instanceof JMeterFunction) {
                 return jMeterFunctionType;
+            } else if (function instanceof GeneralScriptFunction) {
+                return generalScriptFunctionType;
             } else {
                 return null;
             }
@@ -94,45 +104,45 @@ public class AutomationPackageManagerTest {
         try (InputStream is = new FileInputStream(automationPackageJar)) {
             AutomationPackageManager.PackageUpdateResult result = manager.createOrUpdateAutomationPackage(true, true, null, is, fileName, null, null);
             Assert.assertEquals(AutomationPackageManager.PackageUpdateStatus.UPDATED, result.getStatus());
-            String resultId = result.getId();
+            ObjectId resultId = result.getId();
 
             // id of existing package is returned
-            Assert.assertEquals(r.storedPackage.getId().toString(), resultId);
+            Assert.assertEquals(r.storedPackage.getId().toString(), resultId.toString());
 
             r.storedPackage = automationPackageAccessor.get(resultId);
             Assert.assertEquals("My package", r.storedPackage.getAttribute(AbstractOrganizableObject.NAME));
 
-            // 1 plan has been updated, 1 plan has been added
+            // 3 plans have been updated, 1 plan has been added
             List<Plan> storedPlans = planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(resultId)).collect(Collectors.toList());
-            Assert.assertEquals(2, storedPlans.size());
+            Assert.assertEquals(4, storedPlans.size());
 
-            Plan updatedPlan = storedPlans.stream().filter(p -> p.getAttribute(AbstractOrganizableObject.NAME).equals("Test Plan")).findFirst().orElse(null);
+            Plan updatedPlan = storedPlans.stream().filter(p -> p.getAttribute(AbstractOrganizableObject.NAME).equals(PLAN_NAME_FROM_DESCRIPTOR)).findFirst().orElse(null);
             Assert.assertNotNull(updatedPlan);
-            Assert.assertEquals(r.storedPlan.getId(), updatedPlan.getId());
+            Assert.assertEquals(findPlanByName(r.storedPlans, PLAN_NAME_FROM_DESCRIPTOR).getId(), updatedPlan.getId());
 
-            Assert.assertNotNull(storedPlans.stream().filter(p -> p.getAttribute(AbstractOrganizableObject.NAME).equals("Test Plan 2")).findFirst().orElse(null));
+            Assert.assertNotNull(storedPlans.stream().filter(p -> p.getAttribute(AbstractOrganizableObject.NAME).equals(PLAN_NAME_FROM_DESCRIPTOR_2)).findFirst().orElse(null));
 
-            // 1 function has been updated, 1 function has been added
+            // 3 functions have been updated, 1 function has been added
             List<Function> storedFunctions = functionAccessor.findManyByCriteria(getAutomationPackageIdCriteria(resultId)).collect(Collectors.toList());
-            Assert.assertEquals(2, storedFunctions.size());
+            Assert.assertEquals(4, storedFunctions.size());
 
-            Function updatedFunction = storedFunctions.stream().filter(f -> f.getAttribute(AbstractOrganizableObject.NAME).equals("JMeter keyword from automation package")).findFirst().orElse(null);
+            Function updatedFunction = storedFunctions.stream().filter(f -> f.getAttribute(AbstractOrganizableObject.NAME).equals(J_METER_KEYWORD_1)).findFirst().orElse(null);
             Assert.assertNotNull(updatedFunction);
-            Assert.assertEquals(r.storedFunction.getId(), updatedFunction.getId());
+            Assert.assertEquals(findFunctionByClassAndName(r.storedFunctions, JMeterFunction.class, J_METER_KEYWORD_1).getId(), updatedFunction.getId());
 
-            Assert.assertNotNull(storedFunctions.stream().filter(p -> p.getAttribute(AbstractOrganizableObject.NAME).equals("Another JMeter keyword from automation package")).findFirst().orElse(null));
+            Assert.assertNotNull(storedFunctions.stream().filter(p -> p.getAttribute(AbstractOrganizableObject.NAME).equals(J_METER_KEYWORD_2)).findFirst().orElse(null));
 
             // 1 task has been updated, 1 task has been added
             List<ExecutiontTaskParameters> storedTasks = executionTaskAccessor.findManyByCriteria(getAutomationPackageIdCriteria(resultId)).collect(Collectors.toList());
             Assert.assertEquals(2, storedTasks.size());
 
-            ExecutiontTaskParameters updatedTask = storedTasks.stream().filter(t -> t.getAttribute(AbstractOrganizableObject.NAME).equals("firstSchedule")).findFirst().orElse(null);
+            ExecutiontTaskParameters updatedTask = storedTasks.stream().filter(t -> t.getAttribute(AbstractOrganizableObject.NAME).equals(SCHEDULE_1)).findFirst().orElse(null);
             Assert.assertNotNull(updatedTask);
             Assert.assertEquals(r.storedTask.getId(), updatedTask.getId());
-            Assert.assertEquals(r.storedPlan.getId(), updatedTask.getExecutionsParameters().getPlan().getId());
+            Assert.assertEquals(findPlanByName(r.storedPlans, PLAN_NAME_FROM_DESCRIPTOR).getId(), updatedTask.getExecutionsParameters().getPlan().getId());
 
             // new task is configured as inactive in sample
-            ExecutiontTaskParameters newTask = storedTasks.stream().filter(t -> t.getAttribute(AbstractOrganizableObject.NAME).equals("secondSchedule")).findFirst().orElse(null);
+            ExecutiontTaskParameters newTask = storedTasks.stream().filter(t -> t.getAttribute(AbstractOrganizableObject.NAME).equals(SCHEDULE_2)).findFirst().orElse(null);
             Assert.assertNotNull(newTask);
             Assert.assertFalse(newTask.isActive());
         }
@@ -140,8 +150,8 @@ public class AutomationPackageManagerTest {
         // 3. Upload the original sample again - added plans/functions/tasks from step 2 should be removed
         SampleUploadingResult r2 = uploadSample1WithAsserts(false);
         Assert.assertEquals(r.storedPackage.getId(), r2.storedPackage.getId());
-        Assert.assertEquals(r.storedPlan.getId(), r2.storedPlan.getId());
-        Assert.assertEquals(r.storedFunction.getId(), r2.storedFunction.getId());
+        Assert.assertEquals(findPlanByName(r.storedPlans, PLAN_NAME_FROM_DESCRIPTOR), findPlanByName(r2.storedPlans, PLAN_NAME_FROM_DESCRIPTOR));
+        Assert.assertEquals(toIds(r.storedFunctions), toIds(r2.storedFunctions));
         Assert.assertEquals(r.storedTask.getId(), r2.storedTask.getId());
 
         // 4. Delete package by name - everything should be removed
@@ -149,7 +159,7 @@ public class AutomationPackageManagerTest {
 
         Assert.assertEquals(0, automationPackageAccessor.stream().count());
 
-        Map<String, String> packageIdCriteria = getAutomationPackageIdCriteria(r2.storedPackage.getId().toString());
+        Map<String, String> packageIdCriteria = getAutomationPackageIdCriteria(r2.storedPackage.getId());
         Assert.assertEquals(0, planAccessor.findManyByCriteria(packageIdCriteria).count());
         Assert.assertEquals(0, functionAccessor.findManyByCriteria(packageIdCriteria).count());
         Assert.assertEquals(0, executionTaskAccessor.findManyByCriteria(packageIdCriteria).count());
@@ -161,7 +171,7 @@ public class AutomationPackageManagerTest {
 
         SampleUploadingResult r = new SampleUploadingResult();
         try (InputStream is = new FileInputStream(automationPackageJar)) {
-            String result;
+            ObjectId result;
             if (createNew) {
                 result = manager.createAutomationPackage(is, fileName, null, null);
             } else {
@@ -173,38 +183,43 @@ public class AutomationPackageManagerTest {
             r.storedPackage = automationPackageAccessor.get(result);
             Assert.assertEquals("My package", r.storedPackage.getAttribute(AbstractOrganizableObject.NAME));
 
+            // 2 annotated plans and 1 plan from yaml descriptor
             List<Plan> storedPlans = planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
-            Assert.assertEquals(1, storedPlans.size());
+            Assert.assertEquals(3, storedPlans.size());
 
-            r.storedPlan = storedPlans.get(0);
-            Assert.assertEquals("Test Plan", r.storedPlan.getAttribute(AbstractOrganizableObject.NAME));
+            r.storedPlans = storedPlans;
+            Plan planFromDescriptor = findPlanByName(storedPlans, PLAN_NAME_FROM_DESCRIPTOR);
+            Assert.assertNotNull(planFromDescriptor);
+            Assert.assertNotNull(findPlanByName(storedPlans, PLAN_FROM_PLANS_ANNOTATION));
+            Assert.assertNotNull(findPlanByName(storedPlans, INLINE_PLAN));
 
-            List<Function> storedFunctions = functionAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
-            Assert.assertEquals(1, storedFunctions.size());
-            r.storedFunction = storedFunctions.get(0);
-            Assert.assertEquals("JMeter keyword from automation package", r.storedFunction.getAttribute(AbstractOrganizableObject.NAME));
+            r.storedFunctions = functionAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
+            Assert.assertEquals(3, r.storedFunctions.size());
+            findFunctionByClassAndName(r.storedFunctions, JMeterFunction.class, J_METER_KEYWORD_1);
+            findFunctionByClassAndName(r.storedFunctions, GeneralScriptFunction.class, ANNOTATED_KEYWORD);
+            findFunctionByClassAndName(r.storedFunctions, GeneralScriptFunction.class, INLINE_PLAN);
 
             List<ExecutiontTaskParameters> storedTasks = executionTaskAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
             Assert.assertEquals(1, storedTasks.size());
             r.storedTask = storedTasks.get(0);
-            Assert.assertEquals("firstSchedule", r.storedTask.getAttribute(AbstractOrganizableObject.NAME));
+            Assert.assertEquals(SCHEDULE_1, r.storedTask.getAttribute(AbstractOrganizableObject.NAME));
             Assert.assertEquals("0 15 10 ? * *", r.storedTask.getCronExpression());
             Assert.assertTrue(r.storedTask.isActive());
-            Assert.assertEquals(r.storedPlan.getId(), r.storedTask.getExecutionsParameters().getPlan().getId());
+            Assert.assertEquals(planFromDescriptor.getId(), r.storedTask.getExecutionsParameters().getPlan().getId());
         }
         return r;
     }
 
-    private static Map<String, String> getAutomationPackageIdCriteria(String automationPackageId) {
+    private static Map<String, String> getAutomationPackageIdCriteria(ObjectId automationPackageId) {
         Map<String, String> criteria = new HashMap<>();
-        criteria.put("customFields." + AutomationPackageEntity.AUTOMATION_PACKAGE_ID, automationPackageId);
+        criteria.put("customFields." + AutomationPackageEntity.AUTOMATION_PACKAGE_ID, automationPackageId.toString());
         return criteria;
     }
 
     private static class SampleUploadingResult {
         private AutomationPackage storedPackage;
-        private Plan storedPlan;
-        private Function storedFunction;
+        private List<Plan> storedPlans;
+        private List<Function> storedFunctions;
         private ExecutiontTaskParameters storedTask;
     }
 }
