@@ -22,7 +22,7 @@ import step.attachments.FileResolver;
 import step.automation.packages.AutomationPackageAttributesApplyingContext;
 import step.automation.packages.yaml.deserialization.SpecialKeywordAttributesApplier;
 import step.automation.packages.yaml.rules.YamlKeywordConversionRule;
-import step.automation.packages.yaml.rules.YamlKeywordConversionRuleAddOn;
+import step.automation.packages.yaml.rules.YamlConversionRuleAddOn;
 import step.core.dynamicbeans.DynamicValue;
 import step.plugins.java.GeneralScriptFunction;
 import step.resources.InvalidResourceFormatException;
@@ -35,7 +35,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-@YamlKeywordConversionRuleAddOn(functions = GeneralScriptFunction.class)
+@YamlConversionRuleAddOn(targetClasses = GeneralScriptFunction.class)
 public class GeneralScriptFunctionConversionRule implements YamlKeywordConversionRule {
 
     @Override

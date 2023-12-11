@@ -185,6 +185,23 @@ public class YamlJsonSchemaHelper {
 		}
 	}
 
+	public JsonObjectBuilder createNamedObjectImplDef(String yamlName, Class<?> clazz, JsonSchemaCreator jsonSchemaCreator) throws JsonSchemaPreparationException {
+		JsonObjectBuilder res = jsonProvider.createObjectBuilder();
+		res.add("type", "object");
+
+		// on the top level there is a name only
+		JsonObjectBuilder schemaBuilder = jsonProvider.createObjectBuilder();
+
+		// other properties are located in nested object and automatically prepared via reflection
+		JsonObjectBuilder properties = jsonProvider.createObjectBuilder();
+		extractPropertiesFromClass(jsonSchemaCreator, clazz, properties, yamlName);
+
+		schemaBuilder.add(yamlName, jsonProvider.createObjectBuilder().add("type", "object").add("properties", properties).add("additionalProperties", false));
+		res.add("properties", schemaBuilder);
+		res.add("additionalProperties", false);
+		return res;
+	}
+
 	public static JsonObjectBuilder addRef(JsonObjectBuilder builder, String refValue){
 		return builder.add("$ref", "#/$defs/" + refValue);
 	}

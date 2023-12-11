@@ -27,8 +27,8 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import step.automation.packages.yaml.AutomationPackageKeywordsLookuper;
 import step.automation.packages.model.AutomationPackageKeyword;
-import step.automation.packages.yaml.rules.KeywordNameRule;
-import step.automation.packages.yaml.rules.TokenSelectionCriteriaRule;
+import step.automation.packages.yaml.rules.keywords.KeywordNameRule;
+import step.automation.packages.yaml.rules.keywords.TokenSelectionCriteriaRule;
 import step.automation.packages.yaml.rules.YamlKeywordConversionRule;
 import step.functions.Function;
 
@@ -65,8 +65,8 @@ public class YamlKeywordDeserializer extends JsonDeserializer<AutomationPackageK
 
             // process some fields in special way
             boolean processedAsSpecialField = false;
-            for (YamlKeywordFieldDeserializationProcessor proc : deserializationProcessors()) {
-                if (proc.deserializeKeywordField(javaKeywordClass, next, techKeyword, jsonParser.getCodec())) {
+            for (YamlFieldDeserializationProcessor proc : deserializationProcessors()) {
+                if (proc.deserializeField(javaKeywordClass, next, techKeyword, jsonParser.getCodec())) {
                     processedAsSpecialField = true;
                 }
             }
@@ -127,8 +127,8 @@ public class YamlKeywordDeserializer extends JsonDeserializer<AutomationPackageK
         return yamlKeywordClass;
     }
 
-    private List<YamlKeywordFieldDeserializationProcessor> deserializationProcessors() {
-        List<YamlKeywordFieldDeserializationProcessor> processors = new ArrayList<>();
+    private List<YamlFieldDeserializationProcessor> deserializationProcessors() {
+        List<YamlFieldDeserializationProcessor> processors = new ArrayList<>();
 
         // default rules
         processors.add(new KeywordNameRule().getDeserializationProcessor());
@@ -136,7 +136,7 @@ public class YamlKeywordDeserializer extends JsonDeserializer<AutomationPackageK
 
         List<YamlKeywordConversionRule> additionalRules = keywordsLookuper.getAllConversionRules();
         for (YamlKeywordConversionRule rule : additionalRules) {
-            YamlKeywordFieldDeserializationProcessor deserializationProcessor = rule.getDeserializationProcessor();
+            YamlFieldDeserializationProcessor deserializationProcessor = rule.getDeserializationProcessor();
             if (deserializationProcessor != null) {
                 processors.add(deserializationProcessor);
             }

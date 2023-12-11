@@ -27,18 +27,18 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.Map;
 
 /**
- * Deserializes the keyword field from yaml format to {@link step.functions.Function}
+ * Deserializes the field from yaml format to the technical format
  */
-public interface YamlKeywordFieldDeserializationProcessor {
+public interface YamlFieldDeserializationProcessor {
 
     /**
-     * @param keywordClass the name (class) of keyword
+     * @param entityClassName the name (class) of entity
      * @param field the field name/value in yaml format
      * @param output the output json node (in technical format)
      * @param codec the codec to create json elements
      * @return true if this processor is applicable for the keyword field, false otherwise
      */
-    boolean deserializeKeywordField(String keywordClass, Map.Entry<String, JsonNode> field, ObjectNode output, ObjectCodec codec) throws JsonProcessingException;
+    boolean deserializeField(String entityClassName, Map.Entry<String, JsonNode> field, ObjectNode output, ObjectCodec codec) throws JsonProcessingException;
 
     default ArrayNode createArrayNode(ObjectCodec codec) {
         return (ArrayNode) codec.createArrayNode();

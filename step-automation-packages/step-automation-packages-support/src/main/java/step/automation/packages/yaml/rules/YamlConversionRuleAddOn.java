@@ -18,8 +18,6 @@
  ******************************************************************************/
 package step.automation.packages.yaml.rules;
 
-import step.functions.Function;
-
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
@@ -28,6 +26,6 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 @Retention(RUNTIME)
 @Target(ElementType.TYPE)
-public @interface YamlKeywordConversionRuleAddOn {
-    Class<? extends Function>[] functions() default Function.class;
+public @interface YamlConversionRuleAddOn {
+    Class<?>[] targetClasses();
 }

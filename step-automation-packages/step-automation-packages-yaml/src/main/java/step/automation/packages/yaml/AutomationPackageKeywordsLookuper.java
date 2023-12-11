@@ -20,7 +20,7 @@ package step.automation.packages.yaml;
 
 import step.automation.packages.AutomationPackageKeyword;
 import step.automation.packages.yaml.rules.YamlKeywordConversionRule;
-import step.automation.packages.yaml.rules.YamlKeywordConversionRuleAddOn;
+import step.automation.packages.yaml.rules.YamlConversionRuleAddOn;
 import step.core.scanner.CachedAnnotationScanner;
 import step.functions.Function;
 
@@ -55,13 +55,17 @@ public class AutomationPackageKeywordsLookuper {
 
     public List<YamlKeywordConversionRule> getConversionRulesForKeyword(Function function) {
         return getAllConversionRules().stream().filter(r -> {
-            YamlKeywordConversionRuleAddOn annotation = r.getClass().getAnnotation(YamlKeywordConversionRuleAddOn.class);
-            if (annotation != null && annotation.functions() == null) {
+            YamlConversionRuleAddOn annotation = r.getClass().getAnnotation(YamlConversionRuleAddOn.class);
+            if(annotation == null){
+                return false;
+            }
+
+            if (annotation.targetClasses() == null) {
                 return true;
             }
 
-            Class<? extends Function>[] functions = annotation.functions();
-            for (Class<? extends Function> aClass : functions) {
+            Class<?>[] functions = annotation.targetClasses();
+            for (Class<?> aClass : functions) {
                 if (aClass.isAssignableFrom(function.getClass())) {
                     return true;
                 }
@@ -91,7 +95,8 @@ public class AutomationPackageKeywordsLookuper {
     }
 
     public List<YamlKeywordConversionRule> getAllConversionRules() {
-        return CachedAnnotationScanner.getClassesWithAnnotation(YamlKeywordConversionRuleAddOn.class).stream()
+        return CachedAnnotationScanner.getClassesWithAnnotation(YamlConversionRuleAddOn.class).stream()
+                .filter(YamlKeywordConversionRule.class::isAssignableFrom)
                 .map(newInstanceAs(YamlKeywordConversionRule.class))
                 .collect(Collectors.toList());
     }

@@ -16,11 +16,12 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.yaml.rules;
+package step.automation.packages.yaml.rules.keywords;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.json.spi.JsonProvider;
-import step.automation.packages.yaml.deserialization.YamlKeywordFieldDeserializationProcessor;
+import step.automation.packages.yaml.deserialization.YamlFieldDeserializationProcessor;
+import step.automation.packages.yaml.rules.YamlKeywordConversionRule;
 import step.functions.Function;
 import step.handlers.javahandler.jsonschema.FieldMetadata;
 import step.handlers.javahandler.jsonschema.FieldMetadataExtractor;
@@ -52,7 +53,7 @@ public class TokenSelectionCriteriaRule implements YamlKeywordConversionRule {
     }
 
     @Override
-    public YamlKeywordFieldDeserializationProcessor getDeserializationProcessor() {
+    public YamlFieldDeserializationProcessor getDeserializationProcessor() {
         return (keywordClass, field, output, codec) -> {
             if (field.getKey().equals(TOKEN_SELECTION_CRITERIA_YAML_FIELD)) {
                 JsonNode selectionCriteriaValue = field.getValue();

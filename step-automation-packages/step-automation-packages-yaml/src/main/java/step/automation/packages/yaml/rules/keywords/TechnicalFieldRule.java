@@ -16,9 +16,10 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.yaml.rules;
+package step.automation.packages.yaml.rules.keywords;
 
 import jakarta.json.spi.JsonProvider;
+import step.automation.packages.yaml.rules.YamlKeywordConversionRule;
 import step.core.accessors.AbstractIdentifiableObject;
 import step.core.accessors.AbstractOrganizableObject;
 import step.functions.Function;

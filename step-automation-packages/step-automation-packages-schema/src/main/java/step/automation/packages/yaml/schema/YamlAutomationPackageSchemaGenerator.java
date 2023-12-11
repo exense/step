@@ -33,19 +33,23 @@ public class YamlAutomationPackageSchemaGenerator {
     protected final String targetPackage;
 
     protected final Version actualVersion;
+    private final boolean supportAlertingRules;
 
     protected final ObjectMapper objectMapper = new ObjectMapper();
     protected final JsonProvider jsonProvider = JsonProvider.provider();
     private final YamlKeywordSchemaGenerator keywordSchemaGenerator;
     private final YamlPlanJsonSchemaGenerator planSchemaGenerator;
     private final YamlScheduleSchemaGenerator scheduleSchemaGenerator;
+    private final YamlAlertingRuleSchemaGenerator alertingRuleSchemaGenerator;
 
-    public YamlAutomationPackageSchemaGenerator(String targetPackage, Version actualVersion) {
+    public YamlAutomationPackageSchemaGenerator(String targetPackage, Version actualVersion, boolean supportAlertingRules) {
         this.targetPackage = targetPackage;
         this.actualVersion = actualVersion;
+        this.supportAlertingRules = supportAlertingRules;
         this.keywordSchemaGenerator = new YamlKeywordSchemaGenerator(jsonProvider);
         this.planSchemaGenerator = new YamlPlanJsonSchemaGenerator("step", YamlPlanVersions.ACTUAL_VERSION, null);
         this.scheduleSchemaGenerator = new YamlScheduleSchemaGenerator(jsonProvider);
+        this.alertingRuleSchemaGenerator = new YamlAlertingRuleSchemaGenerator(jsonProvider);
     }
 
     public JsonNode generateJsonSchema() throws JsonSchemaPreparationException {
@@ -60,12 +64,15 @@ public class YamlAutomationPackageSchemaGenerator {
         JsonObjectBuilder allDefs = keywordSchemaGenerator.createKeywordDefs()
                 .addAll(planSchemaGenerator.createDefs())
                 .addAll(scheduleSchemaGenerator.createScheduleDefs());
+        if (supportAlertingRules) {
+            allDefs.addAll(alertingRuleSchemaGenerator.createAlertingRulesDefs());
+        }
         topLevelBuilder.add("$defs", allDefs);
 
         // add properties for top-level
         topLevelBuilder.add("properties", createPackageProperties());
         topLevelBuilder.add("required", jsonProvider.createArrayBuilder());
-        topLevelBuilder.add( "additionalProperties", false);
+        topLevelBuilder.add("additionalProperties", false);
 
         // convert jakarta objects to jackson JsonNode
         try {
@@ -96,7 +103,7 @@ public class YamlAutomationPackageSchemaGenerator {
                         .add("items", jsonProvider.createObjectBuilder()
                                 .add("type", "object")
                                 .add("properties", planSchemaGenerator.createYamlPlanProperties(false)))
-                                .add("required", jsonProvider.createArrayBuilder().add("name").add("root"))
+                        .add("required", jsonProvider.createArrayBuilder().add("name").add("root"))
         );
 
         objectBuilder.add("fragments",
@@ -110,6 +117,14 @@ public class YamlAutomationPackageSchemaGenerator {
                         .add("type", "array")
                         .add("items", scheduleSchemaGenerator.addRef(jsonProvider.createObjectBuilder(), YamlScheduleSchemaGenerator.SCHEDULE_DEF))
         );
+
+        if (supportAlertingRules) {
+            objectBuilder.add("alertingRules",
+                    jsonProvider.createObjectBuilder()
+                            .add("type", "array")
+                            .add("items", alertingRuleSchemaGenerator.addRef(jsonProvider.createObjectBuilder(), YamlAlertingRuleSchemaGenerator.ALERTING_RULE_DEF))
+            );
+        }
         return objectBuilder;
     }
 

@@ -20,6 +20,7 @@ package step.automation.packages.yaml.model;
 
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.Nulls;
+import step.automation.packages.model.AutomationPackageAlertingRule;
 import step.automation.packages.model.AutomationPackageKeyword;
 import step.automation.packages.model.AutomationPackageSchedule;
 import step.plans.parser.yaml.model.YamlPlan;
@@ -32,6 +33,7 @@ public class AutomationPackageFragmentYaml {
     private List<AutomationPackageKeyword> keywords = new ArrayList<>();
     private List<YamlPlan> plans = new ArrayList<>();
     private List<AutomationPackageSchedule> schedules = new ArrayList<>();
+    private List<AutomationPackageAlertingRule> alertingRules = new ArrayList<>();
 
     public List<AutomationPackageKeyword> getKeywords() {
         return keywords;
@@ -67,5 +69,14 @@ public class AutomationPackageFragmentYaml {
     @JsonSetter(nulls = Nulls.AS_EMPTY)
     public void setSchedules(List<AutomationPackageSchedule> schedules) {
         this.schedules = schedules;
+    }
+
+    public List<AutomationPackageAlertingRule> getAlertingRules() {
+        return alertingRules;
+    }
+
+    @JsonSetter(nulls = Nulls.AS_EMPTY)
+    public void setAlertingRules(List<AutomationPackageAlertingRule> alertingRules) {
+        this.alertingRules = alertingRules;
     }
 }

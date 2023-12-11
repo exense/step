@@ -22,8 +22,6 @@ import step.core.plans.Plan;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class AutomationPackageContent {
 
@@ -33,6 +31,7 @@ public class AutomationPackageContent {
     private List<AutomationPackageKeyword> keywords = new ArrayList<>();
     private List<Plan> plans = new ArrayList<>();
     private List<AutomationPackageSchedule> schedules = new ArrayList<>();
+    private List<AutomationPackageAlertingRule> alertingRules = new ArrayList<>();
 
     public String getName() {
         return name;
@@ -72,5 +71,13 @@ public class AutomationPackageContent {
 
     public void setSchedules(List<AutomationPackageSchedule> schedules) {
         this.schedules = schedules;
+    }
+
+    public List<AutomationPackageAlertingRule> getAlertingRules() {
+        return alertingRules;
+    }
+
+    public void setAlertingRules(List<AutomationPackageAlertingRule> alertingRules) {
+        this.alertingRules = alertingRules;
     }
 }

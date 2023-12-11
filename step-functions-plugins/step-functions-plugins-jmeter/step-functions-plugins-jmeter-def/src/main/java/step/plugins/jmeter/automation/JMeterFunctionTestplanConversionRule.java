@@ -21,17 +21,17 @@ package step.plugins.jmeter.automation;
 import step.attachments.FileResolver;
 import step.automation.packages.yaml.deserialization.SpecialKeywordAttributesApplier;
 import step.automation.packages.yaml.deserialization.SpecialKeywordAttributesExtractor;
-import step.automation.packages.yaml.deserialization.YamlKeywordFieldDeserializationProcessor;
+import step.automation.packages.yaml.deserialization.YamlFieldDeserializationProcessor;
 import step.automation.packages.AutomationPackageAttributesApplyingContext;
 import step.automation.packages.AutomationPackageResourceUploader;
 import step.automation.packages.yaml.rules.YamlKeywordConversionRule;
-import step.automation.packages.yaml.rules.YamlKeywordConversionRuleAddOn;
+import step.automation.packages.yaml.rules.YamlConversionRuleAddOn;
 import step.core.dynamicbeans.DynamicValue;
 import step.plugins.jmeter.JMeterFunction;
 import step.resources.Resource;
 import step.resources.ResourceManager;
 
-@YamlKeywordConversionRuleAddOn(functions = JMeterFunction.class)
+@YamlConversionRuleAddOn(targetClasses = JMeterFunction.class)
 public class JMeterFunctionTestplanConversionRule implements YamlKeywordConversionRule {
 
     public static final String JMETER_TESTPLAN_ATTR = "jmeterTestplan";
@@ -61,7 +61,7 @@ public class JMeterFunctionTestplanConversionRule implements YamlKeywordConversi
     }
 
     @Override
-    public YamlKeywordFieldDeserializationProcessor getDeserializationProcessor() {
+    public YamlFieldDeserializationProcessor getDeserializationProcessor() {
         return (keywordClass, field, output, codec) -> {
             if (keywordClass.equalsIgnoreCase(JMeterFunction.class.getName()) && field.getKey().equals(JMETER_TESTPLAN_ATTR)) {
                 // ignore the jmeterTestplan attribute - it will be applied via SpecialKeywordAttributesExtractor

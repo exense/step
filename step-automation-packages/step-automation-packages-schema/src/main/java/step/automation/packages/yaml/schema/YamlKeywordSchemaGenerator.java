@@ -24,9 +24,9 @@ import jakarta.json.spi.JsonProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.automation.packages.yaml.AutomationPackageKeywordsLookuper;
-import step.automation.packages.yaml.rules.KeywordNameRule;
-import step.automation.packages.yaml.rules.TechnicalFieldRule;
-import step.automation.packages.yaml.rules.TokenSelectionCriteriaRule;
+import step.automation.packages.yaml.rules.keywords.KeywordNameRule;
+import step.automation.packages.yaml.rules.keywords.TechnicalFieldRule;
+import step.automation.packages.yaml.rules.keywords.TokenSelectionCriteriaRule;
 import step.core.yaml.schema.*;
 import step.functions.Function;
 import step.handlers.javahandler.jsonschema.*;
@@ -74,7 +74,7 @@ public class YamlKeywordSchemaGenerator {
             }
         });
 
-        // prepare definitions for subclasses annotated with @AutomationPackageKeyword
+        // prepare definitions for keyword classes
         definitionCreators.add((defsList) -> {
             Map<String, JsonObjectBuilder> keywordImplDefs = createKeywordImplDefs();
             for (Map.Entry<String, JsonObjectBuilder> artefactImplDef : keywordImplDefs.entrySet()) {
@@ -96,8 +96,8 @@ public class YamlKeywordSchemaGenerator {
         JsonObjectBuilder builder = jsonProvider.createObjectBuilder();
         builder.add("type", "object");
         JsonArrayBuilder arrayBuilder = jsonProvider.createArrayBuilder();
-        for (String artefactImplReference : keywordDefsReferences) {
-            arrayBuilder.add(addRef(jsonProvider.createObjectBuilder(), artefactImplReference));
+        for (String keywordImplReference : keywordDefsReferences) {
+            arrayBuilder.add(addRef(jsonProvider.createObjectBuilder(), keywordImplReference));
         }
         builder.add("oneOf", arrayBuilder);
         return builder;
@@ -109,30 +109,9 @@ public class YamlKeywordSchemaGenerator {
         for (Class<? extends Function> automationPackageKeyword : automationPackageKeywords) {
             String yamlName = automationPackageKeywordsLookuper.getAutomationPackageKeywordName(automationPackageKeyword);
             String defName = yamlName + "Def";
-            result.put(defName, createKeywordImplDef(yamlName, automationPackageKeyword));
+            result.put(defName, schemaHelper.createNamedObjectImplDef(yamlName, automationPackageKeyword, jsonSchemaCreator));
         }
         return result;
-    }
-
-    private JsonObjectBuilder createKeywordImplDef(String yamlName, Class<? extends Function> keywordClass) throws JsonSchemaPreparationException {
-        JsonObjectBuilder res = jsonProvider.createObjectBuilder();
-        res.add("type", "object");
-
-        // on the top level there is a keyword type name only
-        JsonObjectBuilder keywordSchemaBuilder = jsonProvider.createObjectBuilder();
-
-        // other properties are located in nested object and automatically prepared via reflection
-        JsonObjectBuilder keywordProperties = jsonProvider.createObjectBuilder();
-        fillKeywordProperties(keywordClass, keywordProperties, yamlName);
-
-        keywordSchemaBuilder.add(yamlName, jsonProvider.createObjectBuilder().add("type", "object").add("properties", keywordProperties).add("additionalProperties", false));
-        res.add("properties", keywordSchemaBuilder);
-        res.add("additionalProperties", false);
-        return res;
-    }
-
-    private void fillKeywordProperties(Class<? extends Function> keywordClass, JsonObjectBuilder keywordProperties, String yamlName) throws JsonSchemaPreparationException {
-        this.schemaHelper.extractPropertiesFromClass(jsonSchemaCreator, keywordClass, keywordProperties, yamlName);
     }
 
     protected FieldMetadataExtractor prepareMetadataExtractor() {
