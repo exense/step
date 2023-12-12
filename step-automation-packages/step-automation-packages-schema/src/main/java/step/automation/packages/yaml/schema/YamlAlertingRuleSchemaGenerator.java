@@ -21,6 +21,7 @@ package step.automation.packages.yaml.schema;
 import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObjectBuilder;
 import jakarta.json.spi.JsonProvider;
+import step.automation.packages.AutomationPackageAlertingEvent;
 import step.automation.packages.AutomationPackageRuleCondition;
 import step.automation.packages.model.AutomationPackageAlertingRule;
 import step.automation.packages.yaml.rules.YamlConversionRule;
@@ -118,9 +119,11 @@ public class YamlAlertingRuleSchemaGenerator {
     private Map<String, JsonObjectBuilder> createConditionsDef() throws JsonSchemaPreparationException {
         HashMap<String, JsonObjectBuilder> result = new HashMap<>();
 
-        List<? extends Class<? extends AlertingRuleCondition>> conditionClasses = CachedAnnotationScanner.getClassesWithAnnotation(AutomationPackageRuleCondition.class).stream()
-                .map(c -> (Class<? extends AlertingRuleCondition>) c)
-                .collect(Collectors.toList());
+        List<? extends Class<? extends AlertingRuleCondition>> conditionClasses =
+                CachedAnnotationScanner.getClassesWithAnnotation(AutomationPackageRuleCondition.LOCATION, AutomationPackageRuleCondition.class, Thread.currentThread().getContextClassLoader())
+                        .stream()
+                        .map(c -> (Class<? extends AlertingRuleCondition>) c)
+                        .collect(Collectors.toList());
         for (Class<? extends AlertingRuleCondition> conditionClass : conditionClasses) {
             String name = conditionClass.getSimpleName();
             String defName = name + "Def";
@@ -129,15 +132,38 @@ public class YamlAlertingRuleSchemaGenerator {
         return result;
     }
 
+    // TODO: extract rules
     protected List<JsonSchemaFieldProcessor> prepareFieldProcessors() {
         List<JsonSchemaFieldProcessor> result = new ArrayList<>();
 
         // -- BASIC PROCESSING RULES
         result.add(new CommonFilteredFieldProcessor());
 
+        // event classes
+        result.add((objectClass, field, fieldMetadata, propertiesBuilder, requiredPropertiesOutput) -> {
+            if (objectClass.equals(AutomationPackageAlertingRule.class) && field.getName().equals(AutomationPackageAlertingRule.EVENT_CLASS_FIELD)) {
+                JsonObjectBuilder nestedPropertyParamsBuilder = jsonProvider.createObjectBuilder();
+                JsonArrayBuilder arrayBuilder = jsonProvider.createArrayBuilder();
+
+                Set<Class<?>> annotatedAlertingEvents = CachedAnnotationScanner.getClassesWithAnnotation(
+                        AutomationPackageAlertingEvent.LOCATION,
+                        AutomationPackageAlertingEvent.class,
+                        Thread.currentThread().getContextClassLoader()
+                );
+                for (Class<?> annotatedAlertingEvent : annotatedAlertingEvents) {
+                    arrayBuilder.add(annotatedAlertingEvent.getSimpleName());
+                }
+
+                nestedPropertyParamsBuilder.add("enum", arrayBuilder);
+                propertiesBuilder.add(fieldMetadata.getFieldName(), nestedPropertyParamsBuilder);
+                return true;
+            }
+            return false;
+        });
+
         // conditions
         result.add((objectClass, field, fieldMetadata, propertiesBuilder, requiredPropertiesOutput) -> {
-            if (objectClass.equals(AutomationPackageAlertingRule.class) && field.getName().equals("conditions")) {
+            if (objectClass.equals(AutomationPackageAlertingRule.class) && field.getName().equals(AutomationPackageAlertingRule.CONDITIONS_FIELD)) {
                 JsonObjectBuilder nestedPropertyParamsBuilder = jsonProvider.createObjectBuilder();
                 nestedPropertyParamsBuilder.add("type", "array");
                 nestedPropertyParamsBuilder.add("items", addRef(jsonProvider.createObjectBuilder(), ALERTING_RULE_CONDITION_DEF));
@@ -158,10 +184,10 @@ public class YamlAlertingRuleSchemaGenerator {
     }
 
     protected List<JsonSchemaFieldProcessor> getConditionFieldExtensions() {
-        return CachedAnnotationScanner.getClassesWithAnnotation(YamlConversionRuleAddOn.class).stream()
+        return CachedAnnotationScanner.getClassesWithAnnotation(YamlConversionRuleAddOn.LOCATION, YamlConversionRuleAddOn.class, Thread.currentThread().getContextClassLoader()).stream()
                 .filter(c -> {
                     Class<?>[] classes = c.getAnnotation(YamlConversionRuleAddOn.class).targetClasses();
-                    return classes == null || classes.length == 0 || Arrays.stream(classes).anyMatch(cl -> cl.isAssignableFrom(AlertingRuleCondition.class));
+                    return classes == null || classes.length == 0 || Arrays.stream(classes).anyMatch(AlertingRuleCondition.class::isAssignableFrom);
                 })
                 .filter(YamlConversionRule.class::isAssignableFrom)
                 .map(newInstanceAs(YamlConversionRule.class))
