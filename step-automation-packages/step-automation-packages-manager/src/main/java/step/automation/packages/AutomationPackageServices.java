@@ -144,7 +144,7 @@ public class AutomationPackageServices extends AbstractStepServices {
                 responseBuilder = Response.status(200);
                 break;
         }
-        return responseBuilder.entity(result.getId()).build();
+        return responseBuilder.entity(result.getId().toHexString()).build();
     }
 
 }

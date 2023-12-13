@@ -59,6 +59,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import static step.automation.packages.AutomationPackageArchive.METADATA_FILES;
+
 public class AutomationPackageManager {
 
     private static final Logger log = LoggerFactory.getLogger(AutomationPackageManager.class);
@@ -396,7 +398,9 @@ public class AutomationPackageManager {
     protected AutomationPackageContent readAutomationPackage(AutomationPackageArchive automationPackageArchive) throws AutomationPackageReadingException {
         AutomationPackageContent packageContent;
         packageContent = packageReader.readAutomationPackage(automationPackageArchive, false);
-        if (packageContent.getName() == null || packageContent.getName().isEmpty()) {
+        if (packageContent == null) {
+            throw new AutomationPackageManagerException("Automation package descriptor is missing, allowed names: " + METADATA_FILES);
+        } else if (packageContent.getName() == null || packageContent.getName().isEmpty()) {
             throw new AutomationPackageManagerException("Automation package name is missing");
         }
         return packageContent;
