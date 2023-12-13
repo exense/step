@@ -1,0 +1,101 @@
+---
+_class: "step.core.plans.Plan"
+customFields: null
+attributes:
+  name: "test plan"
+root:
+  _class: "Sequence"
+  customFields: null
+  attributes:
+    name: "Sequence"
+  dynamicName:
+    dynamic: false
+    value: ""
+    expression: ""
+    expressionType: null
+  useDynamicName: false
+  description: null
+  children:
+    - _class: "Assert"
+      customFields: null
+      attributes:
+        name: "Assert"
+      dynamicName:
+        dynamic: false
+        value: ""
+        expression: ""
+        expressionType: null
+      useDynamicName: false
+      description: null
+      children: []
+      customAttributes: null
+      attachments: null
+      skipNode:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      instrumentNode:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      actual:
+        dynamic: true
+        value: null
+        expression: "'status'"
+        expressionType: ""
+      operator: null
+      doNegate:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      expected:
+        dynamic: false
+        value: "ok"
+        expression: null
+        expressionType: null
+      customErrorMessage:
+        dynamic: false
+        value: ""
+        expression: null
+        expressionType: null
+      id: "644fbe4e38a61e07cc3a4df8"
+  customAttributes: null
+  attachments: null
+  skipNode:
+    dynamic: false
+    value: false
+    expression: null
+    expressionType: null
+  instrumentNode:
+    dynamic: false
+    value: false
+    expression: null
+    expressionType: null
+  continueParentNodeExecutionOnError:
+    dynamic: false
+    value: false
+    expression: null
+    expressionType: null
+  continueOnError:
+    dynamic: false
+    value: false
+    expression: null
+    expressionType: null
+  pacing:
+    dynamic: false
+    value: null
+    expression: null
+    expressionType: null
+  id: "644fbe4e38a61e07cc3a4df8"
+functions: null
+subPlans: null
+visible: true
+id: "644fbe4e38a61e07cc3a4df8"

@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import jakarta.ws.rs.client.Invocation.Builder;
 import jakarta.ws.rs.core.GenericType;
@@ -58,6 +59,12 @@ public class RemoteReportTreeAccessor extends AbstractRemoteClient implements Re
 		});
 		
 		return skipLimitIterator;			
+	}
+
+	@Override
+	public Stream<ReportNode> getReportNodesWithContributingErrors(String executionId) {
+		// TODO implement
+		throw new UnsupportedOperationException("This method isn't implemented yet");
 	}
 
 	@Override

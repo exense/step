@@ -19,6 +19,7 @@
 package step.plugins.java;
 
 import ch.exense.commons.app.Configuration;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
 import step.functions.type.SetupFunctionException;
 
@@ -50,6 +51,14 @@ public class GeneralScriptFunctionType extends AbstractScriptFunctionType<Genera
 	public GeneralScriptFunction newFunction() {
 		GeneralScriptFunction function = new GeneralScriptFunction();
 		function.getScriptLanguage().setValue("java");
+		return function;
+	}
+
+	@Override
+	public GeneralScriptFunction newFunction(Map<String, String> configuration) {
+		GeneralScriptFunction function = this.newFunction();
+		function.addAttribute(AbstractOrganizableObject.NAME, configuration.get("name"));
+		function.setScriptFile(new DynamicValue<>(configuration.get("scriptFile")));
 		return function;
 	}
 

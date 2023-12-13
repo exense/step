@@ -21,7 +21,7 @@ package step.artefacts;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 
-@Artefact(useAsTemplate = true)
+@Artefact(validAsRoot = true)
 public class TestScenario extends AbstractArtefact {
 	
 }

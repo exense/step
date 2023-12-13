@@ -23,14 +23,12 @@ import org.slf4j.LoggerFactory;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
-import step.core.plans.PlanAccessor;
 import step.core.scanner.AnnotationScanner;
 import step.functions.Function;
 import step.handlers.javahandler.Keyword;
 import step.junit.runner.StepClassParser;
 import step.junit.runner.StepClassParserResult;
 import step.junit.runners.annotations.Plans;
-import step.plans.nl.RootArtefactType;
 import step.plans.nl.parser.PlanParser;
 import step.plugins.functions.types.CompositeFunctionUtils;
 import step.plugins.java.GeneralScriptFunction;
@@ -40,6 +38,7 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.net.JarURLConnection;
 import java.net.URL;
 import java.util.*;
 
@@ -91,11 +90,11 @@ public class StepJarParser {
         return functions;
     }
 
-	public List<Plan> getPlansForJar(File artifact, File dependency, String[] includedClasses, String[] includedAnnotations,
-									 String[] excludedClasses, String[] excludedAnnotations) {
+    public PlansParsingResult getPlansForJar(File artifact, File dependency, String[] includedClasses, String[] includedAnnotations,
+                                             String[] excludedClasses, String[] excludedAnnotations) {
 
         List<Plan> result = new ArrayList<>();
-
+        List<Function> functions = new ArrayList<>();
         try (AnnotationScanner annotationScanner = AnnotationScanner.forSpecificJar(artifact)) {
             // Find classes containing plans:
             Set<Class<?>> classesWithPlans = new HashSet<>();
@@ -146,13 +145,19 @@ public class StepJarParser {
             classesWithPlans.forEach(c -> result.addAll(getPlansForClass(annotationScanner,c,artifact)));
 
             // Find all keywords
-            List<Function> functions = getFunctions(annotationScanner, artifact, dependency);
-            result.forEach(p -> p.setFunctions(functions));
+            functions = getFunctions(annotationScanner, artifact, dependency);
+
+            // replace null with empty collections to avoid NPEs
+            result.forEach(plan -> {
+                if(plan.getFunctions() == null){
+                    plan.setFunctions(new ArrayList<>());
+                }
+            });
         } catch (Exception e) {
             throw new RuntimeException("Exception when trying to list the plans of jar file '" + artifact.getName() + "'", e);
         }
 
-        return result;
+        return new PlansParsingResult(result, functions);
     }
 
     protected List<Plan> getPlansForClass(AnnotationScanner annotationScanner, Class<?> klass, File artifact) {
@@ -185,13 +190,10 @@ public class StepJarParser {
     private List<StepClassParserResult> getPlanFromPlansAnnotation(Class<?> klass, File artifact) {
         final List<StepClassParserResult> result = new ArrayList<>();
 
-        Exception exception = null;
-        PlanParser planParser = new PlanParser();
-
         Plans plans = klass.getAnnotation(Plans.class);
         if (plans!=null) {
             for (String file : plans.value()) {
-                Plan plan = null;
+                StepClassParserResult parserResult = null;
                 try {
                     URL url = null;
                     if (file.startsWith("/")) {
@@ -201,20 +203,45 @@ public class StepJarParser {
                                 klass.getPackageName().replace(".", "/") + "/" + file);
                     }
 
-                    InputStream stream = url.openStream();
+                    JarURLConnection jarURLConnection = (JarURLConnection) url.openConnection();
+                    jarURLConnection.setUseCaches(false);
+                    try ( InputStream stream = jarURLConnection.getInputStream()) {
 
-                    if (stream != null) {
-                        plan = planParser.parse(stream, RootArtefactType.TestCase);
-                    } else {
-                        throw new FileNotFoundException(file);
+                        if (stream != null) {
+                            // create plan from plain-text or from yaml
+                            parserResult = stepClassParser.createPlan(klass, file, stream);
+                        } else {
+                            throw new FileNotFoundException(file);
+                        }
+                        if (parserResult.getPlan() != null) {
+                            StepClassParser.setPlanName(parserResult.getPlan(), file);
+                        }
                     }
-                    StepClassParser.setPlanName(plan, file);
                 } catch (Exception e) {
-                    exception = e;
+                    parserResult = new StepClassParserResult(file, null,  e);
                 }
-                result.add(new StepClassParserResult(file, plan, exception));
+                result.add(parserResult);
             }
         }
         return result;
+    }
+
+    public static class PlansParsingResult {
+
+        private final List<Plan> plans;
+        private final List<Function> functions;
+
+        public PlansParsingResult(List<Plan> plans, List<Function> functions) {
+            this.plans = plans;
+            this.functions = functions;
+        }
+
+        public List<Plan> getPlans() {
+            return plans;
+        }
+
+        public List<Function> getFunctions() {
+            return functions;
+        }
     }
 }

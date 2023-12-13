@@ -1,0 +1,17 @@
+Sequence
+Echo "Testing Asserts"
+planWithAssert
+Assert key = "value"
+Assert key beginsWith "value"
+Assert key not beginsWith "value2"
+Assert missingKey isNull
+Assert key not isNull
+Assert intKey > 76
+Assert intKey < 78
+Assert intKey >= 76
+Assert intKey >= 77
+Assert intKey <= 78
+Assert intKey <= 77
+Assert intKey = 77
+Assert boolKey = true
+End

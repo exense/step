@@ -32,6 +32,19 @@ public @interface Artefact {
 	
 	boolean block() default true;
 
-	boolean useAsTemplate() default false;
+	/**
+	 * @return true if the artefact can be used as root artefact in Plans.
+	 */
+	boolean validAsRoot() default false;
+
+	/**
+	 * @return true if the artefact can be used as control within Plans
+	 */
+	boolean validAsControl() default true;
+
+	/**
+	 * Marks the artefact as test (used in unit tests) to avoid inclusion in json schema for Yaml format
+	 */
+	boolean test() default false;
 
 }

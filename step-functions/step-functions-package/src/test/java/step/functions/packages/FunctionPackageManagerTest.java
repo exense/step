@@ -210,7 +210,8 @@ public class FunctionPackageManagerTest {
 		
 		// Assert that the old resource has been deleted
 		Assert.assertThrows(RuntimeException.class, () -> resourceManager.getResource(testResource.getId().toString()));
-		Assert.assertThrows(RuntimeException.class, () -> resourceManager.getResource(libraryResource1.getId().toString()));
+		// linked library is not deleted anymore
+//		Assert.assertThrows(RuntimeException.class, () -> resourceManager.getResource(libraryResource1.getId().toString()));
 		
 		// Assert that the new resource still exist
 		Resource actualResource2 = resourceManager.getResource(testResource2.getId().toString());
@@ -260,7 +261,7 @@ public class FunctionPackageManagerTest {
 	}
 
 	private FunctionPackage createTestPackage(Resource resource, FunctionPackageManager pm, FileResolver resolver) {
-		pm.registerFunctionPackageHandler(new JavaFunctionPackageHandler(resolver, null));
+		pm.registerFunctionPackageHandler(new JavaFunctionPackageHandler(resolver, new Configuration()));
 
 		FunctionPackage fp = new FunctionPackage();
 		fp.setId(new ObjectId());
@@ -308,6 +309,10 @@ public class FunctionPackageManagerTest {
 			return null;
 		}
 
+		@Override
+		public Function newFunction(String type, Map<String, String> configuration) {
+			return null;
+		}
 	}
 	
 	@Test

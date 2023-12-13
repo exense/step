@@ -1,0 +1,275 @@
+---
+_class: "step.core.plans.Plan"
+customFields: null
+attributes:
+  name: "test plan"
+root:
+  _class: "Sequence"
+  customFields: null
+  attributes:
+    name: "Sequence"
+  dynamicName:
+    dynamic: false
+    value: ""
+    expression: ""
+    expressionType: null
+  useDynamicName: false
+  description: null
+  children:
+    - _class: "CallKeyword"
+      customFields: null
+      attributes:
+        name: "myKeyword"
+      dynamicName:
+        dynamic: false
+        value: ""
+        expression: ""
+        expressionType: null
+      useDynamicName: false
+      description: null
+      children: []
+      customAttributes: null
+      attachments: null
+      skipNode:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      instrumentNode:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      remote:
+        dynamic: false
+        value: true
+        expression: null
+        expressionType: null
+      token:
+        dynamic: false
+        value: "{}"
+        expression: null
+        expressionType: null
+      function:
+        dynamic: false
+        value: "{\"name\":{\"dynamic\":false,\"value\":\"myKeyword\",\"expression\"\
+        :null,\"expressionType\":null}}"
+        expression: null
+        expressionType: null
+      argument:
+        dynamic: false
+        value: "{}"
+        expression: null
+        expressionType: null
+      resultMap:
+        dynamic: false
+        value: null
+        expression: null
+        expressionType: null
+      id: "644fbe4e38a61e07cc3a4df8"
+    - _class: "CallKeyword"
+      customFields: null
+      attributes:
+        name: "myKeyword2"
+      dynamicName:
+        dynamic: false
+        value: ""
+        expression: ""
+        expressionType: null
+      useDynamicName: false
+      description: null
+      children: []
+      customAttributes: null
+      attachments: null
+      skipNode:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      instrumentNode:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      remote:
+        dynamic: false
+        value: true
+        expression: null
+        expressionType: null
+      token:
+        dynamic: false
+        value: "{}"
+        expression: null
+        expressionType: null
+      function:
+        dynamic: false
+        value: "{\"name\":{\"dynamic\":true,\"value\":null,\"expression\":\"'myKeyword2'\"\
+        ,\"expressionType\":\"\"}}"
+        expression: null
+        expressionType: null
+      argument:
+        dynamic: false
+        value: "{}"
+        expression: null
+        expressionType: null
+      resultMap:
+        dynamic: false
+        value: null
+        expression: null
+        expressionType: null
+      id: "644fbe4e38a61e07cc3a4df8"
+    - _class: "CallKeyword"
+      customFields: null
+      attributes:
+        name: "myKeyword3"
+      dynamicName:
+        dynamic: false
+        value: ""
+        expression: ""
+        expressionType: null
+      useDynamicName: false
+      description: null
+      children: []
+      customAttributes: null
+      attachments: null
+      skipNode:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      instrumentNode:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      remote:
+        dynamic: false
+        value: true
+        expression: null
+        expressionType: null
+      token:
+        dynamic: false
+        value: "{\"criteria1\":\"criteriaValue1\"}"
+        expression: null
+        expressionType: null
+      function:
+        dynamic: false
+        value: "{\"name\":{\"dynamic\":false,\"value\":\"myKeyword3\",\"expression\"\
+        :null,\"expressionType\":null}}"
+        expression: null
+        expressionType: null
+      argument:
+        dynamic: false
+        value: "{}"
+        expression: null
+        expressionType: null
+      resultMap:
+        dynamic: false
+        value: null
+        expression: null
+        expressionType: null
+      id: "644fbe4e38a61e07cc3a4df8"
+    - _class: "CallKeyword"
+      customFields: null
+      attributes:
+        name: "myKeyword4"
+      dynamicName:
+        dynamic: false
+        value: ""
+        expression: ""
+        expressionType: null
+      useDynamicName: false
+      description: null
+      children: []
+      customAttributes: null
+      attachments: null
+      skipNode:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      instrumentNode:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      remote:
+        dynamic: false
+        value: true
+        expression: null
+        expressionType: null
+      token:
+        dynamic: false
+        value: "{\"criteria1\":\"criteriaValue1\"}"
+        expression: null
+        expressionType: null
+      function:
+        dynamic: false
+        value: "{\"name\":{\"dynamic\":true,\"value\":null,\"expression\":\"'myKeyword4'\"\
+        ,\"expressionType\":\"\"}}"
+        expression: null
+        expressionType: null
+      argument:
+        dynamic: false
+        value: "{\"stringInput\":{\"dynamic\":true,\"expression\":\"'abc'\"},\"intInput\"\
+        :777}"
+        expression: null
+        expressionType: null
+      resultMap:
+        dynamic: false
+        value: null
+        expression: null
+        expressionType: null
+      id: "644fbe4e38a61e07cc3a4df8"
+  customAttributes: null
+  attachments: null
+  skipNode:
+    dynamic: false
+    value: false
+    expression: null
+    expressionType: null
+  instrumentNode:
+    dynamic: false
+    value: false
+    expression: null
+    expressionType: null
+  continueParentNodeExecutionOnError:
+    dynamic: false
+    value: false
+    expression: null
+    expressionType: null
+  continueOnError:
+    dynamic: false
+    value: false
+    expression: null
+    expressionType: null
+  pacing:
+    dynamic: false
+    value: null
+    expression: null
+    expressionType: null
+  id: "644fbe4e38a61e07cc3a4df8"
+functions: null
+subPlans: null
+visible: true
+id: "644fbe4e38a61e07cc3a4df8"

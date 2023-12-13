@@ -121,6 +121,11 @@ public class ScreenTemplateManagerTest {
 			}
 
 			@Override
+			public Stream<ScreenInput> streamLazy() {
+				return null;
+			}
+
+			@Override
 			public Spliterator<ScreenInput> findManyByAttributes(Map<String, String> attributes) {
 				return null;
 			}
@@ -143,6 +148,11 @@ public class ScreenTemplateManagerTest {
 
 			@Override
 			public ScreenInput findByCriteria(Map<String, String> map) {
+				return null;
+			}
+
+			@Override
+			public Stream<ScreenInput> findByIds(List<String> ids) {
 				return null;
 			}
 

@@ -32,17 +32,38 @@ public class RemoteFunctionPackageClientImpl extends AbstractRemoteClient implem
 		remoteResourceManager = new RemoteResourceManager(credentials);
 	}
 	
-	private FunctionPackage addOrUpdateKeywordPackage(FunctionPackage previousPackage, File packageLibraryFile, File packageFile, Map<String, String> packageAttributes, String trackingField) throws IOException {
+	private FunctionPackage addOrUpdateKeywordPackage(FunctionPackage previousPackage, LibFileReference packageLibraryFile, File packageFile, Map<String, String> packageAttributes, String trackingField) throws IOException {
 		FunctionPackage functionPackage = null;
 		if(previousPackage != null) {
 			functionPackage = previousPackage;
 		}else {
 			functionPackage = new FunctionPackage();
 		}
-		Resource packageLibraryResource = null;
-		if(packageLibraryFile != null) {
-			packageLibraryResource = upload(packageLibraryFile);
-			functionPackage.setPackageLibrariesLocation(FileResolver.RESOURCE_PREFIX+packageLibraryResource.getId().toString());
+		if (packageLibraryFile != null) {
+			Resource packageLibraryResource = null;
+			if (packageLibraryFile.getFile() != null) {
+				// upload new file as library (or reuse the existing resource with the same has sum)
+				File file = packageLibraryFile.getFile();
+				try {
+					// TODO: here we want to protect against uploading duplicated resources (checkForDuplicates=true), but the remoteResourceManager now doesn't support this (should be fixed)
+					remoteResourceManager.createResource("functions", new FileInputStream(file), file.getName(), true, null);
+				} catch (SimilarResourceExistingException e) {
+					// in case of existing resource with the same hash sum we want to use it
+					if (e.getSimilarResources() != null && !e.getSimilarResources().isEmpty()) {
+						packageLibraryResource = e.getSimilarResources().get(0);
+					}
+				}
+			} else if (packageLibraryFile.getResourceId() != null && !packageLibraryFile.getResourceId().isEmpty()) {
+				// reuse existing resource as package library
+				packageLibraryResource = remoteResourceManager.getResource(packageLibraryFile.getResourceId());
+				if (packageLibraryResource == null) {
+					throw new IllegalArgumentException("Library resource not found by id: " + packageLibraryFile.getResourceId());
+				}
+			}
+
+			if (packageLibraryResource != null) {
+				functionPackage.setPackageLibrariesLocation(FileResolver.RESOURCE_PREFIX + packageLibraryResource.getId().toString());
+			}
 		}
 
 		Resource packageResource = upload(packageFile);
@@ -69,12 +90,22 @@ public class RemoteFunctionPackageClientImpl extends AbstractRemoteClient implem
 
 	@Override
 	public FunctionPackage newKeywordPackage(File packageLibraryFile, File packageFile, Map<String, String> packageAttributes, String trackingField) throws IOException {
-		return addOrUpdateKeywordPackage(null, packageLibraryFile, packageFile, packageAttributes, trackingField);
+		return addOrUpdateKeywordPackage(null, packageLibraryFile == null ? null : LibFileReference.file(packageFile), packageFile, packageAttributes, trackingField);
 	}
 	
 	@Override
 	public FunctionPackage updateKeywordPackageById(FunctionPackage previousPackage, File packageLibraryFile, File packageFile, Map<String, String> packageAttributes, String trackingField) throws IOException {
-		return addOrUpdateKeywordPackage(previousPackage, packageLibraryFile, packageFile, packageAttributes, trackingField);
+		return addOrUpdateKeywordPackage(previousPackage, packageLibraryFile == null ? null : LibFileReference.file(packageFile), packageFile, packageAttributes, trackingField);
+	}
+
+	@Override
+	public FunctionPackage newKeywordPackageWithLibReference(LibFileReference packageLib, File packageFile, Map<String, String> packageAttributes, String trackingField) throws IOException {
+		return addOrUpdateKeywordPackage(null, packageLib, packageFile, packageAttributes, trackingField);
+	}
+
+	@Override
+	public FunctionPackage updateKeywordPackageWithLibReference(FunctionPackage previousPackage, LibFileReference packageLib, File packageFile, Map<String, String> packageAttributes, String trackingField) throws IOException {
+		return addOrUpdateKeywordPackage(previousPackage, packageLib, packageFile, packageAttributes, trackingField);
 	}
 
 	@Override

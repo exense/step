@@ -1,0 +1,27 @@
+---
+version: "1.0.0"
+name: "test plan"
+root:
+  sequence:
+    continueParentNodeExecutionOnError: false
+    instrumentNode: false
+    skipNode: false
+    children:
+      - dataSet:
+          continueParentNodeExecutionOnError: false
+          instrumentNode: false
+          skipNode: false
+          description: "test excel"
+          userItem: "userId"
+          globalCounter: "gcounter"
+          threads: 1
+          dataSource:
+            excel:
+              forWrite: true
+              headers: true
+              worksheet: "myWorksheet"
+              file:
+                id: "644fbe4e38a61e07cc3a4df9"
+          item: "dataSet"
+          resetAtEnd: false
+    continueOnError: false

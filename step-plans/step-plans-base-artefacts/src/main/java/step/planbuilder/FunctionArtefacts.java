@@ -18,6 +18,8 @@
  ******************************************************************************/
 package step.planbuilder;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.json.Json;
 import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
@@ -114,6 +116,17 @@ public class FunctionArtefacts {
 		call.setArgument(new DynamicValue<>(input));
 		call.getFunction().setValue("{\"name\":\""+keywordName+"\"}");
 		call.getAttributes().put("name", keywordName);
+		call.setRemote(new DynamicValue<>(remote));
+		return call;
+	}
+
+	public static CallFunction keyword(Map<String,String> selectionCriteria, boolean remote, String input) throws JsonProcessingException {
+		CallFunction call = new CallFunction();
+		call.setArgument(new DynamicValue<>(input));
+		StringBuffer buf = new StringBuffer();
+		ObjectMapper mapper = new ObjectMapper();
+		call.getFunction().setValue(mapper.writeValueAsString(selectionCriteria));
+		call.getAttributes().put(NAME, selectionCriteria.get(NAME));
 		call.setRemote(new DynamicValue<>(remote));
 		return call;
 	}

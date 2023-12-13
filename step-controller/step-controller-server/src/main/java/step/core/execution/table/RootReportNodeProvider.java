@@ -23,6 +23,8 @@ import java.util.Iterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import step.artefacts.Failure;
+import step.artefacts.reports.FailureReportNode;
 import step.core.GlobalContext;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeAccessor;
@@ -57,7 +59,13 @@ public class RootReportNodeProvider {
 			} else {
 				logger.debug("No children found for report node with id "+rootReportNode.getId());
 			}
+			return null;
+		} else {
+			// no root report node present at all, so we assume a failure
+			FailureReportNode fn = new FailureReportNode();
+			fn.setResolvedArtefact(new Failure());
+			fn.setStatus(execution.getResult());
+			return fn;
 		}
-		return null;
 	}
 }

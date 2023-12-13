@@ -18,6 +18,8 @@
  ******************************************************************************/
 package step.parameter;
 
+import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.annotation.Nulls;
 import step.commons.activation.ActivableObject;
 import step.commons.activation.Expression;
 import step.core.accessors.AbstractTrackedObject;
@@ -37,7 +39,7 @@ public class Parameter extends AbstractTrackedObject implements ActivableObject,
 	
 	protected Integer priority;
 	
-	protected Boolean protectedValue;
+	protected Boolean protectedValue = false;
 	
 	/**
 	 * When running with an encryption manager, the value of protected

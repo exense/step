@@ -28,6 +28,7 @@ import step.core.execution.ExecutionEngine.Builder;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
+import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.InMemoryPlanAccessor;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
@@ -172,7 +173,7 @@ public class ExecutionEngineTest {
 		Assert.assertFalse(importResult.isSuccessful());
 		String string = importResult.getErrors().get(0);
 		Assert.assertEquals(REPOSITORY_IMPORT_STATUS_ERROR, string);
-		assertEquals(ReportNodeStatus.NORUN, result.getResult());
+		assertEquals(ReportNodeStatus.IMPORT_ERROR, result.getResult());
 	}
 
 	@Test
@@ -185,7 +186,7 @@ public class ExecutionEngineTest {
 		ImportResult importResult = execution.getImportResult();
 		Assert.assertFalse(importResult.isSuccessful());
 		Assert.assertEquals(List.of(VETO_TEST_1, VETO_TEST_2), importResult.getErrors());
-		assertEquals(ReportNodeStatus.NORUN, result.getResult());
+		assertEquals(ReportNodeStatus.VETOED, result.getResult());
 	}
 
 	protected HashMap<String, String> newFailingRepositoryImport() {
@@ -268,7 +269,7 @@ public class ExecutionEngineTest {
 				}
 				
 				@Override
-				public TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters) throws Exception {
+				public TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) throws Exception {
 					return null;
 				}
 				

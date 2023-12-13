@@ -42,16 +42,23 @@ import step.grid.client.GridClient;
 import step.grid.client.GridClientConfiguration;
 import step.grid.client.LocalGridClientImpl;
 import step.grid.client.TokenLifecycleStrategy;
+import step.grid.filemanager.FileManagerImplConfig;
 import step.grid.io.AgentErrorCode;
 import step.resources.ResourceManagerControllerPlugin;
 
 @Plugin(dependencies= {ResourceManagerControllerPlugin.class})
 public class GridPlugin extends AbstractControllerPlugin {
-	
+
 	private static final Logger logger = LoggerFactory.getLogger(GridPlugin.class);
-	
+	public static final String GRID_FILEMANAGER_CACHE_MAXIMUMSIZE = "grid.filemanager.cache.maximumsize";
+	public static final String GRID_FILEMANAGER_CACHE_EXPIREAFTER_MS = "grid.filemanager.cache.expireafter.ms";
+	public static final String GRID_FILENAMANGER_FILE_CLEANUP_ENABLED = "grid.filenamanger.file.cleanup.enabled";
+	public static final String GRID_FILENAMANGER_FILE_CLEANUP_INTERVAL_MINUTES = "grid.filenamanger.file.cleanup.interval.minutes";
+	public static final String GRID_FILEMANAGER_FILE_CLEANUP_LAST_ACCESS_THRESHOLD_MINUTES = "grid.filemanager.file.cleanup.last.access.threshold.minutes";
+
 	private GridImpl grid;
 	private GridClient client;
+	private static final String GRID_FILEMANAGER_CACHE_CONCURRENCYLEVEL_KEY = "grid.filemanager.cache.concurrencylevel";
 
 	@Override
 	public void serverStart(GlobalContext context) throws Exception {
@@ -63,16 +70,27 @@ public class GridPlugin extends AbstractControllerPlugin {
 		String fileManagerPath = configuration.getProperty("grid.filemanager.path", "filemanager");
 		
 		GridImplConfig gridConfig = new GridImplConfig();
-		gridConfig.setFileLastModificationCacheConcurrencyLevel(configuration.getPropertyAsInteger("grid.filemanager.cache.concurrencylevel", 4));
-		gridConfig.setFileLastModificationCacheMaximumsize(configuration.getPropertyAsInteger("grid.filemanager.cache.maximumsize", 1000));
-		gridConfig.setFileLastModificationCacheExpireAfter(configuration.getPropertyAsInteger("grid.filemanager.cache.expireafter.ms", 500));
 		gridConfig.setTtl(tokenTTL);
 		
 		gridConfig.setTokenAffinityEvaluatorClass(configuration.getProperty("grid.tokens.affinityevaluator.classname"));
 		Map<String, String> tokenAffinityEvaluatorProperties = configuration.getPropertyNames().stream().filter(p->(p instanceof String && p.toString().startsWith("grid.tokens.affinityevaluator")))
 			.collect(Collectors.toMap(p->p.toString().replace("grid.tokens.affinityevaluator.", ""), p->configuration.getProperty(p.toString())));
 		gridConfig.setTokenAffinityEvaluatorProperties(tokenAffinityEvaluatorProperties);
-		
+
+		FileManagerImplConfig fileManagerConfig = new FileManagerImplConfig();
+		fileManagerConfig.setFileLastModificationCacheConcurrencyLevel(configuration.getPropertyAsInteger(GRID_FILEMANAGER_CACHE_CONCURRENCYLEVEL_KEY, 4));
+		fileManagerConfig.setFileLastModificationCacheMaximumsize(configuration.getPropertyAsInteger(GRID_FILEMANAGER_CACHE_MAXIMUMSIZE, 1000));
+		fileManagerConfig.setFileLastModificationCacheExpireAfter(configuration.getPropertyAsInteger(GRID_FILEMANAGER_CACHE_EXPIREAFTER_MS, 500));
+		fileManagerConfig.setCleanupJobEnabled(configuration.getPropertyAsBoolean(GRID_FILENAMANGER_FILE_CLEANUP_ENABLED, true));
+		fileManagerConfig.setCleanupIntervalMinutes(configuration.getPropertyAsInteger(GRID_FILENAMANGER_FILE_CLEANUP_INTERVAL_MINUTES, 60));
+		fileManagerConfig.setCleanupLastAccessTimeThresholdMinutes(configuration.getPropertyAsLong(GRID_FILEMANAGER_FILE_CLEANUP_LAST_ACCESS_THRESHOLD_MINUTES, 3600000l));
+		gridConfig.setFileManagerImplConfig(fileManagerConfig);
+
+		GridConfigurationEditor.List editors = context.get(GridConfigurationEditor.List.class);
+		if (editors != null) {
+			editors.forEach(m -> m.editConfiguration(gridConfig));
+		}
+
 		grid = new GridImpl(new File(fileManagerPath), gridPort, gridConfig);
         try {
             grid.start();

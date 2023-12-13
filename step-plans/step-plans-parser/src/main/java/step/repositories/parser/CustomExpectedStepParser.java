@@ -104,7 +104,14 @@ public class CustomExpectedStepParser implements StepParser<ExpectedStep> {
 			
 			assert_.getActual().setValue(key);
 			assert_.getExpected().setDynamic(true);
-			assert_.getExpected().setExpression(ctx.attributeValue().getText());
+			if(ctx.attributeValue() != null) {
+				// can be null for 'isNull' operator
+				assert_.getExpected().setExpression(ctx.attributeValue().getText());
+			} else {
+				assert_.getExpected().setDynamic(false);
+				assert_.getExpected().setValue(null);
+			}
+
 			if(operator.equals("=")) {
 				assert_.setOperator(AssertOperator.EQUALS);
 			} else if(operator.equals("~")) {
@@ -115,6 +122,16 @@ public class CustomExpectedStepParser implements StepParser<ExpectedStep> {
 				assert_.setOperator(AssertOperator.BEGINS_WITH);
 			} else if(operator.equals("endsWith")) {
 				assert_.setOperator(AssertOperator.ENDS_WITH);
+			} else if(operator.equals("<")){
+				assert_.setOperator(AssertOperator.LESS_THAN);
+			} else if(operator.equals("<=")){
+				assert_.setOperator(AssertOperator.LESS_THAN_OR_EQUALS);
+			} else if(operator.equals(">")) {
+				assert_.setOperator(AssertOperator.GREATER_THAN);
+			} else if(operator.equals(">=")){
+				assert_.setOperator(AssertOperator.GREATER_THAN_OR_EQUALS);
+			} else if(operator.equals("isNull")){
+				assert_.setOperator(AssertOperator.IS_NULL);
 			}
 			
 			parsingContext.addArtefactToCurrentParent(assert_);

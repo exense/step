@@ -245,7 +245,7 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 	protected File retrieveFileVersion(String properyName, Map<String,String> properties) throws FileManagerException {
 		FileVersionId fileVersionId = getFileVersionId(properyName, properties);
 		if(fileVersionId != null) {
-			FileVersion fileVersion = fileManagerClient.requestFileVersion(fileVersionId);
+			FileVersion fileVersion = fileManagerClient.requestFileVersion(fileVersionId, true);
 			return fileVersion != null ? fileVersion.getFile() : null;
 		} else {
 			return null;

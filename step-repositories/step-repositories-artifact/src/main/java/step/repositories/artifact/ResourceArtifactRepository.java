@@ -18,7 +18,11 @@
  ******************************************************************************/
 package step.repositories.artifact;
 
+import step.core.execution.ExecutionContext;
 import step.core.plans.PlanAccessor;
+import step.core.repositories.RepositoryObjectReference;
+import step.repositories.ArtifactRepositoryConstants;
+import step.resources.Resource;
 import step.resources.ResourceManager;
 import step.resources.ResourceRevisionFileHandle;
 
@@ -28,8 +32,8 @@ import java.util.Set;
 
 public class ResourceArtifactRepository extends AbstractArtifactRepository {
 
-	protected static final String PARAM_RESOURCE_ID = "resourceId";
-	protected static final String PARAM_LIB_RESOURCE_ID = "libResourceId";
+	protected static final String PARAM_RESOURCE_ID = ArtifactRepositoryConstants.RESOURCE_PARAM_RESOURCE_ID;
+	protected static final String PARAM_LIB_RESOURCE_ID = ArtifactRepositoryConstants.RESOURCE_PARAM_LIB_RESOURCE_ID;
 
 	private final ResourceManager resourceManager;
 
@@ -65,5 +69,19 @@ public class ResourceArtifactRepository extends AbstractArtifactRepository {
 			throw new RuntimeException("Resource not found by id: " + resourceId);
 		}
 		return resourceContent.getResourceFile();
+	}
+
+	@Override
+	public void postExecution(ExecutionContext context, RepositoryObjectReference repositoryObjectReference) throws Exception {
+		if (repositoryObjectReference != null) {
+			String resourceId = repositoryObjectReference.getRepositoryParameters().get(ArtifactRepositoryConstants.RESOURCE_PARAM_RESOURCE_ID);
+			if (resourceId != null) {
+				Resource resource = resourceManager.getResource(resourceId);
+				if (ResourceManager.RESOURCE_TYPE_TEMP.equals(resource.getResourceType())) {
+					resourceManager.deleteResource(resourceId);
+				}
+			}
+		}
+		super.postExecution(context, repositoryObjectReference);
 	}
 }

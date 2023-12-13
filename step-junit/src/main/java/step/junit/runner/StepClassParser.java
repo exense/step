@@ -18,13 +18,6 @@
  ******************************************************************************/
 package step.junit.runner;
 
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.artefacts.AbstractArtefact;
@@ -34,16 +27,28 @@ import step.handlers.javahandler.Keyword;
 import step.junit.runners.annotations.Plans;
 import step.plans.nl.RootArtefactType;
 import step.plans.nl.parser.PlanParser;
+import step.plans.parser.yaml.YamlPlanReader;
+
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class StepClassParser {
 	private static final Logger logger = LoggerFactory.getLogger(StepClassParser.class);
 
 	private final boolean appendClassnameToPlanName;
+
 	private final PlanParser planParser = new PlanParser();
+
+	private final YamlPlanReader simpleYamlPlanReader;
 
 	public StepClassParser(boolean appendClassnameToPlanName) {
 		super();
 		this.appendClassnameToPlanName = appendClassnameToPlanName;
+		this.simpleYamlPlanReader = new YamlPlanReader();
 	}
 
 	public List<StepClassParserResult> createPlansForClass(Class<?> klass) throws Exception {
@@ -105,23 +110,40 @@ public class StepClassParser {
 		}
 	}
 
-	public StepClassParserResult createPlan(Class<?> klass, String name) throws Exception {
+	public StepClassParserResult createPlan(Class<?> klass, String fileName) throws Exception {
+		InputStream stream = klass.getResourceAsStream(fileName);
+		return createPlan(klass, fileName, stream);
+	}
+
+	public StepClassParserResult createPlan(Class<?> klass, String fileName, InputStream stream) {
 		Plan plan = null;
 		Exception exception = null;
 		try {
-			InputStream stream = klass.getResourceAsStream(name);
+			ParserMode parserMode = chooseParserModeByFileName(fileName);
+
 			if (stream == null) {
-				throw new Exception("Plan '" + name + "' was not found for class " + klass.getName());
+				throw new Exception("Plan '" + fileName + "' was not found for class " + klass.getName());
 			}
 
-			plan = planParser.parse(stream, RootArtefactType.TestCase);
-			logger.debug("plan is:"+ plan+ " for class "+klass.getName());
-			setPlanName(plan, name);
+			if (parserMode == ParserMode.PLAIN_TEXT_PARSER) {
+				plan = planParser.parse(stream, RootArtefactType.TestCase);
+				logger.debug("plan is:" + plan + " for class " + klass.getName());
+				setPlanName(plan, fileName);
+			} else if (parserMode == ParserMode.YAML_PARSER) {
+				try {
+					plan = simpleYamlPlanReader.readYamlPlan(stream);
+				} catch (Exception e) {
+					// wrap into another exception to include the fileName to error details
+					throw new RuntimeException(fileName + " processing error", e);
+				}
+			} else {
+				throw new UnsupportedOperationException("Unable to resolve plan parser " + parserMode);
+			}
 		} catch (Exception e) {
 			exception = e;
 		}
 
-		return new StepClassParserResult(name, plan, exception);
+		return new StepClassParserResult(fileName, plan, exception);
 	}
 
 	public static void setPlanName(Plan plan, String name) {
@@ -129,5 +151,18 @@ public class StepClassParser {
 		attributes.put(AbstractArtefact.NAME, name);
 		plan.setAttributes(attributes);
 		plan.getRoot().getAttributes().put(AbstractArtefact.NAME, name);
+	}
+
+	private ParserMode chooseParserModeByFileName(String fileName) {
+		if (fileName.endsWith(".yaml") || fileName.endsWith(".yml")) {
+			return ParserMode.YAML_PARSER;
+		} else {
+			return ParserMode.PLAIN_TEXT_PARSER;
+		}
+	}
+
+	private enum ParserMode {
+		PLAIN_TEXT_PARSER,
+		YAML_PARSER
 	}
 }

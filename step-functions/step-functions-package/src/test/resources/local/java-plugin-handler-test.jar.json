@@ -1,6 +1,7 @@
 {
 	"attributes": {
 		"attribute1": "@ref1",
-		"attribute2": "value2"
+		"attribute2": "value2",
+		"attributeI18n": "Äöüßêï"
 	}
 }

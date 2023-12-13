@@ -18,34 +18,30 @@
  ******************************************************************************/
 package step.resources;
 
-import java.io.IOException;
-import java.io.InputStream;
-
+import ch.exense.commons.io.FileHelper;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.ServletContext;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.DELETE;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.StreamingOutput;
-
-import io.swagger.v3.oas.annotations.tags.Tag;
 import org.bson.types.ObjectId;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
-
-import ch.exense.commons.io.FileHelper;
 import step.core.GlobalContext;
 import step.core.deployment.AbstractStepServices;
 import step.core.deployment.ControllerServiceException;
-import step.framework.server.security.Secured;
 import step.core.objectenricher.ObjectEnricher;
+import step.framework.server.security.Secured;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
+import java.util.Map;
+import java.util.Spliterator;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @Path("/resources")
 @Tag(name = "Resources")
@@ -69,7 +65,8 @@ public class ResourceServices extends AbstractStepServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	public ResourceUploadResponse createResource(@FormDataParam("file") InputStream uploadedInputStream,
 			@FormDataParam("file") FormDataContentDisposition fileDetail, @QueryParam("type") String resourceType,
-												 @QueryParam("duplicateCheck") Boolean checkForDuplicate, @QueryParam("directory") Boolean isDirectory) throws IOException {
+												 @QueryParam("duplicateCheck") Boolean checkForDuplicate, @QueryParam("directory") Boolean isDirectory,
+												 @QueryParam("trackingAttribute") String trackingAttribute) throws IOException {
 		ObjectEnricher objectEnricher = getObjectEnricher();
 		
 		if(checkForDuplicate == null) {
@@ -81,7 +78,7 @@ public class ResourceServices extends AbstractStepServices {
 			throw new RuntimeException("Missing resource type query parameter 'type'");
 		
 		try {
-			Resource resource = resourceManager.createResource(resourceType, isDirectory, uploadedInputStream, fileDetail.getFileName(), checkForDuplicate, objectEnricher);
+			Resource resource = resourceManager.createResource(resourceType, isDirectory, uploadedInputStream, fileDetail.getFileName(), checkForDuplicate, objectEnricher, trackingAttribute);
 			return new ResourceUploadResponse(resource, null);
 		} catch (SimilarResourceExistingException e) {
 			return new ResourceUploadResponse(e.getResource(), e.getSimilarResources());
@@ -150,6 +147,14 @@ public class ResourceServices extends AbstractStepServices {
 		ResourceRevisionContentImpl resourceContent = resourceManager.getResourceRevisionContent(resourceRevisionId);
 		return getResponseForResourceRevisionContent(resourceContent, inline);
 	}
+
+	@POST
+	@Path("/find")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public List<Resource> findManyByCriteria(Map<String, String> criteria) {
+		return resourceAccessor.findManyByCriteria(criteria).collect(Collectors.toList());
+	}
 	
 	@jakarta.ws.rs.core.Context 
 	ServletContext context;
@@ -167,7 +172,7 @@ public class ResourceServices extends AbstractStepServices {
 		String mimeType = context.getMimeType(resourceName);
 		if (mimeType == null) {
 			if(resourceName.endsWith(".log")) {
-				mimeType = "text/plain";
+				mimeType = "text/plain; charset=utf-8";
 			} else {
 				mimeType = "application/octet-stream";
 			}

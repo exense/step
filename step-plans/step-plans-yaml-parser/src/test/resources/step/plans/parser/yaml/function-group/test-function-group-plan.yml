@@ -1,0 +1,10 @@
+name: "test plan"
+root:
+  sequence:
+    name: Sequence
+    children:
+      - session:
+          nodeName: Session
+          routing:
+            - criteria1: "criteriaValue1"
+            - criteria2: "criteriaValue2"

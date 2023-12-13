@@ -73,4 +73,9 @@ public class RemoteFunctionManagerImpl extends RemoteFunctionManager {
 	public Function newFunction(String functionType) {
 		throw new RuntimeException("Not implemented");
 	}
+
+	@Override
+	public Function newFunction(String type, Map<String, String> configuration) {
+		throw new RuntimeException("Not implemented");
+	}
 }

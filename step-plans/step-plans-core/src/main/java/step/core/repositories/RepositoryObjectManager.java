@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import step.core.execution.ExecutionContext;
 import step.core.execution.model.ReportExport;
 import step.core.execution.model.ReportExportStatus;
+import step.core.objectenricher.ObjectPredicate;
 
 import java.util.Map;
 import java.util.Objects;
@@ -74,6 +75,15 @@ public class RepositoryObjectManager {
 		}
 		return export;
 	}
+
+	public void postExecution(ExecutionContext context, RepositoryObjectReference report) {
+		String repositoryId = report.getRepositoryID();
+		try {
+			getRepository(repositoryId).postExecution(context, report);
+		} catch (Exception ex) {
+			throw new RuntimeException("Error on post execution hook (execution id: " + context.getExecutionId() + ", repository: " + repositoryId + ")", ex);
+		}
+	}
 	
 	public ArtefactInfo getArtefactInfo(RepositoryObjectReference ref) throws Exception {
 		String respositoryId = ref.getRepositoryID();
@@ -86,10 +96,10 @@ public class RepositoryObjectManager {
 		}
 	}
 	
-	public TestSetStatusOverview getReport(RepositoryObjectReference report) throws Exception {
+	public TestSetStatusOverview getReport(RepositoryObjectReference report, ObjectPredicate objectPredicate) throws Exception {
 		String respositoryId = report.getRepositoryID();
 		Repository repository = getRepository(respositoryId);
-		return repository.getTestSetStatusOverview(report.getRepositoryParameters());
+		return repository.getTestSetStatusOverview(report.getRepositoryParameters(), objectPredicate);
 	}
 
 	public boolean compareRepositoryObjectReference(RepositoryObjectReference ref1, RepositoryObjectReference ref2) {

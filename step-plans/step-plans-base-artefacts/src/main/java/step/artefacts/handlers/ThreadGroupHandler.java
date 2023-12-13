@@ -72,7 +72,7 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 		
 		// Attach global iteration counter & user counter
 		LongAdder gcounter = new LongAdder();
-		AtomicReportNodeStatusComposer reportNodeStatusComposer = new AtomicReportNodeStatusComposer(node.getStatus());
+		AtomicReportNodeStatusComposer reportNodeStatusComposer = new AtomicReportNodeStatusComposer(node);
 		
 		Iterator<Integer> groupIterator = new IntegerSequenceIterator(1,numberOfUsers,1);
 		
@@ -101,16 +101,16 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 						HashMap<String, Object> newVariable = new HashMap<>();
 						newVariable.put(thread.threadGroup.getUserItem().get(), thread.groupId);
 						ReportNode threadReportNode = delegateExecute(thread, node, newVariable);
-						reportNodeStatusComposer.addStatusAndRecompose(threadReportNode.getStatus());
+						reportNodeStatusComposer.addStatusAndRecompose(threadReportNode);
 					} catch (Throwable e) {
 						failWithException(node, e);
-						reportNodeStatusComposer.addStatusAndRecompose(node.getStatus());
+						reportNodeStatusComposer.addStatusAndRecompose(node);
 					}
 				};
 			}
 		}, numberOfUsers);
-		
-		node.setStatus(reportNodeStatusComposer.getParentStatus());
+
+		reportNodeStatusComposer.applyComposedStatusToParentNode(node);
 	}
 
 	@Override
@@ -118,7 +118,7 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 		return new ReportNode();
 	}
 	
-	@Artefact()
+	@Artefact(test = true)
 	public static class Thread extends AbstractArtefact {
 		
 		@JsonIgnore
@@ -223,7 +223,7 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 				context.getVariablesManager().putVariable(sessionReportNode, TEC_EXECUTION_REPORTNODES_PERSISTBEFORE, false);
 				SequentialArtefactScheduler sequentialArtefactScheduler = new SequentialArtefactScheduler(context);
 				sequentialArtefactScheduler.executeWithinBeforeAndAfter(sessionArtefact, sessionReportNode, newChildren->{
-					AtomicReportNodeStatusComposer sessionReportNodeStatusComposer = new AtomicReportNodeStatusComposer(sessionReportNode.getStatus());
+					AtomicReportNodeStatusComposer sessionReportNodeStatusComposer = new AtomicReportNodeStatusComposer(sessionReportNode);
 					try {
 						Pacer.scheduleAtConstantPacing(i->{
 							ReportNode iterationReportNode = null;
@@ -245,11 +245,11 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 								newVariable.put(thread.threadGroup.getItem().get(), thread.gcounter.intValue());
 								
 								iterationReportNode = delegateExecute(iterationTestCase, sessionReportNode, newVariable);
-								sessionReportNodeStatusComposer.addStatusAndRecompose(iterationReportNode.getStatus());
+								sessionReportNodeStatusComposer.addStatusAndRecompose(iterationReportNode);
 							} catch (Throwable e) {
 								if(iterationReportNode!=null) {
 									failWithException(iterationReportNode, e);
-									sessionReportNodeStatusComposer.addStatusAndRecompose(iterationReportNode.getStatus());
+									sessionReportNodeStatusComposer.addStatusAndRecompose(iterationReportNode);
 								}
 							}
 							
@@ -259,9 +259,9 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 										&& (numberOfIterations == 0 || c.getIterations() < numberOfIterations), context);
 					} catch (InterruptedException e) {
 						failWithException(sessionReportNode, e);
-						sessionReportNodeStatusComposer.addStatusAndRecompose(sessionReportNode.getStatus());
+						sessionReportNodeStatusComposer.addStatusAndRecompose(sessionReportNode);
 					}
-					sessionReportNode.setStatus(sessionReportNodeStatusComposer.getParentStatus());
+					sessionReportNodeStatusComposer.applyComposedStatusToParentNode(sessionReportNode);
 					return sessionReportNode;
 				}, BeforeThread.class, AfterThread.class);
 			});

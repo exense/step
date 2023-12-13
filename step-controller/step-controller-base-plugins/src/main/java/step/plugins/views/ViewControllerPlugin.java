@@ -21,7 +21,10 @@ package step.plugins.views;
 import step.core.GlobalContext;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
-import step.engine.plugins.ExecutionEnginePlugin;
+import step.core.views.ViewManager;
+import step.core.views.ViewModel;
+import step.core.views.ViewModelAccessor;
+import step.core.views.ViewModelAccessorImpl;
 
 @Plugin
 public class ViewControllerPlugin extends AbstractControllerPlugin {
@@ -37,10 +40,5 @@ public class ViewControllerPlugin extends AbstractControllerPlugin {
 		context.put(ViewManager.class, viewManager);
 
 		context.getServiceRegistrationCallback().registerService(ViewPluginServices.class);
-	}
-
-	@Override
-	public ExecutionEnginePlugin getExecutionEnginePlugin() {
-		return new ViewPlugin(viewManager);
 	}
 }

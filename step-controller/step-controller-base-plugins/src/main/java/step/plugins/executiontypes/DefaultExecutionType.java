@@ -20,7 +20,7 @@ package step.plugins.executiontypes;
 
 import step.core.GlobalContext;
 import step.core.execution.type.ExecutionType;
-import step.plugins.views.ViewManager;
+import step.core.views.ViewManager;
 import step.plugins.views.functions.ReportNodeStatusDistribution;
 
 public class DefaultExecutionType extends ExecutionType {

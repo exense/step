@@ -26,7 +26,7 @@ public class ExecutionSchedulerTest {
 		return this.executor;
 	}
 	
-	private class MockedExecutor extends Executor {
+	public static class MockedExecutor extends Executor {
 		private boolean isValidateMethodCalled;
 		private boolean isScheduleMethodCalled;
 		private boolean isDeleteScheduleMethodCalled;

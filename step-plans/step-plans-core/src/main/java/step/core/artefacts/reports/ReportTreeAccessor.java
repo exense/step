@@ -19,6 +19,7 @@
 package step.core.artefacts.reports;
 
 import java.util.Iterator;
+import java.util.stream.Stream;
 
 public interface ReportTreeAccessor {
 
@@ -37,4 +38,6 @@ public interface ReportTreeAccessor {
 	 * @return an Iterator of the list of children
 	 */
 	public Iterator<ReportNode> getChildren(String parentID);
+
+	Stream<ReportNode> getReportNodesWithContributingErrors(String executionId);
 }

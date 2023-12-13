@@ -88,17 +88,17 @@ public class SequentialArtefactScheduler {
 		// get the list of children artefacts without Before- and AfterSequence artefacts
 		List<AbstractArtefact> newChildren = children.stream().filter(c->!(beforeClass.isInstance(c)) && !(afterClass.isInstance(c))).collect(Collectors.toList());
 		
-		AtomicReportNodeStatusComposer reportNodeStatusComposer = new AtomicReportNodeStatusComposer(reportNode.getStatus());
+		AtomicReportNodeStatusComposer reportNodeStatusComposer = new AtomicReportNodeStatusComposer(reportNode);
 		try {
 			// Execute the BeforeSequence artefacts
 			for (AbstractArtefact beforeArtefact : beforeArtefacts) {
 				ReportNode resultNode = artefactHandlerManager.execute(beforeArtefact, reportNode);
-				reportNodeStatusComposer.addStatusAndRecompose(resultNode.getStatus());
+				reportNodeStatusComposer.addStatusAndRecompose(resultNode);
 			}
 			
 			// delegate the execution of the new children without Before- and AfterSequence artefacts
 			ReportNode resultNode = consumer.apply(newChildren);
-			reportNodeStatusComposer.addStatusAndRecompose(resultNode.getStatus());
+			reportNodeStatusComposer.addStatusAndRecompose(resultNode);
 		} finally {
 			// Execute the AfterSequence artefacts even when aborting
 			boolean byPassInterrupt = context.isInterrupted();
@@ -108,7 +108,7 @@ public class SequentialArtefactScheduler {
 			try{
 				for (AbstractArtefact afterArtefact : afterArtefacts) {
 					ReportNode resultNode = artefactHandlerManager.execute(afterArtefact, reportNode);
-					reportNodeStatusComposer.addStatusAndRecompose(resultNode.getStatus());
+					reportNodeStatusComposer.addStatusAndRecompose(resultNode);
 				}
 
 			} finally {
@@ -118,7 +118,7 @@ public class SequentialArtefactScheduler {
 				}
 			}
 		}
-		reportNode.setStatus(reportNodeStatusComposer.getParentStatus());
+		reportNodeStatusComposer.applyComposedStatusToParentNode(reportNode);
 		return reportNode;
 	}
 	
@@ -129,7 +129,7 @@ public class SequentialArtefactScheduler {
 				// Set the status to PASSED if the artefact contains no children
 				reportNodeStatusComposer = new AtomicReportNodeStatusComposer(ReportNodeStatus.PASSED);
 			} else {
-				reportNodeStatusComposer = new AtomicReportNodeStatusComposer(reportNode.getStatus());
+				reportNodeStatusComposer = new AtomicReportNodeStatusComposer(reportNode);
 			}
 			try {
 				for (AbstractArtefact child : children) {
@@ -137,7 +137,7 @@ public class SequentialArtefactScheduler {
 						break;
 					}
 					ReportNode resultNode = artefactHandlerManager.execute(child, reportNode);
-					reportNodeStatusComposer.addStatusAndRecompose(resultNode.getStatus());
+					reportNodeStatusComposer.addStatusAndRecompose(resultNode);
 	
 					if (resultNode.getStatus() == ReportNodeStatus.TECHNICAL_ERROR
 							|| resultNode.getStatus() == ReportNodeStatus.FAILED) {
@@ -166,7 +166,7 @@ public class SequentialArtefactScheduler {
 				if (context.isInterrupted()) {
 					reportNode.setStatus(ReportNodeStatus.INTERRUPTED);
 				} else {
-					reportNode.setStatus(reportNodeStatusComposer.getParentStatus());
+					reportNodeStatusComposer.applyComposedStatusToParentNode(reportNode);
 				}
 			}
 			return reportNode;

@@ -1,0 +1,1449 @@
+_id:
+  "$oid": 6493669dbbb20005929fa0f7
+_class: step.core.plans.Plan
+customFields:
+  versionId: 6493669ebbb20005929fa164
+attributes:
+  type: ''
+  name: Build
+  project: 64732d07eee7d35370046108
+root:
+  _class: TestCase
+  attributes:
+    type: ''
+    name: Build
+  dynamicName:
+    dynamic: false
+    value: ''
+    expression: ''
+  useDynamicName: false
+  children:
+    - _class: Check
+      attributes:
+        name: Check BRANCH is given
+      dynamicName:
+        dynamic: false
+        value: ''
+        expression: ''
+      useDynamicName: false
+      children: []
+      persistNode: true
+      skipNode:
+        dynamic: false
+        value: false
+      instrumentNode:
+        dynamic: false
+        value: false
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+      expression:
+        dynamic: true
+        expression: binding.hasVariable("BRANCH") && !BRANCH.isBlank()
+        expressionType: ''
+      _id:
+        "$oid": 63fc7e6d32ed452ab30d86fe
+    - _class: Check
+      attributes:
+        name: Check PROJECT is given
+      dynamicName:
+        dynamic: false
+        value: ''
+        expression: ''
+      useDynamicName: false
+      children: []
+      persistNode: true
+      skipNode:
+        dynamic: false
+        value: false
+      instrumentNode:
+        dynamic: false
+        value: false
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+      expression:
+        dynamic: true
+        expression: binding.hasVariable("PROJECT") && !PROJECT.isBlank()
+        expressionType: ''
+      _id:
+        "$oid": 63fc7e6d32ed452ab30d86ff
+    - _class: Check
+      attributes:
+        name: Check ENVIRONMENT is given
+      dynamicName:
+        dynamic: false
+        value: ''
+        expression: ''
+      useDynamicName: false
+      children: []
+      persistNode: true
+      skipNode:
+        dynamic: false
+        value: false
+      instrumentNode:
+        dynamic: false
+        value: false
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+      expression:
+        dynamic: true
+        expression: binding.hasVariable("ENVIRONMENT") && !ENVIRONMENT.isBlank()
+        expressionType: ''
+      _id:
+        "$oid": 63fc7e6d32ed452ab30d8700
+    - _class: If
+      attributes:
+        name: If ENVIRONMENT=="PRODUCTION"
+      dynamicName:
+        dynamic: false
+        value: ''
+        expression: ''
+      useDynamicName: false
+      children:
+        - _class: Check
+          attributes:
+            name: Check VERSION is given when releasing into PRODUCTION
+          dynamicName:
+            dynamic: false
+            value: ''
+            expression: ''
+          useDynamicName: false
+          children: []
+          persistNode: true
+          skipNode:
+            dynamic: false
+            value: false
+          instrumentNode:
+            dynamic: false
+            value: false
+          continueParentNodeExecutionOnError:
+            dynamic: false
+            value: false
+          expression:
+            dynamic: true
+            expression: binding.hasVariable("VERSION") && !VERSION.isBlank()
+            expressionType: ''
+          _id:
+            "$oid": 63fc7e6d32ed452ab30d8707
+        - _class: Check
+          attributes:
+            name: Check VERSION is properly formated
+          dynamicName:
+            dynamic: false
+            value: ''
+            expression: ''
+          useDynamicName: false
+          children: []
+          persistNode: true
+          skipNode:
+            dynamic: false
+            value: false
+          instrumentNode:
+            dynamic: false
+            value: false
+          continueParentNodeExecutionOnError:
+            dynamic: false
+            value: false
+          expression:
+            dynamic: true
+            expression: VERSION ==~ /\d+\.\d+\.\d+/
+            expressionType: ''
+          _id:
+            "$oid": 63fc7e6d32ed452ab30d8708
+      persistNode: true
+      skipNode:
+        dynamic: false
+        value: false
+      instrumentNode:
+        dynamic: false
+        value: false
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+      condition:
+        dynamic: true
+        expression: ENVIRONMENT=="PRODUCTION"
+        expressionType: ''
+      _id:
+        "$oid": 63fc7e6d32ed452ab30d8706
+    - _class: Set
+      attributes:
+        name: Init SCALEUP
+      dynamicName:
+        dynamic: false
+        value: ''
+        expression: ''
+      useDynamicName: false
+      children: []
+      persistNode: true
+      skipNode:
+        dynamic: false
+        value: false
+      instrumentNode:
+        dynamic: false
+        value: false
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+      key:
+        dynamic: false
+        value: SCALEUP
+      value:
+        dynamic: false
+        value: ''
+      _id:
+        "$oid": 648721fbffbf2419e6c82fc8
+    - _class: If
+      attributes:
+        name: If OS==LINUX
+      dynamicName:
+        dynamic: false
+        value: ''
+        expression: ''
+      useDynamicName: false
+      children:
+        - _class: CallPlan
+          attributes:
+            name: Scale Up Build Agents
+          dynamicName:
+            dynamic: false
+            value: ''
+            expression: ''
+          useDynamicName: false
+          children: []
+          persistNode: true
+          skipNode:
+            dynamic: false
+            value: false
+          instrumentNode:
+            dynamic: false
+            value: false
+          continueParentNodeExecutionOnError:
+            dynamic: false
+            value: false
+          planId: 6386268253799329484c57ef
+          selectionAttributes:
+            dynamic: false
+            value: "{}"
+          input:
+            dynamic: false
+            value: "{}"
+          _id:
+            "$oid": 63fc81fb32ed452ab30e74fb
+      persistNode: true
+      skipNode:
+        dynamic: false
+        value: false
+      instrumentNode:
+        dynamic: false
+        value: false
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+      condition:
+        dynamic: true
+        expression: OS=="LINUX"
+        expressionType: ''
+      _id:
+        "$oid": 63fc820732ed452ab30e756a
+    - _class: Sequence
+      attributes:
+        name: Sequence
+      dynamicName:
+        dynamic: false
+        value: ''
+        expression: ''
+      useDynamicName: false
+      children:
+        - _class: Session
+          attributes:
+            name: Session
+          dynamicName:
+            dynamic: false
+            value: ''
+            expression: ''
+          useDynamicName: false
+          children:
+            - _class: Sequence
+              attributes:
+                name: Main Sequence
+              dynamicName:
+                dynamic: false
+                value: ''
+                expression: ''
+              useDynamicName: false
+              children:
+                - _class: BeforeSequence
+                  attributes:
+                    name: BeforeSequence - Init variables
+                  dynamicName:
+                    dynamic: false
+                    value: ''
+                    expression: ''
+                  useDynamicName: false
+                  children:
+                    - _class: Set
+                      attributes:
+                        name: Init STATUS - FAILED
+                      dynamicName:
+                        dynamic: false
+                        value: ''
+                        expression: ''
+                      useDynamicName: false
+                      children: []
+                      persistNode: true
+                      skipNode:
+                        dynamic: false
+                        value: false
+                      instrumentNode:
+                        dynamic: false
+                        value: false
+                      continueParentNodeExecutionOnError:
+                        dynamic: false
+                        value: false
+                      key:
+                        dynamic: false
+                        value: STATUS
+                      value:
+                        dynamic: false
+                        value: FAILED
+                      _id:
+                        "$oid": 63fc7e6d32ed452ab30d870b
+                    - _class: Set
+                      attributes:
+                        name: Init FOLDER
+                      dynamicName:
+                        dynamic: false
+                        value: ''
+                        expression: ''
+                      useDynamicName: false
+                      children: []
+                      persistNode: true
+                      skipNode:
+                        dynamic: false
+                        value: false
+                      instrumentNode:
+                        dynamic: false
+                        value: false
+                      continueParentNodeExecutionOnError:
+                        dynamic: false
+                        value: false
+                      key:
+                        dynamic: false
+                        value: FOLDER
+                      value:
+                        dynamic: true
+                        expression: ''
+                      _id:
+                        "$oid": 6414814498e6504cd092bd2d
+                    - _class: Set
+                      attributes:
+                        name: Init FTP_FILES
+                      dynamicName:
+                        dynamic: false
+                        value: ''
+                      useDynamicName: false
+                      description: ''
+                      children: []
+                      persistNode: true
+                      skipNode:
+                        dynamic: false
+                        value: false
+                      instrumentNode:
+                        dynamic: false
+                        value: false
+                      continueParentNodeExecutionOnError:
+                        dynamic: false
+                        value: true
+                      key:
+                        dynamic: false
+                        value: FTP_FILES
+                      value:
+                        dynamic: false
+                        value: ''
+                      _id:
+                        "$oid": 63ff3eae32ed452ab359e2f9
+                    - _class: Set
+                      attributes:
+                        name: Init TESTS
+                      dynamicName:
+                        dynamic: false
+                        value: ''
+                      useDynamicName: false
+                      description: ''
+                      children: []
+                      persistNode: true
+                      skipNode:
+                        dynamic: false
+                        value: false
+                      instrumentNode:
+                        dynamic: false
+                        value: false
+                      continueParentNodeExecutionOnError:
+                        dynamic: false
+                        value: false
+                      key:
+                        dynamic: false
+                        value: TESTS
+                      value:
+                        dynamic: false
+                        value: ''
+                      _id:
+                        "$oid": 6418a5ac15d6cd528cf17c84
+                    - _class: Set
+                      attributes:
+                        name: Init DEPLOYED_INSTANCES
+                      dynamicName:
+                        dynamic: false
+                        value: ''
+                      useDynamicName: false
+                      description: ''
+                      children: []
+                      persistNode: true
+                      skipNode:
+                        dynamic: false
+                        value: false
+                      instrumentNode:
+                        dynamic: false
+                        value: false
+                      continueParentNodeExecutionOnError:
+                        dynamic: false
+                        value: true
+                      key:
+                        dynamic: false
+                        value: DEPLOYED_INSTANCES
+                      value:
+                        dynamic: false
+                        value: ''
+                      _id:
+                        "$oid": 63ff3ec632ed452ab359e9fa
+                    - _class: Set
+                      attributes:
+                        name: Set BRANCH_EXIST if not given
+                      dynamicName:
+                        dynamic: false
+                        value: ''
+                        expression: ''
+                      useDynamicName: false
+                      children: []
+                      persistNode: true
+                      skipNode:
+                        dynamic: false
+                        value: false
+                      instrumentNode:
+                        dynamic: false
+                        value: false
+                      continueParentNodeExecutionOnError:
+                        dynamic: false
+                        value: false
+                      key:
+                        dynamic: false
+                        value: BRANCH_EXIST
+                      value:
+                        dynamic: true
+                        expression: '!binding.hasVariable("BRANCH_EXIST")? true : Boolean.parseBoolean("${BRANCH_EXIST}")'
+                      _id:
+                        "$oid": 63fc7e6d32ed452ab30d8701
+                    - _class: Set
+                      attributes:
+                        name: Set OS if not given
+                      dynamicName:
+                        dynamic: false
+                        value: ''
+                        expression: ''
+                      useDynamicName: false
+                      children: []
+                      persistNode: true
+                      skipNode:
+                        dynamic: false
+                        value: false
+                      instrumentNode:
+                        dynamic: false
+                        value: false
+                      continueParentNodeExecutionOnError:
+                        dynamic: false
+                        value: false
+                      key:
+                        dynamic: false
+                        value: OS
+                      value:
+                        dynamic: true
+                        expression: '!binding.hasVariable("OS")? "LINUX" : OS'
+                      _id:
+                        "$oid": 648d7b9445bf235e60b16b99
+                    - _class: Set
+                      attributes:
+                        name: Set SHOULD_PROPAGATE if not given
+                      dynamicName:
+                        dynamic: false
+                        value: ''
+                        expression: ''
+                      useDynamicName: false
+                      children: []
+                      persistNode: true
+                      skipNode:
+                        dynamic: false
+                        value: false
+                      instrumentNode:
+                        dynamic: false
+                        value: false
+                      continueParentNodeExecutionOnError:
+                        dynamic: false
+                        value: false
+                      key:
+                        dynamic: false
+                        value: SHOULD_PROPAGATE
+                      value:
+                        dynamic: true
+                        expression: '!binding.hasVariable("SHOULD_PROPAGATE")? true : Boolean.parseBoolean("${SHOULD_PROPAGATE}")'
+                      _id:
+                        "$oid": 63fc7e6d32ed452ab30d8702
+                    - _class: Set
+                      attributes:
+                        name: Set EMAIL if not given
+                      dynamicName:
+                        dynamic: false
+                        value: ''
+                        expression: ''
+                      useDynamicName: false
+                      children: []
+                      persistNode: true
+                      skipNode:
+                        dynamic: false
+                        value: false
+                      instrumentNode:
+                        dynamic: false
+                        value: false
+                      continueParentNodeExecutionOnError:
+                        dynamic: false
+                        value: false
+                      key:
+                        dynamic: false
+                        value: EMAIL
+                      value:
+                        dynamic: true
+                        expression: '!binding.hasVariable("EMAIL")? DEFAULT_EMAIL : EMAIL'
+                      _id:
+                        "$oid": 63fc7e6d32ed452ab30d8703
+                    - _class: Set
+                      attributes:
+                        name: Set AUTHOR if not given
+                      dynamicName:
+                        dynamic: false
+                        value: ''
+                        expression: ''
+                      useDynamicName: false
+                      children: []
+                      persistNode: true
+                      skipNode:
+                        dynamic: false
+                        value: false
+                      instrumentNode:
+                        dynamic: false
+                        value: false
+                      continueParentNodeExecutionOnError:
+                        dynamic: false
+                        value: false
+                      key:
+                        dynamic: false
+                        value: AUTHOR
+                      value:
+                        dynamic: true
+                        expression: '!binding.hasVariable("AUTHOR")? "Dev team" : AUTHOR'
+                      _id:
+                        "$oid": 63fc7e6d32ed452ab30d8704
+                    - _class: Set
+                      attributes:
+                        name: Set SEND_EMAIL if not given
+                      dynamicName:
+                        dynamic: false
+                        value: ''
+                        expression: ''
+                      useDynamicName: false
+                      children: []
+                      persistNode: true
+                      skipNode:
+                        dynamic: false
+                        value: false
+                      instrumentNode:
+                        dynamic: false
+                        value: false
+                      continueParentNodeExecutionOnError:
+                        dynamic: false
+                        value: false
+                      key:
+                        dynamic: false
+                        value: SEND_EMAIL
+                      value:
+                        dynamic: true
+                        expression: '!binding.hasVariable("SEND_EMAIL")?true:Boolean.parseBoolean("${SEND_EMAIL}")'
+                      _id:
+                        "$oid": 63fc7e6d32ed452ab30d8705
+                    - _class: Set
+                      attributes:
+                        name: Set VERSION if not given
+                      dynamicName:
+                        dynamic: false
+                        value: ''
+                        expression: ''
+                      useDynamicName: false
+                      children: []
+                      persistNode: true
+                      skipNode:
+                        dynamic: false
+                        value: false
+                      instrumentNode:
+                        dynamic: false
+                        value: false
+                      continueParentNodeExecutionOnError:
+                        dynamic: false
+                        value: false
+                      key:
+                        dynamic: false
+                        value: VERSION
+                      value:
+                        dynamic: true
+                        expression: '(!binding.hasVariable("VERSION") || VERSION.isBlank())?
+                  "${new Date().format("YYYY.M.d")}-${context.getExecutionId()}" :
+                  VERSION'
+                      _id:
+                        "$oid": 63fc7e6d32ed452ab30d8709
+                  persistNode: true
+                  skipNode:
+                    dynamic: false
+                    value: false
+                  instrumentNode:
+                    dynamic: false
+                    value: false
+                  continueParentNodeExecutionOnError:
+                    dynamic: false
+                    value: false
+                  continueOnError:
+                    dynamic: false
+                    value: false
+                  pacing:
+                    dynamic: false
+                  _id:
+                    "$oid": 648969d5a00af97184dcd16f
+                - _class: Echo
+                  attributes:
+                    name: Echo info
+                  dynamicName:
+                    dynamic: false
+                    value: ''
+                    expression: ''
+                  useDynamicName: false
+                  children: []
+                  persistNode: true
+                  skipNode:
+                    dynamic: false
+                    value: false
+                  instrumentNode:
+                    dynamic: false
+                    value: false
+                  continueParentNodeExecutionOnError:
+                    dynamic: false
+                    value: false
+                  text:
+                    dynamic: true
+                    expression: '"Building ${PROJECT}, for branch ${BRANCH} version ${VERSION}
+                in environment ${ENVIRONMENT}"'
+                  _id:
+                    "$oid": 63fc7e6d32ed452ab30d870a
+                - _class: CallPlan
+                  attributes:
+                    name: Create unique folder
+                  dynamicName:
+                    dynamic: false
+                    value: ''
+                    expression: ''
+                  useDynamicName: false
+                  children: []
+                  persistNode: true
+                  skipNode:
+                    dynamic: false
+                    value: false
+                  instrumentNode:
+                    dynamic: false
+                    value: false
+                  continueParentNodeExecutionOnError:
+                    dynamic: false
+                    value: false
+                  planId: 618aa49f34603040f758fd12
+                  selectionAttributes:
+                    dynamic: false
+                    value: "{}"
+                  input:
+                    dynamic: false
+                    value: "{}"
+                  _id:
+                    "$oid": 63fc7e6d32ed452ab30d870c
+                - _class: CallPlan
+                  attributes:
+                    name: Checkout git
+                  dynamicName:
+                    dynamic: false
+                    value: ''
+                    expression: ''
+                  useDynamicName: false
+                  children: []
+                  persistNode: true
+                  skipNode:
+                    dynamic: false
+                    value: false
+                  instrumentNode:
+                    dynamic: false
+                    value: false
+                  continueParentNodeExecutionOnError:
+                    dynamic: false
+                    value: false
+                  planId: 63fc7ffd32ed452ab30e0116
+                  selectionAttributes:
+                    dynamic: false
+                    value: "{}"
+                  input:
+                    dynamic: false
+                    value: "{}"
+                  _id:
+                    "$oid": 63fc7e6d32ed452ab30d870d
+                - _class: Set
+                  attributes:
+                    name: Init JSON
+                  dynamicName:
+                    dynamic: false
+                    value: ''
+                    expression: ''
+                  useDynamicName: false
+                  children: []
+                  persistNode: true
+                  skipNode:
+                    dynamic: false
+                    value: false
+                  instrumentNode:
+                    dynamic: false
+                    value: false
+                  continueParentNodeExecutionOnError:
+                    dynamic: false
+                    value: false
+                  key:
+                    dynamic: false
+                    value: JSON
+                  value:
+                    dynamic: false
+                    value: ''
+                  _id:
+                    "$oid": 63fc826332ed452ab30e8377
+                - _class: CallPlan
+                  attributes:
+                    name: Read JSON
+                  dynamicName:
+                    dynamic: false
+                    value: ''
+                    expression: ''
+                  useDynamicName: false
+                  children: []
+                  persistNode: true
+                  skipNode:
+                    dynamic: false
+                    value: false
+                  instrumentNode:
+                    dynamic: false
+                    value: false
+                  continueParentNodeExecutionOnError:
+                    dynamic: false
+                    value: false
+                  planId: 618aa49f34603040f758fd0b
+                  selectionAttributes:
+                    dynamic: false
+                    value: "{}"
+                  input:
+                    dynamic: false
+                    value: "{}"
+                  _id:
+                    "$oid": 63fc825032ed452ab30e8332
+                - _class: CallPlan
+                  attributes:
+                    name: Run action
+                  dynamicName:
+                    dynamic: false
+                    value: ''
+                    expression: ''
+                  useDynamicName: false
+                  children: []
+                  persistNode: true
+                  skipNode:
+                    dynamic: false
+                    value: false
+                  instrumentNode:
+                    dynamic: false
+                    value: false
+                  continueParentNodeExecutionOnError:
+                    dynamic: false
+                    value: false
+                  planId: 618aa49f34603040f758fd15
+                  selectionAttributes:
+                    dynamic: false
+                    value: "{}"
+                  input:
+                    dynamic: false
+                    value: "{}"
+                  _id:
+                    "$oid": 63fc89a432ed452ab310987e
+                - _class: CallPlan
+                  attributes:
+                    name: Create release
+                  dynamicName:
+                    dynamic: false
+                    value: ''
+                    expression: ''
+                  useDynamicName: false
+                  children: []
+                  persistNode: true
+                  skipNode:
+                    dynamic: false
+                    value: false
+                  instrumentNode:
+                    dynamic: false
+                    value: false
+                  continueParentNodeExecutionOnError:
+                    dynamic: false
+                    value: false
+                  planId: 64145b48d91d580809da608f
+                  selectionAttributes:
+                    dynamic: false
+                    value: "{}"
+                  input:
+                    dynamic: false
+                    value: "{}"
+                  _id:
+                    "$oid": 64145b7bd91d580809da8019
+                - _class: RetryIfFails
+                  attributes:
+                    name: RetryIfFails
+                  dynamicName:
+                    dynamic: false
+                    value: ''
+                  useDynamicName: false
+                  children:
+                    - _class: CallPlan
+                      attributes:
+                        name: Set latest version
+                      dynamicName:
+                        dynamic: false
+                        value: ''
+                        expression: ''
+                      useDynamicName: false
+                      children: []
+                      persistNode: true
+                      skipNode:
+                        dynamic: false
+                        value: false
+                      instrumentNode:
+                        dynamic: false
+                        value: false
+                      continueParentNodeExecutionOnError:
+                        dynamic: false
+                        value: false
+                      planId: 63ff232032ed452ab35619aa
+                      selectionAttributes:
+                        dynamic: false
+                        value: "{}"
+                      input:
+                        dynamic: false
+                        value: "{}"
+                      _id:
+                        "$oid": 63ff248b32ed452ab356541e
+                  persistNode: true
+                  skipNode:
+                    dynamic: false
+                    value: false
+                  instrumentNode:
+                    dynamic: false
+                    value: false
+                  continueParentNodeExecutionOnError:
+                    dynamic: false
+                    value: false
+                  maxRetries:
+                    dynamic: false
+                    value: 3
+                  gracePeriod:
+                    dynamic: false
+                    value: 1000
+                  timeout:
+                    dynamic: false
+                    value: 0
+                  releaseTokens:
+                    dynamic: false
+                    value: false
+                  reportLastTryOnly:
+                    dynamic: false
+                    value: true
+                  _id:
+                    "$oid": 63ff248332ed452ab3565136
+                - _class: Set
+                  attributes:
+                    name: Set STATUS at PASSED
+                  dynamicName:
+                    dynamic: false
+                    value: ''
+                    expression: ''
+                  useDynamicName: false
+                  children: []
+                  persistNode: true
+                  skipNode:
+                    dynamic: false
+                    value: false
+                  instrumentNode:
+                    dynamic: false
+                    value: false
+                  continueParentNodeExecutionOnError:
+                    dynamic: false
+                    value: false
+                  key:
+                    dynamic: false
+                    value: STATUS
+                  value:
+                    dynamic: false
+                    value: PASSED
+                  _id:
+                    "$oid": 6414815b98e6504cd092c702
+                - _class: AfterSequence
+                  attributes:
+                    name: AfterSequence - Set result
+                  dynamicName:
+                    dynamic: false
+                    value: ''
+                    expression: ''
+                  useDynamicName: false
+                  children:
+                    - _class: CallPlan
+                      attributes:
+                        name: Set build result
+                      dynamicName:
+                        dynamic: false
+                        value: ''
+                        expression: ''
+                      useDynamicName: false
+                      children: []
+                      persistNode: true
+                      skipNode:
+                        dynamic: false
+                        value: false
+                      instrumentNode:
+                        dynamic: false
+                        value: false
+                      continueParentNodeExecutionOnError:
+                        dynamic: false
+                        value: false
+                      planId: 64145bc4d91d580809daa2f1
+                      selectionAttributes:
+                        dynamic: false
+                        value: "{}"
+                      input:
+                        dynamic: false
+                        value: "{}"
+                      _id:
+                        "$oid": 641cd9d131c603580f7bcb07
+                    - _class: If
+                      attributes:
+                        name: If ENVIRONMENT=="PRODUCTION" && STATUS=="PASSED"
+                      dynamicName:
+                        dynamic: false
+                        value: ''
+                        expression: ''
+                      useDynamicName: false
+                      children:
+                        - _class: Set
+                          attributes:
+                            name: Set EXEC_ID
+                          dynamicName:
+                            dynamic: false
+                            value: ''
+                            expression: ''
+                          useDynamicName: false
+                          children: []
+                          persistNode: true
+                          skipNode:
+                            dynamic: false
+                            value: false
+                          instrumentNode:
+                            dynamic: false
+                            value: false
+                          continueParentNodeExecutionOnError:
+                            dynamic: false
+                            value: false
+                          key:
+                            dynamic: false
+                            value: EXEC_ID
+                          value:
+                            dynamic: true
+                            expression: context.getExecutionId()
+                          _id:
+                            "$oid": 6440ef80f5cade706bcf5311
+                        - _class: CallKeyword
+                          attributes:
+                            name: Set as "Retain this execution"
+                          dynamicName:
+                            dynamic: false
+                            value: ''
+                            expression: ''
+                          useDynamicName: false
+                          description: ''
+                          children: []
+                          persistNode: true
+                          skipNode:
+                            dynamic: false
+                            value: false
+                          instrumentNode:
+                            dynamic: false
+                            value: false
+                          continueParentNodeExecutionOnError:
+                            dynamic: false
+                            value: false
+                          remote:
+                            dynamic: false
+                            value: true
+                          token:
+                            dynamic: false
+                            value: "{}"
+                          function:
+                            dynamic: false
+                            value: '{"name":{"value":"HttpRequest","dynamic":false}}'
+                          argument:
+                            dynamic: false
+                            value: '{"URL":{"value":"","expression":"\"${K8S_BUILD_INSTANCE_URL}/rest/housekeeping/execution/${EXEC_ID}/protection\"","dynamic":true},"Method":{"dynamic":false,"value":"POST"},"Header_content-type":{"value":"application/json","expression":"","dynamic":false},"Data":{"dynamic":false,"value":"true"}}'
+                          resultMap:
+                            dynamic: false
+                          _id:
+                            "$oid": 6440ee76f5cade706bcf46df
+                      persistNode: true
+                      skipNode:
+                        dynamic: false
+                        value: false
+                      instrumentNode:
+                        dynamic: false
+                        value: false
+                      continueParentNodeExecutionOnError:
+                        dynamic: false
+                        value: false
+                      condition:
+                        dynamic: true
+                        expression: ENVIRONMENT=="PRODUCTION" && STATUS=="PASSED"
+                        expressionType: ''
+                      _id:
+                        "$oid": 6440fd6df5cade706bcfda26
+                  persistNode: true
+                  skipNode:
+                    dynamic: false
+                    value: false
+                  instrumentNode:
+                    dynamic: false
+                    value: false
+                  continueParentNodeExecutionOnError:
+                    dynamic: false
+                    value: false
+                  continueOnError:
+                    dynamic: false
+                    value: false
+                  pacing:
+                    dynamic: false
+                  _id:
+                    "$oid": 641cd9d131c603580f7bcb06
+                - _class: AfterSequence
+                  attributes:
+                    name: AfterSequence - Send email
+                  dynamicName:
+                    dynamic: false
+                    value: ''
+                    expression: ''
+                  useDynamicName: false
+                  children:
+                    - _class: If
+                      attributes:
+                        name: If SEND_EMAIL
+                      dynamicName:
+                        dynamic: false
+                        value: ''
+                      useDynamicName: false
+                      children:
+                        - _class: RetryIfFails
+                          attributes:
+                            name: RetryIfFails
+                          dynamicName:
+                            dynamic: false
+                            value: ''
+                          useDynamicName: false
+                          children:
+                            - _class: CallPlan
+                              attributes:
+                                name: Send Email
+                              dynamicName:
+                                dynamic: false
+                                value: ''
+                              useDynamicName: false
+                              children: []
+                              persistNode: true
+                              skipNode:
+                                dynamic: false
+                                value: false
+                              instrumentNode:
+                                dynamic: false
+                                value: false
+                              continueParentNodeExecutionOnError:
+                                dynamic: false
+                                value: false
+                              planId: 6229efeaf270a8319dfbee2e
+                              selectionAttributes:
+                                dynamic: false
+                                value: "{}"
+                              input:
+                                dynamic: false
+                                value: "{}"
+                              _id:
+                                "$oid": 64146d7369e65776fdbfe34e
+                          persistNode: true
+                          skipNode:
+                            dynamic: false
+                            value: false
+                          instrumentNode:
+                            dynamic: false
+                            value: false
+                          continueParentNodeExecutionOnError:
+                            dynamic: false
+                            value: false
+                          maxRetries:
+                            dynamic: false
+                            value: 3
+                          gracePeriod:
+                            dynamic: false
+                            value: 1000
+                          timeout:
+                            dynamic: false
+                            value: 0
+                          releaseTokens:
+                            dynamic: false
+                            value: false
+                          reportLastTryOnly:
+                            dynamic: false
+                            value: false
+                          _id:
+                            "$oid": 64146d7369e65776fdbfe34d
+                      persistNode: true
+                      skipNode:
+                        dynamic: false
+                        value: false
+                      instrumentNode:
+                        dynamic: false
+                        value: false
+                      continueParentNodeExecutionOnError:
+                        dynamic: false
+                        value: false
+                      condition:
+                        dynamic: true
+                        expression: SEND_EMAIL
+                        expressionType: ''
+                      _id:
+                        "$oid": 63ff1a6d32ed452ab3553ca1
+                  persistNode: true
+                  skipNode:
+                    dynamic: false
+                    value: false
+                  instrumentNode:
+                    dynamic: false
+                    value: false
+                  continueParentNodeExecutionOnError:
+                    dynamic: false
+                    value: false
+                  continueOnError:
+                    dynamic: false
+                    value: true
+                  pacing:
+                    dynamic: false
+                  _id:
+                    "$oid": 63fc960932ed452ab312f9b1
+                - _class: AfterSequence
+                  attributes:
+                    name: AfterSequence - Clean folder
+                  dynamicName:
+                    dynamic: false
+                    value: ''
+                    expression: ''
+                  useDynamicName: false
+                  children:
+                    - _class: CallKeyword
+                      attributes:
+                        name: Rmdir ${FOLDER}
+                      dynamicName:
+                        dynamic: false
+                        value: ''
+                        expression: ''
+                      useDynamicName: false
+                      children: []
+                      persistNode: true
+                      skipNode:
+                        dynamic: false
+                        value: false
+                      instrumentNode:
+                        dynamic: false
+                        value: false
+                      continueParentNodeExecutionOnError:
+                        dynamic: false
+                        value: false
+                      remote:
+                        dynamic: false
+                        value: true
+                      token:
+                        dynamic: false
+                        value: "{}"
+                      function:
+                        dynamic: false
+                        value: '{"name":{"value":"Rmdir","dynamic":false}}'
+                      argument:
+                        dynamic: false
+                        value: '{"Folder":{"dynamic":true,"expression":"FOLDER"}}'
+                      resultMap:
+                        dynamic: false
+                      _id:
+                        "$oid": 63fc961232ed452ab312fa3b
+                  persistNode: true
+                  skipNode:
+                    dynamic: false
+                    value: false
+                  instrumentNode:
+                    dynamic: false
+                    value: false
+                  continueParentNodeExecutionOnError:
+                    dynamic: false
+                    value: false
+                  continueOnError:
+                    dynamic: false
+                    value: false
+                  pacing:
+                    dynamic: false
+                  _id:
+                    "$oid": 648969a1a00af97184dcccc3
+                - _class: AfterSequence
+                  attributes:
+                    name: AfterSequence - Propagate build
+                  dynamicName:
+                    dynamic: false
+                    value: ''
+                    expression: ''
+                  useDynamicName: false
+                  children:
+                    - _class: If
+                      attributes:
+                        name: If SHOULD_PROPAGATE && PASSED
+                      dynamicName:
+                        dynamic: false
+                        value: ''
+                      useDynamicName: false
+                      description: ''
+                      children:
+                        - _class: CallPlan
+                          attributes:
+                            name: Propagate build - scale down the agent if needed
+                          dynamicName:
+                            dynamic: false
+                            value: ''
+                            expression: ''
+                          useDynamicName: false
+                          children: []
+                          persistNode: true
+                          skipNode:
+                            dynamic: false
+                            value: false
+                          instrumentNode:
+                            dynamic: false
+                            value: false
+                          continueParentNodeExecutionOnError:
+                            dynamic: false
+                            value: false
+                          planId: 63ff47ed32ed452ab35c23d0
+                          selectionAttributes:
+                            dynamic: false
+                            value: "{}"
+                          input:
+                            dynamic: false
+                            value: "{}"
+                          _id:
+                            "$oid": 63ff4a0a32ed452ab35c7c42
+                      persistNode: true
+                      skipNode:
+                        dynamic: false
+                        value: false
+                      instrumentNode:
+                        dynamic: false
+                        value: false
+                      continueParentNodeExecutionOnError:
+                        dynamic: false
+                        value: false
+                      condition:
+                        dynamic: true
+                        expression: STATUS.equals("PASSED") &&  SHOULD_PROPAGATE
+                        expressionType: ''
+                      _id:
+                        "$oid": 64146d7369e65776fdbfe34c
+                  persistNode: true
+                  skipNode:
+                    dynamic: false
+                    value: false
+                  instrumentNode:
+                    dynamic: false
+                    value: false
+                  continueParentNodeExecutionOnError:
+                    dynamic: false
+                    value: false
+                  continueOnError:
+                    dynamic: false
+                    value: false
+                  pacing:
+                    dynamic: false
+                  _id:
+                    "$oid": 64897ef4a00af97184e16d7a
+                - _class: AfterSequence
+                  attributes:
+                    name: AfterSequence - Scale down agent if needed
+                  dynamicName:
+                    dynamic: false
+                    value: ''
+                    expression: ''
+                  useDynamicName: false
+                  children:
+                    - _class: If
+                      attributes:
+                        name: If STATUS is not "PASSED" or SHOULD_PROPAGATE is false
+                      dynamicName:
+                        dynamic: false
+                        value: ''
+                        expression: ''
+                      useDynamicName: false
+                      children:
+                        - _class: CallPlan
+                          attributes:
+                            name: Scale Down Build Agents - After Execution
+                          dynamicName:
+                            dynamic: false
+                            value: ''
+                            expression: ''
+                          useDynamicName: false
+                          children: []
+                          persistNode: true
+                          skipNode:
+                            dynamic: false
+                            value: false
+                          instrumentNode:
+                            dynamic: false
+                            value: false
+                          continueParentNodeExecutionOnError:
+                            dynamic: false
+                            value: false
+                          planId: 6482daa9cdd45e7199acdcac
+                          selectionAttributes:
+                            dynamic: false
+                            value: "{}"
+                          input:
+                            dynamic: false
+                            value: "{}"
+                          _id:
+                            "$oid": 6482e97dcdd45e7199adff45
+                      persistNode: true
+                      skipNode:
+                        dynamic: false
+                        value: false
+                      instrumentNode:
+                        dynamic: false
+                        value: false
+                      continueParentNodeExecutionOnError:
+                        dynamic: false
+                        value: false
+                      condition:
+                        dynamic: true
+                        expression: '!STATUS.equals("PASSED") || !SHOULD_PROPAGATE'
+                        expressionType: ''
+                      _id:
+                        "$oid": 6482e948cdd45e7199adfa4f
+                  persistNode: true
+                  skipNode:
+                    dynamic: false
+                    value: false
+                  instrumentNode:
+                    dynamic: false
+                    value: false
+                  continueParentNodeExecutionOnError:
+                    dynamic: false
+                    value: false
+                  continueOnError:
+                    dynamic: false
+                    value: false
+                  pacing:
+                    dynamic: false
+                  _id:
+                    "$oid": 648969b0a00af97184dcce28
+              persistNode: true
+              skipNode:
+                dynamic: false
+                value: false
+              instrumentNode:
+                dynamic: false
+                value: false
+              continueParentNodeExecutionOnError:
+                dynamic: false
+                value: false
+              continueOnError:
+                dynamic: false
+                value: false
+              pacing:
+                dynamic: false
+              _id:
+                "$oid": 63fc95fa32ed452ab312f8c5
+          persistNode: true
+          skipNode:
+            dynamic: false
+            value: false
+          instrumentNode:
+            dynamic: false
+            value: false
+          continueParentNodeExecutionOnError:
+            dynamic: false
+            value: false
+          remote:
+            dynamic: false
+            value: true
+          token:
+            dynamic: false
+            value: '{"OS":{"dynamic":true,"expression":"OS"},"type":{"value":"build","expression":"","dynamic":false}}'
+          _id:
+            "$oid": 63fc81ba32ed452ab30e6eb2
+      persistNode: true
+      skipNode:
+        dynamic: false
+        value: false
+      instrumentNode:
+        dynamic: false
+        value: false
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+      continueOnError:
+        dynamic: false
+        value: true
+      pacing:
+        dynamic: false
+      _id:
+        "$oid": 649008457259bb777a47ccda
+  persistNode: true
+  skipNode:
+    dynamic: false
+    value: false
+  instrumentNode:
+    dynamic: false
+    value: false
+  continueParentNodeExecutionOnError:
+    dynamic: false
+    value: false
+  _id:
+    "$oid": 63fc7e6b32ed452ab30d84d7
+visible: true

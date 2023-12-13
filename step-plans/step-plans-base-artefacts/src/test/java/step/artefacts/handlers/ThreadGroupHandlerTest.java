@@ -312,14 +312,14 @@ public class ThreadGroupHandlerTest extends AbstractArtefactHandlerTest {
 				"    BeforeSequence:PASSED:\n" + 
 				"     Echo:PASSED:\n" + 
 				"    Echo:PASSED:\n" + 
-				"    Check:FAILED:\n" + 
+				"    Check:FAILED:The expression 'false' returned false\n" +
 				"    AfterSequence:PASSED:\n" + 
 				"     Echo:PASSED:\n" + 
 				"   Iteration 2:FAILED:\n" + 
 				"    BeforeSequence:PASSED:\n" + 
 				"     Echo:PASSED:\n" + 
 				"    Echo:PASSED:\n" + 
-				"    Check:FAILED:\n" + 
+				"    Check:FAILED:The expression 'false' returned false\n" +
 				"    AfterSequence:PASSED:\n" + 
 				"     Echo:PASSED:\n" + 
 				"   AfterThread:PASSED:\n" + 

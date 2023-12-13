@@ -60,10 +60,6 @@ public abstract class AbstractExecutionEnginePlugin extends AbstractPlugin imple
 	@Deprecated()
 	public void afterReportNodeExecution(ReportNode node) {
 	}
-	
-	@Deprecated()
-	public void rollbackReportNode(ReportNode node) {
-	}
 
 	@Override
 	public void afterReportNodeSkeletonCreation(ExecutionContext context, ReportNode node) {
@@ -81,9 +77,10 @@ public abstract class AbstractExecutionEnginePlugin extends AbstractPlugin imple
 	}
 	
 	@Override
-	public void rollbackReportNode(ExecutionContext context, ReportNode node) {
-		rollbackReportNode(node);
-	}
+	public void onReportNodeRemoval(ExecutionContext context, ReportNode node) {}
+
+	@Override
+	public void onErrorContributionRemoval(ExecutionContext context, ReportNode node) {}
 
 	@Override
 	public void associateThread(ExecutionContext context, Thread thread) {}

@@ -26,6 +26,7 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import step.controller.services.entities.AbstractEntityServices;
 import step.core.access.User;
+import step.core.deployment.ControllerServiceException;
 import step.core.entities.EntityManager;
 import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
@@ -82,7 +83,15 @@ public class SchedulerServices extends AbstractEntityServices<ExecutiontTaskPara
         // This is for instance needed to run the execution within the same project as
         // the scheduler task
         getObjectEnricher().accept(schedule.getExecutionsParameters());
-        scheduler.addExecutionTask(schedule);
+
+        // when create/update the execution task, we need to check that user defined in execution parameters have rights to execute it
+        checkRightsOnBehalfOf("plan-execute", schedule.getExecutionsParameters().getUserID());
+
+		try {
+            scheduler.addExecutionTask(schedule);
+        } catch (Exception e) {
+            throw new ControllerServiceException(e.getMessage());
+        }
         return schedule;
     }
 
@@ -128,10 +137,14 @@ public class SchedulerServices extends AbstractEntityServices<ExecutiontTaskPara
     @Path("/{id}")
     @Secured(right = "{entity}-write")
     public void enableExecutionTask(@PathParam("id") String executionTaskID, @QueryParam("enabled") Boolean enabled) {
-        if (enabled != null && enabled) {
-            scheduler.enableExecutionTask(executionTaskID);
-        } else {
-            scheduler.disableExecutionTask(executionTaskID);
+        try {
+            if (enabled != null && enabled) {
+                scheduler.enableExecutionTask(executionTaskID);
+            } else {
+                scheduler.disableExecutionTask(executionTaskID);
+            }
+        } catch (Exception e) {
+            throw new ControllerServiceException(e.getMessage());
         }
     }
 

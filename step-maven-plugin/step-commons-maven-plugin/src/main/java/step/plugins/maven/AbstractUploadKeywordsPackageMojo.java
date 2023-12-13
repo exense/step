@@ -26,6 +26,7 @@ import step.client.accessors.RemoteAccessors;
 import step.client.collections.remote.RemoteCollectionFactory;
 import step.core.accessors.AbstractAccessor;
 import step.functions.packages.FunctionPackage;
+import step.functions.packages.client.LibFileReference;
 import step.functions.packages.client.RemoteFunctionPackageClientImpl;
 
 import java.io.File;
@@ -51,6 +52,24 @@ public abstract class AbstractUploadKeywordsPackageMojo extends AbstractStepPlug
 
 	@Parameter(property = "step-upload-keywords.tracking-attr", required = false)
 	private String trackingAttribute;
+
+	@Parameter(property = "step-upload-keywords.lib-step-resource-search-criteria")
+	private Map<String, String> libStepResourceSearchCriteria;
+
+	@Parameter(property = "step-upload-keywords.lib-artifact-group-id")
+	private String libArtifactGroupId;
+
+	@Parameter(property = "step-upload-keywords.lib-artifact-id")
+	private String libArtifactId;
+
+	@Parameter(property = "step-upload-keywords.lib-artifact-version")
+	private String libArtifactVersion;
+
+	@Parameter(property = "step-upload-keywords.lib-artifact-classifier", defaultValue = "")
+	private String libArtifactClassifier;
+
+	protected AbstractUploadKeywordsPackageMojo() {
+	}
 
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
@@ -89,14 +108,16 @@ public abstract class AbstractUploadKeywordsPackageMojo extends AbstractStepPlug
 				previousPackage = remoteFunctionAccessor.findByCriteria(searchCriteria);
 			}
 
+			LibFileReference lib = resolveLibFile();
+
 			FunctionPackage uploaded = null;
 
 			if (previousPackage == null) {
 				getLog().info("Uploading the new function package...");
-				uploaded = remoteFunctionPackageClient.newKeywordPackage(null, packagedTarget, packageAttributes, trackingAttribute);
+				uploaded = remoteFunctionPackageClient.newKeywordPackageWithLibReference(lib, packagedTarget, packageAttributes, trackingAttribute);
 			} else {
 				getLog().info("Updating the existing function package (" + previousPackage.getId().toString() + ")...");
-				uploaded = remoteFunctionPackageClient.updateKeywordPackageById(previousPackage, null, packagedTarget, packageAttributes, trackingAttribute);
+				uploaded = remoteFunctionPackageClient.updateKeywordPackageWithLibReference(previousPackage, lib, packagedTarget, packageAttributes, trackingAttribute);
 			}
 			if (uploaded == null) {
 				throw new MojoExecutionException("Uploaded function package is null. Upload failed");
@@ -107,12 +128,42 @@ public abstract class AbstractUploadKeywordsPackageMojo extends AbstractStepPlug
 		}
 	}
 
+	protected LibFileReference resolveLibFile() throws MojoExecutionException {
+		Map<String, String> libStepResourceSearchCriteria = getLibStepResourceSearchCriteria();
+		if (libStepResourceSearchCriteria != null && !libStepResourceSearchCriteria.isEmpty()) {
+			return LibFileReference.resourceId(resolveKeywordLibResourceByCriteria(libStepResourceSearchCriteria));
+		} else if (getLibArtifactId() != null && !getLibArtifactId().isEmpty()) {
+			org.eclipse.aether.artifact.Artifact remoteLibArtifact = getRemoteArtifact(getLibArtifactGroupId(), getLibArtifactId(), getLibArtifactVersion(), getLibArtifactClassifier(), "jar");
+			if (remoteLibArtifact == null) {
+				throw new MojoExecutionException("Library artifact is not resolved");
+			}
+			return prepareLibraryFileReferenceForMavenArtifact(remoteLibArtifact);
+		} else {
+			return null;
+		}
+	}
+
 	protected RemoteFunctionPackageClientImpl createRemoteFunctionPackageClient() {
 		return new RemoteFunctionPackageClientImpl(getControllerCredentials());
 	}
 
 	protected void fillAdditionalPackageSearchCriteria(Map<String, String> searchCriteria) throws MojoExecutionException {
 
+	}
+
+	protected AbstractAccessor<FunctionPackage> createRemoteFunctionPackageAccessor() {
+		RemoteAccessors remoteAccessors = new RemoteAccessors(new RemoteCollectionFactory(getControllerCredentials()));
+		return remoteAccessors.getAbstractAccessor("functionPackage", FunctionPackage.class);
+	}
+
+	private File getFileToUpload() throws MojoExecutionException {
+		Artifact artifact = getProjectArtifact(getArtifactClassifier(), getGroupId(), getArtifactId(), getArtifactVersion());
+
+		if (artifact == null || artifact.getFile() == null) {
+			throw new MojoExecutionException("Unable to resolve artifact to upload.");
+		}
+
+		return artifact.getFile();
 	}
 
 	public Map<String, String> getCustomPackageAttributes() {
@@ -163,19 +214,44 @@ public abstract class AbstractUploadKeywordsPackageMojo extends AbstractStepPlug
 		this.artifactVersion = artifactVersion;
 	}
 
-	protected AbstractAccessor<FunctionPackage> createRemoteFunctionPackageAccessor() {
-		RemoteAccessors remoteAccessors = new RemoteAccessors(new RemoteCollectionFactory(getControllerCredentials()));
-		return remoteAccessors.getAbstractAccessor("functionPackage", FunctionPackage.class);
+	public Map<String, String> getLibStepResourceSearchCriteria() {
+		return libStepResourceSearchCriteria;
 	}
 
-	private File getFileToUpload() throws MojoExecutionException {
-		Artifact artifact = getArtifactByClassifier(getArtifactClassifier(), getGroupId(), getArtifactId(), getArtifactVersion());
+	public void setLibStepResourceSearchCriteria(Map<String, String> libStepResourceSearchCriteria) {
+		this.libStepResourceSearchCriteria = libStepResourceSearchCriteria;
+	}
 
-		if (artifact == null || artifact.getFile() == null) {
-			throw new MojoExecutionException("Unable to resolve artifact to upload.");
-		}
+	public String getLibArtifactGroupId() {
+		return libArtifactGroupId;
+	}
 
-		return artifact.getFile();
+	public void setLibArtifactGroupId(String libArtifactGroupId) {
+		this.libArtifactGroupId = libArtifactGroupId;
+	}
+
+	public String getLibArtifactId() {
+		return libArtifactId;
+	}
+
+	public void setLibArtifactId(String libArtifactId) {
+		this.libArtifactId = libArtifactId;
+	}
+
+	public String getLibArtifactVersion() {
+		return libArtifactVersion;
+	}
+
+	public void setLibArtifactVersion(String libArtifactVersion) {
+		this.libArtifactVersion = libArtifactVersion;
+	}
+
+	public String getLibArtifactClassifier() {
+		return libArtifactClassifier;
+	}
+
+	public void setLibArtifactClassifier(String libArtifactClassifier) {
+		this.libArtifactClassifier = libArtifactClassifier;
 	}
 
 }
