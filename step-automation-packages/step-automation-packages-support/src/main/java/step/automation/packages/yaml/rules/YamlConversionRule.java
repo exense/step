@@ -19,7 +19,7 @@
 package step.automation.packages.yaml.rules;
 
 import jakarta.json.spi.JsonProvider;
-import step.automation.packages.yaml.deserialization.YamlFieldDeserializationProcessor;
+import step.core.yaml.deserializers.YamlFieldDeserializationProcessor;
 import step.handlers.javahandler.jsonschema.FieldMetadataExtractor;
 import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
 

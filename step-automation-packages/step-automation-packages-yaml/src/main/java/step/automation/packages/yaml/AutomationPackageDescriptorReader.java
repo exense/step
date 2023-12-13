@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import step.artefacts.handlers.JsonSchemaValidator;
 import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.yaml.deserialization.YamlKeywordDeserializer;
+import step.automation.packages.yaml.deserialization.YamlAlertingRuleConditionDeserializer;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
 import step.automation.packages.model.AutomationPackageKeyword;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
@@ -37,6 +38,7 @@ import step.core.yaml.deserializers.YamlDynamicValueDeserializer;
 import step.plans.parser.yaml.YamlPlanReader;
 import step.plans.parser.yaml.model.YamlPlanVersions;
 import step.plans.parser.yaml.schema.YamlPlanValidationException;
+import step.plugins.alerting.rule.condition.AlertingRuleCondition;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -132,6 +134,7 @@ public class AutomationPackageDescriptorReader {
 
         module.addDeserializer(DynamicValue.class, new YamlDynamicValueDeserializer());
         module.addDeserializer(AutomationPackageKeyword.class, new YamlKeywordDeserializer());
+        module.addDeserializer(AlertingRuleCondition.class, new YamlAlertingRuleConditionDeserializer());
 
         yamlMapper.registerModule(module);
 

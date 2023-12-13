@@ -19,21 +19,23 @@
 package step.automation.packages.yaml.deserialization;
 
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import step.automation.packages.yaml.AutomationPackageKeywordsLookuper;
 import step.automation.packages.model.AutomationPackageKeyword;
+import step.automation.packages.yaml.AutomationPackageKeywordsLookuper;
+import step.automation.packages.yaml.rules.YamlKeywordConversionRule;
 import step.automation.packages.yaml.rules.keywords.KeywordNameRule;
 import step.automation.packages.yaml.rules.keywords.TokenSelectionCriteriaRule;
-import step.automation.packages.yaml.rules.YamlKeywordConversionRule;
+import step.core.yaml.deserializers.NamedEntityYamlDeserializer;
+import step.core.yaml.deserializers.YamlFieldDeserializationProcessor;
 import step.functions.Function;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class YamlKeywordDeserializer extends JsonDeserializer<AutomationPackageKeyword> {
 
@@ -45,40 +47,38 @@ public class YamlKeywordDeserializer extends JsonDeserializer<AutomationPackageK
 
     @Override
     public AutomationPackageKeyword deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException {
-        JsonNode keywordNode = jsonParser.getCodec().readTree(jsonParser);
-        String yamlKeywordClass = resolveKeywordClass(keywordNode);
+        JsonNode node = jsonParser.getCodec().readTree(jsonParser);
+        NamedEntityYamlDeserializer<Function> nameEntityDeserializer = new NamedEntityYamlDeserializer<>(Function.class) {
+            @Override
+            protected String resolveTargetClassNameByYamlName(String yamlName) {
+                return keywordsLookuper.yamlKeywordClassToJava(yamlName);
+            }
 
-        ObjectNode techKeyword = createObjectNode(jsonParser.getCodec());
+            @Override
+            protected List<YamlFieldDeserializationProcessor> deserializationProcessors() {
+                List<YamlFieldDeserializationProcessor> processors = new ArrayList<>();
 
-        // java artifact has UpperCamelCase, but in Yaml we use lowerCamelCase
-        String javaKeywordClass = keywordsLookuper.yamlKeywordClassToJava(yamlKeywordClass);
-        if (javaKeywordClass == null) {
-            throw new RuntimeException("Unable to resolve implementation class for keyword " + yamlKeywordClass);
-        }
+                // default rules
+                processors.add(new KeywordNameRule().getDeserializationProcessor());
+                processors.add(new TokenSelectionCriteriaRule().getDeserializationProcessor());
 
-        JsonNode keywordFields = keywordNode.get(yamlKeywordClass);
-        techKeyword.put(Function.JSON_CLASS_FIELD, javaKeywordClass);
-
-        Iterator<Map.Entry<String, JsonNode>> fields = keywordFields.fields();
-        while (fields.hasNext()) {
-            Map.Entry<String, JsonNode> next = fields.next();
-
-            // process some fields in special way
-            boolean processedAsSpecialField = false;
-            for (YamlFieldDeserializationProcessor proc : deserializationProcessors()) {
-                if (proc.deserializeField(javaKeywordClass, next, techKeyword, jsonParser.getCodec())) {
-                    processedAsSpecialField = true;
+                List<YamlKeywordConversionRule> additionalRules = keywordsLookuper.getAllConversionRules();
+                for (YamlKeywordConversionRule rule : additionalRules) {
+                    YamlFieldDeserializationProcessor deserializationProcessor = rule.getDeserializationProcessor();
+                    if (deserializationProcessor != null) {
+                        processors.add(deserializationProcessor);
+                    }
                 }
+                return processors;
             }
 
-            // copy all other fields (parameters)
-            if (!processedAsSpecialField) {
-                techKeyword.set(next.getKey(), next.getValue().deepCopy());
+            @Override
+            protected String getTargetClassField() {
+                return Function.JSON_CLASS_FIELD;
             }
-        }
-
-        Function keyword = jsonParser.getCodec().treeToValue(techKeyword, Function.class);
-        Map<String, Object> specialAttributes = extractSpecialKeywordAttributes(keywordFields, keyword);
+        };
+        Function keyword = nameEntityDeserializer.deserialize(node, jsonParser.getCodec());
+        Map<String, Object> specialAttributes = extractSpecialKeywordAttributes(nameEntityDeserializer.getAllYamlFields(node), keyword);
         return new AutomationPackageKeyword(keyword, specialAttributes);
     }
 
@@ -105,50 +105,4 @@ public class YamlKeywordDeserializer extends JsonDeserializer<AutomationPackageK
         return attributesExtractors;
     }
 
-    private String resolveKeywordClass(JsonNode yamlKeyword) {
-        // move keyword class into the '_class' field
-        Iterator<String> childrenKeywordTypesName = yamlKeyword.fieldNames();
-
-        List<String> keywordNames = new ArrayList<String>();
-        childrenKeywordTypesName.forEachRemaining(keywordNames::add);
-
-        String yamlKeywordClass = null;
-        if (keywordNames.size() == 0) {
-            throw new RuntimeException("Keyword should have a name");
-        } else if (keywordNames.size() > 1) {
-            throw new RuntimeException("Keyword should have only one name");
-        } else {
-            yamlKeywordClass = keywordNames.get(0);
-        }
-
-        if (yamlKeywordClass == null) {
-            throw new RuntimeException("Keyword class cannot be resolved");
-        }
-        return yamlKeywordClass;
-    }
-
-    private List<YamlFieldDeserializationProcessor> deserializationProcessors() {
-        List<YamlFieldDeserializationProcessor> processors = new ArrayList<>();
-
-        // default rules
-        processors.add(new KeywordNameRule().getDeserializationProcessor());
-        processors.add(new TokenSelectionCriteriaRule().getDeserializationProcessor());
-
-        List<YamlKeywordConversionRule> additionalRules = keywordsLookuper.getAllConversionRules();
-        for (YamlKeywordConversionRule rule : additionalRules) {
-            YamlFieldDeserializationProcessor deserializationProcessor = rule.getDeserializationProcessor();
-            if (deserializationProcessor != null) {
-                processors.add(deserializationProcessor);
-            }
-        }
-        return processors;
-    }
-
-    private static ArrayNode createArrayNode(ObjectCodec codec) {
-        return (ArrayNode) codec.createArrayNode();
-    }
-
-    private static ObjectNode createObjectNode(ObjectCodec codec) {
-        return (ObjectNode) codec.createObjectNode();
-    }
 }

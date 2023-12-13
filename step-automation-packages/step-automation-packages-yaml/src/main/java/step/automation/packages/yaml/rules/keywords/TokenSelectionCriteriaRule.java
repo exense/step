@@ -20,7 +20,7 @@ package step.automation.packages.yaml.rules.keywords;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.json.spi.JsonProvider;
-import step.automation.packages.yaml.deserialization.YamlFieldDeserializationProcessor;
+import step.core.yaml.deserializers.YamlFieldDeserializationProcessor;
 import step.automation.packages.yaml.rules.YamlKeywordConversionRule;
 import step.functions.Function;
 import step.handlers.javahandler.jsonschema.FieldMetadata;

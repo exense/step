@@ -21,7 +21,7 @@ package step.plugins.jmeter.automation;
 import step.attachments.FileResolver;
 import step.automation.packages.yaml.deserialization.SpecialKeywordAttributesApplier;
 import step.automation.packages.yaml.deserialization.SpecialKeywordAttributesExtractor;
-import step.automation.packages.yaml.deserialization.YamlFieldDeserializationProcessor;
+import step.core.yaml.deserializers.YamlFieldDeserializationProcessor;
 import step.automation.packages.AutomationPackageAttributesApplyingContext;
 import step.automation.packages.AutomationPackageResourceUploader;
 import step.automation.packages.yaml.rules.YamlKeywordConversionRule;
