@@ -174,6 +174,7 @@ public class TimeSeriesHandler {
     }
 
     public TimeSeriesAPIResponse getTimeSeries(FetchBucketsRequest request) {
+        validateFetchRequest(request);
         TimeSeriesAggregationQuery query = mapToQuery(request, this.aggregationPipeline);
         TimeSeriesAggregationResponse response = query.run();
         return mapToApiResponse(request, response);
