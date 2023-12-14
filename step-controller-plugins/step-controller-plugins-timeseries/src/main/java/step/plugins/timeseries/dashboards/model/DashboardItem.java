@@ -5,6 +5,7 @@ public class DashboardItem { // T = 'ChartSettings'. class: 'ChartSettings' @Jso
 	private String name;
 	private DashletType type;
 	private ChartSettings chartSettings;
+	private int size = 1; // full width is 2
 	// one setting for each type
 
 
@@ -32,6 +33,15 @@ public class DashboardItem { // T = 'ChartSettings'. class: 'ChartSettings' @Jso
 
 	public DashboardItem setChartSettings(ChartSettings chartSettings) {
 		this.chartSettings = chartSettings;
+		return this;
+	}
+
+	public int getSize() {
+		return size;
+	}
+
+	public DashboardItem setSize(int size) {
+		this.size = size;
 		return this;
 	}
 }

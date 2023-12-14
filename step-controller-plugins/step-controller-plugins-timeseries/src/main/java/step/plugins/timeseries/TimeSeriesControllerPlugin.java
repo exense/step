@@ -83,7 +83,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 		MetricAttribute planAttribute = new MetricAttribute().setName("planId").setDisplayName("Plan");
 		MetricAttribute nameAttribute = new MetricAttribute().setName("name").setDisplayName("Name");
 		MetricAttribute errorCodeAttribute = new MetricAttribute().setName("errorCode").setDisplayName("Error Code");
-		
+
 		long existingDashboardsCount = dashboardAccessor.stream().count();
 		DashboardView dashboard = new DashboardView();
 		dashboard
@@ -92,10 +92,42 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 						.setType(TimeRangeSelectionType.ABSOLUTE)
 						.setAbsoluteSelection(new TimeRange().setFrom(1700152446408L).setTo(1700155195285L))
 				)
-				.setFilters(Arrays.asList(new ChartFilterItem()
-						.setAttribute("rnStatus")
-						.setTextValues(Arrays.asList("PASSED"))
-						.setExactMatch(true)
+				.setFilters(Arrays.asList(
+						new ChartFilterItem()
+								.setLabel("Status")
+								.setAttribute("rnStatus")
+								.setTextOptions(Arrays.asList("PASSED", "FAILED", "TECHNICAL_ERROR", "INTERRUPTED"))
+								.setTextValues(Arrays.asList("PASSED"))
+								.setType(ChartFilterItemType.OPTIONS)
+								.setExactMatch(true),
+						new ChartFilterItem()
+								.setLabel("Type")
+								.setTextOptions(Arrays.asList("keyword", "custom"))
+								.setType(ChartFilterItemType.OPTIONS)
+								.setAttribute("type")
+								.setExactMatch(true),
+						new ChartFilterItem()
+								.setLabel("Name")
+								.setType(ChartFilterItemType.FREE_TEXT)
+								.setAttribute("name"),
+						new ChartFilterItem()
+								.setLabel("Execution")
+								.setAttribute("eId")
+								.setType(ChartFilterItemType.EXECUTION),
+						new ChartFilterItem()
+								.setLabel("Origin")
+								.setType(ChartFilterItemType.FREE_TEXT)
+								.setAttribute("origin"),
+						new ChartFilterItem()
+								.setLabel("Task")
+								.setAttribute("taskId")
+								.setType(ChartFilterItemType.TASK),
+						new ChartFilterItem()
+								.setLabel("Plan")
+								.setAttribute("planId")
+								.setType(ChartFilterItemType.PLAN)
+
+
 				))
 				.setDashlets(Arrays.asList(
 						new DashboardItem()
@@ -140,8 +172,8 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 												.setDisplayType(AxesDisplayType.LINE)
 												.setUnit("1")
 												.setRenderingSettings(new MetricRenderingSettings()
-														.setSeriesColors(Map.of("FAILED", "#d9534f", 
-																"PASSED", "#5cb85c", 
+														.setSeriesColors(Map.of("FAILED", "#d9534f",
+																"PASSED", "#5cb85c",
 																"INTERRUPTED", "#f9c038",
 																"TECHNICAL_ERROR", "#000000"))
 												)

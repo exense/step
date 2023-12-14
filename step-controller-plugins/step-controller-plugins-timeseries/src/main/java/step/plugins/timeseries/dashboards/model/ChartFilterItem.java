@@ -4,13 +4,25 @@ import java.util.List;
 
 public class ChartFilterItem {
 	
+	private String label; // optional. should be used for filter options
 	private String attribute;
 	private ChartFilterItemType type;
+	private boolean exactMatch; // for text values
+	private boolean isRemovable = true;
 	
 	private Long min;
 	private Long max;
 	private List<String> textValues;
-	private boolean exactMatch;
+	private List<String> textOptions; // for checkbox selection
+
+	public String getLabel() {
+		return label;
+	}
+
+	public ChartFilterItem setLabel(String label) {
+		this.label = label;
+		return this;
+	}
 
 	public String getAttribute() {
 		return attribute;
@@ -21,12 +33,30 @@ public class ChartFilterItem {
 		return this;
 	}
 
+	public boolean isRemovable() {
+		return isRemovable;
+	}
+
+	public ChartFilterItem setRemovable(boolean removable) {
+		isRemovable = removable;
+		return this;
+	}
+
 	public ChartFilterItemType getType() {
 		return type;
 	}
 
 	public ChartFilterItem setType(ChartFilterItemType type) {
 		this.type = type;
+		return this;
+	}
+
+	public List<String> getTextOptions() {
+		return textOptions;
+	}
+
+	public ChartFilterItem setTextOptions(List<String> textOptions) {
+		this.textOptions = textOptions;
 		return this;
 	}
 
