@@ -214,7 +214,7 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @Secured(right = "{entity}-write")
+    @Secured(right = "{entity}-lock")
     @Path("{id}/locked")
     public void setLocked(@PathParam("id") String id, Boolean locked) {
         T t = getEntity(id);
