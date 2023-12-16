@@ -25,6 +25,8 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
-public @interface AutomationPackageAlertingEvent {
+public @interface AutomationPackageNamedEntity {
     String LOCATION = "step";
+
+    String name() default "";
 }

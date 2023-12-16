@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.core.yaml.deserializers;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -30,16 +31,19 @@ import java.util.Map;
 
 public abstract class NamedEntityYamlDeserializer<T>  {
 
-    private final Class<T> targetClass;
-
-    public NamedEntityYamlDeserializer(Class<T> targetClass) {
-        this.targetClass = targetClass;
+    public NamedEntityYamlDeserializer() {
     }
 
-    public T deserialize(JsonNode node, ObjectCodec codec) throws IOException {
+    public T deserialize(JsonNode namedEntity, ObjectCodec codec) throws IOException {
+        ObjectNode techYaml = namedEntityToTechYaml(namedEntity, codec);
+        String yamlName = getEntityNameFromYaml(namedEntity);
+        return (T) codec.treeToValue(techYaml, resolveTargetClassByYamlName(yamlName));
+    }
+
+    private ObjectNode namedEntityToTechYaml(JsonNode namedEntity, ObjectCodec codec) throws JsonProcessingException {
         ObjectNode techYaml = createObjectNode(codec);
 
-        String yamlName = getEntityNameFromYaml(node);
+        String yamlName = getEntityNameFromYaml(namedEntity);
 
         String targetClass = resolveTargetClassNameByYamlName(yamlName);
         if (targetClass == null) {
@@ -47,7 +51,7 @@ public abstract class NamedEntityYamlDeserializer<T>  {
         }
 
         // move entity name into the target '_class' field
-        JsonNode allYamlFields = node.get(yamlName);
+        JsonNode allYamlFields = namedEntity.get(yamlName);
         techYaml.put(getTargetClassField(), targetClass);
 
         Iterator<Map.Entry<String, JsonNode>> fields = allYamlFields.fields();
@@ -67,8 +71,7 @@ public abstract class NamedEntityYamlDeserializer<T>  {
                 techYaml.set(next.getKey(), next.getValue().deepCopy());
             }
         }
-
-        return codec.treeToValue(techYaml, this.targetClass);
+        return techYaml;
     }
 
     public JsonNode getAllYamlFields(JsonNode node){
@@ -83,7 +86,12 @@ public abstract class NamedEntityYamlDeserializer<T>  {
         return node.get(yamlName);
     }
 
-    protected abstract String resolveTargetClassNameByYamlName(String yamlName);
+    protected String resolveTargetClassNameByYamlName(String yamlName){
+        Class<?> clazz = resolveTargetClassByYamlName(yamlName);
+        return clazz == null ? null : clazz.getName();
+    }
+
+    protected abstract Class<?> resolveTargetClassByYamlName(String yamlName);
 
     protected String getEntityNameFromYaml(JsonNode yamlNode) {
         Iterator<String> nameIterator = yamlNode.fieldNames();

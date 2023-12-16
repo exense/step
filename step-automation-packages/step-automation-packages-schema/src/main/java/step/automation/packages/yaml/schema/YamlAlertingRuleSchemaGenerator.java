@@ -21,8 +21,7 @@ package step.automation.packages.yaml.schema;
 import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObjectBuilder;
 import jakarta.json.spi.JsonProvider;
-import step.automation.packages.AutomationPackageAlertingEvent;
-import step.automation.packages.AutomationPackageRuleCondition;
+import step.automation.packages.AutomationPackageNamedEntityUtils;
 import step.automation.packages.model.AutomationPackageAlertingRule;
 import step.automation.packages.yaml.rules.YamlConversionRule;
 import step.automation.packages.yaml.rules.YamlConversionRuleAddOn;
@@ -32,6 +31,7 @@ import step.handlers.javahandler.jsonschema.DefaultFieldMetadataExtractor;
 import step.handlers.javahandler.jsonschema.JsonSchemaCreator;
 import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
 import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
+import step.plugins.alerting.event.AlertingEventInterface;
 import step.plugins.alerting.rule.condition.AlertingRuleCondition;
 
 import java.util.*;
@@ -119,12 +119,8 @@ public class YamlAlertingRuleSchemaGenerator {
     private Map<String, JsonObjectBuilder> createConditionsDef() throws JsonSchemaPreparationException {
         HashMap<String, JsonObjectBuilder> result = new HashMap<>();
 
-        List<? extends Class<? extends AlertingRuleCondition>> conditionClasses =
-                CachedAnnotationScanner.getClassesWithAnnotation(AutomationPackageRuleCondition.LOCATION, AutomationPackageRuleCondition.class, Thread.currentThread().getContextClassLoader())
-                        .stream()
-                        .map(c -> (Class<? extends AlertingRuleCondition>) c)
-                        .collect(Collectors.toList());
-        for (Class<? extends AlertingRuleCondition> conditionClass : conditionClasses) {
+        List<? extends Class<?>> conditionClasses = AutomationPackageNamedEntityUtils.scanNamedEntityClasses(AutomationPackageAlertingRule.class);
+        for (Class<?> conditionClass : conditionClasses) {
             String name = conditionClass.getSimpleName();
             String defName = name + "Def";
             result.put(defName, schemaHelper.createNamedObjectImplDef(name, conditionClass, jsonSchemaCreator));
@@ -145,11 +141,7 @@ public class YamlAlertingRuleSchemaGenerator {
                 JsonObjectBuilder nestedPropertyParamsBuilder = jsonProvider.createObjectBuilder();
                 JsonArrayBuilder arrayBuilder = jsonProvider.createArrayBuilder();
 
-                Set<Class<?>> annotatedAlertingEvents = CachedAnnotationScanner.getClassesWithAnnotation(
-                        AutomationPackageAlertingEvent.LOCATION,
-                        AutomationPackageAlertingEvent.class,
-                        Thread.currentThread().getContextClassLoader()
-                );
+                List<Class<?>> annotatedAlertingEvents = AutomationPackageNamedEntityUtils.scanNamedEntityClasses(AlertingEventInterface.class);
                 for (Class<?> annotatedAlertingEvent : annotatedAlertingEvents) {
                     arrayBuilder.add(annotatedAlertingEvent.getSimpleName());
                 }

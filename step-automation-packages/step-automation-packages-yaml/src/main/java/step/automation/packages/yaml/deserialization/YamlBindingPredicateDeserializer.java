@@ -23,34 +23,55 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import step.automation.packages.AutomationPackageNamedEntityUtils;
+import step.automation.packages.yaml.rules.YamlConversionRule;
+import step.automation.packages.yaml.rules.YamlConversionRuleAddOn;
+import step.core.scanner.CachedAnnotationScanner;
 import step.core.yaml.deserializers.NamedEntityYamlDeserializer;
 import step.core.yaml.deserializers.YamlFieldDeserializationProcessor;
-import step.plugins.alerting.rule.condition.AlertingRuleCondition;
+import step.plugins.alerting.rule.condition.binding.BindingPredicate;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
-public class YamlAlertingRuleConditionDeserializer extends JsonDeserializer<AlertingRuleCondition> {
+import static step.core.scanner.Classes.newInstanceAs;
+
+public class YamlBindingPredicateDeserializer extends JsonDeserializer<BindingPredicate> {
+
     @Override
-    public AlertingRuleCondition deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JacksonException {
-        return new NamedEntityYamlDeserializer<AlertingRuleCondition>() {
+    public BindingPredicate deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JacksonException {
+        return new NamedEntityYamlDeserializer<BindingPredicate>() {
             @Override
             protected Class<?> resolveTargetClassByYamlName(String yamlName) {
-                List<Class<?>> classes = AutomationPackageNamedEntityUtils.scanNamedEntityClasses(AlertingRuleCondition.class);
+                List<Class<?>> classes = AutomationPackageNamedEntityUtils.scanNamedEntityClasses(BindingPredicate.class);
                 return AutomationPackageNamedEntityUtils.getClassByEntityName(yamlName, classes);
             }
 
             @Override
             protected List<YamlFieldDeserializationProcessor> deserializationProcessors() {
-               // TODO: maybe add some mechanism to look up custom processors for Condition classes
-                return new ArrayList<>();
+                // scan all serialization processors from classpath
+                List<YamlFieldDeserializationProcessor> res = new ArrayList<>();
+                List<YamlConversionRule> conversionRules = CachedAnnotationScanner.getClassesWithAnnotation(YamlConversionRuleAddOn.LOCATION, YamlConversionRuleAddOn.class, Thread.currentThread().getContextClassLoader()).stream()
+                        .filter(c -> {
+                            Class<?>[] targetClasses = c.getAnnotation(YamlConversionRuleAddOn.class).targetClasses();
+                            return targetClasses == null || Arrays.stream(targetClasses).anyMatch(BindingPredicate.class::isAssignableFrom);
+                        })
+                        .map(newInstanceAs(YamlConversionRule.class))
+                        .collect(Collectors.toList());
+
+                for (YamlConversionRule conversionRule : conversionRules) {
+                    res.add(conversionRule.getDeserializationProcessor());
+                }
+                return res;
             }
 
             @Override
             protected String getTargetClassField() {
-                return AlertingRuleCondition.JSON_CLASS_PROPERTY;
+                return BindingPredicate.JSON_CLASS_FIELD;
             }
         }.deserialize(p.getCodec().readTree(p), p.getCodec());
+
     }
 }

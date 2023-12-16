@@ -16,17 +16,11 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages;
+package step.plugins.alerting.rule.condition.binding;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+public interface BindingPredicate {
 
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-public @interface AutomationPackageRuleCondition {
+    String JSON_CLASS_FIELD = "class";
 
-    String LOCATION = "step";
-
+    boolean apply(Object bindingValue);
 }

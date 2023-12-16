@@ -48,10 +48,14 @@ public class YamlKeywordDeserializer extends JsonDeserializer<AutomationPackageK
     @Override
     public AutomationPackageKeyword deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException {
         JsonNode node = jsonParser.getCodec().readTree(jsonParser);
-        NamedEntityYamlDeserializer<Function> nameEntityDeserializer = new NamedEntityYamlDeserializer<>(Function.class) {
+        NamedEntityYamlDeserializer<Function> nameEntityDeserializer = new NamedEntityYamlDeserializer<>() {
             @Override
             protected String resolveTargetClassNameByYamlName(String yamlName) {
                 return keywordsLookuper.yamlKeywordClassToJava(yamlName);
+            }
+
+            protected Class<?> resolveTargetClassByYamlName(String yamlName){
+                return Function.class;
             }
 
             @Override

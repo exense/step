@@ -23,6 +23,7 @@ import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.json.spi.JsonProvider;
+import step.automation.packages.AutomationPackageNamedEntityUtils;
 import step.automation.packages.yaml.AutomationPackageKeywordsLookuper;
 import step.core.yaml.deserializers.YamlFieldDeserializationProcessor;
 import step.automation.packages.yaml.rules.YamlKeywordConversionRule;
@@ -47,7 +48,7 @@ public class KeywordNameRule implements YamlKeywordConversionRule {
                         AbstractOrganizableObject.NAME,
                         jsonProvider.createObjectBuilder()
                                 .add("type", "string")
-                                .add("default", keywordsLookuper.getAutomationPackageKeywordName((Class<? extends Function>) objectClass))
+                                .add("default", AutomationPackageNamedEntityUtils.getEntityNameByClass((Class<? extends Function>) objectClass))
                 );
                 return true;
             } else {
