@@ -119,7 +119,7 @@ public class YamlAlertingRuleSchemaGenerator {
     private Map<String, JsonObjectBuilder> createConditionsDef() throws JsonSchemaPreparationException {
         HashMap<String, JsonObjectBuilder> result = new HashMap<>();
 
-        List<? extends Class<?>> conditionClasses = AutomationPackageNamedEntityUtils.scanNamedEntityClasses(AutomationPackageAlertingRule.class);
+        List<? extends Class<?>> conditionClasses = AutomationPackageNamedEntityUtils.scanNamedEntityClasses(AlertingRuleCondition.class);
         for (Class<?> conditionClass : conditionClasses) {
             String name = conditionClass.getSimpleName();
             String defName = name + "Def";

@@ -49,7 +49,7 @@ public class YamlAlertingRuleConditionDeserializer extends JsonDeserializer<Aler
 
             @Override
             protected String getTargetClassField() {
-                return AlertingRuleCondition.JSON_CLASS_PROPERTY;
+                return AlertingRuleCondition.JSON_CLASS_FIELD;
             }
         }.deserialize(p.getCodec().readTree(p), p.getCodec());
     }

@@ -18,11 +18,20 @@
  ******************************************************************************/
 package step.plugins.alerting.rule.condition;
 
-public abstract class AlertingRuleCondition {
+public class AlertingRuleAction {
+
     public static final String JSON_CLASS_FIELD = "class";
 
     public String description;
-
     public boolean active = true;
-    public boolean negate = false;
+
+    @Override
+    public String toString() {
+        if (description != null && !this.description.isBlank()) {
+            return this.getClass().getName() + ": " + description;
+        } else {
+            return super.toString();
+        }
+    }
+
 }

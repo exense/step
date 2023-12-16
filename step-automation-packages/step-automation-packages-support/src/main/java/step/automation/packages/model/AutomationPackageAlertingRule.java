@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.automation.packages.model;
 
+import step.plugins.alerting.rule.condition.AlertingRuleAction;
 import step.plugins.alerting.rule.condition.AlertingRuleCondition;
 
 import java.util.List;
@@ -31,9 +32,8 @@ public class AutomationPackageAlertingRule {
     private String description;
     private String eventClass;
 
-    // TODO: actions
     private List<AlertingRuleCondition> conditions;
-    // private List<Action> actions;
+    private List<AlertingRuleAction> actions;
 
     public boolean isActive() {
         return active;
@@ -65,5 +65,13 @@ public class AutomationPackageAlertingRule {
 
     public void setConditions(List<AlertingRuleCondition> conditions) {
         this.conditions = conditions;
+    }
+
+    public List<AlertingRuleAction> getActions() {
+        return actions;
+    }
+
+    public void setActions(List<AlertingRuleAction> actions) {
+        this.actions = actions;
     }
 }

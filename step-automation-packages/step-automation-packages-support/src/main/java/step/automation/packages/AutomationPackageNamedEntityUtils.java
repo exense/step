@@ -21,6 +21,7 @@ package step.automation.packages;
 import step.core.scanner.CachedAnnotationScanner;
 
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -30,6 +31,7 @@ public class AutomationPackageNamedEntityUtils {
         return CachedAnnotationScanner.getClassesWithAnnotation(AutomationPackageNamedEntity.LOCATION, AutomationPackageNamedEntity.class, Thread.currentThread().getContextClassLoader())
                 .stream()
                 .filter(applicableClass::isAssignableFrom)
+                .sorted(Comparator.comparing(Class::getSimpleName))
                 .collect(Collectors.toList());
     }
 
