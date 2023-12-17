@@ -27,40 +27,39 @@ import step.core.yaml.deserializers.NamedEntityYamlDeserializer;
 import step.core.yaml.deserializers.StepYamlDeserializer;
 import step.core.yaml.deserializers.StepYamlDeserializerAddOn;
 import step.core.yaml.deserializers.YamlFieldDeserializationProcessor;
-import step.plugins.alerting.rule.condition.binding.BindingPredicate;
+import step.plugins.alerting.rule.condition.AlertingRuleAction;
 
 import java.io.IOException;
 import java.util.List;
 
-@StepYamlDeserializerAddOn(targetClasses = {BindingPredicate.class})
-public class YamlBindingPredicateDeserializer extends StepYamlDeserializer<BindingPredicate> {
+@StepYamlDeserializerAddOn(targetClasses = {AlertingRuleAction.class})
+public class YamlAlertingRuleActionDeserializer extends StepYamlDeserializer<AlertingRuleAction> {
 
-    public YamlBindingPredicateDeserializer() {
+    public YamlAlertingRuleActionDeserializer() {
     }
 
-    public YamlBindingPredicateDeserializer(ObjectMapper yamlObjectMapper) {
+    public YamlAlertingRuleActionDeserializer(ObjectMapper yamlObjectMapper) {
         super(yamlObjectMapper);
     }
 
     @Override
-    public BindingPredicate deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JacksonException {
-        return new NamedEntityYamlDeserializer<BindingPredicate>() {
+    public AlertingRuleAction deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JacksonException {
+        return new NamedEntityYamlDeserializer<AlertingRuleAction>() {
             @Override
             protected Class<?> resolveTargetClassByYamlName(String yamlName) {
-                List<Class<?>> classes = AutomationPackageNamedEntityUtils.scanNamedEntityClasses(BindingPredicate.class);
+                List<Class<?>> classes = AutomationPackageNamedEntityUtils.scanNamedEntityClasses(AlertingRuleAction.class);
                 return AutomationPackageNamedEntityUtils.getClassByEntityName(yamlName, classes);
             }
 
             @Override
             protected List<YamlFieldDeserializationProcessor> deserializationProcessors() {
-                return AutomationPackageNamedEntityUtils.scanDeserializationProcessorsForNamedEntity(BindingPredicate.class);
+                return AutomationPackageNamedEntityUtils.scanDeserializationProcessorsForNamedEntity(AlertingRuleAction.class);
             }
 
             @Override
             protected String getTargetClassField() {
-                return BindingPredicate.JSON_CLASS_FIELD;
+                return AlertingRuleAction.JSON_CLASS_FIELD;
             }
         }.deserialize(p.getCodec().readTree(p), p.getCodec());
-
     }
 }

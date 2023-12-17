@@ -18,12 +18,15 @@
  ******************************************************************************/
 package step.automation.packages;
 
+import step.automation.packages.yaml.rules.YamlConversionRule;
+import step.automation.packages.yaml.rules.YamlConversionRuleAddOn;
 import step.core.scanner.CachedAnnotationScanner;
+import step.core.yaml.deserializers.YamlFieldDeserializationProcessor;
 
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
+
+import static step.core.scanner.Classes.newInstanceAs;
 
 public class AutomationPackageNamedEntityUtils {
 
@@ -56,5 +59,25 @@ public class AutomationPackageNamedEntityUtils {
             }
         }
         return null;
+    }
+
+    public static List<YamlFieldDeserializationProcessor> scanDeserializationProcessorsForNamedEntity(Class<?> namedEntityClass) {
+        // scan all deserialization processors from classpath
+        List<YamlFieldDeserializationProcessor> res = new ArrayList<>();
+        List<YamlConversionRule> conversionRules = CachedAnnotationScanner.getClassesWithAnnotation(YamlConversionRuleAddOn.LOCATION, YamlConversionRuleAddOn.class, Thread.currentThread().getContextClassLoader()).stream()
+                .filter(c -> {
+                    Class<?>[] targetClasses = c.getAnnotation(YamlConversionRuleAddOn.class).targetClasses();
+                    return targetClasses == null || Arrays.stream(targetClasses).anyMatch(namedEntityClass::isAssignableFrom);
+                })
+                .map(newInstanceAs(YamlConversionRule.class))
+                .collect(Collectors.toList());
+
+        for (YamlConversionRule conversionRule : conversionRules) {
+            YamlFieldDeserializationProcessor p = conversionRule.getDeserializationProcessor();
+            if (p != null) {
+                res.add(p);
+            }
+        }
+        return res;
     }
 }

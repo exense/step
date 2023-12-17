@@ -26,6 +26,7 @@ import java.util.List;
 public class AutomationPackageAlertingRule {
 
     public static final String CONDITIONS_FIELD = "conditions";
+    public static final String ACTIONS_FIELD = "actions";
     public static final String EVENT_CLASS_FIELD = "eventClass";
 
     private boolean active;

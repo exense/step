@@ -23,9 +23,6 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import step.automation.packages.AutomationPackageNamedEntityUtils;
-import step.automation.packages.yaml.rules.YamlConversionRule;
-import step.automation.packages.yaml.rules.YamlConversionRuleAddOn;
-import step.core.scanner.CachedAnnotationScanner;
 import step.core.yaml.deserializers.NamedEntityYamlDeserializer;
 import step.core.yaml.deserializers.StepYamlDeserializer;
 import step.core.yaml.deserializers.StepYamlDeserializerAddOn;
@@ -33,12 +30,7 @@ import step.core.yaml.deserializers.YamlFieldDeserializationProcessor;
 import step.plugins.alerting.rule.condition.AlertingRuleCondition;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
-
-import static step.core.scanner.Classes.newInstanceAs;
 
 @StepYamlDeserializerAddOn(targetClasses = {AlertingRuleCondition.class})
 public class YamlAlertingRuleConditionDeserializer extends StepYamlDeserializer<AlertingRuleCondition> {
@@ -61,20 +53,7 @@ public class YamlAlertingRuleConditionDeserializer extends StepYamlDeserializer<
 
             @Override
             protected List<YamlFieldDeserializationProcessor> deserializationProcessors() {
-                // scan all deserialization processors from classpath
-                List<YamlFieldDeserializationProcessor> res = new ArrayList<>();
-                List<YamlConversionRule> conversionRules = CachedAnnotationScanner.getClassesWithAnnotation(YamlConversionRuleAddOn.LOCATION, YamlConversionRuleAddOn.class, Thread.currentThread().getContextClassLoader()).stream()
-                        .filter(c -> {
-                            Class<?>[] targetClasses = c.getAnnotation(YamlConversionRuleAddOn.class).targetClasses();
-                            return targetClasses == null || Arrays.stream(targetClasses).anyMatch(AlertingRuleCondition.class::isAssignableFrom);
-                        })
-                        .map(newInstanceAs(YamlConversionRule.class))
-                        .collect(Collectors.toList());
-
-                for (YamlConversionRule conversionRule : conversionRules) {
-                    res.add(conversionRule.getDeserializationProcessor());
-                }
-                return res;
+                return AutomationPackageNamedEntityUtils.scanDeserializationProcessorsForNamedEntity(AlertingRuleCondition.class);
             }
 
             @Override

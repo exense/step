@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.plugins.alerting.rule.condition;
 
-public class AlertingRuleAction {
+public abstract class AlertingRuleAction {
 
     public static final String JSON_CLASS_FIELD = "class";
 

@@ -176,6 +176,18 @@ public class YamlAlertingRuleSchemaGenerator {
             return false;
         });
 
+        // actions
+        result.add((objectClass, field, fieldMetadata, propertiesBuilder, requiredPropertiesOutput) -> {
+            if (objectClass.equals(AutomationPackageAlertingRule.class) && field.getName().equals(AutomationPackageAlertingRule.ACTIONS_FIELD)) {
+                JsonObjectBuilder nestedPropertyParamsBuilder = jsonProvider.createObjectBuilder();
+                nestedPropertyParamsBuilder.add("type", "array");
+                nestedPropertyParamsBuilder.add("items", addRef(jsonProvider.createObjectBuilder(), ALERTING_RULE_ACTION_DEF));
+                propertiesBuilder.add(fieldMetadata.getFieldName(), nestedPropertyParamsBuilder);
+                return true;
+            }
+            return false;
+        });
+
         // -- RULES FROM EXTENSIONS HAVE LESS PRIORITY THAN BASIC RULES, BUT MORE PRIORITY THAN OTHER RULES
         result.addAll(getConditionFieldExtensions());
 

@@ -30,5 +30,5 @@ public @interface YamlConversionRuleAddOn {
 
     String LOCATION = "step";
 
-    Class<?>[] targetClasses();
+    Class<?>[] targetClasses() default {};
 }
