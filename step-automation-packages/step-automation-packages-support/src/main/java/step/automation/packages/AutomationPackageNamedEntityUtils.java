@@ -37,15 +37,15 @@ public class AutomationPackageNamedEntityUtils {
 
     public static String getEntityNameByClass(Class<?> namedEntityClass) {
         boolean annotationPresent = namedEntityClass.isAnnotationPresent(AutomationPackageNamedEntity.class);
-        String keywordAliasFromAnnotation = null;
+        String nameFromAnnotation = null;
         if (annotationPresent) {
-            keywordAliasFromAnnotation = namedEntityClass.getAnnotation(AutomationPackageNamedEntity.class).name();
+            nameFromAnnotation = namedEntityClass.getAnnotation(AutomationPackageNamedEntity.class).name();
         }
 
-        if (keywordAliasFromAnnotation == null || keywordAliasFromAnnotation.isEmpty()) {
+        if (nameFromAnnotation == null || nameFromAnnotation.isEmpty()) {
             return namedEntityClass.getSimpleName();
         } else {
-            return keywordAliasFromAnnotation;
+            return nameFromAnnotation;
         }
     }
 

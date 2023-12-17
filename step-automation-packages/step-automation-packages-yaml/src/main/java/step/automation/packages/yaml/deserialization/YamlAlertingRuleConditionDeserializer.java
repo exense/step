@@ -21,17 +21,35 @@ package step.automation.packages.yaml.deserialization;
 import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import step.automation.packages.AutomationPackageNamedEntityUtils;
+import step.automation.packages.yaml.rules.YamlConversionRule;
+import step.automation.packages.yaml.rules.YamlConversionRuleAddOn;
+import step.core.scanner.CachedAnnotationScanner;
 import step.core.yaml.deserializers.NamedEntityYamlDeserializer;
+import step.core.yaml.deserializers.StepYamlDeserializer;
+import step.core.yaml.deserializers.StepYamlDeserializerAddOn;
 import step.core.yaml.deserializers.YamlFieldDeserializationProcessor;
 import step.plugins.alerting.rule.condition.AlertingRuleCondition;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
-public class YamlAlertingRuleConditionDeserializer extends JsonDeserializer<AlertingRuleCondition> {
+import static step.core.scanner.Classes.newInstanceAs;
+
+@StepYamlDeserializerAddOn(targetClasses = {AlertingRuleCondition.class})
+public class YamlAlertingRuleConditionDeserializer extends StepYamlDeserializer<AlertingRuleCondition> {
+
+    public YamlAlertingRuleConditionDeserializer() {
+    }
+
+    public YamlAlertingRuleConditionDeserializer(ObjectMapper yamlObjectMapper) {
+        super(yamlObjectMapper);
+    }
+
     @Override
     public AlertingRuleCondition deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JacksonException {
         return new NamedEntityYamlDeserializer<AlertingRuleCondition>() {
@@ -43,8 +61,20 @@ public class YamlAlertingRuleConditionDeserializer extends JsonDeserializer<Aler
 
             @Override
             protected List<YamlFieldDeserializationProcessor> deserializationProcessors() {
-               // TODO: maybe add some mechanism to look up custom processors for Condition classes
-                return new ArrayList<>();
+                // scan all deserialization processors from classpath
+                List<YamlFieldDeserializationProcessor> res = new ArrayList<>();
+                List<YamlConversionRule> conversionRules = CachedAnnotationScanner.getClassesWithAnnotation(YamlConversionRuleAddOn.LOCATION, YamlConversionRuleAddOn.class, Thread.currentThread().getContextClassLoader()).stream()
+                        .filter(c -> {
+                            Class<?>[] targetClasses = c.getAnnotation(YamlConversionRuleAddOn.class).targetClasses();
+                            return targetClasses == null || Arrays.stream(targetClasses).anyMatch(AlertingRuleCondition.class::isAssignableFrom);
+                        })
+                        .map(newInstanceAs(YamlConversionRule.class))
+                        .collect(Collectors.toList());
+
+                for (YamlConversionRule conversionRule : conversionRules) {
+                    res.add(conversionRule.getDeserializationProcessor());
+                }
+                return res;
             }
 
             @Override

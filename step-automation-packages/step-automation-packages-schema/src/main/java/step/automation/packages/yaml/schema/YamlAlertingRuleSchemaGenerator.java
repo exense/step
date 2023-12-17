@@ -32,6 +32,7 @@ import step.handlers.javahandler.jsonschema.JsonSchemaCreator;
 import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
 import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 import step.plugins.alerting.event.AlertingEventInterface;
+import step.plugins.alerting.rule.condition.AlertingRuleAction;
 import step.plugins.alerting.rule.condition.AlertingRuleCondition;
 
 import java.util.*;
@@ -43,6 +44,7 @@ public class YamlAlertingRuleSchemaGenerator {
 
     public static final String ALERTING_RULE_DEF = "AlertingRuleDef";
     public static final String ALERTING_RULE_CONDITION_DEF = "AlertingRuleConditionDef";
+    public static final String ALERTING_RULE_ACTION_DEF = "AlertingRuleActionDef";
 
     private final jakarta.json.spi.JsonProvider jsonProvider;
 
@@ -76,12 +78,22 @@ public class YamlAlertingRuleSchemaGenerator {
         // prepare definitions for AutomationPackageAlertingRule content
         definitionCreators.add(defsList -> {
             // scan annotated Conditions to find all supported implementations
-            Map<String, JsonObjectBuilder> conditionsDef = createConditionsDef();
-            for (Map.Entry<String, JsonObjectBuilder> artefactImplDef : conditionsDef.entrySet()) {
-                defsBuilder.add(artefactImplDef.getKey(), artefactImplDef.getValue());
+            Map<String, JsonObjectBuilder> conditionsDef = createDefsForAnnotatedNamedEntities(AlertingRuleCondition.class);
+            for (Map.Entry<String, JsonObjectBuilder> conditionImplDef : conditionsDef.entrySet()) {
+                defsBuilder.add(conditionImplDef.getKey(), conditionImplDef.getValue());
             }
 
-            defsBuilder.add(ALERTING_RULE_CONDITION_DEF, createConditionDef(conditionsDef.keySet()));
+            defsBuilder.add(ALERTING_RULE_CONDITION_DEF, createOneOfDef(conditionsDef.keySet().stream().sorted().collect(Collectors.toList())));
+        });
+
+        definitionCreators.add(defsList -> {
+            // scan annotated Actions to find all supported implementations
+            Map<String, JsonObjectBuilder> actionsDef = createDefsForAnnotatedNamedEntities(AlertingRuleAction.class);
+            for (Map.Entry<String, JsonObjectBuilder> actionImplDef : actionsDef.entrySet()) {
+                defsBuilder.add(actionImplDef.getKey(), actionImplDef.getValue());
+            }
+
+            defsBuilder.add(ALERTING_RULE_ACTION_DEF, createOneOfDef(actionsDef.keySet().stream().sorted().collect(Collectors.toList())));
         });
 
         // prepare the main definition for AutomationPackageAlertingRule class
@@ -105,21 +117,21 @@ public class YamlAlertingRuleSchemaGenerator {
         return defsBuilder;
     }
 
-    protected JsonObjectBuilder createConditionDef(Set<String> conditionImplsReferences) {
+    protected JsonObjectBuilder createOneOfDef(List<String> references) {
         JsonObjectBuilder builder = jsonProvider.createObjectBuilder();
         builder.add("type", "object");
         JsonArrayBuilder arrayBuilder = jsonProvider.createArrayBuilder();
-        for (String conditionDefReference : conditionImplsReferences) {
+        for (String conditionDefReference : references) {
             arrayBuilder.add(addRef(jsonProvider.createObjectBuilder(), conditionDefReference));
         }
         builder.add("oneOf", arrayBuilder);
         return builder;
     }
 
-    private Map<String, JsonObjectBuilder> createConditionsDef() throws JsonSchemaPreparationException {
+    private Map<String, JsonObjectBuilder> createDefsForAnnotatedNamedEntities(Class<?> entityClass) throws JsonSchemaPreparationException {
         HashMap<String, JsonObjectBuilder> result = new HashMap<>();
 
-        List<? extends Class<?>> conditionClasses = AutomationPackageNamedEntityUtils.scanNamedEntityClasses(AlertingRuleCondition.class);
+        List<? extends Class<?>> conditionClasses = AutomationPackageNamedEntityUtils.scanNamedEntityClasses(entityClass);
         for (Class<?> conditionClass : conditionClasses) {
             String name = conditionClass.getSimpleName();
             String defName = name + "Def";
@@ -128,7 +140,6 @@ public class YamlAlertingRuleSchemaGenerator {
         return result;
     }
 
-    // TODO: extract rules
     protected List<JsonSchemaFieldProcessor> prepareFieldProcessors() {
         List<JsonSchemaFieldProcessor> result = new ArrayList<>();
 

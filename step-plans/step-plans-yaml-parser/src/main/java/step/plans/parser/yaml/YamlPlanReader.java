@@ -34,12 +34,11 @@ import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
 import step.core.scanner.AnnotationScanner;
 import step.core.scanner.CachedAnnotationScanner;
+import step.core.yaml.deserializers.StepYamlDeserializersScanner;
 import step.migration.MigrationManager;
 import step.plans.nl.RootArtefactType;
 import step.plans.nl.parser.PlanParser;
-import step.core.yaml.deserializers.YamlDynamicValueDeserializer;
 import step.plans.parser.yaml.deserializers.UpgradableYamlPlanDeserializer;
-import step.plans.parser.yaml.deserializers.YamlRootArtefactDeserializer;
 import step.plans.parser.yaml.migrations.AbstractYamlPlanMigrationTask;
 import step.plans.parser.yaml.migrations.YamlPlanMigration;
 import step.plans.parser.yaml.model.YamlPlan;
@@ -196,7 +195,7 @@ public class YamlPlanReader {
 		ObjectMapper yamlMapper = createDefaultYamlMapper();
 
 		// configure custom deserializers
-		yamlMapper.registerModule(registerAllSerializers(new SimpleModule(), yamlMapper));
+		yamlMapper.registerModule(registerAllSerializers(new SimpleModule(), yamlMapper, true));
 		return yamlMapper;
 	}
 
@@ -214,26 +213,21 @@ public class YamlPlanReader {
 	}
 
 	private SimpleModule registerBasicSerializers(SimpleModule module, ObjectMapper resultingMapper) {
-		module.addDeserializer(DynamicValue.class, new YamlDynamicValueDeserializer());
-		module.addDeserializer(YamlRootArtefact.class, createRootArtefactDeserializer(resultingMapper));
+		StepYamlDeserializersScanner.addAllDeserializerAddonsToModule(module, resultingMapper);
 
 		module.addSerializer(DynamicValue.class, new YamlDynamicValueSerializer());
 		return module.addSerializer(YamlRootArtefact.class, createRootArtefactSerializer(resultingMapper));
 	}
 
-	public SimpleModule registerAllSerializers(SimpleModule module, ObjectMapper resultingMapper) {
+	public SimpleModule registerAllSerializers(SimpleModule module, ObjectMapper resultingMapper, boolean upgradablePlan) {
 		ObjectMapper nonUpgradableYamlMapper = createDefaultYamlMapper().registerModule(createDatabindModuleForNonUpgradablePlans(resultingMapper));
 
 		return registerBasicSerializers(module, resultingMapper)
-				.addDeserializer(YamlPlan.class, new UpgradableYamlPlanDeserializer(currentVersion, jsonSchema, migrationManager, nonUpgradableYamlMapper));
+				.addDeserializer(YamlPlan.class, new UpgradableYamlPlanDeserializer(upgradablePlan ? currentVersion : null, jsonSchema, migrationManager, nonUpgradableYamlMapper));
 	}
 
 	protected YamlRootArtefactSerializer createRootArtefactSerializer(ObjectMapper stepYamlMapper) {
 		return new YamlRootArtefactSerializer(stepYamlMapper);
-	}
-
-	protected YamlRootArtefactDeserializer createRootArtefactDeserializer(ObjectMapper stepYamlMapper) {
-		return new YamlRootArtefactDeserializer(stepYamlMapper);
 	}
 
 	protected ObjectMapper getYamlMapper() {

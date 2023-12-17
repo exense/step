@@ -20,14 +20,16 @@ package step.automation.packages.yaml.deserialization;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import step.automation.packages.model.AutomationPackageKeyword;
 import step.automation.packages.yaml.AutomationPackageKeywordsLookuper;
 import step.automation.packages.yaml.rules.YamlKeywordConversionRule;
 import step.automation.packages.yaml.rules.keywords.KeywordNameRule;
 import step.automation.packages.yaml.rules.keywords.TokenSelectionCriteriaRule;
 import step.core.yaml.deserializers.NamedEntityYamlDeserializer;
+import step.core.yaml.deserializers.StepYamlDeserializer;
+import step.core.yaml.deserializers.StepYamlDeserializerAddOn;
 import step.core.yaml.deserializers.YamlFieldDeserializationProcessor;
 import step.functions.Function;
 
@@ -37,11 +39,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class YamlKeywordDeserializer extends JsonDeserializer<AutomationPackageKeyword> {
+@StepYamlDeserializerAddOn(targetClasses = {AutomationPackageKeyword.class})
+public class YamlKeywordDeserializer extends StepYamlDeserializer<AutomationPackageKeyword> {
 
     private final AutomationPackageKeywordsLookuper keywordsLookuper;
 
     public YamlKeywordDeserializer() {
+        this(null);
+    }
+
+    public YamlKeywordDeserializer(ObjectMapper yamlObjectMapper) {
+        super(yamlObjectMapper);
         this.keywordsLookuper = new AutomationPackageKeywordsLookuper();
     }
 

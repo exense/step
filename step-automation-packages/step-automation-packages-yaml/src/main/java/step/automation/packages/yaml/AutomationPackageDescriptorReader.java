@@ -27,20 +27,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.artefacts.handlers.JsonSchemaValidator;
 import step.automation.packages.AutomationPackageReadingException;
-import step.automation.packages.yaml.deserialization.YamlBindingPredicateDeserializer;
-import step.automation.packages.yaml.deserialization.YamlKeywordDeserializer;
-import step.automation.packages.yaml.deserialization.YamlAlertingRuleConditionDeserializer;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
-import step.automation.packages.model.AutomationPackageKeyword;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
 import step.core.accessors.DefaultJacksonMapperProvider;
-import step.core.dynamicbeans.DynamicValue;
-import step.core.yaml.deserializers.YamlDynamicValueDeserializer;
+import step.core.yaml.deserializers.StepYamlDeserializersScanner;
 import step.plans.parser.yaml.YamlPlanReader;
 import step.plans.parser.yaml.model.YamlPlanVersions;
 import step.plans.parser.yaml.schema.YamlPlanValidationException;
-import step.plugins.alerting.rule.condition.AlertingRuleCondition;
-import step.plugins.alerting.rule.condition.binding.BindingPredicate;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -130,16 +123,11 @@ public class AutomationPackageDescriptorReader {
         // configure custom deserializers
         SimpleModule module = new SimpleModule();
 
-        // register serializers/deserializers to read yaml plans
-        // TODO: we don't want to use the default upgradable plan serializer, because the plan version is defined via automation package schema version, but not inside the plan...
-        planReader.registerAllSerializers(module, yamlMapper);
+        // register deserializers to read yaml plans
+        planReader.registerAllSerializers(module, yamlMapper, false);
 
-        module.addDeserializer(DynamicValue.class, new YamlDynamicValueDeserializer());
-        module.addDeserializer(AutomationPackageKeyword.class, new YamlKeywordDeserializer());
-
-        // alerting rules classes
-        module.addDeserializer(AlertingRuleCondition.class, new YamlAlertingRuleConditionDeserializer());
-        module.addDeserializer(BindingPredicate.class, new YamlBindingPredicateDeserializer());
+        // add annotated jackson deserializers
+        StepYamlDeserializersScanner.addAllDeserializerAddonsToModule(module, yamlObjectMapper);
 
         yamlMapper.registerModule(module);
 

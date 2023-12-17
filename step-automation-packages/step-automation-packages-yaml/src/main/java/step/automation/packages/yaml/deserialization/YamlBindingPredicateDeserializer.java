@@ -21,12 +21,14 @@ package step.automation.packages.yaml.deserialization;
 import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import step.automation.packages.AutomationPackageNamedEntityUtils;
 import step.automation.packages.yaml.rules.YamlConversionRule;
 import step.automation.packages.yaml.rules.YamlConversionRuleAddOn;
 import step.core.scanner.CachedAnnotationScanner;
 import step.core.yaml.deserializers.NamedEntityYamlDeserializer;
+import step.core.yaml.deserializers.StepYamlDeserializer;
+import step.core.yaml.deserializers.StepYamlDeserializerAddOn;
 import step.core.yaml.deserializers.YamlFieldDeserializationProcessor;
 import step.plugins.alerting.rule.condition.binding.BindingPredicate;
 
@@ -38,7 +40,15 @@ import java.util.stream.Collectors;
 
 import static step.core.scanner.Classes.newInstanceAs;
 
-public class YamlBindingPredicateDeserializer extends JsonDeserializer<BindingPredicate> {
+@StepYamlDeserializerAddOn(targetClasses = {BindingPredicate.class})
+public class YamlBindingPredicateDeserializer extends StepYamlDeserializer<BindingPredicate> {
+
+    public YamlBindingPredicateDeserializer() {
+    }
+
+    public YamlBindingPredicateDeserializer(ObjectMapper yamlObjectMapper) {
+        super(yamlObjectMapper);
+    }
 
     @Override
     public BindingPredicate deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JacksonException {
@@ -51,7 +61,7 @@ public class YamlBindingPredicateDeserializer extends JsonDeserializer<BindingPr
 
             @Override
             protected List<YamlFieldDeserializationProcessor> deserializationProcessors() {
-                // scan all serialization processors from classpath
+                // scan all deserialization processors from classpath
                 List<YamlFieldDeserializationProcessor> res = new ArrayList<>();
                 List<YamlConversionRule> conversionRules = CachedAnnotationScanner.getClassesWithAnnotation(YamlConversionRuleAddOn.LOCATION, YamlConversionRuleAddOn.class, Thread.currentThread().getContextClassLoader()).stream()
                         .filter(c -> {
