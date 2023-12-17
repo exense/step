@@ -7,6 +7,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 import step.automation.packages.accessor.AutomationPackageAccessorImpl;
+import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.collections.inmemory.InMemoryCollection;
 import step.core.controller.ControllerSettingAccessorImpl;
@@ -89,7 +90,9 @@ public class AutomationPackageManagerTest {
                 planAccessor,
                 resourceManager,
                 executionTaskAccessor,
-                executionScheduler
+                executionScheduler,
+                null,
+                YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH
         );
     }
 

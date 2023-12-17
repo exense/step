@@ -29,6 +29,7 @@ public class AutomationPackageAlertingRule {
     public static final String ACTIONS_FIELD = "actions";
     public static final String EVENT_CLASS_FIELD = "eventClass";
 
+    private String name;
     private boolean active;
     private String description;
     private String eventClass;
@@ -74,5 +75,13 @@ public class AutomationPackageAlertingRule {
 
     public void setActions(List<AlertingRuleAction> actions) {
         this.actions = actions;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 }

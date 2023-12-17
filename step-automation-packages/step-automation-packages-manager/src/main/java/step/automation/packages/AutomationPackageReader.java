@@ -205,6 +205,7 @@ public class AutomationPackageReader {
         targetPackage.getKeywords().addAll(fragment.getKeywords());
         targetPackage.getPlans().addAll(fragment.getPlans().stream().map(p -> getDescriptorReader().getPlanReader().yamlPlanToPlan(p)).collect(Collectors.toList()));
         targetPackage.getSchedules().addAll(fragment.getSchedules());
+        targetPackage.getAlertingRules().addAll(fragment.getAlertingRules());
 
         if (!fragment.getFragments().isEmpty()) {
             for (String importedFragmentReference : fragment.getFragments()) {

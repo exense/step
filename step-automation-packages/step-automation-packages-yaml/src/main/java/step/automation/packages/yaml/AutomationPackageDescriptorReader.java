@@ -93,6 +93,9 @@ public class AutomationPackageDescriptorReader {
             if (!res.getSchedules().isEmpty()) {
                 log.info("{} schedule(s) found in automation package {}", res.getSchedules().size(), StringUtils.defaultString(packageFileName));
             }
+            if(!res.getAlertingRules().isEmpty()){
+                log.info("{} alerting rule(s) found in automation package {}", res.getAlertingRules().size(), StringUtils.defaultString(packageFileName));
+            }
             if (!res.getFragments().isEmpty()) {
                 log.info("{} imported fragment(s) found in automation package {}", res.getFragments().size(), StringUtils.defaultString(packageFileName));
             }

@@ -25,6 +25,7 @@ import step.automation.packages.AutomationPackageReader;
 import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.model.AutomationPackageContent;
 import step.automation.packages.model.AutomationPackageKeyword;
+import step.automation.packages.yaml.Constants;
 import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionEngineContext;
 import step.core.execution.OperationMode;
@@ -76,6 +77,6 @@ public class AutomationPackageKeywordsPlugin extends AbstractExecutionEnginePlug
     }
 
     protected String getAutomationPackageJsonSchema(Configuration configuration) {
-        return configuration.getProperty(AutomationPackageJsonSchemaPlugin.PROP_AUTOMATION_PACKAGE_JSON_SCHEMA, null);
+        return configuration.getProperty(Constants.PROP_AUTOMATION_PACKAGE_JSON_SCHEMA, null);
     }
 }

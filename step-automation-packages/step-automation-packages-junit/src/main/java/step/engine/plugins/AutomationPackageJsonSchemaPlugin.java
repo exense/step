@@ -19,6 +19,7 @@
 package step.engine.plugins;
 
 import ch.exense.commons.app.Configuration;
+import step.automation.packages.yaml.Constants;
 import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionEngineContext;
@@ -27,13 +28,12 @@ import step.core.plugins.Plugin;
 
 @Plugin()
 public class AutomationPackageJsonSchemaPlugin extends AbstractExecutionEnginePlugin {
-    public static final String PROP_AUTOMATION_PACKAGE_JSON_SCHEMA = "plugins.automation.jsonschema";
 
     @Override
     public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext context) {
         if (context.getOperationMode() == OperationMode.LOCAL) {
             Configuration config = context.getConfiguration();
-            config.putProperty(PROP_AUTOMATION_PACKAGE_JSON_SCHEMA, YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH);
+            config.putProperty(Constants.PROP_AUTOMATION_PACKAGE_JSON_SCHEMA, YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH);
         }
     }
 }

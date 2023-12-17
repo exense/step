@@ -18,10 +18,12 @@
  ******************************************************************************/
 package step.automation.packages;
 
+import jakarta.json.spi.JsonProvider;
 import step.automation.packages.yaml.rules.YamlConversionRule;
 import step.automation.packages.yaml.rules.YamlConversionRuleAddOn;
 import step.core.scanner.CachedAnnotationScanner;
 import step.core.yaml.deserializers.YamlFieldDeserializationProcessor;
+import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -63,21 +65,39 @@ public class AutomationPackageNamedEntityUtils {
 
     public static List<YamlFieldDeserializationProcessor> scanDeserializationProcessorsForNamedEntity(Class<?> namedEntityClass) {
         // scan all deserialization processors from classpath
-        List<YamlFieldDeserializationProcessor> res = new ArrayList<>();
-        List<YamlConversionRule> conversionRules = CachedAnnotationScanner.getClassesWithAnnotation(YamlConversionRuleAddOn.LOCATION, YamlConversionRuleAddOn.class, Thread.currentThread().getContextClassLoader()).stream()
-                .filter(c -> {
-                    Class<?>[] targetClasses = c.getAnnotation(YamlConversionRuleAddOn.class).targetClasses();
-                    return targetClasses == null || Arrays.stream(targetClasses).anyMatch(namedEntityClass::isAssignableFrom);
-                })
-                .map(newInstanceAs(YamlConversionRule.class))
-                .collect(Collectors.toList());
+        List<YamlConversionRule> rules = getConversionRulesForNamedEntity(namedEntityClass);
 
-        for (YamlConversionRule conversionRule : conversionRules) {
-            YamlFieldDeserializationProcessor p = conversionRule.getDeserializationProcessor();
+        List<YamlFieldDeserializationProcessor> res = new ArrayList<>();
+        for (YamlConversionRule rule : rules) {
+            YamlFieldDeserializationProcessor p = rule.getDeserializationProcessor();
             if (p != null) {
                 res.add(p);
             }
         }
         return res;
+    }
+
+    public static List<JsonSchemaFieldProcessor> scanJsonSchemaFieldProcessorsForNamedEntity(Class<?> namedEntityClass, JsonProvider jsonProvider) {
+        // scan all json schema field processors from classpath
+        List<YamlConversionRule> rules = getConversionRulesForNamedEntity(namedEntityClass);
+
+        List<JsonSchemaFieldProcessor> res = new ArrayList<>();
+        for (YamlConversionRule rule : rules) {
+            JsonSchemaFieldProcessor proc = rule.getJsonSchemaFieldProcessor(jsonProvider);
+            if (proc != null) {
+                res.add(proc);
+            }
+        }
+        return res;
+    }
+
+    private static List<YamlConversionRule> getConversionRulesForNamedEntity(Class<?> namedEntityClass) {
+        return CachedAnnotationScanner.getClassesWithAnnotation(YamlConversionRuleAddOn.LOCATION, YamlConversionRuleAddOn.class, Thread.currentThread().getContextClassLoader()).stream()
+                .filter(c -> {
+                    Class<?>[] targetClasses = c.getAnnotation(YamlConversionRuleAddOn.class).targetClasses();
+                    return targetClasses == null || targetClasses.length == 0 || Arrays.stream(targetClasses).anyMatch(namedEntityClass::isAssignableFrom);
+                })
+                .map(newInstanceAs(YamlConversionRule.class))
+                .collect(Collectors.toList());
     }
 }

@@ -56,15 +56,18 @@ public class AutomationPackageExecutor {
     private final ExecutionAccessor executionAccessor;
     private final FunctionTypeRegistry functionTypeRegistry;
     private final IsolatedAutomationPackageRepository isolatedAutomationPackageRepository;
+    private final String jsonSchema;
 
     public AutomationPackageExecutor(ExecutionScheduler scheduler,
                                      ExecutionAccessor executionAccessor,
                                      FunctionTypeRegistry functionTypeRegistry,
-                                     IsolatedAutomationPackageRepository isolatedAutomationPackageRepository) {
+                                     IsolatedAutomationPackageRepository isolatedAutomationPackageRepository,
+                                     String jsonSchema) {
         this.scheduler = scheduler;
         this.executionAccessor = executionAccessor;
         this.functionTypeRegistry = functionTypeRegistry;
         this.isolatedAutomationPackageRepository = isolatedAutomationPackageRepository;
+        this.jsonSchema = jsonSchema;
     }
 
     public List<String> runInIsolation(InputStream automationPackage, String fileName, AutomationPackageExecutionParameters parameters,
@@ -74,7 +77,7 @@ public class AutomationPackageExecutor {
         // prepare the isolated in-memory automation package manager with the only one automation package
         List<String> executions = new ArrayList<>();
         try {
-            AutomationPackageManager inMemoryPackageManager = AutomationPackageManager.createIsolatedAutomationPackageManager(contextId, functionTypeRegistry);
+            AutomationPackageManager inMemoryPackageManager = AutomationPackageManager.createIsolatedAutomationPackageManager(contextId, functionTypeRegistry, jsonSchema);
             ObjectId packageId = inMemoryPackageManager.createAutomationPackage(automationPackage, fileName, objectEnricher, objectPredicate);
             isolatedAutomationPackageRepository.putContext(contextId.toString(), inMemoryPackageManager);
 

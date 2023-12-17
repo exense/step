@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.automation.packages.accessor.AutomationPackageAccessor;
 import step.automation.packages.accessor.InMemoryAutomationPackageAccessorImpl;
+import step.automation.packages.model.AutomationPackageAlertingRule;
 import step.automation.packages.model.AutomationPackageContent;
 import step.automation.packages.model.AutomationPackageKeyword;
 import step.automation.packages.model.AutomationPackageSchedule;
@@ -66,6 +67,7 @@ public class AutomationPackageManager {
     private final AutomationPackageAccessor automationPackageAccessor;
     private final FunctionManager functionManager;
     private final FunctionAccessor functionAccessor;
+    private final AutomationPackageAlertingRuleManager alertingRuleManager;
     private final PlanAccessor planAccessor;
     private final ExecutionTaskAccessor executionTaskAccessor;
     private final ExecutionScheduler executionScheduler;
@@ -79,11 +81,14 @@ public class AutomationPackageManager {
                                     PlanAccessor planAccessor,
                                     ResourceManager resourceManager,
                                     ExecutionTaskAccessor executionTaskAccessor,
-                                    ExecutionScheduler executionScheduler) {
+                                    ExecutionScheduler executionScheduler,
+                                    AutomationPackageAlertingRuleManager alertingRuleManager,
+                                    String jsonSchema) {
         this.automationPackageAccessor = automationPackageAccessor;
 
         this.functionManager = functionManager;
         this.functionAccessor = functionAccessor;
+        this.alertingRuleManager = alertingRuleManager;
         this.functionAccessor.createIndexIfNeeded(getAutomationPackageTrackingField());
 
         this.planAccessor = planAccessor;
@@ -94,12 +99,12 @@ public class AutomationPackageManager {
 
         // TODO: avoid executionScheduler in automation package manager
         this.executionScheduler = executionScheduler;
-        this.packageReader = new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH);
+        this.packageReader = new AutomationPackageReader(jsonSchema);
         this.resourceManager = resourceManager;
         this.keywordsAttributesApplier = new AutomationPackageKeywordsAttributesApplier(resourceManager);
     }
 
-    public static AutomationPackageManager createIsolatedAutomationPackageManager(ObjectId isolatedContextId, FunctionTypeRegistry functionTypeRegistry){
+    public static AutomationPackageManager createIsolatedAutomationPackageManager(ObjectId isolatedContextId, FunctionTypeRegistry functionTypeRegistry, String jsonSchema){
         InMemoryFunctionAccessorImpl inMemoryFunctionRepository = new InMemoryFunctionAccessorImpl();
         return new AutomationPackageManager(
                 new InMemoryAutomationPackageAccessorImpl(),
@@ -108,7 +113,9 @@ public class AutomationPackageManager {
                 new InMemoryPlanAccessor(),
                 new LocalResourceManagerImpl(new File("resources", isolatedContextId.toString())),
                 new InMemoryExecutionTaskAccessor(),
-                null
+                null,
+                null,
+                jsonSchema
         );
     }
 
@@ -160,6 +167,16 @@ public class AutomationPackageManager {
         deletePlans(automationPackage);
         deleteSchedules(automationPackage);
         deleteResources(automationPackage);
+        deleteAlertingRules(automationPackage);
+    }
+
+    private void deleteAlertingRules(AutomationPackage automationPackage) {
+        if (alertingRuleManager != null) {
+            boolean res = alertingRuleManager.delete(automationPackage.getId());
+            if (!res) {
+                log.warn("Error while deleting alerting rules for automation package {}", automationPackage.getAttribute(AbstractOrganizableObject.NAME));
+            }
+        }
     }
 
     /**
@@ -243,6 +260,7 @@ public class AutomationPackageManager {
             List<Plan> completePlans = preparePlansStaging(packageContent, oldPackage, enricherForIncludedEntities);
             List<ExecutiontTaskParameters> completeExecTasksParameters = prepareExecutionTasksParamsStaging(enricherForIncludedEntities, packageContent, oldPackage, completePlans);
             List<Function> completeFunctions = prepareFunctionsStaging(newPackage, automationPackageArchive, packageContent, enricherForIncludedEntities, oldPackage);
+            List<AutomationPackageAlertingRule> completeAlertingRules = packageContent.getAlertingRules();
 
             // delete old package entities
             if (oldPackage != null) {
@@ -250,15 +268,27 @@ public class AutomationPackageManager {
             }
 
             // persist all staged entities
-            persistStagedEntities(completeExecTasksParameters, completeFunctions, completePlans);
+            persistStagedEntities(completeExecTasksParameters, completeFunctions, completePlans, completeAlertingRules, enricherForIncludedEntities);
 
             // save automation package metadata
             ObjectId result = automationPackageAccessor.save(newPackage).getId();
 
             if (oldPackage != null) {
-                log.info("Automation package has been updated ({}). Plans: {}. Functions: {}. Schedules: {}", newPackage.getAttribute(AbstractOrganizableObject.NAME), completePlans.size(), completeFunctions.size(), completeExecTasksParameters.size());
+                log.info("Automation package has been updated ({}). Plans: {}. Functions: {}. Schedules: {}. Alerting rules: {}",
+                        newPackage.getAttribute(AbstractOrganizableObject.NAME),
+                        completePlans.size(),
+                        completeFunctions.size(),
+                        completeExecTasksParameters.size(),
+                        completeAlertingRules.size()
+                );
             } else {
-                log.info("New automation package saved ({}). Plans: {}. Functions: {}. Schedules: {}", newPackage.getAttribute(AbstractOrganizableObject.NAME), completePlans.size(), completeFunctions.size(), completeExecTasksParameters.size());
+                log.info("New automation package saved ({}). Plans: {}. Functions: {}. Schedules: {}. Alerting rules: {}",
+                        newPackage.getAttribute(AbstractOrganizableObject.NAME),
+                        completePlans.size(),
+                        completeFunctions.size(),
+                        completeExecTasksParameters.size(),
+                        completeAlertingRules.size()
+                );
             }
             return new PackageUpdateResult(oldPackage == null ? PackageUpdateStatus.CREATED : PackageUpdateStatus.UPDATED, result);
         } catch (Exception ex) {
@@ -286,7 +316,11 @@ public class AutomationPackageManager {
         }
     }
 
-    private void persistStagedEntities(List<ExecutiontTaskParameters> completeExecTasksParameters, List<Function> completeFunctions, List<Plan> completePlans) {
+    private void persistStagedEntities(List<ExecutiontTaskParameters> completeExecTasksParameters,
+                                       List<Function> completeFunctions,
+                                       List<Plan> completePlans,
+                                       List<AutomationPackageAlertingRule> alertingRules,
+                                       ObjectEnricher objectEnricher) {
         try {
             for (Function completeFunction : completeFunctions) {
                 functionManager.saveFunction(completeFunction);
@@ -297,6 +331,14 @@ public class AutomationPackageManager {
 
         for (Plan plan : completePlans) {
             planAccessor.save(plan);
+        }
+
+        if (alertingRules != null && !alertingRules.isEmpty()) {
+            if (alertingRuleManager != null) {
+                alertingRuleManager.save(alertingRules, objectEnricher);
+            } else {
+                log.warn("Unable to save alerting rules for automation package. Alerting rule manager is not configured");
+            }
         }
 
         for (ExecutiontTaskParameters execTasksParameter : completeExecTasksParameters) {
