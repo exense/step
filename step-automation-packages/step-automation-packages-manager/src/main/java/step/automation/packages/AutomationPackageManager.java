@@ -37,6 +37,7 @@ import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.InMemoryPlanAccessor;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
+import step.core.repositories.RepositoryObjectReference;
 import step.core.scheduler.ExecutionScheduler;
 import step.core.scheduler.ExecutionTaskAccessor;
 import step.core.scheduler.ExecutiontTaskParameters;
@@ -371,7 +372,13 @@ public class AutomationPackageManager {
                             ". No plan with '" + planNameFromSchedule + "' name found for schedule " + schedule.getName());
                 }
             }
-            execTaskParameters.setExecutionsParameters(new ExecutionParameters(plan, schedule.getExecutionParameters()));
+            ExecutionParameters executionParameters = new ExecutionParameters(plan, schedule.getExecutionParameters());
+            executionParameters.setRepositoryObject(
+                    new RepositoryObjectReference(
+                            RepositoryObjectReference.LOCAL_REPOSITORY_ID, Map.of(RepositoryObjectReference.PLAN_ID, plan.getId().toString())
+                    )
+            );
+            execTaskParameters.setExecutionsParameters(executionParameters);
             completeExecTasksParameters.add(execTaskParameters);
         }
         fillEntities(completeExecTasksParameters, oldPackage != null ? getPackageSchedules(oldPackage.getId()) : new ArrayList<>(), enricher);
