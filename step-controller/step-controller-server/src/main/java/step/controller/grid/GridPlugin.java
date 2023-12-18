@@ -83,7 +83,7 @@ public class GridPlugin extends AbstractControllerPlugin {
 		fileManagerConfig.setFileLastModificationCacheExpireAfter(configuration.getPropertyAsInteger(GRID_FILEMANAGER_CACHE_EXPIREAFTER_MS, 500));
 		fileManagerConfig.setCleanupJobEnabled(configuration.getPropertyAsBoolean(GRID_FILENAMANGER_FILE_CLEANUP_ENABLED, true));
 		fileManagerConfig.setCleanupIntervalMinutes(configuration.getPropertyAsInteger(GRID_FILENAMANGER_FILE_CLEANUP_INTERVAL_MINUTES, 60));
-		fileManagerConfig.setCleanupLastAccessTimeThresholdMinutes(configuration.getPropertyAsLong(GRID_FILEMANAGER_FILE_CLEANUP_LAST_ACCESS_THRESHOLD_MINUTES, 3600000l));
+		fileManagerConfig.setCleanupLastAccessTimeThresholdMinutes(configuration.getPropertyAsLong(GRID_FILEMANAGER_FILE_CLEANUP_LAST_ACCESS_THRESHOLD_MINUTES, 120L));
 		gridConfig.setFileManagerImplConfig(fileManagerConfig);
 
 		GridConfigurationEditor.List editors = context.get(GridConfigurationEditor.List.class);
