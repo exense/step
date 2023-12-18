@@ -355,10 +355,21 @@ public class AutomationPackageManager {
             execTaskParameters.addAttribute(AbstractOrganizableObject.NAME, schedule.getName());
             execTaskParameters.setCronExpression(schedule.getCron());
 
-            Plan plan = plansStaging.stream().filter(p -> Objects.equals(p.getAttribute(AbstractOrganizableObject.NAME), schedule.getPlanName())).findFirst().orElse(null);
-            if (plan == null) {
+            String planNameFromSchedule = schedule.getPlanName();
+            if (planNameFromSchedule == null || planNameFromSchedule.isEmpty()) {
                 throw new AutomationPackageManagerException("Invalid automation package: " + packageContent.getName() +
-                        " No plan with '" + schedule.getPlanName() + "' name found for schedule " + schedule.getName());
+                        ". Plan name is not defined for schedule " + schedule.getName());
+            }
+
+            Plan plan = plansStaging.stream().filter(p -> Objects.equals(p.getAttribute(AbstractOrganizableObject.NAME), planNameFromSchedule)).findFirst().orElse(null);
+            if (plan == null) {
+                // schedule can reference the existing persisted plan (not defined inside the automation package)
+                plan = planAccessor.findByAttributes(Map.of(AbstractOrganizableObject.NAME, planNameFromSchedule));
+
+                if (plan == null) {
+                    throw new AutomationPackageManagerException("Invalid automation package: " + packageContent.getName() +
+                            ". No plan with '" + planNameFromSchedule + "' name found for schedule " + schedule.getName());
+                }
             }
             execTaskParameters.setExecutionsParameters(new ExecutionParameters(plan, schedule.getExecutionParameters()));
             completeExecTasksParameters.add(execTaskParameters);
