@@ -18,17 +18,12 @@
  ******************************************************************************/
 package step.client.executions;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.TimeoutException;
-
+import ch.exense.commons.io.Poller;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.client.Invocation.Builder;
 import jakarta.ws.rs.core.MediaType;
-
 import step.client.AbstractRemoteClient;
 import step.client.credentials.ControllerCredentials;
-import ch.exense.commons.io.Poller;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.model.Execution;
@@ -36,6 +31,9 @@ import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.execution.model.ExecutionStatus;
 import step.core.repositories.RepositoryObjectReference;
+
+import java.util.*;
+import java.util.concurrent.TimeoutException;
 
 /**
  * This class provides an API for the execution of plans existing on a remote controller
@@ -159,6 +157,27 @@ public class RemoteExecutionManager extends AbstractRemoteClient {
 	public Execution waitForTermination(String executionID, long timeout) throws TimeoutException, InterruptedException {
 		Poller.waitFor(()->get(executionID).getStatus().equals(ExecutionStatus.ENDED), timeout);
 		return get(executionID);
+	}
+
+	public List<Execution> waitForTermination(List<String> executionIds, long timeout) throws TimeoutException, InterruptedException {
+		Set<String> pendingExecutions = new HashSet<>(executionIds);
+		Poller.waitFor(() -> {
+            Set<String> completed = new HashSet<>();
+            for (String e : pendingExecutions) {
+                if (RemoteExecutionManager.this.get(e).getStatus().equals(ExecutionStatus.ENDED)) {
+                    completed.add(e);
+                }
+            }
+            pendingExecutions.removeAll(completed);
+            return pendingExecutions.isEmpty();
+        }, timeout);
+
+		List<Execution> res = new ArrayList<>();
+		for (String e : executionIds) {
+			Execution executionObj = get(e);
+			res.add(executionObj);
+		}
+		return res;
 	}
 	
 	/**
