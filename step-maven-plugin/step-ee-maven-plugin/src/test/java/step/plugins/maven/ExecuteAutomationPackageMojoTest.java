@@ -18,84 +18,65 @@
  ******************************************************************************/
 package step.plugins.maven;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
-import org.bson.types.ObjectId;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
-import step.client.executions.RemoteExecutionFuture;
+import step.automation.packages.client.RemoteAutomationPackageClientImpl;
+import step.automation.packages.execution.AutomationPackageExecutionParameters;
 import step.client.executions.RemoteExecutionManager;
-import step.client.resources.RemoteResourceManager;
+import step.controller.multitenancy.client.MultitenancyClient;
+import step.controller.multitenancy.client.RemoteMultitenancyClientImpl;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.execution.model.ExecutionStatus;
 import step.core.repositories.ImportResult;
-import step.repositories.ArtifactRepositoryConstants;
-import step.resources.Resource;
-import step.resources.SimilarResourceExistingException;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.File;
 import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
 
-public class RunPackagedAutomationPackagesMojoOSTest extends AbstractMojoTest {
+public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 
 	@Test
-	public void testExecuteOk() throws InterruptedException, TimeoutException, MojoExecutionException, MojoFailureException, URISyntaxException, SimilarResourceExistingException, IOException {
+	public void testExecuteOk() throws InterruptedException, TimeoutException, MojoExecutionException, MojoFailureException, URISyntaxException {
 		RemoteExecutionManager remoteExecutionManagerMock = createExecutionManagerMock(ReportNodeStatus.PASSED);
 
-		RemoteResourceManager remoteResourceManagerMock = Mockito.mock(RemoteResourceManager.class);
-		Resource resourceMock = Mockito.mock(Resource.class);
-		Mockito.when(resourceMock.getId()).thenReturn(new ObjectId());
+		RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock = Mockito.mock(RemoteAutomationPackageClientImpl.class);
+		RemoteMultitenancyClientImpl multitenancyClientMock = createRemoteMultitenancyClientMock();
 
-		Mockito.when(remoteResourceManagerMock.createResource(Mockito.anyString(), Mockito.any(InputStream.class), Mockito.anyString(), Mockito.anyBoolean(), Mockito.isNull())).thenReturn(resourceMock);
-
-		RunPackagedAutomationPackagesMojoOSTestable mojo = new RunPackagedAutomationPackagesMojoOSTestable(remoteExecutionManagerMock, remoteResourceManagerMock);
+		RunAutomationPackageMojoTestable mojo = new RunAutomationPackageMojoTestable(remoteExecutionManagerMock, remoteAutomationPackageClientMock, multitenancyClientMock);
 		configureMojo(mojo);
 		mojo.execute();
 
-		ArgumentCaptor<InputStream> fileCaptor = ArgumentCaptor.forClass(InputStream.class);
-		Mockito.verify(remoteResourceManagerMock, Mockito.times(1)).createResource(Mockito.anyString(), fileCaptor.capture(), Mockito.anyString(), Mockito.eq(false), Mockito.isNull());
-		FileInputStream capturedFile = (FileInputStream) fileCaptor.getValue();
-		Assert.assertEquals(Arrays.asList("jar-with-dependencies content"), IOUtils.readLines(capturedFile, StandardCharsets.UTF_8));
+		ArgumentCaptor<File> fileCaptor = ArgumentCaptor.forClass(File.class);
+		ArgumentCaptor<AutomationPackageExecutionParameters> executionParamsCaptor = ArgumentCaptor.forClass(AutomationPackageExecutionParameters.class);
+		Mockito.verify(remoteAutomationPackageClientMock, Mockito.times(1)).executeAutomationPackage(fileCaptor.capture(), executionParamsCaptor.capture());
+		File capturedFile = fileCaptor.getValue();
+		Assert.assertEquals("test-file-jar.jar", capturedFile.getName());
 
 		ArgumentCaptor<ExecutionParameters> captor = ArgumentCaptor.forClass(ExecutionParameters.class);
 		Mockito.verify(remoteExecutionManagerMock, Mockito.times(1)).execute(captor.capture());
 		ExecutionParameters captured = captor.getValue();
 		Assert.assertEquals("Test description", captured.getDescription());
-		Assert.assertNull(captured.getUserID());
+		Assert.assertEquals("testUser", captured.getUserID());
 		Assert.assertEquals("ResourceArtifact", captured.getRepositoryObject().getRepositoryID());
 		Assert.assertEquals(ExecutionMode.RUN, captured.getMode());
-		Assert.assertEquals(resourceMock.getId().toString(), captured.getRepositoryObject().getRepositoryParameters().get(ArtifactRepositoryConstants.RESOURCE_PARAM_RESOURCE_ID));
-		Assert.assertEquals("5", captured.getRepositoryObject().getRepositoryParameters().get(ArtifactRepositoryConstants.PARAM_THREAD_NUMBER));
-		Assert.assertEquals(TEST_INCLUDE_CLASSES, captured.getRepositoryObject().getRepositoryParameters().get(ArtifactRepositoryConstants.PARAM_INCLUDE_CLASSES));
-		Assert.assertEquals(TEST_EXCLUDE_CLASSES, captured.getRepositoryObject().getRepositoryParameters().get(ArtifactRepositoryConstants.PARAM_EXCLUDE_CLASSES));
-		Assert.assertEquals(TEST_INCLUDE_ANNOTATIONS, captured.getRepositoryObject().getRepositoryParameters().get(ArtifactRepositoryConstants.PARAM_INCLUDE_ANNOTATIONS));
-		Assert.assertEquals(TEST_EXCLUDE_ANNOTATIONS, captured.getRepositoryObject().getRepositoryParameters().get(ArtifactRepositoryConstants.PARAM_EXCLUDE_ANNOTATIONS));
 
 		Assert.assertEquals(createTestCustomParams(), captured.getCustomParameters());
 	}
 
 	private RemoteExecutionManager createExecutionManagerMock(ReportNodeStatus resultStatus) throws TimeoutException, InterruptedException {
 		RemoteExecutionManager remoteExecutionManagerMock = Mockito.mock(RemoteExecutionManager.class);
-		Mockito.when(remoteExecutionManagerMock.execute(Mockito.any(ExecutionParameters.class))).thenReturn("exec-id-1");
-
-		RemoteExecutionFuture remoteExecutionFuture = Mockito.mock(RemoteExecutionFuture.class);
-		Mockito.when(remoteExecutionFuture.waitForExecutionToTerminate(Mockito.anyLong())).thenReturn(remoteExecutionFuture);
 
 		Execution execution = Mockito.mock(Execution.class);
-		Mockito.when(remoteExecutionFuture.getExecution()).thenReturn(execution);
 		Mockito.when(execution.getStatus()).thenReturn(ExecutionStatus.ENDED);
 		Mockito.when(execution.getResult()).thenReturn(resultStatus);
 		ImportResult t = new ImportResult();
@@ -105,31 +86,27 @@ public class RunPackagedAutomationPackagesMojoOSTest extends AbstractMojoTest {
 		}
 		Mockito.when(execution.getImportResult()).thenReturn(t);
 
-		Mockito.when(remoteExecutionManagerMock.getFuture("exec-id-1")).thenReturn(remoteExecutionFuture);
+		Mockito.when(remoteExecutionManagerMock.waitForTermination(Mockito.anyList(), Mockito.anyLong())).thenReturn(List.of(execution));
 		return remoteExecutionManagerMock;
 	}
 
-	private void configureMojo(RunPackagedAutomationPackagesMojoOSTestable mojo) throws URISyntaxException {
+	private void configureMojo(RunAutomationPackageMojoTestable mojo) throws URISyntaxException {
 		mojo.setArtifactId(ARTIFACT_ID);
 		mojo.setArtifactClassifier("jar-with-dependencies");
 		mojo.setArtifactVersion(VERSION_ID);
 		mojo.setGroupId(GROUP_ID);
-		mojo.setDescription("Test description");
 		mojo.setUrl("http://localhost:8080");
+		mojo.setAuthToken("abc");
 		mojo.setBuildFinalName("Test build name");
 		mojo.setProjectVersion("1.0.0");
 		mojo.setExecutionResultTimeoutS(3);
+		mojo.setUserId("testUser");
+		Map<String, String> params = createTestCustomParams();
+		mojo.setExecutionParameters(params);
 		mojo.setWaitForExecution(true);
 		mojo.setEnsureExecutionSuccess(true);
 
-		mojo.setThreads(5);
-		mojo.setIncludeClasses(TEST_INCLUDE_CLASSES);
-		mojo.setExcludeClasses(TEST_EXCLUDE_CLASSES);
-		mojo.setIncludeAnnotations(TEST_INCLUDE_ANNOTATIONS);
-		mojo.setExcludeAnnotations(TEST_EXCLUDE_ANNOTATIONS);
-
-		Map<String, String> params = createTestCustomParams();
-		mojo.setExecutionParameters(params);
+		mojo.setIncludePlans(TEST_INCLUDE_PLANS);
 
 		MavenProject mockedProject = Mockito.mock(MavenProject.class);
 
@@ -144,6 +121,8 @@ public class RunPackagedAutomationPackagesMojoOSTest extends AbstractMojoTest {
 		Mockito.when(mockedProject.getAttachedArtifacts()).thenReturn(Arrays.asList(jarWithDependenciesArtifact));
 
 		mojo.setProject(mockedProject);
+
+		mojo.setStepProjectName(TENANT_1.getName());
 	}
 
 	private static Map<String, String> createTestCustomParams() {
@@ -153,15 +132,23 @@ public class RunPackagedAutomationPackagesMojoOSTest extends AbstractMojoTest {
 		return params;
 	}
 
-	private static class RunPackagedAutomationPackagesMojoOSTestable extends RunPackagedAutomationPackagesMojoOS {
+	private RemoteMultitenancyClientImpl createRemoteMultitenancyClientMock(){
+		RemoteMultitenancyClientImpl mock = Mockito.mock(RemoteMultitenancyClientImpl.class);
+		Mockito.when(mock.getAvailableTenants()).thenReturn(List.of(TENANT_1, TENANT_2));
+		return mock;
+	}
 
-		private RemoteExecutionManager remoteExecutionManagerMock;
-		private RemoteResourceManager remoteResourceManagerMock;
+	private static class RunAutomationPackageMojoTestable extends ExecuteAutomationPackageMojo {
 
-		public RunPackagedAutomationPackagesMojoOSTestable(RemoteExecutionManager remoteExecutionManagerMock, RemoteResourceManager remoteResourceManagerMock) {
+		private final RemoteExecutionManager remoteExecutionManagerMock;
+		private final RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock;
+		private final MultitenancyClient multitenancyClientMock;
+
+		public RunAutomationPackageMojoTestable(RemoteExecutionManager remoteExecutionManagerMock, RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock, MultitenancyClient multitenancyClientMock) {
 			super();
 			this.remoteExecutionManagerMock = remoteExecutionManagerMock;
-			this.remoteResourceManagerMock = remoteResourceManagerMock;
+			this.remoteAutomationPackageClientMock = remoteAutomationPackageClientMock;
+			this.multitenancyClientMock = multitenancyClientMock;
 		}
 
 		@Override
@@ -170,8 +157,13 @@ public class RunPackagedAutomationPackagesMojoOSTest extends AbstractMojoTest {
 		}
 
 		@Override
-		protected RemoteResourceManager createRemoteResourceManager() {
-			return remoteResourceManagerMock;
+		protected RemoteAutomationPackageClientImpl createRemoteAutomationPackageClient() {
+			return remoteAutomationPackageClientMock;
+		}
+
+		@Override
+		protected MultitenancyClient createMultitenancyClient() {
+			return multitenancyClientMock;
 		}
 	}
 }

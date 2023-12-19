@@ -30,21 +30,24 @@ import step.controller.multitenancy.client.MultitenancyClient;
 import step.controller.multitenancy.client.RemoteMultitenancyClientImpl;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionMode;
+import step.core.plans.PlanFilter;
+import step.core.plans.filters.PlanByExcludedNamesFilter;
+import step.core.plans.filters.PlanByIncludedNamesFilter;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
-@Mojo(name = "exec-packaged-automation-package")
-public class ExecutePackagedAutomationPackagesMojo extends AbstractStepPluginMojo {
+@Mojo(name = "execute-automation-package")
+public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
 
-    @Parameter(property = "step.step-project-name", required = true)
+    @Parameter(property = "step.step-project-name", required = false)
     private String stepProjectName;
-
     @Parameter(property = "step-run-auto-packages.user-id", required = false)
     private String userId;
-
     @Parameter(property = "step.auth-token", required = false)
     private String authToken;
 
@@ -157,13 +160,26 @@ public class ExecutePackagedAutomationPackagesMojo extends AbstractStepPluginMoj
         return new RemoteExecutionManager(getControllerCredentials());
     }
 
-    protected AutomationPackageExecutionParameters prepareExecutionParameters() {
+    protected AutomationPackageExecutionParameters prepareExecutionParameters() throws MojoExecutionException {
         AutomationPackageExecutionParameters executionParameters = new AutomationPackageExecutionParameters();
         executionParameters.setMode(ExecutionMode.RUN);
         executionParameters.setCustomParameters(getExecutionParameters());
         executionParameters.setUserID(getUserId());
 
-        // TODO: set plan filters?
+        PlanFilter planFilter = null;
+        if (getIncludePlans() != null && !getIncludePlans().isEmpty()) {
+            planFilter = new PlanByIncludedNamesFilter(Arrays.stream(getIncludePlans().split(",")).collect(Collectors.toList()));
+        }
+        if (getExcludePlans() != null && !getExcludePlans().isEmpty()) {
+            if (planFilter != null) {
+                throw new MojoExecutionException("Plan filter configuration is ambiguous. Please use one of the following parameters: includePlans, excludePlans");
+            }
+            planFilter = new PlanByExcludedNamesFilter(Arrays.stream(getExcludePlans().split(",")).collect(Collectors.toList()));
+        }
+        if (planFilter != null) {
+            executionParameters.setPlanFilter(planFilter);
+        }
+
         return executionParameters;
     }
 

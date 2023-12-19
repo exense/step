@@ -22,6 +22,7 @@ import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.client.Invocation;
 import jakarta.ws.rs.core.GenericType;
 import jakarta.ws.rs.core.MediaType;
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.MultiPart;
 import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
 import step.automation.packages.execution.AutomationPackageExecutionParameters;
@@ -61,12 +62,12 @@ public class RemoteAutomationPackageClientImpl extends AbstractRemoteClient impl
     @Override
     public List<String> executeAutomationPackage(File automationPackageFile, AutomationPackageExecutionParameters params) {
         MultiPart multiPart = prepareFileDataMultiPart(automationPackageFile);
-        FileDataBodyPart paramsBodyPart = new FileDataBodyPart("executionParams", automationPackageFile, MediaType.APPLICATION_OCTET_STREAM_TYPE);
+        FormDataBodyPart paramsBodyPart = new FormDataBodyPart("executionParams", params, MediaType.APPLICATION_JSON_TYPE);
         multiPart.bodyPart(paramsBodyPart);
 
         Entity<MultiPart> entity = Entity.entity(multiPart, multiPart.getMediaType());
         Invocation.Builder builder = requestBuilder("/rest/automation-packages/execute");
-        return builder.put(entity, new GenericType<List<String>>() {});
+        return builder.post(entity, new GenericType<List<String>>() {});
     }
 
     @Override
