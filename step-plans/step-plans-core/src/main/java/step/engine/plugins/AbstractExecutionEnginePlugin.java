@@ -99,4 +99,7 @@ public abstract class AbstractExecutionEnginePlugin extends AbstractPlugin imple
 
 	@Override
 	public void afterFunctionExecution(ExecutionContext context, ReportNode node, Function function, Output<JsonObject> output) {}
+
+	@Override
+	public void forceStopExecution(ExecutionContext context) {}
 }

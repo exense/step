@@ -135,6 +135,18 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 		return null;
 	}
 
+	@Operation(description = "Stops the execution with the given execution id.")
+	@GET
+	@Path("/{id}/force-stop")
+	@Secured(right="plan-execute")
+	public Void forceStop(@PathParam("id") String executionID) {
+		ExecutionContext context = getExecutionRunnable(executionID);
+		if(context!=null) {
+			new ExecutionLifecycleManager(context).forceAbort();
+		}
+		return null;
+	}
+
 	@Operation(description = "Returns the executions matching the provided attributes.")
 	@POST
 	@Produces(MediaType.APPLICATION_JSON)
