@@ -5,12 +5,15 @@ import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
+import step.core.execution.type.ExecutionTypeManager;
+import step.core.execution.type.ExecutionTypePlugin;
 import step.core.plugins.IgnoreDuringAutoDiscovery;
 import step.core.plugins.Plugin;
 import step.core.timeseries.TimeSeriesIngestionPipeline;
 import step.core.timeseries.aggregation.TimeSeriesAggregationPipeline;
 import step.core.timeseries.bucket.BucketAttributes;
 import step.core.views.ViewManager;
+import step.core.views.ViewPlugin;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.plugins.views.functions.ErrorDistribution;
 import step.plugins.views.functions.ErrorDistributionView;
@@ -19,7 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @IgnoreDuringAutoDiscovery
-@Plugin(dependencies= {})
+@Plugin(dependencies= {ViewPlugin.class, ExecutionTypePlugin.class})
 public class TimeSeriesExecutionPlugin extends AbstractExecutionEnginePlugin {
 
 	// TODO find a better place to define this constant
@@ -63,22 +66,25 @@ public class TimeSeriesExecutionPlugin extends AbstractExecutionEnginePlugin {
 		ExecutionAccessor executionAccessor = context.getExecutionAccessor();
 		Execution execution = executionAccessor.get(context.getExecutionId());
 		ViewManager viewManager = context.require(ViewManager.class);
+		ExecutionTypeManager executionTypeManager = context.require(ExecutionTypeManager.class);
 
-		boolean executionPassed = execution.getResult() == ReportNodeStatus.PASSED;
+		if (executionTypeManager.get(execution.getExecutionType()).generateExecutionMetrics()) {
+			boolean executionPassed = execution.getResult() == ReportNodeStatus.PASSED;
 
-		ingestionPipeline.ingestPoint(withExecutionAttributes(execution, Map.of(METRIC_TYPE, EXECUTIONS_COUNT)), execution.getStartTime(), 1);
-		ingestionPipeline.ingestPoint(withExecutionAttributes(execution, Map.of(METRIC_TYPE, FAILURE_PERCENTAGE)), execution.getStartTime(), executionPassed ? 0 : 100);
-		ingestionPipeline.ingestPoint(withExecutionAttributes(execution, Map.of(METRIC_TYPE, FAILURE_COUNT)), execution.getStartTime(), executionPassed ? 0 : 1);
+			ingestionPipeline.ingestPoint(withExecutionAttributes(execution, Map.of(METRIC_TYPE, EXECUTIONS_COUNT)), execution.getStartTime(), 1);
+			ingestionPipeline.ingestPoint(withExecutionAttributes(execution, Map.of(METRIC_TYPE, FAILURE_PERCENTAGE)), execution.getStartTime(), executionPassed ? 0 : 100);
+			ingestionPipeline.ingestPoint(withExecutionAttributes(execution, Map.of(METRIC_TYPE, FAILURE_COUNT)), execution.getStartTime(), executionPassed ? 0 : 1);
 
-		ErrorDistribution errorDistribution = (ErrorDistribution) viewManager.queryView(ErrorDistributionView.ERROR_DISTRIBUTION_VIEW, context.getExecutionId());
+			ErrorDistribution errorDistribution = (ErrorDistribution) viewManager.queryView(ErrorDistributionView.ERROR_DISTRIBUTION_VIEW, context.getExecutionId());
 
-		errorDistribution.getCountByErrorCode().entrySet().forEach(entry -> {
-			ingestionPipeline.ingestPoint(withExecutionAttributes(execution, Map.of(METRIC_TYPE, FAILURES_COUNT_BY_ERROR_CODE, ERROR_CODE, entry.getKey())), execution.getStartTime(), entry.getValue() > 0 ? 1 : 0);
-		});
+			errorDistribution.getCountByErrorCode().entrySet().forEach(entry -> {
+				ingestionPipeline.ingestPoint(withExecutionAttributes(execution, Map.of(METRIC_TYPE, FAILURES_COUNT_BY_ERROR_CODE, ERROR_CODE, entry.getKey())), execution.getStartTime(), entry.getValue() > 0 ? 1 : 0);
+			});
 
-		// Ensure that all measurements have been flushed before the execution ends
-		// This is critical for the SchedulerTaskAssertions to work properly
-		ingestionPipeline.flush();
+			// Ensure that all measurements have been flushed before the execution ends
+			// This is critical for the SchedulerTaskAssertions to work properly
+			ingestionPipeline.flush();
+		}
 
 		super.afterExecutionEnd(context);
 	}

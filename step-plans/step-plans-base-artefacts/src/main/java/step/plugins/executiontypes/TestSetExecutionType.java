@@ -18,24 +18,26 @@
  ******************************************************************************/
 package step.plugins.executiontypes;
 
-import step.core.GlobalContext;
-import step.core.execution.type.ExecutionTypeManager;
-import step.core.execution.type.ExecutionTypePlugin;
-import step.core.plugins.AbstractControllerPlugin;
-import step.core.plugins.Plugin;
-import step.plugins.views.ViewControllerPlugin;
+import step.core.execution.AbstractExecutionEngineContext;
+import step.core.execution.type.ExecutionType;
+import step.core.views.ViewManager;
+import step.plugins.views.functions.ReportNodeStatusDistribution;
 
-@Plugin(dependencies= {ExecutionTypePlugin.class, ViewControllerPlugin.class})
-public class BaseExecutionTypePlugin extends AbstractControllerPlugin {
+public class TestSetExecutionType extends ExecutionType {
+
+	public static final String NAME = "TestSet";
+
+	private ViewManager viewManager;
+	
+	public TestSetExecutionType(AbstractExecutionEngineContext context) {
+		super(NAME);
+		this.viewManager = context.get(ViewManager.class);
+	}
 
 	@Override
-	public void serverStart(GlobalContext context) throws Exception {
-		super.serverStart(context);
-		
-		ExecutionTypeManager executionTypeManager = context.get(ExecutionTypeManager.class);
-		executionTypeManager.put(new DefaultExecutionType(context));
-		executionTypeManager.put(new TestSetExecutionType(context));
-
+	public Object getExecutionSummary(String executionId) {
+		ReportNodeStatusDistribution distribution = (ReportNodeStatusDistribution) viewManager.queryView("statusDistributionForTestcases", executionId);
+		return distribution;
 	}
 
 }
