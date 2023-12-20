@@ -34,8 +34,8 @@ import step.controller.multitenancy.client.RemoteMultitenancyClientImpl;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionMode;
-import step.core.execution.model.ExecutionParameters;
 import step.core.execution.model.ExecutionStatus;
+import step.core.plans.filters.PlanByIncludedNamesFilter;
 import step.core.repositories.ImportResult;
 
 import java.io.File;
@@ -60,15 +60,12 @@ public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 		ArgumentCaptor<AutomationPackageExecutionParameters> executionParamsCaptor = ArgumentCaptor.forClass(AutomationPackageExecutionParameters.class);
 		Mockito.verify(remoteAutomationPackageClientMock, Mockito.times(1)).executeAutomationPackage(fileCaptor.capture(), executionParamsCaptor.capture());
 		File capturedFile = fileCaptor.getValue();
-		Assert.assertEquals("test-file-jar.jar", capturedFile.getName());
+		Assert.assertEquals("test-file-jar-with-dependencies.jar", capturedFile.getName());
 
-		ArgumentCaptor<ExecutionParameters> captor = ArgumentCaptor.forClass(ExecutionParameters.class);
-		Mockito.verify(remoteExecutionManagerMock, Mockito.times(1)).execute(captor.capture());
-		ExecutionParameters captured = captor.getValue();
-		Assert.assertEquals("Test description", captured.getDescription());
+		AutomationPackageExecutionParameters captured = executionParamsCaptor.getValue();
 		Assert.assertEquals("testUser", captured.getUserID());
-		Assert.assertEquals("ResourceArtifact", captured.getRepositoryObject().getRepositoryID());
 		Assert.assertEquals(ExecutionMode.RUN, captured.getMode());
+		Assert.assertEquals(List.of("plan1", "plan2"), ((PlanByIncludedNamesFilter) captured.getPlanFilter()).getIncludedNames());
 
 		Assert.assertEquals(createTestCustomParams(), captured.getCustomParameters());
 	}
