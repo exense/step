@@ -1,7 +1,11 @@
 package step.plugins.timeseries.dashboards.model;
 
+import jakarta.validation.constraints.NotNull;
+
 public class TimeRange {
+	@NotNull
 	private long from;
+	@NotNull
 	private long to;
 
 	public long getFrom() {

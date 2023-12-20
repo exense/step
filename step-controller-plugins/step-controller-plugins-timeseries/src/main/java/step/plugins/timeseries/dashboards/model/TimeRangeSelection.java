@@ -1,8 +1,11 @@
 package step.plugins.timeseries.dashboards.model;
 
+import jakarta.validation.constraints.NotNull;
+
 import javax.annotation.Nullable;
 
 public class TimeRangeSelection {
+	@NotNull
 	private TimeRangeSelectionType type;
 	private TimeRange absoluteSelection;
 	private Long relativeRangeMs;

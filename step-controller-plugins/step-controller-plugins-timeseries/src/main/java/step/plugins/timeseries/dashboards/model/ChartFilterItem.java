@@ -1,13 +1,19 @@
 package step.plugins.timeseries.dashboards.model;
 
+import jakarta.validation.constraints.NotNull;
+
 import java.util.List;
 
 public class ChartFilterItem {
 	
 	private String label; // optional. should be used for filter options
+	@NotNull
 	private String attribute;
+	@NotNull
 	private ChartFilterItemType type;
+	@NotNull
 	private boolean exactMatch; // for text values
+	@NotNull
 	private boolean isRemovable = true;
 	
 	private Long min;

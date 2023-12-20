@@ -1,5 +1,6 @@
 package step.plugins.timeseries.dashboards.model;
 
+import jakarta.validation.constraints.NotNull;
 import step.core.timeseries.metric.MetricAggregation;
 import step.core.timeseries.metric.MetricRenderingSettings;
 
@@ -7,8 +8,11 @@ import java.util.List;
 
 public class AxesSettings {
 
+	@NotNull
 	private MetricAggregation aggregation;
+	@NotNull
 	private AxesDisplayType displayType;
+	@NotNull
 	private String unit;
 	private MetricRenderingSettings renderingSettings;
 

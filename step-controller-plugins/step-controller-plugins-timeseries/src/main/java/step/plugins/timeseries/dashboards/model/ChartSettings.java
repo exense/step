@@ -1,20 +1,31 @@
 package step.plugins.timeseries.dashboards.model;
 
+import jakarta.validation.constraints.NotNull;
 import step.core.timeseries.metric.MetricAttribute;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ChartSettings {
 	
+	@NotNull
 	private String metricKey;
-	private List<MetricAttribute> attributes;
+	@NotNull
+	private List<MetricAttribute> attributes = new ArrayList<>();
+	@NotNull
 	private AxesSettings primaryAxes;
-	private List<ChartFilterItem> filters;
-	private List<String> grouping;
+	@NotNull
+	private List<ChartFilterItem> filters = new ArrayList<>();
+	@NotNull
+	private List<String> grouping = new ArrayList<>();
+	@NotNull
 	private boolean inheritGlobalFilters;
+	@NotNull
 	private boolean inheritGlobalGrouping;
 	
+	@NotNull
 	private boolean readonlyGrouping;
+	@NotNull
 	private boolean readonlyAggregate;
 
 	public List<MetricAttribute> getAttributes() {

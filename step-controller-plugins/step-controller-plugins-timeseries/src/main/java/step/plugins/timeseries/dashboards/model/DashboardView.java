@@ -1,5 +1,6 @@
 package step.plugins.timeseries.dashboards.model;
 
+import jakarta.validation.constraints.NotNull;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.objectenricher.EnricheableObject;
 
@@ -7,11 +8,16 @@ import java.util.List;
 
 public class DashboardView extends AbstractOrganizableObject implements EnricheableObject {
 	
+	@NotNull
 	private String name;
 	private Long resolution;
+	@NotNull
 	private TimeRangeSelection timeRange;
+	@NotNull
 	private List<String> grouping;
+	@NotNull
 	private List<ChartFilterItem> filters;
+	@NotNull
 	private List<DashboardItem> dashlets;
 
 	public String getName() {
