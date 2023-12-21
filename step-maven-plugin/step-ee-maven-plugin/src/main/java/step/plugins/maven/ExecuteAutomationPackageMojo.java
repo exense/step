@@ -25,6 +25,7 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import step.automation.packages.client.RemoteAutomationPackageClientImpl;
 import step.automation.packages.execution.AutomationPackageExecutionParameters;
+import step.client.credentials.ControllerCredentials;
 import step.client.executions.RemoteExecutionManager;
 import step.controller.multitenancy.client.MultitenancyClient;
 import step.controller.multitenancy.client.RemoteMultitenancyClientImpl;
@@ -46,32 +47,32 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
 
     @Parameter(property = "step.step-project-name", required = false)
     private String stepProjectName;
-    @Parameter(property = "step-run-auto-packages.user-id", required = false)
+    @Parameter(property = "step-execute-auto-packages.user-id", required = false)
     private String userId;
     @Parameter(property = "step.auth-token", required = false)
     private String authToken;
 
-    @Parameter(property = "step-run-auto-packages.group-id", required = true, defaultValue = "${project.groupId}")
+    @Parameter(property = "step-execute-auto-packages.group-id", required = true, defaultValue = "${project.groupId}")
     private String groupId;
-    @Parameter(property = "step-run-auto-packages.artifact-id", required = true, defaultValue = "${project.artifactId}")
+    @Parameter(property = "step-execute-auto-packages.artifact-id", required = true, defaultValue = "${project.artifactId}")
     private String artifactId;
-    @Parameter(property = "step-run-auto-packages.artifact-version", required = true, defaultValue = "${project.version}")
+    @Parameter(property = "step-execute-auto-packages.artifact-version", required = true, defaultValue = "${project.version}")
     private String artifactVersion;
-    @Parameter(property = "step-run-auto-packages.artifact-classifier", required = false)
+    @Parameter(property = "step-execute-auto-packages.artifact-classifier", required = false)
     private String artifactClassifier;
 
-    @Parameter(property = "step-run-auto-packages.execution-parameters", required = false)
+    @Parameter(property = "step-execute-auto-packages.execution-parameters", required = false)
     private Map<String, String> executionParameters;
-    @Parameter(property = "step-run-auto-packages.exec-result-timeout-s", defaultValue = "3600")
+    @Parameter(property = "step-execute-auto-packages.exec-result-timeout-s", defaultValue = "3600")
     private Integer executionResultTimeoutS;
-    @Parameter(property = "step-run-auto-packages.wait-for-exec", defaultValue = "true")
+    @Parameter(property = "step-execute-auto-packages.wait-for-exec", defaultValue = "true")
     private Boolean waitForExecution;
-    @Parameter(property = "step-run-auto-packages.ensure-exec-success", defaultValue = "true")
+    @Parameter(property = "step-execute-auto-packages.ensure-exec-success", defaultValue = "true")
     private Boolean ensureExecutionSuccess;
 
-    @Parameter(property = "step-run-auto-packages.include-plans")
+    @Parameter(property = "step-execute-auto-packages.include-plans")
     private String includePlans;
-    @Parameter(property = "step-run-auto-packages.exclude-plans")
+    @Parameter(property = "step-execute-auto-packages.exclude-plans")
     private String excludePlans;
 
     @Override
@@ -97,13 +98,17 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
             AutomationPackageExecutionParameters executionParameters = prepareExecutionParameters();
 
             List<String> executionIds = automationPackageClient.executeAutomationPackage(automationPackageFile, executionParameters);
-            String baseMessage = "Execution has been started in Step (" + getUrl() + "): " + executionIds;
+            getLog().info("Executions have been started in Step (" + getUrl() + "):");
+            for (String executionId : executionIds) {
+                Execution executionInfo = remoteExecutionManager.get(executionId);
+                getLog().info("- " + executionToString(executionId, executionInfo));
+            }
 
             if (getWaitForExecution()) {
-                getLog().info(baseMessage + ". Waiting on results...");
+                getLog().info("Waiting on results...");
                 waitForExecutionFinish(remoteExecutionManager, executionIds);
             } else {
-                getLog().info(baseMessage + ". Waiting on results is disabled.");
+                getLog().info("Waiting on results is disabled.");
             }
         } catch (Exception ex) {
             throw logAndThrow("Unable to run execution in Step (" + getUrl() + ")", ex);
@@ -121,13 +126,13 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
                 Execution endedExecution = endedExecutions.stream().filter(e -> e.getId().toString().equals(id)).findFirst().orElse(null);
                 if (endedExecution == null) {
                     error = true;
-                    getLog().error("Unknown result status for execution " + id);
+                    getLog().error("Unknown result status for execution " + executionToString(id, null));
                 } else if (getEnsureExecutionSuccess() && !endedExecution.getImportResult().isSuccessful()) {
                     error = true;
-                    getLog().error("The execution result is NOT OK for execution " + id + ". The following error(s) occurred during import " +
+                    getLog().error("The execution result is NOT OK for execution " + executionToString(id, endedExecution) + ". The following error(s) occurred during import " +
                             String.join(";", endedExecution.getImportResult().getErrors()));
                 } else {
-                    getLog().info("The execution result is OK. Final status is " + endedExecution.getResult());
+                    getLog().info("The execution result " + executionToString(id, endedExecution) + " is OK. Final status is " + endedExecution.getResult());
                 }
             }
             if (error) {
@@ -135,6 +140,14 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
             }
         } catch (TimeoutException | InterruptedException ex) {
             throw logAndThrow("The success execution result is not received from Step in " + getExecutionResultTimeoutS() + "seconds", ex);
+        }
+    }
+
+    private String executionToString(String id, Execution ex) {
+        if (ex != null) {
+            return String.format("'%s' (%s)", ex.getDescription(), ex.getId().toString());
+        } else {
+            return id;
         }
     }
 
@@ -146,6 +159,11 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
         } else {
             throw logAndThrow("Unable to resolve automation package file " + artifactToString(getGroupId(), getArtifactId(), getArtifactClassifier(), getArtifactVersion()));
         }
+    }
+
+    @Override
+    protected ControllerCredentials getControllerCredentials() {
+        return new ControllerCredentials(getUrl(), getAuthToken());
     }
 
     protected MultitenancyClient createMultitenancyClient() {
