@@ -59,6 +59,7 @@ public class TimeSeriesService extends AbstractStepServices {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public TimeSeriesAPIResponse getTimeSeries(FetchBucketsRequest request) {
+        enrichRequestFilter(request);
         return handler.getTimeSeries(request);
     }
     
@@ -69,7 +70,15 @@ public class TimeSeriesService extends AbstractStepServices {
     @Produces(MediaType.APPLICATION_JSON)
     // TODO this method should be renamed as it doesn't return measurements but a timeseries
     public TimeSeriesAPIResponse getMeasurements(FetchBucketsRequest request) {
+        enrichRequestFilter(request);
         return handler.getOrBuildTimeSeries(request);
+    }
+
+    private void enrichRequestFilter(FetchBucketsRequest request) {
+        String additionalOqlFilter = getObjectFilter().getOQLFilter();
+        if (additionalOqlFilter != null && ! additionalOqlFilter.isEmpty()) {
+            request.setOqlFilter(request.getOqlFilter() + " and (" + additionalOqlFilter + ")");
+        }
     }
 
     /**

@@ -17,6 +17,7 @@ import step.plugins.views.functions.ErrorDistributionView;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 @IgnoreDuringAutoDiscovery
 @Plugin(dependencies= {})
@@ -36,17 +37,47 @@ public class TimeSeriesExecutionPlugin extends AbstractExecutionEnginePlugin {
 	public static final String TASK_ID = "taskId";
 	public static final String PLAN_ID = "planId";
 
-	private final TimeSeriesIngestionPipeline ingestionPipeline;
+	private final TimeSeriesIngestionPipeline parentIngestionPipeline;
 	private final TimeSeriesAggregationPipeline aggregationPipeline;
+	private TimeSeriesIngestionPipeline ingestionPipeline;
 
-	public TimeSeriesExecutionPlugin(TimeSeriesIngestionPipeline ingestionPipeline, TimeSeriesAggregationPipeline aggregationPipeline) {
-		this.ingestionPipeline = ingestionPipeline;
+	public TimeSeriesExecutionPlugin(TimeSeriesIngestionPipeline parentIngestionPipeline, TimeSeriesAggregationPipeline aggregationPipeline) {
+		this.parentIngestionPipeline = parentIngestionPipeline;
 		this.aggregationPipeline = aggregationPipeline;
 	}
 
 	@Override
 	public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
 		super.initializeExecutionContext(executionEngineContext, executionContext);
+		TreeMap<String, String> additionalAttributes = executionContext.getObjectEnricher().getAdditionalAttributes();
+		ingestionPipeline = new TimeSeriesIngestionPipeline(null, 0) {
+			@Override
+			public void ingestPoint(Map<String, Object> attributes, long timestamp, long value) {
+				attributes.putAll(additionalAttributes);
+				parentIngestionPipeline.ingestPoint(attributes, timestamp, value);
+			}
+
+			@Override
+			public void ingestPoint(BucketAttributes attributes, long timestamp, long value) {
+				attributes.putAll(additionalAttributes);
+				parentIngestionPipeline.ingestPoint(attributes, timestamp, value);
+			}
+
+			@Override
+			public void flush() {
+				parentIngestionPipeline.flush();
+			}
+
+			@Override
+			public long getFlushCount() {
+				return parentIngestionPipeline.getFlushCount();
+			}
+
+			@Override
+			public void close() {
+				parentIngestionPipeline.close();
+			}
+		};
 
 		executionContext.put(TimeSeriesAggregationPipeline.class, aggregationPipeline);
 		executionContext.put(TimeSeriesIngestionPipeline.class, ingestionPipeline);

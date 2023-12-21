@@ -1,5 +1,7 @@
 package step.plugins.measurements;
 
+import groovy.transform.Synchronized;
+import io.prometheus.client.Collector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.artefacts.reports.CallFunctionReportNode;
@@ -21,6 +23,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+
+import static step.plugins.measurements.MeasurementControllerPlugin.ThreadgroupGaugeName;
 
 @Plugin
 @IgnoreDuringAutoDiscovery
@@ -80,7 +84,7 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 			measurementHandler.afterExecutionEnd(context);
 		}
 		//Clean up gauge metrics for execution id
-		GaugeCollector gaugeCollector = gaugeCollectorRegistry.getGaugeCollector(MeasurementControllerPlugin.ThreadgroupGaugeName);
+		GaugeCollector gaugeCollector = gaugeCollectorRegistry.getGaugeCollector(ThreadgroupGaugeName);
 		ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 		Runnable task = new Runnable() {
 			public void run() {
@@ -97,18 +101,48 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 	@Override
 	public void beforeReportNodeExecution(ExecutionContext context, ReportNode node) {
 		if (node instanceof ThreadReportNode) {
-			ThreadReportNode tNode = (ThreadReportNode) node;
-			GaugeCollector gaugeCollector = gaugeCollectorRegistry.getGaugeCollector(MeasurementControllerPlugin.ThreadgroupGaugeName);
-			String schedulerTaskId = (String) context.get(SCHEDULER_TASK_ID);
-			schedulerTaskId = (schedulerTaskId!=null) ? schedulerTaskId : "";
-			String planId = context.getPlan().getId().toString();
-			String[] labels = {tNode.getExecutionID(),tNode.getThreadGroupName(),planId,schedulerTaskId};
-			gaugeCollector.getGauge().labels(labels).inc();
-			labelsByExec.get(context.getExecutionId()).add(labels);
-			List<Measurement> measurements = gaugeCollector.collectAsMeasurements();
-			for (MeasurementHandler measurementHandler : MeasurementPlugin.measurementHandlers) {
-				measurementHandler.processGauges(measurements);
-			}
+			processThreadReportNode(context, (ThreadReportNode) node, true);
+		}
+	}
+
+	@Synchronized
+	private GaugeCollector getOrInitThreadGauge(ExecutionContext context) {
+		GaugeCollector gaugeCollector = gaugeCollectorRegistry.getGaugeCollector(ThreadgroupGaugeName);
+		if (gaugeCollector == null) {
+			List<String> labelsThreadGroup = new ArrayList<>(Arrays.asList(ATTRIBUTE_EXECUTION_ID, NAME, PLAN_ID, TASK_ID));
+			Set<String> additionalAttributeKeys = context.getObjectEnricher().getAdditionalAttributes().keySet();
+			labelsThreadGroup.addAll(additionalAttributeKeys);
+
+			gaugeCollector = new GaugeCollector(ThreadgroupGaugeName,
+					"step thread group active threads count", labelsThreadGroup.toArray(String[]::new)) {
+				@Override
+				public List<Collector.MetricFamilySamples> collect() {
+					return getGauge().collect();
+				}
+			};
+			//Register thread group gauge metrics
+			gaugeCollectorRegistry.registerCollector(ThreadgroupGaugeName, gaugeCollector);
+		}
+		return gaugeCollector;
+	}
+
+	private void processThreadReportNode(ExecutionContext context, ThreadReportNode node, boolean inc) {
+		GaugeCollector gaugeCollector = getOrInitThreadGauge(context);
+		String schedulerTaskId = (String) context.get(SCHEDULER_TASK_ID);
+		schedulerTaskId = (schedulerTaskId!=null) ? schedulerTaskId : "";
+		String planId = context.getPlan().getId().toString();
+		List<String> labels = new ArrayList<>(Arrays.asList(node.getExecutionID(),node.getThreadGroupName(),planId,schedulerTaskId));
+		labels.addAll(context.getObjectEnricher().getAdditionalAttributes().values());
+		String[] labelsArray = labels.toArray(String[]::new);
+		if (inc) {
+			gaugeCollector.getGauge().labels(labelsArray).inc();
+		} else {
+			gaugeCollector.getGauge().labels(labelsArray).dec();
+		}
+		labelsByExec.get(context.getExecutionId()).add(labelsArray);
+		List<Measurement> measurements = gaugeCollector.collectAsMeasurements();
+		for (MeasurementHandler measurementHandler : MeasurementPlugin.measurementHandlers) {
+			measurementHandler.processGauges(measurements);
 		}
 	}
 
@@ -156,27 +190,16 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 			}
 
 			//Delegate to plugins implementation
-			if (measurements.size() > 0) {
-				processMeasurements(measurements, executionContext);
+			if (!measurements.isEmpty()) {
+				processMeasurements(measurements);
 			}
 		}
 		if (node instanceof ThreadReportNode) {
-			ThreadReportNode tNode = (ThreadReportNode) node;
-			GaugeCollector gaugeCollector = gaugeCollectorRegistry.getGaugeCollector(MeasurementControllerPlugin.ThreadgroupGaugeName);
-			String schedulerTaskId = (String) executionContext.get(SCHEDULER_TASK_ID);
-			schedulerTaskId = (schedulerTaskId!=null) ? schedulerTaskId : "";
-			String planId = executionContext.getPlan().getId().toString();
-			String[] labels = {tNode.getExecutionID(),tNode.getThreadGroupName(),planId,schedulerTaskId};
-			gaugeCollector.getGauge().labels(labels).dec();
-			labelsByExec.get(executionContext.getExecutionId()).add(labels);
-			List<Measurement> measurements = gaugeCollector.collectAsMeasurements();
-			for (MeasurementHandler measurementHandler : MeasurementPlugin.measurementHandlers) {
-				measurementHandler.processGauges(measurements);
-			}
+			processThreadReportNode(executionContext, (ThreadReportNode) node, false);
 		}
 	}
 
-	protected void processMeasurements(List<Measurement> measurements, ExecutionContext executionContext) {
+	protected void processMeasurements(List<Measurement> measurements) {
 		for (MeasurementHandler measurementHandler : MeasurementPlugin.measurementHandlers) {
 			try {
 				measurementHandler.processMeasurements(measurements);
