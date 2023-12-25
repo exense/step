@@ -37,9 +37,7 @@ import step.core.plans.filters.PlanByExcludedNamesFilter;
 import step.core.plans.filters.PlanByIncludedNamesFilter;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
@@ -128,10 +126,16 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
                 if (endedExecution == null) {
                     error = true;
                     getLog().error("Unknown result status for execution " + executionToString(id, null));
-                } else if (getEnsureExecutionSuccess() && endedExecution.getResult() != ReportNodeStatus.PASSED && endedExecution.getResult() != ReportNodeStatus.SKIPPED) {
+                } else if (getEnsureExecutionSuccess() && !isStatusSuccess(endedExecution)) {
                     error = true;
+                    List<String> errors;
+                    if (endedExecution.getImportResult() != null && endedExecution.getImportResult().getErrors() != null) {
+                        errors = endedExecution.getImportResult().getErrors();
+                    } else {
+                        errors = new ArrayList<>();
+                    }
                     getLog().error("The execution result is NOT OK for execution " + executionToString(id, endedExecution) + ". The following error(s) occurred during import " +
-                            String.join(";", endedExecution.getImportResult().getErrors()));
+                            String.join(";", errors));
                 } else {
                     getLog().info("The execution result " + executionToString(id, endedExecution) + " is OK. Final status is " + endedExecution.getResult());
                 }
@@ -144,9 +148,18 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
         }
     }
 
+    private boolean isStatusSuccess(Execution ex){
+        Set<ReportNodeStatus> okStatus = Set.of(ReportNodeStatus.PASSED, ReportNodeStatus.SKIPPED, ReportNodeStatus.NORUN);
+        return okStatus.contains(ex.getResult());
+    }
+
     private String executionToString(String id, Execution ex) {
         if (ex != null) {
-            return String.format("'%s' (%s)", ex.getDescription(), ex.getId().toString());
+            String res = String.format("'%s' (%s).", ex.getDescription(), ex.getId().toString());
+            if (ex.getResult() != null) {
+                res += " Status: " + ex.getResult();
+            }
+            return res;
         } else {
             return id;
         }

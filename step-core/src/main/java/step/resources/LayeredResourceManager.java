@@ -152,13 +152,26 @@ public class LayeredResourceManager implements ResourceManager {
     }
 
     protected <V> V layeredLookup(Function<ResourceManager, V> f) {
+        V result = null;
+        ResourceMissingException caught = null;
         for (ResourceManager rm : resourceManagers) {
-            V result = f.apply(rm);
-            if(result != null) {
+            try {
+                result = f.apply(rm);
+            } catch (ResourceMissingException ex) {
+                // just ignore the exception
+                caught = ex;
+            }
+            if (result != null) {
                 return result;
             }
         }
-        return null;
+
+        // if nothing is found we have to re-throw the exception from underlying resource manager
+        if (caught != null) {
+            throw caught;
+        } else {
+            return null;
+        }
     }
 
     protected <V> List<V> layeredSearch(Function<ResourceManager, List<V>> searchFunction) {
