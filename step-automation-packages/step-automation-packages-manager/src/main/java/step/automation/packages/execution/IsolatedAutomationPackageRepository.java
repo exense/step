@@ -18,6 +18,8 @@
  ******************************************************************************/
 package step.automation.packages.execution;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.automation.packages.AutomationPackage;
 import step.automation.packages.AutomationPackageManager;
 import step.core.accessors.AbstractOrganizableObject;
@@ -28,12 +30,14 @@ import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
 import step.core.repositories.*;
+import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 import step.resources.LayeredResourceAccessor;
 import step.resources.LayeredResourceManager;
 import step.resources.ResourceAccessor;
 import step.resources.ResourceManager;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -42,6 +46,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class IsolatedAutomationPackageRepository extends AbstractRepository {
 
     public static final String REPOSITORY_PARAM_CONTEXTID = "contextid";
+
+    public static final Logger log = LoggerFactory.getLogger(IsolatedAutomationPackageRepository.class);
 
     private final ConcurrentHashMap<String, AutomationPackageManager> inMemoryPackageManagers = new ConcurrentHashMap<>();
 
@@ -104,10 +110,18 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
         planAccessor.save(plan);
 
         FunctionAccessor functionAccessor = context.get(FunctionAccessor.class);
+        List<Function> functionsForSave = new ArrayList<>();
         if (plan.getFunctions() != null) {
-            plan.getFunctions().iterator().forEachRemaining(functionAccessor::save);
+            plan.getFunctions().iterator().forEachRemaining(functionsForSave::add);
         }
-        automationPackageManager.getPackageFunctions(automationPackage.getId()).forEach(functionAccessor::save);
+        functionsForSave.addAll(automationPackageManager.getPackageFunctions(automationPackage.getId()));
+
+        // we ensure that all functions in automation package have unique names, i.e. there no previously stored functions with the same names
+        List<String> errors = saveFunctionsWithUniqueName(functionAccessor, functionsForSave);
+        if (!errors.isEmpty()) {
+            result.setErrors(errors);
+            return result;
+        }
 
         ResourceManager contextResourceManager = context.getResourceManager();
         if (!(contextResourceManager instanceof LayeredResourceManager)) {
@@ -131,6 +145,20 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
         result.setSuccessful(true);
 
         return result;
+    }
+
+    private List<String> saveFunctionsWithUniqueName(FunctionAccessor functionAccessor, List<Function> functionsForSave) {
+        List<String> errors = new ArrayList<>();
+        for (Function function : functionsForSave) {
+            String functionName = function.getAttribute(AbstractOrganizableObject.NAME);
+            if (functionAccessor.findByAttributes(Map.of(AbstractOrganizableObject.NAME, functionName)) != null) {
+                errors.add("Function '" + functionName + "' already exists");
+            }
+        }
+        if (errors.isEmpty()) {
+            functionAccessor.save(functionsForSave);
+        }
+        return errors;
     }
 
     private static boolean isLayeredAccessor(Accessor<?> accessor) {

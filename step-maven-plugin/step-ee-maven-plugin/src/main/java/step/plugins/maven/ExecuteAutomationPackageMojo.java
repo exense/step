@@ -29,6 +29,7 @@ import step.client.credentials.ControllerCredentials;
 import step.client.executions.RemoteExecutionManager;
 import step.controller.multitenancy.client.MultitenancyClient;
 import step.controller.multitenancy.client.RemoteMultitenancyClientImpl;
+import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionMode;
 import step.core.plans.PlanFilter;
@@ -127,7 +128,7 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
                 if (endedExecution == null) {
                     error = true;
                     getLog().error("Unknown result status for execution " + executionToString(id, null));
-                } else if (getEnsureExecutionSuccess() && !endedExecution.getImportResult().isSuccessful()) {
+                } else if (getEnsureExecutionSuccess() && endedExecution.getResult() != ReportNodeStatus.PASSED && endedExecution.getResult() != ReportNodeStatus.SKIPPED) {
                     error = true;
                     getLog().error("The execution result is NOT OK for execution " + executionToString(id, endedExecution) + ". The following error(s) occurred during import " +
                             String.join(";", endedExecution.getImportResult().getErrors()));

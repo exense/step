@@ -74,6 +74,7 @@ public class AutomationPackageManager {
     private final AutomationPackageReader packageReader;
     private final AutomationPackageKeywordsAttributesApplier keywordsAttributesApplier;
     private final ResourceManager resourceManager;
+    private boolean isIsolated = false;
 
     public AutomationPackageManager(AutomationPackageAccessor automationPackageAccessor,
                                     FunctionManager functionManager,
@@ -103,7 +104,7 @@ public class AutomationPackageManager {
 
     public static AutomationPackageManager createIsolatedAutomationPackageManager(ObjectId isolatedContextId, FunctionTypeRegistry functionTypeRegistry){
         InMemoryFunctionAccessorImpl inMemoryFunctionRepository = new InMemoryFunctionAccessorImpl();
-        return new AutomationPackageManager(
+        AutomationPackageManager automationPackageManager = new AutomationPackageManager(
                 new InMemoryAutomationPackageAccessorImpl(),
                 new FunctionManagerImpl(inMemoryFunctionRepository, functionTypeRegistry),
                 inMemoryFunctionRepository,
@@ -112,6 +113,8 @@ public class AutomationPackageManager {
                 new InMemoryExecutionTaskAccessor(),
                 null
         );
+        automationPackageManager.isIsolated = true;
+        return automationPackageManager;
     }
 
     public AutomationPackage getAutomationPackageById(ObjectId id, ObjectPredicate objectPredicate) {
@@ -498,6 +501,10 @@ public class AutomationPackageManager {
         return executionTaskAccessor.findManyByCriteria(getAutomationPackageIdCriteria(automationPackageId)).collect(Collectors.toList());
     }
 
+    public boolean isIsolated() {
+        return isIsolated;
+    }
+
     public PlanAccessor getPlanAccessor() {
         return planAccessor;
     }
@@ -515,7 +522,11 @@ public class AutomationPackageManager {
     }
 
     public void cleanup() {
-        this.resourceManager.cleanup();
+        if (isIsolated) {
+            this.resourceManager.cleanup();
+        } else {
+            log.info("Skip automation package cleanup. Cleanup is only supported for isolated (in-memory) automation package manager");
+        }
     }
 
     private static File stream2file(InputStream in, String fileName) throws IOException {
