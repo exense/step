@@ -31,6 +31,7 @@ import step.core.plans.Plan;
 import step.core.plans.PlanFilter;
 import step.core.repositories.RepositoryObjectReference;
 import step.core.scheduler.ExecutionScheduler;
+import step.functions.accessor.FunctionAccessor;
 import step.functions.type.FunctionTypeRegistry;
 
 import java.io.InputStream;
@@ -55,15 +56,18 @@ public class AutomationPackageExecutor {
     private final ExecutionScheduler scheduler;
     private final ExecutionAccessor executionAccessor;
     private final FunctionTypeRegistry functionTypeRegistry;
+    private final FunctionAccessor functionAccessor;
     private final IsolatedAutomationPackageRepository isolatedAutomationPackageRepository;
 
     public AutomationPackageExecutor(ExecutionScheduler scheduler,
                                      ExecutionAccessor executionAccessor,
                                      FunctionTypeRegistry functionTypeRegistry,
+                                     FunctionAccessor functionAccessor,
                                      IsolatedAutomationPackageRepository isolatedAutomationPackageRepository) {
         this.scheduler = scheduler;
         this.executionAccessor = executionAccessor;
         this.functionTypeRegistry = functionTypeRegistry;
+        this.functionAccessor = functionAccessor;
         this.isolatedAutomationPackageRepository = isolatedAutomationPackageRepository;
     }
 
@@ -74,7 +78,10 @@ public class AutomationPackageExecutor {
         // prepare the isolated in-memory automation package manager with the only one automation package
         List<String> executions = new ArrayList<>();
         try {
-            AutomationPackageManager inMemoryPackageManager = AutomationPackageManager.createIsolatedAutomationPackageManager(contextId, functionTypeRegistry);
+            AutomationPackageManager inMemoryPackageManager = AutomationPackageManager.createIsolatedAutomationPackageManager(
+                    contextId, functionTypeRegistry,
+                    functionAccessor
+            );
             ObjectId packageId = inMemoryPackageManager.createAutomationPackage(automationPackage, fileName, objectEnricher, objectPredicate);
             isolatedAutomationPackageRepository.putContext(contextId.toString(), inMemoryPackageManager);
 

@@ -39,8 +39,6 @@ import step.functions.plugin.FunctionControllerPlugin;
 import step.functions.type.FunctionTypeRegistry;
 import step.resources.ResourceManagerControllerPlugin;
 
-import java.io.IOException;
-
 @Plugin(dependencies = {ObjectHookControllerPlugin.class, ResourceManagerControllerPlugin.class, FunctionControllerPlugin.class, SchedulerPlugin.class})
 public class AutomationPackagePlugin extends AbstractControllerPlugin {
 
@@ -87,6 +85,7 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
                 context.getScheduler(),
                 context.require(ExecutionAccessor.class),
                 context.require(FunctionTypeRegistry.class),
+                context.require(FunctionAccessor.class),
                 context.require(IsolatedAutomationPackageRepository.class)
         );
         context.put(AutomationPackageExecutor.class, packageExecutor);

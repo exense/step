@@ -115,13 +115,7 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
             plan.getFunctions().iterator().forEachRemaining(functionsForSave::add);
         }
         functionsForSave.addAll(automationPackageManager.getPackageFunctions(automationPackage.getId()));
-
-        // we ensure that all functions in automation package have unique names, i.e. there no previously stored functions with the same names
-        List<String> errors = saveFunctionsWithUniqueName(functionAccessor, functionsForSave);
-        if (!errors.isEmpty()) {
-            result.setErrors(errors);
-            return result;
-        }
+        functionAccessor.save(functionsForSave);
 
         ResourceManager contextResourceManager = context.getResourceManager();
         if (!(contextResourceManager instanceof LayeredResourceManager)) {
@@ -145,20 +139,6 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
         result.setSuccessful(true);
 
         return result;
-    }
-
-    private List<String> saveFunctionsWithUniqueName(FunctionAccessor functionAccessor, List<Function> functionsForSave) {
-        List<String> errors = new ArrayList<>();
-        for (Function function : functionsForSave) {
-            String functionName = function.getAttribute(AbstractOrganizableObject.NAME);
-            if (functionAccessor.findByAttributes(Map.of(AbstractOrganizableObject.NAME, functionName)) != null) {
-                errors.add("Function '" + functionName + "' already exists");
-            }
-        }
-        if (errors.isEmpty()) {
-            functionAccessor.save(functionsForSave);
-        }
-        return errors;
     }
 
     private static boolean isLayeredAccessor(Accessor<?> accessor) {
