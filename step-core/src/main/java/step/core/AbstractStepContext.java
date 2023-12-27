@@ -52,7 +52,7 @@ public abstract class AbstractStepContext extends AbstractContext {
 		layeredAccessor.pushAccessor(parentContext.getResourceAccessor());
 		resourceAccessor = layeredAccessor;
 
-		resourceManager = new LayeredResourceManager(parentContext.getResourceManager());
+		resourceManager = new LayeredResourceManager(parentContext.getResourceManager(), true);
 
 		setFileResolver(new FileResolver(resourceManager));
 	}

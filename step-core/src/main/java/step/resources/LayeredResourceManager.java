@@ -22,10 +22,7 @@ import step.core.objectenricher.ObjectEnricher;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -33,19 +30,47 @@ public class LayeredResourceManager implements ResourceManager {
 
     private final List<ResourceManager> resourceManagers = new ArrayList<>();
 
+    private ResourceManager permanentResourceManager = null;
+
     public LayeredResourceManager() {
     }
 
     public LayeredResourceManager(ResourceManager resourceManager) {
-        this.resourceManagers.add(resourceManager);
+        addManager(resourceManager, true);
     }
 
-    public void addManager(ResourceManager manager) {
+    public LayeredResourceManager(ResourceManager resourceManager, boolean isPermanent) {
+        addManager(resourceManager, isPermanent);
+    }
+
+    /**
+     * Adds the resource manager to the bottom layer
+     *
+     * @param manager     the resource manager to be added
+     * @param isPermanent if true, this resource manager is designed to keep all resources permanently
+     *                    (unlike the non-permanent resource managers which resources are temporarily and can be
+     *                    automatically deleted)
+     */
+    public void addManager(ResourceManager manager, boolean isPermanent) {
         resourceManagers.add(manager);
+        if (isPermanent) {
+            permanentResourceManager = manager;
+        }
     }
 
-    public void pushManager(ResourceManager manager) {
+    /**
+     * Adds the resource manager to the top layer
+     *
+     * @param manager     the resource manager to be added
+     * @param isPermanent if true, this resource manager is designed to keep all resources permanently
+     *                    (unlike the non-permanent resource managers which resources are temporarily and can be
+     *                    automatically deleted)
+     */
+    public void pushManager(ResourceManager manager, boolean isPermanent) {
         resourceManagers.add(0, manager);
+        if (isPermanent) {
+            permanentResourceManager = manager;
+        }
     }
 
     @Override
@@ -191,6 +216,22 @@ public class LayeredResourceManager implements ResourceManager {
     }
 
     public List<ResourceManager> getResourceManagers() {
-        return resourceManagers;
+        return Collections.unmodifiableList(resourceManagers);
+    }
+
+    /**
+     * Returns the nested resource manager marked as permanent. I.e. all resources stored in this resource manager
+     * will be stored permanently and won't be automatically deleted as temporary resources.
+     */
+    public ResourceManager getPermanentResourceManager() {
+        if (permanentResourceManager != null) {
+            if (permanentResourceManager instanceof LayeredResourceManager) {
+                return ((LayeredResourceManager) permanentResourceManager).getPermanentResourceManager();
+            } else {
+                return permanentResourceManager;
+            }
+        } else {
+            return null;
+        }
     }
 }

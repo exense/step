@@ -124,7 +124,8 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
         }
 
         // import all resources from automation package to execution context by adding the layer to contextResourceManager
-        ((LayeredResourceManager) contextResourceManager).pushManager(automationPackageManager.getResourceManager());
+        // resource manager used in isolated package manager is non-permanent
+        ((LayeredResourceManager) contextResourceManager).pushManager(automationPackageManager.getResourceManager(), false);
 
         // push the resource accessor from resource manager to keep consistency between ResourceManager and ResourceAccessor
         if (automationPackageManager.getResourceManager().getResourceAccessor() != null) {
