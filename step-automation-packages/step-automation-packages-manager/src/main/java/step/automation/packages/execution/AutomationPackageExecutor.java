@@ -72,7 +72,7 @@ public class AutomationPackageExecutor {
     }
 
     public List<String> runInIsolation(InputStream automationPackage, String fileName, AutomationPackageExecutionParameters parameters,
-                                       ObjectEnricher objectEnricher, String userId, ObjectPredicate objectPredicate) throws AutomationPackageManagerException {
+                                       ObjectEnricher objectEnricher, String userName, ObjectPredicate objectPredicate) throws AutomationPackageManagerException {
         ObjectId contextId = new ObjectId();
 
         // prepare the isolated in-memory automation package manager with the only one automation package
@@ -97,8 +97,8 @@ public class AutomationPackageExecutor {
                     params.setRepositoryObject(new RepositoryObjectReference(IsolatedAutomationPackageRepositoryPlugin.ISOLATED_AUTOMATION_PACKAGE, repositoryParameters));
                     params.setDescription(CommonExecutionParameters.defaultDescription(plan));
 
-                    if (userId != null) {
-                        params.setUserID(userId);
+                    if (userName != null) {
+                        params.setUserID(userName);
                     }
 
                     String newExecutionId = this.scheduler.execute(params);

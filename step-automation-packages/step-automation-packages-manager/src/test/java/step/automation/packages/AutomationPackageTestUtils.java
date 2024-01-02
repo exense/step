@@ -33,7 +33,7 @@ public class AutomationPackageTestUtils {
 
     public static final String PLAN_NAME_FROM_DESCRIPTOR = "Test Plan";
     public static final String PLAN_NAME_FROM_DESCRIPTOR_2 = "Test Plan 2";
-    public static final String INLINE_PLAN = "inlinePlan";
+    public static final String INLINE_PLAN = "Inline Plan";
     public static final String PLAN_FROM_PLANS_ANNOTATION = "plan.plan";
 
     public static final String J_METER_KEYWORD_1 = "JMeter keyword from automation package";

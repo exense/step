@@ -81,7 +81,7 @@ public class StepRunnerWithPlansAnnotationTest extends AbstractKeyword {
 	}
 
 	@Plan("Echo PARAM_EXEC")
-	@Keyword
+	@Keyword(name = "Inline Plan")
 	public void inlinePlan() {}
 
 }
