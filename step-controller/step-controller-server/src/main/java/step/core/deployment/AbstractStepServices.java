@@ -28,6 +28,7 @@ import step.core.execution.ExecutionContext;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectFilter;
 import step.core.objectenricher.ObjectHookRegistry;
+import step.core.objectenricher.ObjectPredicate;
 import step.core.scheduler.ExecutionScheduler;
 import step.framework.server.AbstractServices;
 import step.framework.server.Session;
@@ -73,6 +74,10 @@ public abstract class AbstractStepServices extends AbstractServices<User> {
 
 	protected ObjectFilter getObjectFilter() {
 		return objectHookRegistry.getObjectFilter(getSession());
+	}
+
+	protected ObjectPredicate getObjectPredicate(){
+		return objectHookRegistry.getObjectPredicate(getSession());
 	}
 
 	protected AuthorizationManager<User, Session<User>> getAuthorizationManager(){

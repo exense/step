@@ -87,7 +87,7 @@ public class StepJarParser {
         try (AnnotationScanner annotationScanner = AnnotationScanner.forSpecificJar(artifact)) {
             // This code is moved to automation package reader just to be reused in StepJarParser for now.
             // Further the StepJarParser should be completely replaced with automation package functionality
-            List<Plan> result = automationPackageReader.extractAnnotatedPlansFromFile(
+            List<Plan> result = automationPackageReader.extractAnnotatedPlans(
                     artifact, annotationScanner, includedClasses, includedAnnotations, excludedClasses, excludedAnnotations
             );
 
@@ -118,4 +118,5 @@ public class StepJarParser {
             return functions;
         }
     }
+
 }

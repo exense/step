@@ -32,11 +32,7 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 import step.automation.packages.execution.AutomationPackageExecutionParameters;
 import step.automation.packages.execution.AutomationPackageExecutor;
 import step.core.access.User;
-import step.core.collections.PojoFilter;
 import step.core.deployment.AbstractStepServices;
-import step.core.objectenricher.ObjectFilter;
-import step.core.objectenricher.ObjectPredicate;
-import step.core.ql.OQLFilterBuilder;
 import step.framework.server.security.Secured;
 
 import java.io.InputStream;
@@ -57,19 +53,19 @@ public class AutomationPackageServices extends AbstractStepServices {
     }
 
     @GET
-    @Path("/{name}")
+    @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
     @Secured(right = "automation-package-read")
-    public AutomationPackage getAutomationPackage(@PathParam("name") String automationPackageName) {
-        return automationPackageManager.getAutomationPackageByName(automationPackageName, getObjectPredicate());
+    public AutomationPackage getAutomationPackage(@PathParam("id") String id) {
+        return automationPackageManager.getAutomatonPackageById(new ObjectId(id));
     }
 
     @DELETE
-    @Path("/{name}")
+    @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
     @Secured(right = "automation-package-delete")
-    public void deleteAutomationPackage(@PathParam("name") String automationPackageName) {
-        automationPackageManager.removeAutomationPackage(automationPackageName, getObjectPredicate());
+    public void deleteAutomationPackage(@PathParam("id") String id) {
+        automationPackageManager.removeAutomationPackage(new ObjectId(id), getObjectPredicate());
     }
 
     @POST
@@ -113,18 +109,34 @@ public class AutomationPackageServices extends AbstractStepServices {
     }
 
     @PUT
+    @Path("/{id}")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.TEXT_PLAIN)
     @Secured(right = "automation-package-write")
-    public Response updateAutomationPackage(@FormDataParam("file") InputStream uploadedInputStream,
+    public void updateAutomationPackageById(@PathParam("id") String id,
+                                            @FormDataParam("file") InputStream uploadedInputStream,
                                             @FormDataParam("file") FormDataContentDisposition fileDetail,
                                             @Context UriInfo uriInfo) throws Exception {
+        automationPackageManager.createOrUpdateAutomationPackage(
+                true, false, new ObjectId(id),
+                uploadedInputStream, fileDetail.getFileName(),
+                getObjectEnricher(), getObjectPredicate()
+        );
+    }
+
+    @PUT
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Produces(MediaType.TEXT_PLAIN)
+    @Secured(right = "automation-package-write")
+    public Response createOrUpdateAutomationPackage(@FormDataParam("file") InputStream uploadedInputStream,
+                                                    @FormDataParam("file") FormDataContentDisposition fileDetail,
+                                                    @Context UriInfo uriInfo) throws Exception {
         AutomationPackageManager.PackageUpdateResult result = automationPackageManager.createOrUpdateAutomationPackage(
-                true, uploadedInputStream, fileDetail.getFileName(),
+                true, true, null, uploadedInputStream, fileDetail.getFileName(),
                 getObjectEnricher(), getObjectPredicate()
         );
         Response.ResponseBuilder responseBuilder;
-        switch (result.getStatus()){
+        switch (result.getStatus()) {
             case CREATED:
                 responseBuilder = Response.status(201);
                 break;
@@ -132,14 +144,7 @@ public class AutomationPackageServices extends AbstractStepServices {
                 responseBuilder = Response.status(200);
                 break;
         }
-        return responseBuilder.entity(result.getId()).build();
-    }
-
-    protected ObjectPredicate getObjectPredicate() {
-        ObjectFilter objectFilter = getObjectFilter();
-        String oqlFilter = objectFilter.getOQLFilter();
-        PojoFilter<Object> pojoFilter = OQLFilterBuilder.getPojoFilter(oqlFilter);
-        return pojoFilter::test;
+        return responseBuilder.entity(result.getId().toHexString()).build();
     }
 
 }

@@ -100,7 +100,7 @@ public class YamlPlanReader {
 				this.jsonSchema = readJsonSchema(jsonSchemaPath);
 			} else {
 				// resolve the json schema to use
-				List<String> jsonSchemasFromExtensions = CachedAnnotationScanner.getClassesWithAnnotation("step.plans", YamlPlanReaderExtension.class, Thread.currentThread().getContextClassLoader())
+				List<String> jsonSchemasFromExtensions = CachedAnnotationScanner.getClassesWithAnnotation(YamlPlanMigration.LOCATION, YamlPlanReaderExtension.class, Thread.currentThread().getContextClassLoader())
 						.stream()
 						.map(newInstanceAs(YamlPlanReaderExtender.class))
 						.map(YamlPlanReaderExtender::getJsonSchemaPath)
@@ -257,7 +257,7 @@ public class YamlPlanReader {
 	protected MigrationManager initMigrationManager() {
 		final MigrationManager migrationManager = new MigrationManager();
 
-		try (AnnotationScanner annotationScanner = AnnotationScanner.forAllClassesFromClassLoader("step.plans", Thread.currentThread().getContextClassLoader())) {
+		try (AnnotationScanner annotationScanner = AnnotationScanner.forAllClassesFromClassLoader(YamlPlanMigration.LOCATION, Thread.currentThread().getContextClassLoader())) {
 			Set<Class<?>> migrations = annotationScanner.getClassesWithAnnotation(YamlPlanMigration.class);
 			for (Class<?> migration : migrations) {
 				if (!AbstractYamlPlanMigrationTask.class.isAssignableFrom(migration)) {

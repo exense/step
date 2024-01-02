@@ -23,9 +23,11 @@ import step.core.objectenricher.ObjectEnricher;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class LayeredResourceManager implements ResourceManager {
 
@@ -142,7 +144,7 @@ public class LayeredResourceManager implements ResourceManager {
 
     @Override
     public List<Resource> findManyByCriteria(Map<String, String> criteria) {
-        return null;
+        return layeredSearch(resourceManager -> resourceManager.findManyByCriteria(criteria));
     }
 
     protected ResourceManager getManagerForPersistence() {
@@ -157,6 +159,10 @@ public class LayeredResourceManager implements ResourceManager {
             }
         }
         return null;
+    }
+
+    protected <V> List<V> layeredSearch(Function<ResourceManager, List<V>> searchFunction) {
+        return resourceManagers.stream().map(searchFunction).flatMap(Collection::stream).collect(Collectors.toList());
     }
 
     @Override

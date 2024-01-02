@@ -127,18 +127,14 @@ public class AutomationPackageReader {
             }
             res.getKeywords().addAll(scannedKeywords);
 
-            List<Plan> annotatedPlans;
+            // TODO: don't use file in code below (in getPlanFromPlansAnnotation)?
             if (originalFile != null) {
-                // TODO: don't use file in code below (in getPlanFromPlansAnnotation)?
-                annotatedPlans = extractAnnotatedPlansFromFile(originalFile, annotationScanner, null, null, null, null);
+                List<Plan> annotatedPlans = extractAnnotatedPlans(originalFile, annotationScanner, null, null, null, null);
                 if (!annotatedPlans.isEmpty()) {
                     log.info("{} annotated plans found in automation package {}", annotatedPlans.size(), StringUtils.defaultString(archive.getOriginalFileName()));
                 }
-            } else {
-                // TODO: scan classpath?
-                annotatedPlans = new ArrayList<>();
+                res.getPlans().addAll(annotatedPlans);
             }
-            res.getPlans().addAll(annotatedPlans);
         }
     }
 
@@ -230,56 +226,64 @@ public class AutomationPackageReader {
         }
     }
 
-    public List<Plan> extractAnnotatedPlansFromFile(File artifact, AnnotationScanner annotationScanner, String[] includedClasses, String[] includedAnnotations, String[] excludedClasses, String[] excludedAnnotations) {
+    public List<Plan> extractAnnotatedPlans(File artifact, AnnotationScanner annotationScanner, String[] includedClasses, String[] includedAnnotations, String[] excludedClasses, String[] excludedAnnotations) {
         List<Plan> result = new ArrayList<>();
+        Set<String> includedA = new HashSet<>(includedAnnotations == null ? new ArrayList<>() : List.of(includedAnnotations));
+        Set<String> excludedA = new HashSet<>(excludedAnnotations == null ? new ArrayList<>() : List.of(excludedAnnotations));
 
         // Find classes containing plans:
+        Set<Class<?>> excludedByAnnotation = new HashSet<>();
         Set<Class<?>> classesWithPlans = new HashSet<>();
+
         // Classes with @Plans annotation
-        classesWithPlans.addAll(annotationScanner.getClassesWithAnnotation(Plans.class));
+        Set<Class<?>> classesWithPlansAnnotation = annotationScanner.getClassesWithAnnotation(Plans.class);
+        for (Class<?> aClass : classesWithPlansAnnotation) {
+            log.debug("Checking if " + aClass.getName() + " should be filtered...");
+            String targetName = "@Plans class " + aClass.getName();
+            FilterResult filtered = isAnnotationFiltered(targetName, includedA, excludedA, aClass.getAnnotations());
+            if (filtered == FilterResult.NOT_FILTERED) {
+                classesWithPlans.add(aClass);
+            } else {
+                if (filtered == FilterResult.FILTERED_BY_EXCLUDED) {
+                    // we have to ignore the class while scanning for '@Plan' once it is explicitly excluded
+                    excludedByAnnotation.add(aClass);
+                }
+                log.debug(aClass.getName() + " has been filtered out");
+            }
+        }
 
         // Classes with @Plan annotation in methods
         // and filter them
-        Set<String> includedA = new HashSet<>(includedAnnotations == null ? List.of() : List.of(includedAnnotations));
-        Set<String> excludedA = new HashSet<>(excludedAnnotations == null ? List.of() : List.of(excludedAnnotations));
-
         for (Method m : annotationScanner.getMethodsWithAnnotation(step.junit.runners.annotations.Plan.class)) {
-            log.debug("Checking if " + m.getName() + " should be filtered...");
-            boolean filtered = !includedA.isEmpty();
-            for (Annotation a : m.getAnnotations()) {
-                if (excludedA.contains(a.toString())) {
-                    log.debug("Filtering out @Plan method " + m.getName() + " due to excluded annotation " + a);
-                    filtered = true;
-                    break;
-                } else if (includedA.contains(a.toString())) {
-                    log.debug("Including @Plan method " + m.getName() + " due to included annotation " + a);
-                    filtered = false;
+            if (!excludedByAnnotation.contains(m.getDeclaringClass()) && !classesWithPlans.contains(m.getDeclaringClass())) {
+                log.debug("Checking if " + m.getName() + " should be filtered...");
+                String targetName = "@Plan method " + m.getName();
+                FilterResult filtered = isAnnotationFiltered(targetName, includedA, excludedA, m.getAnnotations());
+                if (filtered == FilterResult.NOT_FILTERED) {
+                    classesWithPlans.add(m.getDeclaringClass());
+                } else {
+                    log.debug(m.getName() + " has been filtered out");
                 }
-            }
-            if (!filtered) {
-                classesWithPlans.add(m.getDeclaringClass());
-            } else {
-                log.debug(m.getName() + " has been filtered out");
             }
         }
 
         // Filter the classes:
-        Set<String> included = new HashSet<>(includedClasses == null ? List.of() : List.of(includedClasses));
-        Set<String> excluded = new HashSet<>(excludedClasses == null ? List.of() : List.of(excludedClasses));
+        Set<String> included = new HashSet<>(includedClasses == null ? new ArrayList<>() : List.of(includedClasses));
+        Set<String> excluded = new HashSet<>(excludedClasses == null ? new ArrayList<>() : List.of(excludedClasses));
         HashSet<Class<?>> tmp = new HashSet<>();
         for (Class<?> klass : classesWithPlans) {
-            log.debug("Checking if " + klass.getName() + " should be filtered...");
+            log.debug("Checking if "+klass.getName()+" should be filtered...");
             if (!excluded.contains(klass.getName()) && (included.isEmpty() || included.contains(klass.getName()))) {
                 tmp.add(klass);
-                log.debug("Not filtering class " + klass.getName());
+                log.debug("Not filtering class "+klass.getName());
             } else {
-                log.debug("Filtering out class " + klass.getName());
+                log.debug("Filtering out class "+klass.getName());
             }
         }
         classesWithPlans = tmp;
 
         // Create plans for discovered classes
-        classesWithPlans.forEach(c -> result.addAll(getPlansForClass(annotationScanner, c, artifact)));
+        classesWithPlans.forEach(c -> result.addAll(getPlansForClass(annotationScanner,c,artifact)));
 
         // replace null with empty collections to avoid NPEs
         result.forEach(plan -> {
@@ -287,7 +291,25 @@ public class AutomationPackageReader {
                 plan.setFunctions(new ArrayList<>());
             }
         });
+
         return result;
+    }
+
+    private FilterResult isAnnotationFiltered(String target, Set<String> includedA, Set<String> excludedA, Annotation[] annotations) {
+        FilterResult filtered = includedA.isEmpty() ? FilterResult.NOT_FILTERED : FilterResult.FILTERED_BY_INCLUDED;
+        for (Annotation a : annotations) {
+            // if the annotation object is proxy, the toString() is not applicable (the format in this case is like “@step.examples.plugins.StepEETests()”)
+            // so we need to check the name of annotation type to get the class name
+            if (excludedA.contains(a.toString()) || excludedA.contains(a.annotationType().getName())) {
+                log.debug("Filtering out " + target + " due to excluded annotation " + a);
+                filtered = FilterResult.FILTERED_BY_EXCLUDED;
+                break;
+            } else if (includedA.contains(a.toString()) || includedA.contains(a.annotationType().getName())) {
+                log.debug("Including " + target + " due to included annotation " + a);
+                filtered = FilterResult.NOT_FILTERED;
+            }
+        }
+        return filtered;
     }
 
     protected List<Plan> getPlansForClass(AnnotationScanner annotationScanner, Class<?> klass, File artifact) {
@@ -362,5 +384,11 @@ public class AutomationPackageReader {
             this.descriptorReader = new AutomationPackageDescriptorReader(jsonSchema);
         }
         return descriptorReader;
+    }
+
+    private enum FilterResult {
+        NOT_FILTERED,
+        FILTERED_BY_INCLUDED,
+        FILTERED_BY_EXCLUDED
     }
 }

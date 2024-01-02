@@ -45,18 +45,19 @@ public abstract class AbstractRunDeployedAutomationPackagesMojo extends Abstract
 
 	@Override
 	protected RepositoryObjectReference prepareExecutionRepositoryObject(Map<String, Object> executionContext) {
-		return new RepositoryObjectReference(ArtifactRepositoryConstants.MAVEN_REPO_ID, prepareRepositoryParameters());
+		return new RepositoryObjectReference(ArtifactRepositoryConstants.MAVEN_REPO_ID, prepareRepositoryParameters(executionContext));
 	}
 
-	private HashMap<String, String> prepareRepositoryParameters() {
-		HashMap<String, String> repoParams = new HashMap<>();
+	protected HashMap<String, String> prepareRepositoryParameters(Map<String, Object> executionContext) {
+		HashMap<String, String> repoParams = new HashMap<>(super.prepareRepositoryParameters(executionContext));
+
 		repoParams.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_GROUP_ID, getGroupId());
 		repoParams.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_ARTIFACT_ID, getArtifactId());
 		repoParams.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_VERSION, getArtifactVersion());
+
 		if (getArtifactClassifier() != null && !getArtifactClassifier().isEmpty()) {
 			repoParams.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_CLASSIFIER, getArtifactClassifier());
 		}
-
 		if (getLibArtifactGroupId() != null && !getLibArtifactGroupId().isEmpty()) {
 			repoParams.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_LIB_GROUP_ID, getLibArtifactGroupId());
 		}

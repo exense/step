@@ -38,8 +38,6 @@ import java.io.InputStream;
 @YamlKeywordConversionRuleAddOn(functions = GeneralScriptFunction.class)
 public class GeneralScriptFunctionConversionRule implements YamlKeywordConversionRule {
 
-    public static final String AUTOMATION_PACKAGE_FILE_REFERENCE = "automationPackageFileReference";
-
     @Override
     public SpecialKeywordAttributesApplier getSpecialKeywordAttributesApplier(AutomationPackageAttributesApplyingContext context) {
         return (keyword, automationPackageArchive, automationPackageId, objectEnricher) -> {

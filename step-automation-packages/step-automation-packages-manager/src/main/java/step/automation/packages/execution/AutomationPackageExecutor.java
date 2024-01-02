@@ -23,6 +23,7 @@ import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.automation.packages.AutomationPackageManager;
+import step.automation.packages.AutomationPackageManagerException;
 import step.core.execution.model.*;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectPredicate;
@@ -30,6 +31,7 @@ import step.core.plans.Plan;
 import step.core.plans.PlanFilter;
 import step.core.repositories.RepositoryObjectReference;
 import step.core.scheduler.ExecutionScheduler;
+import step.functions.type.FunctionTypeRegistry;
 import step.functions.type.FunctionTypeException;
 import step.functions.type.FunctionTypeRegistry;
 import step.functions.type.SetupFunctionException;
@@ -103,7 +105,7 @@ public class AutomationPackageExecutor {
                 }
             }
         } finally {
-            cleanupContextAfterAllExecutions(contextId, inMemoryPackageManager, executions, fileName);
+            cleanupIsolatedContextAfterExecution(contextId, executions, fileName);
         }
         return executions;
     }
@@ -116,16 +118,13 @@ public class AutomationPackageExecutor {
         }
     }
 
-    protected void cleanupContextAfterAllExecutions(ObjectId contextId, AutomationPackageManager packageManager, List<String> executions, String fileName) {
+    protected void cleanupIsolatedContextAfterExecution(ObjectId contextId, List<String> executions, String fileName) {
         // wait for all executions to be finished
         delayedCleanupExecutor.execute(() -> {
             if (waitForAllExecutionEnded(executions)) return;
 
-            // remove stored resources
-            packageManager.getResourceManager().cleanup();
-
             // remove the context from isolated automation package repository
-            isolatedAutomationPackageRepository.removeContext(contextId.toString());
+            isolatedAutomationPackageRepository.cleanupContext(contextId.toString());
 
             log.info("Execution finished for automation package {}", fileName);
         });

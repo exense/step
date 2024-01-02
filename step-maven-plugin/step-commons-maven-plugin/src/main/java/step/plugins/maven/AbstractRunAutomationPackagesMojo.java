@@ -27,6 +27,7 @@ import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.repositories.RepositoryObjectReference;
+import step.repositories.ArtifactRepositoryConstants;
 
 import java.util.*;
 import java.util.concurrent.TimeoutException;
@@ -50,6 +51,19 @@ public abstract class AbstractRunAutomationPackagesMojo extends AbstractStepPlug
 	private Boolean waitForExecution;
 	@Parameter(property = "step-run-auto-packages.ensure-exec-success", defaultValue = "true")
 	private Boolean ensureExecutionSuccess;
+
+	@Parameter(property = "step-run-auto-packages.include-classes")
+	private String includeClasses;
+	@Parameter(property = "step-run-auto-packages.exclude-classes")
+	private String excludeClasses;
+
+	@Parameter(property = "step-run-auto-packages.include-annotations")
+	private String includeAnnotations;
+	@Parameter(property = "step-run-auto-packages.exclude-annotations")
+	private String excludeAnnotations;
+
+	@Parameter(property = "step-run-auto-packages.threads")
+	private Integer threads;
 
 	@Parameter(property = "step-run-auto-packages.lib-artifact-group-id")
 	private String libArtifactGroupId;
@@ -223,4 +237,63 @@ public abstract class AbstractRunAutomationPackagesMojo extends AbstractStepPlug
 		this.libArtifactClassifier = libArtifactClassifier;
 	}
 
+	public String getIncludeClasses() {
+		return includeClasses;
+	}
+
+	public void setIncludeClasses(String includeClasses) {
+		this.includeClasses = includeClasses;
+	}
+
+	public String getExcludeClasses() {
+		return excludeClasses;
+	}
+
+	public void setExcludeClasses(String excludeClasses) {
+		this.excludeClasses = excludeClasses;
+	}
+
+	public String getIncludeAnnotations() {
+		return includeAnnotations;
+	}
+
+	public void setIncludeAnnotations(String includeAnnotations) {
+		this.includeAnnotations = includeAnnotations;
+	}
+
+	public String getExcludeAnnotations() {
+		return excludeAnnotations;
+	}
+
+	public void setExcludeAnnotations(String excludeAnnotations) {
+		this.excludeAnnotations = excludeAnnotations;
+	}
+
+	public Integer getThreads() {
+		return threads;
+	}
+
+	public void setThreads(Integer threads) {
+		this.threads = threads;
+	}
+
+	protected HashMap<String, String> prepareRepositoryParameters(Map<String, Object> executionContext) {
+		HashMap<String, String> repoParams = new HashMap<>();
+		if (getIncludeAnnotations() != null && !getIncludeAnnotations().isEmpty()) {
+			repoParams.put(ArtifactRepositoryConstants.PARAM_INCLUDE_ANNOTATIONS, getIncludeAnnotations());
+		}
+		if (getExcludeAnnotations() != null && !getExcludeAnnotations().isEmpty()) {
+			repoParams.put(ArtifactRepositoryConstants.PARAM_EXCLUDE_ANNOTATIONS, getExcludeAnnotations());
+		}
+		if (getIncludeClasses() != null && !getIncludeClasses().isEmpty()) {
+			repoParams.put(ArtifactRepositoryConstants.PARAM_INCLUDE_CLASSES, getIncludeClasses());
+		}
+		if (getExcludeClasses() != null && !getExcludeClasses().isEmpty()) {
+			repoParams.put(ArtifactRepositoryConstants.PARAM_EXCLUDE_CLASSES, getExcludeClasses());
+		}
+		if (getThreads() != null) {
+			repoParams.put(ArtifactRepositoryConstants.PARAM_THREAD_NUMBER, String.valueOf(getThreads()));
+		}
+		return repoParams;
+	}
 }

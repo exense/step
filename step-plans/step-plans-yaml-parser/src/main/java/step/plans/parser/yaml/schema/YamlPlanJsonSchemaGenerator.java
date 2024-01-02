@@ -129,14 +129,14 @@ public class YamlPlanJsonSchemaGenerator {
 
 	protected List<JsonSchemaFieldProcessor> getFieldExtensions() {
 		List<JsonSchemaFieldProcessor> extensions = new ArrayList<>();
-		CachedAnnotationScanner.getClassesWithAnnotation("step.plans", YamlPlanReaderExtension.class, Thread.currentThread().getContextClassLoader()).stream()
+		CachedAnnotationScanner.getClassesWithAnnotation("step.plans", YamlPlanReaderExtension.LOCATION, YamlPlanReaderExtension.class, Thread.currentThread().getContextClassLoader()).stream()
 				.map(newInstanceAs(YamlPlanReaderExtender.class)).forEach(e -> extensions.addAll(e.getJsonSchemaFieldProcessingExtensions()));
 		return extensions;
 	}
 
 	protected List<JsonSchemaDefinitionCreator> getDefinitionsExtensions() {
 		List<JsonSchemaDefinitionCreator> extensions = new ArrayList<>();
-		CachedAnnotationScanner.getClassesWithAnnotation("step.plans", YamlPlanReaderExtension.class, Thread.currentThread().getContextClassLoader()).stream()
+		CachedAnnotationScanner.getClassesWithAnnotation("step.plans", YamlPlanReaderExtension.LOCATION, YamlPlanReaderExtension.class, Thread.currentThread().getContextClassLoader()).stream()
 				.map(newInstanceAs(YamlPlanReaderExtender.class)).forEach(e -> extensions.addAll(e.getJsonSchemaDefinitionsExtensions()));
 		return extensions;
 	}
