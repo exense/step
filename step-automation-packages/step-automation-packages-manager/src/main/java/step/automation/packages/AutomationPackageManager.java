@@ -18,7 +18,6 @@
  ******************************************************************************/
 package step.automation.packages;
 
-import org.apache.commons.io.IOUtils;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -151,16 +150,6 @@ public class AutomationPackageManager {
         return stream;
     }
 
-    public Stream<AutomationPackage> getAllAutomationPackages(ObjectPredicate objectPredicate) {
-        Stream<AutomationPackage> stream = StreamSupport.stream(Spliterators.spliteratorUnknownSize(automationPackageAccessor.getAll(), Spliterator.ORDERED),
-                false
-        );
-        if (objectPredicate != null) {
-            stream = stream.filter(objectPredicate);
-        }
-        return stream;
-    }
-
     public void removeAutomationPackage(ObjectId id, ObjectPredicate objectPredicate) {
         AutomationPackage automationPackage = getAutomationPackageById(id, objectPredicate);
         deleteAutomationPackageEntities(automationPackage);
@@ -195,58 +184,74 @@ public class AutomationPackageManager {
      * @param allowUpdate     whether update existing package is allowed
      * @param allowCreate     whether create new package is allowed
      * @param explicitOldId   the explicit package id to be updated (if null, the id will be automatically resolved by package name from packageStream)
-     * @param packageStream   the package content
      * @param fileName        the original name of file with automation package
      * @param enricher        the enricher used to fill all stored objects (for instance, with product id for multitenant application)
      * @param objectPredicate the filter for automation package
      * @return the id of created/updated package
-     * @throws SetupFunctionException
-     * @throws FunctionTypeException
      */
-    public PackageUpdateResult createOrUpdateAutomationPackage(boolean allowUpdate, boolean allowCreate, ObjectId explicitOldId, InputStream packageStream, String fileName, ObjectEnricher enricher, ObjectPredicate objectPredicate) {
+    public PackageUpdateResult createOrUpdateAutomationPackage(boolean allowUpdate, boolean allowCreate, ObjectId explicitOldId,
+                                                               InputStream inputStream, String fileName, ObjectEnricher enricher,
+                                                               ObjectPredicate objectPredicate) throws AutomationPackageManagerException {
+        try {
+            try (AutomationPackageArchiveProvider provider = new AutomationPackageFromInputStreamProvider(inputStream, fileName)) {
+                return createOrUpdateAutomationPackage(allowUpdate, allowCreate, explicitOldId, provider, false, enricher, objectPredicate);
+            }
+        } catch (IOException | AutomationPackageReadingException ex) {
+            throw new AutomationPackageManagerException("Automation package cannot be created", ex);
+        }
+    }
+
+    /**
+     * Creates new or updates the existing automation package
+     *
+     * @param allowUpdate               whether update existing package is allowed
+     * @param allowCreate               whether create new package is allowed
+     * @param explicitOldId             the explicit package id to be updated (if null, the id will be automatically resolved by package name from packageStream)
+     * @param automationPackageProvider the automation package content provider
+     * @param enricher                  the enricher used to fill all stored objects (for instance, with product id for multitenant application)
+     * @param objectPredicate           the filter for automation package
+     * @return the id of created/updated package
+     */
+    public PackageUpdateResult createOrUpdateAutomationPackage(boolean allowUpdate, boolean allowCreate, ObjectId explicitOldId,
+                                                               AutomationPackageArchiveProvider automationPackageProvider, boolean isLocalPackage,
+                                                               ObjectEnricher enricher, ObjectPredicate objectPredicate) {
         AutomationPackageArchive automationPackageArchive;
         AutomationPackageContent packageContent;
 
         AutomationPackage newPackage = null;
 
-        // store automation package into temp file
-        File automationPackageFile = null;
-        try {
-            automationPackageFile = stream2file(packageStream, fileName);
-        } catch (Exception ex) {
-            throw new AutomationPackageManagerException("Unable to store automation package file");
-        }
-
         try {
             try {
-                automationPackageArchive = new AutomationPackageArchive(automationPackageFile, fileName);
-                packageContent = readAutomationPackage(automationPackageArchive);
+                automationPackageArchive = automationPackageProvider.getAutomationPackageArchive();
+                packageContent = readAutomationPackage(automationPackageArchive, isLocalPackage);
             } catch (AutomationPackageReadingException e) {
                 throw new AutomationPackageManagerException("Unable to read automation package", e);
             }
 
             AutomationPackage oldPackage;
-        if (explicitOldId != null) {
-            oldPackage = getAutomationPackageById(explicitOldId, objectPredicate);
+            if (explicitOldId != null) {
+                oldPackage = getAutomationPackageById(explicitOldId, objectPredicate);
 
-            String newName = packageContent.getName();
-            String oldName = oldPackage.getAttribute(AbstractOrganizableObject.NAME);
-            if (!Objects.equals(newName, oldName)) {
-                // the package with the same name shouldn't exist
-                AutomationPackage existingPackageWithSameName = getAutomationPackageByName(newName, objectPredicate);
+                String newName = packageContent.getName();
+                String oldName = oldPackage.getAttribute(AbstractOrganizableObject.NAME);
+                if (!Objects.equals(newName, oldName)) {
+                    // the package with the same name shouldn't exist
+                    AutomationPackage existingPackageWithSameName = getAutomationPackageByName(newName, objectPredicate);
 
-                if (existingPackageWithSameName != null) {
-                    throw new AutomationPackageManagerException("Unable to change the package name to '" + newName
-                            + "'. Package with the same name already exists (" + existingPackageWithSameName.getId().toString() + ")");
+                    if (existingPackageWithSameName != null) {
+                        throw new AutomationPackageManagerException("Unable to change the package name to '" + newName
+                                + "'. Package with the same name already exists (" + existingPackageWithSameName.getId().toString() + ")");
+                    }
                 }
+            } else {
+                oldPackage = getAutomationPackageByName(packageContent.getName(), objectPredicate);
             }
-        } else {
-            oldPackage = getAutomationPackageByName(packageContent.getName(), objectPredicate);
-            }if (!allowUpdate && oldPackage != null) {
+            if (!allowUpdate && oldPackage != null) {
                 throw new AutomationPackageManagerException("Automation package '" + packageContent.getName() + "' already exists");
-            }if (!allowCreate && oldPackage == null) {
-            throw new AutomationPackageManagerException("Automation package '" + packageContent.getName() + "' doesn't exist");
-        }
+            }
+            if (!allowCreate && oldPackage == null) {
+                throw new AutomationPackageManagerException("Automation package '" + packageContent.getName() + "' doesn't exist");
+            }
 
             // keep old package id
             newPackage = createNewInstance(automationPackageArchive.getOriginalFileName(), packageContent, oldPackage, enricher);
@@ -287,15 +292,6 @@ public class AutomationPackageManager {
                 log.warn("Cannot cleanup resource", e);
             }
             throw ex;
-        } finally {
-            // cleanup temp file
-            try {
-                if (automationPackageFile.exists()) {
-                    automationPackageFile.delete();
-                }
-            } catch (Exception e) {
-                log.warn("Cannot cleanup temp file {}", automationPackageFile.getName(), e);
-            }
         }
     }
 
@@ -425,7 +421,7 @@ public class AutomationPackageManager {
 
     protected AutomationPackageContent readAutomationPackage(AutomationPackageArchive automationPackageArchive, boolean isLocalPackage) throws AutomationPackageReadingException {
         AutomationPackageContent packageContent;
-        packageContent = packageReader.readAutomationPackage(automationPackageArchive, false);
+        packageContent = packageReader.readAutomationPackage(automationPackageArchive, isLocalPackage);
         if (packageContent == null) {
             throw new AutomationPackageManagerException("Automation package descriptor is missing, allowed names: " + METADATA_FILES);
         } else if (packageContent.getName() == null || packageContent.getName().isEmpty()) {
@@ -544,15 +540,6 @@ public class AutomationPackageManager {
 
     public void cleanup() {
         this.resourceManager.cleanup();
-    }
-
-    private static File stream2file(InputStream in, String fileName) throws IOException {
-        final File tempFile = File.createTempFile(fileName, ".tmp");
-        tempFile.deleteOnExit();
-        try (FileOutputStream out = new FileOutputStream(tempFile)) {
-            IOUtils.copy(in, out);
-        }
-        return tempFile;
     }
 
     public static class PackageUpdateResult {

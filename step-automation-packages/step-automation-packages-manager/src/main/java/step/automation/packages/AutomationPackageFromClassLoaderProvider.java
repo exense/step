@@ -17,6 +17,9 @@
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
 package step.automation.packages;
+
+import java.io.IOException;
+
 public class AutomationPackageFromClassLoaderProvider implements AutomationPackageArchiveProvider {
 
     private final ClassLoader classLoader;
@@ -28,5 +31,10 @@ public class AutomationPackageFromClassLoaderProvider implements AutomationPacka
     @Override
     public AutomationPackageArchive getAutomationPackageArchive() {
         return new AutomationPackageArchive(classLoader);
+    }
+
+    @Override
+    public void close() throws IOException {
+
     }
 }

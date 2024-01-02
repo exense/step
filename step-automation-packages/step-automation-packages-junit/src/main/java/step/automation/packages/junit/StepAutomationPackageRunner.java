@@ -56,8 +56,8 @@ public class StepAutomationPackageRunner extends AbstractStepRunner {
 			);
 
 			automationPackageId = this.automationPackageManager.createOrUpdateAutomationPackage(
-					false, new AutomationPackageFromClassLoaderProvider(this.klass.getClassLoader()),
-					null, null, false
+					false, true, null, new AutomationPackageFromClassLoaderProvider(this.klass.getClassLoader()),
+					true, null, null
 			).getId();
 
 			Predicate<Plan> planNameFilter = plan -> true;

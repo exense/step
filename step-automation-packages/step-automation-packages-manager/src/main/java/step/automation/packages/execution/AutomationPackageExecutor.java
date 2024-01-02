@@ -71,15 +71,16 @@ public class AutomationPackageExecutor {
     }
 
     public List<String> runInIsolation(InputStream automationPackage, String fileName, AutomationPackageExecutionParameters parameters,
-                                       ObjectEnricher objectEnricher, String userId, ObjectPredicate objectPredicate) throws SetupFunctionException, FunctionTypeException {
+                                       ObjectEnricher objectEnricher, String userId, ObjectPredicate objectPredicate) {
         ObjectId contextId = new ObjectId();
 
         // prepare the isolated in-memory automation package manager with the only one automation package
         AutomationPackageManager inMemoryPackageManager = AutomationPackageManager.createIsolatedAutomationPackageManager(contextId, functionTypeRegistry);
-        ObjectId packageId = inMemoryPackageManager.createAutomationPackage(automationPackage, fileName, objectEnricher, objectPredicate);
 
         List<String> executions = new ArrayList<>();
         try {
+            ObjectId packageId = inMemoryPackageManager.createAutomationPackage(automationPackage, fileName, objectEnricher, objectPredicate);
+
             isolatedAutomationPackageRepository.putContext(contextId.toString(), inMemoryPackageManager);
 
             for (Plan plan : inMemoryPackageManager.getPackagePlans(packageId)) {

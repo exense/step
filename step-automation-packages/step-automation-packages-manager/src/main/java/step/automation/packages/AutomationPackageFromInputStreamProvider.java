@@ -19,24 +19,21 @@
 package step.automation.packages;
 
 import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class AutomationPackageArchiveFromInputStreamProvider implements AutomationPackageArchiveProvider {
+public class AutomationPackageFromInputStreamProvider implements AutomationPackageArchiveProvider {
 
-    private final InputStream packageStream;
-    private final String fileName;
+    private static final Logger log = LoggerFactory.getLogger(AutomationPackageArchiveProvider.class);
 
-    public AutomationPackageArchiveFromInputStreamProvider(InputStream packageStream, String fileName) {
-        this.packageStream = packageStream;
-        this.fileName = fileName;
-    }
+    private final AutomationPackageArchive archive;
 
-    @Override
-    public AutomationPackageArchive getAutomationPackageArchive() throws AutomationPackageReadingException {
+    public AutomationPackageFromInputStreamProvider(InputStream packageStream, String fileName) throws AutomationPackageReadingException {
         // store automation package into temp file
         File automationPackageFile = null;
         try {
@@ -45,10 +42,14 @@ public class AutomationPackageArchiveFromInputStreamProvider implements Automati
             throw new AutomationPackageManagerException("Unable to store automation package file");
         }
 
-        return new AutomationPackageArchive(automationPackageFile, fileName);
+        this.archive = new AutomationPackageArchive(automationPackageFile, fileName);
     }
 
-    // TODO: find another way to read automation package from input stream
+    @Override
+    public AutomationPackageArchive getAutomationPackageArchive() throws AutomationPackageReadingException {
+        return this.archive;
+    }
+
     private static File stream2file(InputStream in, String fileName) throws IOException {
         final File tempFile = File.createTempFile(fileName, ".tmp");
         tempFile.deleteOnExit();
@@ -58,4 +59,16 @@ public class AutomationPackageArchiveFromInputStreamProvider implements Automati
         return tempFile;
     }
 
+    @Override
+    public void close() throws IOException {
+        // cleanup temp file
+        try {
+            if (this.archive.getOriginalFile() != null && this.archive.getOriginalFile().exists()) {
+                //noinspection ResultOfMethodCallIgnored
+                this.archive.getOriginalFile().delete();
+            }
+        } catch (Exception e) {
+            log.warn("Cannot cleanup temp file {}", this.archive.getOriginalFileName(), e);
+        }
+    }
 }

@@ -16,10 +16,11 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages;
+package step.junit.runner;
 
-import java.io.Closeable;
+import org.junit.runner.RunWith;
+import step.automation.packages.junit.StepAutomationPackageRunner;
 
-public interface AutomationPackageArchiveProvider extends Closeable {
-    AutomationPackageArchive getAutomationPackageArchive() throws AutomationPackageReadingException;
+@RunWith(StepAutomationPackageRunner.class)
+public class RunSampleTest {
 }
