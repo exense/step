@@ -355,6 +355,14 @@ public class AutomationPackageManager {
             execTaskParameters.setActive(schedule.getActive() == null || schedule.getActive());
             execTaskParameters.addAttribute(AbstractOrganizableObject.NAME, schedule.getName());
             execTaskParameters.setCronExpression(schedule.getCron());
+            if (schedule.getAssertionPlanName() != null && !schedule.getAssertionPlanName().isEmpty()) {
+                Plan assertionPlan = lookupPlanByName(plansStaging, schedule.getAssertionPlanName());
+                if (assertionPlan == null) {
+                    throw new AutomationPackageManagerException("Invalid automation package: " + packageContent.getName() +
+                            ". No assertion plan with '" + schedule.getAssertionPlanName() + "' name found for schedule " + schedule.getName());
+                }
+                execTaskParameters.setAssertionPlan(assertionPlan.getId());
+            }
 
             String planNameFromSchedule = schedule.getPlanName();
             if (planNameFromSchedule == null || planNameFromSchedule.isEmpty()) {
@@ -362,16 +370,12 @@ public class AutomationPackageManager {
                         ". Plan name is not defined for schedule " + schedule.getName());
             }
 
-            Plan plan = plansStaging.stream().filter(p -> Objects.equals(p.getAttribute(AbstractOrganizableObject.NAME), planNameFromSchedule)).findFirst().orElse(null);
+            Plan plan = lookupPlanByName(plansStaging, planNameFromSchedule);
             if (plan == null) {
-                // schedule can reference the existing persisted plan (not defined inside the automation package)
-                plan = planAccessor.findByAttributes(Map.of(AbstractOrganizableObject.NAME, planNameFromSchedule));
-
-                if (plan == null) {
-                    throw new AutomationPackageManagerException("Invalid automation package: " + packageContent.getName() +
-                            ". No plan with '" + planNameFromSchedule + "' name found for schedule " + schedule.getName());
-                }
+                throw new AutomationPackageManagerException("Invalid automation package: " + packageContent.getName() +
+                        ". No plan with '" + planNameFromSchedule + "' name found for schedule " + schedule.getName());
             }
+
             ExecutionParameters executionParameters = new ExecutionParameters(plan, schedule.getExecutionParameters());
             executionParameters.setRepositoryObject(
                     new RepositoryObjectReference(
@@ -383,6 +387,15 @@ public class AutomationPackageManager {
         }
         fillEntities(completeExecTasksParameters, oldPackage != null ? getPackageSchedules(oldPackage.getId()) : new ArrayList<>(), enricher);
         return completeExecTasksParameters;
+    }
+
+    private Plan lookupPlanByName(List<Plan> plansStaging, String planName) {
+        Plan plan = plansStaging.stream().filter(p -> Objects.equals(p.getAttribute(AbstractOrganizableObject.NAME), planName)).findFirst().orElse(null);
+        if (plan == null) {
+            // schedule can reference the existing persisted plan (not defined inside the automation package)
+            plan = planAccessor.findByAttributes(Map.of(AbstractOrganizableObject.NAME, planName));
+        }
+        return plan;
     }
 
     private Map<String, ObjectId> createNameToIdMap(List<? extends AbstractOrganizableObject> objects) {

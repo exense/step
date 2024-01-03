@@ -1921,6 +1921,9 @@
           "type" : "object",
           "properties" : { }
         },
+        "assertionPlanName" : {
+          "type" : "string"
+        },
         "planName" : {
           "type" : "string"
         },
