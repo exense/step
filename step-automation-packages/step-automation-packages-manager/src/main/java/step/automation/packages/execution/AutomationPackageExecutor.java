@@ -101,6 +101,11 @@ public class AutomationPackageExecutor {
                         params.setUserID(userName);
                     }
 
+                    // for instance, set the project for multitenant application
+                    if (objectEnricher != null) {
+                        objectEnricher.accept(params);
+                    }
+
                     String newExecutionId = this.scheduler.execute(params);
                     if (newExecutionId != null) {
                         executions.add(newExecutionId);
