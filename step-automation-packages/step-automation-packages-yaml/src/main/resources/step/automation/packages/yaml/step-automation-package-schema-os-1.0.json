@@ -1835,69 +1835,69 @@
       "oneOf" : [ {
         "$ref" : "#/$defs/AfterSequenceDef"
       }, {
-        "$ref" : "#/$defs/SetDef"
+        "$ref" : "#/$defs/AfterThreadDef"
       }, {
-        "$ref" : "#/$defs/CheckDef"
+        "$ref" : "#/$defs/AssertDef"
       }, {
-        "$ref" : "#/$defs/CheckArtefactDef"
-      }, {
-        "$ref" : "#/$defs/ScriptDef"
+        "$ref" : "#/$defs/BeforeSequenceDef"
       }, {
         "$ref" : "#/$defs/BeforeThreadDef"
       }, {
         "$ref" : "#/$defs/CallKeywordDef"
       }, {
-        "$ref" : "#/$defs/ExportDef"
-      }, {
-        "$ref" : "#/$defs/SequenceDef"
-      }, {
-        "$ref" : "#/$defs/SwitchDef"
-      }, {
-        "$ref" : "#/$defs/StreamingArtefactDef"
-      }, {
-        "$ref" : "#/$defs/ForDef"
+        "$ref" : "#/$defs/CallPlanDef"
       }, {
         "$ref" : "#/$defs/CaseDef"
       }, {
-        "$ref" : "#/$defs/FailureDef"
+        "$ref" : "#/$defs/CheckDef"
       }, {
-        "$ref" : "#/$defs/ReturnDef"
-      }, {
-        "$ref" : "#/$defs/ForEachDef"
-      }, {
-        "$ref" : "#/$defs/RetryIfFailsDef"
-      }, {
-        "$ref" : "#/$defs/WhileDef"
-      }, {
-        "$ref" : "#/$defs/CallPlanDef"
-      }, {
-        "$ref" : "#/$defs/EchoDef"
-      }, {
-        "$ref" : "#/$defs/TestScenarioDef"
-      }, {
-        "$ref" : "#/$defs/SynchronizedDef"
-      }, {
-        "$ref" : "#/$defs/BeforeSequenceDef"
-      }, {
-        "$ref" : "#/$defs/TestSetDef"
-      }, {
-        "$ref" : "#/$defs/SessionDef"
+        "$ref" : "#/$defs/CheckArtefactDef"
       }, {
         "$ref" : "#/$defs/DataSetDef"
       }, {
-        "$ref" : "#/$defs/SleepDef"
+        "$ref" : "#/$defs/EchoDef"
       }, {
-        "$ref" : "#/$defs/AssertDef"
+        "$ref" : "#/$defs/ExportDef"
       }, {
-        "$ref" : "#/$defs/TestCaseDef"
+        "$ref" : "#/$defs/FailureDef"
       }, {
-        "$ref" : "#/$defs/AfterThreadDef"
+        "$ref" : "#/$defs/ForDef"
       }, {
-        "$ref" : "#/$defs/PlaceholderDef"
+        "$ref" : "#/$defs/ForEachDef"
+      }, {
+        "$ref" : "#/$defs/SessionDef"
       }, {
         "$ref" : "#/$defs/IfDef"
       }, {
+        "$ref" : "#/$defs/PlaceholderDef"
+      }, {
+        "$ref" : "#/$defs/RetryIfFailsDef"
+      }, {
+        "$ref" : "#/$defs/ReturnDef"
+      }, {
+        "$ref" : "#/$defs/ScriptDef"
+      }, {
+        "$ref" : "#/$defs/SequenceDef"
+      }, {
+        "$ref" : "#/$defs/SetDef"
+      }, {
+        "$ref" : "#/$defs/SleepDef"
+      }, {
+        "$ref" : "#/$defs/StreamingArtefactDef"
+      }, {
+        "$ref" : "#/$defs/SwitchDef"
+      }, {
+        "$ref" : "#/$defs/SynchronizedDef"
+      }, {
+        "$ref" : "#/$defs/TestCaseDef"
+      }, {
+        "$ref" : "#/$defs/TestScenarioDef"
+      }, {
+        "$ref" : "#/$defs/TestSetDef"
+      }, {
         "$ref" : "#/$defs/ThreadGroupDef"
+      }, {
+        "$ref" : "#/$defs/WhileDef"
       } ]
     },
     "RootArtefactDef" : {
@@ -1920,6 +1920,9 @@
         "executionParameters" : {
           "type" : "object",
           "properties" : { }
+        },
+        "assertionPlanName" : {
+          "type" : "string"
         },
         "planName" : {
           "type" : "string"
