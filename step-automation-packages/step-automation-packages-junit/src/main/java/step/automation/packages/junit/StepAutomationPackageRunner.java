@@ -37,9 +37,6 @@ import java.util.stream.Collectors;
 
 public class StepAutomationPackageRunner extends AbstractStepRunner {
 
-	private final AutomationPackageManager automationPackageManager;
-	private final ObjectId automationPackageId;
-
 	public StepAutomationPackageRunner(Class<?> klass) throws InitializationError {
 		super(klass, klass);
 
@@ -51,12 +48,14 @@ public class StepAutomationPackageRunner extends AbstractStepRunner {
 				}
 			}).withPluginsFromClasspath().build();
 
-			this.automationPackageManager = AutomationPackageManager.createIsolatedAutomationPackageManager(
-					new ObjectId(), executionEngine.getExecutionEngineContext().require(FunctionTypeRegistry.class)
+			FunctionTypeRegistry functionTypeRegistry = executionEngine.getExecutionEngineContext().require(FunctionTypeRegistry.class);
+			AutomationPackageManager automationPackageManager = AutomationPackageManager.createIsolatedAutomationPackageManager(
+					new ObjectId(), functionTypeRegistry
 			);
 
-			automationPackageId = this.automationPackageManager.createOrUpdateAutomationPackage(
-					false, true, null, new AutomationPackageFromClassLoaderProvider(this.klass.getClassLoader()),
+			AutomationPackageFromClassLoaderProvider automationPackageProvider = new AutomationPackageFromClassLoaderProvider(this.klass.getClassLoader());
+			ObjectId automationPackageId = automationPackageManager.createOrUpdateAutomationPackage(
+					false, true, null, automationPackageProvider,
 					true, null, null
 			).getId();
 

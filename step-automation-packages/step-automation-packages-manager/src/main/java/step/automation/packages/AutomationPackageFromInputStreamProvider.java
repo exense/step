@@ -32,17 +32,18 @@ public class AutomationPackageFromInputStreamProvider implements AutomationPacka
     private static final Logger log = LoggerFactory.getLogger(AutomationPackageArchiveProvider.class);
 
     private final AutomationPackageArchive archive;
+    private File tempFile;
 
     public AutomationPackageFromInputStreamProvider(InputStream packageStream, String fileName) throws AutomationPackageReadingException {
         // store automation package into temp file
-        File automationPackageFile = null;
+        this.tempFile = null;
         try {
-            automationPackageFile = stream2file(packageStream, fileName);
+            tempFile = stream2file(packageStream, fileName);
         } catch (Exception ex) {
             throw new AutomationPackageManagerException("Unable to store automation package file");
         }
 
-        this.archive = new AutomationPackageArchive(automationPackageFile, fileName);
+        this.archive = new AutomationPackageArchive(tempFile, fileName);
     }
 
     @Override
@@ -63,12 +64,12 @@ public class AutomationPackageFromInputStreamProvider implements AutomationPacka
     public void close() throws IOException {
         // cleanup temp file
         try {
-            if (this.archive.getOriginalFile() != null && this.archive.getOriginalFile().exists()) {
+            if (this.tempFile != null && tempFile.exists()) {
                 //noinspection ResultOfMethodCallIgnored
-                this.archive.getOriginalFile().delete();
+                tempFile.delete();
             }
         } catch (Exception e) {
-            log.warn("Cannot cleanup temp file {}", this.archive.getOriginalFileName(), e);
+            log.warn("Cannot cleanup temp file {}", this.tempFile == null ? "" : this.tempFile.getName(), e);
         }
     }
 }
