@@ -38,6 +38,7 @@ import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.InMemoryPlanAccessor;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
+import step.core.repositories.RepositoryObjectReference;
 import step.core.scheduler.ExecutionScheduler;
 import step.core.scheduler.ExecutionTaskAccessor;
 import step.core.scheduler.ExecutiontTaskParameters;
@@ -59,6 +60,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+
+import static step.automation.packages.AutomationPackageArchive.METADATA_FILES;
 
 public class AutomationPackageManager {
 
@@ -394,17 +397,48 @@ public class AutomationPackageManager {
             execTaskParameters.setActive(schedule.getActive() == null || schedule.getActive());
             execTaskParameters.addAttribute(AbstractOrganizableObject.NAME, schedule.getName());
             execTaskParameters.setCronExpression(schedule.getCron());
+            String assertionPlanName = schedule.getAssertionPlanName();
+            if (assertionPlanName != null && !assertionPlanName.isEmpty()) {
+                Plan assertionPlan = lookupPlanByName(plansStaging, assertionPlanName);
+                if (assertionPlan == null) {
+                    throw new AutomationPackageManagerException("Invalid automation package: " + packageContent.getName() +
+                            ". No assertion plan with '" + assertionPlanName + "' name found for schedule " + schedule.getName());
+                }
+                execTaskParameters.setAssertionPlan(assertionPlan.getId());
+            }
 
-            Plan plan = plansStaging.stream().filter(p -> Objects.equals(p.getAttribute(AbstractOrganizableObject.NAME), schedule.getPlanName())).findFirst().orElse(null);
+            String planNameFromSchedule = schedule.getPlanName();
+            if (planNameFromSchedule == null || planNameFromSchedule.isEmpty()) {
+                throw new AutomationPackageManagerException("Invalid automation package: " + packageContent.getName() +
+                        ". Plan name is not defined for schedule " + schedule.getName());
+            }
+
+            Plan plan = lookupPlanByName(plansStaging, planNameFromSchedule);
             if (plan == null) {
                 throw new AutomationPackageManagerException("Invalid automation package: " + packageContent.getName() +
-                        " No plan with '" + schedule.getPlanName() + "' name found for schedule " + schedule.getName());
+                        ". No plan with '" + planNameFromSchedule + "' name found for schedule " + schedule.getName());
             }
-            execTaskParameters.setExecutionsParameters(new ExecutionParameters(plan, schedule.getExecutionParameters()));
+
+            ExecutionParameters executionParameters = new ExecutionParameters(plan, schedule.getExecutionParameters());
+            executionParameters.setRepositoryObject(
+                    new RepositoryObjectReference(
+                            RepositoryObjectReference.LOCAL_REPOSITORY_ID, Map.of(RepositoryObjectReference.PLAN_ID, plan.getId().toString())
+                    )
+            );
+            execTaskParameters.setExecutionsParameters(executionParameters);
             completeExecTasksParameters.add(execTaskParameters);
         }
         fillEntities(completeExecTasksParameters, oldPackage != null ? getPackageSchedules(oldPackage.getId()) : new ArrayList<>(), enricher);
         return completeExecTasksParameters;
+    }
+
+    private Plan lookupPlanByName(List<Plan> plansStaging, String planName) {
+        Plan plan = plansStaging.stream().filter(p -> Objects.equals(p.getAttribute(AbstractOrganizableObject.NAME), planName)).findFirst().orElse(null);
+        if (plan == null) {
+            // schedule can reference the existing persisted plan (not defined inside the automation package)
+            plan = planAccessor.findByAttributes(Map.of(AbstractOrganizableObject.NAME, planName));
+        }
+        return plan;
     }
 
     private Map<String, ObjectId> createNameToIdMap(List<? extends AbstractOrganizableObject> objects) {
@@ -438,7 +472,9 @@ public class AutomationPackageManager {
     protected AutomationPackageContent readAutomationPackage(AutomationPackageArchive automationPackageArchive) throws AutomationPackageReadingException {
         AutomationPackageContent packageContent;
         packageContent = packageReader.readAutomationPackage(automationPackageArchive, false);
-        if (packageContent.getName() == null || packageContent.getName().isEmpty()) {
+        if (packageContent == null) {
+            throw new AutomationPackageManagerException("Automation package descriptor is missing, allowed names: " + METADATA_FILES);
+        } else if (packageContent.getName() == null || packageContent.getName().isEmpty()) {
             throw new AutomationPackageManagerException("Automation package name is missing");
         }
         return packageContent;
