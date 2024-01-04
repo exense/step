@@ -33,6 +33,9 @@ import step.core.repositories.RepositoryObjectReference;
 import step.core.scheduler.ExecutionScheduler;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.type.FunctionTypeRegistry;
+import step.functions.type.FunctionTypeException;
+import step.functions.type.FunctionTypeRegistry;
+import step.functions.type.SetupFunctionException;
 
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -72,17 +75,19 @@ public class AutomationPackageExecutor {
     }
 
     public List<String> runInIsolation(InputStream automationPackage, String fileName, AutomationPackageExecutionParameters parameters,
-                                       ObjectEnricher objectEnricher, String userName, ObjectPredicate objectPredicate) throws AutomationPackageManagerException {
+                                       ObjectEnricher objectEnricher, String userName, ObjectPredicate objectPredicate) {
         ObjectId contextId = new ObjectId();
 
         // prepare the isolated in-memory automation package manager with the only one automation package
+        AutomationPackageManager inMemoryPackageManager = AutomationPackageManager.createIsolatedAutomationPackageManager(
+                contextId, functionTypeRegistry,
+                functionAccessor
+        );
+
         List<String> executions = new ArrayList<>();
         try {
-            AutomationPackageManager inMemoryPackageManager = AutomationPackageManager.createIsolatedAutomationPackageManager(
-                    contextId, functionTypeRegistry,
-                    functionAccessor
-            );
             ObjectId packageId = inMemoryPackageManager.createAutomationPackage(automationPackage, fileName, objectEnricher, objectPredicate);
+
             isolatedAutomationPackageRepository.putContext(contextId.toString(), inMemoryPackageManager);
 
             for (Plan plan : inMemoryPackageManager.getPackagePlans(packageId)) {

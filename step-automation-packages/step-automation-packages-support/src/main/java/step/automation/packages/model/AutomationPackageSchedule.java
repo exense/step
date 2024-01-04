@@ -26,6 +26,7 @@ public class AutomationPackageSchedule {
     private Boolean active = true;
     private String cron;
     private String planName;
+    private String assertionPlanName;
     private Map<String, String> executionParameters;
 
     public AutomationPackageSchedule() {
@@ -79,6 +80,15 @@ public class AutomationPackageSchedule {
         this.active = active;
     }
 
+    public String getAssertionPlanName() {
+        return assertionPlanName;
+    }
+
+    public void setAssertionPlanName(String assertionPlanName) {
+        this.assertionPlanName = assertionPlanName;
+    }
+
+
     @Override
     public String toString() {
         return "AutomationPackageSchedule{" +
@@ -86,6 +96,7 @@ public class AutomationPackageSchedule {
                 ", active=" + active +
                 ", cron='" + cron + '\'' +
                 ", planName='" + planName + '\'' +
+                ", assertionPlanName='" + assertionPlanName + '\'' +
                 ", executionParameters=" + executionParameters +
                 '}';
     }

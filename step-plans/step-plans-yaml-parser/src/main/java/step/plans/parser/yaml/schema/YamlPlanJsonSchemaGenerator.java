@@ -225,7 +225,7 @@ public class YamlPlanJsonSchemaGenerator {
 			}
 
 			// add definition for "anyOf" artefact definitions prepared above
-			defsBuilder.add(ARTEFACT_DEF, createArtefactDef(artefactImplDefs.allArtefactDefs.keySet()));
+			defsBuilder.add(ARTEFACT_DEF, createArtefactDef(artefactImplDefs.controlArtefactDefs));
 			defsBuilder.add(ROOT_ARTEFACT_DEF, createArtefactDef(artefactImplDefs.rootArtefactDefs));
 		});
 
@@ -251,6 +251,25 @@ public class YamlPlanJsonSchemaGenerator {
 					.collect(Collectors.toList());
 			log.info("The following {} artefact classes detected: {}", artefactClasses.size(), artefactClasses);
 
+			// find allowed control artefacts
+			Set<Class<?>> controlArtefactClasses = artefactClasses.stream().filter(c -> {
+				Artefact ann = c.getAnnotation(Artefact.class);
+				if (ann == null) {
+					return false;
+				}
+				return ann.validAsControl();
+			}).collect(Collectors.toSet());
+
+			// find allowed root artefacts
+			Set<Class<?>> rootArtefactClasses = artefactClasses.stream().filter(c -> {
+				Artefact ann = c.getAnnotation(Artefact.class);
+				if (ann == null) {
+					return false;
+				}
+				return ann.validAsRoot();
+			}).collect(Collectors.toSet());
+			log.info("The following {} artefact classes detected: {}", rootArtefactClasses.size(), rootArtefactClasses);
+
 			for (Class<?> artefactClass : artefactClasses) {
 				// use the name of artefact as definition name
 				String name = AbstractArtefact.getArtefactName((Class<? extends AbstractArtefact>) artefactClass);
@@ -261,10 +280,11 @@ public class YamlPlanJsonSchemaGenerator {
 				artefactDefinitions.allArtefactDefs.put(defName, def);
 
 				// for root artefacts we only support the subset of all artefact definitions
-				for (RootArtefactType rootArtefactType : RootArtefactType.values()) {
-					if (rootArtefactType.createRootArtefact().getClass().equals(artefactClass)) {
-						artefactDefinitions.rootArtefactDefs.add(defName);
-					}
+				if (rootArtefactClasses.contains(artefactClass)) {
+					artefactDefinitions.rootArtefactDefs.add(defName);
+				}
+				if (controlArtefactClasses.contains(artefactClass)) {
+					artefactDefinitions.controlArtefactDefs.add(defName);
 				}
 			}
 			return artefactDefinitions;
@@ -310,7 +330,9 @@ public class YamlPlanJsonSchemaGenerator {
 
 	private static class ArtefactDefinitions {
 		private final Map<String, JsonObjectBuilder> allArtefactDefs = new HashMap<>();
-		private final Collection<String> rootArtefactDefs = new ArrayList<>();
+
+		private final List<String> controlArtefactDefs = new ArrayList<>();
+		private final List<String> rootArtefactDefs = new ArrayList<>();
 	}
 
 }

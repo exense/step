@@ -18,7 +18,6 @@
  ******************************************************************************/
 package step.automation.packages;
 
-import org.apache.commons.io.IOUtils;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -212,61 +211,77 @@ public class AutomationPackageManager {
      * @param allowUpdate     whether update existing package is allowed
      * @param allowCreate     whether create new package is allowed
      * @param explicitOldId   the explicit package id to be updated (if null, the id will be automatically resolved by package name from packageStream)
-     * @param packageStream   the package content
      * @param fileName        the original name of file with automation package
      * @param enricher        the enricher used to fill all stored objects (for instance, with product id for multitenant application)
      * @param objectPredicate the filter for automation package
      * @return the id of created/updated package
-     * @throws SetupFunctionException
-     * @throws FunctionTypeException
      */
-    public PackageUpdateResult createOrUpdateAutomationPackage(boolean allowUpdate, boolean allowCreate, ObjectId explicitOldId, InputStream packageStream, String fileName, ObjectEnricher enricher, ObjectPredicate objectPredicate) {
+    public PackageUpdateResult createOrUpdateAutomationPackage(boolean allowUpdate, boolean allowCreate, ObjectId explicitOldId,
+                                                               InputStream inputStream, String fileName, ObjectEnricher enricher,
+                                                               ObjectPredicate objectPredicate) throws AutomationPackageManagerException {
+        try {
+            try (AutomationPackageArchiveProvider provider = new AutomationPackageFromInputStreamProvider(inputStream, fileName)) {
+                return createOrUpdateAutomationPackage(allowUpdate, allowCreate, explicitOldId, provider, false, enricher, objectPredicate);
+            }
+        } catch (IOException | AutomationPackageReadingException ex) {
+            throw new AutomationPackageManagerException("Automation package cannot be created", ex);
+        }
+    }
+
+    /**
+     * Creates new or updates the existing automation package
+     *
+     * @param allowUpdate               whether update existing package is allowed
+     * @param allowCreate               whether create new package is allowed
+     * @param explicitOldId             the explicit package id to be updated (if null, the id will be automatically resolved by package name from packageStream)
+     * @param automationPackageProvider the automation package content provider
+     * @param enricher                  the enricher used to fill all stored objects (for instance, with product id for multitenant application)
+     * @param objectPredicate           the filter for automation package
+     * @return the id of created/updated package
+     */
+    public PackageUpdateResult createOrUpdateAutomationPackage(boolean allowUpdate, boolean allowCreate, ObjectId explicitOldId,
+                                                               AutomationPackageArchiveProvider automationPackageProvider, boolean isLocalPackage,
+                                                               ObjectEnricher enricher, ObjectPredicate objectPredicate) {
         AutomationPackageArchive automationPackageArchive;
         AutomationPackageContent packageContent;
 
         AutomationPackage newPackage = null;
 
-        // store automation package into temp file
-        File automationPackageFile = null;
-        try {
-            automationPackageFile = stream2file(packageStream, fileName);
-        } catch (Exception ex) {
-            throw new AutomationPackageManagerException("Unable to store automation package file");
-        }
-
         try {
             try {
-                automationPackageArchive = new AutomationPackageArchive(automationPackageFile, fileName);
-                packageContent = readAutomationPackage(automationPackageArchive);
+                automationPackageArchive = automationPackageProvider.getAutomationPackageArchive();
+                packageContent = readAutomationPackage(automationPackageArchive, isLocalPackage);
             } catch (AutomationPackageReadingException e) {
                 throw new AutomationPackageManagerException("Unable to read automation package", e);
             }
 
             AutomationPackage oldPackage;
-        if (explicitOldId != null) {
-            oldPackage = getAutomationPackageById(explicitOldId, objectPredicate);
+            if (explicitOldId != null) {
+                oldPackage = getAutomationPackageById(explicitOldId, objectPredicate);
 
-            String newName = packageContent.getName();
-            String oldName = oldPackage.getAttribute(AbstractOrganizableObject.NAME);
-            if (!Objects.equals(newName, oldName)) {
-                // the package with the same name shouldn't exist
-                AutomationPackage existingPackageWithSameName = getAutomationPackageByName(newName, objectPredicate);
+                String newName = packageContent.getName();
+                String oldName = oldPackage.getAttribute(AbstractOrganizableObject.NAME);
+                if (!Objects.equals(newName, oldName)) {
+                    // the package with the same name shouldn't exist
+                    AutomationPackage existingPackageWithSameName = getAutomationPackageByName(newName, objectPredicate);
 
-                if (existingPackageWithSameName != null) {
-                    throw new AutomationPackageManagerException("Unable to change the package name to '" + newName
-                            + "'. Package with the same name already exists (" + existingPackageWithSameName.getId().toString() + ")");
+                    if (existingPackageWithSameName != null) {
+                        throw new AutomationPackageManagerException("Unable to change the package name to '" + newName
+                                + "'. Package with the same name already exists (" + existingPackageWithSameName.getId().toString() + ")");
+                    }
                 }
+            } else {
+                oldPackage = getAutomationPackageByName(packageContent.getName(), objectPredicate);
             }
-        } else {
-            oldPackage = getAutomationPackageByName(packageContent.getName(), objectPredicate);
-            }if (!allowUpdate && oldPackage != null) {
+            if (!allowUpdate && oldPackage != null) {
                 throw new AutomationPackageManagerException("Automation package '" + packageContent.getName() + "' already exists");
-            }if (!allowCreate && oldPackage == null) {
-            throw new AutomationPackageManagerException("Automation package '" + packageContent.getName() + "' doesn't exist");
-        }
+            }
+            if (!allowCreate && oldPackage == null) {
+                throw new AutomationPackageManagerException("Automation package '" + packageContent.getName() + "' doesn't exist");
+            }
 
             // keep old package id
-            newPackage = createNewInstance(fileName, packageContent, oldPackage, enricher);
+            newPackage = createNewInstance(automationPackageArchive.getOriginalFileName(), packageContent, oldPackage, enricher);
 
             // prepare staging collections
             ObjectEnricher enricherForIncludedEntities = ObjectEnricherComposer.compose(Arrays.asList(enricher, new AutomationPackageLinkEnricher(newPackage.getId().toString())));
@@ -304,19 +319,10 @@ public class AutomationPackageManager {
                 log.warn("Cannot cleanup resource", e);
             }
             throw ex;
-        } finally {
-            // cleanup temp file
-            try {
-                if (automationPackageFile.exists()) {
-                    automationPackageFile.delete();
-                }
-            } catch (Exception e) {
-                log.warn("Cannot cleanup temp file {}", automationPackageFile.getName(), e);
-            }
         }
     }
 
-    private void persistStagedEntities(List<ExecutiontTaskParameters> completeExecTasksParameters, List<Function> completeFunctions, List<Plan> completePlans) {
+        private void persistStagedEntities(List<ExecutiontTaskParameters> completeExecTasksParameters, List<Function> completeFunctions, List<Plan> completePlans) {
         try {
             for (Function completeFunction : completeFunctions) {
                 functionManager.saveFunction(completeFunction);
@@ -384,6 +390,15 @@ public class AutomationPackageManager {
             execTaskParameters.setActive(schedule.getActive() == null || schedule.getActive());
             execTaskParameters.addAttribute(AbstractOrganizableObject.NAME, schedule.getName());
             execTaskParameters.setCronExpression(schedule.getCron());
+            String assertionPlanName = schedule.getAssertionPlanName();
+            if (assertionPlanName != null && !assertionPlanName.isEmpty()) {
+                Plan assertionPlan = lookupPlanByName(plansStaging, assertionPlanName);
+                if (assertionPlan == null) {
+                    throw new AutomationPackageManagerException("Invalid automation package: " + packageContent.getName() +
+                            ". No assertion plan with '" + assertionPlanName + "' name found for schedule " + schedule.getName());
+                }
+                execTaskParameters.setAssertionPlan(assertionPlan.getId());
+            }
 
             String planNameFromSchedule = schedule.getPlanName();
             if (planNameFromSchedule == null || planNameFromSchedule.isEmpty()) {
@@ -391,16 +406,12 @@ public class AutomationPackageManager {
                         ". Plan name is not defined for schedule " + schedule.getName());
             }
 
-            Plan plan = plansStaging.stream().filter(p -> Objects.equals(p.getAttribute(AbstractOrganizableObject.NAME), planNameFromSchedule)).findFirst().orElse(null);
+            Plan plan = lookupPlanByName(plansStaging, planNameFromSchedule);
             if (plan == null) {
-                // schedule can reference the existing persisted plan (not defined inside the automation package)
-                plan = planAccessor.findByAttributes(Map.of(AbstractOrganizableObject.NAME, planNameFromSchedule));
-
-                if (plan == null) {
-                    throw new AutomationPackageManagerException("Invalid automation package: " + packageContent.getName() +
-                            ". No plan with '" + planNameFromSchedule + "' name found for schedule " + schedule.getName());
-                }
+                throw new AutomationPackageManagerException("Invalid automation package: " + packageContent.getName() +
+                        ". No plan with '" + planNameFromSchedule + "' name found for schedule " + schedule.getName());
             }
+
             ExecutionParameters executionParameters = new ExecutionParameters(plan, schedule.getExecutionParameters());
             executionParameters.setRepositoryObject(
                     new RepositoryObjectReference(
@@ -412,6 +423,15 @@ public class AutomationPackageManager {
         }
         fillEntities(completeExecTasksParameters, oldPackage != null ? getPackageSchedules(oldPackage.getId()) : new ArrayList<>(), enricher);
         return completeExecTasksParameters;
+    }
+
+    private Plan lookupPlanByName(List<Plan> plansStaging, String planName) {
+        Plan plan = plansStaging.stream().filter(p -> Objects.equals(p.getAttribute(AbstractOrganizableObject.NAME), planName)).findFirst().orElse(null);
+        if (plan == null) {
+            // schedule can reference the existing persisted plan (not defined inside the automation package)
+            plan = planAccessor.findByAttributes(Map.of(AbstractOrganizableObject.NAME, planName));
+        }
+        return plan;
     }
 
     private Map<String, ObjectId> createNameToIdMap(List<? extends AbstractOrganizableObject> objects) {
@@ -442,9 +462,9 @@ public class AutomationPackageManager {
         return newPackage;
     }
 
-    protected AutomationPackageContent readAutomationPackage(AutomationPackageArchive automationPackageArchive) throws AutomationPackageReadingException {
+    protected AutomationPackageContent readAutomationPackage(AutomationPackageArchive automationPackageArchive, boolean isLocalPackage) throws AutomationPackageReadingException {
         AutomationPackageContent packageContent;
-        packageContent = packageReader.readAutomationPackage(automationPackageArchive, false);
+        packageContent = packageReader.readAutomationPackage(automationPackageArchive, isLocalPackage);
         if (packageContent == null) {
             throw new AutomationPackageManagerException("Automation package descriptor is missing, allowed names: " + METADATA_FILES);
         } else if (packageContent.getName() == null || packageContent.getName().isEmpty()) {
@@ -575,15 +595,6 @@ public class AutomationPackageManager {
         } else {
             log.info("Skip automation package cleanup. Cleanup is only supported for isolated (in-memory) automation package manager");
         }
-    }
-
-    private static File stream2file(InputStream in, String fileName) throws IOException {
-        final File tempFile = File.createTempFile(fileName, ".tmp");
-        tempFile.deleteOnExit();
-        try (FileOutputStream out = new FileOutputStream(tempFile)) {
-            IOUtils.copy(in, out);
-        }
-        return tempFile;
     }
 
     public static class PackageUpdateResult {
