@@ -1,0 +1,9 @@
+plans:
+  - name: Test Plan
+    root:
+      testCase:
+        children:
+          - echo:
+              text: "Just echo"
+          - callKeyword:
+              keyword: "MyKeyword2"
