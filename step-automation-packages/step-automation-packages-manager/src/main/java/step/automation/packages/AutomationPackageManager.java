@@ -370,12 +370,8 @@ public class AutomationPackageManager {
             completeFunctions.add(completeFunction);
         }
 
-        // get old functions with same name and use their (i.e. update old functions)
-        List<Function> oldFunctions = new ArrayList<>();
-        for (Function newFunction : completeFunctions) {
-            oldFunctions.addAll(getFunctionsByAttributes(Map.of(AbstractOrganizableObject.NAME, newFunction.getAttribute(AbstractOrganizableObject.NAME))));
-        }
-
+        // get old functions with same name and reuse their ids
+        List<Function> oldFunctions = oldPackage == null ? new ArrayList<>() : getPackageFunctions(oldPackage.getId());
         fillEntities(completeFunctions, oldFunctions, enricher);
         return completeFunctions;
     }
