@@ -70,7 +70,7 @@ public class MavenArtifactRepositoryTest {
 
         // getTestSetStatusOverview
         TestSetStatusOverview testSetStatusOverview = artifactRepository.getTestSetStatusOverview(REPOSITORY_PARAMETERS, null);
-        assertEquals(Set.of("plan2.plan", "implicitPlanWithWithCustomKeywordName", "explicitPlan", "implicitPlanWithDefaultKeywordName"),
+        assertEquals(Set.of("plan2.plan", "My custom keyword name", "explicitPlan", "implicitPlanWithDefaultKeywordName"),
                 testSetStatusOverview.getRuns().stream().map(r -> r.getTestplanName()).collect(Collectors.toSet()));
 
         // importArtefact
