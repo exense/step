@@ -355,11 +355,12 @@ public class AutomationPackageManager {
             execTaskParameters.setActive(schedule.getActive() == null || schedule.getActive());
             execTaskParameters.addAttribute(AbstractOrganizableObject.NAME, schedule.getName());
             execTaskParameters.setCronExpression(schedule.getCron());
-            if (schedule.getAssertionPlanName() != null && !schedule.getAssertionPlanName().isEmpty()) {
-                Plan assertionPlan = lookupPlanByName(plansStaging, schedule.getAssertionPlanName());
+            String assertionPlanName = schedule.getAssertionPlanName();
+            if (assertionPlanName != null && !assertionPlanName.isEmpty()) {
+                Plan assertionPlan = lookupPlanByName(plansStaging, assertionPlanName);
                 if (assertionPlan == null) {
                     throw new AutomationPackageManagerException("Invalid automation package: " + packageContent.getName() +
-                            ". No assertion plan with '" + schedule.getAssertionPlanName() + "' name found for schedule " + schedule.getName());
+                            ". No assertion plan with '" + assertionPlanName + "' name found for schedule " + schedule.getName());
                 }
                 execTaskParameters.setAssertionPlan(assertionPlan.getId());
             }
