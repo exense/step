@@ -18,6 +18,8 @@
  ******************************************************************************/
 package step.automation.packages.execution;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.automation.packages.AutomationPackage;
 import step.automation.packages.AutomationPackageManager;
 import step.core.accessors.AbstractOrganizableObject;
@@ -28,12 +30,14 @@ import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
 import step.core.repositories.*;
+import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 import step.resources.LayeredResourceAccessor;
 import step.resources.LayeredResourceManager;
 import step.resources.ResourceAccessor;
 import step.resources.ResourceManager;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -42,6 +46,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class IsolatedAutomationPackageRepository extends AbstractRepository {
 
     public static final String REPOSITORY_PARAM_CONTEXTID = "contextid";
+
+    public static final Logger log = LoggerFactory.getLogger(IsolatedAutomationPackageRepository.class);
 
     private final ConcurrentHashMap<String, AutomationPackageManager> inMemoryPackageManagers = new ConcurrentHashMap<>();
 
@@ -104,10 +110,12 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
         planAccessor.save(plan);
 
         FunctionAccessor functionAccessor = context.get(FunctionAccessor.class);
+        List<Function> functionsForSave = new ArrayList<>();
         if (plan.getFunctions() != null) {
-            plan.getFunctions().iterator().forEachRemaining(functionAccessor::save);
+            plan.getFunctions().iterator().forEachRemaining(functionsForSave::add);
         }
-        automationPackageManager.getPackageFunctions(automationPackage.getId()).forEach(functionAccessor::save);
+        functionsForSave.addAll(automationPackageManager.getPackageFunctions(automationPackage.getId()));
+        functionAccessor.save(functionsForSave);
 
         ResourceManager contextResourceManager = context.getResourceManager();
         if (!(contextResourceManager instanceof LayeredResourceManager)) {
@@ -116,7 +124,8 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
         }
 
         // import all resources from automation package to execution context by adding the layer to contextResourceManager
-        ((LayeredResourceManager) contextResourceManager).pushManager(automationPackageManager.getResourceManager());
+        // resource manager used in isolated package manager is non-permanent
+        ((LayeredResourceManager) contextResourceManager).pushManager(automationPackageManager.getResourceManager(), false);
 
         // push the resource accessor from resource manager to keep consistency between ResourceManager and ResourceAccessor
         if (automationPackageManager.getResourceManager().getResourceAccessor() != null) {

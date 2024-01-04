@@ -25,7 +25,7 @@ public class StepJarParserTest {
 		List<String> planNames = plansForJar.getPlans().stream().map(p -> p.getAttribute("name")).collect(Collectors.toList());
 		log.info("Plans parsed in jar: {}", planNames);
 		Assert.assertEquals(7, planNames.size());
-		Assert.assertTrue(planNames.contains("implicitPlanWithWithCustomKeywordName"));
+		Assert.assertTrue(planNames.contains("My custom keyword name"));
 		Assert.assertTrue(planNames.contains("planWithAssert"));
 		Assert.assertTrue(planNames.contains("explicitPlanWithExecutionParameter"));
 		Assert.assertTrue(planNames.contains("inlinePlan"));

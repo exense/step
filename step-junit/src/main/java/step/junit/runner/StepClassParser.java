@@ -76,32 +76,38 @@ public class StepClassParser {
 
 	public List<StepClassParserResult> getPlanFromAnnotatedMethods(AnnotationScanner annotationScanner, Class<?> klass) {
 		return annotationScanner.getMethodsWithAnnotation(step.junit.runners.annotations.Plan.class).stream()
-			.filter(m -> m.getDeclaringClass() == klass).map(m -> {
-				String planName = (appendClassnameToPlanName?m.getDeclaringClass().getName()+".":"")+m.getName();
-				Exception exception = null;
-				Plan plan = null;
-				try {
-					String planStr = m.getAnnotation(step.junit.runners.annotations.Plan.class).value();
-					if (planStr.trim().length() == 0) {
-						Keyword keyword = m.getAnnotation(Keyword.class);
-						if (keyword != null) {
-							String name = keyword.name();
-							if (name.trim().length() > 0) {
-								planStr = "\"" + name + "\"";
-							} else {
-								planStr = m.getName();
-							}
-						} else {
-							throw new IllegalStateException("Missing annotation @Keyword on implicit plan method "+m.getName());
-						}
+				.filter(m -> m.getDeclaringClass() == klass).map(m -> {
+					Keyword keyword = m.getAnnotation(Keyword.class);
+					String planName;
+					if (keyword != null && keyword.name() != null && !keyword.name().isEmpty()) {
+						planName = keyword.name();
+					} else {
+						planName = (appendClassnameToPlanName ? m.getDeclaringClass().getName() + "." : "") + m.getName();
 					}
-					plan = planParser.parse(planStr, RootArtefactType.TestCase);
-					setPlanName(plan, planName);
-				} catch (Exception e) {
-					exception = e;
-				}
-				return new StepClassParserResult(planName, plan, exception);
-			}).collect(Collectors.toList());
+
+					Exception exception = null;
+					Plan plan = null;
+					try {
+						String planStr = m.getAnnotation(step.junit.runners.annotations.Plan.class).value();
+						if (planStr.trim().length() == 0) {
+							if (keyword != null) {
+								String name = keyword.name();
+								if (name.trim().length() > 0) {
+									planStr = "\"" + name + "\"";
+								} else {
+									planStr = m.getName();
+								}
+							} else {
+								throw new IllegalStateException("Missing annotation @Keyword on implicit plan method " + m.getName());
+							}
+						}
+						plan = planParser.parse(planStr, RootArtefactType.TestCase);
+						setPlanName(plan, planName);
+					} catch (Exception e) {
+						exception = e;
+					}
+					return new StepClassParserResult(planName, plan, exception);
+				}).collect(Collectors.toList());
 	}
 
 	public List<StepClassParserResult> getPlanFromAnnotatedMethods(Class<?> klass) {

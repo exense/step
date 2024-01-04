@@ -20,13 +20,17 @@ package step.automation.packages.client;
 
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.client.Invocation;
+import jakarta.ws.rs.core.GenericType;
 import jakarta.ws.rs.core.MediaType;
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.MultiPart;
 import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
+import step.automation.packages.execution.AutomationPackageExecutionParameters;
 import step.client.AbstractRemoteClient;
 import step.client.credentials.ControllerCredentials;
 
 import java.io.File;
+import java.util.List;
 import java.util.function.Function;
 
 public class RemoteAutomationPackageClientImpl extends AbstractRemoteClient implements AutomationPackageClient {
@@ -56,20 +60,36 @@ public class RemoteAutomationPackageClientImpl extends AbstractRemoteClient impl
     }
 
     @Override
-    public void deleteAutomationPackage(String packageName) {
-        Invocation.Builder builder = requestBuilder("/rest/automation-packages/" + packageName);
+    public List<String> executeAutomationPackage(File automationPackageFile, AutomationPackageExecutionParameters params) {
+        MultiPart multiPart = prepareFileDataMultiPart(automationPackageFile);
+        FormDataBodyPart paramsBodyPart = new FormDataBodyPart("executionParams", params, MediaType.APPLICATION_JSON_TYPE);
+        multiPart.bodyPart(paramsBodyPart);
+
+        Entity<MultiPart> entity = Entity.entity(multiPart, multiPart.getMediaType());
+        Invocation.Builder builder = requestBuilder("/rest/automation-packages/execute");
+        return builder.post(entity, new GenericType<List<String>>() {});
+    }
+
+    @Override
+    public void deleteAutomationPackage(String packageId) {
+        Invocation.Builder builder = requestBuilder("/rest/automation-packages/" + packageId);
         executeRequest(() -> builder.delete(Void.class));
     }
 
+
     protected String uploadPackage(File automationPackageFile, Function<Entity<MultiPart>, String> executeRequest) {
+        MultiPart multiPart = prepareFileDataMultiPart(automationPackageFile);
+        Entity<MultiPart> entity = Entity.entity(multiPart, multiPart.getMediaType());
+        return executeRequest.apply(entity);
+    }
+
+    private MultiPart prepareFileDataMultiPart(File automationPackageFile) {
         FileDataBodyPart fileDataBodyPart = new FileDataBodyPart("file", automationPackageFile, MediaType.APPLICATION_OCTET_STREAM_TYPE);
 
         MultiPart multiPart = new MultiPart();
         multiPart.setMediaType(MediaType.MULTIPART_FORM_DATA_TYPE);
         multiPart.bodyPart(fileDataBodyPart);
-        Entity<MultiPart> entity = Entity.entity(multiPart, multiPart.getMediaType());
-
-        return executeRequest.apply(entity);
+        return multiPart;
     }
 
 }

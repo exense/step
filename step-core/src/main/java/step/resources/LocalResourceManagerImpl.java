@@ -46,6 +46,7 @@ public class LocalResourceManagerImpl extends ResourceManagerImpl {
 	public void cleanup() {
 		if (resourceRootFolder.exists() && resourceRootFolder.isDirectory() && resourceRootFolder.canWrite()) {
 			try {
+				logger.info("Cleanup resource directory: {}", resourceRootFolder.getAbsolutePath());
 				FileUtils.deleteDirectory(resourceRootFolder);
 			} catch (IOException e) {
 				logger.error("Could not remove local resource folder: " + resourceRootFolder.getAbsolutePath(),e );

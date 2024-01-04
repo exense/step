@@ -103,7 +103,7 @@ public class AutomationPackageServices extends AbstractStepServices {
                 fileDetail.getFileName(),
                 executionParameters,
                 getObjectEnricher(),
-                user == null ? null : user.getId().toString(),
+                user == null ? null : user.getUsername(),
                 getObjectPredicate()
         );
     }
