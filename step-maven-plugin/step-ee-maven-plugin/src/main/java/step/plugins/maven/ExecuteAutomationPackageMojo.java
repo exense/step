@@ -21,6 +21,7 @@ package step.plugins.maven;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import step.automation.packages.client.RemoteAutomationPackageClientImpl;
@@ -37,7 +38,10 @@ import step.core.plans.filters.PlanByExcludedNamesFilter;
 import step.core.plans.filters.PlanByIncludedNamesFilter;
 
 import java.io.File;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
@@ -97,54 +101,54 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
             AutomationPackageExecutionParameters executionParameters = prepareExecutionParameters();
 
             List<String> executionIds = automationPackageClient.executeAutomationPackage(automationPackageFile, executionParameters);
-            getLog().info("Executions have been started in Step (" + getUrl() + "):");
+            getLog().info("Executions started in Step:");
             for (String executionId : executionIds) {
                 Execution executionInfo = remoteExecutionManager.get(executionId);
                 getLog().info("- " + executionToString(executionId, executionInfo));
             }
 
             if (getWaitForExecution()) {
-                getLog().info("Waiting on results...");
+                getLog().info("Waiting for executions to complete...");
                 waitForExecutionFinish(remoteExecutionManager, executionIds);
             } else {
-                getLog().info("Waiting on results is disabled.");
+                getLog().info("waitForExecution set to 'false'. Not waiting for executions to complete.");
             }
         } catch (Exception ex) {
-            throw logAndThrow("Unable to run execution in Step (" + getUrl() + ")", ex);
+            throw logAndThrow("Error while running executions in Step", ex);
         }
     }
 
     protected void waitForExecutionFinish(RemoteExecutionManager remoteExecutionManager, List<String> executionIds) throws MojoExecutionException {
-        getLog().info("Waiting for execution result from Step (" + getUrl() + ")...");
-
         // run the execution and wait until it is finished
         try {
             List<Execution> endedExecutions = remoteExecutionManager.waitForTermination(executionIds, getExecutionResultTimeoutS() * 1000);
-            boolean error = false;
+            int executionFailureCount = 0;
             for (String id : executionIds) {
                 Execution endedExecution = endedExecutions.stream().filter(e -> e.getId().toString().equals(id)).findFirst().orElse(null);
+                Log log = getLog();
                 if (endedExecution == null) {
-                    error = true;
-                    getLog().error("Unknown result status for execution " + executionToString(id, null));
-                } else if (getEnsureExecutionSuccess() && !isStatusSuccess(endedExecution)) {
-                    error = true;
-                    List<String> errors;
-                    if (endedExecution.getImportResult() != null && endedExecution.getImportResult().getErrors() != null) {
-                        errors = endedExecution.getImportResult().getErrors();
-                    } else {
-                        errors = new ArrayList<>();
+                    executionFailureCount++;
+                    log.error("Unknown result status for execution " + executionToString(id, null));
+                } else if (!endedExecution.getImportResult().isSuccessful()) {
+                    executionFailureCount++;
+                    String errorMessage = "Error(s) while importing plan for execution " + executionToString(id, endedExecution);
+                    List<String> errors = endedExecution.getImportResult().getErrors();
+                    if (errors != null) {
+                        errorMessage += ": " + String.join(";", errors);
                     }
-                    getLog().error("The execution result is NOT OK for execution " + executionToString(id, endedExecution) + ". The following error(s) occurred during import " +
-                            String.join(";", errors));
+                    log.error(errorMessage);
+                } else if (!isStatusSuccess(endedExecution)) {
+                    executionFailureCount++;
+                    log.error("Execution " + executionToString(id, endedExecution) + " failed. Result status was " + endedExecution.getResult());
                 } else {
-                    getLog().info("The execution result " + executionToString(id, endedExecution) + " is OK. Final status is " + endedExecution.getResult());
+                    log.info("Execution " + executionToString(id, endedExecution) + " succeeded. Result status was " + endedExecution.getResult());
                 }
             }
-            if (error) {
-                throw new MojoExecutionException("Execution failure");
+            if (executionFailureCount > 0 && getEnsureExecutionSuccess()) {
+                throw new MojoExecutionException(executionFailureCount + " execution(s) failed");
             }
         } catch (TimeoutException | InterruptedException ex) {
-            throw logAndThrow("The success execution result is not received from Step in " + getExecutionResultTimeoutS() + "seconds", ex);
+            throw logAndThrow("Timeout after " + getExecutionResultTimeoutS() + " seconds while waiting for executions to complete", ex);
         }
     }
 
@@ -155,11 +159,7 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
 
     private String executionToString(String id, Execution ex) {
         if (ex != null) {
-            String res = String.format("'%s' (%s).", ex.getDescription(), ex.getId().toString());
-            if (ex.getResult() != null) {
-                res += " Status: " + ex.getResult();
-            }
-            return res;
+            return String.format("'%s' (%s)", ex.getDescription(), getUrl() + "#/root/executions/" + ex.getId().toString());
         } else {
             return id;
         }
