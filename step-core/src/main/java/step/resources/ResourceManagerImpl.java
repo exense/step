@@ -273,8 +273,8 @@ public class ResourceManagerImpl implements ResourceManager {
 	@Override
 	public Resource getResource(String resourceId) {
 		Resource resource = resourceAccessor.get(new ObjectId(resourceId));
-		if(resource == null) {
-			throw new RuntimeException("The resource with ID "+resourceId+" doesn't exist");
+		if (resource == null) {
+			throw new ResourceMissingException(resourceId);
 		}
 		return resource;
 	}

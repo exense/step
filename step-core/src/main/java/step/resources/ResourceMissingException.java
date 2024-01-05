@@ -16,11 +16,18 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plugins.maven;
+package step.resources;
 
-import org.apache.maven.plugins.annotations.Mojo;
+public class ResourceMissingException extends RuntimeException {
 
-@Mojo(name = "run-deployed-automation-packages-os")
-public class RunDeployedAutomationPackagesMojoOS extends AbstractRunDeployedAutomationPackagesMojo {
+    private String resourceId;
 
+    public ResourceMissingException(String resourceId) {
+        super("The resource with ID " + resourceId + " doesn't exist");
+        this.resourceId = resourceId;
+    }
+
+    public String getResourceId() {
+        return resourceId;
+    }
 }

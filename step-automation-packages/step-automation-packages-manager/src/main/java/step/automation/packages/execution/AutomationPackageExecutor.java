@@ -30,6 +30,7 @@ import step.core.plans.Plan;
 import step.core.plans.PlanFilter;
 import step.core.repositories.RepositoryObjectReference;
 import step.core.scheduler.ExecutionScheduler;
+import step.functions.accessor.FunctionAccessor;
 import step.functions.type.FunctionTypeRegistry;
 
 import java.io.InputStream;
@@ -54,27 +55,33 @@ public class AutomationPackageExecutor {
     private final ExecutionScheduler scheduler;
     private final ExecutionAccessor executionAccessor;
     private final FunctionTypeRegistry functionTypeRegistry;
+    private final FunctionAccessor functionAccessor;
     private final IsolatedAutomationPackageRepository isolatedAutomationPackageRepository;
     private final AutomationPackageManager automationPackageManager;
 
     public AutomationPackageExecutor(ExecutionScheduler scheduler,
                                      ExecutionAccessor executionAccessor,
                                      FunctionTypeRegistry functionTypeRegistry,
+                                     FunctionAccessor functionAccessor,
                                      IsolatedAutomationPackageRepository isolatedAutomationPackageRepository,
                                      AutomationPackageManager automationPackageManager) {
         this.scheduler = scheduler;
         this.executionAccessor = executionAccessor;
         this.functionTypeRegistry = functionTypeRegistry;
+        this.functionAccessor = functionAccessor;
         this.isolatedAutomationPackageRepository = isolatedAutomationPackageRepository;
         this.automationPackageManager = automationPackageManager;
     }
 
     public List<String> runInIsolation(InputStream automationPackage, String fileName, AutomationPackageExecutionParameters parameters,
-                                       ObjectEnricher objectEnricher, String userId, ObjectPredicate objectPredicate) {
+                                       ObjectEnricher objectEnricher, String userName, ObjectPredicate objectPredicate) {
         ObjectId contextId = new ObjectId();
 
         // prepare the isolated in-memory automation package manager with the only one automation package
-        AutomationPackageManager inMemoryPackageManager = automationPackageManager.createIsolated(contextId, functionTypeRegistry);
+        AutomationPackageManager inMemoryPackageManager = automationPackageManager.createIsolated(
+                contextId, functionTypeRegistry,
+                functionAccessor
+        );
 
         List<String> executions = new ArrayList<>();
         try {
@@ -94,8 +101,13 @@ public class AutomationPackageExecutor {
                     params.setRepositoryObject(new RepositoryObjectReference(IsolatedAutomationPackageRepositoryPlugin.ISOLATED_AUTOMATION_PACKAGE, repositoryParameters));
                     params.setDescription(CommonExecutionParameters.defaultDescription(plan));
 
-                    if (userId != null) {
-                        params.setUserID(userId);
+                    if (userName != null) {
+                        params.setUserID(userName);
+                    }
+
+                    // for instance, set the project for multitenant application
+                    if (objectEnricher != null) {
+                        objectEnricher.accept(params);
                     }
 
                     String newExecutionId = this.scheduler.execute(params);
@@ -121,9 +133,10 @@ public class AutomationPackageExecutor {
     protected void cleanupIsolatedContextAfterExecution(ObjectId contextId, List<String> executions, String fileName) {
         // wait for all executions to be finished
         delayedCleanupExecutor.execute(() -> {
-            if (waitForAllExecutionEnded(executions)) return;
+            waitForAllExecutionEnded(executions);
 
             // remove the context from isolated automation package repository
+            log.info("Cleanup isolated execution context");
             isolatedAutomationPackageRepository.cleanupContext(contextId.toString());
 
             log.info("Execution finished for automation package {}", fileName);
@@ -162,13 +175,13 @@ public class AutomationPackageExecutor {
                 return !activeExecutionFound;
             }, AUTOMATION_PACKAGE_EXECUTION_TIMEOUT, CLEANUP_POLLING_INTERVAL);
         } catch (InterruptedException e) {
-            log.warn("Automation context cleanup interrupted");
-            return true;
+            log.warn("Isolated execution interrupted");
+            return false;
         } catch (Throwable e) {
-            log.error("Exception during execution cleanup", e);
-            return true;
+            log.error("Exception during isolated execution", e);
+            return false;
         }
-        return false;
+        return true;
     }
 
 }

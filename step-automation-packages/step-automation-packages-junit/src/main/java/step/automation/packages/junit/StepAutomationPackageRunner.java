@@ -25,8 +25,11 @@ import step.automation.packages.AutomationPackageManager;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
+import step.core.execution.ExecutionEngineContext;
 import step.core.plans.Plan;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
+import step.functions.accessor.FunctionAccessor;
+import step.functions.type.FunctionTypeRegistry;
 import step.junit.runner.AbstractStepRunner;
 import step.junit.runner.StepClassParserResult;
 

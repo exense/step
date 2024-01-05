@@ -84,6 +84,7 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
                 context.getScheduler(),
                 context.require(ExecutionAccessor.class),
                 context.require(FunctionTypeRegistry.class),
+                context.require(FunctionAccessor.class),
                 context.require(IsolatedAutomationPackageRepository.class),
                 packageManager
         );
