@@ -143,16 +143,6 @@ public abstract class AbtractFunctionServices extends AbstractEntityServices<Fun
 		}
 	}
 
-	@Operation(operationId = "get{Entity}sInputsFromSchema")
-	@GET
-	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="{entity}-read")
-	@Path("/{id}/schema/inputs")
-	public JsonObject getFunctionInputFromSchema(@PathParam("id") String functionId) {
-		Function function = functionManager.getFunctionById(functionId);
-		return FunctionArtefacts.buildInputFromSchema(function);
-	}
-
 	@Override
 	public Function save(Function function) {
 		try {
