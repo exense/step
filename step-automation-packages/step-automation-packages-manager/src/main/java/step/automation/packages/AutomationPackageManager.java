@@ -39,8 +39,6 @@ import step.core.scheduler.ExecutionTaskAccessor;
 import step.core.scheduler.ExecutiontTaskParameters;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
-import step.functions.accessor.InMemoryFunctionAccessorImpl;
-import step.functions.accessor.LayeredFunctionAccessor;
 import step.functions.manager.FunctionManager;
 import step.functions.type.FunctionTypeException;
 import step.functions.type.FunctionTypeRegistry;
@@ -48,8 +46,6 @@ import step.functions.type.SetupFunctionException;
 import step.resources.Resource;
 import step.resources.ResourceManager;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
@@ -72,12 +68,12 @@ public abstract class AutomationPackageManager {
     protected final AbstractAutomationPackageReader<?> packageReader;
     protected final AutomationPackageKeywordsAttributesApplier keywordsAttributesApplier;
     protected final ResourceManager resourceManager;
-    private boolean isIsolated = false;
+    protected boolean isIsolated = false;
 
     /**
      * The automation package manager used to store/delete automation packages. To run the automation package in isolated
      * context please use the separate in-memory automation package manager created via
-     * {@link AutomationPackageManager#createIsolatedAutomationPackageManager(ObjectId, FunctionTypeRegistry, FunctionAccessor)}
+     * {@link AutomationPackageManager#createIsolated(ObjectId, FunctionTypeRegistry, FunctionAccessor)}
      */
     public AutomationPackageManager(AutomationPackageAccessor automationPackageAccessor,
                                     FunctionManager functionManager,
@@ -117,26 +113,7 @@ public abstract class AutomationPackageManager {
      *                             keywords with duplicated names
      * @return the automation manager with in-memory accessors for plans and keywords
      */
-    public static AutomationPackageManager createIsolatedAutomationPackageManager(ObjectId isolatedContextId,
-                                                                                  FunctionTypeRegistry functionTypeRegistry,
-                                                                                  FunctionAccessor mainFunctionAccessor) {
-        InMemoryFunctionAccessorImpl inMemoryFunctionRepository = new InMemoryFunctionAccessorImpl();
-        LayeredFunctionAccessor layeredFunctionAccessor = new LayeredFunctionAccessor(List.of(inMemoryFunctionRepository, mainFunctionAccessor));
-
-        AutomationPackageManager automationPackageManager = new AutomationPackageManager(
-                new InMemoryAutomationPackageAccessorImpl(),
-                new FunctionManagerImpl(layeredFunctionAccessor, functionTypeRegistry),
-                layeredFunctionAccessor,
-                new InMemoryPlanAccessor(),
-                new LocalResourceManagerImpl(new File("resources", isolatedContextId.toString())),
-                new InMemoryExecutionTaskAccessor(),
-                null
-        );
-        automationPackageManager.isIsolated = true;
-        return automationPackageManager;
-    }
-
-    public abstract AutomationPackageManager createIsolated(ObjectId isolatedContextId, FunctionTypeRegistry functionTypeRegistry);
+    public abstract AutomationPackageManager createIsolated(ObjectId isolatedContextId, FunctionTypeRegistry functionTypeRegistry, FunctionAccessor mainFunctionAccessor);
 
     public AutomationPackage getAutomationPackageById(ObjectId id, ObjectPredicate objectPredicate) {
         AutomationPackage automationPackage = automationPackageAccessor.get(id);

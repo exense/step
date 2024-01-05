@@ -28,6 +28,7 @@ import step.core.scheduler.ExecutionTaskAccessor;
 import step.core.scheduler.InMemoryExecutionTaskAccessor;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.accessor.InMemoryFunctionAccessorImpl;
+import step.functions.accessor.LayeredFunctionAccessor;
 import step.functions.manager.FunctionManager;
 import step.functions.manager.FunctionManagerImpl;
 import step.functions.type.FunctionTypeRegistry;
@@ -35,6 +36,7 @@ import step.resources.LocalResourceManagerImpl;
 import step.resources.ResourceManager;
 
 import java.io.File;
+import java.util.List;
 
 public class AutomationPackageManagerOS extends AutomationPackageManager {
     public AutomationPackageManagerOS(AutomationPackageAccessor automationPackageAccessor, FunctionManager functionManager, FunctionAccessor functionAccessor, PlanAccessor planAccessor, ResourceManager resourceManager, ExecutionTaskAccessor executionTaskAccessor, ExecutionScheduler executionScheduler) {
@@ -46,20 +48,27 @@ public class AutomationPackageManagerOS extends AutomationPackageManager {
     }
 
     @Override
-    public AutomationPackageManager createIsolated(ObjectId isolatedContextId, FunctionTypeRegistry functionTypeRegistry) {
-        return createIsolatedAutomationPackageManagerOS(isolatedContextId, functionTypeRegistry);
+    public AutomationPackageManager createIsolated(ObjectId isolatedContextId, FunctionTypeRegistry functionTypeRegistry, FunctionAccessor mainFunctionAccessor) {
+        return createIsolatedAutomationPackageManagerOS(isolatedContextId, functionTypeRegistry, mainFunctionAccessor);
     }
 
-    public static AutomationPackageManagerOS createIsolatedAutomationPackageManagerOS(ObjectId isolatedContextId, FunctionTypeRegistry functionTypeRegistry) {
+    public static AutomationPackageManager createIsolatedAutomationPackageManagerOS(ObjectId isolatedContextId,
+                                                                                  FunctionTypeRegistry functionTypeRegistry,
+                                                                                  FunctionAccessor mainFunctionAccessor) {
         InMemoryFunctionAccessorImpl inMemoryFunctionRepository = new InMemoryFunctionAccessorImpl();
-        return new AutomationPackageManagerOS(
+        LayeredFunctionAccessor layeredFunctionAccessor = new LayeredFunctionAccessor(List.of(inMemoryFunctionRepository, mainFunctionAccessor));
+
+        AutomationPackageManager automationPackageManager = new AutomationPackageManagerOS(
                 new InMemoryAutomationPackageAccessorImpl(),
-                new FunctionManagerImpl(inMemoryFunctionRepository, functionTypeRegistry),
-                inMemoryFunctionRepository,
+                new FunctionManagerImpl(layeredFunctionAccessor, functionTypeRegistry),
+                layeredFunctionAccessor,
                 new InMemoryPlanAccessor(),
                 new LocalResourceManagerImpl(new File("resources", isolatedContextId.toString())),
                 new InMemoryExecutionTaskAccessor(),
                 null
         );
+        automationPackageManager.isIsolated = true;
+        return automationPackageManager;
     }
+
 }
