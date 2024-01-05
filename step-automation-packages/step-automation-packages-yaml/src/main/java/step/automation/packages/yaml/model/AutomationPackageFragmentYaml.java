@@ -18,65 +18,18 @@
  ******************************************************************************/
 package step.automation.packages.yaml.model;
 
-import com.fasterxml.jackson.annotation.JsonSetter;
-import com.fasterxml.jackson.annotation.Nulls;
-import step.automation.packages.model.AutomationPackageAlertingRule;
 import step.automation.packages.model.AutomationPackageKeyword;
 import step.automation.packages.model.AutomationPackageSchedule;
 import step.plans.parser.yaml.model.YamlPlan;
 
-import java.util.ArrayList;
 import java.util.List;
 
-public class AutomationPackageFragmentYaml {
-    private List<String> fragments = new ArrayList<>();
-    private List<AutomationPackageKeyword> keywords = new ArrayList<>();
-    private List<YamlPlan> plans = new ArrayList<>();
-    private List<AutomationPackageSchedule> schedules = new ArrayList<>();
-    private List<AutomationPackageAlertingRule> alertingRules = new ArrayList<>();
+public interface AutomationPackageFragmentYaml {
+    List<AutomationPackageKeyword> getKeywords();
 
-    public List<AutomationPackageKeyword> getKeywords() {
-        return keywords;
-    }
+    List<YamlPlan> getPlans();
 
-    @JsonSetter(nulls = Nulls.AS_EMPTY)
-    public void setKeywords(List<AutomationPackageKeyword> keywords) {
-        this.keywords = keywords;
-    }
+    List<String> getFragments();
 
-    public List<YamlPlan> getPlans() {
-        return plans;
-    }
-
-    @JsonSetter(nulls = Nulls.AS_EMPTY)
-    public void setPlans(List<YamlPlan> plans) {
-        this.plans = plans;
-    }
-
-    public List<String> getFragments() {
-        return fragments;
-    }
-
-    @JsonSetter(nulls = Nulls.AS_EMPTY)
-    public void setFragments(List<String> fragments) {
-        this.fragments = fragments;
-    }
-
-    public List<AutomationPackageSchedule> getSchedules() {
-        return schedules;
-    }
-
-    @JsonSetter(nulls = Nulls.AS_EMPTY)
-    public void setSchedules(List<AutomationPackageSchedule> schedules) {
-        this.schedules = schedules;
-    }
-
-    public List<AutomationPackageAlertingRule> getAlertingRules() {
-        return alertingRules;
-    }
-
-    @JsonSetter(nulls = Nulls.AS_EMPTY)
-    public void setAlertingRules(List<AutomationPackageAlertingRule> alertingRules) {
-        this.alertingRules = alertingRules;
-    }
+    List<AutomationPackageSchedule> getSchedules();
 }

@@ -18,52 +18,48 @@
  ******************************************************************************/
 package step.engine.plugins;
 
-import ch.exense.commons.app.Configuration;
-import step.automation.packages.AutomationPackageArchive;
-import step.automation.packages.AutomationPackageKeywordsAttributesApplier;
-import step.automation.packages.AutomationPackageReader;
-import step.automation.packages.AutomationPackageReadingException;
+import org.bson.types.ObjectId;
+import step.automation.packages.*;
 import step.automation.packages.model.AutomationPackageContent;
 import step.automation.packages.model.AutomationPackageKeyword;
-import step.automation.packages.yaml.Constants;
 import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionEngineContext;
 import step.core.execution.OperationMode;
 import step.core.plugins.Plugin;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
+import step.functions.type.FunctionTypeRegistry;
 import step.resources.ResourceManager;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@Plugin(dependencies = {FunctionPlugin.class, AutomationPackageJsonSchemaPlugin.class})
+@Plugin(dependencies = {FunctionPlugin.class})
 public class AutomationPackageKeywordsPlugin extends AbstractExecutionEnginePlugin {
-
-    private FunctionAccessor functionAccessor;
-    private ResourceManager resourceManager;
 
     @Override
     public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext context) {
         if (context.getOperationMode() == OperationMode.LOCAL) {
-            functionAccessor = context.require(FunctionAccessor.class);
-            resourceManager = context.getResourceManager();
+            FunctionAccessor functionAccessor = context.require(FunctionAccessor.class);
+            ResourceManager resourceManager = context.getResourceManager();
 
-            List<Function> localFunctions = getFunctionsFromAutomationPackage(context.getConfiguration());
+            List<Function> localFunctions = getFunctionsFromAutomationPackage(
+                    resourceManager,
+                    context.computeIfAbsent(AutomationPackageManager.class, automationPackageManagerClass -> AutomationPackageManagerOS.createIsolatedAutomationPackageManagerOS(new ObjectId(), context.require(FunctionTypeRegistry.class)))
+            );
             functionAccessor.save(localFunctions);
         }
     }
 
-    public List<Function> getFunctionsFromAutomationPackage(Configuration configuration) {
+    private List<Function> getFunctionsFromAutomationPackage(ResourceManager resourceManager, AutomationPackageManager automationPackageManager) {
         ArrayList<Function> res = new ArrayList<>();
 
         // the automation package should be found in current classloader
         AutomationPackageArchive automationPackageArchive = new AutomationPackageArchive(this.getClass().getClassLoader());
         if (automationPackageArchive.isAutomationPackage()) {
             try {
-                AutomationPackageReader automationPackageReader = new AutomationPackageReader(getAutomationPackageJsonSchema(configuration));
                 AutomationPackageKeywordsAttributesApplier attributesApplier = new AutomationPackageKeywordsAttributesApplier(resourceManager);
-                AutomationPackageContent automationPackageContent = automationPackageReader.readAutomationPackage(automationPackageArchive, true);
+                AutomationPackageContent automationPackageContent = automationPackageManager.getPackageReader().readAutomationPackage(automationPackageArchive, true);
                 if (automationPackageContent != null) {
                     for (AutomationPackageKeyword foundKeyword : automationPackageContent.getKeywords()) {
                         res.add(attributesApplier.applySpecialAttributesToKeyword(foundKeyword, automationPackageArchive, null, null));
@@ -76,7 +72,4 @@ public class AutomationPackageKeywordsPlugin extends AbstractExecutionEnginePlug
         return res;
     }
 
-    protected String getAutomationPackageJsonSchema(Configuration configuration) {
-        return configuration.getProperty(Constants.PROP_AUTOMATION_PACKAGE_JSON_SCHEMA, null);
-    }
 }

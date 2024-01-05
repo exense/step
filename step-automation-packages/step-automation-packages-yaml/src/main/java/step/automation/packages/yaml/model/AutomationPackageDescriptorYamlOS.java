@@ -16,22 +16,22 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.model;
+package step.automation.packages.yaml.model;
 
-import step.core.plans.Plan;
+import java.util.HashMap;
+import java.util.Map;
 
-import java.util.ArrayList;
-import java.util.List;
-
-public class AutomationPackageContent {
+public class AutomationPackageDescriptorYamlOS extends AutomationPackageFragmentYamlOS implements AutomationPackageDescriptorYaml {
 
     private String version;
+
+    private String schemaVersion;
+
+    private Map<String, String> attributes = new HashMap<>();
+
     private String name;
 
-    private List<AutomationPackageKeyword> keywords = new ArrayList<>();
-    private List<Plan> plans = new ArrayList<>();
-    private List<AutomationPackageSchedule> schedules = new ArrayList<>();
-
+    @Override
     public String getName() {
         return name;
     }
@@ -40,14 +40,7 @@ public class AutomationPackageContent {
         this.name = name;
     }
 
-    public List<AutomationPackageKeyword> getKeywords() {
-        return keywords;
-    }
-
-    public void setKeywords(List<AutomationPackageKeyword> keywords) {
-        this.keywords = keywords;
-    }
-
+    @Override
     public String getVersion() {
         return version;
     }
@@ -56,20 +49,21 @@ public class AutomationPackageContent {
         this.version = version;
     }
 
-    public List<Plan> getPlans() {
-        return plans;
+    @Override
+    public String getSchemaVersion() {
+        return schemaVersion;
     }
 
-    public void setPlans(List<Plan> plans) {
-        this.plans = plans;
+    public void setSchemaVersion(String schemaVersion) {
+        this.schemaVersion = schemaVersion;
     }
 
-    public List<AutomationPackageSchedule> getSchedules() {
-        return schedules;
+    @Override
+    public Map<String, String> getAttributes() {
+        return attributes;
     }
 
-    public void setSchedules(List<AutomationPackageSchedule> schedules) {
-        this.schedules = schedules;
+    public void setAttributes(Map<String, String> attributes) {
+        this.attributes = attributes;
     }
-
 }

@@ -16,11 +16,23 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plugins.alerting.rule.condition.binding;
+package step.automation.packages;
 
-public interface BindingPredicate {
+import step.automation.packages.model.AutomationPackageContent;
+import step.automation.packages.yaml.YamlAutomationPackageVersions;
 
-    String JSON_CLASS_FIELD = "class";
+public class AutomationPackageReaderOS extends AbstractAutomationPackageReader<AutomationPackageContent> {
 
-    boolean apply(Object bindingValue);
+    public AutomationPackageReaderOS() {
+        this(true);
+    }
+
+    public AutomationPackageReaderOS(boolean useJsonSchema) {
+        super(useJsonSchema ? YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH : null);
+    }
+
+    @Override
+    protected AutomationPackageContent newContentInstance() {
+        return new AutomationPackageContent();
+    }
 }

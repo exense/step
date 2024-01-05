@@ -27,7 +27,6 @@ import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
 import step.core.plans.Plan;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
-import step.functions.type.FunctionTypeRegistry;
 import step.junit.runner.AbstractStepRunner;
 import step.junit.runner.StepClassParserResult;
 
@@ -48,11 +47,7 @@ public class StepAutomationPackageRunner extends AbstractStepRunner {
 				}
 			}).withPluginsFromClasspath().build();
 
-			FunctionTypeRegistry functionTypeRegistry = executionEngine.getExecutionEngineContext().require(FunctionTypeRegistry.class);
-			AutomationPackageManager automationPackageManager = AutomationPackageManager.createIsolatedAutomationPackageManager(
-					new ObjectId(), functionTypeRegistry
-			);
-
+			AutomationPackageManager automationPackageManager = executionEngine.getExecutionEngineContext().require(AutomationPackageManager.class);
 			AutomationPackageFromClassLoaderProvider automationPackageProvider = new AutomationPackageFromClassLoaderProvider(this.klass.getClassLoader());
 			ObjectId automationPackageId = automationPackageManager.createOrUpdateAutomationPackage(
 					false, true, null, automationPackageProvider,

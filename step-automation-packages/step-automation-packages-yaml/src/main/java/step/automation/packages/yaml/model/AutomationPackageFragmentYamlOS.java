@@ -16,58 +16,60 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.model;
+package step.automation.packages.yaml.model;
 
-import step.core.plans.Plan;
+import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.annotation.Nulls;
+import step.automation.packages.model.AutomationPackageKeyword;
+import step.automation.packages.model.AutomationPackageSchedule;
+import step.plans.parser.yaml.model.YamlPlan;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class AutomationPackageContent {
+public class AutomationPackageFragmentYamlOS implements AutomationPackageFragmentYaml {
 
-    private String version;
-    private String name;
-
+    private List<String> fragments = new ArrayList<>();
     private List<AutomationPackageKeyword> keywords = new ArrayList<>();
-    private List<Plan> plans = new ArrayList<>();
+    private List<YamlPlan> plans = new ArrayList<>();
     private List<AutomationPackageSchedule> schedules = new ArrayList<>();
 
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
+    @Override
     public List<AutomationPackageKeyword> getKeywords() {
         return keywords;
     }
 
+    @JsonSetter(nulls = Nulls.AS_EMPTY)
     public void setKeywords(List<AutomationPackageKeyword> keywords) {
         this.keywords = keywords;
     }
 
-    public String getVersion() {
-        return version;
-    }
-
-    public void setVersion(String version) {
-        this.version = version;
-    }
-
-    public List<Plan> getPlans() {
+    @Override
+    public List<YamlPlan> getPlans() {
         return plans;
     }
 
-    public void setPlans(List<Plan> plans) {
+    @JsonSetter(nulls = Nulls.AS_EMPTY)
+    public void setPlans(List<YamlPlan> plans) {
         this.plans = plans;
     }
 
+    @Override
+    public List<String> getFragments() {
+        return fragments;
+    }
+
+    @JsonSetter(nulls = Nulls.AS_EMPTY)
+    public void setFragments(List<String> fragments) {
+        this.fragments = fragments;
+    }
+
+    @Override
     public List<AutomationPackageSchedule> getSchedules() {
         return schedules;
     }
 
+    @JsonSetter(nulls = Nulls.AS_EMPTY)
     public void setSchedules(List<AutomationPackageSchedule> schedules) {
         this.schedules = schedules;
     }

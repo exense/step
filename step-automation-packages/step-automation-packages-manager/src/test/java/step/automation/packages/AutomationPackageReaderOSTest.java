@@ -4,7 +4,6 @@ import org.junit.Test;
 import step.artefacts.TestCase;
 import step.automation.packages.model.AutomationPackageContent;
 import step.automation.packages.model.AutomationPackageKeyword;
-import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.plans.Plan;
 import step.plugins.java.GeneralScriptFunction;
@@ -19,9 +18,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static step.automation.packages.AutomationPackageTestUtils.*;
 
-public class AutomationPackageReaderTest {
+public class AutomationPackageReaderOSTest {
 
-    private final AutomationPackageReader reader = new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH);
+    private final AutomationPackageReaderOS reader = new AutomationPackageReaderOS();
 
     @Test
     public void testReadFromPackage() throws AutomationPackageReadingException {

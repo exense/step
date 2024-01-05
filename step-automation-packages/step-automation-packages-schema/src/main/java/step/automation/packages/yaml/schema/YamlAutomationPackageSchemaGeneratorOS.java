@@ -28,28 +28,24 @@ import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 import step.plans.parser.yaml.model.YamlPlanVersions;
 import step.plans.parser.yaml.schema.YamlPlanJsonSchemaGenerator;
 
-public class YamlAutomationPackageSchemaGenerator {
+public class YamlAutomationPackageSchemaGeneratorOS {
 
     protected final String targetPackage;
 
     protected final Version actualVersion;
-    private final boolean supportAlertingRules;
 
     protected final ObjectMapper objectMapper = new ObjectMapper();
     protected final JsonProvider jsonProvider = JsonProvider.provider();
     private final YamlKeywordSchemaGenerator keywordSchemaGenerator;
     private final YamlPlanJsonSchemaGenerator planSchemaGenerator;
     private final YamlScheduleSchemaGenerator scheduleSchemaGenerator;
-    private final YamlAlertingRuleSchemaGenerator alertingRuleSchemaGenerator;
 
-    public YamlAutomationPackageSchemaGenerator(String targetPackage, Version actualVersion, boolean supportAlertingRules) {
+    public YamlAutomationPackageSchemaGeneratorOS(String targetPackage, Version actualVersion) {
         this.targetPackage = targetPackage;
         this.actualVersion = actualVersion;
-        this.supportAlertingRules = supportAlertingRules;
         this.keywordSchemaGenerator = new YamlKeywordSchemaGenerator(jsonProvider);
         this.planSchemaGenerator = new YamlPlanJsonSchemaGenerator("step", YamlPlanVersions.ACTUAL_VERSION, null);
         this.scheduleSchemaGenerator = new YamlScheduleSchemaGenerator(jsonProvider);
-        this.alertingRuleSchemaGenerator = new YamlAlertingRuleSchemaGenerator(jsonProvider);
     }
 
     public JsonNode generateJsonSchema() throws JsonSchemaPreparationException {
@@ -61,16 +57,11 @@ public class YamlAutomationPackageSchemaGenerator {
         topLevelBuilder.add("type", "object");
 
         // prepare definitions to be reused in subschemas (referenced via $ref property)
-        JsonObjectBuilder allDefs = keywordSchemaGenerator.createKeywordDefs()
-                .addAll(planSchemaGenerator.createDefs())
-                .addAll(scheduleSchemaGenerator.createScheduleDefs());
-        if (supportAlertingRules) {
-            allDefs.addAll(alertingRuleSchemaGenerator.createAlertingRulesDefs());
-        }
+        JsonObjectBuilder allDefs = prepareDefinitions();
         topLevelBuilder.add("$defs", allDefs);
 
         // add properties for top-level
-        topLevelBuilder.add("properties", createPackageProperties());
+        topLevelBuilder.add("properties", createMainAutomationPackageProperties());
         topLevelBuilder.add("required", jsonProvider.createArrayBuilder());
         topLevelBuilder.add("additionalProperties", false);
 
@@ -82,7 +73,13 @@ public class YamlAutomationPackageSchemaGenerator {
         }
     }
 
-    private JsonObjectBuilder createPackageProperties() {
+    protected JsonObjectBuilder prepareDefinitions() throws JsonSchemaPreparationException {
+        return keywordSchemaGenerator.createKeywordDefs()
+                .addAll(planSchemaGenerator.createDefs())
+                .addAll(scheduleSchemaGenerator.createScheduleDefs());
+    }
+
+    protected JsonObjectBuilder createMainAutomationPackageProperties() {
         JsonObjectBuilder objectBuilder = jsonProvider.createObjectBuilder();
 
         // in 'schemaVersion' we should either explicitly specify the current json schema version or skip this field
@@ -118,13 +115,6 @@ public class YamlAutomationPackageSchemaGenerator {
                         .add("items", scheduleSchemaGenerator.addRef(jsonProvider.createObjectBuilder(), YamlScheduleSchemaGenerator.SCHEDULE_DEF))
         );
 
-        if (supportAlertingRules) {
-            objectBuilder.add("alertingRules",
-                    jsonProvider.createObjectBuilder()
-                            .add("type", "array")
-                            .add("items", alertingRuleSchemaGenerator.addRef(jsonProvider.createObjectBuilder(), YamlAlertingRuleSchemaGenerator.ALERTING_RULE_DEF))
-            );
-        }
         return objectBuilder;
     }
 

@@ -18,15 +18,12 @@
  ******************************************************************************/
 package step.automation.packages;
 
-import ch.exense.commons.app.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.automation.packages.accessor.AutomationPackageAccessor;
 import step.automation.packages.accessor.AutomationPackageAccessorImpl;
 import step.automation.packages.execution.AutomationPackageExecutor;
 import step.automation.packages.execution.IsolatedAutomationPackageRepository;
-import step.automation.packages.yaml.Constants;
-import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.core.GlobalContext;
 import step.core.collections.Collection;
 import step.core.deployment.ObjectHookControllerPlugin;
@@ -42,12 +39,11 @@ import step.functions.plugin.FunctionControllerPlugin;
 import step.functions.type.FunctionTypeRegistry;
 import step.resources.ResourceManagerControllerPlugin;
 
-@Plugin(dependencies = {ObjectHookControllerPlugin.class, ResourceManagerControllerPlugin.class, FunctionControllerPlugin.class, SchedulerPlugin.class, AlertingRulePlugin.class})
+@Plugin(dependencies = {ObjectHookControllerPlugin.class, ResourceManagerControllerPlugin.class, FunctionControllerPlugin.class, SchedulerPlugin.class})
 public class AutomationPackagePlugin extends AbstractControllerPlugin {
 
     private static final Logger log = LoggerFactory.getLogger(AutomationPackagePlugin.class);
 
-    private AutomationPackageManager packageManager;
     private AutomationPackageAccessor packageAccessor;
     private AutomationPackageExecutor packageExecutor;
 
@@ -72,19 +68,15 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
     public void afterInitializeData(GlobalContext context) throws Exception {
         super.afterInitializeData(context);
 
-        String jsonSchema = getAutomationPackageJsonSchema(context.getConfiguration());
-
         // moved to 'afterInitializeData' to have the schedule accessor in context
-        packageManager = new AutomationPackageManager(
+        AutomationPackageManager packageManager = new AutomationPackageManagerOS(
                 packageAccessor,
                 context.require(FunctionManager.class),
                 context.require(FunctionAccessor.class),
                 context.getPlanAccessor(),
                 context.getResourceManager(),
                 context.getScheduleAccessor(),
-                context.getScheduler(),
-                context.get(AutomationPackageAlertingRuleManager.class),
-                jsonSchema
+                context.getScheduler()
         );
         context.put(AutomationPackageManager.class, packageManager);
 
@@ -93,27 +85,23 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
                 context.require(ExecutionAccessor.class),
                 context.require(FunctionTypeRegistry.class),
                 context.require(IsolatedAutomationPackageRepository.class),
-                jsonSchema
+                packageManager
         );
         context.put(AutomationPackageExecutor.class, packageExecutor);
 
-    }
-
-    protected String getAutomationPackageJsonSchema(Configuration configuration) {
-        return configuration.getProperty(Constants.PROP_AUTOMATION_PACKAGE_JSON_SCHEMA, YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH);
     }
 
     @Override
     public void serverStop(GlobalContext context) {
         super.serverStop(context);
         try {
-            packageManager.cleanup();
+            context.require(AutomationPackageManager.class).cleanup();
         } catch (Exception e) {
             log.warn("Unable to finalize automaton package manager");
         }
 
         try {
-            this.packageExecutor.shutdown();
+            context.require(AutomationPackageExecutor.class).shutdown();
         } catch (InterruptedException e) {
             log.warn("Interrupted", e);
         }
