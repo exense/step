@@ -89,7 +89,8 @@ public class AutomationPackageManagerOSTest {
                 planAccessor,
                 resourceManager,
                 executionTaskAccessor,
-                executionScheduler
+                executionScheduler,
+                new AutomationPackageReaderOS()
         );
     }
 

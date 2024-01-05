@@ -45,7 +45,14 @@ public class AutomationPackageKeywordsPlugin extends AbstractExecutionEnginePlug
 
             List<Function> localFunctions = getFunctionsFromAutomationPackage(
                     resourceManager,
-                    context.computeIfAbsent(AutomationPackageManager.class, automationPackageManagerClass -> AutomationPackageManagerOS.createIsolatedAutomationPackageManagerOS(new ObjectId(), context.require(FunctionTypeRegistry.class), functionAccessor))
+                    context.computeIfAbsent(
+                            AutomationPackageManager.class,
+                            automationPackageManagerClass -> AutomationPackageManagerOS.createIsolatedAutomationPackageManagerOS(
+                                    new ObjectId(),
+                                    context.require(FunctionTypeRegistry.class),
+                                    functionAccessor,
+                                    new AutomationPackageReaderOS())
+                    )
             );
             functionAccessor.save(localFunctions);
         }

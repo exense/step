@@ -39,22 +39,26 @@ import java.io.File;
 import java.util.List;
 
 public class AutomationPackageManagerOS extends AutomationPackageManager {
-    public AutomationPackageManagerOS(AutomationPackageAccessor automationPackageAccessor, FunctionManager functionManager, FunctionAccessor functionAccessor, PlanAccessor planAccessor, ResourceManager resourceManager, ExecutionTaskAccessor executionTaskAccessor, ExecutionScheduler executionScheduler) {
+    public AutomationPackageManagerOS(AutomationPackageAccessor automationPackageAccessor, FunctionManager functionManager,
+                                      FunctionAccessor functionAccessor, PlanAccessor planAccessor, ResourceManager resourceManager,
+                                      ExecutionTaskAccessor executionTaskAccessor, ExecutionScheduler executionScheduler,
+                                      AbstractAutomationPackageReader<?> reader) {
         super(automationPackageAccessor, functionManager,
                 functionAccessor, planAccessor,
                 resourceManager, executionTaskAccessor,
-                executionScheduler, new AutomationPackageReaderOS()
+                executionScheduler, reader
         );
     }
 
     @Override
     public AutomationPackageManager createIsolated(ObjectId isolatedContextId, FunctionTypeRegistry functionTypeRegistry, FunctionAccessor mainFunctionAccessor) {
-        return createIsolatedAutomationPackageManagerOS(isolatedContextId, functionTypeRegistry, mainFunctionAccessor);
+        return createIsolatedAutomationPackageManagerOS(isolatedContextId, functionTypeRegistry, mainFunctionAccessor, getPackageReader());
     }
 
     public static AutomationPackageManager createIsolatedAutomationPackageManagerOS(ObjectId isolatedContextId,
-                                                                                  FunctionTypeRegistry functionTypeRegistry,
-                                                                                  FunctionAccessor mainFunctionAccessor) {
+                                                                                    FunctionTypeRegistry functionTypeRegistry,
+                                                                                    FunctionAccessor mainFunctionAccessor,
+                                                                                    AbstractAutomationPackageReader<?> reader) {
         InMemoryFunctionAccessorImpl inMemoryFunctionRepository = new InMemoryFunctionAccessorImpl();
         LayeredFunctionAccessor layeredFunctionAccessor = new LayeredFunctionAccessor(List.of(inMemoryFunctionRepository, mainFunctionAccessor));
 
@@ -65,7 +69,7 @@ public class AutomationPackageManagerOS extends AutomationPackageManager {
                 new InMemoryPlanAccessor(),
                 new LocalResourceManagerImpl(new File("resources", isolatedContextId.toString())),
                 new InMemoryExecutionTaskAccessor(),
-                null
+                null, reader
         );
         automationPackageManager.isIsolated = true;
         return automationPackageManager;
