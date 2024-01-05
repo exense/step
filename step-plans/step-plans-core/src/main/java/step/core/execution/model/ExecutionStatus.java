@@ -27,7 +27,7 @@ public enum ExecutionStatus {
 	
 	ABORTING,
 
-	FORCING_ABORTING,
+	FORCING_ABORT,
 	
 	EXPORTING,
 

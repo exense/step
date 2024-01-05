@@ -52,7 +52,7 @@ public class ExecutionLifecycleManager {
 
 	public void forceAbort() {
 		if(context.getStatus()!=ExecutionStatus.ENDED) {
-			executionManager.updateStatus(context, ExecutionStatus.FORCING_ABORTING);
+			executionManager.updateStatus(context, ExecutionStatus.FORCING_ABORT);
 		}
 		executionCallbacks.forceStopExecution(context);
 	}
