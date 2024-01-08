@@ -22,7 +22,6 @@ import step.core.GlobalContext;
 import step.core.deployment.ObjectHookControllerPlugin;
 import step.core.objectenricher.ObjectHookRegistry;
 import step.core.plans.PlanPlugin;
-import step.core.plans.PlanTypeRegistry;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.functions.Function;
@@ -30,6 +29,7 @@ import step.functions.editors.FunctionEditor;
 import step.functions.editors.FunctionEditorRegistry;
 import step.functions.plugin.FunctionControllerPlugin;
 import step.functions.type.FunctionTypeRegistry;
+import step.plugins.functions.types.composite.services.CompositeFunctionServices;
 
 @Plugin(dependencies= {FunctionControllerPlugin.class, PlanPlugin.class, ObjectHookControllerPlugin.class})
 public class CompositeFunctionTypeControllerPlugin extends AbstractControllerPlugin {
@@ -37,6 +37,8 @@ public class CompositeFunctionTypeControllerPlugin extends AbstractControllerPlu
 	@Override
 	public void serverStart(GlobalContext context) throws Exception {
 		super.serverStart(context);
+
+		context.getServiceRegistrationCallback().registerService(CompositeFunctionServices.class);
 
 		FunctionTypeRegistry functionTypeRegistry = context.require(FunctionTypeRegistry.class);
 		ObjectHookRegistry objectHookRegistry = context.get(ObjectHookRegistry.class);
