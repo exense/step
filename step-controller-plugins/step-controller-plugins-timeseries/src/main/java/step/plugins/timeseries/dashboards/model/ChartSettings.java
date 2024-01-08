@@ -16,6 +16,9 @@ public class ChartSettings {
 	private AxesSettings primaryAxes;
 	@NotNull
 	private List<ChartFilterItem> filters = new ArrayList<>();
+	
+	private String oql;
+	
 	@NotNull
 	private List<String> grouping = new ArrayList<>();
 	@NotNull
@@ -34,6 +37,15 @@ public class ChartSettings {
 
 	public ChartSettings setAttributes(List<MetricAttribute> attributes) {
 		this.attributes = attributes;
+		return this;
+	}
+
+	public String getOql() {
+		return oql;
+	}
+
+	public ChartSettings setOql(String oql) {
+		this.oql = oql;
 		return this;
 	}
 

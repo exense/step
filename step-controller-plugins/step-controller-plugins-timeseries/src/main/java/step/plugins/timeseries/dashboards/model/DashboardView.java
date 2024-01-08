@@ -10,6 +10,7 @@ public class DashboardView extends AbstractOrganizableObject implements Enrichea
 	
 	@NotNull
 	private String name;
+	private String description;
 	private Long resolution;
 	@NotNull
 	private TimeRangeSelection timeRange;
@@ -71,6 +72,15 @@ public class DashboardView extends AbstractOrganizableObject implements Enrichea
 
 	public DashboardView setDashlets(List<DashboardItem> dashlets) {
 		this.dashlets = dashlets;
+		return this;
+	}
+
+	public String getDescription() {
+		return description;
+	}
+
+	public DashboardView setDescription(String description) {
+		this.description = description;
 		return this;
 	}
 }

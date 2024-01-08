@@ -2,8 +2,10 @@ package step.plugins.timeseries;
 
 import ch.exense.commons.app.Configuration;
 import step.core.GlobalContext;
+import step.core.collections.Collection;
 import step.core.collections.CollectionFactory;
 import step.core.deployment.WebApplicationConfigurationManager;
+import step.core.entities.Entity;
 import step.core.entities.EntityManager;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
@@ -12,8 +14,11 @@ import step.core.timeseries.TimeSeriesIngestionPipeline;
 import step.core.timeseries.aggregation.TimeSeriesAggregationPipeline;
 import step.core.timeseries.metric.*;
 import step.engine.plugins.ExecutionEnginePlugin;
+import step.framework.server.tables.Table;
+import step.framework.server.tables.TableRegistry;
 import step.plugins.measurements.GaugeCollectorRegistry;
 import step.plugins.measurements.MeasurementPlugin;
+import step.plugins.screentemplating.ScreenInput;
 import step.plugins.timeseries.dashboards.model.*;
 import step.plugins.timeseries.dashboards.DashboardAccessor;
 
@@ -60,10 +65,15 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 		context.getServiceRegistrationCallback().registerService(TimeSeriesService.class);
 
 		// dashboards
-		DashboardAccessor dashboardsAccessor = new DashboardAccessor(context.getCollectionFactory().getCollection(EntityManager.dashboards, DashboardView.class));
+		Collection<DashboardView> dashboardsCollection = context.getCollectionFactory().getCollection(EntityManager.dashboards, DashboardView.class);
+		DashboardAccessor dashboardsAccessor = new DashboardAccessor(dashboardsCollection);
+		context.getEntityManager().register(new Entity<>(EntityManager.dashboards, dashboardsAccessor, DashboardView.class));
 		context.put(DashboardAccessor.class, dashboardsAccessor);
 		context.getServiceRegistrationCallback().registerService(DashboardsService.class);
 		createSimpleDashboard(dashboardsAccessor);
+		
+		TableRegistry tableRegistry = context.get(TableRegistry.class);
+		tableRegistry.register(EntityManager.dashboards, new Table<>(dashboardsCollection, "dashboards-read", false));
 
 		MeasurementPlugin.registerMeasurementHandlers(handler);
 		GaugeCollectorRegistry.getInstance().registerHandler(handler);
@@ -88,6 +98,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 		DashboardView dashboard = new DashboardView();
 		dashboard
 				.setName("Initial Dashboard")
+				.setDescription("This is a generated dashboard, for development")
 				.setTimeRange(new TimeRangeSelection()
 						.setType(TimeRangeSelectionType.ABSOLUTE)
 						.setAbsoluteSelection(new TimeRange().setFrom(1700152446408L).setTo(1700155195285L))
@@ -126,8 +137,6 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 								.setLabel("Plan")
 								.setAttribute("planId")
 								.setType(ChartFilterItemType.PLAN)
-
-
 				))
 				.setDashlets(Arrays.asList(
 						new DashboardItem()
@@ -179,8 +188,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 												)
 										)
 								)
-				))
-		;
+				));
 		if (existingDashboardsCount > 0) {
 			dashboard.setId(dashboardAccessor.stream().findFirst().get().getId());
 		}
