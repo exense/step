@@ -13,7 +13,7 @@ import static org.junit.Assert.*;
 
 public class ControllerPluginManagerTest {
 
-    public static final WebPlugin WEB_PLUGIN = new WebPlugin();
+    public static final Ng2WebPlugin WEB_PLUGIN = new Ng2WebPlugin();
     public static final AbstractExecutionEnginePlugin EXECUTION_ENGINE_PLUGIN = new AbstractExecutionEnginePlugin() {
     };
 

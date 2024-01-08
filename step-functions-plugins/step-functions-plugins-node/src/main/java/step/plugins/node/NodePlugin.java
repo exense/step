@@ -19,10 +19,7 @@
 package step.plugins.node;
 
 import step.core.GlobalContext;
-import step.core.plugins.AbstractControllerPlugin;
-import step.core.plugins.AbstractWebPlugin;
-import step.core.plugins.Plugin;
-import step.core.plugins.WebPlugin;
+import step.core.plugins.*;
 import step.functions.plugin.FunctionControllerPlugin;
 import step.functions.type.FunctionTypeRegistry;
 
@@ -45,12 +42,11 @@ public class NodePlugin extends AbstractControllerPlugin {
 		super.serverStart(context);
 	}
 
-
 	@Override
 	public AbstractWebPlugin getWebPlugin() {
-		WebPlugin webPlugin = new WebPlugin();
-		webPlugin.getAngularModules().add("NodePlugin");
-		webPlugin.getScripts().add("node/js/controllers/node.js");		
+		Ng2WebPlugin webPlugin = new Ng2WebPlugin();
+		webPlugin.setName("NodePlugin");
+		webPlugin.setEntryPoint("step-enterprise-core/remoteEntry.js");
 		return webPlugin;
-	}	
+	}
 }
