@@ -34,11 +34,11 @@
 			"PARAMETERS": [
 				{
 					"NAME": "DEVELOPMENT",
-					"URL": "nexus-staging https://nexus-enterprise.exense.ch/repository/staging-npm/"
+					"URL": "nexus-staging https://nexus-enterprise-staging.exense.ch/repository/staging-npm/"
 				},
 				{
 					"NAME": "INTEGRATION",
-					"URL": "nexus-staging https://nexus-enterprise.exense.ch/repository/staging-npm/"
+					"URL": "nexus-staging https://nexus-enterprise-staging.exense.ch/repository/staging-npm/"
 				},
 				{
 					"NAME": "PRODUCTION",
