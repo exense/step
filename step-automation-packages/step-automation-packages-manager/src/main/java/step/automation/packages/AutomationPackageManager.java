@@ -334,6 +334,9 @@ public abstract class AutomationPackageManager {
         }
 
         for (ExecutiontTaskParameters execTasksParameter : staging.taskParameters) {
+            //make sure the execution parameter of the schedule are enriched too (required to execute in same project
+            //as the schedule and populate event bindings
+            objectEnricher.accept(execTasksParameter.getExecutionsParameters());
             if (executionScheduler != null) {
                 // TODO: move this to a dedicated class as part of SED-2594
                 executionScheduler.addExecutionTask(execTasksParameter, false);
