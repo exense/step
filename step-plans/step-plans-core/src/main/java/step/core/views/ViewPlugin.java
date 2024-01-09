@@ -35,6 +35,14 @@ public class ViewPlugin extends AbstractExecutionEnginePlugin {
 		viewManager = context.inheritFromParentOrComputeIfAbsent(parentContext, ViewManager.class, k->new ViewManager(new InMemoryViewModelAccessor()));
 	}
 
+	//We need the view manager in the execution context for the after execution hook even if the plan import fail
+	@Override
+	public void beforePlanImport(ExecutionContext context) {
+		context.put(ViewManager.class, viewManager);
+		viewManager.createViewModelsForExecution(context.getExecutionId());
+	}
+
+	//Plan import might not be called (i.e. interactive executions)
 	@Override
 	public void executionStart(ExecutionContext context) {
 		context.put(ViewManager.class, viewManager);
