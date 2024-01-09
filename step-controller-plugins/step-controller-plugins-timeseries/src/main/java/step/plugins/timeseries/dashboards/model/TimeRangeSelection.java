@@ -2,13 +2,11 @@ package step.plugins.timeseries.dashboards.model;
 
 import jakarta.validation.constraints.NotNull;
 
-import javax.annotation.Nullable;
-
 public class TimeRangeSelection {
 	@NotNull
 	private TimeRangeSelectionType type;
 	private TimeRange absoluteSelection;
-	private Long relativeRangeMs;
+	private TimeRangeRelativeSelection relativeSelection;
 
 	public TimeRangeSelectionType getType() {
 		return type;
@@ -28,12 +26,12 @@ public class TimeRangeSelection {
 		return this;
 	}
 
-	public Long getRelativeRangeMs() {
-		return relativeRangeMs;
+	public TimeRangeRelativeSelection getRelativeSelection() {
+		return relativeSelection;
 	}
 
-	public TimeRangeSelection setRelativeRangeMs(Long relativeRangeMs) {
-		this.relativeRangeMs = relativeRangeMs;
+	public TimeRangeSelection setRelativeSelection(TimeRangeRelativeSelection relativeSelection) {
+		this.relativeSelection = relativeSelection;
 		return this;
 	}
 }
