@@ -18,51 +18,17 @@
  ******************************************************************************/
 package step.automation.packages.yaml.model;
 
-import java.util.HashMap;
 import java.util.Map;
 
-public class AutomationPackageDescriptorYaml extends AutomationPackageFragmentYaml {
-
+public interface AutomationPackageDescriptorYaml extends AutomationPackageFragmentYaml {
     // this name should be kept untouched to support the migrations for old versions
-    public static final String VERSION_FIELD_NAME = "version";
+    String VERSION_FIELD_NAME = "version";
 
-    private String version;
+    String getName();
 
-    private String schemaVersion;
+    String getVersion();
 
-    private Map<String, String> attributes = new HashMap<>();
+    String getSchemaVersion();
 
-    private String name;
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getVersion() {
-        return version;
-    }
-
-    public void setVersion(String version) {
-        this.version = version;
-    }
-
-    public String getSchemaVersion() {
-        return schemaVersion;
-    }
-
-    public void setSchemaVersion(String schemaVersion) {
-        this.schemaVersion = schemaVersion;
-    }
-
-    public Map<String, String> getAttributes() {
-        return attributes;
-    }
-
-    public void setAttributes(Map<String, String> attributes) {
-        this.attributes = attributes;
-    }
+    Map<String, String> getAttributes();
 }

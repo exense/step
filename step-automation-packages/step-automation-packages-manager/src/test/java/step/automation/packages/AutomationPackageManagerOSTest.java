@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
 
 import static step.automation.packages.AutomationPackageTestUtils.*;
 
-public class AutomationPackageManagerTest {
+public class AutomationPackageManagerOSTest {
 
     private AutomationPackageManager manager;
     private AutomationPackageAccessorImpl automationPackageAccessor;
@@ -82,14 +82,15 @@ public class AutomationPackageManagerTest {
         // scheduler with mocked executor
         this.executionScheduler = new ExecutionScheduler(new ControllerSettingAccessorImpl(new InMemoryCollection<>()), executionTaskAccessor, Mockito.mock(Executor.class));
 
-        this.manager = new AutomationPackageManager(
+        this.manager = new AutomationPackageManagerOS(
                 automationPackageAccessor,
                 functionManager,
                 functionAccessor,
                 planAccessor,
                 resourceManager,
                 executionTaskAccessor,
-                executionScheduler
+                executionScheduler,
+                new AutomationPackageReaderOS()
         );
     }
 

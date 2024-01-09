@@ -27,9 +27,17 @@ import step.core.yaml.YamlFields;
 
 import java.io.IOException;
 
-public class YamlDynamicValueDeserializer extends JsonDeserializer<DynamicValue<?>> implements ContextualDeserializer {
+@StepYamlDeserializerAddOn(targetClasses = {DynamicValue.class})
+public class YamlDynamicValueDeserializer extends StepYamlDeserializer<DynamicValue<?>> implements ContextualDeserializer {
 
 	private JavaType type;
+
+	public YamlDynamicValueDeserializer() {
+	}
+
+	public YamlDynamicValueDeserializer(ObjectMapper yamlObjectMapper) {
+		super(yamlObjectMapper);
+	}
 
 	@Override
 	public JsonDeserializer<?> createContextual(DeserializationContext ctxt, BeanProperty property) throws JsonMappingException {

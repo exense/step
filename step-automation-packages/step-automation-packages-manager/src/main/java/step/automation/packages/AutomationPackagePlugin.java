@@ -44,16 +44,15 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
 
     private static final Logger log = LoggerFactory.getLogger(AutomationPackagePlugin.class);
 
-    private AutomationPackageManager packageManager;
-    private AutomationPackageAccessor packageAccessor;
-    private AutomationPackageExecutor packageExecutor;
-
     @Override
     public void serverStart(GlobalContext context) throws Exception {
         super.serverStart(context);
-        packageAccessor = new AutomationPackageAccessorImpl(
+
+        AutomationPackageAccessor packageAccessor = new AutomationPackageAccessorImpl(
                 context.getCollectionFactory().getCollection("automationPackages", AutomationPackage.class)
         );
+        context.put(AutomationPackageAccessor.class, packageAccessor);
+        context.getEntityManager().register(new AutomationPackageEntity(packageAccessor));
 
         Collection<AutomationPackage> automationPackageCollection = context.getCollectionFactory().getCollection("automationPackages", AutomationPackage.class);
 
@@ -62,47 +61,62 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
 
         context.getServiceRegistrationCallback().registerService(AutomationPackageServices.class);
 
-        context.getEntityManager().register(new AutomationPackageEntity(packageAccessor));
+        // EE implementation of AbstractAutomationPackageReader can be used
+        if (context.get(AbstractAutomationPackageReader.class) == null) {
+            log.info("Using the OS implementation of automation package accessor");
+            context.put(AbstractAutomationPackageReader.class, new AutomationPackageReaderOS());
+        }
     }
 
     @Override
     public void afterInitializeData(GlobalContext context) throws Exception {
         super.afterInitializeData(context);
 
-        // moved to 'afterInitializeData' to have the schedule accessor in context
-        packageManager = new AutomationPackageManager(
-                packageAccessor,
-                context.require(FunctionManager.class),
-                context.require(FunctionAccessor.class),
-                context.getPlanAccessor(),
-                context.getResourceManager(),
-                context.getScheduleAccessor(),
-                context.getScheduler()
-        );
-        context.put(AutomationPackageManager.class, packageManager);
+        if (context.get(AutomationPackageManager.class) == null) {
+            log.info("Using the OS implementation of automation package manager");
 
-        packageExecutor = new AutomationPackageExecutor(
-                context.getScheduler(),
-                context.require(ExecutionAccessor.class),
-                context.require(FunctionTypeRegistry.class),
-                context.require(FunctionAccessor.class),
-                context.require(IsolatedAutomationPackageRepository.class)
-        );
-        context.put(AutomationPackageExecutor.class, packageExecutor);
+            // moved to 'afterInitializeData' to have the schedule accessor in context
+            AutomationPackageManager packageManager = new AutomationPackageManagerOS(
+                    context.require(AutomationPackageAccessor.class),
+                    context.require(FunctionManager.class),
+                    context.require(FunctionAccessor.class),
+                    context.getPlanAccessor(),
+                    context.getResourceManager(),
+                    context.getScheduleAccessor(),
+                    context.getScheduler(),
+                    context.require(AbstractAutomationPackageReader.class)
+            );
+            context.put(AutomationPackageManager.class, packageManager);
 
+            AutomationPackageExecutor packageExecutor = new AutomationPackageExecutor(
+                    context.getScheduler(),
+                    context.require(ExecutionAccessor.class),
+                    context.require(FunctionTypeRegistry.class),
+                    context.require(FunctionAccessor.class),
+                    context.require(IsolatedAutomationPackageRepository.class),
+                    packageManager
+            );
+            context.put(AutomationPackageExecutor.class, packageExecutor);
+        }
     }
 
     @Override
     public void serverStop(GlobalContext context) {
         super.serverStop(context);
         try {
-            packageManager.cleanup();
+            AutomationPackageManager automationPackageManager = context.get(AutomationPackageManager.class);
+            if (automationPackageManager != null) {
+                automationPackageManager.cleanup();
+            }
         } catch (Exception e) {
             log.warn("Unable to finalize automaton package manager");
         }
 
         try {
-            this.packageExecutor.shutdown();
+            AutomationPackageExecutor executor = context.get(AutomationPackageExecutor.class);
+            if (executor != null) {
+                executor.shutdown();
+            }
         } catch (InterruptedException e) {
             log.warn("Interrupted", e);
         }

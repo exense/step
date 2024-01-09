@@ -16,15 +16,17 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.yaml.rules;
+package step.automation.packages.yaml.rules.keywords;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.json.spi.JsonProvider;
+import step.automation.packages.AutomationPackageNamedEntityUtils;
 import step.automation.packages.yaml.AutomationPackageKeywordsLookuper;
-import step.automation.packages.yaml.deserialization.YamlKeywordFieldDeserializationProcessor;
+import step.core.yaml.deserializers.YamlFieldDeserializationProcessor;
+import step.automation.packages.yaml.rules.YamlKeywordConversionRule;
 import step.core.accessors.AbstractOrganizableObject;
 import step.functions.Function;
 import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
@@ -46,7 +48,7 @@ public class KeywordNameRule implements YamlKeywordConversionRule {
                         AbstractOrganizableObject.NAME,
                         jsonProvider.createObjectBuilder()
                                 .add("type", "string")
-                                .add("default", keywordsLookuper.getAutomationPackageKeywordName((Class<? extends Function>) objectClass))
+                                .add("default", AutomationPackageNamedEntityUtils.getEntityNameByClass((Class<? extends Function>) objectClass))
                 );
                 return true;
             } else {
@@ -56,10 +58,10 @@ public class KeywordNameRule implements YamlKeywordConversionRule {
     }
 
     @Override
-    public YamlKeywordFieldDeserializationProcessor getDeserializationProcessor() {
-        return new YamlKeywordFieldDeserializationProcessor() {
+    public YamlFieldDeserializationProcessor getDeserializationProcessor() {
+        return new YamlFieldDeserializationProcessor() {
             @Override
-            public boolean deserializeKeywordField(String keywordClass, Map.Entry<String, JsonNode> field, ObjectNode output, ObjectCodec codec) throws JsonProcessingException {
+            public boolean deserializeField(String entityClassName, Map.Entry<String, JsonNode> field, ObjectNode output, ObjectCodec codec) throws JsonProcessingException {
                 if (field.getKey().equals(AbstractOrganizableObject.NAME)) {
                     ObjectNode attributesNode = (ObjectNode) output.get("attributes");
                     if (attributesNode == null) {

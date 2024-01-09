@@ -16,20 +16,21 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.yaml.model;
+package step.core.yaml.deserializers;
 
-import step.automation.packages.model.AutomationPackageKeyword;
-import step.automation.packages.model.AutomationPackageSchedule;
-import step.plans.parser.yaml.model.YamlPlan;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.util.List;
+public abstract class StepYamlDeserializer<T> extends JsonDeserializer<T> {
 
-public interface AutomationPackageFragmentYaml {
-    List<AutomationPackageKeyword> getKeywords();
+    protected ObjectMapper yamlObjectMapper;
 
-    List<YamlPlan> getPlans();
+    public StepYamlDeserializer() {
+    }
 
-    List<String> getFragments();
+    public StepYamlDeserializer(ObjectMapper yamlObjectMapper){
+        this.yamlObjectMapper = yamlObjectMapper;
+    }
 
-    List<AutomationPackageSchedule> getSchedules();
+
 }

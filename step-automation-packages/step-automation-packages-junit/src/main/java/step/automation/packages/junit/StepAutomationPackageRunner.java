@@ -50,12 +50,7 @@ public class StepAutomationPackageRunner extends AbstractStepRunner {
 				}
 			}).withPluginsFromClasspath().build();
 
-			ExecutionEngineContext executionEngineContext = executionEngine.getExecutionEngineContext();
-			FunctionTypeRegistry functionTypeRegistry = executionEngineContext.require(FunctionTypeRegistry.class);
-			FunctionAccessor functionAccessor = executionEngineContext.require(FunctionAccessor.class);
-			AutomationPackageManager automationPackageManager = AutomationPackageManager.createIsolatedAutomationPackageManager(
-					new ObjectId(), functionTypeRegistry, functionAccessor);
-
+			AutomationPackageManager automationPackageManager = executionEngine.getExecutionEngineContext().require(AutomationPackageManager.class);
 			AutomationPackageFromClassLoaderProvider automationPackageProvider = new AutomationPackageFromClassLoaderProvider(this.klass.getClassLoader());
 			ObjectId automationPackageId = automationPackageManager.createOrUpdateAutomationPackage(
 					false, true, null, automationPackageProvider,

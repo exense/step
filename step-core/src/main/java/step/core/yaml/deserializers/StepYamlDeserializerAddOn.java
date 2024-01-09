@@ -16,9 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.yaml.rules;
-
-import step.functions.Function;
+package step.core.yaml.deserializers;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -28,6 +26,9 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 @Retention(RUNTIME)
 @Target(ElementType.TYPE)
-public @interface YamlKeywordConversionRuleAddOn {
-    Class<? extends Function>[] functions() default Function.class;
+public @interface StepYamlDeserializerAddOn {
+
+    String LOCATION = "step";
+
+    Class<?>[] targetClasses();
 }

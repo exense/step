@@ -16,24 +16,23 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.engine.plugins;
+package step.automation.packages;
 
-import ch.exense.commons.app.Configuration;
+import step.automation.packages.model.AutomationPackageContent;
 import step.automation.packages.yaml.YamlAutomationPackageVersions;
-import step.core.execution.AbstractExecutionEngineContext;
-import step.core.execution.ExecutionEngineContext;
-import step.core.execution.OperationMode;
-import step.core.plugins.Plugin;
 
-@Plugin()
-public class AutomationPackageJsonSchemaPlugin extends AbstractExecutionEnginePlugin {
-    public static final String PROP_AUTOMATION_PACKAGE_JSON_SCHEMA = "plugins.automation.jsonschema";
+public class AutomationPackageReaderOS extends AbstractAutomationPackageReader<AutomationPackageContent> {
+
+    public AutomationPackageReaderOS() {
+        this(true);
+    }
+
+    public AutomationPackageReaderOS(boolean useJsonSchema) {
+        super(useJsonSchema ? YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH : null);
+    }
 
     @Override
-    public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext context) {
-        if (context.getOperationMode() == OperationMode.LOCAL) {
-            Configuration config = context.getConfiguration();
-            config.putProperty(PROP_AUTOMATION_PACKAGE_JSON_SCHEMA, YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH);
-        }
+    protected AutomationPackageContent newContentInstance() {
+        return new AutomationPackageContent();
     }
 }

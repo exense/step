@@ -28,7 +28,7 @@ import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 import step.plans.parser.yaml.model.YamlPlanVersions;
 import step.plans.parser.yaml.schema.YamlPlanJsonSchemaGenerator;
 
-public class YamlAutomationPackageSchemaGenerator {
+public class YamlAutomationPackageSchemaGeneratorOS {
 
     protected final String targetPackage;
 
@@ -40,7 +40,7 @@ public class YamlAutomationPackageSchemaGenerator {
     private final YamlPlanJsonSchemaGenerator planSchemaGenerator;
     private final YamlScheduleSchemaGenerator scheduleSchemaGenerator;
 
-    public YamlAutomationPackageSchemaGenerator(String targetPackage, Version actualVersion) {
+    public YamlAutomationPackageSchemaGeneratorOS(String targetPackage, Version actualVersion) {
         this.targetPackage = targetPackage;
         this.actualVersion = actualVersion;
         this.keywordSchemaGenerator = new YamlKeywordSchemaGenerator(jsonProvider);
@@ -57,15 +57,13 @@ public class YamlAutomationPackageSchemaGenerator {
         topLevelBuilder.add("type", "object");
 
         // prepare definitions to be reused in subschemas (referenced via $ref property)
-        JsonObjectBuilder allDefs = keywordSchemaGenerator.createKeywordDefs()
-                .addAll(planSchemaGenerator.createDefs())
-                .addAll(scheduleSchemaGenerator.createScheduleDefs());
+        JsonObjectBuilder allDefs = prepareDefinitions();
         topLevelBuilder.add("$defs", allDefs);
 
         // add properties for top-level
-        topLevelBuilder.add("properties", createPackageProperties());
+        topLevelBuilder.add("properties", createMainAutomationPackageProperties());
         topLevelBuilder.add("required", jsonProvider.createArrayBuilder());
-        topLevelBuilder.add( "additionalProperties", false);
+        topLevelBuilder.add("additionalProperties", false);
 
         // convert jakarta objects to jackson JsonNode
         try {
@@ -75,7 +73,13 @@ public class YamlAutomationPackageSchemaGenerator {
         }
     }
 
-    private JsonObjectBuilder createPackageProperties() {
+    protected JsonObjectBuilder prepareDefinitions() throws JsonSchemaPreparationException {
+        return keywordSchemaGenerator.createKeywordDefs()
+                .addAll(planSchemaGenerator.createDefs())
+                .addAll(scheduleSchemaGenerator.createScheduleDefs());
+    }
+
+    protected JsonObjectBuilder createMainAutomationPackageProperties() {
         JsonObjectBuilder objectBuilder = jsonProvider.createObjectBuilder();
 
         // in 'schemaVersion' we should either explicitly specify the current json schema version or skip this field
@@ -96,7 +100,7 @@ public class YamlAutomationPackageSchemaGenerator {
                         .add("items", jsonProvider.createObjectBuilder()
                                 .add("type", "object")
                                 .add("properties", planSchemaGenerator.createYamlPlanProperties(false)))
-                                .add("required", jsonProvider.createArrayBuilder().add("name").add("root"))
+                        .add("required", jsonProvider.createArrayBuilder().add("name").add("root"))
         );
 
         objectBuilder.add("fragments",
@@ -110,6 +114,7 @@ public class YamlAutomationPackageSchemaGenerator {
                         .add("type", "array")
                         .add("items", scheduleSchemaGenerator.addRef(jsonProvider.createObjectBuilder(), YamlScheduleSchemaGenerator.SCHEDULE_DEF))
         );
+
         return objectBuilder;
     }
 

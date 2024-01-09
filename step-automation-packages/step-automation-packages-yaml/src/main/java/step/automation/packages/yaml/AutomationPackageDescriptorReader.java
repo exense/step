@@ -27,13 +27,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.artefacts.handlers.JsonSchemaValidator;
 import step.automation.packages.AutomationPackageReadingException;
-import step.automation.packages.yaml.deserialization.YamlKeywordDeserializer;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
-import step.automation.packages.model.AutomationPackageKeyword;
+import step.automation.packages.yaml.model.AutomationPackageDescriptorYamlOS;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
+import step.automation.packages.yaml.model.AutomationPackageFragmentYamlOS;
 import step.core.accessors.DefaultJacksonMapperProvider;
-import step.core.dynamicbeans.DynamicValue;
-import step.core.yaml.deserializers.YamlDynamicValueDeserializer;
+import step.core.yaml.deserializers.StepYamlDeserializersScanner;
 import step.plans.parser.yaml.YamlPlanReader;
 import step.plans.parser.yaml.model.YamlPlanVersions;
 import step.plans.parser.yaml.schema.YamlPlanValidationException;
@@ -44,13 +43,13 @@ import java.nio.charset.StandardCharsets;
 
 public class AutomationPackageDescriptorReader {
 
-    private static final Logger log = LoggerFactory.getLogger(AutomationPackageDescriptorReader.class);
+    protected static final Logger log = LoggerFactory.getLogger(AutomationPackageDescriptorReader.class);
 
-    private final ObjectMapper yamlObjectMapper;
+    protected final ObjectMapper yamlObjectMapper;
 
-    private final YamlPlanReader planReader;
+    protected final YamlPlanReader planReader;
 
-    private String jsonSchema;
+    protected String jsonSchema;
 
     public AutomationPackageDescriptorReader(String jsonSchema) {
         // TODO: we need to find a way to resolve the actual json schema (controller config) depending on running server instance (EE or OS)
@@ -65,12 +64,20 @@ public class AutomationPackageDescriptorReader {
 
     public AutomationPackageDescriptorYaml readAutomationPackageDescriptor(InputStream yamlDescriptor, String packageFileName) throws AutomationPackageReadingException {
         log.info("Reading automation package descriptor...");
-        return readAutomationPackageYamlFile(yamlDescriptor, AutomationPackageDescriptorYaml.class, packageFileName);
+        return readAutomationPackageYamlFile(yamlDescriptor, getDescriptorClass(), packageFileName);
+    }
+
+    protected Class<? extends AutomationPackageDescriptorYaml> getDescriptorClass() {
+        return AutomationPackageDescriptorYamlOS.class;
     }
 
     public AutomationPackageFragmentYaml readAutomationPackageFragment(InputStream yamlFragment, String fragmentName, String packageFileName) throws AutomationPackageReadingException {
         log.info("Reading automation package descriptor fragment ({})...", fragmentName);
-        return readAutomationPackageYamlFile(yamlFragment, AutomationPackageFragmentYaml.class, packageFileName);
+        return readAutomationPackageYamlFile(yamlFragment, getFragmentClass(), packageFileName);
+    }
+
+    protected Class<? extends AutomationPackageFragmentYaml> getFragmentClass() {
+        return AutomationPackageFragmentYamlOS.class;
     }
 
     protected <T extends AutomationPackageFragmentYaml> T readAutomationPackageYamlFile(InputStream yaml, Class<T> targetClass, String packageFileName) throws AutomationPackageReadingException {
@@ -87,21 +94,25 @@ public class AutomationPackageDescriptorReader {
 
             T res = yamlObjectMapper.readValue(yamlDescriptorString, targetClass);
 
-            if (!res.getKeywords().isEmpty()) {
-                log.info("{} keyword(s) found in automation package {}", res.getKeywords().size(), StringUtils.defaultString(packageFileName));
-            }
-            if (!res.getPlans().isEmpty()) {
-                log.info("{} plan(s) found in automation package {}", res.getPlans().size(), StringUtils.defaultString(packageFileName));
-            }
-            if (!res.getSchedules().isEmpty()) {
-                log.info("{} schedule(s) found in automation package {}", res.getSchedules().size(), StringUtils.defaultString(packageFileName));
-            }
-            if (!res.getFragments().isEmpty()) {
-                log.info("{} imported fragment(s) found in automation package {}", res.getFragments().size(), StringUtils.defaultString(packageFileName));
-            }
+            logAfterRead(packageFileName, res);
             return res;
         } catch (IOException | YamlPlanValidationException e) {
             throw new AutomationPackageReadingException("Unable to read the automation package yaml", e);
+        }
+    }
+
+    protected <T extends AutomationPackageFragmentYaml> void logAfterRead(String packageFileName, T res) {
+        if (!res.getKeywords().isEmpty()) {
+            log.info("{} keyword(s) found in automation package {}", res.getKeywords().size(), StringUtils.defaultString(packageFileName));
+        }
+        if (!res.getPlans().isEmpty()) {
+            log.info("{} plan(s) found in automation package {}", res.getPlans().size(), StringUtils.defaultString(packageFileName));
+        }
+        if (!res.getSchedules().isEmpty()) {
+            log.info("{} schedule(s) found in automation package {}", res.getSchedules().size(), StringUtils.defaultString(packageFileName));
+        }
+        if (!res.getFragments().isEmpty()) {
+            log.info("{} imported fragment(s) found in automation package {}", res.getFragments().size(), StringUtils.defaultString(packageFileName));
         }
     }
 
@@ -126,12 +137,11 @@ public class AutomationPackageDescriptorReader {
         // configure custom deserializers
         SimpleModule module = new SimpleModule();
 
-        // register serializers/deserializers to read yaml plans
-        // TODO: we don't want to use the default upgradable plan serializer, because the plan version is defined via automation package schema version, but not inside the plan...
-        planReader.registerAllSerializers(module, yamlMapper);
+        // register deserializers to read yaml plans
+        planReader.registerAllSerializers(module, yamlMapper, false);
 
-        module.addDeserializer(DynamicValue.class, new YamlDynamicValueDeserializer());
-        module.addDeserializer(AutomationPackageKeyword.class, new YamlKeywordDeserializer());
+        // add annotated jackson deserializers
+        StepYamlDeserializersScanner.addAllDeserializerAddonsToModule(module, yamlObjectMapper);
 
         yamlMapper.registerModule(module);
 

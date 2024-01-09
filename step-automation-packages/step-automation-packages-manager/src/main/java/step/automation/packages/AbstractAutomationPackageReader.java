@@ -53,22 +53,22 @@ import java.util.stream.Collectors;
 
 /**
  * Designed to read the automation package content from some source (for instance, from jar archive).
- * It is important that the {@link AutomationPackageReader} doesn't affect the global context, i.e. it doesn't persist any plan, keyword or resource.
+ * It is important that the {@link AbstractAutomationPackageReader} doesn't affect the global context, i.e. it doesn't persist any plan, keyword or resource.
  * Instead of this, it prepares the {@link AutomationPackageContent} with {@link AutomationPackageKeyword}
  * containing the draft instances of {@link Function}, without any references to uploaded resources (because
  * these resources are not stored yet).
  * So it is imperative to fill these draft objects by {@link AutomationPackageKeywordsAttributesApplier} afrter
- * reading the automation package via {@link AutomationPackageReader}.
+ * reading the automation package via {@link AbstractAutomationPackageReader}.
  */
-public class AutomationPackageReader {
+public abstract class AbstractAutomationPackageReader<T extends AutomationPackageContent> {
 
-    private static final Logger log = LoggerFactory.getLogger(AutomationPackageReader.class);
+    protected static final Logger log = LoggerFactory.getLogger(AbstractAutomationPackageReader.class);
 
-    private final String jsonSchema;
-    private final StepClassParser stepClassParser;
-    private AutomationPackageDescriptorReader descriptorReader;
+    protected final String jsonSchema;
+    protected final StepClassParser stepClassParser;
+    protected AutomationPackageDescriptorReader descriptorReader;
 
-    public AutomationPackageReader(String jsonSchema) {
+    public AbstractAutomationPackageReader(String jsonSchema) {
         this.jsonSchema = jsonSchema;
         this.stepClassParser = new StepClassParser(false);
     }
@@ -77,7 +77,7 @@ public class AutomationPackageReader {
      * @param isLocalPackage true if the automation package is located in current classloader (i.e. all annotated keywords
      *                       can be read as {@link step.engine.plugins.LocalFunctionPlugin.LocalFunction}, but not as {@link GeneralScriptFunction}
      */
-    public AutomationPackageContent readAutomationPackage(AutomationPackageArchive automationPackageArchive, boolean isLocalPackage) throws AutomationPackageReadingException {
+    public T readAutomationPackage(AutomationPackageArchive automationPackageArchive, boolean isLocalPackage) throws AutomationPackageReadingException {
         return this.readAutomationPackage(automationPackageArchive, isLocalPackage, true);
     }
 
@@ -86,14 +86,14 @@ public class AutomationPackageReader {
      *                        can be read as {@link step.engine.plugins.LocalFunctionPlugin.LocalFunction}, but not as {@link GeneralScriptFunction}
      * @param scanAnnotations true if it is required to include annotated java keywords and plans as well as located in yaml descriptor
      */
-    public AutomationPackageContent readAutomationPackage(AutomationPackageArchive automationPackageArchive, boolean isLocalPackage, boolean scanAnnotations) throws AutomationPackageReadingException {
+    public T readAutomationPackage(AutomationPackageArchive automationPackageArchive, boolean isLocalPackage, boolean scanAnnotations) throws AutomationPackageReadingException {
         try {
             if (!automationPackageArchive.isAutomationPackage()) {
                 return null;
             }
 
             try (InputStream yamlInputStream = automationPackageArchive.getDescriptorYaml()) {
-                AutomationPackageDescriptorYaml descriptorYaml = getDescriptorReader().readAutomationPackageDescriptor(yamlInputStream, automationPackageArchive.getOriginalFileName());
+                AutomationPackageDescriptorYaml descriptorYaml = getOrCreateDescriptorReader().readAutomationPackageDescriptor(yamlInputStream, automationPackageArchive.getOriginalFileName());
                 return buildAutomationPackage(descriptorYaml, automationPackageArchive, isLocalPackage, scanAnnotations);
             }
         } catch (IOException ex) {
@@ -101,8 +101,8 @@ public class AutomationPackageReader {
         }
     }
 
-    protected AutomationPackageContent buildAutomationPackage(AutomationPackageDescriptorYaml descriptor, AutomationPackageArchive archive, boolean isLocalPackage, boolean scanAnnotations) throws AutomationPackageReadingException {
-        AutomationPackageContent res = new AutomationPackageContent();
+    protected T buildAutomationPackage(AutomationPackageDescriptorYaml descriptor, AutomationPackageArchive archive, boolean isLocalPackage, boolean scanAnnotations) throws AutomationPackageReadingException {
+        T res = newContentInstance();
         res.setName(descriptor.getName());
 
         if (scanAnnotations) {
@@ -113,6 +113,8 @@ public class AutomationPackageReader {
         fillAutomationPackageWithImportedFragments(res, descriptor, archive);
         return res;
     }
+
+    protected abstract T newContentInstance();
 
     private void fillAutomationPackageWithAnnotatedKeywordsAndPlans(AutomationPackageArchive archive, boolean isLocalPackage, AutomationPackageContent res) {
         // for file-based packages we create class loader for file, otherwise we just use class loader from archive
@@ -129,7 +131,7 @@ public class AutomationPackageReader {
 
             // TODO: don't use file in code below (in getPlanFromPlansAnnotation)?
             if (originalFile != null) {
-                List<Plan> annotatedPlans = extractAnnotatedPlans(originalFile, annotationScanner, null, null, null, null);
+                List<Plan> annotatedPlans = extractAnnotatedPlans(originalFile, annotationScanner, null, null, null, null, stepClassParser);
                 if (!annotatedPlans.isEmpty()) {
                     log.info("{} annotated plans found in automation package {}", annotatedPlans.size(), StringUtils.defaultString(archive.getOriginalFileName()));
                 }
@@ -138,7 +140,7 @@ public class AutomationPackageReader {
         }
     }
 
-    public List<AutomationPackageKeyword> extractAnnotatedKeywords(AnnotationScanner annotationScanner, boolean isLocalPackage, String scriptFile, String librariesFile) {
+    public static List<AutomationPackageKeyword> extractAnnotatedKeywords(AnnotationScanner annotationScanner, boolean isLocalPackage, String scriptFile, String librariesFile) {
         List<AutomationPackageKeyword> scannedKeywords = new ArrayList<>();
         Set<Method> methods = annotationScanner.getMethodsWithAnnotation(Keyword.class);
 
@@ -201,15 +203,13 @@ public class AutomationPackageReader {
         return annotation.planReference() != null && !annotation.planReference().isBlank();
     }
 
-    public void fillAutomationPackageWithImportedFragments(AutomationPackageContent targetPackage, AutomationPackageFragmentYaml fragment, AutomationPackageArchive archive) throws AutomationPackageReadingException {
-        targetPackage.getKeywords().addAll(fragment.getKeywords());
-        targetPackage.getPlans().addAll(fragment.getPlans().stream().map(p -> getDescriptorReader().getPlanReader().yamlPlanToPlan(p)).collect(Collectors.toList()));
-        targetPackage.getSchedules().addAll(fragment.getSchedules());
+    public void fillAutomationPackageWithImportedFragments(T targetPackage, AutomationPackageFragmentYaml fragment, AutomationPackageArchive archive) throws AutomationPackageReadingException {
+        fillContentSections(targetPackage, fragment);
 
         if (!fragment.getFragments().isEmpty()) {
             for (String importedFragmentReference : fragment.getFragments()) {
                 try (InputStream fragmentYamlStream = archive.getResourceAsStream(importedFragmentReference)) {
-                    fragment = getDescriptorReader().readAutomationPackageFragment(fragmentYamlStream, importedFragmentReference, archive.getOriginalFileName());
+                    fragment = getOrCreateDescriptorReader().readAutomationPackageFragment(fragmentYamlStream, importedFragmentReference, archive.getOriginalFileName());
                     fillAutomationPackageWithImportedFragments(targetPackage, fragment, archive);
                 } catch (IOException e) {
                     throw new AutomationPackageReadingException("Unable to read fragment in automation package: " + importedFragmentReference, e);
@@ -218,7 +218,13 @@ public class AutomationPackageReader {
         }
     }
 
-    public AutomationPackageContent readAutomationPackageFromJarFile(File automationPackageJar) throws AutomationPackageReadingException {
+    protected void fillContentSections(T targetPackage, AutomationPackageFragmentYaml fragment) {
+        targetPackage.getKeywords().addAll(fragment.getKeywords());
+        targetPackage.getPlans().addAll(fragment.getPlans().stream().map(p -> getOrCreateDescriptorReader().getPlanReader().yamlPlanToPlan(p)).collect(Collectors.toList()));
+        targetPackage.getSchedules().addAll(fragment.getSchedules());
+    }
+
+    public T readAutomationPackageFromJarFile(File automationPackageJar) throws AutomationPackageReadingException {
         try (AutomationPackageArchive automationPackageArchive = new AutomationPackageArchive(automationPackageJar, automationPackageJar.getName())) {
             return readAutomationPackage(automationPackageArchive, false);
         } catch (IOException e) {
@@ -226,7 +232,7 @@ public class AutomationPackageReader {
         }
     }
 
-    public List<Plan> extractAnnotatedPlans(File artifact, AnnotationScanner annotationScanner, String[] includedClasses, String[] includedAnnotations, String[] excludedClasses, String[] excludedAnnotations) {
+    public static List<Plan> extractAnnotatedPlans(File artifact, AnnotationScanner annotationScanner, String[] includedClasses, String[] includedAnnotations, String[] excludedClasses, String[] excludedAnnotations, StepClassParser stepClassParser) {
         List<Plan> result = new ArrayList<>();
         Set<String> includedA = new HashSet<>(includedAnnotations == null ? new ArrayList<>() : List.of(includedAnnotations));
         Set<String> excludedA = new HashSet<>(excludedAnnotations == null ? new ArrayList<>() : List.of(excludedAnnotations));
@@ -283,7 +289,7 @@ public class AutomationPackageReader {
         classesWithPlans = tmp;
 
         // Create plans for discovered classes
-        classesWithPlans.forEach(c -> result.addAll(getPlansForClass(annotationScanner,c,artifact)));
+        classesWithPlans.forEach(c -> result.addAll(getPlansForClass(annotationScanner,c,artifact, stepClassParser)));
 
         // replace null with empty collections to avoid NPEs
         result.forEach(plan -> {
@@ -295,7 +301,7 @@ public class AutomationPackageReader {
         return result;
     }
 
-    private FilterResult isAnnotationFiltered(String target, Set<String> includedA, Set<String> excludedA, Annotation[] annotations) {
+    private static FilterResult isAnnotationFiltered(String target, Set<String> includedA, Set<String> excludedA, Annotation[] annotations) {
         FilterResult filtered = includedA.isEmpty() ? FilterResult.NOT_FILTERED : FilterResult.FILTERED_BY_INCLUDED;
         for (Annotation a : annotations) {
             // if the annotation object is proxy, the toString() is not applicable (the format in this case is like “@step.examples.plugins.StepEETests()”)
@@ -312,13 +318,13 @@ public class AutomationPackageReader {
         return filtered;
     }
 
-    protected List<Plan> getPlansForClass(AnnotationScanner annotationScanner, Class<?> klass, File artifact) {
+    protected static List<Plan> getPlansForClass(AnnotationScanner annotationScanner, Class<?> klass, File artifact, StepClassParser stepClassParser) {
 
         List<Plan> result = new ArrayList<>();
         List<StepClassParserResult> plans;
         try {
             plans = stepClassParser.getPlanFromAnnotatedMethods(annotationScanner, klass);
-            plans.addAll(getPlanFromPlansAnnotation(klass, artifact));
+            plans.addAll(getPlanFromPlansAnnotation(klass, artifact, stepClassParser));
 
         } catch (Exception e) {
             throw new RuntimeException(
@@ -339,7 +345,7 @@ public class AutomationPackageReader {
         return result;
     }
 
-    private List<StepClassParserResult> getPlanFromPlansAnnotation(Class<?> klass, File artifact) {
+    private static List<StepClassParserResult> getPlanFromPlansAnnotation(Class<?> klass, File artifact, StepClassParser stepClassParser) {
         final List<StepClassParserResult> result = new ArrayList<>();
 
         Plans plans = klass.getAnnotation(Plans.class);
@@ -378,7 +384,7 @@ public class AutomationPackageReader {
         return result;
     }
 
-    protected synchronized AutomationPackageDescriptorReader getDescriptorReader() {
+    protected synchronized AutomationPackageDescriptorReader getOrCreateDescriptorReader() {
         // lazy initialization of descriptor reader (performance issue)
         if (descriptorReader == null) {
             this.descriptorReader = new AutomationPackageDescriptorReader(jsonSchema);

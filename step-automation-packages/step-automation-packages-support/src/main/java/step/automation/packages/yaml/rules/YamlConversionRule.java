@@ -18,25 +18,32 @@
  ******************************************************************************/
 package step.automation.packages.yaml.rules;
 
-import step.automation.packages.AutomationPackageAttributesApplyingContext;
-import step.automation.packages.yaml.deserialization.SpecialKeywordAttributesApplier;
-import step.automation.packages.yaml.deserialization.SpecialKeywordAttributesExtractor;
+import jakarta.json.spi.JsonProvider;
+import step.core.yaml.deserializers.YamlFieldDeserializationProcessor;
+import step.handlers.javahandler.jsonschema.FieldMetadataExtractor;
+import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
 
-public interface YamlKeywordConversionRule extends YamlConversionRule {
+public interface YamlConversionRule {
 
     /**
-     * Returns the special attributes extract used to extract some special data, which can't be applied during the
-     * deserialization from yaml (for example, if some data should be stored in database before to the {@link step.functions.Function} object)
+     * Returns the field metadata provider (to decide, how the field should be named in yaml format, it the field mandatory etc)
      */
-    default SpecialKeywordAttributesExtractor getSpecialAttributesExtractor() {
+    default FieldMetadataExtractor getFieldMetadataExtractor() {
         return null;
     }
 
     /**
-     * Returns the applier for the special attributes extracted by {@link SpecialKeywordAttributesExtractor}.
+     * Returns the json schema field processor to be used in when generating the json schema for entity (if the fields
+     * requires some special non-standard representation in json schema)
      */
-    default SpecialKeywordAttributesApplier getSpecialKeywordAttributesApplier(AutomationPackageAttributesApplyingContext context) {
+    default JsonSchemaFieldProcessor getJsonSchemaFieldProcessor(JsonProvider jsonProvider){
         return null;
     }
 
+    /**
+     * Returns the processor to be used to deserialize the yaml representation to the technical object
+     */
+    default YamlFieldDeserializationProcessor getDeserializationProcessor() {
+        return null;
+    }
 }

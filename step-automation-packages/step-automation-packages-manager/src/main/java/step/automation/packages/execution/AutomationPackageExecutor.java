@@ -23,7 +23,6 @@ import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.automation.packages.AutomationPackageManager;
-import step.automation.packages.AutomationPackageManagerException;
 import step.core.execution.model.*;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectPredicate;
@@ -33,9 +32,6 @@ import step.core.repositories.RepositoryObjectReference;
 import step.core.scheduler.ExecutionScheduler;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.type.FunctionTypeRegistry;
-import step.functions.type.FunctionTypeException;
-import step.functions.type.FunctionTypeRegistry;
-import step.functions.type.SetupFunctionException;
 
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -61,17 +57,20 @@ public class AutomationPackageExecutor {
     private final FunctionTypeRegistry functionTypeRegistry;
     private final FunctionAccessor functionAccessor;
     private final IsolatedAutomationPackageRepository isolatedAutomationPackageRepository;
+    private final AutomationPackageManager automationPackageManager;
 
     public AutomationPackageExecutor(ExecutionScheduler scheduler,
                                      ExecutionAccessor executionAccessor,
                                      FunctionTypeRegistry functionTypeRegistry,
                                      FunctionAccessor functionAccessor,
-                                     IsolatedAutomationPackageRepository isolatedAutomationPackageRepository) {
+                                     IsolatedAutomationPackageRepository isolatedAutomationPackageRepository,
+                                     AutomationPackageManager automationPackageManager) {
         this.scheduler = scheduler;
         this.executionAccessor = executionAccessor;
         this.functionTypeRegistry = functionTypeRegistry;
         this.functionAccessor = functionAccessor;
         this.isolatedAutomationPackageRepository = isolatedAutomationPackageRepository;
+        this.automationPackageManager = automationPackageManager;
     }
 
     public List<String> runInIsolation(InputStream automationPackage, String fileName, AutomationPackageExecutionParameters parameters,
@@ -79,7 +78,7 @@ public class AutomationPackageExecutor {
         ObjectId contextId = new ObjectId();
 
         // prepare the isolated in-memory automation package manager with the only one automation package
-        AutomationPackageManager inMemoryPackageManager = AutomationPackageManager.createIsolatedAutomationPackageManager(
+        AutomationPackageManager inMemoryPackageManager = automationPackageManager.createIsolated(
                 contextId, functionTypeRegistry,
                 functionAccessor
         );

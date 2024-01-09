@@ -2,7 +2,8 @@ package step.functions.packages.handlers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import step.attachments.FileResolver;
-import step.automation.packages.AutomationPackageReader;
+import step.automation.packages.AbstractAutomationPackageReader;
+import step.automation.packages.AutomationPackageReaderOS;
 import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.model.AutomationPackageContent;
 import step.automation.packages.model.AutomationPackageKeyword;
@@ -33,8 +34,10 @@ public class JavaFunctionPackageDaemon extends FunctionPackageUtils {
 
 	private final KeywordJsonSchemaCreator schemaCreator = new KeywordJsonSchemaCreator();
 
-	// TODO: resolve automation package schema version
-	private final AutomationPackageReader automationPackageReader = new AutomationPackageReader(null);
+	// TODO: resolve implementation (EE or OS)
+	// the workaround is applied now - we don't use the json schema for validation to support the extended yaml format for EE
+	// but actually we have to parse the 'keywords' section only
+	private final AbstractAutomationPackageReader<?> automationPackageReader = new AutomationPackageReaderOS(true);
 
 	public JavaFunctionPackageDaemon() {
 		super(new FileResolver(new LocalResourceManagerImpl()));

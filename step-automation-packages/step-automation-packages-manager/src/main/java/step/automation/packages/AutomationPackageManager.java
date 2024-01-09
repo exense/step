@@ -22,40 +22,30 @@ import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.automation.packages.accessor.AutomationPackageAccessor;
-import step.automation.packages.accessor.InMemoryAutomationPackageAccessorImpl;
 import step.automation.packages.model.AutomationPackageContent;
 import step.automation.packages.model.AutomationPackageKeyword;
 import step.automation.packages.model.AutomationPackageSchedule;
-import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.execution.model.ExecutionParameters;
 import step.core.objectenricher.EnricheableObject;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectEnricherComposer;
 import step.core.objectenricher.ObjectPredicate;
-import step.core.plans.InMemoryPlanAccessor;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
 import step.core.repositories.RepositoryObjectReference;
 import step.core.scheduler.ExecutionScheduler;
 import step.core.scheduler.ExecutionTaskAccessor;
 import step.core.scheduler.ExecutiontTaskParameters;
-import step.core.scheduler.InMemoryExecutionTaskAccessor;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
-import step.functions.accessor.InMemoryFunctionAccessorImpl;
-import step.functions.accessor.LayeredFunctionAccessor;
 import step.functions.manager.FunctionManager;
-import step.functions.manager.FunctionManagerImpl;
 import step.functions.type.FunctionTypeException;
 import step.functions.type.FunctionTypeRegistry;
 import step.functions.type.SetupFunctionException;
-import step.resources.LocalResourceManagerImpl;
 import step.resources.Resource;
 import step.resources.ResourceManager;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
@@ -65,25 +55,25 @@ import java.util.stream.StreamSupport;
 
 import static step.automation.packages.AutomationPackageArchive.METADATA_FILES;
 
-public class AutomationPackageManager {
+public abstract class AutomationPackageManager {
 
     private static final Logger log = LoggerFactory.getLogger(AutomationPackageManager.class);
 
-    private final AutomationPackageAccessor automationPackageAccessor;
-    private final FunctionManager functionManager;
-    private final FunctionAccessor functionAccessor;
-    private final PlanAccessor planAccessor;
-    private final ExecutionTaskAccessor executionTaskAccessor;
-    private final ExecutionScheduler executionScheduler;
-    private final AutomationPackageReader packageReader;
-    private final AutomationPackageKeywordsAttributesApplier keywordsAttributesApplier;
-    private final ResourceManager resourceManager;
-    private boolean isIsolated = false;
+    protected final AutomationPackageAccessor automationPackageAccessor;
+    protected final FunctionManager functionManager;
+    protected final FunctionAccessor functionAccessor;
+    protected final PlanAccessor planAccessor;
+    protected final ExecutionTaskAccessor executionTaskAccessor;
+    protected final ExecutionScheduler executionScheduler;
+    protected final AbstractAutomationPackageReader<?> packageReader;
+    protected final AutomationPackageKeywordsAttributesApplier keywordsAttributesApplier;
+    protected final ResourceManager resourceManager;
+    protected boolean isIsolated = false;
 
     /**
      * The automation package manager used to store/delete automation packages. To run the automation package in isolated
      * context please use the separate in-memory automation package manager created via
-     * {@link AutomationPackageManager#createIsolatedAutomationPackageManager(ObjectId, FunctionTypeRegistry, FunctionAccessor)}
+     * {@link AutomationPackageManager#createIsolated(ObjectId, FunctionTypeRegistry, FunctionAccessor)}
      */
     public AutomationPackageManager(AutomationPackageAccessor automationPackageAccessor,
                                     FunctionManager functionManager,
@@ -91,7 +81,8 @@ public class AutomationPackageManager {
                                     PlanAccessor planAccessor,
                                     ResourceManager resourceManager,
                                     ExecutionTaskAccessor executionTaskAccessor,
-                                    ExecutionScheduler executionScheduler) {
+                                    ExecutionScheduler executionScheduler,
+                                    AbstractAutomationPackageReader<?> packageReader) {
         this.automationPackageAccessor = automationPackageAccessor;
 
         this.functionManager = functionManager;
@@ -106,7 +97,7 @@ public class AutomationPackageManager {
 
         // TODO: avoid executionScheduler in automation package manager
         this.executionScheduler = executionScheduler;
-        this.packageReader = new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH);
+        this.packageReader = packageReader;
         this.resourceManager = resourceManager;
         this.keywordsAttributesApplier = new AutomationPackageKeywordsAttributesApplier(resourceManager);
     }
@@ -122,24 +113,7 @@ public class AutomationPackageManager {
      *                             keywords with duplicated names
      * @return the automation manager with in-memory accessors for plans and keywords
      */
-    public static AutomationPackageManager createIsolatedAutomationPackageManager(ObjectId isolatedContextId,
-                                                                                  FunctionTypeRegistry functionTypeRegistry,
-                                                                                  FunctionAccessor mainFunctionAccessor) {
-        InMemoryFunctionAccessorImpl inMemoryFunctionRepository = new InMemoryFunctionAccessorImpl();
-        LayeredFunctionAccessor layeredFunctionAccessor = new LayeredFunctionAccessor(List.of(inMemoryFunctionRepository, mainFunctionAccessor));
-
-        AutomationPackageManager automationPackageManager = new AutomationPackageManager(
-                new InMemoryAutomationPackageAccessorImpl(),
-                new FunctionManagerImpl(layeredFunctionAccessor, functionTypeRegistry),
-                layeredFunctionAccessor,
-                new InMemoryPlanAccessor(),
-                new LocalResourceManagerImpl(new File("resources", isolatedContextId.toString())),
-                new InMemoryExecutionTaskAccessor(),
-                null
-        );
-        automationPackageManager.isIsolated = true;
-        return automationPackageManager;
-    }
+    public abstract AutomationPackageManager createIsolated(ObjectId isolatedContextId, FunctionTypeRegistry functionTypeRegistry, FunctionAccessor mainFunctionAccessor);
 
     public AutomationPackage getAutomationPackageById(ObjectId id, ObjectPredicate objectPredicate) {
         AutomationPackage automationPackage = automationPackageAccessor.get(id);
@@ -184,7 +158,7 @@ public class AutomationPackageManager {
         log.info("Automation package ({}) has been removed", id);
     }
 
-    private void deleteAutomationPackageEntities(AutomationPackage automationPackage) {
+    protected void deleteAutomationPackageEntities(AutomationPackage automationPackage) {
         deleteFunctions(automationPackage);
         deletePlans(automationPackage);
         deleteSchedules(automationPackage);
@@ -284,10 +258,9 @@ public class AutomationPackageManager {
             newPackage = createNewInstance(automationPackageArchive.getOriginalFileName(), packageContent, oldPackage, enricher);
 
             // prepare staging collections
+            Staging staging = createStaging();
             ObjectEnricher enricherForIncludedEntities = ObjectEnricherComposer.compose(Arrays.asList(enricher, new AutomationPackageLinkEnricher(newPackage.getId().toString())));
-            List<Plan> completePlans = preparePlansStaging(packageContent, oldPackage, enricherForIncludedEntities);
-            List<ExecutiontTaskParameters> completeExecTasksParameters = prepareExecutionTasksParamsStaging(enricherForIncludedEntities, packageContent, oldPackage, completePlans);
-            List<Function> completeFunctions = prepareFunctionsStaging(newPackage, automationPackageArchive, packageContent, enricherForIncludedEntities, oldPackage);
+            fillStaging(staging, packageContent, newPackage, oldPackage, enricherForIncludedEntities, automationPackageArchive);
 
             // delete old package entities
             if (oldPackage != null) {
@@ -295,16 +268,12 @@ public class AutomationPackageManager {
             }
 
             // persist all staged entities
-            persistStagedEntities(completeExecTasksParameters, completeFunctions, completePlans);
+            persistStagedEntities(staging, enricherForIncludedEntities);
 
             // save automation package metadata
             ObjectId result = automationPackageAccessor.save(newPackage).getId();
 
-            if (oldPackage != null) {
-                log.info("Automation package has been updated ({}). Plans: {}. Functions: {}. Schedules: {}", newPackage.getAttribute(AbstractOrganizableObject.NAME), completePlans.size(), completeFunctions.size(), completeExecTasksParameters.size());
-            } else {
-                log.info("New automation package saved ({}). Plans: {}. Functions: {}. Schedules: {}", newPackage.getAttribute(AbstractOrganizableObject.NAME), completePlans.size(), completeFunctions.size(), completeExecTasksParameters.size());
-            }
+            logAfterSave(staging, oldPackage, newPackage);
             return new PackageUpdateResult(oldPackage == null ? PackageUpdateStatus.CREATED : PackageUpdateStatus.UPDATED, result);
         } catch (Exception ex) {
             // cleanup created resources
@@ -322,20 +291,49 @@ public class AutomationPackageManager {
         }
     }
 
-        private void persistStagedEntities(List<ExecutiontTaskParameters> completeExecTasksParameters, List<Function> completeFunctions, List<Plan> completePlans) {
+    protected void logAfterSave(Staging staging, AutomationPackage oldPackage, AutomationPackage newPackage) {
+        if (oldPackage != null) {
+            log.info("Automation package has been updated ({}). Plans: {}. Functions: {}. Schedules: {}",
+                    newPackage.getAttribute(AbstractOrganizableObject.NAME),
+                    staging.plans.size(),
+                    staging.functions.size(),
+                    staging.taskParameters.size()
+            );
+        } else {
+            log.info("New automation package saved ({}). Plans: {}. Functions: {}. Schedules: {}",
+                    newPackage.getAttribute(AbstractOrganizableObject.NAME),
+                    staging.plans.size(),
+                    staging.functions.size(),
+                    staging.taskParameters.size()
+            );
+        }
+    }
+
+    protected Staging createStaging(){
+        return new Staging();
+    }
+
+    protected void fillStaging(Staging staging, AutomationPackageContent packageContent, AutomationPackage newPackage, AutomationPackage oldPackage, ObjectEnricher enricherForIncludedEntities, AutomationPackageArchive automationPackageArchive){
+        staging.plans = preparePlansStaging(packageContent, oldPackage, enricherForIncludedEntities);
+        staging.taskParameters = prepareExecutionTasksParamsStaging(enricherForIncludedEntities, packageContent, oldPackage, staging.plans);
+        staging.functions = prepareFunctionsStaging(newPackage, automationPackageArchive, packageContent, enricherForIncludedEntities, oldPackage);
+    }
+
+    protected void persistStagedEntities(Staging staging,
+                                         ObjectEnricher objectEnricher) {
         try {
-            for (Function completeFunction : completeFunctions) {
+            for (Function completeFunction : staging.functions) {
                 functionManager.saveFunction(completeFunction);
             }
         } catch (SetupFunctionException | FunctionTypeException e) {
             throw new AutomationPackageManagerException("Unable to persist a keyword in automation package", e);
         }
 
-        for (Plan plan : completePlans) {
+        for (Plan plan : staging.plans) {
             planAccessor.save(plan);
         }
 
-        for (ExecutiontTaskParameters execTasksParameter : completeExecTasksParameters) {
+        for (ExecutiontTaskParameters execTasksParameter : staging.taskParameters) {
             if (executionScheduler != null) {
                 // TODO: move this to a dedicated class as part of SED-2594
                 executionScheduler.addExecutionTask(execTasksParameter, false);
@@ -549,7 +547,7 @@ public class AutomationPackageManager {
         return resourceManager.findManyByCriteria(criteria);
     }
 
-    public List<Resource> getPackageResources(ObjectId automationPackageId){
+    public List<Resource> getPackageResources(ObjectId automationPackageId) {
         return getResourcesByCriteria(getAutomationPackageIdCriteria(automationPackageId));
     }
 
@@ -567,6 +565,10 @@ public class AutomationPackageManager {
 
     protected List<ExecutiontTaskParameters> getPackageSchedules(ObjectId automationPackageId) {
         return executionTaskAccessor.findManyByCriteria(getAutomationPackageIdCriteria(automationPackageId)).collect(Collectors.toList());
+    }
+
+    public AbstractAutomationPackageReader<?> getPackageReader() {
+        return packageReader;
     }
 
     public boolean isIsolated() {
@@ -618,6 +620,12 @@ public class AutomationPackageManager {
     public enum PackageUpdateStatus {
         CREATED,
         UPDATED
+    }
+
+    protected static class Staging {
+        List<Plan> plans = new ArrayList<>();
+        List<ExecutiontTaskParameters> taskParameters = new ArrayList<>();
+        List<Function> functions = new ArrayList<>();
     }
 
 }

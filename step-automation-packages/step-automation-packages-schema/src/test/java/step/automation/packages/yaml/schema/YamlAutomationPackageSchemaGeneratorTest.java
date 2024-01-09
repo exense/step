@@ -25,7 +25,7 @@ public class YamlAutomationPackageSchemaGeneratorTest {
         InputStream jsonSchemaFile = this.getClass().getClassLoader().getResourceAsStream("step/automation/packages/yaml/step-automation-package-schema-os-1.0.json");
 
         JsonNode publishedSchema = jsonObjectMapper.readTree(jsonSchemaFile);
-        YamlAutomationPackageSchemaGenerator schemaGenerator = new YamlAutomationPackageSchemaGenerator("step", YamlAutomationPackageVersions.ACTUAL_VERSION);
+        YamlAutomationPackageSchemaGeneratorOS schemaGenerator = new YamlAutomationPackageSchemaGeneratorOS("step", YamlAutomationPackageVersions.ACTUAL_VERSION);
         JsonNode currentSchema = schemaGenerator.generateJsonSchema();
 
         log.info("GENERATED SCHEMA:");

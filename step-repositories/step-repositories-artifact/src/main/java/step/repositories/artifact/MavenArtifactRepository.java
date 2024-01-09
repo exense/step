@@ -22,6 +22,7 @@ import ch.exense.commons.app.Configuration;
 import org.apache.maven.settings.building.SettingsBuildingException;
 import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
+import step.automation.packages.AbstractAutomationPackageReader;
 import step.core.controller.ControllerSetting;
 import step.core.controller.ControllerSettingAccessor;
 import step.core.plans.PlanAccessor;
@@ -59,8 +60,8 @@ public class MavenArtifactRepository extends AbstractArtifactRepository {
     private final ControllerSettingAccessor controllerSettingAccessor;
     private final File localRepository;
 
-    public MavenArtifactRepository(PlanAccessor planAccessor, ResourceManager resourceManager, ControllerSettingAccessor controllerSettingAccessor, Configuration configuration) {
-        super(Set.of(PARAM_GROUP_ID, PARAM_ARTIFACT_ID, PARAM_VERSION), planAccessor, resourceManager);
+    public MavenArtifactRepository(PlanAccessor planAccessor, ResourceManager resourceManager, ControllerSettingAccessor controllerSettingAccessor, Configuration configuration, AbstractAutomationPackageReader<?> automationPackageReader) {
+        super(Set.of(PARAM_GROUP_ID, PARAM_ARTIFACT_ID, PARAM_VERSION), planAccessor, resourceManager, automationPackageReader);
         localRepository = configuration.getPropertyAsFile(CONFIGURATION_MAVEN_FOLDER, new File(DEFAULT_MAVEN_FOLDER));
         this.controllerSettingAccessor = controllerSettingAccessor;
     }
@@ -70,7 +71,7 @@ public class MavenArtifactRepository extends AbstractArtifactRepository {
         ControllerSetting settingsXml = controllerSettingAccessor.getSettingByKey(mavenSettingsId);
 
         if (settingsXml==null) {
-            logger.warn("No settings found for \""+mavenSettingsId+"\", using empty settings instead.");
+            AbstractArtifactRepository.logger.warn("No settings found for \""+mavenSettingsId+"\", using empty settings instead.");
             controllerSettingAccessor.updateOrCreateSetting(mavenSettingsId,MAVEN_EMPTY_SETTINGS);
             settingsXml = controllerSettingAccessor.getSettingByKey(mavenSettingsId);
         }
@@ -93,10 +94,10 @@ public class MavenArtifactRepository extends AbstractArtifactRepository {
 
             if (artifactId!=null) {
                 if (groupId==null) {
-                    groupId = getMandatoryRepositoryParameter(repositoryParameters,PARAM_GROUP_ID);
+                    groupId = AbstractArtifactRepository.getMandatoryRepositoryParameter(repositoryParameters,PARAM_GROUP_ID);
                 }
                 if (version==null) {
-                    version = getMandatoryRepositoryParameter(repositoryParameters,PARAM_VERSION);
+                    version = AbstractArtifactRepository.getMandatoryRepositoryParameter(repositoryParameters,PARAM_VERSION);
                 }
                 return mavenArtifactClient.getArtifact(new DefaultArtifact(groupId, artifactId, classifier, "jar", version));
             } else {
@@ -112,9 +113,9 @@ public class MavenArtifactRepository extends AbstractArtifactRepository {
         ControllerSetting settingsXml = getMavenSettings(repositoryParameters);
         try {
             MavenArtifactClient mavenArtifactClient = new MavenArtifactClient(settingsXml.getValue(), localRepository);
-            String artifactId = getMandatoryRepositoryParameter(repositoryParameters, PARAM_ARTIFACT_ID);
-            String version = getMandatoryRepositoryParameter(repositoryParameters, PARAM_VERSION);
-            String groupId = getMandatoryRepositoryParameter(repositoryParameters, PARAM_GROUP_ID);
+            String artifactId = AbstractArtifactRepository.getMandatoryRepositoryParameter(repositoryParameters, PARAM_ARTIFACT_ID);
+            String version = AbstractArtifactRepository.getMandatoryRepositoryParameter(repositoryParameters, PARAM_VERSION);
+            String groupId = AbstractArtifactRepository.getMandatoryRepositoryParameter(repositoryParameters, PARAM_GROUP_ID);
             String classifier = repositoryParameters.get(PARAM_CLASSIFIER);
             return mavenArtifactClient.getArtifact(new DefaultArtifact(groupId, artifactId, classifier, "jar", version));
         } catch (SettingsBuildingException | ArtifactResolutionException e) {

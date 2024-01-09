@@ -57,7 +57,7 @@ public class MavenArtifactRepositoryTest {
         controllerSettingAccessor.createSettingIfNotExisting("maven_settings_default", MAVEN_SETTINGS_NEXUS);
 
         Configuration configuration = new Configuration();
-        artifactRepository = new MavenArtifactRepository(planAccessor, resourceManager, controllerSettingAccessor, configuration);
+        artifactRepository = new MavenArtifactRepository(planAccessor, resourceManager, controllerSettingAccessor, configuration, null);
         executionContext = ExecutionEngine.builder().build().newExecutionContext();
     }
 
@@ -116,7 +116,7 @@ public class MavenArtifactRepositoryTest {
         InMemoryControllerSettingAccessor controllerSettingAccessor = new InMemoryControllerSettingAccessor();
         controllerSettingAccessor.createSettingIfNotExisting("maven_settings_default", "settings> </settings>");
         Configuration configuration = new Configuration();
-        MavenArtifactRepository artifactRepository = new MavenArtifactRepository(planAccessor, resourceManager, controllerSettingAccessor, configuration);
+        MavenArtifactRepository artifactRepository = new MavenArtifactRepository(planAccessor, resourceManager, controllerSettingAccessor, configuration, null);
         ExecutionContext executionContext = ExecutionEngine.builder().build().newExecutionContext();
 
         // getArtefactInfo
