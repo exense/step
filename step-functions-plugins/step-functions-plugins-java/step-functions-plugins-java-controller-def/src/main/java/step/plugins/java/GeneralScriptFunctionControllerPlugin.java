@@ -19,23 +19,12 @@
 package step.plugins.java;
 
 import step.core.GlobalContext;
-import step.core.plugins.AbstractControllerPlugin;
-import step.core.plugins.AbstractWebPlugin;
-import step.core.plugins.Plugin;
-import step.core.plugins.WebPlugin;
+import step.core.plugins.*;
 import step.functions.plugin.FunctionControllerPlugin;
 import step.functions.type.FunctionTypeRegistry;
 
 @Plugin(dependencies= {FunctionControllerPlugin.class})
 public class GeneralScriptFunctionControllerPlugin extends AbstractControllerPlugin {
-	
-	@Override
-	public AbstractWebPlugin getWebPlugin() {
-		WebPlugin webPlugin = new WebPlugin();
-		webPlugin.getAngularModules().add("javaPlugin");
-		webPlugin.getScripts().add("javaplugin/js/script.js");
-		return webPlugin;
-	}
 
 	@Override
 	public void serverStart(GlobalContext context) throws Exception {
@@ -45,4 +34,11 @@ public class GeneralScriptFunctionControllerPlugin extends AbstractControllerPlu
 		super.serverStart(context);
 	}
 
+	@Override
+	public AbstractWebPlugin getWebPlugin() {
+		Ng2WebPlugin webPlugin = new Ng2WebPlugin();
+		webPlugin.setName("javaPlugin");
+		webPlugin.setEntryPoint("step-enterprise-core/remoteEntry.js");
+		return webPlugin;
+	}
 }

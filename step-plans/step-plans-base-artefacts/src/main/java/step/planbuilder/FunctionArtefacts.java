@@ -167,56 +167,6 @@ public class FunctionArtefacts {
 		return keyword(keywordName, remote, "{}");
 	}
 
-	public static JsonObject buildInputFromSchema(Function function) {
-		JsonObjectBuilder inputBuilder = Json.createObjectBuilder();
-		JsonObject schema = function.getSchema();
-		if (schema != null && schema.get("required") != null) {
-			if (schema.get("required").getValueType().equals(JsonValue.ValueType.ARRAY)) {
-				JsonArray required = schema.getJsonArray("required");
-				if (schema.get("properties").getValueType().equals(JsonValue.ValueType.OBJECT)) {
-					JsonObject properties = schema.getJsonObject("properties");
-					try {
-						required.getValuesAs(JsonString.class).forEach(v -> {
-							String key = v.getString();
-							if (properties.get(key) != null && properties.get(key).getValueType().equals(JsonValue.ValueType.OBJECT)) {
-								JsonObject prop = properties.getJsonObject(key);
-								String type = prop.getString("type", "");
-								JsonObjectBuilder dynamicExpressionBuilder = Json.createObjectBuilder();
-								dynamicExpressionBuilder.add("dynamic", false);
-								if (prop.get("default") != null) {
-									if (type.equals("number") || type.equals("integer")) {
-										dynamicExpressionBuilder.add("value", prop.getJsonNumber("default"));
-									} else if (type.equals("boolean")) {
-										dynamicExpressionBuilder.add("value", prop.getBoolean("default"));
-									} else {
-										dynamicExpressionBuilder.add("value", prop.getString("default"));
-									}
-								} else {
-									dynamicExpressionBuilder.add("value", "");
-								}
-								inputBuilder.add(key, dynamicExpressionBuilder.build());
-							} else {
-								logger.error("Invalid schema provided for function " + function.getAttribute(NAME) +
-										". The property '" + key + "' should be a json object. Schema provided: " + schema.toString());
-							}
-						});
-					} catch (ClassCastException e) {
-						logger.error("Invalid schema provided for function " + function.getAttribute(NAME) +
-								". The 'required' array should contain only strings, found: " + required);
-					}
-				} else {
-					logger.error("Invalid schema provided for function " + function.getAttribute(NAME) +
-							". The 'properties' should be a json object. Schema provided: " + schema.toString());
-				}
-			}
-			else {
-				logger.error("Invalid schema provided for function " + function.getAttribute(NAME) +
-						". The 'required' property should be a json array. Schema provided: " + schema.toString());
-			}
-		}
-		return inputBuilder.build();
-	}
-
 	public static CallFunctionBuilder keyword(Map<String, String> attributes) {
 		JsonObjectBuilder attributeJson = Json.createObjectBuilder();
 		attributes.forEach((key, value) -> {

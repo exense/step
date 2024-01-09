@@ -47,14 +47,12 @@ import step.core.access.User;
 import step.core.artefacts.reports.ReportNode;
 import step.core.collections.SearchOrder;
 import step.core.deployment.AbstractStepAsyncServices;
+import step.core.deployment.ControllerServiceException;
 import step.core.deployment.FindByCriteraParam;
 import step.core.entities.EntityManager;
+import step.core.execution.model.*;
 import step.framework.server.Session;
 import step.framework.server.security.Secured;
-import step.core.execution.model.Execution;
-import step.core.execution.model.ExecutionAccessor;
-import step.core.execution.model.ExecutionAccessorImpl;
-import step.core.execution.model.ExecutionParameters;
 import step.core.repositories.RepositoryObjectReference;
 import step.engine.execution.ExecutionLifecycleManager;
 import step.framework.server.tables.service.TableService;
@@ -206,12 +204,16 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 		return executionAccessor.save(execution);
 	}
 
-	@Operation(description = "Delete the execution with the given execution id.")
+	@Operation(description = "Delete the execution with the given execution id, use the housekeeping services for full deletion")
 	@DELETE
 	@Path("/{id}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Secured(right="execution-delete")
 	public void deleteExecution(@PathParam("id") String id) {
+		Execution execution = executionAccessor.get(id);
+		if (execution.getStatus().equals(ExecutionStatus.ENDED)) {
+			throw new ControllerServiceException("Only ended executions can be deleted.");
+		}
 		executionAccessor.remove(new ObjectId(id));
 	}
 
