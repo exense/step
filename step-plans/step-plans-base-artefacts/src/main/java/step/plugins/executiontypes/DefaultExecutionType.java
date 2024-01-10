@@ -16,20 +16,27 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.core.execution.type;
+package step.plugins.executiontypes;
 
-public abstract class ExecutionType {
-	
-	protected String name;
-	
-	public abstract Object getExecutionSummary(String executionId);
+import step.core.execution.AbstractExecutionEngineContext;
+import step.core.execution.type.ExecutionType;
+import step.core.views.ViewManager;
+import step.plugins.views.functions.ReportNodeStatusDistribution;
 
-	public ExecutionType(String name) {
-		super();	
-		this.name = name;
+public class DefaultExecutionType extends ExecutionType {
+
+	public static final String NAME = "Default";
+	private ViewManager viewManager;
+	
+	public DefaultExecutionType(AbstractExecutionEngineContext context) {
+		super(NAME);
+		this.viewManager = context.get(ViewManager.class);
 	}
 
-	protected String getName() {
-		return name;
+	@Override
+	public Object getExecutionSummary(String executionId) {
+		ReportNodeStatusDistribution distribution = (ReportNodeStatusDistribution) viewManager.queryView("statusDistributionForFunctionCalls", executionId);
+		return distribution;
 	}
+
 }

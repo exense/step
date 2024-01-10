@@ -222,7 +222,7 @@ public class ExportManagerTest {
 			}
 
 			@Override
-			public Map<String, String> getAdditionalAttributes() {
+			public TreeMap<String, String> getAdditionalAttributes() {
 				return null;
 			}
 		};

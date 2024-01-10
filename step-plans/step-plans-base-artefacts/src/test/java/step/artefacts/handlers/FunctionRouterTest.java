@@ -53,6 +53,7 @@ import step.grid.TokenWrapper;
 import step.grid.TokenWrapperOwner;
 import step.grid.client.AbstractGridClientImpl.AgentCommunicationException;
 import step.grid.client.GridClient;
+import step.grid.client.GridClientException;
 import step.grid.filemanager.FileManagerException;
 import step.grid.filemanager.FileVersion;
 import step.grid.filemanager.FileVersionId;
@@ -238,6 +239,11 @@ public class FunctionRouterTest extends AbstractArtefactTest {
 			@Override
 			public void returnTokenHandle(String arg0) throws AgentCommunicationException {
 				
+			}
+
+			@Override
+			public void interruptTokenExecution(String s) throws GridClientException, AgentCommunicationException {
+
 			}
 
 			@Override

@@ -55,6 +55,7 @@ import step.grid.agent.handler.context.OutputMessageBuilder;
 import step.grid.client.AbstractGridClientImpl.AgentCallTimeoutException;
 import step.grid.client.AbstractGridClientImpl.AgentCommunicationException;
 import step.grid.client.GridClient;
+import step.grid.client.GridClientException;
 import step.grid.filemanager.FileManagerException;
 import step.grid.filemanager.FileVersion;
 import step.grid.filemanager.FileVersionId;
@@ -382,6 +383,11 @@ public class FunctionExecutionServiceImplTest {
 				if(returnTokenException != null) {
 					throw returnTokenException;
 				}
+			}
+
+			@Override
+			public void interruptTokenExecution(String s) throws GridClientException, AgentCommunicationException {
+
 			}
 
 			@Override

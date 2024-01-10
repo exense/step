@@ -71,6 +71,8 @@ import java.util.NoSuchElementException;
 public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunctionReportNode> {
 
 	private static final String KEYWORD_OUTPUT_LEGACY_FORMAT = "keywords.output.legacy";
+	public static final String OPERATION_KEYWORD_CALL = "Keyword Call";
+
 	protected FunctionExecutionService functionExecutionService;
 	
 	protected FunctionAccessor functionAccessor;
@@ -144,7 +146,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				node.setAgentUrl(token.getAgent().getAgentUrl());
 				node.setTokenId(token.getID());
 				
-				OperationManager.getInstance().enter("Keyword Call", new Object[]{function.getAttributes(), token.getToken(), token.getAgent()},
+				OperationManager.getInstance().enter(OPERATION_KEYWORD_CALL, new Object[]{function.getAttributes(), token.getToken(), token.getAgent()},
 						node.getId().toString());
 
 				// Add the docker image if present within the session
