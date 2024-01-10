@@ -8,10 +8,7 @@ import step.core.GlobalContext;
 import step.core.collections.Collection;
 import step.core.deployment.ObjectHookControllerPlugin;
 import step.core.objectenricher.ObjectHookRegistry;
-import step.core.plugins.AbstractControllerPlugin;
-import step.core.plugins.AbstractWebPlugin;
-import step.core.plugins.Plugin;
-import step.core.plugins.WebPlugin;
+import step.core.plugins.*;
 import step.framework.server.tables.Table;
 import step.framework.server.tables.TableRegistry;
 import step.functions.manager.FunctionManager;
@@ -102,10 +99,9 @@ public class FunctionPackagePlugin extends AbstractControllerPlugin {
 
 	@Override
 	public AbstractWebPlugin getWebPlugin() {
-		WebPlugin webPlugin = new WebPlugin();
-		webPlugin.getAngularModules().add("functionPackages");
-		webPlugin.getScripts().add("functionpackages/js/controllers/functionPackages.js");
+		Ng2WebPlugin webPlugin = new Ng2WebPlugin();
+		webPlugin.setName("functionPackages");
+		webPlugin.setEntryPoint("step-enterprise-core/remoteEntry.js");
 		return webPlugin;
 	}
-
 }
