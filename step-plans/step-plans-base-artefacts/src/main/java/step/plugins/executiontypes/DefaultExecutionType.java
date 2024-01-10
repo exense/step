@@ -16,34 +16,27 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.core.plugins;
+package step.plugins.executiontypes;
 
-import java.util.ArrayList;
-import java.util.List;
+import step.core.execution.AbstractExecutionEngineContext;
+import step.core.execution.type.ExecutionType;
+import step.core.views.ViewManager;
+import step.plugins.views.functions.ReportNodeStatusDistribution;
 
-public class WebPlugin extends AbstractWebPlugin {
+public class DefaultExecutionType extends ExecutionType {
 
-	List<String> scripts = new ArrayList<>();
+	public static final String NAME = "Default";
+	private ViewManager viewManager;
 	
-	List<String> angularModules = new ArrayList<>();
-
-	public WebPlugin() {
-		super();
+	public DefaultExecutionType(AbstractExecutionEngineContext context) {
+		super(NAME);
+		this.viewManager = context.get(ViewManager.class);
 	}
 
-	public void setScripts(List<String> scripts) {
-		this.scripts = scripts;
+	@Override
+	public Object getExecutionSummary(String executionId) {
+		ReportNodeStatusDistribution distribution = (ReportNodeStatusDistribution) viewManager.queryView("statusDistributionForFunctionCalls", executionId);
+		return distribution;
 	}
 
-	public void setAngularModules(List<String> angularModules) {
-		this.angularModules = angularModules;
-	}
-
-	public List<String> getScripts() {
-		return scripts;
-	}
-
-	public List<String> getAngularModules() {
-		return angularModules;
-	}
 }

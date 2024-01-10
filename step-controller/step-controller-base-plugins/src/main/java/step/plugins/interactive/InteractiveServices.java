@@ -283,44 +283,6 @@ public class InteractiveServices extends AbstractStepServices {
 		}
 
 	}
-	@POST
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
-	@Path("/functiontest/{keywordid}/start")
-	@Secured(right="interactive")
-	public FunctionTestingSession startFunctionTestingSession(@PathParam("keywordid") String keywordid) {
-		Function function = functionManager.getFunctionById(keywordid);
-
-		ObjectPredicate objectPredicate = objectPredicateFactory.getObjectPredicate(getSession());
-		Map<String, String> functionAttributes = functionTableScreenInputs.getSelectionAttributes(function, null, objectPredicate);
-
-		//build input based on schema
-		String inputs = FunctionArtefacts.buildInputFromSchema(function).toString();
-		CallFunction callFunction = FunctionArtefacts.keyword(functionAttributes).withInput(inputs).build();
-
-		// TODO do this centrally. Currently the same logic is implemented in the UI
-		Map<String, String> attributes = new HashMap<>();
-		attributes.put("name", function.getAttributes().get(NAME));
-		callFunction.setAttributes(attributes);
-		FunctionGroup functionGroup = new FunctionGroup();
-		attributes = new HashMap<>();
-		attributes.put("name", "Session");
-		functionGroup.setAttributes(attributes);
-		
-		Plan plan = PlanBuilder.create()
-				.startBlock(functionGroup)
-				.add(callFunction)
-				.endBlock()
-				.build();
-		plan.setVisible(false);
-		
-		getObjectEnricher().accept(plan);
-		getContext().getPlanAccessor().save(plan);
-		FunctionTestingSession result = new FunctionTestingSession();
-		result.setPlanId(plan.getId().toString());
-		result.setCallFunctionId(callFunction.getId().toString());
-		return result;
-	}
 
 	private InteractiveSession getAndTouchSession(String sessionId) {
 		InteractiveSession session = sessions.get(sessionId);

@@ -46,6 +46,11 @@
         </dependency>
         <dependency>
             <groupId>ch.exense.step</groupId>
+            <artifactId>step-controller-base-plugins</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ch.exense.step</groupId>
             <artifactId>step-framework-collections-mongodb</artifactId>
             <version>${step-framework.version}</version>
             <scope>test</scope>
