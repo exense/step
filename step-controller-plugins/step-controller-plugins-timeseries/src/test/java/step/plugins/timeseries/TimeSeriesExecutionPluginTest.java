@@ -18,6 +18,7 @@ import step.core.dynamicbeans.DynamicValue;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
 import step.core.execution.model.Execution;
+import step.core.execution.type.ExecutionTypePlugin;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
 import step.core.plans.runner.PlanRunnerResult;
@@ -96,6 +97,8 @@ public class TimeSeriesExecutionPluginTest extends AbstractKeyword {
                 .withPlugin(new ThreadPoolPlugin())
 				.withPlugin(new LocalFunctionPlugin())
                 .withPlugin(new BaseArtefactPlugin())
+				.withPlugin(new ExecutionTypePlugin())
+				.withPlugin(new ViewPlugin())
                 .withPlugin(new TimeSeriesExecutionPlugin(timeSeriesIngestionPipeline, timeSeriesAggregationPipeline))
 				.withPlugin(new ViewPlugin())
 				.build();
