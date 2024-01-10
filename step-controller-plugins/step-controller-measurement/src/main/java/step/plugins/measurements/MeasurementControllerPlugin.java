@@ -5,14 +5,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.controller.grid.GridPlugin;
 import step.core.GlobalContext;
-import step.core.access.User;
-import step.core.collections.Collection;
-import step.core.execution.table.ExecutionWrapper;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.engine.plugins.ExecutionEnginePlugin;
-import step.framework.server.tables.Table;
-import step.framework.server.tables.TableRegistry;
 import step.grid.Grid;
 import step.grid.GridReportBuilder;
 import step.grid.TokenWrapperState;
@@ -43,16 +38,18 @@ public class MeasurementControllerPlugin extends AbstractControllerPlugin {
 
 	protected void initGaugeCollectorRegistry(GlobalContext context) {
 		gaugeCollectorRegistry = GaugeCollectorRegistry.getInstance();
-
-		//Register grid gauge metrics
-		//Define grouping attributes and corresponds metric labels ($ not supported)
-		List<String> groupBy = new ArrayList<>(Arrays.asList(context.getConfiguration()
-				.getProperty("plugins.grid.monitoring.attributes", "$agenttype,type")
-				.split(",")));
-		if (!groupBy.contains("url")) {groupBy.add("url");}
-		List<String> labels = groupBy.stream().map(s->s.replace("$","")).collect(Collectors.toList());
-		labels.add("name");
 		if (context.get(Grid.class)!=null) {
+			//Register grid gauge metrics
+			//Define grouping attributes and corresponds metric labels ($ not supported)
+			List<String> groupBy = new ArrayList<>(Arrays.asList(context.getConfiguration()
+					.getProperty("plugins.grid.monitoring.attributes", "$agenttype,type")
+					.split(",")));
+			if (!groupBy.contains("url")) {
+				groupBy.add("url");
+			}
+			List<String> labels = groupBy.stream().map(s->s.replace("$","")).collect(Collectors.toList());
+			labels.add("name");
+			//Project id not added yet to the grid metrics
 			gaugeCollectorRegistry.registerCollector(GridGaugeName, new GaugeCollector(GridGaugeName,
 					"step grid token usage and capacity", labels.stream().toArray(String[]::new)) {
 				final GridReportBuilder gridReportBuilder = new GridReportBuilder((Grid) context.get(Grid.class));
@@ -92,16 +89,7 @@ public class MeasurementControllerPlugin extends AbstractControllerPlugin {
 		}
 
 		gaugeCollectorRegistry = GaugeCollectorRegistry.getInstance();
-		final String[] labelsThreadGroup = {ATTRIBUTE_EXECUTION_ID,NAME,PLAN_ID,TASK_ID};
-		//Register thread group gauge metrics
-		gaugeCollectorRegistry.registerCollector(ThreadgroupGaugeName,new GaugeCollector(ThreadgroupGaugeName,
-				"step thread group active threads count", labelsThreadGroup)
-			{
-				@Override
-				public List<Collector.MetricFamilySamples> collect() {
-					return getGauge().collect();
-				}
-			});
+
 
 		//Start the gauge scheduler
 		int interval = context.getConfiguration().getPropertyAsInteger("plugins.measurements.gaugecollector.interval",15);

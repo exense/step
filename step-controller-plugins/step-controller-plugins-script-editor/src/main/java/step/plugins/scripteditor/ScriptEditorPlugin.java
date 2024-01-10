@@ -19,10 +19,7 @@
 package step.plugins.scripteditor;
 
 import step.core.GlobalContext;
-import step.core.plugins.AbstractControllerPlugin;
-import step.core.plugins.AbstractWebPlugin;
-import step.core.plugins.Plugin;
-import step.core.plugins.WebPlugin;
+import step.core.plugins.*;
 import step.functions.Function;
 import step.functions.editors.FunctionEditor;
 import step.functions.editors.FunctionEditorRegistry;
@@ -57,15 +54,11 @@ public class ScriptEditorPlugin extends AbstractControllerPlugin {
 		super.serverStart(context);
 	}
 
-
 	@Override
 	public AbstractWebPlugin getWebPlugin() {
-		WebPlugin webPlugin = new WebPlugin();
-		webPlugin.getAngularModules().add("scriptEditor");
-		webPlugin.getScripts().add("scripteditor/js/controllers/scriptEditor.js");
-		webPlugin.getScripts().add("scripteditor/bower_components/ace-builds/src-min-noconflict/ace.js");
+		Ng2WebPlugin webPlugin = new Ng2WebPlugin();
+		webPlugin.setName("scriptEditor");
+		webPlugin.setEntryPoint("step-enterprise-core/remoteEntry.js");
 		return webPlugin;
 	}
-
-	
 }

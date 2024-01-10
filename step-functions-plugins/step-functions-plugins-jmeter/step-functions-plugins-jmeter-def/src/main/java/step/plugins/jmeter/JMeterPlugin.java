@@ -19,10 +19,7 @@
 package step.plugins.jmeter;
 
 import step.core.GlobalContext;
-import step.core.plugins.AbstractControllerPlugin;
-import step.core.plugins.AbstractWebPlugin;
-import step.core.plugins.Plugin;
-import step.core.plugins.WebPlugin;
+import step.core.plugins.*;
 import step.functions.plugin.FunctionControllerPlugin;
 import step.functions.type.FunctionTypeRegistry;
 
@@ -41,10 +38,9 @@ public class JMeterPlugin extends AbstractControllerPlugin {
 	
 	@Override
 	public AbstractWebPlugin getWebPlugin() {
-		WebPlugin webPlugin = new WebPlugin();
-		webPlugin.getAngularModules().add("jmeterPlugin");
-		webPlugin.getScripts().add("jmeterplugin/js/jmeter.js");
+		Ng2WebPlugin webPlugin = new Ng2WebPlugin();
+		webPlugin.setName("jmeterPlugin");
+		webPlugin.setEntryPoint("step-enterprise-core/remoteEntry.js");
 		return webPlugin;
 	}
-
 }

@@ -25,7 +25,7 @@ import step.core.execution.table.ExecutionSummaryProvider;
 import step.core.execution.table.ExecutionWrapper;
 import step.core.execution.table.LeafReportNodeTableFilterFactory;
 import step.core.execution.table.RootReportNodeProvider;
-import step.core.execution.type.ExecutionTypePlugin;
+import step.core.execution.type.ExecutionTypeControllerPlugin;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.framework.server.tables.Table;
@@ -34,7 +34,7 @@ import step.plugins.screentemplating.ScreenTemplatePlugin;
 
 import java.util.ArrayList;
 
-@Plugin(dependencies= {ExecutionTypePlugin.class, ScreenTemplatePlugin.class})
+@Plugin(dependencies= {ExecutionTypeControllerPlugin.class, ScreenTemplatePlugin.class})
 public class ExecutionPlugin extends AbstractControllerPlugin {
 
 	@Override

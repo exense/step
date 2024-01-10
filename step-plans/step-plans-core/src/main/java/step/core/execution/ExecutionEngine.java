@@ -300,12 +300,12 @@ public class ExecutionEngine {
 		planAccessor.pushAccessor(executionEngineContext.getPlanAccessor());
 		planAccessor.pushAccessor(new InMemoryPlanAccessor());
 		executionContext.setPlanAccessor(planAccessor);
-		
+
+		addObjectHooksToExecutionContext(executionParameters, executiontTaskParameters, executionContext);
+
 		executionContext.setExecutionCallbacks(plugins);
 		plugins.initializeExecutionContext(executionEngineContext, executionContext);
-		
-		addObjectHooksToExecutionContext(executionParameters, executiontTaskParameters, executionContext);
-		
+
 		return executionContext;
 	}
 	

@@ -49,6 +49,13 @@ public class ExecutionLifecycleManager {
 		}
 		executionCallbacks.beforeExecutionEnd(context);
 	}
+
+	public void forceAbort() {
+		if(context.getStatus()!=ExecutionStatus.ENDED) {
+			executionManager.updateStatus(context, ExecutionStatus.FORCING_ABORT);
+		}
+		executionCallbacks.forceStopExecution(context);
+	}
 	
 	public void beforePlanImport() {
 		executionCallbacks.beforePlanImport(context);

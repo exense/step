@@ -73,6 +73,8 @@ public interface ExecutionCallbacks {
 	public void executionStart(ExecutionContext context);
 
 	public void beforeExecutionEnd(ExecutionContext context);
-	
+
+	public void forceStopExecution(ExecutionContext context);
+
 	public void afterExecutionEnd(ExecutionContext context);
 }

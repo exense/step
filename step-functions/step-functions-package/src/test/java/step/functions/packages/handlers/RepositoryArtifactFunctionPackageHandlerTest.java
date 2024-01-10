@@ -2,7 +2,7 @@ package step.functions.packages.handlers;
 
 import java.io.File;
 import java.util.List;
-import java.util.Map;
+import java.util.TreeMap;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -98,7 +98,7 @@ public class RepositoryArtifactFunctionPackageHandlerTest {
 			}
 			
 			@Override
-			public Map<String, String> getAdditionalAttributes() {
+			public TreeMap<String, String> getAdditionalAttributes() {
 				return null;
 			}
 		});

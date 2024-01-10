@@ -56,9 +56,9 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<!-- internal dependencies -->
 		<exense-commons.version>2.0.6</exense-commons.version>
-		<step-framework.version>0.0.0-SNAPSHOT</step-framework.version>
-		<step-grid.version>2023.11.27-656464f81a77627c7ce48820</step-grid.version>
-		<step-api.version>1.2.2</step-api.version>
+		<step-framework.version>2023.11.13-6551f537478de332cb32c751</step-framework.version>
+		<step-grid.version>2024.1.5-65980af3ccbcc87c80685a2c</step-grid.version>
+		<step-api.version>2024.1.5-65980830ccbcc87c80633d8a</step-api.version>
 		<!-- external dependencies -->
 		<junit.version>4.13.1</junit.version>
 		<mockito.version>5.1.1</mockito.version>
