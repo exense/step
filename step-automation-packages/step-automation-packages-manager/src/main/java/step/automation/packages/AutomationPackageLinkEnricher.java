@@ -22,8 +22,7 @@ import step.core.accessors.AbstractIdentifiableObject;
 import step.core.objectenricher.EnricheableObject;
 import step.core.objectenricher.ObjectEnricher;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.TreeMap;
 
 public class AutomationPackageLinkEnricher implements ObjectEnricher {
 
@@ -34,8 +33,8 @@ public class AutomationPackageLinkEnricher implements ObjectEnricher {
     }
 
     @Override
-    public Map<String, String> getAdditionalAttributes() {
-        return new HashMap<>();
+    public TreeMap<String, String> getAdditionalAttributes() {
+        return new TreeMap<>();
     }
 
     @Override
