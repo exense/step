@@ -36,4 +36,8 @@ public abstract class ExecutionType {
 	public boolean generateExecutionMetrics() {
 		return true;
 	}
+
+	public boolean notifyOnTestEnd() {
+		return true;
+	}
 }
