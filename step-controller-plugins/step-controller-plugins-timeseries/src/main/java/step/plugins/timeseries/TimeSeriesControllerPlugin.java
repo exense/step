@@ -70,6 +70,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 		context.getEntityManager().register(new Entity<>(EntityManager.dashboards, dashboardsAccessor, DashboardView.class));
 		context.put(DashboardAccessor.class, dashboardsAccessor);
 		context.getServiceRegistrationCallback().registerService(DashboardsService.class);
+		createLegacyDashboard(dashboardsAccessor);
 		createSimpleDashboard(dashboardsAccessor);
 		
 		TableRegistry tableRegistry = context.get(TableRegistry.class);
@@ -85,6 +86,14 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 	@Override
 	public ExecutionEnginePlugin getExecutionEnginePlugin() {
 		return new TimeSeriesExecutionPlugin(mainIngestionPipeline, aggregationPipeline);
+	}
+	
+	private void createLegacyDashboard(DashboardAccessor dashboardAccessor) {
+		DashboardView dashboard = new DashboardView();
+		dashboard.setName("Default Dashboard");
+		dashboard.getMetadata().put("isLegacy", true);
+		dashboard.getMetadata().put("link", "/analytics");
+		dashboardAccessor.save(dashboard);
 	}
 
 	private void createSimpleDashboard(DashboardAccessor dashboardAccessor) {

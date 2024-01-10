@@ -4,7 +4,9 @@ import jakarta.validation.constraints.NotNull;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.objectenricher.EnricheableObject;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class DashboardView extends AbstractOrganizableObject implements EnricheableObject {
 	
@@ -20,6 +22,8 @@ public class DashboardView extends AbstractOrganizableObject implements Enrichea
 	private List<ChartFilterItem> filters;
 	@NotNull
 	private List<DashboardItem> dashlets;
+	
+	private Map<String, Object> metadata = new HashMap<>();
 
 	public String getName() {
 		return name;
@@ -81,6 +85,15 @@ public class DashboardView extends AbstractOrganizableObject implements Enrichea
 
 	public DashboardView setDescription(String description) {
 		this.description = description;
+		return this;
+	}
+
+	public Map<String, Object> getMetadata() {
+		return metadata;
+	}
+
+	public DashboardView setMetadata(Map<String, Object> metadata) {
+		this.metadata = metadata;
 		return this;
 	}
 }
