@@ -23,7 +23,7 @@ import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 
 @Plugin
-public class ExecutionTypePlugin extends AbstractControllerPlugin {
+public class ExecutionTypeControllerPlugin extends AbstractControllerPlugin {
 
 	@Override
 	public void serverStart(GlobalContext context) throws Exception {
