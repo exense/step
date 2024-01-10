@@ -131,7 +131,7 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 		String schedulerTaskId = (String) context.get(SCHEDULER_TASK_ID);
 		schedulerTaskId = (schedulerTaskId!=null) ? schedulerTaskId : "";
 		String planId = context.getPlan().getId().toString();
-		List<String> labels = new ArrayList<>(Arrays.asList(node.getExecutionID(),node.getThreadGroupName(),planId,schedulerTaskId));
+		List<String> labels = new ArrayList<>(Arrays.asList(node.getExecutionID(), node.getThreadGroupName(), planId, schedulerTaskId));
 		labels.addAll(context.getObjectEnricher().getAdditionalAttributes().values());
 		String[] labelsArray = labels.toArray(String[]::new);
 		if (inc) {

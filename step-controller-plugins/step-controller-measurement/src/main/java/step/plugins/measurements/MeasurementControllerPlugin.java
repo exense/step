@@ -44,7 +44,9 @@ public class MeasurementControllerPlugin extends AbstractControllerPlugin {
 			List<String> groupBy = new ArrayList<>(Arrays.asList(context.getConfiguration()
 					.getProperty("plugins.grid.monitoring.attributes", "$agenttype,type")
 					.split(",")));
-			if (!groupBy.contains("url")) {groupBy.add("url");}
+			if (!groupBy.contains("url")) {
+				groupBy.add("url");
+			}
 			List<String> labels = groupBy.stream().map(s->s.replace("$","")).collect(Collectors.toList());
 			labels.add("name");
 			//Project id not added yet to the grid metrics

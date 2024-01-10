@@ -7,6 +7,7 @@ import jakarta.inject.Singleton;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
+import org.apache.commons.lang3.StringUtils;
 import step.controller.services.async.AsyncTaskManager;
 import step.controller.services.async.AsyncTaskStatus;
 import step.core.GlobalContext;
@@ -75,10 +76,17 @@ public class TimeSeriesService extends AbstractStepServices {
     }
 
     private void enrichRequestFilter(FetchBucketsRequest request) {
+        request.setOqlFilter(enrichOqlFilter(request.getOqlFilter()));
+    }
+
+    private String enrichOqlFilter(String oqlFilter) {
         String additionalOqlFilter = getObjectFilter().getOQLFilter();
-        if (additionalOqlFilter != null && ! additionalOqlFilter.isEmpty()) {
-            request.setOqlFilter(request.getOqlFilter() + " and (" + additionalOqlFilter + ")");
+        if (StringUtils.isNotEmpty(additionalOqlFilter)) {
+            return (StringUtils.isNotEmpty(oqlFilter)) ?
+                oqlFilter + " and (" + additionalOqlFilter + ")" :
+                "(" + additionalOqlFilter + ")";
         }
+        return oqlFilter;
     }
 
     /**
@@ -120,6 +128,7 @@ public class TimeSeriesService extends AbstractStepServices {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Set<String> getMeasurementsAttributes(@QueryParam("filter") String oqlFilter) {
+        oqlFilter = enrichOqlFilter(oqlFilter);
         return handler.getMeasurementsAttributes(oqlFilter);
     }
 
@@ -133,6 +142,7 @@ public class TimeSeriesService extends AbstractStepServices {
             @QueryParam("limit") int limit,
             @QueryParam("skip") int skip
     ) {
+        oqlFilter = enrichOqlFilter(oqlFilter);
         return handler.getRawMeasurements(oqlFilter, skip, limit);
     }
 
@@ -142,6 +152,7 @@ public class TimeSeriesService extends AbstractStepServices {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public MeasurementsStats getRawMeasurementsStats(@QueryParam("filter") String oqlFilter) {
+        oqlFilter = enrichOqlFilter(oqlFilter);
         return handler.getRawMeasurementsStats(oqlFilter);
     }
 
