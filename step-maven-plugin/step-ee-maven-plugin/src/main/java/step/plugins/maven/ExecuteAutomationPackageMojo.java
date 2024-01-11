@@ -26,6 +26,7 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import step.automation.packages.client.RemoteAutomationPackageClientImpl;
 import step.automation.packages.execution.AutomationPackageExecutionParameters;
+import step.automation.packages.execution.ExecuteAutomationPackageResult;
 import step.client.credentials.ControllerCredentials;
 import step.client.executions.RemoteExecutionManager;
 import step.controller.multitenancy.client.MultitenancyClient;
@@ -100,18 +101,25 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
             File automationPackageFile = getAutomationPackageFile();
             AutomationPackageExecutionParameters executionParameters = prepareExecutionParameters();
 
-            List<String> executionIds = automationPackageClient.executeAutomationPackage(automationPackageFile, executionParameters);
-            getLog().info("Executions started in Step:");
-            for (String executionId : executionIds) {
-                Execution executionInfo = remoteExecutionManager.get(executionId);
-                getLog().info("- " + executionToString(executionId, executionInfo));
-            }
+            ExecuteAutomationPackageResult result = automationPackageClient.executeAutomationPackage(automationPackageFile, executionParameters);
+            if(result.executionIds != null) {
+                List<String> executionIds = result.executionIds;
+                getLog().info("Executions started in Step:");
+                for (String executionId : executionIds) {
+                    Execution executionInfo = remoteExecutionManager.get(executionId);
+                    getLog().info("- " + executionToString(executionId, executionInfo));
+                }
 
-            if (getWaitForExecution()) {
-                getLog().info("Waiting for executions to complete...");
-                waitForExecutionFinish(remoteExecutionManager, executionIds);
+                if (getWaitForExecution()) {
+                    getLog().info("Waiting for executions to complete...");
+                    waitForExecutionFinish(remoteExecutionManager, executionIds);
+                } else {
+                    getLog().info("waitForExecution set to 'false'. Not waiting for executions to complete.");
+                }
+            } else if(result.errorMessage != null) {
+                logAndThrow("Error while executing automation package: " + result.errorMessage);
             } else {
-                getLog().info("waitForExecution set to 'false'. Not waiting for executions to complete.");
+                logAndThrow("Unexpected result from Step. The automation package execution returned no execution Id and no error. Please check the controller logs.");
             }
         } catch (Exception ex) {
             throw logAndThrow("Error while running executions in Step", ex);

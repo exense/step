@@ -31,6 +31,7 @@ import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import step.automation.packages.execution.AutomationPackageExecutionParameters;
 import step.automation.packages.execution.AutomationPackageExecutor;
+import step.automation.packages.execution.ExecuteAutomationPackageResult;
 import step.core.access.User;
 import step.core.deployment.AbstractStepServices;
 import step.framework.server.security.Secured;
@@ -84,10 +85,10 @@ public class AutomationPackageServices extends AbstractStepServices {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/execute")
     @Secured(right = "automation-package-execute")
-    public List<String> executeAutomationPackage(@FormDataParam("file") InputStream automationPackageInputStream,
+    public ExecuteAutomationPackageResult executeAutomationPackage(@FormDataParam("file") InputStream automationPackageInputStream,
                                                  @FormDataParam("file") FormDataContentDisposition fileDetail,
                                                  @FormDataParam("executionParams") FormDataBodyPart executionParamsBodyPart,
-                                                 @Context UriInfo uriInfo) throws Exception {
+                                                 @Context UriInfo uriInfo) {
         AutomationPackageExecutionParameters executionParameters = null;
         if (executionParamsBodyPart != null) {
             // The workaround to parse execution parameters as application/json even if the Content-Type for this part is not explicitly set in request
@@ -97,15 +98,22 @@ public class AutomationPackageServices extends AbstractStepServices {
             executionParameters = new AutomationPackageExecutionParameters();
         }
 
+        ExecuteAutomationPackageResult result = new ExecuteAutomationPackageResult();
         User user = getSession().getUser();
-        return automationPackageExecutor.runInIsolation(
-                automationPackageInputStream,
-                fileDetail.getFileName(),
-                executionParameters,
-                getObjectEnricher(),
-                user == null ? null : user.getUsername(),
-                getObjectPredicate()
-        );
+        try {
+            List<String> executionIds = automationPackageExecutor.runInIsolation(
+                    automationPackageInputStream,
+                    fileDetail.getFileName(),
+                    executionParameters,
+                    getObjectEnricher(),
+                    user == null ? null : user.getUsername(),
+                    getObjectPredicate()
+            );
+            result.executionIds = executionIds;
+        } catch (AutomationPackageManagerException e) {
+            result.errorMessage = e.getMessage();
+        }
+        return result;
     }
 
     @PUT

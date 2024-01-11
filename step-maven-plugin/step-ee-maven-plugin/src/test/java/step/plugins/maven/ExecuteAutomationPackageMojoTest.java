@@ -27,6 +27,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
+import step.automation.packages.execution.ExecuteAutomationPackageResult;
 import step.automation.packages.client.RemoteAutomationPackageClientImpl;
 import step.automation.packages.execution.AutomationPackageExecutionParameters;
 import step.client.executions.RemoteExecutionFuture;
@@ -53,12 +54,12 @@ public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 		Execution execution = getMockedExecution(ReportNodeStatus.PASSED);
 
 		List<Execution> executions = List.of(execution);
-		List<String> executionIds = executions.stream().map(e -> e.getId().toString()).collect(Collectors.toList());
+		ExecuteAutomationPackageResult automationPackageResult = getExecuteAutomationPackageResult(executions);
 
 		RemoteExecutionManager remoteExecutionManagerMock = createExecutionManagerMock(executions);
 
 		RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock = Mockito.mock(RemoteAutomationPackageClientImpl.class);
-		Mockito.when(remoteAutomationPackageClientMock.executeAutomationPackage(Mockito.any(), Mockito.any())).thenReturn(executionIds);
+		Mockito.when(remoteAutomationPackageClientMock.executeAutomationPackage(Mockito.any(), Mockito.any())).thenReturn(automationPackageResult);
 		RemoteMultitenancyClientImpl multitenancyClientMock = createRemoteMultitenancyClientMock();
 
 		RunAutomationPackageMojoTestable mojo = new RunAutomationPackageMojoTestable(remoteExecutionManagerMock, remoteAutomationPackageClientMock, multitenancyClientMock);
@@ -68,17 +69,24 @@ public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 		assertAutomationPackageClientMockCalls(remoteAutomationPackageClientMock);
 	}
 
+	private static ExecuteAutomationPackageResult getExecuteAutomationPackageResult(List<Execution> executions) {
+		List<String> executionIds = executions.stream().map(e -> e.getId().toString()).collect(Collectors.toList());
+		ExecuteAutomationPackageResult automationPackageResult = new ExecuteAutomationPackageResult();
+		automationPackageResult.executionIds = executionIds;
+		return automationPackageResult;
+	}
+
 	@Test
 	public void testExecuteImportError() throws InterruptedException, TimeoutException, MojoExecutionException, MojoFailureException, URISyntaxException {
 		Execution execution = getMockedExecution(ReportNodeStatus.FAILED, "Import error");
 
 		List<Execution> executions = List.of(execution);
-		List<String> executionIds = executions.stream().map(e -> e.getId().toString()).collect(Collectors.toList());
+		ExecuteAutomationPackageResult automationPackageResult = getExecuteAutomationPackageResult(executions);
 
 		RemoteExecutionManager remoteExecutionManagerMock = createExecutionManagerMock(executions);
 
 		RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock = Mockito.mock(RemoteAutomationPackageClientImpl.class);
-		Mockito.when(remoteAutomationPackageClientMock.executeAutomationPackage(Mockito.any(), Mockito.any())).thenReturn(executionIds);
+		Mockito.when(remoteAutomationPackageClientMock.executeAutomationPackage(Mockito.any(), Mockito.any())).thenReturn(automationPackageResult);
 		RemoteMultitenancyClientImpl multitenancyClientMock = createRemoteMultitenancyClientMock();
 
 		RunAutomationPackageMojoTestable mojo = new RunAutomationPackageMojoTestable(remoteExecutionManagerMock, remoteAutomationPackageClientMock, multitenancyClientMock);
@@ -92,12 +100,12 @@ public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 		Execution execution = getMockedExecution(ReportNodeStatus.FAILED);
 
 		List<Execution> executions = List.of(execution);
-		List<String> executionIds = executions.stream().map(e -> e.getId().toString()).collect(Collectors.toList());
+		ExecuteAutomationPackageResult automationPackageResult = getExecuteAutomationPackageResult(executions);
 
 		RemoteExecutionManager remoteExecutionManagerMock = createExecutionManagerMock(executions);
 
 		RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock = Mockito.mock(RemoteAutomationPackageClientImpl.class);
-		Mockito.when(remoteAutomationPackageClientMock.executeAutomationPackage(Mockito.any(), Mockito.any())).thenReturn(executionIds);
+		Mockito.when(remoteAutomationPackageClientMock.executeAutomationPackage(Mockito.any(), Mockito.any())).thenReturn(automationPackageResult);
 		RemoteMultitenancyClientImpl multitenancyClientMock = createRemoteMultitenancyClientMock();
 
 		RunAutomationPackageMojoTestable mojo = new RunAutomationPackageMojoTestable(remoteExecutionManagerMock, remoteAutomationPackageClientMock, multitenancyClientMock);
@@ -111,12 +119,12 @@ public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 		Execution execution = getMockedExecution(ReportNodeStatus.FAILED);
 
 		List<Execution> executions = List.of(execution);
-		List<String> executionIds = executions.stream().map(e -> e.getId().toString()).collect(Collectors.toList());
+		ExecuteAutomationPackageResult automationPackageResult = getExecuteAutomationPackageResult(executions);
 
 		RemoteExecutionManager remoteExecutionManagerMock = createExecutionManagerMock(executions);
 
 		RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock = Mockito.mock(RemoteAutomationPackageClientImpl.class);
-		Mockito.when(remoteAutomationPackageClientMock.executeAutomationPackage(Mockito.any(), Mockito.any())).thenReturn(executionIds);
+		Mockito.when(remoteAutomationPackageClientMock.executeAutomationPackage(Mockito.any(), Mockito.any())).thenReturn(automationPackageResult);
 		RemoteMultitenancyClientImpl multitenancyClientMock = createRemoteMultitenancyClientMock();
 
 		RunAutomationPackageMojoTestable mojo = new RunAutomationPackageMojoTestable(remoteExecutionManagerMock, remoteAutomationPackageClientMock, multitenancyClientMock);

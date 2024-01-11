@@ -19,10 +19,10 @@
 package step.automation.packages.client;
 
 import step.automation.packages.execution.AutomationPackageExecutionParameters;
+import step.automation.packages.execution.ExecuteAutomationPackageResult;
 
 import java.io.Closeable;
 import java.io.File;
-import java.util.List;
 
 public interface AutomationPackageClient extends Closeable {
 
@@ -30,7 +30,7 @@ public interface AutomationPackageClient extends Closeable {
 
     String createOrUpdateAutomationPackage(File automationPackageFile);
 
-    List<String> executeAutomationPackage(File automationPackageFile, AutomationPackageExecutionParameters params);
+    ExecuteAutomationPackageResult executeAutomationPackage(File automationPackageFile, AutomationPackageExecutionParameters params);
 
     void deleteAutomationPackage(String packageName);
 }

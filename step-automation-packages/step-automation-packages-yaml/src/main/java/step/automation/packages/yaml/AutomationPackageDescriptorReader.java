@@ -97,7 +97,7 @@ public class AutomationPackageDescriptorReader {
             logAfterRead(packageFileName, res);
             return res;
         } catch (IOException | YamlPlanValidationException e) {
-            throw new AutomationPackageReadingException("Unable to read the automation package yaml", e);
+            throw new AutomationPackageReadingException("Unable to read the automation package yaml. Caused by: " + e.getMessage(), e);
         }
     }
 
