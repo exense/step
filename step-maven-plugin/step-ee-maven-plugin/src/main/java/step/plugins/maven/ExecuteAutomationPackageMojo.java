@@ -139,7 +139,8 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
                     log.error(errorMessage);
                 } else if (!isStatusSuccess(endedExecution)) {
                     executionFailureCount++;
-                    log.error("Execution " + executionToString(id, endedExecution) + " failed. Result status was " + endedExecution.getResult());
+                    String errorSummary = remoteExecutionManager.getFuture(id).getErrorSummary();
+                    log.error("Execution " + executionToString(id, endedExecution) + " failed. Result status was " + endedExecution.getResult() + ". Error summary: " + errorSummary);
                 } else {
                     log.info("Execution " + executionToString(id, endedExecution) + " succeeded. Result status was " + endedExecution.getResult());
                 }
