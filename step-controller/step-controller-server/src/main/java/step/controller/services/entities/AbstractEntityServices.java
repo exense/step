@@ -212,9 +212,8 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
 
     @Operation(operationId = "lock{Entity}", description = "Lock this entity")
     @POST
-    @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @Secured(right = "{entity}-lock")
+    @Secured(right = "{entity}-write")
     @Path("{id}/locked")
     public void setLocked(@PathParam("id") String id, Boolean locked) {
         T t = getEntity(id);
