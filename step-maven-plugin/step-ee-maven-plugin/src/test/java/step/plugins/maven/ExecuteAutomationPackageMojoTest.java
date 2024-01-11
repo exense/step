@@ -29,6 +29,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import step.automation.packages.client.RemoteAutomationPackageClientImpl;
 import step.automation.packages.execution.AutomationPackageExecutionParameters;
+import step.client.executions.RemoteExecutionFuture;
 import step.client.executions.RemoteExecutionManager;
 import step.controller.multitenancy.client.MultitenancyClient;
 import step.controller.multitenancy.client.RemoteMultitenancyClientImpl;
@@ -166,6 +167,9 @@ public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 		RemoteExecutionManager remoteExecutionManagerMock = Mockito.mock(RemoteExecutionManager.class);
 		Mockito.when(remoteExecutionManagerMock.get(Mockito.any())).thenAnswer(invocationOnMock -> executions.stream().filter(e -> e.getId().toString().equals(invocationOnMock.getArgument(0))).findFirst().get());
 		Mockito.when(remoteExecutionManagerMock.waitForTermination(Mockito.anyList(), Mockito.anyLong())).thenReturn(executions);
+		RemoteExecutionFuture futureMock = Mockito.mock(RemoteExecutionFuture.class);
+		Mockito.when(futureMock.getErrorSummary()).thenReturn("Error summary...");
+		Mockito.when((remoteExecutionManagerMock.getFuture(Mockito.anyString()))).thenReturn(futureMock);
 		return remoteExecutionManagerMock;
 	}
 
