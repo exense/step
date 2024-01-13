@@ -120,8 +120,10 @@ public abstract class AbstractStepRunner extends ParentRunner<StepClassParserRes
         executionParameters.putAll(getExecutionParametersByAnnotation());
         // Prio 2: Execution parameters from environment variables (prefixed with STEP_*)
         executionParameters.putAll(getExecutionParametersFromEnvironmentVariables());
+
+        // TODO: all system properties are set to cmd in K6FunctionHandler => do we really need to pass them to execution parameters
         // Prio 3: Execution parameters from system properties
-        executionParameters.putAll(getExecutionParametersFromSystemProperties());
+//        executionParameters.putAll(getExecutionParametersFromSystemProperties());
         return executionParameters;
     }
 
