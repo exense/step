@@ -20,12 +20,14 @@ package step.engine.plugins;
 
 import step.artefacts.handlers.DefaultFunctionRouterImpl;
 import step.artefacts.handlers.FunctionRouter;
+import step.artefacts.handlers.LocalFunctionRouterImpl;
 import step.attachments.FileResolver;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;
+import step.core.execution.OperationMode;
 import step.core.plugins.Plugin;
 import step.functions.accessor.CachedFunctionAccessor;
 import step.functions.accessor.FunctionAccessor;
@@ -74,7 +76,11 @@ public class FunctionPlugin extends AbstractExecutionEnginePlugin {
 		
 		functionRouter = context.inheritFromParentOrComputeIfAbsent(parentContext, FunctionRouter.class, k->{
 			DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));
-			return new DefaultFunctionRouterImpl(functionExecutionService, functionTypeRegistry, dynamicJsonObjectResolver);
+			if (context.getOperationMode() == OperationMode.LOCAL) {
+				return new LocalFunctionRouterImpl(functionExecutionService);
+			} else {
+				return new DefaultFunctionRouterImpl(functionExecutionService, functionTypeRegistry, dynamicJsonObjectResolver);
+			}
 		});
 	}
 

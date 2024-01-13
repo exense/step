@@ -48,11 +48,14 @@ public class DefaultFunctionRouterImpl implements FunctionRouter {
 	
 	protected final SimpleAffinityEvaluator<Identity,Identity> affinityEvaluator = new SimpleAffinityEvaluator<>();
 
+	protected final LocalFunctionRouterImpl localFunctionRouter;
+
 	public DefaultFunctionRouterImpl(FunctionExecutionService functionClient, FunctionTypeRegistry functionTypeRegistry, DynamicJsonObjectResolver dynamicJsonObjectResolver) {
 		super();
 		this.functionExecutionService = functionClient;
 		this.functionTypeRegistry = functionTypeRegistry;
 		this.tokenSelectorHelper = new TokenSelectorHelper(dynamicJsonObjectResolver);
+		this.localFunctionRouter = new LocalFunctionRouterImpl(functionClient);
 	}
 
 	@Override
@@ -60,21 +63,7 @@ public class DefaultFunctionRouterImpl implements FunctionRouter {
 		TokenWrapper token;
 		if(function.requiresLocalExecution() || callFunction.getRemote().get().equals(false)) {
 			// The function requires a local execution => get a local token
-			if(functionGroupContext!=null) {
-				synchronized (functionGroupContext) {
-					if(!functionGroupContext.isOwner(Thread.currentThread().getId())) {
-						throw new RuntimeException("Tokens from this sesssion are already reserved by another thread. This usually means that you're spawning threads from wihtin a session control without creating new sessions for the new threads.");
-					}
-					if(functionGroupContext.getLocalToken()!=null) {
-						token = functionGroupContext.getLocalToken();
-					} else {
-						token = functionExecutionService.getLocalTokenHandle();
-						functionGroupContext.setLocalToken(token);
-					}
-				}
-			} else {
-				token = functionExecutionService.getLocalTokenHandle();
-			}
+			token = localFunctionRouter.selectToken(callFunction, function, functionGroupContext, bindings, tokenWrapperOwner);
 		} else {
 			if(functionGroupContext!=null) {
 				synchronized (functionGroupContext) {
