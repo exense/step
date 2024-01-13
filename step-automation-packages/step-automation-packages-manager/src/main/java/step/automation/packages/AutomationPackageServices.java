@@ -31,9 +31,9 @@ import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import step.automation.packages.execution.AutomationPackageExecutionParameters;
 import step.automation.packages.execution.AutomationPackageExecutor;
-import step.automation.packages.execution.ExecuteAutomationPackageResult;
 import step.core.access.User;
 import step.core.deployment.AbstractStepServices;
+import step.core.deployment.ControllerServiceException;
 import step.framework.server.security.Secured;
 
 import java.io.InputStream;
@@ -74,10 +74,13 @@ public class AutomationPackageServices extends AbstractStepServices {
     @Produces(MediaType.TEXT_PLAIN)
     @Secured(right = "automation-package-write")
     public String createAutomationPackage(@FormDataParam("file") InputStream automationPackageInputStream,
-                                          @FormDataParam("file") FormDataContentDisposition fileDetail,
-                                          @Context UriInfo uriInfo) throws Exception {
-        ObjectId id = automationPackageManager.createAutomationPackage(automationPackageInputStream, fileDetail.getFileName(), getObjectEnricher(), getObjectPredicate());
-        return id == null ? null : id.toString();
+                                                                 @FormDataParam("file") FormDataContentDisposition fileDetail) {
+        try {
+            ObjectId id = automationPackageManager.createAutomationPackage(automationPackageInputStream, fileDetail.getFileName(), getObjectEnricher(), getObjectPredicate());
+            return id == null ? null : id.toString();
+        } catch (AutomationPackageManagerException e) {
+            throw new ControllerServiceException(e.getMessage());
+        }
     }
 
     @POST
@@ -85,11 +88,10 @@ public class AutomationPackageServices extends AbstractStepServices {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/execute")
     @Secured(right = "automation-package-execute")
-    public ExecuteAutomationPackageResult executeAutomationPackage(@FormDataParam("file") InputStream automationPackageInputStream,
+    public List<String> executeAutomationPackage(@FormDataParam("file") InputStream automationPackageInputStream,
                                                  @FormDataParam("file") FormDataContentDisposition fileDetail,
-                                                 @FormDataParam("executionParams") FormDataBodyPart executionParamsBodyPart,
-                                                 @Context UriInfo uriInfo) {
-        AutomationPackageExecutionParameters executionParameters = null;
+                                                 @FormDataParam("executionParams") FormDataBodyPart executionParamsBodyPart) {
+        AutomationPackageExecutionParameters executionParameters;
         if (executionParamsBodyPart != null) {
             // The workaround to parse execution parameters as application/json even if the Content-Type for this part is not explicitly set in request
             executionParamsBodyPart.setMediaType(MediaType.APPLICATION_JSON_TYPE);
@@ -98,10 +100,9 @@ public class AutomationPackageServices extends AbstractStepServices {
             executionParameters = new AutomationPackageExecutionParameters();
         }
 
-        ExecuteAutomationPackageResult result = new ExecuteAutomationPackageResult();
         User user = getSession().getUser();
         try {
-            List<String> executionIds = automationPackageExecutor.runInIsolation(
+            return automationPackageExecutor.runInIsolation(
                     automationPackageInputStream,
                     fileDetail.getFileName(),
                     executionParameters,
@@ -109,11 +110,9 @@ public class AutomationPackageServices extends AbstractStepServices {
                     user == null ? null : user.getUsername(),
                     getObjectPredicate()
             );
-            result.executionIds = executionIds;
         } catch (AutomationPackageManagerException e) {
-            result.errorMessage = e.getMessage();
+            throw new ControllerServiceException(e.getMessage());
         }
-        return result;
     }
 
     @PUT
@@ -123,13 +122,16 @@ public class AutomationPackageServices extends AbstractStepServices {
     @Secured(right = "automation-package-write")
     public void updateAutomationPackageById(@PathParam("id") String id,
                                             @FormDataParam("file") InputStream uploadedInputStream,
-                                            @FormDataParam("file") FormDataContentDisposition fileDetail,
-                                            @Context UriInfo uriInfo) throws Exception {
-        automationPackageManager.createOrUpdateAutomationPackage(
-                true, false, new ObjectId(id),
-                uploadedInputStream, fileDetail.getFileName(),
-                getObjectEnricher(), getObjectPredicate()
-        );
+                                            @FormDataParam("file") FormDataContentDisposition fileDetail) {
+        try {
+            automationPackageManager.createOrUpdateAutomationPackage(
+                    true, false, new ObjectId(id),
+                    uploadedInputStream, fileDetail.getFileName(),
+                    getObjectEnricher(), getObjectPredicate()
+            );
+        } catch (AutomationPackageManagerException e) {
+            throw new ControllerServiceException(e.getMessage());
+        }
     }
 
     @PUT
@@ -137,22 +139,22 @@ public class AutomationPackageServices extends AbstractStepServices {
     @Produces(MediaType.TEXT_PLAIN)
     @Secured(right = "automation-package-write")
     public Response createOrUpdateAutomationPackage(@FormDataParam("file") InputStream uploadedInputStream,
-                                                    @FormDataParam("file") FormDataContentDisposition fileDetail,
-                                                    @Context UriInfo uriInfo) throws Exception {
-        AutomationPackageManager.PackageUpdateResult result = automationPackageManager.createOrUpdateAutomationPackage(
-                true, true, null, uploadedInputStream, fileDetail.getFileName(),
-                getObjectEnricher(), getObjectPredicate()
-        );
-        Response.ResponseBuilder responseBuilder;
-        switch (result.getStatus()) {
-            case CREATED:
+                                                    @FormDataParam("file") FormDataContentDisposition fileDetail) {
+        try {
+            AutomationPackageManager.PackageUpdateResult result = automationPackageManager.createOrUpdateAutomationPackage(
+                    true, true, null, uploadedInputStream, fileDetail.getFileName(),
+                    getObjectEnricher(), getObjectPredicate()
+            );
+            Response.ResponseBuilder responseBuilder;
+            if (result.getStatus() == AutomationPackageManager.PackageUpdateStatus.CREATED) {
                 responseBuilder = Response.status(201);
-                break;
-            default:
+            } else {
                 responseBuilder = Response.status(200);
-                break;
+            }
+            return responseBuilder.entity(result.getId().toHexString()).build();
+        } catch (AutomationPackageManagerException e) {
+            throw new ControllerServiceException(e.getMessage());
         }
-        return responseBuilder.entity(result.getId().toHexString()).build();
     }
 
 }

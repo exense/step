@@ -19,18 +19,18 @@
 package step.automation.packages.client;
 
 import step.automation.packages.execution.AutomationPackageExecutionParameters;
-import step.automation.packages.execution.ExecuteAutomationPackageResult;
 
 import java.io.Closeable;
 import java.io.File;
+import java.util.List;
 
 public interface AutomationPackageClient extends Closeable {
 
-    String createAutomationPackage(File automationPackageFile);
+    String createAutomationPackage(File automationPackageFile) throws AutomationPackageClientException;
 
-    String createOrUpdateAutomationPackage(File automationPackageFile);
+    String createOrUpdateAutomationPackage(File automationPackageFile) throws AutomationPackageClientException;
 
-    ExecuteAutomationPackageResult executeAutomationPackage(File automationPackageFile, AutomationPackageExecutionParameters params);
+    List<String> executeAutomationPackage(File automationPackageFile, AutomationPackageExecutionParameters params) throws AutomationPackageClientException;
 
-    void deleteAutomationPackage(String packageName);
+    void deleteAutomationPackage(String packageName) throws AutomationPackageClientException;
 }

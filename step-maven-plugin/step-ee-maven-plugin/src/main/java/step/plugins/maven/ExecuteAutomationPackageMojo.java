@@ -24,9 +24,9 @@ import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import step.automation.packages.client.AutomationPackageClientException;
 import step.automation.packages.client.RemoteAutomationPackageClientImpl;
 import step.automation.packages.execution.AutomationPackageExecutionParameters;
-import step.automation.packages.execution.ExecuteAutomationPackageResult;
 import step.client.credentials.ControllerCredentials;
 import step.client.executions.RemoteExecutionManager;
 import step.controller.multitenancy.client.MultitenancyClient;
@@ -101,28 +101,32 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
             File automationPackageFile = getAutomationPackageFile();
             AutomationPackageExecutionParameters executionParameters = prepareExecutionParameters();
 
-            ExecuteAutomationPackageResult result = automationPackageClient.executeAutomationPackage(automationPackageFile, executionParameters);
-            if(result.executionIds != null) {
-                List<String> executionIds = result.executionIds;
-                getLog().info("Executions started in Step:");
+            List<String> executionIds;
+            try {
+                executionIds = automationPackageClient.executeAutomationPackage(automationPackageFile, executionParameters);
+            } catch (AutomationPackageClientException e) {
+                throw logAndThrow("Error while executing automation package: " + e.getMessage());
+            }
+            if(executionIds != null) {
+                getLog().info("Execution(s) started in Step:");
                 for (String executionId : executionIds) {
                     Execution executionInfo = remoteExecutionManager.get(executionId);
                     getLog().info("- " + executionToString(executionId, executionInfo));
                 }
 
                 if (getWaitForExecution()) {
-                    getLog().info("Waiting for executions to complete...");
+                    getLog().info("Waiting for execution(s) to complete...");
                     waitForExecutionFinish(remoteExecutionManager, executionIds);
                 } else {
                     getLog().info("waitForExecution set to 'false'. Not waiting for executions to complete.");
                 }
-            } else if(result.errorMessage != null) {
-                logAndThrow("Error while executing automation package: " + result.errorMessage);
             } else {
-                logAndThrow("Unexpected result from Step. The automation package execution returned no execution Id and no error. Please check the controller logs.");
+                throw logAndThrow("Unexpected response from Step. No execution Id returned. Please check the controller logs.");
             }
+        } catch (MojoExecutionException e) {
+            throw e;
         } catch (Exception ex) {
-            throw logAndThrow("Error while running executions in Step", ex);
+            throw logAndThrow("Unexpected error while executing automation package", ex);
         }
     }
 
@@ -154,10 +158,16 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
                 }
             }
             if (executionFailureCount > 0 && getEnsureExecutionSuccess()) {
-                throw new MojoExecutionException(executionFailureCount + " execution(s) failed");
+                int executionsCount = executionIds.size();
+                throw logAndThrow(executionFailureCount + "/" + executionsCount + " execution(s) failed. See " + getUrl() + "#/root/executions/list");
             }
         } catch (TimeoutException | InterruptedException ex) {
             throw logAndThrow("Timeout after " + getExecutionResultTimeoutS() + " seconds while waiting for executions to complete", ex);
+        } catch (MojoExecutionException e) {
+            // Rethrow MojoExecutionException
+            throw e;
+        } catch (Exception e) {
+            throw logAndThrow("Unexpected error while executing automation package", e);
         }
     }
 
