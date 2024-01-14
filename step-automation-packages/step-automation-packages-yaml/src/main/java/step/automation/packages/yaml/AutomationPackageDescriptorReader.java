@@ -18,7 +18,11 @@
  ******************************************************************************/
 package step.automation.packages.yaml;
 
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.deser.DeserializationProblemHandler;
+import com.fasterxml.jackson.databind.jsontype.TypeIdResolver;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
@@ -32,6 +36,7 @@ import step.automation.packages.yaml.model.AutomationPackageDescriptorYamlOS;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYamlOS;
 import step.core.accessors.DefaultJacksonMapperProvider;
+import step.core.yaml.deserializers.CustomYamlFormat;
 import step.core.yaml.deserializers.StepYamlDeserializersScanner;
 import step.plans.parser.yaml.YamlPlanReader;
 import step.plans.parser.yaml.model.YamlPlanVersions;
@@ -144,9 +149,33 @@ public class AutomationPackageDescriptorReader {
         StepYamlDeserializersScanner.addAllDeserializerAddonsToModule(module, yamlObjectMapper);
 
         yamlMapper.registerModule(module);
+        yamlMapper.registerModule(new YamlFormatErrorHandlerModule());
 
         return yamlMapper;
     }
+
+    private static class YamlFormatErrorHandlerModule extends SimpleModule {
+        @Override
+        public void setupModule(SetupContext context) {
+            super.setupModule(context);
+            context.addDeserializationProblemHandler(new DeserializationProblemHandler() {
+                @Override
+                public JavaType handleMissingTypeId(DeserializationContext ctxt, JavaType baseType, TypeIdResolver idResolver, String failureMsg) throws IOException {
+                    // Some classes may be annotated with @JsonTypeInfo, but in yaml format we don't use
+                    // special fields to provide the typeInfo. By default, this will cause the 'missingTypeId' error
+                    // and break the deserialization.
+                    // That's why here we return the baseType for these classes and force jackson to
+                    // run our custom yaml deserializer for this class anyway.
+                    if (baseType.getRawClass().getAnnotation(CustomYamlFormat.class) != null) {
+                        return baseType;
+                    }
+                    return super.handleMissingTypeId(ctxt, baseType, idResolver, failureMsg);
+                }
+            });
+        }
+    }
+
+
 
     public YamlPlanReader getPlanReader(){
         return this.planReader;
