@@ -154,6 +154,13 @@ public class AutomationPackageDescriptorReader {
         return yamlMapper;
     }
 
+    /**
+     * Some classes may be annotated with @JsonTypeInfo, but in yaml format we don't use
+     * special fields to provide the typeInfo. By default, this will cause the 'missingTypeId' error
+     * and break the deserialization.
+     * That's why here we return the baseType for these classes and force jackson to
+     * run our custom yaml deserializer for this class anyway.
+     */
     private static class YamlFormatErrorHandlerModule extends SimpleModule {
         @Override
         public void setupModule(SetupContext context) {
@@ -161,15 +168,18 @@ public class AutomationPackageDescriptorReader {
             context.addDeserializationProblemHandler(new DeserializationProblemHandler() {
                 @Override
                 public JavaType handleMissingTypeId(DeserializationContext ctxt, JavaType baseType, TypeIdResolver idResolver, String failureMsg) throws IOException {
-                    // Some classes may be annotated with @JsonTypeInfo, but in yaml format we don't use
-                    // special fields to provide the typeInfo. By default, this will cause the 'missingTypeId' error
-                    // and break the deserialization.
-                    // That's why here we return the baseType for these classes and force jackson to
-                    // run our custom yaml deserializer for this class anyway.
                     if (baseType.getRawClass().getAnnotation(CustomYamlFormat.class) != null) {
                         return baseType;
                     }
                     return super.handleMissingTypeId(ctxt, baseType, idResolver, failureMsg);
+                }
+
+                @Override
+                public JavaType handleUnknownTypeId(DeserializationContext ctxt, JavaType baseType, String subTypeId, TypeIdResolver idResolver, String failureMsg) throws IOException {
+                    if (baseType.getRawClass().getAnnotation(CustomYamlFormat.class) != null) {
+                        return baseType;
+                    }
+                    return super.handleUnknownTypeId(ctxt, baseType, subTypeId, idResolver, failureMsg);
                 }
             });
         }
