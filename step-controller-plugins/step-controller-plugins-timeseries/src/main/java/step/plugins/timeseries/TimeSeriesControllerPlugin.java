@@ -18,7 +18,6 @@ import step.framework.server.tables.Table;
 import step.framework.server.tables.TableRegistry;
 import step.plugins.measurements.GaugeCollectorRegistry;
 import step.plugins.measurements.MeasurementPlugin;
-import step.plugins.screentemplating.ScreenInput;
 import step.plugins.timeseries.dashboards.model.*;
 import step.plugins.timeseries.dashboards.DashboardAccessor;
 
@@ -117,39 +116,39 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 						.setAbsoluteSelection(new TimeRange().setFrom(1700152446408L).setTo(1700155195285L))
 				)
 				.setFilters(Arrays.asList(
-						new ChartFilterItem()
+						new TimeSeriesFilterItem()
 								.setLabel("Status")
 								.setAttribute("rnStatus")
 								.setTextOptions(Arrays.asList("PASSED", "FAILED", "TECHNICAL_ERROR", "INTERRUPTED"))
 								.setTextValues(Arrays.asList("PASSED"))
-								.setType(ChartFilterItemType.OPTIONS)
+								.setType(TimeSeriesFilterItemType.OPTIONS)
 								.setExactMatch(true),
-						new ChartFilterItem()
+						new TimeSeriesFilterItem()
 								.setLabel("Type")
 								.setTextOptions(Arrays.asList("keyword", "custom"))
-								.setType(ChartFilterItemType.OPTIONS)
+								.setType(TimeSeriesFilterItemType.OPTIONS)
 								.setAttribute("type")
 								.setExactMatch(true),
-						new ChartFilterItem()
+						new TimeSeriesFilterItem()
 								.setLabel("Name")
-								.setType(ChartFilterItemType.FREE_TEXT)
+								.setType(TimeSeriesFilterItemType.FREE_TEXT)
 								.setAttribute("name"),
-						new ChartFilterItem()
+						new TimeSeriesFilterItem()
 								.setLabel("Execution")
 								.setAttribute("eId")
-								.setType(ChartFilterItemType.EXECUTION),
-						new ChartFilterItem()
+								.setType(TimeSeriesFilterItemType.EXECUTION),
+						new TimeSeriesFilterItem()
 								.setLabel("Origin")
-								.setType(ChartFilterItemType.FREE_TEXT)
+								.setType(TimeSeriesFilterItemType.FREE_TEXT)
 								.setAttribute("origin"),
-						new ChartFilterItem()
+						new TimeSeriesFilterItem()
 								.setLabel("Task")
 								.setAttribute("taskId")
-								.setType(ChartFilterItemType.TASK),
-						new ChartFilterItem()
+								.setType(TimeSeriesFilterItemType.TASK),
+						new TimeSeriesFilterItem()
 								.setLabel("Plan")
 								.setAttribute("planId")
-								.setType(ChartFilterItemType.PLAN)
+								.setType(TimeSeriesFilterItemType.PLAN)
 				))
 				.setDashlets(Arrays.asList(
 						new DashboardItem()

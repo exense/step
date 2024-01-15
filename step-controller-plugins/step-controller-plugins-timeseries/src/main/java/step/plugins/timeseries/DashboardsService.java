@@ -31,9 +31,9 @@ public class DashboardsService extends AbstractEntityServices<DashboardView> { /
 	@PostConstruct
     public void init() throws Exception {
 		super.init();
-        GlobalContext context = getContext();
-        accessor = context.require(DashboardAccessor.class);
-    }
+		GlobalContext context = getContext();
+		accessor = context.require(DashboardAccessor.class);
+	}
 	
 	@Secured(right = "dashboard-read")
 	@GET

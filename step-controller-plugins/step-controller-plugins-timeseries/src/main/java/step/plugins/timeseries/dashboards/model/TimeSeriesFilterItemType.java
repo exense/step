@@ -1,6 +1,6 @@
 package step.plugins.timeseries.dashboards.model;
 
-public enum ChartFilterItemType {
+public enum TimeSeriesFilterItemType {
 	OPTIONS, // this is a text with suggestions
 	FREE_TEXT,
 	EXECUTION, // custom behavior with picker for executions

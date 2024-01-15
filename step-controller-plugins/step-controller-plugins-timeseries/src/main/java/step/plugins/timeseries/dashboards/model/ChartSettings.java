@@ -15,7 +15,7 @@ public class ChartSettings {
 	@NotNull
 	private AxesSettings primaryAxes;
 	@NotNull
-	private List<ChartFilterItem> filters = new ArrayList<>();
+	private List<TimeSeriesFilterItem> filters = new ArrayList<>();
 	
 	private String oql;
 	
@@ -58,11 +58,11 @@ public class ChartSettings {
 		return this;
 	}
 
-	public List<ChartFilterItem> getFilters() {
+	public List<TimeSeriesFilterItem> getFilters() {
 		return filters;
 	}
 
-	public ChartSettings setFilters(List<ChartFilterItem> filters) {
+	public ChartSettings setFilters(List<TimeSeriesFilterItem> filters) {
 		this.filters = filters;
 		return this;
 	}

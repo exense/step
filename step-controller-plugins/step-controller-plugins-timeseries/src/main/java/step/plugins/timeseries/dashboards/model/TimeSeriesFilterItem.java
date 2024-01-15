@@ -4,13 +4,13 @@ import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
 
-public class ChartFilterItem {
+public class TimeSeriesFilterItem {
 	
 	private String label; // optional. should be used for filter options
 	@NotNull
 	private String attribute;
 	@NotNull
-	private ChartFilterItemType type;
+	private TimeSeriesFilterItemType type;
 	@NotNull
 	private boolean exactMatch; // for text values
 	@NotNull
@@ -25,7 +25,7 @@ public class ChartFilterItem {
 		return label;
 	}
 
-	public ChartFilterItem setLabel(String label) {
+	public TimeSeriesFilterItem setLabel(String label) {
 		this.label = label;
 		return this;
 	}
@@ -34,7 +34,7 @@ public class ChartFilterItem {
 		return attribute;
 	}
 
-	public ChartFilterItem setAttribute(String attribute) {
+	public TimeSeriesFilterItem setAttribute(String attribute) {
 		this.attribute = attribute;
 		return this;
 	}
@@ -43,16 +43,16 @@ public class ChartFilterItem {
 		return isRemovable;
 	}
 
-	public ChartFilterItem setRemovable(boolean removable) {
+	public TimeSeriesFilterItem setRemovable(boolean removable) {
 		isRemovable = removable;
 		return this;
 	}
 
-	public ChartFilterItemType getType() {
+	public TimeSeriesFilterItemType getType() {
 		return type;
 	}
 
-	public ChartFilterItem setType(ChartFilterItemType type) {
+	public TimeSeriesFilterItem setType(TimeSeriesFilterItemType type) {
 		this.type = type;
 		return this;
 	}
@@ -61,7 +61,7 @@ public class ChartFilterItem {
 		return textOptions;
 	}
 
-	public ChartFilterItem setTextOptions(List<String> textOptions) {
+	public TimeSeriesFilterItem setTextOptions(List<String> textOptions) {
 		this.textOptions = textOptions;
 		return this;
 	}
@@ -70,7 +70,7 @@ public class ChartFilterItem {
 		return min;
 	}
 
-	public ChartFilterItem setMin(Long min) {
+	public TimeSeriesFilterItem setMin(Long min) {
 		this.min = min;
 		return this;
 	}
@@ -79,7 +79,7 @@ public class ChartFilterItem {
 		return max;
 	}
 
-	public ChartFilterItem setMax(Long max) {
+	public TimeSeriesFilterItem setMax(Long max) {
 		this.max = max;
 		return this;
 	}
@@ -88,7 +88,7 @@ public class ChartFilterItem {
 		return textValues;
 	}
 
-	public ChartFilterItem setTextValues(List<String> textValues) {
+	public TimeSeriesFilterItem setTextValues(List<String> textValues) {
 		this.textValues = textValues;
 		return this;
 	}
@@ -97,7 +97,7 @@ public class ChartFilterItem {
 		return exactMatch;
 	}
 
-	public ChartFilterItem setExactMatch(boolean exactMatch) {
+	public TimeSeriesFilterItem setExactMatch(boolean exactMatch) {
 		this.exactMatch = exactMatch;
 		return this;
 	}

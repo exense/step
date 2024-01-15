@@ -19,7 +19,7 @@ public class DashboardView extends AbstractOrganizableObject implements Enrichea
 	@NotNull
 	private List<String> grouping;
 	@NotNull
-	private List<ChartFilterItem> filters;
+	private List<TimeSeriesFilterItem> filters;
 	@NotNull
 	private List<DashboardItem> dashlets;
 	
@@ -61,11 +61,11 @@ public class DashboardView extends AbstractOrganizableObject implements Enrichea
 		return this;
 	}
 
-	public List<ChartFilterItem> getFilters() {
+	public List<TimeSeriesFilterItem> getFilters() {
 		return filters;
 	}
 
-	public DashboardView setFilters(List<ChartFilterItem> filters) {
+	public DashboardView setFilters(List<TimeSeriesFilterItem> filters) {
 		this.filters = filters;
 		return this;
 	}
