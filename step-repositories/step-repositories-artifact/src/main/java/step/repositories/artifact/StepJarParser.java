@@ -62,13 +62,10 @@ public class StepJarParser {
         try (AutomationPackageArchive automationPackageArchive = new AutomationPackageArchive(artifact, artifact.getName())) {
             // add functions from automation package
             if (automationPackageArchive.isAutomationPackage() && automationPackageReader != null) {
-
                 AutomationPackageContent content = automationPackageReader.readAutomationPackage(automationPackageArchive, false, false);
-                for (AutomationPackageKeyword automationPackageKeyword : content.getKeywords()) {
-                    functions.add(automationPackagesKeywordAttributesApplier.applySpecialAttributesToKeyword(
-                            automationPackageKeyword, automationPackageArchive, null, null)
-                    );
-                }
+                functions.addAll(automationPackagesKeywordAttributesApplier.applySpecialAttributesToKeyword(
+                        content.getKeywords(), automationPackageArchive, null, null)
+                );
             }
         } catch (AutomationPackageReadingException | IOException e) {
             throw new RuntimeException("Unable to process automation package", e);

@@ -43,9 +43,11 @@ import step.functions.manager.FunctionManager;
 import step.functions.type.FunctionTypeException;
 import step.functions.type.FunctionTypeRegistry;
 import step.functions.type.SetupFunctionException;
+import step.resources.LocalResourceManagerImpl;
 import step.resources.Resource;
 import step.resources.ResourceManager;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
@@ -370,12 +372,8 @@ public abstract class AutomationPackageManager {
     }
 
     protected List<Function> prepareFunctionsStaging(AutomationPackage newPackage, AutomationPackageArchive automationPackageArchive, AutomationPackageContent packageContent, ObjectEnricher enricher, AutomationPackage oldPackage) {
-        List<Function> completeFunctions = new ArrayList<>();
-        for (AutomationPackageKeyword keyword : packageContent.getKeywords()) {
-            // TODO: here want to apply additional attributes to draft function (upload linked files as resources), but we have to refactor the way to do that
-            Function completeFunction = keywordsAttributesApplier.applySpecialAttributesToKeyword(keyword, automationPackageArchive, newPackage.getId(), enricher);
-            completeFunctions.add(completeFunction);
-        }
+        // TODO: here want to apply additional attributes to draft function (upload linked files as resources), but we have to refactor the way to do that
+        List<Function> completeFunctions = keywordsAttributesApplier.applySpecialAttributesToKeyword(packageContent.getKeywords(), automationPackageArchive, newPackage.getId(), enricher);
 
         // get old functions with same name and reuse their ids
         List<Function> oldFunctions = oldPackage == null ? new ArrayList<>() : getPackageFunctions(oldPackage.getId());
