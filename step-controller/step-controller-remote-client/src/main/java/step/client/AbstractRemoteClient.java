@@ -146,17 +146,16 @@ public class AbstractRemoteClient implements Closeable {
 			}
 		} catch(WebApplicationException e) {
 			Response response = e.getResponse();
-			ControllerServiceExceptionContent controllerServiceExceptionContent;
 			try {
 				// Try to parse the response as ControllerServiceException
-				controllerServiceExceptionContent = response.readEntity(ControllerServiceExceptionContent.class);
+				ControllerServiceExceptionContent controllerServiceExceptionContent = response.readEntity(ControllerServiceExceptionContent.class);
+				throw new ControllerServiceException(controllerServiceExceptionContent);
 			} catch (Exception e2) {
 				// Fallback to string
 				String errorMessage = response.readEntity(String.class);
 				throw new ControllerClientException("Error while calling controller "+
 						credentials.getServerUrl()+". The server returned following error: "+errorMessage, e);
 			}
-			throw new ControllerServiceException(controllerServiceExceptionContent);
 		}
 	}
 
