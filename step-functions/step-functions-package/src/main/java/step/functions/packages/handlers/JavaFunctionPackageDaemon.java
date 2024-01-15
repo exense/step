@@ -1,12 +1,14 @@
 package step.functions.packages.handlers;
 
+import java.io.*;
+import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Set;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import step.attachments.FileResolver;
-import step.automation.packages.AbstractAutomationPackageReader;
-import step.automation.packages.AutomationPackageReaderOS;
-import step.automation.packages.AutomationPackageReadingException;
-import step.automation.packages.model.AutomationPackageContent;
-import step.automation.packages.model.AutomationPackageKeyword;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.scanner.AnnotationScanner;
 import step.functions.Function;
@@ -21,23 +23,9 @@ import step.plugins.functions.types.CompositeFunctionUtils;
 import step.plugins.java.GeneralScriptFunction;
 import step.resources.LocalResourceManagerImpl;
 
-import java.io.File;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.lang.reflect.Method;
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
-
 public class JavaFunctionPackageDaemon extends FunctionPackageUtils {
 
 	private final KeywordJsonSchemaCreator schemaCreator = new KeywordJsonSchemaCreator();
-
-	// TODO: resolve implementation (EE or OS)
-	// the workaround is applied now - we don't use the json schema for validation to support the extended yaml format for EE
-	// but actually we have to parse the 'keywords' section only
-	private final AbstractAutomationPackageReader<?> automationPackageReader = new AutomationPackageReaderOS(true);
 
 	public JavaFunctionPackageDaemon() {
 		super(new FileResolver(new LocalResourceManagerImpl()));
@@ -125,34 +113,10 @@ public class JavaFunctionPackageDaemon extends FunctionPackageUtils {
 					functions.functions.add(res);
 				}
 			}
-
-			try {
-				// add functions from automation package
-				AutomationPackageContent automationPackageContent = automationPackageReader.readAutomationPackageFromJarFile(packageFile);
-				if(automationPackageContent != null) {
-					List<AutomationPackageKeyword> automationPackageKeywords = automationPackageContent.getKeywords();
-					if (automationPackageKeywords != null) {
-						addAutomationPackageKeywordsToFunctionList(automationPackageKeywords, functions);
-					}
-				}
-			} catch (AutomationPackageReadingException e) {
-				throw new RuntimeException("Unable to process automation package", e);
-			}
 		} catch (Throwable e) {
 			functions.exception = e.getClass().getName() + ": " + e.getMessage();
 		}
 		return functions;
-	}
-
-	protected void addAutomationPackageKeywordsToFunctionList(List<AutomationPackageKeyword> automationPackageKeywords, FunctionList functionList) {
-		for (AutomationPackageKeyword automationPackageKeyword : automationPackageKeywords) {
-			functionList.getFunctions().add(automationPackageKeyword.getDraftKeyword());
-			// TODO: send to output as Map<String, Object>?
-			functionList.getAutomationPackageAttributes().put(
-					automationPackageKeyword.getDraftKeyword().getId().toString(),
-					automationPackageKeyword.getSpecialAttributes()
-			);
-		}
 	}
 
 }

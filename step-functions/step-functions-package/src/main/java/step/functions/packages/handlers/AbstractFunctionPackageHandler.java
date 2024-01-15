@@ -5,8 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.attachments.FileResolver;
-import step.automation.packages.AutomationPackageArchive;
-import step.automation.packages.AutomationPackageReadingException;
 import step.core.objectenricher.ObjectEnricher;
 import step.functions.Function;
 import step.functions.packages.FunctionPackage;
@@ -15,7 +13,6 @@ import step.functions.packages.FunctionPackageHandler;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Map;
 
 public abstract class AbstractFunctionPackageHandler extends FunctionPackageUtils implements FunctionPackageHandler {
 
@@ -31,7 +28,7 @@ public abstract class AbstractFunctionPackageHandler extends FunctionPackageUtil
 	@Override
 	public abstract List<Function> buildFunctions(FunctionPackage functionPackage, boolean preview, ObjectEnricher objectEnricher) throws Exception;
 
-	protected List<Function> getFunctionsFromDaemon(FunctionPackage functionPackage, ManagedProcess discovererDeamon, boolean preview)
+	protected List<Function> getFunctionsFromDaemon(FunctionPackage functionPackage, ManagedProcess discovererDeamon)
 			throws Exception {
 
 		File packageFile = resolveMandatoryFile(functionPackage.getPackageLocation());
@@ -72,32 +69,13 @@ public abstract class AbstractFunctionPackageHandler extends FunctionPackageUtil
 		}
 
 		if (list.exception == null) {
-			AutomationPackageArchive automationPackageArchive = null;
-			try {
-				if (!list.getAutomationPackageAttributes().isEmpty()) {
-					// some attributes contain links to resources in automation package
-					// we have to apply them
-					try {
-						automationPackageArchive = new AutomationPackageArchive(packageFile, packageFile.getName());
-					} catch (AutomationPackageReadingException e) {
-						throw new RuntimeException(e);
-					}
-				}
-
-				AutomationPackageArchive finalAutomationPackageArchive = automationPackageArchive;
-				((List<Function>) list.getFunctions()).forEach(f -> configureFunction(f, functionPackage, preview, list.getAutomationPackageAttributes().get(f.getId().toString()), finalAutomationPackageArchive));
-				return list.getFunctions();
-			} finally {
-				if (automationPackageArchive != null) {
-					automationPackageArchive.close();
-				}
-			}
+			List<Function> functions = list.getFunctions();
+			functions.forEach(f -> configureFunction(f, functionPackage));
+			return list.getFunctions();
 		} else {
 			throw new Exception(list.exception);
 		}
 	}
 
-	protected abstract void configureFunction(Function f, FunctionPackage functionPackage,
-											  boolean preview, Map<String, Object> specialAutomationPackageAttributes,
-											  AutomationPackageArchive automationPackageArchive);
+	protected abstract void configureFunction(Function f, FunctionPackage functionPackage);
 }
