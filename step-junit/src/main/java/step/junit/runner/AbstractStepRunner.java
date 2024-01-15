@@ -39,12 +39,13 @@ import java.io.Writer;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public abstract class AbstractStepRunner extends ParentRunner<StepClassParserResult> {
     private static final Logger logger = LoggerFactory.getLogger(Step.class);
-    private final static Pattern ENV_PARAM_PREFIX = Pattern.compile("STEP_(.+?)");
+    private final static Pattern SYSTEM_PROPERTIES_PREFIX = Pattern.compile("STEP_(.+?)");
 
     protected final Class<?> klass;
     protected List<StepClassParserResult> listPlans;
@@ -120,10 +121,8 @@ public abstract class AbstractStepRunner extends ParentRunner<StepClassParserRes
         executionParameters.putAll(getExecutionParametersByAnnotation());
         // Prio 2: Execution parameters from environment variables (prefixed with STEP_*)
         executionParameters.putAll(getExecutionParametersFromEnvironmentVariables());
-
-        // TODO: all system properties are set to cmd in K6FunctionHandler => do we really need to pass them to execution parameters
         // Prio 3: Execution parameters from system properties
-//        executionParameters.putAll(getExecutionParametersFromSystemProperties());
+        executionParameters.putAll(getExecutionParametersFromSystemProperties());
         return executionParameters;
     }
 
@@ -144,22 +143,27 @@ public abstract class AbstractStepRunner extends ParentRunner<StepClassParserRes
         return executionParameters;
     }
 
-    private Map<String, String> getExecutionParametersFromSystemProperties() {
+    protected Map<String, String> getExecutionParametersFromSystemProperties() {
         Map<String, String> executionParameters = new HashMap<>();
-        System.getProperties().forEach((k, v) -> executionParameters.put(k.toString(), v.toString()));
+        System.getProperties().forEach((k, v) ->
+                unescapeParameterKeyIfMatches(k.toString()).ifPresent(key -> executionParameters.put(key, v.toString())));
         return executionParameters;
     }
 
     private Map<String, String> getExecutionParametersFromEnvironmentVariables() {
         Map<String, String> executionParameters = new HashMap<>();
-        System.getenv().forEach((k, v) -> {
-            Matcher matcher = ENV_PARAM_PREFIX.matcher(k);
-            if (matcher.matches()) {
-                String key = matcher.group(1);
-                executionParameters.put(key, v);
-            }
-        });
+        System.getenv().forEach((k, v) -> unescapeParameterKeyIfMatches(k).ifPresent(key -> executionParameters.put(key, v)));
         return executionParameters;
+    }
+
+    private Optional<String> unescapeParameterKeyIfMatches(String key) {
+        Matcher matcher = SYSTEM_PROPERTIES_PREFIX.matcher(key);
+        if (matcher.matches()) {
+            String unescapedKey = matcher.group(1);
+            return Optional.of(unescapedKey);
+        } else {
+            return Optional.empty();
+        }
     }
 
     protected void notifyFailure(EachTestNotifier childNotifier, PlanRunnerResult res, String errorMsg,
