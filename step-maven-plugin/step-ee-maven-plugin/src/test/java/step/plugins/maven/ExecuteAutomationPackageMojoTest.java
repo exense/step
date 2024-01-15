@@ -20,15 +20,16 @@ package step.plugins.maven;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
 import org.bson.types.ObjectId;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
+import step.automation.packages.client.AutomationPackageClientException;
 import step.automation.packages.client.RemoteAutomationPackageClientImpl;
 import step.automation.packages.execution.AutomationPackageExecutionParameters;
+import step.client.executions.RemoteExecutionFuture;
 import step.client.executions.RemoteExecutionManager;
 import step.controller.multitenancy.client.MultitenancyClient;
 import step.controller.multitenancy.client.RemoteMultitenancyClientImpl;
@@ -48,11 +49,11 @@ import java.util.stream.Collectors;
 public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 
 	@Test
-	public void testExecuteOk() throws InterruptedException, TimeoutException, MojoExecutionException, MojoFailureException, URISyntaxException {
+	public void testExecuteOk() throws Exception {
 		Execution execution = getMockedExecution(ReportNodeStatus.PASSED);
 
 		List<Execution> executions = List.of(execution);
-		List<String> executionIds = executions.stream().map(e -> e.getId().toString()).collect(Collectors.toList());
+		List<String> executionIds = getExecuteAutomationPackageResult(executions);
 
 		RemoteExecutionManager remoteExecutionManagerMock = createExecutionManagerMock(executions);
 
@@ -67,12 +68,16 @@ public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 		assertAutomationPackageClientMockCalls(remoteAutomationPackageClientMock);
 	}
 
+	private static List<String> getExecuteAutomationPackageResult(List<Execution> executions) {
+		return executions.stream().map(e -> e.getId().toString()).collect(Collectors.toList());
+	}
+
 	@Test
-	public void testExecuteImportError() throws InterruptedException, TimeoutException, MojoExecutionException, MojoFailureException, URISyntaxException {
+	public void testExecuteImportError() throws Exception {
 		Execution execution = getMockedExecution(ReportNodeStatus.FAILED, "Import error");
 
 		List<Execution> executions = List.of(execution);
-		List<String> executionIds = executions.stream().map(e -> e.getId().toString()).collect(Collectors.toList());
+		List<String> executionIds = getExecuteAutomationPackageResult(executions);
 
 		RemoteExecutionManager remoteExecutionManagerMock = createExecutionManagerMock(executions);
 
@@ -87,11 +92,11 @@ public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 	}
 
 	@Test
-	public void testExecuteNotOk() throws InterruptedException, TimeoutException, MojoExecutionException, MojoFailureException, URISyntaxException {
+	public void testExecuteNotOk() throws Exception {
 		Execution execution = getMockedExecution(ReportNodeStatus.FAILED);
 
 		List<Execution> executions = List.of(execution);
-		List<String> executionIds = executions.stream().map(e -> e.getId().toString()).collect(Collectors.toList());
+		List<String> executionIds = getExecuteAutomationPackageResult(executions);
 
 		RemoteExecutionManager remoteExecutionManagerMock = createExecutionManagerMock(executions);
 
@@ -106,11 +111,11 @@ public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 	}
 
 	@Test
-	public void testExecuteNotOkWithout() throws InterruptedException, TimeoutException, MojoExecutionException, MojoFailureException, URISyntaxException {
+	public void testExecuteNotOkWithout() throws Exception {
 		Execution execution = getMockedExecution(ReportNodeStatus.FAILED);
 
 		List<Execution> executions = List.of(execution);
-		List<String> executionIds = executions.stream().map(e -> e.getId().toString()).collect(Collectors.toList());
+		List<String> executionIds = getExecuteAutomationPackageResult(executions);
 
 		RemoteExecutionManager remoteExecutionManagerMock = createExecutionManagerMock(executions);
 
@@ -125,7 +130,7 @@ public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 		assertAutomationPackageClientMockCalls(remoteAutomationPackageClientMock);
 	}
 
-	private static void assertAutomationPackageClientMockCalls(RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock) {
+	private static void assertAutomationPackageClientMockCalls(RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock) throws AutomationPackageClientException {
 		ArgumentCaptor<File> fileCaptor = ArgumentCaptor.forClass(File.class);
 		ArgumentCaptor<AutomationPackageExecutionParameters> executionParamsCaptor = ArgumentCaptor.forClass(AutomationPackageExecutionParameters.class);
 		Mockito.verify(remoteAutomationPackageClientMock, Mockito.times(1)).executeAutomationPackage(fileCaptor.capture(), executionParamsCaptor.capture());
@@ -166,6 +171,9 @@ public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 		RemoteExecutionManager remoteExecutionManagerMock = Mockito.mock(RemoteExecutionManager.class);
 		Mockito.when(remoteExecutionManagerMock.get(Mockito.any())).thenAnswer(invocationOnMock -> executions.stream().filter(e -> e.getId().toString().equals(invocationOnMock.getArgument(0))).findFirst().get());
 		Mockito.when(remoteExecutionManagerMock.waitForTermination(Mockito.anyList(), Mockito.anyLong())).thenReturn(executions);
+		RemoteExecutionFuture futureMock = Mockito.mock(RemoteExecutionFuture.class);
+		Mockito.when(futureMock.getErrorSummary()).thenReturn("Error summary...");
+		Mockito.when((remoteExecutionManagerMock.getFuture(Mockito.anyString()))).thenReturn(futureMock);
 		return remoteExecutionManagerMock;
 	}
 

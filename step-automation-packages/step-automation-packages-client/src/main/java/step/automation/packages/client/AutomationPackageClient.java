@@ -26,11 +26,11 @@ import java.util.List;
 
 public interface AutomationPackageClient extends Closeable {
 
-    String createAutomationPackage(File automationPackageFile);
+    String createAutomationPackage(File automationPackageFile) throws AutomationPackageClientException;
 
-    String createOrUpdateAutomationPackage(File automationPackageFile);
+    String createOrUpdateAutomationPackage(File automationPackageFile) throws AutomationPackageClientException;
 
-    List<String> executeAutomationPackage(File automationPackageFile, AutomationPackageExecutionParameters params);
+    List<String> executeAutomationPackage(File automationPackageFile, AutomationPackageExecutionParameters params) throws AutomationPackageClientException;
 
-    void deleteAutomationPackage(String packageName);
+    void deleteAutomationPackage(String packageName) throws AutomationPackageClientException;
 }

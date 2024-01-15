@@ -68,4 +68,6 @@ public interface ReportNodeAccessor extends Accessor<ReportNode>, ReportTreeAcce
 	Iterator<ReportNode> getChildren(String parentID);
 
 	void removeNodesByExecutionID(String executionID);
+
+	Stream<ReportNode> getReportNodesWithContributingErrors(String executionId, Integer skip, Integer limit);
 }

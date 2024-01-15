@@ -198,7 +198,7 @@ public abstract class AutomationPackageManager {
                 return createOrUpdateAutomationPackage(allowUpdate, allowCreate, explicitOldId, provider, false, enricher, objectPredicate);
             }
         } catch (IOException | AutomationPackageReadingException ex) {
-            throw new AutomationPackageManagerException("Automation package cannot be created", ex);
+            throw new AutomationPackageManagerException("Automation package cannot be created. Caused by: " + ex.getMessage(), ex);
         }
     }
 
@@ -226,7 +226,7 @@ public abstract class AutomationPackageManager {
                 automationPackageArchive = automationPackageProvider.getAutomationPackageArchive();
                 packageContent = readAutomationPackage(automationPackageArchive, isLocalPackage);
             } catch (AutomationPackageReadingException e) {
-                throw new AutomationPackageManagerException("Unable to read automation package", e);
+                throw new AutomationPackageManagerException("Unable to read automation package. Cause: " + e.getMessage(), e);
             }
 
             AutomationPackage oldPackage;

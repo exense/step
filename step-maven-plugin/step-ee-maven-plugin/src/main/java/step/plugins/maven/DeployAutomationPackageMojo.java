@@ -23,6 +23,7 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import step.automation.packages.client.AutomationPackageClientException;
 import step.automation.packages.client.RemoteAutomationPackageClientImpl;
 import step.client.credentials.ControllerCredentials;
 import step.controller.multitenancy.client.MultitenancyClient;
@@ -64,14 +65,20 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
             File packagedTarget = getFileToUpload();
 
             getLog().info("Uploading the automation package...");
-            String uploadedId = automationPackageClient.createOrUpdateAutomationPackage(packagedTarget);
-
-            if (uploadedId == null) {
-                throw new MojoExecutionException("Uploaded automation package id is null. Upload failed");
+            try {
+                String uploadedId = automationPackageClient.createOrUpdateAutomationPackage(packagedTarget);
+                if (uploadedId != null) {
+                    getLog().info("Automation package successfully uploaded. Id: " + uploadedId);
+                } else {
+                    throw logAndThrow("Unexpected response from Step. The returned automation package id is null. Please check the controller logs.");
+                }
+            } catch (AutomationPackageClientException e) {
+                throw logAndThrow("Error while uploading automation package to Step: " + e.getMessage());
             }
-            getLog().info("Automation package uploaded: " + uploadedId);
+        } catch (MojoExecutionException e) {
+            throw e;
         } catch (Exception e) {
-            throw logAndThrow("Unable to upload automation package to Step", e);
+            throw logAndThrow("Unexpected error while uploading automation package to Step", e);
         }
     }
 
