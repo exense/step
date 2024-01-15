@@ -10,8 +10,6 @@ import step.core.GlobalContext;
 import step.core.deployment.AbstractStepServices;
 import step.core.entities.EntityManager;
 import step.framework.server.security.Secured;
-import step.framework.server.tables.Table;
-import step.framework.server.tables.TableRegistry;
 import step.plugins.timeseries.dashboards.DashboardAccessor;
 import step.plugins.timeseries.dashboards.model.DashboardView;
 
