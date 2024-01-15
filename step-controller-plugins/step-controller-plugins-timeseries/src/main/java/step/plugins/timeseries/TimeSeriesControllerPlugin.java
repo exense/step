@@ -70,7 +70,6 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 		context.put(DashboardAccessor.class, dashboardsAccessor);
 		context.getServiceRegistrationCallback().registerService(DashboardsService.class);
 		createLegacyDashboard(dashboardsAccessor);
-		createSimpleDashboard(dashboardsAccessor);
 
 		TableRegistry tableRegistry = context.get(TableRegistry.class);
 		tableRegistry.register(EntityManager.dashboards, new Table<>(dashboardsCollection, "dashboards-read", false));
@@ -91,7 +90,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 		boolean legacyDashboardExists = dashboardAccessor.stream().anyMatch(d -> d.getMetadata().get("isLegacy") != null && d.getMetadata().get("isLegacy").equals(true));
 		if (!legacyDashboardExists) {
 			DashboardView dashboard = new DashboardView();
-			dashboard.setName("Default Dashboard");
+			dashboard.setName("Performance Dashboard");
 			dashboard.getMetadata().put("isLegacy", true);
 			dashboard.getMetadata().put("link", "analytics");
 			dashboardAccessor.save(dashboard);
@@ -99,7 +98,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 
 	}
 
-	private void createSimpleDashboard(DashboardAccessor dashboardAccessor) {
+	private void createTestDashboard(DashboardAccessor dashboardAccessor) {
 		MetricAttribute taskAttribute = new MetricAttribute().setName("taskId").setDisplayName("Task");
 		MetricAttribute executionAttribute = new MetricAttribute().setName("eId").setDisplayName("Execution");
 		MetricAttribute planAttribute = new MetricAttribute().setName("planId").setDisplayName("Plan");
