@@ -44,7 +44,7 @@ public class FunctionPackagePlugin extends AbstractControllerPlugin {
 		functionManager = context.get(FunctionManager.class);
 		ObjectHookRegistry objectHookRegistry = context.require(ObjectHookRegistry.class);
 		packageManager = new FunctionPackageManager(packageAccessor, functionManager, resourceManager, fileResolver, configuration, objectHookRegistry);
-		packageManager.registerFunctionPackageHandler(new JavaFunctionPackageHandler(fileResolver, configuration, context.getResourceManager()));
+		packageManager.registerFunctionPackageHandler(new JavaFunctionPackageHandler(fileResolver, configuration));
 		packageManager.registerFunctionPackageHandler(new RepositoryArtifactFunctionPackageHandler(resourceManager, fileResolver, configuration));
 
 		packageManager.start();
