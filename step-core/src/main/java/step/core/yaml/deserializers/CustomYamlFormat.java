@@ -24,6 +24,13 @@ import java.lang.annotation.Target;
 
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
+/**
+ * Used to mark some class or interface as having the special yaml format in step. This allows to customize jackson
+ * deserializers and redefine the default deserialization behavior for inherited classes
+ * (for instance, if the @{@link com.fasterxml.jackson.annotation.JsonTypeInfo} annotation is used to specify
+ * the java type for json representation, but for yaml it is required to use another field
+ * to specify the java type).
+ */
 @Retention(RUNTIME)
 @Target(ElementType.TYPE)
 public @interface CustomYamlFormat {
