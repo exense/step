@@ -107,10 +107,7 @@ public abstract class AbstractStepRunner extends ParentRunner<StepClassParserRes
         } catch (Exception e) {
             childNotifier.addFailure(e);
         } finally {
-            if (resourceManager instanceof LocalResourceManagerImpl) {
-                // Cleanup resource manager after execution
-                ((LocalResourceManagerImpl) resourceManager).cleanup();
-            }
+            resourceManager.cleanup();
             childNotifier.fireTestFinished();
         }
     }
