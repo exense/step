@@ -37,7 +37,7 @@ public class MyKeywordLibraryAutopack extends AbstractKeyword {
 		}
 	}
 
-	@Plan("Echo PARAM_EXEC")
+	@Plan("Echo 'hello'")
 	@Keyword
 	public void inlinePlan() {}
 
