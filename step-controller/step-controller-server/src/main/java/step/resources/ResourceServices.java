@@ -55,7 +55,7 @@ public class ResourceServices extends AbstractStepServices {
 		super.init();
 		GlobalContext globalContext = getContext();
 		resourceManager = globalContext.getResourceManager();
-		resourceAccessor = globalContext.getResourceAccessor();
+		resourceAccessor = resourceManager.getResourceAccessor();
 	}
 	
 	@POST

@@ -81,8 +81,8 @@ public abstract class AbstractStepRunner extends ParentRunner<StepClassParserRes
         notifier.addListener(new RunListener() {
             @Override
             public void testSuiteFinished(Description description) throws Exception {
-                // Clean up the resource manager of the ExecutionEngine once all tests were executed
-                resourceManager.cleanup();
+                // Close the execution engine once all tests were executed
+                executionEngine.close();
                 super.testSuiteFinished(description);
             }
         });

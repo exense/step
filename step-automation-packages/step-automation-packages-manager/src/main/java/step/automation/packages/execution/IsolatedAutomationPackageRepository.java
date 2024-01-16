@@ -127,16 +127,6 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
         // resource manager used in isolated package manager is non-permanent
         ((LayeredResourceManager) contextResourceManager).pushManager(automationPackageManager.getResourceManager(), false);
 
-        // push the resource accessor from resource manager to keep consistency between ResourceManager and ResourceAccessor
-        if (automationPackageManager.getResourceManager().getResourceAccessor() != null) {
-            ResourceAccessor contextResourceAccessor = context.getResourceAccessor();
-            if (!isLayeredAccessor(contextResourceAccessor)) {
-                result.setErrors(List.of(contextResourceAccessor.getClass() + " is not layered"));
-                return result;
-            }
-            ((LayeredResourceAccessor) contextResourceAccessor).pushAccessor(automationPackageManager.getResourceManager().getResourceAccessor());
-        }
-
         result.setSuccessful(true);
 
         return result;
