@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import org.apache.commons.lang3.StringUtils;
+import org.everit.json.schema.ValidationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.artefacts.handlers.JsonSchemaValidator;
@@ -88,7 +89,12 @@ public class AutomationPackageDescriptorReader {
                 try {
                     JsonSchemaValidator.validate(jsonSchema, yamlObjectMapper.readTree(yamlDescriptorString).toString());
                 } catch (Exception ex) {
-                    throw new YamlPlanValidationException(ex.getMessage(), ex);
+                    // add error details
+                    String message = ex.getMessage();
+                    if (ex instanceof ValidationException) {
+                        message = message + " " + ((ValidationException) ex).getAllMessages();
+                    }
+                    throw new YamlPlanValidationException(message, ex);
                 }
             }
 
