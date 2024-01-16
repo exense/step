@@ -91,6 +91,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 		if (!legacyDashboardExists) {
 			DashboardView dashboard = new DashboardView();
 			dashboard.setName("Performance Dashboard");
+			dashboard.setDescription("Default dashboard displaying performance of all executions");
 			dashboard.getMetadata().put("isLegacy", true);
 			dashboard.getMetadata().put("link", "analytics");
 			dashboardAccessor.save(dashboard);
