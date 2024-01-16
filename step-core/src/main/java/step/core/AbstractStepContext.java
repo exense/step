@@ -28,10 +28,12 @@ import step.expressions.ExpressionHandler;
 import step.resources.*;
 
 import java.io.File;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 public abstract class AbstractStepContext extends AbstractContext {
 
+	private final UUID contextId = UUID.randomUUID();
 	private ExpressionHandler expressionHandler;
 	private DynamicBeanResolver dynamicBeanResolver;
 	private ResourceAccessor resourceAccessor;
@@ -43,8 +45,13 @@ public abstract class AbstractStepContext extends AbstractContext {
 		expressionHandler = new ExpressionHandler();
 		dynamicBeanResolver = new DynamicBeanResolver(new DynamicValueResolver(expressionHandler));
 		resourceAccessor = new InMemoryResourceAccessor();
-		resourceManager = new LocalResourceManagerImpl(new File("resources"), resourceAccessor, new InMemoryResourceRevisionAccessor());
+		// Create a local resource manager in a dedicated folder per default
+		resourceManager = new LocalResourceManagerImpl(new File(contextPath() + "/resources"), resourceAccessor, new InMemoryResourceRevisionAccessor());
 		setFileResolver(new FileResolver(resourceManager));
+	}
+
+	private String contextPath() {
+		return "context_" + contextId;
 	}
 
 	protected void useSourceAttributesFromParentContext(AbstractStepContext parentContext) {

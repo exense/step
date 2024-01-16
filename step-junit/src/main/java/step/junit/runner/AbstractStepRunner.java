@@ -20,9 +20,11 @@ package step.junit.runner;
 
 import org.junit.internal.runners.model.EachTestNotifier;
 import org.junit.runner.Description;
+import org.junit.runner.notification.RunListener;
 import org.junit.runner.notification.RunNotifier;
 import org.junit.runners.ParentRunner;
 import org.junit.runners.model.InitializationError;
+import org.junit.runners.model.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.artefacts.reports.ReportNodeStatus;
@@ -30,7 +32,6 @@ import step.core.execution.ExecutionEngine;
 import step.core.plans.Plan;
 import step.core.plans.runner.PlanRunnerResult;
 import step.junit.runners.annotations.ExecutionParameters;
-import step.resources.LocalResourceManagerImpl;
 import step.resources.ResourceManager;
 
 import java.io.IOException;
@@ -76,6 +77,19 @@ public abstract class AbstractStepRunner extends ParentRunner<StepClassParserRes
     }
 
     @Override
+    protected Statement childrenInvoker(RunNotifier notifier) {
+        notifier.addListener(new RunListener() {
+            @Override
+            public void testSuiteFinished(Description description) throws Exception {
+                // Clean up the resource manager of the ExecutionEngine once all tests were executed
+                resourceManager.cleanup();
+                super.testSuiteFinished(description);
+            }
+        });
+        return super.childrenInvoker(notifier);
+    }
+
+    @Override
     protected void runChild(StepClassParserResult child, RunNotifier notifier) {
         Description desc = Description.createTestDescription(klass, child.getName());
         EachTestNotifier childNotifier = new EachTestNotifier(notifier, desc);
@@ -107,7 +121,6 @@ public abstract class AbstractStepRunner extends ParentRunner<StepClassParserRes
         } catch (Exception e) {
             childNotifier.addFailure(e);
         } finally {
-            resourceManager.cleanup();
             childNotifier.fireTestFinished();
         }
     }
