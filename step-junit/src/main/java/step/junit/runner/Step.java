@@ -23,6 +23,9 @@ import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class Step extends AbstractStepRunner {
 
 	public Step(Class<?> klass) throws InitializationError {
@@ -40,6 +43,14 @@ public class Step extends AbstractStepRunner {
 		} catch (Exception e) {
 			throw new InitializationError(e);
 		}
+	}
+
+	@Override
+	// Keeping this old implementation for this legacy runner. New implementation adds prefixed properties only
+	protected Map<String, String> getExecutionParametersFromSystemProperties() {
+		Map<String, String> executionParameters = new HashMap<>();
+		System.getProperties().forEach((k, v) -> executionParameters.put(k.toString(), v.toString()));
+		return executionParameters;
 	}
 
 }
