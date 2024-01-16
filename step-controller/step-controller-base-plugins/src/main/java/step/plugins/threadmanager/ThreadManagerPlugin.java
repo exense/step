@@ -18,11 +18,14 @@
  ******************************************************************************/
 package step.plugins.threadmanager;
 
+import step.artefacts.handlers.CallFunctionHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ExecutionContext;
 import step.core.plugins.IgnoreDuringAutoDiscovery;
 import step.core.plugins.Plugin;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
+import step.grid.Token;
+import step.grid.client.GridClient;
 
 @Plugin
 @IgnoreDuringAutoDiscovery
@@ -63,5 +66,23 @@ public class ThreadManagerPlugin extends AbstractExecutionEnginePlugin {
 	@Override
 	public void beforeExecutionEnd(ExecutionContext context) {
 		threadManager.beforeExecutionEnd(context);
+	}
+
+	@Override
+	public void forceStopExecution(ExecutionContext context) {
+		GridClient gridClient = context.require(GridClient.class);
+		threadManager.getCurrentOperations(context).forEach(o -> {
+			if(o.getName().equals(CallFunctionHandler.OPERATION_KEYWORD_CALL)) {
+				Object[] details = (Object[]) o.getDetails();
+				Token tokenWrapper = (Token) details[1];
+				String tokenId = tokenWrapper.getId();
+				try {
+					gridClient.interruptTokenExecution(tokenId);
+				} catch (Exception e) {
+					// Ignore
+				}
+			}
+		});
+		super.forceStopExecution(context);
 	}
 }

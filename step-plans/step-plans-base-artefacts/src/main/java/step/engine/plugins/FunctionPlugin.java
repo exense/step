@@ -104,5 +104,9 @@ public class FunctionPlugin extends AbstractExecutionEnginePlugin {
 			// if available
 			context.put(Grid.class, grid);
 		}
+
+		if(gridClient != null) {
+			context.put(GridClient.class, gridClient);
+		}
 	}
 }
