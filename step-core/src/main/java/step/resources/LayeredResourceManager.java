@@ -146,6 +146,11 @@ public class LayeredResourceManager implements ResourceManager {
     }
 
     @Override
+    public Resource copyResource(Resource resource, ResourceManager sourceResourceManager) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException {
+        return getManagerForPersistence().copyResource(resource, sourceResourceManager);
+    }
+
+    @Override
     public Resource saveResourceContent(String resourceId, InputStream resourceStream, String resourceFileName) throws IOException, InvalidResourceFormatException {
         return getManagerForPersistence().saveResourceContent(resourceId, resourceStream, resourceFileName);
     }

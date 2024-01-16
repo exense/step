@@ -23,7 +23,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.automation.packages.accessor.AutomationPackageAccessor;
 import step.automation.packages.model.AutomationPackageContent;
-import step.automation.packages.model.AutomationPackageKeyword;
 import step.automation.packages.model.AutomationPackageSchedule;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.execution.model.ExecutionParameters;
@@ -43,9 +42,7 @@ import step.functions.manager.FunctionManager;
 import step.functions.type.FunctionTypeException;
 import step.functions.type.FunctionTypeRegistry;
 import step.functions.type.SetupFunctionException;
-import step.resources.LocalResourceManagerImpl;
-import step.resources.Resource;
-import step.resources.ResourceManager;
+import step.resources.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -68,7 +65,7 @@ public abstract class AutomationPackageManager {
     protected final ExecutionTaskAccessor executionTaskAccessor;
     protected final ExecutionScheduler executionScheduler;
     protected final AbstractAutomationPackageReader<?> packageReader;
-    protected final AutomationPackageKeywordsAttributesApplier keywordsAttributesApplier;
+
     protected final ResourceManager resourceManager;
     protected boolean isIsolated = false;
 
@@ -101,7 +98,6 @@ public abstract class AutomationPackageManager {
         this.executionScheduler = executionScheduler;
         this.packageReader = packageReader;
         this.resourceManager = resourceManager;
-        this.keywordsAttributesApplier = new AutomationPackageKeywordsAttributesApplier(resourceManager);
     }
 
     /**
@@ -318,11 +314,22 @@ public abstract class AutomationPackageManager {
     protected void fillStaging(Staging staging, AutomationPackageContent packageContent, AutomationPackage newPackage, AutomationPackage oldPackage, ObjectEnricher enricherForIncludedEntities, AutomationPackageArchive automationPackageArchive){
         staging.plans = preparePlansStaging(packageContent, oldPackage, enricherForIncludedEntities);
         staging.taskParameters = prepareExecutionTasksParamsStaging(enricherForIncludedEntities, packageContent, oldPackage, staging.plans);
-        staging.functions = prepareFunctionsStaging(newPackage, automationPackageArchive, packageContent, enricherForIncludedEntities, oldPackage);
+        staging.functions = prepareFunctionsStaging(newPackage, automationPackageArchive, packageContent, enricherForIncludedEntities, oldPackage, staging.resourceManager);
     }
 
     protected void persistStagedEntities(Staging staging,
                                          ObjectEnricher objectEnricher) {
+        List<Resource> stagingResources = staging.resourceManager.findManyByCriteria(null);
+        try {
+            for (Resource resource: stagingResources) {
+                resourceManager.copyResource(resource, staging.resourceManager);
+            }
+        } catch (IOException | SimilarResourceExistingException | InvalidResourceFormatException e) {
+            throw new AutomationPackageManagerException("Unable to persist a resource in automation package", e);
+        } finally {
+            staging.resourceManager.cleanup();
+        }
+
         try {
             for (Function completeFunction : staging.functions) {
                 functionManager.saveFunction(completeFunction);
@@ -371,8 +378,9 @@ public abstract class AutomationPackageManager {
         return plans;
     }
 
-    protected List<Function> prepareFunctionsStaging(AutomationPackage newPackage, AutomationPackageArchive automationPackageArchive, AutomationPackageContent packageContent, ObjectEnricher enricher, AutomationPackage oldPackage) {
+    protected List<Function> prepareFunctionsStaging(AutomationPackage newPackage, AutomationPackageArchive automationPackageArchive, AutomationPackageContent packageContent, ObjectEnricher enricher, AutomationPackage oldPackage, ResourceManager resourceManager) {
         // TODO: here want to apply additional attributes to draft function (upload linked files as resources), but we have to refactor the way to do that
+        AutomationPackageKeywordsAttributesApplier keywordsAttributesApplier = new AutomationPackageKeywordsAttributesApplier(resourceManager);
         List<Function> completeFunctions = keywordsAttributesApplier.applySpecialAttributesToKeyword(packageContent.getKeywords(), automationPackageArchive, newPackage.getId(), enricher);
 
         // get old functions with same name and reuse their ids
@@ -627,6 +635,7 @@ public abstract class AutomationPackageManager {
         List<Plan> plans = new ArrayList<>();
         List<ExecutiontTaskParameters> taskParameters = new ArrayList<>();
         List<Function> functions = new ArrayList<>();
+        ResourceManager resourceManager = new LocalResourceManagerImpl(new File("resources", new ObjectId().toString()));
     }
 
 }
