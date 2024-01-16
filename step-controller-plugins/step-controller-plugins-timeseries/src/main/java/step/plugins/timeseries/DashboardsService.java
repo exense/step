@@ -7,9 +7,9 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import step.controller.services.entities.AbstractEntityServices;
 import step.core.GlobalContext;
-import step.core.deployment.AbstractStepServices;
 import step.core.entities.EntityManager;
 import step.framework.server.security.Secured;
+import step.framework.server.security.SecuredContext;
 import step.plugins.timeseries.dashboards.DashboardAccessor;
 import step.plugins.timeseries.dashboards.model.DashboardView;
 
@@ -20,6 +20,8 @@ import java.util.stream.Collectors;
 @Singleton
 @Path("/dashboards")
 @Tag(name = "Dashboards")
+@Tag(name = "Entity=Dashboard")
+@SecuredContext(key = "entity", value = "dashboard")
 public class DashboardsService extends AbstractEntityServices<DashboardView> { // AbstractEntityServices + init table
 
 	private DashboardAccessor accessor;

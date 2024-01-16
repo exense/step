@@ -7,6 +7,7 @@ import jakarta.inject.Singleton;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
+import org.apache.commons.lang3.StringUtils;
 import step.controller.services.async.AsyncTaskManager;
 import step.controller.services.async.AsyncTaskStatus;
 import step.core.GlobalContext;
@@ -59,6 +60,7 @@ public class TimeSeriesService extends AbstractStepServices {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public TimeSeriesAPIResponse getTimeSeries(@NotNull FetchBucketsRequest request) {
+        enrichRequestFilter(request);
         return handler.getTimeSeries(request);
     }
     
@@ -69,7 +71,22 @@ public class TimeSeriesService extends AbstractStepServices {
     @Produces(MediaType.APPLICATION_JSON)
     // TODO this method should be renamed as it doesn't return measurements but a timeseries
     public TimeSeriesAPIResponse getMeasurements(@NotNull FetchBucketsRequest request) {
+        enrichRequestFilter(request);
         return handler.getOrBuildTimeSeries(request);
+    }
+
+    private void enrichRequestFilter(FetchBucketsRequest request) {
+        request.setOqlFilter(enrichOqlFilter(request.getOqlFilter()));
+    }
+
+    private String enrichOqlFilter(String oqlFilter) {
+        String additionalOqlFilter = getObjectFilter().getOQLFilter();
+        if (StringUtils.isNotEmpty(additionalOqlFilter)) {
+            return (StringUtils.isNotEmpty(oqlFilter)) ?
+                oqlFilter + " and (" + additionalOqlFilter + ")" :
+                "(" + additionalOqlFilter + ")";
+        }
+        return oqlFilter;
     }
 
     /**
@@ -111,6 +128,7 @@ public class TimeSeriesService extends AbstractStepServices {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Set<String> getMeasurementsAttributes(@QueryParam("filter") String oqlFilter) {
+        oqlFilter = enrichOqlFilter(oqlFilter);
         return handler.getMeasurementsAttributes(oqlFilter);
     }
 
@@ -124,6 +142,7 @@ public class TimeSeriesService extends AbstractStepServices {
             @QueryParam("limit") int limit,
             @QueryParam("skip") int skip
     ) {
+        oqlFilter = enrichOqlFilter(oqlFilter);
         return handler.getRawMeasurements(oqlFilter, skip, limit);
     }
 
@@ -133,6 +152,7 @@ public class TimeSeriesService extends AbstractStepServices {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public MeasurementsStats getRawMeasurementsStats(@QueryParam("filter") String oqlFilter) {
+        oqlFilter = enrichOqlFilter(oqlFilter);
         return handler.getRawMeasurementsStats(oqlFilter);
     }
 
