@@ -146,6 +146,11 @@ public class RemoteResourceManager extends AbstractRemoteClient implements Resou
 	}
 
 	@Override
+	public Resource copyResource(Resource resource, ResourceManager sourceResourceManager) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException {
+		throw new RuntimeException("Not implemented");
+	}
+
+	@Override
 	public Resource saveResourceContent(String resourceId, InputStream resourceStream, String resourceFileName)
 			throws IOException {
 		
