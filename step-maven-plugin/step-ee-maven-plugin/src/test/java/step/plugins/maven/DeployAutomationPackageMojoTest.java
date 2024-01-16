@@ -24,6 +24,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
+import step.automation.packages.client.AutomationPackageClientException;
 import step.automation.packages.client.RemoteAutomationPackageClientImpl;
 import step.controller.multitenancy.client.RemoteMultitenancyClientImpl;
 
@@ -83,7 +84,7 @@ public class DeployAutomationPackageMojoTest extends AbstractMojoTest {
     }
 
 
-    private RemoteAutomationPackageClientImpl createRemoteAutomationPackageClientMock() throws IOException {
+    private RemoteAutomationPackageClientImpl createRemoteAutomationPackageClientMock() throws AutomationPackageClientException {
         RemoteAutomationPackageClientImpl remoteClient = Mockito.mock(RemoteAutomationPackageClientImpl.class);
         Mockito.when(remoteClient.createOrUpdateAutomationPackage(Mockito.any())).thenReturn(UPDATED_PACK_ID);
         return remoteClient;

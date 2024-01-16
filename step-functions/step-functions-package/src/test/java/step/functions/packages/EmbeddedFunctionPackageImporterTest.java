@@ -41,7 +41,7 @@ public class EmbeddedFunctionPackageImporterTest {
 		FunctionPackageAccessor functionPackageAccessor = new InMemoryFunctionPackageAccessorImpl();
 		FunctionPackageManager functionPackageManager = new FunctionPackageManager(functionPackageAccessor,
 				functionManager, resourceManager, fileResolver, configuration, new ObjectHookRegistry());
-		functionPackageManager.registerFunctionPackageHandler(new JavaFunctionPackageHandler(fileResolver, configuration, resourceManager));
+		functionPackageManager.registerFunctionPackageHandler(new JavaFunctionPackageHandler(fileResolver, configuration));
 		functionPackageManager.registerAttributeResolver("attribute1", v -> "value1");
 		
 		EmbeddedFunctionPackageImporter embeddedFunctionPackageImporter = new EmbeddedFunctionPackageImporter(functionPackageAccessor, functionPackageManager);

@@ -32,6 +32,7 @@ import step.client.credentials.ControllerCredentials;
 import java.io.File;
 import java.util.List;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class RemoteAutomationPackageClientImpl extends AbstractRemoteClient implements AutomationPackageClient {
 
@@ -44,7 +45,7 @@ public class RemoteAutomationPackageClientImpl extends AbstractRemoteClient impl
     }
 
     @Override
-    public String createAutomationPackage(File automationPackageFile) {
+    public String createAutomationPackage(File automationPackageFile) throws AutomationPackageClientException {
         return uploadPackage(automationPackageFile, multiPartEntity -> {
             Invocation.Builder builder = requestBuilder("/rest/automation-packages");
             return RemoteAutomationPackageClientImpl.this.executeRequest(() -> builder.post(multiPartEntity, String.class));
@@ -52,7 +53,7 @@ public class RemoteAutomationPackageClientImpl extends AbstractRemoteClient impl
     }
 
     @Override
-    public String createOrUpdateAutomationPackage(File automationPackageFile) {
+    public String createOrUpdateAutomationPackage(File automationPackageFile) throws AutomationPackageClientException {
         return uploadPackage(automationPackageFile, multiPartEntity -> {
             Invocation.Builder builder = requestBuilder("/rest/automation-packages");
             return RemoteAutomationPackageClientImpl.this.executeRequest(() -> builder.put(multiPartEntity, String.class));
@@ -60,27 +61,38 @@ public class RemoteAutomationPackageClientImpl extends AbstractRemoteClient impl
     }
 
     @Override
-    public List<String> executeAutomationPackage(File automationPackageFile, AutomationPackageExecutionParameters params) {
+    public List<String> executeAutomationPackage(File automationPackageFile, AutomationPackageExecutionParameters params) throws AutomationPackageClientException {
         MultiPart multiPart = prepareFileDataMultiPart(automationPackageFile);
         FormDataBodyPart paramsBodyPart = new FormDataBodyPart("executionParams", params, MediaType.APPLICATION_JSON_TYPE);
         multiPart.bodyPart(paramsBodyPart);
 
         Entity<MultiPart> entity = Entity.entity(multiPart, multiPart.getMediaType());
         Invocation.Builder builder = requestBuilder("/rest/automation-packages/execute");
-        return builder.post(entity, new GenericType<List<String>>() {});
+        return this.executeAutomationPackageClientRequest(() -> builder.post(entity, new GenericType<List<String>>() {}));
     }
 
     @Override
-    public void deleteAutomationPackage(String packageId) {
+    public void deleteAutomationPackage(String packageId) throws AutomationPackageClientException {
         Invocation.Builder builder = requestBuilder("/rest/automation-packages/" + packageId);
-        executeRequest(() -> builder.delete(Void.class));
+        executeAutomationPackageClientRequest(() -> builder.delete(Void.class));
     }
 
+    private <T> T executeAutomationPackageClientRequest(Supplier<T> provider) throws AutomationPackageClientException {
+        try {
+            return executeRequest(provider);
+        } catch (ControllerServiceException e) {
+            throw new AutomationPackageClientException(e.getMessage());
+        }
+    }
 
-    protected String uploadPackage(File automationPackageFile, Function<Entity<MultiPart>, String> executeRequest) {
+    protected String uploadPackage(File automationPackageFile, Function<Entity<MultiPart>, String> executeRequest) throws AutomationPackageClientException {
         MultiPart multiPart = prepareFileDataMultiPart(automationPackageFile);
         Entity<MultiPart> entity = Entity.entity(multiPart, multiPart.getMediaType());
-        return executeRequest.apply(entity);
+        try {
+            return executeRequest.apply(entity);
+        } catch (ControllerServiceException e) {
+            throw new AutomationPackageClientException(e.getMessage());
+        }
     }
 
     private MultiPart prepareFileDataMultiPart(File automationPackageFile) {

@@ -18,11 +18,9 @@
  ******************************************************************************/
 package step.client.reports;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import jakarta.ws.rs.client.Invocation.Builder;
 import jakarta.ws.rs.core.GenericType;
@@ -63,8 +61,16 @@ public class RemoteReportTreeAccessor extends AbstractRemoteClient implements Re
 
 	@Override
 	public Stream<ReportNode> getReportNodesWithContributingErrors(String executionId) {
-		// TODO implement
-		throw new UnsupportedOperationException("This method isn't implemented yet");
+		SkipLimitIterator<ReportNode> skipLimitIterator = new SkipLimitIterator<ReportNode>((skip, limit) -> {
+			Map<String, String> queryParams = new HashMap<>();
+			queryParams.put("skip", Integer.toString(skip));
+			queryParams.put("limit", Integer.toString(limit));
+			GenericType<List<ReportNode>> genericEntity = new GenericType<>() {};
+			Builder b = requestBuilder("/rest/executions/" + executionId + "/reportnodes-with-errors", queryParams);
+			return executeRequest(() -> b.get(genericEntity));
+		});
+
+		return StreamSupport.stream(Spliterators.spliteratorUnknownSize(skipLimitIterator, Spliterator.ORDERED), false);
 	}
 
 	@Override

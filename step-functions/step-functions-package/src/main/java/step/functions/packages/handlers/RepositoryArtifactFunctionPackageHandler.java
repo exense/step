@@ -53,7 +53,7 @@ public class RepositoryArtifactFunctionPackageHandler extends JavaFunctionPackag
 	private LocalRepository localRepository;
 
 	public RepositoryArtifactFunctionPackageHandler(ResourceManager resourceManager, FileResolver fileResolver, Configuration config) {
-		super(fileResolver, config, resourceManager);
+		super(fileResolver, config);
 
 		this.resourceManager = resourceManager;
 		repositorySystem = newRepositorySystem();

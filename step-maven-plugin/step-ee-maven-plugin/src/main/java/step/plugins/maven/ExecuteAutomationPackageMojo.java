@@ -24,6 +24,7 @@ import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import step.automation.packages.client.AutomationPackageClientException;
 import step.automation.packages.client.RemoteAutomationPackageClientImpl;
 import step.automation.packages.execution.AutomationPackageExecutionParameters;
 import step.client.credentials.ControllerCredentials;
@@ -100,21 +101,32 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
             File automationPackageFile = getAutomationPackageFile();
             AutomationPackageExecutionParameters executionParameters = prepareExecutionParameters();
 
-            List<String> executionIds = automationPackageClient.executeAutomationPackage(automationPackageFile, executionParameters);
-            getLog().info("Executions started in Step:");
-            for (String executionId : executionIds) {
-                Execution executionInfo = remoteExecutionManager.get(executionId);
-                getLog().info("- " + executionToString(executionId, executionInfo));
+            List<String> executionIds;
+            try {
+                executionIds = automationPackageClient.executeAutomationPackage(automationPackageFile, executionParameters);
+            } catch (AutomationPackageClientException e) {
+                throw logAndThrow("Error while executing automation package: " + e.getMessage());
             }
+            if(executionIds != null) {
+                getLog().info("Execution(s) started in Step:");
+                for (String executionId : executionIds) {
+                    Execution executionInfo = remoteExecutionManager.get(executionId);
+                    getLog().info("- " + executionToString(executionId, executionInfo));
+                }
 
-            if (getWaitForExecution()) {
-                getLog().info("Waiting for executions to complete...");
-                waitForExecutionFinish(remoteExecutionManager, executionIds);
+                if (getWaitForExecution()) {
+                    getLog().info("Waiting for execution(s) to complete...");
+                    waitForExecutionFinish(remoteExecutionManager, executionIds);
+                } else {
+                    getLog().info("waitForExecution set to 'false'. Not waiting for executions to complete.");
+                }
             } else {
-                getLog().info("waitForExecution set to 'false'. Not waiting for executions to complete.");
+                throw logAndThrow("Unexpected response from Step. No execution Id returned. Please check the controller logs.");
             }
+        } catch (MojoExecutionException e) {
+            throw e;
         } catch (Exception ex) {
-            throw logAndThrow("Error while running executions in Step", ex);
+            throw logAndThrow("Unexpected error while executing automation package", ex);
         }
     }
 
@@ -139,16 +151,23 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
                     log.error(errorMessage);
                 } else if (!isStatusSuccess(endedExecution)) {
                     executionFailureCount++;
-                    log.error("Execution " + executionToString(id, endedExecution) + " failed. Result status was " + endedExecution.getResult());
+                    String errorSummary = remoteExecutionManager.getFuture(id).getErrorSummary();
+                    log.error("Execution " + executionToString(id, endedExecution) + " failed. Result status was " + endedExecution.getResult() + ". Error summary: " + errorSummary);
                 } else {
                     log.info("Execution " + executionToString(id, endedExecution) + " succeeded. Result status was " + endedExecution.getResult());
                 }
             }
             if (executionFailureCount > 0 && getEnsureExecutionSuccess()) {
-                throw new MojoExecutionException(executionFailureCount + " execution(s) failed");
+                int executionsCount = executionIds.size();
+                throw logAndThrow(executionFailureCount + "/" + executionsCount + " execution(s) failed. See " + getUrl() + "#/root/executions/list");
             }
         } catch (TimeoutException | InterruptedException ex) {
             throw logAndThrow("Timeout after " + getExecutionResultTimeoutS() + " seconds while waiting for executions to complete", ex);
+        } catch (MojoExecutionException e) {
+            // Rethrow MojoExecutionException
+            throw e;
+        } catch (Exception e) {
+            throw logAndThrow("Unexpected error while executing automation package", e);
         }
     }
 

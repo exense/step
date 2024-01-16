@@ -111,10 +111,27 @@ public class AbstractRemoteClient implements Closeable {
 		}
 		return b;
 	}
-	
-	public <T> T executeRequest(Supplier<T> provider) throws ControllerClientException {
+
+	public static class ControllerServiceExceptionContent {
+		public String errorName;
+		public String errorMessage;
+	}
+
+	public static class ControllerServiceException extends RuntimeException {
+		public String errorName;
+		public String errorMessage;
+
+		public ControllerServiceException(ControllerServiceExceptionContent content) {
+			super(content.errorMessage);
+			this.errorName = content.errorName;
+			this.errorMessage = content.errorMessage;
+		}
+	}
+
+	public <T> T executeRequest(Supplier<T> provider) throws ControllerClientException, ControllerServiceException {
 		try {
 			T r = provider.get();
+			// Todo: not sure if this path still makes sense. It seems that a WebApplicationException is always thrown in case of error
 			if(r instanceof Response) {
 				Response response = (Response) r;
 				if(!(response.getStatus()==204||response.getStatus()==200)) {
@@ -128,9 +145,17 @@ public class AbstractRemoteClient implements Closeable {
 				return r;
 			}
 		} catch(WebApplicationException e) {
-			String errorMessage = e.getResponse().readEntity(String.class);
-			throw new ControllerClientException("Error while calling controller "+
-			credentials.getServerUrl()+". The server returned following error: "+errorMessage, e);
+			Response response = e.getResponse();
+			try {
+				// Try to parse the response as ControllerServiceException
+				ControllerServiceExceptionContent controllerServiceExceptionContent = response.readEntity(ControllerServiceExceptionContent.class);
+				throw new ControllerServiceException(controllerServiceExceptionContent);
+			} catch (Exception e2) {
+				// Fallback to string
+				String errorMessage = response.readEntity(String.class);
+				throw new ControllerClientException("Error while calling controller "+
+						credentials.getServerUrl()+". The server returned following error: "+errorMessage, e);
+			}
 		}
 	}
 

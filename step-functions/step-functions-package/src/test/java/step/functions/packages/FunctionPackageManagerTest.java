@@ -181,7 +181,7 @@ public class FunctionPackageManagerTest {
 		
 		// Create a package
 		Resource testResource = createTestResource(resourceFileName, resourceManager);
-		FunctionPackage testPackage = createTestPackage(testResource,pm,resolver,resourceManager);
+		FunctionPackage testPackage = createTestPackage(testResource,pm,resolver);
 		// Add a library resource
 		Resource libraryResource1 = createTestResource(resourceFileName, resourceManager);
 		testPackage.setPackageLibrariesLocation(resolver.createPathForResourceId(libraryResource1.getId().toString()));
@@ -199,7 +199,7 @@ public class FunctionPackageManagerTest {
 		
 		// Update the package with a new resource
 		Resource testResource2 = createTestResource(resourceFileName, resourceManager);
-		FunctionPackage testPackage2 = createTestPackage(testResource2,pm,resolver, resourceManager);
+		FunctionPackage testPackage2 = createTestPackage(testResource2,pm,resolver);
 		testPackage2.setId(testPackage.getId());
 		
 		// update the library resource too
@@ -260,8 +260,8 @@ public class FunctionPackageManagerTest {
 		return resource;
 	}
 
-	private FunctionPackage createTestPackage(Resource resource, FunctionPackageManager pm, FileResolver resolver, ResourceManager resourceManager) {
-		pm.registerFunctionPackageHandler(new JavaFunctionPackageHandler(resolver, new Configuration(), resourceManager));
+	private FunctionPackage createTestPackage(Resource resource, FunctionPackageManager pm, FileResolver resolver) {
+		pm.registerFunctionPackageHandler(new JavaFunctionPackageHandler(resolver, new Configuration()));
 
 		FunctionPackage fp = new FunctionPackage();
 		fp.setId(new ObjectId());
