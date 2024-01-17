@@ -129,14 +129,11 @@ public abstract class AbstractAutomationPackageReader<T extends AutomationPackag
             }
             res.getKeywords().addAll(scannedKeywords);
 
-            // TODO: don't use file in code below (in getPlanFromPlansAnnotation)?
-            if (originalFile != null) {
-                List<Plan> annotatedPlans = extractAnnotatedPlans(originalFile, annotationScanner, null, null, null, null, stepClassParser);
-                if (!annotatedPlans.isEmpty()) {
-                    log.info("{} annotated plans found in automation package {}", annotatedPlans.size(), StringUtils.defaultString(archive.getOriginalFileName()));
-                }
-                res.getPlans().addAll(annotatedPlans);
+            List<Plan> annotatedPlans = extractAnnotatedPlans(originalFile, annotationScanner, null, null, null, null, stepClassParser);
+            if (!annotatedPlans.isEmpty()) {
+                log.info("{} annotated plans found in automation package {}", annotatedPlans.size(), StringUtils.defaultString(archive.getOriginalFileName()));
             }
+            res.getPlans().addAll(annotatedPlans);
         }
     }
 
@@ -324,7 +321,11 @@ public abstract class AbstractAutomationPackageReader<T extends AutomationPackag
         List<StepClassParserResult> plans;
         try {
             plans = stepClassParser.getPlanFromAnnotatedMethods(annotationScanner, klass);
-            plans.addAll(getPlanFromPlansAnnotation(klass, artifact, stepClassParser));
+
+            // TODO: now we only can extract plans with @Plans annotation from File (clarify, how to do that without file)
+            if (artifact != null) {
+                plans.addAll(getPlanFromPlansAnnotation(klass, artifact, stepClassParser));
+            }
 
         } catch (Exception e) {
             throw new RuntimeException(
