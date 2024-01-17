@@ -46,8 +46,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
-import java.net.JarURLConnection;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -129,7 +129,7 @@ public abstract class AbstractAutomationPackageReader<T extends AutomationPackag
             }
             res.getKeywords().addAll(scannedKeywords);
 
-            List<Plan> annotatedPlans = extractAnnotatedPlans(originalFile, annotationScanner, null, null, null, null, stepClassParser);
+            List<Plan> annotatedPlans = extractAnnotatedPlans(archive, annotationScanner, null, null, null, null, stepClassParser);
             if (!annotatedPlans.isEmpty()) {
                 log.info("{} annotated plans found in automation package {}", annotatedPlans.size(), StringUtils.defaultString(archive.getOriginalFileName()));
             }
@@ -229,7 +229,7 @@ public abstract class AbstractAutomationPackageReader<T extends AutomationPackag
         }
     }
 
-    public static List<Plan> extractAnnotatedPlans(File artifact, AnnotationScanner annotationScanner, String[] includedClasses, String[] includedAnnotations, String[] excludedClasses, String[] excludedAnnotations, StepClassParser stepClassParser) {
+    public static List<Plan> extractAnnotatedPlans(AutomationPackageArchive archive, AnnotationScanner annotationScanner, String[] includedClasses, String[] includedAnnotations, String[] excludedClasses, String[] excludedAnnotations, StepClassParser stepClassParser) {
         List<Plan> result = new ArrayList<>();
         Set<String> includedA = new HashSet<>(includedAnnotations == null ? new ArrayList<>() : List.of(includedAnnotations));
         Set<String> excludedA = new HashSet<>(excludedAnnotations == null ? new ArrayList<>() : List.of(excludedAnnotations));
@@ -286,7 +286,7 @@ public abstract class AbstractAutomationPackageReader<T extends AutomationPackag
         classesWithPlans = tmp;
 
         // Create plans for discovered classes
-        classesWithPlans.forEach(c -> result.addAll(getPlansForClass(annotationScanner,c,artifact, stepClassParser)));
+        classesWithPlans.forEach(c -> result.addAll(getPlansForClass(annotationScanner, c, archive, stepClassParser)));
 
         // replace null with empty collections to avoid NPEs
         result.forEach(plan -> {
@@ -315,18 +315,13 @@ public abstract class AbstractAutomationPackageReader<T extends AutomationPackag
         return filtered;
     }
 
-    protected static List<Plan> getPlansForClass(AnnotationScanner annotationScanner, Class<?> klass, File artifact, StepClassParser stepClassParser) {
+    protected static List<Plan> getPlansForClass(AnnotationScanner annotationScanner, Class<?> klass, AutomationPackageArchive archive, StepClassParser stepClassParser) {
 
         List<Plan> result = new ArrayList<>();
         List<StepClassParserResult> plans;
         try {
             plans = stepClassParser.getPlanFromAnnotatedMethods(annotationScanner, klass);
-
-            // TODO: now we only can extract plans with @Plans annotation from File (clarify, how to do that without file)
-            if (artifact != null) {
-                plans.addAll(getPlanFromPlansAnnotation(klass, artifact, stepClassParser));
-            }
-
+            plans.addAll(getPlanFromPlansAnnotation(klass, archive, stepClassParser));
         } catch (Exception e) {
             throw new RuntimeException(
                     "Unhandled exception when searching for plans for class '" + klass.getCanonicalName() + "'", e);
@@ -346,7 +341,7 @@ public abstract class AbstractAutomationPackageReader<T extends AutomationPackag
         return result;
     }
 
-    private static List<StepClassParserResult> getPlanFromPlansAnnotation(Class<?> klass, File artifact, StepClassParser stepClassParser) {
+    private static List<StepClassParserResult> getPlanFromPlansAnnotation(Class<?> klass, AutomationPackageArchive archive, StepClassParser stepClassParser) {
         final List<StepClassParserResult> result = new ArrayList<>();
 
         Plans plans = klass.getAnnotation(Plans.class);
@@ -354,18 +349,14 @@ public abstract class AbstractAutomationPackageReader<T extends AutomationPackag
             for (String file : plans.value()) {
                 StepClassParserResult parserResult = null;
                 try {
-                    URL url = null;
-                    if (file.startsWith("/")) {
-                        url = new URL("jar:file:" + artifact.getAbsolutePath() + "!" + file);
+                    ClassLoader classLoader = null;
+                    File originalFile = archive.getOriginalFile();
+                    if (originalFile != null) {
+                        classLoader = new URLClassLoader(new URL[]{originalFile.toURI().toURL()});
                     } else {
-                        url = new URL("jar:file:" + artifact.getAbsolutePath() + "!/" +
-                                klass.getPackageName().replace(".", "/") + "/" + file);
+                        classLoader = archive.getClassLoader();
                     }
-
-                    JarURLConnection jarURLConnection = (JarURLConnection) url.openConnection();
-                    jarURLConnection.setUseCaches(false);
-                    try (InputStream stream = jarURLConnection.getInputStream()) {
-
+                    try (InputStream stream = classLoader.getResourceAsStream(file)) {
                         if (stream != null) {
                             // create plan from plain-text or from yaml
                             parserResult = stepClassParser.createPlan(klass, file, stream);
