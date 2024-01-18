@@ -399,9 +399,4 @@ public class ResourceManagerImpl implements ResourceManager {
 	public String getResourcesRootPath() {
 		return resourceRootFolder.getPath();
 	}
-
-	@Override
-	public ResourceAccessor getResourceAccessor() {
-		return resourceAccessor;
-	}
 }
