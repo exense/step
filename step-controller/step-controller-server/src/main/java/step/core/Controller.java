@@ -118,12 +118,8 @@ public class Controller {
 				collectionFactory.getCollection("resourceRevisions", ResourceRevision.class));
 		String resourceRootDir = ResourceManagerControllerPlugin.getResourceDir(configuration);
 		ResourceManager resourceManager = new ResourceManagerImpl(new File(resourceRootDir), resourceAccessor, resourceRevisionAccessor);
-		FileResolver fileResolver = new FileResolver(resourceManager);
-		
-		context.setResourceAccessor(resourceAccessor);
 		context.setResourceManager(resourceManager);
-		context.setFileResolver(fileResolver);
-		
+
 		TableRegistry tableRegistry = new TableRegistry();
 		context.put(TableRegistry.class, tableRegistry);		
 		ExecutionAccessorImpl executionAccessor = new ExecutionAccessorImpl(
@@ -171,7 +167,7 @@ public class Controller {
 				.register(new Entity<>(EntityManager.reports, context.getReportAccessor(), ReportNode.class))
 				.register(new Entity<>(EntityManager.tasks, context.getScheduleAccessor(), ExecutiontTaskParameters.class))
 				.register(new Entity<>(EntityManager.users, context.getUserAccessor(), User.class))
-				.register(new ResourceEntity(resourceAccessor, resourceManager, fileResolver, entityManager))
+				.register(new ResourceEntity(resourceAccessor, resourceManager, context.getFileResolver(), entityManager))
 				.register(new Entity<>(EntityManager.resourceRevisions, resourceRevisionAccessor, ResourceRevision.class));
 		
 		entityManager.registerImportHook(new ResourceImporter(context.getResourceManager()));

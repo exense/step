@@ -49,7 +49,7 @@ import step.engine.plugins.ExecutionEnginePlugin;
  * It replaces all the classes implementing the legacy {@link PlanRunner} interface
  *
  */
-public class ExecutionEngine {
+public class ExecutionEngine implements AutoCloseable {
 
 	private static final Logger logger = LoggerFactory.getLogger(ExecutionEngine.class);
 	
@@ -69,7 +69,12 @@ public class ExecutionEngine {
 			this.objectHookRegistry = new ObjectHookRegistry();
 		}
 	}
-	
+
+	@Override
+	public void close() throws Exception {
+		executionEngineContext.close();
+	}
+
 	public static class Builder {
 
 		private final step.core.plugins.PluginManager.Builder<ExecutionEnginePlugin> pluginBuilder;

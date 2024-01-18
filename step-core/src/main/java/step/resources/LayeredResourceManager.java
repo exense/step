@@ -215,11 +215,6 @@ public class LayeredResourceManager implements ResourceManager {
         }
     }
 
-    @Override
-    public ResourceAccessor getResourceAccessor() {
-        return getManagerForPersistence().getResourceAccessor();
-    }
-
     public List<ResourceManager> getResourceManagers() {
         return Collections.unmodifiableList(resourceManagers);
     }

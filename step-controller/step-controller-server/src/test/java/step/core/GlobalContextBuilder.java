@@ -97,15 +97,7 @@ public class GlobalContextBuilder {
 		try {
 			File rootFolder = FileHelper.createTempFolder();
 			ResourceManager resourceManager = new ResourceManagerImpl(rootFolder,resourceAccessor, resourceRevisionAccessor);
-			FileResolver fileResolver = new FileResolver(resourceManager);
-			context.put(ResourceAccessor.class, resourceAccessor);
-			context.put(ResourceManager.class, resourceManager);
-			context.put(FileResolver.class, fileResolver);
-
-			//new since SED-440, class need a full refactoring
-			context.setResourceAccessor(resourceAccessor);
 			context.setResourceManager(resourceManager);
-			context.setFileResolver(fileResolver);
 		} catch (IOException e) {
 			logger.error("Unable to create temp folder for the resource manager", e);
 		}
