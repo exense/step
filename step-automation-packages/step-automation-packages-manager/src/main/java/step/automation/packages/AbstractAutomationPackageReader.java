@@ -88,13 +88,15 @@ public abstract class AbstractAutomationPackageReader<T extends AutomationPackag
      */
     public T readAutomationPackage(AutomationPackageArchive automationPackageArchive, boolean isLocalPackage, boolean scanAnnotations) throws AutomationPackageReadingException {
         try {
-            if (!automationPackageArchive.isAutomationPackage()) {
+            if (automationPackageArchive.hasAutomationPackageDescriptor()) {
+                try (InputStream yamlInputStream = automationPackageArchive.getDescriptorYaml()) {
+                    AutomationPackageDescriptorYaml descriptorYaml = getOrCreateDescriptorReader().readAutomationPackageDescriptor(yamlInputStream, automationPackageArchive.getOriginalFileName());
+                    return buildAutomationPackage(descriptorYaml, automationPackageArchive, isLocalPackage, scanAnnotations);
+                }
+            } else if (automationPackageArchive.getType().equals(AutomationPackageArchiveType.JAVA) && scanAnnotations) {
+                return buildAutomationPackage(null, automationPackageArchive, isLocalPackage, scanAnnotations);
+            } else {
                 return null;
-            }
-
-            try (InputStream yamlInputStream = automationPackageArchive.getDescriptorYaml()) {
-                AutomationPackageDescriptorYaml descriptorYaml = getOrCreateDescriptorReader().readAutomationPackageDescriptor(yamlInputStream, automationPackageArchive.getOriginalFileName());
-                return buildAutomationPackage(descriptorYaml, automationPackageArchive, isLocalPackage, scanAnnotations);
             }
         } catch (IOException ex) {
             throw new AutomationPackageReadingException("Unable to read the automation package", ex);
@@ -103,15 +105,25 @@ public abstract class AbstractAutomationPackageReader<T extends AutomationPackag
 
     protected T buildAutomationPackage(AutomationPackageDescriptorYaml descriptor, AutomationPackageArchive archive, boolean isLocalPackage, boolean scanAnnotations) throws AutomationPackageReadingException {
         T res = newContentInstance();
-        res.setName(descriptor.getName());
+        res.setName(resolveName(descriptor, archive));
 
         if (scanAnnotations) {
             fillAutomationPackageWithAnnotatedKeywordsAndPlans(archive, isLocalPackage, res);
         }
 
         // apply imported fragments recursively
-        fillAutomationPackageWithImportedFragments(res, descriptor, archive);
+        if (descriptor != null) {
+            fillAutomationPackageWithImportedFragments(res, descriptor, archive);
+        }
         return res;
+    }
+
+    private String resolveName(AutomationPackageDescriptorYaml descriptor, AutomationPackageArchive archive) {
+        if (descriptor != null) {
+            return descriptor.getName();
+        } else {
+            return Objects.requireNonNullElse(archive.getOriginalFileName(), "local-automation-package");
+        }
     }
 
     protected abstract T newContentInstance();

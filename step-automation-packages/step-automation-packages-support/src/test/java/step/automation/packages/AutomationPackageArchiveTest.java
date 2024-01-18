@@ -29,7 +29,7 @@ public class AutomationPackageArchiveTest {
         File automationPackageJar = new File("src/test/resources/samples/step-automation-packages-sample2.jar");
 
         try (AutomationPackageArchive validPackage = new AutomationPackageArchive(automationPackageJar, automationPackageJar.getName())) {
-            Assert.assertTrue(validPackage.isAutomationPackage());
+            Assert.assertTrue(validPackage.hasAutomationPackageDescriptor());
 
             JsonNode actualDescriptor = yamlObjectMapper.readTree(validPackage.getDescriptorYaml());
             JsonNode expectedDescriptor = yamlObjectMapper.readTree(new File("src/test/resources/step/automation/packages/yaml/expectedTestpackDescriptor.yml"));
@@ -47,7 +47,7 @@ public class AutomationPackageArchiveTest {
 
         File malformedPackageJar = new File("src/test/resources/samples/step-automation-packages-malformed.jar");
         try (AutomationPackageArchive malformed = new AutomationPackageArchive(malformedPackageJar, malformedPackageJar.getName())) {
-            boolean isAutomationPackage = malformed.isAutomationPackage();
+            boolean isAutomationPackage = malformed.hasAutomationPackageDescriptor();
             if (isAutomationPackage) {
                 JsonNode malformedDescriptor = yamlObjectMapper.readTree(malformed.getDescriptorYaml());
                 if (malformedDescriptor != null) {

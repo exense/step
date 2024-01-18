@@ -22,6 +22,7 @@ import org.bson.types.ObjectId;
 import org.junit.runners.model.InitializationError;
 import step.automation.packages.AutomationPackageFromClassLoaderProvider;
 import step.automation.packages.AutomationPackageManager;
+import step.automation.packages.junit.AutomationPackagePlans;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;

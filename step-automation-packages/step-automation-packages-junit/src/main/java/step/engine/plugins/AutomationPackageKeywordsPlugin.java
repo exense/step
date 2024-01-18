@@ -21,7 +21,6 @@ package step.engine.plugins;
 import org.bson.types.ObjectId;
 import step.automation.packages.*;
 import step.automation.packages.model.AutomationPackageContent;
-import step.automation.packages.model.AutomationPackageKeyword;
 import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionEngineContext;
 import step.core.execution.OperationMode;
@@ -63,7 +62,7 @@ public class AutomationPackageKeywordsPlugin extends AbstractExecutionEnginePlug
 
         // the automation package should be found in current classloader
         AutomationPackageArchive automationPackageArchive = new AutomationPackageArchive(this.getClass().getClassLoader());
-        if (automationPackageArchive.isAutomationPackage()) {
+        if (automationPackageArchive.hasAutomationPackageDescriptor()) {
             try {
                 AutomationPackageKeywordsAttributesApplier attributesApplier = new AutomationPackageKeywordsAttributesApplier(resourceManager);
                 AutomationPackageContent automationPackageContent = automationPackageManager.getPackageReader().readAutomationPackage(automationPackageArchive, true);
