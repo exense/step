@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.junit;
+package step.junit.runner;
 
 import org.bson.types.ObjectId;
 import org.junit.runners.model.InitializationError;
@@ -26,21 +26,16 @@ import step.automation.packages.junit.AutomationPackagePlans;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
-import step.core.execution.ExecutionEngineContext;
 import step.core.plans.Plan;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
-import step.functions.accessor.FunctionAccessor;
-import step.functions.type.FunctionTypeRegistry;
-import step.junit.runner.AbstractStepRunner;
-import step.junit.runner.StepClassParserResult;
 
 import java.util.Arrays;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public class StepAutomationPackageRunner extends AbstractStepRunner {
+public class Step extends AbstractStepRunner {
 
-	public StepAutomationPackageRunner(Class<?> klass) throws InitializationError {
+	public Step(Class<?> klass) throws InitializationError {
 		super(klass, klass);
 
 		try {

@@ -13,6 +13,7 @@ import step.junit.runners.annotations.Plans;
 @Category(LocalJMeter.class)
 @RunWith(Step.class)
 @Plans({"testAutomation.plan"})
-public class AutomationPackageKeywordsPluginTest {
+@AutomationPackagePlans({"testAutomation.plan"})
+public class StepAutomationPackagesPlanAnnotation {
 
 }

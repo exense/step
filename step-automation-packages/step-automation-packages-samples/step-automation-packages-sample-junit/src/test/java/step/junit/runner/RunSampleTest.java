@@ -19,8 +19,7 @@
 package step.junit.runner;
 
 import org.junit.runner.RunWith;
-import step.automation.packages.junit.StepAutomationPackageRunner;
 
-@RunWith(StepAutomationPackageRunner.class)
+@RunWith(Step.class)
 public class RunSampleTest {
 }
