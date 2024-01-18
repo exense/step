@@ -28,8 +28,6 @@ import java.util.stream.Collectors;
 
 public class LayeredResourceManager implements ResourceManager {
 
-
-    private final LayeredResourceAccessor layeredAccessor = new LayeredResourceAccessor();
     private final List<ResourceManager> resourceManagers = new ArrayList<>();
 
     private ResourceManager permanentResourceManager = null;
@@ -55,7 +53,6 @@ public class LayeredResourceManager implements ResourceManager {
      */
     public void addManager(ResourceManager manager, boolean isPermanent) {
         resourceManagers.add(manager);
-        layeredAccessor.addAccessor(manager.getResourceAccessor());
         if (isPermanent) {
             permanentResourceManager = manager;
         }
@@ -71,7 +68,6 @@ public class LayeredResourceManager implements ResourceManager {
      */
     public void pushManager(ResourceManager manager, boolean isPermanent) {
         resourceManagers.add(0, manager);
-        layeredAccessor.pushAccessor(manager.getResourceAccessor());
         if (isPermanent) {
             permanentResourceManager = manager;
         }
@@ -212,11 +208,6 @@ public class LayeredResourceManager implements ResourceManager {
         for (ResourceManager resourceManager : resourceManagers) {
             resourceManager.cleanup();
         }
-    }
-
-    @Override
-    public ResourceAccessor getResourceAccessor() {
-        return getManagerForPersistence().getResourceAccessor();
     }
 
     public List<ResourceManager> getResourceManagers() {

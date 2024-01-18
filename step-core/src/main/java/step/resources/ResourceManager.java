@@ -121,8 +121,4 @@ public interface ResourceManager {
 	default void cleanup() {
 	}
 
-	default ResourceAccessor getResourceAccessor() {
-		return null;
-	}
-
 }
