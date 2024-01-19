@@ -35,6 +35,7 @@
         <module>step-automation-packages-support</module>
         <module>step-automation-packages-yaml</module>
         <module>step-automation-packages-schema</module>
+        <module>step-automation-packages-junit-model</module>
         <module>step-automation-packages-junit</module>
         <module>step-automation-packages-samples</module>
         <module>step-automation-packages-manager</module>

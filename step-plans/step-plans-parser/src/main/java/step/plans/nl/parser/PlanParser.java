@@ -185,7 +185,7 @@ public class PlanParser {
 	}
 
 	public Plan parseCompositePlanFromPlanReference(Method m, String planReference) throws Exception {
-		InputStream stream = m.getDeclaringClass().getResourceAsStream(planReference);
+		InputStream stream = m.getDeclaringClass().getClassLoader().getResourceAsStream(planReference);
 		if (stream == null) {
 			throw new Exception("Plan '" + planReference + "' was not found for class " + m.getClass().getName());
 		}

@@ -30,6 +30,8 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.List;
 
+import static step.automation.packages.AutomationPackageArchiveType.JAVA;
+
 public class AutomationPackageArchive implements Closeable {
 
     private static final Logger log = LoggerFactory.getLogger(AutomationPackageArchive.class);
@@ -39,17 +41,20 @@ public class AutomationPackageArchive implements Closeable {
     private final File originalFile;
     private final String originalFileName;
     private boolean internalClassLoader = false;
+    private final AutomationPackageArchiveType type;
 
     public AutomationPackageArchive(ClassLoader classLoader) {
         this.classLoader = classLoader;
         this.originalFile = null;
         this.originalFileName = null;
+        this.type = JAVA;
     }
 
     public AutomationPackageArchive(File automationPackageJar, String fileName) throws AutomationPackageReadingException {
         this.internalClassLoader = true;
         this.originalFile = automationPackageJar;
         this.originalFileName = fileName;
+        this.type = JAVA; //Only supported type for now
         try {
             this.classLoader = new URLClassLoader(new URL[]{automationPackageJar.toURI().toURL()}, null);
         } catch (MalformedURLException ex) {
@@ -57,7 +62,7 @@ public class AutomationPackageArchive implements Closeable {
         }
     }
 
-    public boolean isAutomationPackage() {
+    public boolean hasAutomationPackageDescriptor() {
         for (String metadataFile : METADATA_FILES) {
             URL metadataFileUrl = classLoader.getResource(metadataFile);
             if (metadataFileUrl != null) {
@@ -107,5 +112,9 @@ public class AutomationPackageArchive implements Closeable {
         if (internalClassLoader && this.classLoader instanceof Closeable) {
             ((Closeable) this.classLoader).close();
         }
+    }
+
+    public AutomationPackageArchiveType getType() {
+        return type;
     }
 }

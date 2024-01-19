@@ -61,7 +61,7 @@ public class StepJarParser {
         // if artifact is an automation package we need to add keywords from yaml descriptors (annotated keywords have already been included above)
         try (AutomationPackageArchive automationPackageArchive = new AutomationPackageArchive(artifact, artifact.getName())) {
             // add functions from automation package
-            if (automationPackageArchive.isAutomationPackage() && automationPackageReader != null) {
+            if (automationPackageArchive.hasAutomationPackageDescriptor() && automationPackageReader != null) {
                 AutomationPackageContent content = automationPackageReader.readAutomationPackage(automationPackageArchive, false, false);
                 functions.addAll(automationPackagesKeywordAttributesApplier.applySpecialAttributesToKeyword(
                         content.getKeywords(), automationPackageArchive, null, null)
@@ -79,8 +79,9 @@ public class StepJarParser {
         try (AnnotationScanner annotationScanner = AnnotationScanner.forSpecificJar(artifact)) {
             // This code is moved to automation package reader just to be reused in StepJarParser for now.
             // Further the StepJarParser should be completely replaced with automation package functionality
+            AutomationPackageArchive automationPackageArchive = new AutomationPackageArchive(artifact, artifact.getName());
             List<Plan> result = AbstractAutomationPackageReader.extractAnnotatedPlans(
-                    artifact, annotationScanner, includedClasses, includedAnnotations, excludedClasses, excludedAnnotations, stepClassParser
+                    automationPackageArchive, annotationScanner, includedClasses, includedAnnotations, excludedClasses, excludedAnnotations, stepClassParser
             );
 
             // Find all keywords

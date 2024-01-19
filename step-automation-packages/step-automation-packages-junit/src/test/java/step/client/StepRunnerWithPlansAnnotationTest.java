@@ -28,7 +28,7 @@ import step.junit.runners.annotations.Plan;
 import step.junit.runners.annotations.Plans;
 
 @RunWith(Step.class)
-@Plans({"plan2.plan", "plan3.plan", "assertsTest.plan"})
+@Plans({"plans/plan2.plan", "plans/plan3.plan", "plans/assertsTest.plan"})
 @ExecutionParameters({"PARAM_EXEC","Value","PARAM_EXEC2","Value","PARAM_EXEC3","Value"})
 public class StepRunnerWithPlansAnnotationTest extends AbstractKeyword {
 

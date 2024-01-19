@@ -44,7 +44,7 @@ public class StepRunnerTestKeywords extends AbstractKeyword {
 		Assert.assertEquals(Integer.valueOf(777), intInput);
 	}
 
-	@Keyword(planReference = "composite1.plan", schema = "{ \"properties\": { "
+	@Keyword(planReference = "plans/composite1.plan", schema = "{ \"properties\": { "
 			+ "\"myInput\": {\"type\": \"string\", \"default\":\"defaultValueString\"}"
 			+ "}, \"required\" : []}", properties = { "" },
 			description = "Keyword used to explicitly close the current driver.", name="MyCompoInPackage")

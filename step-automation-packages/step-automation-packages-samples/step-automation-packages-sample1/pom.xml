@@ -36,7 +36,7 @@
         </dependency>
         <dependency>
             <groupId>ch.exense.step</groupId>
-            <artifactId>step-junit</artifactId>
+            <artifactId>step-automation-packages-junit-model</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>
