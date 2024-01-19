@@ -59,7 +59,7 @@ public class TimeSeriesService extends AbstractStepServices {
     @Path("")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public TimeSeriesAPIResponse getTimeSeries(FetchBucketsRequest request) {
+    public TimeSeriesAPIResponse getTimeSeries(@NotNull FetchBucketsRequest request) {
         enrichRequestFilter(request);
         return handler.getTimeSeries(request);
     }
@@ -70,7 +70,7 @@ public class TimeSeriesService extends AbstractStepServices {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     // TODO this method should be renamed as it doesn't return measurements but a timeseries
-    public TimeSeriesAPIResponse getMeasurements(FetchBucketsRequest request) {
+    public TimeSeriesAPIResponse getMeasurements(@NotNull FetchBucketsRequest request) {
         enrichRequestFilter(request);
         return handler.getOrBuildTimeSeries(request);
     }
@@ -107,7 +107,7 @@ public class TimeSeriesService extends AbstractStepServices {
     @Path("/rebuild")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public AsyncTaskStatus<Object> rebuildTimeSeries(TimeSeriesRebuildRequest request) {
+    public AsyncTaskStatus<Object> rebuildTimeSeries(@NotNull TimeSeriesRebuildRequest request) {
         String executionId = Objects.requireNonNull(request.getExecutionId(), "executionId not specified");
         return handler.rebuildTimeSeries(executionId);
     }
