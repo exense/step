@@ -1,0 +1,6 @@
+schemaVersion: 1.0.0
+name: "My package"
+fragments:
+  - "keywords.yml"
+  - "plans.yml"
+  - "schedules.yml"

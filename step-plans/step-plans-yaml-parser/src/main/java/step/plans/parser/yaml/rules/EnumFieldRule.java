@@ -18,29 +18,14 @@
  ******************************************************************************/
 package step.plans.parser.yaml.rules;
 
-import jakarta.json.JsonArrayBuilder;
-import jakarta.json.JsonObjectBuilder;
 import jakarta.json.spi.JsonProvider;
+import step.core.yaml.schema.EnumFieldProcessor;
 import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
 
 public class EnumFieldRule implements ArtefactFieldConversionRule {
     @Override
     public JsonSchemaFieldProcessor getJsonSchemaFieldProcessor(JsonProvider jsonProvider) {
-        return (objectClass, field, fieldMetadata, propertiesBuilder, requiredPropertiesOutput) -> {
-            if (field.getType().isEnum()) {
-                JsonObjectBuilder nestedPropertyParamsBuilder = jsonProvider.createObjectBuilder();
-
-                JsonArrayBuilder enumArray = jsonProvider.createArrayBuilder();
-                for (Object enumValue : field.getType().getEnumConstants()) {
-                    enumArray.add(enumValue.toString());
-                }
-                nestedPropertyParamsBuilder.add("enum", enumArray);
-
-                propertiesBuilder.add(fieldMetadata.getFieldName(), nestedPropertyParamsBuilder);
-                return true;
-            }
-            return false;
-        };
+        return new EnumFieldProcessor(jsonProvider);
     }
 
 }

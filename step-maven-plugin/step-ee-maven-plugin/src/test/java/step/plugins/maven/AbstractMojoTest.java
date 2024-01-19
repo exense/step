@@ -32,6 +32,13 @@ public abstract class AbstractMojoTest {
 	public static final String ARTIFACT_ID = "step-functions-plugins-java-handler-test-3";
 	public static final String VERSION_ID = "0.0.0-SNAPSHOT";
 
+	public static final String TEST_INCLUDE_CLASSES = "a.b.c,d.e.f";
+	public static final String TEST_EXCLUDE_CLASSES = "x.y.z";
+	public static final String TEST_INCLUDE_ANNOTATIONS = "annotationA,annotationB";
+	public static final String TEST_EXCLUDE_ANNOTATIONS = "annotationZ";
+
+	public static final String TEST_INCLUDE_PLANS = "plan1,plan2";
+
 	protected static final Tenant TENANT_1 = createTenant1();
 	protected static final Tenant TENANT_2 = createTenant2();
 

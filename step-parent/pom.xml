@@ -69,6 +69,10 @@
 		<commons-lang.version>3.10</commons-lang.version>
 		<jaxb.version>2.3.1</jaxb.version>
 		<slf4j.version>1.7.36</slf4j.version>
+		<apache-jmeter.version>5.4.3</apache-jmeter.version>
+		<logback.version>1.2.11</logback.version>
+
+		<excluded.jmeter.group/>
 	</properties>
 
 	<repositories>
@@ -99,7 +103,7 @@
 		<dependency>
 			<groupId>ch.qos.logback</groupId>
 			<artifactId>logback-classic</artifactId>
-			<version>1.2.11</version>
+			<version>${logback.version}</version>
 		</dependency>
 	</dependencies>
 
@@ -108,6 +112,7 @@
 		<module>../step-agent</module>
 		<module>../step-core-model</module>
 		<module>../step-core</module>
+		<module>../step-automation-packages</module>
 		<module>../step-functions</module>
 		<module>../step-functions-plugins</module>
 		<module>../step-plans</module>
@@ -116,7 +121,6 @@
 		<module>../step-maven-plugin</module>
 		<module>../step-repositories</module>
 		<module>../step-ide</module>
-		<module>../step-junit</module>
 		<module>../step-libs-maven-client</module>
 	</modules>
 
@@ -276,6 +280,11 @@
 					<artifactId>maven-shade-plugin</artifactId>
 					<version>3.1.0</version>
 				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-clean-plugin</artifactId>
+					<version>3.1.0</version>
+				</plugin>
 				<!--This plugin's configuration is used to store Eclipse m2e settings
 					only. It has no influence on the Maven build itself. -->
 				<plugin>
@@ -318,6 +327,15 @@
 
 	<profiles>
 		<profile>
+			<id>SkipJMeterTests</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+			<properties>
+				<excluded.jmeter.group>step.junit.categories.LocalJMeter</excluded.jmeter.group>
+			</properties>
+		</profile>
+		<profile>
 			<!-- Local compilation - no signature -->
 			<id>LocalBuild</id>
 			<activation>
@@ -329,7 +347,7 @@
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-surefire-plugin</artifactId>
 						<configuration>
-							<excludedGroups>ch.exense.commons.test.categories.PerformanceTest</excludedGroups>
+							<excludedGroups>ch.exense.commons.test.categories.PerformanceTest,${excluded.jmeter.group}</excludedGroups>
 						</configuration>
 					</plugin>
 				</plugins>
@@ -345,6 +363,9 @@
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-surefire-plugin</artifactId>
+						<configuration>
+							<excludedGroups>${excluded.jmeter.group}</excludedGroups>
+						</configuration>
 					</plugin>
 				</plugins>
 			</build>
@@ -364,7 +385,7 @@
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-surefire-plugin</artifactId>
 						<configuration>
-							<excludedGroups>ch.exense.commons.test.categories.PerformanceTest</excludedGroups>
+							<excludedGroups>ch.exense.commons.test.categories.PerformanceTest,${excluded.jmeter.group}</excludedGroups>
 						</configuration>
 					</plugin>
 				</plugins>
@@ -404,7 +425,7 @@
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-surefire-plugin</artifactId>
 						<configuration>
-							<excludedGroups>ch.exense.commons.test.categories.PerformanceTest</excludedGroups>
+							<excludedGroups>ch.exense.commons.test.categories.PerformanceTest,${excluded.jmeter.group}</excludedGroups>
 						</configuration>
 					</plugin>
 					<!-- Signature -->
@@ -431,4 +452,5 @@
 			</build>
 		</profile>
 	</profiles>
+
 </project>

@@ -31,10 +31,7 @@ import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ExecutionContext;
 import step.core.variables.UndefinedVariableException;
 import step.core.variables.VariablesManager;
-import step.resources.InvalidResourceFormatException;
-import step.resources.Resource;
-import step.resources.ResourceManager;
-import step.resources.ResourceRevisionContainer;
+import step.resources.*;
 
 
 // TODO refactor this class to remove the ExecutionContext dependency 
@@ -49,11 +46,21 @@ public class ReportNodeAttachmentManager {
 	private ResourceManager resourceManager;
 	
 	private ExecutionContext context;
-	
+
 	public ReportNodeAttachmentManager(ExecutionContext context) {
 		super();
 		this.context = context;
-		this.resourceManager = context.getResourceManager();
+		ResourceManager contextResourceManager = context.getResourceManager();
+
+		if (contextResourceManager != null) {
+			// in case of isolated execution we want to store attachments in permanent resource manager to avoid cleanup
+			if (contextResourceManager instanceof LayeredResourceManager) {
+				ResourceManager permanentManager = ((LayeredResourceManager) contextResourceManager).getPermanentResourceManager();
+				this.resourceManager = permanentManager != null ? permanentManager : contextResourceManager;
+			} else {
+				this.resourceManager = contextResourceManager;
+			}
+		}
 	}
 
 	// Warning: only use this constructor if you know that you will only use the method createAttachmentWithoutQuotaCheck. 

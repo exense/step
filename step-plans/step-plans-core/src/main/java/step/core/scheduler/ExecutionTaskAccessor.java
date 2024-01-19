@@ -26,4 +26,5 @@ public interface ExecutionTaskAccessor extends Accessor<ExecutiontTaskParameters
 
 	Iterator<ExecutiontTaskParameters> getActiveExecutionTasks();
 
+	void createIndexIfNeeded(String fieldName);
 }

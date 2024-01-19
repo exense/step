@@ -24,6 +24,8 @@ import java.util.stream.Stream;
 
 public interface PlanAccessor extends Accessor<Plan> {
 
+    void createIndexIfNeeded(String fieldName);
+
     Stream<Plan> getVisiblePlans();
 
 }

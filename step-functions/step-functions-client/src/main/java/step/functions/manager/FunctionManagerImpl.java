@@ -18,18 +18,17 @@
  ******************************************************************************/
 package step.functions.manager;
 
-import java.util.Map;
-
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionTypeException;
 import step.functions.type.FunctionTypeRegistry;
 import step.functions.type.SetupFunctionException;
+
+import java.util.Map;
 
 public class FunctionManagerImpl implements FunctionManager {
 
@@ -57,6 +56,9 @@ public class FunctionManagerImpl implements FunctionManager {
 
 	private void setupFunction(Function function) throws SetupFunctionException {
 		AbstractFunctionType<Function> type = getFunctionType(function);
+		if (type == null) {
+			throw new SetupFunctionException("Function type is not resolved for " + function.getClass());
+		}
 		type.setupFunction(function);
 		functionRepository.save(function);
 	}

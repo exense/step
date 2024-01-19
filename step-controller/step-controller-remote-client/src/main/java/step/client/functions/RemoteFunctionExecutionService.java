@@ -29,6 +29,7 @@ import jakarta.ws.rs.core.MediaType;
 
 import step.client.AbstractRemoteClient;
 import step.client.credentials.ControllerCredentials;
+import step.core.AbstractStepContext;
 import step.functions.Function;
 import step.functions.execution.FunctionExecutionService;
 import step.functions.execution.TokenLifecycleInterceptor;
@@ -75,6 +76,11 @@ public class RemoteFunctionExecutionService extends AbstractRemoteClient impleme
 	public void returnTokenHandle(String tokenId) {
 		Builder b = requestBuilder("/rest/functions/executor/tokens/"+tokenId+"/return");
 		executeRequest(()->b.post(Entity.json(null)));
+	}
+
+	@Override
+	public <IN, OUT> Output<OUT> callFunction(String tokenHandleId, Function function, FunctionInput<IN> functionInput, Class<OUT> outputClass, AbstractStepContext executionContext) {
+		throw new UnsupportedOperationException("Calling function with execution context is not supported in remote services");
 	}
 
 	@Override

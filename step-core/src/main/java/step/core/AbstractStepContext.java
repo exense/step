@@ -18,6 +18,9 @@
  ******************************************************************************/
 package step.core;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import step.attachments.FileResolver;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicValueResolver;
@@ -25,27 +28,36 @@ import step.expressions.ExpressionHandler;
 import step.resources.*;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 public abstract class AbstractStepContext extends AbstractContext {
 
+	private final UUID contextId = UUID.randomUUID();
 	private ExpressionHandler expressionHandler;
 	private DynamicBeanResolver dynamicBeanResolver;
-	private ResourceAccessor resourceAccessor;
 	private ResourceManager resourceManager;
 	private FileResolver fileResolver;
+	private LoadingCache<String, File> fileResolverCache;
+	// Keep track of the default resource manager created at initialization of the context
+	private LocalResourceManagerImpl localResourceManager;
 
 	protected void setDefaultAttributes() {
 		expressionHandler = new ExpressionHandler();
 		dynamicBeanResolver = new DynamicBeanResolver(new DynamicValueResolver(expressionHandler));
-		resourceAccessor = new InMemoryResourceAccessor();
-		resourceManager = new LocalResourceManagerImpl(new File("resources"), resourceAccessor, new InMemoryResourceRevisionAccessor());
-		fileResolver = new FileResolver(resourceManager);
+		// Create a local resource manager in a dedicated folder per default
+		localResourceManager = new LocalResourceManagerImpl(new File(contextPath() + "/resources"), new InMemoryResourceAccessor(), new InMemoryResourceRevisionAccessor());
+		setResourceManager(localResourceManager);
+	}
+
+	private String contextPath() {
+		return "context_" + contextId;
 	}
 
 	protected void useSourceAttributesFromParentContext(AbstractStepContext parentContext) {
-		resourceAccessor = parentContext.getResourceAccessor();
-		resourceManager = parentContext.getResourceManager();
-		fileResolver = parentContext.getFileResolver();
+		ResourceManager resourceManager = new LayeredResourceManager(parentContext.getResourceManager(), true);
+		setResourceManager(resourceManager);
 	}
 
 	protected void useStandardAttributesFromParentContext(AbstractStepContext parentContext) {
@@ -69,27 +81,39 @@ public abstract class AbstractStepContext extends AbstractContext {
 		this.dynamicBeanResolver = dynamicBeanResolver;
 	}
 
-	public ResourceAccessor getResourceAccessor() {
-		return resourceAccessor;
-	}
-
-	public void setResourceAccessor(ResourceAccessor resourceAccessor) {
-		this.resourceAccessor = resourceAccessor;
-	}
-
 	public ResourceManager getResourceManager() {
 		return resourceManager;
 	}
 
 	public void setResourceManager(ResourceManager resourceManager) {
 		this.resourceManager = resourceManager;
+		updateFileResolver();
 	}
 
 	public FileResolver getFileResolver() {
 		return fileResolver;
 	}
 
-	public void setFileResolver(FileResolver fileResolver) {
-		this.fileResolver = fileResolver;
+	private void updateFileResolver() {
+		this.fileResolver = new FileResolver(resourceManager);
+		this.fileResolverCache = CacheBuilder.newBuilder().concurrencyLevel(4)
+				.maximumSize(1000)
+				.expireAfterWrite(500, TimeUnit.MILLISECONDS)
+				.build(new CacheLoader<>() {
+					public File load(String filepath) {
+						return fileResolver.resolve(filepath);
+					}
+				});
+	}
+
+	public LoadingCache<String, File> getFileResolverCache() {
+		return fileResolverCache;
+	}
+
+	@Override
+	public void close() throws IOException {
+		// Cleanup the default resource manager
+		localResourceManager.cleanup();
+		super.close();
 	}
 }

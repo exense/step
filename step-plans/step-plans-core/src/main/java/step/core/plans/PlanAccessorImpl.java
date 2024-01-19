@@ -31,6 +31,11 @@ public class PlanAccessorImpl extends AbstractAccessor<Plan> implements PlanAcce
 	}
 
 	@Override
+	public void createIndexIfNeeded(String fieldName) {
+		createOrUpdateIndex(fieldName);
+	}
+
+	@Override
 	public Stream<Plan> getVisiblePlans() {
 		return collectionDriver.find(Filters.equals("visible", true), null, null, null, 0);
 	}

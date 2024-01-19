@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.repositories.artifact;
 
+import step.automation.packages.AbstractAutomationPackageReader;
 import step.core.execution.ExecutionContext;
 import step.core.plans.PlanAccessor;
 import step.core.repositories.RepositoryObjectReference;
@@ -37,8 +38,8 @@ public class ResourceArtifactRepository extends AbstractArtifactRepository {
 
 	private final ResourceManager resourceManager;
 
-	public ResourceArtifactRepository(PlanAccessor planAccessor, ResourceManager resourceManager) {
-		super(Set.of(PARAM_RESOURCE_ID), planAccessor); // artifact_id = resource_id
+	public ResourceArtifactRepository(PlanAccessor planAccessor, ResourceManager resourceManager, AbstractAutomationPackageReader<?> automationPackageReader) {
+		super(Set.of(PARAM_RESOURCE_ID), planAccessor, resourceManager, automationPackageReader); // artifact_id = resource_id
 		this.resourceManager = resourceManager;
 	}
 
@@ -54,7 +55,7 @@ public class ResourceArtifactRepository extends AbstractArtifactRepository {
 
 	@Override
 	protected File getArtifact(Map<String, String> repositoryParameters) {
-		String resourceId = getMandatoryRepositoryParameter(repositoryParameters, PARAM_RESOURCE_ID);
+		String resourceId = AbstractArtifactRepository.getMandatoryRepositoryParameter(repositoryParameters, PARAM_RESOURCE_ID);
 		return getResourceFile(resourceId);
 	}
 

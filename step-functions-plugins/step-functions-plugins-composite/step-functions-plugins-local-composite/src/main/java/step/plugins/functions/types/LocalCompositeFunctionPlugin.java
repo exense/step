@@ -27,12 +27,15 @@ import step.core.plugins.Plugin;
 import step.core.scanner.CachedAnnotationScanner;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.engine.plugins.FunctionPlugin;
+import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.type.FunctionTypeRegistry;
 import step.handlers.javahandler.Keyword;
 import step.plans.nl.parser.PlanParser;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 @Plugin(dependencies= {FunctionPlugin.class})
@@ -60,18 +63,27 @@ public class LocalCompositeFunctionPlugin extends AbstractExecutionEnginePlugin 
 
 	public void saveLocalFunctions() {
 		Set<Method> methods = CachedAnnotationScanner.getMethodsWithAnnotation(Keyword.class);
+		List<Function> functions = getLocalCompositeFunctions(methods);
+		for (Function function : functions) {
+			functionAccessor.save(function);
+		}
+	}
+
+	public static List<Function> getLocalCompositeFunctions(Set<Method> methods) {
+		List<Function> functions = new ArrayList<>();
 		for (Method m : methods) {
 			Keyword annotation = m.getAnnotation(Keyword.class);
 
 			// keywords with plan reference are not local functions but composite functions linked with plan
 			if (annotation.planReference() != null && !annotation.planReference().isBlank()) {
 				try {
-					functionAccessor.save(CompositeFunctionUtils.createCompositeFunction(annotation, m, new PlanParser().parseCompositePlanFromPlanReference(m, annotation.planReference())));
+					functions.add(CompositeFunctionUtils.createCompositeFunction(annotation, m, new PlanParser().parseCompositePlanFromPlanReference(m, annotation.planReference())));
 				} catch (Exception ex) {
 					throw new RuntimeException("Unable to prepare local composite", ex);
 				}
 			}
 		}
+		return functions;
 	}
 
 

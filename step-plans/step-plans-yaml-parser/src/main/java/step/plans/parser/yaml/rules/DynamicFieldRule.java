@@ -18,13 +18,11 @@
  ******************************************************************************/
 package step.plans.parser.yaml.rules;
 
-import jakarta.json.JsonObjectBuilder;
 import jakarta.json.spi.JsonProvider;
-import step.core.dynamicbeans.DynamicValue;
+import step.core.yaml.deserializers.YamlDynamicValueDeserializer;
+import step.core.yaml.schema.DynamicValueFieldProcessor;
+import step.core.yaml.serializers.YamlDynamicValueSerializer;
 import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
-import step.plans.parser.yaml.deserializers.YamlDynamicValueDeserializer;
-import step.plans.parser.yaml.schema.YamlDynamicValueJsonSchemaHelper;
-import step.plans.parser.yaml.serializers.YamlDynamicValueSerializer;
 
 /**
  * @see YamlDynamicValueDeserializer
@@ -34,19 +32,7 @@ public class DynamicFieldRule implements ArtefactFieldConversionRule {
 
     @Override
     public JsonSchemaFieldProcessor getJsonSchemaFieldProcessor(JsonProvider jsonProvider) {
-        YamlDynamicValueJsonSchemaHelper dynamicValueHelper = new YamlDynamicValueJsonSchemaHelper(jsonProvider);
-
-        return (objectClass, field, fieldMetadata, propertiesBuilder, requiredPropertiesOutput) -> {
-            if (DynamicValue.class.isAssignableFrom(field.getType())) {
-                JsonObjectBuilder nestedPropertyParamsBuilder = jsonProvider.createObjectBuilder();
-
-                dynamicValueHelper.applyDynamicValueDefForField(field, nestedPropertyParamsBuilder);
-
-                propertiesBuilder.add(fieldMetadata.getFieldName(), nestedPropertyParamsBuilder);
-                return true;
-            }
-            return false;
-        };
+        return new DynamicValueFieldProcessor(jsonProvider);
     }
 
     // SERIALIZER/DESERIALIZER IS NOT REQUIRED, BECAUSE THIS LOGIC IS INCLUDED in YamlDynamicValueSerializer/YamlDynamicValueDeserializer

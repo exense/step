@@ -18,7 +18,6 @@
  ******************************************************************************/
 package step.plugins.jmeter;
 
-import ch.qos.logback.classic.Logger;
 import org.apache.jmeter.config.Arguments;
 import org.apache.jmeter.engine.StandardJMeterEngine;
 import org.apache.jmeter.save.SaveService;
@@ -26,6 +25,7 @@ import org.apache.jmeter.testelement.TestPlan;
 import org.apache.jmeter.util.JMeterUtils;
 import org.apache.jorphan.collections.HashTree;
 import org.apache.jorphan.collections.HashTreeTraverser;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.functions.handler.JsonBasedFunctionHandler;
 import step.functions.io.Input;
@@ -39,6 +39,8 @@ import java.io.File;
 import java.util.Objects;
 
 public class JMeterLocalHandler extends JsonBasedFunctionHandler {
+
+	private static final Logger log = LoggerFactory.getLogger(JMeterLocalHandler.class);
 
 	public static final String JMETER_TESTPLAN = "$jmeter.testplan.file";
 
@@ -75,7 +77,11 @@ public class JMeterLocalHandler extends JsonBasedFunctionHandler {
 		}
 
 		if (rootLogger != null) {
-			appender = new StepAppender(rootLogger);
+			if (rootLogger instanceof ch.qos.logback.classic.Logger) {
+				appender = new StepAppender((ch.qos.logback.classic.Logger) rootLogger);
+			} else {
+				log.warn("rootLogger is not an instance of {}. Actual logger class is {}. The StepAppender cannot be used", ch.qos.logback.classic.Logger.class, rootLogger.getClass());
+			}
 		}
 
 		OutputBuilder out = new OutputBuilder();

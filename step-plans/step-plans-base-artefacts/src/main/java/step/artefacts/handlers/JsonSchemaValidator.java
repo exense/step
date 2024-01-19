@@ -33,7 +33,7 @@ public class JsonSchemaValidator {
 			Schema schema_ = SchemaLoader.load(jsonSchema);
 			schema_.validate(jsonSubject);
 		} catch (JSONException e) {
-			throw new RuntimeException("Error while validating input " + input + " using schema "+schema, e);
+			throw new RuntimeException("Error while validating input \n" + input, e);
 		}
 	}
 }

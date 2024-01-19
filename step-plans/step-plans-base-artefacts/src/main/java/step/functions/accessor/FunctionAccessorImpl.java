@@ -27,4 +27,9 @@ public class FunctionAccessorImpl extends AbstractAccessor<Function> implements 
 	public FunctionAccessorImpl(Collection<Function> collectionDriver) {
 		super(collectionDriver);
 	}
+
+	@Override
+	public void createIndexIfNeeded(String fieldName) {
+		createOrUpdateIndex(fieldName);
+	}
 }

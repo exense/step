@@ -1,34 +1,29 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
 package step.client.executions;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.TimeoutException;
-
+import ch.exense.commons.io.Poller;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.client.Invocation.Builder;
 import jakarta.ws.rs.core.MediaType;
-
 import step.client.AbstractRemoteClient;
 import step.client.credentials.ControllerCredentials;
-import ch.exense.commons.io.Poller;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.model.Execution;
@@ -37,12 +32,15 @@ import step.core.execution.model.ExecutionParameters;
 import step.core.execution.model.ExecutionStatus;
 import step.core.repositories.RepositoryObjectReference;
 
+import java.util.*;
+import java.util.concurrent.TimeoutException;
+
 /**
  * This class provides an API for the execution of plans existing on a remote controller
  *
  */
 public class RemoteExecutionManager extends AbstractRemoteClient {
-	
+
 	public RemoteExecutionManager() {
 		super();
 	}
@@ -50,20 +48,20 @@ public class RemoteExecutionManager extends AbstractRemoteClient {
 	public RemoteExecutionManager(ControllerCredentials credentials) {
 		super(credentials);
 	}
-	
+
 	/**
 	 * Executes a plan located on the controller
-	 *  
+	 *
 	 * @param planId the ID of the plan to be executed.
 	 * @return the execution ID of the execution
 	 */
 	public String execute(String planId) {
 		return execute(planId, new HashMap<>());
 	}
-	
+
 	/**
 	 * Executes a plan located on the controller
-	 * 
+	 *
 	 * @param planId the ID of the plan to be executed.
 	 * @param executionParameters the execution parameters (the drop-downs that are set on the execution screen in the UI)
 	 * @return the execution ID of the execution
@@ -76,20 +74,20 @@ public class RemoteExecutionManager extends AbstractRemoteClient {
 
 	/**
 	 * Executes a plan located on an external repository
-	 * 
+	 *
 	 * @param repositoryId the ID of the repository the Plan is located on
-	 * @param repositoryParameters the parameters to be passed to the repository to locate the plan 
+	 * @param repositoryParameters the parameters to be passed to the repository to locate the plan
 	 * @return the execution ID of the execution
 	 */
 	public String executeFromExternalRepository(String repositoryId, Map<String, String> repositoryParameters) {
 		return executeFromExternalRepository(repositoryId, repositoryParameters, new HashMap<>());
 	}
-	
+
 	/**
 	 * Executes a plan located on an external repository
-	 * 
+	 *
 	 * @param repositoryId the ID of the repository the Plan is located on
-	 * @param repositoryParameters the parameters to be passed to the repository to locate the plan 
+	 * @param repositoryParameters the parameters to be passed to the repository to locate the plan
 	 * @param executionParameters the execution parameters (the drop-downs that are set on the execution screen in the UI)
 	 * @return the execution ID of the execution
 	 */
@@ -101,14 +99,14 @@ public class RemoteExecutionManager extends AbstractRemoteClient {
 		executionParameterObject.setUserID(credentials.getUsername());
 		executionParameterObject.setMode(ExecutionMode.RUN);
 		executionParameterObject.setCustomParameters(executionParameters);
-		
+
 		return execute(executionParameterObject);
 	}
-	
+
 	/**
 	 * (Advanced) Executes a plan located on the controller using the provided {@link ExecutionParameters} object
-	 * 
-	 * @param executionParameterObject the {@link ExecutionParameters} 
+	 *
+	 * @param executionParameterObject the {@link ExecutionParameters}
 	 * @return the execution ID of the execution
 	 */
 	public String execute(ExecutionParameters executionParameterObject) {
@@ -116,17 +114,17 @@ public class RemoteExecutionManager extends AbstractRemoteClient {
 		Entity<?> entity = Entity.entity(executionParameterObject, MediaType.APPLICATION_JSON);
 		return executeRequest(()->b.post(entity, String.class));
 	}
-	
+
 	/**
 	 * Stop an execution
-	 * 
-	 * @param executionId the ID of the execution to be stopped 
+	 *
+	 * @param executionId the ID of the execution to be stopped
 	 */
 	public void stop(String executionId) {
 		Builder b = requestBuilder("/rest/executions/"+executionId+"/stop");
 		executeRequest(()->b.get());
 	}
-	
+
 	/**
 	 * @param executionId the ID of the execution
 	 * @return the {@link Execution}
@@ -146,13 +144,13 @@ public class RemoteExecutionManager extends AbstractRemoteClient {
 		throw new RuntimeException("Not supported anymore since 3.17");
 
 	}
-	
+
 	/**
 	 * Waits for an execution to terminate
-	 * 
-	 * @param executionID 
+	 *
+	 * @param executionID
 	 * @param timeout the timeout in ms
-	 * @return 
+	 * @return
 	 * @throws TimeoutException
 	 * @throws InterruptedException
 	 */
@@ -160,17 +158,38 @@ public class RemoteExecutionManager extends AbstractRemoteClient {
 		Poller.waitFor(()->get(executionID).getStatus().equals(ExecutionStatus.ENDED), timeout);
 		return get(executionID);
 	}
-	
+
+	public List<Execution> waitForTermination(List<String> executionIds, long timeout) throws TimeoutException, InterruptedException {
+		Set<String> pendingExecutions = new HashSet<>(executionIds);
+		Poller.waitFor(() -> {
+			Set<String> completed = new HashSet<>();
+			for (String e : pendingExecutions) {
+				if (get(e).getStatus().equals(ExecutionStatus.ENDED)) {
+					completed.add(e);
+				}
+			}
+			pendingExecutions.removeAll(completed);
+			return pendingExecutions.isEmpty();
+		}, timeout);
+
+		List<Execution> res = new ArrayList<>();
+		for (String e : executionIds) {
+			Execution executionObj = get(e);
+			res.add(executionObj);
+		}
+		return res;
+	}
+
 	/**
 	 * Returns a future representing of the execution
-	 * 
+	 *
 	 * @param executionId
 	 * @return
 	 */
 	public RemoteExecutionFuture getFuture(String executionId) {
 		return new RemoteExecutionFuture(this, executionId);
 	}
-	
+
 	protected ControllerCredentials getControllerCredentials() {
 		return credentials;
 	}

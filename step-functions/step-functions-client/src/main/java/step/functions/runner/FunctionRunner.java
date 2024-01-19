@@ -95,7 +95,7 @@ public class FunctionRunner {
 			input.setProperties(properties);
 			
 			try {
-				return functionExecutionService.callFunction(functionExecutionService.getLocalTokenHandle().getID(), function, input, JsonObject.class);
+				return functionExecutionService.callFunction(functionExecutionService.getLocalTokenHandle().getID(), function, input, JsonObject.class, null);
 			} catch (Exception e) {
 				throw new RuntimeException(e);
 			}

@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.plans.parser.yaml.schema;
 
-public class YamlPlanValidationException extends Exception{
+public class YamlPlanValidationException extends RuntimeException{
     public YamlPlanValidationException(String message) {
         super(message);
     }

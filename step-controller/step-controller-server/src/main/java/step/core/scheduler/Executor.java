@@ -18,30 +18,14 @@
  ******************************************************************************/
 package step.core.scheduler;
 
-import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Properties;
-
-import org.quartz.CronScheduleBuilder;
-import org.quartz.CronTrigger;
-import org.quartz.JobBuilder;
-import org.quartz.JobDataMap;
-import org.quartz.JobDetail;
-import org.quartz.JobKey;
-import org.quartz.Scheduler;
-import org.quartz.SchedulerException;
-import org.quartz.SchedulerFactory;
-import org.quartz.Trigger;
-import org.quartz.TriggerBuilder;
+import ch.exense.commons.app.Configuration;
+import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
 import org.quartz.impl.calendar.BaseCalendar;
 import org.quartz.impl.calendar.CronCalendar;
 import org.quartz.impl.matchers.GroupMatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import ch.exense.commons.app.Configuration;
 import step.core.GlobalContext;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
@@ -49,6 +33,11 @@ import step.core.execution.OperationMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.objectenricher.ObjectHookRegistry;
 import step.engine.plugins.ExecutionEnginePlugin;
+
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
 
 import static step.core.accessors.AbstractOrganizableObject.NAME;
 
