@@ -419,12 +419,10 @@ public abstract class AutomationPackageManager {
                         ". No plan with '" + planNameFromSchedule + "' name found for schedule " + schedule.getName());
             }
 
-            ExecutionParameters executionParameters = new ExecutionParameters(plan, schedule.getExecutionParameters());
-            executionParameters.setRepositoryObject(
-                    new RepositoryObjectReference(
-                            RepositoryObjectReference.LOCAL_REPOSITORY_ID, Map.of(RepositoryObjectReference.PLAN_ID, plan.getId().toString())
-                    )
+            RepositoryObjectReference repositoryObjectReference = new RepositoryObjectReference(
+                    RepositoryObjectReference.LOCAL_REPOSITORY_ID, Map.of(RepositoryObjectReference.PLAN_ID, plan.getId().toString())
             );
+            ExecutionParameters executionParameters = new ExecutionParameters(repositoryObjectReference, schedule.getExecutionParameters());
             execTaskParameters.setExecutionsParameters(executionParameters);
             completeExecTasksParameters.add(execTaskParameters);
         }
