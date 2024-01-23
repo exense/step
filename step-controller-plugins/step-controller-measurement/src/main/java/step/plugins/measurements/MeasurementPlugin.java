@@ -172,6 +172,7 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 						measurement.addCustomField(AGENT_URL, functionReport.getAgentUrl());
 						enrichWithNodeAttributes(measurement, node, schedulerTaskId, planId);
 						enrichWithCustomData(measurement, measure.getData());
+						enrichWithExecutionContext(measurement, executionContext);
 						measurements.add(measurement);
 					}
 				}
@@ -185,7 +186,7 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 				measurement.setBegin(node.getExecutionTime());
 				measurement.setType(TYPE_CUSTOM);
 				enrichWithNodeAttributes(measurement, node, schedulerTaskId, planId);
-
+				enrichWithExecutionContext(measurement, executionContext);
 				measurements.add(measurement);
 			}
 
@@ -242,7 +243,9 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 		}
 	}
 
-
+	private void enrichWithExecutionContext(Measurement measurement, ExecutionContext executionContext) {
+		measurement.addCustomFields(executionContext.getObjectEnricher().getAdditionalAttributes());
+	}
 
 
 }
