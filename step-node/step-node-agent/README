@@ -1,1 +1,3 @@
-Official documentation available at: https://step.exense.ch/knowledgebase/3.13/plugins/nodeJS/
+Official documentation available at: https://step.exense.ch/knowledgebase/plugins/nodejs/
+
+To run locally:  npm i; npm start

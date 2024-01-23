@@ -46,6 +46,12 @@ module.exports = function Controller (agentContext, fileManager) {
       console.log('[Controller] No session founds for token: ' + tokenId)
     }
   }
+
+  exports.interruptExecution = function (req, res) {
+    const tokenId = req.params.tokenId
+    console.warn('[Controller] Interrupting token: ' + tokenId + ' : not implemented')
+  }
+
   exports.process = function (req, res) {
     const tokenId = req.params.tokenId
     const keywordName = req.body.payload.function
