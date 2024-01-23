@@ -1,0 +1,25 @@
+version: 1.0.0
+name: "My package"
+plans:
+  - name: Test Plan
+    root:
+      testCase:
+        children:
+          - echo:
+              text: "Just echo"
+  - name: JMeter Plan
+    root:
+      testCase:
+        children:
+          - callKeyword:
+              keyword: "JMeterAutomation"
+              inputs:
+                - url: "www.exense.ch"
+keywords:
+  - JMeter:
+      name: "JMeterAutomation"
+      description: "JMeter keyword 1"
+      useCustomTemplate: true
+      callTimeout: 1000
+      jmeterTestplan: "jmeterProject1/jmeterProject1.jmx"
+      

@@ -1,0 +1,61 @@
+schemaVersion: 1.0.0
+name: "complete-package"
+fragments:
+  - "importPlans.yml"
+  - "importKeywords.yml"
+keywords:
+  - JMeter:
+      name: "JMeter keyword from automation package"
+      description: "JMeter keyword 1"
+      executeLocally: false
+      useCustomTemplate: true
+      callTimeout: 1000
+      jmeterTestplan: "jmeterProject1/jmeterProject1.xml"
+      routing:
+        criteriaA: valueA
+        criteriaB: valueB
+      schema:
+        type: object
+        properties:
+          firstName:
+            type: string
+          lastName:
+            type: string
+        required: [ "firstName", "lastName" ]
+plans:
+  - name: First Plan
+    root:
+      sequence:
+        continueOnError: false
+        children:
+          - if:
+              nodeName: IfBlock
+              condition:
+                expression: "controllerSettings.getSettingByKey('housekeeping_enabled').getValue()=='true'"
+              description: "my description"
+              children:
+                - assert:
+                    actual:
+                      expression: "'status'"
+                    operator: "EQUALS"
+                    doNegate: false
+                    expected:
+                      expression: "'ok'"
+                    customErrorMessage: "my custom error"
+  - name: Second Plan
+    root:
+      testCase:
+        children:
+          - echo:
+              text: "Just echo"
+schedules:
+  - name: "My first task"
+    cron: "*/5 * * * *"
+    executionParameters:
+      environment: "TEST"
+    planName: "First Plan"
+  - name: "My second task"
+    cron: "0 * * * *"
+    executionParameters:
+      environment: "PROD"
+    planName: "Second Plan"

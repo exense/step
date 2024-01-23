@@ -15,6 +15,7 @@ import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.collections.inmemory.InMemoryCollectionFactory;
 import step.core.deployment.WebApplicationConfigurationManager;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.entities.EntityManager;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
 import step.core.execution.model.Execution;
@@ -31,6 +32,7 @@ import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.engine.plugins.FunctionPlugin;
 import step.engine.plugins.LocalFunctionPlugin;
 import step.framework.server.ServiceRegistrationCallback;
+import step.framework.server.tables.TableRegistry;
 import step.handlers.javahandler.AbstractKeyword;
 import step.handlers.javahandler.Keyword;
 import step.planbuilder.BaseArtefacts;
@@ -60,6 +62,8 @@ public class TimeSeriesExecutionPluginTest extends AbstractKeyword {
 	@Before
 	public void setUp() throws Exception {
 		globalContext = new GlobalContext();
+		globalContext.setEntityManager(new EntityManager());
+		globalContext.put(TableRegistry.class, new TableRegistry());
 		globalContext.setCollectionFactory(new InMemoryCollectionFactory(null));
 		globalContext.setServiceRegistrationCallback(new ServiceRegistrationCallback() {
 			@Override

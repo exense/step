@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.artefacts.Check;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.yaml.YamlFields;
 import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
 import step.plans.parser.yaml.YamlPlanFields;
 import step.plans.parser.yaml.deserializers.YamlArtefactFieldDeserializationProcessor;
@@ -63,7 +64,7 @@ public class CheckExpressionRule implements ArtefactFieldConversionRule {
            public boolean deserializeArtefactField(String artefactClass, Map.Entry<String, JsonNode> field, ObjectNode output, ObjectCodec codec) throws JsonProcessingException {
                if ((artefactClass.equals("Check") && field.getKey().equals(YamlPlanFields.CHECK_EXPRESSION_ORIGINAL_FIELD))) {
                    ObjectNode objectNode = createObjectNode(codec);
-                   objectNode.set(YamlPlanFields.DYN_VALUE_EXPRESSION_FIELD, field.getValue());
+                   objectNode.set(YamlFields.DYN_VALUE_EXPRESSION_FIELD, field.getValue());
                    output.set(YamlPlanFields.CHECK_EXPRESSION_ORIGINAL_FIELD, objectNode);
                    return true;
                }

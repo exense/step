@@ -207,6 +207,18 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 		return result;
 	}
 
+	@Operation(description = "Returns the list of report nodes with contributing errors for the given execution")
+	@GET
+	@Path("/{id}/reportnodes-with-errors")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right = "execution-read")
+	public List<ReportNode> getReportNodeWithContributingErrors(@PathParam("id") String executionId, @QueryParam("skip") Integer skip, @QueryParam("limit") Integer limit) {
+		skip = skip != null ? skip : 0;
+		limit = limit != null ? limit : 1000;
+		Stream<ReportNode> stream = getContext().getReportAccessor().getReportNodesWithContributingErrors(executionId, skip, limit);
+		return stream.collect(Collectors.toList());
+	}
+
 	@Operation(description = "Updates the provided execution.")
 	@POST
 	@Produces(MediaType.APPLICATION_JSON)

@@ -20,6 +20,7 @@ package step.functions.type;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -30,6 +31,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 
 import step.attachments.FileResolver;
+import step.core.AbstractStepContext;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
 import step.functions.Function;
@@ -40,6 +42,8 @@ import step.grid.filemanager.FileManagerException;
 import step.grid.filemanager.FileVersion;
 import step.grid.filemanager.FileVersionId;
 import step.grid.tokenpool.Interest;
+import step.resources.LayeredResourceManager;
+import step.resources.ResourceManager;
 
 public abstract class AbstractFunctionType<T extends Function> {
 	
@@ -71,7 +75,7 @@ public abstract class AbstractFunctionType<T extends Function> {
 	protected void setGridFileServices(GridFileService gridFileServices) {
 		this.gridFileServices = gridFileServices;
 	}
-	
+
 	protected void init() {}
 
 	public Map<String, Interest> getTokenSelectionCriteria(T function) {
@@ -87,7 +91,11 @@ public abstract class AbstractFunctionType<T extends Function> {
 	};
 	
 	public abstract Map<String, String> getHandlerProperties(T function);
-	
+
+	public Map<String, String> getHandlerProperties(T function, AbstractStepContext executionContext){
+		return getHandlerProperties(function);
+	}
+
 	public void beforeFunctionCall(T function, Input<?> input, Map<String, String> properties) throws FunctionExecutionException {
 		
 	}
@@ -115,7 +123,7 @@ public abstract class AbstractFunctionType<T extends Function> {
 	/**
 	 * Register the provided file in the grid's file manager for a given property. Enrich the map with the resulting file and version ids.
 	 * @deprecated
-	 * This method register cleanable resource only, use {@link #registerFile(DynamicValue, String, Map, boolean)} instead
+	 * This method register cleanable resource only, use {@link #registerFile(DynamicValue, String, Map, boolean, AbstractStepContext)} instead
 	 * to specifically define whether the registered file can be cleaned up at runtime
 	 *
 	 * @param dynamicValue the {@link DynamicValue} of the file's path to be registered
@@ -124,28 +132,58 @@ public abstract class AbstractFunctionType<T extends Function> {
 	 * @throws RuntimeException
 	 */
 	protected void registerFile(DynamicValue<String> dynamicValue, String propertyName, Map<String, String> props) {
-		registerFile(dynamicValue, propertyName, props, true);
-
+		registerFile(dynamicValue, propertyName, props, true, null);
 	}
 
 	/**
 	 * Register the provided file in the grid's file manager for a given property. Enrich the map with the resulting file and version ids.
 	 *
-	 * @param dynamicValue the {@link DynamicValue} of the file's path to be registered
-	 * @param propertyName the name of the property for which we register the file
-	 * @param props the map will be enriched with the propertyName id and version of the registered file that can be later used to retrieve the file
-	 * @param cleanable whether this version of the file can be cleaned-up at runtime
+	 * @param dynamicValue     the {@link DynamicValue} of the file's path to be registered
+	 * @param propertyName     the name of the property for which we register the file
+	 * @param props            the map will be enriched with the propertyName id and version of the registered file that can be later used to retrieve the file
+	 * @param cleanable        whether this version of the file can be cleaned-up at runtime
+	 * @param executionContext the current execution context (should be defined if the function is executing via ExecutionEngine with
+	 *                         execution-scope resource manager)
 	 * @throws RuntimeException
 	 */
-	protected void registerFile(DynamicValue<String> dynamicValue, String propertyName, Map<String, String> props, boolean cleanable) {
+	protected void registerFile(DynamicValue<String> dynamicValue, String propertyName, Map<String, String> props, boolean cleanable, AbstractStepContext executionContext) {
 		if(dynamicValue!=null) {
 			String filepath = dynamicValue.get();
 			if(filepath!=null && filepath.trim().length()>0) {
-				File file;
+				File file = null;
 				try {
-					// Using the file resolver cache here to avoid performance issues
-					// This method might be called at every function execution
-					file = fileResolverCache.get(filepath);
+					// in case of isolated execution, the execution context contains temporary in-memory resource manager
+					// we have to use this manager instead of the global one from fileResolver
+					if (executionContext != null) {
+						boolean resolvedFromExecutionContext = false;
+						ResourceManager executionContextResourceManager = getResourceManager(executionContext);
+						if (executionContextResourceManager == getResourceManager(null)) {
+							// if resource manager is the global one, it is better to use fileResolverCache for performance reason
+							file = fileResolverCache.get(filepath);
+						} else if (executionContextResourceManager instanceof LayeredResourceManager) {
+							// performance hack - if the resource manager is layered, but contains the only one resource manager
+							// and this resource manager equals to the global one, we can use cached file resolver
+							ResourceManager unwrappedManager = unwrapResourceManager((LayeredResourceManager) executionContextResourceManager);
+							if (unwrappedManager == getResourceManager(null)) {
+								file = fileResolverCache.get(filepath);
+							} else {
+								resolvedFromExecutionContext = true;
+								file = executionContext.getFileResolverCache().get(filepath);
+							}
+						} else {
+							resolvedFromExecutionContext = true;
+							file = executionContext.getFileResolverCache().get(filepath);
+						}
+
+						// just a fallback - if the file is not found in execution context, try to use global file resolver
+						if (resolvedFromExecutionContext && file == null) {
+							file = fileResolverCache.get(filepath);
+						}
+					} else {
+						// Using the file resolver cache here to avoid performance issues
+						// This method might be called at every function execution
+						file = fileResolverCache.get(filepath);
+					}
 				} catch (ExecutionException e) {
 					throw new RuntimeException("Error while resolving path "+filepath, e);
 				}
@@ -182,6 +220,18 @@ public abstract class AbstractFunctionType<T extends Function> {
 		FileVersionId fileVersionId = registerFile(file, cleanable);
 		registerFileVersionId(propertyName, props, fileVersionId);
 	}
+
+	private ResourceManager unwrapResourceManager(LayeredResourceManager layeredResourceManager) {
+		List<ResourceManager> resourceManagers = layeredResourceManager.getResourceManagers();
+		if (resourceManagers.size() != 1) {
+			return null;
+		} else if (resourceManagers.get(0) instanceof LayeredResourceManager) {
+			return unwrapResourceManager((LayeredResourceManager) resourceManagers.get(0));
+		} else {
+			return resourceManagers.get(0);
+		}
+	}
+
 
 	private void registerFileVersionId(String properyName, Map<String, String> props, FileVersionId fileVersionId) {
 		props.put(properyName +".id", fileVersionId.getFileId());
@@ -273,6 +323,16 @@ public abstract class AbstractFunctionType<T extends Function> {
 	
 	protected FileVersionId registerFile(String filepath, boolean cleanable) {
 		return registerFile(new File(filepath), cleanable);
+	}
+
+	protected ResourceManager getResourceManager(AbstractStepContext executionContext) {
+		if (executionContext != null && executionContext.getResourceManager() != null) {
+			return executionContext.getResourceManager();
+		} else if (fileResolver != null) {
+			return fileResolver.getResourceManager();
+		} else {
+			return null;
+		}
 	}
 	
 	public void deleteFunction(T function) throws FunctionTypeException {

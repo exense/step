@@ -26,7 +26,6 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.StreamingOutput;
-import org.bson.types.ObjectId;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import step.core.GlobalContext;
@@ -39,23 +38,18 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
-import java.util.Spliterator;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 @Path("/resources")
 @Tag(name = "Resources")
 public class ResourceServices extends AbstractStepServices {
 
 	protected ResourceManager resourceManager;
-	protected ResourceAccessor resourceAccessor;
-	
+
 	@PostConstruct
 	public void init() throws Exception {
 		super.init();
 		GlobalContext globalContext = getContext();
 		resourceManager = globalContext.getResourceManager();
-		resourceAccessor = globalContext.getResourceAccessor();
 	}
 	
 	@POST
@@ -122,7 +116,7 @@ public class ResourceServices extends AbstractStepServices {
 	@Path("/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Resource getResource(@PathParam("id") String resourceId) throws IOException {
-		return resourceAccessor.get(new ObjectId(resourceId));
+		return resourceManager.getResource(resourceId);
 	}
 	
 	@GET
@@ -153,7 +147,7 @@ public class ResourceServices extends AbstractStepServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public List<Resource> findManyByCriteria(Map<String, String> criteria) {
-		return resourceAccessor.findManyByCriteria(criteria).collect(Collectors.toList());
+		return resourceManager.findManyByCriteria(criteria);
 	}
 	
 	@jakarta.ws.rs.core.Context 

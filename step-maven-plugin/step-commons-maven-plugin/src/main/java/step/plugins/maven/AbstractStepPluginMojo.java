@@ -108,6 +108,11 @@ public abstract class AbstractStepPluginMojo extends AbstractMojo {
 		return new MojoExecutionException(errorText, e);
 	}
 
+	protected MojoExecutionException logAndThrow(String errorText) {
+		getLog().error(errorText);
+		return new MojoExecutionException(errorText);
+	}
+
 	protected ControllerCredentials getControllerCredentials() {
 		return new ControllerCredentials(getUrl(), null);
 	}
@@ -245,20 +250,19 @@ public abstract class AbstractStepPluginMojo extends AbstractMojo {
 	}
 
 	protected String artifactToString(Artifact artifact) {
-		String s = artifact.getGroupId() + ":" + artifact.getArtifactId();
-		if (artifact.getClassifier() != null && !artifact.getClassifier().isEmpty()) {
-			s = s + ":" + artifact.getClassifier();
-		}
-		s = s + ":" + artifact.getVersion();
-		return s;
+		return artifactToString(artifact.getGroupId(), artifact.getArtifactId(), artifact.getClassifier(), artifact.getVersion());
 	}
 
 	protected String artifactToString(org.eclipse.aether.artifact.Artifact artifact) {
-		String s = artifact.getGroupId() + ":" + artifact.getArtifactId();
-		if (artifact.getClassifier() != null && !artifact.getClassifier().isEmpty()) {
-			s = s + ":" + artifact.getClassifier();
+		return artifactToString(artifact.getGroupId(), artifact.getArtifactId(), artifact.getClassifier(), artifact.getVersion());
+	}
+
+	protected String artifactToString(String groupId, String artifactId, String classifier, String version){
+		String s = groupId + ":" + artifactId;
+		if (classifier != null && !classifier.isEmpty()) {
+			s = s + ":" + classifier;
 		}
-		s = s + ":" + artifact.getVersion();
+		s = s + ":" + version;
 		return s;
 	}
 

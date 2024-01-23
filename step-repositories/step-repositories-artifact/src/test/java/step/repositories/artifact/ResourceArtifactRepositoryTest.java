@@ -40,7 +40,7 @@ public class ResourceArtifactRepositoryTest {
     public void setup() throws IOException {
         this.resourceManager = new ResourceManagerImpl(FileHelper.createTempFolder(), new InMemoryResourceAccessor(), new InMemoryResourceRevisionAccessor());
         this.planAccessor = new InMemoryPlanAccessor();
-        this.repo = new ResourceArtifactRepository(planAccessor, resourceManager);
+        this.repo = new ResourceArtifactRepository(planAccessor, resourceManager, null);
     }
 
     @Test
