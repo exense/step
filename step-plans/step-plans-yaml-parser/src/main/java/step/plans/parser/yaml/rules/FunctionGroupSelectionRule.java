@@ -23,11 +23,10 @@ import jakarta.json.JsonObjectBuilder;
 import jakarta.json.spi.JsonProvider;
 import step.artefacts.FunctionGroup;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.yaml.schema.YamlJsonSchemaHelper;
 import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
 import step.plans.parser.yaml.YamlPlanFields;
 import step.plans.parser.yaml.deserializers.YamlArtefactFieldDeserializationProcessor;
-import step.plans.parser.yaml.schema.YamlDynamicValueJsonSchemaHelper;
-import step.plans.parser.yaml.schema.YamlPlanJsonSchemaGenerator;
 import step.plans.parser.yaml.serializers.YamlArtefactFieldSerializationProcessor;
 
 public class FunctionGroupSelectionRule extends DynamicInputsSupport implements ArtefactFieldConversionRule {
@@ -37,7 +36,7 @@ public class FunctionGroupSelectionRule extends DynamicInputsSupport implements 
        return (objectClass, field, fieldMetadata, propertiesBuilder, requiredPropertiesOutput) -> {
             if (FunctionGroup.class.isAssignableFrom(objectClass) && field.getName().equals(YamlPlanFields.TOKEN_SELECTOR_TOKEN_ORIGINAL_FIELD)) {
                 JsonObjectBuilder nestedPropertyParamsBuilder = jsonProvider.createObjectBuilder();
-                YamlPlanJsonSchemaGenerator.addRef(nestedPropertyParamsBuilder, YamlDynamicValueJsonSchemaHelper.DYNAMIC_KEYWORD_INPUTS_DEF);
+                YamlJsonSchemaHelper.addRef(nestedPropertyParamsBuilder, YamlJsonSchemaHelper.DYNAMIC_KEYWORD_INPUTS_DEF);
                 propertiesBuilder.add(fieldMetadata.getFieldName(), nestedPropertyParamsBuilder);
                 return true;
             }

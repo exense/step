@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.core.AbstractStepContext;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.reports.Error;
@@ -175,7 +176,12 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 	}
 
 	@Override
-	public <IN,OUT> Output<OUT> callFunction(String tokenHandleId, Function function, FunctionInput<IN> functionInput, Class<OUT> outputClass) {
+	public <IN, OUT> Output<OUT> callFunction(String tokenHandleId, Function function, FunctionInput<IN> functionInput, Class<OUT> outputClass) {
+		return this.callFunction(tokenHandleId, function, functionInput, outputClass, null);
+	}
+
+	@Override
+	public <IN,OUT> Output<OUT> callFunction(String tokenHandleId, Function function, FunctionInput<IN> functionInput, Class<OUT> outputClass, AbstractStepContext executionContext) {
 		Input<IN> input = new Input<>();
 		input.setPayload(functionInput.getPayload());
 		input.setFunction(function.getAttributes().get(AbstractOrganizableObject.NAME));
@@ -202,7 +208,7 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 			}
 
 
-			Map<String, String> handlerProperties = functionType.getHandlerProperties(function);
+			Map<String, String> handlerProperties = functionType.getHandlerProperties(function, executionContext);
 			if(handlerProperties!=null) {
 				properties.putAll(handlerProperties);
 			}

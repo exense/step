@@ -127,11 +127,11 @@ public class ExportManagerTest {
 		planAccessor = new InMemoryPlanAccessor();
 		functionAccessor = new InMemoryFunctionAccessorImpl();
 		parameterAccessor = new AbstractAccessor<>(new InMemoryCollection<>());
-		
-		resourceManager = new LocalResourceManagerImpl();
-		resourceAccessor = resourceManager.getResourceAccessor();
-		resourceRevisionAccessor = resourceManager.getResourceRevisionAccessor();
-		
+
+		resourceAccessor = new InMemoryResourceAccessor();
+		resourceRevisionAccessor = new InMemoryResourceRevisionAccessor();
+		resourceManager = new LocalResourceManagerImpl(new File("resources"), resourceAccessor, resourceRevisionAccessor);
+
 		entityManager = new EntityManager();
 		
 		FileResolver fileResolver = new FileResolver(resourceManager);

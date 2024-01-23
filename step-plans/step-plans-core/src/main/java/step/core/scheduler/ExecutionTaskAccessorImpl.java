@@ -35,4 +35,9 @@ public class ExecutionTaskAccessorImpl extends AbstractAccessor<ExecutiontTaskPa
 	public Iterator<ExecutiontTaskParameters> getActiveExecutionTasks() {
     	return collectionDriver.find(Filters.equals("active", true), null, null, null, 0).iterator();
 	}
+
+	@Override
+	public void createIndexIfNeeded(String fieldName) {
+		createOrUpdateIndex(fieldName);
+	}
 }

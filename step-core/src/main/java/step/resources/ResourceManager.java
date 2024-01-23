@@ -34,7 +34,7 @@ public interface ResourceManager {
 	String RESOURCE_TYPE_STAGING_CONTEXT_FILES = "stagingContextFiles";
 	String RESOURCE_TYPE_ATTACHMENT = "attachment";
 	String RESOURCE_TYPE_TEMP = "temp";
-	
+
 	/**
 	 * @param resourceType the type of the resource
 	 * @param resourceStream the stream of the resource to be saved
@@ -86,6 +86,15 @@ public interface ResourceManager {
 							String trackingAttribute) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException;
 
 	/**
+	 * Create a copy of the resource from a source repository
+	 * @param resource the source resource {@link Resource} to be copied
+	 * @param sourceResourceManager the source resource manager to copy from
+	 * @return the newly create resource {@link Resource}
+	 * @throws IOException, SimilarResourceExistingException or InvalidResourceFormatException that may occur during the call
+	 */
+	Resource copyResource(Resource resource, ResourceManager sourceResourceManager) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException;
+
+	/**
 	 * Save the content provided as stream to an existing resource.
 	 * This creates a new {@link ResourceRevision} for the {@link Resource}
 	 * and saves the content provided as stream under this revision.
@@ -117,5 +126,8 @@ public interface ResourceManager {
 	void deleteResource(String resourceId);
 
 	List<Resource> findManyByCriteria(Map<String, String> criteria);
+
+	default void cleanup() {
+	}
 
 }

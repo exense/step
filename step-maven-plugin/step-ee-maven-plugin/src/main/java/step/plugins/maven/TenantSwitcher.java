@@ -19,16 +19,27 @@
 package step.plugins.maven;
 
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.logging.Log;
 import step.controller.multitenancy.Tenant;
 import step.controller.multitenancy.client.MultitenancyClient;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 
 public abstract class TenantSwitcher {
 
-	public Tenant switchTenant(String projectName) throws MojoExecutionException {
+	public Tenant switchTenant(String projectName, Log log) throws MojoExecutionException {
+		try {
+			Tenant currentTenant = switchTenant(projectName);
+			log.info("Current tenant: " + currentTenant.getName() + " (" + currentTenant.getProjectId() + "). Is global: " + currentTenant.isGlobal());
+			return currentTenant;
+		} catch (MojoExecutionException e) {
+			log.error("Unable to switch tenant");
+			throw logAndThrow(log, e.getMessage(), e);
+		}
+	}
+
+	protected Tenant switchTenant(String projectName) throws MojoExecutionException {
 		try (MultitenancyClient multitenancyClient = createClient()) {
 			List<Tenant> availableTenants = multitenancyClient.getAvailableTenants();
 
@@ -47,4 +58,9 @@ public abstract class TenantSwitcher {
 	}
 
 	protected abstract MultitenancyClient createClient();
+
+	protected MojoExecutionException logAndThrow(Log log, String errorText, Throwable e) {
+		log.error(errorText, e);
+		return new MojoExecutionException(errorText, e);
+	}
 }

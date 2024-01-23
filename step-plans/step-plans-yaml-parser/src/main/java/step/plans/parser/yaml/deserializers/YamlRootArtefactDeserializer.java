@@ -31,12 +31,14 @@ import step.artefacts.CallFunction;
 import step.core.artefacts.AbstractArtefact;
 import step.core.plans.Plan;
 import step.core.scanner.CachedAnnotationScanner;
+import step.core.yaml.deserializers.StepYamlDeserializer;
+import step.core.yaml.deserializers.StepYamlDeserializerAddOn;
 import step.plans.parser.yaml.YamlPlanFields;
 import step.plans.parser.yaml.YamlPlanReaderExtender;
 import step.plans.parser.yaml.YamlPlanReaderExtension;
 import step.plans.parser.yaml.model.YamlRootArtefact;
 import step.plans.parser.yaml.rules.*;
-import step.plans.parser.yaml.schema.JsonSchemaFieldProcessingException;
+import step.core.yaml.schema.JsonSchemaFieldProcessingException;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -46,13 +48,17 @@ import java.util.Map;
 
 import static step.core.scanner.Classes.newInstanceAs;
 
-public class YamlRootArtefactDeserializer extends JsonDeserializer<YamlRootArtefact> {
+@StepYamlDeserializerAddOn(targetClasses = {YamlRootArtefact.class})
+public class YamlRootArtefactDeserializer extends StepYamlDeserializer<YamlRootArtefact> {
 
     private final List<YamlArtefactFieldDeserializationProcessor> customFieldProcessors;
-    private ObjectMapper stepYamlObjectMapper;
+
+    public YamlRootArtefactDeserializer() {
+        this(null);
+    }
 
     public YamlRootArtefactDeserializer(ObjectMapper stepYamlObjectMapper) {
-        this.stepYamlObjectMapper = stepYamlObjectMapper;
+        super(stepYamlObjectMapper);
         this.customFieldProcessors = prepareFieldProcessors();
     }
 
@@ -96,9 +102,9 @@ public class YamlRootArtefactDeserializer extends JsonDeserializer<YamlRootArtef
         res.add(new KeywordSelectionRule().getArtefactFieldDeserializationProcessor());
         res.add(new KeywordRoutingRule().getArtefactFieldDeserializationProcessor());
         res.add(new FunctionGroupSelectionRule().getArtefactFieldDeserializationProcessor());
-        res.add(new ForBlockRule(stepYamlObjectMapper).getArtefactFieldDeserializationProcessor());
-        res.add(new ForEachBlockRule(stepYamlObjectMapper).getArtefactFieldDeserializationProcessor());
-        res.add(new DataSetRule(stepYamlObjectMapper).getArtefactFieldDeserializationProcessor());
+        res.add(new ForBlockRule(yamlObjectMapper).getArtefactFieldDeserializationProcessor());
+        res.add(new ForEachBlockRule(yamlObjectMapper).getArtefactFieldDeserializationProcessor());
+        res.add(new DataSetRule(yamlObjectMapper).getArtefactFieldDeserializationProcessor());
 
         // for 'Check' we always use the dynamic expression for 'expression' field (static value is not supported)
         res.add(new CheckExpressionRule().getArtefactFieldDeserializationProcessor());
@@ -107,7 +113,7 @@ public class YamlRootArtefactDeserializer extends JsonDeserializer<YamlRootArtef
 
     protected List<YamlArtefactFieldDeserializationProcessor> getExtensions() {
         List<YamlArtefactFieldDeserializationProcessor> extensions = new ArrayList<>();
-        CachedAnnotationScanner.getClassesWithAnnotation(YamlPlanReaderExtension.class).stream()
+        CachedAnnotationScanner.getClassesWithAnnotation(YamlPlanReaderExtension.LOCATION, YamlPlanReaderExtension.class, Thread.currentThread().getContextClassLoader()).stream()
                 .map(newInstanceAs(YamlPlanReaderExtender.class)).forEach(e -> extensions.addAll(e.getDeserializationExtensions()));
         return extensions;
     }

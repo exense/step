@@ -18,18 +18,17 @@
  ******************************************************************************/
 package step.core.scheduler;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.controller.ControllerSettingAccessor;
 import step.core.execution.ExecutionContext;
 import step.core.execution.model.ExecutionParameters;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 public class ExecutionScheduler {
 	
@@ -110,13 +109,19 @@ public class ExecutionScheduler {
 	}
 
 	public boolean addExecutionTask(ExecutiontTaskParameters task) {
+		return addExecutionTask(task, true);
+	}
+
+	public boolean addExecutionTask(ExecutiontTaskParameters task, boolean autoActivateNewTask) {
 		executor.validate(task);
-		if(!taskAlreadyExists(task)) {
+		if (autoActivateNewTask && !taskAlreadyExists(task)) {
 			task.setActive(true);
 		}
 		boolean triggerMayFireAgain = true;
-		if(isSchedulerEnabled() && task.isActive()) {
+
+		if (isSchedulerEnabled() && task.isActive()) {
 			triggerMayFireAgain = executor.schedule(task);
+
 		}
 		//Only save task if it could be scheduled
 		save(task);

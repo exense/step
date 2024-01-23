@@ -31,38 +31,38 @@ import static step.plugins.timeseries.TimeSeriesExecutionPlugin.*;
 @Plugin
 public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 
-    public static final String PLUGINS_TIMESERIES_FLUSH_PERIOD = "plugins.timeseries.flush.period";
-    public static final String RESOLUTION_PERIOD_PROPERTY = "plugins.timeseries.resolution.period";
-    public static final String TIME_SERIES_SAMPLING_LIMIT = "plugins.timeseries.sampling.limit";
-    public static final String TIME_SERIES_COLLECTION_PROPERTY = "timeseries";
-    public static final String TIME_SERIES_ATTRIBUTES_PROPERTY = "plugins.timeseries.attributes";
-    public static final String TIME_SERIES_ATTRIBUTES_DEFAULT = EXECUTION_ID + "," + TASK_ID + "," + PLAN_ID + ",metricType,origin,name,rnStatus,project,type";
+	public static final String PLUGINS_TIMESERIES_FLUSH_PERIOD = "plugins.timeseries.flush.period";
+	public static final String RESOLUTION_PERIOD_PROPERTY = "plugins.timeseries.resolution.period";
+	public static final String TIME_SERIES_SAMPLING_LIMIT = "plugins.timeseries.sampling.limit";
+	public static final String TIME_SERIES_COLLECTION_PROPERTY = "timeseries";
+	public static final String TIME_SERIES_ATTRIBUTES_PROPERTY = "plugins.timeseries.attributes";
+	public static final String TIME_SERIES_ATTRIBUTES_DEFAULT = EXECUTION_ID + "," + TASK_ID + "," + PLAN_ID + ",metricType,origin,name,rnStatus,project,type";
 
-    private TimeSeriesIngestionPipeline mainIngestionPipeline;
-    private TimeSeriesAggregationPipeline aggregationPipeline;
-    private DashboardAccessor dashboardAccessor;
+	private TimeSeriesIngestionPipeline mainIngestionPipeline;
+	private TimeSeriesAggregationPipeline aggregationPipeline;
+	private DashboardAccessor dashboardAccessor;
 
-    @Override
-    public void serverStart(GlobalContext context) {
-        Configuration configuration = context.getConfiguration();
-        Integer resolutionPeriod = configuration.getPropertyAsInteger(RESOLUTION_PERIOD_PROPERTY, 1000);
-        Long flushPeriod = configuration.getPropertyAsLong(PLUGINS_TIMESERIES_FLUSH_PERIOD, 1000L);
-        List<String> attributes = Arrays.asList(configuration.getProperty(TIME_SERIES_ATTRIBUTES_PROPERTY, TIME_SERIES_ATTRIBUTES_DEFAULT).split(","));
-        CollectionFactory collectionFactory = context.getCollectionFactory();
+	@Override
+	public void serverStart(GlobalContext context) {
+		Configuration configuration = context.getConfiguration();
+		Integer resolutionPeriod = configuration.getPropertyAsInteger(RESOLUTION_PERIOD_PROPERTY, 1000);
+		Long flushPeriod = configuration.getPropertyAsLong(PLUGINS_TIMESERIES_FLUSH_PERIOD, 1000L);
+		List<String> attributes = Arrays.asList(configuration.getProperty(TIME_SERIES_ATTRIBUTES_PROPERTY, TIME_SERIES_ATTRIBUTES_DEFAULT).split(","));
+		CollectionFactory collectionFactory = context.getCollectionFactory();
 
-        TimeSeries timeSeries = new TimeSeries(collectionFactory, TIME_SERIES_COLLECTION_PROPERTY, Set.of("eId"), resolutionPeriod);
-        mainIngestionPipeline = timeSeries.newIngestionPipeline(flushPeriod);
-        aggregationPipeline = timeSeries.getAggregationPipeline();
-        TimeSeriesAggregationPipeline aggregationPipeline = timeSeries.getAggregationPipeline();
-        MetricTypeAccessor metricTypeAccessor = new MetricTypeAccessor(context.getCollectionFactory().getCollection(EntityManager.metricTypes, MetricType.class));
-        TimeSeriesBucketingHandler handler = new TimeSeriesBucketingHandler(mainIngestionPipeline, attributes);
+		TimeSeries timeSeries = new TimeSeries(collectionFactory, TIME_SERIES_COLLECTION_PROPERTY, Set.of("eId"), resolutionPeriod);
+		mainIngestionPipeline = timeSeries.newIngestionPipeline(flushPeriod);
+		aggregationPipeline = timeSeries.getAggregationPipeline();
+		TimeSeriesAggregationPipeline aggregationPipeline = timeSeries.getAggregationPipeline();
+		MetricTypeAccessor metricTypeAccessor = new MetricTypeAccessor(context.getCollectionFactory().getCollection(EntityManager.metricTypes, MetricType.class));
+		TimeSeriesBucketingHandler handler = new TimeSeriesBucketingHandler(mainIngestionPipeline, attributes);
 
-        context.put(TimeSeries.class, timeSeries);
-        context.put(TimeSeriesIngestionPipeline.class, mainIngestionPipeline);
-        context.put(TimeSeriesAggregationPipeline.class, aggregationPipeline);
-        context.put(MetricTypeAccessor.class, metricTypeAccessor);
-        context.put(TimeSeriesBucketingHandler.class, handler);
-        context.getServiceRegistrationCallback().registerService(TimeSeriesService.class);
+		context.put(TimeSeries.class, timeSeries);
+		context.put(TimeSeriesIngestionPipeline.class, mainIngestionPipeline);
+		context.put(TimeSeriesAggregationPipeline.class, aggregationPipeline);
+		context.put(MetricTypeAccessor.class, metricTypeAccessor);
+		context.put(TimeSeriesBucketingHandler.class, handler);
+		context.getServiceRegistrationCallback().registerService(TimeSeriesService.class);
 
         // dashboards
         Collection<DashboardView> dashboardsCollection = context.getCollectionFactory().getCollection(EntityManager.dashboards, DashboardView.class);
@@ -77,14 +77,14 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
         MeasurementPlugin.registerMeasurementHandlers(handler);
         GaugeCollectorRegistry.getInstance().registerHandler(handler);
 
-        WebApplicationConfigurationManager configurationManager = context.require(WebApplicationConfigurationManager.class);
-        configurationManager.registerHook(s -> Map.of(RESOLUTION_PERIOD_PROPERTY, resolutionPeriod.toString()));
-    }
+		WebApplicationConfigurationManager configurationManager = context.require(WebApplicationConfigurationManager.class);
+		configurationManager.registerHook(s -> Map.of(RESOLUTION_PERIOD_PROPERTY, resolutionPeriod.toString()));
+	}
 
-    @Override
-    public ExecutionEnginePlugin getExecutionEnginePlugin() {
-        return new TimeSeriesExecutionPlugin(mainIngestionPipeline, aggregationPipeline);
-    }
+	@Override
+	public ExecutionEnginePlugin getExecutionEnginePlugin() {
+		return new TimeSeriesExecutionPlugin(mainIngestionPipeline, aggregationPipeline);
+	}
 
     private void createLegacyDashboard() {
         boolean legacyDashboardExists = dashboardAccessor.findLegacyDashboards().findFirst().isPresent();
@@ -98,7 +98,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
         }
 
     }
-
+    
     @Override
     public void initializeData(GlobalContext context) {
         //Create legacy dashboards
@@ -185,8 +185,8 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
         });
     }
 
-    @Override
-    public void serverStop(GlobalContext context) {
-        mainIngestionPipeline.close();
-    }
+	@Override
+	public void serverStop(GlobalContext context) {
+		mainIngestionPipeline.close();
+	}
 }

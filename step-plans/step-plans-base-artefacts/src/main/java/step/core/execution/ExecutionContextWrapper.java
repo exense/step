@@ -98,16 +98,6 @@ public class ExecutionContextWrapper extends ExecutionContext {
     }
 
     @Override
-    public ResourceAccessor getResourceAccessor() {
-        return wrappedContext.getResourceAccessor();
-    }
-
-    @Override
-    public void setResourceAccessor(ResourceAccessor resourceAccessor) {
-        wrappedContext.setResourceAccessor(resourceAccessor);
-    }
-
-    @Override
     public ResourceManager getResourceManager() {
         return wrappedContext.getResourceManager();
     }
@@ -120,11 +110,6 @@ public class ExecutionContextWrapper extends ExecutionContext {
     @Override
     public FileResolver getFileResolver() {
         return wrappedContext.getFileResolver();
-    }
-
-    @Override
-    public void setFileResolver(FileResolver fileResolver) {
-        wrappedContext.setFileResolver(fileResolver);
     }
 
     @Override

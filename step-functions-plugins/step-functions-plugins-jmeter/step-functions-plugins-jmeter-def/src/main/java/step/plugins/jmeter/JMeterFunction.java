@@ -18,14 +18,16 @@
  ******************************************************************************/
 package step.plugins.jmeter;
 
+import step.automation.packages.AutomationPackageNamedEntity;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.entities.EntityManager;
 import step.core.entities.EntityReference;
 import step.functions.Function;
 
+@AutomationPackageNamedEntity(name = "JMeter")
 public class JMeterFunction extends Function {
 
-	DynamicValue<String> jmeterTestplan = new DynamicValue<>();
+	private DynamicValue<String> jmeterTestplan = new DynamicValue<>();
 
 	@EntityReference(type=EntityManager.resources)
 	public DynamicValue<String> getJmeterTestplan() {

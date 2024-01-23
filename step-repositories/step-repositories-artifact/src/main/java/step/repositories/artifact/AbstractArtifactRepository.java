@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.artefacts.TestCase;
 import step.artefacts.TestSet;
+import step.automation.packages.AbstractAutomationPackageReader;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.reports.ReportNodeStatus;
@@ -32,9 +33,14 @@ import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
 import step.core.plans.builder.PlanBuilder;
 import step.core.repositories.*;
+import step.repositories.ArtifactRepositoryConstants;
+import step.resources.ResourceManager;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static step.planbuilder.BaseArtefacts.callPlan;
@@ -43,17 +49,15 @@ public abstract class AbstractArtifactRepository extends AbstractRepository {
 
 	protected static final Logger logger = LoggerFactory.getLogger(MavenArtifactRepository.class);
 
-	private static final String PARAM_THREAD_NUMBER = "threads";
-	private static final String PARAM_INCLUDE_CLASSES = "includeClasses";
-	private static final String PARAM_INCLUDE_ANNOTATIONS = "includeAnnotations";
-	private static final String PARAM_EXCLUDE_CLASSES = "excludeClasses";
-	private static final String PARAM_EXCLUDE_ANNOTATIONS = "excludeAnnotations";
 	protected final PlanAccessor planAccessor;
-	protected final StepJarParser stepJarParser = new StepJarParser();
+	protected final ResourceManager resourceManager;
+	protected final StepJarParser stepJarParser;
 
-	public AbstractArtifactRepository(Set<String> canonicalRepositoryParameters, PlanAccessor planAccessor) {
+	public AbstractArtifactRepository(Set<String> canonicalRepositoryParameters, PlanAccessor planAccessor, ResourceManager resourceManager, AbstractAutomationPackageReader<?> automationPackageReader) {
 		super(canonicalRepositoryParameters);
 		this.planAccessor = planAccessor;
+		this.resourceManager = resourceManager;
+		this.stepJarParser = new StepJarParser(resourceManager, automationPackageReader);
 	}
 
 	protected static String getMandatoryRepositoryParameter(Map<String, String> repositoryParameters, String paramKey) {
@@ -89,10 +93,10 @@ public abstract class AbstractArtifactRepository extends AbstractRepository {
 		File artifact = getArtifact(repositoryParameters);
 		File libraries = getLibraries(repositoryParameters);
 
-		String[] includedClasses = repositoryParameters.getOrDefault(PARAM_INCLUDE_CLASSES, ",").split(",");
-		String[] includedAnnotations = repositoryParameters.getOrDefault(PARAM_INCLUDE_ANNOTATIONS, ",").split(",");
-		String[] excludedClasses = repositoryParameters.getOrDefault(PARAM_EXCLUDE_CLASSES, ",").split(",");
-		String[] excludedAnnotations = repositoryParameters.getOrDefault(PARAM_EXCLUDE_ANNOTATIONS, ",").split(",");
+		String[] includedClasses = repositoryParameters.getOrDefault(ArtifactRepositoryConstants.PARAM_INCLUDE_CLASSES, ",").split(",");
+		String[] includedAnnotations = repositoryParameters.getOrDefault(ArtifactRepositoryConstants.PARAM_INCLUDE_ANNOTATIONS, ",").split(",");
+		String[] excludedClasses = repositoryParameters.getOrDefault(ArtifactRepositoryConstants.PARAM_EXCLUDE_CLASSES, ",").split(",");
+		String[] excludedAnnotations = repositoryParameters.getOrDefault(ArtifactRepositoryConstants.PARAM_EXCLUDE_ANNOTATIONS, ",").split(",");
 
 		StepJarParser.PlansParsingResult parsingResult = parsePlans(artifact,libraries,includedClasses,includedAnnotations,excludedClasses,excludedAnnotations);
 		return new ParsedArtifact(artifact, parsingResult);
@@ -122,7 +126,7 @@ public abstract class AbstractArtifactRepository extends AbstractRepository {
 
 	private Plan buildTestSetPlan(ExecutionContext context, Map<String, String> repositoryParameters, ParsedArtifact parsedArtifact) {
 		PlanBuilder planBuilder = PlanBuilder.create();
-		int numberOfThreads = Integer.parseInt(repositoryParameters.getOrDefault(PARAM_THREAD_NUMBER, "0"));
+		int numberOfThreads = Integer.parseInt(repositoryParameters.getOrDefault(ArtifactRepositoryConstants.PARAM_THREAD_NUMBER, "0"));
 		TestSet testSet = new TestSet(numberOfThreads);
 		testSet.addAttribute(AbstractArtefact.NAME, parsedArtifact.artifact.getName());
 

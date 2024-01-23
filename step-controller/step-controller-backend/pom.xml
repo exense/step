@@ -65,7 +65,7 @@
 		</dependency>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
-			<artifactId>step-functions-plugins-jmeter-def</artifactId>
+			<artifactId>step-functions-plugins-jmeter-controller-def</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>

@@ -38,7 +38,7 @@ public class GeneralScriptFunctionControllerPlugin extends AbstractControllerPlu
 	public AbstractWebPlugin getWebPlugin() {
 		Ng2WebPlugin webPlugin = new Ng2WebPlugin();
 		webPlugin.setName("javaPlugin");
-		webPlugin.setEntryPoint("step-enterprise-core/remoteEntry.js");
+		webPlugin.setEntryPoint("default");
 		return webPlugin;
 	}
 }

@@ -27,15 +27,11 @@ import org.slf4j.LoggerFactory;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.objectenricher.ObjectEnricher;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 public class ResourceManagerImpl implements ResourceManager {
 
@@ -87,6 +83,18 @@ public class ResourceManagerImpl implements ResourceManager {
 	}
 
 	@Override
+	public Resource copyResource(Resource resource, ResourceManager sourceResourceManager) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException {
+		File resourceFile = sourceResourceManager.getResourceFile(resource.getId().toHexString()).getResourceFile();
+		ResourceRevisionContainer resourceContainer = createResourceContainer(resource);
+		try (FileInputStream is = new FileInputStream(resourceFile)) {
+			FileHelper.copy(is, resourceContainer.getOutputStream(), 2048);
+		}
+		resourceContainer.save(false, null);
+		return resourceContainer.getResource();
+	}
+
+
+	@Override
 	public Resource createResource(String resourceType,
 								   boolean isDirectory,
 								   InputStream resourceStream,
@@ -98,6 +106,11 @@ public class ResourceManagerImpl implements ResourceManager {
 		FileHelper.copy(resourceStream, resourceContainer.getOutputStream(), 2048);
 		resourceContainer.save(checkForDuplicates, objectEnricher);
 		return resourceContainer.getResource();
+	}
+
+	private ResourceRevisionContainer createResourceContainer(Resource resource) throws IOException {
+		ResourceRevision revision = createResourceRevisionContainer(resource.getResourceName(), resource);
+		return new ResourceRevisionContainer(resource, revision, this);
 	}
 
 	private ResourceRevisionContainer createResourceContainer(String resourceType, String resourceFileName, boolean isDirectory, String trackingAttribute) throws IOException {
@@ -173,7 +186,7 @@ public class ResourceManagerImpl implements ResourceManager {
 
 	@Override
 	public List<Resource> findManyByCriteria(Map<String, String> attributes) {
-		return StreamSupport.stream(resourceAccessor.findManyByAttributes(attributes), false).collect(Collectors.toList());
+		return resourceAccessor.findManyByCriteria(attributes).collect(Collectors.toList());
 	}
 
 	private List<Resource> getSimilarResources(Resource actualResource, ResourceRevision actualResourceRevision) {
@@ -270,8 +283,8 @@ public class ResourceManagerImpl implements ResourceManager {
 	@Override
 	public Resource getResource(String resourceId) {
 		Resource resource = resourceAccessor.get(new ObjectId(resourceId));
-		if(resource == null) {
-			throw new RuntimeException("The resource with ID "+resourceId+" doesn't exist");
+		if (resource == null) {
+			throw new ResourceMissingException(resourceId);
 		}
 		return resource;
 	}
@@ -386,5 +399,4 @@ public class ResourceManagerImpl implements ResourceManager {
 	public String getResourcesRootPath() {
 		return resourceRootFolder.getPath();
 	}
-
 }

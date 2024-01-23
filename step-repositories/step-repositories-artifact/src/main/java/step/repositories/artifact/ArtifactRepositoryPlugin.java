@@ -21,6 +21,8 @@ package step.repositories.artifact;
 import ch.exense.commons.app.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.automation.packages.AbstractAutomationPackageReader;
+import step.automation.packages.AutomationPackagePlugin;
 import step.core.GlobalContext;
 import step.core.controller.ControllerSettingAccessor;
 import step.core.controller.ControllerSettingPlugin;
@@ -29,7 +31,7 @@ import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.repositories.ArtifactRepositoryConstants;
 
-@Plugin(dependencies = {ControllerSettingPlugin.class})
+@Plugin(dependencies = {ControllerSettingPlugin.class, AutomationPackagePlugin.class})
 public class ArtifactRepositoryPlugin extends AbstractControllerPlugin {
 
     private static final Logger logger = LoggerFactory.getLogger(ArtifactRepositoryPlugin.class);
@@ -42,8 +44,9 @@ public class ArtifactRepositoryPlugin extends AbstractControllerPlugin {
         PlanAccessor planAccessor = context.getPlanAccessor();
         ControllerSettingAccessor controllerSettingAccessor = context.require(ControllerSettingAccessor.class);
         Configuration configuration = context.getConfiguration();
-        MavenArtifactRepository mavenRepository = new MavenArtifactRepository(planAccessor, controllerSettingAccessor, configuration);
-        ResourceArtifactRepository resourceRepository = new ResourceArtifactRepository(planAccessor, context.getResourceManager());
+        AbstractAutomationPackageReader<?> automationPackageReader = context.require(AbstractAutomationPackageReader.class);
+        MavenArtifactRepository mavenRepository = new MavenArtifactRepository(planAccessor, context.getResourceManager(), controllerSettingAccessor, configuration, automationPackageReader);
+        ResourceArtifactRepository resourceRepository = new ResourceArtifactRepository(planAccessor, context.getResourceManager(), automationPackageReader);
         context.getRepositoryObjectManager().registerRepository(MAVEN_REPO_ID, mavenRepository);
         context.getRepositoryObjectManager().registerRepository(RESOURCE_REPO_ID, resourceRepository);
         super.serverStart(context);

@@ -20,7 +20,7 @@ package step.plans.parser.yaml;
 
 import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
 import step.plans.parser.yaml.deserializers.YamlArtefactFieldDeserializationProcessor;
-import step.plans.parser.yaml.schema.YamlPlanJsonSchemaDefinitionCreator;
+import step.core.yaml.schema.JsonSchemaDefinitionCreator;
 import step.plans.parser.yaml.serializers.YamlArtefactFieldSerializationProcessor;
 
 import java.util.ArrayList;
@@ -66,7 +66,7 @@ public interface YamlPlanReaderExtender {
     /**
      * Defines the additional list of YamlPlanJsonSchemaDefinitionCreator to be used to add some type reusable definitions (sub-schemas) to json the schema
      */
-    default List<YamlPlanJsonSchemaDefinitionCreator> getJsonSchemaDefinitionsExtensions(){
+    default List<JsonSchemaDefinitionCreator> getJsonSchemaDefinitionsExtensions(){
         return new ArrayList<>();
     }
 

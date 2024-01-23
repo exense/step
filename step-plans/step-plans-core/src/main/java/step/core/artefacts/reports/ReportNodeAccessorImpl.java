@@ -129,10 +129,7 @@ public class ReportNodeAccessorImpl extends AbstractAccessor<ReportNode> impleme
 
 	@Override
 	public Stream<ReportNode> getReportNodesWithContributingErrors(String executionID) {
-		assert executionID != null;
-		return collectionDriver.find(
-				Filters.and(List.of(Filters.equals("executionID", executionID), Filters.equals("contributingError", true))),
-				null, null, null, 0);
+		return getReportNodesWithContributingErrors(executionID, null, null);
 	}
 
 	@Override
@@ -140,4 +137,13 @@ public class ReportNodeAccessorImpl extends AbstractAccessor<ReportNode> impleme
 		assert executionID != null;
 		collectionDriver.remove(Filters.equals("executionID", executionID));
 	}
+
+	@Override
+	public Stream<ReportNode> getReportNodesWithContributingErrors(String executionId, Integer skip, Integer limit) {
+		assert executionId != null;
+		return collectionDriver.find(
+				Filters.and(List.of(Filters.equals("executionID", executionId), Filters.equals("contributingError", true))),
+				null, skip, limit, 0);
+	}
+
 }
