@@ -64,18 +64,18 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 		context.put(TimeSeriesBucketingHandler.class, handler);
 		context.getServiceRegistrationCallback().registerService(TimeSeriesService.class);
 
-        // dashboards
-        Collection<DashboardView> dashboardsCollection = context.getCollectionFactory().getCollection(EntityManager.dashboards, DashboardView.class);
-        dashboardAccessor = new DashboardAccessor(dashboardsCollection);
-        context.getEntityManager().register(new Entity<>(EntityManager.dashboards, dashboardAccessor, DashboardView.class));
-        context.put(DashboardAccessor.class, dashboardAccessor);
-        context.getServiceRegistrationCallback().registerService(DashboardsService.class);
+		// dashboards
+		Collection<DashboardView> dashboardsCollection = context.getCollectionFactory().getCollection(EntityManager.dashboards, DashboardView.class);
+		dashboardAccessor = new DashboardAccessor(dashboardsCollection);
+		context.getEntityManager().register(new Entity<>(EntityManager.dashboards, dashboardAccessor, DashboardView.class));
+		context.put(DashboardAccessor.class, dashboardAccessor);
+		context.getServiceRegistrationCallback().registerService(DashboardsService.class);
 
-        TableRegistry tableRegistry = context.get(TableRegistry.class);
-        tableRegistry.register(EntityManager.dashboards, new Table<>(dashboardsCollection, "dashboard-read", true));
+		TableRegistry tableRegistry = context.get(TableRegistry.class);
+		tableRegistry.register(EntityManager.dashboards, new Table<>(dashboardsCollection, "dashboard-read", true));
 
-        MeasurementPlugin.registerMeasurementHandlers(handler);
-        GaugeCollectorRegistry.getInstance().registerHandler(handler);
+		MeasurementPlugin.registerMeasurementHandlers(handler);
+		GaugeCollectorRegistry.getInstance().registerHandler(handler);
 
 		WebApplicationConfigurationManager configurationManager = context.require(WebApplicationConfigurationManager.class);
 		configurationManager.registerHook(s -> Map.of(RESOLUTION_PERIOD_PROPERTY, resolutionPeriod.toString()));
@@ -86,23 +86,23 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 		return new TimeSeriesExecutionPlugin(mainIngestionPipeline, aggregationPipeline);
 	}
 
-    private void createLegacyDashboard() {
-        boolean legacyDashboardExists = dashboardAccessor.findLegacyDashboards().findFirst().isPresent();
-        if (!legacyDashboardExists) {
-            DashboardView dashboard = new DashboardView();
-            dashboard.setName("Performance Dashboard");
-            dashboard.setDescription("Default dashboard displaying performance of all executions");
-            dashboard.getMetadata().put("isLegacy", true);
-            dashboard.getMetadata().put("link", "analytics");
-            dashboardAccessor.save(dashboard);
-        }
+	private void createLegacyDashboard() {
+		boolean legacyDashboardExists = dashboardAccessor.findLegacyDashboards().findFirst().isPresent();
+		if (!legacyDashboardExists) {
+			DashboardView dashboard = new DashboardView();
+			dashboard.setName("Performance Dashboard");
+			dashboard.setDescription("Default dashboard displaying performance of all executions");
+			dashboard.getMetadata().put("isLegacy", true);
+			dashboard.getMetadata().put("link", "analytics");
+			dashboardAccessor.save(dashboard);
+		}
 
-    }
-    
-    @Override
-    public void initializeData(GlobalContext context) {
-        //Create legacy dashboards
-        createLegacyDashboard();
+	}
+
+	@Override
+	public void initializeData(GlobalContext context) {
+		//Create legacy dashboards
+		createLegacyDashboard();
 
         MetricAttribute statusAttribute = new MetricAttribute()
                 .setName("rnStatus")
