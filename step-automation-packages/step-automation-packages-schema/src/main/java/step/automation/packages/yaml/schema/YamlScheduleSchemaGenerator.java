@@ -51,21 +51,8 @@ public class YamlScheduleSchemaGenerator {
      */
     public JsonObjectBuilder createScheduleDefs() throws JsonSchemaPreparationException {
         JsonObjectBuilder defsBuilder = jsonProvider.createObjectBuilder();
-
-        JsonObjectBuilder res = jsonProvider.createObjectBuilder();
-        res.add("type", "object");
-
-        JsonObjectBuilder schedulerTaskProperties = jsonProvider.createObjectBuilder();
-
-        List<String> requiredProperties = new ArrayList<>();
-        schemaHelper.extractPropertiesFromClass(this.jsonSchemaCreator, AutomationPackageSchedule.class, schedulerTaskProperties, "scheduler", requiredProperties);
-
-        res.add("properties", schedulerTaskProperties);
-        res.add("additionalProperties", false);
-        schemaHelper.addRequiredProperties(requiredProperties, res);
-
+        JsonObjectBuilder res = schemaHelper.createJsonSchemaForClass(jsonSchemaCreator, AutomationPackageSchedule.class, false);
         defsBuilder.add(SCHEDULE_DEF, res);
-
         return defsBuilder;
     }
 

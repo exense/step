@@ -24,7 +24,6 @@ import jakarta.json.spi.JsonProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.yaml.YamlFields;
-import step.functions.Function;
 import step.handlers.javahandler.jsonschema.JsonInputConverter;
 import step.handlers.javahandler.jsonschema.JsonSchemaCreator;
 import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
@@ -62,9 +61,38 @@ public class YamlJsonSchemaHelper {
 	}
 
 	/**
+	 * Prepares the json schema for class.
+	 * @return the following structure:
+	 * {
+	 *   "type": "object",
+	 *   "properties": {
+	 *     fields extracted from class via reflection
+	 *   },
+	 *   "additionalProperties": false,
+	 *   "required": [...]
+	 * }
+	 */
+	public JsonObjectBuilder createJsonSchemaForClass(JsonSchemaCreator jsonSchemaCreator, Class<?> clazz, boolean additionalProperties) throws JsonSchemaPreparationException {
+		JsonObjectBuilder res = jsonProvider.createObjectBuilder();
+		res.add("type", "object");
+
+		JsonObjectBuilder propertiesBuilder = jsonProvider.createObjectBuilder();
+
+		List<String> requiredProperties = new ArrayList<>();
+		extractPropertiesFromClass(jsonSchemaCreator, clazz, propertiesBuilder, requiredProperties);
+
+		res.add("properties", propertiesBuilder);
+		if(!additionalProperties) {
+			res.add("additionalProperties", additionalProperties);
+		}
+		addRequiredProperties(requiredProperties, res);
+		return res;
+	}
+
+	/**
 	 * Analyzes the class hierarchy and writes all applicable fields to the json schema (output)
 	 */
-	public void extractPropertiesFromClass(JsonSchemaCreator jsonSchemaCreator, Class<?> clazz, JsonObjectBuilder output, String nodeName, List<String> requiredPropertiesOutput) throws JsonSchemaPreparationException {
+	public void extractPropertiesFromClass(JsonSchemaCreator jsonSchemaCreator, Class<?> clazz, JsonObjectBuilder output, List<String> requiredPropertiesOutput) throws JsonSchemaPreparationException {
 		log.info("Preparing json schema for class {}...", clazz);
 
 		// analyze the class hierarchy
@@ -81,11 +109,11 @@ public class YamlJsonSchemaHelper {
 		try {
 			jsonSchemaCreator.processFields(clazz, output, allFieldsInHierarchy, requiredPropertiesOutput);
 		} catch (Exception ex) {
-			throw new JsonSchemaPreparationException("Unable to process yaml node " + nodeName, ex);
+			throw new JsonSchemaPreparationException("Unable to json schema for class " + clazz, ex);
 		}
 	}
 
-	public void addRequiredProperties(List<String> requiredProperties, JsonObjectBuilder propertiesBuilder) {
+	protected void addRequiredProperties(List<String> requiredProperties, JsonObjectBuilder propertiesBuilder) {
 		if (requiredProperties != null && !requiredProperties.isEmpty()) {
 			JsonArrayBuilder requiredBuilder = jsonProvider.createArrayBuilder();
 			for (String requiredProperty : requiredProperties) {
@@ -195,7 +223,29 @@ public class YamlJsonSchemaHelper {
 		}
 	}
 
-	public JsonObjectBuilder createNamedObjectImplDef(String yamlName, Class<?> clazz, JsonSchemaCreator jsonSchemaCreator) throws JsonSchemaPreparationException {
+	/**
+	 * Prepares the json schema for named entity (i.e. there is the top-level node with class name and all nested
+	 * fields are written to nested fields)
+	 *
+	 * @param yamlName the top-level node name (entity name)
+	 * @return the following structure:
+	 * {
+	 *   "type" : "object",
+	 *   "properties" : {
+	 *     "${yamlName}" : {
+	 *       "type" : "object",
+	 *       "properties" : {
+	 *           fields extracted from class via reflection
+	 *       },
+	 *       "required": [...],
+	 *       "additionalProperties": false
+	 *     }
+	 *   },
+	 *   "additionalProperties" : false
+	 * }
+	 *
+	 */
+	public JsonObjectBuilder createNamedObjectImplDef(String yamlName, Class<?> clazz, JsonSchemaCreator jsonSchemaCreator, boolean additionalProperties) throws JsonSchemaPreparationException {
 		JsonObjectBuilder res = jsonProvider.createObjectBuilder();
 		res.add("type", "object");
 
@@ -203,15 +253,9 @@ public class YamlJsonSchemaHelper {
 		JsonObjectBuilder schemaBuilder = jsonProvider.createObjectBuilder();
 
 		// other properties are located in nested object and automatically prepared via reflection
-		JsonObjectBuilder properties = jsonProvider.createObjectBuilder();
+		JsonObjectBuilder propertiesBuilder = createJsonSchemaForClass(jsonSchemaCreator, clazz, additionalProperties);
 
-		List<String> requiredPropertiesOutput = new ArrayList<>();
-		extractPropertiesFromClass(jsonSchemaCreator, clazz, properties, yamlName, requiredPropertiesOutput);
-
-		JsonObjectBuilder propertiesBuilder = jsonProvider.createObjectBuilder().add("type", "object").add("properties", properties);
-		addRequiredProperties(requiredPropertiesOutput, propertiesBuilder);
-
-		schemaBuilder.add(yamlName, propertiesBuilder.add("additionalProperties", false));
+		schemaBuilder.add(yamlName, propertiesBuilder);
 		res.add("properties", schemaBuilder);
 		res.add("additionalProperties", false);
 		return res;

@@ -37,10 +37,8 @@ import step.core.yaml.schema.AggregatingFieldMetadataExtractor;
 import step.core.yaml.schema.JsonSchemaDefinitionCreator;
 import step.core.yaml.schema.YamlJsonSchemaHelper;
 import step.handlers.javahandler.jsonschema.*;
-import step.plans.nl.RootArtefactType;
 import step.plans.parser.yaml.YamlPlanFields;
 import step.plans.parser.yaml.rules.*;
-import step.plans.parser.yaml.ArtefactFieldMetadataExtractor;
 import step.plans.parser.yaml.YamlPlanReaderExtender;
 import step.plans.parser.yaml.YamlPlanReaderExtension;
 
@@ -297,30 +295,9 @@ public class YamlPlanJsonSchemaGenerator {
 	}
 
 	private JsonObjectBuilder createArtefactImplDef(String name, Class<?> artefactClass) throws JsonSchemaPreparationException {
-		JsonObjectBuilder res = jsonProvider.createObjectBuilder();
-		res.add("type", "object");
-
 		// artefact has the top-level property matching the artefact name
-		JsonObjectBuilder artefactNameProperty = jsonProvider.createObjectBuilder();
-
-		// other properties are located in nested object and automatically prepared via reflection
-		JsonObjectBuilder artefactProperties = jsonProvider.createObjectBuilder();
-
-		List<String> requiredProperties = new ArrayList<>();
-		fillArtefactProperties(artefactClass, artefactProperties, name, requiredProperties);
-
-		// use camelCase for artefact names in yaml
-		JsonObjectBuilder propertiesBuilder = jsonProvider.createObjectBuilder().add("type", "object").add("properties", artefactProperties);
-		schemaHelper.addRequiredProperties(requiredProperties, propertiesBuilder);
-
-		artefactNameProperty.add(YamlPlanFields.javaArtefactNameToYaml(name), propertiesBuilder);
-		res.add("properties", artefactNameProperty);
-		res.add("additionalProperties", false);
-		return res;
-	}
-
-	private void fillArtefactProperties(Class<?> artefactClass, JsonObjectBuilder artefactProperties, String artefactName, List<String> requiredPropertiesOutput) throws JsonSchemaPreparationException {
-		schemaHelper.extractPropertiesFromClass(jsonSchemaCreator, artefactClass, artefactProperties, artefactName, requiredPropertiesOutput);
+		String yamlName = YamlPlanFields.javaArtefactNameToYaml(name);
+		return schemaHelper.createNamedObjectImplDef(yamlName, artefactClass, jsonSchemaCreator, true);
 	}
 
 	private JsonObjectBuilder createArtefactDef(Collection<String> artefactImplReferences) {
