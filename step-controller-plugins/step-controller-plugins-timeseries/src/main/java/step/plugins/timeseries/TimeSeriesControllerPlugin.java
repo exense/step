@@ -104,86 +104,86 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 		//Create legacy dashboards
 		createLegacyDashboard();
 
-        MetricAttribute statusAttribute = new MetricAttribute()
-                .setName("rnStatus")
-                .setType(MetricAttributeType.TEXT)
-                .setMetadata(Map.of("knownValues", Arrays.asList("PASSED", "FAILED", "TECHNICAL_ERROR", "INTERRUPTED")))
-                .setDisplayName("Status");
-        MetricAttribute taskAttribute = new MetricAttribute()
-                .setName("taskId")
-                .setType(MetricAttributeType.TEXT)
-                .setMetadata(Map.of("entity", "task"))
-                .setDisplayName("Task");
-        MetricAttribute executionAttribute = new MetricAttribute()
-                .setName("eId")
-                .setType(MetricAttributeType.TEXT)
-                .setMetadata(Map.of("entity", "execution"))
-                .setDisplayName("Execution");
-        MetricAttribute planAttribute = new MetricAttribute()
-                .setName("planId")
-                .setType(MetricAttributeType.TEXT)
-                .setMetadata(Map.of("entity", "plan"))
-                .setDisplayName("Plan");
-        MetricAttribute nameAttribute = new MetricAttribute()
-                .setName("name")
-                .setType(MetricAttributeType.TEXT)
-                .setDisplayName("Name");
-        MetricAttribute errorCodeAttribute = new MetricAttribute()
-                .setName("errorCode")
-                .setDisplayName("Error Code");
+		MetricAttribute statusAttribute = new MetricAttribute()
+				.setName("rnStatus")
+				.setType(MetricAttributeType.TEXT)
+				.setMetadata(Map.of("knownValues", Arrays.asList("PASSED", "FAILED", "TECHNICAL_ERROR", "INTERRUPTED")))
+				.setDisplayName("Status");
+		MetricAttribute taskAttribute = new MetricAttribute()
+				.setName("taskId")
+				.setType(MetricAttributeType.TEXT)
+				.setMetadata(Map.of("entity", "task"))
+				.setDisplayName("Task");
+		MetricAttribute executionAttribute = new MetricAttribute()
+				.setName("eId")
+				.setType(MetricAttributeType.TEXT)
+				.setMetadata(Map.of("entity", "execution"))
+				.setDisplayName("Execution");
+		MetricAttribute planAttribute = new MetricAttribute()
+				.setName("planId")
+				.setType(MetricAttributeType.TEXT)
+				.setMetadata(Map.of("entity", "plan"))
+				.setDisplayName("Plan");
+		MetricAttribute nameAttribute = new MetricAttribute()
+				.setName("name")
+				.setType(MetricAttributeType.TEXT)
+				.setDisplayName("Name");
+		MetricAttribute errorCodeAttribute = new MetricAttribute()
+				.setName("errorCode")
+				.setDisplayName("Error Code");
 
-        // TODO create a builder for units
-        // TODO metrics shouldn't be defined centrally but in each plugin they belong to. Implement a central registration service
-        MetricTypeAccessor metricTypeAccessor = context.require(MetricTypeAccessor.class);
-        List<MetricType> metrics = Arrays.asList(
-                new MetricType()
-                        .setName(EXECUTIONS_COUNT)
-                        .setDisplayName("Execution count")
-                        .setAttributes(Arrays.asList(taskAttribute, executionAttribute, planAttribute))
-                        .setDefaultAggregation(MetricAggregation.SUM)
-                        .setUnit("1")
-                        .setRenderingSettings(new MetricRenderingSettings()
-                        ),
-                new MetricType()
-                        // AVG calculation is enough here. the value is either 0 or 100 for each exec.
-                        .setName(FAILURE_PERCENTAGE)
-                        .setDisplayName("Execution failure percentage")
-                        .setAttributes(Arrays.asList(taskAttribute, executionAttribute, planAttribute))
-                        .setUnit("%")
-                        .setDefaultAggregation(MetricAggregation.AVG)
-                        .setRenderingSettings(new MetricRenderingSettings()),
-                new MetricType()
-                        .setName(FAILURE_COUNT)
-                        .setUnit("1")
-                        .setDisplayName("Execution failure count")
-                        .setAttributes(Arrays.asList(taskAttribute, executionAttribute, planAttribute))
-                        .setDefaultAggregation(MetricAggregation.SUM)
-                        .setRenderingSettings(new MetricRenderingSettings()),
-                new MetricType()
-                        .setName(FAILURES_COUNT_BY_ERROR_CODE)
-                        .setDisplayName("Execution failure count by error code")
-                        .setUnit("1")
-                        .setDefaultGroupingAttributes(Arrays.asList(errorCodeAttribute.getName()))
-                        .setDefaultAggregation(MetricAggregation.SUM)
-                        .setAttributes(Arrays.asList(taskAttribute, executionAttribute, planAttribute, errorCodeAttribute))
-                        .setRenderingSettings(new MetricRenderingSettings()),
-                new MetricType()
-                        .setName(RESPONSE_TIME)
-                        .setDisplayName("Response time")
-                        .setAttributes(Arrays.asList(statusAttribute, nameAttribute, taskAttribute, executionAttribute, planAttribute))
-                        .setDefaultGroupingAttributes(Arrays.asList(nameAttribute.getName()))
-                        .setUnit("ms")
-                        .setDefaultAggregation(MetricAggregation.AVG)
-                        .setRenderingSettings(new MetricRenderingSettings())
-        );
-        metrics.forEach(m -> {
-            MetricType existingMetric = metricTypeAccessor.findByCriteria(Map.of("name", m.getName()));
-            if (existingMetric != null) {
-                m.setId(existingMetric.getId()); // update the metric
-            }
-            metricTypeAccessor.save(m);
-        });
-    }
+		// TODO create a builder for units
+		// TODO metrics shouldn't be defined centrally but in each plugin they belong to. Implement a central registration service
+		MetricTypeAccessor metricTypeAccessor = context.require(MetricTypeAccessor.class);
+		List<MetricType> metrics = Arrays.asList(
+				new MetricType()
+						.setName(EXECUTIONS_COUNT)
+						.setDisplayName("Execution count")
+						.setAttributes(Arrays.asList(taskAttribute, executionAttribute, planAttribute))
+						.setDefaultAggregation(MetricAggregation.SUM)
+						.setUnit("1")
+						.setRenderingSettings(new MetricRenderingSettings()
+						),
+				new MetricType()
+						// AVG calculation is enough here. the value is either 0 or 100 for each exec.
+						.setName(FAILURE_PERCENTAGE)
+						.setDisplayName("Execution failure percentage")
+						.setAttributes(Arrays.asList(taskAttribute, executionAttribute, planAttribute))
+						.setUnit("%")
+						.setDefaultAggregation(MetricAggregation.AVG)
+						.setRenderingSettings(new MetricRenderingSettings()),
+				new MetricType()
+						.setName(FAILURE_COUNT)
+						.setUnit("1")
+						.setDisplayName("Execution failure count")
+						.setAttributes(Arrays.asList(taskAttribute, executionAttribute, planAttribute))
+						.setDefaultAggregation(MetricAggregation.SUM)
+						.setRenderingSettings(new MetricRenderingSettings()),
+				new MetricType()
+						.setName(FAILURES_COUNT_BY_ERROR_CODE)
+						.setDisplayName("Execution failure count by error code")
+						.setUnit("1")
+						.setDefaultGroupingAttributes(Arrays.asList(errorCodeAttribute.getName()))
+						.setDefaultAggregation(MetricAggregation.SUM)
+						.setAttributes(Arrays.asList(taskAttribute, executionAttribute, planAttribute, errorCodeAttribute))
+						.setRenderingSettings(new MetricRenderingSettings()),
+				new MetricType()
+						.setName(RESPONSE_TIME)
+						.setDisplayName("Response time")
+						.setAttributes(Arrays.asList(statusAttribute, nameAttribute, taskAttribute, executionAttribute, planAttribute))
+						.setDefaultGroupingAttributes(Arrays.asList(nameAttribute.getName()))
+						.setUnit("ms")
+						.setDefaultAggregation(MetricAggregation.AVG)
+						.setRenderingSettings(new MetricRenderingSettings())
+		);
+		metrics.forEach(m -> {
+			MetricType existingMetric = metricTypeAccessor.findByCriteria(Map.of("name", m.getName()));
+			if (existingMetric != null) {
+				m.setId(existingMetric.getId()); // update the metric
+			}
+			metricTypeAccessor.save(m);
+		});
+	}
 
 	@Override
 	public void serverStop(GlobalContext context) {
