@@ -23,6 +23,7 @@ import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.automation.packages.AutomationPackageManager;
+import step.core.artefacts.Artefact;
 import step.core.execution.model.*;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectPredicate;
@@ -92,7 +93,7 @@ public class AutomationPackageExecutor {
             for (Plan plan : inMemoryPackageManager.getPackagePlans(packageId)) {
                 PlanFilter planFilter = parameters.getPlanFilter();
 
-                if (planFilter == null || planFilter.isSelected(plan)) {
+                if ((planFilter == null || planFilter.isSelected(plan)) && plan.getRoot().getClass().getAnnotation(Artefact.class).validForStandaloneExecution()) {
                     ExecutionParameters params = parameters.toExecutionParameters();
                     HashMap<String, String> repositoryParameters = new HashMap<>();
                     repositoryParameters.put(IsolatedAutomationPackageRepository.REPOSITORY_PARAM_CONTEXTID, contextId.toString());

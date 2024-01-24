@@ -38,6 +38,7 @@ import step.functions.manager.FunctionManager;
 import step.functions.plugin.FunctionControllerPlugin;
 import step.functions.type.FunctionTypeRegistry;
 import step.resources.ResourceManagerControllerPlugin;
+import step.automation.packages.hooks.AutomationPackageHookRegistry;
 
 @Plugin(dependencies = {ObjectHookControllerPlugin.class, ResourceManagerControllerPlugin.class, FunctionControllerPlugin.class, SchedulerPlugin.class})
 public class AutomationPackagePlugin extends AbstractControllerPlugin {
@@ -66,6 +67,9 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
             log.info("Using the OS implementation of automation package accessor");
             context.put(AbstractAutomationPackageReader.class, new AutomationPackageReaderOS());
         }
+
+        AutomationPackageHookRegistry registry = new AutomationPackageHookRegistry();
+        context.put(AutomationPackageHookRegistry.class, registry);
     }
 
     @Override
@@ -83,7 +87,7 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
                     context.getPlanAccessor(),
                     context.getResourceManager(),
                     context.getScheduleAccessor(),
-                    context.getScheduler(),
+                    context.require(AutomationPackageHookRegistry.class),
                     context.require(AbstractAutomationPackageReader.class)
             );
             context.put(AutomationPackageManager.class, packageManager);

@@ -16,6 +16,24 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
+/*******************************************************************************
+ * Copyright (C) 2020, exense GmbH
+ *
+ * This file is part of STEP
+ *
+ * STEP is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * STEP is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
+ ******************************************************************************/
 package step.automation.packages;
 
 import org.bson.types.ObjectId;
@@ -33,7 +51,6 @@ import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
 import step.core.repositories.RepositoryObjectReference;
-import step.core.scheduler.ExecutionScheduler;
 import step.core.scheduler.ExecutionTaskAccessor;
 import step.core.scheduler.ExecutiontTaskParameters;
 import step.functions.Function;
@@ -43,6 +60,7 @@ import step.functions.type.FunctionTypeException;
 import step.functions.type.FunctionTypeRegistry;
 import step.functions.type.SetupFunctionException;
 import step.resources.*;
+import step.automation.packages.hooks.AutomationPackageHookRegistry;
 
 import java.io.File;
 import java.io.IOException;
@@ -63,10 +81,10 @@ public abstract class AutomationPackageManager {
     protected final FunctionAccessor functionAccessor;
     protected final PlanAccessor planAccessor;
     protected final ExecutionTaskAccessor executionTaskAccessor;
-    protected final ExecutionScheduler executionScheduler;
     protected final AbstractAutomationPackageReader<?> packageReader;
 
     protected final ResourceManager resourceManager;
+    protected final AutomationPackageHookRegistry automationPackageHookRegistry;
     protected boolean isIsolated = false;
 
     /**
@@ -80,7 +98,7 @@ public abstract class AutomationPackageManager {
                                     PlanAccessor planAccessor,
                                     ResourceManager resourceManager,
                                     ExecutionTaskAccessor executionTaskAccessor,
-                                    ExecutionScheduler executionScheduler,
+                                    AutomationPackageHookRegistry automationPackageHookRegistry,
                                     AbstractAutomationPackageReader<?> packageReader) {
         this.automationPackageAccessor = automationPackageAccessor;
 
@@ -94,8 +112,7 @@ public abstract class AutomationPackageManager {
         this.executionTaskAccessor = executionTaskAccessor;
         this.executionTaskAccessor.createIndexIfNeeded(getAutomationPackageTrackingField());
 
-        // TODO: avoid executionScheduler in automation package manager
-        this.executionScheduler = executionScheduler;
+        this.automationPackageHookRegistry = automationPackageHookRegistry;
         this.packageReader = packageReader;
         this.resourceManager = resourceManager;
     }
@@ -346,10 +363,7 @@ public abstract class AutomationPackageManager {
             //make sure the execution parameter of the schedule are enriched too (required to execute in same project
             //as the schedule and populate event bindings
             objectEnricher.accept(execTasksParameter.getExecutionsParameters());
-            if (executionScheduler != null) {
-                // TODO: move this to a dedicated class as part of SED-2594
-                executionScheduler.addExecutionTask(execTasksParameter, false);
-            } else {
+            if (! automationPackageHookRegistry.onCreate(execTasksParameter)) {
                 executionTaskAccessor.save(execTasksParameter);
             }
         }
@@ -484,9 +498,7 @@ public abstract class AutomationPackageManager {
         List<ExecutiontTaskParameters> schedules = getPackageSchedules(automationPackage.getId());
         schedules.forEach(schedule -> {
             try {
-                if (executionScheduler != null) {
-                    executionScheduler.removeExecutionTask(schedule.getId().toString());
-                } else {
+                if (!automationPackageHookRegistry.onDelete(schedule)) {
                     executionTaskAccessor.remove(schedule.getId());
                 }
             } catch (Exception e) {
