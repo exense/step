@@ -18,6 +18,8 @@
  ******************************************************************************/
 package step.plugins.threadmanager;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.artefacts.handlers.CallFunctionHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ExecutionContext;
@@ -30,6 +32,8 @@ import step.grid.client.GridClient;
 @Plugin
 @IgnoreDuringAutoDiscovery
 public class ThreadManagerPlugin extends AbstractExecutionEnginePlugin {
+
+	private static final Logger logger = LoggerFactory.getLogger(ThreadManagerPlugin.class);
 
 	private final ThreadManager threadManager;
 
@@ -79,10 +83,10 @@ public class ThreadManagerPlugin extends AbstractExecutionEnginePlugin {
 				try {
 					gridClient.interruptTokenExecution(tokenId);
 				} catch (Exception e) {
-					// Ignore
+					logger.warn("Error when trying to interrupt the execution for token {}",tokenId,e);
 				}
 			}
 		});
-		super.forceStopExecution(context);
+ 		super.forceStopExecution(context);
 	}
 }

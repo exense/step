@@ -149,7 +149,7 @@ public class ExecutionContext extends AbstractExecutionEngineContext  {
 	}
 	public boolean isInterrupted() {
 		boolean byPass = interruptByPass.get() != null && interruptByPass.get();
-		return !byPass && getStatus() == ExecutionStatus.ABORTING;
+		return !byPass && (getStatus() == ExecutionStatus.ABORTING || getStatus() == ExecutionStatus.FORCING_ABORT);
 	}
 
 	public boolean isSimulation() {

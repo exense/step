@@ -7,4 +7,5 @@ module.exports = function (app, agentContext) {
   app.route('/token/:tokenId/reserve').get(controller.reserveToken)
   app.route('/token/:tokenId/release').get(controller.releaseToken)
   app.route('/token/:tokenId/process').post(controller.process)
+  app.route('/token/:tokenId/interrupt-execution').post(controller.interruptExecution)
 }
