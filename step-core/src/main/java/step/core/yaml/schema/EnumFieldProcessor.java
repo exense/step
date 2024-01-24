@@ -22,6 +22,7 @@ import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObjectBuilder;
 import jakarta.json.spi.JsonProvider;
 import step.handlers.javahandler.jsonschema.FieldMetadata;
+import step.handlers.javahandler.jsonschema.JsonSchemaCreator;
 import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
 import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 
@@ -46,6 +47,11 @@ public class EnumFieldProcessor implements JsonSchemaFieldProcessor {
                 enumArray.add(enumValue.toString());
             }
             nestedPropertyParamsBuilder.add("enum", enumArray);
+
+            // TODO: apply some generic approach to apply default values in json schemas and deserialization
+            if (fieldMetadata.getDefaultValue() != null) {
+                JsonSchemaCreator.addDefaultValue(fieldMetadata.getDefaultValue(), nestedPropertyParamsBuilder, fieldMetadata.getType(), fieldMetadata.getFieldName());
+            }
 
             jsonObjectBuilder.add(fieldMetadata.getFieldName(), nestedPropertyParamsBuilder);
             return true;

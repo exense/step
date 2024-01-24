@@ -51,7 +51,7 @@ public class ForBlockRule implements ArtefactFieldConversionRule {
                     return true;
                 } else if (field.getName().equals(YamlPlanFields.DATA_SOURCE_ORIGINAL_FIELD)) {
                     // data source parameters are represented as several independent fields in yaml
-                    dataSourceFieldsYamlHelper.fillDataSourceJsonSchemaParams(ForBlock.DATA_SOURCE_TYPE, jsonProvider, propertiesBuilder, false);
+                    dataSourceFieldsYamlHelper.fillDataSourceJsonSchemaParams(ForBlock.DATA_SOURCE_TYPE, jsonProvider, propertiesBuilder, false, requiredPropertiesOutput);
                     return true;
                 }
             }

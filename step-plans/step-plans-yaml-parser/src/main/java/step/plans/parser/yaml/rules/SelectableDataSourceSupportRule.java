@@ -78,7 +78,7 @@ public abstract class SelectableDataSourceSupportRule implements ArtefactFieldCo
                         JsonObjectBuilder dataSourceTypeProperty = jsonProvider.createObjectBuilder();
 
                         JsonObjectBuilder dataSourceProperties = jsonProvider.createObjectBuilder();
-                        dataSourceFieldsYamlHelper.fillDataSourceJsonSchemaParams(dataSourceType, jsonProvider, dataSourceProperties, isForWriteEditable());
+                        dataSourceFieldsYamlHelper.fillDataSourceJsonSchemaParams(dataSourceType, jsonProvider, dataSourceProperties, isForWriteEditable(), requiredPropertiesOutput);
 
                         dataSourceTypeProperty.add(dataSourceType, jsonProvider.createObjectBuilder().add("type", "object").add("additionalProperties", false).add("properties", dataSourceProperties));
 

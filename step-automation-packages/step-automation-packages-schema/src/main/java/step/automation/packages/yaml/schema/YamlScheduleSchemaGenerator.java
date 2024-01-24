@@ -28,6 +28,7 @@ import step.handlers.javahandler.jsonschema.JsonSchemaCreator;
 import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class YamlScheduleSchemaGenerator {
 
@@ -55,10 +56,13 @@ public class YamlScheduleSchemaGenerator {
         res.add("type", "object");
 
         JsonObjectBuilder schedulerTaskProperties = jsonProvider.createObjectBuilder();
-        schemaHelper.extractPropertiesFromClass(this.jsonSchemaCreator, AutomationPackageSchedule.class, schedulerTaskProperties, "scheduler");
+
+        List<String> requiredProperties = new ArrayList<>();
+        schemaHelper.extractPropertiesFromClass(this.jsonSchemaCreator, AutomationPackageSchedule.class, schedulerTaskProperties, "scheduler", requiredProperties);
 
         res.add("properties", schedulerTaskProperties);
         res.add("additionalProperties", false);
+        schemaHelper.addRequiredProperties(requiredProperties, res);
 
         defsBuilder.add(SCHEDULE_DEF, res);
 
