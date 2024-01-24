@@ -55,10 +55,10 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<!-- internal dependencies -->
-		<exense-commons.version>2024.1.5-6597d9b8ccbcc87c80531d7f</exense-commons.version>
-		<step-framework.version>2024.1.16-65a6bb32cd2ce56f47f26c06</step-framework.version>
-		<step-grid.version>2024.1.10-659e8959ccbcc87c808a07a6</step-grid.version>
-		<step-api.version>2024.1.8-659bac4accbcc87c8061a552</step-api.version>
+		<exense-commons.version>2.0.7</exense-commons.version>
+		<step-framework.version>2024.1.22-65ae9110cd2ce56f479bffb6</step-framework.version>
+		<step-grid.version>2.0.3</step-grid.version>
+		<step-api.version>1.2.3</step-api.version>
 		<!-- external dependencies -->
 		<junit.version>4.13.1</junit.version>
 		<mockito.version>5.1.1</mockito.version>
@@ -68,11 +68,11 @@
 		<annotation.version>1.3.2</annotation.version>
 		<commons-lang.version>3.10</commons-lang.version>
 		<jaxb.version>2.3.1</jaxb.version>
-		<slf4j.version>1.7.36</slf4j.version>
+		<slf4j.version>2.0.9</slf4j.version>
 		<apache-jmeter.version>5.4.3</apache-jmeter.version>
-		<logback.version>1.2.11</logback.version>
+		<logback.version>1.3.12</logback.version>
 
-		<excluded.jmeter.group/>
+		<excluded.jmeter.group>ch.exense.commons.test.categories.JMeterTest</excluded.jmeter.group>
 	</properties>
 
 	<repositories>

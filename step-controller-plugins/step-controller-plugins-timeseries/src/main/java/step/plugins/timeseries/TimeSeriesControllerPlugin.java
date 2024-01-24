@@ -104,11 +104,33 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 		//Create legacy dashboards
 		createLegacyDashboard();
 
-		MetricAttribute taskAttribute = new MetricAttribute().setName("taskId").setDisplayName("Task");
-		MetricAttribute executionAttribute = new MetricAttribute().setName("eId").setDisplayName("Execution");
-		MetricAttribute planAttribute = new MetricAttribute().setName("planId").setDisplayName("Plan");
-		MetricAttribute nameAttribute = new MetricAttribute().setName("name").setDisplayName("Name");
-		MetricAttribute errorCodeAttribute = new MetricAttribute().setName("errorCode").setDisplayName("Error Code");
+		MetricAttribute statusAttribute = new MetricAttribute()
+				.setName("rnStatus")
+				.setType(MetricAttributeType.TEXT)
+				.setMetadata(Map.of("knownValues", Arrays.asList("PASSED", "FAILED", "TECHNICAL_ERROR", "INTERRUPTED")))
+				.setDisplayName("Status");
+		MetricAttribute taskAttribute = new MetricAttribute()
+				.setName("taskId")
+				.setType(MetricAttributeType.TEXT)
+				.setMetadata(Map.of("entity", "task"))
+				.setDisplayName("Task");
+		MetricAttribute executionAttribute = new MetricAttribute()
+				.setName("eId")
+				.setType(MetricAttributeType.TEXT)
+				.setMetadata(Map.of("entity", "execution"))
+				.setDisplayName("Execution");
+		MetricAttribute planAttribute = new MetricAttribute()
+				.setName("planId")
+				.setType(MetricAttributeType.TEXT)
+				.setMetadata(Map.of("entity", "plan"))
+				.setDisplayName("Plan");
+		MetricAttribute nameAttribute = new MetricAttribute()
+				.setName("name")
+				.setType(MetricAttributeType.TEXT)
+				.setDisplayName("Name");
+		MetricAttribute errorCodeAttribute = new MetricAttribute()
+				.setName("errorCode")
+				.setDisplayName("Error Code");
 
 		// TODO create a builder for units
 		// TODO metrics shouldn't be defined centrally but in each plugin they belong to. Implement a central registration service
@@ -148,7 +170,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 				new MetricType()
 						.setName(RESPONSE_TIME)
 						.setDisplayName("Response time")
-						.setAttributes(Arrays.asList(nameAttribute, taskAttribute, executionAttribute, planAttribute))
+						.setAttributes(Arrays.asList(statusAttribute, nameAttribute, taskAttribute, executionAttribute, planAttribute))
 						.setDefaultGroupingAttributes(Arrays.asList(nameAttribute.getName()))
 						.setUnit("ms")
 						.setDefaultAggregation(MetricAggregation.AVG)
