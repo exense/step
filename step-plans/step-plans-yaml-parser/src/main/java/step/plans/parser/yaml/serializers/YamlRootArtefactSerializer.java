@@ -25,12 +25,13 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import step.core.artefacts.AbstractArtefact;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.scanner.CachedAnnotationScanner;
-import step.plans.parser.yaml.ArtefactFieldMetadataExtractor;
+import step.handlers.javahandler.jsonschema.FieldMetadataExtractor;
 import step.plans.parser.yaml.YamlPlanFields;
 import step.plans.parser.yaml.YamlPlanReaderExtender;
 import step.plans.parser.yaml.YamlPlanReaderExtension;
 import step.plans.parser.yaml.model.YamlRootArtefact;
 import step.plans.parser.yaml.rules.*;
+import step.plans.parser.yaml.schema.YamlPlanJsonSchemaGenerator;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -43,7 +44,7 @@ import static step.core.scanner.Classes.newInstanceAs;
 public class YamlRootArtefactSerializer extends JsonSerializer<YamlRootArtefact> {
 
     private final List<YamlArtefactFieldSerializationProcessor> customFieldProcessors;
-    private final ArtefactFieldMetadataExtractor metadataExtractor;
+    private final FieldMetadataExtractor metadataExtractor;
     private ObjectMapper stepYamlMapper;
 
     public YamlRootArtefactSerializer(ObjectMapper stepYamlMapper) {
@@ -52,8 +53,8 @@ public class YamlRootArtefactSerializer extends JsonSerializer<YamlRootArtefact>
         this.customFieldProcessors = prepareFieldProcessors();
     }
 
-    protected ArtefactFieldMetadataExtractor prepareMetadataExtractor() {
-        return new ArtefactFieldMetadataExtractor();
+    protected FieldMetadataExtractor prepareMetadataExtractor() {
+        return YamlPlanJsonSchemaGenerator.prepareMetadataExtractor();
     }
 
     protected List<YamlArtefactFieldSerializationProcessor> prepareFieldProcessors() {
@@ -93,6 +94,7 @@ public class YamlRootArtefactSerializer extends JsonSerializer<YamlRootArtefact>
         result.addAll(getExtensions());
 
         // -- RULES FOR OS ARTEFACTS
+        // TODO: all these rules for OS artefacts should be taken in the same way (pluggable) via getFieldExtensions
         result.add(new KeywordSelectionRule().getArtefactFieldSerializationProcessor());
         result.add(new KeywordRoutingRule().getArtefactFieldSerializationProcessor());
         result.add(new KeywordInputsRule().getArtefactFieldSerializationProcessor());
