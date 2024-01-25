@@ -22,12 +22,14 @@ import junit.framework.Assert;
 import org.junit.Test;
 import step.core.artefacts.CheckArtefact;
 import step.core.artefacts.handlers.CheckArtefactHandler;
+import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.*;
 import step.core.execution.ExecutionEngine.Builder;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
+import step.core.execution.model.ExecutionStatus;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.InMemoryPlanAccessor;
 import step.core.plans.Plan;
@@ -46,8 +48,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 
 public class ExecutionEngineTest {
 
@@ -65,7 +66,7 @@ public class ExecutionEngineTest {
 		Plan plan = PlanBuilder.create().startBlock(new CheckArtefact()).endBlock().build();
 		PlanRunnerResult result = executionEngine.execute(plan);
 		
-		Assert.assertEquals("CheckArtefact:PASSED:\n", result.getTreeAsString());
+		assertEquals("CheckArtefact:PASSED:\n", result.getTreeAsString());
 		assertEquals(ReportNodeStatus.PASSED, result.getResult());
 	}
 
@@ -93,50 +94,71 @@ public class ExecutionEngineTest {
 		String executionId = executionEngine.initializeExecution(new ExecutionParameters(plan, null));
 		PlanRunnerResult result = executionEngine.execute(executionId);
 		
-		Assert.assertEquals("CheckArtefact:PASSED:\n", result.getTreeAsString());
+		assertEquals("CheckArtefact:PASSED:\n", result.getTreeAsString());
 		assertEquals(ReportNodeStatus.PASSED, result.getResult());
 	}
 	
 	@Test
-	public void testAbortExecution() throws ExecutionEngineException, IOException, TimeoutException, InterruptedException, ExecutionException {
-		ExecutionEngine executionEngine = newExecutionEngine();
+	public void testAbortExecution() throws Exception {
+		for (ExecutionStatus executionStatus : new ExecutionStatus[]{ExecutionStatus.ABORTING, ExecutionStatus.FORCING_ABORT}) {
+			try (ExecutionEngine executionEngine = newExecutionEngine()) {
 
-		Semaphore semaphore = new Semaphore(1);
-		semaphore.acquire();
-		Plan plan = PlanBuilder.create().startBlock(new CheckArtefact(e-> {
-			// Notify execution start
-			semaphore.release();
-			while(!e.isInterrupted()) {
-				try {
-					Thread.sleep(10);
-				} catch (InterruptedException e1) {}
+				Semaphore semaphore = new Semaphore(1);
+				semaphore.acquire();
+				Plan plan = PlanBuilder.create().startBlock(new CheckArtefact(e -> {
+					// Notify execution start
+					semaphore.release();
+					while (!e.isInterrupted()) {
+						try {
+							Thread.sleep(10);
+						} catch (InterruptedException ignored) {
+						}
+					}
+					try {
+						Thread.sleep(500);
+					} catch (InterruptedException ex) {
+						throw new RuntimeException(ex);
+					}
+				})).endBlock().build();
+
+				Future<PlanRunnerResult> future = Executors.newSingleThreadExecutor().submit(() -> executionEngine.execute(plan));
+
+				// Wait for the execution to start
+				assertTrue(semaphore.tryAcquire(10, TimeUnit.SECONDS));
+				List<ExecutionContext> currentExecutions = executionEngine.getCurrentExecutions();
+
+				// The number of executions should now be 1
+				assertEquals(1, currentExecutions.size());
+				ExecutionContext executionContext = currentExecutions.get(0);
+
+				// Abort the execution
+				switch (executionStatus) {
+					case ABORTING:
+						new ExecutionLifecycleManager(executionContext).abort();
+						break;
+					case FORCING_ABORT:
+						new ExecutionLifecycleManager(executionContext).forceAbort();
+						break;
+					default:
+				}
+
+				assertEquals(executionStatus, executionContext.getStatus());
+
+				// Wait for the execution to terminate
+				PlanRunnerResult result = future.get(15,TimeUnit.SECONDS);
+				result.waitForExecutionToTerminate(1000);
+
+				// The number of executions should now be 0
+				currentExecutions = executionEngine.getCurrentExecutions();
+				assertEquals(0, currentExecutions.size());
+
+				assertEquals(ExecutionStatus.ENDED, executionContext.getStatus());
+
+				// TODO the status is reported here as RUNNING which is wrong. Fix this in the future
+				assertEquals(ReportNodeStatus.RUNNING, result.getResult());
 			}
-		})).endBlock().build();
-		
-		Future<PlanRunnerResult> future = Executors.newSingleThreadExecutor().submit(()->executionEngine.execute(plan));
-
-		// Wait for the execution to start
-		semaphore.tryAcquire(10, TimeUnit.SECONDS);
-		List<ExecutionContext> currentExecutions = executionEngine.getCurrentExecutions();
-		
-		// The number of executions should now be 1
-		Assert.assertEquals(1, currentExecutions.size());
-		ExecutionContext executionContext = currentExecutions.get(0);
-		
-		// Abort the execution
-		new ExecutionLifecycleManager(executionContext).abort();
-		
-		// Wait for the execution to terminate
-		PlanRunnerResult result = future.get();
-		result.waitForExecutionToTerminate(1000);
-		
-		// The number of executions should now be 0
-		currentExecutions = executionEngine.getCurrentExecutions();
-		Assert.assertEquals(0, currentExecutions.size());
-		
-		// TODO the status is reported here as RUNNING which is wrong. Fix this in the future
-		assertEquals(ReportNodeStatus.RUNNING, result.getResult());
-	}
+		}
+    }
 	
 	@Test
 	public void testRepository() throws ExecutionEngineException, IOException {
@@ -145,8 +167,8 @@ public class ExecutionEngineTest {
 		PlanRunnerResult result = executionEngine.execute(new ExecutionParameters(new RepositoryObjectReference(TEST_REPOSITORY, newSuccessfulRepositoryImport()), null));
 		
 		assertEquals(ReportNodeStatus.PASSED, result.getResult());
-		Assert.assertEquals("CheckArtefact:PASSED:\n", result.getTreeAsString());
-		Assert.assertTrue(exportCalled);
+		assertEquals("CheckArtefact:PASSED:\n", result.getTreeAsString());
+		assertTrue(exportCalled);
 	}
 	
 	@Test
@@ -158,8 +180,8 @@ public class ExecutionEngineTest {
 		PlanRunnerResult result = executionEngine.execute(executionParameters); 
 		
 		assertEquals(ReportNodeStatus.PASSED, result.getResult());
-		Assert.assertEquals("CheckArtefact:PASSED:\n", result.getTreeAsString());
-		Assert.assertFalse(exportCalled);
+		assertEquals("CheckArtefact:PASSED:\n", result.getTreeAsString());
+		assertFalse(exportCalled);
 	}
 	
 	@Test
@@ -170,9 +192,9 @@ public class ExecutionEngineTest {
 		
 		Execution execution = executionEngine.getExecutionEngineContext().getExecutionAccessor().get(result.getExecutionId());
 		ImportResult importResult = execution.getImportResult();
-		Assert.assertFalse(importResult.isSuccessful());
+		assertFalse(importResult.isSuccessful());
 		String string = importResult.getErrors().get(0);
-		Assert.assertEquals(REPOSITORY_IMPORT_STATUS_ERROR, string);
+		assertEquals(REPOSITORY_IMPORT_STATUS_ERROR, string);
 		assertEquals(ReportNodeStatus.IMPORT_ERROR, result.getResult());
 	}
 
@@ -184,8 +206,8 @@ public class ExecutionEngineTest {
 
 		Execution execution = executionEngine.getExecutionEngineContext().getExecutionAccessor().get(result.getExecutionId());
 		ImportResult importResult = execution.getImportResult();
-		Assert.assertFalse(importResult.isSuccessful());
-		Assert.assertEquals(List.of(VETO_TEST_1, VETO_TEST_2), importResult.getErrors());
+		assertFalse(importResult.isSuccessful());
+		assertEquals(List.of(VETO_TEST_1, VETO_TEST_2), importResult.getErrors());
 		assertEquals(ReportNodeStatus.VETOED, result.getResult());
 	}
 
@@ -232,7 +254,7 @@ public class ExecutionEngineTest {
 		assertNull(actual);
 		
 		assertEquals(ReportNodeStatus.PASSED, result.getResult());
-		Assert.assertEquals("CheckArtefact:PASSED:\n", result.getTreeAsString());
+		assertEquals("CheckArtefact:PASSED:\n", result.getTreeAsString());
 	}
 	
 	private Boolean exportCalled = false; 
@@ -288,7 +310,7 @@ public class ExecutionEngineTest {
 
 	@Plugin
 	@IgnoreDuringAutoDiscovery
-	public class VetoingPlugin extends AbstractExecutionEnginePlugin implements ExecutionVetoer {
+	public static class VetoingPlugin extends AbstractExecutionEnginePlugin implements ExecutionVetoer {
 		@Override
 		public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
 			executionContext.addExecutionVetoer(this);
