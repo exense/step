@@ -436,7 +436,8 @@ public abstract class AutomationPackageManager {
             RepositoryObjectReference repositoryObjectReference = new RepositoryObjectReference(
                     RepositoryObjectReference.LOCAL_REPOSITORY_ID, Map.of(RepositoryObjectReference.PLAN_ID, plan.getId().toString())
             );
-            ExecutionParameters executionParameters = new ExecutionParameters(repositoryObjectReference, schedule.getExecutionParameters());
+            ExecutionParameters executionParameters = new ExecutionParameters(repositoryObjectReference, plan.getAttribute(AbstractOrganizableObject.NAME),
+                    schedule.getExecutionParameters());
             execTaskParameters.setExecutionsParameters(executionParameters);
             completeExecTasksParameters.add(execTaskParameters);
         }
