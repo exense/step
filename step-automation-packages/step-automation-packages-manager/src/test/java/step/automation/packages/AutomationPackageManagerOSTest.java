@@ -140,7 +140,7 @@ public class AutomationPackageManagerOSTest {
             ExecutiontTaskParameters updatedTask = storedTasks.stream().filter(t -> t.getAttribute(AbstractOrganizableObject.NAME).equals(SCHEDULE_1)).findFirst().orElse(null);
             Assert.assertNotNull(updatedTask);
             Assert.assertEquals(r.storedTask.getId(), updatedTask.getId());
-            Assert.assertEquals(findPlanByName(r.storedPlans, PLAN_NAME_FROM_DESCRIPTOR).getId(), updatedTask.getExecutionsParameters().getPlan().getId());
+            Assert.assertEquals(findPlanByName(r.storedPlans, PLAN_NAME_FROM_DESCRIPTOR).getId().toHexString(), updatedTask.getExecutionsParameters().getRepositoryObject().getRepositoryParameters().get("planid"));
 
             // new task is configured as inactive in sample
             ExecutiontTaskParameters newTask = storedTasks.stream().filter(t -> t.getAttribute(AbstractOrganizableObject.NAME).equals(SCHEDULE_2)).findFirst().orElse(null);
@@ -206,7 +206,8 @@ public class AutomationPackageManagerOSTest {
             Assert.assertEquals(SCHEDULE_1, r.storedTask.getAttribute(AbstractOrganizableObject.NAME));
             Assert.assertEquals("0 15 10 ? * *", r.storedTask.getCronExpression());
             Assert.assertTrue(r.storedTask.isActive());
-            Assert.assertEquals(planFromDescriptor.getId(), r.storedTask.getExecutionsParameters().getPlan().getId());
+            Assert.assertEquals("local", r.storedTask.getExecutionsParameters().getRepositoryObject().getRepositoryID());
+            Assert.assertEquals(planFromDescriptor.getId().toHexString(), r.storedTask.getExecutionsParameters().getRepositoryObject().getRepositoryParameters().get("planid"));
         }
         return r;
     }
