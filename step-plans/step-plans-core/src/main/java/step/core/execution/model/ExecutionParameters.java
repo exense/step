@@ -46,6 +46,9 @@ public class ExecutionParameters extends CommonExecutionParameters {
 		this(mode, null, null, null, null, null, null, false, null);
 	}
 
+	public ExecutionParameters(RepositoryObjectReference repositoryObjectReference, String description, Map<String, String> customParameters) {
+		this(ExecutionMode.RUN, null, repositoryObjectReference, customParameters, description, null, null, false, null);
+	}
 	public ExecutionParameters(RepositoryObjectReference repositoryObjectReference, Map<String, String> customParameters) {
 		this(ExecutionMode.RUN, null, repositoryObjectReference, customParameters, null, null, null, false, null);
 	}

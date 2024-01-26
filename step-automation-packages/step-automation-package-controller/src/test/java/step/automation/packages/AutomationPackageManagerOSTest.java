@@ -28,6 +28,8 @@ import step.plugins.java.GeneralScriptFunctionType;
 import step.plugins.jmeter.JMeterFunction;
 import step.plugins.jmeter.JMeterFunctionType;
 import step.resources.LocalResourceManagerImpl;
+import step.automation.packages.hooks.AutomationPackageHookRegistry;
+import step.automation.packages.hooks.AutomationPackageHook;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -81,6 +83,18 @@ public class AutomationPackageManagerOSTest {
 
         // scheduler with mocked executor
         this.executionScheduler = new ExecutionScheduler(new ControllerSettingAccessorImpl(new InMemoryCollection<>()), executionTaskAccessor, Mockito.mock(Executor.class));
+        AutomationPackageHookRegistry automationPackageHookRegistry = new AutomationPackageHookRegistry();
+        automationPackageHookRegistry.register(ExecutiontTaskParameters.class, new AutomationPackageHook<ExecutiontTaskParameters>() {
+            @Override
+            public void onCreate(ExecutiontTaskParameters entity) {
+                executionScheduler.addExecutionTask(entity, false);
+            }
+
+            @Override
+            public void onDelete(ExecutiontTaskParameters entity) {
+                executionScheduler.removeExecutionTask(entity.getId().toHexString());
+            }
+        });
 
         this.manager = new AutomationPackageManagerOS(
                 automationPackageAccessor,
@@ -89,7 +103,7 @@ public class AutomationPackageManagerOSTest {
                 planAccessor,
                 resourceManager,
                 executionTaskAccessor,
-                executionScheduler,
+                automationPackageHookRegistry,
                 new AutomationPackageReaderOS()
         );
     }

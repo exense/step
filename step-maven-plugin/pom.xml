@@ -40,7 +40,6 @@
     <modules>
         <module>step-commons-maven-plugin</module>
         <module>step-os-maven-plugin</module>
-        <module>step-ee-maven-plugin</module>
     </modules>
 
     <dependencyManagement>

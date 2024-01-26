@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.core.scheduler;
 
+import step.automation.packages.hooks.AutomationPackageHookRegistry;
 import step.core.GlobalContext;
 import step.core.collections.Collection;
 import step.core.controller.ControllerSettingAccessor;
@@ -29,6 +30,7 @@ import step.core.plugins.Plugin;
 import step.framework.server.tables.Table;
 import step.framework.server.tables.TableRegistry;
 import step.plugins.screentemplating.*;
+import step.automation.packages.hooks.AutomationPackageHook;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -64,6 +66,20 @@ public class SchedulerPlugin extends AbstractControllerPlugin {
 	public void afterInitializeData(GlobalContext context) throws Exception {
 		ExecutionScheduler scheduler = new ExecutionScheduler(context.require(ControllerSettingAccessor.class), context.getScheduleAccessor(), new Executor(context));
 		context.setScheduler(scheduler);
+
+		AutomationPackageHookRegistry apRegistry = context.require(AutomationPackageHookRegistry.class);
+		apRegistry.register(ExecutiontTaskParameters.class, new AutomationPackageHook<ExecutiontTaskParameters>() {
+
+			@Override
+			public void onCreate(ExecutiontTaskParameters entity) {
+				scheduler.addExecutionTask(entity, false);
+			}
+
+			@Override
+			public void onDelete(ExecutiontTaskParameters entity) {
+				scheduler.removeExecutionTask(entity.getId().toString());
+			}
+		});
 	}
 
 	@Override
