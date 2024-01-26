@@ -95,6 +95,7 @@ public class AutomationPackageExecutor {
 
                 if ((planFilter == null || planFilter.isSelected(plan)) && plan.getRoot().getClass().getAnnotation(Artefact.class).validForStandaloneExecution()) {
                     ExecutionParameters params = parameters.toExecutionParameters();
+                    params.setIsolatedExecution(true);
                     HashMap<String, String> repositoryParameters = new HashMap<>();
                     repositoryParameters.put(IsolatedAutomationPackageRepository.REPOSITORY_PARAM_CONTEXTID, contextId.toString());
                     repositoryParameters.put(RepositoryObjectReference.PLAN_ID, plan.getId().toString());
