@@ -24,6 +24,8 @@ import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.StreamingOutput;
 import org.bson.types.ObjectId;
 import step.artefacts.CallPlan;
 import step.artefacts.handlers.PlanLocator;
@@ -39,7 +41,9 @@ import step.core.objectenricher.ObjectPredicate;
 import step.core.objectenricher.ObjectPredicateFactory;
 import step.framework.server.security.Secured;
 import step.framework.server.security.SecuredContext;
+import step.plans.parser.yaml.YamlPlanReader;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -57,6 +61,8 @@ public class PlanServices extends AbstractEntityServices<Plan> {
 	protected PlanTypeRegistry planTypeRegistry;
 	protected ObjectPredicateFactory objectPredicateFactory;
 	private ArtefactHandlerRegistry artefactHandlerRegistry;
+
+	private YamlPlanReader yamlPlanReader = new YamlPlanReader();
 
 	public PlanServices() {
 		super(EntityManager.plans);
@@ -245,6 +251,26 @@ public class PlanServices extends AbstractEntityServices<Plan> {
 	@Secured(right="{entity}-read")
 	public Set<String> getArtefactTemplates() {
 		return new TreeSet<>(artefactHandlerRegistry.getRootArtefactNames());
+	}
+
+
+	@Operation(description = "Returns the plan in yaml format.")
+	@GET
+	@Path("/{id}/yaml")
+	@Produces(MediaType.TEXT_PLAIN)
+	@Secured(right="{entity}-read")
+	public Response getYamlPlan(@PathParam("id") String id) {
+		Plan plan = planAccessor.get(id);
+		StreamingOutput fileStream = new StreamingOutput() {
+			@Override
+			public void write(java.io.OutputStream output) throws IOException {
+				yamlPlanReader.writeYamlPlan(output, plan);
+			}
+		};
+
+		String mimeType = "text/plain; charset=utf-8";
+		return Response.ok(fileStream, mimeType).build();
+
 	}
 
 	private void assignNewId(AbstractArtefact artefact) {
