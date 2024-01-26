@@ -54,7 +54,9 @@ public class DataSourceFieldsYamlHelper {
     public DataSourceFieldsYamlHelper() {
     }
 
-    public void fillDataSourceJsonSchemaParams(String dataSourceType, JsonProvider jsonProvider, JsonObjectBuilder propertiesBuilder, boolean isForWriteEditable) throws JsonSchemaPreparationException {
+    public void fillDataSourceJsonSchemaParams(String dataSourceType,
+                                               JsonProvider jsonProvider, JsonObjectBuilder propertiesBuilder,
+                                               boolean isForWriteEditable, List<String> requiredPropertiesOutput) throws JsonSchemaPreparationException {
         List<JsonSchemaFieldProcessor> fieldProcessors = new ArrayList<>();
 
         // -- PROCESSING RULES
@@ -91,7 +93,7 @@ public class DataSourceFieldsYamlHelper {
 
         DataPoolConfiguration config = DataPoolFactory.getDefaultDataPoolConfiguration(dataSourceType);
 
-        jsonSchemaCreator.processFields(config.getClass(), propertiesBuilder, getAllFieldsAccessible(config), new ArrayList<>());
+        jsonSchemaCreator.processFields(config.getClass(), propertiesBuilder, getAllFieldsAccessible(config), requiredPropertiesOutput);
     }
 
     public boolean isTechnicalDataPoolField(Field field, boolean isForWriteEditable) {

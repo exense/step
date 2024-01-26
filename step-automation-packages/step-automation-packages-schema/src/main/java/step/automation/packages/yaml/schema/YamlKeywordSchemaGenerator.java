@@ -110,7 +110,7 @@ public class YamlKeywordSchemaGenerator {
         for (Class<? extends Function> automationPackageKeyword : automationPackageKeywords) {
             String yamlName = AutomationPackageNamedEntityUtils.getEntityNameByClass(automationPackageKeyword);
             String defName = yamlName + "Def";
-            result.put(defName, schemaHelper.createNamedObjectImplDef(yamlName, automationPackageKeyword, jsonSchemaCreator));
+            result.put(defName, schemaHelper.createNamedObjectImplDef(yamlName, automationPackageKeyword, jsonSchemaCreator, false));
         }
         return result;
     }
