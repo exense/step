@@ -34,6 +34,7 @@ public abstract class AbstractMojoTest {
 	public static final String TEST_EXCLUDE_CLASSES = "x.y.z";
 	public static final String TEST_INCLUDE_ANNOTATIONS = "annotationA,annotationB";
 	public static final String TEST_EXCLUDE_ANNOTATIONS = "annotationZ";
+	public static final String TEST_INCLUDE_PLANS = "plan1,plan2";
 
 	protected Artifact createArtifactMock() throws URISyntaxException {
 		Artifact mainArtifact = Mockito.mock(Artifact.class);
