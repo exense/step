@@ -311,7 +311,7 @@ public abstract class AutomationPackageManager {
     }
 
     protected void fillStaging(Staging staging, AutomationPackageContent packageContent, AutomationPackage newPackage, AutomationPackage oldPackage, ObjectEnricher enricherForIncludedEntities, AutomationPackageArchive automationPackageArchive){
-        staging.plans = preparePlansStaging(packageContent, oldPackage, enricherForIncludedEntities);
+        staging.plans = preparePlansStaging(packageContent, automationPackageArchive, oldPackage, enricherForIncludedEntities);
         staging.taskParameters = prepareExecutionTasksParamsStaging(enricherForIncludedEntities, packageContent, oldPackage, staging.plans);
         staging.functions = prepareFunctionsStaging(newPackage, automationPackageArchive, packageContent, enricherForIncludedEntities, oldPackage, staging.resourceManager);
     }
@@ -368,8 +368,12 @@ public abstract class AutomationPackageManager {
         }
     }
 
-    protected List<Plan> preparePlansStaging(AutomationPackageContent packageContent, AutomationPackage oldPackage, ObjectEnricher enricher) {
+    protected List<Plan> preparePlansStaging(AutomationPackageContent packageContent, AutomationPackageArchive automationPackageArchive,
+                                             AutomationPackage oldPackage, ObjectEnricher enricher) {
         List<Plan> plans = packageContent.getPlans();
+        AutomationPackagePlansAttributesApplier specialAttributesApplier = new AutomationPackagePlansAttributesApplier(resourceManager);
+        specialAttributesApplier.applySpecialAttributesToPlans(plans, automationPackageArchive, enricher);
+
         fillEntities(plans, oldPackage != null ? getPackagePlans(oldPackage.getId()) : new ArrayList<>(), enricher);
         return plans;
     }

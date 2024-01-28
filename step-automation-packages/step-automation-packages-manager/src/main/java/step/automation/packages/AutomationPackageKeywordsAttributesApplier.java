@@ -27,7 +27,6 @@ import step.core.objectenricher.ObjectEnricher;
 import step.functions.Function;
 import step.resources.ResourceManager;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -45,7 +44,7 @@ public class AutomationPackageKeywordsAttributesApplier {
                                                     AutomationPackageArchive automationPackageArchive,
                                                     ObjectId automationPackageId,
                                                     ObjectEnricher objectEnricher){
-        AutomationPackageAttributesApplyingContext automationPackageAttributesApplyingContext = prepareContext();
+        AutomationPackageAttributesApplyingContext automationPackageAttributesApplyingContext = prepareContext(automationPackageArchive, objectEnricher);
         return keywords.stream().map(keyword -> {
             List<YamlKeywordConversionRule> conversionRules = lookuper.getConversionRulesForKeyword(keyword.getDraftKeyword());
             List<SpecialKeywordAttributesApplier> appliers = conversionRules.stream()
@@ -54,14 +53,14 @@ public class AutomationPackageKeywordsAttributesApplier {
                     .collect(Collectors.toList());
 
             for (SpecialKeywordAttributesApplier applier : appliers) {
-                applier.applySpecialAttributesToKeyword(keyword, automationPackageArchive, automationPackageId, objectEnricher);
+                applier.applySpecialAttributesToKeyword(keyword, automationPackageId);
             }
             return keyword.getDraftKeyword();
         }).collect(Collectors.toList());
     }
 
-    protected AutomationPackageAttributesApplyingContext prepareContext() {
-        return new AutomationPackageAttributesApplyingContext(resourceManager);
+    protected AutomationPackageAttributesApplyingContext prepareContext(AutomationPackageArchive automationPackageArchive, ObjectEnricher enricher) {
+        return new AutomationPackageAttributesApplyingContext(resourceManager, automationPackageArchive, enricher);
     }
 
 }

@@ -40,7 +40,7 @@
         <module>step-automation-packages-samples</module>
         <module>step-automation-packages-manager</module>
         <module>step-automation-packages-client</module>
-        <module>step-automation-package-controller</module>
+        <module>step-automation-packages-controller</module>
     </modules>
 
     <properties>

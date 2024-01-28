@@ -40,18 +40,18 @@ public class GeneralScriptFunctionConversionRule implements YamlKeywordConversio
 
     @Override
     public SpecialKeywordAttributesApplier getSpecialKeywordAttributesApplier(AutomationPackageAttributesApplyingContext context) {
-        return (keyword, automationPackageArchive, automationPackageId, objectEnricher) -> {
+        return (keyword, automationPackageId) -> {
             GeneralScriptFunction generalScriptFunction = (GeneralScriptFunction) keyword.getDraftKeyword();
             if (generalScriptFunction.getScriptFile().get() == null || generalScriptFunction.getScriptFile().get().isEmpty()) {
                 String uploadedPackageFileResource = context.getUploadedPackageFileResource();
                 if (uploadedPackageFileResource == null) {
-                    File originalFile = automationPackageArchive.getOriginalFile();
+                    File originalFile = context.getAutomationPackageArchive().getOriginalFile();
                     if (originalFile == null) {
                         throw new RuntimeException("General script functions can only be used within automation package archive");
                     }
                     try (InputStream is = new FileInputStream(originalFile)) {
                         Resource resource = context.getResourceManager().createResource(
-                                ResourceManager.RESOURCE_TYPE_FUNCTIONS, is, originalFile.getName(), false, objectEnricher
+                                ResourceManager.RESOURCE_TYPE_FUNCTIONS, is, originalFile.getName(), false, context.getEnricher()
                         );
                         uploadedPackageFileResource = FileResolver.RESOURCE_PREFIX + resource.getId().toString();
 

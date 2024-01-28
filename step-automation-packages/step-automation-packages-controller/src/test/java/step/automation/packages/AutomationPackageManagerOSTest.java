@@ -6,16 +6,20 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
+import step.artefacts.ForEachBlock;
+import step.attachments.FileResolver;
 import step.automation.packages.accessor.AutomationPackageAccessorImpl;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.collections.inmemory.InMemoryCollection;
 import step.core.controller.ControllerSettingAccessorImpl;
+import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessorImpl;
 import step.core.scheduler.ExecutionScheduler;
 import step.core.scheduler.ExecutionTaskAccessorImpl;
 import step.core.scheduler.ExecutiontTaskParameters;
 import step.core.scheduler.Executor;
+import step.datapool.excel.ExcelDataPool;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessorImpl;
 import step.functions.manager.FunctionManagerImpl;
@@ -30,11 +34,9 @@ import step.plugins.jmeter.JMeterFunctionType;
 import step.resources.LocalResourceManagerImpl;
 import step.automation.packages.hooks.AutomationPackageHookRegistry;
 import step.automation.packages.hooks.AutomationPackageHook;
+import step.resources.Resource;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -180,7 +182,44 @@ public class AutomationPackageManagerOSTest {
         Assert.assertEquals(0, executionTaskAccessor.findManyByCriteria(packageIdCriteria).count());
     }
 
-    private SampleUploadingResult uploadSample1WithAsserts(boolean createNew) throws IOException, FunctionTypeException, SetupFunctionException {
+    @Test
+    public void testResourcesInKeywordsAndPlans() throws IOException {
+        String fileName = "samples/step-automation-packages-sample2.jar";
+        File automationPackageJar = new File("src/test/resources/" + fileName);
+
+        try (InputStream is = new FileInputStream(automationPackageJar)) {
+            ObjectId result;
+            result = manager.createAutomationPackage(is, fileName, null, null);
+            AutomationPackage storedPackage = automationPackageAccessor.get(result);
+
+            List<Plan> storedPlans = planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
+            Assert.assertEquals(1, storedPlans.size());
+            Plan forEachExcelPlan = storedPlans.get(0);
+            Assert.assertEquals("Test excel plan", forEachExcelPlan.getAttribute(AbstractOrganizableObject.NAME));
+            ForEachBlock forEachArtefact = (ForEachBlock) forEachExcelPlan.getRoot().getChildren().get(0);
+            ExcelDataPool excelDataPool = (ExcelDataPool) forEachArtefact.getDataSource();
+            checkUploadedResource(excelDataPool.getFile(), "excel1.xlsx");
+
+            List<Function> storedFunctions = functionAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
+            Assert.assertEquals(1, storedFunctions.size());
+            JMeterFunction jMeterFunction = (JMeterFunction) storedFunctions.get(0);
+            DynamicValue<String> jmeterTestplanRef = jMeterFunction.getJmeterTestplan();
+            checkUploadedResource(jmeterTestplanRef, "jmeterProject1.xml");
+        }
+    }
+
+    private void checkUploadedResource(DynamicValue<String> fileResourceReference, String expectedFileName) {
+        FileResolver fileResolver = new FileResolver(resourceManager);
+        String resourceReferenceString = fileResourceReference.get();
+        Assert.assertTrue(resourceReferenceString.startsWith(FileResolver.RESOURCE_PREFIX));
+        String resourceId = fileResolver.resolveResourceId(resourceReferenceString);
+        File excelFile = fileResolver.resolve(resourceId);
+        Assert.assertNotNull(excelFile);
+        Resource resource = resourceManager.getResource(resourceId);
+        Assert.assertEquals(expectedFileName, resource.getResourceName());
+    }
+
+    private SampleUploadingResult uploadSample1WithAsserts(boolean createNew) throws IOException {
         String fileName = "samples/step-automation-packages-sample1.jar";
         File automationPackageJar = new File("src/test/resources/" + fileName);
 
