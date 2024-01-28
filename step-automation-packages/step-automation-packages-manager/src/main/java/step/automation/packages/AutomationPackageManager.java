@@ -380,25 +380,7 @@ public abstract class AutomationPackageManager {
         List<Function> completeFunctions = keywordsAttributesApplier.applySpecialAttributesToKeyword(packageContent.getKeywords(), automationPackageArchive, newPackage.getId(), enricher);
 
         // get old functions with same name and reuse their ids
-        List<Function> oldFunctions;
-
-        // For isolated execution we want to reuse old function id even if the function with the same name
-        // is not linked with current AP. This allows to 'override' old function with the new one in in-memory functionAccessor.
-
-        // For in non-isolated context this overriding is not applicable, because in this case we'll rewrite the original function
-        // in persistent storage, so we only can to reuse old ids for functions within the same automation package
-        if (!isIsolated) {
-            oldFunctions = oldPackage == null ? new ArrayList<>() : getPackageFunctions(oldPackage.getId());
-        } else {
-            oldFunctions = new ArrayList<>();
-            for (Function completeFunction : completeFunctions) {
-                Function found = functionAccessor.findByAttributes(Map.of(AbstractOrganizableObject.NAME, completeFunction.getAttribute(AbstractOrganizableObject.NAME)));
-                if (found != null) {
-                    oldFunctions.add(found);
-                }
-            }
-        }
-
+        List<Function> oldFunctions = oldPackage == null ? new ArrayList<>() : getPackageFunctions(oldPackage.getId());
         fillEntities(completeFunctions, oldFunctions, enricher);
         return completeFunctions;
     }
