@@ -118,4 +118,26 @@
 
     </dependencies>
 
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-plugin-plugin</artifactId>
+                <version>${maven-plugin-tools.version}</version>
+                <configuration>
+                    <helpPackageName>step.plugins.maven</helpPackageName>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>help-mojo</id>
+                        <goals>
+                            <!-- good practice is to generate help mojo for plugin -->
+                            <goal>helpmojo</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
 </project>
