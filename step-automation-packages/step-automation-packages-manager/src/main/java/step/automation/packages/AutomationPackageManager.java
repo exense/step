@@ -628,7 +628,7 @@ public abstract class AutomationPackageManager {
         List<Plan> plans = new ArrayList<>();
         List<ExecutiontTaskParameters> taskParameters = new ArrayList<>();
         List<Function> functions = new ArrayList<>();
-        ResourceManager resourceManager = new LocalResourceManagerImpl(new File("ap_staging_resources", new ObjectId().toString()));
+        ResourceManager resourceManager = new LocalResourceManagerImpl(new File("ap_staging_resources_" + new ObjectId()));
     }
 
 }

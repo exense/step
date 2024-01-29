@@ -59,6 +59,18 @@ public class AutomationPackageManagerOS extends AutomationPackageManager {
                                                                                     FunctionTypeRegistry functionTypeRegistry,
                                                                                     FunctionAccessor mainFunctionAccessor,
                                                                                     AbstractAutomationPackageReader<?> reader) {
+
+        return AutomationPackageManagerOS.createIsolatedAutomationPackageManagerOS(isolatedContextId,
+                functionTypeRegistry, mainFunctionAccessor,
+                new LocalResourceManagerImpl(new File("resources_" + isolatedContextId.toString())),
+                reader);
+    }
+
+    public static AutomationPackageManager createIsolatedAutomationPackageManagerOS(ObjectId isolatedContextId,
+                                                                                    FunctionTypeRegistry functionTypeRegistry,
+                                                                                    FunctionAccessor mainFunctionAccessor,
+                                                                                    ResourceManager resourceManager,
+                                                                                    AbstractAutomationPackageReader<?> reader) {
         InMemoryFunctionAccessorImpl inMemoryFunctionRepository = new InMemoryFunctionAccessorImpl();
         LayeredFunctionAccessor layeredFunctionAccessor = new LayeredFunctionAccessor(List.of(inMemoryFunctionRepository, mainFunctionAccessor));
 
@@ -67,7 +79,7 @@ public class AutomationPackageManagerOS extends AutomationPackageManager {
                 new FunctionManagerImpl(layeredFunctionAccessor, functionTypeRegistry),
                 layeredFunctionAccessor,
                 new InMemoryPlanAccessor(),
-                new LocalResourceManagerImpl(new File("resources", isolatedContextId.toString())),
+                resourceManager,
                 new InMemoryExecutionTaskAccessor(),
                 new AutomationPackageHookRegistry(), reader
         );

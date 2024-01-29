@@ -2,6 +2,7 @@ package step.automation.packages;
 
 import ch.exense.commons.app.Configuration;
 import org.bson.types.ObjectId;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -106,6 +107,13 @@ public class AutomationPackageManagerOSTest {
                 automationPackageHookRegistry,
                 new AutomationPackageReaderOS()
         );
+    }
+
+    @After
+    public void after() {
+        if (resourceManager != null) {
+            resourceManager.cleanup();
+        }
     }
 
     @Test
