@@ -31,6 +31,8 @@ import step.automation.packages.client.RemoteAutomationPackageClientImpl;
 import step.automation.packages.execution.AutomationPackageExecutionParameters;
 import step.client.executions.RemoteExecutionFuture;
 import step.client.executions.RemoteExecutionManager;
+import step.controller.multitenancy.client.MultitenancyClient;
+import step.controller.multitenancy.client.RemoteMultitenancyClientImpl;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionMode;
@@ -57,8 +59,9 @@ public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 
 		RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock = Mockito.mock(RemoteAutomationPackageClientImpl.class);
 		Mockito.when(remoteAutomationPackageClientMock.executeAutomationPackage(Mockito.any(), Mockito.any())).thenReturn(executionIds);
+		RemoteMultitenancyClientImpl multitenancyClientMock = createRemoteMultitenancyClientMock();
 
-		RunAutomationPackageMojoTestable mojo = new RunAutomationPackageMojoTestable(remoteExecutionManagerMock, remoteAutomationPackageClientMock);
+		RunAutomationPackageMojoTestable mojo = new RunAutomationPackageMojoTestable(remoteExecutionManagerMock, remoteAutomationPackageClientMock, multitenancyClientMock);
 		configureMojo(mojo, true);
 		mojo.execute();
 
@@ -80,8 +83,9 @@ public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 
 		RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock = Mockito.mock(RemoteAutomationPackageClientImpl.class);
 		Mockito.when(remoteAutomationPackageClientMock.executeAutomationPackage(Mockito.any(), Mockito.any())).thenReturn(executionIds);
+		RemoteMultitenancyClientImpl multitenancyClientMock = createRemoteMultitenancyClientMock();
 
-		RunAutomationPackageMojoTestable mojo = new RunAutomationPackageMojoTestable(remoteExecutionManagerMock, remoteAutomationPackageClientMock);
+		RunAutomationPackageMojoTestable mojo = new RunAutomationPackageMojoTestable(remoteExecutionManagerMock, remoteAutomationPackageClientMock, multitenancyClientMock);
 		configureMojo(mojo, true);
 		Assert.assertThrows(MojoExecutionException.class, mojo::execute);
 		assertAutomationPackageClientMockCalls(remoteAutomationPackageClientMock);
@@ -98,8 +102,9 @@ public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 
 		RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock = Mockito.mock(RemoteAutomationPackageClientImpl.class);
 		Mockito.when(remoteAutomationPackageClientMock.executeAutomationPackage(Mockito.any(), Mockito.any())).thenReturn(executionIds);
+		RemoteMultitenancyClientImpl multitenancyClientMock = createRemoteMultitenancyClientMock();
 
-		RunAutomationPackageMojoTestable mojo = new RunAutomationPackageMojoTestable(remoteExecutionManagerMock, remoteAutomationPackageClientMock);
+		RunAutomationPackageMojoTestable mojo = new RunAutomationPackageMojoTestable(remoteExecutionManagerMock, remoteAutomationPackageClientMock, multitenancyClientMock);
 		configureMojo(mojo, true);
 		Assert.assertThrows(MojoExecutionException.class, mojo::execute);
 		assertAutomationPackageClientMockCalls(remoteAutomationPackageClientMock);
@@ -116,8 +121,9 @@ public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 
 		RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock = Mockito.mock(RemoteAutomationPackageClientImpl.class);
 		Mockito.when(remoteAutomationPackageClientMock.executeAutomationPackage(Mockito.any(), Mockito.any())).thenReturn(executionIds);
+		RemoteMultitenancyClientImpl multitenancyClientMock = createRemoteMultitenancyClientMock();
 
-		RunAutomationPackageMojoTestable mojo = new RunAutomationPackageMojoTestable(remoteExecutionManagerMock, remoteAutomationPackageClientMock);
+		RunAutomationPackageMojoTestable mojo = new RunAutomationPackageMojoTestable(remoteExecutionManagerMock, remoteAutomationPackageClientMock, multitenancyClientMock);
 
 		configureMojo(mojo, false);
 		mojo.execute();
@@ -177,6 +183,7 @@ public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 		mojo.setArtifactVersion(VERSION_ID);
 		mojo.setGroupId(GROUP_ID);
 		mojo.setUrl("http://localhost:8080");
+		mojo.setAuthToken("abc");
 		mojo.setBuildFinalName("Test build name");
 		mojo.setProjectVersion("1.0.0");
 		mojo.setExecutionResultTimeoutS(3);
@@ -202,6 +209,7 @@ public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 
 		mojo.setProject(mockedProject);
 
+		mojo.setStepProjectName(TENANT_1.getName());
 	}
 
 	private static Map<String, String> createTestCustomParams() {
@@ -211,14 +219,23 @@ public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 		return params;
 	}
 
+	private RemoteMultitenancyClientImpl createRemoteMultitenancyClientMock(){
+		RemoteMultitenancyClientImpl mock = Mockito.mock(RemoteMultitenancyClientImpl.class);
+		Mockito.when(mock.getAvailableTenants()).thenReturn(List.of(TENANT_1, TENANT_2));
+		return mock;
+	}
+
 	private static class RunAutomationPackageMojoTestable extends ExecuteAutomationPackageMojo {
 
 		private final RemoteExecutionManager remoteExecutionManagerMock;
 		private final RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock;
-		public RunAutomationPackageMojoTestable(RemoteExecutionManager remoteExecutionManagerMock, RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock) {
+		private final MultitenancyClient multitenancyClientMock;
+
+		public RunAutomationPackageMojoTestable(RemoteExecutionManager remoteExecutionManagerMock, RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock, MultitenancyClient multitenancyClientMock) {
 			super();
 			this.remoteExecutionManagerMock = remoteExecutionManagerMock;
 			this.remoteAutomationPackageClientMock = remoteAutomationPackageClientMock;
+			this.multitenancyClientMock = multitenancyClientMock;
 		}
 
 		@Override
@@ -229,6 +246,11 @@ public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 		@Override
 		protected RemoteAutomationPackageClientImpl createRemoteAutomationPackageClient() {
 			return remoteAutomationPackageClientMock;
+		}
+
+		@Override
+		protected MultitenancyClient createMultitenancyClient() {
+			return multitenancyClientMock;
 		}
 	}
 }

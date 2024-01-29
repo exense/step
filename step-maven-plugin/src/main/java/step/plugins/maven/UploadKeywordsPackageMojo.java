@@ -21,9 +21,14 @@ package step.plugins.maven;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import step.client.accessors.RemoteAccessors;
 import step.client.collections.remote.RemoteCollectionFactory;
+import step.client.credentials.ControllerCredentials;
+import step.controller.multitenancy.Tenant;
+import step.controller.multitenancy.client.MultitenancyClient;
+import step.controller.multitenancy.client.RemoteMultitenancyClientImpl;
 import step.core.accessors.AbstractAccessor;
 import step.functions.packages.FunctionPackage;
 import step.functions.packages.client.LibFileReference;
@@ -33,7 +38,8 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
-public abstract class AbstractUploadKeywordsPackageMojo extends AbstractStepPluginMojo {
+@Mojo(name = "upload-keywords-package")
+public class UploadKeywordsPackageMojo extends AbstractStepPluginMojo {
 
 	@Parameter(defaultValue = "${project.groupId}", readonly = true, required = true)
 	private String groupId;
@@ -68,7 +74,19 @@ public abstract class AbstractUploadKeywordsPackageMojo extends AbstractStepPlug
 	@Parameter(property = "step-upload-keywords.lib-artifact-classifier", defaultValue = "")
 	private String libArtifactClassifier;
 
-	protected AbstractUploadKeywordsPackageMojo() {
+	@Parameter(property = "step.step-project-name", required = false)
+	private String stepProjectName;
+
+	@Parameter(property = "step.auth-token", required = false)
+	private String authToken;
+
+	protected UploadKeywordsPackageMojo() {
+	}
+
+	@Override
+	protected ControllerCredentials getControllerCredentials() {
+		String authToken = getAuthToken();
+		return new ControllerCredentials(getUrl(), authToken == null || authToken.isEmpty() ? null : authToken);
 	}
 
 	@Override
@@ -148,7 +166,23 @@ public abstract class AbstractUploadKeywordsPackageMojo extends AbstractStepPlug
 	}
 
 	protected void fillAdditionalPackageSearchCriteria(Map<String, String> searchCriteria) throws MojoExecutionException {
+		if (getStepProjectName() != null && !getStepProjectName().isEmpty()) {
+			getLog().info("Step project name: " + getStepProjectName());
 
+			Tenant currentTenant = new TenantSwitcher() {
+				@Override
+				protected MultitenancyClient createClient() {
+					return createMultitenancyClient();
+				}
+			}.switchTenant(getStepProjectName());
+
+			// setup Step project and use it to search fo existing packages
+			searchCriteria.put("attributes.project", currentTenant.getProjectId());
+		}
+	}
+
+	protected MultitenancyClient createMultitenancyClient() {
+		return new RemoteMultitenancyClientImpl(getControllerCredentials());
 	}
 
 	protected AbstractAccessor<FunctionPackage> createRemoteFunctionPackageAccessor() {
@@ -252,6 +286,22 @@ public abstract class AbstractUploadKeywordsPackageMojo extends AbstractStepPlug
 
 	public void setLibArtifactClassifier(String libArtifactClassifier) {
 		this.libArtifactClassifier = libArtifactClassifier;
+	}
+
+	public String getStepProjectName() {
+		return stepProjectName;
+	}
+
+	public void setStepProjectName(String stepProjectName) {
+		this.stepProjectName = stepProjectName;
+	}
+
+	public String getAuthToken() {
+		return authToken;
+	}
+
+	public void setAuthToken(String authToken) {
+		this.authToken = authToken;
 	}
 
 }

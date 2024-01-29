@@ -21,14 +21,18 @@ package step.plugins.maven;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import step.automation.packages.client.AutomationPackageClientException;
 import step.automation.packages.client.RemoteAutomationPackageClientImpl;
+import step.client.credentials.ControllerCredentials;
+import step.controller.multitenancy.client.MultitenancyClient;
+import step.controller.multitenancy.client.RemoteMultitenancyClientImpl;
 
 import java.io.File;
 
-
-public abstract class AbstractDeployAutomationPackageMojo extends AbstractStepPluginMojo {
+@Mojo(name = "deploy-automation-package")
+public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
 
     @Parameter(defaultValue = "${project.groupId}", readonly = true, required = true)
     private String groupId;
@@ -42,8 +46,21 @@ public abstract class AbstractDeployAutomationPackageMojo extends AbstractStepPl
     @Parameter(property = "step-deploy-automation-package.artifact-classifier")
     private String artifactClassifier;
 
+    @Parameter(property = "step.step-project-name")
+    private String stepProjectName;
+
+    @Parameter(property = "step.auth-token")
+    private String authToken;
+
+    @Override
+    protected ControllerCredentials getControllerCredentials() {
+        String authToken = getAuthToken();
+        return new ControllerCredentials(getUrl(), authToken == null || authToken.isEmpty() ? null : authToken);
+    }
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
+        switchTenant();
         try (RemoteAutomationPackageClientImpl automationPackageClient = createRemoteAutomationPackageClient()) {
             File packagedTarget = getFileToUpload();
 
@@ -63,6 +80,23 @@ public abstract class AbstractDeployAutomationPackageMojo extends AbstractStepPl
         } catch (Exception e) {
             throw logAndThrow("Unexpected error while uploading automation package to Step", e);
         }
+    }
+
+    protected void switchTenant() throws MojoExecutionException {
+        if (getStepProjectName() != null && !getStepProjectName().isEmpty()) {
+            getLog().info("Step project name: " + getStepProjectName());
+
+            new TenantSwitcher() {
+                @Override
+                protected MultitenancyClient createClient() {
+                    return createMultitenancyClient();
+                }
+            }.switchTenant(getStepProjectName(), getLog());
+        }
+    }
+
+    protected MultitenancyClient createMultitenancyClient() {
+        return new RemoteMultitenancyClientImpl(getControllerCredentials());
     }
 
     protected File getFileToUpload() throws MojoExecutionException {
@@ -111,4 +145,20 @@ public abstract class AbstractDeployAutomationPackageMojo extends AbstractStepPl
         this.artifactVersion = artifactVersion;
     }
 
+
+    public String getStepProjectName() {
+        return stepProjectName;
+    }
+
+    public void setStepProjectName(String stepProjectName) {
+        this.stepProjectName = stepProjectName;
+    }
+
+    public String getAuthToken() {
+        return authToken;
+    }
+
+    public void setAuthToken(String authToken) {
+        this.authToken = authToken;
+    }
 }

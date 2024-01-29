@@ -19,7 +19,9 @@
 package step.plugins.maven;
 
 import org.apache.maven.artifact.Artifact;
+import org.bson.types.ObjectId;
 import org.mockito.Mockito;
+import step.controller.multitenancy.Tenant;
 
 import java.io.File;
 import java.net.URISyntaxException;
@@ -34,7 +36,11 @@ public abstract class AbstractMojoTest {
 	public static final String TEST_EXCLUDE_CLASSES = "x.y.z";
 	public static final String TEST_INCLUDE_ANNOTATIONS = "annotationA,annotationB";
 	public static final String TEST_EXCLUDE_ANNOTATIONS = "annotationZ";
+
 	public static final String TEST_INCLUDE_PLANS = "plan1,plan2";
+
+	protected static final Tenant TENANT_1 = createTenant1();
+	protected static final Tenant TENANT_2 = createTenant2();
 
 	protected Artifact createArtifactMock() throws URISyntaxException {
 		Artifact mainArtifact = Mockito.mock(Artifact.class);
@@ -54,5 +60,19 @@ public abstract class AbstractMojoTest {
 		Mockito.when(jarWithDependenciesArtifact.getVersion()).thenReturn(VERSION_ID);
 		Mockito.when(jarWithDependenciesArtifact.getFile()).thenReturn(new File(this.getClass().getClassLoader().getResource("step/plugins/maven/test-file-jar-with-dependencies.jar").toURI()));
 		return jarWithDependenciesArtifact;
+	}
+
+	protected static Tenant createTenant1() {
+		Tenant tenant1 = new Tenant();
+		tenant1.setName("project1");
+		tenant1.setProjectId(new ObjectId().toString());
+		return tenant1;
+	}
+
+	protected static Tenant createTenant2() {
+		Tenant tenant2 = new Tenant();
+		tenant2.setName("project2");
+		tenant2.setProjectId(new ObjectId().toString());
+		return tenant2;
 	}
 }

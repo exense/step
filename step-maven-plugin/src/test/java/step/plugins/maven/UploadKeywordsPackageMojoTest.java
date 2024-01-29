@@ -19,14 +19,13 @@
 package step.plugins.maven;
 
 import org.apache.maven.artifact.Artifact;
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
 import org.bson.types.ObjectId;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
+import step.controller.multitenancy.client.RemoteMultitenancyClientImpl;
 import step.core.accessors.AbstractAccessor;
 import step.functions.packages.FunctionPackage;
 import step.functions.packages.client.RemoteFunctionPackageClientImpl;
@@ -39,14 +38,10 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
 
-public class UploadKeywordsPackageMojoOSTest extends AbstractMojoTest {
+public class UploadKeywordsPackageMojoTest extends AbstractMojoTest {
 
 	private static final FunctionPackage OLD_PACKAGE = createOldPackageMock();
 	private static final FunctionPackage UPDATED_PACKAGE = createUpdatedPackageMock();
-
-	private static final String GROUP_ID = "my-group-id";
-	private static final String ARTIFACT_ID = "step-functions-plugins-java-handler-test-3";
-	private static final String VERSION_ID = "0.0.0-SNAPSHOT";
 
 	private static FunctionPackage createOldPackageMock() {
 		FunctionPackage res = Mockito.mock(FunctionPackage.class);
@@ -61,28 +56,31 @@ public class UploadKeywordsPackageMojoOSTest extends AbstractMojoTest {
 	}
 
 	@Test
-	public void testExecuteOk() throws MojoExecutionException, MojoFailureException, URISyntaxException, IOException {
+	public void testExecuteOk() throws Exception {
 		AbstractAccessor<FunctionPackage> functionAccessorMock = createRemoteFunctionAccessorMock();
 		RemoteFunctionPackageClientImpl remoteFunctionManagerMock = createRemoteFunctionManagerMock();
-		UploadKeywordsPackageMojoOSTestable mojo = new UploadKeywordsPackageMojoOSTestable(remoteFunctionManagerMock, functionAccessorMock);
+		RemoteMultitenancyClientImpl multitenancyClientMock = createRemoteMultitenancyClientMock();
+		UploadKeywordsPackageMojoEETestable mojo = new UploadKeywordsPackageMojoEETestable(remoteFunctionManagerMock, functionAccessorMock, multitenancyClientMock);
 
 		// configure mojo with test parameters and mocked Maven Project
 		configureMojo(mojo);
-
 		mojo.execute();
 
-		// verify arguments of external calls
+		// tenant should be chosen according to project name
+		Mockito.verify(multitenancyClientMock, Mockito.times(1)).selectTenant(Mockito.eq(TENANT_1.getName()));
+
+		// attributes used to search for existing function packages
 		ArgumentCaptor<Map<String, String>> searchCriteriaCaptor = ArgumentCaptor.forClass(Map.class);
 		Mockito.verify(functionAccessorMock, Mockito.times(1)).findByCriteria(searchCriteriaCaptor.capture());
-		Assert.assertEquals(Set.of("customFields.tracking"), searchCriteriaCaptor.getValue().keySet());
+		Assert.assertEquals(Set.of("customFields.tracking", "attributes.project"), searchCriteriaCaptor.getValue().keySet());
 		Assert.assertEquals(GROUP_ID + "." + ARTIFACT_ID, searchCriteriaCaptor.getValue().get("customFields.tracking"));
-
+		Assert.assertEquals(TENANT_1.getProjectId(), searchCriteriaCaptor.getValue().get("attributes.project"));
 		Mockito.verifyNoMoreInteractions(functionAccessorMock);
 
+		// parameters used to upload (update) the function package
 		ArgumentCaptor<FunctionPackage> oldPackageCaptor = ArgumentCaptor.forClass(FunctionPackage.class);
 		ArgumentCaptor<File> uploadedFileCaptor = ArgumentCaptor.forClass(File.class);
 		ArgumentCaptor<Map<String, String>> uploadedPackageAttributesCaptor = ArgumentCaptor.forClass(Map.class);
-
 		Mockito.verify(remoteFunctionManagerMock, Mockito.times(1)).updateKeywordPackageWithLibReference(
 				oldPackageCaptor.capture(),
 				Mockito.isNull(),
@@ -103,7 +101,7 @@ public class UploadKeywordsPackageMojoOSTest extends AbstractMojoTest {
 		Mockito.verifyNoMoreInteractions(remoteFunctionManagerMock);
 	}
 
-	private void configureMojo(UploadKeywordsPackageMojoOSTestable mojo) throws URISyntaxException {
+	private void configureMojo(UploadKeywordsPackageMojoEETestable mojo) throws URISyntaxException {
 		mojo.setUrl("http://localhost:8080");
 		mojo.setBuildFinalName("Test build name");
 		mojo.setProjectVersion("1.0.0");
@@ -131,11 +129,11 @@ public class UploadKeywordsPackageMojoOSTest extends AbstractMojoTest {
 		customAttributes.put("versionId", VERSION_ID);
 
 		mojo.setCustomPackageAttributes(customAttributes);
+		mojo.setStepProjectName(TENANT_1.getName());
 	}
 
 	private RemoteFunctionPackageClientImpl createRemoteFunctionManagerMock() throws IOException {
 		RemoteFunctionPackageClientImpl remoteFunctionPackageClient = Mockito.mock(RemoteFunctionPackageClientImpl.class);
-
 		Mockito.when(remoteFunctionPackageClient.updateKeywordPackageById(
 				Mockito.any(),
 				Mockito.isNull(),
@@ -151,7 +149,6 @@ public class UploadKeywordsPackageMojoOSTest extends AbstractMojoTest {
 				Mockito.any(),
 				Mockito.any())
 		).thenReturn(UPDATED_PACKAGE);
-
 		return remoteFunctionPackageClient;
 	}
 
@@ -161,14 +158,24 @@ public class UploadKeywordsPackageMojoOSTest extends AbstractMojoTest {
 		return mock;
 	}
 
-	private static class UploadKeywordsPackageMojoOSTestable extends UploadKeywordsPackageMojoOS {
+	private RemoteMultitenancyClientImpl createRemoteMultitenancyClientMock(){
+		RemoteMultitenancyClientImpl mock = Mockito.mock(RemoteMultitenancyClientImpl.class);
+		Mockito.when(mock.getAvailableTenants()).thenReturn(List.of(TENANT_1, TENANT_2));
+		return mock;
+	}
+
+	private static class UploadKeywordsPackageMojoEETestable extends UploadKeywordsPackageMojo {
 
 		private final RemoteFunctionPackageClientImpl functionPackageClientMock;
 		private final AbstractAccessor<FunctionPackage> remoteFunctionAccessor;
+		private final RemoteMultitenancyClientImpl remoteMultitenancyClientMock;
 
-		public UploadKeywordsPackageMojoOSTestable(RemoteFunctionPackageClientImpl functionPackageClientMock, AbstractAccessor<FunctionPackage> remoteFunctionAccessor) {
+		public UploadKeywordsPackageMojoEETestable(RemoteFunctionPackageClientImpl functionPackageClientMock,
+												   AbstractAccessor<FunctionPackage> remoteFunctionAccessor,
+												   RemoteMultitenancyClientImpl remoteMultitenancyClientMock) {
 			this.functionPackageClientMock = functionPackageClientMock;
 			this.remoteFunctionAccessor = remoteFunctionAccessor;
+			this.remoteMultitenancyClientMock = remoteMultitenancyClientMock;
 		}
 
 		@Override
@@ -179,6 +186,11 @@ public class UploadKeywordsPackageMojoOSTest extends AbstractMojoTest {
 		@Override
 		protected AbstractAccessor<FunctionPackage> createRemoteFunctionPackageAccessor() {
 			return remoteFunctionAccessor;
+		}
+
+		@Override
+		protected RemoteMultitenancyClientImpl createMultitenancyClient() {
+			return remoteMultitenancyClientMock;
 		}
 	}
 }

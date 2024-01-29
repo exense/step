@@ -22,10 +22,12 @@ import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugin.logging.Log;
+import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import step.automation.packages.client.AutomationPackageClientException;
 import step.automation.packages.client.RemoteAutomationPackageClientImpl;
 import step.automation.packages.execution.AutomationPackageExecutionParameters;
+import step.client.credentials.ControllerCredentials;
 import step.client.executions.RemoteExecutionManager;
 import step.controller.multitenancy.client.MultitenancyClient;
 import step.controller.multitenancy.client.RemoteMultitenancyClientImpl;
@@ -44,11 +46,16 @@ import java.util.Set;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
+@Mojo(name = "execute-automation-package")
+public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
 
-public abstract class AbstractExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
-
+    @Parameter(property = "step.step-project-name", required = false)
+    private String stepProjectName;
     @Parameter(property = "step-execute-auto-packages.user-id", required = false)
     private String userId;
+    @Parameter(property = "step.auth-token", required = false)
+    private String authToken;
+
     @Parameter(property = "step-execute-auto-packages.group-id", required = true, defaultValue = "${project.groupId}")
     private String groupId;
     @Parameter(property = "step-execute-auto-packages.artifact-id", required = true, defaultValue = "${project.artifactId}")
@@ -74,6 +81,17 @@ public abstract class AbstractExecuteAutomationPackageMojo extends AbstractStepP
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
+        if (getStepProjectName() != null && !getStepProjectName().isEmpty()) {
+            getLog().info("Step project name: " + getStepProjectName());
+
+            new TenantSwitcher() {
+                @Override
+                protected MultitenancyClient createClient() {
+                    return createMultitenancyClient();
+                }
+            }.switchTenant(getStepProjectName(), getLog());
+        }
+
         executePackageOnStep();
     }
 
@@ -176,6 +194,12 @@ public abstract class AbstractExecuteAutomationPackageMojo extends AbstractStepP
         }
     }
 
+    @Override
+    protected ControllerCredentials getControllerCredentials() {
+        String authToken = getAuthToken();
+        return new ControllerCredentials(getUrl(), authToken == null || authToken.isEmpty() ? null : authToken);
+    }
+
     protected MultitenancyClient createMultitenancyClient() {
         return new RemoteMultitenancyClientImpl(getControllerCredentials());
     }
@@ -211,12 +235,28 @@ public abstract class AbstractExecuteAutomationPackageMojo extends AbstractStepP
         return executionParameters;
     }
 
+    public String getStepProjectName() {
+        return stepProjectName;
+    }
+
+    public void setStepProjectName(String stepProjectName) {
+        this.stepProjectName = stepProjectName;
+    }
+
     public String getUserId() {
         return userId;
     }
 
     public void setUserId(String userId) {
         this.userId = userId;
+    }
+
+    public String getAuthToken() {
+        return authToken;
+    }
+
+    public void setAuthToken(String authToken) {
+        this.authToken = authToken;
     }
 
     public String getGroupId() {
