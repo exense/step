@@ -1,0 +1,37 @@
+---
+version: "1.0.0"
+name: "Performance assert example"
+root:
+  testCase:
+    continueParentNodeExecutionOnError: false
+    instrumentNode: false
+    skipNode: false
+    children:
+      - threadGroup:
+          continueParentNodeExecutionOnError: false
+          instrumentNode: false
+          skipNode: false
+          children:
+            - callKeyword:
+                continueParentNodeExecutionOnError: false
+                instrumentNode: false
+                skipNode: false
+                remote: true
+                inputs: []
+                keyword: "Buy MacBook in OpenCart"
+          userItem: "userId"
+          localItem: "literationId"
+          item: "gcounter"
+          maxDuration: 0
+          startOffset: 0
+          pacing: 0
+          iterations: 10
+          users: 1
+      - performanceAssert:
+          continueParentNodeExecutionOnError: false
+          instrumentNode: false
+          skipNode: false
+          expectedValue: 10000
+          comparator: "LOWER_THAN"
+          aggregator: "AVG"
+          measurementName: "Buy MacBook in OpenCart"

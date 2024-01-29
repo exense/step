@@ -70,6 +70,7 @@ public class BaseArtefactPlugin extends AbstractExecutionEnginePlugin {
 		artefactHandlerRegistry.put(Assert.class, AssertHandler.class);
 		artefactHandlerRegistry.put(Placeholder.class, PlaceholderHandler.class);
 		artefactHandlerRegistry.put(Export.class, ExportHandler.class);
+		artefactHandlerRegistry.put(PerformanceAssert.class, PerformanceAssertHandler.class);
 		
 		// Special artefacts that are not accessible in the UI
 		artefactHandlerRegistry.put(StreamingArtefact.class, StreamingArtefactHandler.class);

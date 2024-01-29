@@ -1,0 +1,16 @@
+version: 1.0.0
+name: "Performance assert example"
+root:
+  testCase:
+    children:
+      - threadGroup:
+          users: 1
+          pacing: 0
+          maxDuration: 0
+          iterations: 10
+          children:
+            - callKeyword:
+                keyword: "Buy MacBook in OpenCart"
+      - performanceAssert:
+          measurementName: "Buy MacBook in OpenCart"
+          expectedValue: 10000
