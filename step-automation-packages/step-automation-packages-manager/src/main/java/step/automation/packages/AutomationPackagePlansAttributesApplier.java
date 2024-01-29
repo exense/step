@@ -43,9 +43,11 @@ public class AutomationPackagePlansAttributesApplier {
     private static final String STEP_PACKAGE = "step";
 
     private final ResourceManager resourceManager;
+    private final FileResolver fileResolver;
 
     public AutomationPackagePlansAttributesApplier(ResourceManager resourceManager) {
         this.resourceManager = resourceManager;
+        this.fileResolver = new FileResolver(resourceManager);
     }
 
     public void applySpecialAttributesToPlans(List<Plan> plans,
@@ -87,13 +89,13 @@ public class AutomationPackagePlansAttributesApplier {
                 Object value = pd.getReadMethod().invoke(object);
                 if (value instanceof String) {
                     String stringValue = (String) value;
-                    if (!stringValue.startsWith(FileResolver.RESOURCE_PREFIX)) {
+                    if (!fileResolver.isResource(stringValue)) {
                         String uploadedResource = uploadAutomationPackageResource(stringValue, apContext);
                         setter.invoke(object, uploadedResource);
                     }
                 } else if (value instanceof DynamicValue) {
                     DynamicValue<String> dynamicValue = (DynamicValue<String>) value;
-                    if (dynamicValue.getValue() != null && !dynamicValue.getValue().startsWith(FileResolver.RESOURCE_PREFIX)) {
+                    if (dynamicValue.getValue() != null && !fileResolver.isResource(dynamicValue.getValue())) {
                         String uploadedResource = uploadAutomationPackageResource(dynamicValue.getValue(), apContext);
                         setter.invoke(object, new DynamicValue<>(uploadedResource));
                     }
