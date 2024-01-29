@@ -88,17 +88,14 @@ public class FunctionPlugin extends AbstractExecutionEnginePlugin {
 	public void initializeExecutionContext(ExecutionEngineContext executionEngineContext,
 			ExecutionContext context) {
 		// Use a layered function accessor to isolate the local context from the parent one
-		// This allow temporary persistence of function for the duration of the execution
+		// This allows temporary persistence of function for the duration of the execution
 		LayeredFunctionAccessor layeredFunctionAccessor = new LayeredFunctionAccessor();
-		layeredFunctionAccessor.pushAccessor(functionAccessor);
-		layeredFunctionAccessor.pushAccessor(new InMemoryFunctionAccessorImpl());
-		
 		// Use a cached accessor for performance reasons
-		CachedFunctionAccessor cachedFunctionAccessor = new CachedFunctionAccessor(layeredFunctionAccessor);
-		
-		FunctionManagerImpl functionManager = new FunctionManagerImpl(cachedFunctionAccessor, functionTypeRegistry);
-		
-		context.put(FunctionAccessor.class, cachedFunctionAccessor);
+		layeredFunctionAccessor.pushAccessor(new CachedFunctionAccessor(functionAccessor));
+		layeredFunctionAccessor.pushAccessor(new InMemoryFunctionAccessorImpl());
+
+		FunctionManagerImpl functionManager = new FunctionManagerImpl(layeredFunctionAccessor, functionTypeRegistry);
+		context.put(FunctionAccessor.class, layeredFunctionAccessor);
 		context.put(FunctionManager.class, functionManager);
 		context.put(FunctionTypeRegistry.class, functionTypeRegistry);
 		context.put(FunctionExecutionService.class, functionExecutionService);
