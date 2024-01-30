@@ -29,21 +29,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import step.artefacts.Check;
-import step.artefacts.DataSetArtefact;
-import step.artefacts.ForBlock;
-import step.artefacts.ForEachBlock;
-import step.artefacts.FunctionGroup;
-import step.artefacts.IfBlock;
-import step.artefacts.RetryIfFails;
-import step.artefacts.Sequence;
-import step.artefacts.Sleep;
-import step.artefacts.Synchronized;
-import step.artefacts.TestCase;
-import step.artefacts.TestScenario;
-import step.artefacts.TestSet;
+import step.artefacts.*;
 import step.artefacts.ThreadGroup;
-import step.artefacts.While;
 import step.core.artefacts.AbstractArtefact;
 import step.datapool.excel.ExcelDataPool;
 import step.datapool.file.FileDataPool;
@@ -512,5 +499,51 @@ public class DefaultDescriptionStepParserTest extends AbstractDescriptionStepPar
 		Assert.assertEquals("key.toString() == 'value with space'",check.getExpression().getExpression());
 		check = (Check) children.get(6);
 		Assert.assertEquals("key.toString().equals(\"value with space\")",check.getExpression().getExpression());
+	}
+
+
+	@Test
+	public void testPerformanceAssert() throws ParsingException {
+		List<AbstractStep> steps = new ArrayList<>();
+		steps.add(step("PerformanceAssert Measurement= \"myMeasurement1\" \t Comparator=\"higher than\" Metric = \"Count\" Value= 10"));
+		PerformanceAssert artefact = parseAndGetUniqueChild(steps, PerformanceAssert.class);
+		Assert.assertEquals("10",artefact.getExpectedValue().getExpression());
+		Filter filter = artefact.getFilters().get(0);
+		Assert.assertEquals("\"myMeasurement1\"", filter.getFilter().getExpression());
+		Assert.assertEquals(Comparator.HIGHER_THAN, artefact.getComparator());
+		Assert.assertEquals(Aggregator.COUNT, artefact.getAggregator());
+	}
+
+	@Test
+	public void testPerformanceAssertWithMinimalArgs() throws ParsingException {
+		List<AbstractStep> steps = new ArrayList<>();
+		steps.add(step("PerformanceAssert Measurement=\"myMeasurement1\" Value=10"));
+		PerformanceAssert artefact = parseAndGetUniqueChild(steps, PerformanceAssert.class);
+		Assert.assertEquals("10",artefact.getExpectedValue().getExpression());
+		Filter filter = artefact.getFilters().get(0);
+		Assert.assertEquals("\"myMeasurement1\"", filter.getFilter().getExpression());
+	}
+
+	@Test
+	public void testPerformanceAssertInvalidArguments() {
+		List<AbstractStep> steps = new ArrayList<>();
+		steps.add(step("PerformanceAssert Measurement= \"myMeasurement1\""));
+		ParsingException parsingException = Assert.assertThrows("h", ParsingException.class, () -> parseAndGetUniqueChild(steps, PerformanceAssert.class));
+		Assert.assertTrue(parsingException.getMessage().contains("Missing attribute 'Value'"));
+
+		steps.clear();
+		steps.add(step("PerformanceAssert Value=10"));
+		ParsingException parsingException1 = Assert.assertThrows("", ParsingException.class, () -> parseAndGetUniqueChild(steps, PerformanceAssert.class));
+		Assert.assertTrue(parsingException1.getMessage().contains("Missing attribute 'Measurement'"));
+
+		steps.clear();
+		steps.add(step("PerformanceAssert Measurement=\"myMeasurement1\" Comparator=\"invalid\" Value=1"));
+		ParsingException parsingException2 = Assert.assertThrows("", ParsingException.class, () -> parseAndGetUniqueChild(steps, PerformanceAssert.class));
+		Assert.assertTrue(parsingException2.getMessage().contains("Invalid Comparator 'invalid'"));
+
+		steps.clear();
+		steps.add(step("PerformanceAssert Measurement=\"myMeasurement1\" Comparator=\"higher then\" Metric=\"invalid\" Value=1"));
+		ParsingException parsingException3 = Assert.assertThrows("", ParsingException.class, () -> parseAndGetUniqueChild(steps, PerformanceAssert.class));
+		Assert.assertTrue(parsingException3.getMessage().contains("Invalid Metric 'invalid'"));
 	}
 }

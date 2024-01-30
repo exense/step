@@ -38,6 +38,8 @@ import step.repositories.parser.steps.DescriptionStep;
 
 public class AbstractDescriptionStepParser extends AnnotatedStepParser<DescriptionStep> {
 
+	public static final String EXPRESSION = "expression";
+
 	protected static JsonObject parseKeyValues(String selectionCriteriaExpr) {
 		JsonObjectBuilder builder = Json.createObjectBuilder();
 		KeyValueParser parser = new KeyValueParser(new CommonTokenStream(new KeyValueLexer(new ANTLRInputStream(selectionCriteriaExpr))));
@@ -86,4 +88,7 @@ public class AbstractDescriptionStepParser extends AnnotatedStepParser<Descripti
 		super(stepClass);
 	}
 
+	protected static String getExpression(JsonObject object, String key) {
+		return object.getJsonObject(key).getString(EXPRESSION);
+	}
 }

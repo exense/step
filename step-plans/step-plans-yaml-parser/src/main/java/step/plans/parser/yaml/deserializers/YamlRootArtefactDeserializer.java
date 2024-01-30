@@ -106,6 +106,7 @@ public class YamlRootArtefactDeserializer extends StepYamlDeserializer<YamlRootA
         res.add(new ForBlockRule(yamlObjectMapper).getArtefactFieldDeserializationProcessor());
         res.add(new ForEachBlockRule(yamlObjectMapper).getArtefactFieldDeserializationProcessor());
         res.add(new DataSetRule(yamlObjectMapper).getArtefactFieldDeserializationProcessor());
+        res.add(new PerformanceAssertFilterRule().getArtefactFieldDeserializationProcessor());
 
         // for 'Check' we always use the dynamic expression for 'expression' field (static value is not supported)
         res.add(new CheckExpressionRule().getArtefactFieldDeserializationProcessor());

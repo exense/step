@@ -55,6 +55,9 @@ public class YamlPlanFields extends YamlFields {
 
     public static final String FILE_REFERENCE_RESOURCE_ID_FIELD = "id";
 
+    public static final String PERFORMANCE_ASSERT_FILTERS_ORIGINAL_FIELD = "filters";
+    public static final String PERFORMANCE_ASSERT_FILTERS_YAML_FIELD = "measurementName";
+
     public static String javaArtefactNameToYaml(String javaArtefactName) {
         return CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_CAMEL, javaArtefactName);
     }

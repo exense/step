@@ -1081,6 +1081,51 @@
       },
       "additionalProperties" : false
     },
+    "PerformanceAssertDef" : {
+      "type" : "object",
+      "properties" : {
+        "performanceAssert" : {
+          "type" : "object",
+          "properties" : {
+            "nodeName" : {
+              "type" : "string",
+              "default" : "PerformanceAssert"
+            },
+            "continueParentNodeExecutionOnError" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "children" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/$defs/ArtefactDef"
+              }
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "expectedValue" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            },
+            "comparator" : {
+              "enum" : [ "EQUALS", "HIGHER_THAN", "LOWER_THAN" ]
+            },
+            "aggregator" : {
+              "enum" : [ "AVG", "MAX", "MIN", "COUNT", "SUM" ]
+            },
+            "measurementName" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            }
+          }
+        }
+      },
+      "additionalProperties" : false
+    },
     "SynchronizedDef" : {
       "type" : "object",
       "properties" : {
@@ -1824,6 +1869,8 @@
         "$ref" : "#/$defs/SessionDef"
       }, {
         "$ref" : "#/$defs/IfDef"
+      }, {
+        "$ref" : "#/$defs/PerformanceAssertDef"
       }, {
         "$ref" : "#/$defs/PlaceholderDef"
       }, {

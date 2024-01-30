@@ -141,6 +141,18 @@ public class YamlPlanReaderTest {
 		);
 	}
 
+	/*@Test
+	public void readBenchmarkSampleYamlPlan() throws YamlPlanValidationException {
+		convertFromYamlToPlan(
+				"src/test/resources/step/plans/parser/yaml/benchmark/test-benchmark-sample-plan.yml",
+				"src/test/resources/step/plans/parser/yaml/benchmark/test-expected-benchmark-sample-tech-plan.yml"
+		);
+
+		convertPlanToYaml(
+				"src/test/resources/step/plans/parser/yaml/benchmark/test-expected-benchmark-sample-tech-plan.yml",
+				"src/test/resources/step/plans/parser/yaml/benchmark/test-converted-benchmark-sample-plan.yml");
+	}*/
+
 	@Test
 	public void checkArtefactExpression() throws YamlPlanValidationException {
 		// test expressions in 'Check' artefact - convert from yaml format to technical format
