@@ -139,8 +139,9 @@ public class DataSourceFieldsYamlHelper {
 
     public JsonNode convertFileReferenceToTechFormat(JsonNode fileReferenceField) {
         if (!fileReferenceField.isContainerNode()) {
-            // TODO: in automation packages we have to support relative paths to the files included in package and search for resources by name e.t.c
-            throw new IllegalArgumentException("Only file references by ID are supported now");
+            // simple value means the reference to local file in automation package
+            // TODO: now the value is applied in AutomationPackagePlansAttributesApplier, but should be refactored to some common approach
+            return new TextNode(fileReferenceField.asText());
         }
         JsonNode resourceId = fileReferenceField.get(YamlPlanFields.FILE_REFERENCE_RESOURCE_ID_FIELD);
         if (resourceId == null) {
