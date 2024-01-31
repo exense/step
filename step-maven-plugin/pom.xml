@@ -22,7 +22,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>step-maven-plugin</artifactId>
-    <packaging>pom</packaging>
+    <packaging>maven-plugin</packaging>
 
     <parent>
         <groupId>ch.exense.step</groupId>
@@ -36,12 +36,6 @@
         <maven-core.version>3.8.1</maven-core.version>
         <maven-plugin-api.version>3.8.1</maven-plugin-api.version>
     </properties>
-
-    <modules>
-        <module>step-commons-maven-plugin</module>
-        <module>step-os-maven-plugin</module>
-        <module>step-ee-maven-plugin</module>
-    </modules>
 
     <dependencyManagement>
         <dependencies>
@@ -75,5 +69,75 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-plugin-api</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-core</artifactId>
+        </dependency>
+
+        <!-- dependencies to annotations -->
+        <dependency>
+            <groupId>org.apache.maven.plugin-tools</groupId>
+            <artifactId>maven-plugin-annotations</artifactId>
+        </dependency>
+
+        <!-- For polling -->
+        <dependency>
+            <groupId>ch.exense.commons</groupId>
+            <artifactId>exense-basic-commons</artifactId>
+            <version>${exense-commons.version}</version>
+        </dependency>
+
+        <!-- Step remote clients -->
+        <dependency>
+            <groupId>ch.exense.step</groupId>
+            <artifactId>step-controller-remote-client</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ch.exense.step</groupId>
+            <artifactId>step-functions-package-client</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ch.exense.step</groupId>
+            <artifactId>step-automation-packages-client</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-plugin-plugin</artifactId>
+                <version>${maven-plugin-tools.version}</version>
+                <configuration>
+                    <helpPackageName>step.plugins.maven</helpPackageName>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>help-mojo</id>
+                        <goals>
+                            <!-- good practice is to generate help mojo for plugin -->
+                            <goal>helpmojo</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>

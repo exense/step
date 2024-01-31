@@ -43,6 +43,11 @@ public @interface Artefact {
 	boolean validAsControl() default true;
 
 	/**
+	 * @return true if plans with this artefact as root should be allowed for standalone execution
+	 * i.e. when executing an automation package, controlling how related events are dealt with...
+	 */
+	boolean validForStandaloneExecution() default true;
+	/**
 	 * Marks the artefact as test (used in unit tests) to avoid inclusion in json schema for Yaml format
 	 */
 	boolean test() default false;

@@ -30,9 +30,6 @@ public class ExecutionParameters extends CommonExecutionParameters {
 	Plan plan;
 	RepositoryObjectReference repositoryObject;
 
-	/**
-	 * @deprecated this field is deprecated and isn't used anymore
-	 */
 	boolean isolatedExecution = false;
 	
 	List<RepositoryObjectReference> exports;
@@ -46,6 +43,9 @@ public class ExecutionParameters extends CommonExecutionParameters {
 		this(mode, null, null, null, null, null, null, false, null);
 	}
 
+	public ExecutionParameters(RepositoryObjectReference repositoryObjectReference, String description, Map<String, String> customParameters) {
+		this(ExecutionMode.RUN, null, repositoryObjectReference, customParameters, description, null, null, false, null);
+	}
 	public ExecutionParameters(RepositoryObjectReference repositoryObjectReference, Map<String, String> customParameters) {
 		this(ExecutionMode.RUN, null, repositoryObjectReference, customParameters, null, null, null, false, null);
 	}
@@ -89,18 +89,10 @@ public class ExecutionParameters extends CommonExecutionParameters {
 		this.exports = exports;
 	}
 
-	/**
-	 * @deprecated This field is deprecated and isn't used anymore
-	 * @return
-	 */
 	public Boolean isIsolatedExecution() {
 		return isolatedExecution;
 	}
 
-	/**
-	 * @deprecated This field is deprecated and isn't used anymore
-	 * @param isolatedExecution
-	 */
 	public void setIsolatedExecution(Boolean isolatedExecution) {
 		this.isolatedExecution = isolatedExecution;
 	}

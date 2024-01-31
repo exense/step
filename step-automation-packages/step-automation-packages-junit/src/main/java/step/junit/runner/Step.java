@@ -24,6 +24,7 @@ import step.automation.packages.AutomationPackageFromClassLoaderProvider;
 import step.automation.packages.AutomationPackageManager;
 import step.automation.packages.junit.AutomationPackagePlans;
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.artefacts.Artefact;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
 import step.core.plans.Plan;
@@ -65,6 +66,7 @@ public class Step extends AbstractStepRunner {
 			listPlans = automationPackageManager.getPackagePlans(automationPackageId)
 					.stream()
 					.filter(planNameFilter)
+					.filter(p -> p.getRoot().getClass().getAnnotation(Artefact.class).validForStandaloneExecution())
 					.map(p -> new StepClassParserResult(p.getAttribute(AbstractOrganizableObject.NAME), p, null))
 					.collect(Collectors.toList());
 		} catch (Exception e) {

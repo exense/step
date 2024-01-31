@@ -20,30 +20,31 @@ package step.plans.parser.yaml;
 
 import step.artefacts.CallFunction;
 import step.artefacts.TokenSelector;
-import step.handlers.javahandler.jsonschema.DefaultFieldMetadataExtractor;
 import step.handlers.javahandler.jsonschema.FieldMetadata;
 import step.handlers.javahandler.jsonschema.FieldMetadataExtractor;
 
-import java.lang.reflect.Field;
+import java.util.List;
 
-public class ArtefactFieldMetadataExtractor implements FieldMetadataExtractor {
-
-    private final FieldMetadataExtractor defaultMetadataExtractor = new DefaultFieldMetadataExtractor();
+@YamlPlanReaderExtension
+public class ArtefactFieldMetadataExtractor implements YamlPlanReaderExtender {
 
     @Override
-    public FieldMetadata extractMetadata(Field field) {
-        // TODO: this logic can be replaced with field-level annotation
-        if (field.getDeclaringClass().equals(CallFunction.class) && field.getName().equals(YamlPlanFields.CALL_FUNCTION_ARGUMENT_ORIGINAL_FIELD)) {
-            // rename 'argument' field to 'inputs'
-            return new FieldMetadata(YamlPlanFields.CALL_FUNCTION_ARGUMENT_YAML_FIELD, null, field.getType(), false);
-        } else if (field.getDeclaringClass().equals(TokenSelector.class) && field.getName().equals(YamlPlanFields.TOKEN_SELECTOR_TOKEN_ORIGINAL_FIELD)) {
-            // rename 'token' field to 'routing'
-            return new FieldMetadata(YamlPlanFields.TOKEN_SELECTOR_TOKEN_YAML_FIELD, null, field.getType(), false);
-        } else if (field.getDeclaringClass().equals(CallFunction.class) && field.getName().equals(YamlPlanFields.CALL_FUNCTION_FUNCTION_ORIGINAL_FIELD)) {
-            // rename 'function' field to 'keyword'
-            return new FieldMetadata(YamlPlanFields.CALL_FUNCTION_FUNCTION_YAML_FIELD, null, field.getType(), false);
-        } else {
-            return defaultMetadataExtractor.extractMetadata(field);
-        }
+    public List<FieldMetadataExtractor> getMetadataExtractorExtensions() {
+        return List.of(field -> {
+            // TODO: this logic can be replaced with field-level annotation
+            if (field.getDeclaringClass().equals(CallFunction.class) && field.getName().equals(YamlPlanFields.CALL_FUNCTION_ARGUMENT_ORIGINAL_FIELD)) {
+                // rename 'argument' field to 'inputs'
+                return new FieldMetadata(YamlPlanFields.CALL_FUNCTION_ARGUMENT_YAML_FIELD, null, field.getType(), false);
+            } else if (field.getDeclaringClass().equals(TokenSelector.class) && field.getName().equals(YamlPlanFields.TOKEN_SELECTOR_TOKEN_ORIGINAL_FIELD)) {
+                // rename 'token' field to 'routing'
+                return new FieldMetadata(YamlPlanFields.TOKEN_SELECTOR_TOKEN_YAML_FIELD, null, field.getType(), false);
+            } else if (field.getDeclaringClass().equals(CallFunction.class) && field.getName().equals(YamlPlanFields.CALL_FUNCTION_FUNCTION_ORIGINAL_FIELD)) {
+                // rename 'function' field to 'keyword'
+                return new FieldMetadata(YamlPlanFields.CALL_FUNCTION_FUNCTION_YAML_FIELD, null, field.getType(), false);
+            } else {
+                return null;
+            }
+        });
     }
+
 }

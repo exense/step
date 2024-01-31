@@ -18,7 +18,6 @@
  ******************************************************************************/
 package step.automation.packages;
 
-import step.core.objectenricher.ObjectEnricher;
 import step.resources.Resource;
 import step.resources.ResourceManager;
 
@@ -27,25 +26,23 @@ import java.net.URL;
 
 public class AutomationPackageResourceUploader {
 
-    public Resource uploadResourceFromAutomationPackage(AutomationPackageArchive automationPackageArchive,
-                                                        String resourcePath,
+    public Resource uploadResourceFromAutomationPackage(String resourcePath,
                                                         String resourceType,
-                                                        AutomationPackageAttributesApplyingContext context,
-                                                        ObjectEnricher objectEnricher) {
+                                                        AutomationPackageAttributesApplyingContext context) {
         if (resourcePath != null && !resourcePath.isEmpty()) {
             ResourceManager resourceManager = context.getResourceManager();
 
             try {
-                URL resourceUrl = automationPackageArchive.getResource(resourcePath);
+                URL resourceUrl = context.getAutomationPackageArchive().getResource(resourcePath);
                 if (resourceUrl == null) {
                     throw new RuntimeException("Resource not found in automation package: " + resourcePath);
                 }
                 File resourceFile = new File(resourceUrl.getFile());
                 return resourceManager.createResource(
                         resourceType,
-                        automationPackageArchive.getResourceAsStream(resourcePath),
+                        context.getAutomationPackageArchive().getResourceAsStream(resourcePath),
                         resourceFile.getName(),
-                        false, objectEnricher
+                        false, context.getEnricher()
                 );
             } catch (Exception e) {
                 throw new RuntimeException("Unable to upload automation package resource " + resourcePath, e);

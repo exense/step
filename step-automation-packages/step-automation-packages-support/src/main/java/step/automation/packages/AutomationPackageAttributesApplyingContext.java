@@ -18,15 +18,20 @@
  ******************************************************************************/
 package step.automation.packages;
 
+import step.core.objectenricher.ObjectEnricher;
 import step.resources.ResourceManager;
 
 public class AutomationPackageAttributesApplyingContext {
     private ResourceManager resourceManager;
+    private AutomationPackageArchive automationPackageArchive;
+    private ObjectEnricher enricher;
 
     private String uploadedPackageFileResource;
 
-    public AutomationPackageAttributesApplyingContext(ResourceManager resourceManager) {
+    public AutomationPackageAttributesApplyingContext(ResourceManager resourceManager, AutomationPackageArchive automationPackageArchive, ObjectEnricher enricher) {
         this.resourceManager = resourceManager;
+        this.automationPackageArchive = automationPackageArchive;
+        this.enricher = enricher;
     }
 
     public ResourceManager getResourceManager() {
@@ -37,11 +42,27 @@ public class AutomationPackageAttributesApplyingContext {
         this.resourceManager = resourceManager;
     }
 
+    public AutomationPackageArchive getAutomationPackageArchive() {
+        return automationPackageArchive;
+    }
+
     public String getUploadedPackageFileResource() {
         return uploadedPackageFileResource;
     }
 
     public void setUploadedPackageFileResource(String uploadedPackageFileResource) {
         this.uploadedPackageFileResource = uploadedPackageFileResource;
+    }
+
+    public ObjectEnricher getEnricher() {
+        return enricher;
+    }
+
+    public void setAutomationPackageArchive(AutomationPackageArchive automationPackageArchive) {
+        this.automationPackageArchive = automationPackageArchive;
+    }
+
+    public void setEnricher(ObjectEnricher enricher) {
+        this.enricher = enricher;
     }
 }

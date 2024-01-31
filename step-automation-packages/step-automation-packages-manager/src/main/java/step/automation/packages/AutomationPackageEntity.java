@@ -19,7 +19,6 @@
 package step.automation.packages;
 
 import step.automation.packages.accessor.AutomationPackageAccessor;
-import step.core.GlobalContext;
 import step.core.entities.Entity;
 
 public class AutomationPackageEntity extends Entity<AutomationPackage, AutomationPackageAccessor> {

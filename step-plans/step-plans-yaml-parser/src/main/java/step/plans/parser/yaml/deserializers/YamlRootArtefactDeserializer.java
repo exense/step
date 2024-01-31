@@ -99,12 +99,14 @@ public class YamlRootArtefactDeserializer extends StepYamlDeserializer<YamlRootA
         // for 'CallFunction' we can use either the `keyword` (keyword name) field or the `keyword.selectionCriteria` to define the keyword name
         // and 'token' aka 'selectionCriteria' field should contain all input values (dynamic values) as json string
         //  but in simplified format we represent input values as array of key / values
+        // TODO: all these rules for OS artefacts should be taken in the same way (pluggable) via getExtensions
         res.add(new KeywordSelectionRule().getArtefactFieldDeserializationProcessor());
         res.add(new KeywordRoutingRule().getArtefactFieldDeserializationProcessor());
         res.add(new FunctionGroupSelectionRule().getArtefactFieldDeserializationProcessor());
         res.add(new ForBlockRule(yamlObjectMapper).getArtefactFieldDeserializationProcessor());
         res.add(new ForEachBlockRule(yamlObjectMapper).getArtefactFieldDeserializationProcessor());
         res.add(new DataSetRule(yamlObjectMapper).getArtefactFieldDeserializationProcessor());
+        res.add(new PerformanceAssertFilterRule().getArtefactFieldDeserializationProcessor());
 
         // for 'Check' we always use the dynamic expression for 'expression' field (static value is not supported)
         res.add(new CheckExpressionRule().getArtefactFieldDeserializationProcessor());

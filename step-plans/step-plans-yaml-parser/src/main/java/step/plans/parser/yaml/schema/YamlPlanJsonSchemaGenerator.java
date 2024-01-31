@@ -33,16 +33,12 @@ import step.core.artefacts.Artefact;
 import step.core.scanner.AnnotationScanner;
 import step.core.scanner.CachedAnnotationScanner;
 import step.core.yaml.schema.AggregatedJsonSchemaFieldProcessor;
+import step.core.yaml.schema.AggregatingFieldMetadataExtractor;
 import step.core.yaml.schema.JsonSchemaDefinitionCreator;
 import step.core.yaml.schema.YamlJsonSchemaHelper;
-import step.handlers.javahandler.jsonschema.FieldMetadataExtractor;
-import step.handlers.javahandler.jsonschema.JsonSchemaCreator;
-import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
-import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
-import step.plans.nl.RootArtefactType;
+import step.handlers.javahandler.jsonschema.*;
 import step.plans.parser.yaml.YamlPlanFields;
 import step.plans.parser.yaml.rules.*;
-import step.plans.parser.yaml.ArtefactFieldMetadataExtractor;
 import step.plans.parser.yaml.YamlPlanReaderExtender;
 import step.plans.parser.yaml.YamlPlanReaderExtension;
 
@@ -109,6 +105,7 @@ public class YamlPlanJsonSchemaGenerator {
 		// -- RULES FROM EXTENSIONS HAVE LESS PRIORITY THAN BASIC RULES, BUT MORE PRIORITY THAN OTHER RULES
 		result.addAll(getFieldExtensions());
 
+		// TODO: all these rules for OS artefacts should be taken in the same way (pluggable) via getFieldExtensions
 		// -- RULES FOR OS ARTEFACTS
 		result.add(new NodeNameRule().getJsonSchemaFieldProcessor(jsonProvider));
 		result.add(new KeywordSelectionRule().getJsonSchemaFieldProcessor(jsonProvider));
@@ -119,6 +116,7 @@ public class YamlPlanJsonSchemaGenerator {
 		result.add(new ForBlockRule(null).getJsonSchemaFieldProcessor(jsonProvider));
 		result.add(new ForEachBlockRule(null).getJsonSchemaFieldProcessor(jsonProvider));
 		result.add(new DataSetRule(null).getJsonSchemaFieldProcessor(jsonProvider));
+		result.add(new PerformanceAssertFilterRule().getJsonSchemaFieldProcessor(jsonProvider));
 
 		// -- SOME DEFAULT RULES FOR ENUMS AND DYNAMIC FIELDS
 		result.add(new DynamicFieldRule().getJsonSchemaFieldProcessor(jsonProvider));
@@ -141,8 +139,14 @@ public class YamlPlanJsonSchemaGenerator {
 		return extensions;
 	}
 
-	protected ArtefactFieldMetadataExtractor prepareMetadataExtractor() {
-		return new ArtefactFieldMetadataExtractor();
+	public static FieldMetadataExtractor prepareMetadataExtractor() {
+		List<FieldMetadataExtractor> metadataExtractors = new ArrayList<>();
+
+		CachedAnnotationScanner.getClassesWithAnnotation(YamlPlanReaderExtension.LOCATION, YamlPlanReaderExtension.class, Thread.currentThread().getContextClassLoader()).stream()
+				.map(newInstanceAs(YamlPlanReaderExtender.class)).forEach(e -> metadataExtractors.addAll(e.getMetadataExtractorExtensions()));
+		metadataExtractors.add(new DefaultFieldMetadataExtractor());
+
+		return new AggregatingFieldMetadataExtractor(metadataExtractors);
 	}
 
 	public JsonNode generateJsonSchema() throws JsonSchemaPreparationException {
@@ -292,25 +296,9 @@ public class YamlPlanJsonSchemaGenerator {
 	}
 
 	private JsonObjectBuilder createArtefactImplDef(String name, Class<?> artefactClass) throws JsonSchemaPreparationException {
-		JsonObjectBuilder res = jsonProvider.createObjectBuilder();
-		res.add("type", "object");
-
 		// artefact has the top-level property matching the artefact name
-		JsonObjectBuilder artefactNameProperty = jsonProvider.createObjectBuilder();
-
-		// other properties are located in nested object and automatically prepared via reflection
-		JsonObjectBuilder artefactProperties = jsonProvider.createObjectBuilder();
-		fillArtefactProperties(artefactClass, artefactProperties, name);
-
-		// use camelCase for artefact names in yaml
-		artefactNameProperty.add(YamlPlanFields.javaArtefactNameToYaml(name), jsonProvider.createObjectBuilder().add("type", "object").add("properties", artefactProperties));
-		res.add("properties", artefactNameProperty);
-		res.add("additionalProperties", false);
-		return res;
-	}
-
-	private void fillArtefactProperties(Class<?> artefactClass, JsonObjectBuilder artefactProperties, String artefactName) throws JsonSchemaPreparationException {
-		schemaHelper.extractPropertiesFromClass(jsonSchemaCreator, artefactClass, artefactProperties, artefactName);
+		String yamlName = YamlPlanFields.javaArtefactNameToYaml(name);
+		return schemaHelper.createNamedObjectImplDef(yamlName, artefactClass, jsonSchemaCreator, true);
 	}
 
 	private JsonObjectBuilder createArtefactDef(Collection<String> artefactImplReferences) {

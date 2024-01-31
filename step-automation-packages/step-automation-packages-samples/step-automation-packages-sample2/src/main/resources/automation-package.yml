@@ -2,11 +2,21 @@ schemaVersion: 1.0.0
 name: "My package"
 keywords:
   - JMeter:
-      name: "JMeter keyword from automation package"  
+      name: "JMeter keyword from automation package"
       description: "JMeter keyword 1"
       executeLocally: false
       useCustomTemplate: true
-      managed: true
       callTimeout: 1000
       jmeterTestplan: "jmeterProject1/jmeterProject1.xml"
-      
+plans:
+  - name: "Test excel plan"
+    root:
+      sequence:
+        name: Sequence
+        children:
+          - forEach:
+              description: "test excel"
+              dataSource:
+                excel:
+                  file: "excel/excel1.xlsx"
+                  worksheet: "myWorksheet"

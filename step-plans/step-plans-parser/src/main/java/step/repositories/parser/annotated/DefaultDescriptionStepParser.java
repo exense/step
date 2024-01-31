@@ -18,6 +18,8 @@
  ******************************************************************************/
 package step.repositories.parser.annotated;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,29 +28,9 @@ import jakarta.json.JsonObject;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import step.artefacts.AfterSequence;
-import step.artefacts.AfterThread;
-import step.artefacts.BeforeSequence;
-import step.artefacts.BeforeThread;
-import step.artefacts.CallFunction;
-import step.artefacts.CallPlan;
-import step.artefacts.Check;
-import step.artefacts.DataSetArtefact;
-import step.artefacts.Echo;
-import step.artefacts.ForBlock;
-import step.artefacts.ForEachBlock;
-import step.artefacts.FunctionGroup;
-import step.artefacts.IfBlock;
-import step.artefacts.RetryIfFails;
-import step.artefacts.Script;
-import step.artefacts.Sequence;
-import step.artefacts.Sleep;
-import step.artefacts.Synchronized;
-import step.artefacts.TestCase;
-import step.artefacts.TestScenario;
-import step.artefacts.TestSet;
+import step.artefacts.*;
 import step.artefacts.ThreadGroup;
-import step.artefacts.While;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.execution.ExecutionContextBindings;
 import step.datapool.DataPoolConfiguration;
@@ -501,5 +483,59 @@ public class DefaultDescriptionStepParser extends AbstractDescriptionStepParser 
 	@Step("^End[ \t\n]*$")
 	public static void end(ParsingContext parsingContext) {
 		parsingContext.popCurrentArtefact();
-	}	
+	}
+
+	public static final String METRIC = "Metric";
+	public static final String MEASUREMENT = "Measurement";
+	public static final String COMPARATOR = "Comparator";
+	public static final String VALUE = "Value";
+
+	@Step(value = "PerformanceAssert(.*)$", priority = 2)
+	public static void performanceAssert(ParsingContext parsingContext, String args) {
+		JsonObject object = parseKeyValues(args);
+
+		String measurementName = getNonNullExpression(object, MEASUREMENT);
+		String aggregatorStr = getStringOrDefault(object, METRIC, Aggregator.AVG.getDescription());
+		Aggregator aggregator = Arrays.stream(Aggregator.values()).filter(a -> a.getDescription().equals(aggregatorStr)).findFirst()
+				.orElseThrow(() -> new RuntimeException("Invalid " + METRIC + " '" + aggregatorStr + "'"));
+		String comparatorString = getStringOrDefault(object, COMPARATOR, Comparator.LOWER_THAN.getDescription());
+		Comparator comparator = Arrays.stream(Comparator.values()).filter(c -> c.getDescription().equals(comparatorString)).findFirst()
+				.orElseThrow(() -> new RuntimeException("Invalid " + COMPARATOR + " '" + comparatorString + "'"));
+		DynamicValue<Number> expectedValue = new DynamicValue<>(getNonNullExpression(object, VALUE), "");
+
+		PerformanceAssert performanceAssert = new PerformanceAssert();
+		performanceAssert.setAggregator(aggregator);
+		performanceAssert.setComparator(comparator);
+		performanceAssert.setExpectedValue(expectedValue);
+
+		Filter filter = new Filter();
+		filter.setField(new DynamicValue<>(AbstractOrganizableObject.NAME));
+		filter.setFilterType(FilterType.REGEX);
+		filter.setFilter(new DynamicValue<>(measurementName, ""));
+		ArrayList filters = new ArrayList();
+		filters.add(filter);
+		performanceAssert.setFilters(filters);
+		parsingContext.addArtefactToCurrentParent(performanceAssert);
+	}
+
+	private static String getNonNullExpression(JsonObject object, String key) {
+		if (object.containsKey(key)) {
+			return getExpression(object, key);
+		} else {
+			throw new RuntimeException("Missing attribute '" + key + "'");
+		}
+	}
+
+	private static String getStringOrDefault(JsonObject object, String key, String defaultExpression) {
+		if (object.containsKey(key)) {
+			return getString(object, key);
+		} else {
+			return defaultExpression;
+		}
+	}
+
+	private static String getString(JsonObject object, String key) {
+		String string = object.getJsonObject(key).getString(EXPRESSION);
+		return string.substring(1, string.length() - 1);
+	}
 }

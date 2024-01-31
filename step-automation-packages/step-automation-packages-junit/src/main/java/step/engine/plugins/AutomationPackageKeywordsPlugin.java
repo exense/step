@@ -50,6 +50,7 @@ public class AutomationPackageKeywordsPlugin extends AbstractExecutionEnginePlug
                                     new ObjectId(),
                                     context.require(FunctionTypeRegistry.class),
                                     functionAccessor,
+                                    resourceManager,
                                     new AutomationPackageReaderOS())
                     )
             );
