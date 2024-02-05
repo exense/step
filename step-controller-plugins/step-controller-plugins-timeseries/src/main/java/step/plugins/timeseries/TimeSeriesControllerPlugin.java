@@ -130,6 +130,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 				.setDisplayName("Name");
 		MetricAttribute errorCodeAttribute = new MetricAttribute()
 				.setName("errorCode")
+				.setType(MetricAttributeType.TEXT)
 				.setDisplayName("Error Code");
 
 		// TODO create a builder for units
