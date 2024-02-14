@@ -159,7 +159,7 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
             }
             if (executionFailureCount > 0 && getEnsureExecutionSuccess()) {
                 int executionsCount = executionIds.size();
-                throw logAndThrow(executionFailureCount + "/" + executionsCount + " execution(s) failed. See " + getUrl() + "#/executions/list");
+                throw logAndThrow(executionFailureCount + "/" + executionsCount + " execution(s) failed. See " + getUrl() + "#/root/executions/list");
             }
         } catch (TimeoutException | InterruptedException ex) {
             throw logAndThrow("Timeout after " + getExecutionResultTimeoutS() + " seconds while waiting for executions to complete", ex);
@@ -178,7 +178,7 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
 
     private String executionToString(String id, Execution ex) {
         if (ex != null) {
-            return String.format("'%s' (%s)", ex.getDescription(), getUrl() + "#/executions/" + ex.getId().toString());
+            return String.format("'%s' (%s)", ex.getDescription(), getUrl() + "#/root/executions/" + ex.getId().toString());
         } else {
             return id;
         }

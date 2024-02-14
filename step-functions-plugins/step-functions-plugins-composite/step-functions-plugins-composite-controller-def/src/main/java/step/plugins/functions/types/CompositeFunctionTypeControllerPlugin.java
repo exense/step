@@ -47,7 +47,7 @@ public class CompositeFunctionTypeControllerPlugin extends AbstractControllerPlu
 		context.get(FunctionEditorRegistry.class).register(new FunctionEditor() {
 			@Override
 			public String getEditorPath(Function function) {
-				return "/composites/editor/"+ function.getId();
+				return "/root/composites/editor/"+ function.getId();
 			}
 
 			@Override
