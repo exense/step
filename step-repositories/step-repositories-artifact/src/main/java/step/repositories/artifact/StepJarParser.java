@@ -24,6 +24,7 @@ import step.automation.packages.model.AutomationPackageKeyword;
 import step.core.plans.Plan;
 import step.core.scanner.AnnotationScanner;
 import step.functions.Function;
+import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 import step.junit.runner.StepClassParser;
 import step.resources.ResourceManager;
 
@@ -49,29 +50,29 @@ public class StepJarParser {
     }
 
     private List<Function> getFunctions(AnnotationScanner annotationScanner, File artifact, File libraries) {
+        try {
+            // reuse logic from automation package reader to scan annotated keywords
+            // BUT in contrast with automation package here we need to fill scriptFile and librariesFile references immediately
+            List<Function> functions = AbstractAutomationPackageReader
+                    .extractAnnotatedKeywords(annotationScanner, false, artifact.getAbsolutePath(), libraries != null ? libraries.getAbsolutePath() : null)
+                    .stream()
+                    .map(AutomationPackageKeyword::getDraftKeyword)
+                    .collect(Collectors.toList());
 
-        // reuse logic from automation package reader to scan annotated keywords
-        // BUT in contrast with automation package here we need to fill scriptFile and librariesFile references immediately
-        List<Function> functions = AbstractAutomationPackageReader
-                .extractAnnotatedKeywords(annotationScanner, false, artifact.getAbsolutePath(), libraries != null ? libraries.getAbsolutePath() : null)
-                .stream()
-                .map(AutomationPackageKeyword::getDraftKeyword)
-                .collect(Collectors.toList());
-
-        // if artifact is an automation package we need to add keywords from yaml descriptors (annotated keywords have already been included above)
-        try (AutomationPackageArchive automationPackageArchive = new AutomationPackageArchive(artifact, artifact.getName())) {
-            // add functions from automation package
-            if (automationPackageArchive.hasAutomationPackageDescriptor() && automationPackageReader != null) {
-                AutomationPackageContent content = automationPackageReader.readAutomationPackage(automationPackageArchive, false, false);
-                functions.addAll(automationPackagesKeywordAttributesApplier.applySpecialAttributesToKeyword(
-                        content.getKeywords(), automationPackageArchive, null, null)
-                );
+            // if artifact is an automation package we need to add keywords from yaml descriptors (annotated keywords have already been included above)
+            try (AutomationPackageArchive automationPackageArchive = new AutomationPackageArchive(artifact, artifact.getName())) {
+                // add functions from automation package
+                if (automationPackageArchive.hasAutomationPackageDescriptor() && automationPackageReader != null) {
+                    AutomationPackageContent content = automationPackageReader.readAutomationPackage(automationPackageArchive, false, false);
+                    functions.addAll(automationPackagesKeywordAttributesApplier.applySpecialAttributesToKeyword(
+                            content.getKeywords(), automationPackageArchive, null, null)
+                    );
+                }
             }
-        } catch (AutomationPackageReadingException | IOException e) {
+            return functions;
+        } catch (AutomationPackageReadingException | JsonSchemaPreparationException | IOException e) {
             throw new RuntimeException("Unable to process automation package", e);
         }
-
-        return functions;
     }
 
     public PlansParsingResult getPlansForJar(File artifact, File dependency, String[] includedClasses, String[] includedAnnotations,

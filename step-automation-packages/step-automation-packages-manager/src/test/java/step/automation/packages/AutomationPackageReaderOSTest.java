@@ -1,5 +1,6 @@
 package step.automation.packages;
 
+import jakarta.json.spi.JsonProvider;
 import org.junit.Test;
 import step.artefacts.TestCase;
 import step.automation.packages.model.AutomationPackageContent;
@@ -11,6 +12,7 @@ import step.plugins.jmeter.JMeterFunction;
 import step.plugins.jmeter.automation.JMeterFunctionTestplanConversionRule;
 
 import java.io.File;
+import java.io.StringReader;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -19,6 +21,10 @@ import static org.junit.Assert.assertNotNull;
 import static step.automation.packages.AutomationPackageTestUtils.*;
 
 public class AutomationPackageReaderOSTest {
+
+    private static final String KEYWORD_SCHEMA_FROM_SAMPLE = "{ \"properties\": { "
+            + "\"myInput\": {\"type\": \"string\", \"default\":\"defaultValueString\"}"
+            + "}, \"required\" : []}";
 
     private final AutomationPackageReaderOS reader = new AutomationPackageReaderOS();
 
@@ -39,7 +45,10 @@ public class AutomationPackageReaderOSTest {
                 jmeterKeyword.getSpecialAttributes().get(JMeterFunctionTestplanConversionRule.JMETER_TESTPLAN_ATTR)
         );
 
-        AutomationPackageTestUtils.findKeywordByClassAndName(keywords, GeneralScriptFunction.class, ANNOTATED_KEYWORD);
+        AutomationPackageKeyword myKeyword2 = findKeywordByClassAndName(keywords, GeneralScriptFunction.class, ANNOTATED_KEYWORD);
+        // check the plan-text schema specified in keyword annotation
+        assertEquals(JsonProvider.provider().createReader(new StringReader(KEYWORD_SCHEMA_FROM_SAMPLE)).readObject(), myKeyword2.getDraftKeyword().getSchema());
+
         AutomationPackageTestUtils.findKeywordByClassAndName(keywords, GeneralScriptFunction.class, INLINE_PLAN);
 
         // 2 annotated plans and 1 plan in yaml descriptor

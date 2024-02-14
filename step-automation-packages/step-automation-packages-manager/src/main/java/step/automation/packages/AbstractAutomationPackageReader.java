@@ -33,6 +33,8 @@ import step.core.scanner.AnnotationScanner;
 import step.engine.plugins.LocalFunctionPlugin;
 import step.functions.Function;
 import step.handlers.javahandler.Keyword;
+import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
+import step.handlers.javahandler.jsonschema.KeywordJsonSchemaCreator;
 import step.junit.runner.StepClassParser;
 import step.junit.runner.StepClassParserResult;
 import step.junit.runners.annotations.Plans;
@@ -128,7 +130,8 @@ public abstract class AbstractAutomationPackageReader<T extends AutomationPackag
 
     protected abstract T newContentInstance();
 
-    private void fillAutomationPackageWithAnnotatedKeywordsAndPlans(AutomationPackageArchive archive, boolean isLocalPackage, AutomationPackageContent res) {
+    private void fillAutomationPackageWithAnnotatedKeywordsAndPlans(AutomationPackageArchive archive, boolean isLocalPackage, AutomationPackageContent res) throws AutomationPackageReadingException {
+
         // for file-based packages we create class loader for file, otherwise we just use class loader from archive
         File originalFile = archive.getOriginalFile();
         try (AnnotationScanner annotationScanner = originalFile != null ? AnnotationScanner.forSpecificJar(originalFile) : AnnotationScanner.forAllClassesFromClassLoader(archive.getClassLoader())) {
@@ -146,51 +149,63 @@ public abstract class AbstractAutomationPackageReader<T extends AutomationPackag
                 log.info("{} annotated plans found in automation package {}", annotatedPlans.size(), StringUtils.defaultString(archive.getOriginalFileName()));
             }
             res.getPlans().addAll(annotatedPlans);
+        } catch (JsonSchemaPreparationException e) {
+            throw new AutomationPackageReadingException("Cannot read the json schema from annotated keyword", e);
         }
     }
 
-    public static List<AutomationPackageKeyword> extractAnnotatedKeywords(AnnotationScanner annotationScanner, boolean isLocalPackage, String scriptFile, String librariesFile) {
+    public static List<AutomationPackageKeyword> extractAnnotatedKeywords(AnnotationScanner annotationScanner, boolean isLocalPackage, String scriptFile, String librariesFile) throws JsonSchemaPreparationException {
         List<AutomationPackageKeyword> scannedKeywords = new ArrayList<>();
         Set<Method> methods = annotationScanner.getMethodsWithAnnotation(Keyword.class);
-
-        for (Method m : methods) {
-            Keyword annotation = m.getAnnotation(Keyword.class);
-            if (annotation == null) {
-                log.warn("Keyword annotation is not found for method " + m.getName());
-                continue;
-            }
-
-            Function f;
-            if (isCompositeFunction(annotation)) {
-                f = createCompositeFunction(m, annotation);
-            } else {
-                if (!isLocalPackage) {
-                    String functionName = annotation.name().length() > 0 ? annotation.name() : m.getName();
-
-                    GeneralScriptFunction function = new GeneralScriptFunction();
-                    function.setAttributes(new HashMap<>());
-                    function.getAttributes().put(AbstractOrganizableObject.NAME, functionName);
-
-                    // to be filled by AutomationPackageKeywordsAttributesApplier
-                    if (scriptFile != null) {
-                        function.setScriptFile(new DynamicValue<>(scriptFile));
-                    }
-
-                    // libraries file is not used is automation package (only required for compatibility with StepJarParser)
-                    if (librariesFile != null) {
-                        function.setLibrariesFile(new DynamicValue<>(librariesFile));
-                    }
-
-                    function.getCallTimeout().setValue(annotation.timeout());
-                    function.setDescription(annotation.description());
-                    function.setScriptLanguage(new DynamicValue<>("java"));
-                    f = function;
-                } else {
-                    f = LocalFunctionPlugin.createLocalFunction(m, annotation);
+        if(!methods.isEmpty()) {
+            KeywordJsonSchemaCreator annotatedKeywordJsonSchemaCreator = new KeywordJsonSchemaCreator();
+            for (Method m : methods) {
+                Keyword annotation = m.getAnnotation(Keyword.class);
+                if (annotation == null) {
+                    log.warn("Keyword annotation is not found for method " + m.getName());
+                    continue;
                 }
-            }
 
-            scannedKeywords.add(new AutomationPackageKeyword(f, new HashMap<>()));
+                Function f;
+                if (isCompositeFunction(annotation)) {
+                    f = createCompositeFunction(m, annotation);
+                } else {
+                    if (!isLocalPackage) {
+                        String functionName = annotation.name().length() > 0 ? annotation.name() : m.getName();
+
+                        GeneralScriptFunction function = new GeneralScriptFunction();
+                        function.setAttributes(new HashMap<>());
+                        function.getAttributes().put(AbstractOrganizableObject.NAME, functionName);
+
+                        // to be filled by AutomationPackageKeywordsAttributesApplier
+                        if (scriptFile != null) {
+                            function.setScriptFile(new DynamicValue<>(scriptFile));
+                        }
+
+                        // libraries file is not used is automation package (only required for compatibility with StepJarParser)
+                        if (librariesFile != null) {
+                            function.setLibrariesFile(new DynamicValue<>(librariesFile));
+                        }
+
+                        function.getCallTimeout().setValue(annotation.timeout());
+                        function.setScriptLanguage(new DynamicValue<>("java"));
+                        f = function;
+                    } else {
+                        f = LocalFunctionPlugin.createLocalFunction(m, annotation);
+                    }
+                }
+
+                f.setDescription(annotation.description());
+                f.setSchema(annotatedKeywordJsonSchemaCreator.createJsonSchemaForKeyword(m));
+
+                String htmlTemplate = f.getAttributes().remove("htmlTemplate");
+                if (htmlTemplate != null && !htmlTemplate.isEmpty()) {
+                    f.setHtmlTemplate(htmlTemplate);
+                    f.setUseCustomTemplate(true);
+                }
+
+                scannedKeywords.add(new AutomationPackageKeyword(f, new HashMap<>()));
+            }
         }
         return scannedKeywords;
     }
