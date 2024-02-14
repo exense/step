@@ -6,4 +6,7 @@ plans:
           - echo:
               text: "Just echo"
           - callKeyword:
+              nodeName: CallMyKeyword2
               keyword: "MyKeyword2"
+              inputs:
+                - myInput: "myValue"
