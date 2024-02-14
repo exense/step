@@ -26,12 +26,14 @@ import step.junit.runners.annotations.Plans;
 @Plans({"plan.plan"})
 public class MyKeywordLibraryAutopack extends AbstractKeyword {
 
-	@Keyword
-	public void MyKeyword2() {
+	@Keyword(schema = "{ \"properties\": { "
+			+ "\"myInput\": {\"type\": \"string\", \"default\":\"defaultValueString\"}"
+			+ "}, \"required\" : []}")
+	public void MyKeyword2(String myInput) {
 		System.out.println("MyKeyword2 called!");
-		output.add("MyKey", "MyValue");
-		if(properties!=null) {
-			properties.forEach((key, value)->{
+		output.add("MyKey", myInput);
+		if (properties != null) {
+			properties.forEach((key, value) -> {
 				output.add(key, value);
 			});
 		}
