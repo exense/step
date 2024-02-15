@@ -2,10 +2,12 @@ package step.automation.packages;
 
 import jakarta.json.spi.JsonProvider;
 import org.junit.Test;
+import step.artefacts.CallFunction;
 import step.artefacts.TestCase;
 import step.automation.packages.model.AutomationPackageContent;
 import step.automation.packages.model.AutomationPackageKeyword;
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.artefacts.AbstractArtefact;
 import step.core.plans.Plan;
 import step.plugins.java.GeneralScriptFunction;
 import step.plugins.jmeter.JMeterFunction;
@@ -16,8 +18,7 @@ import java.io.StringReader;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 import static step.automation.packages.AutomationPackageTestUtils.*;
 
 public class AutomationPackageReaderOSTest {
@@ -54,9 +55,20 @@ public class AutomationPackageReaderOSTest {
         // 2 annotated plans and 1 plan in yaml descriptor
         List<Plan> plans = automationPackageContent.getPlans();
         assertEquals("Detected plans: " + plans.stream().map(p -> p.getAttribute(AbstractOrganizableObject.NAME)).collect(Collectors.toList()), 3, plans.size());
-        assertEquals(TestCase.class, AutomationPackageTestUtils.findPlanByName(plans, PLAN_NAME_FROM_DESCRIPTOR).getRoot().getClass());
+        Plan testPlan = findPlanByName(plans, PLAN_NAME_FROM_DESCRIPTOR);
+        assertEquals(TestCase.class, testPlan.getRoot().getClass());
         assertEquals(TestCase.class, AutomationPackageTestUtils.findPlanByName(plans, PLAN_FROM_PLANS_ANNOTATION).getRoot().getClass());
         assertEquals(TestCase.class, AutomationPackageTestUtils.findPlanByName(plans, INLINE_PLAN).getRoot().getClass());
+
+        // check how keyword inputs from test plan are parsed
+        CallFunction callKeyword = (CallFunction) testPlan.getRoot().getChildren()
+                .stream()
+                .filter(a -> a.getAttribute(AbstractOrganizableObject.NAME).equals("CallMyKeyword2"))
+                .findFirst()
+                .orElse(null);
+        assertNotNull(callKeyword);
+        assertFalse(callKeyword.getArgument().isDynamic());
+        assertEquals("{\"myInput\":{\"dynamic\":false,\"value\":\"myValue\"}}", callKeyword.getArgument().get());
     }
 
 }

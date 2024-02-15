@@ -67,7 +67,8 @@ root:
         expressionType: null
       token:
         dynamic: false
-        value: "{\"criteria1\":\"criteriaValue1\",\"criteria2\":\"criteriaValue2\"}"
+        value: "{\"criteria1\":{\"dynamic\":false,\"value\":\"criteriaValue1\"},\"criteria2\"\
+        :{\"dynamic\":false,\"value\":\"criteriaValue2\"}}"
         expression: null
         expressionType: null
       id: "644fbe4e38a61e07cc3a4df8"

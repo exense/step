@@ -164,7 +164,7 @@ root:
         expressionType: null
       token:
         dynamic: false
-        value: "{\"criteria1\":\"criteriaValue1\"}"
+        value: "{\"criteria1\":{\"dynamic\":false,\"value\":\"criteriaValue1\"}}"
         expression: null
         expressionType: null
       function:
@@ -220,7 +220,7 @@ root:
         expressionType: null
       token:
         dynamic: false
-        value: "{\"criteria1\":\"criteriaValue1\"}"
+        value: "{\"criteria1\":{\"dynamic\":false,\"value\":\"criteriaValue1\"}}"
         expression: null
         expressionType: null
       function:
@@ -232,7 +232,7 @@ root:
       argument:
         dynamic: false
         value: "{\"stringInput\":{\"dynamic\":true,\"expression\":\"'abc'\"},\"intInput\"\
-        :777}"
+        :{\"dynamic\":false,\"value\":777}}"
         expression: null
         expressionType: null
       resultMap:

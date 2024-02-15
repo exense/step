@@ -1473,8 +1473,9 @@ root:
                           argument:
                             dynamic: false
                             value: "{\"URL\":{\"dynamic\":true,\"expression\":\"\\\"${K8S_BUILD_INSTANCE_URL}/rest/housekeeping/execution/${EXEC_ID}/protection\\\
-                  \"\"},\"Method\":\"POST\",\"Header_content-type\":\"application/json\"\
-                  ,\"Data\":\"true\"}"
+                  \"\"},\"Method\":{\"dynamic\":false,\"value\":\"POST\"},\"Header_content-type\"\
+                  :{\"dynamic\":false,\"value\":\"application/json\"},\"Data\":{\"\
+                  dynamic\":false,\"value\":\"true\"}}"
                             expression: null
                             expressionType: null
                           resultMap:
@@ -2062,21 +2063,6 @@ root:
                 expressionType: null
               id: "644fbe4e38a61e07cc3a4df8"
           customAttributes: null
-          dockerImage:
-            dynamic: false
-            expression: null
-            expressionType: null
-            value: null
-          containerUser:
-            dynamic: false
-            expression: null
-            expressionType: null
-            value: null
-          containerCommand:
-            dynamic: false
-            expression: null
-            expressionType: null
-            value: null
           attachments: null
           skipNode:
             dynamic: false
@@ -2100,8 +2086,23 @@ root:
             expressionType: null
           token:
             dynamic: false
-            value: "{\"OS\":{\"dynamic\":true,\"expression\":\"OS\"},\"type\":\"build\"\
-          }"
+            value: "{\"OS\":{\"dynamic\":true,\"expression\":\"OS\"},\"type\":{\"dynamic\"\
+          :false,\"value\":\"build\"}}"
+            expression: null
+            expressionType: null
+          dockerImage:
+            dynamic: false
+            value: null
+            expression: null
+            expressionType: null
+          containerUser:
+            dynamic: false
+            value: null
+            expression: null
+            expressionType: null
+          containerCommand:
+            dynamic: false
+            value: null
             expression: null
             expressionType: null
           id: "644fbe4e38a61e07cc3a4df8"
