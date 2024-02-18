@@ -190,37 +190,80 @@ public class AutomationPackageManagerOSTest {
         Assert.assertEquals(0, executionTaskAccessor.findManyByCriteria(packageIdCriteria).count());
     }
 
+    /**
+     * Checks that resources referenced in keywords and plans are successfully uploaded and used
+     */
     @Test
     public void testResourcesInKeywordsAndPlans() throws IOException {
         String fileName = "samples/step-automation-packages-sample2.jar";
         File automationPackageJar = new File("src/test/resources/" + fileName);
+        ObjectId apId;
+        DynamicValue<String> initialExcelFileRef;
+        DynamicValue<String> initialJmeterTestplanRef;
+        Plan initialForEachExcelPlan;
+        JMeterFunction initialJMeterFunction;
 
+        // create new AP from sample 2
         try (InputStream is = new FileInputStream(automationPackageJar)) {
-            ObjectId result;
-            result = manager.createAutomationPackage(is, fileName, null, null);
-            AutomationPackage storedPackage = automationPackageAccessor.get(result);
+            apId = manager.createAutomationPackage(is, fileName, null, null);
 
-            List<Plan> storedPlans = planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
-            Assert.assertEquals(1, storedPlans.size());
-            Plan forEachExcelPlan = storedPlans.get(0);
-            Assert.assertEquals("Test excel plan", forEachExcelPlan.getAttribute(AbstractOrganizableObject.NAME));
-            ForEachBlock forEachArtefact = (ForEachBlock) forEachExcelPlan.getRoot().getChildren().get(0);
+            // check resource reference in Plan
+            initialForEachExcelPlan = getTestExcelPlanFromSample2(apId);
+            ForEachBlock forEachArtefact = (ForEachBlock) initialForEachExcelPlan.getRoot().getChildren().get(0);
             ExcelDataPool excelDataPool = (ExcelDataPool) forEachArtefact.getDataSource();
-            checkUploadedResource(excelDataPool.getFile(), "excel1.xlsx");
+            initialExcelFileRef = excelDataPool.getFile();
+            checkUploadedResource(initialExcelFileRef, "excel1.xlsx", null);
 
-            List<Function> storedFunctions = functionAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
-            Assert.assertEquals(1, storedFunctions.size());
-            JMeterFunction jMeterFunction = (JMeterFunction) storedFunctions.get(0);
-            DynamicValue<String> jmeterTestplanRef = jMeterFunction.getJmeterTestplan();
-            checkUploadedResource(jmeterTestplanRef, "jmeterProject1.xml");
+            // check resource reference in keyword
+            initialJMeterFunction = getJMeterTestFunctionFromSample2(apId);
+            initialJmeterTestplanRef = initialJMeterFunction.getJmeterTestplan();
+            checkUploadedResource(initialJmeterTestplanRef, "jmeterProject1.xml", null);
+        }
+
+        // update AP with the same content (re-upload)
+        try (InputStream is = new FileInputStream(automationPackageJar)) {
+            AutomationPackageManager.PackageUpdateResult updateResult = manager.createOrUpdateAutomationPackage(true, false, apId, is, fileName, null, null);
+            Assert.assertEquals(AutomationPackageManager.PackageUpdateStatus.UPDATED, updateResult.getStatus());
+
+            Plan forEachExcelPlan = getTestExcelPlanFromSample2(apId);
+            // plan is not changed after update
+            Assert.assertEquals(initialForEachExcelPlan.getId(), forEachExcelPlan.getId());
+            ForEachBlock forEachArtefact = (ForEachBlock) forEachExcelPlan.getRoot().getChildren().get(0);
+            // linked resource is uploaded with the same (!!!) resource
+            checkUploadedResource(((ExcelDataPool) forEachArtefact.getDataSource()).getFile(), "excel1.xlsx", null);
+
+            JMeterFunction jMeterFunction = getJMeterTestFunctionFromSample2(apId);
+            // keyword id is not changed after update
+            Assert.assertEquals(initialJMeterFunction.getId(), jMeterFunction.getId());
+            // linked resource is uploaded with the same (!!!) resource
+            checkUploadedResource(jMeterFunction.getJmeterTestplan(), "jmeterProject1.xml", initialJmeterTestplanRef);
         }
     }
 
-    private void checkUploadedResource(DynamicValue<String> fileResourceReference, String expectedFileName) {
+    private JMeterFunction getJMeterTestFunctionFromSample2(ObjectId result) {
+        List<Function> storedFunctions = functionAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
+        Assert.assertEquals(1, storedFunctions.size());
+        return (JMeterFunction) storedFunctions.get(0);
+    }
+
+    private Plan getTestExcelPlanFromSample2(ObjectId result) {
+        List<Plan> storedPlans = planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
+        Assert.assertEquals(1, storedPlans.size());
+        Plan forEachExcelPlan = storedPlans.get(0);
+        Assert.assertEquals("Test excel plan", forEachExcelPlan.getAttribute(AbstractOrganizableObject.NAME));
+        return forEachExcelPlan;
+    }
+
+    private void checkUploadedResource(DynamicValue<String> fileResourceReference, String expectedFileName, DynamicValue<String> expectedResourceReference) {
         FileResolver fileResolver = new FileResolver(resourceManager);
         String resourceReferenceString = fileResourceReference.get();
+        if (expectedResourceReference != null) {
+            Assert.assertEquals(expectedResourceReference.get(), resourceReferenceString);
+        }
         Assert.assertTrue(resourceReferenceString.startsWith(FileResolver.RESOURCE_PREFIX));
+
         String resourceId = fileResolver.resolveResourceId(resourceReferenceString);
+
         File excelFile = fileResolver.resolve(resourceId);
         Assert.assertNotNull(excelFile);
         Resource resource = resourceManager.getResource(resourceId);

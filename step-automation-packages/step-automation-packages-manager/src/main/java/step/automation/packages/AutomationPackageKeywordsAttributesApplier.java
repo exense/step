@@ -34,17 +34,18 @@ import java.util.stream.Collectors;
 public class AutomationPackageKeywordsAttributesApplier {
 
     private final AutomationPackageKeywordsLookuper lookuper = new AutomationPackageKeywordsLookuper();
-    private final ResourceManager resourceManager;
+    private final ResourceManager stagingResourceManager;
 
-    public AutomationPackageKeywordsAttributesApplier(ResourceManager resourceManager) {
-        this.resourceManager = resourceManager;
+    public AutomationPackageKeywordsAttributesApplier(ResourceManager stagingResourceManager) {
+        this.stagingResourceManager = stagingResourceManager;
     }
 
     public List<Function> applySpecialAttributesToKeyword(List<AutomationPackageKeyword> keywords,
-                                                    AutomationPackageArchive automationPackageArchive,
-                                                    ObjectId automationPackageId,
-                                                    ObjectEnricher objectEnricher){
-        AutomationPackageAttributesApplyingContext automationPackageAttributesApplyingContext = prepareContext(automationPackageArchive, objectEnricher);
+                                                          List<Function> oldKeywords,
+                                                          AutomationPackageArchive automationPackageArchive,
+                                                          ObjectId automationPackageId,
+                                                          ObjectEnricher objectEnricher) {
+        AutomationPackageAttributesApplyingContext automationPackageAttributesApplyingContext = prepareContext(automationPackageArchive, objectEnricher, oldKeywords);
         return keywords.stream().map(keyword -> {
             List<YamlKeywordConversionRule> conversionRules = lookuper.getConversionRulesForKeyword(keyword.getDraftKeyword());
             List<SpecialKeywordAttributesApplier> appliers = conversionRules.stream()
@@ -59,8 +60,8 @@ public class AutomationPackageKeywordsAttributesApplier {
         }).collect(Collectors.toList());
     }
 
-    protected AutomationPackageAttributesApplyingContext prepareContext(AutomationPackageArchive automationPackageArchive, ObjectEnricher enricher) {
-        return new AutomationPackageAttributesApplyingContext(resourceManager, automationPackageArchive, enricher);
+    protected AutomationPackageAttributesApplyingContext prepareContext(AutomationPackageArchive automationPackageArchive, ObjectEnricher enricher, List<Function> oldKeywords) {
+        return new AutomationPackageAttributesApplyingContext(stagingResourceManager, automationPackageArchive, enricher, oldKeywords);
     }
 
 }

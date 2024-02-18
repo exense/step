@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.resources;
 
+import org.bson.types.ObjectId;
 import step.core.objectenricher.ObjectEnricher;
 
 import java.io.IOException;
@@ -78,6 +79,15 @@ public interface ResourceManager {
 	String getResourcesRootPath();
 
 	Resource createResource(String resourceType,
+							boolean isDirectory,
+							InputStream resourceStream,
+							String resourceFileName,
+							boolean checkForDuplicates,
+							ObjectEnricher objectEnricher,
+							String trackingAttribute) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException;
+
+	Resource createResource(ObjectId objectId,
+							String resourceType,
 							boolean isDirectory,
 							InputStream resourceStream,
 							String resourceFileName,

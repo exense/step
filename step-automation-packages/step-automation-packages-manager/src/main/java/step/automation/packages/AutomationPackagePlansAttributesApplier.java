@@ -18,15 +18,12 @@
  ******************************************************************************/
 package step.automation.packages;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import step.attachments.FileResolver;
 import step.core.artefacts.AbstractArtefact;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.plans.Plan;
 import step.plans.parser.yaml.rules.DataSourceFieldsYamlHelper;
-import step.resources.Resource;
 import step.resources.ResourceManager;
 
 import java.beans.PropertyDescriptor;
@@ -42,12 +39,12 @@ public class AutomationPackagePlansAttributesApplier {
 
     private static final String STEP_PACKAGE = "step";
 
-    private final ResourceManager resourceManager;
+    private final ResourceManager stagingResourceManager;
     private final FileResolver fileResolver;
 
-    public AutomationPackagePlansAttributesApplier(ResourceManager resourceManager) {
-        this.resourceManager = resourceManager;
-        this.fileResolver = new FileResolver(resourceManager);
+    public AutomationPackagePlansAttributesApplier(ResourceManager stagingResourceManager) {
+        this.stagingResourceManager = stagingResourceManager;
+        this.fileResolver = new FileResolver(stagingResourceManager);
     }
 
     public void applySpecialAttributesToPlans(List<Plan> plans,
@@ -60,7 +57,7 @@ public class AutomationPackagePlansAttributesApplier {
     }
 
     protected AutomationPackageAttributesApplyingContext prepareContext(AutomationPackageArchive automationPackageArchive, ObjectEnricher enricher) {
-        return new AutomationPackageAttributesApplyingContext(resourceManager, automationPackageArchive, enricher);
+        return new AutomationPackageAttributesApplyingContext(stagingResourceManager, automationPackageArchive, enricher, null);
     }
 
     private void applySpecialValuesForArtifact(AbstractArtefact artifact, AutomationPackageAttributesApplyingContext apContext) {
@@ -126,12 +123,7 @@ public class AutomationPackagePlansAttributesApplier {
 
     private String uploadAutomationPackageResource(String yamlResourceRef, AutomationPackageAttributesApplyingContext apContext) {
         AutomationPackageResourceUploader resourceUploader = new AutomationPackageResourceUploader();
-        Resource resource = resourceUploader.uploadResourceFromAutomationPackage(yamlResourceRef, ResourceManager.RESOURCE_TYPE_FUNCTIONS, apContext);
-        String result = null;
-        if (resource != null) {
-            result = FileResolver.RESOURCE_PREFIX + resource.getId().toString();
-        }
-        return result;
+        return resourceUploader.applyResourceReference(yamlResourceRef, ResourceManager.RESOURCE_TYPE_FUNCTIONS, apContext, null);
     }
 
     private void applySpecialValuesForChildren(AbstractArtefact parent, AutomationPackageAttributesApplyingContext apContext) {

@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.resources;
 
+import org.bson.types.ObjectId;
 import step.core.objectenricher.ObjectEnricher;
 
 import java.io.IOException;
@@ -143,6 +144,11 @@ public class LayeredResourceManager implements ResourceManager {
     @Override
     public Resource createResource(String resourceType, boolean isDirectory, InputStream resourceStream, String resourceFileName, boolean checkForDuplicates, ObjectEnricher objectEnricher, String trackingAttribute) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException {
         return getManagerForPersistence().createResource(resourceType, isDirectory, resourceStream, resourceFileName, checkForDuplicates, objectEnricher);
+    }
+
+    @Override
+    public Resource createResource(ObjectId objectId, String resourceType, boolean isDirectory, InputStream resourceStream, String resourceFileName, boolean checkForDuplicates, ObjectEnricher objectEnricher, String trackingAttribute) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException {
+        return getManagerForPersistence().createResource(objectId, resourceType, isDirectory, resourceStream, resourceFileName, checkForDuplicates, objectEnricher, trackingAttribute);
     }
 
     @Override

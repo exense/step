@@ -26,6 +26,7 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.StreamingOutput;
+import org.bson.types.ObjectId;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import step.core.GlobalContext;
@@ -58,8 +59,9 @@ public class ResourceServices extends AbstractStepServices {
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	@Produces(MediaType.APPLICATION_JSON)
 	public ResourceUploadResponse createResource(@FormDataParam("file") InputStream uploadedInputStream,
-			@FormDataParam("file") FormDataContentDisposition fileDetail, @QueryParam("type") String resourceType,
+												 @FormDataParam("file") FormDataContentDisposition fileDetail, @QueryParam("type") String resourceType,
 												 @QueryParam("duplicateCheck") Boolean checkForDuplicate, @QueryParam("directory") Boolean isDirectory,
+												 @QueryParam("resourceId") String resourceId,
 												 @QueryParam("trackingAttribute") String trackingAttribute) throws IOException {
 		ObjectEnricher objectEnricher = getObjectEnricher();
 		
@@ -72,7 +74,10 @@ public class ResourceServices extends AbstractStepServices {
 			throw new RuntimeException("Missing resource type query parameter 'type'");
 		
 		try {
-			Resource resource = resourceManager.createResource(resourceType, isDirectory, uploadedInputStream, fileDetail.getFileName(), checkForDuplicate, objectEnricher, trackingAttribute);
+			Resource resource = resourceManager.createResource(resourceId == null ? null : new ObjectId(resourceId),
+					resourceType, isDirectory, uploadedInputStream, fileDetail.getFileName(), checkForDuplicate,
+					objectEnricher, trackingAttribute
+			);
 			return new ResourceUploadResponse(resource, null);
 		} catch (SimilarResourceExistingException e) {
 			return new ResourceUploadResponse(e.getResource(), e.getSimilarResources());

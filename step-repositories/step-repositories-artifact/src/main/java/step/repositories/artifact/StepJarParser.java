@@ -65,7 +65,7 @@ public class StepJarParser {
                 if (automationPackageArchive.hasAutomationPackageDescriptor() && automationPackageReader != null) {
                     AutomationPackageContent content = automationPackageReader.readAutomationPackage(automationPackageArchive, false, false);
                     functions.addAll(automationPackagesKeywordAttributesApplier.applySpecialAttributesToKeyword(
-                            content.getKeywords(), automationPackageArchive, null, null)
+                            content.getKeywords(), null, automationPackageArchive, null, null)
                     );
                 }
             }

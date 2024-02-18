@@ -18,19 +18,44 @@
  ******************************************************************************/
 package step.automation.packages;
 
+import org.bson.types.ObjectId;
+import step.attachments.FileResolver;
+import step.core.dynamicbeans.DynamicValue;
+import step.core.objectenricher.ObjectEnricher;
+import step.resources.InvalidResourceFormatException;
 import step.resources.Resource;
 import step.resources.ResourceManager;
+import step.resources.SimilarResourceExistingException;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 
 public class AutomationPackageResourceUploader {
 
+    public String applyResourceReference(String resourceReference,
+                                         String resourceType,
+                                         AutomationPackageAttributesApplyingContext context,
+                                         DynamicValue<String> oldResourceReference){
+        String result = null;
+        if (resourceReference != null && !resourceReference.startsWith(FileResolver.RESOURCE_PREFIX)) {
+            Resource resource = uploadResourceFromAutomationPackage(resourceReference, resourceType, context, oldResourceReference);
+            if (resource != null) {
+                result = FileResolver.RESOURCE_PREFIX + resource.getId().toString();
+            }
+        } else {
+            result = resourceReference;
+        }
+        return result;
+    }
+
     public Resource uploadResourceFromAutomationPackage(String resourcePath,
                                                         String resourceType,
-                                                        AutomationPackageAttributesApplyingContext context) {
+                                                        AutomationPackageAttributesApplyingContext context,
+                                                        DynamicValue<String> oldResourceReference) {
         if (resourcePath != null && !resourcePath.isEmpty()) {
-            ResourceManager resourceManager = context.getResourceManager();
+            ResourceManager stagingResourceManager = context.getStagingResourceManager();
 
             try {
                 URL resourceUrl = context.getAutomationPackageArchive().getResource(resourcePath);
@@ -38,17 +63,27 @@ public class AutomationPackageResourceUploader {
                     throw new RuntimeException("Resource not found in automation package: " + resourcePath);
                 }
                 File resourceFile = new File(resourceUrl.getFile());
-                return resourceManager.createResource(
-                        resourceType,
-                        context.getAutomationPackageArchive().getResourceAsStream(resourcePath),
-                        resourceFile.getName(),
-                        false, context.getEnricher()
-                );
+                InputStream is = context.getAutomationPackageArchive().getResourceAsStream(resourcePath);
+                return uploadResource(resourceType, is,  resourceFile.getName(), stagingResourceManager, oldResourceReference, context.getEnricher());
             } catch (Exception e) {
                 throw new RuntimeException("Unable to upload automation package resource " + resourcePath, e);
             }
         }
 
         return null;
+    }
+
+    public Resource uploadResource(String resourceType, InputStream is, String fileName,
+                                   ResourceManager resourceManager,
+                                   DynamicValue<String> oldResourceReference,
+                                   ObjectEnricher enricher) throws IOException, InvalidResourceFormatException, SimilarResourceExistingException {
+        FileResolver fr = new FileResolver(resourceManager);
+        String oldResourceId = null;
+        if (oldResourceReference != null && oldResourceReference.getValue() != null && !oldResourceReference.getValue().isEmpty()) {
+            oldResourceId = fr.resolveResourceId(oldResourceReference.getValue());
+        }
+
+        // we need to reuse old resource id (if exists)
+        return resourceManager.createResource(oldResourceId == null ? null : new ObjectId(oldResourceId), resourceType, false, is, fileName, false, enricher, null);
     }
 }

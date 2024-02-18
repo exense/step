@@ -18,17 +18,15 @@
  ******************************************************************************/
 package step.plugins.jmeter.automation;
 
-import step.attachments.FileResolver;
-import step.automation.packages.yaml.deserialization.SpecialKeywordAttributesApplier;
-import step.automation.packages.yaml.deserialization.SpecialKeywordAttributesExtractor;
-import step.core.yaml.deserializers.YamlFieldDeserializationProcessor;
 import step.automation.packages.AutomationPackageAttributesApplyingContext;
 import step.automation.packages.AutomationPackageResourceUploader;
-import step.automation.packages.yaml.rules.YamlKeywordConversionRule;
+import step.automation.packages.yaml.deserialization.SpecialKeywordAttributesApplier;
+import step.automation.packages.yaml.deserialization.SpecialKeywordAttributesExtractor;
 import step.automation.packages.yaml.rules.YamlConversionRuleAddOn;
+import step.automation.packages.yaml.rules.YamlKeywordConversionRule;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.yaml.deserializers.YamlFieldDeserializationProcessor;
 import step.plugins.jmeter.JMeterFunction;
-import step.resources.Resource;
 import step.resources.ResourceManager;
 
 @YamlConversionRuleAddOn(targetClasses = JMeterFunction.class)
@@ -52,16 +50,12 @@ public class JMeterFunctionTestplanConversionRule implements YamlKeywordConversi
         return (keyword, automationPackageId) -> {
             JMeterFunction draftKeyword = (JMeterFunction) keyword.getDraftKeyword();
             String testplanPath = (String) keyword.getSpecialAttributes().get(JMETER_TESTPLAN_ATTR);
-            String testPlanRef = null;
+            JMeterFunction oldKeyword = context.getOldKeyword(draftKeyword.getId());
 
-            if (testplanPath != null && !testplanPath.startsWith(FileResolver.RESOURCE_PREFIX)) {
-                Resource resource = resourceUploader.uploadResourceFromAutomationPackage(testplanPath, ResourceManager.RESOURCE_TYPE_FUNCTIONS, context);
-                if (resource != null) {
-                    testPlanRef = FileResolver.RESOURCE_PREFIX + resource.getId().toString();
-                }
-            } else {
-                testPlanRef = testplanPath;
-            }
+            String testPlanRef = resourceUploader.applyResourceReference(
+                    testplanPath, ResourceManager.RESOURCE_TYPE_FUNCTIONS, context,
+                    oldKeyword == null ? null : oldKeyword.getJmeterTestplan()
+            );
             if (testPlanRef != null) {
                 draftKeyword.setJmeterTestplan(new DynamicValue<>(testPlanRef));
             }

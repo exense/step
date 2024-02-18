@@ -20,9 +20,10 @@ package step.plugins.java.automation;
 
 import step.attachments.FileResolver;
 import step.automation.packages.AutomationPackageAttributesApplyingContext;
+import step.automation.packages.AutomationPackageResourceUploader;
 import step.automation.packages.yaml.deserialization.SpecialKeywordAttributesApplier;
-import step.automation.packages.yaml.rules.YamlKeywordConversionRule;
 import step.automation.packages.yaml.rules.YamlConversionRuleAddOn;
+import step.automation.packages.yaml.rules.YamlKeywordConversionRule;
 import step.core.dynamicbeans.DynamicValue;
 import step.plugins.java.GeneralScriptFunction;
 import step.resources.InvalidResourceFormatException;
@@ -38,6 +39,8 @@ import java.io.InputStream;
 @YamlConversionRuleAddOn(targetClasses = GeneralScriptFunction.class)
 public class GeneralScriptFunctionConversionRule implements YamlKeywordConversionRule {
 
+    private final AutomationPackageResourceUploader resourceUploader = new AutomationPackageResourceUploader();
+
     @Override
     public SpecialKeywordAttributesApplier getSpecialKeywordAttributesApplier(AutomationPackageAttributesApplyingContext context) {
         return (keyword, automationPackageId) -> {
@@ -50,8 +53,13 @@ public class GeneralScriptFunctionConversionRule implements YamlKeywordConversio
                         throw new RuntimeException("General script functions can only be used within automation package archive");
                     }
                     try (InputStream is = new FileInputStream(originalFile)) {
-                        Resource resource = context.getResourceManager().createResource(
-                                ResourceManager.RESOURCE_TYPE_FUNCTIONS, is, originalFile.getName(), false, context.getEnricher()
+                        GeneralScriptFunction oldKeyword = context.getOldKeyword(generalScriptFunction.getId());
+
+                        Resource resource = resourceUploader.uploadResource(
+                                ResourceManager.RESOURCE_TYPE_FUNCTIONS, is, originalFile.getName(),
+                                context.getStagingResourceManager(),
+                                oldKeyword == null ? null : oldKeyword.getScriptFile(),
+                                context.getEnricher()
                         );
                         uploadedPackageFileResource = FileResolver.RESOURCE_PREFIX + resource.getId().toString();
 

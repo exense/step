@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.automation.packages.accessor.AutomationPackageAccessor;
 import step.automation.packages.model.AutomationPackageContent;
+import step.automation.packages.model.AutomationPackageKeyword;
 import step.automation.packages.model.AutomationPackageSchedule;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.execution.model.ExecutionParameters;
@@ -311,7 +312,7 @@ public abstract class AutomationPackageManager {
     }
 
     protected void fillStaging(Staging staging, AutomationPackageContent packageContent, AutomationPackage newPackage, AutomationPackage oldPackage, ObjectEnricher enricherForIncludedEntities, AutomationPackageArchive automationPackageArchive){
-        staging.plans = preparePlansStaging(packageContent, automationPackageArchive, oldPackage, enricherForIncludedEntities);
+        staging.plans = preparePlansStaging(packageContent, automationPackageArchive, oldPackage, enricherForIncludedEntities, staging.resourceManager);
         staging.taskParameters = prepareExecutionTasksParamsStaging(enricherForIncludedEntities, packageContent, oldPackage, staging.plans);
         staging.functions = prepareFunctionsStaging(newPackage, automationPackageArchive, packageContent, enricherForIncludedEntities, oldPackage, staging.resourceManager);
     }
@@ -369,24 +370,26 @@ public abstract class AutomationPackageManager {
     }
 
     protected List<Plan> preparePlansStaging(AutomationPackageContent packageContent, AutomationPackageArchive automationPackageArchive,
-                                             AutomationPackage oldPackage, ObjectEnricher enricher) {
+                                             AutomationPackage oldPackage, ObjectEnricher enricher, ResourceManager stagingResourceManager) {
         List<Plan> plans = packageContent.getPlans();
-        AutomationPackagePlansAttributesApplier specialAttributesApplier = new AutomationPackagePlansAttributesApplier(resourceManager);
-        specialAttributesApplier.applySpecialAttributesToPlans(plans, automationPackageArchive, enricher);
-
         fillEntities(plans, oldPackage != null ? getPackagePlans(oldPackage.getId()) : new ArrayList<>(), enricher);
+
+        // apply special attributes (like resource references)
+        AutomationPackagePlansAttributesApplier specialAttributesApplier = new AutomationPackagePlansAttributesApplier(stagingResourceManager);
+        specialAttributesApplier.applySpecialAttributesToPlans(plans, automationPackageArchive, enricher);
         return plans;
     }
 
-    protected List<Function> prepareFunctionsStaging(AutomationPackage newPackage, AutomationPackageArchive automationPackageArchive, AutomationPackageContent packageContent, ObjectEnricher enricher, AutomationPackage oldPackage, ResourceManager resourceManager) {
+    protected List<Function> prepareFunctionsStaging(AutomationPackage newPackage, AutomationPackageArchive automationPackageArchive, AutomationPackageContent packageContent,
+                                                     ObjectEnricher enricher, AutomationPackage oldPackage, ResourceManager stagingResourceManager) {
         // TODO: here want to apply additional attributes to draft function (upload linked files as resources), but we have to refactor the way to do that
-        AutomationPackageKeywordsAttributesApplier keywordsAttributesApplier = new AutomationPackageKeywordsAttributesApplier(resourceManager);
-        List<Function> completeFunctions = keywordsAttributesApplier.applySpecialAttributesToKeyword(packageContent.getKeywords(), automationPackageArchive, newPackage.getId(), enricher);
+        AutomationPackageKeywordsAttributesApplier keywordsAttributesApplier = new AutomationPackageKeywordsAttributesApplier(stagingResourceManager);
 
         // get old functions with same name and reuse their ids
         List<Function> oldFunctions = oldPackage == null ? new ArrayList<>() : getPackageFunctions(oldPackage.getId());
-        fillEntities(completeFunctions, oldFunctions, enricher);
-        return completeFunctions;
+        fillEntities(packageContent.getKeywords().stream().map(AutomationPackageKeyword::getDraftKeyword).collect(Collectors.toList()), oldFunctions, enricher);
+
+        return keywordsAttributesApplier.applySpecialAttributesToKeyword(packageContent.getKeywords(), oldFunctions, automationPackageArchive, newPackage.getId(), enricher);
     }
 
     protected List<ExecutiontTaskParameters> prepareExecutionTasksParamsStaging(ObjectEnricher enricher, AutomationPackageContent packageContent, AutomationPackage oldPackage, List<Plan> plansStaging) {

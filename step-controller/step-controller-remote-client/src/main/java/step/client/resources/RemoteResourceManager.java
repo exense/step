@@ -23,6 +23,7 @@ import jakarta.ws.rs.client.Invocation.Builder;
 import jakarta.ws.rs.core.GenericType;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.bson.types.ObjectId;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.MultiPart;
 import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
@@ -86,10 +87,10 @@ public class RemoteResourceManager extends AbstractRemoteClient implements Resou
 	}
 
 	protected ResourceUploadResponse upload(FormDataBodyPart bodyPart) {
-		return upload(bodyPart, ResourceManager.RESOURCE_TYPE_STAGING_CONTEXT_FILES, false, true, null);
+		return upload(bodyPart, ResourceManager.RESOURCE_TYPE_STAGING_CONTEXT_FILES, false, true, null, null);
 	}
 	
-	protected ResourceUploadResponse upload(FormDataBodyPart bodyPart, String type, boolean isDirectory, boolean checkForDuplicates, String trackingAttribute) {
+	protected ResourceUploadResponse upload(FormDataBodyPart bodyPart, String type, boolean isDirectory, boolean checkForDuplicates, String trackingAttribute, String resourceId) {
 		MultiPart multiPart = new MultiPart();
         multiPart.setMediaType(MediaType.MULTIPART_FORM_DATA_TYPE);
         multiPart.bodyPart(bodyPart);
@@ -98,6 +99,10 @@ public class RemoteResourceManager extends AbstractRemoteClient implements Resou
         params.put("type", type);
 		params.put("directory", Boolean.toString(isDirectory));
         params.put("duplicateCheck", Boolean.toString(checkForDuplicates));
+		if (resourceId != null) {
+			params.put("resourceId", resourceId);
+		}
+
 		if (trackingAttribute != null) {
 			params.put("trackingAttribute", trackingAttribute);
 		}
@@ -137,11 +142,16 @@ public class RemoteResourceManager extends AbstractRemoteClient implements Resou
 
 	@Override
 	public Resource createResource(String resourceType, boolean isDirectory, InputStream resourceStream, String resourceFileName, boolean checkForDuplicates, ObjectEnricher objectEnricher, String trackingAttribute) {
+		return createResource(null, resourceType, isDirectory, resourceStream, resourceFileName, checkForDuplicates, objectEnricher, trackingAttribute);
+	}
+
+	@Override
+	public Resource createResource(ObjectId objectId, String resourceType, boolean isDirectory, InputStream resourceStream, String resourceFileName, boolean checkForDuplicates, ObjectEnricher objectEnricher, String trackingAttribute) {
 		StreamDataBodyPart bodyPart = new StreamDataBodyPart("file", resourceStream, resourceFileName);
 
 		// !!! in fact, 'checkForDuplicates' parameter is ignored, because the list of found duplicated resources (with the same hash sums)
 		// is located in ResourceUploadResponse.similarResources, but we ignore this list here and just take the uploaded resource
-		ResourceUploadResponse upload = upload(bodyPart, resourceType, isDirectory, checkForDuplicates, trackingAttribute);
+		ResourceUploadResponse upload = upload(bodyPart, resourceType, isDirectory, checkForDuplicates, trackingAttribute, objectId == null ? null : objectId.toHexString());
 		return upload.getResource();
 	}
 
