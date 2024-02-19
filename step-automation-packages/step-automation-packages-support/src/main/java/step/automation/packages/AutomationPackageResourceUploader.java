@@ -32,14 +32,25 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 
+/**
+ * The utility class to upload resources used in automation packages
+ */
 public class AutomationPackageResourceUploader {
 
+    /**
+     * Uploads the resource file referenced via resourceReference and returns the id of uploaded resource.
+     * If the old oldResourceReference exists, the id of old resource is reused.
+     *
+     * @return the resource id of uploaded resource
+     */
     public String applyResourceReference(String resourceReference,
                                          String resourceType,
                                          AutomationPackageAttributesApplyingContext context,
-                                         DynamicValue<String> oldResourceReference){
+                                         DynamicValue<String> oldResourceReference) {
         String result = null;
+        // the resource reference can be either the reference to the file within AP or the explicit resourceId of resource in step
         if (resourceReference != null && !resourceReference.startsWith(FileResolver.RESOURCE_PREFIX)) {
+            // if it is a reference to the file, we upload this file via resource manager and return the resource id of uploaded resource
             Resource resource = uploadResourceFromAutomationPackage(resourceReference, resourceType, context, oldResourceReference);
             if (resource != null) {
                 result = FileResolver.RESOURCE_PREFIX + resource.getId().toString();
@@ -50,10 +61,10 @@ public class AutomationPackageResourceUploader {
         return result;
     }
 
-    public Resource uploadResourceFromAutomationPackage(String resourcePath,
-                                                        String resourceType,
-                                                        AutomationPackageAttributesApplyingContext context,
-                                                        DynamicValue<String> oldResourceReference) {
+    protected Resource uploadResourceFromAutomationPackage(String resourcePath,
+                                                           String resourceType,
+                                                           AutomationPackageAttributesApplyingContext context,
+                                                           DynamicValue<String> oldResourceReference) {
         if (resourcePath != null && !resourcePath.isEmpty()) {
             ResourceManager stagingResourceManager = context.getStagingResourceManager();
 
@@ -64,7 +75,7 @@ public class AutomationPackageResourceUploader {
                 }
                 File resourceFile = new File(resourceUrl.getFile());
                 InputStream is = context.getAutomationPackageArchive().getResourceAsStream(resourcePath);
-                return uploadResource(resourceType, is,  resourceFile.getName(), stagingResourceManager, oldResourceReference, context.getEnricher());
+                return uploadResource(resourceType, is, resourceFile.getName(), stagingResourceManager, oldResourceReference, context.getEnricher());
             } catch (Exception e) {
                 throw new RuntimeException("Unable to upload automation package resource " + resourcePath, e);
             }
@@ -73,6 +84,12 @@ public class AutomationPackageResourceUploader {
         return null;
     }
 
+    /**
+     * Uploads the resource file referenced via resourceReference and returns the uploaded resource
+     * If the old oldResourceReference exists, the id of old resource is reused.
+     *
+     * @return the uploaded resource
+     */
     public Resource uploadResource(String resourceType, InputStream is, String fileName,
                                    ResourceManager resourceManager,
                                    DynamicValue<String> oldResourceReference,
