@@ -20,6 +20,7 @@ package step.automation.packages;
 
 import org.bson.types.ObjectId;
 import step.core.objectenricher.ObjectEnricher;
+import step.core.plans.Plan;
 import step.functions.Function;
 import step.resources.ResourceManager;
 
@@ -30,17 +31,20 @@ public class AutomationPackageAttributesApplyingContext {
     private AutomationPackageArchive automationPackageArchive;
     private ObjectEnricher enricher;
     private List<Function> oldKeywords;
+    private List<Plan> oldPlans;
 
     private String uploadedPackageFileResource;
 
     public AutomationPackageAttributesApplyingContext(ResourceManager stagingResourceManager,
                                                       AutomationPackageArchive automationPackageArchive,
                                                       ObjectEnricher enricher,
-                                                      List<Function> oldKeywords) {
+                                                      List<Function> oldKeywords,
+                                                      List<Plan> oldPlans) {
         this.stagingResourceManager = stagingResourceManager;
         this.automationPackageArchive = automationPackageArchive;
         this.enricher = enricher;
         this.oldKeywords = oldKeywords;
+        this.oldPlans = oldPlans;
     }
 
     public ResourceManager getStagingResourceManager() {
@@ -83,6 +87,14 @@ public class AutomationPackageAttributesApplyingContext {
         this.oldKeywords = oldKeywords;
     }
 
+    public List<Plan> getOldPlans() {
+        return oldPlans;
+    }
+
+    public void setOldPlans(List<Plan> oldPlans) {
+        this.oldPlans = oldPlans;
+    }
+
     public <T extends Function> T getOldKeyword(ObjectId keywordId) {
         if (oldKeywords == null) {
             return null;
@@ -94,5 +106,9 @@ public class AutomationPackageAttributesApplyingContext {
             // unable to cast old keyword to required type
             return null;
         }
+    }
+
+    public Plan getOldPlan(ObjectId planId) {
+        return oldPlans.stream().filter(p -> p.getId().equals(planId)).findFirst().orElse(null);
     }
 }

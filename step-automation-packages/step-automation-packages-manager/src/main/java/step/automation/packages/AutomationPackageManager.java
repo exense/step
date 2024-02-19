@@ -372,11 +372,13 @@ public abstract class AutomationPackageManager {
     protected List<Plan> preparePlansStaging(AutomationPackageContent packageContent, AutomationPackageArchive automationPackageArchive,
                                              AutomationPackage oldPackage, ObjectEnricher enricher, ResourceManager stagingResourceManager) {
         List<Plan> plans = packageContent.getPlans();
-        fillEntities(plans, oldPackage != null ? getPackagePlans(oldPackage.getId()) : new ArrayList<>(), enricher);
+        List<Plan> oldPlans = oldPackage != null ? getPackagePlans(oldPackage.getId()) : new ArrayList<>();
+        fillEntities(plans, oldPlans, enricher);
 
         // apply special attributes (like resource references)
         AutomationPackagePlansAttributesApplier specialAttributesApplier = new AutomationPackagePlansAttributesApplier(stagingResourceManager);
-        specialAttributesApplier.applySpecialAttributesToPlans(plans, automationPackageArchive, enricher);
+        AutomationPackageAttributesApplyingContext ctx = new AutomationPackageAttributesApplyingContext(stagingResourceManager, automationPackageArchive, enricher, null, oldPlans);
+        specialAttributesApplier.applySpecialAttributesToPlans(plans, ctx);
         return plans;
     }
 

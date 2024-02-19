@@ -24,6 +24,7 @@ import step.automation.packages.yaml.AutomationPackageKeywordsLookuper;
 import step.automation.packages.yaml.deserialization.SpecialKeywordAttributesApplier;
 import step.automation.packages.yaml.rules.YamlKeywordConversionRule;
 import step.core.objectenricher.ObjectEnricher;
+import step.core.plans.Plan;
 import step.functions.Function;
 import step.resources.ResourceManager;
 
@@ -45,7 +46,7 @@ public class AutomationPackageKeywordsAttributesApplier {
                                                           AutomationPackageArchive automationPackageArchive,
                                                           ObjectId automationPackageId,
                                                           ObjectEnricher objectEnricher) {
-        AutomationPackageAttributesApplyingContext automationPackageAttributesApplyingContext = prepareContext(automationPackageArchive, objectEnricher, oldKeywords);
+        AutomationPackageAttributesApplyingContext automationPackageAttributesApplyingContext = prepareContext(automationPackageArchive, objectEnricher, oldKeywords, null);
         return keywords.stream().map(keyword -> {
             List<YamlKeywordConversionRule> conversionRules = lookuper.getConversionRulesForKeyword(keyword.getDraftKeyword());
             List<SpecialKeywordAttributesApplier> appliers = conversionRules.stream()
@@ -60,8 +61,8 @@ public class AutomationPackageKeywordsAttributesApplier {
         }).collect(Collectors.toList());
     }
 
-    protected AutomationPackageAttributesApplyingContext prepareContext(AutomationPackageArchive automationPackageArchive, ObjectEnricher enricher, List<Function> oldKeywords) {
-        return new AutomationPackageAttributesApplyingContext(stagingResourceManager, automationPackageArchive, enricher, oldKeywords);
+    protected AutomationPackageAttributesApplyingContext prepareContext(AutomationPackageArchive automationPackageArchive, ObjectEnricher enricher, List<Function> oldKeywords, List<Plan> oldPlans) {
+        return new AutomationPackageAttributesApplyingContext(stagingResourceManager, automationPackageArchive, enricher, oldKeywords, oldPlans);
     }
 
 }

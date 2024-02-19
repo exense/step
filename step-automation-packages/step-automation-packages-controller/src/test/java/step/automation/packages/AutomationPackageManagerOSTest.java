@@ -230,7 +230,7 @@ public class AutomationPackageManagerOSTest {
             Assert.assertEquals(initialForEachExcelPlan.getId(), forEachExcelPlan.getId());
             ForEachBlock forEachArtefact = (ForEachBlock) forEachExcelPlan.getRoot().getChildren().get(0);
             // linked resource is uploaded with the same (!!!) resource
-            checkUploadedResource(((ExcelDataPool) forEachArtefact.getDataSource()).getFile(), "excel1.xlsx", null);
+            checkUploadedResource(((ExcelDataPool) forEachArtefact.getDataSource()).getFile(), "excel1.xlsx", initialExcelFileRef);
 
             JMeterFunction jMeterFunction = getJMeterTestFunctionFromSample2(apId);
             // keyword id is not changed after update
