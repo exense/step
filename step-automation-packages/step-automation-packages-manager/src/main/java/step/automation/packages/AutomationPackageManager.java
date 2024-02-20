@@ -48,6 +48,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -68,6 +70,8 @@ public abstract class AutomationPackageManager {
     protected final ResourceManager resourceManager;
     protected final AutomationPackageHookRegistry automationPackageHookRegistry;
     protected boolean isIsolated = false;
+
+    ExecutorService delayedUpdateExecutor = Executors.newFixedThreadPool(10);
 
     /**
      * The automation package manager used to store/delete automation packages. To run the automation package in isolated
@@ -173,7 +177,7 @@ public abstract class AutomationPackageManager {
      * @throws AutomationPackageManagerException
      */
     public ObjectId createAutomationPackage(InputStream packageStream, String fileName, ObjectEnricher enricher, ObjectPredicate objectPredicate) throws AutomationPackageManagerException {
-        return createOrUpdateAutomationPackage(false, true, null, packageStream, fileName, enricher, objectPredicate).getId();
+        return createOrUpdateAutomationPackage(false, true, null, packageStream, fileName, enricher, objectPredicate, false).getId();
     }
 
     /**
@@ -187,12 +191,12 @@ public abstract class AutomationPackageManager {
      * @param objectPredicate the filter for automation package
      * @return the id of created/updated package
      */
-    public PackageUpdateResult createOrUpdateAutomationPackage(boolean allowUpdate, boolean allowCreate, ObjectId explicitOldId,
-                                                               InputStream inputStream, String fileName, ObjectEnricher enricher,
-                                                               ObjectPredicate objectPredicate) throws AutomationPackageManagerException {
+    public AutomationPackageUpdateResult createOrUpdateAutomationPackage(boolean allowUpdate, boolean allowCreate, ObjectId explicitOldId,
+                                                                         InputStream inputStream, String fileName, ObjectEnricher enricher,
+                                                                         ObjectPredicate objectPredicate, boolean async) throws AutomationPackageManagerException {
         try {
             try (AutomationPackageArchiveProvider provider = new AutomationPackageFromInputStreamProvider(inputStream, fileName)) {
-                return createOrUpdateAutomationPackage(allowUpdate, allowCreate, explicitOldId, provider, false, enricher, objectPredicate);
+                return createOrUpdateAutomationPackage(allowUpdate, allowCreate, explicitOldId, provider, false, enricher, objectPredicate, async);
             }
         } catch (IOException | AutomationPackageReadingException ex) {
             throw new AutomationPackageManagerException("Automation package cannot be created. Caused by: " + ex.getMessage(), ex);
@@ -210,9 +214,9 @@ public abstract class AutomationPackageManager {
      * @param objectPredicate           the filter for automation package
      * @return the id of created/updated package
      */
-    public PackageUpdateResult createOrUpdateAutomationPackage(boolean allowUpdate, boolean allowCreate, ObjectId explicitOldId,
-                                                               AutomationPackageArchiveProvider automationPackageProvider, boolean isLocalPackage,
-                                                               ObjectEnricher enricher, ObjectPredicate objectPredicate) {
+    public AutomationPackageUpdateResult createOrUpdateAutomationPackage(boolean allowUpdate, boolean allowCreate, ObjectId explicitOldId,
+                                                                         AutomationPackageArchiveProvider automationPackageProvider, boolean isLocalPackage,
+                                                                         ObjectEnricher enricher, ObjectPredicate objectPredicate, boolean async) {
         AutomationPackageArchive automationPackageArchive;
         AutomationPackageContent packageContent;
 
@@ -268,24 +272,62 @@ public abstract class AutomationPackageManager {
             persistStagedEntities(staging, enricherForIncludedEntities);
 
             // save automation package metadata
-            ObjectId result = automationPackageAccessor.save(newPackage).getId();
+            if (!async || !isAutomationPackageLocked(newPackage)) {
+                ObjectId result = automationPackageAccessor.save(newPackage).getId();
 
-            logAfterSave(staging, oldPackage, newPackage);
-            return new PackageUpdateResult(oldPackage == null ? PackageUpdateStatus.CREATED : PackageUpdateStatus.UPDATED, result);
-        } catch (Exception ex) {
-            // cleanup created resources
-            try {
-                if (newPackage != null) {
-                    List<Resource> resources = resourceManager.findManyByCriteria(Map.of("customFields." + AutomationPackageEntity.AUTOMATION_PACKAGE_ID, newPackage.getId().toString()));
-                    for (Resource resource : resources) {
-                        resourceManager.deleteResource(resource.getId().toString());
+                logAfterSave(staging, oldPackage, newPackage);
+                return new AutomationPackageUpdateResult(oldPackage == null ? AutomationPackageUpdateStatus.CREATED : AutomationPackageUpdateStatus.UPDATED, result);
+            } else {
+                // async update
+                changeAutomationPackageStatus(newPackage.getId(), AutomationPackageStatus.DELAYED_UPDATE);
+                AutomationPackage finalNewPackage = newPackage;
+                delayedUpdateExecutor.submit(() -> {
+                    try {
+                        waitForPackageUnlock(finalNewPackage);
+                        automationPackageAccessor.save(finalNewPackage).getId();
+
+                        // clear status (DELAYED_UPDATE)
+                        changeAutomationPackageStatus(finalNewPackage.getId(), null);
+                        logAfterSave(staging, oldPackage, finalNewPackage);
+                    } catch (Exception e) {
+                        handleExceptionOnPackageUpdate(finalNewPackage);
+                        log.error("Exception on delayed AP update", e);
                     }
-                }
-            } catch (Exception e) {
-                log.warn("Cannot cleanup resource", e);
+                });
+                return new AutomationPackageUpdateResult(AutomationPackageUpdateStatus.UPDATE_DELAYED, newPackage.getId());
             }
+
+        } catch (Exception ex) {
+            handleExceptionOnPackageUpdate(newPackage);
             throw ex;
         }
+    }
+
+    private void handleExceptionOnPackageUpdate(AutomationPackage automationPackage) {
+        // cleanup created resources
+        try {
+            if (automationPackage != null) {
+                List<Resource> resources = resourceManager.findManyByCriteria(Map.of("customFields." + AutomationPackageEntity.AUTOMATION_PACKAGE_ID, automationPackage.getId().toString()));
+                for (Resource resource : resources) {
+                    resourceManager.deleteResource(resource.getId().toString());
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Cannot cleanup resource", e);
+        }
+    }
+
+    private void changeAutomationPackageStatus(ObjectId id, AutomationPackageStatus automationPackageStatus) {
+        // TODO: implement
+    }
+
+    protected void waitForPackageUnlock(AutomationPackage newPackage) {
+        // TODO: implement
+    }
+
+    protected boolean isAutomationPackageLocked(AutomationPackage newPackage) {
+        // TODO: check lock
+        return false;
     }
 
     protected void logAfterSave(Staging staging, AutomationPackage oldPackage, AutomationPackage newPackage) {
@@ -603,29 +645,6 @@ public abstract class AutomationPackageManager {
         } else {
             log.info("Skip automation package cleanup. Cleanup is only supported for isolated (in-memory) automation package manager");
         }
-    }
-
-    public static class PackageUpdateResult {
-        private final PackageUpdateStatus status;
-        private final ObjectId id;
-
-        public PackageUpdateResult(PackageUpdateStatus status, ObjectId id) {
-            this.status = status;
-            this.id = id;
-        }
-
-        public PackageUpdateStatus getStatus() {
-            return status;
-        }
-
-        public ObjectId getId() {
-            return id;
-        }
-    }
-
-    public enum PackageUpdateStatus {
-        CREATED,
-        UPDATED
     }
 
     protected static class Staging {

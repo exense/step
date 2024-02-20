@@ -127,8 +127,8 @@ public class AutomationPackageManagerOSTest {
         String fileName = "samples/step-automation-packages-sample1-extended.jar";
         File automationPackageJar = new File("src/test/resources/" + fileName);
         try (InputStream is = new FileInputStream(automationPackageJar)) {
-            AutomationPackageManager.PackageUpdateResult result = manager.createOrUpdateAutomationPackage(true, true, null, is, fileName, null, null);
-            Assert.assertEquals(AutomationPackageManager.PackageUpdateStatus.UPDATED, result.getStatus());
+            AutomationPackageUpdateResult result = manager.createOrUpdateAutomationPackage(true, true, null, is, fileName, null, null, false);
+            Assert.assertEquals(AutomationPackageUpdateStatus.UPDATED, result.getStatus());
             ObjectId resultId = result.getId();
 
             // id of existing package is returned
@@ -237,8 +237,8 @@ public class AutomationPackageManagerOSTest {
             if (createNew) {
                 result = manager.createAutomationPackage(is, fileName, null, null);
             } else {
-                AutomationPackageManager.PackageUpdateResult updateResult = manager.createOrUpdateAutomationPackage(true, true, null, is, fileName, null, null);
-                Assert.assertEquals(AutomationPackageManager.PackageUpdateStatus.UPDATED, updateResult.getStatus());
+                AutomationPackageUpdateResult updateResult = manager.createOrUpdateAutomationPackage(true, true, null, is, fileName, null, null, false);
+                Assert.assertEquals(AutomationPackageUpdateStatus.UPDATED, updateResult.getStatus());
                 result = updateResult.getId();
             }
 

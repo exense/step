@@ -22,5 +22,5 @@ import step.core.accessors.AbstractOrganizableObject;
 import step.core.objectenricher.EnricheableObject;
 
 public class AutomationPackage extends AbstractOrganizableObject implements EnricheableObject {
-
+    private AutomationPackageStatus status;
 }

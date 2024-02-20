@@ -21,10 +21,8 @@ package step.automation.packages;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.PostConstruct;
 import jakarta.ws.rs.*;
-import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.UriInfo;
 import org.bson.types.ObjectId;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
@@ -121,13 +119,14 @@ public class AutomationPackageServices extends AbstractStepServices {
     @Produces(MediaType.TEXT_PLAIN)
     @Secured(right = "automation-package-write")
     public void updateAutomationPackageById(@PathParam("id") String id,
+                                            @QueryParam("async") Boolean async,
                                             @FormDataParam("file") InputStream uploadedInputStream,
                                             @FormDataParam("file") FormDataContentDisposition fileDetail) {
         try {
             automationPackageManager.createOrUpdateAutomationPackage(
                     true, false, new ObjectId(id),
                     uploadedInputStream, fileDetail.getFileName(),
-                    getObjectEnricher(), getObjectPredicate()
+                    getObjectEnricher(), getObjectPredicate(), async != null && async
             );
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage());
@@ -138,20 +137,21 @@ public class AutomationPackageServices extends AbstractStepServices {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.TEXT_PLAIN)
     @Secured(right = "automation-package-write")
-    public Response createOrUpdateAutomationPackage(@FormDataParam("file") InputStream uploadedInputStream,
+    public Response createOrUpdateAutomationPackage(@QueryParam("async") Boolean async,
+                                                    @FormDataParam("file") InputStream uploadedInputStream,
                                                     @FormDataParam("file") FormDataContentDisposition fileDetail) {
         try {
-            AutomationPackageManager.PackageUpdateResult result = automationPackageManager.createOrUpdateAutomationPackage(
+            AutomationPackageUpdateResult result = automationPackageManager.createOrUpdateAutomationPackage(
                     true, true, null, uploadedInputStream, fileDetail.getFileName(),
-                    getObjectEnricher(), getObjectPredicate()
+                    getObjectEnricher(), getObjectPredicate(), async != null && async
             );
             Response.ResponseBuilder responseBuilder;
-            if (result.getStatus() == AutomationPackageManager.PackageUpdateStatus.CREATED) {
+            if (result.getStatus() == AutomationPackageUpdateStatus.CREATED) {
                 responseBuilder = Response.status(201);
             } else {
                 responseBuilder = Response.status(200);
             }
-            return responseBuilder.entity(result.getId().toHexString()).build();
+            return responseBuilder.entity(result).build();
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage());
         }
