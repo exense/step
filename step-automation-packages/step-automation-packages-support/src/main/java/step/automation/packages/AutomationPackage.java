@@ -23,4 +23,12 @@ import step.core.objectenricher.EnricheableObject;
 
 public class AutomationPackage extends AbstractOrganizableObject implements EnricheableObject {
     private AutomationPackageStatus status;
+
+    public AutomationPackageStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(AutomationPackageStatus status) {
+        this.status = status;
+    }
 }
