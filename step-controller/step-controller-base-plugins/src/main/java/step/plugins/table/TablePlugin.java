@@ -18,6 +18,8 @@
  ******************************************************************************/
 package step.plugins.table;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.core.GlobalContext;
 import step.core.deployment.ObjectHookControllerPlugin;
 import step.core.objectenricher.ObjectHookRegistry;
@@ -29,14 +31,24 @@ import step.framework.server.tables.TableRegistry;
 @Plugin(dependencies = {ObjectHookControllerPlugin.class})
 public class TablePlugin extends AbstractControllerPlugin {
 
+    private static final Logger logger = LoggerFactory.getLogger(TablePlugin.class);
+
     @Override
     public void serverStart(GlobalContext context) {
         context.getServiceRegistrationCallback().registerService(TableService.class);
         TableRegistry tableRegistry = context.require(TableRegistry.class);
         ObjectHookRegistry objectHookRegistry = context.require(ObjectHookRegistry.class);
         AuthorizationManager authorizationManager = context.require(AuthorizationManager.class);
-        Integer maxRequestDuration = context.getConfiguration().getPropertyAsInteger("db.query.maxTime", 30);
-        Integer maxResultCount = context.getConfiguration().getPropertyAsInteger("db.query.maxCount", 1000);
+        Integer maxRequestDuration = context.getConfiguration().getPropertyAsInteger("table.query.maxTime");
+        if (maxRequestDuration == null) {
+            maxRequestDuration = context.getConfiguration().getPropertyAsInteger("db.query.maxTime", 30);
+            logger.warn("The Step property db.query.maxTime is deprecated, use table.query.maxTime instead");
+        }
+        Integer maxResultCount = context.getConfiguration().getPropertyAsInteger("table.query.maxResultCount");
+        if (maxResultCount == null) {
+            maxResultCount = context.getConfiguration().getPropertyAsInteger("db.query.maxCount", 1000);
+            logger.warn("The Step property db.query.maxCount is deprecated, use table.query.maxResultCount instead");
+        }
         step.framework.server.tables.service.TableService tableService = new step.framework.server.tables.service.TableService(tableRegistry, objectHookRegistry, authorizationManager, maxRequestDuration, maxResultCount);
         context.put(step.framework.server.tables.service.TableService.class, tableService);
     }
