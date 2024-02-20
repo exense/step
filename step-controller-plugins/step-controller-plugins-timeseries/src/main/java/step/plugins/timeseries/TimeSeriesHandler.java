@@ -168,6 +168,9 @@ public class TimeSeriesHandler {
     }
 
     private int getResolution(FetchBucketsRequest request) {
+        if (request.getIntervalSize() > 0) {
+            return (int) request.getIntervalSize();
+        }
         int nbBuckets = Math.max(100, request.getNumberOfBuckets());
         int calculatedResolution = (int) Math.floor((request.getEnd() - request.getStart()) / nbBuckets);
         return Math.max(resolution, calculatedResolution);
