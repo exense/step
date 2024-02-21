@@ -21,8 +21,11 @@ package step.automation.packages;
 import org.bson.types.ObjectId;
 
 public class AutomationPackageUpdateResult {
-    private final AutomationPackageUpdateStatus status;
-    private final ObjectId id;
+    private AutomationPackageUpdateStatus status;
+    private ObjectId id;
+
+    public AutomationPackageUpdateResult() {
+    }
 
     public AutomationPackageUpdateResult(AutomationPackageUpdateStatus status, ObjectId id) {
         this.status = status;
@@ -35,5 +38,13 @@ public class AutomationPackageUpdateResult {
 
     public ObjectId getId() {
         return id;
+    }
+
+    public void setStatus(AutomationPackageUpdateStatus status) {
+        this.status = status;
+    }
+
+    public void setId(ObjectId id) {
+        this.id = id;
     }
 }

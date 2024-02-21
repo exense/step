@@ -70,6 +70,7 @@ public abstract class AutomationPackageManager {
     protected final ResourceManager resourceManager;
     protected final AutomationPackageHookRegistry automationPackageHookRegistry;
     protected boolean isIsolated = false;
+    protected final AutomationPackageLocks automationPackageLocks;
 
     ExecutorService delayedUpdateExecutor = Executors.newFixedThreadPool(10);
 
@@ -85,7 +86,7 @@ public abstract class AutomationPackageManager {
                                     ResourceManager resourceManager,
                                     ExecutionTaskAccessor executionTaskAccessor,
                                     AutomationPackageHookRegistry automationPackageHookRegistry,
-                                    AbstractAutomationPackageReader<?> packageReader) {
+                                    AbstractAutomationPackageReader<?> packageReader, AutomationPackageLocks automationPackageLocks) {
         this.automationPackageAccessor = automationPackageAccessor;
 
         this.functionManager = functionManager;
@@ -101,6 +102,7 @@ public abstract class AutomationPackageManager {
         this.automationPackageHookRegistry = automationPackageHookRegistry;
         this.packageReader = packageReader;
         this.resourceManager = resourceManager;
+        this.automationPackageLocks = automationPackageLocks;
     }
 
     /**
@@ -156,6 +158,7 @@ public abstract class AutomationPackageManager {
         AutomationPackage automationPackage = getAutomationPackageById(id, objectPredicate);
         deleteAutomationPackageEntities(automationPackage);
         automationPackageAccessor.remove(automationPackage.getId());
+        automationPackageLocks.removeLock(automationPackage.getId().toHexString());
         log.info("Automation package ({}) has been removed", id);
     }
 
@@ -263,32 +266,23 @@ public abstract class AutomationPackageManager {
             ObjectEnricher enricherForIncludedEntities = ObjectEnricherComposer.compose(Arrays.asList(enricher, new AutomationPackageLinkEnricher(newPackage.getId().toString())));
             fillStaging(staging, packageContent, newPackage, oldPackage, enricherForIncludedEntities, automationPackageArchive);
 
-            // delete old package entities
-            if (oldPackage != null) {
-                deleteAutomationPackageEntities(oldPackage);
-            }
-
-            // persist all staged entities
-            persistStagedEntities(staging, enricherForIncludedEntities);
-
             // save automation package metadata
-            if (!async || !isAutomationPackageLocked(newPackage)) {
-                ObjectId result = automationPackageAccessor.save(newPackage).getId();
-
-                logAfterSave(staging, oldPackage, newPackage);
+            if (oldPackage == null || !async) {
+                //If not async or if it's a new package, we synchronously wait on a write lock and update
+                ObjectId result = updateAutomationPackage(oldPackage, newPackage, staging, enricherForIncludedEntities, false);
                 return new AutomationPackageUpdateResult(oldPackage == null ? AutomationPackageUpdateStatus.CREATED : AutomationPackageUpdateStatus.UPDATED, result);
+            } else if (getImmediateWriteLock(newPackage)) {
+                //If it's an async update, but we can acquire a write lock directly, we still proceed synchronously with the update
+                ObjectId result = updateAutomationPackage(oldPackage, newPackage, staging, enricherForIncludedEntities, true);
+                return new AutomationPackageUpdateResult(AutomationPackageUpdateStatus.UPDATED, result);
             } else {
                 // async update
-                changeAutomationPackageStatus(newPackage.getId(), AutomationPackageStatus.DELAYED_UPDATE);
+                newPackage.setStatus(AutomationPackageStatus.DELAYED_UPDATE);
+                automationPackageAccessor.save(newPackage);
                 AutomationPackage finalNewPackage = newPackage;
                 delayedUpdateExecutor.submit(() -> {
                     try {
-                        waitForPackageUnlock(finalNewPackage);
-                        automationPackageAccessor.save(finalNewPackage).getId();
-
-                        // clear status (DELAYED_UPDATE)
-                        changeAutomationPackageStatus(finalNewPackage.getId(), null);
-                        logAfterSave(staging, oldPackage, finalNewPackage);
+                        updateAutomationPackage(oldPackage, finalNewPackage, staging, enricherForIncludedEntities, false);
                     } catch (Exception e) {
                         handleExceptionOnPackageUpdate(finalNewPackage);
                         log.error("Exception on delayed AP update", e);
@@ -296,10 +290,35 @@ public abstract class AutomationPackageManager {
                 });
                 return new AutomationPackageUpdateResult(AutomationPackageUpdateStatus.UPDATE_DELAYED, newPackage.getId());
             }
-
         } catch (Exception ex) {
             handleExceptionOnPackageUpdate(newPackage);
             throw ex;
+        }
+    }
+
+    private ObjectId updateAutomationPackage(AutomationPackage oldPackage, AutomationPackage newPackage,
+                                             Staging staging, ObjectEnricher enricherForIncludedEntities,
+                                             boolean alreadyLocked) {
+        try {
+            //If not already locked (i.e. was not able to acquire an immediate write lock)
+            if (!alreadyLocked) {
+                getWriteLock(newPackage);
+            }
+            // delete old package entities
+            if (oldPackage != null) {
+                deleteAutomationPackageEntities(oldPackage);
+            }
+            // persist all staged entities
+            persistStagedEntities(staging, enricherForIncludedEntities);
+
+            //Clear status in case previous async update failed
+            newPackage.setStatus(null);
+            ObjectId result = automationPackageAccessor.save(newPackage).getId();
+
+            logAfterSave(staging, oldPackage, newPackage);
+            return result;
+        } finally {
+            releaseWriteLock(newPackage);
         }
     }
 
@@ -317,17 +336,17 @@ public abstract class AutomationPackageManager {
         }
     }
 
-    private void changeAutomationPackageStatus(ObjectId id, AutomationPackageStatus automationPackageStatus) {
-        // TODO: implement
+    protected void getWriteLock(AutomationPackage newPackage) {
+        automationPackageLocks.writeLock(newPackage.getId().toHexString());
     }
 
-    protected void waitForPackageUnlock(AutomationPackage newPackage) {
-        // TODO: implement
+    protected boolean getImmediateWriteLock(AutomationPackage newPackage) {
+        return automationPackageLocks.tryWriteLock(newPackage.getId().toHexString());
     }
 
-    protected boolean isAutomationPackageLocked(AutomationPackage newPackage) {
-        // TODO: check lock
-        return false;
+
+    private void releaseWriteLock(AutomationPackage newPackage) {
+        automationPackageLocks.writeUnlock(newPackage.getId().toHexString());
     }
 
     protected void logAfterSave(Staging staging, AutomationPackage oldPackage, AutomationPackage newPackage) {
@@ -353,7 +372,7 @@ public abstract class AutomationPackageManager {
     }
 
     protected void fillStaging(Staging staging, AutomationPackageContent packageContent, AutomationPackage newPackage, AutomationPackage oldPackage, ObjectEnricher enricherForIncludedEntities, AutomationPackageArchive automationPackageArchive){
-        staging.plans = preparePlansStaging(packageContent, automationPackageArchive, oldPackage, enricherForIncludedEntities);
+        staging.plans = preparePlansStaging(packageContent, automationPackageArchive, oldPackage, enricherForIncludedEntities, staging.resourceManager);
         staging.taskParameters = prepareExecutionTasksParamsStaging(enricherForIncludedEntities, packageContent, oldPackage, staging.plans);
         staging.functions = prepareFunctionsStaging(newPackage, automationPackageArchive, packageContent, enricherForIncludedEntities, oldPackage, staging.resourceManager);
     }
@@ -411,18 +430,18 @@ public abstract class AutomationPackageManager {
     }
 
     protected List<Plan> preparePlansStaging(AutomationPackageContent packageContent, AutomationPackageArchive automationPackageArchive,
-                                             AutomationPackage oldPackage, ObjectEnricher enricher) {
+                                             AutomationPackage oldPackage, ObjectEnricher enricher, ResourceManager stagingResourceManager) {
         List<Plan> plans = packageContent.getPlans();
-        AutomationPackagePlansAttributesApplier specialAttributesApplier = new AutomationPackagePlansAttributesApplier(resourceManager);
+        AutomationPackagePlansAttributesApplier specialAttributesApplier = new AutomationPackagePlansAttributesApplier(stagingResourceManager);
         specialAttributesApplier.applySpecialAttributesToPlans(plans, automationPackageArchive, enricher);
 
         fillEntities(plans, oldPackage != null ? getPackagePlans(oldPackage.getId()) : new ArrayList<>(), enricher);
         return plans;
     }
 
-    protected List<Function> prepareFunctionsStaging(AutomationPackage newPackage, AutomationPackageArchive automationPackageArchive, AutomationPackageContent packageContent, ObjectEnricher enricher, AutomationPackage oldPackage, ResourceManager resourceManager) {
+    protected List<Function> prepareFunctionsStaging(AutomationPackage newPackage, AutomationPackageArchive automationPackageArchive, AutomationPackageContent packageContent, ObjectEnricher enricher, AutomationPackage oldPackage, ResourceManager stagingResourceManager) {
         // TODO: here want to apply additional attributes to draft function (upload linked files as resources), but we have to refactor the way to do that
-        AutomationPackageKeywordsAttributesApplier keywordsAttributesApplier = new AutomationPackageKeywordsAttributesApplier(resourceManager);
+        AutomationPackageKeywordsAttributesApplier keywordsAttributesApplier = new AutomationPackageKeywordsAttributesApplier(stagingResourceManager);
         List<Function> completeFunctions = keywordsAttributesApplier.applySpecialAttributesToKeyword(packageContent.getKeywords(), automationPackageArchive, newPackage.getId(), enricher);
 
         // get old functions with same name and reuse their ids
