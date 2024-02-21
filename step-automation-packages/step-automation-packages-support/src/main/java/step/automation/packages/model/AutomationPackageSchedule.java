@@ -19,12 +19,15 @@
 package step.automation.packages.model;
 
 import java.util.Map;
+import java.util.List;
 
 public class AutomationPackageSchedule {
 
     private String name;
     private Boolean active = true;
     private String cron;
+
+    private List<String> cronExclusions;
     private String planName;
     private String assertionPlanName;
     private Map<String, String> executionParameters;
@@ -60,6 +63,14 @@ public class AutomationPackageSchedule {
         this.cron = cron;
     }
 
+    public List<String> getCronExclusions() {
+        return cronExclusions;
+    }
+
+    public void setCronExclusions(List<String> cronExclusions) {
+        this.cronExclusions = cronExclusions;
+    }
+
     public void setPlanName(String planName) {
         this.planName = planName;
     }
@@ -88,13 +99,13 @@ public class AutomationPackageSchedule {
         this.assertionPlanName = assertionPlanName;
     }
 
-
     @Override
     public String toString() {
         return "AutomationPackageSchedule{" +
                 "name='" + name + '\'' +
                 ", active=" + active +
                 ", cron='" + cron + '\'' +
+                ", cronExclusions=" + cronExclusions +
                 ", planName='" + planName + '\'' +
                 ", assertionPlanName='" + assertionPlanName + '\'' +
                 ", executionParameters=" + executionParameters +
