@@ -4,6 +4,7 @@ import ch.exense.commons.app.Configuration;
 import org.bson.types.ObjectId;
 import org.junit.*;
 import org.mockito.Mockito;
+import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.ForEachBlock;
 import step.attachments.FileResolver;
 import step.automation.packages.accessor.AutomationPackageAccessorImpl;
@@ -227,7 +228,6 @@ public class AutomationPackageManagerOSTest {
     }
 
     @Test
-    @Ignore
     public void testUpdateAsync() throws IOException, SetupFunctionException, FunctionTypeException, InterruptedException {
         // 1. Upload new package
         SampleUploadingResult r = uploadSample1WithAsserts(true, true, false);
@@ -309,7 +309,8 @@ public class AutomationPackageManagerOSTest {
     }
 
     protected ExecutionEngine.Builder newExecutionEngineBuilder() {
-        return ExecutionEngine.builder().withPlugins(List.of(new AutomationPackageExecutionPlugin(automationPackageLocks),
+        return ExecutionEngine.builder().withPlugins(List.of(new BaseArtefactPlugin(),
+                new AutomationPackageExecutionPlugin(automationPackageLocks),
                 new AbstractExecutionEnginePlugin() {
                     @Override
                     public void beforeExecutionEnd(ExecutionContext context) {
