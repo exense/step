@@ -31,6 +31,7 @@ import step.core.execution.model.ExecutionAccessor;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.core.scheduler.SchedulerPlugin;
+import step.engine.plugins.ExecutionEnginePlugin;
 import step.framework.server.tables.Table;
 import step.framework.server.tables.TableRegistry;
 import step.functions.accessor.FunctionAccessor;
@@ -44,10 +45,14 @@ import step.automation.packages.hooks.AutomationPackageHookRegistry;
 public class AutomationPackagePlugin extends AbstractControllerPlugin {
 
     private static final Logger log = LoggerFactory.getLogger(AutomationPackagePlugin.class);
+    protected AutomationPackageLocks automationPackageLocks = new AutomationPackageLocks();
 
     @Override
     public void serverStart(GlobalContext context) throws Exception {
         super.serverStart(context);
+
+        //Might be used by EE plugin creating AP manager EE
+        context.put(AutomationPackageLocks.class, automationPackageLocks);
 
         AutomationPackageAccessor packageAccessor = new AutomationPackageAccessorImpl(
                 context.getCollectionFactory().getCollection("automationPackages", AutomationPackage.class)
@@ -88,7 +93,8 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
                     context.getResourceManager(),
                     context.getScheduleAccessor(),
                     context.require(AutomationPackageHookRegistry.class),
-                    context.require(AbstractAutomationPackageReader.class)
+                    context.require(AbstractAutomationPackageReader.class),
+                    automationPackageLocks
             );
             context.put(AutomationPackageManager.class, packageManager);
 
@@ -124,5 +130,10 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
         } catch (InterruptedException e) {
             log.warn("Interrupted", e);
         }
+    }
+
+    @Override
+    public ExecutionEnginePlugin getExecutionEnginePlugin() {
+        return new AutomationPackageExecutionPlugin(automationPackageLocks);
     }
 }

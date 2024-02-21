@@ -116,14 +116,14 @@ public class AutomationPackageServices extends AbstractStepServices {
     @PUT
     @Path("/{id}")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    @Produces(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.APPLICATION_JSON)
     @Secured(right = "automation-package-write")
-    public void updateAutomationPackageById(@PathParam("id") String id,
+    public AutomationPackageUpdateResult updateAutomationPackageById(@PathParam("id") String id,
                                             @QueryParam("async") Boolean async,
                                             @FormDataParam("file") InputStream uploadedInputStream,
                                             @FormDataParam("file") FormDataContentDisposition fileDetail) {
         try {
-            automationPackageManager.createOrUpdateAutomationPackage(
+            return automationPackageManager.createOrUpdateAutomationPackage(
                     true, false, new ObjectId(id),
                     uploadedInputStream, fileDetail.getFileName(),
                     getObjectEnricher(), getObjectPredicate(), async != null && async
@@ -135,7 +135,7 @@ public class AutomationPackageServices extends AbstractStepServices {
 
     @PUT
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    @Produces(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.APPLICATION_JSON)
     @Secured(right = "automation-package-write")
     public Response createOrUpdateAutomationPackage(@QueryParam("async") Boolean async,
                                                     @FormDataParam("file") InputStream uploadedInputStream,
