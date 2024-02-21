@@ -237,7 +237,7 @@ public class AutomationPackageManagerOSTest {
             PlanRunnerResult execute = newExecutionEngineBuilder().build().execute(r.storedPlans.get(0));
         });
         //Give some time to let the execution start
-        Thread.sleep(10);
+        Thread.sleep(200);
         uploadSample1WithAsserts(false, true, true);
     }
 
@@ -316,7 +316,7 @@ public class AutomationPackageManagerOSTest {
                     public void beforeExecutionEnd(ExecutionContext context) {
                         try {
                             //delay end of execution to test locks
-                            Thread.sleep(100);
+                            Thread.sleep(1000);
                         } catch (InterruptedException e) {
                             throw new RuntimeException(e);
                         }
