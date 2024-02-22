@@ -20,6 +20,7 @@ import step.core.execution.ExecutionEngine;
 import step.core.execution.ExecutionEngineContext;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessorImpl;
+import step.core.scheduler.*;
 import step.core.plans.runner.PlanRunnerResult;
 import step.core.scheduler.ExecutionScheduler;
 import step.core.scheduler.ExecutionTaskAccessorImpl;
@@ -296,6 +297,8 @@ public class AutomationPackageManagerOSTest {
             r.storedTask = storedTasks.get(0);
             Assert.assertEquals(SCHEDULE_1, r.storedTask.getAttribute(AbstractOrganizableObject.NAME));
             Assert.assertEquals("0 15 10 ? * *", r.storedTask.getCronExpression());
+            Assert.assertNotNull(r.storedTask.getCronExclusions());
+            Assert.assertEquals(List.of("*/5 * * * *", "0 * * * *"), r.storedTask.getCronExclusions().stream().map(CronExclusion::getCronExpression).collect(Collectors.toList()));
             Assert.assertTrue(r.storedTask.isActive());
             Assert.assertEquals("local", r.storedTask.getExecutionsParameters().getRepositoryObject().getRepositoryID());
             Assert.assertEquals(planFromDescriptor.getId().toHexString(), r.storedTask.getExecutionsParameters().getRepositoryObject().getRepositoryParameters().get("planid"));
@@ -331,5 +334,4 @@ public class AutomationPackageManagerOSTest {
         private List<Function> storedFunctions;
         private ExecutiontTaskParameters storedTask;
     }
-
 }

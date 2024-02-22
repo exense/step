@@ -1974,6 +1974,9 @@
         "planName" : {
           "type" : "string"
         },
+        "cronExclusions" : {
+          "type" : "array"
+        },
         "cron" : {
           "type" : "string"
         },

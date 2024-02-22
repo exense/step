@@ -35,7 +35,7 @@ public class ExecutiontTaskParameters extends AbstractOrganizableObject implemen
 	private ObjectId assertionPlan;
 
 	public String cronExpression;
-private List<CronExclusion> cronExclusions;
+	public  List<CronExclusion> cronExclusions;
 	public boolean active;
 
 	public ExecutiontTaskParameters() {
