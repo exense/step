@@ -147,9 +147,9 @@ public class AutomationPackageServices extends AbstractStepServices {
             );
             Response.ResponseBuilder responseBuilder;
             if (result.getStatus() == AutomationPackageUpdateStatus.CREATED) {
-                responseBuilder = Response.status(201);
+                responseBuilder = Response.status(Response.Status.CREATED);
             } else {
-                responseBuilder = Response.status(200);
+                responseBuilder = Response.status(Response.Status.OK);
             }
             return responseBuilder.entity(result).build();
         } catch (AutomationPackageManagerException e) {

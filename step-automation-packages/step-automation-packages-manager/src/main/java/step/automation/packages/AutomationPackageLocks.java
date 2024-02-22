@@ -40,13 +40,6 @@ public class AutomationPackageLocks {
     }
 
     public void removeLock(String automationPackageId) {
-        ReadWriteLock readWriteLock = locksMap.get(automationPackageId);
-        if (readWriteLock != null) {
-            readWriteLock.writeLock().lock();
-            ReadWriteLock remove = locksMap.remove(automationPackageId);
-            if (remove != null) {
-                remove.writeLock().unlock();
-            }
-        }
+        locksMap.remove(automationPackageId);
     }
 }

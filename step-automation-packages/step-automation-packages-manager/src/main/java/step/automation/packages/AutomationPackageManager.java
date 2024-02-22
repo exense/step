@@ -58,6 +58,8 @@ import static step.automation.packages.AutomationPackageArchive.METADATA_FILES;
 
 public abstract class AutomationPackageManager {
 
+    public static final int DEFAULT_READLOCK_TIMEOUT_SECONDS = 60;
+
     private static final Logger log = LoggerFactory.getLogger(AutomationPackageManager.class);
 
     protected final AutomationPackageAccessor automationPackageAccessor;
@@ -268,7 +270,7 @@ public abstract class AutomationPackageManager {
 
             // persist and activate automation package
             log.debug("Updating automation package, old package is " + ((oldPackage == null) ? "null" : "not null" + ", async: " + async));
-            boolean immediateWriteLock = getImmediateWriteLock(newPackage);
+            boolean immediateWriteLock = tryObtainImmediateWriteLock(newPackage);
             try {
                 if (oldPackage == null || !async || immediateWriteLock) {
                     //If not async or if it's a new package, we synchronously wait on a write lock and update
@@ -349,7 +351,7 @@ public abstract class AutomationPackageManager {
         automationPackageLocks.writeLock(newPackage.getId().toHexString());
     }
 
-    protected boolean getImmediateWriteLock(AutomationPackage newPackage) {
+    protected boolean tryObtainImmediateWriteLock(AutomationPackage newPackage) {
         return automationPackageLocks.tryWriteLock(newPackage.getId().toHexString());
     }
 

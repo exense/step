@@ -51,6 +51,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
+import static step.automation.packages.AutomationPackagePlugin.AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS_DEFAULT;
 import static step.automation.packages.AutomationPackageTestUtils.*;
 
 public class AutomationPackageManagerOSTest {
@@ -64,7 +65,7 @@ public class AutomationPackageManagerOSTest {
     private ExecutionTaskAccessorImpl executionTaskAccessor;
     private ExecutionScheduler executionScheduler;
 
-    private AutomationPackageLocks automationPackageLocks = new AutomationPackageLocks(60);
+    private AutomationPackageLocks automationPackageLocks = new AutomationPackageLocks(AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS_DEFAULT);
 
     @Before
     public void before() {
