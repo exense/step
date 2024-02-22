@@ -64,7 +64,11 @@ public class AutomationPackageServices extends AbstractStepServices {
     @Produces(MediaType.APPLICATION_JSON)
     @Secured(right = "automation-package-delete")
     public void deleteAutomationPackage(@PathParam("id") String id) {
-        automationPackageManager.removeAutomationPackage(new ObjectId(id), getObjectPredicate());
+        try {
+            automationPackageManager.removeAutomationPackage(new ObjectId(id), getObjectPredicate());
+        } catch (Exception e) {
+            throw new ControllerServiceException(e.getMessage());
+        }
     }
 
     @POST

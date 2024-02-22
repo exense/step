@@ -158,10 +158,18 @@ public abstract class AutomationPackageManager {
 
     public void removeAutomationPackage(ObjectId id, ObjectPredicate objectPredicate) {
         AutomationPackage automationPackage = getAutomationPackageById(id, objectPredicate);
-        deleteAutomationPackageEntities(automationPackage);
-        automationPackageAccessor.remove(automationPackage.getId());
-        automationPackageLocks.removeLock(automationPackage.getId().toHexString());
-        log.info("Automation package ({}) has been removed", id);
+        String automationPackageId = automationPackage.getId().toHexString();
+        if (automationPackageLocks.tryWriteLock(automationPackageId)) {
+            try {
+                deleteAutomationPackageEntities(automationPackage);
+                automationPackageAccessor.remove(automationPackage.getId());
+                log.info("Automation package ({}) has been removed", id);
+            } finally {
+                automationPackageLocks.releaseAndRemoveLock(automationPackageId);
+            }
+        } else {
+            throw new AutomationPackageManagerException("Automation package cannot be removed while executions using it are running.");
+        }
     }
 
     protected void deleteAutomationPackageEntities(AutomationPackage automationPackage) {

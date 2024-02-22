@@ -39,7 +39,9 @@ public class AutomationPackageLocks {
         return getLockForAutomationPackage(automationPackageId).writeLock().tryLock();
     }
 
-    public void removeLock(String automationPackageId) {
-        locksMap.remove(automationPackageId);
+    public void releaseAndRemoveLock(String automationPackageId) {
+        ReadWriteLock remove = locksMap.remove(automationPackageId);
+        remove.writeLock().unlock();
     }
+
 }
