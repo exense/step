@@ -49,6 +49,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -57,6 +59,8 @@ import static java.util.Arrays.stream;
 import static step.automation.packages.AutomationPackageArchive.METADATA_FILES;
 
 public abstract class AutomationPackageManager {
+
+    public static final int DEFAULT_READLOCK_TIMEOUT_SECONDS = 60;
 
     private static final Logger log = LoggerFactory.getLogger(AutomationPackageManager.class);
 
@@ -70,6 +74,9 @@ public abstract class AutomationPackageManager {
     protected final ResourceManager resourceManager;
     protected final AutomationPackageHookRegistry automationPackageHookRegistry;
     protected boolean isIsolated = false;
+    protected final AutomationPackageLocks automationPackageLocks;
+
+    private final ExecutorService delayedUpdateExecutor = Executors.newCachedThreadPool();
 
     /**
      * The automation package manager used to store/delete automation packages. To run the automation package in isolated
@@ -83,7 +90,7 @@ public abstract class AutomationPackageManager {
                                     ResourceManager resourceManager,
                                     ExecutionTaskAccessor executionTaskAccessor,
                                     AutomationPackageHookRegistry automationPackageHookRegistry,
-                                    AbstractAutomationPackageReader<?> packageReader) {
+                                    AbstractAutomationPackageReader<?> packageReader, AutomationPackageLocks automationPackageLocks) {
         this.automationPackageAccessor = automationPackageAccessor;
 
         this.functionManager = functionManager;
@@ -99,6 +106,7 @@ public abstract class AutomationPackageManager {
         this.automationPackageHookRegistry = automationPackageHookRegistry;
         this.packageReader = packageReader;
         this.resourceManager = resourceManager;
+        this.automationPackageLocks = automationPackageLocks;
     }
 
     /**
@@ -152,9 +160,18 @@ public abstract class AutomationPackageManager {
 
     public void removeAutomationPackage(ObjectId id, ObjectPredicate objectPredicate) {
         AutomationPackage automationPackage = getAutomationPackageById(id, objectPredicate);
-        deleteAutomationPackageEntities(automationPackage);
-        automationPackageAccessor.remove(automationPackage.getId());
-        log.info("Automation package ({}) has been removed", id);
+        String automationPackageId = automationPackage.getId().toHexString();
+        if (automationPackageLocks.tryWriteLock(automationPackageId)) {
+            try {
+                deleteAutomationPackageEntities(automationPackage);
+                automationPackageAccessor.remove(automationPackage.getId());
+                log.info("Automation package ({}) has been removed", id);
+            } finally {
+                automationPackageLocks.releaseAndRemoveLock(automationPackageId);
+            }
+        } else {
+            throw new AutomationPackageManagerException("Automation package cannot be removed while executions using it are running.");
+        }
     }
 
     protected void deleteAutomationPackageEntities(AutomationPackage automationPackage) {
@@ -175,7 +192,7 @@ public abstract class AutomationPackageManager {
      * @throws AutomationPackageManagerException
      */
     public ObjectId createAutomationPackage(InputStream packageStream, String fileName, ObjectEnricher enricher, ObjectPredicate objectPredicate) throws AutomationPackageManagerException {
-        return createOrUpdateAutomationPackage(false, true, null, packageStream, fileName, enricher, objectPredicate).getId();
+        return createOrUpdateAutomationPackage(false, true, null, packageStream, fileName, enricher, objectPredicate, false).getId();
     }
 
     /**
@@ -189,12 +206,12 @@ public abstract class AutomationPackageManager {
      * @param objectPredicate the filter for automation package
      * @return the id of created/updated package
      */
-    public PackageUpdateResult createOrUpdateAutomationPackage(boolean allowUpdate, boolean allowCreate, ObjectId explicitOldId,
-                                                               InputStream inputStream, String fileName, ObjectEnricher enricher,
-                                                               ObjectPredicate objectPredicate) throws AutomationPackageManagerException {
+    public AutomationPackageUpdateResult createOrUpdateAutomationPackage(boolean allowUpdate, boolean allowCreate, ObjectId explicitOldId,
+                                                                         InputStream inputStream, String fileName, ObjectEnricher enricher,
+                                                                         ObjectPredicate objectPredicate, boolean async) throws AutomationPackageManagerException {
         try {
             try (AutomationPackageArchiveProvider provider = new AutomationPackageFromInputStreamProvider(inputStream, fileName)) {
-                return createOrUpdateAutomationPackage(allowUpdate, allowCreate, explicitOldId, provider, false, enricher, objectPredicate);
+                return createOrUpdateAutomationPackage(allowUpdate, allowCreate, explicitOldId, provider, false, enricher, objectPredicate, async);
             }
         } catch (IOException | AutomationPackageReadingException ex) {
             throw new AutomationPackageManagerException("Automation package cannot be created. Caused by: " + ex.getMessage(), ex);
@@ -212,9 +229,9 @@ public abstract class AutomationPackageManager {
      * @param objectPredicate           the filter for automation package
      * @return the id of created/updated package
      */
-    public PackageUpdateResult createOrUpdateAutomationPackage(boolean allowUpdate, boolean allowCreate, ObjectId explicitOldId,
-                                                               AutomationPackageArchiveProvider automationPackageProvider, boolean isLocalPackage,
-                                                               ObjectEnricher enricher, ObjectPredicate objectPredicate) {
+    public AutomationPackageUpdateResult createOrUpdateAutomationPackage(boolean allowUpdate, boolean allowCreate, ObjectId explicitOldId,
+                                                                         AutomationPackageArchiveProvider automationPackageProvider, boolean isLocalPackage,
+                                                                         ObjectEnricher enricher, ObjectPredicate objectPredicate, boolean async) {
         AutomationPackageArchive automationPackageArchive;
         AutomationPackageContent packageContent;
 
@@ -261,33 +278,96 @@ public abstract class AutomationPackageManager {
             ObjectEnricher enricherForIncludedEntities = ObjectEnricherComposer.compose(Arrays.asList(enricher, new AutomationPackageLinkEnricher(newPackage.getId().toString())));
             fillStaging(staging, packageContent, newPackage, oldPackage, enricherForIncludedEntities, automationPackageArchive);
 
+            // persist and activate automation package
+            log.debug("Updating automation package, old package is " + ((oldPackage == null) ? "null" : "not null" + ", async: " + async));
+            boolean immediateWriteLock = tryObtainImmediateWriteLock(newPackage);
+            try {
+                if (oldPackage == null || !async || immediateWriteLock) {
+                    //If not async or if it's a new package, we synchronously wait on a write lock and update
+                    log.info("Updating the automation package " + newPackage.getId().toString() + " synchronously, any running executions on this package will delay the update.");
+                    ObjectId result = updateAutomationPackage(oldPackage, newPackage, staging, enricherForIncludedEntities, immediateWriteLock);
+                    return new AutomationPackageUpdateResult(oldPackage == null ? AutomationPackageUpdateStatus.CREATED : AutomationPackageUpdateStatus.UPDATED, result);
+                } else {
+                    // async update
+                    log.info("Updating the automation package " + newPackage.getId().toString() + " asynchronously due to running execution(s).");
+                    newPackage.setStatus(AutomationPackageStatus.DELAYED_UPDATE);
+                    automationPackageAccessor.save(newPackage);
+                    AutomationPackage finalNewPackage = newPackage;
+                    delayedUpdateExecutor.submit(() -> {
+                        try {
+                            updateAutomationPackage(oldPackage, finalNewPackage, staging, enricherForIncludedEntities, false);
+                        } catch (Exception e) {
+                            handleExceptionOnPackageUpdate(finalNewPackage);
+                            log.error("Exception on delayed AP update", e);
+                        }
+                    });
+                    return new AutomationPackageUpdateResult(AutomationPackageUpdateStatus.UPDATE_DELAYED, newPackage.getId());
+                }
+            } finally {
+                if (immediateWriteLock) {
+                    releaseWriteLock(newPackage);
+                }
+            }
+        } catch (Exception ex) {
+            handleExceptionOnPackageUpdate(newPackage);
+            throw ex;
+        }
+    }
+
+    private ObjectId updateAutomationPackage(AutomationPackage oldPackage, AutomationPackage newPackage,
+                                             Staging staging, ObjectEnricher enricherForIncludedEntities,
+                                             boolean alreadyLocked) {
+        try {
+            //If not already locked (i.e. was not able to acquire an immediate write lock)
+            if (!alreadyLocked) {
+                log.info("Delaying update of the automation package " + newPackage.getId().toString() + " due to running execution(s) using this package.");
+                getWriteLock(newPackage);
+                log.info("Executions completed, proceeding with the update of the automation package " + newPackage.getId().toString());
+            }
             // delete old package entities
             if (oldPackage != null) {
                 deleteAutomationPackageEntities(oldPackage);
             }
-
             // persist all staged entities
             persistStagedEntities(staging, enricherForIncludedEntities);
-
-            // save automation package metadata
             ObjectId result = automationPackageAccessor.save(newPackage).getId();
-
             logAfterSave(staging, oldPackage, newPackage);
-            return new PackageUpdateResult(oldPackage == null ? PackageUpdateStatus.CREATED : PackageUpdateStatus.UPDATED, result);
-        } catch (Exception ex) {
-            // cleanup created resources
-            try {
-                if (newPackage != null) {
-                    List<Resource> resources = resourceManager.findManyByCriteria(Map.of("customFields." + AutomationPackageEntity.AUTOMATION_PACKAGE_ID, newPackage.getId().toString()));
-                    for (Resource resource : resources) {
-                        resourceManager.deleteResource(resource.getId().toString());
-                    }
-                }
-            } catch (Exception e) {
-                log.warn("Cannot cleanup resource", e);
+            return result;
+        } finally {
+            if (!alreadyLocked) {
+                releaseWriteLock(newPackage); //only release if lock was acquired in this method
             }
-            throw ex;
+            //Clear delayed status
+            newPackage.setStatus(null);
+            automationPackageAccessor.save(newPackage);
         }
+    }
+
+    private void handleExceptionOnPackageUpdate(AutomationPackage automationPackage) {
+        // cleanup created resources
+        try {
+            if (automationPackage != null) {
+                List<Resource> resources = resourceManager.findManyByCriteria(Map.of("customFields." + AutomationPackageEntity.AUTOMATION_PACKAGE_ID, automationPackage.getId().toString()));
+                for (Resource resource : resources) {
+                    resourceManager.deleteResource(resource.getId().toString());
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Cannot cleanup resource", e);
+        }
+    }
+
+    protected void getWriteLock(AutomationPackage newPackage) {
+        automationPackageLocks.writeLock(newPackage.getId().toHexString());
+    }
+
+    protected boolean tryObtainImmediateWriteLock(AutomationPackage newPackage) {
+        return automationPackageLocks.tryWriteLock(newPackage.getId().toHexString());
+    }
+
+
+    private void releaseWriteLock(AutomationPackage newPackage) {
+        automationPackageLocks.writeUnlock(newPackage.getId().toHexString());
     }
 
     protected void logAfterSave(Staging staging, AutomationPackage oldPackage, AutomationPackage newPackage) {
@@ -313,7 +393,7 @@ public abstract class AutomationPackageManager {
     }
 
     protected void fillStaging(Staging staging, AutomationPackageContent packageContent, AutomationPackage newPackage, AutomationPackage oldPackage, ObjectEnricher enricherForIncludedEntities, AutomationPackageArchive automationPackageArchive){
-        staging.plans = preparePlansStaging(packageContent, automationPackageArchive, oldPackage, enricherForIncludedEntities);
+        staging.plans = preparePlansStaging(packageContent, automationPackageArchive, oldPackage, enricherForIncludedEntities, staging.resourceManager);
         staging.taskParameters = prepareExecutionTasksParamsStaging(enricherForIncludedEntities, packageContent, oldPackage, staging.plans);
         staging.functions = prepareFunctionsStaging(newPackage, automationPackageArchive, packageContent, enricherForIncludedEntities, oldPackage, staging.resourceManager);
     }
@@ -371,18 +451,18 @@ public abstract class AutomationPackageManager {
     }
 
     protected List<Plan> preparePlansStaging(AutomationPackageContent packageContent, AutomationPackageArchive automationPackageArchive,
-                                             AutomationPackage oldPackage, ObjectEnricher enricher) {
+                                             AutomationPackage oldPackage, ObjectEnricher enricher, ResourceManager stagingResourceManager) {
         List<Plan> plans = packageContent.getPlans();
-        AutomationPackagePlansAttributesApplier specialAttributesApplier = new AutomationPackagePlansAttributesApplier(resourceManager);
+        AutomationPackagePlansAttributesApplier specialAttributesApplier = new AutomationPackagePlansAttributesApplier(stagingResourceManager);
         specialAttributesApplier.applySpecialAttributesToPlans(plans, automationPackageArchive, enricher);
 
         fillEntities(plans, oldPackage != null ? getPackagePlans(oldPackage.getId()) : new ArrayList<>(), enricher);
         return plans;
     }
 
-    protected List<Function> prepareFunctionsStaging(AutomationPackage newPackage, AutomationPackageArchive automationPackageArchive, AutomationPackageContent packageContent, ObjectEnricher enricher, AutomationPackage oldPackage, ResourceManager resourceManager) {
+    protected List<Function> prepareFunctionsStaging(AutomationPackage newPackage, AutomationPackageArchive automationPackageArchive, AutomationPackageContent packageContent, ObjectEnricher enricher, AutomationPackage oldPackage, ResourceManager stagingResourceManager) {
         // TODO: here want to apply additional attributes to draft function (upload linked files as resources), but we have to refactor the way to do that
-        AutomationPackageKeywordsAttributesApplier keywordsAttributesApplier = new AutomationPackageKeywordsAttributesApplier(resourceManager);
+        AutomationPackageKeywordsAttributesApplier keywordsAttributesApplier = new AutomationPackageKeywordsAttributesApplier(stagingResourceManager);
         List<Function> completeFunctions = keywordsAttributesApplier.applySpecialAttributesToKeyword(packageContent.getKeywords(), automationPackageArchive, newPackage.getId(), enricher);
 
         // get old functions with same name and reuse their ids
@@ -610,29 +690,6 @@ public abstract class AutomationPackageManager {
         } else {
             log.info("Skip automation package cleanup. Cleanup is only supported for isolated (in-memory) automation package manager");
         }
-    }
-
-    public static class PackageUpdateResult {
-        private final PackageUpdateStatus status;
-        private final ObjectId id;
-
-        public PackageUpdateResult(PackageUpdateStatus status, ObjectId id) {
-            this.status = status;
-            this.id = id;
-        }
-
-        public PackageUpdateStatus getStatus() {
-            return status;
-        }
-
-        public ObjectId getId() {
-            return id;
-        }
-    }
-
-    public enum PackageUpdateStatus {
-        CREATED,
-        UPDATED
     }
 
     protected static class Staging {

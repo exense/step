@@ -16,22 +16,35 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.client;
+package step.automation.packages;
 
-import step.automation.packages.AutomationPackageUpdateResult;
-import step.automation.packages.execution.AutomationPackageExecutionParameters;
+import org.bson.types.ObjectId;
 
-import java.io.Closeable;
-import java.io.File;
-import java.util.List;
+public class AutomationPackageUpdateResult {
+    private AutomationPackageUpdateStatus status;
+    private ObjectId id;
 
-public interface AutomationPackageClient extends Closeable {
+    public AutomationPackageUpdateResult() {
+    }
 
-    String createAutomationPackage(File automationPackageFile) throws AutomationPackageClientException;
+    public AutomationPackageUpdateResult(AutomationPackageUpdateStatus status, ObjectId id) {
+        this.status = status;
+        this.id = id;
+    }
 
-    AutomationPackageUpdateResult createOrUpdateAutomationPackage(File automationPackageFile, boolean async) throws AutomationPackageClientException;
+    public AutomationPackageUpdateStatus getStatus() {
+        return status;
+    }
 
-    List<String> executeAutomationPackage(File automationPackageFile, AutomationPackageExecutionParameters params) throws AutomationPackageClientException;
+    public ObjectId getId() {
+        return id;
+    }
 
-    void deleteAutomationPackage(String packageName) throws AutomationPackageClientException;
+    public void setStatus(AutomationPackageUpdateStatus status) {
+        this.status = status;
+    }
+
+    public void setId(ObjectId id) {
+        this.id = id;
+    }
 }

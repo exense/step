@@ -78,7 +78,7 @@ public class PlanRunnerResult {
 	
 	public ReportNodeStatus getResult() {
 		ReportNode rootReportNode = getRootReportNode();
-		if(rootReportNode != null) {
+		if(rootReportNode != null && rootReportNode.getStatus() != null) {
 			return rootReportNode.getStatus();
 		} else {
 			return ReportNodeStatus.NORUN;

@@ -23,6 +23,7 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import step.automation.packages.AutomationPackageUpdateResult;
 import step.automation.packages.client.AutomationPackageClientException;
 import step.automation.packages.client.RemoteAutomationPackageClientImpl;
 import step.client.credentials.ControllerCredentials;
@@ -52,6 +53,9 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
     @Parameter(property = "step.auth-token")
     private String authToken;
 
+    @Parameter(property = "step-deploy-automation-package.async")
+    private Boolean async;
+
     @Override
     protected ControllerCredentials getControllerCredentials() {
         String authToken = getAuthToken();
@@ -66,9 +70,9 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
 
             getLog().info("Uploading the automation package...");
             try {
-                String uploadedId = automationPackageClient.createOrUpdateAutomationPackage(packagedTarget);
-                if (uploadedId != null) {
-                    getLog().info("Automation package successfully uploaded. Id: " + uploadedId);
+                AutomationPackageUpdateResult updateResult = automationPackageClient.createOrUpdateAutomationPackage(packagedTarget, async != null && async);
+                if (updateResult != null && updateResult.getId() != null) {
+                    getLog().info("Automation package successfully uploaded. With status " + updateResult.getStatus() + ". Id: " + updateResult.getId());
                 } else {
                     throw logAndThrow("Unexpected response from Step. The returned automation package id is null. Please check the controller logs.");
                 }
@@ -160,5 +164,13 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
 
     public void setAuthToken(String authToken) {
         this.authToken = authToken;
+    }
+
+    public Boolean getAsync() {
+        return async;
+    }
+
+    public void setAsync(Boolean async) {
+        this.async = async;
     }
 }

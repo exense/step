@@ -25,12 +25,14 @@ import jakarta.ws.rs.core.MediaType;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.MultiPart;
 import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
+import step.automation.packages.AutomationPackageUpdateResult;
 import step.automation.packages.execution.AutomationPackageExecutionParameters;
 import step.client.AbstractRemoteClient;
 import step.client.credentials.ControllerCredentials;
 
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -53,10 +55,10 @@ public class RemoteAutomationPackageClientImpl extends AbstractRemoteClient impl
     }
 
     @Override
-    public String createOrUpdateAutomationPackage(File automationPackageFile) throws AutomationPackageClientException {
+    public AutomationPackageUpdateResult createOrUpdateAutomationPackage(File automationPackageFile, boolean async) throws AutomationPackageClientException {
         return uploadPackage(automationPackageFile, multiPartEntity -> {
-            Invocation.Builder builder = requestBuilder("/rest/automation-packages");
-            return RemoteAutomationPackageClientImpl.this.executeRequest(() -> builder.put(multiPartEntity, String.class));
+            Invocation.Builder builder = requestBuilder("/rest/automation-packages", Map.of("async", String.valueOf(async)));
+            return RemoteAutomationPackageClientImpl.this.executeRequest(() -> builder.put(multiPartEntity, AutomationPackageUpdateResult.class));
         });
     }
 
@@ -85,7 +87,7 @@ public class RemoteAutomationPackageClientImpl extends AbstractRemoteClient impl
         }
     }
 
-    protected String uploadPackage(File automationPackageFile, Function<Entity<MultiPart>, String> executeRequest) throws AutomationPackageClientException {
+    protected <T> T uploadPackage(File automationPackageFile, Function<Entity<MultiPart>, T> executeRequest) throws AutomationPackageClientException {
         MultiPart multiPart = prepareFileDataMultiPart(automationPackageFile);
         Entity<MultiPart> entity = Entity.entity(multiPart, multiPart.getMediaType());
         try {

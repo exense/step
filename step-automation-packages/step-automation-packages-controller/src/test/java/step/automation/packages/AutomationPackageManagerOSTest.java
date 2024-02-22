@@ -7,6 +7,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
+import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.ForEachBlock;
 import step.attachments.FileResolver;
 import step.automation.packages.accessor.AutomationPackageAccessorImpl;
@@ -14,10 +15,18 @@ import step.core.accessors.AbstractOrganizableObject;
 import step.core.collections.inmemory.InMemoryCollection;
 import step.core.controller.ControllerSettingAccessorImpl;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.execution.ExecutionContext;
+import step.core.execution.ExecutionEngine;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessorImpl;
 import step.core.scheduler.*;
+import step.core.plans.runner.PlanRunnerResult;
+import step.core.scheduler.ExecutionScheduler;
+import step.core.scheduler.ExecutionTaskAccessorImpl;
+import step.core.scheduler.ExecutiontTaskParameters;
+import step.core.scheduler.Executor;
 import step.datapool.excel.ExcelDataPool;
+import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessorImpl;
 import step.functions.manager.FunctionManagerImpl;
@@ -38,8 +47,11 @@ import java.io.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
+import static step.automation.packages.AutomationPackagePlugin.AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS_DEFAULT;
 import static step.automation.packages.AutomationPackageTestUtils.*;
 
 public class AutomationPackageManagerOSTest {
@@ -52,6 +64,8 @@ public class AutomationPackageManagerOSTest {
     private LocalResourceManagerImpl resourceManager;
     private ExecutionTaskAccessorImpl executionTaskAccessor;
     private ExecutionScheduler executionScheduler;
+
+    private AutomationPackageLocks automationPackageLocks = new AutomationPackageLocks(AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS_DEFAULT);
 
     @Before
     public void before() {
@@ -104,8 +118,9 @@ public class AutomationPackageManagerOSTest {
                 resourceManager,
                 executionTaskAccessor,
                 automationPackageHookRegistry,
-                new AutomationPackageReaderOS()
-        );
+                new AutomationPackageReaderOS(),
+                automationPackageLocks
+                );
     }
 
     @After
@@ -118,14 +133,14 @@ public class AutomationPackageManagerOSTest {
     @Test
     public void testCrud() throws IOException, SetupFunctionException, FunctionTypeException {
         // 1. Upload new package
-        SampleUploadingResult r = uploadSample1WithAsserts(true);
+        SampleUploadingResult r = uploadSample1WithAsserts(true, false, false);
 
         // 2. Update the package - some entities are updated, some entities are added
         String fileName = "samples/step-automation-packages-sample1-extended.jar";
         File automationPackageJar = new File("src/test/resources/" + fileName);
         try (InputStream is = new FileInputStream(automationPackageJar)) {
-            AutomationPackageManager.PackageUpdateResult result = manager.createOrUpdateAutomationPackage(true, true, null, is, fileName, null, null);
-            Assert.assertEquals(AutomationPackageManager.PackageUpdateStatus.UPDATED, result.getStatus());
+            AutomationPackageUpdateResult result = manager.createOrUpdateAutomationPackage(true, true, null, is, fileName, null, null, false);
+            Assert.assertEquals(AutomationPackageUpdateStatus.UPDATED, result.getStatus());
             ObjectId resultId = result.getId();
 
             // id of existing package is returned
@@ -170,7 +185,7 @@ public class AutomationPackageManagerOSTest {
         }
 
         // 3. Upload the original sample again - added plans/functions/tasks from step 2 should be removed
-        SampleUploadingResult r2 = uploadSample1WithAsserts(false);
+        SampleUploadingResult r2 = uploadSample1WithAsserts(false, false, false);
         Assert.assertEquals(r.storedPackage.getId(), r2.storedPackage.getId());
         Assert.assertEquals(findPlanByName(r.storedPlans, PLAN_NAME_FROM_DESCRIPTOR), findPlanByName(r2.storedPlans, PLAN_NAME_FROM_DESCRIPTOR));
         Assert.assertEquals(toIds(r.storedFunctions), toIds(r2.storedFunctions));
@@ -213,6 +228,20 @@ public class AutomationPackageManagerOSTest {
         }
     }
 
+    @Test
+    public void testUpdateAsync() throws IOException, SetupFunctionException, FunctionTypeException, InterruptedException {
+        // 1. Upload new package
+        SampleUploadingResult r = uploadSample1WithAsserts(true, true, false);
+        uploadSample1WithAsserts(false, true, false);
+        ExecutorService executor = Executors.newFixedThreadPool(1);
+        executor.submit(() -> {
+            PlanRunnerResult execute = newExecutionEngineBuilder().build().execute(r.storedPlans.get(0));
+        });
+        //Give some time to let the execution start
+        Thread.sleep(500);
+        uploadSample1WithAsserts(false, true, true);
+    }
+
     private void checkUploadedResource(DynamicValue<String> fileResourceReference, String expectedFileName) {
         FileResolver fileResolver = new FileResolver(resourceManager);
         String resourceReferenceString = fileResourceReference.get();
@@ -224,7 +253,7 @@ public class AutomationPackageManagerOSTest {
         Assert.assertEquals(expectedFileName, resource.getResourceName());
     }
 
-    private SampleUploadingResult uploadSample1WithAsserts(boolean createNew) throws IOException {
+    private SampleUploadingResult uploadSample1WithAsserts(boolean createNew, boolean async, boolean expectedDelay) throws IOException {
         String fileName = "samples/step-automation-packages-sample1.jar";
         File automationPackageJar = new File("src/test/resources/" + fileName);
 
@@ -234,8 +263,12 @@ public class AutomationPackageManagerOSTest {
             if (createNew) {
                 result = manager.createAutomationPackage(is, fileName, null, null);
             } else {
-                AutomationPackageManager.PackageUpdateResult updateResult = manager.createOrUpdateAutomationPackage(true, true, null, is, fileName, null, null);
-                Assert.assertEquals(AutomationPackageManager.PackageUpdateStatus.UPDATED, updateResult.getStatus());
+                AutomationPackageUpdateResult updateResult = manager.createOrUpdateAutomationPackage(true, true, null, is, fileName, null, null, async);
+                if (async && expectedDelay) {
+                    Assert.assertEquals(AutomationPackageUpdateStatus.UPDATE_DELAYED, updateResult.getStatus());
+                } else {
+                    Assert.assertEquals(AutomationPackageUpdateStatus.UPDATED, updateResult.getStatus());
+                }
                 result = updateResult.getId();
             }
 
@@ -276,6 +309,22 @@ public class AutomationPackageManagerOSTest {
         Map<String, String> criteria = new HashMap<>();
         criteria.put("customFields." + AutomationPackageEntity.AUTOMATION_PACKAGE_ID, automationPackageId.toString());
         return criteria;
+    }
+
+    protected ExecutionEngine.Builder newExecutionEngineBuilder() {
+        return ExecutionEngine.builder().withPlugins(List.of(new BaseArtefactPlugin(),
+                new AutomationPackageExecutionPlugin(automationPackageLocks),
+                new AbstractExecutionEnginePlugin() {
+                    @Override
+                    public void beforeExecutionEnd(ExecutionContext context) {
+                        try {
+                            //delay end of execution to test locks
+                            Thread.sleep(2000);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                }));
     }
 
     private static class SampleUploadingResult {

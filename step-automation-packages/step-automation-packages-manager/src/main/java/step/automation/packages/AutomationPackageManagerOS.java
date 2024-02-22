@@ -42,11 +42,11 @@ public class AutomationPackageManagerOS extends AutomationPackageManager {
     public AutomationPackageManagerOS(AutomationPackageAccessor automationPackageAccessor, FunctionManager functionManager,
                                       FunctionAccessor functionAccessor, PlanAccessor planAccessor, ResourceManager resourceManager,
                                       ExecutionTaskAccessor executionTaskAccessor, AutomationPackageHookRegistry automationPackageHookRegistry,
-                                      AbstractAutomationPackageReader<?> reader) {
+                                      AbstractAutomationPackageReader<?> reader, AutomationPackageLocks automationPackageLocks) {
         super(automationPackageAccessor, functionManager,
                 functionAccessor, planAccessor,
                 resourceManager, executionTaskAccessor,
-                automationPackageHookRegistry, reader
+                automationPackageHookRegistry, reader, automationPackageLocks
         );
     }
 
@@ -81,8 +81,8 @@ public class AutomationPackageManagerOS extends AutomationPackageManager {
                 new InMemoryPlanAccessor(),
                 resourceManager,
                 new InMemoryExecutionTaskAccessor(),
-                new AutomationPackageHookRegistry(), reader
-        );
+                new AutomationPackageHookRegistry(), reader,
+                new AutomationPackageLocks(DEFAULT_READLOCK_TIMEOUT_SECONDS));
         automationPackageManager.isIsolated = true;
         return automationPackageManager;
     }
