@@ -33,6 +33,7 @@ import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
 import step.core.repositories.RepositoryObjectReference;
+import step.core.scheduler.CronExclusion;
 import step.core.scheduler.ExecutionTaskAccessor;
 import step.core.scheduler.ExecutiontTaskParameters;
 import step.functions.Function;
@@ -52,6 +53,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import static java.util.Arrays.stream;
 import static step.automation.packages.AutomationPackageArchive.METADATA_FILES;
 
 public abstract class AutomationPackageManager {
@@ -397,6 +399,11 @@ public abstract class AutomationPackageManager {
             execTaskParameters.setActive(schedule.getActive() == null || schedule.getActive());
             execTaskParameters.addAttribute(AbstractOrganizableObject.NAME, schedule.getName());
             execTaskParameters.setCronExpression(schedule.getCron());
+            List<String> cronExclusionsAsStrings = schedule.getCronExclusions();
+            if (cronExclusionsAsStrings != null && cronExclusionsAsStrings.size() > 1) {
+                List<CronExclusion> cronExclusions = cronExclusionsAsStrings.stream().map(s -> new CronExclusion(s, "")).collect(Collectors.toList());
+                execTaskParameters.setCronExclusions(cronExclusions);
+            }
             String assertionPlanName = schedule.getAssertionPlanName();
             if (assertionPlanName != null && !assertionPlanName.isEmpty()) {
                 Plan assertionPlan = lookupPlanByName(plansStaging, assertionPlanName);
