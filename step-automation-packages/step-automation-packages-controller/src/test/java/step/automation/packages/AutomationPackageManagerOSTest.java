@@ -64,7 +64,7 @@ public class AutomationPackageManagerOSTest {
     private ExecutionTaskAccessorImpl executionTaskAccessor;
     private ExecutionScheduler executionScheduler;
 
-    private AutomationPackageLocks automationPackageLocks = new AutomationPackageLocks();
+    private AutomationPackageLocks automationPackageLocks = new AutomationPackageLocks(60);
 
     @Before
     public void before() {

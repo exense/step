@@ -45,13 +45,18 @@ import step.automation.packages.hooks.AutomationPackageHookRegistry;
 public class AutomationPackagePlugin extends AbstractControllerPlugin {
 
     private static final Logger log = LoggerFactory.getLogger(AutomationPackagePlugin.class);
-    protected AutomationPackageLocks automationPackageLocks = new AutomationPackageLocks();
+    public static final String AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS = "automationPackage.lock.read.timeout.secs";
+    public static final int AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS_DEFAULT = 120;
+    protected AutomationPackageLocks automationPackageLocks;
 
     @Override
     public void serverStart(GlobalContext context) throws Exception {
         super.serverStart(context);
 
         //Might be used by EE plugin creating AP manager EE
+        Integer readLockTimeout = context.getConfiguration().getPropertyAsInteger(AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS,
+                AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS_DEFAULT);
+        automationPackageLocks = new AutomationPackageLocks(readLockTimeout);
         context.put(AutomationPackageLocks.class, automationPackageLocks);
 
         AutomationPackageAccessor packageAccessor = new AutomationPackageAccessorImpl(

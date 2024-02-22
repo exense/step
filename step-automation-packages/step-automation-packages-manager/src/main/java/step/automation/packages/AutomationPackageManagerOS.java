@@ -82,7 +82,7 @@ public class AutomationPackageManagerOS extends AutomationPackageManager {
                 resourceManager,
                 new InMemoryExecutionTaskAccessor(),
                 new AutomationPackageHookRegistry(), reader,
-                new AutomationPackageLocks());
+                new AutomationPackageLocks(60));
         automationPackageManager.isIsolated = true;
         return automationPackageManager;
     }
