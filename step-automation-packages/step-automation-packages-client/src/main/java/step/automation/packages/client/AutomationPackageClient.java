@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.automation.packages.client;
 
+import step.automation.packages.AutomationPackageUpdateResult;
 import step.automation.packages.execution.AutomationPackageExecutionParameters;
 
 import java.io.Closeable;
@@ -28,7 +29,7 @@ public interface AutomationPackageClient extends Closeable {
 
     String createAutomationPackage(File automationPackageFile) throws AutomationPackageClientException;
 
-    String createOrUpdateAutomationPackage(File automationPackageFile) throws AutomationPackageClientException;
+    AutomationPackageUpdateResult createOrUpdateAutomationPackage(File automationPackageFile, boolean async) throws AutomationPackageClientException;
 
     List<String> executeAutomationPackage(File automationPackageFile, AutomationPackageExecutionParameters params) throws AutomationPackageClientException;
 

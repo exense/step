@@ -55,7 +55,21 @@ public class DynamicInputsSupport {
                 String inputName = fieldNames.next();
                 JsonNode argumentValue = next.get(inputName);
                 if (!argumentValue.isContainerNode()) {
-                    inputDynamicValues.set(inputName, argumentValue);
+                    // for simplified input values we also convert them to full dynamic values format (technical format)
+                    // the technical format is used for persistence and UI
+                    ObjectNode dynamicValue = (ObjectNode) codec.createObjectNode();
+                    dynamicValue.put("dynamic", false);
+
+                    if (argumentValue.isTextual()) {
+                        dynamicValue.put(YamlFields.DYN_VALUE_VALUE_FIELD, argumentValue.asText());
+                    } else if (argumentValue.isBoolean()) {
+                        dynamicValue.put(YamlFields.DYN_VALUE_VALUE_FIELD, argumentValue.asBoolean());
+                    } else if (argumentValue.isIntegralNumber()) {
+                        dynamicValue.put(YamlFields.DYN_VALUE_VALUE_FIELD, argumentValue.asLong());
+                    } else if (argumentValue.isFloatingPointNumber()) {
+                        dynamicValue.put(YamlFields.DYN_VALUE_VALUE_FIELD, argumentValue.asDouble());
+                    }
+                    inputDynamicValues.set(inputName, dynamicValue);
                 } else {
                     ObjectNode dynamicValue = (ObjectNode) codec.createObjectNode();
                     dynamicValue.put("dynamic", true);

@@ -48,24 +48,27 @@ public class ExecutionJobFactory implements JobFactory {
 	public Job newJob(TriggerFiredBundle arg0, Scheduler arg1) throws SchedulerException {
 		JobDataMap data = arg0.getJobDetail().getJobDataMap();
 		String executionID;
-		if(data.containsKey(Executor.EXECUTION_ID)) {
+		if (data.containsKey(Executor.EXECUTION_ID)) {
 			executionID = data.getString(Executor.EXECUTION_ID);
 		} else {
-			String executionTaskID = data.getString(Executor.EXECUTION_TASK_ID);
-			ExecutiontTaskParameters executiontTaskParameters = executionTaskAccessor.get(new ObjectId(executionTaskID));
-			
-			ControllerSetting schedulerUsernameSetting = controllerSettingAccessor.getSettingByKey("scheduler_execution_username");
-			if(schedulerUsernameSetting != null) {
-				String schedulerUsername = schedulerUsernameSetting.getValue();
-				if(schedulerUsername != null && schedulerUsername.trim().length()>0) {
-					// Override the execution user if the setting scheduler_execution_username is set
-					executiontTaskParameters.getExecutionsParameters().setUserID(schedulerUsername);
+			try {
+				String executionTaskID = data.getString(Executor.EXECUTION_TASK_ID);
+				ExecutiontTaskParameters executiontTaskParameters = executionTaskAccessor.get(new ObjectId(executionTaskID));
+
+				ControllerSetting schedulerUsernameSetting = controllerSettingAccessor.getSettingByKey("scheduler_execution_username");
+				if (schedulerUsernameSetting != null) {
+					String schedulerUsername = schedulerUsernameSetting.getValue();
+					if (schedulerUsername != null && schedulerUsername.trim().length() > 0) {
+						// Override the execution user if the setting scheduler_execution_username is set
+						executiontTaskParameters.getExecutionsParameters().setUserID(schedulerUsername);
+					}
 				}
+
+				executionID = executionEngine.initializeExecution(executiontTaskParameters);
+			} catch (Exception e) {
+				return new LoggerJob("Unable to create new job for execution", e);
 			}
-			
-			executionID = executionEngine.initializeExecution(executiontTaskParameters);
 		}
-		 
 		return new ExecutionJob(executionEngine, executionID);
 	}
 }

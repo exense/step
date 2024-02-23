@@ -34,7 +34,7 @@ import step.framework.server.Session;
 
 
 @Provider
-@Priority(Priorities.USER)//should be called before the framework one to set default user if required
+@Priority(Priorities.AUTHENTICATION)//should be called before the framework one to set default user if required
 public class NoSecurityFilter extends AbstractStepServices implements ContainerRequestFilter {
 
     private UserAccessor userAccessor;

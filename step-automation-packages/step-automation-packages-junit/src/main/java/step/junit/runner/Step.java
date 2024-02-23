@@ -51,7 +51,7 @@ public class Step extends AbstractStepRunner {
 			AutomationPackageFromClassLoaderProvider automationPackageProvider = new AutomationPackageFromClassLoaderProvider(this.klass.getClassLoader());
 			ObjectId automationPackageId = automationPackageManager.createOrUpdateAutomationPackage(
 					false, true, null, automationPackageProvider,
-					true, null, null
+					true, null, null, false
 			).getId();
 
 			Predicate<Plan> planNameFilter = plan -> true;

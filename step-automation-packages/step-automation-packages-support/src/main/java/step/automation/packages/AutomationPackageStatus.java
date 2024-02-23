@@ -16,9 +16,8 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.core.yaml;
+package step.automation.packages;
 
-public class YamlFields {
-    public static final String DYN_VALUE_EXPRESSION_FIELD = "expression";
-    public static final String DYN_VALUE_VALUE_FIELD = "value";
+public enum AutomationPackageStatus {
+    DELAYED_UPDATE
 }

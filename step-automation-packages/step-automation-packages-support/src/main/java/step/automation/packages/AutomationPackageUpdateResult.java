@@ -16,9 +16,35 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.core.yaml;
+package step.automation.packages;
 
-public class YamlFields {
-    public static final String DYN_VALUE_EXPRESSION_FIELD = "expression";
-    public static final String DYN_VALUE_VALUE_FIELD = "value";
+import org.bson.types.ObjectId;
+
+public class AutomationPackageUpdateResult {
+    private AutomationPackageUpdateStatus status;
+    private ObjectId id;
+
+    public AutomationPackageUpdateResult() {
+    }
+
+    public AutomationPackageUpdateResult(AutomationPackageUpdateStatus status, ObjectId id) {
+        this.status = status;
+        this.id = id;
+    }
+
+    public AutomationPackageUpdateStatus getStatus() {
+        return status;
+    }
+
+    public ObjectId getId() {
+        return id;
+    }
+
+    public void setStatus(AutomationPackageUpdateStatus status) {
+        this.status = status;
+    }
+
+    public void setId(ObjectId id) {
+        this.id = id;
+    }
 }
