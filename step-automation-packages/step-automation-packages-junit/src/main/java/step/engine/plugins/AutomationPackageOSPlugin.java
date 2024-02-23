@@ -30,7 +30,7 @@ import step.functions.type.FunctionTypeRegistry;
 import step.resources.ResourceManager;
 
 /**
- * Scans the keywords defined in automation package and saves it in function accessor, so they can be used in plans during local execution
+ * Registers the automation package manager for local executions in execution engine context
  */
 @Plugin(dependencies = {FunctionPlugin.class})
 public class AutomationPackageOSPlugin extends AbstractExecutionEnginePlugin {
