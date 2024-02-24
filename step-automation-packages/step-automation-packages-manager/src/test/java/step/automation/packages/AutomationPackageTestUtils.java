@@ -45,8 +45,8 @@ public class AutomationPackageTestUtils {
 
     public static AutomationPackageKeyword findKeywordByClassAndName(List<AutomationPackageKeyword> keywords, Class<?> clazz, String name) throws AssertionError {
         for (AutomationPackageKeyword keyword : keywords) {
-            if (clazz.isAssignableFrom(keyword.getDraftKeyword().getClass())) {
-                if (keyword.getDraftKeyword().getAttribute(AbstractOrganizableObject.NAME).equals(name)) {
+            if (clazz.isAssignableFrom(keyword.toDraftKeyword().getClass())) {
+                if (keyword.toDraftKeyword().getAttribute(AbstractOrganizableObject.NAME).equals(name)) {
                     return keyword;
                 }
             }

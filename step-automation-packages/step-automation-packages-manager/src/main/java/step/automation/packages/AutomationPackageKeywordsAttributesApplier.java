@@ -18,17 +18,13 @@
  ******************************************************************************/
 package step.automation.packages;
 
-import org.bson.types.ObjectId;
 import step.automation.packages.model.AutomationPackageKeyword;
 import step.automation.packages.yaml.AutomationPackageKeywordsLookuper;
-import step.automation.packages.yaml.deserialization.SpecialKeywordAttributesApplier;
-import step.automation.packages.yaml.rules.YamlKeywordConversionRule;
 import step.core.objectenricher.ObjectEnricher;
 import step.functions.Function;
 import step.resources.ResourceManager;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class AutomationPackageKeywordsAttributesApplier {
@@ -42,21 +38,9 @@ public class AutomationPackageKeywordsAttributesApplier {
 
     public List<Function> applySpecialAttributesToKeyword(List<AutomationPackageKeyword> keywords,
                                                     AutomationPackageArchive automationPackageArchive,
-                                                    ObjectId automationPackageId,
-                                                    ObjectEnricher objectEnricher){
+                                                          ObjectEnricher objectEnricher){
         AutomationPackageAttributesApplyingContext automationPackageAttributesApplyingContext = prepareContext(automationPackageArchive, objectEnricher);
-        return keywords.stream().map(keyword -> {
-            List<YamlKeywordConversionRule> conversionRules = lookuper.getConversionRulesForKeyword(keyword.getDraftKeyword());
-            List<SpecialKeywordAttributesApplier> appliers = conversionRules.stream()
-                    .map(r -> r.getSpecialKeywordAttributesApplier(automationPackageAttributesApplyingContext))
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
-
-            for (SpecialKeywordAttributesApplier applier : appliers) {
-                applier.applySpecialAttributesToKeyword(keyword, automationPackageId);
-            }
-            return keyword.getDraftKeyword();
-        }).collect(Collectors.toList());
+        return keywords.stream().map(keyword -> keyword.toFullKeyword(automationPackageAttributesApplyingContext)).collect(Collectors.toList());
     }
 
     protected AutomationPackageAttributesApplyingContext prepareContext(AutomationPackageArchive automationPackageArchive, ObjectEnricher enricher) {

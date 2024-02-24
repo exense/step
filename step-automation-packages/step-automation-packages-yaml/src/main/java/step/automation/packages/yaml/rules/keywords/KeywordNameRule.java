@@ -18,37 +18,27 @@
  ******************************************************************************/
 package step.automation.packages.yaml.rules.keywords;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.ObjectCodec;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.json.spi.JsonProvider;
 import step.automation.packages.AutomationPackageNamedEntityUtils;
-import step.automation.packages.yaml.AutomationPackageKeywordsLookuper;
-import step.core.yaml.deserializers.YamlFieldDeserializationProcessor;
+import step.automation.packages.model.AbstractYamlKeyword;
 import step.automation.packages.yaml.rules.YamlKeywordConversionRule;
 import step.core.accessors.AbstractOrganizableObject;
-import step.functions.Function;
 import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
 
 import java.lang.reflect.Field;
-import java.util.Map;
 
 public class KeywordNameRule implements YamlKeywordConversionRule {
-
-    private final AutomationPackageKeywordsLookuper keywordsLookuper = new AutomationPackageKeywordsLookuper();
 
     @Override
     public JsonSchemaFieldProcessor getJsonSchemaFieldProcessor(JsonProvider jsonProvider) {
         return (objectClass, field, fieldMetadata, propertiesBuilder, requiredPropertiesOutput) -> {
-            // TODO: potentially we want to extract mode fields from 'attributes'..
-            if (isAttributesField(field)) {
+            if (isNameField(field)) {
                 // use artefact name as default
                 propertiesBuilder.add(
                         AbstractOrganizableObject.NAME,
                         jsonProvider.createObjectBuilder()
                                 .add("type", "string")
-                                .add("default", AutomationPackageNamedEntityUtils.getEntityNameByClass((Class<? extends Function>) objectClass))
+                                .add("default", AutomationPackageNamedEntityUtils.getEntityNameByClass(objectClass))
                 );
                 return true;
             } else {
@@ -57,27 +47,8 @@ public class KeywordNameRule implements YamlKeywordConversionRule {
         };
     }
 
-    @Override
-    public YamlFieldDeserializationProcessor getDeserializationProcessor() {
-        return new YamlFieldDeserializationProcessor() {
-            @Override
-            public boolean deserializeField(String entityClassName, Map.Entry<String, JsonNode> field, ObjectNode output, ObjectCodec codec) throws JsonProcessingException {
-                if (field.getKey().equals(AbstractOrganizableObject.NAME)) {
-                    ObjectNode attributesNode = (ObjectNode) output.get("attributes");
-                    if (attributesNode == null) {
-                        attributesNode = createObjectNode(codec);
-                    }
-                    attributesNode.put(AbstractOrganizableObject.NAME, field.getValue().asText());
-                    output.set("attributes", attributesNode);
-                    return true;
-                } else {
-                    return false;
-                }
-            }
-        };
+    private boolean isNameField(Field field) {
+        return field.getDeclaringClass().equals(AbstractYamlKeyword.class) && field.getName().equals("name");
     }
 
-    private boolean isAttributesField(Field field) {
-        return field.getDeclaringClass().equals(AbstractOrganizableObject.class) && field.getName().equals("attributes");
-    }
 }

@@ -18,17 +18,29 @@
  ******************************************************************************/
 package step.plugins.java;
 
+import step.attachments.FileResolver;
+import step.automation.packages.AutomationPackageAttributesApplyingContext;
+import step.automation.packages.model.AutomationPackageKeyword;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.entities.EntityManager;
 import step.core.entities.EntityReference;
 import step.functions.Function;
+import step.resources.InvalidResourceFormatException;
+import step.resources.Resource;
+import step.resources.ResourceManager;
+import step.resources.SimilarResourceExistingException;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * This class encapsulates the configuration parameters of functions (aka Keywords)
  * of type "Script"
  *
  */
-public class GeneralScriptFunction extends Function {
+public class GeneralScriptFunction extends Function implements AutomationPackageKeyword {
 
 	DynamicValue<String> scriptFile = new DynamicValue<>("");
 	
@@ -84,5 +96,36 @@ public class GeneralScriptFunction extends Function {
 	 */
 	public void setErrorHandlerFile(DynamicValue<String> errorHandlerFile) {
 		this.errorHandlerFile = errorHandlerFile;
+	}
+
+	@Override
+	public Function toFullKeyword(AutomationPackageAttributesApplyingContext context) {
+		if (getScriptFile().get() == null || getScriptFile().get().isEmpty()) {
+			String uploadedPackageFileResource = context.getUploadedPackageFileResource();
+			if (uploadedPackageFileResource == null) {
+				File originalFile = context.getAutomationPackageArchive().getOriginalFile();
+				if (originalFile == null) {
+					throw new RuntimeException("General script functions can only be used within automation package archive");
+				}
+				try (InputStream is = new FileInputStream(originalFile)) {
+					Resource resource = context.getResourceManager().createResource(
+							ResourceManager.RESOURCE_TYPE_FUNCTIONS, is, originalFile.getName(), false, context.getEnricher()
+					);
+					uploadedPackageFileResource = FileResolver.RESOURCE_PREFIX + resource.getId().toString();
+
+					// fill context with just uploaded resource to upload it only once and reuse it in other general script functions
+					context.setUploadedPackageFileResource(uploadedPackageFileResource);
+				} catch (IOException | SimilarResourceExistingException | InvalidResourceFormatException e) {
+					throw new RuntimeException("General script function cannot be created", e);
+				}
+			}
+			setScriptFile(new DynamicValue<>(uploadedPackageFileResource));
+		}
+		return this;
+	}
+
+	@Override
+	public Function toDraftKeyword() {
+		return this;
 	}
 }

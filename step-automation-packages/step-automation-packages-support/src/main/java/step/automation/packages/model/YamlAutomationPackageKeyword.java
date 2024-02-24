@@ -16,20 +16,34 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.yaml.model;
+package step.automation.packages.model;
 
-import step.automation.packages.model.AutomationPackageSchedule;
-import step.automation.packages.model.YamlAutomationPackageKeyword;
-import step.plans.parser.yaml.model.YamlPlan;
+import step.automation.packages.AutomationPackageAttributesApplyingContext;
+import step.functions.Function;
 
-import java.util.List;
+public class YamlAutomationPackageKeyword implements AutomationPackageKeyword {
 
-public interface AutomationPackageFragmentYaml {
-    List<YamlAutomationPackageKeyword> getKeywords();
+    private AbstractYamlKeyword<?> yamlKeyword;
 
-    List<YamlPlan> getPlans();
+    public YamlAutomationPackageKeyword(AbstractYamlKeyword<?> yamlKeyword) {
+        this.yamlKeyword = yamlKeyword;
+    }
 
-    List<String> getFragments();
+    public AbstractYamlKeyword<?> getYamlKeyword() {
+        return yamlKeyword;
+    }
 
-    List<AutomationPackageSchedule> getSchedules();
+    public void setYamlKeyword(AbstractYamlKeyword<?> yamlKeyword) {
+        this.yamlKeyword = yamlKeyword;
+    }
+
+    @Override
+    public Function toDraftKeyword() {
+        return yamlKeyword.toDraftKeyword();
+    }
+
+    @Override
+    public Function toFullKeyword(AutomationPackageAttributesApplyingContext context) {
+        return yamlKeyword.toFullKeyword(context);
+    }
 }

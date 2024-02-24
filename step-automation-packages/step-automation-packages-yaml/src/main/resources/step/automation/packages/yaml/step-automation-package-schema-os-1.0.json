@@ -59,10 +59,6 @@
         "JMeter" : {
           "type" : "object",
           "properties" : {
-            "name" : {
-              "type" : "string",
-              "default" : "JMeter"
-            },
             "description" : {
               "type" : "string"
             },
@@ -70,7 +66,8 @@
               "type" : "boolean"
             },
             "routing" : {
-              "type" : "object"
+              "type" : "object",
+              "properties" : { }
             },
             "executeLocally" : {
               "type" : "boolean"
@@ -81,6 +78,10 @@
             },
             "callTimeout" : {
               "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            },
+            "name" : {
+              "type" : "string",
+              "default" : "JMeter"
             },
             "jmeterTestplan" : {
               "$ref" : "#/$defs/SmartDynamicValueStringDef"

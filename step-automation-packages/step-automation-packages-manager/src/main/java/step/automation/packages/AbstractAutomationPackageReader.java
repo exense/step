@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.automation.packages.model.AutomationPackageContent;
 import step.automation.packages.model.AutomationPackageKeyword;
+import step.automation.packages.model.JavaAutomationPackageKeyword;
 import step.automation.packages.yaml.AutomationPackageDescriptorReader;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
@@ -56,7 +57,7 @@ import java.util.stream.Collectors;
 /**
  * Designed to read the automation package content from some source (for instance, from jar archive).
  * It is important that the {@link AbstractAutomationPackageReader} doesn't affect the global context, i.e. it doesn't persist any plan, keyword or resource.
- * Instead of this, it prepares the {@link AutomationPackageContent} with {@link AutomationPackageKeyword}
+ * Instead of this, it prepares the {@link AutomationPackageContent} with {@link JavaAutomationPackageKeyword}
  * containing the draft instances of {@link Function}, without any references to uploaded resources (because
  * these resources are not stored yet).
  * So it is imperative to fill these draft objects by {@link AutomationPackageKeywordsAttributesApplier} afrter
@@ -204,7 +205,7 @@ public abstract class AbstractAutomationPackageReader<T extends AutomationPackag
                     f.setUseCustomTemplate(true);
                 }
 
-                scannedKeywords.add(new AutomationPackageKeyword(f, new HashMap<>()));
+                scannedKeywords.add(new JavaAutomationPackageKeyword(f));
             }
         }
         return scannedKeywords;

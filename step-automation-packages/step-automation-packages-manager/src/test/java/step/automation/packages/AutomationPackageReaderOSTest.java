@@ -6,12 +6,12 @@ import step.artefacts.CallFunction;
 import step.artefacts.TestCase;
 import step.automation.packages.model.AutomationPackageContent;
 import step.automation.packages.model.AutomationPackageKeyword;
+import step.automation.packages.model.YamlAutomationPackageKeyword;
 import step.core.accessors.AbstractOrganizableObject;
-import step.core.artefacts.AbstractArtefact;
 import step.core.plans.Plan;
 import step.plugins.java.GeneralScriptFunction;
 import step.plugins.jmeter.JMeterFunction;
-import step.plugins.jmeter.automation.JMeterFunctionTestplanConversionRule;
+import step.plugins.jmeter.automation.YamlJMeterFunction;
 
 import java.io.File;
 import java.io.StringReader;
@@ -40,15 +40,15 @@ public class AutomationPackageReaderOSTest {
         List<AutomationPackageKeyword> keywords = automationPackageContent.getKeywords();
         assertEquals(3, keywords.size());
 
-        AutomationPackageKeyword jmeterKeyword = AutomationPackageTestUtils.findKeywordByClassAndName(keywords, JMeterFunction.class, J_METER_KEYWORD_1);
+        YamlAutomationPackageKeyword jmeterKeyword = (YamlAutomationPackageKeyword) AutomationPackageTestUtils.findKeywordByClassAndName(keywords, JMeterFunction.class, J_METER_KEYWORD_1);
         assertEquals(
                 "jmeterProject1/jmeterProject1.xml",
-                jmeterKeyword.getSpecialAttributes().get(JMeterFunctionTestplanConversionRule.JMETER_TESTPLAN_ATTR)
+                ((YamlJMeterFunction) jmeterKeyword.getYamlKeyword()).getJmeterTestplan().get()
         );
 
         AutomationPackageKeyword myKeyword2 = findKeywordByClassAndName(keywords, GeneralScriptFunction.class, ANNOTATED_KEYWORD);
         // check the plan-text schema specified in keyword annotation
-        assertEquals(JsonProvider.provider().createReader(new StringReader(KEYWORD_SCHEMA_FROM_SAMPLE)).readObject(), myKeyword2.getDraftKeyword().getSchema());
+        assertEquals(JsonProvider.provider().createReader(new StringReader(KEYWORD_SCHEMA_FROM_SAMPLE)).readObject(), myKeyword2.toDraftKeyword().getSchema());
 
         AutomationPackageTestUtils.findKeywordByClassAndName(keywords, GeneralScriptFunction.class, INLINE_PLAN);
 

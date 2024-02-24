@@ -56,7 +56,7 @@ public class StepJarParser {
             List<Function> functions = AbstractAutomationPackageReader
                     .extractAnnotatedKeywords(annotationScanner, false, artifact.getAbsolutePath(), libraries != null ? libraries.getAbsolutePath() : null)
                     .stream()
-                    .map(AutomationPackageKeyword::getDraftKeyword)
+                    .map(AutomationPackageKeyword::toDraftKeyword)
                     .collect(Collectors.toList());
 
             // if artifact is an automation package we need to add keywords from yaml descriptors (annotated keywords have already been included above)
@@ -65,7 +65,7 @@ public class StepJarParser {
                 if (automationPackageArchive.hasAutomationPackageDescriptor() && automationPackageReader != null) {
                     AutomationPackageContent content = automationPackageReader.readAutomationPackage(automationPackageArchive, false, false);
                     functions.addAll(automationPackagesKeywordAttributesApplier.applySpecialAttributesToKeyword(
-                            content.getKeywords(), automationPackageArchive, null, null)
+                            content.getKeywords(), automationPackageArchive, null)
                     );
                 }
             }

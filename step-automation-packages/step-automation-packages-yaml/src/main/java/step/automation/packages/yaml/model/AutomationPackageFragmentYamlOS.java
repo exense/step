@@ -20,8 +20,8 @@ package step.automation.packages.yaml.model;
 
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.Nulls;
-import step.automation.packages.model.AutomationPackageKeyword;
 import step.automation.packages.model.AutomationPackageSchedule;
+import step.automation.packages.model.YamlAutomationPackageKeyword;
 import step.plans.parser.yaml.model.YamlPlan;
 
 import java.util.ArrayList;
@@ -30,17 +30,17 @@ import java.util.List;
 public class AutomationPackageFragmentYamlOS implements AutomationPackageFragmentYaml {
 
     private List<String> fragments = new ArrayList<>();
-    private List<AutomationPackageKeyword> keywords = new ArrayList<>();
+    private List<YamlAutomationPackageKeyword> keywords = new ArrayList<>();
     private List<YamlPlan> plans = new ArrayList<>();
     private List<AutomationPackageSchedule> schedules = new ArrayList<>();
 
     @Override
-    public List<AutomationPackageKeyword> getKeywords() {
+    public List<YamlAutomationPackageKeyword> getKeywords() {
         return keywords;
     }
 
     @JsonSetter(nulls = Nulls.AS_EMPTY)
-    public void setKeywords(List<AutomationPackageKeyword> keywords) {
+    public void setKeywords(List<YamlAutomationPackageKeyword> keywords) {
         this.keywords = keywords;
     }
 
