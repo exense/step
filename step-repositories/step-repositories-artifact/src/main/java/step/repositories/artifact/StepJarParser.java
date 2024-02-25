@@ -20,7 +20,7 @@ package step.repositories.artifact;
 
 import step.automation.packages.*;
 import step.automation.packages.model.AutomationPackageContent;
-import step.automation.packages.model.AutomationPackageKeyword;
+import step.automation.packages.model.JavaAutomationPackageKeyword;
 import step.core.plans.Plan;
 import step.core.scanner.AnnotationScanner;
 import step.functions.Function;
@@ -56,7 +56,7 @@ public class StepJarParser {
             List<Function> functions = AbstractAutomationPackageReader
                     .extractAnnotatedKeywords(annotationScanner, false, artifact.getAbsolutePath(), libraries != null ? libraries.getAbsolutePath() : null)
                     .stream()
-                    .map(AutomationPackageKeyword::toDraftKeyword)
+                    .map(JavaAutomationPackageKeyword::getKeyword)
                     .collect(Collectors.toList());
 
             // if artifact is an automation package we need to add keywords from yaml descriptors (annotated keywords have already been included above)
@@ -64,7 +64,7 @@ public class StepJarParser {
                 // add functions from automation package
                 if (automationPackageArchive.hasAutomationPackageDescriptor() && automationPackageReader != null) {
                     AutomationPackageContent content = automationPackageReader.readAutomationPackage(automationPackageArchive, false, false);
-                    functions.addAll(content.prepareCompleteKeywords(new AutomationPackageAttributesApplyingContext(resourceManager, automationPackageArchive, null)));
+                    functions.addAll(content.prepareCompleteKeywords(new AutomationPackageContext(resourceManager, automationPackageArchive, null)));
                 }
             }
             return functions;

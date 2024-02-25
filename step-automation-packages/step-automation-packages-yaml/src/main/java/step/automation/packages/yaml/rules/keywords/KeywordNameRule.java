@@ -20,7 +20,7 @@ package step.automation.packages.yaml.rules.keywords;
 
 import jakarta.json.spi.JsonProvider;
 import step.automation.packages.AutomationPackageNamedEntityUtils;
-import step.automation.packages.model.AbstractYamlKeyword;
+import step.automation.packages.model.AbstractYamlFunction;
 import step.automation.packages.yaml.rules.YamlConversionRuleAddOn;
 import step.automation.packages.yaml.rules.YamlKeywordConversionRule;
 import step.core.accessors.AbstractOrganizableObject;
@@ -50,7 +50,7 @@ public class KeywordNameRule implements YamlKeywordConversionRule {
     }
 
     private boolean isNameField(Field field) {
-        return field.getDeclaringClass().equals(AbstractYamlKeyword.class) && field.getName().equals("name");
+        return field.getDeclaringClass().equals(AbstractYamlFunction.class) && field.getName().equals("name");
     }
 
 }

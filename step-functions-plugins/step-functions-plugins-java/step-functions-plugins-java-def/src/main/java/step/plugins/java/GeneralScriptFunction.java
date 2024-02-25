@@ -19,8 +19,8 @@
 package step.plugins.java;
 
 import step.attachments.FileResolver;
-import step.automation.packages.AutomationPackageAttributesApplyingContext;
-import step.automation.packages.model.AutomationPackageKeyword;
+import step.automation.packages.AutomationPackageContext;
+import step.automation.packages.model.AutomationPackageContextual;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.entities.EntityManager;
 import step.core.entities.EntityReference;
@@ -40,7 +40,7 @@ import java.io.InputStream;
  * of type "Script"
  *
  */
-public class GeneralScriptFunction extends Function implements AutomationPackageKeyword {
+public class GeneralScriptFunction extends Function implements AutomationPackageContextual<GeneralScriptFunction> {
 
 	DynamicValue<String> scriptFile = new DynamicValue<>("");
 	
@@ -99,7 +99,7 @@ public class GeneralScriptFunction extends Function implements AutomationPackage
 	}
 
 	@Override
-	public Function prepareCompleteKeyword(AutomationPackageAttributesApplyingContext context) {
+	public GeneralScriptFunction applyAutomationPackageContext(AutomationPackageContext context) {
 		if (getScriptFile().get() == null || getScriptFile().get().isEmpty()) {
 			String uploadedPackageFileResource = context.getUploadedPackageFileResource();
 			if (uploadedPackageFileResource == null) {
@@ -121,11 +121,6 @@ public class GeneralScriptFunction extends Function implements AutomationPackage
 			}
 			setScriptFile(new DynamicValue<>(uploadedPackageFileResource));
 		}
-		return this;
-	}
-
-	@Override
-	public Function toDraftKeyword() {
 		return this;
 	}
 }

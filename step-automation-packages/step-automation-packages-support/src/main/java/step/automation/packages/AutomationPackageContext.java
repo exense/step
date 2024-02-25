@@ -21,14 +21,14 @@ package step.automation.packages;
 import step.core.objectenricher.ObjectEnricher;
 import step.resources.ResourceManager;
 
-public class AutomationPackageAttributesApplyingContext {
+public class AutomationPackageContext {
     private ResourceManager resourceManager;
     private AutomationPackageArchive automationPackageArchive;
     private ObjectEnricher enricher;
 
     private String uploadedPackageFileResource;
 
-    public AutomationPackageAttributesApplyingContext(ResourceManager resourceManager, AutomationPackageArchive automationPackageArchive, ObjectEnricher enricher) {
+    public AutomationPackageContext(ResourceManager resourceManager, AutomationPackageArchive automationPackageArchive, ObjectEnricher enricher) {
         this.resourceManager = resourceManager;
         this.automationPackageArchive = automationPackageArchive;
         this.enricher = enricher;

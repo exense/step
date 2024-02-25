@@ -137,7 +137,7 @@ public abstract class AbstractAutomationPackageReader<T extends AutomationPackag
 
             // this code duplicates the StepJarParser, but here we don't set the scriptFile and librariesFile to GeneralScriptFunctions
             // instead of this we keep the scriptFile blank and fill it further in AutomationPackageKeywordsAttributesApplier (after we upload the jar file as resource)
-            List<AutomationPackageKeyword> scannedKeywords = extractAnnotatedKeywords(annotationScanner, isLocalPackage, null, null);
+            List<JavaAutomationPackageKeyword> scannedKeywords = extractAnnotatedKeywords(annotationScanner, isLocalPackage, null, null);
             if(!scannedKeywords.isEmpty()){
                 log.info("{} annotated keywords found in automation package {}", scannedKeywords.size(), StringUtils.defaultString(archive.getOriginalFileName()));
             }
@@ -153,8 +153,8 @@ public abstract class AbstractAutomationPackageReader<T extends AutomationPackag
         }
     }
 
-    public static List<AutomationPackageKeyword> extractAnnotatedKeywords(AnnotationScanner annotationScanner, boolean isLocalPackage, String scriptFile, String librariesFile) throws JsonSchemaPreparationException {
-        List<AutomationPackageKeyword> scannedKeywords = new ArrayList<>();
+    public static List<JavaAutomationPackageKeyword> extractAnnotatedKeywords(AnnotationScanner annotationScanner, boolean isLocalPackage, String scriptFile, String librariesFile) throws JsonSchemaPreparationException {
+        List<JavaAutomationPackageKeyword> scannedKeywords = new ArrayList<>();
         Set<Method> methods = annotationScanner.getMethodsWithAnnotation(Keyword.class);
         if(!methods.isEmpty()) {
             KeywordJsonSchemaCreator annotatedKeywordJsonSchemaCreator = new KeywordJsonSchemaCreator();

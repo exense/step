@@ -24,9 +24,8 @@ import jakarta.json.spi.JsonProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.automation.packages.AutomationPackageNamedEntityUtils;
-import step.automation.packages.model.AbstractYamlKeyword;
+import step.automation.packages.model.AbstractYamlFunction;
 import step.automation.packages.yaml.AutomationPackageKeywordsLookuper;
-import step.automation.packages.yaml.rules.keywords.KeywordNameRule;
 import step.core.yaml.schema.*;
 import step.handlers.javahandler.jsonschema.*;
 
@@ -104,8 +103,8 @@ public class YamlKeywordSchemaGenerator {
 
     protected Map<String, JsonObjectBuilder> createKeywordImplDefs() throws JsonSchemaPreparationException {
         HashMap<String, JsonObjectBuilder> result = new HashMap<>();
-        List<Class<? extends AbstractYamlKeyword<?>>> automationPackageKeywords = automationPackageKeywordsLookuper.getAutomationPackageKeywords();
-        for (Class<? extends AbstractYamlKeyword<?>> automationPackageKeyword : automationPackageKeywords) {
+        List<Class<? extends AbstractYamlFunction<?>>> automationPackageKeywords = automationPackageKeywordsLookuper.getAutomationPackageKeywords();
+        for (Class<? extends AbstractYamlFunction<?>> automationPackageKeyword : automationPackageKeywords) {
             String yamlName = AutomationPackageNamedEntityUtils.getEntityNameByClass(automationPackageKeyword);
             String defName = yamlName + "Def";
             result.put(defName, schemaHelper.createNamedObjectImplDef(yamlName, automationPackageKeyword, jsonSchemaCreator, false));

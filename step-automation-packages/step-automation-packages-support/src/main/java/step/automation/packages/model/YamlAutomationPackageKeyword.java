@@ -18,32 +18,27 @@
  ******************************************************************************/
 package step.automation.packages.model;
 
-import step.automation.packages.AutomationPackageAttributesApplyingContext;
+import step.automation.packages.AutomationPackageContext;
 import step.functions.Function;
 
 public class YamlAutomationPackageKeyword implements AutomationPackageKeyword {
 
-    private AbstractYamlKeyword<?> yamlKeyword;
+    private AbstractYamlFunction<?> yamlKeyword;
 
-    public YamlAutomationPackageKeyword(AbstractYamlKeyword<?> yamlKeyword) {
+    public YamlAutomationPackageKeyword(AbstractYamlFunction<?> yamlKeyword) {
         this.yamlKeyword = yamlKeyword;
     }
 
-    public AbstractYamlKeyword<?> getYamlKeyword() {
+    public AbstractYamlFunction<?> getYamlKeyword() {
         return yamlKeyword;
     }
 
-    public void setYamlKeyword(AbstractYamlKeyword<?> yamlKeyword) {
+    public void setYamlKeyword(AbstractYamlFunction<?> yamlKeyword) {
         this.yamlKeyword = yamlKeyword;
     }
 
     @Override
-    public Function toDraftKeyword() {
-        return yamlKeyword.toDraftKeyword();
-    }
-
-    @Override
-    public Function prepareCompleteKeyword(AutomationPackageAttributesApplyingContext context) {
-        return yamlKeyword.toFullKeyword(context);
+    public Function prepareKeyword(AutomationPackageContext context) {
+        return yamlKeyword.applyAutomationPackageContext(context);
     }
 }

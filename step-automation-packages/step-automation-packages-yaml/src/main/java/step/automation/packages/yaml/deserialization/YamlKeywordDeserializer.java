@@ -22,7 +22,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import step.automation.packages.model.AbstractYamlKeyword;
+import step.automation.packages.model.AbstractYamlFunction;
 import step.automation.packages.model.YamlAutomationPackageKeyword;
 import step.automation.packages.yaml.AutomationPackageKeywordsLookuper;
 import step.core.yaml.deserializers.NamedEntityYamlDeserializer;
@@ -31,7 +31,6 @@ import step.core.yaml.deserializers.StepYamlDeserializerAddOn;
 
 import java.io.IOException;
 
-// TODO: delete
 @StepYamlDeserializerAddOn(targetClasses = {YamlAutomationPackageKeyword.class})
 public class YamlKeywordDeserializer extends StepYamlDeserializer<YamlAutomationPackageKeyword> {
 
@@ -49,7 +48,7 @@ public class YamlKeywordDeserializer extends StepYamlDeserializer<YamlAutomation
     @Override
     public YamlAutomationPackageKeyword deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException {
         JsonNode node = jsonParser.getCodec().readTree(jsonParser);
-        NamedEntityYamlDeserializer<AbstractYamlKeyword<?>> nameEntityDeserializer = new NamedEntityYamlDeserializer<>() {
+        NamedEntityYamlDeserializer<AbstractYamlFunction<?>> nameEntityDeserializer = new NamedEntityYamlDeserializer<>() {
             @Override
             protected String resolveTargetClassNameByYamlName(String yamlName) {
                 return null;
@@ -63,8 +62,7 @@ public class YamlKeywordDeserializer extends StepYamlDeserializer<YamlAutomation
                 }
             }
         };
-        AbstractYamlKeyword<?> keyword = nameEntityDeserializer.deserialize(node, jsonParser.getCodec());
-        return new YamlAutomationPackageKeyword(keyword);
+        return new YamlAutomationPackageKeyword(nameEntityDeserializer.deserialize(node, jsonParser.getCodec()));
     }
 
 }

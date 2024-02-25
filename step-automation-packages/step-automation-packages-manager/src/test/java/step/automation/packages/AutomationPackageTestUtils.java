@@ -19,7 +19,10 @@
 package step.automation.packages;
 
 import org.bson.types.ObjectId;
+import step.automation.packages.model.AbstractYamlFunction;
 import step.automation.packages.model.AutomationPackageKeyword;
+import step.automation.packages.model.JavaAutomationPackageKeyword;
+import step.automation.packages.model.YamlAutomationPackageKeyword;
 import step.core.accessors.AbstractIdentifiableObject;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.plans.Plan;
@@ -43,11 +46,28 @@ public class AutomationPackageTestUtils {
     public static final String SCHEDULE_1 = "firstSchedule";
     public static final String SCHEDULE_2 = "secondSchedule";
 
-    public static AutomationPackageKeyword findKeywordByClassAndName(List<AutomationPackageKeyword> keywords, Class<?> clazz, String name) throws AssertionError {
+    public static Function findJavaKeywordByClassAndName(List<AutomationPackageKeyword> keywords, Class<?> clazz, String name) throws AssertionError {
         for (AutomationPackageKeyword keyword : keywords) {
-            if (clazz.isAssignableFrom(keyword.toDraftKeyword().getClass())) {
-                if (keyword.toDraftKeyword().getAttribute(AbstractOrganizableObject.NAME).equals(name)) {
-                    return keyword;
+            if (keyword instanceof JavaAutomationPackageKeyword) {
+                Function wrappedKeyword = ((JavaAutomationPackageKeyword) keyword).getKeyword();
+                if (clazz.isAssignableFrom(wrappedKeyword.getClass())) {
+                    if (wrappedKeyword.getAttribute(AbstractOrganizableObject.NAME).equals(name)) {
+                        return wrappedKeyword;
+                    }
+                }
+            }
+        }
+        throw new AssertionError("Keyword not found: " + clazz);
+    }
+
+    public static AbstractYamlFunction<?> findYamlKeywordByClassAndName(List<AutomationPackageKeyword> keywords, Class<?> clazz, String name) throws AssertionError {
+        for (AutomationPackageKeyword keyword : keywords) {
+            if (keyword instanceof YamlAutomationPackageKeyword) {
+                AbstractYamlFunction<?> yamlKeyword = ((YamlAutomationPackageKeyword) keyword).getYamlKeyword();
+                if (clazz.isAssignableFrom(yamlKeyword.getClass())) {
+                    if (yamlKeyword.getName().equals(name)) {
+                        return yamlKeyword;
+                    }
                 }
             }
         }

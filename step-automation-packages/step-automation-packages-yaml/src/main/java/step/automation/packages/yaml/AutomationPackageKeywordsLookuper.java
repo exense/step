@@ -20,7 +20,7 @@ package step.automation.packages.yaml;
 
 import step.automation.packages.AutomationPackageNamedEntity;
 import step.automation.packages.AutomationPackageNamedEntityUtils;
-import step.automation.packages.model.AbstractYamlKeyword;
+import step.automation.packages.model.AbstractYamlFunction;
 import step.automation.packages.yaml.rules.YamlConversionRuleAddOn;
 import step.automation.packages.yaml.rules.YamlKeywordConversionRule;
 import step.core.scanner.CachedAnnotationScanner;
@@ -36,8 +36,8 @@ public class AutomationPackageKeywordsLookuper {
     }
 
     public String yamlKeywordClassToJava(String yamlKeywordClass) {
-        List<Class<? extends AbstractYamlKeyword<?>>> annotatedClasses = getAutomationPackageKeywords();
-        for (Class<? extends AbstractYamlKeyword<?>> annotatedClass : annotatedClasses) {
+        List<Class<? extends AbstractYamlFunction<?>>> annotatedClasses = getAutomationPackageKeywords();
+        for (Class<? extends AbstractYamlFunction<?>> annotatedClass : annotatedClasses) {
             AutomationPackageNamedEntity ann = annotatedClass.getAnnotation(AutomationPackageNamedEntity.class);
             String expectedYamlName;
             if (ann.name() != null && !ann.name().isEmpty()) {
@@ -53,9 +53,9 @@ public class AutomationPackageKeywordsLookuper {
         return null;
     }
 
-    public List<Class<? extends AbstractYamlKeyword<?>>> getAutomationPackageKeywords() {
-        return AutomationPackageNamedEntityUtils.scanNamedEntityClasses(AbstractYamlKeyword.class).stream()
-                .map(c -> (Class<? extends AbstractYamlKeyword<?>>) c)
+    public List<Class<? extends AbstractYamlFunction<?>>> getAutomationPackageKeywords() {
+        return AutomationPackageNamedEntityUtils.scanNamedEntityClasses(AbstractYamlFunction.class).stream()
+                .map(c -> (Class<? extends AbstractYamlFunction<?>>) c)
                 .collect(Collectors.toList());
     }
 

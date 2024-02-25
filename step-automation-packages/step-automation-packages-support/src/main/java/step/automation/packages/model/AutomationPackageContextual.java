@@ -19,26 +19,7 @@
 package step.automation.packages.model;
 
 import step.automation.packages.AutomationPackageContext;
-import step.functions.Function;
 
-public class JavaAutomationPackageKeyword implements AutomationPackageKeyword {
-
-    private final Function keyword;
-
-    public JavaAutomationPackageKeyword(Function keyword) {
-        this.keyword = keyword;
-    }
-
-    public Function getKeyword() {
-        return keyword;
-    }
-
-    @Override
-    public Function prepareKeyword(AutomationPackageContext context) {
-        if (keyword instanceof AutomationPackageContextual) {
-            return ((AutomationPackageContextual<Function>) keyword).applyAutomationPackageContext(context);
-        } else {
-            return getKeyword();
-        }
-    }
+public interface AutomationPackageContextual<T> {
+    T applyAutomationPackageContext(AutomationPackageContext context);
 }

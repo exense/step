@@ -18,18 +18,16 @@
  ******************************************************************************/
 package step.plugins.jmeter.automation;
 
-import step.attachments.FileResolver;
-import step.automation.packages.AutomationPackageAttributesApplyingContext;
+import step.automation.packages.AutomationPackageContext;
 import step.automation.packages.AutomationPackageNamedEntity;
 import step.automation.packages.AutomationPackageResourceUploader;
-import step.automation.packages.model.AbstractYamlKeyword;
+import step.automation.packages.model.AbstractYamlFunction;
 import step.core.dynamicbeans.DynamicValue;
 import step.plugins.jmeter.JMeterFunction;
-import step.resources.Resource;
 import step.resources.ResourceManager;
 
 @AutomationPackageNamedEntity(name = "JMeter")
-public class YamlJMeterFunction extends AbstractYamlKeyword<JMeterFunction> {
+public class YamlJMeterFunction extends AbstractYamlFunction<JMeterFunction> {
 
     private DynamicValue<String> jmeterTestplan = new DynamicValue<>();
 
@@ -42,37 +40,19 @@ public class YamlJMeterFunction extends AbstractYamlKeyword<JMeterFunction> {
     }
 
     @Override
-    protected void fillAdditionalFields(JMeterFunction keyword) {
-
-    }
-
-    @Override
-    public JMeterFunction toFullKeyword(AutomationPackageAttributesApplyingContext context) {
-        JMeterFunction res = super.toFullKeyword(context);
-
+    protected void fillDeclaredFields(JMeterFunction function, AutomationPackageContext context) {
         AutomationPackageResourceUploader resourceUploader = new AutomationPackageResourceUploader();
 
         String testplanPath = jmeterTestplan.get();
-        String testPlanRef = null;
-
-        if (testplanPath != null && !testplanPath.startsWith(FileResolver.RESOURCE_PREFIX)) {
-            Resource resource = resourceUploader.uploadResourceFromAutomationPackage(testplanPath, ResourceManager.RESOURCE_TYPE_FUNCTIONS, context);
-            if (resource != null) {
-                testPlanRef = FileResolver.RESOURCE_PREFIX + resource.getId().toString();
-            }
-        } else {
-            testPlanRef = testplanPath;
-        }
-
+        String testPlanRef = resourceUploader.applyResourceReference(testplanPath, ResourceManager.RESOURCE_TYPE_FUNCTIONS, context);
         if (testPlanRef != null) {
-            res.setJmeterTestplan(new DynamicValue<>(testPlanRef));
+            function.setJmeterTestplan(new DynamicValue<>(testPlanRef));
         }
-
-        return res;
     }
 
     @Override
-    protected JMeterFunction createKeywordInstance() {
+    protected JMeterFunction createFunctionInstance() {
         return new JMeterFunction();
     }
+
 }

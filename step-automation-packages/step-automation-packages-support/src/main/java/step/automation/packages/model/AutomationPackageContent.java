@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.automation.packages.model;
 
-import step.automation.packages.AutomationPackageAttributesApplyingContext;
+import step.automation.packages.AutomationPackageContext;
 import step.core.plans.Plan;
 import step.functions.Function;
 
@@ -75,8 +75,8 @@ public class AutomationPackageContent {
         this.schedules = schedules;
     }
 
-    public List<Function> prepareCompleteKeywords(AutomationPackageAttributesApplyingContext context){
-        return keywords.stream().map(keyword -> keyword.prepareCompleteKeyword(context)).collect(Collectors.toList());
+    public List<Function> prepareCompleteKeywords(AutomationPackageContext context){
+        return keywords.stream().map(keyword -> keyword.prepareKeyword(context)).collect(Collectors.toList());
     }
 
 }

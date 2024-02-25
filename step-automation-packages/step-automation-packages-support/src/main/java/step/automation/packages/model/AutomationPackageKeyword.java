@@ -18,13 +18,10 @@
  ******************************************************************************/
 package step.automation.packages.model;
 
-import step.automation.packages.AutomationPackageAttributesApplyingContext;
+import step.automation.packages.AutomationPackageContext;
 import step.functions.Function;
 
 public interface AutomationPackageKeyword {
-    default Function prepareCompleteKeyword(AutomationPackageAttributesApplyingContext context) {
-        return toDraftKeyword();
-    }
+    Function prepareKeyword(AutomationPackageContext context);
 
-    Function toDraftKeyword();
 }

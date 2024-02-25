@@ -19,14 +19,14 @@
 package step.automation.packages.model;
 
 import jakarta.json.JsonObject;
-import step.automation.packages.AutomationPackageAttributesApplyingContext;
+import step.automation.packages.AutomationPackageContext;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
 import step.functions.Function;
 
 import java.util.Map;
 
-public abstract class AbstractYamlKeyword<T extends Function> {
+public abstract class AbstractYamlFunction<T extends Function> implements AutomationPackageContextual<T> {
 
     protected String name;
 
@@ -96,17 +96,6 @@ public abstract class AbstractYamlKeyword<T extends Function> {
         this.name = name;
     }
 
-    public T toFullKeyword(AutomationPackageAttributesApplyingContext context) {
-        return toDraftKeyword();
-    }
-
-    public T toDraftKeyword(){
-        T res = createKeywordInstance();
-        fillCommonFields(res);
-        fillAdditionalFields(res);
-        return res;
-    }
-
     private void fillCommonFields(T res) {
         res.addAttribute(AbstractOrganizableObject.NAME, this.getName());
         res.setDescription(this.getDescription());
@@ -120,7 +109,15 @@ public abstract class AbstractYamlKeyword<T extends Function> {
         res.setTokenSelectionCriteria(this.getRouting());
     }
 
-    protected abstract void fillAdditionalFields(T keyword);
+    protected abstract void fillDeclaredFields(T function, AutomationPackageContext context);
 
-    protected abstract T createKeywordInstance();
+    protected abstract T createFunctionInstance();
+
+    @Override
+    public T applyAutomationPackageContext(AutomationPackageContext context) {
+        T res = createFunctionInstance();
+        fillCommonFields(res);
+        fillDeclaredFields(res, context);
+        return res;
+    }
 }
