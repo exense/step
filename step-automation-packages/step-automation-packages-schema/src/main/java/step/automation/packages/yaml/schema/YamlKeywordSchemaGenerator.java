@@ -126,7 +126,6 @@ public class YamlKeywordSchemaGenerator {
 
         // -- BASIC PROCESSING RULES
         result.add(new CommonFilteredFieldProcessor());
-        result.add(new KeywordNameRule().getJsonSchemaFieldProcessor(jsonProvider));
 
         // -- RULES FROM EXTENSIONS HAVE LESS PRIORITY THAN BASIC RULES, BUT MORE PRIORITY THAN OTHER RULES
         result.addAll(getFieldExtensions());

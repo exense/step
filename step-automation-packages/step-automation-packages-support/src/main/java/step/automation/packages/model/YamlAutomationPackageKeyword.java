@@ -43,7 +43,7 @@ public class YamlAutomationPackageKeyword implements AutomationPackageKeyword {
     }
 
     @Override
-    public Function toFullKeyword(AutomationPackageAttributesApplyingContext context) {
+    public Function prepareCompleteKeyword(AutomationPackageAttributesApplyingContext context) {
         return yamlKeyword.toFullKeyword(context);
     }
 }

@@ -99,7 +99,7 @@ public class GeneralScriptFunction extends Function implements AutomationPackage
 	}
 
 	@Override
-	public Function toFullKeyword(AutomationPackageAttributesApplyingContext context) {
+	public Function prepareCompleteKeyword(AutomationPackageAttributesApplyingContext context) {
 		if (getScriptFile().get() == null || getScriptFile().get().isEmpty()) {
 			String uploadedPackageFileResource = context.getUploadedPackageFileResource();
 			if (uploadedPackageFileResource == null) {

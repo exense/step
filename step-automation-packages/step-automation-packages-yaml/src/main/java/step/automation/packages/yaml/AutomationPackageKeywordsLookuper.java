@@ -24,7 +24,6 @@ import step.automation.packages.model.AbstractYamlKeyword;
 import step.automation.packages.yaml.rules.YamlConversionRuleAddOn;
 import step.automation.packages.yaml.rules.YamlKeywordConversionRule;
 import step.core.scanner.CachedAnnotationScanner;
-import step.functions.Function;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -52,27 +51,6 @@ public class AutomationPackageKeywordsLookuper {
             }
         }
         return null;
-    }
-
-    public List<YamlKeywordConversionRule> getConversionRulesForKeyword(Function function) {
-        return getAllConversionRules().stream().filter(r -> {
-            YamlConversionRuleAddOn annotation = r.getClass().getAnnotation(YamlConversionRuleAddOn.class);
-            if (annotation == null) {
-                return false;
-            }
-
-            if (annotation.targetClasses() == null) {
-                return true;
-            }
-
-            Class<?>[] functions = annotation.targetClasses();
-            for (Class<?> aClass : functions) {
-                if (aClass.isAssignableFrom(function.getClass())) {
-                    return true;
-                }
-            }
-            return false;
-        }).collect(Collectors.toList());
     }
 
     public List<Class<? extends AbstractYamlKeyword<?>>> getAutomationPackageKeywords() {

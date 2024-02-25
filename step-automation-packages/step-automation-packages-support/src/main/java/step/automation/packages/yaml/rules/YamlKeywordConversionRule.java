@@ -18,25 +18,6 @@
  ******************************************************************************/
 package step.automation.packages.yaml.rules;
 
-import step.automation.packages.AutomationPackageAttributesApplyingContext;
-import step.automation.packages.yaml.deserialization.SpecialKeywordAttributesApplier;
-import step.automation.packages.yaml.deserialization.SpecialKeywordAttributesExtractor;
-
 public interface YamlKeywordConversionRule extends YamlConversionRule {
-
-    /**
-     * Returns the special attributes extract used to extract some special data, which can't be applied during the
-     * deserialization from yaml (for example, if some data should be stored in database before to the {@link step.functions.Function} object)
-     */
-    default SpecialKeywordAttributesExtractor getSpecialAttributesExtractor() {
-        return null;
-    }
-
-    /**
-     * Returns the applier for the special attributes extracted by {@link SpecialKeywordAttributesExtractor}.
-     */
-    default SpecialKeywordAttributesApplier getSpecialKeywordAttributesApplier(AutomationPackageAttributesApplyingContext context) {
-        return null;
-    }
 
 }

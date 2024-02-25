@@ -36,17 +36,17 @@ import java.util.stream.Collectors;
 public class StepJarParser {
 
     private final AbstractAutomationPackageReader<?> automationPackageReader;
-    private final AutomationPackageKeywordsAttributesApplier automationPackagesKeywordAttributesApplier;
     private final StepClassParser stepClassParser;
+    private final ResourceManager resourceManager;
 
     public StepJarParser() {
         this(null, null);
     }
 
     public StepJarParser(ResourceManager resourceManager, AbstractAutomationPackageReader<?> automationPackageReader) {
+        this.resourceManager = resourceManager;
         this.stepClassParser = new StepClassParser(false);
         this.automationPackageReader = automationPackageReader;
-        this.automationPackagesKeywordAttributesApplier = new AutomationPackageKeywordsAttributesApplier(resourceManager);
     }
 
     private List<Function> getFunctions(AnnotationScanner annotationScanner, File artifact, File libraries) {
@@ -64,9 +64,7 @@ public class StepJarParser {
                 // add functions from automation package
                 if (automationPackageArchive.hasAutomationPackageDescriptor() && automationPackageReader != null) {
                     AutomationPackageContent content = automationPackageReader.readAutomationPackage(automationPackageArchive, false, false);
-                    functions.addAll(automationPackagesKeywordAttributesApplier.applySpecialAttributesToKeyword(
-                            content.getKeywords(), automationPackageArchive, null)
-                    );
+                    functions.addAll(content.prepareCompleteKeywords(new AutomationPackageAttributesApplyingContext(resourceManager, automationPackageArchive, null)));
                 }
             }
             return functions;

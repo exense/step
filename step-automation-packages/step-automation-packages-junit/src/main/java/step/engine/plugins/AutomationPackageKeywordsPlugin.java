@@ -65,10 +65,10 @@ public class AutomationPackageKeywordsPlugin extends AbstractExecutionEnginePlug
         AutomationPackageArchive automationPackageArchive = new AutomationPackageArchive(this.getClass().getClassLoader());
         if (automationPackageArchive.hasAutomationPackageDescriptor()) {
             try {
-                AutomationPackageKeywordsAttributesApplier attributesApplier = new AutomationPackageKeywordsAttributesApplier(resourceManager);
                 AutomationPackageContent automationPackageContent = automationPackageManager.getPackageReader().readAutomationPackage(automationPackageArchive, true);
                 if (automationPackageContent != null) {
-                    res.addAll(attributesApplier.applySpecialAttributesToKeyword(automationPackageContent.getKeywords(), automationPackageArchive, null));
+                    AutomationPackageAttributesApplyingContext automationPackageAttributesApplyingContext = new AutomationPackageAttributesApplyingContext(resourceManager, automationPackageArchive, null);
+                    res.addAll(automationPackageContent.prepareCompleteKeywords(automationPackageAttributesApplyingContext));
                 }
             } catch (AutomationPackageReadingException e) {
                 throw new RuntimeException("Unable to extract functions from automation package", e);

@@ -22,7 +22,7 @@ import step.automation.packages.AutomationPackageAttributesApplyingContext;
 import step.functions.Function;
 
 public interface AutomationPackageKeyword {
-    default Function toFullKeyword(AutomationPackageAttributesApplyingContext context) {
+    default Function prepareCompleteKeyword(AutomationPackageAttributesApplyingContext context) {
         return toDraftKeyword();
     }
 

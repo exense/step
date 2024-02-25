@@ -18,7 +18,6 @@
  ******************************************************************************/
 package step.automation.packages.model;
 
-import step.automation.packages.AutomationPackageAttributesApplyingContext;
 import step.functions.Function;
 
 public class JavaAutomationPackageKeyword implements AutomationPackageKeyword {
@@ -34,11 +33,6 @@ public class JavaAutomationPackageKeyword implements AutomationPackageKeyword {
 
     public Function getKeyword() {
         return keyword;
-    }
-
-    @Override
-    public Function toFullKeyword(AutomationPackageAttributesApplyingContext context) {
-        return toDraftKeyword();
     }
 
     @Override

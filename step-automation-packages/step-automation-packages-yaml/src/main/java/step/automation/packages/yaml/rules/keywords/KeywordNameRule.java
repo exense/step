@@ -21,12 +21,14 @@ package step.automation.packages.yaml.rules.keywords;
 import jakarta.json.spi.JsonProvider;
 import step.automation.packages.AutomationPackageNamedEntityUtils;
 import step.automation.packages.model.AbstractYamlKeyword;
+import step.automation.packages.yaml.rules.YamlConversionRuleAddOn;
 import step.automation.packages.yaml.rules.YamlKeywordConversionRule;
 import step.core.accessors.AbstractOrganizableObject;
 import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
 
 import java.lang.reflect.Field;
 
+@YamlConversionRuleAddOn
 public class KeywordNameRule implements YamlKeywordConversionRule {
 
     @Override

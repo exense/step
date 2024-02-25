@@ -22,6 +22,7 @@ import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.automation.packages.accessor.AutomationPackageAccessor;
+import step.automation.packages.hooks.AutomationPackageHookRegistry;
 import step.automation.packages.model.AutomationPackageContent;
 import step.automation.packages.model.AutomationPackageSchedule;
 import step.core.accessors.AbstractOrganizableObject;
@@ -43,7 +44,6 @@ import step.functions.type.FunctionTypeException;
 import step.functions.type.FunctionTypeRegistry;
 import step.functions.type.SetupFunctionException;
 import step.resources.*;
-import step.automation.packages.hooks.AutomationPackageHookRegistry;
 
 import java.io.File;
 import java.io.IOException;
@@ -55,7 +55,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import static java.util.Arrays.stream;
 import static step.automation.packages.AutomationPackageArchive.METADATA_FILES;
 
 public abstract class AutomationPackageManager {
@@ -462,8 +461,7 @@ public abstract class AutomationPackageManager {
 
     protected List<Function> prepareFunctionsStaging(AutomationPackageArchive automationPackageArchive, AutomationPackageContent packageContent, ObjectEnricher enricher, AutomationPackage oldPackage, ResourceManager stagingResourceManager) {
         // TODO: here want to apply additional attributes to draft function (upload linked files as resources), but we have to refactor the way to do that
-        AutomationPackageKeywordsAttributesApplier keywordsAttributesApplier = new AutomationPackageKeywordsAttributesApplier(stagingResourceManager);
-        List<Function> completeFunctions = keywordsAttributesApplier.applySpecialAttributesToKeyword(packageContent.getKeywords(), automationPackageArchive, enricher);
+        List<Function> completeFunctions = packageContent.prepareCompleteKeywords(new AutomationPackageAttributesApplyingContext(stagingResourceManager, automationPackageArchive, enricher));
 
         // get old functions with same name and reuse their ids
         List<Function> oldFunctions = oldPackage == null ? new ArrayList<>() : getPackageFunctions(oldPackage.getId());

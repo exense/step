@@ -60,8 +60,6 @@ import java.util.stream.Collectors;
  * Instead of this, it prepares the {@link AutomationPackageContent} with {@link JavaAutomationPackageKeyword}
  * containing the draft instances of {@link Function}, without any references to uploaded resources (because
  * these resources are not stored yet).
- * So it is imperative to fill these draft objects by {@link AutomationPackageKeywordsAttributesApplier} afrter
- * reading the automation package via {@link AbstractAutomationPackageReader}.
  */
 public abstract class AbstractAutomationPackageReader<T extends AutomationPackageContent> {
 
