@@ -46,4 +46,13 @@ root:
             - intInput: 777
           keyword:
             expression: "'myKeyword4'"
+      - callKeyword:
+          continueParentNodeExecutionOnError: false
+          instrumentNode: false
+          skipNode: false
+          remote: true
+          inputs: []
+          keyword: "{\"name\":{\"value\":\"myKeyword5\",\"expression\":\"\",\"dynamic\"\
+          :false},\"version\":{\"value\":\"\",\"expression\":\"1.0.0\",\"dynamic\"\
+          :true}}"
     continueOnError: false

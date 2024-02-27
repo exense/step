@@ -241,6 +241,62 @@ root:
         expression: null
         expressionType: null
       id: "644fbe4e38a61e07cc3a4df8"
+    - _class: "CallKeyword"
+      customFields: null
+      attributes:
+        name: "myKeyword5"
+      dynamicName:
+        dynamic: false
+        value: ""
+        expression: ""
+        expressionType: null
+      useDynamicName: false
+      description: null
+      children: [ ]
+      customAttributes: null
+      attachments: null
+      skipNode:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      instrumentNode:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+        expression: null
+        expressionType: null
+      remote:
+        dynamic: false
+        value: true
+        expression: null
+        expressionType: null
+      token:
+        dynamic: false
+        value: "{}"
+        expression: null
+        expressionType: null
+      function:
+        dynamic: false
+        value: "{\"name\":{\"value\":\"myKeyword5\",\"expression\":\"\",\"dynamic\"\
+          :false},\"version\":{\"value\":\"\",\"expression\":\"1.0.0\",\"dynamic\":true}}"
+        expression: null
+        expressionType: null
+      argument:
+        dynamic: false
+        value: "{}"
+        expression: null
+        expressionType: null
+      resultMap:
+        dynamic: false
+        value: null
+        expression: null
+        expressionType: null
+      id: "644fbe4e38a61e07cc3a4df8"
   customAttributes: null
   attachments: null
   skipNode:
