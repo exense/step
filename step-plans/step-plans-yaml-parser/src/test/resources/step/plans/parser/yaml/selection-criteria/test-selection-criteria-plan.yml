@@ -22,3 +22,8 @@ root:
             - stringInput:
                 expression: "'abc'"
             - intInput: 777
+      - callKeyword:
+          nodeName: "myKeyword5"
+          keyword: "{\"name\":{\"value\":\"myKeyword5\",\"expression\":\"\",\"dynamic\"\
+          :false},\"version\":{\"value\":\"\",\"expression\":\"1.0.0\",\"dynamic\"\
+          :true}}"

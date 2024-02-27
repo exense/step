@@ -77,13 +77,22 @@ public class KeywordSelectionRule implements ArtefactFieldConversionRule {
                         "value": "{\"name\":{\"value\":\"MyKeyword1\",\"dynamic\":false}}"
                     }
                 */
-                DynamicValue<String> keywordName = getDynamicKeywordName(yamlFunctionValue);
-                Map<String, DynamicValue<String>> keywordFunctionCriteria = new HashMap<>();
+                DynamicValue<String> keywordName = getDynamicSelectionCriteria(yamlFunctionValue);
 
-                // "{\"name\":{\"value\":\"MyKeyword1\",\"dynamic\":false}}"
-                keywordFunctionCriteria.put(AbstractOrganizableObject.NAME, keywordName);
+                DynamicValue<String> functionDynamicValue;
+                if (keywordName.getValue() != null && keywordName.getValue().startsWith("{")) {
+                    // complex selection criteria as json - we just copy it 'as is'
+                    functionDynamicValue = keywordName;
+                } else {
+                    // simple selection criteria (by keyword name) - we wrap it into json with 'name' attribute
+                    Map<String, DynamicValue<String>> keywordFunctionCriteria = new HashMap<>();
 
-                DynamicValue<String> functionDynamicValue = new DynamicValue<>(jsonObjectMapper.writeValueAsString(keywordFunctionCriteria));
+                    // "{\"name\":{\"value\":\"MyKeyword1\",\"dynamic\":false}}"
+                    keywordFunctionCriteria.put(AbstractOrganizableObject.NAME, keywordName);
+
+                    functionDynamicValue = new DynamicValue<>(jsonObjectMapper.writeValueAsString(keywordFunctionCriteria));
+                }
+
                 output.putPOJO(YamlPlanFields.CALL_FUNCTION_FUNCTION_ORIGINAL_FIELD, functionDynamicValue);
 
                 return true;
@@ -93,7 +102,7 @@ public class KeywordSelectionRule implements ArtefactFieldConversionRule {
         };
     }
 
-    private DynamicValue<String> getDynamicKeywordName(JsonNode yamlFunctionValue) {
+    private DynamicValue<String> getDynamicSelectionCriteria(JsonNode yamlFunctionValue) {
         DynamicValue<String> keywordName;
         if(yamlFunctionValue.isContainerNode() && yamlFunctionValue.get(YamlFields.DYN_VALUE_EXPRESSION_FIELD) != null){
             keywordName = new DynamicValue<>(yamlFunctionValue.get(YamlFields.DYN_VALUE_EXPRESSION_FIELD).asText(), "");
@@ -112,11 +121,11 @@ public class KeywordSelectionRule implements ArtefactFieldConversionRule {
 
                     gen.writeFieldName(YamlPlanFields.CALL_FUNCTION_FUNCTION_YAML_FIELD);
 
-                    DynamicValue<String> functionNameDynamicValue = getFunctionNameDynamicValue(function, jsonObjectMapper);
+                    DynamicValue<String> selectionCriteria = getFunctionSelectionCriteriaForYaml(function, jsonObjectMapper);
 
                     // here we want to write function name simply as 'keyword: "myKeyword"' in YAML
-                    if (functionNameDynamicValue != null) {
-                        gen.writeObject(functionNameDynamicValue);
+                    if (selectionCriteria != null) {
+                        gen.writeObject(selectionCriteria);
                     }
                     return true;
                 }
@@ -134,12 +143,9 @@ public class KeywordSelectionRule implements ArtefactFieldConversionRule {
                 if (functionNameAsMap.isEmpty()) {
                     return null;
                 }
-                if (functionNameAsMap.size() > 1) {
-                    throw new IllegalArgumentException("Invalid function. Function selector for yaml only supports search by function name, but was: " + function.getValue());
-                }
                 JsonNode functionName = functionNameAsMap.get(AbstractOrganizableObject.NAME);
                 if (functionName == null) {
-                    throw new IllegalArgumentException("Invalid function. Function selector for yaml only supports search by function name, but was: " + function.getValue());
+                    return null;
                 }
 
                 // function name can be either the dynamic value or the simple string (if converted from the plain-text format)
@@ -149,6 +155,40 @@ public class KeywordSelectionRule implements ArtefactFieldConversionRule {
                     return new DynamicValue<>(functionName.asText());
                 }
            } else {
+                throw new IllegalArgumentException("Invalid function. Function selector for yaml only supports function selectors as jsons, but was: " + function.getValue());
+            }
+
+        } else {
+            return null;
+        }
+    }
+
+    public static DynamicValue<String> getFunctionSelectionCriteriaForYaml(DynamicValue<String> function, ObjectMapper jsonObjectMapper) throws JsonProcessingException {
+        if (function.getValue().trim().length() > 0) {
+            if (function.getValue().startsWith("{")) {
+                TypeReference<HashMap<String, JsonNode>> functionValueTypeRef = new TypeReference<>() {
+                };
+                HashMap<String, JsonNode> functionNameAsMap = jsonObjectMapper.readValue(function.getValue(), functionValueTypeRef);
+                JsonNode simpleFunctionName;
+                if (functionNameAsMap.isEmpty()) {
+                    simpleFunctionName = null;
+                } else if (functionNameAsMap.size() > 1) {
+                    // not only function name is used as selection criteria
+                    simpleFunctionName = null;
+                } else {
+                    simpleFunctionName = functionNameAsMap.get(AbstractOrganizableObject.NAME);
+                }
+
+                if(simpleFunctionName == null){
+                    // for complex selection criteria we return the whole json object (not only the name)
+                    return new DynamicValue<>(function.getValue());
+                } else if (simpleFunctionName.isContainerNode()) {
+                    // function name can be either the dynamic value or the simple string (if converted from the plain-text format)
+                    return jsonObjectMapper.treeToValue(simpleFunctionName, DynamicValue.class);
+                } else {
+                    return new DynamicValue<>(simpleFunctionName.asText());
+                }
+            } else {
                 throw new IllegalArgumentException("Invalid function. Function selector for yaml only supports function selectors as jsons, but was: " + function.getValue());
             }
 
