@@ -14,10 +14,8 @@ import jakarta.ws.rs.core.MediaType;
 
 import step.client.AbstractRemoteClient;
 import step.commons.iterators.SkipLimitIterator;
+import step.core.collections.*;
 import step.core.collections.Collection;
-import step.core.collections.Filter;
-import step.core.collections.IndexField;
-import step.core.collections.SearchOrder;
 
 public class RemoteCollection<T> implements Collection<T> {
 
@@ -140,17 +138,12 @@ public class RemoteCollection<T> implements Collection<T> {
     }
 
     @Override
-    public void createOrUpdateIndex(String field, int order) {
+    public void createOrUpdateIndex(String field, Order order) {
         throw notImplemented();
     }
 
     @Override
     public void createOrUpdateCompoundIndex(String... fields) {
-        throw notImplemented();
-    }
-
-    @Override
-    public void createOrUpdateCompoundIndex(Map<String, Integer> map) {
         throw notImplemented();
     }
 

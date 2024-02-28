@@ -26,6 +26,7 @@ import step.automation.packages.model.AutomationPackageContent;
 import step.automation.packages.model.AutomationPackageSchedule;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.collections.IndexField;
+import step.core.collections.Order;
 import step.core.execution.model.ExecutionParameters;
 import step.core.objectenricher.EnricheableObject;
 import step.core.objectenricher.ObjectEnricher;
@@ -96,7 +97,7 @@ public abstract class AutomationPackageManager {
 
         this.functionManager = functionManager;
         this.functionAccessor = functionAccessor;
-        IndexField indexField = new IndexField(getAutomationPackageTrackingField(), 1, String.class);
+        IndexField indexField = new IndexField(getAutomationPackageTrackingField(), Order.ASC, String.class);
         this.functionAccessor.createIndexIfNeeded(indexField);
 
         this.planAccessor = planAccessor;

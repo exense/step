@@ -25,6 +25,7 @@ import step.core.GlobalContext;
 import step.core.collections.Collection;
 import step.core.collections.Document;
 import step.core.collections.IndexField;
+import step.core.collections.Order;
 import step.core.entities.EntityManager;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
@@ -62,11 +63,11 @@ public class RawMeasurementsControllerPlugin extends AbstractControllerPlugin {
 
 	@Override
 	public void initializeData(GlobalContext context) throws Exception {
-		IndexField eidIndex = new IndexField(MeasurementPlugin.ATTRIBUTE_EXECUTION_ID, 1, String.class);
-		IndexField beginIndex = new IndexField(MeasurementPlugin.BEGIN, 1, Integer.class);
-		IndexField typeIndex = new IndexField(MeasurementPlugin.TYPE, 1, String.class);
-		IndexField planIndex = new IndexField(MeasurementPlugin.PLAN_ID, 1, String.class);
-		IndexField taskIndex = new IndexField(MeasurementPlugin.TASK_ID, 1, String.class);
+		IndexField eidIndex = new IndexField(MeasurementPlugin.ATTRIBUTE_EXECUTION_ID, Order.ASC, String.class);
+		IndexField beginIndex = new IndexField(MeasurementPlugin.BEGIN, Order.ASC, Integer.class);
+		IndexField typeIndex = new IndexField(MeasurementPlugin.TYPE, Order.ASC, String.class);
+		IndexField planIndex = new IndexField(MeasurementPlugin.PLAN_ID, Order.ASC, String.class);
+		IndexField taskIndex = new IndexField(MeasurementPlugin.TASK_ID, Order.ASC, String.class);
 		collection.createOrUpdateCompoundIndex(new LinkedHashSet<>(List.of(eidIndex, beginIndex)));
 		collection.createOrUpdateCompoundIndex(new LinkedHashSet<>(List.of(eidIndex, typeIndex, beginIndex)));
 		collection.createOrUpdateCompoundIndex(new LinkedHashSet<>(List.of(planIndex, beginIndex)));

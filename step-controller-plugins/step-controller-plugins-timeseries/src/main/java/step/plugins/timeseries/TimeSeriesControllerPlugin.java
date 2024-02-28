@@ -5,6 +5,7 @@ import step.core.GlobalContext;
 import step.core.collections.Collection;
 import step.core.collections.CollectionFactory;
 import step.core.collections.IndexField;
+import step.core.collections.Order;
 import step.core.deployment.WebApplicationConfigurationManager;
 import step.core.entities.Entity;
 import step.core.entities.EntityManager;
@@ -100,7 +101,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 
 	@Override
 	public void initializeData(GlobalContext context) {
-		timeSeries.createIndexes(new LinkedHashSet<>(List.of(new IndexField("eId", 1, String.class))));
+		timeSeries.createIndexes(new LinkedHashSet<>(List.of(new IndexField("eId", Order.ASC, String.class))));
 
 		//Create legacy dashboards
 		createLegacyDashboard();
