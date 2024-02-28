@@ -24,13 +24,15 @@ import org.slf4j.LoggerFactory;
 import step.core.GlobalContext;
 import step.core.collections.Collection;
 import step.core.collections.Document;
+import step.core.collections.IndexField;
 import step.core.entities.EntityManager;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.framework.server.tables.Table;
 import step.framework.server.tables.TableRegistry;
-import step.plugins.measurements.Measurement;
 import step.plugins.measurements.MeasurementPlugin;
+
+import java.util.Set;
 
 @Plugin
 public class RawMeasurementsControllerPlugin extends AbstractControllerPlugin {
@@ -38,16 +40,12 @@ public class RawMeasurementsControllerPlugin extends AbstractControllerPlugin {
 	private static final Logger logger = LoggerFactory.getLogger(RawMeasurementsControllerPlugin.class);
 
 	private MeasurementAccessor accessor;
+	private Collection<Document> collection;
 
 	@Override
 	public void serverStart(GlobalContext context) throws Exception {
 
-		Collection<Document> collection = context.getCollectionFactory().getCollection(EntityManager.measurements, Document.class);
-		collection.createOrUpdateCompoundIndex(MeasurementPlugin.ATTRIBUTE_EXECUTION_ID, MeasurementPlugin.BEGIN);
-		collection.createOrUpdateCompoundIndex(MeasurementPlugin.ATTRIBUTE_EXECUTION_ID, MeasurementPlugin.TYPE, MeasurementPlugin.BEGIN);
-		collection.createOrUpdateCompoundIndex(MeasurementPlugin.PLAN_ID, MeasurementPlugin.BEGIN);
-		collection.createOrUpdateCompoundIndex(MeasurementPlugin.TASK_ID, MeasurementPlugin.BEGIN);
-		collection.createOrUpdateIndex(MeasurementPlugin.BEGIN);
+		collection = context.getCollectionFactory().getCollection(EntityManager.measurements, Document.class);
 		accessor = new MeasurementAccessor(collection);
 		context.put(MeasurementAccessor.class, accessor);
 
@@ -59,5 +57,19 @@ public class RawMeasurementsControllerPlugin extends AbstractControllerPlugin {
 
 	@Override
 	public void serverStop(GlobalContext context) {
+	}
+
+	@Override
+	public void initializeData(GlobalContext context) throws Exception {
+		IndexField eidIndex = new IndexField(MeasurementPlugin.ATTRIBUTE_EXECUTION_ID, 1, String.class);
+		IndexField beginIndex = new IndexField(MeasurementPlugin.BEGIN, 1, Integer.class);
+		IndexField typeIndex = new IndexField(MeasurementPlugin.TYPE, 1, String.class);
+		IndexField planIndex = new IndexField(MeasurementPlugin.PLAN_ID, 1, String.class);
+		IndexField taskIndex = new IndexField(MeasurementPlugin.TASK_ID, 1, String.class);
+		collection.createOrUpdateCompoundIndex(Set.of(eidIndex, beginIndex));
+		collection.createOrUpdateCompoundIndex(Set.of(eidIndex, typeIndex, beginIndex));
+		collection.createOrUpdateCompoundIndex(Set.of(planIndex, beginIndex));
+		collection.createOrUpdateCompoundIndex(Set.of(taskIndex, beginIndex));
+		collection.createOrUpdateIndex(beginIndex);
 	}
 }

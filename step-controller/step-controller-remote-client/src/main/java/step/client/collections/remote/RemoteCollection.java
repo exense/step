@@ -2,10 +2,7 @@ package step.client.collections.remote;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -20,6 +17,7 @@ import step.commons.iterators.SkipLimitIterator;
 import step.commons.iterators.SkipLimitProvider;
 import step.core.collections.Collection;
 import step.core.collections.Filter;
+import step.core.collections.IndexField;
 import step.core.collections.SearchOrder;
 
 public class RemoteCollection<T> implements Collection<T> {
@@ -138,6 +136,11 @@ public class RemoteCollection<T> implements Collection<T> {
     }
 
     @Override
+    public void createOrUpdateIndex(IndexField indexField) {
+        throw notImplemented();
+    }
+
+    @Override
     public void createOrUpdateIndex(String field, int order) {
         throw notImplemented();
     }
@@ -149,6 +152,11 @@ public class RemoteCollection<T> implements Collection<T> {
 
     @Override
     public void createOrUpdateCompoundIndex(Map<String, Integer> map) {
+        throw notImplemented();
+    }
+
+    @Override
+    public void createOrUpdateCompoundIndex(Set<IndexField> fields) {
         throw notImplemented();
     }
 
@@ -165,6 +173,11 @@ public class RemoteCollection<T> implements Collection<T> {
     @Override
     public Class<T> getEntityClass() {
         return entityClass;
+    }
+
+    @Override
+    public void dropIndex(String indexName) {
+        throw notImplemented();
     }
 
     protected UnsupportedOperationException notImplemented()  {

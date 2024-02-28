@@ -21,10 +21,11 @@ package step.core.scheduler;
 import java.util.Iterator;
 
 import step.core.accessors.Accessor;
+import step.core.collections.IndexField;
 
 public interface ExecutionTaskAccessor extends Accessor<ExecutiontTaskParameters> {
 
 	Iterator<ExecutiontTaskParameters> getActiveExecutionTasks();
 
-	void createIndexIfNeeded(String fieldName);
+	void createIndexIfNeeded(IndexField indexField);
 }

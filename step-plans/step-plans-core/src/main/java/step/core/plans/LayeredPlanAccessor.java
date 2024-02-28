@@ -23,6 +23,7 @@ import java.util.stream.Stream;
 
 import step.core.accessors.Accessor;
 import step.core.accessors.LayeredAccessor;
+import step.core.collections.IndexField;
 
 public class LayeredPlanAccessor extends LayeredAccessor<Plan> implements PlanAccessor {
 
@@ -35,10 +36,10 @@ public class LayeredPlanAccessor extends LayeredAccessor<Plan> implements PlanAc
 	}
 
 	@Override
-	public void createIndexIfNeeded(String fieldName) {
+	public void createIndexIfNeeded(IndexField indexField) {
 		Accessor<Plan> accessorForPersistence = getAccessorForPersistence();
 		if (accessorForPersistence instanceof PlanAccessor) {
-			((PlanAccessor) accessorForPersistence).createIndexIfNeeded(fieldName);
+			((PlanAccessor) accessorForPersistence).createIndexIfNeeded(indexField);
 		}
 	}
 
