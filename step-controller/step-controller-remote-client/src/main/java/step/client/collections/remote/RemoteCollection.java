@@ -14,7 +14,6 @@ import jakarta.ws.rs.core.MediaType;
 
 import step.client.AbstractRemoteClient;
 import step.commons.iterators.SkipLimitIterator;
-import step.commons.iterators.SkipLimitProvider;
 import step.core.collections.Collection;
 import step.core.collections.Filter;
 import step.core.collections.IndexField;
@@ -156,7 +155,7 @@ public class RemoteCollection<T> implements Collection<T> {
     }
 
     @Override
-    public void createOrUpdateCompoundIndex(Set<IndexField> fields) {
+    public void createOrUpdateCompoundIndex(LinkedHashSet<IndexField> fields) {
         throw notImplemented();
     }
 

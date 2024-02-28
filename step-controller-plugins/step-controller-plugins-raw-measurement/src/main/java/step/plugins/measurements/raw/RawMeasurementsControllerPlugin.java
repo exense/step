@@ -32,7 +32,8 @@ import step.framework.server.tables.Table;
 import step.framework.server.tables.TableRegistry;
 import step.plugins.measurements.MeasurementPlugin;
 
-import java.util.Set;
+import java.util.LinkedHashSet;
+import java.util.List;
 
 @Plugin
 public class RawMeasurementsControllerPlugin extends AbstractControllerPlugin {
@@ -66,10 +67,10 @@ public class RawMeasurementsControllerPlugin extends AbstractControllerPlugin {
 		IndexField typeIndex = new IndexField(MeasurementPlugin.TYPE, 1, String.class);
 		IndexField planIndex = new IndexField(MeasurementPlugin.PLAN_ID, 1, String.class);
 		IndexField taskIndex = new IndexField(MeasurementPlugin.TASK_ID, 1, String.class);
-		collection.createOrUpdateCompoundIndex(Set.of(eidIndex, beginIndex));
-		collection.createOrUpdateCompoundIndex(Set.of(eidIndex, typeIndex, beginIndex));
-		collection.createOrUpdateCompoundIndex(Set.of(planIndex, beginIndex));
-		collection.createOrUpdateCompoundIndex(Set.of(taskIndex, beginIndex));
+		collection.createOrUpdateCompoundIndex(new LinkedHashSet<>(List.of(eidIndex, beginIndex)));
+		collection.createOrUpdateCompoundIndex(new LinkedHashSet<>(List.of(eidIndex, typeIndex, beginIndex)));
+		collection.createOrUpdateCompoundIndex(new LinkedHashSet<>(List.of(planIndex, beginIndex)));
+		collection.createOrUpdateCompoundIndex(new LinkedHashSet<>(List.of(taskIndex, beginIndex)));
 		collection.createOrUpdateIndex(beginIndex);
 	}
 }

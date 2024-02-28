@@ -22,10 +22,7 @@ import step.plugins.measurements.MeasurementPlugin;
 import step.plugins.timeseries.dashboards.model.*;
 import step.plugins.timeseries.dashboards.DashboardAccessor;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static step.plugins.timeseries.TimeSeriesExecutionPlugin.*;
 
@@ -103,7 +100,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 
 	@Override
 	public void initializeData(GlobalContext context) {
-		timeSeries.createIndexes(Set.of(new IndexField("eId", 1, String.class)));
+		timeSeries.createIndexes(new LinkedHashSet<>(List.of(new IndexField("eId", 1, String.class))));
 
 		//Create legacy dashboards
 		createLegacyDashboard();
