@@ -21,6 +21,7 @@ package step.functions.accessor;
 import step.core.accessors.Accessor;
 import step.core.accessors.CachedAccessor;
 import step.core.collections.Collection;
+import step.core.collections.IndexField;
 import step.functions.Function;
 
 public class CachedFunctionAccessor extends CachedAccessor<Function> implements FunctionAccessor {
@@ -30,10 +31,10 @@ public class CachedFunctionAccessor extends CachedAccessor<Function> implements 
 	}
 
 	@Override
-	public void createIndexIfNeeded(String fieldName) {
+	public void createIndexIfNeeded(IndexField indexField) {
 		Collection<Function> collectionDriver = getCollectionDriver();
 		if (collectionDriver != null) {
-			collectionDriver.createOrUpdateIndex(fieldName);
+			collectionDriver.createOrUpdateIndex(indexField);
 		}
 	}
 }

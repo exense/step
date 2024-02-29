@@ -21,6 +21,7 @@ package step.core.plans;
 import step.core.accessors.AbstractAccessor;
 import step.core.collections.Collection;
 import step.core.collections.Filters;
+import step.core.collections.IndexField;
 
 import java.util.stream.Stream;
 
@@ -31,8 +32,8 @@ public class PlanAccessorImpl extends AbstractAccessor<Plan> implements PlanAcce
 	}
 
 	@Override
-	public void createIndexIfNeeded(String fieldName) {
-		createOrUpdateIndex(fieldName);
+	public void createIndexIfNeeded(IndexField indexField) {
+		createOrUpdateIndex(indexField);
 	}
 
 	@Override

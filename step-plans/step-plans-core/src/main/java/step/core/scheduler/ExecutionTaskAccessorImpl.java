@@ -23,6 +23,7 @@ import java.util.Iterator;
 import step.core.accessors.AbstractAccessor;
 import step.core.collections.Collection;
 import step.core.collections.Filters;
+import step.core.collections.IndexField;
 
 public class ExecutionTaskAccessorImpl extends AbstractAccessor<ExecutiontTaskParameters> implements ExecutionTaskAccessor {
 
@@ -37,7 +38,7 @@ public class ExecutionTaskAccessorImpl extends AbstractAccessor<ExecutiontTaskPa
 	}
 
 	@Override
-	public void createIndexIfNeeded(String fieldName) {
-		createOrUpdateIndex(fieldName);
+	public void createIndexIfNeeded(IndexField indexField) {
+		createOrUpdateIndex(indexField);
 	}
 }
