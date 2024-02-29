@@ -19,12 +19,13 @@
 package step.core.plans;
 
 import step.core.accessors.Accessor;
+import step.core.collections.IndexField;
 
 import java.util.stream.Stream;
 
 public interface PlanAccessor extends Accessor<Plan> {
 
-    void createIndexIfNeeded(String fieldName);
+    void createIndexIfNeeded(IndexField indexField);
 
     Stream<Plan> getVisiblePlans();
 

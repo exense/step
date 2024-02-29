@@ -68,7 +68,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class Controller {
 
-	public static final Version VERSION = new Version(3,24,0);
+	public static final Version VERSION = new Version(3,24,3);
 
 	public static String USER_ACTIVITY_MAP_KEY = "userActivityMap";
 	private Configuration configuration;

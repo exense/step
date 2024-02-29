@@ -41,7 +41,7 @@ public class TimeSeriesHandlerTest {
         measurementsCollection = new InMemoryCollection<>();
         executionAccessor = new InMemoryExecutionAccessor();
         bucketsCollection = new InMemoryCollection<>();
-        TimeSeries timeSeries = new TimeSeries(bucketsCollection, Set.of(), (int) BUCKET_RESOLUTION);
+        TimeSeries timeSeries = new TimeSeries(bucketsCollection, (int) BUCKET_RESOLUTION);
         TimeSeriesAggregationPipeline aggregationPipeline = timeSeries.getAggregationPipeline();
         AsyncTaskManager asyncTaskManager = new AsyncTaskManager();
         handler = new TimeSeriesHandler(BUCKET_RESOLUTION, TS_ATTRIBUTES, measurementsCollection, executionAccessor, timeSeries, aggregationPipeline, asyncTaskManager, SAMPLING_LIMIT);

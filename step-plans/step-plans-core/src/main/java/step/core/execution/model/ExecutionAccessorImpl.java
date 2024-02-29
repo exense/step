@@ -18,20 +18,14 @@
  ******************************************************************************/
 package step.core.execution.model;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import step.commons.iterators.SkipLimitIterator;
 import step.commons.iterators.SkipLimitProvider;
 import step.core.accessors.AbstractAccessor;
+import step.core.collections.*;
 import step.core.collections.Collection;
-import step.core.collections.Filter;
-import step.core.collections.Filters;
-import step.core.collections.SearchOrder;
 import step.core.repositories.RepositoryObjectReference;
 
 public class ExecutionAccessorImpl extends AbstractAccessor<Execution> implements ExecutionAccessor {
@@ -46,7 +40,8 @@ public class ExecutionAccessorImpl extends AbstractAccessor<Execution> implement
 		createOrUpdateIndex("description");
 		createOrUpdateIndex("executionParameters.userID");
 		createOrUpdateIndex("executionTaskID");
-		collectionDriver.createOrUpdateCompoundIndex(Map.of("executionTaskID",1,"endTime",-1));
+		collectionDriver.createOrUpdateCompoundIndex(new LinkedHashSet<>(List.of(new IndexField("executionTaskID",Order.ASC, null),
+				new IndexField("endTime",Order.DESC, null))));
 	}
 
 	@Override

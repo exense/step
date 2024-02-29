@@ -22,6 +22,7 @@ import java.util.List;
 
 import step.core.accessors.Accessor;
 import step.core.accessors.LayeredAccessor;
+import step.core.collections.IndexField;
 import step.functions.Function;
 
 public class LayeredFunctionAccessor extends LayeredAccessor<Function> implements FunctionAccessor {
@@ -35,10 +36,10 @@ public class LayeredFunctionAccessor extends LayeredAccessor<Function> implement
 	}
 
 	@Override
-	public void createIndexIfNeeded(String fieldName) {
+	public void createIndexIfNeeded(IndexField indexField) {
 		Accessor<Function> accessorForPersistence = getAccessorForPersistence();
 		if (accessorForPersistence instanceof FunctionAccessor) {
-			((FunctionAccessor) accessorForPersistence).createIndexIfNeeded(fieldName);
+			((FunctionAccessor) accessorForPersistence).createIndexIfNeeded(indexField);
 		}
 	}
 }
