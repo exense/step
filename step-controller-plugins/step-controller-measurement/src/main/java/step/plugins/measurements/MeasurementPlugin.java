@@ -12,9 +12,12 @@ import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;
 import step.core.execution.model.Execution;
+import step.core.execution.model.LazyCacheExecutionAccessor;
+import step.core.plans.LazyCachePlanAccessor;
 import step.core.plugins.IgnoreDuringAutoDiscovery;
 import step.core.plugins.Plugin;
 import step.core.reports.Measure;
+import step.core.scheduler.LazyCacheScheduleAccessor;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 
 
@@ -44,16 +47,21 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 	public static final String TASK_ID = "taskId";
 	public static final String PLAN_ID = "planId";
 	public static final String SCHEDULER_TASK_ID = "$schedulerTaskId";
-
 	private static final Logger logger = LoggerFactory.getLogger(MeasurementPlugin.class);
+	private static final List<MeasurementHandler> measurementHandlers = new ArrayList<>();
+	private final Map<String, Set<String[]>> labelsByExec = new ConcurrentHashMap<>();
+	private final LazyCacheExecutionAccessor executionLazyCachedAccessor;
+	private final LazyCachePlanAccessor planLazyCachedAccessor;
+	private final LazyCacheScheduleAccessor scheduleLazyCachedAccessor;
+	private final GaugeCollectorRegistry gaugeCollectorRegistry;
 
-	private static List<MeasurementHandler> measurementHandlers = new ArrayList<>();
-	private Map<String, Set<String[]>> labelsByExec = new ConcurrentHashMap<>();
-
-	GaugeCollectorRegistry gaugeCollectorRegistry;
-
-	public MeasurementPlugin(GaugeCollectorRegistry gaugeCollectorRegistry) {
+	public MeasurementPlugin(GaugeCollectorRegistry gaugeCollectorRegistry, LazyCacheExecutionAccessor executionAccessor,
+							 LazyCachePlanAccessor planAccessor, LazyCacheScheduleAccessor scheduleAccessor) {
 		this.gaugeCollectorRegistry = gaugeCollectorRegistry;
+
+		this.executionLazyCachedAccessor = executionAccessor;
+		this.planLazyCachedAccessor = planAccessor;
+		this.scheduleLazyCachedAccessor = scheduleAccessor;
 	}
 
 	public static synchronized void registerMeasurementHandlers(MeasurementHandler handler) {
@@ -109,7 +117,7 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 	private GaugeCollector getOrInitThreadGauge(ExecutionContext context) {
 		GaugeCollector gaugeCollector = gaugeCollectorRegistry.getGaugeCollector(ThreadgroupGaugeName);
 		if (gaugeCollector == null) {
-			List<String> labelsThreadGroup = new ArrayList<>(Arrays.asList(ATTRIBUTE_EXECUTION_ID, NAME, PLAN_ID, TASK_ID));
+			List<String> labelsThreadGroup = new ArrayList<>(Arrays.asList(ATTRIBUTE_EXECUTION_ID, "execution", NAME, PLAN_ID, "plan", "scheduleId", "schedule"));
 			Set<String> additionalAttributeKeys = context.getObjectEnricher().getAdditionalAttributes().keySet();
 			labelsThreadGroup.addAll(additionalAttributeKeys);
 
@@ -128,10 +136,14 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 
 	private void processThreadReportNode(ExecutionContext context, ThreadReportNode node, boolean inc) {
 		GaugeCollector gaugeCollector = getOrInitThreadGauge(context);
-		String schedulerTaskId = (String) context.get(SCHEDULER_TASK_ID);
-		schedulerTaskId = (schedulerTaskId!=null) ? schedulerTaskId : "";
+		String scheduleId = (String) context.get(SCHEDULER_TASK_ID);
+		String schedule = (scheduleId != null) ? scheduleLazyCachedAccessor.tryResolveName(scheduleId) : "";
+		scheduleId = (scheduleId!=null) ? scheduleId : "";
 		String planId = context.getPlan().getId().toString();
-		List<String> labels = new ArrayList<>(Arrays.asList(node.getExecutionID(), node.getThreadGroupName(), planId, schedulerTaskId));
+		String plan = planLazyCachedAccessor.tryResolveName(planId);
+		String executionID = node.getExecutionID();
+		String execution = executionLazyCachedAccessor.tryResolveDescription(executionID);
+		List<String> labels = new ArrayList<>(Arrays.asList(executionID, execution, node.getThreadGroupName(), planId, plan, scheduleId, schedule));
 		labels.addAll(context.getObjectEnricher().getAdditionalAttributes().values());
 		String[] labelsArray = labels.toArray(String[]::new);
 		if (inc) {

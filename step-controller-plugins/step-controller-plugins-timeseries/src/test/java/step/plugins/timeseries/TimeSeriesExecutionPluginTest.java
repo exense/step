@@ -19,10 +19,16 @@ import step.core.entities.EntityManager;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
 import step.core.execution.model.Execution;
+import step.core.execution.model.InMemoryExecutionAccessor;
+import step.core.execution.model.LazyCacheExecutionAccessor;
 import step.core.execution.type.ExecutionTypePlugin;
+import step.core.plans.InMemoryPlanAccessor;
+import step.core.plans.LazyCachePlanAccessor;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
 import step.core.plans.runner.PlanRunnerResult;
+import step.core.scheduler.InMemoryExecutionTaskAccessor;
+import step.core.scheduler.LazyCacheScheduleAccessor;
 import step.core.timeseries.TimeSeriesFilterBuilder;
 import step.core.timeseries.TimeSeriesIngestionPipeline;
 import step.core.timeseries.aggregation.TimeSeriesAggregationPipeline;
@@ -95,8 +101,11 @@ public class TimeSeriesExecutionPluginTest extends AbstractKeyword {
 		tsPlugin.serverStart(globalContext);
 		timeSeriesAggregationPipeline = globalContext.get(TimeSeriesAggregationPipeline.class);
 		TimeSeriesIngestionPipeline timeSeriesIngestionPipeline = globalContext.get(TimeSeriesIngestionPipeline.class);
+		LazyCacheExecutionAccessor executionAccessor = new LazyCacheExecutionAccessor(new InMemoryExecutionAccessor());
+		LazyCachePlanAccessor planAccessor = new LazyCachePlanAccessor(new InMemoryPlanAccessor());
+		LazyCacheScheduleAccessor scheduleAccessor = new LazyCacheScheduleAccessor(new InMemoryExecutionTaskAccessor());
 		engine = ExecutionEngine.builder()
-				.withPlugin(new MeasurementPlugin(GaugeCollectorRegistry.getInstance()))
+				.withPlugin(new MeasurementPlugin(GaugeCollectorRegistry.getInstance(), executionAccessor, planAccessor, scheduleAccessor))
 				.withPlugin(new FunctionPlugin())
                 .withPlugin(new ThreadPoolPlugin())
 				.withPlugin(new LocalFunctionPlugin())

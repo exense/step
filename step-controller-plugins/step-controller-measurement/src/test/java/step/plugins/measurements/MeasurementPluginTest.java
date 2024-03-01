@@ -24,13 +24,22 @@ import org.junit.Test;
 import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.ThreadGroup;
 import step.core.GlobalContext;
+import step.core.accessors.LazyCachedAccessor;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
 import step.core.execution.ExecutionEngineContext;
+import step.core.execution.model.Execution;
+import step.core.execution.model.InMemoryExecutionAccessor;
+import step.core.execution.model.LazyCacheExecutionAccessor;
+import step.core.plans.InMemoryPlanAccessor;
+import step.core.plans.LazyCachePlanAccessor;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
+import step.core.scheduler.ExecutiontTaskParameters;
+import step.core.scheduler.InMemoryExecutionTaskAccessor;
+import step.core.scheduler.LazyCacheScheduleAccessor;
 import step.engine.plugins.FunctionPlugin;
 import step.engine.plugins.LocalFunctionPlugin;
 import step.handlers.javahandler.AbstractKeyword;
@@ -58,7 +67,11 @@ public class MeasurementPluginTest extends AbstractKeyword {
 		MeasurementControllerPlugin mc = new MeasurementControllerPlugin();
 		mc.initGaugeCollectorRegistry(new GlobalContext());
 		MeasurementPlugin.registerMeasurementHandlers(new TestMeasurementHandler());
-		engine = ExecutionEngine.builder().withPlugin(new MeasurementPlugin(GaugeCollectorRegistry.getInstance()))
+		LazyCacheExecutionAccessor executionAccessor = new LazyCacheExecutionAccessor(new InMemoryExecutionAccessor());
+		LazyCachePlanAccessor planAccessor = new LazyCachePlanAccessor(new InMemoryPlanAccessor());
+		LazyCacheScheduleAccessor scheduleAccessor = new LazyCacheScheduleAccessor(new InMemoryExecutionTaskAccessor());
+		engine = ExecutionEngine.builder().withPlugin(new MeasurementPlugin(GaugeCollectorRegistry.getInstance(),
+						executionAccessor, planAccessor, scheduleAccessor))
 				.withPlugin(new FunctionPlugin()).withPlugin(new ThreadPoolPlugin())
 				.withPlugin(new LocalFunctionPlugin()).withPlugin(new BaseArtefactPlugin())
 				.build();
