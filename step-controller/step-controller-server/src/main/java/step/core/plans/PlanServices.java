@@ -36,6 +36,7 @@ import step.controller.services.entities.AbstractEntityServices;
 import step.core.GlobalContext;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandlerRegistry;
+import step.core.deployment.ControllerServiceException;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.entities.EntityManager;
@@ -267,12 +268,12 @@ public class PlanServices extends AbstractEntityServices<Plan> {
 		Plan plan = planAccessor.get(id);
 		StreamingOutput fileStream = new StreamingOutput() {
 			@Override
-			public void write(java.io.OutputStream output) throws IOException {
+			public void write(java.io.OutputStream output) {
 				try {
 					yamlPlanReader.writeYamlPlan(output, plan);
 				} catch (Exception ex) {
 					log.error("Serialization error", ex);
-					throw ex;
+					throw new ControllerServiceException("Serialization error when converting to YAML plan, check the controller logs for more details", ex);
 				}
 			}
 		};
