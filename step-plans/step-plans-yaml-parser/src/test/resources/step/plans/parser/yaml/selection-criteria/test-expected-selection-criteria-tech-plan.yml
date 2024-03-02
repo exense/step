@@ -252,7 +252,7 @@ root:
         expressionType: null
       useDynamicName: false
       description: null
-      children: [ ]
+      children: []
       customAttributes: null
       attachments: null
       skipNode:
@@ -282,8 +282,9 @@ root:
         expressionType: null
       function:
         dynamic: false
-        value: "{\"name\":{\"value\":\"myKeyword5\",\"expression\":\"\",\"dynamic\"\
-          :false},\"version\":{\"value\":\"\",\"expression\":\"1.0.0\",\"dynamic\":true}}"
+        value: "{\"name\":{\"dynamic\":false,\"value\":\"myKeyword5\",\"expression\"\
+        :null,\"expressionType\":null},\"version\":{\"dynamic\":false,\"value\":\"\
+        1.0.0\",\"expression\":null,\"expressionType\":null}}"
         expression: null
         expressionType: null
       argument:
