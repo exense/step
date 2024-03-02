@@ -22,7 +22,8 @@ root:
           remote: true
           inputs: []
           keyword:
-            expression: "'myKeyword2'"
+            name:
+              expression: "'myKeyword2'"
       - callKeyword:
           continueParentNodeExecutionOnError: false
           instrumentNode: false
@@ -45,14 +46,15 @@ root:
                 expression: "'abc'"
             - intInput: 777
           keyword:
-            expression: "'myKeyword4'"
+            name:
+              expression: "'myKeyword4'"
       - callKeyword:
           continueParentNodeExecutionOnError: false
           instrumentNode: false
           skipNode: false
           remote: true
           inputs: []
-          keyword: "{\"name\":{\"value\":\"myKeyword5\",\"expression\":\"\",\"dynamic\"\
-          :false},\"version\":{\"value\":\"\",\"expression\":\"1.0.0\",\"dynamic\"\
-          :true}}"
+          keyword:
+            name: "myKeyword5"
+            version: "1.0.0"
     continueOnError: false
