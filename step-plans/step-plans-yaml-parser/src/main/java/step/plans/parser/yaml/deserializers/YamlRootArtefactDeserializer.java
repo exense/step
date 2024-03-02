@@ -22,7 +22,6 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -33,12 +32,12 @@ import step.core.plans.Plan;
 import step.core.scanner.CachedAnnotationScanner;
 import step.core.yaml.deserializers.StepYamlDeserializer;
 import step.core.yaml.deserializers.StepYamlDeserializerAddOn;
+import step.core.yaml.schema.JsonSchemaFieldProcessingException;
 import step.plans.parser.yaml.YamlPlanFields;
 import step.plans.parser.yaml.YamlPlanReaderExtender;
 import step.plans.parser.yaml.YamlPlanReaderExtension;
 import step.plans.parser.yaml.model.YamlRootArtefact;
 import step.plans.parser.yaml.rules.*;
-import step.core.yaml.schema.JsonSchemaFieldProcessingException;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -156,18 +155,23 @@ public class YamlRootArtefactDeserializer extends StepYamlDeserializer<YamlRootA
             Iterator<Map.Entry<String, JsonNode>> fields = artifactData.fields();
             while (fields.hasNext()) {
                 Map.Entry<String, JsonNode> next = fields.next();
+                try {
 
-                // process some fields ('name', 'children' etc.) in special way
-                boolean processedAsSpecialField = false;
-                for (YamlArtefactFieldDeserializationProcessor proc : customFieldProcessors) {
-                    if (proc.deserializeArtefactField(javaArtifactClass, next, techArtefact, codec)) {
-                        processedAsSpecialField = true;
+                    // process some fields ('name', 'children' etc.) in special way
+                    boolean processedAsSpecialField = false;
+                    for (YamlArtefactFieldDeserializationProcessor proc : customFieldProcessors) {
+                        if (proc.deserializeArtefactField(javaArtifactClass, next, techArtefact, codec)) {
+                            processedAsSpecialField = true;
+                        }
                     }
-                }
 
-                // copy all other fields (parameters)
-                if (!processedAsSpecialField) {
-                    techArtefact.set(next.getKey(), next.getValue().deepCopy());
+                    // copy all other fields (parameters)
+                    if (!processedAsSpecialField) {
+                        techArtefact.set(next.getKey(), next.getValue().deepCopy());
+                    }
+                } catch (Exception ex) {
+                    throw new RuntimeException("Unable to deserialize field " + next.getKey() + " in artifact "
+                            + javaArtifactClass + " (" + artifactData.get(YamlPlanFields.NAME_YAML_FIELD) + ")");
                 }
             }
 

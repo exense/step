@@ -22,6 +22,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.scanner.CachedAnnotationScanner;
@@ -141,23 +142,28 @@ public class YamlRootArtefactSerializer extends JsonSerializer<YamlRootArtefact>
     protected void serializeArtefactFields(AbstractArtefact value, JsonGenerator gen) throws IOException, IllegalAccessException {
         List<Field> allFieldsInArtefact = getAllFieldsInArtefact(value);
         for (Field field : allFieldsInArtefact) {
-            boolean processedAsCustomField = false;
-            for (YamlArtefactFieldSerializationProcessor customFieldProcessor : customFieldProcessors) {
-                if(customFieldProcessor.serializeArtefactField(value, field, metadataExtractor.extractMetadata(field), gen)){
-                    processedAsCustomField = true;
-                    break;
-                }
-            }
             try {
-                if (!processedAsCustomField) {
-                    // default processing
-                    Object fieldValue = field.get(value);
-                    if(fieldValue != null) {
-                        gen.writeObjectField(field.getName(), fieldValue);
+                boolean processedAsCustomField = false;
+                for (YamlArtefactFieldSerializationProcessor customFieldProcessor : customFieldProcessors) {
+                    if (customFieldProcessor.serializeArtefactField(value, field, metadataExtractor.extractMetadata(field), gen)) {
+                        processedAsCustomField = true;
+                        break;
                     }
                 }
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException("Unable to get field value (" + field.getName() + ")", e);
+                try {
+                    if (!processedAsCustomField) {
+                        // default processing
+                        Object fieldValue = field.get(value);
+                        if (fieldValue != null) {
+                            gen.writeObjectField(field.getName(), fieldValue);
+                        }
+                    }
+                } catch (IllegalAccessException e) {
+                    throw new RuntimeException("Unable to get field value (" + field.getName() + ")", e);
+                }
+            } catch (Exception ex) {
+                throw new RuntimeException("Unable to serialize field " + field.getName() + " in artifact "
+                        + value.getClass().getSimpleName() + " (" + value.getAttribute(AbstractOrganizableObject.NAME) + ")");
             }
         }
     }
