@@ -163,7 +163,7 @@ public class YamlRootArtefactSerializer extends JsonSerializer<YamlRootArtefact>
                 }
             } catch (Exception ex) {
                 throw new RuntimeException("Unable to serialize field " + field.getName() + " in artifact "
-                        + value.getClass().getSimpleName() + " (" + value.getAttribute(AbstractOrganizableObject.NAME) + ")");
+                        + value.getClass().getSimpleName() + " (" + value.getAttribute(AbstractOrganizableObject.NAME) + ")", ex);
             }
         }
     }
