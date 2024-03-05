@@ -47,6 +47,7 @@ public class EntityManager  {
 	public final static String measurements = "measurements";
 	public final static String metricTypes = "metricTypes";
 	public final static String dashboards = "dashboards";
+	public final static String bookmarks = "bookmarks";
 
 	private final Map<String, Entity<?,?>> entities = new ConcurrentHashMap<String, Entity<?,?>>();
 
