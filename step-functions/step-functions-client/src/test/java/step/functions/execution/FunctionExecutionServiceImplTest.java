@@ -35,6 +35,7 @@ import org.junit.Test;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import step.core.AbstractStepContext;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.dynamicbeans.DynamicValueResolver;
@@ -341,7 +342,7 @@ public class FunctionExecutionServiceImplTest {
 					}
 					
 					@Override
-					public Map<String, String> getHandlerProperties(Function function) {
+					public Map<String, String> getHandlerProperties(Function function, AbstractStepContext executionContext) {
 						Map<String, String> handlerProperties = new HashMap<>();
 						handlerProperties.put("handlerProperty1", "handlerProperty1");
 						return handlerProperties;

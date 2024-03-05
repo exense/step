@@ -26,6 +26,7 @@ import java.util.function.Consumer;
 import org.junit.Assert;
 import org.junit.Test;
 
+import step.core.AbstractStepContext;
 import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
@@ -127,7 +128,7 @@ public class FunctionPluginTest {
 		}
 
 		@Override
-		public Map<String, String> getHandlerProperties(Function function) {
+		public Map<String, String> getHandlerProperties(Function function, AbstractStepContext executionContext) {
 			return null;
 		}
 
