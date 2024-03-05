@@ -25,6 +25,7 @@ import org.junit.Test;
 import step.artefacts.CallFunction;
 import step.artefacts.reports.CallFunctionReportNode;
 import step.attachments.AttachmentMeta;
+import step.core.AbstractStepContext;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
@@ -366,7 +367,7 @@ public class CallFunctionHandlerTest extends AbstractArtefactHandlerTest {
 					}
 
 					@Override
-					public Map<String, String> getHandlerProperties(Function function) {
+					public Map<String, String> getHandlerProperties(Function function, AbstractStepContext executionContext) {
 						return null;
 					}
 

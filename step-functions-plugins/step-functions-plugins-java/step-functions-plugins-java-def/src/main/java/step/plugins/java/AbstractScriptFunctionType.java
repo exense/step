@@ -74,10 +74,6 @@ public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction
 		return props;
 	}
 
-	public Map<String, String> getHandlerProperties(T function) {
-		return this.getHandlerProperties(function, null);
-	}
-
 	protected void addPluginLibsIfRequired(String scriptLanguage, Map<String, String> props) {
 		String property = configuration.getProperty("plugins."+scriptLanguage+".libs", null);
 		if(property != null) {
