@@ -21,24 +21,19 @@ public class PacerTest {
 	@Test
 	@Category(PerformanceTest.class)
 	public void test() throws InterruptedException {
-		int expectedThroughput;
-		AtomicInteger executionCount;
+		final int durationInSeconds = 5;
+		// Target throughput in 1/s
+		final int expectedThroughput = 100;
+		final AtomicInteger executionCount = new AtomicInteger(0);
+
+		// Variable sleep between 3s and 12s
+		// The variable sleep will temporarily exceed the pacing
+		// of 10ms corresponding to the throughput of 100/s
+		final int minSleep = 3;
+		final int maxMaxSleep = 12;
+		final int increment = 1;
+
 		try (ExecutionEngine executionEngine = ExecutionEngine.builder().build()) {
-
-			int durationInSeconds = 5;
-
-			// Target throughput in 1/s
-			expectedThroughput = 100;
-
-			// Variable sleep between 3s and 12s
-			// The variable sleep will temporarily exceed the pacing
-			// of 10ms corresponding to the throughput of 100/s
-			int minSleep = 3;
-			int maxMaxSleep = 12;
-			int increment = 1;
-
-
-			executionCount = new AtomicInteger(0);
 			AtomicInteger atomicInteger = new AtomicInteger(minSleep);
 			Pacer.scheduleAtConstantRate(i -> {
 				try {
