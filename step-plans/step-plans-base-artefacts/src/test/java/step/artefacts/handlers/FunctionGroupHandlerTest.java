@@ -23,6 +23,7 @@ import jakarta.json.JsonObject;
 import org.junit.Test;
 import step.artefacts.*;
 import step.artefacts.handlers.FunctionGroupHandler.FunctionGroupContext;
+import step.core.AbstractStepContext;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.CheckArtefact;
 import step.core.artefacts.reports.ReportNodeStatus;
@@ -386,7 +387,7 @@ public class FunctionGroupHandlerTest {
 					}
 
 					@Override
-					public Map<String, String> getHandlerProperties(Function function) {
+					public Map<String, String> getHandlerProperties(Function function, AbstractStepContext executionContext) {
 						return null;
 					}
 
