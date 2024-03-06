@@ -164,28 +164,26 @@ public class ScriptHandlerTest {
 	public void testParallel() throws InterruptedException, ExecutionException, TimeoutException {
 		int nIt = 100;
 		int nThreads = 10;
+        ExecutorService e = Executors.newFixedThreadPool(nThreads);
 
-		try (ExecutorService e = Executors.newFixedThreadPool(nThreads)) {
+        List<Future<Boolean>> results = new ArrayList<>();
 
-			List<Future<Boolean>> results = new ArrayList<>();
+        for(int i=0;i<nIt;i++) {
+            results.add(e.submit(new Callable<Boolean>() {
 
-			for (int i = 0; i < nIt; i++) {
-				results.add(e.submit(new Callable<Boolean>() {
+                @Override
+                public Boolean call() throws Exception {
+                    GeneralScriptFunction f = buildTestFunction("javascript","test1.js");
+                    Output<JsonObject> output = run(f, "{\"key1\":\"val1\"}");
+                    Assert.assertEquals("val1",output.getPayload().getString("key1"));
+                    return true;
+                }
+            }));
+        }
 
-					@Override
-					public Boolean call() throws Exception {
-						GeneralScriptFunction f = buildTestFunction("javascript", "test1.js");
-						Output<JsonObject> output = run(f, "{\"key1\":\"val1\"}");
-						Assert.assertEquals("val1", output.getPayload().getString("key1"));
-						return true;
-					}
-				}));
-			}
-
-			for (Future<Boolean> future : results) {
-				future.get(1, TimeUnit.MINUTES);
-			}
-		}
+        for (Future<Boolean> future : results) {
+            future.get(1, TimeUnit.MINUTES);
+        }
 	}
 	
 	private GeneralScriptFunction buildTestFunction(String scriptLanguage, String scriptFile) {
