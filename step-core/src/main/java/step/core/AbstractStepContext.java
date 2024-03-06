@@ -47,12 +47,15 @@ public abstract class AbstractStepContext extends AbstractContext {
 		expressionHandler = new ExpressionHandler();
 		dynamicBeanResolver = new DynamicBeanResolver(new DynamicValueResolver(expressionHandler));
 		// Create a local resource manager in a dedicated folder per default
-		localResourceManager = new LocalResourceManagerImpl(new File(contextPath()), new InMemoryResourceAccessor(), new InMemoryResourceRevisionAccessor());
+		localResourceManager = new LocalResourceManagerImpl(getContextFolderAsFile(), new InMemoryResourceAccessor(), new InMemoryResourceRevisionAccessor());
 		setResourceManager(localResourceManager);
 	}
 
-	private String contextPath() {
-		return "context_" + contextId;
+	private File getContextFolderAsFile() {
+		//TODO: currently, this will create a directory relative to $CWD.
+		// We may (or may not) want to consolidate this, e.g. to use a common temporary dir.
+		String dirName =  "stepContext_" + getClass().getSimpleName() + "_" + contextId;
+		return new File(dirName);
 	}
 
 	protected void useSourceAttributesFromParentContext(AbstractStepContext parentContext) {
