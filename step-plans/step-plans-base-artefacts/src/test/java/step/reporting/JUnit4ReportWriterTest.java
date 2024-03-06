@@ -79,10 +79,11 @@ public class JUnit4ReportWriterTest {
 		
 		File report = new File("TEST-JUnit4ReportWriterTest-testTestset.xml");
 		report.deleteOnExit();
-		
-		ExecutionEngine engine = ExecutionEngine.builder().withPlugin(new ThreadPoolPlugin()).withPlugin(new BaseArtefactPlugin()).build();
-		engine.execute(plan).writeReport(new JUnit4ReportWriter(), report);
-		
+
+		try (ExecutionEngine engine = ExecutionEngine.builder().withPlugin(new ThreadPoolPlugin()).withPlugin(new BaseArtefactPlugin()).build()) {
+			engine.execute(plan).writeReport(new JUnit4ReportWriter(), report);
+		}
+
 		PlanRunnerResultAssert.assertEquals(this.getClass(), "TEST-JUnit4ReportWriterTest-testTestset-expected.xml", report, "time=\".+?\"");
 	}
 	
@@ -108,10 +109,11 @@ public class JUnit4ReportWriterTest {
 		
 		File report = new File("TEST-JUnit4ReportWriterTest-testSimpleSequence.xml");
 		report.deleteOnExit();
-		
-		ExecutionEngine engine = ExecutionEngine.builder().withPlugin(new BaseArtefactPlugin()).build();
-		engine.execute(plan).writeReport(new JUnit4ReportWriter(), report);
-		
+
+		try (ExecutionEngine engine = ExecutionEngine.builder().withPlugin(new BaseArtefactPlugin()).build()) {
+			engine.execute(plan).writeReport(new JUnit4ReportWriter(), report);
+		}
+
 		PlanRunnerResultAssert.assertEquals(this.getClass(), "TEST-JUnit4ReportWriterTest-testSimpleSequence-expected.xml", report, "time=\".+?\"");
 	}
 	

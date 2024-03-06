@@ -67,11 +67,12 @@ public class FunctionPluginTest {
 			
 			localFunctionAccessor.save(function2);
 		});
-		ExecutionEngine engine = ExecutionEngine.builder().withParentContext(parentContext).withPlugin(new FunctionPlugin()).withPlugin(plugin).build();
-		Plan plan = PlanBuilder.create().startBlock(FunctionArtefacts.keyword("My function call")).endBlock().build();
-		ExecutionParameters executionParameters = new ExecutionParameters(ExecutionMode.RUN, plan, null, null, null, null, null, true, null);
-		engine.execute(executionParameters);
-		
+		try (ExecutionEngine engine = ExecutionEngine.builder().withParentContext(parentContext).withPlugin(new FunctionPlugin()).withPlugin(plugin).build()) {
+			Plan plan = PlanBuilder.create().startBlock(FunctionArtefacts.keyword("My function call")).endBlock().build();
+			ExecutionParameters executionParameters = new ExecutionParameters(ExecutionMode.RUN, plan, null, null, null, null, null, true, null);
+			engine.execute(executionParameters);
+		}
+
 		// Assert that the function2 that has been saved to the local function accessor of the execution context
 		// has not be saved to the parent context
 		Function actual = functionAccessor.get(function2.getId());

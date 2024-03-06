@@ -21,9 +21,9 @@ package step.artefacts.handlers;
 import java.io.IOException;
 import java.io.StringWriter;
 
+import org.junit.Assert;
 import org.junit.Test;
 
-import junit.framework.Assert;
 import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.Echo;
 import step.artefacts.Sequence;
@@ -55,9 +55,10 @@ public class SkipArtefactHandlerTest extends AbstractArtefactHandlerTest {
 		
 		// Run the plan
 		StringWriter writer = new StringWriter();
-		ExecutionEngine engine = ExecutionEngine.builder().withPlugin(new BaseArtefactPlugin()).build();
-		engine.execute(plan).printTree(writer);
-			
+		try (ExecutionEngine engine = ExecutionEngine.builder().withPlugin(new BaseArtefactPlugin()).build()) {
+			engine.execute(plan).printTree(writer);
+		}
+
 		Assert.assertEquals("Sequence:PASSED:\n" + 
 				" Sequence:PASSED:\n" +
 				"  Echo:PASSED:\n" +
@@ -85,9 +86,10 @@ public class SkipArtefactHandlerTest extends AbstractArtefactHandlerTest {
 		
 		// Run the plan
 		StringWriter writer = new StringWriter();
-		ExecutionEngine engine = ExecutionEngine.builder().withPlugin(new BaseArtefactPlugin()).build();
-		engine.execute(plan).printTree(writer);
-			
+		try (ExecutionEngine engine = ExecutionEngine.builder().withPlugin(new BaseArtefactPlugin()).build()) {
+			engine.execute(plan).printTree(writer);
+		}
+
 		Assert.assertEquals("Sequence:PASSED:\n" +
 				" Sequence:SKIPPED:\n" +
 				" Echo:PASSED:\n" +

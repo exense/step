@@ -21,9 +21,9 @@ package step.artefacts.handlers;
 import java.io.IOException;
 import java.io.StringWriter;
 
+import org.junit.Assert;
 import org.junit.Test;
 
-import junit.framework.Assert;
 import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.Check;
 import step.artefacts.TestScenario;
@@ -41,9 +41,10 @@ public class TestScenarioHandlerTest {
 		Plan plan = PlanBuilder.create().startBlock(new TestScenario()).add(passedCheck()).add(passedCheck()).endBlock().build();
 		
 		StringWriter writer = new StringWriter();
-		ExecutionEngine engine = ExecutionEngine.builder().withPlugin(new ThreadPoolPlugin()).withPlugin(new BaseArtefactPlugin()).build();
-		engine.execute(plan).printTree(writer);
-		
+		try (ExecutionEngine engine = ExecutionEngine.builder().withPlugin(new ThreadPoolPlugin()).withPlugin(new BaseArtefactPlugin()).build()) {
+			engine.execute(plan).printTree(writer);
+		}
+
 		Assert.assertTrue(writer.toString().startsWith("TestScenario:"+ReportNodeStatus.PASSED));
 	}
 	
