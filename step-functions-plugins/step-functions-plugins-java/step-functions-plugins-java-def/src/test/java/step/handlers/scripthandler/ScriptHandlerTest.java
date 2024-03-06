@@ -31,6 +31,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import ch.exense.commons.test.categories.PerformanceTest;
 import jakarta.json.JsonObject;
 
 import org.bson.types.ObjectId;
@@ -39,6 +40,7 @@ import org.junit.Test;
 
 import ch.exense.commons.app.Configuration;
 import ch.exense.commons.io.FileHelper;
+import org.junit.experimental.categories.Category;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
 import step.functions.io.Output;
@@ -156,30 +158,33 @@ public class ScriptHandlerTest {
 		Assert.assertTrue(out.getError().getMsg().startsWith("Error while running error handler script:"));
 		Assert.assertEquals(1,out.getAttachments().size());
 	}
-	
-	@Test 
+
+	@Test
+	@Category(PerformanceTest.class)
 	public void testParallel() throws InterruptedException, ExecutionException, TimeoutException {
 		int nIt = 100;
 		int nThreads = 10;
-		ExecutorService e = Executors.newFixedThreadPool(nThreads);
-		
-		List<Future<Boolean>> results = new ArrayList<>();
-		
-		for(int i=0;i<nIt;i++) {
-			results.add(e.submit(new Callable<Boolean>() {
-				
-				@Override
-				public Boolean call() throws Exception {
-					GeneralScriptFunction f = buildTestFunction("javascript","test1.js");
-					Output<JsonObject> output = run(f, "{\"key1\":\"val1\"}");
-					Assert.assertEquals("val1",output.getPayload().getString("key1"));
-					return true;
-				}
-			}));
-		}
-		
-		for (Future<Boolean> future : results) {
-			future.get(1, TimeUnit.MINUTES);
+
+		try (ExecutorService e = Executors.newFixedThreadPool(nThreads)) {
+
+			List<Future<Boolean>> results = new ArrayList<>();
+
+			for (int i = 0; i < nIt; i++) {
+				results.add(e.submit(new Callable<Boolean>() {
+
+					@Override
+					public Boolean call() throws Exception {
+						GeneralScriptFunction f = buildTestFunction("javascript", "test1.js");
+						Output<JsonObject> output = run(f, "{\"key1\":\"val1\"}");
+						Assert.assertEquals("val1", output.getPayload().getString("key1"));
+						return true;
+					}
+				}));
+			}
+
+			for (Future<Boolean> future : results) {
+				future.get(1, TimeUnit.MINUTES);
+			}
 		}
 	}
 	
