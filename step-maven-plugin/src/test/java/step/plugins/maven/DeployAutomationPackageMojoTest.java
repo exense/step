@@ -20,10 +20,14 @@ package step.plugins.maven;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.project.MavenProject;
+import org.bson.types.ObjectId;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
 import org.mockito.Mockito;
+import step.automation.packages.AutomationPackageUpdateResult;
+import step.automation.packages.AutomationPackageUpdateStatus;
 import step.automation.packages.client.AutomationPackageClientException;
 import step.automation.packages.client.RemoteAutomationPackageClientImpl;
 import step.controller.multitenancy.client.RemoteMultitenancyClientImpl;
@@ -36,7 +40,7 @@ import java.util.List;
 
 public class DeployAutomationPackageMojoTest extends AbstractMojoTest {
 
-    private static final String UPDATED_PACK_ID = "updatedPackId";
+    private static final ObjectId UPDATED_PACK_ID = new ObjectId();
 
     @Test
     public void testUpload() throws Exception {
@@ -53,7 +57,7 @@ public class DeployAutomationPackageMojoTest extends AbstractMojoTest {
 
         // attributes used to search for existing function packages
         ArgumentCaptor<File> packageFileCaptor = ArgumentCaptor.forClass(File.class);
-        Mockito.verify(automationPackageClient, Mockito.times(1)).createOrUpdateAutomationPackage(packageFileCaptor.capture());
+        Mockito.verify(automationPackageClient, Mockito.times(1)).createOrUpdateAutomationPackage(packageFileCaptor.capture(), Mockito.anyBoolean());
         Mockito.verify(automationPackageClient, Mockito.times(1)).close();
         Mockito.verifyNoMoreInteractions(automationPackageClient);
         Assert.assertEquals(mojo.getProject().getAttachedArtifacts().get(0).getFile(), packageFileCaptor.getValue());
@@ -68,6 +72,7 @@ public class DeployAutomationPackageMojoTest extends AbstractMojoTest {
         mojo.setGroupId(GROUP_ID);
         mojo.setArtifactClassifier("jar-with-dependencies");
         mojo.setStepProjectName(TENANT_1.getName());
+        mojo.setAsync(false);
 
         MavenProject mockedProject = Mockito.mock(MavenProject.class);
         Artifact mainArtifact = createArtifactMock();
@@ -85,7 +90,7 @@ public class DeployAutomationPackageMojoTest extends AbstractMojoTest {
 
     private RemoteAutomationPackageClientImpl createRemoteAutomationPackageClientMock() throws AutomationPackageClientException {
         RemoteAutomationPackageClientImpl remoteClient = Mockito.mock(RemoteAutomationPackageClientImpl.class);
-        Mockito.when(remoteClient.createOrUpdateAutomationPackage(Mockito.any())).thenReturn(UPDATED_PACK_ID);
+        Mockito.when(remoteClient.createOrUpdateAutomationPackage(Mockito.any(), Mockito.anyBoolean())).thenReturn(new AutomationPackageUpdateResult(AutomationPackageUpdateStatus.CREATED, UPDATED_PACK_ID));
         return remoteClient;
     }
 

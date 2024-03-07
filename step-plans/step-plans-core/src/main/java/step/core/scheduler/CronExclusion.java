@@ -8,6 +8,11 @@ public class CronExclusion {
 	public CronExclusion() {
 	}
 
+	public CronExclusion(String cronExpression, String description) {
+		this.cronExpression = cronExpression;
+		this.description = description;
+	}
+
 	public String getCronExpression() {
 		return cronExpression;
 	}

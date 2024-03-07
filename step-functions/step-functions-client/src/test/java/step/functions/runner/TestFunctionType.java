@@ -20,6 +20,7 @@ package step.functions.runner;
 
 import java.util.Map;
 
+import step.core.AbstractStepContext;
 import step.functions.type.AbstractFunctionType;
 import step.grid.filemanager.FileVersionId;
 
@@ -31,7 +32,7 @@ public class TestFunctionType extends AbstractFunctionType<TestFunction> {
 	}
 
 	@Override
-	public Map<String, String> getHandlerProperties(TestFunction function) {
+	public Map<String, String> getHandlerProperties(TestFunction function, AbstractStepContext executionContext) {
 		return null;
 	}
 

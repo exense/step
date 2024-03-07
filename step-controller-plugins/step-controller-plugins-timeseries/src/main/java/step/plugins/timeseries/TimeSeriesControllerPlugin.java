@@ -4,6 +4,8 @@ import ch.exense.commons.app.Configuration;
 import step.core.GlobalContext;
 import step.core.collections.Collection;
 import step.core.collections.CollectionFactory;
+import step.core.collections.IndexField;
+import step.core.collections.Order;
 import step.core.deployment.WebApplicationConfigurationManager;
 import step.core.entities.Entity;
 import step.core.entities.EntityManager;
@@ -21,10 +23,7 @@ import step.plugins.measurements.MeasurementPlugin;
 import step.plugins.timeseries.dashboards.model.*;
 import step.plugins.timeseries.dashboards.DashboardAccessor;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static step.plugins.timeseries.TimeSeriesExecutionPlugin.*;
 
@@ -41,6 +40,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 	private TimeSeriesIngestionPipeline mainIngestionPipeline;
 	private TimeSeriesAggregationPipeline aggregationPipeline;
 	private DashboardAccessor dashboardAccessor;
+	private TimeSeries timeSeries;
 
 	@Override
 	public void serverStart(GlobalContext context) {
@@ -50,7 +50,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 		List<String> attributes = Arrays.asList(configuration.getProperty(TIME_SERIES_ATTRIBUTES_PROPERTY, TIME_SERIES_ATTRIBUTES_DEFAULT).split(","));
 		CollectionFactory collectionFactory = context.getCollectionFactory();
 
-		TimeSeries timeSeries = new TimeSeries(collectionFactory, TIME_SERIES_COLLECTION_PROPERTY, Set.of("eId"), resolutionPeriod);
+		timeSeries = new TimeSeries(collectionFactory, TIME_SERIES_COLLECTION_PROPERTY, resolutionPeriod);
 		mainIngestionPipeline = timeSeries.newIngestionPipeline(flushPeriod);
 		aggregationPipeline = timeSeries.getAggregationPipeline();
 		TimeSeriesAggregationPipeline aggregationPipeline = timeSeries.getAggregationPipeline();
@@ -101,6 +101,8 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 
 	@Override
 	public void initializeData(GlobalContext context) {
+		timeSeries.createIndexes(new LinkedHashSet<>(List.of(new IndexField("eId", Order.ASC, String.class))));
+
 		//Create legacy dashboards
 		createLegacyDashboard();
 

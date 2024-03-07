@@ -42,11 +42,11 @@ public class AutomationPackageManagerOS extends AutomationPackageManager {
     public AutomationPackageManagerOS(AutomationPackageAccessor automationPackageAccessor, FunctionManager functionManager,
                                       FunctionAccessor functionAccessor, PlanAccessor planAccessor, ResourceManager resourceManager,
                                       ExecutionTaskAccessor executionTaskAccessor, AutomationPackageHookRegistry automationPackageHookRegistry,
-                                      AbstractAutomationPackageReader<?> reader) {
+                                      AbstractAutomationPackageReader<?> reader, AutomationPackageLocks automationPackageLocks) {
         super(automationPackageAccessor, functionManager,
                 functionAccessor, planAccessor,
                 resourceManager, executionTaskAccessor,
-                automationPackageHookRegistry, reader
+                automationPackageHookRegistry, reader, automationPackageLocks
         );
     }
 
@@ -55,22 +55,37 @@ public class AutomationPackageManagerOS extends AutomationPackageManager {
         return createIsolatedAutomationPackageManagerOS(isolatedContextId, functionTypeRegistry, mainFunctionAccessor, getPackageReader());
     }
 
-    public static AutomationPackageManager createIsolatedAutomationPackageManagerOS(ObjectId isolatedContextId,
-                                                                                    FunctionTypeRegistry functionTypeRegistry,
-                                                                                    FunctionAccessor mainFunctionAccessor,
-                                                                                    AbstractAutomationPackageReader<?> reader) {
-
-        return AutomationPackageManagerOS.createIsolatedAutomationPackageManagerOS(isolatedContextId,
-                functionTypeRegistry, mainFunctionAccessor,
-                new LocalResourceManagerImpl(new File("resources_" + isolatedContextId.toString())),
-                reader);
+    /**
+     * Creates the local automation package manager to be used in JUnit runners
+     */
+    public static AutomationPackageManager createLocalAutomationPackageManagerOS(FunctionTypeRegistry functionTypeRegistry,
+                                                                                 FunctionAccessor mainFunctionAccessor,
+                                                                                 ResourceManager resourceManager,
+                                                                                 AbstractAutomationPackageReader<?> reader) {
+        // for local AP manager we don't need to create layered accessors
+        AutomationPackageManager automationPackageManager = new AutomationPackageManagerOS(
+                new InMemoryAutomationPackageAccessorImpl(),
+                new FunctionManagerImpl(mainFunctionAccessor, functionTypeRegistry),
+                mainFunctionAccessor,
+                new InMemoryPlanAccessor(),
+                resourceManager,
+                new InMemoryExecutionTaskAccessor(),
+                new AutomationPackageHookRegistry(), reader,
+                new AutomationPackageLocks(DEFAULT_READLOCK_TIMEOUT_SECONDS)
+        );
+        automationPackageManager.isIsolated = true;
+        return automationPackageManager;
     }
 
+    /**
+     * Creates the automation package manager to be used for isolated executions (based on in-memory accessors)
+     */
     public static AutomationPackageManager createIsolatedAutomationPackageManagerOS(ObjectId isolatedContextId,
                                                                                     FunctionTypeRegistry functionTypeRegistry,
                                                                                     FunctionAccessor mainFunctionAccessor,
-                                                                                    ResourceManager resourceManager,
                                                                                     AbstractAutomationPackageReader<?> reader) {
+
+        ResourceManager resourceManager1 = new LocalResourceManagerImpl(new File("resources_" + isolatedContextId.toString()));
         InMemoryFunctionAccessorImpl inMemoryFunctionRepository = new InMemoryFunctionAccessorImpl();
         LayeredFunctionAccessor layeredFunctionAccessor = new LayeredFunctionAccessor(List.of(inMemoryFunctionRepository, mainFunctionAccessor));
 
@@ -79,10 +94,10 @@ public class AutomationPackageManagerOS extends AutomationPackageManager {
                 new FunctionManagerImpl(layeredFunctionAccessor, functionTypeRegistry),
                 layeredFunctionAccessor,
                 new InMemoryPlanAccessor(),
-                resourceManager,
+                resourceManager1,
                 new InMemoryExecutionTaskAccessor(),
-                new AutomationPackageHookRegistry(), reader
-        );
+                new AutomationPackageHookRegistry(), reader,
+                new AutomationPackageLocks(DEFAULT_READLOCK_TIMEOUT_SECONDS));
         automationPackageManager.isIsolated = true;
         return automationPackageManager;
     }

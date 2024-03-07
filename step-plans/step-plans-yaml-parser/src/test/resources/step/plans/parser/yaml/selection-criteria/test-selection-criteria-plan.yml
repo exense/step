@@ -7,7 +7,8 @@ root:
       - callKeyword:
           nodeName: "myKeyword2"
           keyword:
-            expression: "'myKeyword2'"
+            name:
+              expression: "'myKeyword2'"
       - callKeyword:
           keyword: "myKeyword3"
           routing:
@@ -15,10 +16,16 @@ root:
       - callKeyword:
           nodeName: "myKeyword4"
           keyword:
-            expression: "'myKeyword4'"
+            name:
+              expression: "'myKeyword4'"
           routing:
             - criteria1: "criteriaValue1"
           inputs:
             - stringInput:
                 expression: "'abc'"
             - intInput: 777
+      - callKeyword:
+          nodeName: "myKeyword5"
+          keyword:
+            name: "myKeyword5"
+            version: "1.0.0"

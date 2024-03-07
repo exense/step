@@ -19,8 +19,9 @@
 package step.functions.accessor;
 
 import step.core.accessors.Accessor;
+import step.core.collections.IndexField;
 import step.functions.Function;
 
 public interface FunctionAccessor extends Accessor<Function> {
-    void createIndexIfNeeded(String fieldName);
+    void createIndexIfNeeded(IndexField indexField);
 }
