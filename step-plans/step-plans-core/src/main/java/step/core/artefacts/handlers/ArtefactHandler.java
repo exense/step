@@ -191,10 +191,9 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		if(persistAfter) {
 			if(!persistOnlyNonPassed){
 				saveReportNode(reportNode);
-			} else {
-				if(!reportNode.getStatus().equals(ReportNodeStatus.PASSED)){
-					saveReportNode(reportNode);
-				}
+			} else if(!reportNode.getStatus().equals(ReportNodeStatus.PASSED) &&
+						!reportNode.getStatus().equals(ReportNodeStatus.SKIPPED)){
+				saveReportNode(reportNode);
 			}
 		}
 		
