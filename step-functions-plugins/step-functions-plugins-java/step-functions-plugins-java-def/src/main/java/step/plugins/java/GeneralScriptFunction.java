@@ -23,6 +23,10 @@ import step.core.entities.EntityManager;
 import step.core.entities.EntityReference;
 import step.functions.Function;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.nio.file.NoSuchFileException;
+
 /**
  * This class encapsulates the configuration parameters of functions (aka Keywords)
  * of type "Script"
@@ -71,7 +75,7 @@ public class GeneralScriptFunction extends Function {
 	 * a list of jars
 	 */
 	public void setLibrariesFile(DynamicValue<String> librariesFile) {
-		this.librariesFile = librariesFile;
+		this.librariesFile = validateFileValue(librariesFile);
 	}
 
 	@EntityReference(type=EntityManager.resources)
@@ -83,6 +87,27 @@ public class GeneralScriptFunction extends Function {
 	 * @param errorHandlerFile the path to the script to be executed when the function returns an error
 	 */
 	public void setErrorHandlerFile(DynamicValue<String> errorHandlerFile) {
-		this.errorHandlerFile = errorHandlerFile;
+		this.errorHandlerFile = validateFileValue(errorHandlerFile);
 	}
+
+	// This performs some sanity check on values which are supposed to be files (or directories).
+	// Given the nature of DynamicValues, this is not 100% bulletproof, but it should at least
+	// catch blatant mistakes.
+	static DynamicValue<String> validateFileValue(DynamicValue<String> fileValue) {
+		if (fileValue == null || fileValue.isDynamic()) {
+			return fileValue;
+		}
+		String filename = fileValue.getValue();
+		if (filename == null || filename.isBlank()) {
+			// better not mess with this, hope the user knows what he's doing.
+			return fileValue;
+		}
+		File f = new File(filename);
+		if (!f.exists()) {
+			throw new RuntimeException(new FileNotFoundException(filename));
+		}
+		return fileValue;
+	}
+
+
 }
