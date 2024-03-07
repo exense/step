@@ -63,6 +63,7 @@ public class ScreenTemplateService extends AbstractStepServices {
 			add(ScreenTemplatePlugin.PARAMETER_DIALOG);
 			add(ScreenTemplatePlugin.PLAN_TABLE);
 			add(ScreenTemplatePlugin.PARAMETER_TABLE);
+			add(ScreenTemplatePlugin.FUNCTION_TABLE_EXTENSIONS);
 		}
 	};
 
