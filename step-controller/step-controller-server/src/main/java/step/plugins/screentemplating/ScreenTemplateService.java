@@ -54,7 +54,18 @@ public class ScreenTemplateService extends AbstractStepServices {
 	protected ScreenTemplateManager screenTemplateManager;
 	protected ScreenInputAccessor screenInputAccessor;
 	protected ObjectPredicateFactory objectPredicateFactory;
-	
+	private final Set<String> screens = new HashSet<>() {
+		{
+			add(ScreenTemplatePlugin.SCHEDULER_TABLE);
+			add(ScreenTemplatePlugin.EXECUTION_TABLE);
+			add(ScreenTemplatePlugin.FUNCTION_TABLE);
+			add(ScreenTemplatePlugin.EXECUTION_PARAMETERS);
+			add(ScreenTemplatePlugin.PARAMETER_DIALOG);
+			add(ScreenTemplatePlugin.PLAN_TABLE);
+			add(ScreenTemplatePlugin.PARAMETER_TABLE);
+		}
+	};
+
 	@PostConstruct
 	public void init() throws Exception {
 		super.init();
@@ -68,14 +79,7 @@ public class ScreenTemplateService extends AbstractStepServices {
 	@GET
 	@Secured
 	@Produces(MediaType.APPLICATION_JSON)
-	public Set<String> getScreens() {		
-		HashSet<String> screens = new HashSet<>();
-		screenInputAccessor.getAll().forEachRemaining(s->{
-			String screenId = s.getScreenId();
-			if(screenId!=null) {
-				screens.add(screenId);
-			}
-		});
+	public Set<String> getScreens() {
 		return screens;
 	}
 	
@@ -98,7 +102,7 @@ public class ScreenTemplateService extends AbstractStepServices {
 	public List<Input> getInputsForScreenPost(@PathParam("id") String screenId, Object params) {
 		ObjectPredicate objectPredicate = objectPredicateFactory.getObjectPredicate(getSession());
 		Map<String, Object> contextBindings = getContextBindings(null);
-		if(params != null && params instanceof Map) {
+		if(params instanceof Map) {
 			contextBindings.putAll((Map<String, Object>) params);
 		}
 		return screenTemplateManager.getInputsForScreen(screenId, contextBindings, objectPredicate);
