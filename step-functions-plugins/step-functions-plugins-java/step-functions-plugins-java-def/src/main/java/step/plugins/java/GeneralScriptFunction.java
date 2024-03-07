@@ -25,7 +25,6 @@ import step.functions.Function;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.nio.file.NoSuchFileException;
 
 /**
  * This class encapsulates the configuration parameters of functions (aka Keywords)
