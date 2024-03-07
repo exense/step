@@ -10,6 +10,7 @@ import step.core.collections.Filters;
 import step.functions.packages.FunctionPackagePlugin;
 import step.migration.MigrationContext;
 import step.migration.MigrationTask;
+import step.plugins.screentemplating.ScreenTemplatePlugin;
 
 public class ScreenTemplateFunctionTableExtensionsMigrationTask extends MigrationTask {
 
@@ -24,7 +25,7 @@ public class ScreenTemplateFunctionTableExtensionsMigrationTask extends Migratio
 	@Override
 	public void runUpgradeScript() {
 		screenInputs
-				.find(Filters.and(List.of(Filters.equals("screenId", FunctionPackagePlugin.FUNCTION_TABLE_EXTENSIONS),
+				.find(Filters.and(List.of(Filters.equals("screenId", ScreenTemplatePlugin.FUNCTION_TABLE_EXTENSIONS),
 						Filters.equals("input.id", "customFields.functionPackageId"))), null, null, null, 0)
 				.forEach(t -> {
 					Document input = (Document) t.get("input");
@@ -32,10 +33,10 @@ public class ScreenTemplateFunctionTableExtensionsMigrationTask extends Migratio
 						input.put("searchMapperService", "rest/table/functionPackage/searchIdsBy/attributes.name");
 
 						screenInputs.save(t);
-						logger.info("Migrating screen input of type " + FunctionPackagePlugin.FUNCTION_TABLE_EXTENSIONS
+						logger.info("Migrating screen input of type " + ScreenTemplatePlugin.FUNCTION_TABLE_EXTENSIONS
 								+ " to " + t);
 					} else {
-						logger.warn("Migrating screen input of type " + FunctionPackagePlugin.FUNCTION_TABLE_EXTENSIONS
+						logger.warn("Migrating screen input of type " + ScreenTemplatePlugin.FUNCTION_TABLE_EXTENSIONS
 								+ " failed: no input found in " + t);
 					}
 				});
