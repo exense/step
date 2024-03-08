@@ -42,7 +42,7 @@ import step.framework.server.security.Secured;
 @Provider
 @Secured
 @Priority(Priorities.AUTHENTICATION)
-public class NoAuthenticationFilter extends AbstractStepServices implements ContainerRequestFilter {
+public class AnonymousAuthenticationFilter extends AbstractStepServices implements ContainerRequestFilter {
 
     public static final String ANONYMOUS = "anonymous";
     private UserAccessor userAccessor;
