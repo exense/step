@@ -31,43 +31,52 @@ import step.core.GlobalContext;
 import step.core.access.User;
 import step.core.access.UserAccessor;
 import step.framework.server.Session;
+import step.framework.server.security.Secured;
 
-
+/**
+ * Dummy authentication filter for Step OS, only applies to Secured services. The filter authenticate as
+ * the anonymous user if the session is not yet authenticated.
+ * Make sure to use a lower priority filter (<1000) to bypass it and actually check authentication.
+ * Such filter must abort the chain when not authenticated, the NoAuthenticationFilter does nothing in this context.
+ */
 @Provider
-@Priority(Priorities.AUTHENTICATION)//should be called before the framework one to set default user if required
-public class NoSecurityFilter extends AbstractStepServices implements ContainerRequestFilter {
+@Secured
+@Priority(Priorities.AUTHENTICATION)
+public class AnonymousAuthenticationFilter extends AbstractStepServices implements ContainerRequestFilter {
 
+    public static final String ANONYMOUS = "anonymous";
     private UserAccessor userAccessor;
+    private User anonymousUser;
 
     @PostConstruct
     public void init() throws Exception {
         super.init();
         GlobalContext context = getContext();
         userAccessor = context.getUserAccessor();
-
+        anonymousUser = userAccessor.getByUsername(ANONYMOUS);
     }
 
     @Override
     public void filter(ContainerRequestContext requestContext) throws IOException {
-        // Retrieve or initialize session
-        retrieveOrInitializeSession();
+        authenticateAsAnonymousIfNeeded();
     }
 
-    protected Session retrieveOrInitializeSession() {
+    protected void authenticateAsAnonymousIfNeeded() {
         Session session = getSession();
-        if(session == null) {
-            session = new Session();
-            User anonymous = userAccessor.getByUsername("anonymous");
-            if (anonymous == null) {
-                anonymous = new User();
-                anonymous.setUsername("anonymous");
-                anonymous.setRole("admin");
-                userAccessor.save(anonymous);
-            }
-            session.setUser(anonymous);
-            session.setAuthenticated(false); //no authentication here, only setting
+        if (!session.isAuthenticated() && session.getUser() == null) {
+            createAnonymousUserIfRequired();
+            session.setUser(anonymousUser);
+            session.setAuthenticated(true);
             setSession(session);
         }
-        return session;
+    }
+
+    private synchronized void createAnonymousUserIfRequired() {
+        if (anonymousUser == null) {
+            anonymousUser = new User();
+            anonymousUser.setUsername(ANONYMOUS);
+            anonymousUser.setRole("admin");
+            userAccessor.save(anonymousUser);
+        }
     }
 }
