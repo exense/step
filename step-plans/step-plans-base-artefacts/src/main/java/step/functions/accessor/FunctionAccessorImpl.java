@@ -20,6 +20,7 @@ package step.functions.accessor;
 
 import step.core.accessors.AbstractAccessor;
 import step.core.collections.Collection;
+import step.core.collections.IndexField;
 import step.functions.Function;
 
 public class FunctionAccessorImpl extends AbstractAccessor<Function> implements FunctionAccessor {
@@ -29,7 +30,7 @@ public class FunctionAccessorImpl extends AbstractAccessor<Function> implements 
 	}
 
 	@Override
-	public void createIndexIfNeeded(String fieldName) {
-		createOrUpdateIndex(fieldName);
+	public void createIndexIfNeeded(IndexField indexField) {
+		createOrUpdateIndex(indexField);
 	}
 }

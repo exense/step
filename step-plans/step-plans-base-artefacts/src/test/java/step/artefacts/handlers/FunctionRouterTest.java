@@ -34,6 +34,7 @@ import junit.framework.Assert;
 import step.artefacts.AbstractArtefactTest;
 import step.artefacts.CallFunction;
 import step.artefacts.handlers.FunctionGroupHandler.FunctionGroupContext;
+import step.core.AbstractStepContext;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
@@ -86,7 +87,7 @@ public class FunctionRouterTest extends AbstractArtefactTest {
 			}
 
 			@Override
-			public Map<String, String> getHandlerProperties(Function function) {
+			public Map<String, String> getHandlerProperties(Function function, AbstractStepContext executionContext) {
 				return null;
 			}
 

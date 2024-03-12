@@ -378,7 +378,25 @@
               "$ref" : "#/$defs/DynamicKeywordInputsDef"
             },
             "keyword" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+              "oneOf" : [ {
+                "type" : "string"
+              }, {
+                "type" : "object",
+                "patternProperties" : {
+                  ".*" : {
+                    "oneOf" : [ {
+                      "type" : "number"
+                    }, {
+                      "type" : "boolean"
+                    }, {
+                      "type" : "string"
+                    }, {
+                      "$ref" : "#/$defs/DynamicExpressionDef"
+                    } ]
+                  }
+                },
+                "additionalProperties" : false
+              } ]
             }
           }
         }

@@ -18,7 +18,9 @@
  ******************************************************************************/
 package step.plugins.functions.types.composite;
 
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.Return;
@@ -52,10 +54,20 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class ArtefactFunctionHandlerTest {
 
+	protected ExecutionEngine engine;
+
+	@Before
+	public void before() {
+		engine = ExecutionEngine.builder().withPlugins(Arrays.asList(new BaseArtefactPlugin(), new FunctionPlugin())).build();
+	}
+	@After
+	public void after() throws Exception {
+		engine.close();
+	}
+
 	@Test
 	public void test() {
-		ExecutionContext context = newExecutionContext();
-
+		ExecutionContext context = engine.newExecutionContext();
 		Return r = new Return();
 		r.setOutput(new DynamicValue<>("{\"Result\":{\"dynamic\":true,\"expression\":\"input.Input1\"}}"));
 		
@@ -82,10 +94,6 @@ public class ArtefactFunctionHandlerTest {
 		Assert.assertEquals(3, count.get());
 	}
 
-	protected ExecutionContext newExecutionContext() {
-		return ExecutionEngine.builder().withPlugins(Arrays.asList(new BaseArtefactPlugin(), new FunctionPlugin())).build().newExecutionContext();
-	}
-
 	protected ArtefactFunctionHandler createArtefactFunctionHandler(ExecutionContext context) {
 		ArtefactFunctionHandler handler = new ArtefactFunctionHandler();
 		
@@ -100,7 +108,7 @@ public class ArtefactFunctionHandlerTest {
 	
 	@Test
 	public void testError() {
-		ExecutionContext context = newExecutionContext();
+		ExecutionContext context = engine.newExecutionContext();
 
 		Script script = new Script();
 		script.setScript("output.setError('MyError'");

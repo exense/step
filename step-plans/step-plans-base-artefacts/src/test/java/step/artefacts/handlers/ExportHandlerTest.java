@@ -100,6 +100,8 @@ public class ExportHandlerTest {
 		Plan plan = PlanBuilder.create().startBlock(s).add(new CheckArtefact(c->{
 			throw new RuntimeException();
 		})).add(e).endBlock().build();
-		ExecutionEngine.builder().withPlugin(new BaseArtefactPlugin()).build().execute(plan);
+		try (ExecutionEngine engine = ExecutionEngine.builder().withPlugin(new BaseArtefactPlugin()).build()) {
+			engine.execute(plan);
+		}
 	}
 }

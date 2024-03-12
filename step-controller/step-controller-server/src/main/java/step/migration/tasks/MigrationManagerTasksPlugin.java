@@ -46,6 +46,7 @@ public class MigrationManagerTasksPlugin extends AbstractControllerPlugin {
 		migrationManager.register(MigrateLogicFlowFunctions.class);
 		migrationManager.register(ParameterPriorityScreenInputMigrationTask.class);
 		migrationManager.register(ScreenEntityIconMigrationTask.class);
+		migrationManager.register(FixPostgreSQLIndexes.class);
 	}
 
 	@Override
