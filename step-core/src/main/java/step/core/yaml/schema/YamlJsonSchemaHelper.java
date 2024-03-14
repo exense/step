@@ -146,6 +146,12 @@ public class YamlJsonSchemaHelper {
 //		}
 		JsonObjectBuilder res = jsonProvider.createObjectBuilder();
 		res.add("type", "array");
+		JsonObjectBuilder arrayItemDef = createPatternPropertiesWithDynamicValues();
+		res.add("items", arrayItemDef);
+		return res;
+	}
+
+	public JsonObjectBuilder createPatternPropertiesWithDynamicValues() {
 		JsonObjectBuilder arrayItemDef = jsonProvider.createObjectBuilder();
 		arrayItemDef.add("type", "object");
 
@@ -159,8 +165,7 @@ public class YamlJsonSchemaHelper {
 				.add(".*", jsonProvider.createObjectBuilder().add("oneOf", oneOfArray));
 		arrayItemDef.add("patternProperties", properties);
 		arrayItemDef.add("additionalProperties", false);
-		res.add("items", arrayItemDef);
-		return res;
+		return arrayItemDef;
 	}
 
 	private JsonObjectBuilder createDynamicValueDef() {

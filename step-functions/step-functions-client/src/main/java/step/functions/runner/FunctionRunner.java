@@ -47,6 +47,9 @@ import step.grid.client.GridClient;
 import step.grid.client.MockedGridClientImpl;
 import step.resources.LocalResourceManagerImpl;
 
+/**
+ * This class is only used in Unit Tests, there should be no production code referencing it.
+ */
 public class FunctionRunner {
 
 	public static class Context implements Closeable {
@@ -55,8 +58,8 @@ public class FunctionRunner {
 		
 		FunctionExecutionService functionExecutionService;
 		
-		GridClient client;
-		File fileManagerDirectory;
+		private final GridClient client;
+		private final File fileManagerDirectory;
 		
 		protected Context(Configuration configuration, AbstractFunctionType<?> functionType, Map<String, String> properties) {
 			super();

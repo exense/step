@@ -19,6 +19,7 @@
 package step.plugins.functions.types;
 
 import step.core.AbstractContext;
+import step.core.AbstractStepContext;
 import step.core.objectenricher.ObjectHookRegistry;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
@@ -55,7 +56,7 @@ public class CompositeFunctionType extends AbstractFunctionType<CompositeFunctio
 	}
 
 	@Override
-	public Map<String, String> getHandlerProperties(CompositeFunction function) {
+	public Map<String, String> getHandlerProperties(CompositeFunction function, AbstractStepContext executionContext) {
 		Map<String, String> props = new HashMap<>();
 		props.put(ArtefactFunctionHandler.COMPOSITE_FUNCTION_KEY, function.getId().toString());
 		return props;

@@ -61,4 +61,9 @@ public class DefaultPlanRunner implements PlanRunner {
 		}
 		return engine.execute(plan, mergedExecutionParameters);
 	}
+
+	@Override
+	public void close() {
+		engine.close();
+	}
 }

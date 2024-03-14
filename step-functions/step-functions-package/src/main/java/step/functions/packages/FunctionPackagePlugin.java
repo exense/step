@@ -26,7 +26,6 @@ import java.util.List;
 @Plugin(dependencies= {ObjectHookControllerPlugin.class, ResourceManagerControllerPlugin.class, FunctionControllerPlugin.class, ScreenTemplatePlugin.class, GeneralScriptFunctionControllerPlugin.class})
 public class FunctionPackagePlugin extends AbstractControllerPlugin {
 
-	public static final String FUNCTION_TABLE_EXTENSIONS = "functionTableExtensions";
 	private static final Logger logger = LoggerFactory.getLogger(FunctionPackagePlugin.class);
 	private FunctionPackageManager packageManager;
 	private FunctionManager functionManager;
@@ -36,10 +35,10 @@ public class FunctionPackagePlugin extends AbstractControllerPlugin {
 	public void serverStart(GlobalContext context) throws Exception {
 		FileResolver fileResolver = context.getFileResolver();
 		ResourceManager resourceManager = context.getResourceManager();
-		
+
 		packageAccessor = new FunctionPackageAccessorImpl(
 				context.getCollectionFactory().getCollection("functionPackage", FunctionPackage.class));
-		
+
 		Configuration configuration = context.getConfiguration();
 		functionManager = context.get(FunctionManager.class);
 		ObjectHookRegistry objectHookRegistry = context.require(ObjectHookRegistry.class);
@@ -48,7 +47,7 @@ public class FunctionPackagePlugin extends AbstractControllerPlugin {
 		packageManager.registerFunctionPackageHandler(new RepositoryArtifactFunctionPackageHandler(resourceManager, fileResolver, configuration));
 
 		packageManager.start();
-		
+
 		context.put(FunctionPackageManager.class, packageManager);
 
 		Collection<FunctionPackage> functionPackageCollection = context.getCollectionFactory().getCollection("functionPackage", FunctionPackage.class);
@@ -56,18 +55,18 @@ public class FunctionPackagePlugin extends AbstractControllerPlugin {
 		context.get(TableRegistry.class).register("functionPackage", collection);
 
 		context.getServiceRegistrationCallback().registerService(FunctionPackageServices.class);
-		
+
 		context.getEntityManager().register(new FunctionPackageEntity(FunctionPackageEntity.entityName, packageAccessor, context));
 
 		//registerWebapp(context, "/functionpackages/");
 	}
-	
+
 
 
 	@Override
 	public void initializeData(GlobalContext context) throws Exception {
 		createScreenInputsIfNecessary(context);
-		
+
 		Configuration configuration = context.getConfiguration();
 		String embeddedPackageFolder = configuration.getProperty("plugins.FunctionPackagePlugin.embeddedpackages.folder");
 		if(embeddedPackageFolder != null) {
@@ -78,16 +77,16 @@ public class FunctionPackagePlugin extends AbstractControllerPlugin {
 
 	protected void createScreenInputsIfNecessary(GlobalContext context) {
 		ScreenInputAccessor screenInputAccessor = context.get(ScreenInputAccessor.class);
-		List<ScreenInput> functionTableExtensions = screenInputAccessor.getScreenInputsByScreenId(FUNCTION_TABLE_EXTENSIONS);
+		List<ScreenInput> functionTableExtensions = screenInputAccessor.getScreenInputsByScreenId(ScreenTemplatePlugin.FUNCTION_TABLE_EXTENSIONS);
 		boolean inputExist = functionTableExtensions.stream().filter(i->i.getInput().getId().equals("customFields.functionPackageId")).findFirst().isPresent();
 		if(!inputExist) {
 			Input input = new Input(InputType.TEXT, "customFields.functionPackageId", "Package", "", null);
 			input.setCustomUIComponents(List.of("functionPackageLink"));
 			input.setSearchMapperService("rest/table/functionPackage/searchIdsBy/attributes.name");
-			screenInputAccessor.save(new ScreenInput(FUNCTION_TABLE_EXTENSIONS, input));
+			screenInputAccessor.save(new ScreenInput(ScreenTemplatePlugin.FUNCTION_TABLE_EXTENSIONS, input));
 		}
 	}
-	
+
 	@Override
 	public void serverStop(GlobalContext context) {
 		try {

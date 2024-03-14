@@ -27,6 +27,8 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.StreamingOutput;
 import org.bson.types.ObjectId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.artefacts.CallPlan;
 import step.artefacts.handlers.PlanLocator;
 import step.artefacts.handlers.SelectorHelper;
@@ -34,6 +36,7 @@ import step.controller.services.entities.AbstractEntityServices;
 import step.core.GlobalContext;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandlerRegistry;
+import step.core.deployment.ControllerServiceException;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.entities.EntityManager;
@@ -56,6 +59,8 @@ import java.util.stream.Collectors;
 @Tag(name = "Entity=Plan")
 @SecuredContext(key = "entity", value = "plan")
 public class PlanServices extends AbstractEntityServices<Plan> {
+
+	private static final Logger log = LoggerFactory.getLogger(PlanServices.class);
 
 	protected PlanAccessor planAccessor;
 	protected PlanTypeRegistry planTypeRegistry;
@@ -263,8 +268,13 @@ public class PlanServices extends AbstractEntityServices<Plan> {
 		Plan plan = planAccessor.get(id);
 		StreamingOutput fileStream = new StreamingOutput() {
 			@Override
-			public void write(java.io.OutputStream output) throws IOException {
-				yamlPlanReader.writeYamlPlan(output, plan);
+			public void write(java.io.OutputStream output) {
+				try {
+					yamlPlanReader.writeYamlPlan(output, plan);
+				} catch (Exception ex) {
+					log.error("Serialization error", ex);
+					throw new ControllerServiceException("Serialization error when converting to YAML plan, check the controller logs for more details", ex);
+				}
 			}
 		};
 

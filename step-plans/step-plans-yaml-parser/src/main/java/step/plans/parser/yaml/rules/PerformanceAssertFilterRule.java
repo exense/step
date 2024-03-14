@@ -73,7 +73,7 @@ public class PerformanceAssertFilterRule implements ArtefactFieldConversionRule 
                     // fill filter like in EnterpriseDescriptionStepParser
                     filter.set("filter", field.getValue());
                     filter.put("field", AbstractOrganizableObject.NAME);
-                    filter.put("filterType", FilterType.REGEX.name());
+                    filter.put("filterType", FilterType.EQUALS.name());
                     filters.add(filter);
                     output.set(YamlPlanFields.PERFORMANCE_ASSERT_FILTERS_ORIGINAL_FIELD, filters);
                     return true;
@@ -94,7 +94,7 @@ public class PerformanceAssertFilterRule implements ArtefactFieldConversionRule 
                         throw new IllegalArgumentException("Multiple filters in " + artefact.getClass().getSimpleName() + " are not supported in yaml format");
                     }
                     Filter filter = filters.get(0);
-                    if (filter.getFilterType() != FilterType.REGEX) {
+                    if (filter.getFilterType() != FilterType.EQUALS) {
                         throw new IllegalArgumentException("Filter type " + filter.getFilterType() + " in " + artefact.getClass().getSimpleName() + " is not supported in yaml format");
                     }
                     if(!filter.getField().get().equals(AbstractOrganizableObject.NAME)){

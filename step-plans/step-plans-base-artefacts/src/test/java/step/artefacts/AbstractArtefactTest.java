@@ -18,6 +18,8 @@
  ******************************************************************************/
 package step.artefacts;
 
+import org.junit.After;
+import org.junit.Before;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
 import step.threadpool.ThreadPoolPlugin;
@@ -28,7 +30,17 @@ public class AbstractArtefactTest {
 
 	public AbstractArtefactTest() {
 		super();
+	}
+
+	@Before
+	public void beforeTest() {
 		executionEngine = ExecutionEngine.builder().withPlugin(new ThreadPoolPlugin()).withPlugin(new BaseArtefactPlugin()).build();
+	}
+
+	@After
+	public void afterTest() {
+		// cleans up potential leftovers. try-with-resources is not possible because of scoping and class inheritance.
+		executionEngine.close();
 	}
 
 	protected ExecutionContext newExecutionContext() {

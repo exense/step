@@ -71,8 +71,12 @@ public class ExecutionEngine implements AutoCloseable {
 	}
 
 	@Override
-	public void close() throws Exception {
-		executionEngineContext.close();
+	public void close() {
+		try {
+			executionEngineContext.close();
+		} catch (Exception e) {
+			logger.error("Error while closing executionEngineContext", e);
+		}
 	}
 
 	public static class Builder {

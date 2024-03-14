@@ -90,11 +90,7 @@ public abstract class AbstractFunctionType<T extends Function> {
 		return null;
 	};
 	
-	public abstract Map<String, String> getHandlerProperties(T function);
-
-	public Map<String, String> getHandlerProperties(T function, AbstractStepContext executionContext){
-		return getHandlerProperties(function);
-	}
+	public abstract Map<String, String> getHandlerProperties(T function, AbstractStepContext executionContext);
 
 	public void beforeFunctionCall(T function, Input<?> input, Map<String, String> properties) throws FunctionExecutionException {
 		

@@ -19,6 +19,7 @@
 package step.plugins.java;
 
 import ch.exense.commons.app.Configuration;
+import step.core.AbstractStepContext;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
 import step.functions.type.SetupFunctionException;
@@ -63,7 +64,7 @@ public class GeneralScriptFunctionType extends AbstractScriptFunctionType<Genera
 	}
 
 	@Override
-	public Map<String, String> getHandlerProperties(GeneralScriptFunction function) {
+	public Map<String, String> getHandlerProperties(GeneralScriptFunction function, AbstractStepContext context) {
 		String language = getScriptLanguage(function);
 		if (language != null) {
 			String errorHandler = configuration.getProperty("plugins." + language + ".errorhandler", null);
@@ -71,6 +72,6 @@ public class GeneralScriptFunctionType extends AbstractScriptFunctionType<Genera
 				function.setErrorHandlerFile(new DynamicValue<>(errorHandler));
 			}
 		}
-		return super.getHandlerProperties(function);
+		return super.getHandlerProperties(function, context);
 	}
 }

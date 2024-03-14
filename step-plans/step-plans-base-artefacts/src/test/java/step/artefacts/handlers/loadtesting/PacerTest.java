@@ -21,43 +21,41 @@ public class PacerTest {
 	@Test
 	@Category(PerformanceTest.class)
 	public void test() throws InterruptedException {
-		ExecutionEngine executionEngine = ExecutionEngine.builder().build();
-
-		int durationInSeconds = 5;
-
+		final int durationInSeconds = 5;
 		// Target throughput in 1/s
-		int expectedThroughput = 100;
+		final int expectedThroughput = 100;
+		final AtomicInteger executionCount = new AtomicInteger(0);
 
 		// Variable sleep between 3s and 12s
 		// The variable sleep will temporarily exceed the pacing
 		// of 10ms corresponding to the throughput of 100/s
-		int minSleep = 3;
-		int maxMaxSleep = 12;
-		int increment = 1;
+		final int minSleep = 3;
+		final int maxMaxSleep = 12;
+		final int increment = 1;
 
-		
-		AtomicInteger executionCount = new AtomicInteger(0);
-		AtomicInteger atomicInteger = new AtomicInteger(minSleep);
-		Pacer.scheduleAtConstantRate(i -> {
-			try {
-				if (start == 0) {
-					start = System.currentTimeMillis();
-				} else {
-					long count = executionCount.get();
-					printThroughput(start, count);
+		try (ExecutionEngine executionEngine = ExecutionEngine.builder().build()) {
+			AtomicInteger atomicInteger = new AtomicInteger(minSleep);
+			Pacer.scheduleAtConstantRate(i -> {
+				try {
+					if (start == 0) {
+						start = System.currentTimeMillis();
+					} else {
+						long count = executionCount.get();
+						printThroughput(start, count);
+					}
+					executionCount.incrementAndGet();
+					int sleepTime = atomicInteger.getAndAdd(increment);
+					logger.debug("Sleeping " + sleepTime + "ms");
+					Thread.sleep(sleepTime);
+				} catch (InterruptedException e) {
+					throw new RuntimeException(e);
 				}
-				executionCount.incrementAndGet();
-				int sleepTime = atomicInteger.getAndAdd(increment);
-				logger.debug("Sleeping " + sleepTime + "ms");
-				Thread.sleep(sleepTime);
-			} catch (InterruptedException e) {
-				throw new RuntimeException(e);
-			}
-			if (atomicInteger.get() >= maxMaxSleep) {
-				atomicInteger.set(minSleep);
-			}
-		}, expectedThroughput, durationInSeconds, executionEngine.newExecutionContext());
-		
+				if (atomicInteger.get() >= maxMaxSleep) {
+					atomicInteger.set(minSleep);
+				}
+			}, expectedThroughput, durationInSeconds, executionEngine.newExecutionContext());
+		}
+
 		// Calculate actual throughput
 		long count = executionCount.get();
 		double actualThroughput = throughputInCallsPerSeconds(start, count);

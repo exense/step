@@ -1,6 +1,5 @@
 package step.datapool;
 
-import ch.exense.commons.io.FileHelper;
 import org.junit.Assert;
 import org.junit.Test;
 import step.artefacts.DataSetArtefact;
@@ -10,17 +9,11 @@ import step.artefacts.handlers.AbstractArtefactHandlerTest;
 import step.artefacts.reports.EchoReportNode;
 import step.artefacts.reports.ForBlockReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
-import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
-import step.datapool.file.CSVDataPool;
 import step.planbuilder.BaseArtefacts;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.file.Files;
 
 public abstract class AbstractDataPoolTest extends AbstractArtefactHandlerTest {
 

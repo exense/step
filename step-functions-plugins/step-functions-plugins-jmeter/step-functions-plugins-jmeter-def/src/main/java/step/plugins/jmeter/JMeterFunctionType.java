@@ -76,11 +76,6 @@ public class JMeterFunctionType extends AbstractFunctionType<JMeterFunction> {
 	}
 
 	@Override
-	public Map<String, String> getHandlerProperties(JMeterFunction function) {
-		return this.getHandlerProperties(function, null);
-	}
-
-	@Override
 	public JMeterFunction newFunction() {
 		return new JMeterFunction();
 	}

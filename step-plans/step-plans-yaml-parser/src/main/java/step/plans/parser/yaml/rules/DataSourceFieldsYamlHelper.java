@@ -187,7 +187,7 @@ public class DataSourceFieldsYamlHelper {
                 // file reference is a dynamic string in java class
                 // here we extract the resource id from dynamic value and store this resource id in yaml
                 DynamicValue<String> value = (DynamicValue<String>) field.get(dataSource);
-                if (value != null && !value.getValue().isEmpty()) {
+                if (value != null && value.getValue() != null && !value.getValue().isEmpty()) {
                     gen.writeFieldName(field.getName());
                     gen.writeStartObject();
                     gen.writeFieldName(YamlPlanFields.FILE_REFERENCE_RESOURCE_ID_FIELD);

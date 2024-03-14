@@ -19,6 +19,7 @@
 package step.engine.plugins;
 
 import org.bson.types.ObjectId;
+import step.core.AbstractStepContext;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionEngineContext;
@@ -112,7 +113,7 @@ public class LocalFunctionPlugin extends AbstractExecutionEnginePlugin {
 		}
 
 		@Override
-		public Map<String, String> getHandlerProperties(LocalFunction function) {
+		public Map<String, String> getHandlerProperties(LocalFunction function, AbstractStepContext executionContext) {
 			Map<String, String> properties = new HashMap<>();
 			
 			StringBuilder classes = new StringBuilder();

@@ -31,6 +31,7 @@ import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -50,10 +51,15 @@ import step.core.plans.runner.PlanRunnerResult;
 public class LocalPlanRunnerTest {
 	
 	protected LocalPlanRunner runner;
-	
+
 	@Before
 	public void init() {
 		runner = new LocalPlanRunner(LocalRunnerTestLibrary.class);
+	}
+
+	@After
+	public void cleanup() {
+		runner.close();
 	}
 	
 	@Test

@@ -22,7 +22,7 @@ import java.util.Map;
 
 import step.core.plans.Plan;
 
-public interface PlanRunner {
+public interface PlanRunner extends AutoCloseable {
 
 	/**
 	 * Runs a plan instance

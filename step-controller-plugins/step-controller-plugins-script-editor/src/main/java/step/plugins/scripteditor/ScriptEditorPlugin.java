@@ -40,7 +40,7 @@ public class ScriptEditorPlugin extends AbstractControllerPlugin {
 			
 			@Override
 			public String getEditorPath(Function function) {
-				return "root/scripteditor/"+function.getId().toString();
+				return "scripteditor/"+function.getId().toString();
 			}
 
 			@Override

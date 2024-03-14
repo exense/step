@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.handlers.scripthandler;
+package step.plugins.java;
 
 import java.io.File;
 import java.io.IOException;

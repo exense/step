@@ -26,6 +26,7 @@ import java.util.function.Consumer;
 import org.junit.Assert;
 import org.junit.Test;
 
+import step.core.AbstractStepContext;
 import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
@@ -66,11 +67,12 @@ public class FunctionPluginTest {
 			
 			localFunctionAccessor.save(function2);
 		});
-		ExecutionEngine engine = ExecutionEngine.builder().withParentContext(parentContext).withPlugin(new FunctionPlugin()).withPlugin(plugin).build();
-		Plan plan = PlanBuilder.create().startBlock(FunctionArtefacts.keyword("My function call")).endBlock().build();
-		ExecutionParameters executionParameters = new ExecutionParameters(ExecutionMode.RUN, plan, null, null, null, null, null, true, null);
-		engine.execute(executionParameters);
-		
+		try (ExecutionEngine engine = ExecutionEngine.builder().withParentContext(parentContext).withPlugin(new FunctionPlugin()).withPlugin(plugin).build()) {
+			Plan plan = PlanBuilder.create().startBlock(FunctionArtefacts.keyword("My function call")).endBlock().build();
+			ExecutionParameters executionParameters = new ExecutionParameters(ExecutionMode.RUN, plan, null, null, null, null, null, true, null);
+			engine.execute(executionParameters);
+		}
+
 		// Assert that the function2 that has been saved to the local function accessor of the execution context
 		// has not be saved to the parent context
 		Function actual = functionAccessor.get(function2.getId());
@@ -127,7 +129,7 @@ public class FunctionPluginTest {
 		}
 
 		@Override
-		public Map<String, String> getHandlerProperties(Function function) {
+		public Map<String, String> getHandlerProperties(Function function, AbstractStepContext executionContext) {
 			return null;
 		}
 

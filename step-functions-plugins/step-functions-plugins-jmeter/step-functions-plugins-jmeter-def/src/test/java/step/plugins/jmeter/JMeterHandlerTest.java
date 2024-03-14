@@ -39,6 +39,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+@Category(step.junit.categories.LocalJMeter.class)
 public class JMeterHandlerTest {
 
     private static final Logger logger = LoggerFactory.getLogger(JMeterHandlerTest.class);
@@ -49,7 +50,6 @@ public class JMeterHandlerTest {
         jMeterHome = System.getenv().get(JMeterFunctionTypeLocalPlugin.JMETER_HOME_ENV_VAR);
     }
 
-    @Category(step.junit.categories.LocalJMeter.class)
     @Test
     public void test1() {
         if (jMeterHome == null) {

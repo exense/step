@@ -345,13 +345,12 @@ public class SequenceHandlerTest extends AbstractArtefactHandlerTest {
 				.build();
 		
 		// Run the plan
-		PlanRunner planRunner = new DefaultPlanRunner();
-		PlanRunnerResult result = planRunner.run(plan);	
-		
-		result.waitForExecutionToTerminate();
-		
 		StringWriter writer = new StringWriter();
-		result.printTree(writer);
+		try(PlanRunner planRunner = new DefaultPlanRunner()) {
+			PlanRunnerResult result = planRunner.run(plan);
+			result.waitForExecutionToTerminate();
+			result.printTree(writer);
+		}
 		
 		Assert.assertEquals("Sequence:TECHNICAL_ERROR:\n" + 
 				" CheckArtefact:TECHNICAL_ERROR:My error\n", writer.toString());	
@@ -370,13 +369,12 @@ public class SequenceHandlerTest extends AbstractArtefactHandlerTest {
 				.build();
 		
 		// Run the plan
-		PlanRunner planRunner = new DefaultPlanRunner();
-		PlanRunnerResult result = planRunner.run(plan);	
-		
-		result.waitForExecutionToTerminate();
-		
 		StringWriter writer = new StringWriter();
-		result.printTree(writer);
+		try(PlanRunner planRunner = new DefaultPlanRunner()) {
+			PlanRunnerResult result = planRunner.run(plan);
+			result.waitForExecutionToTerminate();
+			result.printTree(writer);
+		}
 		
 		Assert.assertEquals("Session:TECHNICAL_ERROR:\n" + 
 				" CheckArtefact:TECHNICAL_ERROR:My error\n", writer.toString());	
