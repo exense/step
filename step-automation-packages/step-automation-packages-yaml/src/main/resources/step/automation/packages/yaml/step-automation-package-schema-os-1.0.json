@@ -80,8 +80,8 @@
               "$ref" : "#/$defs/SmartDynamicValueNumDef"
             },
             "name" : {
-              "type" : "string",
-              "default" : "JMeter"
+              "default" : "JMeter",
+              "type" : "string"
             },
             "jmeterTestplan" : {
               "$ref" : "#/$defs/SmartDynamicValueStringDef"
@@ -1994,7 +1994,10 @@
           "type" : "string"
         },
         "cronExclusions" : {
-          "type" : "array"
+          "type" : "array",
+          "items" : {
+            "type" : "string"
+          }
         },
         "cron" : {
           "type" : "string"

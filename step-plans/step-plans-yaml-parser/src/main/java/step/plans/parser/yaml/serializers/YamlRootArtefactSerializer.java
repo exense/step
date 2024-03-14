@@ -139,13 +139,13 @@ public class YamlRootArtefactSerializer extends JsonSerializer<YamlRootArtefact>
     }
 
 
-    protected void serializeArtefactFields(AbstractArtefact value, JsonGenerator gen) throws IOException, IllegalAccessException {
+    protected void serializeArtefactFields(AbstractArtefact value, JsonGenerator gen) {
         List<Field> allFieldsInArtefact = getAllFieldsInArtefact(value);
         for (Field field : allFieldsInArtefact) {
             try {
                 boolean processedAsCustomField = false;
                 for (YamlArtefactFieldSerializationProcessor customFieldProcessor : customFieldProcessors) {
-                    if (customFieldProcessor.serializeArtefactField(value, field, metadataExtractor.extractMetadata(field), gen)) {
+                    if (customFieldProcessor.serializeArtefactField(value, field, metadataExtractor.extractMetadata(value.getClass(), field), gen)) {
                         processedAsCustomField = true;
                         break;
                     }

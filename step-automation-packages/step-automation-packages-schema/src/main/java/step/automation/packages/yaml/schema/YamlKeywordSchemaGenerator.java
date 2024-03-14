@@ -125,24 +125,10 @@ public class YamlKeywordSchemaGenerator {
 
         // -- BASIC PROCESSING RULES
         result.add(new CommonFilteredFieldProcessor());
-
-        // -- RULES FROM EXTENSIONS HAVE LESS PRIORITY THAN BASIC RULES, BUT MORE PRIORITY THAN OTHER RULES
-        result.addAll(getFieldExtensions());
-
-        // -- RULES FOR OS KEYWORDS
-
-        // -- SOME DEFAULT RULES FOR ENUMS AND DYNAMIC FIELDS
         result.add(new DynamicValueFieldProcessor(jsonProvider));
         result.add(new EnumFieldProcessor(jsonProvider));
 
         return result;
-    }
-
-    protected List<JsonSchemaFieldProcessor> getFieldExtensions() {
-        return automationPackageKeywordsLookuper.getAllConversionRules()
-                .stream()
-                .map(r -> r.getJsonSchemaFieldProcessor(jsonProvider))
-                .filter(Objects::nonNull).collect(Collectors.toList());
     }
 
     public JsonObjectBuilder addRef(JsonObjectBuilder builder, String refValue){

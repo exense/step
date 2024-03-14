@@ -20,25 +20,30 @@ package step.automation.packages.model;
 
 import jakarta.json.JsonObject;
 import step.automation.packages.AutomationPackageContext;
+import step.automation.packages.AutomationPackageNamedEntityUtils;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
 import step.functions.Function;
+import step.handlers.javahandler.jsonschema.JsonSchema;
+import step.handlers.javahandler.jsonschema.JsonSchemaDefaultValueProvider;
 
+import java.lang.reflect.Field;
 import java.util.Map;
 
 public abstract class AbstractYamlFunction<T extends Function> implements AutomationPackageContextual<T> {
 
-    protected String name;
+    @JsonSchema(defaultProvider = DefaultYamlFunctionNameProvider.class)
+    private String name;
 
-    protected DynamicValue<Integer> callTimeout;
-    protected JsonObject schema;
+    private DynamicValue<Integer> callTimeout;
+    private JsonObject schema;
 
-    protected boolean executeLocally;
-    protected Map<String, String> routing;
+    private boolean executeLocally;
+    private Map<String, String> routing;
 
-    protected boolean useCustomTemplate=false;
+    private boolean useCustomTemplate=false;
 
-    protected String description;
+    private String description;
 
     public DynamicValue<Integer> getCallTimeout() {
         return callTimeout;
@@ -119,5 +124,16 @@ public abstract class AbstractYamlFunction<T extends Function> implements Automa
         fillCommonFields(res);
         fillDeclaredFields(res, context);
         return res;
+    }
+
+    public static class DefaultYamlFunctionNameProvider implements JsonSchemaDefaultValueProvider {
+
+        public DefaultYamlFunctionNameProvider() {
+        }
+
+        @Override
+        public String getDefaultValue(Class<?> objectClass, Field field) {
+            return AutomationPackageNamedEntityUtils.getEntityNameByClass(objectClass);
+        }
     }
 }

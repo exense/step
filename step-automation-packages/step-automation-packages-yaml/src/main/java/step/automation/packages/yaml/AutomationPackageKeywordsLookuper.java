@@ -21,14 +21,9 @@ package step.automation.packages.yaml;
 import step.automation.packages.AutomationPackageNamedEntity;
 import step.automation.packages.AutomationPackageNamedEntityUtils;
 import step.automation.packages.model.AbstractYamlFunction;
-import step.automation.packages.yaml.rules.YamlConversionRuleAddOn;
-import step.automation.packages.yaml.rules.YamlKeywordConversionRule;
-import step.core.scanner.CachedAnnotationScanner;
 
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static step.core.scanner.Classes.newInstanceAs;
 
 public class AutomationPackageKeywordsLookuper {
 
@@ -59,10 +54,4 @@ public class AutomationPackageKeywordsLookuper {
                 .collect(Collectors.toList());
     }
 
-    public List<YamlKeywordConversionRule> getAllConversionRules() {
-        return CachedAnnotationScanner.getClassesWithAnnotation(YamlConversionRuleAddOn.LOCATION, YamlConversionRuleAddOn.class, Thread.currentThread().getContextClassLoader()).stream()
-                .filter(YamlKeywordConversionRule.class::isAssignableFrom)
-                .map(newInstanceAs(YamlKeywordConversionRule.class))
-                .collect(Collectors.toList());
-    }
 }
