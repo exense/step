@@ -62,18 +62,8 @@ public abstract class NamedEntityYamlDeserializer<T>  {
         while (fields.hasNext()) {
             Map.Entry<String, JsonNode> next = fields.next();
 
-            // process some fields in special way
-            boolean processedAsSpecialField = false;
-            for (YamlFieldDeserializationProcessor proc : deserializationProcessors()) {
-                if (proc.deserializeField(targetClass, next, techYaml, codec)) {
-                    processedAsSpecialField = true;
-                }
-            }
-
-            // copy all other fields (parameters)
-            if (!processedAsSpecialField) {
-                techYaml.set(next.getKey(), next.getValue().deepCopy());
-            }
+            // copy all other fields
+            techYaml.set(next.getKey(), next.getValue().deepCopy());
         }
         return techYaml;
     }
@@ -111,10 +101,6 @@ public abstract class NamedEntityYamlDeserializer<T>  {
             throw new RuntimeException("Entity class cannot be resolved");
         }
         return yamlName;
-    }
-
-    protected List<YamlFieldDeserializationProcessor> deserializationProcessors(){
-        return new ArrayList<>();
     }
 
     protected String getTargetClassField(){

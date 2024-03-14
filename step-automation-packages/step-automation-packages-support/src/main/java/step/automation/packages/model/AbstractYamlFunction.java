@@ -101,7 +101,7 @@ public abstract class AbstractYamlFunction<T extends Function> implements Automa
         this.name = name;
     }
 
-    private void fillCommonFields(T res) {
+    protected void fillDeclaredFields(T res, AutomationPackageContext context){
         res.addAttribute(AbstractOrganizableObject.NAME, this.getName());
         res.setDescription(this.getDescription());
         if (this.getCallTimeout() != null) {
@@ -114,14 +114,11 @@ public abstract class AbstractYamlFunction<T extends Function> implements Automa
         res.setTokenSelectionCriteria(this.getRouting());
     }
 
-    protected abstract void fillDeclaredFields(T function, AutomationPackageContext context);
-
     protected abstract T createFunctionInstance();
 
     @Override
     public T applyAutomationPackageContext(AutomationPackageContext context) {
         T res = createFunctionInstance();
-        fillCommonFields(res);
         fillDeclaredFields(res, context);
         return res;
     }
