@@ -470,7 +470,6 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	
 	protected void failWithException(ReportNode result, Throwable e, boolean generateAttachment) {
 		failWithException(result, null, e, generateAttachment);
-
 	}
 	
 	protected void failWithException(ReportNode result, String errorMsg, Throwable e, boolean generateAttachment) {

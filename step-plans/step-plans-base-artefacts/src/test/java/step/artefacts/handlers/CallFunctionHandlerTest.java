@@ -245,13 +245,8 @@ public class CallFunctionHandlerTest extends AbstractArtefactHandlerTest {
 		ExecutionContext executionContext = newExecutionContext();
 		InMemoryFunctionAccessorImpl funcitonAccessor = new InMemoryFunctionAccessorImpl();
 		
-		FunctionTypeRegistry functionTypeRegistry = getFunctionTypeRepository();
 		FunctionExecutionService functionExecutionService = getFunctionExecutionService();
-		
-		DefaultFunctionRouterImpl functionRouter = new DefaultFunctionRouterImpl(functionExecutionService, functionTypeRegistry, new DynamicJsonObjectResolver(new DynamicJsonValueResolver(executionContext.getExpressionHandler())));
-		
 		executionContext.put(FunctionAccessor.class, funcitonAccessor);
-		executionContext.put(FunctionRouter.class, functionRouter);
 		executionContext.put(FunctionExecutionService.class, functionExecutionService);
 		
 		context = executionContext;

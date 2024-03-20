@@ -18,17 +18,13 @@
  ******************************************************************************/
 package step.artefacts.handlers;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.concurrent.atomic.LongAdder;
-import java.util.function.Consumer;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import step.artefacts.AfterThread;
 import step.artefacts.BeforeThread;
 import step.artefacts.Sequence;
 import step.artefacts.ThreadGroup;
+import step.artefacts.handlers.functions.AutoscalerExecutionPlugin;
+import step.artefacts.handlers.functions.MultiplyingTokenNumberCalculationContext;
 import step.artefacts.handlers.loadtesting.Pacer;
 import step.artefacts.reports.ThreadReportNode;
 import step.core.artefacts.AbstractArtefact;
@@ -41,9 +37,19 @@ import step.threadpool.ThreadPool;
 import step.threadpool.ThreadPool.WorkerController;
 import step.threadpool.WorkerItemConsumerFactory;
 
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.concurrent.atomic.LongAdder;
+import java.util.function.Consumer;
+
 public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode> {
-	
-	public void createReportSkeleton_(ReportNode node, ThreadGroup testArtefact) {		
+
+	public void createReportSkeleton_(ReportNode node, ThreadGroup testArtefact) {
+		Integer numberOfThreads = testArtefact.getUsers().get();
+		AutoscalerExecutionPlugin.pushNewTokenNumberCalculationContext(context, new MultiplyingTokenNumberCalculationContext(numberOfThreads));
+
+		SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
+		scheduler.createReportSkeleton_(node, testArtefact);
 	}
 
 	@Override

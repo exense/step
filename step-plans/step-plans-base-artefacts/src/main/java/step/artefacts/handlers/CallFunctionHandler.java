@@ -25,6 +25,7 @@ import jakarta.json.JsonValue.ValueType;
 import jakarta.json.stream.JsonParsingException;
 import step.artefacts.CallFunction;
 import step.artefacts.handlers.FunctionGroupHandler.FunctionGroupContext;
+import step.artefacts.handlers.functions.*;
 import step.artefacts.reports.CallFunctionReportNode;
 import step.attachments.AttachmentMeta;
 import step.common.managedoperations.OperationManager;
@@ -42,6 +43,7 @@ import step.core.execution.ExecutionContextWrapper;
 import step.core.json.JsonProviderCache;
 import step.core.miscellaneous.ReportNodeAttachmentManager;
 import step.core.miscellaneous.ReportNodeAttachmentManager.AttachmentQuotaException;
+import step.core.plans.Plan;
 import step.core.plugins.ExecutionCallbacks;
 import step.core.reports.Error;
 import step.core.reports.ErrorType;
@@ -50,15 +52,19 @@ import step.datapool.DataSetHandle;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.execution.FunctionExecutionService;
+import step.functions.execution.FunctionExecutionServiceException;
 import step.functions.execution.FunctionExecutionServiceImpl;
 import step.functions.handler.AbstractFunctionHandler;
 import step.functions.io.FunctionInput;
 import step.functions.io.Output;
+import step.functions.type.FunctionTypeRegistry;
 import step.grid.Token;
 import step.grid.TokenWrapper;
 import step.grid.agent.tokenpool.TokenReservationSession;
 import step.grid.io.Attachment;
 import step.grid.io.AttachmentHelper;
+import step.grid.tokenpool.Interest;
+import step.plugins.functions.types.CompositeFunction;
 
 import java.io.StringReader;
 import java.net.MalformedURLException;
@@ -74,16 +80,12 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	public static final String OPERATION_KEYWORD_CALL = "Keyword Call";
 
 	protected FunctionExecutionService functionExecutionService;
-	
 	protected FunctionAccessor functionAccessor;
 	
 	protected ReportNodeAttachmentManager reportNodeAttachmentManager;
 	protected DynamicJsonObjectResolver dynamicJsonObjectResolver;
-	
-	private SelectorHelper selectorHelper;
-	
-	private FunctionRouter functionRouter;
-	
+
+	private TokenSelectionCriteriaMapBuilder tokenSelectionCriteriaMapBuilder;
 	protected FunctionLocator functionLocator;
 
 	protected boolean useLegacyOutput;
@@ -91,18 +93,43 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	@Override
 	public void init(ExecutionContext context) {
 		super.init(context);
-		functionExecutionService = context.get(FunctionExecutionService.class);
-		functionAccessor = context.get(FunctionAccessor.class);
-		functionRouter = context.get(FunctionRouter.class);
+		FunctionTypeRegistry functionTypeRegistry = context.require(FunctionTypeRegistry.class);
+		functionAccessor = context.require(FunctionAccessor.class);
+		functionExecutionService = context.require(FunctionExecutionService.class);
 		reportNodeAttachmentManager = new ReportNodeAttachmentManager(context);
 		dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));
-		this.selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
-		this.functionLocator = new FunctionLocator(functionAccessor, selectorHelper);
+		this.tokenSelectionCriteriaMapBuilder = new TokenSelectionCriteriaMapBuilder(functionTypeRegistry, dynamicJsonObjectResolver);
+		this.functionLocator = new FunctionLocator(functionAccessor, new SelectorHelper(dynamicJsonObjectResolver));
 		this.useLegacyOutput = context.getConfiguration().getPropertyAsBoolean(KEYWORD_OUTPUT_LEGACY_FORMAT, false);
 	}
 
 	@Override
-	protected void createReportSkeleton_(CallFunctionReportNode parentNode, CallFunction testArtefact) {}
+	protected void createReportSkeleton_(CallFunctionReportNode parentNode, CallFunction testArtefact) {
+		// TODO this is a draft
+		try {
+			Function function = getFunction(testArtefact);
+			if(function instanceof CompositeFunction) {
+				Plan plan = ((CompositeFunction) function).getPlan();
+				delegateCreateReportSkeleton(plan.getRoot(), parentNode);
+			} else {
+				FunctionGroupContext functionGroupContext = getFunctionGroupContext();
+				boolean closeFunctionGroupSessionAfterExecution = (functionGroupContext == null);
+
+				FunctionGroupSession functionGroupSession = getOrCreateFunctionGroupSession(functionGroupContext);
+				try {
+					selectToken(parentNode, testArtefact, function, functionGroupContext, functionGroupSession);
+				} finally {
+					if(closeFunctionGroupSessionAfterExecution) {
+						functionGroupSession.close();
+					}
+				}
+			}
+		} catch (Exception e) {
+			// TODO improve handling
+			e.printStackTrace();
+			logger.debug("No able to find function during skeleton creation phase", e);
+		}
+	}
 
 	@Override
 	protected void execute_(CallFunctionReportNode node, CallFunction testArtefact) throws Exception {
@@ -131,11 +158,11 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 
 		Output<JsonObject> output;
 		if(!context.isSimulation()) {
-			FunctionGroupContext functionGroupContext = (FunctionGroupContext) context.getVariablesManager().getVariable(FunctionGroupHandler.FUNCTION_GROUP_CONTEXT_KEY);
-			boolean releaseTokenAfterExecution = (functionGroupContext==null);
-			
-			CallFunctionTokenWrapperOwner tokenWrapperOwner = new CallFunctionTokenWrapperOwner(node.getId().toString(), context.getExecutionId(), context.getExecutionParameters().getDescription());
-			TokenWrapper token = functionRouter.selectToken(testArtefact, function, functionGroupContext, getBindings(), tokenWrapperOwner);
+			FunctionGroupContext functionGroupContext = getFunctionGroupContext();
+			boolean closeFunctionGroupSessionAfterExecution = (functionGroupContext == null);
+			FunctionGroupSession functionGroupSession = getOrCreateFunctionGroupSession(functionGroupContext);
+			TokenWrapper token = selectToken(node, testArtefact, function, functionGroupContext, functionGroupSession);
+
 			try {
 				Token gridToken = token.getToken();
 				if(gridToken.isLocal()) {
@@ -217,8 +244,8 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				String drainOutputValue = testArtefact.getResultMap().get();
 				drainOutput(drainOutputValue, output);
 			} finally {
-				if(releaseTokenAfterExecution) {				
-					functionExecutionService.returnTokenHandle(token.getID());
+				if(closeFunctionGroupSessionAfterExecution) {
+					functionGroupSession.releaseTokens(true);
 				}
 	
 				callChildrenArtefacts(node, testArtefact);
@@ -230,6 +257,35 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 			node.setOutput(output.getPayload().toString());
 			node.setStatus(ReportNodeStatus.PASSED);
 		}
+	}
+
+	private FunctionGroupContext getFunctionGroupContext() {
+		return (FunctionGroupContext) context.getVariablesManager().getVariable(FunctionGroupHandler.FUNCTION_GROUP_CONTEXT_KEY);
+	}
+
+	private FunctionGroupSession getOrCreateFunctionGroupSession(FunctionGroupContext functionGroupContext) {
+		FunctionGroupSession functionGroupSession;
+		if (functionGroupContext == null) {
+			TokenNumberCalculationContext calculationContext = AutoscalerExecutionPlugin.getTokenNumberCalculationContext(context);
+			FunctionExecutionService functionExecutionService = calculationContext.getFunctionExecutionServiceForTokenRequirementCalculation();
+			functionGroupSession = new FunctionGroupSession(functionExecutionService);
+		} else {
+			functionGroupSession = functionGroupContext.getSession();
+		}
+		return functionGroupSession;
+	}
+
+	private TokenWrapper selectToken(CallFunctionReportNode node, CallFunction testArtefact, Function function, FunctionGroupContext functionGroupContext, FunctionGroupSession functionGroupSession) throws FunctionExecutionServiceException {
+		CallFunctionTokenWrapperOwner tokenWrapperOwner = new CallFunctionTokenWrapperOwner(node.getId().toString(), context.getExecutionId(), context.getExecutionParameters().getDescription());
+		boolean localTokenRequired = tokenSelectionCriteriaMapBuilder.isLocalTokenRequired(testArtefact, function);
+		TokenWrapper token;
+		if(localTokenRequired) {
+			token = functionGroupSession.getLocalToken();
+		} else {
+			Map<String, Interest> tokenSelectionCriteria = tokenSelectionCriteriaMapBuilder.buildSelectionCriteriaMap(testArtefact, function, functionGroupContext, getBindings());
+			token = functionGroupSession.getRemoteToken(tokenSelectionCriteria, tokenWrapperOwner);
+		}
+		return token;
 	}
 
 	private void validateInput(FunctionInput<JsonObject> input, Function function) {

@@ -78,8 +78,8 @@ public class FunctionGroupHandlerTest {
 		
 		Plan plan = PlanBuilder.create().startBlock(new FunctionGroup()).add(new CheckArtefact(t-> {
 			FunctionGroupContext functionGroupContext = (FunctionGroupContext) t.getVariablesManager().getVariable(FunctionGroupHandler.FUNCTION_GROUP_CONTEXT_KEY);
-			functionGroupContext.setLocalToken(localToken);
-			functionGroupContext.addToken(token);
+			//functionGroupContext.setLocalToken(localToken);
+			//functionGroupContext.addToken(token);
 			t.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED);
 		})).add(new Echo()).endBlock().build();
 
@@ -169,8 +169,8 @@ public class FunctionGroupHandlerTest {
 		
 		Plan plan = PlanBuilder.create().startBlock(new FunctionGroup()).add(new CheckArtefact(t-> {
 			FunctionGroupContext functionGroupContext = (FunctionGroupContext) t.getVariablesManager().getVariable(FunctionGroupHandler.FUNCTION_GROUP_CONTEXT_KEY);
-			functionGroupContext.setLocalToken(localToken);
-			functionGroupContext.addToken(token);
+			//functionGroupContext.setLocalToken(localToken);
+			//functionGroupContext.addToken(token);
 			t.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED);
 		})).add(new Echo()).endBlock().build();
 
@@ -205,8 +205,8 @@ public class FunctionGroupHandlerTest {
 		
 		Plan plan = PlanBuilder.create().startBlock(new FunctionGroup()).add(new CheckArtefact(t-> {
 			FunctionGroupContext functionGroupContext = (FunctionGroupContext) t.getVariablesManager().getVariable(FunctionGroupHandler.FUNCTION_GROUP_CONTEXT_KEY);
-			functionGroupContext.setLocalToken(localToken);
-			functionGroupContext.addToken(token);
+			//functionGroupContext.setLocalToken(localToken);
+			//functionGroupContext.addToken(token);
 			t.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED);
 		})).add(new Echo()).endBlock().build();
 
@@ -261,8 +261,8 @@ public class FunctionGroupHandlerTest {
 		
 		Plan plan = PlanBuilder.create().startBlock(new FunctionGroup()).add(new CheckArtefact(t-> {
 			FunctionGroupContext functionGroupContext = (FunctionGroupContext) t.getVariablesManager().getVariable(FunctionGroupHandler.FUNCTION_GROUP_CONTEXT_KEY);
-			functionGroupContext.setLocalToken(localToken);
-			functionGroupContext.addToken(token);
+			//functionGroupContext.setLocalToken(localToken);
+			//functionGroupContext.addToken(token);
 			t.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED);
 		})).add(sequence).endBlock().build();
 		
@@ -328,8 +328,6 @@ public class FunctionGroupHandlerTest {
 
 						};
 				executionContext.put(FunctionExecutionService.class, functionExecutionService);
-				DefaultFunctionRouterImpl functionRouter = new DefaultFunctionRouterImpl(functionExecutionService, functionTypeRegistry, new DynamicJsonObjectResolver(new DynamicJsonValueResolver(executionContext.getExpressionHandler())));
-				executionContext.put(FunctionRouter.class, functionRouter);
 			}
 		}).build();
 

@@ -24,6 +24,8 @@ import java.util.OptionalInt;
 import java.util.function.Consumer;
 
 import step.artefacts.TestScenario;
+import step.artefacts.handlers.functions.AutoscalerExecutionPlugin;
+import step.artefacts.handlers.functions.MaxAndMultiplyingTokenNumberCalculationContext;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.handlers.AtomicReportNodeStatusComposer;
@@ -36,9 +38,14 @@ public class TestScenarioHandler extends ArtefactHandler<TestScenario, ReportNod
 
 	@Override
 	public void createReportSkeleton_(ReportNode node, TestScenario testArtefact) {
+		// TODO finalize
+		MaxAndMultiplyingTokenNumberCalculationContext calculationContext = new MaxAndMultiplyingTokenNumberCalculationContext(testArtefact.getChildren().size());
+		AutoscalerExecutionPlugin.pushNewTokenNumberCalculationContext(context, calculationContext);
 		for(AbstractArtefact child:getChildren(testArtefact)) {
 			delegateCreateReportSkeleton(child, node);
+			calculationContext.nextIteration();
 		}
+		calculationContext.end();
 	}
 
 	@Override
