@@ -18,20 +18,19 @@
  ******************************************************************************/
 package step.plans.parser.yaml.model;
 
-import step.core.artefacts.AbstractArtefact;
-
 public class YamlRootArtefact {
-    private AbstractArtefact abstractArtefact;
 
-    public YamlRootArtefact(AbstractArtefact abstractArtefact) {
+    private AbstractYamlArtefact<?> abstractArtefact;
+
+    public YamlRootArtefact(AbstractYamlArtefact<?> abstractArtefact) {
         this.abstractArtefact = abstractArtefact;
     }
 
-    public AbstractArtefact getAbstractArtefact() {
+    public AbstractYamlArtefact<?> getAbstractArtefact() {
         return abstractArtefact;
     }
 
-    public void setAbstractArtefact(AbstractArtefact abstractArtefact) {
+    public void setAbstractArtefact(AbstractYamlArtefact<?> abstractArtefact) {
         this.abstractArtefact = abstractArtefact;
     }
 }

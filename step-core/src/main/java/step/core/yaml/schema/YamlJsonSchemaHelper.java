@@ -44,6 +44,7 @@ public class YamlJsonSchemaHelper {
 	public static final String SMART_DYNAMIC_VALUE_BOOLEAN_DEF = "SmartDynamicValueBooleanDef";
 
 	public static final String DYNAMIC_KEYWORD_INPUTS_DEF = "DynamicKeywordInputsDef";
+	public static final String DEFS_PREFIX = "#/$defs/";
 	private final JsonProvider jsonProvider;
 
 	public YamlJsonSchemaHelper(JsonProvider jsonProvider) {
@@ -267,6 +268,6 @@ public class YamlJsonSchemaHelper {
 	}
 
 	public static JsonObjectBuilder addRef(JsonObjectBuilder builder, String refValue){
-		return builder.add("$ref", "#/$defs/" + refValue);
+		return builder.add("$ref", DEFS_PREFIX + refValue);
 	}
 }

@@ -44,20 +44,21 @@ import static step.core.scanner.Classes.newInstanceAs;
 
 public class YamlRootArtefactSerializer extends JsonSerializer<YamlRootArtefact> {
 
-    private final List<YamlArtefactFieldSerializationProcessor> customFieldProcessors;
-    private final FieldMetadataExtractor metadataExtractor;
+    private final List<YamlArtefactFieldSerializationProcessor> customFieldProcessors = null;
+    private final FieldMetadataExtractor metadataExtractor = null;
     private ObjectMapper stepYamlMapper;
 
     public YamlRootArtefactSerializer(ObjectMapper stepYamlMapper) {
-        this.stepYamlMapper = stepYamlMapper;
-        this.metadataExtractor = prepareMetadataExtractor();
-        this.customFieldProcessors = prepareFieldProcessors();
+//        this.stepYamlMapper = stepYamlMapper;
+//        this.metadataExtractor = prepareMetadataExtractor();
+//        this.customFieldProcessors = prepareFieldProcessors();
     }
 
     protected FieldMetadataExtractor prepareMetadataExtractor() {
         return YamlPlanJsonSchemaGenerator.prepareMetadataExtractor();
     }
 
+    /*
     protected List<YamlArtefactFieldSerializationProcessor> prepareFieldProcessors() {
         List<YamlArtefactFieldSerializationProcessor> result =  new ArrayList<>();
 
@@ -108,6 +109,8 @@ public class YamlRootArtefactSerializer extends JsonSerializer<YamlRootArtefact>
 
         return result;
     }
+    */
+
 
     protected List<YamlArtefactFieldSerializationProcessor> getExtensions() {
         List<YamlArtefactFieldSerializationProcessor> extensions = new ArrayList<>();
@@ -118,68 +121,70 @@ public class YamlRootArtefactSerializer extends JsonSerializer<YamlRootArtefact>
 
     @Override
     public void serialize(YamlRootArtefact value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
-        AbstractArtefact artefact = value.getAbstractArtefact();
-
-        // root artefact
-        try {
-            processArtefact(gen, artefact);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException("Unable to serialize artefact " + value.getClass(), e);
-        }
+        // TODO: implement
+        throw new UnsupportedOperationException("Not implemented yet");
+//        AbstractArtefact artefact = value.getAbstractArtefact();
+//
+//        // root artefact
+//        try {
+//            processArtefact(gen, artefact);
+//        } catch (IllegalAccessException e) {
+//            throw new RuntimeException("Unable to serialize artefact " + value.getClass(), e);
+//        }
     }
 
-    private void processArtefact(JsonGenerator gen, AbstractArtefact artefact) throws IOException, IllegalAccessException {
-        gen.writeStartObject();
-        String artefactName = AbstractArtefact.getArtefactName(artefact.getClass());
-        gen.writeFieldName(YamlPlanFields.javaArtefactNameToYaml(artefactName));
-        gen.writeStartObject();
-        serializeArtefactFields(artefact, gen);
-        gen.writeEndObject();
-        gen.writeEndObject();
-    }
+//    private void processArtefact(JsonGenerator gen, AbstractArtefact artefact) throws IOException, IllegalAccessException {
+//        gen.writeStartObject();
+//        String artefactName = AbstractArtefact.getArtefactName(artefact.getClass());
+//        gen.writeFieldName(YamlPlanFields.javaArtefactNameToYaml(artefactName));
+//        gen.writeStartObject();
+//        serializeArtefactFields(artefact, gen);
+//        gen.writeEndObject();
+//        gen.writeEndObject();
+//    }
 
 
-    protected void serializeArtefactFields(AbstractArtefact value, JsonGenerator gen) {
-        List<Field> allFieldsInArtefact = getAllFieldsInArtefact(value);
-        for (Field field : allFieldsInArtefact) {
-            try {
-                boolean processedAsCustomField = false;
-                for (YamlArtefactFieldSerializationProcessor customFieldProcessor : customFieldProcessors) {
-                    if (customFieldProcessor.serializeArtefactField(value, field, metadataExtractor.extractMetadata(value.getClass(), field), gen)) {
-                        processedAsCustomField = true;
-                        break;
-                    }
-                }
-                try {
-                    if (!processedAsCustomField) {
-                        // default processing
-                        Object fieldValue = field.get(value);
-                        if (fieldValue != null) {
-                            gen.writeObjectField(field.getName(), fieldValue);
-                        }
-                    }
-                } catch (IllegalAccessException e) {
-                    throw new RuntimeException("Unable to get field value (" + field.getName() + ")", e);
-                }
-            } catch (Exception ex) {
-                throw new RuntimeException("Unable to serialize field " + field.getName() + " in artifact "
-                        + value.getClass().getSimpleName() + " (" + value.getAttribute(AbstractOrganizableObject.NAME) + ")", ex);
-            }
-        }
-    }
+//    protected void serializeArtefactFields(AbstractArtefact value, JsonGenerator gen) {
+//        List<Field> allFieldsInArtefact = getAllFieldsInArtefact(value);
+//        for (Field field : allFieldsInArtefact) {
+//            try {
+//                boolean processedAsCustomField = false;
+//                for (YamlArtefactFieldSerializationProcessor customFieldProcessor : customFieldProcessors) {
+//                    if (customFieldProcessor.serializeArtefactField(value, field, metadataExtractor.extractMetadata(value.getClass(), field), gen)) {
+//                        processedAsCustomField = true;
+//                        break;
+//                    }
+//                }
+//                try {
+//                    if (!processedAsCustomField) {
+//                         default processing
+//                        Object fieldValue = field.get(value);
+//                        if (fieldValue != null) {
+//                            gen.writeObjectField(field.getName(), fieldValue);
+//                        }
+//                    }
+//                } catch (IllegalAccessException e) {
+//                    throw new RuntimeException("Unable to get field value (" + field.getName() + ")", e);
+//                }
+//            } catch (Exception ex) {
+//                throw new RuntimeException("Unable to serialize field " + field.getName() + " in artifact "
+//                        + value.getClass().getSimpleName() + " (" + value.getAttribute(AbstractOrganizableObject.NAME) + ")", ex);
+//            }
+//        }
+//    }
 
-    private List<Field> getAllFieldsInArtefact(AbstractArtefact value) {
-        List<Field> allFieldsInArtefactHierarchy = new ArrayList<>();
-        Class<?> currentClass = value.getClass();
-        while (currentClass != null) {
-            allFieldsInArtefactHierarchy.addAll(List.of(currentClass.getDeclaredFields()));
-            currentClass = currentClass.getSuperclass();
-        }
-        Collections.reverse(allFieldsInArtefactHierarchy);
-        for (Field field : allFieldsInArtefactHierarchy) {
-            field.setAccessible(true);
-        }
-        return allFieldsInArtefactHierarchy;
-    }
+//    private List<Field> getAllFieldsInArtefact(AbstractArtefact value) {
+//        List<Field> allFieldsInArtefactHierarchy = new ArrayList<>();
+//        Class<?> currentClass = value.getClass();
+//        while (currentClass != null) {
+//            allFieldsInArtefactHierarchy.addAll(List.of(currentClass.getDeclaredFields()));
+//            currentClass = currentClass.getSuperclass();
+//        }
+//        Collections.reverse(allFieldsInArtefactHierarchy);
+//        for (Field field : allFieldsInArtefactHierarchy) {
+//            field.setAccessible(true);
+//        }
+//        return allFieldsInArtefactHierarchy;
+//    }
 
 }

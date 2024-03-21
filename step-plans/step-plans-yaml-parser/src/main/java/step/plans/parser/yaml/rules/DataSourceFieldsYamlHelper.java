@@ -31,6 +31,8 @@ import step.core.dynamicbeans.DynamicValue;
 import step.core.entities.EntityManager;
 import step.core.entities.EntityReference;
 import step.core.yaml.schema.AggregatedJsonSchemaFieldProcessor;
+import step.core.yaml.schema.DynamicValueFieldProcessor;
+import step.core.yaml.schema.EnumFieldProcessor;
 import step.core.yaml.schema.YamlJsonSchemaHelper;
 import step.datapool.DataPoolConfiguration;
 import step.datapool.DataPoolFactory;
@@ -82,8 +84,8 @@ public class DataSourceFieldsYamlHelper {
             return false;
         });
 
-        fieldProcessors.add(new DynamicFieldRule().getJsonSchemaFieldProcessor(jsonProvider));
-        fieldProcessors.add(new EnumFieldRule().getJsonSchemaFieldProcessor(jsonProvider));
+        fieldProcessors.add(new DynamicValueFieldProcessor(jsonProvider));
+        fieldProcessors.add(new EnumFieldProcessor(jsonProvider));
 
         JsonSchemaCreator jsonSchemaCreator = new JsonSchemaCreator(
                 jsonProvider,

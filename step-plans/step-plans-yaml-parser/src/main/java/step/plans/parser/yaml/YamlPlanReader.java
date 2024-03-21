@@ -41,6 +41,7 @@ import step.plans.nl.parser.PlanParser;
 import step.plans.parser.yaml.deserializers.UpgradableYamlPlanDeserializer;
 import step.plans.parser.yaml.migrations.AbstractYamlPlanMigrationTask;
 import step.plans.parser.yaml.migrations.YamlPlanMigration;
+import step.plans.parser.yaml.model.AbstractYamlArtefact;
 import step.plans.parser.yaml.model.YamlPlan;
 import step.plans.parser.yaml.model.YamlPlanVersions;
 import step.plans.parser.yaml.model.YamlRootArtefact;
@@ -265,7 +266,7 @@ public class YamlPlanReader {
 	}
 
 	public Plan yamlPlanToPlan(YamlPlan yamlPlan) {
-		Plan plan = new Plan(yamlPlan.getRoot().getAbstractArtefact());
+		Plan plan = new Plan(yamlPlan.getRoot().getAbstractArtefact().toArtefact());
 		plan.addAttribute(AbstractOrganizableObject.NAME, yamlPlan.getName());
 		applyDefaultValues(plan);
 		return plan;
@@ -275,7 +276,7 @@ public class YamlPlanReader {
 		YamlPlan yamlPlan = new YamlPlan();
 		yamlPlan.setName(plan.getAttribute(AbstractOrganizableObject.NAME));
 		yamlPlan.setVersion(currentVersion.toString());
-		yamlPlan.setRoot(new YamlRootArtefact(plan.getRoot()));
+		yamlPlan.setRoot(new YamlRootArtefact(AbstractYamlArtefact.toYamlArtefact(plan.getRoot())));
 		return yamlPlan;
 	}
 

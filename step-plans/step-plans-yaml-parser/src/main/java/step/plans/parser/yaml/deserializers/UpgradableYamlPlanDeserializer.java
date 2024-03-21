@@ -59,7 +59,7 @@ public class UpgradableYamlPlanDeserializer extends JsonDeserializer<YamlPlan> {
     }
 
     @Override
-    public YamlPlan deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JacksonException {
+    public YamlPlan deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
         JsonNode planJsonNode = p.readValueAsTree();
 
         if (currentVersion != null) {

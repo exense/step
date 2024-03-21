@@ -21,8 +21,6 @@ package step.automation.packages.yaml.schema;
 import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObjectBuilder;
 import jakarta.json.spi.JsonProvider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import step.automation.packages.AutomationPackageNamedEntityUtils;
 import step.automation.packages.model.AbstractYamlFunction;
 import step.automation.packages.yaml.AutomationPackageKeywordsLookuper;
@@ -30,11 +28,8 @@ import step.core.yaml.schema.*;
 import step.handlers.javahandler.jsonschema.*;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class YamlKeywordSchemaGenerator {
-
-    private static final Logger log = LoggerFactory.getLogger(YamlKeywordSchemaGenerator.class);
 
     public static final String KEYWORD_DEF = "KeywordDef";
 
@@ -50,7 +45,7 @@ public class YamlKeywordSchemaGenerator {
         this.schemaHelper = new YamlJsonSchemaHelper(jsonProvider);
 
         // --- Fields metadata rules (fields we want to rename)
-        FieldMetadataExtractor fieldMetadataExtractor = prepareMetadataExtractor();
+        FieldMetadataExtractor fieldMetadataExtractor = new DefaultFieldMetadataExtractor();
 
         List<JsonSchemaFieldProcessor> processingRules = prepareFieldProcessors();
         this.jsonSchemaCreator = new JsonSchemaCreator(jsonProvider, new AggregatedJsonSchemaFieldProcessor(processingRules), fieldMetadataExtractor);
@@ -110,14 +105,6 @@ public class YamlKeywordSchemaGenerator {
             result.put(defName, schemaHelper.createNamedObjectImplDef(yamlName, automationPackageKeyword, jsonSchemaCreator, false));
         }
         return result;
-    }
-
-    protected FieldMetadataExtractor prepareMetadataExtractor() {
-        List<FieldMetadataExtractor> extractors = new ArrayList<>();
-
-        extractors.add(new DefaultFieldMetadataExtractor());
-
-        return new AggregatingFieldMetadataExtractor(extractors);
     }
 
     protected List<JsonSchemaFieldProcessor> prepareFieldProcessors() {

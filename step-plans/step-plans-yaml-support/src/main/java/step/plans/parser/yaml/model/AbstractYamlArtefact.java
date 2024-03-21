@@ -1,0 +1,179 @@
+/*******************************************************************************
+ * Copyright (C) 2020, exense GmbH
+ *
+ * This file is part of STEP
+ *
+ * STEP is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * STEP is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
+ ******************************************************************************/
+package step.plans.parser.yaml.model;
+
+import com.google.common.base.CaseFormat;
+import step.automation.packages.AutomationPackageNamedEntityUtils;
+import step.core.accessors.AbstractOrganizableObject;
+import step.core.artefacts.AbstractArtefact;
+import step.core.dynamicbeans.DynamicValue;
+import step.core.yaml.schema.YamlJsonSchemaHelper;
+import step.handlers.javahandler.jsonschema.JsonSchema;
+import step.handlers.javahandler.jsonschema.JsonSchemaDefaultValueProvider;
+import step.plans.parser.yaml.YamlArtefactsLookuper;
+
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
+
+public abstract class AbstractYamlArtefact<T extends AbstractArtefact> {
+
+    public static final String ARTEFACT_ARRAY_DEF = "ArtefactArrayDef";
+
+    @JsonSchema(defaultProvider = DefaultYamlArtefactNameProvider.class)
+    private String nodeName;
+    private DynamicValue<Boolean> continueParentNodeExecutionOnError;
+    private DynamicValue<Boolean> instrumentNode;
+    private DynamicValue<Boolean> skipNode;
+    private String description;
+
+    @JsonSchema(ref = YamlJsonSchemaHelper.DEFS_PREFIX + ARTEFACT_ARRAY_DEF)
+    private List<AbstractYamlArtefact<?>> children = new ArrayList<>();
+
+    public final AbstractArtefact toArtefact(){
+        T artefactInstance = createArtefactInstance();
+        fillArtefactFields(artefactInstance);
+        return artefactInstance;
+    }
+
+    protected abstract T createArtefactInstance();
+
+    protected void fillArtefactFields(T res) {
+        res.addAttribute(AbstractOrganizableObject.NAME, this.getNodeName());
+        res.setContinueParentNodeExecutionOnError(this.getContinueParentNodeExecutionOnError());
+        res.setInstrumentNode(this.getInstrumentNode());
+        res.setSkipNode(this.getSkipNode());
+        res.setDescription(this.getDescription());
+        if (this.getChildren() != null) {
+            for (AbstractYamlArtefact<?> child : this.getChildren()) {
+                res.getChildren().add(child.toArtefact());
+            }
+        }
+    }
+
+    protected void fillYamlArtefactFields(AbstractArtefact artefact){
+        this.setNodeName(artefact.getAttribute(AbstractOrganizableObject.NAME));
+        this.setContinueParentNodeExecutionOnError(artefact.getContinueParentNodeExecutionOnError());
+        this.setInstrumentNode(artefact.getInstrumentNode());
+        this.setSkipNode(artefact.getSkipNode());
+        this.setDescription(artefact.getDescription());
+        for (AbstractArtefact child : artefact.getChildren()) {
+            this.getChildren().add(toYamlArtefact(child));
+        }
+    }
+
+    public Class<T> getArtefactClass() {
+        return (Class<T>) createArtefactInstance().getClass();
+    }
+
+    public static AbstractYamlArtefact<?> toYamlArtefact(AbstractArtefact artefact){
+        AbstractYamlArtefact<?> instance = createYamlArtefactInstance(artefact);
+        instance.fillYamlArtefactFields(artefact);
+        return instance;
+    }
+
+    private static AbstractYamlArtefact<?> createYamlArtefactInstance(AbstractArtefact artefact){
+        List<Class<? extends AbstractYamlArtefact<?>>> allYamlArtefactClasses = YamlArtefactsLookuper.getYamlArtefactClasses();
+        Class<? extends AbstractYamlArtefact<?>> applicableYamlClass = null;
+        for (Class<? extends AbstractYamlArtefact<?>> clazz : allYamlArtefactClasses) {
+            String javaArtefactName = yamlArtefactNameToJava(AutomationPackageNamedEntityUtils.getEntityNameByClass(clazz));
+            if(javaArtefactName.equals(AbstractArtefact.getArtefactName(artefact.getClass()))){
+                applicableYamlClass = clazz;
+                break;
+            }
+        }
+        try {
+            if (applicableYamlClass != null) {
+                AbstractYamlArtefact<?> newInstance = applicableYamlClass.getConstructor().newInstance();
+                return newInstance;
+            } else {
+                throw new RuntimeException("No matching yaml class found for " + artefact.getClass());
+            }
+        } catch (Exception ex) {
+            throw new RuntimeException("Unable to create yaml artefact", ex);
+        }
+    }
+
+    private static String javaArtefactNameToYaml(String javaArtefactName) {
+        return CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_CAMEL, javaArtefactName);
+    }
+
+    private static String yamlArtefactNameToJava(String yamlArtefactName) {
+        return CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_CAMEL, yamlArtefactName);
+    }
+
+    public String getNodeName() {
+        return nodeName;
+    }
+
+    public void setNodeName(String nodeName) {
+        this.nodeName = nodeName;
+    }
+
+    public DynamicValue<Boolean> getContinueParentNodeExecutionOnError() {
+        return continueParentNodeExecutionOnError;
+    }
+
+    public void setContinueParentNodeExecutionOnError(DynamicValue<Boolean> continueParentNodeExecutionOnError) {
+        this.continueParentNodeExecutionOnError = continueParentNodeExecutionOnError;
+    }
+
+    public DynamicValue<Boolean> getInstrumentNode() {
+        return instrumentNode;
+    }
+
+    public void setInstrumentNode(DynamicValue<Boolean> instrumentNode) {
+        this.instrumentNode = instrumentNode;
+    }
+
+    public DynamicValue<Boolean> getSkipNode() {
+        return skipNode;
+    }
+
+    public void setSkipNode(DynamicValue<Boolean> skipNode) {
+        this.skipNode = skipNode;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public List<AbstractYamlArtefact<?>> getChildren() {
+        return children;
+    }
+
+    public void setChildren(List<AbstractYamlArtefact<?>> children) {
+        this.children = children;
+    }
+
+    public static class DefaultYamlArtefactNameProvider implements JsonSchemaDefaultValueProvider {
+
+        public DefaultYamlArtefactNameProvider() {
+        }
+
+        @Override
+        public String getDefaultValue(Class<?> objectClass, Field field) {
+            return YamlArtefactsLookuper.getYamlArtefactName((Class<? extends AbstractYamlArtefact<?>>) objectClass);
+        }
+    }
+}

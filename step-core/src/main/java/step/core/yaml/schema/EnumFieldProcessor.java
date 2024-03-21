@@ -29,6 +29,7 @@ import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 import java.lang.reflect.Field;
 import java.util.List;
 
+// TODO: support enum in DefaultJsonSchemaFieldProcessor instead of this class
 public class EnumFieldProcessor implements JsonSchemaFieldProcessor {
 
     private JsonProvider jsonProvider;
