@@ -282,19 +282,22 @@ public abstract class AbstractAutomationPackageReader<T extends AutomationPackag
             }
         }
 
+        Set<Method> excludedMethods = new HashSet<>();
+
         // Classes with @Plan annotation in methods
         // and filter them
         for (Method m : annotationScanner.getMethodsWithAnnotation(step.junit.runners.annotations.Plan.class)) {
-            if (!excludedByAnnotation.contains(m.getDeclaringClass()) && !classesWithPlans.contains(m.getDeclaringClass())) {
+//            if (!excludedByAnnotation.contains(m.getDeclaringClass()) && !classesWithPlans.contains(m.getDeclaringClass())) {
                 log.debug("Checking if " + m.getName() + " should be filtered...");
                 String targetName = "@Plan method " + m.getName();
                 FilterResult filtered = isAnnotationFiltered(targetName, includedA, excludedA, m.getAnnotations());
                 if (filtered == FilterResult.NOT_FILTERED) {
                     classesWithPlans.add(m.getDeclaringClass());
                 } else {
+                    excludedMethods.add(m);
                     log.debug(m.getName() + " has been filtered out");
                 }
-            }
+  //          }
         }
 
         // Filter the classes:
@@ -313,7 +316,7 @@ public abstract class AbstractAutomationPackageReader<T extends AutomationPackag
         classesWithPlans = tmp;
 
         // Create plans for discovered classes
-        classesWithPlans.forEach(c -> result.addAll(getPlansForClass(annotationScanner, c, archive, stepClassParser)));
+        classesWithPlans.forEach(c -> result.addAll(getPlansForClass(annotationScanner, c, archive, stepClassParser, excludedMethods)));
 
         // replace null with empty collections to avoid NPEs
         result.forEach(plan -> {
@@ -342,12 +345,12 @@ public abstract class AbstractAutomationPackageReader<T extends AutomationPackag
         return filtered;
     }
 
-    protected static List<Plan> getPlansForClass(AnnotationScanner annotationScanner, Class<?> klass, AutomationPackageArchive archive, StepClassParser stepClassParser) {
+    protected static List<Plan> getPlansForClass(AnnotationScanner annotationScanner, Class<?> klass, AutomationPackageArchive archive, StepClassParser stepClassParser, Set<Method> excludedMethods) {
 
         List<Plan> result = new ArrayList<>();
         List<StepClassParserResult> plans;
         try {
-            plans = stepClassParser.getPlanFromAnnotatedMethods(annotationScanner, klass);
+            plans = stepClassParser.getPlanFromAnnotatedMethods(annotationScanner, klass, excludedMethods);
             plans.addAll(getPlanFromPlansAnnotation(klass, archive, stepClassParser));
         } catch (Exception e) {
             throw new RuntimeException(

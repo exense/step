@@ -30,10 +30,8 @@ import step.plans.nl.parser.PlanParser;
 import step.plans.parser.yaml.YamlPlanReader;
 
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.lang.reflect.Method;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class StepClassParser {
@@ -74,9 +72,11 @@ public class StepClassParser {
 		return result;
 	}
 
-	public List<StepClassParserResult> getPlanFromAnnotatedMethods(AnnotationScanner annotationScanner, Class<?> klass) {
+	public List<StepClassParserResult> getPlanFromAnnotatedMethods(AnnotationScanner annotationScanner, Class<?> klass, Set<Method> excludedMethods) {
 		return annotationScanner.getMethodsWithAnnotation(step.junit.runners.annotations.Plan.class).stream()
-				.filter(m -> m.getDeclaringClass() == klass).map(m -> {
+				.filter(m -> m.getDeclaringClass() == klass)
+				.filter(m -> !excludedMethods.contains(m))
+				.map(m -> {
 					Keyword keyword = m.getAnnotation(Keyword.class);
 					String planName;
 					if (keyword != null && keyword.name() != null && !keyword.name().isEmpty()) {
@@ -112,7 +112,7 @@ public class StepClassParser {
 
 	public List<StepClassParserResult> getPlanFromAnnotatedMethods(Class<?> klass) {
 		try (AnnotationScanner annotationScanner = AnnotationScanner.forAllClassesFromClassLoader(klass.getClassLoader())) {
-			return getPlanFromAnnotatedMethods(annotationScanner,klass);
+			return getPlanFromAnnotatedMethods(annotationScanner,klass, new HashSet<>());
 		}
 	}
 
