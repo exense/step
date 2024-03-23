@@ -18,11 +18,7 @@
  ******************************************************************************/
 package step.automation.packages.yaml;
 
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.deser.DeserializationProblemHandler;
-import com.fasterxml.jackson.databind.jsontype.TypeIdResolver;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
@@ -37,7 +33,6 @@ import step.automation.packages.yaml.model.AutomationPackageDescriptorYamlOS;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYamlOS;
 import step.core.accessors.DefaultJacksonMapperProvider;
-import step.core.yaml.deserializers.CustomYamlFormat;
 import step.core.yaml.deserializers.StepYamlDeserializersScanner;
 import step.plans.parser.yaml.YamlPlanReader;
 import step.plans.parser.yaml.model.YamlPlanVersions;
@@ -149,48 +144,12 @@ public class AutomationPackageDescriptorReader {
         SimpleModule module = new SimpleModule();
 
         // register deserializers to read yaml plans
-        planReader.registerAllSerializers(module, yamlMapper, false);
-
-        // add annotated jackson deserializers
-        StepYamlDeserializersScanner.addAllDeserializerAddonsToModule(module, yamlObjectMapper);
+        planReader.registerAllSerializersAndDeserializers(module, yamlMapper, false);
 
         yamlMapper.registerModule(module);
-        yamlMapper.registerModule(new YamlFormatErrorHandlerModule());
 
         return yamlMapper;
     }
-
-    /**
-     * Some classes may be annotated with @JsonTypeInfo, but in yaml format we don't use
-     * special fields to provide the typeInfo. By default, this will cause the 'missingTypeId' error
-     * and break the deserialization.
-     * That's why here we return the baseType for these classes and force jackson to
-     * run our custom yaml deserializer for this class anyway.
-     */
-    private static class YamlFormatErrorHandlerModule extends SimpleModule {
-        @Override
-        public void setupModule(SetupContext context) {
-            super.setupModule(context);
-            context.addDeserializationProblemHandler(new DeserializationProblemHandler() {
-                @Override
-                public JavaType handleMissingTypeId(DeserializationContext ctxt, JavaType baseType, TypeIdResolver idResolver, String failureMsg) throws IOException {
-                    if (baseType.getRawClass().getAnnotation(CustomYamlFormat.class) != null) {
-                        return baseType;
-                    }
-                    return super.handleMissingTypeId(ctxt, baseType, idResolver, failureMsg);
-                }
-
-                @Override
-                public JavaType handleUnknownTypeId(DeserializationContext ctxt, JavaType baseType, String subTypeId, TypeIdResolver idResolver, String failureMsg) throws IOException {
-                    if (baseType.getRawClass().getAnnotation(CustomYamlFormat.class) != null) {
-                        return baseType;
-                    }
-                    return super.handleUnknownTypeId(ctxt, baseType, subTypeId, idResolver, failureMsg);
-                }
-            });
-        }
-    }
-
 
 
     public YamlPlanReader getPlanReader(){

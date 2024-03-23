@@ -18,37 +18,19 @@
  ******************************************************************************/
 package step.plans.parser.yaml.model;
 
-public class YamlPlan {
+public class NamedYamlArtefact {
 
-	// this name should be kept untouched to support the migrations for old versions
-	public static final String VERSION_FIELD_NAME = "version";
+    private AbstractYamlArtefact<?> abstractArtefact;
 
-	private String version;
-	private String name;
+    public NamedYamlArtefact(AbstractYamlArtefact<?> abstractArtefact) {
+        this.abstractArtefact = abstractArtefact;
+    }
 
-	private NamedYamlArtefact root;
+    public AbstractYamlArtefact<?> getAbstractArtefact() {
+        return abstractArtefact;
+    }
 
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public NamedYamlArtefact getRoot() {
-		return root;
-	}
-
-	public void setRoot(NamedYamlArtefact root) {
-		this.root = root;
-	}
-
-	public String getVersion() {
-		return version;
-	}
-
-	public void setVersion(String version) {
-		this.version = version;
-	}
+    public void setAbstractArtefact(AbstractYamlArtefact<?> abstractArtefact) {
+        this.abstractArtefact = abstractArtefact;
+    }
 }

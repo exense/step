@@ -18,6 +18,8 @@
  ******************************************************************************/
 package step.plans.parser.yaml.model;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.google.common.base.CaseFormat;
 import step.automation.packages.AutomationPackageNamedEntityUtils;
 import step.core.accessors.AbstractOrganizableObject;
@@ -31,20 +33,26 @@ import step.plans.parser.yaml.YamlArtefactsLookuper;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
+import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY;
+import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.NONE;
+
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonAutoDetect(fieldVisibility = ANY, getterVisibility = NONE, setterVisibility = NONE)
 public abstract class AbstractYamlArtefact<T extends AbstractArtefact> {
 
     public static final String ARTEFACT_ARRAY_DEF = "ArtefactArrayDef";
 
     @JsonSchema(defaultProvider = DefaultYamlArtefactNameProvider.class)
     private String nodeName;
-    private DynamicValue<Boolean> continueParentNodeExecutionOnError;
-    private DynamicValue<Boolean> instrumentNode;
-    private DynamicValue<Boolean> skipNode;
+    private DynamicValue<Boolean> skipNode = new DynamicValue<>(false);
+    private DynamicValue<Boolean> instrumentNode = new DynamicValue<>(false);
+    private DynamicValue<Boolean> continueParentNodeExecutionOnError = new DynamicValue<>(false);
     private String description;
 
     @JsonSchema(ref = YamlJsonSchemaHelper.DEFS_PREFIX + ARTEFACT_ARRAY_DEF)
-    private List<AbstractYamlArtefact<?>> children = new ArrayList<>();
+    private List<NamedYamlArtefact> children = new ArrayList<>();
 
     public final AbstractArtefact toArtefact(){
         T artefactInstance = createArtefactInstance();
@@ -55,26 +63,44 @@ public abstract class AbstractYamlArtefact<T extends AbstractArtefact> {
     protected abstract T createArtefactInstance();
 
     protected void fillArtefactFields(T res) {
-        res.addAttribute(AbstractOrganizableObject.NAME, this.getNodeName());
+        res.addAttribute(AbstractOrganizableObject.NAME, getArtefactName());
+
         res.setContinueParentNodeExecutionOnError(this.getContinueParentNodeExecutionOnError());
         res.setInstrumentNode(this.getInstrumentNode());
         res.setSkipNode(this.getSkipNode());
         res.setDescription(this.getDescription());
         if (this.getChildren() != null) {
-            for (AbstractYamlArtefact<?> child : this.getChildren()) {
-                res.getChildren().add(child.toArtefact());
+            for (NamedYamlArtefact child : this.getChildren()) {
+                res.getChildren().add(child.getAbstractArtefact().toArtefact());
             }
         }
     }
 
+    protected String getArtefactName() {
+        // TODO: for CallFunction the artefact name is keyword name
+        if (getNodeName() != null) {
+            // explicit name from yaml
+            return getNodeName();
+        } else {
+            // default value
+            return getDefaultArtefactName();
+        }
+    }
+
+    protected String getDefaultArtefactName() {
+        return AbstractArtefact.getArtefactName(getArtefactClass());
+    }
+
     protected void fillYamlArtefactFields(AbstractArtefact artefact){
-        this.setNodeName(artefact.getAttribute(AbstractOrganizableObject.NAME));
+        if (!Objects.equals(artefact.getAttribute(AbstractOrganizableObject.NAME), getDefaultArtefactName())) {
+            this.setNodeName(artefact.getAttribute(AbstractOrganizableObject.NAME));
+        }
         this.setContinueParentNodeExecutionOnError(artefact.getContinueParentNodeExecutionOnError());
         this.setInstrumentNode(artefact.getInstrumentNode());
         this.setSkipNode(artefact.getSkipNode());
         this.setDescription(artefact.getDescription());
         for (AbstractArtefact child : artefact.getChildren()) {
-            this.getChildren().add(toYamlArtefact(child));
+            this.getChildren().add(new NamedYamlArtefact(toYamlArtefact(child)));
         }
     }
 
@@ -158,11 +184,11 @@ public abstract class AbstractYamlArtefact<T extends AbstractArtefact> {
         this.description = description;
     }
 
-    public List<AbstractYamlArtefact<?>> getChildren() {
+    public List<NamedYamlArtefact> getChildren() {
         return children;
     }
 
-    public void setChildren(List<AbstractYamlArtefact<?>> children) {
+    public void setChildren(List<NamedYamlArtefact> children) {
         this.children = children;
     }
 
@@ -173,7 +199,7 @@ public abstract class AbstractYamlArtefact<T extends AbstractArtefact> {
 
         @Override
         public String getDefaultValue(Class<?> objectClass, Field field) {
-            return YamlArtefactsLookuper.getYamlArtefactName((Class<? extends AbstractYamlArtefact<?>>) objectClass);
+            return AbstractArtefact.getArtefactName(YamlArtefactsLookuper.getArtefactClass((Class<? extends AbstractYamlArtefact<?>>) objectClass));
         }
     }
 }

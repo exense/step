@@ -16,21 +16,25 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plans.parser.yaml.model;
+package step.core.yaml.serializers;
 
-public class YamlRootArtefact {
+import step.core.yaml.deserializers.StepYamlDeserializer;
 
-    private AbstractYamlArtefact<?> abstractArtefact;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 
-    public YamlRootArtefact(AbstractYamlArtefact<?> abstractArtefact) {
-        this.abstractArtefact = abstractArtefact;
-    }
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-    public AbstractYamlArtefact<?> getAbstractArtefact() {
-        return abstractArtefact;
-    }
+/**
+ * Annotation used to mark the {@link StepYamlDeserializer} to be automatically used for yaml
+ * deserialization of Step entities.
+ */
+@Retention(RUNTIME)
+@Target(ElementType.TYPE)
+public @interface StepYamlSerializerAddOn {
 
-    public void setAbstractArtefact(AbstractYamlArtefact<?> abstractArtefact) {
-        this.abstractArtefact = abstractArtefact;
-    }
+    String LOCATION = "step";
+
+    Class<?>[] targetClasses();
 }

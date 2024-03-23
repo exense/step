@@ -70,8 +70,6 @@ public abstract class NamedEntityYamlDeserializer<T>  {
 
     public JsonNode getAllYamlFields(JsonNode node){
         String yamlName = getEntityNameFromYaml(node);
-
-        // move entity name into the target '_class' field
         return node.get(yamlName);
     }
 

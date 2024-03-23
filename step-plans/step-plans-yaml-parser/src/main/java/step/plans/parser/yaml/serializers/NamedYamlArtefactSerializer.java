@@ -19,39 +19,33 @@
 package step.plans.parser.yaml.serializers;
 
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
-import step.core.accessors.AbstractOrganizableObject;
-import step.core.artefacts.AbstractArtefact;
-import step.core.dynamicbeans.DynamicValue;
-import step.core.scanner.CachedAnnotationScanner;
+import step.automation.packages.AutomationPackageNamedEntityUtils;
+import step.core.yaml.serializers.NamedEntityYamlSerializer;
+import step.core.yaml.serializers.StepYamlSerializer;
+import step.core.yaml.serializers.StepYamlSerializerAddOn;
 import step.handlers.javahandler.jsonschema.FieldMetadataExtractor;
-import step.plans.parser.yaml.YamlPlanFields;
-import step.plans.parser.yaml.YamlPlanReaderExtender;
-import step.plans.parser.yaml.YamlPlanReaderExtension;
-import step.plans.parser.yaml.model.YamlRootArtefact;
-import step.plans.parser.yaml.rules.*;
+import step.plans.parser.yaml.model.AbstractYamlArtefact;
+import step.plans.parser.yaml.model.NamedYamlArtefact;
 import step.plans.parser.yaml.schema.YamlPlanJsonSchemaGenerator;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
-import static step.core.scanner.Classes.newInstanceAs;
-
-public class YamlRootArtefactSerializer extends JsonSerializer<YamlRootArtefact> {
+@StepYamlSerializerAddOn(targetClasses = {NamedYamlArtefact.class})
+public class NamedYamlArtefactSerializer extends StepYamlSerializer<NamedYamlArtefact> {
 
     private final List<YamlArtefactFieldSerializationProcessor> customFieldProcessors = null;
     private final FieldMetadataExtractor metadataExtractor = null;
     private ObjectMapper stepYamlMapper;
 
-    public YamlRootArtefactSerializer(ObjectMapper stepYamlMapper) {
-//        this.stepYamlMapper = stepYamlMapper;
-//        this.metadataExtractor = prepareMetadataExtractor();
-//        this.customFieldProcessors = prepareFieldProcessors();
+    public NamedYamlArtefactSerializer() {
+        super();
+    }
+
+    public NamedYamlArtefactSerializer(ObjectMapper stepYamlMapper) {
+        super(stepYamlMapper);
     }
 
     protected FieldMetadataExtractor prepareMetadataExtractor() {
@@ -112,27 +106,25 @@ public class YamlRootArtefactSerializer extends JsonSerializer<YamlRootArtefact>
     */
 
 
-    protected List<YamlArtefactFieldSerializationProcessor> getExtensions() {
-        List<YamlArtefactFieldSerializationProcessor> extensions = new ArrayList<>();
-        CachedAnnotationScanner.getClassesWithAnnotation(YamlPlanReaderExtension.LOCATION, YamlPlanReaderExtension.class, Thread.currentThread().getContextClassLoader()).stream()
-                .map(newInstanceAs(YamlPlanReaderExtender.class)).forEach(e -> extensions.addAll(e.getSerializationExtensions()));
-        return extensions;
-    }
+//    protected List<YamlArtefactFieldSerializationProcessor> getExtensions() {
+//        List<YamlArtefactFieldSerializationProcessor> extensions = new ArrayList<>();
+//        CachedAnnotationScanner.getClassesWithAnnotation(YamlPlanReaderExtension.LOCATION, YamlPlanReaderExtension.class, Thread.currentThread().getContextClassLoader()).stream()
+//                .map(newInstanceAs(YamlPlanReaderExtender.class)).forEach(e -> extensions.addAll(e.getSerializationExtensions()));
+//        return extensions;
+//    }
 
     @Override
-    public void serialize(YamlRootArtefact value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
-        // TODO: implement
-        throw new UnsupportedOperationException("Not implemented yet");
-//        AbstractArtefact artefact = value.getAbstractArtefact();
-//
-//        // root artefact
-//        try {
-//            processArtefact(gen, artefact);
-//        } catch (IllegalAccessException e) {
-//            throw new RuntimeException("Unable to serialize artefact " + value.getClass(), e);
-//        }
+    public void serialize(NamedYamlArtefact value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+        NamedEntityYamlSerializer<AbstractYamlArtefact<?>> ser = new NamedEntityYamlSerializer<>() {
+            @Override
+            protected String resolveYamlName(Class<AbstractYamlArtefact<?>> clazz) {
+                return AutomationPackageNamedEntityUtils.getEntityNameByClass(clazz);
+            }
+        };
+        ser.serialize(value.getAbstractArtefact(), gen, serializers);
     }
 
+    // TODO: cleanup
 //    private void processArtefact(JsonGenerator gen, AbstractArtefact artefact) throws IOException, IllegalAccessException {
 //        gen.writeStartObject();
 //        String artefactName = AbstractArtefact.getArtefactName(artefact.getClass());

@@ -55,7 +55,19 @@ public class YamlArtefactsLookuper {
     }
 
     public static String getYamlArtefactName(Class<? extends AbstractYamlArtefact<?>> yamlArtefactClass) {
-        return AbstractArtefact.getArtefactName(getArtefactClass(yamlArtefactClass));
+        return AutomationPackageNamedEntityUtils.getEntityNameByClass(yamlArtefactClass);
+    }
+
+    public static String yamlArtefactClassToJava(String yamlArtefactClass) {
+        List<Class<? extends AbstractYamlArtefact<?>>> annotatedClasses = getYamlArtefactClasses();
+        for (Class<? extends AbstractYamlArtefact<?>> annotatedClass : annotatedClasses) {
+            String expectedYamlName = AutomationPackageNamedEntityUtils.getEntityNameByClass(annotatedClass);
+
+            if (yamlArtefactClass.equalsIgnoreCase(expectedYamlName)) {
+                return annotatedClass.getName();
+            }
+        }
+        return null;
     }
 
     private static AbstractYamlArtefact<?> createYamlArtefactInstance(Class<? extends AbstractYamlArtefact<?>> yamlArtefactClass) {

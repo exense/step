@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.Version;
 import step.core.accessors.DefaultJacksonMapperProvider;
+import step.core.artefacts.AbstractArtefact;
 import step.core.scanner.CachedAnnotationScanner;
 import step.core.yaml.schema.*;
 import step.handlers.javahandler.jsonschema.*;
@@ -223,7 +224,7 @@ public class YamlPlanJsonSchemaGenerator {
 
 		for (Class<? extends AbstractYamlArtefact<?>> yamlArtefactClass : artefactClasses) {
 			// use the name of artefact as definition name
-			String name = YamlArtefactsLookuper.getYamlArtefactName(yamlArtefactClass);
+			String name = AbstractArtefact.getArtefactName(YamlArtefactsLookuper.getArtefactClass(yamlArtefactClass));
 			String defName = name + "Def";
 
 			// scan all fields in artefact class and put them to artefact definition

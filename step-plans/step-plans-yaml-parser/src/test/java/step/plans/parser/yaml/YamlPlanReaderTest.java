@@ -335,7 +335,7 @@ public class YamlPlanReaderTest {
 			JsonNode actual = yamlReader.getYamlMapper().readTree(os.toByteArray());
 			Assert.assertEquals(expectedTechnicalYaml, actual);
 		} catch (IOException e) {
-			throw new RuntimeException(e);
+			throw new RuntimeException("IO Exception", e);
 		}
 	}
 

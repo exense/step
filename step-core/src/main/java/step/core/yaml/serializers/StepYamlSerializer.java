@@ -16,22 +16,21 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.core.yaml.deserializers;
+package step.core.yaml.serializers;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
+public abstract class StepYamlSerializer<T> extends JsonSerializer<T> {
 
-/**
- * Used to mark some class or interface as having the special yaml format in step. This allows to customize jackson
- * deserializers and redefine the default deserialization behavior for inherited classes
- * (for instance, if the @{@link com.fasterxml.jackson.annotation.JsonTypeInfo} annotation is used to specify
- * the java type for json representation, but for yaml it is required to use another field
- * to specify the java type).
- */
-@Retention(RUNTIME)
-@Target(ElementType.TYPE)
-public @interface CustomYamlFormat {
+    protected ObjectMapper yamlObjectMapper;
+
+    public StepYamlSerializer() {
+    }
+
+    public StepYamlSerializer(ObjectMapper yamlObjectMapper){
+        this.yamlObjectMapper = yamlObjectMapper;
+    }
+
+
 }

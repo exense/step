@@ -19,14 +19,22 @@
 package step.core.yaml.serializers;
 
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.YamlFields;
 
 import java.io.IOException;
 
-public class YamlDynamicValueSerializer extends JsonSerializer<DynamicValue> {
+@StepYamlSerializerAddOn(targetClasses = {DynamicValue.class})
+public class YamlDynamicValueSerializer extends StepYamlSerializer<DynamicValue<?>> {
+
+    public YamlDynamicValueSerializer() {
+    }
+
+    public YamlDynamicValueSerializer(ObjectMapper yamlObjectMapper) {
+        super(yamlObjectMapper);
+    }
 
     @Override
     public void serialize(DynamicValue value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
@@ -37,5 +45,11 @@ public class YamlDynamicValueSerializer extends JsonSerializer<DynamicValue> {
         } else {
             gen.writeObject(value.getValue());
         }
+    }
+
+    @Override
+    public boolean isEmpty(SerializerProvider provider, DynamicValue<?> value) {
+        // to avoid serialization for null-values
+        return super.isEmpty(provider, value) || value.getValue() == null;
     }
 }

@@ -30,11 +30,11 @@ import step.core.Version;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.artefacts.AbstractArtefact;
-import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
 import step.core.scanner.AnnotationScanner;
 import step.core.scanner.CachedAnnotationScanner;
 import step.core.yaml.deserializers.StepYamlDeserializersScanner;
+import step.core.yaml.serializers.StepYamlSerializersScanner;
 import step.migration.MigrationManager;
 import step.plans.nl.RootArtefactType;
 import step.plans.nl.parser.PlanParser;
@@ -42,13 +42,11 @@ import step.plans.parser.yaml.deserializers.UpgradableYamlPlanDeserializer;
 import step.plans.parser.yaml.migrations.AbstractYamlPlanMigrationTask;
 import step.plans.parser.yaml.migrations.YamlPlanMigration;
 import step.plans.parser.yaml.model.AbstractYamlArtefact;
+import step.plans.parser.yaml.model.NamedYamlArtefact;
 import step.plans.parser.yaml.model.YamlPlan;
 import step.plans.parser.yaml.model.YamlPlanVersions;
-import step.plans.parser.yaml.model.YamlRootArtefact;
 import step.plans.parser.yaml.rules.NodeNameRule;
 import step.plans.parser.yaml.schema.YamlPlanValidationException;
-import step.core.yaml.serializers.YamlDynamicValueSerializer;
-import step.plans.parser.yaml.serializers.YamlRootArtefactSerializer;
 import step.repositories.parser.StepsParser;
 
 import java.io.IOException;
@@ -196,7 +194,7 @@ public class YamlPlanReader {
 		ObjectMapper yamlMapper = createDefaultYamlMapper();
 
 		// configure custom deserializers
-		yamlMapper.registerModule(registerAllSerializers(new SimpleModule(), yamlMapper, true));
+		yamlMapper.registerModule(registerAllSerializersAndDeserializers(new SimpleModule(), yamlMapper, true));
 		return yamlMapper;
 	}
 
@@ -207,28 +205,23 @@ public class YamlPlanReader {
 		return DefaultJacksonMapperProvider.getObjectMapper(yamlFactory);
 	}
 
-	private SimpleModule createDatabindModuleForNonUpgradablePlans(ObjectMapper resultingMapper) {
-		SimpleModule module = new SimpleModule();
-		registerBasicSerializers(module, resultingMapper);
-		return module;
+	private SimpleModule registerBasicSerializersAndDeserializers(SimpleModule module, ObjectMapper resultingMapper) {
+		SimpleModule res = StepYamlDeserializersScanner.addAllDeserializerAddonsToModule(module, resultingMapper);
+		res = StepYamlSerializersScanner.addAllSerializerAddonsToModule(res, resultingMapper);
+		return res;
 	}
 
-	private SimpleModule registerBasicSerializers(SimpleModule module, ObjectMapper resultingMapper) {
-		StepYamlDeserializersScanner.addAllDeserializerAddonsToModule(module, resultingMapper);
+	public SimpleModule registerAllSerializersAndDeserializers(SimpleModule module, ObjectMapper resultingMapper, boolean upgradablePlan) {
+		ObjectMapper nonUpgradableYamlMapper = createDefaultYamlMapper().registerModule(createModuleForNonUpgradablePlans(resultingMapper));
 
-		module.addSerializer(DynamicValue.class, new YamlDynamicValueSerializer());
-		return module.addSerializer(YamlRootArtefact.class, createRootArtefactSerializer(resultingMapper));
-	}
-
-	public SimpleModule registerAllSerializers(SimpleModule module, ObjectMapper resultingMapper, boolean upgradablePlan) {
-		ObjectMapper nonUpgradableYamlMapper = createDefaultYamlMapper().registerModule(createDatabindModuleForNonUpgradablePlans(resultingMapper));
-
-		return registerBasicSerializers(module, resultingMapper)
+		return registerBasicSerializersAndDeserializers(module, resultingMapper)
 				.addDeserializer(YamlPlan.class, new UpgradableYamlPlanDeserializer(upgradablePlan ? currentVersion : null, jsonSchema, migrationManager, nonUpgradableYamlMapper));
 	}
 
-	protected YamlRootArtefactSerializer createRootArtefactSerializer(ObjectMapper stepYamlMapper) {
-		return new YamlRootArtefactSerializer(stepYamlMapper);
+	private SimpleModule createModuleForNonUpgradablePlans(ObjectMapper resultingMapper) {
+		SimpleModule module = new SimpleModule();
+		registerBasicSerializersAndDeserializers(module, resultingMapper);
+		return module;
 	}
 
 	protected ObjectMapper getYamlMapper() {
@@ -276,7 +269,7 @@ public class YamlPlanReader {
 		YamlPlan yamlPlan = new YamlPlan();
 		yamlPlan.setName(plan.getAttribute(AbstractOrganizableObject.NAME));
 		yamlPlan.setVersion(currentVersion.toString());
-		yamlPlan.setRoot(new YamlRootArtefact(AbstractYamlArtefact.toYamlArtefact(plan.getRoot())));
+		yamlPlan.setRoot(new NamedYamlArtefact(AbstractYamlArtefact.toYamlArtefact(plan.getRoot())));
 		return yamlPlan;
 	}
 

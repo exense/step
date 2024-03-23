@@ -19,34 +19,50 @@
 package step.plans.parser.yaml.deserializers;
 
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import step.artefacts.CallFunction;
+import step.core.yaml.deserializers.NamedEntityYamlDeserializer;
 import step.core.yaml.deserializers.StepYamlDeserializer;
 import step.core.yaml.deserializers.StepYamlDeserializerAddOn;
+import step.plans.parser.yaml.YamlArtefactsLookuper;
 import step.plans.parser.yaml.YamlPlanFields;
-import step.plans.parser.yaml.model.YamlRootArtefact;
+import step.plans.parser.yaml.model.AbstractYamlArtefact;
+import step.plans.parser.yaml.model.NamedYamlArtefact;
 
 import java.io.IOException;
 
-@StepYamlDeserializerAddOn(targetClasses = {YamlRootArtefact.class})
-public class YamlRootArtefactDeserializer extends StepYamlDeserializer<YamlRootArtefact> {
+@StepYamlDeserializerAddOn(targetClasses = {NamedYamlArtefact.class})
+public class NamedYamlArtefactDeserializer extends StepYamlDeserializer<NamedYamlArtefact> {
 
-    public YamlRootArtefactDeserializer() {
+    public NamedYamlArtefactDeserializer() {
         this(null);
     }
 
-    public YamlRootArtefactDeserializer(ObjectMapper stepYamlObjectMapper) {
+    public NamedYamlArtefactDeserializer(ObjectMapper stepYamlObjectMapper) {
         super(stepYamlObjectMapper);
     }
 
     @Override
-    public YamlRootArtefact deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException {
-       throw new UnsupportedOperationException("Not implemented yet");
+    public NamedYamlArtefact deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException {
+        JsonNode node = jsonParser.getCodec().readTree(jsonParser);
+        NamedEntityYamlDeserializer<AbstractYamlArtefact<?>> nameEntityDeserializer = new NamedEntityYamlDeserializer<>() {
+            @Override
+            protected String resolveTargetClassNameByYamlName(String yamlName) {
+                return null;
+            }
+
+            protected Class<?> resolveTargetClassByYamlName(String yamlName) {
+                try {
+                    return Class.forName(YamlArtefactsLookuper.yamlArtefactClassToJava(yamlName));
+                } catch (ClassNotFoundException e) {
+                    throw new RuntimeException("Unable to resolve keyword class", e);
+                }
+            }
+        };
+        return new NamedYamlArtefact(nameEntityDeserializer.deserialize(node, jsonParser.getCodec()));
     }
 
     // TODO: move this logic
@@ -60,6 +76,7 @@ public class YamlRootArtefactDeserializer extends StepYamlDeserializer<YamlRootA
             } else {
                 JsonNode functionNode = artifactData.get(YamlPlanFields.CALL_FUNCTION_FUNCTION_YAML_FIELD);
                 if(functionNode != null && !functionNode.isContainerNode()){
+                    // TODO: move this code
                     String staticFunctionName = functionNode.asText();
                     if(!staticFunctionName.isEmpty()){
                         artifactData.put(YamlPlanFields.NAME_YAML_FIELD, staticFunctionName);
@@ -71,12 +88,5 @@ public class YamlRootArtefactDeserializer extends StepYamlDeserializer<YamlRootA
         }
     }
 
-    private static ArrayNode createArrayNode(ObjectCodec codec) {
-        return (ArrayNode) codec.createArrayNode();
-    }
-
-    private static ObjectNode createObjectNode(ObjectCodec codec) {
-        return (ObjectNode) codec.createObjectNode();
-    }
 
 }

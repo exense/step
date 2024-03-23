@@ -18,52 +18,52 @@
  ******************************************************************************/
 package step.artefacts.automation;
 
-import step.artefacts.Sequence;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import step.artefacts.Check;
 import step.automation.packages.AutomationPackageNamedEntity;
 import step.core.artefacts.AbstractArtefact;
 import step.core.dynamicbeans.DynamicValue;
 import step.plans.parser.yaml.model.AbstractYamlArtefact;
 
-@AutomationPackageNamedEntity(name = "sequence")
-public class YamlSequence extends AbstractYamlArtefact<Sequence> {
+@AutomationPackageNamedEntity(name = "check")
+public class YamlCheck extends AbstractYamlArtefact<Check> {
 
-    private DynamicValue<Boolean> continueOnError = new DynamicValue<Boolean>(false);
+    private static final Logger log = LoggerFactory.getLogger(YamlCheck.class);
 
-    private DynamicValue<Long> pacing = new DynamicValue<Long>();
-
-    @Override
-    protected Sequence createArtefactInstance() {
-        return new Sequence();
-    }
+    private String expression = null;
 
     @Override
-    protected void fillArtefactFields(Sequence res) {
+    protected void fillArtefactFields(Check res) {
         super.fillArtefactFields(res);
-        res.setContinueOnError(this.getContinueOnError());
-        res.setPacing(this.getPacing());
+        if(getExpression() != null) {
+            res.setExpression(new DynamicValue<>(getExpression(), ""));
+        }
     }
 
     @Override
     protected void fillYamlArtefactFields(AbstractArtefact artefact) {
         super.fillYamlArtefactFields(artefact);
-        Sequence sequence = (Sequence) artefact;
-        this.setContinueOnError(sequence.getContinueOnError());
-        this.setPacing(sequence.getPacing());
+        Check checkArtefact = (Check) artefact;
+        if (checkArtefact.getExpression() != null) {
+            if (!checkArtefact.getExpression().isDynamic()) {
+                log.warn("Static values are not supported in yaml plan format for 'expression' in " + artefact.getClass().getSimpleName());
+            } else {
+                this.setExpression(checkArtefact.getExpression().getExpression());
+            }
+        }
     }
 
-    public DynamicValue<Boolean> getContinueOnError() {
-        return continueOnError;
+    @Override
+    protected Check createArtefactInstance() {
+        return new Check();
     }
 
-    public void setContinueOnError(DynamicValue<Boolean> continueOnError) {
-        this.continueOnError = continueOnError;
+    public String getExpression() {
+        return expression;
     }
 
-    public DynamicValue<Long> getPacing() {
-        return pacing;
-    }
-
-    public void setPacing(DynamicValue<Long> pacing) {
-        this.pacing = pacing;
+    public void setExpression(String expression) {
+        this.expression = expression;
     }
 }

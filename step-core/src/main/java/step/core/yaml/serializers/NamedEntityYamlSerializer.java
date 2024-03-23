@@ -16,39 +16,22 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plans.parser.yaml.model;
+package step.core.yaml.serializers;
 
-public class YamlPlan {
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.SerializerProvider;
 
-	// this name should be kept untouched to support the migrations for old versions
-	public static final String VERSION_FIELD_NAME = "version";
+import java.io.IOException;
 
-	private String version;
-	private String name;
+public abstract class NamedEntityYamlSerializer<T> {
 
-	private NamedYamlArtefact root;
+    public void serialize(T value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+        String name = resolveYamlName((Class<T>) value.getClass());
+        gen.writeStartObject();
+        gen.writeFieldName(name);
+        gen.writeObject(value);
+        gen.writeEndObject();
+    }
 
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public NamedYamlArtefact getRoot() {
-		return root;
-	}
-
-	public void setRoot(NamedYamlArtefact root) {
-		this.root = root;
-	}
-
-	public String getVersion() {
-		return version;
-	}
-
-	public void setVersion(String version) {
-		this.version = version;
-	}
+    protected abstract String resolveYamlName(Class<T> clazz);
 }
