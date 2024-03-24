@@ -27,7 +27,6 @@ public class TokenSelector extends AbstractArtefact {
     public static final String TOKEN_SELECTOR_TOKEN_YAML_FIELD = "routing";
     DynamicValue<Boolean> remote = new DynamicValue<Boolean>(true);
 
-	@JsonSchema(fieldName = TOKEN_SELECTOR_TOKEN_YAML_FIELD)
 	DynamicValue<String> token = new DynamicValue<>("{}");
 
 	public DynamicValue<Boolean> getRemote() {

@@ -24,6 +24,7 @@ import step.core.artefacts.Artefact;
 import step.plans.parser.yaml.model.AbstractYamlArtefact;
 import step.plans.parser.yaml.model.YamlArtefact;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -78,13 +79,15 @@ public class YamlArtefactsLookuper {
         return AutomationPackageNamedEntityUtils.getEntityNameByClass(yamlArtefactClass);
     }
 
-    public static String yamlArtefactClassToJava(String yamlArtefactClass) {
-        List<Class<? extends AbstractYamlArtefact<?>>> annotatedClasses = getSpecialYamlArtefactModels();
-        for (Class<? extends AbstractYamlArtefact<?>> annotatedClass : annotatedClasses) {
+    public static Class<?> getArtefactClassByYamlName(String yamlName) {
+        List<Class<?>> allModels = new ArrayList<>();
+        allModels.addAll(getSpecialYamlArtefactModels());
+        allModels.addAll(getSimpleYamlArtefactModels());
+        for (Class<?> annotatedClass : allModels) {
             String expectedYamlName = AutomationPackageNamedEntityUtils.getEntityNameByClass(annotatedClass);
 
-            if (yamlArtefactClass.equalsIgnoreCase(expectedYamlName)) {
-                return annotatedClass.getName();
+            if (yamlName.equalsIgnoreCase(expectedYamlName)) {
+                return annotatedClass;
             }
         }
         return null;

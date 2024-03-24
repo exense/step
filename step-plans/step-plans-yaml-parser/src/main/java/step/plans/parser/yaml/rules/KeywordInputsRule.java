@@ -26,6 +26,7 @@ import step.artefacts.CallFunction;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.schema.YamlJsonSchemaHelper;
 import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
+import step.plans.parser.yaml.DynamicInputsSupport;
 import step.plans.parser.yaml.YamlPlanFields;
 import step.plans.parser.yaml.deserializers.YamlArtefactFieldDeserializationProcessor;
 import step.plans.parser.yaml.serializers.YamlArtefactFieldSerializationProcessor;

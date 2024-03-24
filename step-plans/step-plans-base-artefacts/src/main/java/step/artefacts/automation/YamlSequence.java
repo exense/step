@@ -33,9 +33,8 @@ public class YamlSequence extends AbstractYamlArtefact<Sequence> {
 
     private DynamicValue<Long> pacing = new DynamicValue<Long>();
 
-    @Override
-    protected Sequence createArtefactInstance() {
-        return new Sequence();
+    public YamlSequence() {
+        this.artefactClass = Sequence.class;
     }
 
     @Override

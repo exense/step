@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import step.artefacts.CallFunction;
+import step.core.artefacts.AbstractArtefact;
 import step.core.yaml.deserializers.NamedEntityYamlDeserializer;
 import step.core.yaml.deserializers.StepYamlDeserializer;
 import step.core.yaml.deserializers.StepYamlDeserializerAddOn;
@@ -31,8 +32,10 @@ import step.plans.parser.yaml.YamlArtefactsLookuper;
 import step.plans.parser.yaml.YamlPlanFields;
 import step.plans.parser.yaml.model.AbstractYamlArtefact;
 import step.plans.parser.yaml.model.NamedYamlArtefact;
+import step.plans.parser.yaml.model.SimpleYamlArtefact;
 
 import java.io.IOException;
+import java.util.List;
 
 @StepYamlDeserializerAddOn(targetClasses = {NamedYamlArtefact.class})
 public class NamedYamlArtefactDeserializer extends StepYamlDeserializer<NamedYamlArtefact> {
@@ -48,21 +51,34 @@ public class NamedYamlArtefactDeserializer extends StepYamlDeserializer<NamedYam
     @Override
     public NamedYamlArtefact deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException {
         JsonNode node = jsonParser.getCodec().readTree(jsonParser);
-        NamedEntityYamlDeserializer<AbstractYamlArtefact<?>> nameEntityDeserializer = new NamedEntityYamlDeserializer<>() {
+        NamedEntityYamlDeserializer<AbstractYamlArtefact<?>> namedEntityDeserializer = new NamedEntityYamlDeserializer<>() {
             @Override
             protected String resolveTargetClassNameByYamlName(String yamlName) {
                 return null;
             }
 
             protected Class<?> resolveTargetClassByYamlName(String yamlName) {
-                try {
-                    return Class.forName(YamlArtefactsLookuper.yamlArtefactClassToJava(yamlName));
-                } catch (ClassNotFoundException e) {
-                    throw new RuntimeException("Unable to resolve keyword class", e);
-                }
+                return YamlArtefactsLookuper.getArtefactClassByYamlName(yamlName);
             }
         };
-        return new NamedYamlArtefact(nameEntityDeserializer.deserialize(node, jsonParser.getCodec()));
+
+        String entityName = namedEntityDeserializer.getEntityNameFromYaml(node);
+        Class<?> artefactClass = YamlArtefactsLookuper.getArtefactClassByYamlName(entityName);
+        if (artefactClass != null && AbstractYamlArtefact.class.isAssignableFrom(artefactClass)) {
+            return new NamedYamlArtefact(namedEntityDeserializer.deserialize(node, jsonParser.getCodec()));
+        } else if (artefactClass != null && AbstractArtefact.class.isAssignableFrom(artefactClass)) {
+            JsonNode artefactFields = node.get(entityName);
+            ObjectNode nonBasicFields = artefactFields.deepCopy();
+            List<String> basicFields = SimpleYamlArtefact.getBasicFieldNames(yamlObjectMapper);
+            for (String basicField : basicFields) {
+                nonBasicFields.remove(basicField);
+            }
+            SimpleYamlArtefact<AbstractArtefact> simpleYamlArtefact = new SimpleYamlArtefact<>((Class<AbstractArtefact>) artefactClass, nonBasicFields, yamlObjectMapper);
+            yamlObjectMapper.readerForUpdating(simpleYamlArtefact).readValue(artefactFields);
+            return new NamedYamlArtefact(simpleYamlArtefact);
+        } else {
+            throw new RuntimeException("Unable to resolve java class for artefact " + entityName);
+        }
     }
 
     // TODO: move this logic

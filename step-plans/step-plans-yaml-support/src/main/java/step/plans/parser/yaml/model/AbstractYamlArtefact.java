@@ -19,9 +19,11 @@
 package step.plans.parser.yaml.model;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.google.common.base.CaseFormat;
-import step.automation.packages.AutomationPackageNamedEntityUtils;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.dynamicbeans.DynamicValue;
@@ -44,6 +46,9 @@ public abstract class AbstractYamlArtefact<T extends AbstractArtefact> {
 
     public static final String ARTEFACT_ARRAY_DEF = "ArtefactArrayDef";
 
+    @JsonIgnore
+    protected Class<T> artefactClass;
+
     @JsonSchema(defaultProvider = DefaultYamlArtefactNameProvider.class)
     private String nodeName;
     private DynamicValue<Boolean> skipNode = new DynamicValue<>(false);
@@ -60,7 +65,13 @@ public abstract class AbstractYamlArtefact<T extends AbstractArtefact> {
         return artefactInstance;
     }
 
-    protected abstract T createArtefactInstance();
+    protected T createArtefactInstance(){
+        try {
+            return (T) artefactClass.getConstructor().newInstance();
+        } catch (Exception e) {
+            throw new RuntimeException("Unable to create artefact instance", e);
+        }
+    }
 
     protected void fillArtefactFields(T res) {
         res.addAttribute(AbstractOrganizableObject.NAME, getArtefactName());
@@ -77,13 +88,25 @@ public abstract class AbstractYamlArtefact<T extends AbstractArtefact> {
     }
 
     protected String getArtefactName() {
-        // TODO: for CallFunction the artefact name is keyword name
         if (getNodeName() != null) {
             // explicit name from yaml
             return getNodeName();
         } else {
             // default value
             return getDefaultArtefactName();
+        }
+    }
+
+    public static List<String> getBasicFieldNames(ObjectMapper objectMapper) {
+        try {
+            JsonSerializer<Object> serializer = objectMapper.getSerializerProviderInstance().findValueSerializer(AbstractYamlArtefact.class);
+            List<String> res = new ArrayList<>();
+            serializer.properties().forEachRemaining(p -> {
+                res.add(p.getName());
+            });
+            return res;
+        } catch (JsonMappingException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -105,7 +128,7 @@ public abstract class AbstractYamlArtefact<T extends AbstractArtefact> {
     }
 
     public Class<T> getArtefactClass() {
-        return (Class<T>) createArtefactInstance().getClass();
+        return artefactClass;
     }
 
     public static AbstractYamlArtefact<?> toYamlArtefact(AbstractArtefact artefact){
@@ -118,10 +141,13 @@ public abstract class AbstractYamlArtefact<T extends AbstractArtefact> {
         List<Class<? extends AbstractYamlArtefact<?>>> allYamlArtefactClasses = YamlArtefactsLookuper.getSpecialYamlArtefactModels();
         Class<? extends AbstractYamlArtefact<?>> applicableYamlClass = null;
         for (Class<? extends AbstractYamlArtefact<?>> clazz : allYamlArtefactClasses) {
-            String javaArtefactName = yamlArtefactNameToJava(AutomationPackageNamedEntityUtils.getEntityNameByClass(clazz));
-            if(javaArtefactName.equals(AbstractArtefact.getArtefactName(artefact.getClass()))){
-                applicableYamlClass = clazz;
-                break;
+            Class<? extends AbstractArtefact> artefactClass = YamlArtefactsLookuper.getArtefactClass(clazz);
+            if (artefactClass != null) {
+                String javaArtefactName = AbstractArtefact.getArtefactName(artefactClass);
+                if (javaArtefactName.equals(AbstractArtefact.getArtefactName(artefact.getClass()))) {
+                    applicableYamlClass = clazz;
+                    break;
+                }
             }
         }
         try {
@@ -134,10 +160,6 @@ public abstract class AbstractYamlArtefact<T extends AbstractArtefact> {
         } catch (Exception ex) {
             throw new RuntimeException("Unable to create yaml artefact", ex);
         }
-    }
-
-    private static String yamlArtefactNameToJava(String yamlArtefactName) {
-        return CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_CAMEL, yamlArtefactName);
     }
 
     public String getNodeName() {

@@ -33,6 +33,7 @@ import step.core.scanner.CachedAnnotationScanner;
 import step.core.yaml.schema.*;
 import step.handlers.javahandler.jsonschema.*;
 import step.plans.parser.yaml.YamlArtefactsLookuper;
+import step.plans.parser.yaml.YamlPlanFields;
 import step.plans.parser.yaml.YamlPlanReaderExtender;
 import step.plans.parser.yaml.YamlPlanReaderExtension;
 import step.plans.parser.yaml.model.AbstractYamlArtefact;
@@ -293,7 +294,7 @@ public class YamlPlanJsonSchemaGenerator {
 		schemaHelper.extractPropertiesFromClass(jsonSchemaCreator, simpleYamlModel, classPropertiesBuilder, requiredProperties, AbstractArtefact.class);
 
 		// TODO: some better workaround to apply default 'nodeName'?
-		classPropertiesBuilder.add("nodeName",
+		classPropertiesBuilder.add(YamlPlanFields.NAME_YAML_FIELD,
 				jsonProvider.createObjectBuilder()
 						.add("type", "string")
 						.add("default", new AbstractYamlArtefact.DefaultYamlArtefactNameProvider().getDefaultValue(simpleYamlModel, null))

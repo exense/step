@@ -30,10 +30,8 @@ public class CallFunction extends TokenSelector {
 	public static final String CALL_FUNCTION_ARGUMENT_YAML_FIELD = "inputs";
 	public static final String CALL_FUNCTION_FUNCTION_YAML_FIELD = "keyword";
 
-	@JsonSchema(fieldName = CALL_FUNCTION_FUNCTION_YAML_FIELD)
 	private DynamicValue<String> function = new DynamicValue<>("{}");
 
-	@JsonSchema(fieldName = CALL_FUNCTION_ARGUMENT_YAML_FIELD)
 	private DynamicValue<String> argument = new DynamicValue<>("{}");
 	private DynamicValue<String> resultMap = new DynamicValue<>();
 

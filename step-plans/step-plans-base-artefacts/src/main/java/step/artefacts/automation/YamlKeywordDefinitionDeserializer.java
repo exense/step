@@ -16,37 +16,33 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plans.parser.yaml.model;
+package step.artefacts.automation;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.core.JacksonException;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import step.core.artefacts.AbstractArtefact;
+import step.core.yaml.deserializers.StepYamlDeserializer;
+import step.core.yaml.deserializers.StepYamlDeserializerAddOn;
 
 import java.io.IOException;
 
-public class SimpleYamlArtefact<T extends AbstractArtefact> extends AbstractYamlArtefact<T> {
+@StepYamlDeserializerAddOn(targetClasses = {YamlKeywordDefinition.class})
+public class YamlKeywordDefinitionDeserializer extends StepYamlDeserializer<YamlKeywordDefinition> {
 
-    @JsonIgnore
-    protected JsonNode fieldValues;
-
-    @JsonIgnore
-    protected ObjectMapper yamlObjectMapper;
-
-    public SimpleYamlArtefact(Class<T> techArtefactClass, JsonNode fieldValues, ObjectMapper yamlObjectMapper) {
-        this.artefactClass = techArtefactClass;
-        this.fieldValues = fieldValues;
-        this.yamlObjectMapper = yamlObjectMapper;
+    public YamlKeywordDefinitionDeserializer(ObjectMapper yamlObjectMapper) {
+        super(yamlObjectMapper);
     }
 
     @Override
-    protected void fillArtefactFields(T res) {
-        super.fillArtefactFields(res);
-        try {
-            yamlObjectMapper.readerForUpdating(res).readValue(fieldValues);
-        } catch (IOException e) {
-            throw new RuntimeException("Unable to fill artefact " + artefactClass, e);
+    public YamlKeywordDefinition deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JacksonException {
+        JsonNode node = p.getCodec().readTree(p);
+        if (!node.isContainerNode()) {
+            return new YamlKeywordDefinition(node.asText(), null);
+        } else {
+            // TODO: prepare valid json
+            return new YamlKeywordDefinition(null, node.asText());
         }
     }
-
 }

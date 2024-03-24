@@ -35,6 +35,10 @@ public class YamlCheck extends AbstractYamlArtefact<Check> {
 
     private String expression = null;
 
+    public YamlCheck() {
+        this.artefactClass = Check.class;
+    }
+
     @Override
     protected void fillArtefactFields(Check res) {
         super.fillArtefactFields(res);
@@ -54,11 +58,6 @@ public class YamlCheck extends AbstractYamlArtefact<Check> {
                 this.setExpression(checkArtefact.getExpression().getExpression());
             }
         }
-    }
-
-    @Override
-    protected Check createArtefactInstance() {
-        return new Check();
     }
 
     public String getExpression() {

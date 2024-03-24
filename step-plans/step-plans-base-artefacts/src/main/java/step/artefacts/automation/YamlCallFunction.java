@@ -18,51 +18,47 @@
  ******************************************************************************/
 package step.artefacts.automation;
 
-import step.artefacts.Echo;
+import step.artefacts.CallFunction;
 import step.automation.packages.AutomationPackageNamedEntity;
 import step.core.artefacts.AbstractArtefact;
 import step.core.dynamicbeans.DynamicValue;
 import step.plans.parser.yaml.model.AbstractYamlArtefact;
 import step.plans.parser.yaml.model.YamlArtefact;
 
-@YamlArtefact(forClass = Echo.class)
-@AutomationPackageNamedEntity(name = "echo")
-public class YamlEcho extends AbstractYamlArtefact<Echo> {
+@YamlArtefact(forClass = CallFunction.class)
+@AutomationPackageNamedEntity(name = "callKeyword")
+public class YamlCallFunction extends AbstractYamlArtefact<CallFunction> {
 
-    private DynamicValue<String> text = new DynamicValue<>();
+    private YamlDynamicInputs routing = new YamlDynamicInputs("{}");
 
-    public YamlEcho() {
-        this.artefactClass = Echo.class;
+    private DynamicValue<Boolean> remote = new DynamicValue<>(true);
+
+    private DynamicValue<String> resultMap = new DynamicValue<>();
+
+    private YamlDynamicInputs inputs = new YamlDynamicInputs("{}");
+
+    private YamlKeywordDefinition keyword;
+
+    public YamlCallFunction() {
+        this.artefactClass = CallFunction.class;
     }
 
     @Override
-    protected void fillArtefactFields(Echo res) {
+    protected void fillArtefactFields(CallFunction res) {
         super.fillArtefactFields(res);
-        DynamicValue<String> text = getText();
-        if (text != null) {
-            if (text.isDynamic()) {
-                res.setText(new DynamicValue<>(text.getExpression(), text.getExpressionType()));
-            } else {
-                res.setText(new DynamicValue<>(text.getValue()));
-            }
-        }
+        res.setRemote(this.remote);
+        res.setResultMap(this.resultMap);
+        res.setToken(this.routing.toDynamicValue());
+        res.setArgument(this.inputs.toDynamicValue());
     }
 
     @Override
-    protected void fillYamlArtefactFields(AbstractArtefact artefact) {
-        super.fillYamlArtefactFields(artefact);
-        Echo echo = (Echo) artefact;
-        if (echo.getText() != null) {
-            DynamicValue<Object> echoText = echo.getText();
-            setText(echoText.isDynamic() ? new DynamicValue<>(echoText.getExpression(), echoText.getExpressionType()) : new DynamicValue<>((String) echoText.getValue()));
+    protected String getDefaultArtefactName() {
+        if (keyword != null && keyword.getKeywordName() != null && !keyword.getKeywordName().isEmpty()) {
+            return keyword.getKeywordName();
+        } else {
+            return AbstractArtefact.getArtefactName(getArtefactClass());
         }
     }
 
-    public DynamicValue<String> getText() {
-        return text;
-    }
-
-    public void setText(DynamicValue<String> text) {
-        this.text = text;
-    }
 }

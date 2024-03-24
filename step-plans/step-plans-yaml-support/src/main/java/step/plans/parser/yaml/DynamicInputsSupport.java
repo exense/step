@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plans.parser.yaml.rules;
+package step.plans.parser.yaml;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -45,7 +45,7 @@ public class DynamicInputsSupport {
     /**
      * @return dynamic input values as json string
      */
-    protected String deserializeDynamicInputs(ObjectCodec codec, ArrayNode value) throws JsonProcessingException {
+    public String deserializeDynamicInputs(ObjectCodec codec, ArrayNode value) throws JsonProcessingException {
         ObjectNode inputDynamicValues = (ObjectNode) codec.createObjectNode();
         Iterator<JsonNode> elements = value.elements();
         while (elements.hasNext()) {

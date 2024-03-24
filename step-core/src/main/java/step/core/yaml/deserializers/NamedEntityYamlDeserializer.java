@@ -80,7 +80,7 @@ public abstract class NamedEntityYamlDeserializer<T>  {
 
     protected abstract Class<?> resolveTargetClassByYamlName(String yamlName);
 
-    protected String getEntityNameFromYaml(JsonNode yamlNode) {
+    public String getEntityNameFromYaml(JsonNode yamlNode) {
         Iterator<String> nameIterator = yamlNode.fieldNames();
 
         List<String> names = new ArrayList<String>();

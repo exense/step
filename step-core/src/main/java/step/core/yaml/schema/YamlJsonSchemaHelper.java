@@ -29,9 +29,12 @@ import step.handlers.javahandler.jsonschema.JsonSchemaCreator;
 import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class YamlJsonSchemaHelper {
 
@@ -99,16 +102,7 @@ public class YamlJsonSchemaHelper {
 		log.info("Preparing json schema for class {}...", clazz);
 
 		// analyze the class hierarchy
-		List<Field> allFieldsInHierarchy = new ArrayList<>();
-		Class<?> currentClass = clazz;
-		while (currentClass != null) {
-			allFieldsInHierarchy.addAll(List.of(currentClass.getDeclaredFields()));
-			currentClass = currentClass.getSuperclass();
-			if (currentClass != null && currentClass.equals(untilParentClassIs)) {
-				currentClass = null;
-			}
-		}
-		Collections.reverse(allFieldsInHierarchy);
+		List<Field> allFieldsInHierarchy = getAllFieldsInHierarchy(clazz, untilParentClassIs);
 
 		// for each field we want either build the json schema via reflection
 		// or use some predefined schemas for some special classes (like step.core.dynamicbeans.DynamicValue)
@@ -117,6 +111,20 @@ public class YamlJsonSchemaHelper {
 		} catch (Exception ex) {
 			throw new JsonSchemaPreparationException("Unable to prepare json schema for " + clazz, ex);
 		}
+	}
+
+	public static List<Field> getAllFieldsInHierarchy(Class<?> clazz, Class<?> untilParentClassIs) {
+		List<Field> allFieldsInHierarchy = new ArrayList<>();
+		Class<?> currentClass = clazz;
+		while (currentClass != null) {
+			allFieldsInHierarchy.addAll(Stream.of(currentClass.getDeclaredFields()).filter(f -> !f.isSynthetic() && !Modifier.isStatic(f.getModifiers())).collect(Collectors.toList()));
+			currentClass = currentClass.getSuperclass();
+			if (currentClass != null && currentClass.equals(untilParentClassIs)) {
+				currentClass = null;
+			}
+		}
+		Collections.reverse(allFieldsInHierarchy);
+		return allFieldsInHierarchy;
 	}
 
 	public void addRequiredProperties(List<String> requiredProperties, JsonObjectBuilder propertiesBuilder) {
