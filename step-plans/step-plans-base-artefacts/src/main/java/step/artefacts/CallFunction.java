@@ -21,15 +21,19 @@ package step.artefacts;
 import step.artefacts.reports.CallFunctionReportNode;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
-import step.core.entities.EntityManager;
-import step.core.entities.EntityReference;
+import step.handlers.javahandler.jsonschema.JsonSchema;
 
 @Artefact(name=CallFunction.ARTEFACT_NAME, report = CallFunctionReportNode.class)
 public class CallFunction extends TokenSelector {
 	
 	public static final String ARTEFACT_NAME = "CallKeyword";
+	public static final String CALL_FUNCTION_ARGUMENT_YAML_FIELD = "inputs";
+	public static final String CALL_FUNCTION_FUNCTION_YAML_FIELD = "keyword";
 
+	@JsonSchema(fieldName = CALL_FUNCTION_FUNCTION_YAML_FIELD)
 	private DynamicValue<String> function = new DynamicValue<>("{}");
+
+	@JsonSchema(fieldName = CALL_FUNCTION_ARGUMENT_YAML_FIELD)
 	private DynamicValue<String> argument = new DynamicValue<>("{}");
 	private DynamicValue<String> resultMap = new DynamicValue<>();
 

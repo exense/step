@@ -22,7 +22,6 @@ import jakarta.json.JsonObjectBuilder;
 import jakarta.json.spi.JsonProvider;
 import step.core.dynamicbeans.DynamicValue;
 import step.handlers.javahandler.jsonschema.FieldMetadata;
-import step.handlers.javahandler.jsonschema.JsonSchemaCreator;
 import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
 import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 
@@ -43,14 +42,7 @@ public class DynamicValueFieldProcessor implements JsonSchemaFieldProcessor {
 
         if (DynamicValue.class.isAssignableFrom(field.getType())) {
             JsonObjectBuilder nestedPropertyParamsBuilder = jsonProvider.createObjectBuilder();
-
             dynamicValueHelper.applyDynamicValueDefForField(field, nestedPropertyParamsBuilder);
-
-            // TODO: apply some generic approach to apply default values in json schemas and deserialization
-            if (fieldMetadata.getDefaultValue() != null) {
-                JsonSchemaCreator.addDefaultValue(fieldMetadata.getDefaultValue(), nestedPropertyParamsBuilder, fieldMetadata.getType(), fieldMetadata.getFieldName());
-            }
-
             jsonObjectBuilder.add(fieldMetadata.getFieldName(), nestedPropertyParamsBuilder);
             return true;
         }

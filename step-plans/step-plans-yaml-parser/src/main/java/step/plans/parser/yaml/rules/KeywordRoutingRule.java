@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import jakarta.json.JsonObjectBuilder;
 import jakarta.json.spi.JsonProvider;
 import step.artefacts.CallFunction;
+import step.artefacts.TokenSelector;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.schema.YamlJsonSchemaHelper;
 import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
@@ -58,7 +59,7 @@ public class KeywordRoutingRule extends DynamicInputsSupport implements Artefact
     public YamlArtefactFieldDeserializationProcessor getArtefactFieldDeserializationProcessor() {
         return (artefactClass, field, output, codec) -> {
             // rename 'routing' to 'token'
-            if (artefactClass.equals(CallFunction.ARTEFACT_NAME) && field.getKey().equals(YamlPlanFields.TOKEN_SELECTOR_TOKEN_YAML_FIELD)) {
+            if (artefactClass.equals(CallFunction.ARTEFACT_NAME) && field.getKey().equals(TokenSelector.TOKEN_SELECTOR_TOKEN_YAML_FIELD)) {
                 JsonNode functionRouting = field.getValue();
 
                 if (functionRouting instanceof ArrayNode) {
@@ -80,7 +81,7 @@ public class KeywordRoutingRule extends DynamicInputsSupport implements Artefact
 
                     if (isNotEmptyDynamicInputs(token)) {
                         // write token as 'routing'
-                        gen.writeFieldName(YamlPlanFields.TOKEN_SELECTOR_TOKEN_YAML_FIELD);
+                        gen.writeFieldName(TokenSelector.TOKEN_SELECTOR_TOKEN_YAML_FIELD);
                         serializeDynamicInputs(gen, token);
                     }
                     return true;

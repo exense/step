@@ -74,7 +74,7 @@ public class KeywordSelectionRule implements ArtefactFieldConversionRule {
     public YamlArtefactFieldDeserializationProcessor getArtefactFieldDeserializationProcessor() {
         return (artefactClass, field, output, codec) -> {
             // for 'CallFunction' we can use either the `keyword` (keyword name) field or the `keyword.routing` to define the keyword name
-            if (artefactClass.equals(CallFunction.ARTEFACT_NAME) && field.getKey().equals(YamlPlanFields.CALL_FUNCTION_FUNCTION_YAML_FIELD)) {
+            if (artefactClass.equals(CallFunction.ARTEFACT_NAME) && field.getKey().equals(CallFunction.CALL_FUNCTION_FUNCTION_YAML_FIELD)) {
                 JsonNode yamlFunctionValue = field.getValue();
 
                 // for function name we need to prepare the following output:
@@ -127,7 +127,7 @@ public class KeywordSelectionRule implements ArtefactFieldConversionRule {
             if (CallFunction.class.isAssignableFrom(artefact.getClass())) {
                 if ((field.getName().equals(YamlPlanFields.CALL_FUNCTION_FUNCTION_ORIGINAL_FIELD))) {
                     DynamicValue<String> function = (DynamicValue<String>) field.get(artefact);
-                    gen.writeFieldName(YamlPlanFields.CALL_FUNCTION_FUNCTION_YAML_FIELD);
+                    gen.writeFieldName(CallFunction.CALL_FUNCTION_FUNCTION_YAML_FIELD);
 
                     String simpleFunctionName = getSimpleFunctionNameForYamlSerialization(function, jsonObjectMapper);
                     if (simpleFunctionName != null) {

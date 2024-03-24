@@ -25,7 +25,9 @@ import step.automation.packages.AutomationPackageNamedEntity;
 import step.core.artefacts.AbstractArtefact;
 import step.core.dynamicbeans.DynamicValue;
 import step.plans.parser.yaml.model.AbstractYamlArtefact;
+import step.plans.parser.yaml.model.YamlArtefact;
 
+@YamlArtefact(forClass = Check.class)
 @AutomationPackageNamedEntity(name = "check")
 public class YamlCheck extends AbstractYamlArtefact<Check> {
 

@@ -52,7 +52,7 @@ public class KeywordInputsRule extends DynamicInputsSupport implements ArtefactF
         return (artefactClass, field, output, codec) -> {
             try {
                 boolean inputsForCallFunction = artefactClass.equals(CallFunction.ARTEFACT_NAME)
-                        && field.getKey().equals(YamlPlanFields.CALL_FUNCTION_ARGUMENT_YAML_FIELD);
+                        && field.getKey().equals(CallFunction.CALL_FUNCTION_ARGUMENT_YAML_FIELD);
 
                 if (inputsForCallFunction) {
                     String argumentsAsJsonString = deserializeDynamicInputs(codec, (ArrayNode) field.getValue());
@@ -72,7 +72,7 @@ public class KeywordInputsRule extends DynamicInputsSupport implements ArtefactF
         return (artefact, field, fieldMetadata, gen) -> {
             if (artefact.getClass().equals(CallFunction.class) && field.getName().equals(YamlPlanFields.CALL_FUNCTION_ARGUMENT_ORIGINAL_FIELD)) {
                 DynamicValue<String> argumentValue = (DynamicValue<String>) field.get(artefact);
-                gen.writeFieldName(YamlPlanFields.CALL_FUNCTION_ARGUMENT_YAML_FIELD);
+                gen.writeFieldName(CallFunction.CALL_FUNCTION_ARGUMENT_YAML_FIELD);
                 serializeDynamicInputs(gen, argumentValue);
                 return true;
             }

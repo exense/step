@@ -80,7 +80,7 @@ public class YamlJsonSchemaHelper {
 		JsonObjectBuilder propertiesBuilder = jsonProvider.createObjectBuilder();
 
 		List<String> requiredProperties = new ArrayList<>();
-		extractPropertiesFromClass(jsonSchemaCreator, clazz, propertiesBuilder, requiredProperties);
+		extractPropertiesFromClass(jsonSchemaCreator, clazz, propertiesBuilder, requiredProperties, null);
 
 		res.add("properties", propertiesBuilder);
 		if(!additionalProperties) {
@@ -93,7 +93,9 @@ public class YamlJsonSchemaHelper {
 	/**
 	 * Analyzes the class hierarchy and writes all applicable fields to the json schema (output)
 	 */
-	public void extractPropertiesFromClass(JsonSchemaCreator jsonSchemaCreator, Class<?> clazz, JsonObjectBuilder output, List<String> requiredPropertiesOutput) throws JsonSchemaPreparationException {
+	public void extractPropertiesFromClass(JsonSchemaCreator jsonSchemaCreator, Class<?> clazz,
+										   JsonObjectBuilder output, List<String> requiredPropertiesOutput,
+										   Class<?> untilParentClassIs) throws JsonSchemaPreparationException {
 		log.info("Preparing json schema for class {}...", clazz);
 
 		// analyze the class hierarchy
@@ -102,6 +104,9 @@ public class YamlJsonSchemaHelper {
 		while (currentClass != null) {
 			allFieldsInHierarchy.addAll(List.of(currentClass.getDeclaredFields()));
 			currentClass = currentClass.getSuperclass();
+			if (currentClass != null && currentClass.equals(untilParentClassIs)) {
+				currentClass = null;
+			}
 		}
 		Collections.reverse(allFieldsInHierarchy);
 
@@ -114,7 +119,7 @@ public class YamlJsonSchemaHelper {
 		}
 	}
 
-	protected void addRequiredProperties(List<String> requiredProperties, JsonObjectBuilder propertiesBuilder) {
+	public void addRequiredProperties(List<String> requiredProperties, JsonObjectBuilder propertiesBuilder) {
 		if (requiredProperties != null && !requiredProperties.isEmpty()) {
 			JsonArrayBuilder requiredBuilder = jsonProvider.createArrayBuilder();
 			for (String requiredProperty : requiredProperties) {

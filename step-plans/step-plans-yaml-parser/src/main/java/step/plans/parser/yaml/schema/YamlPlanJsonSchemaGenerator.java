@@ -39,6 +39,7 @@ import step.plans.parser.yaml.model.AbstractYamlArtefact;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static step.core.scanner.Classes.newInstanceAs;
 
@@ -65,8 +66,6 @@ public class YamlPlanJsonSchemaGenerator {
 		this.targetPackage = targetPackage;
 		this.actualVersion = actualVersion;
 		this.schemaId = schemaId;
-
-		// TODO: further we can replace this hardcoded logic for some custom field metadata and processing with some enhanced solution (java annotations?)
 
 		// --- Fields metadata rules (fields we want to rename)
 		FieldMetadataExtractor fieldMetadataExtractor = prepareMetadataExtractor();
@@ -170,15 +169,7 @@ public class YamlPlanJsonSchemaGenerator {
 			}
 		});
 
-		// prepare definitions for referenced resources
-		definitionCreators.add(defsList -> {
-			Map<String, JsonObjectBuilder> dynamicValueDefs = resourceReferenceJsonSchemaHelper.createResourceReferenceDefs();
-			for (Map.Entry<String, JsonObjectBuilder> dynamicValueDef : dynamicValueDefs.entrySet()) {
-				defsBuilder.add(dynamicValueDef.getKey(), dynamicValueDef.getValue());
-			}
-		});
-
-		// prepare definitions for subclasses annotated with @Artefact
+		// prepare definitions for artefacts
 		definitionCreators.add((defsList) -> {
 			ArtefactDefinitions artefactImplDefs = createArtefactImplDefs();
 			for (Map.Entry<String, JsonObjectBuilder> artefactImplDef : artefactImplDefs.allArtefactDefs.entrySet()) {
@@ -211,45 +202,110 @@ public class YamlPlanJsonSchemaGenerator {
 	private ArtefactDefinitions createArtefactImplDefs() throws JsonSchemaPreparationException {
 		ArtefactDefinitions artefactDefinitions = new ArtefactDefinitions();
 
-		// scan all @Artefact classes in classpath and automatically prepare definitions for them
-		List<Class<? extends AbstractYamlArtefact<?>>> artefactClasses = YamlArtefactsLookuper.getYamlArtefactClasses();
-		log.info("The following {} artefact classes detected: {}", artefactClasses.size(), artefactClasses);
+		List<Class<? extends AbstractYamlArtefact<?>>> specialYamlModels = YamlArtefactsLookuper.getSpecialYamlArtefactModels();
+		log.info("The following {} special artefact yaml models detected: {}", specialYamlModels.size(), specialYamlModels);
+
+		List<Class<? extends AbstractArtefact>> simpleYamlModels = YamlArtefactsLookuper.getSimpleYamlArtefactModels();
+		log.info("The following {} simple artefact yaml models detected: {}", simpleYamlModels.size(), simpleYamlModels);
 
 		// find allowed control artefacts
-		Set<Class<?>> controlArtefactClasses = artefactClasses.stream().filter(YamlArtefactsLookuper::isControlArtefact).collect(Collectors.toSet());
+		Set<Class<?>> controlArtefactClasses = Stream.concat(specialYamlModels.stream(), simpleYamlModels.stream())
+				.filter(YamlArtefactsLookuper::isControlArtefact)
+				.collect(Collectors.toSet());
 
 		// find allowed root artefacts
-		Set<Class<?>> rootArtefactClasses = artefactClasses.stream().filter(YamlArtefactsLookuper::isRootArtefact).collect(Collectors.toSet());
-		log.info("The following {} artefact classes detected: {}", rootArtefactClasses.size(), rootArtefactClasses);
+		Set<Class<?>> rootArtefactClasses = Stream.concat(specialYamlModels.stream(), simpleYamlModels.stream())
+				.filter(YamlArtefactsLookuper::isRootArtefact)
+				.collect(Collectors.toSet());
+		log.info("The following {} root artefact classes detected: {}", rootArtefactClasses.size(), rootArtefactClasses);
 
-		for (Class<? extends AbstractYamlArtefact<?>> yamlArtefactClass : artefactClasses) {
+		// prepare json schemas for SPECIAL models
+		for (Class<? extends AbstractYamlArtefact<?>> yamlArtefactClass : specialYamlModels) {
 			// use the name of artefact as definition name
-			String name = AbstractArtefact.getArtefactName(YamlArtefactsLookuper.getArtefactClass(yamlArtefactClass));
-			String defName = name + "Def";
+			Class<? extends AbstractArtefact> artefactClass = YamlArtefactsLookuper.getArtefactClass(yamlArtefactClass);
 
-			// scan all fields in artefact class and put them to artefact definition
-			JsonObjectBuilder def = createArtefactImplDef(name, yamlArtefactClass);
-			artefactDefinitions.allArtefactDefs.put(defName, def);
+			if (artefactClass != null) {
+				String name = AbstractArtefact.getArtefactName(artefactClass);
+				String defName = name + "Def";
 
-			// for root artefacts we only support the subset of all artefact definitions
-			if (rootArtefactClasses.contains(yamlArtefactClass)) {
-				artefactDefinitions.rootArtefactDefs.add(defName);
-			}
-			if (controlArtefactClasses.contains(yamlArtefactClass)) {
-				artefactDefinitions.controlArtefactDefs.add(defName);
+				JsonObjectBuilder def = schemaHelper.createNamedObjectImplDef(
+						YamlArtefactsLookuper.getYamlArtefactName(yamlArtefactClass),
+						yamlArtefactClass,
+						jsonSchemaCreator,
+						true
+				);
+
+				artefactDefinitions.allArtefactDefs.put(defName, def);
+
+				// for root artefacts we only support the subset of all artefact definitions
+				if (rootArtefactClasses.contains(yamlArtefactClass)) {
+					artefactDefinitions.rootArtefactDefs.add(defName);
+				}
+				if (controlArtefactClasses.contains(yamlArtefactClass)) {
+					artefactDefinitions.controlArtefactDefs.add(defName);
+				}
 			}
 		}
+
+		// prepare json schemas for SIMPLE models
+		for (Class<? extends AbstractArtefact> simpleYamlModel : simpleYamlModels) {
+			// use the name of artefact as definition name
+			Class<? extends AbstractArtefact> artefactClass = YamlArtefactsLookuper.getArtefactClass(simpleYamlModel);
+
+			if (artefactClass != null) {
+				String name = AbstractArtefact.getArtefactName(artefactClass);
+				String defName = name + "Def";
+
+				JsonObjectBuilder def = createJsonSchemaForSimpleArtefact(simpleYamlModel);
+
+				artefactDefinitions.allArtefactDefs.put(defName, def);
+
+				// for root artefacts we only support the subset of all artefact definitions
+				if (rootArtefactClasses.contains(simpleYamlModel)) {
+					artefactDefinitions.rootArtefactDefs.add(defName);
+				}
+				if (controlArtefactClasses.contains(simpleYamlModel)) {
+					artefactDefinitions.controlArtefactDefs.add(defName);
+				}
+			}
+		}
+
 		return artefactDefinitions;
 	}
 
-	private JsonObjectBuilder createArtefactImplDef(String name, Class<? extends AbstractYamlArtefact<?>> yamlArtefactClass) throws JsonSchemaPreparationException {
-		// artefact has the top-level property matching the artefact name
-		return schemaHelper.createNamedObjectImplDef(
-				YamlArtefactsLookuper.getYamlArtefactName(yamlArtefactClass),
-				yamlArtefactClass,
-				jsonSchemaCreator,
-				true
+	private JsonObjectBuilder createJsonSchemaForSimpleArtefact(Class<? extends AbstractArtefact> simpleYamlModel) throws JsonSchemaPreparationException {
+		JsonObjectBuilder res = jsonProvider.createObjectBuilder();
+		res.add("type", "object");
+
+		// on the top level there is a name only
+		JsonObjectBuilder schemaBuilder = jsonProvider.createObjectBuilder();
+
+		// other properties are located in nested object and automatically prepared via reflection
+		JsonObjectBuilder propertiesBuilder = jsonProvider.createObjectBuilder();
+		propertiesBuilder.add("type", "object");
+
+		JsonObjectBuilder classPropertiesBuilder = jsonProvider.createObjectBuilder();
+
+		List<String> requiredProperties = new ArrayList<>();
+
+		// properties declared in AbstractArtefact are taken from AbstractYamlArtefact
+		schemaHelper.extractPropertiesFromClass(jsonSchemaCreator, AbstractYamlArtefact.class, classPropertiesBuilder, requiredProperties, null);
+		schemaHelper.extractPropertiesFromClass(jsonSchemaCreator, simpleYamlModel, classPropertiesBuilder, requiredProperties, AbstractArtefact.class);
+
+		// TODO: some better workaround to apply default 'nodeName'?
+		classPropertiesBuilder.add("nodeName",
+				jsonProvider.createObjectBuilder()
+						.add("type", "string")
+						.add("default", new AbstractYamlArtefact.DefaultYamlArtefactNameProvider().getDefaultValue(simpleYamlModel, null))
 		);
+
+		propertiesBuilder.add("properties", classPropertiesBuilder);
+		schemaHelper.addRequiredProperties(requiredProperties, propertiesBuilder);
+
+		schemaBuilder.add(YamlArtefactsLookuper.getYamlArtefactName(simpleYamlModel), propertiesBuilder);
+		res.add("properties", schemaBuilder);
+		res.add("additionalProperties", false);
+		return res;
 	}
 
 	private JsonObjectBuilder createArtefactDef(Collection<String> artefactImplReferences) {

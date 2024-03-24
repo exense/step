@@ -73,7 +73,7 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
 	
 	public static String getArtefactName(Class<? extends AbstractArtefact> artefactClass) {
 		Artefact annotation = artefactClass.getAnnotation(Artefact.class);
-		return annotation.name().length() > 0 ? annotation.name() : artefactClass.getSimpleName();
+		return !annotation.name().isEmpty() ? annotation.name() : artefactClass.getSimpleName();
 	}
 
 	public String getDescription() {
@@ -267,4 +267,9 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
 			return false;
 		return true;
 	}
+
+	/**
+	 * Void class to be used in annotations instead of null-values
+	 */
+	public static final class None extends AbstractArtefact {}
 }

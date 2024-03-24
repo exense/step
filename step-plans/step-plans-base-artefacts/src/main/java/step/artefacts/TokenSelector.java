@@ -20,11 +20,14 @@ package step.artefacts;
 
 import step.core.artefacts.AbstractArtefact;
 import step.core.dynamicbeans.DynamicValue;
+import step.handlers.javahandler.jsonschema.JsonSchema;
 
 public class TokenSelector extends AbstractArtefact {
 
-	DynamicValue<Boolean> remote = new DynamicValue<Boolean>(true);
-	
+    public static final String TOKEN_SELECTOR_TOKEN_YAML_FIELD = "routing";
+    DynamicValue<Boolean> remote = new DynamicValue<Boolean>(true);
+
+	@JsonSchema(fieldName = TOKEN_SELECTOR_TOKEN_YAML_FIELD)
 	DynamicValue<String> token = new DynamicValue<>("{}");
 
 	public DynamicValue<Boolean> getRemote() {

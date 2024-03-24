@@ -48,12 +48,6 @@ public class EnumFieldProcessor implements JsonSchemaFieldProcessor {
                 enumArray.add(enumValue.toString());
             }
             nestedPropertyParamsBuilder.add("enum", enumArray);
-
-            // TODO: apply some generic approach to apply default values in json schemas and deserialization
-            if (fieldMetadata.getDefaultValue() != null) {
-                JsonSchemaCreator.addDefaultValue(fieldMetadata.getDefaultValue(), nestedPropertyParamsBuilder, fieldMetadata.getType(), fieldMetadata.getFieldName());
-            }
-
             jsonObjectBuilder.add(fieldMetadata.getFieldName(), nestedPropertyParamsBuilder);
             return true;
         }

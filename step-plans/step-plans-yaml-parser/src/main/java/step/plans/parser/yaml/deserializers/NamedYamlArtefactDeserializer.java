@@ -74,7 +74,7 @@ public class NamedYamlArtefactDeserializer extends StepYamlDeserializer<NamedYam
             if(!javaArtifactClass.equals(CallFunction.ARTEFACT_NAME)) {
                 artifactData.put(YamlPlanFields.NAME_YAML_FIELD, javaArtifactClass);
             } else {
-                JsonNode functionNode = artifactData.get(YamlPlanFields.CALL_FUNCTION_FUNCTION_YAML_FIELD);
+                JsonNode functionNode = artifactData.get(CallFunction.CALL_FUNCTION_FUNCTION_YAML_FIELD);
                 if(functionNode != null && !functionNode.isContainerNode()){
                     // TODO: move this code
                     String staticFunctionName = functionNode.asText();

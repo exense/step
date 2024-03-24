@@ -115,7 +115,7 @@ public abstract class AbstractYamlArtefact<T extends AbstractArtefact> {
     }
 
     private static AbstractYamlArtefact<?> createYamlArtefactInstance(AbstractArtefact artefact){
-        List<Class<? extends AbstractYamlArtefact<?>>> allYamlArtefactClasses = YamlArtefactsLookuper.getYamlArtefactClasses();
+        List<Class<? extends AbstractYamlArtefact<?>>> allYamlArtefactClasses = YamlArtefactsLookuper.getSpecialYamlArtefactModels();
         Class<? extends AbstractYamlArtefact<?>> applicableYamlClass = null;
         for (Class<? extends AbstractYamlArtefact<?>> clazz : allYamlArtefactClasses) {
             String javaArtefactName = yamlArtefactNameToJava(AutomationPackageNamedEntityUtils.getEntityNameByClass(clazz));
@@ -134,10 +134,6 @@ public abstract class AbstractYamlArtefact<T extends AbstractArtefact> {
         } catch (Exception ex) {
             throw new RuntimeException("Unable to create yaml artefact", ex);
         }
-    }
-
-    private static String javaArtefactNameToYaml(String javaArtefactName) {
-        return CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_CAMEL, javaArtefactName);
     }
 
     private static String yamlArtefactNameToJava(String yamlArtefactName) {
@@ -199,7 +195,8 @@ public abstract class AbstractYamlArtefact<T extends AbstractArtefact> {
 
         @Override
         public String getDefaultValue(Class<?> objectClass, Field field) {
-            return AbstractArtefact.getArtefactName(YamlArtefactsLookuper.getArtefactClass((Class<? extends AbstractYamlArtefact<?>>) objectClass));
+            Class<? extends AbstractArtefact> artefactClass = YamlArtefactsLookuper.getArtefactClass(objectClass);
+            return artefactClass == null ? null : AbstractArtefact.getArtefactName(artefactClass);
         }
     }
 }

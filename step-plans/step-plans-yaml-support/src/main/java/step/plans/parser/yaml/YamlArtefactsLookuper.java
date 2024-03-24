@@ -22,44 +22,64 @@ import step.automation.packages.AutomationPackageNamedEntityUtils;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.plans.parser.yaml.model.AbstractYamlArtefact;
+import step.plans.parser.yaml.model.YamlArtefact;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class YamlArtefactsLookuper {
 
-    public static List<Class<? extends AbstractYamlArtefact<?>>> getYamlArtefactClasses() {
+    public static List<Class<? extends AbstractYamlArtefact<?>>> getSpecialYamlArtefactModels() {
         return AutomationPackageNamedEntityUtils.scanNamedEntityClasses(AbstractYamlArtefact.class).stream()
+                .filter(c -> c.isAnnotationPresent(YamlArtefact.class))
                 .map(c -> (Class<? extends AbstractYamlArtefact<?>>) c)
                 .collect(Collectors.toList());
     }
 
-    public static boolean isRootArtefact(Class<? extends AbstractYamlArtefact<?>> yamlArtefactClass) {
-        Artefact ann = createYamlArtefactInstance(yamlArtefactClass).getArtefactClass().getAnnotation(Artefact.class);
-        if (ann == null) {
+    public static List<Class<? extends AbstractArtefact>> getSimpleYamlArtefactModels() {
+        return AutomationPackageNamedEntityUtils.scanNamedEntityClasses(AbstractArtefact.class).stream()
+                .filter(c -> c.isAnnotationPresent(YamlArtefact.class))
+                .map(c -> (Class<? extends AbstractArtefact>) c)
+                .collect(Collectors.toList());
+    }
+
+    public static boolean isRootArtefact(Class<?> yamlArtefactClass) {
+        Class<? extends AbstractArtefact> artefactClass = getArtefactClass(yamlArtefactClass);
+        if (artefactClass == null) {
             return false;
         }
-        return ann.validAsRoot();
+        return artefactClass.getAnnotation(Artefact.class) != null && artefactClass.getAnnotation(Artefact.class).validAsRoot();
     }
 
-    public static boolean isControlArtefact(Class<? extends AbstractYamlArtefact<?>> yamlArtefactClass) {
-        Artefact ann = createYamlArtefactInstance(yamlArtefactClass).getArtefactClass().getAnnotation(Artefact.class);
-        if (ann == null) {
+    public static boolean isControlArtefact(Class<?> yamlArtefactClass) {
+        Class<? extends AbstractArtefact> artefactClass = getArtefactClass(yamlArtefactClass);
+        if (artefactClass == null) {
             return false;
         }
-        return ann.validAsControl();
+        return artefactClass.getAnnotation(Artefact.class) != null && artefactClass.getAnnotation(Artefact.class).validAsControl();
     }
 
-    public static Class<? extends AbstractArtefact> getArtefactClass(Class<? extends AbstractYamlArtefact<?>> yamlArtefactClass) {
-        return createYamlArtefactInstance(yamlArtefactClass).getArtefactClass();
+    public static Class<? extends AbstractArtefact> getArtefactClass(Class<?> yamlArtefactClass) {
+        YamlArtefact ann = yamlArtefactClass.getAnnotation(YamlArtefact.class);
+        if (ann == null) {
+            return null;
+        }
+
+        Class<? extends AbstractArtefact> artefactClass;
+        if (ann.forClass() != null && !ann.forClass().equals(AbstractArtefact.None.class)) {
+            artefactClass = ann.forClass();
+        } else {
+            artefactClass = (Class<? extends AbstractArtefact>) yamlArtefactClass;
+        }
+        return artefactClass;
     }
 
-    public static String getYamlArtefactName(Class<? extends AbstractYamlArtefact<?>> yamlArtefactClass) {
+    public static String getYamlArtefactName(Class<?> yamlArtefactClass) {
         return AutomationPackageNamedEntityUtils.getEntityNameByClass(yamlArtefactClass);
     }
 
     public static String yamlArtefactClassToJava(String yamlArtefactClass) {
-        List<Class<? extends AbstractYamlArtefact<?>>> annotatedClasses = getYamlArtefactClasses();
+        List<Class<? extends AbstractYamlArtefact<?>>> annotatedClasses = getSpecialYamlArtefactModels();
         for (Class<? extends AbstractYamlArtefact<?>> annotatedClass : annotatedClasses) {
             String expectedYamlName = AutomationPackageNamedEntityUtils.getEntityNameByClass(annotatedClass);
 
@@ -70,11 +90,4 @@ public class YamlArtefactsLookuper {
         return null;
     }
 
-    private static AbstractYamlArtefact<?> createYamlArtefactInstance(Class<? extends AbstractYamlArtefact<?>> yamlArtefactClass) {
-        try {
-            return yamlArtefactClass.getConstructor().newInstance();
-        } catch (Exception e) {
-            throw new RuntimeException("Yaml artefact exception", e);
-        }
-    }
 }
