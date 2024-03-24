@@ -21,6 +21,8 @@ package step.artefacts.automation;
 import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObjectBuilder;
 import jakarta.json.spi.JsonProvider;
+import step.core.accessors.DefaultJacksonMapperProvider;
+import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.schema.YamlJsonSchemaHelper;
 import step.handlers.javahandler.jsonschema.FieldMetadata;
 import step.handlers.javahandler.jsonschema.JsonSchema;
@@ -36,12 +38,28 @@ public class YamlKeywordDefinition {
     private String keywordName;
     private String keywordSelectionCriteriaJson;
 
-    public YamlKeywordDefinition() {
-    }
-
     public YamlKeywordDefinition(String keywordName, String keywordSelectionCriteria) {
         this.keywordName = keywordName;
         this.keywordSelectionCriteriaJson = keywordSelectionCriteria;
+    }
+
+    public DynamicValue<String> toDynamicValue() {
+        if (keywordSelectionCriteriaJson != null) {
+            return new DynamicValue<>(keywordSelectionCriteriaJson);
+        } else {
+            return new DynamicValue<>("{}");
+        }
+    }
+
+    public static YamlKeywordDefinition fromDynamicValue(DynamicValue<String> dynamicValue) {
+        try {
+            if (dynamicValue.isDynamic()) {
+                throw new UnsupportedOperationException("Dynamic arguments are not supported");
+            }
+            return new YamlKeywordDefinition(YamlKeywordDefinitionSerializer.getSimpleFunctionName(dynamicValue, DefaultJacksonMapperProvider.getObjectMapper()), dynamicValue.getValue());
+        } catch (Exception ex) {
+            throw new RuntimeException("Unable to parse keyword definition", ex);
+        }
     }
 
     public String getKeywordName() {

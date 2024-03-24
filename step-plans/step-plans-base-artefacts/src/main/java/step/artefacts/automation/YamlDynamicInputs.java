@@ -22,7 +22,7 @@ import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.schema.YamlJsonSchemaHelper;
 import step.handlers.javahandler.jsonschema.JsonSchema;
 
-@JsonSchema(ref = YamlJsonSchemaHelper.DEFS_PREFIX +  YamlJsonSchemaHelper.DYNAMIC_KEYWORD_INPUTS_DEF)
+@JsonSchema(ref = YamlJsonSchemaHelper.DEFS_PREFIX + YamlJsonSchemaHelper.DYNAMIC_KEYWORD_INPUTS_DEF)
 public class YamlDynamicInputs {
 
     private String json;
@@ -34,8 +34,15 @@ public class YamlDynamicInputs {
     public YamlDynamicInputs() {
     }
 
-    public DynamicValue<String> toDynamicValue(){
+    public DynamicValue<String> toDynamicValue() {
         return new DynamicValue<>(json);
+    }
+
+    public static YamlDynamicInputs fromDynamicValue(DynamicValue<String> dynamicValue) {
+        if (dynamicValue.isDynamic()) {
+            throw new UnsupportedOperationException("Dynamic arguments are not supported");
+        }
+        return new YamlDynamicInputs(dynamicValue.getValue());
     }
 
 }

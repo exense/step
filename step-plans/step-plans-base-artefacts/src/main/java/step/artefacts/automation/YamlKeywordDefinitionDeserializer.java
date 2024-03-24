@@ -23,26 +23,63 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import step.core.accessors.AbstractOrganizableObject;
+import step.core.accessors.DefaultJacksonMapperProvider;
+import step.core.dynamicbeans.DynamicValue;
+import step.core.yaml.YamlFields;
 import step.core.yaml.deserializers.StepYamlDeserializer;
 import step.core.yaml.deserializers.StepYamlDeserializerAddOn;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 @StepYamlDeserializerAddOn(targetClasses = {YamlKeywordDefinition.class})
 public class YamlKeywordDefinitionDeserializer extends StepYamlDeserializer<YamlKeywordDefinition> {
+
+    private final ObjectMapper simpleObjectMapper = DefaultJacksonMapperProvider.getObjectMapper();
 
     public YamlKeywordDefinitionDeserializer(ObjectMapper yamlObjectMapper) {
         super(yamlObjectMapper);
     }
 
     @Override
-    public YamlKeywordDefinition deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JacksonException {
+    public YamlKeywordDefinition deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
         JsonNode node = p.getCodec().readTree(p);
+
+        Map<String, DynamicValue<String>> criteria = getDynamicSelectionCriteria(node);
+        String selectionCriteriaJson = simpleObjectMapper.writeValueAsString(criteria);
+
         if (!node.isContainerNode()) {
-            return new YamlKeywordDefinition(node.asText(), null);
+            // for simple function definition the node (string node) contains explicit function name
+            return new YamlKeywordDefinition(node.asText(), selectionCriteriaJson);
         } else {
-            // TODO: prepare valid json
-            return new YamlKeywordDefinition(null, node.asText());
+            return new YamlKeywordDefinition(null, selectionCriteriaJson);
         }
     }
+
+    private Map<String, DynamicValue<String>> getDynamicSelectionCriteria(JsonNode yamlFunctionValue) {
+        // in yaml format we can simply define function name as string,
+        // or we can define several selection criteria within the 'keyword' block in yaml
+        if (yamlFunctionValue.isContainerNode()) {
+            Map<String, DynamicValue<String>> result = new HashMap<>();
+            Iterator<Map.Entry<String, JsonNode>> fieldsIterator = yamlFunctionValue.fields();
+            while (fieldsIterator.hasNext()) {
+                Map.Entry<String, JsonNode> field = fieldsIterator.next();
+                if (field.getValue().isContainerNode() && field.getValue().get(YamlFields.DYN_VALUE_EXPRESSION_FIELD) != null) {
+                    // selection criteria with dynamic value
+                    result.put(field.getKey(), new DynamicValue<>(field.getValue().get(YamlFields.DYN_VALUE_EXPRESSION_FIELD).asText(), ""));
+                } else {
+                    // selection criteria with simple value
+                    result.put(field.getKey(), new DynamicValue<>(field.getValue().asText()));
+                }
+            }
+            return result;
+        } else {
+            // simple function name
+            return Map.of(AbstractOrganizableObject.NAME, new DynamicValue<>(yamlFunctionValue.asText()));
+        }
+    }
+
 }

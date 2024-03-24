@@ -83,7 +83,7 @@ public class DynamicInputsSupport {
         return jsonObjectMapper.writeValueAsString(inputDynamicValues);
     }
 
-    protected void serializeDynamicInputs(JsonGenerator gen, DynamicValue<String> dynamicInputsValue) throws IOException {
+    public void serializeDynamicInputs(JsonGenerator gen, DynamicValue<String> dynamicInputsValue) throws IOException {
         gen.writeStartArray();
         if (dynamicInputsValue.isDynamic()) {
             throw new UnsupportedOperationException("Dynamic arguments are not supported");
@@ -116,7 +116,7 @@ public class DynamicInputsSupport {
         gen.writeEndArray();
     }
 
-    protected boolean isNotEmptyDynamicInputs(DynamicValue<String> dynamicInputsValue) {
+    public boolean isNotEmptyDynamicInputs(DynamicValue<String> dynamicInputsValue) {
         return (dynamicInputsValue.getValue() != null && !dynamicInputsValue.getValue().isEmpty() && !dynamicInputsValue.getValue().equals(EMPTY_JSON))
                 || (dynamicInputsValue.getExpression() != null && !dynamicInputsValue.getExpression().isEmpty());
     }

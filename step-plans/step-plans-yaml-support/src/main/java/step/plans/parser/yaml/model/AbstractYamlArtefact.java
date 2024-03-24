@@ -93,7 +93,7 @@ public abstract class AbstractYamlArtefact<T extends AbstractArtefact> {
             return getNodeName();
         } else {
             // default value
-            return getDefaultArtefactName();
+            return getDefaultArtefactNameFromYamlArtefact();
         }
     }
 
@@ -110,12 +110,16 @@ public abstract class AbstractYamlArtefact<T extends AbstractArtefact> {
         }
     }
 
-    protected String getDefaultArtefactName() {
+    protected String getDefaultArtefactNameFromYamlArtefact() {
         return AbstractArtefact.getArtefactName(getArtefactClass());
     }
 
-    protected void fillYamlArtefactFields(AbstractArtefact artefact){
-        if (!Objects.equals(artefact.getAttribute(AbstractOrganizableObject.NAME), getDefaultArtefactName())) {
+    protected String getDefaultArtefactNameFromArtefact(T artefact){
+        return AbstractArtefact.getArtefactName(artefact.getClass());
+    }
+
+    protected void fillYamlArtefactFields(T artefact){
+        if (!Objects.equals(artefact.getAttribute(AbstractOrganizableObject.NAME), getDefaultArtefactNameFromArtefact((T) artefact))) {
             this.setNodeName(artefact.getAttribute(AbstractOrganizableObject.NAME));
         }
         this.setContinueParentNodeExecutionOnError(artefact.getContinueParentNodeExecutionOnError());
@@ -131,8 +135,8 @@ public abstract class AbstractYamlArtefact<T extends AbstractArtefact> {
         return artefactClass;
     }
 
-    public static AbstractYamlArtefact<?> toYamlArtefact(AbstractArtefact artefact){
-        AbstractYamlArtefact<?> instance = createYamlArtefactInstance(artefact);
+    public static <T extends AbstractArtefact> AbstractYamlArtefact<T> toYamlArtefact(T artefact){
+        AbstractYamlArtefact<T> instance = (AbstractYamlArtefact<T>) createYamlArtefactInstance(artefact);
         instance.fillYamlArtefactFields(artefact);
         return instance;
     }

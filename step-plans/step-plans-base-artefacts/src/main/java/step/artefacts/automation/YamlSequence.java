@@ -45,11 +45,10 @@ public class YamlSequence extends AbstractYamlArtefact<Sequence> {
     }
 
     @Override
-    protected void fillYamlArtefactFields(AbstractArtefact artefact) {
+    protected void fillYamlArtefactFields(Sequence artefact) {
         super.fillYamlArtefactFields(artefact);
-        Sequence sequence = (Sequence) artefact;
-        this.setContinueOnError(sequence.getContinueOnError());
-        this.setPacing(sequence.getPacing());
+        this.setContinueOnError(artefact.getContinueOnError());
+        this.setPacing(artefact.getPacing());
     }
 
     public DynamicValue<Boolean> getContinueOnError() {

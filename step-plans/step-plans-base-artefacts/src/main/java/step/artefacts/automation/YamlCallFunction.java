@@ -37,7 +37,7 @@ public class YamlCallFunction extends AbstractYamlArtefact<CallFunction> {
 
     private YamlDynamicInputs inputs = new YamlDynamicInputs("{}");
 
-    private YamlKeywordDefinition keyword;
+    private YamlKeywordDefinition keyword = new YamlKeywordDefinition(null, "{}");
 
     public YamlCallFunction() {
         this.artefactClass = CallFunction.class;
@@ -50,15 +50,43 @@ public class YamlCallFunction extends AbstractYamlArtefact<CallFunction> {
         res.setResultMap(this.resultMap);
         res.setToken(this.routing.toDynamicValue());
         res.setArgument(this.inputs.toDynamicValue());
+        res.setFunction(this.keyword.toDynamicValue());
     }
 
     @Override
-    protected String getDefaultArtefactName() {
-        if (keyword != null && keyword.getKeywordName() != null && !keyword.getKeywordName().isEmpty()) {
-            return keyword.getKeywordName();
-        } else {
-            return AbstractArtefact.getArtefactName(getArtefactClass());
+    protected void fillYamlArtefactFields(CallFunction artefact) {
+        super.fillYamlArtefactFields(artefact);
+        if (artefact.getRemote() != null) {
+            this.remote = artefact.getRemote();
+        }
+        if (artefact.getResultMap() != null) {
+            this.resultMap = artefact.getResultMap();
+        }
+        if (artefact.getToken() != null) {
+            this.routing = YamlDynamicInputs.fromDynamicValue(artefact.getToken());
+        }
+        if (artefact.getArgument() != null) {
+            this.inputs = YamlDynamicInputs.fromDynamicValue(artefact.getArgument());
         }
     }
 
+    @Override
+    protected String getDefaultArtefactNameFromYamlArtefact() {
+        if (keyword != null && keyword.getKeywordName() != null && !keyword.getKeywordName().isEmpty()) {
+            return keyword.getKeywordName();
+        } else {
+            return super.getDefaultArtefactNameFromYamlArtefact();
+        }
+    }
+
+    @Override
+    protected String getDefaultArtefactNameFromArtefact(CallFunction artefact) {
+        if (artefact.getFunction() != null) {
+            String keywordName = YamlKeywordDefinition.fromDynamicValue(artefact.getFunction()).getKeywordName();
+            if (keywordName != null && !keywordName.isEmpty()) {
+                return keywordName;
+            }
+        }
+        return super.getDefaultArtefactNameFromArtefact(artefact);
+    }
 }

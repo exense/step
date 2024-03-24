@@ -49,11 +49,10 @@ public class YamlEcho extends AbstractYamlArtefact<Echo> {
     }
 
     @Override
-    protected void fillYamlArtefactFields(AbstractArtefact artefact) {
+    protected void fillYamlArtefactFields(Echo artefact) {
         super.fillYamlArtefactFields(artefact);
-        Echo echo = (Echo) artefact;
-        if (echo.getText() != null) {
-            DynamicValue<Object> echoText = echo.getText();
+        if (artefact.getText() != null) {
+            DynamicValue<Object> echoText = artefact.getText();
             setText(echoText.isDynamic() ? new DynamicValue<>(echoText.getExpression(), echoText.getExpressionType()) : new DynamicValue<>((String) echoText.getValue()));
         }
     }

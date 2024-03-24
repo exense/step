@@ -48,14 +48,13 @@ public class YamlCheck extends AbstractYamlArtefact<Check> {
     }
 
     @Override
-    protected void fillYamlArtefactFields(AbstractArtefact artefact) {
+    protected void fillYamlArtefactFields(Check artefact) {
         super.fillYamlArtefactFields(artefact);
-        Check checkArtefact = (Check) artefact;
-        if (checkArtefact.getExpression() != null) {
-            if (!checkArtefact.getExpression().isDynamic()) {
+        if (artefact.getExpression() != null) {
+            if (!artefact.getExpression().isDynamic()) {
                 log.warn("Static values are not supported in yaml plan format for 'expression' in " + artefact.getClass().getSimpleName());
             } else {
-                this.setExpression(checkArtefact.getExpression().getExpression());
+                this.setExpression(artefact.getExpression().getExpression());
             }
         }
     }

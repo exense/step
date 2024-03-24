@@ -58,7 +58,6 @@ public class StepYamlDeserializersScanner {
     public static SimpleModule addAllDeserializerAddonsToModule(SimpleModule module, ObjectMapper yamlObjectMapper){
         SimpleModule res = module;
         for (StepYamlDeserializersScanner.DeserializerBind<?> deser : StepYamlDeserializersScanner.scanDeserializerAddons(yamlObjectMapper)) {
-            log.info("Add deserializer " + deser.deserializer.getClass() + " for " + deser.clazz);
             res = module.addDeserializer((Class<Object>) deser.clazz, deser.deserializer);
         }
         return res;
