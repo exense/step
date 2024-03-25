@@ -101,13 +101,14 @@ public class PlanPlugin extends AbstractControllerPlugin {
 			Input input = i.getInput();
 			if(input.getId().equals("attributes.name")) {
 				i.setInput(nameInput);
+				i.setImmutable(true);
 				screenInputAccessor.save(i);
 				inputExists.set(true);
 			}
 		});
 		// Create it if not existing
 		if(!inputExists.get()) {
-			screenInputAccessor.save(new ScreenInput(0, "planTable", nameInput));
+			screenInputAccessor.save(new ScreenInput(0, "planTable", nameInput, true));
 		}
 	}
 }

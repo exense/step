@@ -65,25 +65,12 @@ public class FunctionPackagePlugin extends AbstractControllerPlugin {
 
 	@Override
 	public void initializeData(GlobalContext context) throws Exception {
-		createScreenInputsIfNecessary(context);
 
 		Configuration configuration = context.getConfiguration();
 		String embeddedPackageFolder = configuration.getProperty("plugins.FunctionPackagePlugin.embeddedpackages.folder");
 		if(embeddedPackageFolder != null) {
 			EmbeddedFunctionPackageImporter embeddedFunctionPackageImporter = new EmbeddedFunctionPackageImporter(packageAccessor, packageManager);
 			embeddedFunctionPackageImporter.importEmbeddedFunctionPackages(embeddedPackageFolder);
-		}
-	}
-
-	protected void createScreenInputsIfNecessary(GlobalContext context) {
-		ScreenInputAccessor screenInputAccessor = context.get(ScreenInputAccessor.class);
-		List<ScreenInput> functionTableExtensions = screenInputAccessor.getScreenInputsByScreenId(ScreenTemplatePlugin.FUNCTION_TABLE_EXTENSIONS);
-		boolean inputExist = functionTableExtensions.stream().filter(i->i.getInput().getId().equals("customFields.functionPackageId")).findFirst().isPresent();
-		if(!inputExist) {
-			Input input = new Input(InputType.TEXT, "customFields.functionPackageId", "Package", "", null);
-			input.setCustomUIComponents(List.of("functionPackageLink"));
-			input.setSearchMapperService("rest/table/functionPackage/searchIdsBy/attributes.name");
-			screenInputAccessor.save(new ScreenInput(ScreenTemplatePlugin.FUNCTION_TABLE_EXTENSIONS, input));
 		}
 	}
 

@@ -28,16 +28,23 @@ public class ScreenInput extends AbstractOrganizableObject implements Enricheabl
 	protected int position;
 	
 	protected Input input;
+	//Checked in screen services, and set to true for attributes.name inputs
+	protected Boolean immutable;
 
 	public ScreenInput() {
 		super();
 	}
 
 	public ScreenInput(int position, String screenId, Input input) {
+		this(position, screenId, input, false);
+	}
+
+	public ScreenInput(int position, String screenId, Input input, Boolean immutable) {
 		super();
 		this.position = position;
 		this.screenId = screenId;
 		this.input = input;
+		this.immutable = immutable;
 	}
 	
 	public ScreenInput(String screenId, Input input) {
@@ -69,5 +76,12 @@ public class ScreenInput extends AbstractOrganizableObject implements Enricheabl
 	public void setInput(Input input) {
 		this.input = input;
 	}
-	
+
+	public Boolean getImmutable() {
+		return immutable != null && immutable;
+	}
+
+	public void setImmutable(Boolean immutable) {
+		this.immutable = immutable;
+	}
 }

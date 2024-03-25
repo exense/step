@@ -34,9 +34,11 @@ public class Input extends AbstractActivableObject {
 	String label;
 	
 	String description;
-	
+
+	//Deprecated for new columns configurations (only used for table rendering)
 	List<String> customUIComponents;
-	
+
+	//Deprecated for new columns configurations (only used for function package)
 	String searchMapperService;
 	
 	List<Option> options;

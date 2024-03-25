@@ -33,8 +33,12 @@ import step.framework.server.security.Secured;
 import step.framework.server.tables.service.TableRequest;
 import step.framework.server.tables.service.TableResponse;
 import step.framework.server.tables.service.TableServiceException;
+import step.plugins.table.settings.TableSettings;
+import step.plugins.table.settings.TableSettingsAccessor;
 import step.resources.Resource;
 import step.resources.ResourceManager;
+
+import java.util.List;
 
 @Singleton
 @Path("table")
@@ -46,6 +50,7 @@ public class TableService extends AbstractStepServices {
     private step.framework.server.tables.service.TableService tableService;
     private AsyncTaskManager asyncTaskManager;
     private ResourceManager resourceManager;
+    private TableSettingsAccessor tableSettingsAccessor;
 
     @PostConstruct
     public void init() throws Exception {
@@ -54,6 +59,7 @@ public class TableService extends AbstractStepServices {
         asyncTaskManager = context.require(AsyncTaskManager.class);
         resourceManager = context.getResourceManager();
         tableService = context.require(step.framework.server.tables.service.TableService.class);
+        tableSettingsAccessor = context.require(TableSettingsAccessor.class);
     }
 
     @POST
@@ -72,5 +78,27 @@ public class TableService extends AbstractStepServices {
     @Secured
     public AsyncTaskStatus<Resource> createExport(@PathParam("tableName") String tableName, TableExportRequest exportRequest) throws Exception {
         return asyncTaskManager.scheduleAsyncTask(new TableExportTask(tableService, resourceManager, tableName, exportRequest, getSession()));
+    }
+
+    @POST
+    @Path("/{tableName}/settings")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Secured
+    public void saveTableSettings(@PathParam("tableName") String tableName, TableSettingsRequest tableSettingsRequest) {
+        tableSettingsAccessor.saveSetting(tableSettingsRequest.tableSettings, tableSettingsRequest.scope, getSession());
+    }
+
+    public static class TableSettingsRequest {
+        public TableSettings tableSettings;
+        public List<String> scope;
+    }
+
+    @GET
+    @Path("/{tableName}/settings")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Secured
+    public TableSettings getTableSettings(@PathParam("tableName") String tableName) {
+        return tableSettingsAccessor.getSetting(tableName, getSession()).orElse(null); //return 204 if no setting exists yet
     }
 }

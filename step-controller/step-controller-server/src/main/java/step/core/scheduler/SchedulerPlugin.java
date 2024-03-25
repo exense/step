@@ -56,7 +56,6 @@ public class SchedulerPlugin extends AbstractControllerPlugin {
 
 	@Override
 	public void initializeData(GlobalContext context) throws Exception {
-		createScreenInputDefinitionsIfNecessary(context);
 		createSchedulerSettingsIfNecessary(context);
 	}
 
@@ -89,30 +88,4 @@ public class SchedulerPlugin extends AbstractControllerPlugin {
 		controllerSettingAccessor.createSettingIfNotExisting(ExecutionScheduler.SETTING_SCHEDULER_ENABLED, "true");
 	}
 
-	protected void createScreenInputDefinitionsIfNecessary(GlobalContext context) {
-		// Plan table
-		ScreenInputAccessor screenInputAccessor = context.get(ScreenInputAccessor.class);
-		List<ScreenInput> screenInputsByScreenId = screenInputAccessor.getScreenInputsByScreenId(ScreenTemplatePlugin.SCHEDULER_TABLE);
-		Input nameInput = new Input(InputType.TEXT, "attributes.name", "Name", null, null);
-		nameInput.setCustomUIComponents(List.of("schedulerTaskLink"));
-		AtomicBoolean inputExists = new AtomicBoolean(false);
-		// Force content of input 'attributes.name'
-		screenInputsByScreenId.forEach(i->{
-			Input input = i.getInput();
-			if(input.getId().equals("attributes.name")) {
-				i.setInput(nameInput);
-				screenInputAccessor.save(i);
-				inputExists.set(true);
-			}
-		});
-		// Create it if not existing
-		if(!inputExists.get()) {
-			screenInputAccessor.save(new ScreenInput(0, ScreenTemplatePlugin.SCHEDULER_TABLE, nameInput));
-		}
-		
-		if(screenInputsByScreenId.isEmpty()) {
-			screenInputAccessor.save(new ScreenInput(1, ScreenTemplatePlugin.SCHEDULER_TABLE,
-					new Input(InputType.TEXT, "executionsParameters.customParameters.env", "Environment", null, null)));
-		}
-	}
 }

@@ -15,7 +15,6 @@ public class MigrationTasksRegistrationPlugin  extends AbstractControllerPlugin 
 	@Override
 	public void serverStart(GlobalContext context) throws Exception {
 		MigrationManager migrationManager = context.get(MigrationManager.class);
-		migrationManager.register(ScreenTemplateFunctionTableExtensionsMigrationTask.class);
 
 		migrationManager.register(PlansInCompositeFunctionsMigrationTask.class);
 	}

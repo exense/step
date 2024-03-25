@@ -35,6 +35,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.bson.types.ObjectId;
 
 import step.core.GlobalContext;
+import step.core.deployment.ControllerServiceException;
 import step.framework.server.access.AuthorizationManager;
 import step.core.access.Role;
 import step.core.access.User;
@@ -56,14 +57,9 @@ public class ScreenTemplateService extends AbstractStepServices {
 	protected ObjectPredicateFactory objectPredicateFactory;
 	private final Set<String> screens = new HashSet<>() {
 		{
-			add(ScreenTemplatePlugin.SCHEDULER_TABLE);
-			add(ScreenTemplatePlugin.EXECUTION_TABLE);
 			add(ScreenTemplatePlugin.FUNCTION_TABLE);
 			add(ScreenTemplatePlugin.EXECUTION_PARAMETERS);
-			add(ScreenTemplatePlugin.PARAMETER_DIALOG);
 			add(ScreenTemplatePlugin.PLAN_TABLE);
-			add(ScreenTemplatePlugin.PARAMETER_TABLE);
-			add(ScreenTemplatePlugin.FUNCTION_TABLE_EXTENSIONS);
 		}
 	};
 
@@ -146,7 +142,11 @@ public class ScreenTemplateService extends AbstractStepServices {
 	@Secured(right="screenInputs-delete")
 	@Path("/input/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public void deleteInput(@PathParam("id") String id) {		
+	public void deleteInput(@PathParam("id") String id) {
+		ScreenInput screenInput = screenInputAccessor.get(id);
+		if (screenInput.getImmutable()) {
+			throw new ControllerServiceException("This screen input is immutable.");
+		}
 		screenInputAccessor.remove(new ObjectId(id));
 		screenTemplateManager.notifyChange();
 	}
@@ -157,6 +157,10 @@ public class ScreenTemplateService extends AbstractStepServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	public void saveInput(ScreenInput screenInput) {
+		ScreenInput screenInputOrig = screenInputAccessor.get(screenInput.getId());
+		if (screenInputOrig != null && screenInputOrig.getImmutable()) {
+			throw new ControllerServiceException("This screen input is immutable.");
+		}
 		screenInputAccessor.save(screenInput);
 		screenTemplateManager.notifyChange();
 	}

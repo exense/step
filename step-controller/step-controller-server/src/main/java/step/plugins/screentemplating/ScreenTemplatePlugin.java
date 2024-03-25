@@ -27,18 +27,15 @@ import step.framework.server.tables.Table;
 import step.framework.server.tables.TableRegistry;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Plugin
 public class ScreenTemplatePlugin extends AbstractControllerPlugin {
 
-	public static final String EXECUTION_TABLE = "executionTable";
 	public static final String FUNCTION_TABLE = "functionTable";
 	public static final String EXECUTION_PARAMETERS = "executionParameters";
-	public static final String SCHEDULER_TABLE = "schedulerTable";
-	public static final String PARAMETER_DIALOG = "parameterDialog";
-	public static final String PARAMETER_TABLE = "parameterTable";
 	public static final String PLAN_TABLE = "planTable";
-	public static final String FUNCTION_TABLE_EXTENSIONS = "functionTableExtensions";
 
 	protected ScreenTemplateManager screenTemplateManager;
 	protected ScreenInputAccessor screenInputAccessor;
@@ -66,12 +63,26 @@ public class ScreenTemplatePlugin extends AbstractControllerPlugin {
 	}
 
 	private void initializeScreenInputsIfNecessary() {
-		if(screenInputAccessor.getScreenInputsByScreenId(FUNCTION_TABLE).isEmpty()) {
-			screenInputAccessor.save(new ScreenInput(FUNCTION_TABLE, new Input(InputType.TEXT, "attributes.name", "Name", null)));
+		// Function table
+		List<ScreenInput> screenInputsByScreenId = screenInputAccessor.getScreenInputsByScreenId(ScreenTemplatePlugin.FUNCTION_TABLE);
+		Input nameInput = new Input(InputType.TEXT, "attributes.name", "Name", null, null);
+		AtomicBoolean inputExists = new AtomicBoolean(false);
+		// Force content of input 'attributes.name'
+		screenInputsByScreenId.forEach(i->{
+			Input input = i.getInput();
+			if(input.getId().equals("attributes.name")) {
+				i.setInput(nameInput);
+				i.setImmutable(true);
+				screenInputAccessor.save(i);
+				inputExists.set(true);
+			}
+		});
+		// Create it if not existing
+		if(!inputExists.get()) {
+			screenInputAccessor.save(new ScreenInput(0, FUNCTION_TABLE, nameInput, true));
 		}
-		if(screenInputAccessor.getScreenInputsByScreenId(EXECUTION_TABLE).isEmpty()) {
-			screenInputAccessor.save(new ScreenInput(EXECUTION_TABLE, new Input(InputType.TEXT, "executionParameters.customParameters.env", "Environment", null)));
-		}
+
+		//Execution parameters
 		if(screenInputAccessor.getScreenInputsByScreenId(EXECUTION_PARAMETERS).isEmpty()) {
 			screenInputAccessor.save(new ScreenInput(EXECUTION_PARAMETERS, new Input(InputType.DROPDOWN, "env", "Environment", Arrays.asList(new Option("TEST"),new Option("PROD")))));
 		}
