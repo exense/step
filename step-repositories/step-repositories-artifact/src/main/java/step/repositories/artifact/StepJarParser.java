@@ -20,7 +20,7 @@ package step.repositories.artifact;
 
 import step.automation.packages.*;
 import step.automation.packages.model.AutomationPackageContent;
-import step.automation.packages.model.AutomationPackageKeyword;
+import step.automation.packages.model.JavaAutomationPackageKeyword;
 import step.core.plans.Plan;
 import step.core.scanner.AnnotationScanner;
 import step.functions.Function;
@@ -36,17 +36,17 @@ import java.util.stream.Collectors;
 public class StepJarParser {
 
     private final AbstractAutomationPackageReader<?> automationPackageReader;
-    private final AutomationPackageKeywordsAttributesApplier automationPackagesKeywordAttributesApplier;
     private final StepClassParser stepClassParser;
+    private final ResourceManager resourceManager;
 
     public StepJarParser() {
         this(null, null);
     }
 
     public StepJarParser(ResourceManager resourceManager, AbstractAutomationPackageReader<?> automationPackageReader) {
+        this.resourceManager = resourceManager;
         this.stepClassParser = new StepClassParser(false);
         this.automationPackageReader = automationPackageReader;
-        this.automationPackagesKeywordAttributesApplier = new AutomationPackageKeywordsAttributesApplier(resourceManager);
     }
 
     private List<Function> getFunctions(AnnotationScanner annotationScanner, File artifact, File libraries) {
@@ -56,7 +56,7 @@ public class StepJarParser {
             List<Function> functions = AbstractAutomationPackageReader
                     .extractAnnotatedKeywords(annotationScanner, false, artifact.getAbsolutePath(), libraries != null ? libraries.getAbsolutePath() : null)
                     .stream()
-                    .map(AutomationPackageKeyword::getDraftKeyword)
+                    .map(JavaAutomationPackageKeyword::getKeyword)
                     .collect(Collectors.toList());
 
             // if artifact is an automation package we need to add keywords from yaml descriptors (annotated keywords have already been included above)
@@ -64,9 +64,7 @@ public class StepJarParser {
                 // add functions from automation package
                 if (automationPackageArchive.hasAutomationPackageDescriptor() && automationPackageReader != null) {
                     AutomationPackageContent content = automationPackageReader.readAutomationPackage(automationPackageArchive, false, false);
-                    functions.addAll(automationPackagesKeywordAttributesApplier.applySpecialAttributesToKeyword(
-                            content.getKeywords(), automationPackageArchive, null, null)
-                    );
+                    functions.addAll(content.prepareCompleteKeywords(new AutomationPackageContext(resourceManager, automationPackageArchive, null)));
                 }
             }
             return functions;

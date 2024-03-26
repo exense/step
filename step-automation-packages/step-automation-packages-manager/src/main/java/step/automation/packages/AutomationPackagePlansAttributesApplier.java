@@ -18,8 +18,6 @@
  ******************************************************************************/
 package step.automation.packages;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import step.attachments.FileResolver;
 import step.core.artefacts.AbstractArtefact;
 import step.core.dynamicbeans.DynamicValue;
@@ -53,23 +51,23 @@ public class AutomationPackagePlansAttributesApplier {
     public void applySpecialAttributesToPlans(List<Plan> plans,
                                               AutomationPackageArchive automationPackageArchive,
                                               ObjectEnricher objectEnricher) {
-        AutomationPackageAttributesApplyingContext apContext = prepareContext(automationPackageArchive, objectEnricher);
+        AutomationPackageContext apContext = prepareContext(automationPackageArchive, objectEnricher);
         for (Plan plan : plans) {
             applySpecialValuesForArtifact(plan.getRoot(), apContext);
         }
     }
 
-    protected AutomationPackageAttributesApplyingContext prepareContext(AutomationPackageArchive automationPackageArchive, ObjectEnricher enricher) {
-        return new AutomationPackageAttributesApplyingContext(resourceManager, automationPackageArchive, enricher);
+    protected AutomationPackageContext prepareContext(AutomationPackageArchive automationPackageArchive, ObjectEnricher enricher) {
+        return new AutomationPackageContext(resourceManager, automationPackageArchive, enricher);
     }
 
-    private void applySpecialValuesForArtifact(AbstractArtefact artifact, AutomationPackageAttributesApplyingContext apContext) {
+    private void applySpecialValuesForArtifact(AbstractArtefact artifact, AutomationPackageContext apContext) {
         fillResources(artifact, apContext);
         applySpecialValuesForChildren(artifact, apContext);
     }
 
     // TODO: some common pluggable approach should be used for keyword resources and plan resources
-    private void fillResources(Object object, AutomationPackageAttributesApplyingContext apContext) {
+    private void fillResources(Object object, AutomationPackageContext apContext) {
         try {
             applyResourcePropertyRecursively(object, apContext);
         } catch (Exception e) {
@@ -77,7 +75,7 @@ public class AutomationPackagePlansAttributesApplier {
         }
     }
 
-    private void applyResourcePropertyRecursively(Object object, AutomationPackageAttributesApplyingContext apContext) throws InvocationTargetException, IllegalAccessException {
+    private void applyResourcePropertyRecursively(Object object, AutomationPackageContext apContext) throws InvocationTargetException, IllegalAccessException {
         if (object == null) {
             return;
         }
@@ -124,7 +122,7 @@ public class AutomationPackagePlansAttributesApplier {
         }
     }
 
-    private String uploadAutomationPackageResource(String yamlResourceRef, AutomationPackageAttributesApplyingContext apContext) {
+    private String uploadAutomationPackageResource(String yamlResourceRef, AutomationPackageContext apContext) {
         AutomationPackageResourceUploader resourceUploader = new AutomationPackageResourceUploader();
         Resource resource = resourceUploader.uploadResourceFromAutomationPackage(yamlResourceRef, ResourceManager.RESOURCE_TYPE_FUNCTIONS, apContext);
         String result = null;
@@ -134,7 +132,7 @@ public class AutomationPackagePlansAttributesApplier {
         return result;
     }
 
-    private void applySpecialValuesForChildren(AbstractArtefact parent, AutomationPackageAttributesApplyingContext apContext) {
+    private void applySpecialValuesForChildren(AbstractArtefact parent, AutomationPackageContext apContext) {
         List<AbstractArtefact> children = parent.getChildren();
         if (children != null) {
             for (AbstractArtefact child : children) {

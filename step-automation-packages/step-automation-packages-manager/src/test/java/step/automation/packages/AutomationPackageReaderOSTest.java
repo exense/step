@@ -7,11 +7,9 @@ import step.artefacts.TestCase;
 import step.automation.packages.model.AutomationPackageContent;
 import step.automation.packages.model.AutomationPackageKeyword;
 import step.core.accessors.AbstractOrganizableObject;
-import step.core.artefacts.AbstractArtefact;
 import step.core.plans.Plan;
 import step.plugins.java.GeneralScriptFunction;
-import step.plugins.jmeter.JMeterFunction;
-import step.plugins.jmeter.automation.JMeterFunctionTestplanConversionRule;
+import step.plugins.jmeter.automation.YamlJMeterFunction;
 
 import java.io.File;
 import java.io.StringReader;
@@ -40,17 +38,17 @@ public class AutomationPackageReaderOSTest {
         List<AutomationPackageKeyword> keywords = automationPackageContent.getKeywords();
         assertEquals(3, keywords.size());
 
-        AutomationPackageKeyword jmeterKeyword = AutomationPackageTestUtils.findKeywordByClassAndName(keywords, JMeterFunction.class, J_METER_KEYWORD_1);
+        YamlJMeterFunction jmeterKeyword = (YamlJMeterFunction) AutomationPackageTestUtils.findYamlKeywordByClassAndName(keywords, YamlJMeterFunction.class, J_METER_KEYWORD_1);
         assertEquals(
                 "jmeterProject1/jmeterProject1.xml",
-                jmeterKeyword.getSpecialAttributes().get(JMeterFunctionTestplanConversionRule.JMETER_TESTPLAN_ATTR)
+                jmeterKeyword.getJmeterTestplan().get()
         );
 
-        AutomationPackageKeyword myKeyword2 = findKeywordByClassAndName(keywords, GeneralScriptFunction.class, ANNOTATED_KEYWORD);
+        GeneralScriptFunction myKeyword2 = (GeneralScriptFunction) findJavaKeywordByClassAndName(keywords, GeneralScriptFunction.class, ANNOTATED_KEYWORD);
         // check the plan-text schema specified in keyword annotation
-        assertEquals(JsonProvider.provider().createReader(new StringReader(KEYWORD_SCHEMA_FROM_SAMPLE)).readObject(), myKeyword2.getDraftKeyword().getSchema());
+        assertEquals(JsonProvider.provider().createReader(new StringReader(KEYWORD_SCHEMA_FROM_SAMPLE)).readObject(), myKeyword2.getSchema());
 
-        AutomationPackageTestUtils.findKeywordByClassAndName(keywords, GeneralScriptFunction.class, INLINE_PLAN);
+        AutomationPackageTestUtils.findJavaKeywordByClassAndName(keywords, GeneralScriptFunction.class, INLINE_PLAN);
 
         // 2 annotated plans and 1 plan in yaml descriptor
         List<Plan> plans = automationPackageContent.getPlans();

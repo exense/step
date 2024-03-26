@@ -18,14 +18,14 @@
  ******************************************************************************/
 package step.automation.packages.yaml.model;
 
-import step.automation.packages.model.AutomationPackageKeyword;
 import step.automation.packages.model.AutomationPackageSchedule;
+import step.automation.packages.model.YamlAutomationPackageKeyword;
 import step.plans.parser.yaml.model.YamlPlan;
 
 import java.util.List;
 
 public interface AutomationPackageFragmentYaml {
-    List<AutomationPackageKeyword> getKeywords();
+    List<YamlAutomationPackageKeyword> getKeywords();
 
     List<YamlPlan> getPlans();
 

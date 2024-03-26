@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.automation.packages;
 
+import step.attachments.FileResolver;
 import step.resources.Resource;
 import step.resources.ResourceManager;
 
@@ -26,9 +27,24 @@ import java.net.URL;
 
 public class AutomationPackageResourceUploader {
 
+    public String applyResourceReference(String resourceReference,
+                                         String resourceType,
+                                         AutomationPackageContext context) {
+        String result = null;
+        if (resourceReference != null && !resourceReference.startsWith(FileResolver.RESOURCE_PREFIX)) {
+            Resource resource = uploadResourceFromAutomationPackage(resourceReference, resourceType, context);
+            if (resource != null) {
+                result = FileResolver.RESOURCE_PREFIX + resource.getId().toString();
+            }
+        } else {
+            result = resourceReference;
+        }
+        return result;
+    }
+
     public Resource uploadResourceFromAutomationPackage(String resourcePath,
                                                         String resourceType,
-                                                        AutomationPackageAttributesApplyingContext context) {
+                                                        AutomationPackageContext context) {
         if (resourcePath != null && !resourcePath.isEmpty()) {
             ResourceManager resourceManager = context.getResourceManager();
 

@@ -138,7 +138,7 @@ public class AutomationPackageDescriptorReader {
         }
     }
 
-    protected ObjectMapper createYamlObjectMapper() {
+    public ObjectMapper createYamlObjectMapper() {
         YAMLFactory yamlFactory = new YAMLFactory();
 
         // Disable native type id to enable conversion to generic Documents

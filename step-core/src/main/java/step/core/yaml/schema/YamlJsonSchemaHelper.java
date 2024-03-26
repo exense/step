@@ -109,7 +109,7 @@ public class YamlJsonSchemaHelper {
 		try {
 			jsonSchemaCreator.processFields(clazz, output, allFieldsInHierarchy, requiredPropertiesOutput);
 		} catch (Exception ex) {
-			throw new JsonSchemaPreparationException("Unable to json schema for class " + clazz, ex);
+			throw new JsonSchemaPreparationException("Unable to prepare json schema for " + clazz, ex);
 		}
 	}
 

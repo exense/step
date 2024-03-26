@@ -33,9 +33,9 @@ public class AggregatingFieldMetadataExtractor implements FieldMetadataExtractor
     }
 
     @Override
-    public FieldMetadata extractMetadata(Field field) {
+    public FieldMetadata extractMetadata(Class<?> objectClass, Field field) {
         for (FieldMetadataExtractor extractor : extractors) {
-            FieldMetadata fieldMetadata = extractor.extractMetadata(field);
+            FieldMetadata fieldMetadata = extractor.extractMetadata(objectClass, field);
             if (fieldMetadata != null) {
                 return fieldMetadata;
             }

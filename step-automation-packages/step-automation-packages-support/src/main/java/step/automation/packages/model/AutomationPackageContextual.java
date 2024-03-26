@@ -16,13 +16,10 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.yaml.deserialization;
+package step.automation.packages.model;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import step.functions.Function;
+import step.automation.packages.AutomationPackageContext;
 
-import java.util.Map;
-
-public interface SpecialKeywordAttributesExtractor {
-    void extractSpecialAttributes(JsonNode yamlKeywordFields, Function draftKeywordObject, Map<String, Object> specialAttributesCollector);
+public interface AutomationPackageContextual<T> {
+    T applyAutomationPackageContext(AutomationPackageContext context);
 }

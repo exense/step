@@ -46,30 +46,24 @@ public abstract class NamedEntityYamlDeserializer<T>  {
         String yamlName = getEntityNameFromYaml(namedEntity);
 
         String targetClass = resolveTargetClassNameByYamlName(yamlName);
-        if (targetClass == null) {
-            throw new RuntimeException("Unable to resolve implementation class for entity " + yamlName);
-        }
 
         // move entity name into the target '_class' field
         JsonNode allYamlFields = namedEntity.get(yamlName);
-        techYaml.put(getTargetClassField(), targetClass);
+
+        String targetClassField = getTargetClassField();
+        if (targetClassField != null) {
+            if (targetClass == null) {
+                throw new RuntimeException("Unable to resolve implementation class for entity " + yamlName);
+            }
+            techYaml.put(targetClassField, targetClass);
+        }
 
         Iterator<Map.Entry<String, JsonNode>> fields = allYamlFields.fields();
         while (fields.hasNext()) {
             Map.Entry<String, JsonNode> next = fields.next();
 
-            // process some fields in special way
-            boolean processedAsSpecialField = false;
-            for (YamlFieldDeserializationProcessor proc : deserializationProcessors()) {
-                if (proc.deserializeField(targetClass, next, techYaml, codec)) {
-                    processedAsSpecialField = true;
-                }
-            }
-
-            // copy all other fields (parameters)
-            if (!processedAsSpecialField) {
-                techYaml.set(next.getKey(), next.getValue().deepCopy());
-            }
+            // copy all other fields
+            techYaml.set(next.getKey(), next.getValue().deepCopy());
         }
         return techYaml;
     }
@@ -77,16 +71,11 @@ public abstract class NamedEntityYamlDeserializer<T>  {
     public JsonNode getAllYamlFields(JsonNode node){
         String yamlName = getEntityNameFromYaml(node);
 
-        String targetClass = resolveTargetClassNameByYamlName(yamlName);
-        if (targetClass == null) {
-            throw new RuntimeException("Unable to resolve implementation class for entity " + yamlName);
-        }
-
         // move entity name into the target '_class' field
         return node.get(yamlName);
     }
 
-    protected String resolveTargetClassNameByYamlName(String yamlName){
+    protected String resolveTargetClassNameByYamlName(String yamlName)  {
         Class<?> clazz = resolveTargetClassByYamlName(yamlName);
         return clazz == null ? null : clazz.getName();
     }
@@ -114,9 +103,9 @@ public abstract class NamedEntityYamlDeserializer<T>  {
         return yamlName;
     }
 
-    protected abstract List<YamlFieldDeserializationProcessor> deserializationProcessors();
-
-    protected abstract String getTargetClassField();
+    protected String getTargetClassField(){
+        return null;
+    }
 
     private static ObjectNode createObjectNode(ObjectCodec codec) {
         return (ObjectNode) codec.createObjectNode();

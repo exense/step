@@ -30,7 +30,7 @@ public class ArtefactFieldMetadataExtractor implements YamlPlanReaderExtender {
 
     @Override
     public List<FieldMetadataExtractor> getMetadataExtractorExtensions() {
-        return List.of(field -> {
+        return List.of((objectClass, field) -> {
             // TODO: this logic can be replaced with field-level annotation
             if (field.getDeclaringClass().equals(CallFunction.class) && field.getName().equals(YamlPlanFields.CALL_FUNCTION_ARGUMENT_ORIGINAL_FIELD)) {
                 // rename 'argument' field to 'inputs'

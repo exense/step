@@ -16,19 +16,29 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.yaml.rules;
+package step.automation.packages.model;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
+import step.automation.packages.AutomationPackageContext;
+import step.functions.Function;
 
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
+public class YamlAutomationPackageKeyword implements AutomationPackageKeyword {
 
-@Retention(RUNTIME)
-@Target(ElementType.TYPE)
-public @interface YamlConversionRuleAddOn {
+    private AbstractYamlFunction<?> yamlKeyword;
 
-    String LOCATION = "step";
+    public YamlAutomationPackageKeyword(AbstractYamlFunction<?> yamlKeyword) {
+        this.yamlKeyword = yamlKeyword;
+    }
 
-    Class<?>[] targetClasses() default {};
+    public AbstractYamlFunction<?> getYamlKeyword() {
+        return yamlKeyword;
+    }
+
+    public void setYamlKeyword(AbstractYamlFunction<?> yamlKeyword) {
+        this.yamlKeyword = yamlKeyword;
+    }
+
+    @Override
+    public Function prepareKeyword(AutomationPackageContext context) {
+        return yamlKeyword.applyAutomationPackageContext(context);
+    }
 }

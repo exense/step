@@ -16,12 +16,29 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.yaml.deserialization;
+package step.automation.packages.model;
 
-import org.bson.types.ObjectId;
-import step.automation.packages.model.AutomationPackageKeyword;
+import step.automation.packages.AutomationPackageContext;
+import step.functions.Function;
 
-public interface SpecialKeywordAttributesApplier {
-    void applySpecialAttributesToKeyword(AutomationPackageKeyword keyword,
-                                         ObjectId automationPackageId);
+public class JavaAutomationPackageKeyword implements AutomationPackageKeyword {
+
+    private final Function keyword;
+
+    public JavaAutomationPackageKeyword(Function keyword) {
+        this.keyword = keyword;
+    }
+
+    public Function getKeyword() {
+        return keyword;
+    }
+
+    @Override
+    public Function prepareKeyword(AutomationPackageContext context) {
+        if (keyword instanceof AutomationPackageContextual) {
+            return ((AutomationPackageContextual<Function>) keyword).applyAutomationPackageContext(context);
+        } else {
+            return getKeyword();
+        }
+    }
 }

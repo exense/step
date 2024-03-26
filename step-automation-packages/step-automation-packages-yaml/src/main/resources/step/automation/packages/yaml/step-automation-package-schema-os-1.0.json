@@ -59,10 +59,6 @@
         "JMeter" : {
           "type" : "object",
           "properties" : {
-            "name" : {
-              "type" : "string",
-              "default" : "JMeter"
-            },
             "description" : {
               "type" : "string"
             },
@@ -70,7 +66,8 @@
               "type" : "boolean"
             },
             "routing" : {
-              "type" : "object"
+              "type" : "object",
+              "properties" : { }
             },
             "executeLocally" : {
               "type" : "boolean"
@@ -81,6 +78,10 @@
             },
             "callTimeout" : {
               "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            },
+            "name" : {
+              "default" : "JMeter",
+              "type" : "string"
             },
             "jmeterTestplan" : {
               "$ref" : "#/$defs/SmartDynamicValueStringDef"
@@ -1993,7 +1994,10 @@
           "type" : "string"
         },
         "cronExclusions" : {
-          "type" : "array"
+          "type" : "array",
+          "items" : {
+            "type" : "string"
+          }
         },
         "cron" : {
           "type" : "string"

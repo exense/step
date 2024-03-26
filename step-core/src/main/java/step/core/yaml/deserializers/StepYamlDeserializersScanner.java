@@ -26,6 +26,9 @@ import java.util.*;
 
 public class StepYamlDeserializersScanner {
 
+    /**
+     * Scans and returns all {@link StepYamlDeserializer} classes annotated with {@link StepYamlDeserializerAddOn}
+     */
     public static List<DeserializerBind<?>> scanDeserializerAddons(ObjectMapper yamlObjectMapper) {
         List<DeserializerBind<?>> result = new ArrayList<>();
         List<Class<?>> annotatedClasses = new ArrayList<>(CachedAnnotationScanner.getClassesWithAnnotation(StepYamlDeserializerAddOn.LOCATION, StepYamlDeserializerAddOn.class, Thread.currentThread().getContextClassLoader()));

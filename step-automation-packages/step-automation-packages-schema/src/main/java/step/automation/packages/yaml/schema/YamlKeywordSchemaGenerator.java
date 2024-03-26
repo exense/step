@@ -24,12 +24,9 @@ import jakarta.json.spi.JsonProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.automation.packages.AutomationPackageNamedEntityUtils;
+import step.automation.packages.model.AbstractYamlFunction;
 import step.automation.packages.yaml.AutomationPackageKeywordsLookuper;
-import step.automation.packages.yaml.rules.keywords.KeywordNameRule;
-import step.automation.packages.yaml.rules.keywords.TechnicalFieldRule;
-import step.automation.packages.yaml.rules.keywords.TokenSelectionCriteriaRule;
 import step.core.yaml.schema.*;
-import step.functions.Function;
 import step.handlers.javahandler.jsonschema.*;
 
 import java.util.*;
@@ -106,8 +103,8 @@ public class YamlKeywordSchemaGenerator {
 
     protected Map<String, JsonObjectBuilder> createKeywordImplDefs() throws JsonSchemaPreparationException {
         HashMap<String, JsonObjectBuilder> result = new HashMap<>();
-        List<Class<? extends Function>> automationPackageKeywords = automationPackageKeywordsLookuper.getAutomationPackageKeywords();
-        for (Class<? extends Function> automationPackageKeyword : automationPackageKeywords) {
+        List<Class<? extends AbstractYamlFunction<?>>> automationPackageKeywords = automationPackageKeywordsLookuper.getAutomationPackageKeywords();
+        for (Class<? extends AbstractYamlFunction<?>> automationPackageKeyword : automationPackageKeywords) {
             String yamlName = AutomationPackageNamedEntityUtils.getEntityNameByClass(automationPackageKeyword);
             String defName = yamlName + "Def";
             result.put(defName, schemaHelper.createNamedObjectImplDef(yamlName, automationPackageKeyword, jsonSchemaCreator, false));
@@ -118,7 +115,6 @@ public class YamlKeywordSchemaGenerator {
     protected FieldMetadataExtractor prepareMetadataExtractor() {
         List<FieldMetadataExtractor> extractors = new ArrayList<>();
 
-        extractors.add(new TokenSelectionCriteriaRule().getFieldMetadataExtractor());
         extractors.add(new DefaultFieldMetadataExtractor());
 
         return new AggregatingFieldMetadataExtractor(extractors);
@@ -129,27 +125,10 @@ public class YamlKeywordSchemaGenerator {
 
         // -- BASIC PROCESSING RULES
         result.add(new CommonFilteredFieldProcessor());
-        result.add(new KeywordNameRule().getJsonSchemaFieldProcessor(jsonProvider));
-        result.add(new TechnicalFieldRule().getJsonSchemaFieldProcessor(jsonProvider));
-        result.add(new TokenSelectionCriteriaRule().getJsonSchemaFieldProcessor(jsonProvider));
-
-        // -- RULES FROM EXTENSIONS HAVE LESS PRIORITY THAN BASIC RULES, BUT MORE PRIORITY THAN OTHER RULES
-        result.addAll(getFieldExtensions());
-
-        // -- RULES FOR OS KEYWORDS
-
-        // -- SOME DEFAULT RULES FOR ENUMS AND DYNAMIC FIELDS
         result.add(new DynamicValueFieldProcessor(jsonProvider));
         result.add(new EnumFieldProcessor(jsonProvider));
 
         return result;
-    }
-
-    protected List<JsonSchemaFieldProcessor> getFieldExtensions() {
-        return automationPackageKeywordsLookuper.getAllConversionRules()
-                .stream()
-                .map(r -> r.getJsonSchemaFieldProcessor(jsonProvider))
-                .filter(Objects::nonNull).collect(Collectors.toList());
     }
 
     public JsonObjectBuilder addRef(JsonObjectBuilder builder, String refValue){
