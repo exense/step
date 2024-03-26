@@ -86,6 +86,7 @@ public class TableService extends AbstractStepServices {
     @Produces(MediaType.APPLICATION_JSON)
     @Secured
     public void saveTableSettings(@PathParam("tableName") String tableName, TableSettingsRequest tableSettingsRequest) {
+        tableSettingsRequest.tableSettings.setSettingId(tableName);
         tableSettingsAccessor.saveSetting(tableSettingsRequest.tableSettings, tableSettingsRequest.scope, getSession());
     }
 
