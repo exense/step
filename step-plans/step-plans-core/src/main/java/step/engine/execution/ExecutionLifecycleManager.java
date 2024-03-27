@@ -68,6 +68,11 @@ public class ExecutionLifecycleManager {
 	public void executionStarted() {
 		executionCallbacks.executionStart(context);
 	}
+
+	public void provisionRequiredResources() {
+		updateStatus(ExecutionStatus.PROVISIONING);
+		executionCallbacks.provisionRequiredResources(context);
+	}
 	
 	public void executionEnded() {
 		executionCallbacks.afterExecutionEnd(context);

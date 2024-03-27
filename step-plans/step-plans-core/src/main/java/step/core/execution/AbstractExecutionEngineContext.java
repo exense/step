@@ -33,6 +33,7 @@ import step.engine.execution.ExecutionManagerImpl;
 
 public abstract class AbstractExecutionEngineContext extends AbstractStepContext {
 
+	private OperationMode operationMode;
 	private ArtefactHandlerRegistry artefactHandlerRegistry;
 
 	private PlanAccessor planAccessor;
@@ -72,6 +73,7 @@ public abstract class AbstractExecutionEngineContext extends AbstractStepContext
 		setConfiguration(parentContext.getConfiguration());
 		repositoryObjectManager = parentContext.getRepositoryObjectManager();
 		artefactHandlerRegistry = parentContext.getArtefactHandlerRegistry();
+		operationMode = parentContext.getOperationMode();
 	}
 	
 	protected void useSourceAttributesFromParentContext(AbstractExecutionEngineContext parentContext) {
@@ -91,6 +93,14 @@ public abstract class AbstractExecutionEngineContext extends AbstractStepContext
 
 	public void setConfiguration(Configuration configuration) {
 		this.put(Configuration.class, configuration);
+	}
+
+	public OperationMode getOperationMode() {
+		return operationMode;
+	}
+
+	public void setOperationMode(OperationMode operationMode) {
+		this.operationMode = operationMode;
 	}
 
 	public ArtefactHandlerRegistry getArtefactHandlerRegistry() {

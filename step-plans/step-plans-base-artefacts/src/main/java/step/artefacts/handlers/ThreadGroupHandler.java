@@ -23,8 +23,9 @@ import step.artefacts.AfterThread;
 import step.artefacts.BeforeThread;
 import step.artefacts.Sequence;
 import step.artefacts.ThreadGroup;
-import step.artefacts.handlers.functions.AutoscalerExecutionPlugin;
-import step.artefacts.handlers.functions.MultiplyingTokenNumberCalculationContext;
+import step.artefacts.handlers.functions.TokenAutoscalingExecutionPlugin;
+import step.artefacts.handlers.functions.MultiplyingTokenForecastingContext;
+import step.artefacts.handlers.functions.TokenForecastingContext;
 import step.artefacts.handlers.loadtesting.Pacer;
 import step.artefacts.reports.ThreadReportNode;
 import step.core.artefacts.AbstractArtefact;
@@ -46,7 +47,9 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 
 	public void createReportSkeleton_(ReportNode node, ThreadGroup testArtefact) {
 		Integer numberOfThreads = testArtefact.getUsers().get();
-		AutoscalerExecutionPlugin.pushNewTokenNumberCalculationContext(context, new MultiplyingTokenNumberCalculationContext(numberOfThreads));
+
+		TokenForecastingContext tokenForecastingContext = TokenAutoscalingExecutionPlugin.getTokenForecastingContext(context);
+		TokenAutoscalingExecutionPlugin.pushNewTokenNumberCalculationContext(context, new MultiplyingTokenForecastingContext(tokenForecastingContext, numberOfThreads));
 
 		SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
 		scheduler.createReportSkeleton_(node, testArtefact);

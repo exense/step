@@ -40,6 +40,7 @@ import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionContextBindings;
 import step.core.execution.ExecutionContextWrapper;
+import step.core.execution.OperationMode;
 import step.core.json.JsonProviderCache;
 import step.core.miscellaneous.ReportNodeAttachmentManager;
 import step.core.miscellaneous.ReportNodeAttachmentManager.AttachmentQuotaException;
@@ -115,9 +116,12 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				FunctionGroupContext functionGroupContext = getFunctionGroupContext();
 				boolean closeFunctionGroupSessionAfterExecution = (functionGroupContext == null);
 
-				FunctionGroupSession functionGroupSession = getOrCreateFunctionGroupSession(functionGroupContext);
+				// Inject the mocked function execution service of the token forecasting context instead of the function execution service of the context
+				FunctionExecutionService functionExecutionService = TokenAutoscalingExecutionPlugin.getTokenForecastingContext(context).getFunctionExecutionServiceForTokenForecasting();
+				FunctionGroupSession functionGroupSession = getOrCreateFunctionGroupSession(functionExecutionService, functionGroupContext);
 				try {
-					selectToken(parentNode, testArtefact, function, functionGroupContext, functionGroupSession);
+					// Do not force the local token selection in order to simulate a real token selection
+					selectToken(parentNode, testArtefact, function, functionGroupContext, functionGroupSession, false);
 				} finally {
 					if(closeFunctionGroupSessionAfterExecution) {
 						functionGroupSession.close();
@@ -160,8 +164,11 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		if(!context.isSimulation()) {
 			FunctionGroupContext functionGroupContext = getFunctionGroupContext();
 			boolean closeFunctionGroupSessionAfterExecution = (functionGroupContext == null);
-			FunctionGroupSession functionGroupSession = getOrCreateFunctionGroupSession(functionGroupContext);
-			TokenWrapper token = selectToken(node, testArtefact, function, functionGroupContext, functionGroupSession);
+			FunctionGroupSession functionGroupSession = getOrCreateFunctionGroupSession(functionExecutionService, functionGroupContext);
+
+			// Force local token selection for local plan executions
+			boolean forceLocalToken =  context.getOperationMode() == OperationMode.LOCAL;
+			TokenWrapper token = selectToken(node, testArtefact, function, functionGroupContext, functionGroupSession, forceLocalToken);
 
 			try {
 				Token gridToken = token.getToken();
@@ -263,11 +270,9 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		return (FunctionGroupContext) context.getVariablesManager().getVariable(FunctionGroupHandler.FUNCTION_GROUP_CONTEXT_KEY);
 	}
 
-	private FunctionGroupSession getOrCreateFunctionGroupSession(FunctionGroupContext functionGroupContext) {
+	private FunctionGroupSession getOrCreateFunctionGroupSession(FunctionExecutionService functionExecutionService, FunctionGroupContext functionGroupContext) {
 		FunctionGroupSession functionGroupSession;
 		if (functionGroupContext == null) {
-			TokenNumberCalculationContext calculationContext = AutoscalerExecutionPlugin.getTokenNumberCalculationContext(context);
-			FunctionExecutionService functionExecutionService = calculationContext.getFunctionExecutionServiceForTokenRequirementCalculation();
 			functionGroupSession = new FunctionGroupSession(functionExecutionService);
 		} else {
 			functionGroupSession = functionGroupContext.getSession();
@@ -275,9 +280,9 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		return functionGroupSession;
 	}
 
-	private TokenWrapper selectToken(CallFunctionReportNode node, CallFunction testArtefact, Function function, FunctionGroupContext functionGroupContext, FunctionGroupSession functionGroupSession) throws FunctionExecutionServiceException {
+	private TokenWrapper selectToken(CallFunctionReportNode node, CallFunction testArtefact, Function function, FunctionGroupContext functionGroupContext, FunctionGroupSession functionGroupSession, boolean localToken) throws FunctionExecutionServiceException {
 		CallFunctionTokenWrapperOwner tokenWrapperOwner = new CallFunctionTokenWrapperOwner(node.getId().toString(), context.getExecutionId(), context.getExecutionParameters().getDescription());
-		boolean localTokenRequired = tokenSelectionCriteriaMapBuilder.isLocalTokenRequired(testArtefact, function);
+		boolean localTokenRequired = localToken || tokenSelectionCriteriaMapBuilder.isLocalTokenRequired(testArtefact, function);
 		TokenWrapper token;
 		if(localTokenRequired) {
 			token = functionGroupSession.getLocalToken();

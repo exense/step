@@ -19,9 +19,9 @@
 package step.artefacts.handlers;
 
 import step.artefacts.FunctionGroup;
-import step.artefacts.handlers.functions.AutoscalerExecutionPlugin;
+import step.artefacts.handlers.functions.TokenAutoscalingExecutionPlugin;
 import step.artefacts.handlers.functions.FunctionGroupSession;
-import step.artefacts.handlers.functions.TokenNumberCalculationContext;
+import step.artefacts.handlers.functions.TokenForecastingContext;
 import step.core.AbstractContext;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandler;
@@ -33,10 +33,8 @@ import step.core.functions.FunctionGroupHandle;
 import step.functions.execution.FunctionExecutionService;
 import step.grid.tokenpool.Interest;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.regex.Pattern;
 
@@ -61,9 +59,9 @@ public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportN
 
 	@Override
 	protected void createReportSkeleton_(ReportNode node, FunctionGroup testArtefact) {
-		// TODO finalize
-		TokenNumberCalculationContext autoscalerResourceCalculationContext = AutoscalerExecutionPlugin.getTokenNumberCalculationContext(context);
-		FunctionExecutionService functionExecutionService = autoscalerResourceCalculationContext.getFunctionExecutionServiceForTokenRequirementCalculation();
+		TokenForecastingContext tokenForecastingContext = TokenAutoscalingExecutionPlugin.getTokenForecastingContext(context);
+		// Inject the mocked function execution service of the token forecasting context instead of the function execution service of the context
+		FunctionExecutionService functionExecutionService = tokenForecastingContext.getFunctionExecutionServiceForTokenForecasting();
 		FunctionGroupContext handle = buildFunctionGroupContext(functionExecutionService, testArtefact);
 		try {
 			addFunctionGroupContextToContext(node, handle);
@@ -87,8 +85,6 @@ public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportN
 
 		private final FunctionGroupSession session;
 
-		private final Map<String, AtomicInteger> tokenRequirements = new HashMap<>();
-
 		private final Map<String, Interest> functionGroupTokenSelectionCriteria;
 
 		public final Optional<String> dockerImage;
@@ -109,11 +105,6 @@ public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportN
 			this.containerUser = containerUser;
 			this.containerCommand = containerCommand;
 			this.session = new FunctionGroupSession(functionExecutionService);
-		}
-
-
-		public void addTokenRequirement(String pool, int count) {
-			tokenRequirements.computeIfAbsent(pool, k->new AtomicInteger(0)).addAndGet(count);
 		}
 
 		public Map<String, Interest> getFunctionGroupTokenSelectionCriteria() {
@@ -149,6 +140,8 @@ public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportN
 
 	private FunctionGroupContext buildFunctionGroupContext(FunctionExecutionService functionExecutionService, FunctionGroup functionGroup) {
 		Map<String, Interest> additionalSelectionCriteria = tokenSelectorHelper.getTokenSelectionCriteria(functionGroup, getBindings());
+
+		// TODO refactor this: group docker related variables and logic in a class
 		String dockerImage = functionGroup.getDockerImage().get();
 		String containerUser = functionGroup.getContainerUser().get();
 		String containerCommand = functionGroup.getContainerCommand().get();
@@ -159,13 +152,11 @@ public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportN
 		} else {
 			dockerImageOptional = Optional.empty();
 		}
-
 		Optional<String> containerUserOptional = containerUser != null && !containerUser.isEmpty() ? Optional.ofNullable(containerUser) : Optional.empty();
 		Optional<String> containerCommandOptional = containerCommand != null && !containerCommand.isEmpty() ? Optional.ofNullable(containerCommand) : Optional.empty();
 		dockerImageOptional.ifPresent(image -> additionalSelectionCriteria.put("$docker", new Interest(Pattern.compile("true"), true)));
 
-		FunctionGroupContext handle = new FunctionGroupContext(functionExecutionService, additionalSelectionCriteria, dockerImageOptional,  containerUserOptional, containerCommandOptional);
-		return handle;
+		return new FunctionGroupContext(functionExecutionService, additionalSelectionCriteria, dockerImageOptional,  containerUserOptional, containerCommandOptional);
 	}
 
 	@Override

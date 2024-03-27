@@ -22,7 +22,7 @@ import org.junit.Test;
 import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.CallFunction;
 import step.artefacts.ThreadGroup;
-import step.artefacts.handlers.functions.AutoscalerExecutionPlugin;
+import step.artefacts.handlers.functions.TokenAutoscalingExecutionPlugin;
 import step.core.AbstractStepContext;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
@@ -116,7 +116,7 @@ public class AutoscalerTest {
 				functionTypeRegistry.registerFunctionType(new CompositeFunctionType(null));
 				functionTypeRegistry.registerFunctionType(new MyFunctionType());
 			}
-		}).withPlugin(new ThreadPoolPlugin()).withPlugin(new BaseArtefactPlugin()).withPlugin(new AutoscalerExecutionPlugin()).build();
+		}).withPlugin(new ThreadPoolPlugin()).withPlugin(new BaseArtefactPlugin()).withPlugin(new TokenAutoscalingExecutionPlugin()).build();
 		executionEngine.execute(plan).printTree();
 	}
 

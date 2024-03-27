@@ -23,6 +23,18 @@ public enum ExecutionStatus {
 	
 	IMPORTING,
 
+	/**
+	 * This status corresponds to the report skeleton creation phase.
+	 * During this phase the work that will be performed during the execution is estimated.
+	 * The required resources (agent tokens, etc) is also estimated during this phase.
+	 */
+	ESTIMATING,
+
+	/**
+	 * This status corresponds to the provisioning of the resources required for the execution
+	 */
+	PROVISIONING,
+
 	RUNNING,
 	
 	ABORTING,

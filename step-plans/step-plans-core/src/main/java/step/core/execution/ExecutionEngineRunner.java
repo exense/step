@@ -106,7 +106,7 @@ public class ExecutionEngineRunner {
 				executionContext.setPlan(plan);
 				
 				logger.info("Starting test execution. Execution ID: " + executionId);
-				updateStatus(ExecutionStatus.RUNNING);
+				updateStatus(ExecutionStatus.ESTIMATING);
 				
 				executionContext.associateThread();
 				
@@ -169,6 +169,10 @@ public class ExecutionEngineRunner {
 		ArtefactHandlerManager artefactHandlerManager = executionContext.getArtefactHandlerManager();
 		AbstractArtefact root = plan.getRoot();
 		artefactHandlerManager.createReportSkeleton(root, rootReportNode);
+
+		// Provision the resources required for the execution before starting the execution phase
+		executionLifecycleManager.provisionRequiredResources();
+
 		return artefactHandlerManager.execute(root, rootReportNode);
 	}
 	

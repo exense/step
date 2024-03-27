@@ -35,7 +35,7 @@ public interface ExecutionCallbacks {
 	 * @param context the {@link ExecutionContext}
 	 * @param function the resolved {@link Function} that will be executed
 	 */
-	public void beforeFunctionExecution(ExecutionContext context, ReportNode node, Function function);
+	void beforeFunctionExecution(ExecutionContext context, ReportNode node, Function function);
 	
 	/**
 	 * This hook is called immediately after a {@link Function} is executed in
@@ -50,31 +50,39 @@ public interface ExecutionCallbacks {
 	 * @param function the {@link Function} that has been executed
 	 * @param output   the result {@link Output} of the execution
 	 */
-	public void afterFunctionExecution(ExecutionContext context, ReportNode node, Function function, Output<JsonObject> output);
+	void afterFunctionExecution(ExecutionContext context, ReportNode node, Function function, Output<JsonObject> output);
 	
-	public void afterReportNodeSkeletonCreation(ExecutionContext context, ReportNode node);
+	void afterReportNodeSkeletonCreation(ExecutionContext context, ReportNode node);
 	
-	public void beforeReportNodeExecution(ExecutionContext context, ReportNode node);
+	void beforeReportNodeExecution(ExecutionContext context, ReportNode node);
 	
-	public void afterReportNodeExecution(ExecutionContext context, ReportNode node);
+	void afterReportNodeExecution(ExecutionContext context, ReportNode node);
 	
-	public void onReportNodeRemoval(ExecutionContext context, ReportNode node);
+	void onReportNodeRemoval(ExecutionContext context, ReportNode node);
 
-	public void onErrorContributionRemoval(ExecutionContext context, ReportNode node);
+	void onErrorContributionRemoval(ExecutionContext context, ReportNode node);
 	
-	public void associateThread(ExecutionContext context, Thread thread);
+	void associateThread(ExecutionContext context, Thread thread);
 	
-	public void associateThread(ExecutionContext context, Thread thread, long parentThreadId);
+	void associateThread(ExecutionContext context, Thread thread, long parentThreadId);
 	
-	public void unassociateThread(ExecutionContext context, Thread thread);
+	void unassociateThread(ExecutionContext context, Thread thread);
 	
-	public void beforePlanImport(ExecutionContext context);
+	void beforePlanImport(ExecutionContext context);
 	
-	public void executionStart(ExecutionContext context);
+	void executionStart(ExecutionContext context);
 
-	public void beforeExecutionEnd(ExecutionContext context);
+	/**
+	 * This hook is called after the report skeleton creation phase.
+	 * It aims to provision all resources required for the execution.
+	 *
+	 * @param context
+	 */
+	void provisionRequiredResources(ExecutionContext context);
 
-	public void forceStopExecution(ExecutionContext context);
+	void beforeExecutionEnd(ExecutionContext context);
 
-	public void afterExecutionEnd(ExecutionContext context);
+	void forceStopExecution(ExecutionContext context);
+
+	void afterExecutionEnd(ExecutionContext context);
 }
