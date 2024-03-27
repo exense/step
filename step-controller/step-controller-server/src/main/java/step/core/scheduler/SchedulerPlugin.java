@@ -38,8 +38,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Plugin(dependencies= {ScreenTemplatePlugin.class, ControllerSettingPlugin.class, ObjectHookControllerPlugin.class})
 public class SchedulerPlugin extends AbstractControllerPlugin {
 
-	private static final String SCHEDULER_TABLE = "schedulerTable";
-	
 	private ControllerSettingAccessor controllerSettingAccessor;
 
 	@Override
@@ -94,7 +92,7 @@ public class SchedulerPlugin extends AbstractControllerPlugin {
 	protected void createScreenInputDefinitionsIfNecessary(GlobalContext context) {
 		// Plan table
 		ScreenInputAccessor screenInputAccessor = context.get(ScreenInputAccessor.class);
-		List<ScreenInput> screenInputsByScreenId = screenInputAccessor.getScreenInputsByScreenId(SCHEDULER_TABLE);
+		List<ScreenInput> screenInputsByScreenId = screenInputAccessor.getScreenInputsByScreenId(ScreenTemplatePlugin.SCHEDULER_TABLE);
 		Input nameInput = new Input(InputType.TEXT, "attributes.name", "Name", null, null);
 		nameInput.setCustomUIComponents(List.of("schedulerTaskLink"));
 		AtomicBoolean inputExists = new AtomicBoolean(false);
@@ -109,11 +107,12 @@ public class SchedulerPlugin extends AbstractControllerPlugin {
 		});
 		// Create it if not existing
 		if(!inputExists.get()) {
-			screenInputAccessor.save(new ScreenInput(0, SCHEDULER_TABLE, nameInput));
+			screenInputAccessor.save(new ScreenInput(0, ScreenTemplatePlugin.SCHEDULER_TABLE, nameInput));
 		}
 		
 		if(screenInputsByScreenId.isEmpty()) {
-			screenInputAccessor.save(new ScreenInput(1, SCHEDULER_TABLE, new Input(InputType.TEXT, "executionsParameters.customParameters.env", "Environment", null, null)));
+			screenInputAccessor.save(new ScreenInput(1, ScreenTemplatePlugin.SCHEDULER_TABLE,
+					new Input(InputType.TEXT, "executionsParameters.customParameters.env", "Environment", null, null)));
 		}
 	}
 }

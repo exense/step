@@ -14,6 +14,7 @@ public class DashboardView extends AbstractOrganizableObject implements Enrichea
 	private String name;
 	private String description;
 	private Long resolution;
+	private Long refreshInterval;
 	@NotNull
 	private TimeRangeSelection timeRange;
 	@NotNull
@@ -94,6 +95,15 @@ public class DashboardView extends AbstractOrganizableObject implements Enrichea
 
 	public DashboardView setMetadata(Map<String, Object> metadata) {
 		this.metadata = metadata;
+		return this;
+	}
+
+	public Long getRefreshInterval() {
+		return refreshInterval;
+	}
+
+	public DashboardView setRefreshInterval(Long refreshInterval) {
+		this.refreshInterval = refreshInterval;
 		return this;
 	}
 }
