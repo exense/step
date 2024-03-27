@@ -28,8 +28,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * This function ensures that all the artefacts have their name saved properly in the attribute map. 
- * This will only be needed for the migration from 3.3.x or lower to 3.4.x or higher
+ * This function migrates the sleep artefact in plans to align with the new time input in the Frontend
  *
  */
 public class MigrateSleepArtefactInPlans extends MigrationTask {
@@ -114,6 +113,6 @@ public class MigrateSleepArtefactInPlans extends MigrationTask {
 	
 	@Override
 	public void runDowngradeScript() {
-		// TODO Auto-generated method stub		
+
 	}
 }
