@@ -173,7 +173,12 @@ public class ExecutionEngineRunner {
 		// Provision the resources required for the execution before starting the execution phase
 		executionLifecycleManager.provisionRequiredResources();
 
-		return artefactHandlerManager.execute(root, rootReportNode);
+		try {
+			return artefactHandlerManager.execute(root, rootReportNode);
+		} finally {
+			// Deprovision the resources provisioned for the execution
+			executionLifecycleManager.deprovisionRequiredResources();
+		}
 	}
 	
 	protected PlanRunnerResult result(String executionId) {

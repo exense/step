@@ -4,13 +4,14 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.Map;
+import java.util.UUID;
 
 public class TestTokenAutoscalingDriver implements TokenAutoscalingDriver{
 
     public static final String CONFIGURATION_KEY = "grid.tokens.pools";
 
     @Override
-    public TokenAutoscalingConfiguration getAutoscalerConfiguration() {
+    public TokenAutoscalingConfiguration getConfiguration() {
         String property = "{\"pools\":{\"pool1\": {\"$agenttype\": \"default\"}}}"; // context.getConfiguration().getProperty(CONFIGURATION_KEY, "{\"pools\":{\"pool1\": {\"$agenttype\": \"default\"}}}");
 
         ObjectMapper objectMapper = new ObjectMapper();
@@ -26,7 +27,22 @@ public class TestTokenAutoscalingDriver implements TokenAutoscalingDriver{
     }
 
     @Override
-    public void provisionTokens(TokenProvisioningRequest request) {
-        // This default implementation doesn't perform anything
+    public void executeTokenProvisioningRequest(String provisioningRequestId) {
+
+    }
+
+    @Override
+    public void deprovisionTokens(String provisioningRequestId) {
+
+    }
+
+    @Override
+    public TokenProvisioningStatus getTokenProvisioningStatus(String provisioningRequestId) {
+        return new TokenProvisioningStatus();
+    }
+
+    @Override
+    public String initializeTokenProvisioningRequest(TokenProvisioningRequest request) {
+        return UUID.randomUUID().toString();
     }
 }

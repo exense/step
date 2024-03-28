@@ -80,6 +80,8 @@ public interface ExecutionCallbacks {
 	 */
 	void provisionRequiredResources(ExecutionContext context);
 
+	void deprovisionRequiredResources(ExecutionContext context);
+
 	void beforeExecutionEnd(ExecutionContext context);
 
 	void forceStopExecution(ExecutionContext context);

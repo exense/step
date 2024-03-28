@@ -40,7 +40,9 @@ public enum ExecutionStatus {
 	ABORTING,
 
 	FORCING_ABORT,
-	
+
+	DEPROVISIONING,
+
 	EXPORTING,
 
 	ENDED;

@@ -73,7 +73,11 @@ public class ExecutionLifecycleManager {
 		updateStatus(ExecutionStatus.PROVISIONING);
 		executionCallbacks.provisionRequiredResources(context);
 	}
-	
+
+	public void deprovisionRequiredResources() {
+		updateStatus(ExecutionStatus.DEPROVISIONING);
+		executionCallbacks.deprovisionRequiredResources(context);
+	}
 	public void executionEnded() {
 		executionCallbacks.afterExecutionEnd(context);
 	}

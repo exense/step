@@ -2,7 +2,13 @@ package step.artefacts.handlers.functions.autoscaler;
 
 public interface TokenAutoscalingDriver {
 
-    TokenAutoscalingConfiguration getAutoscalerConfiguration();
+    TokenAutoscalingConfiguration getConfiguration();
 
-    void provisionTokens(TokenProvisioningRequest request);
+    String initializeTokenProvisioningRequest(TokenProvisioningRequest request);
+
+    void executeTokenProvisioningRequest(String provisioningRequestId);
+
+    TokenProvisioningStatus getTokenProvisioningStatus(String provisioningRequestId);
+
+    void deprovisionTokens(String provisioningRequestId);
 }
