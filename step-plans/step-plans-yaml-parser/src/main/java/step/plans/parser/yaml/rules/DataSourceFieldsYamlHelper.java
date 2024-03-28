@@ -34,7 +34,7 @@ import step.core.yaml.schema.AggregatedJsonSchemaFieldProcessor;
 import step.core.yaml.schema.YamlJsonSchemaHelper;
 import step.datapool.DataPoolConfiguration;
 import step.datapool.DataPoolFactory;
-import step.handlers.javahandler.jsonschema.DefaultFieldMetadataExtractor;
+import step.jsonschema.DefaultFieldMetadataExtractor;
 import step.handlers.javahandler.jsonschema.JsonSchemaCreator;
 import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
 import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;

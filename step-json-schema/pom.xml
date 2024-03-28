@@ -1,0 +1,87 @@
+<!--
+  Copyright (C) 2020, exense GmbH
+
+  This file is part of STEP
+
+  STEP is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  STEP is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU Affero General Public License for more details.
+
+  You should have received a copy of the GNU Affero General Public License
+  along with STEP.  If not, see <http://www.gnu.org/licenses/>.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+    <artifactId>step-json-schema</artifactId>
+    <packaging>jar</packaging>
+
+    <parent>
+        <groupId>ch.exense.step</groupId>
+        <artifactId>step-parent</artifactId>
+        <version>0.0.0-SNAPSHOT</version>
+        <relativePath>../step-parent</relativePath>
+    </parent>
+
+    <properties>
+    </properties>
+
+    <dependencies>
+
+        <!-- all classes from this step-json-schema module could be moved to step-api-keyword module, but it leads to conflict in unit-tests (jakarta.json vs javax.json) -->
+        <dependency>
+            <groupId>ch.exense.step</groupId>
+            <artifactId>step-api-keyword</artifactId>
+            <version>${step-api.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ch.exense.step</groupId>
+            <artifactId>step-api-json-schema</artifactId>
+            <version>${step-api.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.glassfish</groupId>
+            <artifactId>jakarta.json</artifactId>
+            <version>2.0.1</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>javax.json</groupId>
+            <artifactId>javax.json-api</artifactId>
+            <version>1.0</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>${slf4j.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>${jackson.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+</project>

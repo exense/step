@@ -37,6 +37,7 @@ import step.core.yaml.schema.AggregatingFieldMetadataExtractor;
 import step.core.yaml.schema.JsonSchemaDefinitionCreator;
 import step.core.yaml.schema.YamlJsonSchemaHelper;
 import step.handlers.javahandler.jsonschema.*;
+import step.jsonschema.DefaultFieldMetadataExtractor;
 import step.plans.parser.yaml.YamlPlanFields;
 import step.plans.parser.yaml.rules.*;
 import step.plans.parser.yaml.YamlPlanReaderExtender;

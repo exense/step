@@ -28,9 +28,9 @@ import step.automation.packages.model.AbstractYamlFunction;
 import step.automation.packages.yaml.AutomationPackageKeywordsLookuper;
 import step.core.yaml.schema.*;
 import step.handlers.javahandler.jsonschema.*;
+import step.jsonschema.DefaultFieldMetadataExtractor;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class YamlKeywordSchemaGenerator {
 
