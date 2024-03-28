@@ -18,46 +18,42 @@
  ******************************************************************************/
 package step.artefacts.handlers;
 
-import ch.exense.commons.io.FileHelper;
-import org.bson.types.ObjectId;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
+import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.CallFunction;
+import step.artefacts.handlers.functions.TokenAutoscalingExecutionPlugin;
+import step.artefacts.handlers.functions.test.MyFunction;
+import step.artefacts.handlers.functions.test.MyFunctionType;
 import step.artefacts.reports.CallFunctionReportNode;
 import step.attachments.AttachmentMeta;
-import step.core.AbstractStepContext;
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.artefacts.CheckArtefact;
 import step.core.artefacts.reports.ReportNodeStatus;
-import step.core.dynamicbeans.DynamicJsonObjectResolver;
-import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.execution.ExecutionContext;
+import step.core.execution.ExecutionEngine;
+import step.core.execution.ExecutionEngineContext;
 import step.core.execution.model.ExecutionMode;
+import step.core.execution.model.ExecutionParameters;
+import step.core.plans.Plan;
+import step.core.plans.builder.PlanBuilder;
+import step.core.plans.runner.PlanRunnerResult;
 import step.core.reports.Error;
 import step.core.reports.ErrorType;
 import step.core.reports.Measure;
 import step.datapool.DataSetHandle;
-import step.functions.Function;
-import step.functions.accessor.FunctionAccessor;
-import step.functions.accessor.InMemoryFunctionAccessorImpl;
-import step.functions.execution.FunctionExecutionService;
-import step.functions.execution.TokenLifecycleInterceptor;
-import step.functions.io.FunctionInput;
+import step.engine.plugins.AbstractExecutionEnginePlugin;
+import step.engine.plugins.FunctionPlugin;
 import step.functions.io.Output;
-import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionTypeRegistry;
-import step.grid.AgentRef;
-import step.grid.Token;
-import step.grid.TokenWrapper;
-import step.grid.TokenWrapperOwner;
-import step.grid.agent.tokenpool.TokenReservationSession;
 import step.grid.io.Attachment;
-import step.grid.tokenpool.Interest;
 import step.planbuilder.FunctionArtefacts;
+import step.threadpool.ThreadPoolPlugin;
 
-import jakarta.json.Json;
-import jakarta.json.JsonObject;
-import java.io.File;
+import javax.json.Json;
+import javax.json.JsonObject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -65,102 +61,83 @@ import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static step.planbuilder.BaseArtefacts.sequence;
 
-public class CallFunctionHandlerTest extends AbstractArtefactHandlerTest {
+public class CallFunctionHandlerTest {
 	
-	private static final ObjectId FUNCTION_ID_ERROR = new ObjectId();
-	private static final ObjectId FUNCTION_ID_SUCCESS = new ObjectId();
+	private ExecutionEngine executionEngine;
+
+	@Before
+	public void before() {
+		executionEngine = ExecutionEngine.builder().withPlugin(new FunctionPlugin()).withPlugin(newMyFunctionTypePlugin()).withPlugin(new ThreadPoolPlugin()).withPlugin(new BaseArtefactPlugin()).withPlugin(new TokenAutoscalingExecutionPlugin()).build();
+	}
+
+	public static AbstractExecutionEnginePlugin newMyFunctionTypePlugin() {
+		return new AbstractExecutionEnginePlugin() {
+			@Override
+			public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
+				super.initializeExecutionContext(executionEngineContext, executionContext);
+				FunctionTypeRegistry functionTypeRegistry = executionContext.require(FunctionTypeRegistry.class);
+				functionTypeRegistry.registerFunctionType(new MyFunctionType());
+			}
+		};
+	}
 
 	@After
 	public void cleanup() {
-		// delete the attachment folder created during the tests
-		File attachmentFolder = new File("attachments");
-		FileHelper.deleteFolder(attachmentFolder);
+		executionEngine.close();
 	}
 	
 	@Test
 	public void test() {
-		ExecutionContext executionContext = buildExecutionContext();
-		
-		Function function = newFunction(FUNCTION_ID_SUCCESS);
-		executionContext.get(FunctionAccessor.class).save(function);
-		
-		CallFunctionHandler handler = new CallFunctionHandler();
-		handler.init(executionContext);
+		MyFunction function = newPassingFunction();
+		Plan plan = newCallFunctionPlan(function);
 
-		CallFunction callFunction = FunctionArtefacts.keyword(function.getId().toString());
-		
-		CallFunctionReportNode node = (CallFunctionReportNode) execute(callFunction);
+		PlanRunnerResult result = executionEngine.execute(plan);
+		CallFunctionReportNode node = getCallFunctionReportNode(result);
 
-		assertEquals(1, node.getAttachments().size());
-		AttachmentMeta attachment = node.getAttachments().get(0);
-		assertEquals("Attachment1", attachment.getName());
-		
-		assertEquals(1, node.getMeasures().size());
-		
-		assertEquals("{\"Output1\":\"Value1\"}", node.getOutput());
-		assertEquals(ReportNodeStatus.PASSED, node.getStatus());
+		assertPassingFunctionReportNode(node);
 	}
-	
+
 	@Test
 	public void testByAttributes() {
-		ExecutionContext executionContext = buildExecutionContext();
-		
-		Function function = newFunction("MyFunction");
-		executionContext.get(FunctionAccessor.class).save(function);
-		
-		CallFunctionHandler handler = new CallFunctionHandler();
-		handler.init(executionContext);
-		
+		MyFunction function = newPassingFunction();
 		CallFunction callFunction = new CallFunction();
 		callFunction.setFunction(new DynamicValue<>("{\"name\":\"MyFunction\"}"));
-		
-		CallFunctionReportNode node = (CallFunctionReportNode) execute(callFunction);
+		Plan plan = newPlan(function, callFunction);
 
-		assertEquals(1, node.getAttachments().size());
-		AttachmentMeta attachment = node.getAttachments().get(0);
-		assertEquals("Attachment1", attachment.getName());
-		
-		assertEquals(1, node.getMeasures().size());
-		
-		assertEquals("{\"Output1\":\"Value1\"}", node.getOutput());
-		assertEquals(ReportNodeStatus.PASSED, node.getStatus());
+		PlanRunnerResult result = executionEngine.execute(plan);
+		CallFunctionReportNode node = getCallFunctionReportNode(result);
+
+		assertPassingFunctionReportNode(node);
 	}
-	
+
 	@Test
 	public void testDrainOutputToMap() {
-		ExecutionContext executionContext = buildExecutionContext();
-		
-		Function function = newFunction(FUNCTION_ID_SUCCESS);
-		executionContext.get(FunctionAccessor.class).save(function);
-		
-		CallFunctionHandler handler = new CallFunctionHandler();
-		handler.init(executionContext);
-		
-		Map<String, String> map = new HashMap<>();
-		executionContext.getVariablesManager().putVariable(executionContext.getReport(),"map", map);
-
-		CallFunction callFunction = FunctionArtefacts.keyword(function.getId().toString());
+		MyFunction function = newPassingFunction();
+		CallFunction callFunction = FunctionArtefacts.keyword(function.getAttribute(AbstractOrganizableObject.NAME));
 		callFunction.setResultMap(new DynamicValue<>("map"));
-		
-		CallFunctionReportNode node = (CallFunctionReportNode) execute(callFunction);
 
-		assertEquals(ReportNodeStatus.PASSED, node.getStatus());
-		
+		Map<String, String> map = new HashMap<>();
+		Plan plan = PlanBuilder.create().startBlock(sequence())
+				.add(new CheckArtefact(executionContext -> {
+					executionContext.getVariablesManager().putVariable(executionContext.getReport(), "map", map);
+				})).add(callFunction).endBlock().build();
+		plan.setFunctions(List.of(function));
+
+		PlanRunnerResult result = executionEngine.execute(plan);
+
+		assertEquals(ReportNodeStatus.PASSED, result.getResult());
 		assertEquals("Value1", map.get("Output1"));
 	}
 	
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testDrainOutputToDataSetHandle() {
-		ExecutionContext executionContext = buildExecutionContext();
-		
-		Function function = newFunction(FUNCTION_ID_SUCCESS);
-		executionContext.get(FunctionAccessor.class).save(function);
-		
-		CallFunctionHandler handler = new CallFunctionHandler();
-		handler.init(executionContext);
-		
+		MyFunction function = newPassingFunction();
+		CallFunction callFunction = FunctionArtefacts.keyword(function.getAttribute(AbstractOrganizableObject.NAME));
+		callFunction.setResultMap(new DynamicValue<>("dataSet"));
+
 		List<Object> addedRows = new ArrayList<>();
 		DataSetHandle dataSetHandle = new DataSetHandle() {
 
@@ -173,206 +150,105 @@ public class CallFunctionHandlerTest extends AbstractArtefactHandlerTest {
 			public void addRow(Object row) {
 				addedRows.add(row);
 			}
-			
+
 		};
-		executionContext.getVariablesManager().putVariable(executionContext.getReport(),"dataSet", dataSetHandle);
 
-		CallFunction callFunction = FunctionArtefacts.keyword(function.getId().toString());
-		callFunction.setResultMap(new DynamicValue<>("dataSet"));
-		
-		CallFunctionReportNode node = (CallFunctionReportNode) execute(callFunction);
+		Plan plan = PlanBuilder.create().startBlock(sequence())
+				.add(new CheckArtefact(executionContext -> {
+					executionContext.getVariablesManager().putVariable(executionContext.getReport(), "dataSet", dataSetHandle);
+				})).add(callFunction).endBlock().build();
+		plan.setFunctions(List.of(function));
 
-		assertEquals(ReportNodeStatus.PASSED, node.getStatus());
-		
+		PlanRunnerResult result = executionEngine.execute(plan);
+
+		assertEquals(ReportNodeStatus.PASSED, result.getResult());
 		assertEquals("Value1", ((Map<String, String>)addedRows.get(0)).get("Output1"));
-	}
-
-	protected Function newFunction(ObjectId id) {
-		Function function = new Function();
-		function.setId(id);
-		function.addAttribute(AbstractOrganizableObject.NAME, id.toString());
-		return function;
-	}
-	
-	protected Function newFunction(String name) {
-		Function function = new Function();
-		
-		Map<String, String> attributes = new HashMap<>();
-		attributes.put(AbstractOrganizableObject.NAME, name);
-		function.setAttributes(attributes);
-		return function;
 	}
 	
 	@Test
 	public void testError() {
-		ExecutionContext executionContext = buildExecutionContext();
-		
-		Function function = newFunction(FUNCTION_ID_ERROR);
-		
-		executionContext.get(FunctionAccessor.class).save(function);
-		
-		CallFunctionHandler handler = new CallFunctionHandler();
-		handler.init(executionContext);
-		
-		CallFunction callFunction = FunctionArtefacts.keyword(function.getId().toString());
-		
-		CallFunctionReportNode node = (CallFunctionReportNode) execute(callFunction);
+		MyFunction function = newFailingFunction();
+		Plan plan = newCallFunctionPlan(function);
+
+		PlanRunnerResult result = executionEngine.execute(plan);
+		CallFunctionReportNode node = getCallFunctionReportNode(result);
 		
 		assertEquals("My Error", node.getError().getMsg());
 	}
 	
 	@Test
 	public void testSimulation() {
-		ExecutionContext executionContext = buildExecutionContext();
-		executionContext.getExecutionParameters().setMode(ExecutionMode.SIMULATION);
-		
-		Function function = newFunction(FUNCTION_ID_SUCCESS);
-		executionContext.get(FunctionAccessor.class).save(function);
-		
-		CallFunctionHandler handler = new CallFunctionHandler();
-		handler.init(executionContext);
-		
-		CallFunction callFunction = FunctionArtefacts.keyword(function.getId().toString());
+		MyFunction function = newPassingFunction();
+		Plan plan = newCallFunctionPlan(function);
 
-		CallFunctionReportNode node = (CallFunctionReportNode) execute(callFunction);
+		ExecutionParameters executionParameters = new ExecutionParameters(plan, Map.of());
+		executionParameters.setMode(ExecutionMode.SIMULATION);
+
+		PlanRunnerResult result = executionEngine.execute(executionParameters);
+		CallFunctionReportNode node = getCallFunctionReportNode(result);
 		
 		assertEquals(ReportNodeStatus.PASSED, node.getStatus());
 		assertEquals("{}", node.getOutput());
 		assertNull(node.getError());
 	}
 
-	protected ExecutionContext buildExecutionContext() {
-		ExecutionContext executionContext = newExecutionContext();
-		InMemoryFunctionAccessorImpl funcitonAccessor = new InMemoryFunctionAccessorImpl();
-		
-		FunctionExecutionService functionExecutionService = getFunctionExecutionService();
-		executionContext.put(FunctionAccessor.class, funcitonAccessor);
-		executionContext.put(FunctionExecutionService.class, functionExecutionService);
-		
-		context = executionContext;
-		
-		return executionContext;
+	private static CallFunctionReportNode getCallFunctionReportNode(PlanRunnerResult result) {
+		return (CallFunctionReportNode) result.getReportTreeAccessor().getChildren(result.getRootReportNode().getId().toString()).next();
 	}
 
-	protected FunctionExecutionService getFunctionExecutionService() {
-		TokenWrapper token = getLocalToken();
-		
-		return new FunctionExecutionService() {
-			
-			@Override
-			public void returnTokenHandle(String tokenId) {
-				
-			}
-			
-			@Override
-			public TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests,
-					boolean createSession, TokenWrapperOwner tokenWrapperOwner) {
-				return token;
-			}
-
-			@Override
-			public void registerTokenLifecycleInterceptor(TokenLifecycleInterceptor interceptor) {
-
-			}
-
-			@Override
-			public void unregisterTokenLifecycleInterceptor(TokenLifecycleInterceptor interceptor) {
-
-			}
-
-			@Override
-			public TokenWrapper getLocalTokenHandle() {
-				return null;
-			}
-			
-			@SuppressWarnings("unchecked")
-			@Override
-			public <IN, OUT> Output<OUT> callFunction(String tokenId, Function function, FunctionInput<IN> input,	Class<OUT> outputClass) {
-				return (Output<OUT>) newOutput(function.getId().toString());
-			}
-			
-			private Output<JsonObject> newOutput(String functionId) {
-				if(functionId.equals(FUNCTION_ID_ERROR.toString())) {
-					return newErrorOutput();
-				} else {
-					return newPassedOutput();
-				}
-			}
-			
-			private Output<JsonObject> newPassedOutput() {
-				Output<JsonObject> output = new Output<>();
-				
-				List<Attachment> attachments = new ArrayList<>();
-				Attachment attachment = new Attachment();
-				attachment.setName("Attachment1");
-				attachment.setHexContent("");
-				attachments.add(attachment);
-				output.setAttachments(attachments);
-				
-				List<Measure> measures = new ArrayList<>();
-				measures.add(new Measure("Measure1", 1, 1, null));
-				output.setMeasures(measures);
-				
-				output.setPayload(Json.createObjectBuilder().add("Output1", "Value1").build());
-				
-				return output;
-			}
-			
-			private Output<JsonObject> newErrorOutput() {
-				Output<JsonObject> output = new Output<>();
-				output.setError(new Error(ErrorType.TECHNICAL, "keyword", "My Error", 0, true));
-				return output;
-			}
-		};
+	private static Plan newCallFunctionPlan(MyFunction function) {
+		CallFunction callFunction = FunctionArtefacts.keyword(function.getAttribute(AbstractOrganizableObject.NAME));
+		return newPlan(function, callFunction);
 	}
 
-	protected TokenWrapper getLocalToken() {
-		Token localToken = new Token();
-		localToken.setAgentid("local");
-		TokenWrapper token = new TokenWrapper();
-		token.setToken(localToken);
-		token.setAgent(new AgentRef());
-		token.getToken().attachObject(TokenWrapper.TOKEN_RESERVATION_SESSION, new TokenReservationSession());
-		return token;
+	private static Plan newPlan(MyFunction function, CallFunction callFunction) {
+		Plan plan = PlanBuilder.create().startBlock(callFunction).endBlock().build();
+		plan.setFunctions(List.of(function));
+		return plan;
 	}
 
-	protected FunctionTypeRegistry getFunctionTypeRepository() {
-		return new FunctionTypeRegistry() {
-			
-			@Override
-			public void registerFunctionType(AbstractFunctionType<? extends Function> functionType) {
-			}
-			
-			@Override
-			public AbstractFunctionType<Function> getFunctionTypeByFunction(Function function) {
-				return dummyFunctionType();
-			}
-			
-			@Override
-			public AbstractFunctionType<Function> getFunctionType(String functionType) {
-				return dummyFunctionType();
-			}
+	private static MyFunction newPassingFunction() {
+		MyFunction function = new MyFunction(input -> {
+			Output<JsonObject> output = new Output<>();
 
-			private AbstractFunctionType<Function> dummyFunctionType() {
-				return new AbstractFunctionType<>() {
+			List<Attachment> attachments = new ArrayList<>();
+			Attachment attachment = new Attachment();
+			attachment.setName("Attachment1");
+			attachment.setHexContent("");
+			attachments.add(attachment);
+			output.setAttachments(attachments);
 
-					@Override
-					public Function newFunction() {
-						return null;
-					}
+			List<Measure> measures = new ArrayList<>();
+			measures.add(new Measure("Measure1", 1, 1, null));
+			output.setMeasures(measures);
 
-					@Override
-					public Map<String, String> getHandlerProperties(Function function, AbstractStepContext executionContext) {
-						return null;
-					}
+			output.setPayload(Json.createObjectBuilder().add("Output1", "Value1").build());
+			return output;
+		});
+		function.addAttribute(AbstractOrganizableObject.NAME, "MyFunction");
+		return function;
+	}
 
-					@Override
-					public String getHandlerChain(Function function) {
-						return null;
-					}
-				};
-			}
-		};
+	private static MyFunction newFailingFunction() {
+		MyFunction function = new MyFunction(input -> {
+			Output<JsonObject> output = new Output<>();
+			output.setError(new Error(ErrorType.TECHNICAL, "keyword", "My Error", 0, true));
+			return output;
+		});
+		function.addAttribute(AbstractOrganizableObject.NAME, "MyFunction");
+		return function;
+	}
+
+
+	private static void assertPassingFunctionReportNode(CallFunctionReportNode node) {
+		assertEquals(1, node.getAttachments().size());
+		AttachmentMeta attachment = node.getAttachments().get(0);
+		assertEquals("Attachment1", attachment.getName());
+
+		assertEquals(2, node.getMeasures().size());
+
+		assertEquals("{\"Output1\":\"Value1\"}", node.getOutput());
+		assertEquals(ReportNodeStatus.PASSED, node.getStatus());
 	}
 }
 

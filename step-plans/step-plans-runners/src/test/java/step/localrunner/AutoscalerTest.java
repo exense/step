@@ -23,7 +23,8 @@ import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.CallFunction;
 import step.artefacts.ThreadGroup;
 import step.artefacts.handlers.functions.TokenAutoscalingExecutionPlugin;
-import step.core.AbstractStepContext;
+import step.artefacts.handlers.functions.test.MyFunction;
+import step.artefacts.handlers.functions.test.MyFunctionType;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.execution.ExecutionContext;
@@ -33,24 +34,15 @@ import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.engine.plugins.FunctionPlugin;
-import step.functions.Function;
-import step.functions.handler.JsonBasedFunctionHandler;
-import step.functions.io.Input;
 import step.functions.io.Output;
-import step.functions.io.OutputBuilder;
-import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionTypeRegistry;
-import step.handlers.javahandler.AbstractKeyword;
-import step.handlers.javahandler.Keyword;
 import step.planbuilder.BaseArtefacts;
 import step.planbuilder.FunctionArtefacts;
 import step.plugins.functions.types.CompositeFunction;
 import step.plugins.functions.types.CompositeFunctionType;
 import step.threadpool.ThreadPoolPlugin;
 
-import javax.json.JsonObject;
 import java.util.List;
-import java.util.Map;
 
 public class AutoscalerTest {
 	
@@ -103,7 +95,7 @@ public class AutoscalerTest {
 		compositeFunction.addAttribute(AbstractOrganizableObject.NAME, "MyComposite");
 		compositeFunction.setPlan(compositePlan);
 
-		MyFunction function = new MyFunction();
+		MyFunction function = new MyFunction(jsonObjectInput -> new Output<>());
 		function.addAttribute(AbstractOrganizableObject.NAME, "test");
 
 		plan.setFunctions(List.of(function, compositeFunction));
@@ -120,46 +112,5 @@ public class AutoscalerTest {
 		executionEngine.execute(plan).printTree();
 	}
 
-	public static class MyFunction extends Function {
-
-		@Override
-		public boolean requiresLocalExecution() {
-			return false;
-		}
-	}
-
-	public static class MyFunctionType extends AbstractFunctionType<MyFunction> {
-
-		@Override
-		public String getHandlerChain(MyFunction function) {
-			return MyFunctionHandler.class.getName();
-		}
-
-		@Override
-		public Map<String, String> getHandlerProperties(MyFunction function, AbstractStepContext executionContext) {
-			return null;
-		}
-
-		@Override
-		public MyFunction newFunction() {
-			return new MyFunction();
-		}
-	}
-
-	public static class MyFunctionHandler extends JsonBasedFunctionHandler {
-
-		@Override
-		public Output<JsonObject> handle(Input<JsonObject> input) throws Exception {
-			return new OutputBuilder().build();
-		}
-	}
-
-	public static class MyKeyword extends AbstractKeyword {
-
-		@Keyword
-		public void test() {
-
-		}
-	}
 }
 

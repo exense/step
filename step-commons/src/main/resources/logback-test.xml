@@ -10,7 +10,7 @@
 	<logger name="step.grid.tokenpool.TokenPool" level="info" />
 	<!-- <logger name="step.grid.filemanager" level="debug" /> -->
 
-	<root level="info">
+	<root level="debug">
 		<appender-ref ref="STDOUT" />
 	</root>
 </configuration>

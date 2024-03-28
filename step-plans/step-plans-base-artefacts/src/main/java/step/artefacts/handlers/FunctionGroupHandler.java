@@ -52,7 +52,7 @@ public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportN
 	@Override
 	public void init(ExecutionContext context) {
 		super.init(context);
-		functionExecutionService = context.require(FunctionExecutionService.class);
+		functionExecutionService = context.get(FunctionExecutionService.class);
 		tokenSelectorHelper = new TokenSelectorHelper(new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler())));
 
 	}

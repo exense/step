@@ -20,8 +20,11 @@ package step.artefacts;
 
 import org.junit.After;
 import org.junit.Before;
+import step.artefacts.handlers.functions.TokenAutoscalingExecutionPlugin;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
+import step.core.execution.OperationMode;
+import step.engine.plugins.FunctionPlugin;
 import step.threadpool.ThreadPoolPlugin;
 
 public class AbstractArtefactTest {
@@ -34,7 +37,9 @@ public class AbstractArtefactTest {
 
 	@Before
 	public void beforeTest() {
-		executionEngine = ExecutionEngine.builder().withPlugin(new ThreadPoolPlugin()).withPlugin(new BaseArtefactPlugin()).build();
+		executionEngine = ExecutionEngine.builder().withPlugin(new ThreadPoolPlugin())
+				.withPlugin(new BaseArtefactPlugin()).withPlugin(new TokenAutoscalingExecutionPlugin())
+				.withPlugin(new FunctionPlugin()).withOperationMode(OperationMode.CONTROLLER).build();
 	}
 
 	@After
