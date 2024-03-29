@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 public class FunctionGroupSession implements AutoCloseable {
 
     private final long ownerThreadId;
-    protected final FunctionExecutionService functionExecutionService;
+    private final FunctionExecutionService functionExecutionService;
     private final SimpleAffinityEvaluator<Identity, Identity> affinityEvaluator = new SimpleAffinityEvaluator<>();
 
     private final List<TokenWrapper> tokens = new ArrayList<>();
@@ -38,7 +38,7 @@ public class FunctionGroupSession implements AutoCloseable {
     }
 
     public synchronized TokenWrapper getRemoteToken(Map<String, Interest> tokenSelectionCriteria, TokenWrapperOwner tokenWrapperOwner) throws FunctionExecutionServiceException {
-        if (!isOwner(Thread.currentThread().getId())) {
+        if (!isCurrentThreadOwner()) {
             throw new RuntimeException("Tokens from this sesssion are already reserved by another thread. This usually means that you're spawning threads from wihtin a session control without creating new sessions for the new threads.");
         }
 
@@ -52,23 +52,23 @@ public class FunctionGroupSession implements AutoCloseable {
             token = matchingToken;
         } else {
             // No token matching the selection criteria => select a new token and add it to the function group context
-            token = selectToken(tokenSelectionCriteria, true, tokenWrapperOwner);
+            token = selectToken(tokenSelectionCriteria, tokenWrapperOwner);
             tokens.add(token);
         }
         return token;
     }
 
-    private boolean isOwner(long id) {
+    private boolean isCurrentThreadOwner() {
         return Thread.currentThread().getId() == ownerThreadId;
     }
 
-    private TokenWrapper selectToken(Map<String, Interest> selectionCriteria, boolean createSession, TokenWrapperOwner tokenWrapperOwner) throws FunctionExecutionServiceException {
+    private TokenWrapper selectToken(Map<String, Interest> selectionCriteria, TokenWrapperOwner tokenWrapperOwner) throws FunctionExecutionServiceException {
         Map<String, String> pretenderAttributes = new HashMap<>();
 
         TokenWrapper token;
         OperationManager.getInstance().enter("Token selection", selectionCriteria);
         try {
-            token = functionExecutionService.getTokenHandle(pretenderAttributes, selectionCriteria, createSession, tokenWrapperOwner);
+            token = functionExecutionService.getTokenHandle(pretenderAttributes, selectionCriteria, true, tokenWrapperOwner);
         } finally {
             OperationManager.getInstance().exit();
         }
@@ -82,16 +82,14 @@ public class FunctionGroupSession implements AutoCloseable {
 
     public void releaseTokens(boolean alsoReleaseLocalTokens) throws Exception {
         List<Exception> releaseExceptions = new ArrayList<>();
-        if (tokens != null) {
-            tokens.forEach(t -> {
-                try {
-                    functionExecutionService.returnTokenHandle(t.getID());
-                } catch (FunctionExecutionServiceException e) {
-                    releaseExceptions.add(e);
-                }
-            });
-            tokens.clear();
-        }
+        tokens.forEach(t -> {
+            try {
+                functionExecutionService.returnTokenHandle(t.getID());
+            } catch (FunctionExecutionServiceException e) {
+                releaseExceptions.add(e);
+            }
+        });
+        tokens.clear();
         if (localToken != null && alsoReleaseLocalTokens) {
             try {
                 functionExecutionService.returnTokenHandle(localToken.getID());
@@ -108,7 +106,7 @@ public class FunctionGroupSession implements AutoCloseable {
                 throw releaseExceptions.get(0);
             } else {
                 throw new Exception("Multiple errors occurred when releasing agent tokens: " +
-                        releaseExceptions.stream().map(e -> e.getMessage()).collect(Collectors.joining(", ")));
+                        releaseExceptions.stream().map(Throwable::getMessage).collect(Collectors.joining(", ")));
             }
         }
     }

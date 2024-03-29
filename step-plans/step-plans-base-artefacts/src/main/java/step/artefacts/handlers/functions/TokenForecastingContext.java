@@ -67,6 +67,10 @@ public class TokenForecastingContext {
         return poolResourceReservations.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().maxReservationCount));
     }
 
+    public Set<Map<String, Interest>> getCriteriaWithoutMatch() {
+        return criteriaWithoutMatch;
+    }
+
     public FunctionExecutionService getFunctionExecutionServiceForTokenForecasting() {
         return new FunctionExecutionService() {
 
@@ -96,7 +100,7 @@ public class TokenForecastingContext {
                     tokens.put(tokenWrapper.getID(), pool);
                 } catch (NoMatchingTokenPoolException e) {
                     // No token pool matches the selection criteria. Keep track of these criteria
-                    criteriaWithoutMatch.add(interests);
+                    reportFailedSelection(interests);
                     tokenWrapper = newTokenWrapper(false, null);
                 }
                 return tokenWrapper;
@@ -125,6 +129,14 @@ public class TokenForecastingContext {
                 throw new IllegalStateException("This method shouldn't be called");
             }
         };
+    }
+
+    private void reportFailedSelection(Map<String, Interest> interests) {
+        if(parentContext != null) {
+            parentContext.reportFailedSelection(interests);
+        } else {
+            criteriaWithoutMatch.add(interests);
+        }
     }
 
     private static class PoolReservationTracker {

@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.plugins.autoscaling;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
 import jakarta.ws.rs.*;
@@ -31,7 +32,8 @@ import step.core.execution.ExecutionContext;
 import step.framework.server.security.Secured;
 
 @Singleton
-@Path("/token-autoscaling")
+@Path("/executions")
+@Tag(name = "Executions")
 public class TokenAutoscalingServices extends AbstractStepServices {
 
 	private TokenAutoscalingDriver tokenAutoscalingDriver;
@@ -44,7 +46,7 @@ public class TokenAutoscalingServices extends AbstractStepServices {
 	}
 
 	@GET
-	@Path("/status/{executionId}")
+	@Path("/{executionId}/provisioning/status")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="execution-read")

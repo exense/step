@@ -14,8 +14,10 @@ import step.core.execution.ExecutionEngineContext;
 import step.core.plugins.Plugin;
 import step.core.plugins.exceptions.PluginCriticalException;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
+import step.grid.tokenpool.Interest;
 
 import java.util.Map;
+import java.util.Set;
 
 /**
  * This plugin is responsible for the autoscaling of agent tokens.
@@ -31,12 +33,22 @@ public class TokenAutoscalingExecutionPlugin extends AbstractExecutionEnginePlug
     public static final String PROVISIONING_REQUEST_ID = "$provisioningRequestId";
     private TokenAutoscalingDriver tokenAutoscalingDriver;
 
+    public TokenAutoscalingExecutionPlugin() {
+
+    }
+
+    public TokenAutoscalingExecutionPlugin(TokenAutoscalingDriver tokenAutoscalingDriver) {
+        this.tokenAutoscalingDriver = tokenAutoscalingDriver;
+    }
+
     @Override
     public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext executionEngineContext) {
         super.initializeExecutionEngineContext(parentContext, executionEngineContext);
-        // Get the autoscaling driver from the parent context or create it
-        tokenAutoscalingDriver = executionEngineContext.inheritFromParentOrComputeIfAbsent(parentContext, TokenAutoscalingDriver.class, tokenAutoscalingDriverClass ->
-                createAutoscalingDriver(executionEngineContext.getConfiguration()));
+        if (tokenAutoscalingDriver == null) {
+            // Get the autoscaling driver from the parent context or create it
+            tokenAutoscalingDriver = executionEngineContext.inheritFromParentOrComputeIfAbsent(parentContext, TokenAutoscalingDriver.class, tokenAutoscalingDriverClass ->
+                    createAutoscalingDriver(executionEngineContext.getConfiguration()));
+        }
     }
 
     @Override
@@ -48,15 +60,21 @@ public class TokenAutoscalingExecutionPlugin extends AbstractExecutionEnginePlug
         Map<String, Integer> tokenForecastPerPool = tokenForecastingContext.getTokenForecastPerPool();
         logger.debug("Token forecast estimation result: " + tokenForecastPerPool);
 
+        Set<Map<String, Interest>> criteriaWithoutMatch = tokenForecastingContext.getCriteriaWithoutMatch();
+        if (!criteriaWithoutMatch.isEmpty()) {
+            logger.warn("No matching pool found for selection criteria: " + criteriaWithoutMatch);
+            throw new PluginCriticalException("test");
+        }
+
         // Delegate the provisioning of the agent tokens to the driver according to the calculated forecast
         TokenProvisioningRequest request = new TokenProvisioningRequest();
         request.requiredNumberOfTokensPerPool = tokenForecastPerPool;
 
         String provisioningRequestId = tokenAutoscalingDriver.initializeTokenProvisioningRequest(request);
+        context.put(PROVISIONING_REQUEST_ID, provisioningRequestId);
 
         tokenAutoscalingDriver.executeTokenProvisioningRequest(provisioningRequestId);
         logger.info("Successfully provisioned resources for execution " + context.getExecutionId());
-        context.put(PROVISIONING_REQUEST_ID, provisioningRequestId);
     }
 
     @Override

@@ -18,65 +18,28 @@
  ******************************************************************************/
 package step.artefacts.handlers;
 
-import jakarta.json.Json;
-import jakarta.json.JsonObject;
-import org.junit.Before;
 import org.junit.Test;
 import step.artefacts.*;
-import step.artefacts.handlers.FunctionGroupHandler.FunctionGroupContext;
-import step.artefacts.handlers.functions.FunctionGroupSession;
-import step.artefacts.handlers.functions.TokenAutoscalingExecutionPlugin;
 import step.artefacts.handlers.functions.test.MyFunction;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.CheckArtefact;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicValue;
-import step.core.execution.*;
+import step.core.execution.ExecutionEngine;
+import step.core.execution.ExecutionEngineException;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
-import step.engine.plugins.AbstractExecutionEnginePlugin;
-import step.engine.plugins.FunctionPlugin;
-import step.functions.Function;
-import step.functions.execution.FunctionExecutionService;
-import step.functions.execution.FunctionExecutionServiceException;
-import step.functions.execution.TokenLifecycleInterceptor;
-import step.functions.io.FunctionInput;
-import step.functions.io.Output;
-import step.grid.AgentRef;
-import step.grid.Token;
-import step.grid.TokenWrapper;
-import step.grid.TokenWrapperOwner;
-import step.grid.tokenpool.Interest;
 import step.planbuilder.FunctionArtefacts;
 
 import java.io.IOException;
 import java.io.StringWriter;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static step.artefacts.handlers.CallFunctionHandlerTest.newMyFunctionTypePlugin;
 
-public class FunctionGroupHandlerTest {
-
-    private TokenWrapper token;
-    private TokenWrapper localToken;
-    private AtomicBoolean localTokenReturned;
-    private AtomicBoolean tokenReturned;
-
-    @Before
-    public void before() {
-        token = token("remote");
-        localToken = token("local");
-        localTokenReturned = new AtomicBoolean(false);
-        tokenReturned = new AtomicBoolean(false);
-    }
+public class FunctionGroupHandlerTest extends AbstractFunctionHandlerTest {
 
     @Test
     public void test() throws IOException, ExecutionEngineException {
@@ -92,93 +55,6 @@ public class FunctionGroupHandlerTest {
         assertEquals("Session:PASSED:\n" +
                 " CheckArtefact:PASSED:\n" +
                 " Echo:PASSED:\n", writer.toString());
-    }
-
-    private void assertThatLocalAndRemoteTokenHaveBeenReleased() {
-        assertTrue(localTokenReturned.get());
-        assertTrue(tokenReturned.get());
-    }
-
-    private void markTokenAsReleased(String id) {
-        if (localToken.getID().equals(id)) {
-            localTokenReturned.set(true);
-        }
-        if (token.getID().equals(id)) {
-            tokenReturned.set(true);
-        }
-    }
-
-    private static void getLocalAndRemoteTokenFromSession(ExecutionContext t) {
-        FunctionGroupContext functionGroupContext = (FunctionGroupContext) t.getVariablesManager().getVariable(FunctionGroupHandler.FUNCTION_GROUP_CONTEXT_KEY);
-        FunctionGroupSession session = functionGroupContext.getSession();
-        getLocalAndRemoteToken(session);
-        t.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED);
-    }
-
-    private static void getLocalAndRemoteToken(FunctionGroupSession session) {
-        session.getLocalToken();
-        try {
-            session.getRemoteToken(Map.of(), null);
-        } catch (FunctionExecutionServiceException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private ExecutionEngine newEngineWithCustomTokenReleaseFunction(Consumer<String> tokenReleaseFunction) {
-        return ExecutionEngine.builder().withOperationMode(OperationMode.CONTROLLER).withPlugin(new BaseArtefactPlugin()).withPlugin(new FunctionPlugin()).withPlugin(newMyFunctionTypePlugin()).withPlugin(new TokenAutoscalingExecutionPlugin()).withPlugin(new AbstractExecutionEnginePlugin() {
-
-            @Override
-            public void initializeExecutionContext(ExecutionEngineContext executionEngineContext,
-                                                   ExecutionContext executionContext) {
-                executionContext.put(FunctionExecutionService.class, new FunctionExecutionService() {
-
-                    @Override
-                    public void registerTokenLifecycleInterceptor(TokenLifecycleInterceptor interceptor) {
-
-                    }
-
-                    @Override
-                    public void unregisterTokenLifecycleInterceptor(TokenLifecycleInterceptor interceptor) {
-
-                    }
-
-                    @Override
-                    public TokenWrapper getLocalTokenHandle() {
-                        return localToken;
-                    }
-
-                    @Override
-                    public TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests,
-                                                       boolean createSession, TokenWrapperOwner tokenWrapperOwner) {
-                        return token;
-                    }
-
-                    @Override
-                    public void returnTokenHandle(String id) throws FunctionExecutionServiceException {
-                        try {
-                            tokenReleaseFunction.accept(id);
-                        } catch (Exception e) {
-                            throw new FunctionExecutionServiceException(e.getMessage());
-                        }
-                    }
-
-                    @Override
-                    public <IN, OUT> Output<OUT> callFunction(String id, Function function,
-                                                              FunctionInput<IN> input, Class<OUT> outputClass) {
-                        return (Output<OUT>) newOutput();
-                    }
-
-                    private Output<JsonObject> newOutput() {
-                        Output<JsonObject> output = new Output<>();
-                        JsonObject payload = Json.createObjectBuilder().build();
-                        output.setPayload(payload);
-                        output.setMeasures(new ArrayList<>());
-                        output.setAttachments(new ArrayList<>());
-                        return output;
-                    }
-                });
-            }
-        }).build();
     }
 
     @Test
@@ -256,17 +132,18 @@ public class FunctionGroupHandlerTest {
         CheckArtefact check1 = new CheckArtefact(c -> c.getCurrentReportNode().setStatus(ReportNodeStatus.FAILED));
         retryIfFail.addChild(check1);
 
-        ExecutionEngine engine = newEngineWithCustomTokenReleaseFunction(id -> {
+        StringWriter writer;
+        try (ExecutionEngine engine = newEngineWithCustomTokenReleaseFunction(id -> {
             if (localToken.getID().equals(id)) {
                 localTokenReturned.incrementAndGet();
             }
             if (token.getID().equals(id)) {
                 tokenReturned.incrementAndGet();
             }
-        });
-
-        StringWriter writer = new StringWriter();
-        engine.execute(plan).printTree(writer);
+        })) {
+            writer = new StringWriter();
+            engine.execute(plan).printTree(writer);
+        }
 
         // Assert that the token have been returned after Session execution
         assertEquals(1, localTokenReturned.get());
@@ -284,13 +161,6 @@ public class FunctionGroupHandlerTest {
                 "   Iteration3:FAILED:\n" +
                 "    CheckArtefact:FAILED:\n" +
                 "  CallKeyword:PASSED:\n").replace("CallKeyword", name), writer.toString());
-    }
-
-    protected TokenWrapper token(String id) {
-        Token localToken_ = new Token();
-        localToken_.setId(id);
-        localToken_.setAgentid(id);
-        return new TokenWrapper(localToken_, new AgentRef());
     }
 
 }

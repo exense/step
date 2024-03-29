@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -23,15 +23,19 @@ import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.CallFunction;
 import step.artefacts.ThreadGroup;
 import step.artefacts.handlers.functions.TokenAutoscalingExecutionPlugin;
+import step.artefacts.handlers.functions.test.TestTokenAutoscalingDriver;
+import step.artefacts.handlers.functions.autoscaler.TokenAutoscalingConfiguration;
 import step.artefacts.handlers.functions.test.MyFunction;
 import step.artefacts.handlers.functions.test.MyFunctionType;
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
 import step.core.execution.ExecutionEngineContext;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
+import step.core.plans.runner.PlanRunnerResult;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.engine.plugins.FunctionPlugin;
 import step.functions.io.Output;
@@ -43,9 +47,13 @@ import step.plugins.functions.types.CompositeFunctionType;
 import step.threadpool.ThreadPoolPlugin;
 
 import java.util.List;
+import java.util.Map;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 public class AutoscalerTest {
-	
+
 	@Test
 	public void test() throws Exception {
 		ThreadGroup threadGroup = new ThreadGroup();
@@ -67,7 +75,6 @@ public class AutoscalerTest {
 		otherPlan.addAttribute(AbstractOrganizableObject.NAME, "MyOtherPlan");
 
 		CallFunction callFunction = FunctionArtefacts.keyword("test");
-		//callFunction.setToken(new DynamicValue<>("{\"key1\":\"value1\"}"));
 		Plan compositePlan = PlanBuilder.create()
 				.startBlock(threadGroup4)
 				.add(callFunction)
@@ -100,7 +107,31 @@ public class AutoscalerTest {
 
 		plan.setFunctions(List.of(function, compositeFunction));
 
-		ExecutionEngine executionEngine = ExecutionEngine.builder().withPlugin(new FunctionPlugin()).withPlugin(new AbstractExecutionEnginePlugin() {
+		// One matching token pool
+		Map<String, Map<String, String>> availableTokenPools = Map.of("pool1", Map.of("$agenttype", "default"));
+		TestTokenAutoscalingDriver tokenAutoscalingDriver = executePlanWithSpecifiedTokenPools(plan, availableTokenPools);
+		assertEquals(10, (int) tokenAutoscalingDriver.getRequest().requiredNumberOfTokensPerPool.get("pool1"));
+
+		// 2 token pools, one matching
+		availableTokenPools = Map.of("pool1", Map.of("$agenttype", "default"), "pool2", Map.of());
+		tokenAutoscalingDriver = executePlanWithSpecifiedTokenPools(plan, availableTokenPools);
+		assertEquals(10, (int) tokenAutoscalingDriver.getRequest().requiredNumberOfTokensPerPool.get("pool1"));
+		assertNull(tokenAutoscalingDriver.getRequest().requiredNumberOfTokensPerPool.get("pool2"));
+
+		// No matching token pool
+		TestTokenAutoscalingDriver testDriver = createTestDriver(Map.of());
+		PlanRunnerResult result = executePlan(plan, testDriver);
+		assertEquals(ReportNodeStatus.TECHNICAL_ERROR, result.getResult());
+	}
+
+	private static TestTokenAutoscalingDriver executePlanWithSpecifiedTokenPools(Plan plan, Map<String, Map<String, String>> availableTokenPools) {
+		TestTokenAutoscalingDriver tokenAutoscalingDriver = createTestDriver(availableTokenPools);
+		executePlan(plan, tokenAutoscalingDriver);
+		return tokenAutoscalingDriver;
+	}
+
+	private static PlanRunnerResult executePlan(Plan plan, TestTokenAutoscalingDriver tokenAutoscalingDriver) {
+		try(ExecutionEngine executionEngine = ExecutionEngine.builder().withPlugin(new FunctionPlugin()).withPlugin(new AbstractExecutionEnginePlugin() {
 			@Override
 			public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
 				super.initializeExecutionContext(executionEngineContext, executionContext);
@@ -108,8 +139,17 @@ public class AutoscalerTest {
 				functionTypeRegistry.registerFunctionType(new CompositeFunctionType(null));
 				functionTypeRegistry.registerFunctionType(new MyFunctionType());
 			}
-		}).withPlugin(new ThreadPoolPlugin()).withPlugin(new BaseArtefactPlugin()).withPlugin(new TokenAutoscalingExecutionPlugin()).build();
-		executionEngine.execute(plan).printTree();
+		}).withPlugin(new ThreadPoolPlugin()).withPlugin(new BaseArtefactPlugin()).withPlugin(new TokenAutoscalingExecutionPlugin(tokenAutoscalingDriver)).build()) {
+			return executionEngine.execute(plan);
+		}
+	}
+
+	private static TestTokenAutoscalingDriver createTestDriver(Map<String, Map<String, String>> availableTokenPools) {
+		// Create a test driver with a unique pool
+		TokenAutoscalingConfiguration configuration = new TokenAutoscalingConfiguration();
+		configuration.availableTokenPools = availableTokenPools;
+		TestTokenAutoscalingDriver tokenAutoscalingDriver = new TestTokenAutoscalingDriver(configuration);
+		return tokenAutoscalingDriver;
 	}
 
 }

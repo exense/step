@@ -115,27 +115,31 @@ public class ExecutionEngineRunner {
 				persistReportNode(rootReportNode);
 
 				executionLifecycleManager.executionStarted();
-				
-				ReportNode planReportNode = execute(plan, rootReportNode);
-				
-				if(planReportNode!=null && planReportNode.getStatus() != null) {
-					ReportNodeStatus resultStatus = planReportNode.getStatus();
-					rootReportNode.setStatus(resultStatus);
-					persistReportNode(rootReportNode);
-				}
-				
-				result.waitForExecutionToTerminate();
-				ReportNodeStatus resultStatus = result.getResult();
-				executionLifecycleManager.updateExecutionResult(executionContext, resultStatus);
-				
-				logger.debug("Test execution ended. Reporting result.... Execution ID: " + executionId);
-				
-				if(!executionContext.isSimulation()) {
-					updateStatus(ExecutionStatus.EXPORTING);
-					exportExecution(executionContext);
-					logger.info("Test execution ended and reported. Execution ID: " + executionId);
-				} else {
-					logger.info("Test execution simulation ended. Test report isn't reported in simulation mode. Execution ID: " + executionId);
+
+				try {
+					ReportNode planReportNode = execute(plan, rootReportNode);
+
+					if(planReportNode!=null && planReportNode.getStatus() != null) {
+						ReportNodeStatus resultStatus = planReportNode.getStatus();
+						rootReportNode.setStatus(resultStatus);
+						persistReportNode(rootReportNode);
+					}
+
+					result.waitForExecutionToTerminate();
+					ReportNodeStatus resultStatus = result.getResult();
+					executionLifecycleManager.updateExecutionResult(executionContext, resultStatus);
+
+					logger.debug("Test execution ended. Reporting result.... Execution ID: " + executionId);
+
+					if(!executionContext.isSimulation()) {
+						updateStatus(ExecutionStatus.EXPORTING);
+						exportExecution(executionContext);
+						logger.info("Test execution ended and reported. Execution ID: " + executionId);
+					} else {
+						logger.info("Test execution simulation ended. Test report isn't reported in simulation mode. Execution ID: " + executionId);
+					}
+				} catch (ProvisioningException e) {
+					saveFailureReportWithResult(ReportNodeStatus.TECHNICAL_ERROR);
 				}
 			} else {
 				updateStatus(ExecutionStatus.ENDED);
@@ -151,7 +155,7 @@ public class ExecutionEngineRunner {
 		return result;
 	}
 
-	protected ReportNode execute(Plan plan, ReportNode rootReportNode) {
+	protected ReportNode execute(Plan plan, ReportNode rootReportNode) throws ProvisioningException {
 		Collection<Function> planInnerFunctions = plan.getFunctions();
 		if(planInnerFunctions!=null && planInnerFunctions.size()>0) {
 			if(functionAccessor != null) {
@@ -171,8 +175,13 @@ public class ExecutionEngineRunner {
 		artefactHandlerManager.createReportSkeleton(root, rootReportNode);
 
 		// Provision the resources required for the execution before starting the execution phase
-		executionLifecycleManager.provisionRequiredResources();
+		try {
+			executionLifecycleManager.provisionRequiredResources();
+		} catch(Exception e) {
+			throw new ProvisioningException();
+		}
 
+		executionLifecycleManager.updateStatus(ExecutionStatus.RUNNING);
 		try {
 			return artefactHandlerManager.execute(root, rootReportNode);
 		} finally {
@@ -248,4 +257,6 @@ public class ExecutionEngineRunner {
 		executionLifecycleManager.updateExecutionResult(executionContext, status);
 	}
 
+	private class ProvisioningException extends Exception {
+	}
 }

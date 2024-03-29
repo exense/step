@@ -20,6 +20,7 @@ package step.artefacts;
 
 import step.artefacts.handlers.*;
 import step.artefacts.handlers.ThreadGroupHandler.ThreadHandler;
+import step.artefacts.handlers.functions.TokenAutoscalingExecutionPlugin;
 import step.core.artefacts.CheckArtefact;
 import step.core.artefacts.handlers.ArtefactHandlerRegistry;
 import step.core.artefacts.handlers.CheckArtefactHandler;
@@ -28,7 +29,7 @@ import step.core.execution.ExecutionEngineContext;
 import step.core.plugins.Plugin;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 
-@Plugin
+@Plugin(dependencies = TokenAutoscalingExecutionPlugin.class)
 public class BaseArtefactPlugin extends AbstractExecutionEnginePlugin {
 
 	@Override

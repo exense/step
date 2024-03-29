@@ -6,11 +6,12 @@
 	</appender>
 
 	<logger name="org.lightcouch" level="error" />
+	<logger name="step.core.artefacts.handlers.ArtefactHandler" level="debug" />
 	<!-- 	<logger name="step" level="debug" /> -->
 	<logger name="step.grid.tokenpool.TokenPool" level="info" />
 	<!-- <logger name="step.grid.filemanager" level="debug" /> -->
 
-	<root level="debug">
+	<root level="info">
 		<appender-ref ref="STDOUT" />
 	</root>
 </configuration>

@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ * <p>
  * This file is part of STEP
- *  
+ * <p>
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ * <p>
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ * <p>
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -25,16 +25,13 @@ import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.CallFunction;
 import step.artefacts.handlers.functions.TokenAutoscalingExecutionPlugin;
 import step.artefacts.handlers.functions.test.MyFunction;
-import step.artefacts.handlers.functions.test.MyFunctionType;
 import step.artefacts.reports.CallFunctionReportNode;
 import step.attachments.AttachmentMeta;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.CheckArtefact;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicValue;
-import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
-import step.core.execution.ExecutionEngineContext;
 import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.plans.Plan;
@@ -44,10 +41,8 @@ import step.core.reports.Error;
 import step.core.reports.ErrorType;
 import step.core.reports.Measure;
 import step.datapool.DataSetHandle;
-import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.engine.plugins.FunctionPlugin;
 import step.functions.io.Output;
-import step.functions.type.FunctionTypeRegistry;
 import step.grid.io.Attachment;
 import step.planbuilder.FunctionArtefacts;
 import step.threadpool.ThreadPoolPlugin;
@@ -63,28 +58,18 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static step.planbuilder.BaseArtefacts.sequence;
 
-public class CallFunctionHandlerTest {
-	
+public class CallFunctionHandlerTest extends AbstractFunctionHandlerTest {
+
 	private ExecutionEngine executionEngine;
 
 	@Before
 	public void before() {
-		executionEngine = ExecutionEngine.builder().withPlugin(new FunctionPlugin()).withPlugin(newMyFunctionTypePlugin()).withPlugin(new ThreadPoolPlugin()).withPlugin(new BaseArtefactPlugin()).withPlugin(new TokenAutoscalingExecutionPlugin()).build();
-	}
-
-	public static AbstractExecutionEnginePlugin newMyFunctionTypePlugin() {
-		return new AbstractExecutionEnginePlugin() {
-			@Override
-			public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
-				super.initializeExecutionContext(executionEngineContext, executionContext);
-				FunctionTypeRegistry functionTypeRegistry = executionContext.require(FunctionTypeRegistry.class);
-				functionTypeRegistry.registerFunctionType(new MyFunctionType());
-			}
-		};
+		executionEngine = ExecutionEngine.builder().withPlugin(new FunctionPlugin()).withPlugin(newMyFunctionTypePlugin())
+				.withPlugin(new ThreadPoolPlugin()).withPlugin(new BaseArtefactPlugin()).withPlugin(new TokenAutoscalingExecutionPlugin()).build();
 	}
 
 	@After
-	public void cleanup() {
+	public void after() {
 		executionEngine.close();
 	}
 	
@@ -120,9 +105,8 @@ public class CallFunctionHandlerTest {
 
 		Map<String, String> map = new HashMap<>();
 		Plan plan = PlanBuilder.create().startBlock(sequence())
-				.add(new CheckArtefact(executionContext -> {
-					executionContext.getVariablesManager().putVariable(executionContext.getReport(), "map", map);
-				})).add(callFunction).endBlock().build();
+				.add(new CheckArtefact(executionContext -> executionContext.getVariablesManager().putVariable(executionContext.getReport(),
+						"map", map))).add(callFunction).endBlock().build();
 		plan.setFunctions(List.of(function));
 
 		PlanRunnerResult result = executionEngine.execute(plan);
@@ -154,9 +138,8 @@ public class CallFunctionHandlerTest {
 		};
 
 		Plan plan = PlanBuilder.create().startBlock(sequence())
-				.add(new CheckArtefact(executionContext -> {
-					executionContext.getVariablesManager().putVariable(executionContext.getReport(), "dataSet", dataSetHandle);
-				})).add(callFunction).endBlock().build();
+				.add(new CheckArtefact(executionContext -> executionContext.getVariablesManager().putVariable(executionContext.getReport(),
+						"dataSet", dataSetHandle))).add(callFunction).endBlock().build();
 		plan.setFunctions(List.of(function));
 
 		PlanRunnerResult result = executionEngine.execute(plan);
@@ -190,10 +173,6 @@ public class CallFunctionHandlerTest {
 		assertEquals(ReportNodeStatus.PASSED, node.getStatus());
 		assertEquals("{}", node.getOutput());
 		assertNull(node.getError());
-	}
-
-	private static CallFunctionReportNode getCallFunctionReportNode(PlanRunnerResult result) {
-		return (CallFunctionReportNode) result.getReportTreeAccessor().getChildren(result.getRootReportNode().getId().toString()).next();
 	}
 
 	private static Plan newCallFunctionPlan(MyFunction function) {
