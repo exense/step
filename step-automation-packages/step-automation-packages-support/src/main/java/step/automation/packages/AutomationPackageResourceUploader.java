@@ -42,9 +42,9 @@ public class AutomationPackageResourceUploader {
         return result;
     }
 
-    public Resource uploadResourceFromAutomationPackage(String resourcePath,
-                                                        String resourceType,
-                                                        AutomationPackageContext context) {
+    private Resource uploadResourceFromAutomationPackage(String resourcePath,
+                                                         String resourceType,
+                                                         AutomationPackageContext context) {
         if (resourcePath != null && !resourcePath.isEmpty()) {
             ResourceManager resourceManager = context.getResourceManager();
 

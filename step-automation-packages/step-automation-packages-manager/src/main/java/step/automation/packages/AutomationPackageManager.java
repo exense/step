@@ -463,7 +463,8 @@ public abstract class AutomationPackageManager {
     }
 
     protected List<Function> prepareFunctionsStaging(AutomationPackageArchive automationPackageArchive, AutomationPackageContent packageContent, ObjectEnricher enricher, AutomationPackage oldPackage, ResourceManager stagingResourceManager) {
-        List<Function> completeFunctions = packageContent.prepareCompleteKeywords(new AutomationPackageContext(stagingResourceManager, automationPackageArchive, enricher));
+        AutomationPackageContext apContext = new AutomationPackageContext(stagingResourceManager, automationPackageArchive, enricher);
+        List<Function> completeFunctions = packageContent.getKeywords().stream().map(keyword -> keyword.prepareKeyword(apContext)).collect(Collectors.toList());
 
         // get old functions with same name and reuse their ids
         List<Function> oldFunctions = oldPackage == null ? new ArrayList<>() : getPackageFunctions(oldPackage.getId());

@@ -64,7 +64,8 @@ public class StepJarParser {
                 // add functions from automation package
                 if (automationPackageArchive.hasAutomationPackageDescriptor() && automationPackageReader != null) {
                     AutomationPackageContent content = automationPackageReader.readAutomationPackage(automationPackageArchive, false, false);
-                    functions.addAll(content.prepareCompleteKeywords(new AutomationPackageContext(resourceManager, automationPackageArchive, null)));
+                    AutomationPackageContext apContext = new AutomationPackageContext(resourceManager, automationPackageArchive, null);
+                    functions.addAll(content.getKeywords().stream().map(keyword -> keyword.prepareKeyword(apContext)).collect(Collectors.toList()));
                 }
             }
             return functions;
