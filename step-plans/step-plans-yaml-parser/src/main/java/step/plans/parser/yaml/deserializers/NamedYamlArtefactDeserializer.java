@@ -72,7 +72,7 @@ public class NamedYamlArtefactDeserializer extends StepYamlDeserializer<NamedYam
             for (String basicField : basicFields) {
                 nonBasicFields.remove(basicField);
             }
-            SimpleYamlArtefact<AbstractArtefact> simpleYamlArtefact = new SimpleYamlArtefact<>((Class<AbstractArtefact>) artefactClass, nonBasicFields);
+            SimpleYamlArtefact<AbstractArtefact> simpleYamlArtefact = new SimpleYamlArtefact<>((Class<AbstractArtefact>) artefactClass, nonBasicFields, yamlObjectMapper);
             yamlObjectMapper.readerForUpdating(simpleYamlArtefact).readValue(artefactFields);
             return new NamedYamlArtefact(simpleYamlArtefact);
         } else {

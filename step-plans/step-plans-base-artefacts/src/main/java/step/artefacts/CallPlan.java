@@ -18,12 +18,16 @@
  ******************************************************************************/
 package step.artefacts;
 
+import step.automation.packages.AutomationPackageNamedEntity;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.entities.EntityManager;
 import step.core.entities.EntityReference;
+import step.plans.parser.yaml.model.YamlArtefact;
 
+@YamlArtefact
+@AutomationPackageNamedEntity(name = "callPlan")
 @Artefact()
 public class CallPlan extends AbstractArtefact {
 	

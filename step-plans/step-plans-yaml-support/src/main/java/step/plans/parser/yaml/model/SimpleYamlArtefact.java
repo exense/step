@@ -19,6 +19,7 @@
 package step.plans.parser.yaml.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import step.core.artefacts.AbstractArtefact;
 import step.plans.parser.yaml.SerializationUtils;
@@ -31,9 +32,10 @@ public class SimpleYamlArtefact<T extends AbstractArtefact> extends AbstractYaml
     @JsonIgnore
     protected ObjectNode fieldValues;
 
-    public SimpleYamlArtefact(Class<T> techArtefactClass, ObjectNode fieldValues) {
+    public SimpleYamlArtefact(Class<T> techArtefactClass, ObjectNode fieldValues, ObjectMapper yamlObjectMapper) {
         this.artefactClass = techArtefactClass;
         this.fieldValues = fieldValues;
+        setYamlObjectMapper(yamlObjectMapper);
     }
 
     @Override

@@ -18,9 +18,13 @@
  ******************************************************************************/
 package step.artefacts;
 
+import step.automation.packages.AutomationPackageNamedEntity;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
+import step.plans.parser.yaml.model.YamlArtefact;
 
+@YamlArtefact
+@AutomationPackageNamedEntity(name = "placeholder")
 @Artefact()
 public class Placeholder extends AbstractArtefact {
 

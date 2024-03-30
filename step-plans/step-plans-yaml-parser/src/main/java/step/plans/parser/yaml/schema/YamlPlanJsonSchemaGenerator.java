@@ -231,7 +231,7 @@ public class YamlPlanJsonSchemaGenerator {
 				String defName = name + "Def";
 
 				JsonObjectBuilder def = schemaHelper.createNamedObjectImplDef(
-						YamlArtefactsLookuper.getYamlArtefactName(yamlArtefactClass),
+						YamlArtefactsLookuper.getYamlArtefactName(artefactClass),
 						yamlArtefactClass,
 						jsonSchemaCreator,
 						true
@@ -275,7 +275,7 @@ public class YamlPlanJsonSchemaGenerator {
 		return artefactDefinitions;
 	}
 
-	private JsonObjectBuilder createJsonSchemaForSimpleArtefact(Class<? extends AbstractArtefact> simpleYamlModel) throws JsonSchemaPreparationException {
+	private JsonObjectBuilder createJsonSchemaForSimpleArtefact(Class<? extends AbstractArtefact> simpleYamlArtefact) throws JsonSchemaPreparationException {
 		JsonObjectBuilder res = jsonProvider.createObjectBuilder();
 		res.add("type", "object");
 
@@ -292,19 +292,19 @@ public class YamlPlanJsonSchemaGenerator {
 
 		// properties declared in AbstractArtefact are taken from AbstractYamlArtefact
 		schemaHelper.extractPropertiesFromClass(jsonSchemaCreator, AbstractYamlArtefact.class, classPropertiesBuilder, requiredProperties, null);
-		schemaHelper.extractPropertiesFromClass(jsonSchemaCreator, simpleYamlModel, classPropertiesBuilder, requiredProperties, AbstractArtefact.class);
+		schemaHelper.extractPropertiesFromClass(jsonSchemaCreator, simpleYamlArtefact, classPropertiesBuilder, requiredProperties, AbstractArtefact.class);
 
 		// TODO: some better workaround to apply default 'nodeName'?
 		classPropertiesBuilder.add(YamlPlanFields.NAME_YAML_FIELD,
 				jsonProvider.createObjectBuilder()
 						.add("type", "string")
-						.add("default", new AbstractYamlArtefact.DefaultYamlArtefactNameProvider().getDefaultValue(simpleYamlModel, null))
+						.add("default", new AbstractYamlArtefact.DefaultYamlArtefactNameProvider().getDefaultValue(simpleYamlArtefact, null))
 		);
 
 		propertiesBuilder.add("properties", classPropertiesBuilder);
 		schemaHelper.addRequiredProperties(requiredProperties, propertiesBuilder);
 
-		schemaBuilder.add(YamlArtefactsLookuper.getYamlArtefactName(simpleYamlModel), propertiesBuilder);
+		schemaBuilder.add(YamlArtefactsLookuper.getYamlArtefactName(simpleYamlArtefact), propertiesBuilder);
 		res.add("properties", schemaBuilder);
 		res.add("additionalProperties", false);
 		return res;

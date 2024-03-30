@@ -66,7 +66,7 @@ public class YamlArtefactsLookuper {
     }
 
     private static boolean hasSpecialModelClass(Class<?> c) {
-        return c.getAnnotation(YamlArtefact.class).model() != null && c.getAnnotation(YamlArtefact.class).model() != AbstractYamlArtefact.None.class;
+        return c.isAnnotationPresent(YamlArtefact.class) && c.getAnnotation(YamlArtefact.class).model() != null && c.getAnnotation(YamlArtefact.class).model() != AbstractYamlArtefact.None.class;
     }
 
     public static boolean isRootArtefact(Class<?> yamlArtefactClass) {
@@ -87,9 +87,13 @@ public class YamlArtefactsLookuper {
 
     public static Class<? extends AbstractArtefact> getArtefactClass(Class<?> yamlArtefactClass) {
         if(MODEL_TO_ARTEFACT_MAP.get(yamlArtefactClass) != null){
+            // speical model
             return MODEL_TO_ARTEFACT_MAP.get(yamlArtefactClass);
-        } else {
+        } else if(AbstractArtefact.class.isAssignableFrom(yamlArtefactClass)){
+            // simple model
             return (Class<? extends AbstractArtefact>) yamlArtefactClass;
+        } else {
+            return null;
         }
     }
 

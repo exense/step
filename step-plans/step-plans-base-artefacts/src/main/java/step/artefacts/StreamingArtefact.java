@@ -23,10 +23,14 @@ import java.util.concurrent.Future;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import step.artefacts.ArtefactQueue.WorkItem;
+import step.automation.packages.AutomationPackageNamedEntity;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.artefacts.reports.ReportNode;
+import step.plans.parser.yaml.model.YamlArtefact;
 
+@YamlArtefact
+@AutomationPackageNamedEntity(name = "streamingArtefact")
 @Artefact()
 public class StreamingArtefact extends AbstractArtefact {
 

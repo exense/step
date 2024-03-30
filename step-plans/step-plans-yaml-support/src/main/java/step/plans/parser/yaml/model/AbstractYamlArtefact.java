@@ -146,11 +146,11 @@ public abstract class AbstractYamlArtefact<T extends AbstractArtefact> {
             if (applicableYamlClass != null) {
                 AbstractYamlArtefact<?> newInstance;
                 if (SimpleYamlArtefact.class.equals(applicableYamlClass)) {
-                    newInstance = new SimpleYamlArtefact<>(artefact.getClass(), null);
+                    newInstance = new SimpleYamlArtefact<>(artefact.getClass(), null, yamlObjectMapper);
                 } else {
                     newInstance = (AbstractYamlArtefact<?>) applicableYamlClass.getConstructor().newInstance();
+                    newInstance.setYamlObjectMapper(yamlObjectMapper);
                 }
-                newInstance.setYamlObjectMapper(yamlObjectMapper);
                 return newInstance;
             } else {
                 throw new RuntimeException("No matching yaml class found for " + artefact.getClass());

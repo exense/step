@@ -18,10 +18,14 @@
  ******************************************************************************/
 package step.artefacts;
 
+import step.automation.packages.AutomationPackageNamedEntity;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
+import step.plans.parser.yaml.model.YamlArtefact;
 
+@YamlArtefact
+@AutomationPackageNamedEntity(name = "switch")
 @Artefact()
 public class Switch extends AbstractArtefact {
 	
