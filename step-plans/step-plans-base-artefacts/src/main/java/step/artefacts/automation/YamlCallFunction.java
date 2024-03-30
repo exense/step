@@ -19,14 +19,11 @@
 package step.artefacts.automation;
 
 import step.artefacts.CallFunction;
-import step.automation.packages.AutomationPackageNamedEntity;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.dynamicbeans.DynamicValue;
 import step.plans.parser.yaml.model.AbstractYamlArtefact;
-import step.plans.parser.yaml.model.YamlArtefact;
 
-@YamlArtefact(forClass = CallFunction.class)
-@AutomationPackageNamedEntity(name = "callKeyword")
 public class YamlCallFunction extends AbstractYamlArtefact<CallFunction> {
 
     private YamlDynamicInputs routing = new YamlDynamicInputs("{}");
@@ -37,7 +34,7 @@ public class YamlCallFunction extends AbstractYamlArtefact<CallFunction> {
 
     private YamlDynamicInputs inputs = new YamlDynamicInputs("{}");
 
-    private YamlKeywordDefinition keyword = new YamlKeywordDefinition(null, "{}");
+    private YamlKeywordDefinition keyword = new YamlKeywordDefinition(null,null, "{}");
 
     public YamlCallFunction() {
         this.artefactClass = CallFunction.class;
@@ -51,6 +48,17 @@ public class YamlCallFunction extends AbstractYamlArtefact<CallFunction> {
         res.setToken(this.routing.toDynamicValue());
         res.setArgument(this.inputs.toDynamicValue());
         res.setFunction(this.keyword.toDynamicValue());
+
+        // for keywords we use the keyword name as default artefact name
+        if (getNodeName() == null || getNodeName().isEmpty()) {
+            String name;
+            if (keyword != null && keyword.getKeywordName() != null && !keyword.getKeywordName().isEmpty()) {
+                name = keyword.getKeywordName();
+            } else {
+                name = AbstractArtefact.getArtefactName(getArtefactClass());
+            }
+            res.addAttribute(AbstractOrganizableObject.NAME, name);
+        }
     }
 
     @Override
@@ -68,25 +76,20 @@ public class YamlCallFunction extends AbstractYamlArtefact<CallFunction> {
         if (artefact.getArgument() != null) {
             this.inputs = YamlDynamicInputs.fromDynamicValue(artefact.getArgument());
         }
-    }
-
-    @Override
-    protected String getDefaultArtefactNameFromYamlArtefact() {
-        if (keyword != null && keyword.getKeywordName() != null && !keyword.getKeywordName().isEmpty()) {
-            return keyword.getKeywordName();
-        } else {
-            return super.getDefaultArtefactNameFromYamlArtefact();
+        if (artefact.getFunction() != null) {
+            this.keyword = YamlKeywordDefinition.fromDynamicValue(artefact.getFunction());
         }
+
     }
 
     @Override
-    protected String getDefaultArtefactNameFromArtefact(CallFunction artefact) {
+    protected String getDefaultNodeNameForYaml(CallFunction artefact) {
         if (artefact.getFunction() != null) {
             String keywordName = YamlKeywordDefinition.fromDynamicValue(artefact.getFunction()).getKeywordName();
             if (keywordName != null && !keywordName.isEmpty()) {
                 return keywordName;
             }
         }
-        return super.getDefaultArtefactNameFromArtefact(artefact);
+        return super.getDefaultNodeNameForYaml(artefact);
     }
 }

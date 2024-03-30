@@ -269,7 +269,7 @@ public class YamlPlanReader {
 		YamlPlan yamlPlan = new YamlPlan();
 		yamlPlan.setName(plan.getAttribute(AbstractOrganizableObject.NAME));
 		yamlPlan.setVersion(currentVersion.toString());
-		yamlPlan.setRoot(new NamedYamlArtefact(AbstractYamlArtefact.toYamlArtefact(plan.getRoot())));
+		yamlPlan.setRoot(new NamedYamlArtefact(AbstractYamlArtefact.toYamlArtefact(plan.getRoot(), yamlMapper)));
 		return yamlPlan;
 	}
 

@@ -18,10 +18,15 @@
  ******************************************************************************/
 package step.artefacts;
 
+import step.artefacts.automation.YamlEcho;
+import step.automation.packages.AutomationPackageNamedEntity;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
+import step.plans.parser.yaml.model.YamlArtefact;
 
+@YamlArtefact(model = YamlEcho.class)
+@AutomationPackageNamedEntity(name = "echo")
 @Artefact(block=false)
 public class Echo extends AbstractArtefact {
 

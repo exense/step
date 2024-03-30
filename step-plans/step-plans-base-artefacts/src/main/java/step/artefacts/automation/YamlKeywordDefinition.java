@@ -36,10 +36,12 @@ import java.util.List;
 public class YamlKeywordDefinition {
 
     private String keywordName;
+    private String simpleKeywordName;
     private String keywordSelectionCriteriaJson;
 
-    public YamlKeywordDefinition(String keywordName, String keywordSelectionCriteria) {
+    public YamlKeywordDefinition(String keywordName, String simpleKeywordName, String keywordSelectionCriteria) {
         this.keywordName = keywordName;
+        this.simpleKeywordName = simpleKeywordName;
         this.keywordSelectionCriteriaJson = keywordSelectionCriteria;
     }
 
@@ -56,18 +58,26 @@ public class YamlKeywordDefinition {
             if (dynamicValue.isDynamic()) {
                 throw new UnsupportedOperationException("Dynamic arguments are not supported");
             }
-            return new YamlKeywordDefinition(YamlKeywordDefinitionSerializer.getSimpleFunctionName(dynamicValue, DefaultJacksonMapperProvider.getObjectMapper()), dynamicValue.getValue());
+            return new YamlKeywordDefinition(
+                    YamlKeywordDefinitionSerializer.getFunctionName(dynamicValue, DefaultJacksonMapperProvider.getObjectMapper(), false),
+                    YamlKeywordDefinitionSerializer.getFunctionName(dynamicValue, DefaultJacksonMapperProvider.getObjectMapper(), true),
+                    dynamicValue.getValue()
+            );
         } catch (Exception ex) {
             throw new RuntimeException("Unable to parse keyword definition", ex);
         }
     }
 
-    public String getKeywordName() {
-        return keywordName;
+    public String getKeywordName(){
+       return this.keywordName;
     }
 
-    public void setKeywordName(String keywordName) {
-        this.keywordName = keywordName;
+    public String getSimpleKeywordName() {
+        return simpleKeywordName;
+    }
+
+    public void setSimpleKeywordName(String simpleKeywordName) {
+        this.simpleKeywordName = simpleKeywordName;
     }
 
     public String getKeywordSelectionCriteriaJson() {

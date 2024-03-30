@@ -3,41 +3,38 @@ version: "1.0.0"
 name: "test plan"
 root:
   sequence:
-    continueParentNodeExecutionOnError: false
-    instrumentNode: false
     skipNode: false
+    instrumentNode: false
+    continueParentNodeExecutionOnError: false
     children:
       - callKeyword:
-          continueParentNodeExecutionOnError: false
-          instrumentNode: false
           skipNode: false
+          instrumentNode: false
+          continueParentNodeExecutionOnError: false
           remote: true
-          inputs: []
           keyword: "myKeyword"
       - callKeyword:
           nodeName: "myKeyword2"
-          continueParentNodeExecutionOnError: false
-          instrumentNode: false
           skipNode: false
+          instrumentNode: false
+          continueParentNodeExecutionOnError: false
           remote: true
-          inputs: []
           keyword:
             name:
               expression: "'myKeyword2'"
       - callKeyword:
-          continueParentNodeExecutionOnError: false
-          instrumentNode: false
           skipNode: false
+          instrumentNode: false
+          continueParentNodeExecutionOnError: false
           routing:
             - criteria1: "criteriaValue1"
           remote: true
-          inputs: []
           keyword: "myKeyword3"
       - callKeyword:
           nodeName: "myKeyword4"
-          continueParentNodeExecutionOnError: false
-          instrumentNode: false
           skipNode: false
+          instrumentNode: false
+          continueParentNodeExecutionOnError: false
           routing:
             - criteria1: "criteriaValue1"
           remote: true
@@ -49,11 +46,10 @@ root:
             name:
               expression: "'myKeyword4'"
       - callKeyword:
-          continueParentNodeExecutionOnError: false
-          instrumentNode: false
           skipNode: false
+          instrumentNode: false
+          continueParentNodeExecutionOnError: false
           remote: true
-          inputs: []
           keyword:
             name: "myKeyword5"
             version: "1.0.0"

@@ -23,13 +23,12 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import step.artefacts.CallFunction;
 import step.core.artefacts.AbstractArtefact;
 import step.core.yaml.deserializers.NamedEntityYamlDeserializer;
 import step.core.yaml.deserializers.StepYamlDeserializer;
 import step.core.yaml.deserializers.StepYamlDeserializerAddOn;
 import step.plans.parser.yaml.YamlArtefactsLookuper;
-import step.plans.parser.yaml.YamlPlanFields;
+import step.plans.parser.yaml.SerializationUtils;
 import step.plans.parser.yaml.model.AbstractYamlArtefact;
 import step.plans.parser.yaml.model.NamedYamlArtefact;
 import step.plans.parser.yaml.model.SimpleYamlArtefact;
@@ -58,49 +57,26 @@ public class NamedYamlArtefactDeserializer extends StepYamlDeserializer<NamedYam
             }
 
             protected Class<?> resolveTargetClassByYamlName(String yamlName) {
-                return YamlArtefactsLookuper.getArtefactClassByYamlName(yamlName);
+                return YamlArtefactsLookuper.getArtefactModelClassByYamlName(yamlName);
             }
         };
 
         String entityName = namedEntityDeserializer.getEntityNameFromYaml(node);
-        Class<?> artefactClass = YamlArtefactsLookuper.getArtefactClassByYamlName(entityName);
+        Class<?> artefactClass = YamlArtefactsLookuper.getArtefactModelClassByYamlName(entityName);
         if (artefactClass != null && AbstractYamlArtefact.class.isAssignableFrom(artefactClass)) {
             return new NamedYamlArtefact(namedEntityDeserializer.deserialize(node, jsonParser.getCodec()));
         } else if (artefactClass != null && AbstractArtefact.class.isAssignableFrom(artefactClass)) {
             JsonNode artefactFields = node.get(entityName);
             ObjectNode nonBasicFields = artefactFields.deepCopy();
-            List<String> basicFields = SimpleYamlArtefact.getBasicFieldNames(yamlObjectMapper);
+            List<String> basicFields = SerializationUtils.getJsonFieldNames(yamlObjectMapper, AbstractYamlArtefact.class);
             for (String basicField : basicFields) {
                 nonBasicFields.remove(basicField);
             }
-            SimpleYamlArtefact<AbstractArtefact> simpleYamlArtefact = new SimpleYamlArtefact<>((Class<AbstractArtefact>) artefactClass, nonBasicFields, yamlObjectMapper);
+            SimpleYamlArtefact<AbstractArtefact> simpleYamlArtefact = new SimpleYamlArtefact<>((Class<AbstractArtefact>) artefactClass, nonBasicFields);
             yamlObjectMapper.readerForUpdating(simpleYamlArtefact).readValue(artefactFields);
             return new NamedYamlArtefact(simpleYamlArtefact);
         } else {
             throw new RuntimeException("Unable to resolve java class for artefact " + entityName);
-        }
-    }
-
-    // TODO: move this logic
-    private static void fillDefaultValuesForArtifactFields(String javaArtifactClass, ObjectNode artifactData) {
-        // if artefact name (nodeName) is not defined in YAML, we use the artefact class as default value
-        // but for CallFunction we use the keyword name as default
-        JsonNode name = artifactData.get(YamlPlanFields.NAME_YAML_FIELD);
-        if (name == null) {
-            if(!javaArtifactClass.equals(CallFunction.ARTEFACT_NAME)) {
-                artifactData.put(YamlPlanFields.NAME_YAML_FIELD, javaArtifactClass);
-            } else {
-                JsonNode functionNode = artifactData.get(CallFunction.CALL_FUNCTION_FUNCTION_YAML_FIELD);
-                if(functionNode != null && !functionNode.isContainerNode()){
-                    // TODO: move this code
-                    String staticFunctionName = functionNode.asText();
-                    if(!staticFunctionName.isEmpty()){
-                        artifactData.put(YamlPlanFields.NAME_YAML_FIELD, staticFunctionName);
-                    } else {
-                        artifactData.put(YamlPlanFields.NAME_YAML_FIELD, javaArtifactClass);
-                    }
-                }
-            }
         }
     }
 

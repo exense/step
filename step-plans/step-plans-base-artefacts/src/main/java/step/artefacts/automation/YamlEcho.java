@@ -19,14 +19,9 @@
 package step.artefacts.automation;
 
 import step.artefacts.Echo;
-import step.automation.packages.AutomationPackageNamedEntity;
-import step.core.artefacts.AbstractArtefact;
 import step.core.dynamicbeans.DynamicValue;
 import step.plans.parser.yaml.model.AbstractYamlArtefact;
-import step.plans.parser.yaml.model.YamlArtefact;
 
-@YamlArtefact(forClass = Echo.class)
-@AutomationPackageNamedEntity(name = "echo")
 public class YamlEcho extends AbstractYamlArtefact<Echo> {
 
     private DynamicValue<String> text = new DynamicValue<>();

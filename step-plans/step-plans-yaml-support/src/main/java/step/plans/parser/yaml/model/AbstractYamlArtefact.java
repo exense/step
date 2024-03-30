@@ -21,8 +21,6 @@ package step.plans.parser.yaml.model;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
@@ -45,6 +43,9 @@ import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.NONE;
 public abstract class AbstractYamlArtefact<T extends AbstractArtefact> {
 
     public static final String ARTEFACT_ARRAY_DEF = "ArtefactArrayDef";
+
+    @JsonIgnore
+    protected ObjectMapper yamlObjectMapper;
 
     @JsonIgnore
     protected Class<T> artefactClass;
@@ -93,70 +94,63 @@ public abstract class AbstractYamlArtefact<T extends AbstractArtefact> {
             return getNodeName();
         } else {
             // default value
-            return getDefaultArtefactNameFromYamlArtefact();
+            return AbstractArtefact.getArtefactName(getArtefactClass());
         }
-    }
-
-    public static List<String> getBasicFieldNames(ObjectMapper objectMapper) {
-        try {
-            JsonSerializer<Object> serializer = objectMapper.getSerializerProviderInstance().findValueSerializer(AbstractYamlArtefact.class);
-            List<String> res = new ArrayList<>();
-            serializer.properties().forEachRemaining(p -> {
-                res.add(p.getName());
-            });
-            return res;
-        } catch (JsonMappingException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    protected String getDefaultArtefactNameFromYamlArtefact() {
-        return AbstractArtefact.getArtefactName(getArtefactClass());
-    }
-
-    protected String getDefaultArtefactNameFromArtefact(T artefact){
-        return AbstractArtefact.getArtefactName(artefact.getClass());
     }
 
     protected void fillYamlArtefactFields(T artefact){
-        if (!Objects.equals(artefact.getAttribute(AbstractOrganizableObject.NAME), getDefaultArtefactNameFromArtefact((T) artefact))) {
-            this.setNodeName(artefact.getAttribute(AbstractOrganizableObject.NAME));
+        // the node name is not obligatory in yaml - we skip this if the name is equal to the default one
+        String nameAttribute = artefact.getAttribute(AbstractOrganizableObject.NAME);
+        if (!Objects.equals(nameAttribute, getDefaultNodeNameForYaml(artefact))) {
+            this.setNodeName(nameAttribute);
         }
         this.setContinueParentNodeExecutionOnError(artefact.getContinueParentNodeExecutionOnError());
         this.setInstrumentNode(artefact.getInstrumentNode());
         this.setSkipNode(artefact.getSkipNode());
         this.setDescription(artefact.getDescription());
         for (AbstractArtefact child : artefact.getChildren()) {
-            this.getChildren().add(new NamedYamlArtefact(toYamlArtefact(child)));
+            this.getChildren().add(new NamedYamlArtefact(toYamlArtefact(child, yamlObjectMapper)));
         }
+    }
+
+    protected String getDefaultNodeNameForYaml(T artefact) {
+        return AbstractArtefact.getArtefactName(artefact.getClass());
     }
 
     public Class<T> getArtefactClass() {
         return artefactClass;
     }
 
-    public static <T extends AbstractArtefact> AbstractYamlArtefact<T> toYamlArtefact(T artefact){
-        AbstractYamlArtefact<T> instance = (AbstractYamlArtefact<T>) createYamlArtefactInstance(artefact);
+    public ObjectMapper getYamlObjectMapper() {
+        return yamlObjectMapper;
+    }
+
+    public void setYamlObjectMapper(ObjectMapper yamlObjectMapper) {
+        this.yamlObjectMapper = yamlObjectMapper;
+    }
+
+    public static <T extends AbstractArtefact> AbstractYamlArtefact<T> toYamlArtefact(T artefact, ObjectMapper yamlObjectMapper){
+        AbstractYamlArtefact<T> instance = (AbstractYamlArtefact<T>) createYamlArtefactInstance(artefact, yamlObjectMapper);
         instance.fillYamlArtefactFields(artefact);
         return instance;
     }
 
-    private static AbstractYamlArtefact<?> createYamlArtefactInstance(AbstractArtefact artefact){
-        List<Class<? extends AbstractYamlArtefact<?>>> allYamlArtefactClasses = YamlArtefactsLookuper.getSpecialYamlArtefactModels();
-        Class<? extends AbstractYamlArtefact<?>> applicableYamlClass = null;
-        for (Class<? extends AbstractYamlArtefact<?>> clazz : allYamlArtefactClasses) {
-            Class<? extends AbstractArtefact> artefactClass = YamlArtefactsLookuper.getArtefactClass(clazz);
-            if (artefactClass != null) {
-                String javaArtefactName = AbstractArtefact.getArtefactName(artefactClass);
-                if (javaArtefactName.equals(AbstractArtefact.getArtefactName(artefact.getClass()))) {
-                    applicableYamlClass = clazz;
-                    break;
-                }
-            }
+    private static AbstractYamlArtefact<?> createYamlArtefactInstance(AbstractArtefact artefact, ObjectMapper yamlObjectMapper){
+        Class<?> applicableYamlClass;
+        if(YamlArtefactsLookuper.getSimpleYamlArtefactModels().contains(artefact.getClass())){
+            applicableYamlClass = SimpleYamlArtefact.class;
+        } else {
+            applicableYamlClass = YamlArtefactsLookuper.getSpecialModelClassForArtefact(artefact.getClass());
         }
         try {
             if (applicableYamlClass != null) {
-                AbstractYamlArtefact<?> newInstance = applicableYamlClass.getConstructor().newInstance();
+                AbstractYamlArtefact<?> newInstance;
+                if (SimpleYamlArtefact.class.equals(applicableYamlClass)) {
+                    newInstance = new SimpleYamlArtefact<>(artefact.getClass(), null);
+                } else {
+                    newInstance = (AbstractYamlArtefact<?>) applicableYamlClass.getConstructor().newInstance();
+                }
+                newInstance.setYamlObjectMapper(yamlObjectMapper);
                 return newInstance;
             } else {
                 throw new RuntimeException("No matching yaml class found for " + artefact.getClass());
@@ -225,4 +219,9 @@ public abstract class AbstractYamlArtefact<T extends AbstractArtefact> {
             return artefactClass == null ? null : AbstractArtefact.getArtefactName(artefactClass);
         }
     }
+
+    /**
+     * Void class to be used in annotations instead of null-values
+     */
+    public static final class None extends AbstractYamlArtefact<AbstractArtefact> {}
 }

@@ -18,7 +18,6 @@
  ******************************************************************************/
 package step.artefacts.automation;
 
-import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -53,9 +52,9 @@ public class YamlKeywordDefinitionDeserializer extends StepYamlDeserializer<Yaml
 
         if (!node.isContainerNode()) {
             // for simple function definition the node (string node) contains explicit function name
-            return new YamlKeywordDefinition(node.asText(), selectionCriteriaJson);
+            return new YamlKeywordDefinition(node.asText(), node.asText(), selectionCriteriaJson);
         } else {
-            return new YamlKeywordDefinition(null, selectionCriteriaJson);
+            return new YamlKeywordDefinition(YamlKeywordDefinitionSerializer.getFunctionName(node.asText(), simpleObjectMapper, false), null, selectionCriteriaJson);
         }
     }
 

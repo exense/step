@@ -16,26 +16,25 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.core.yaml.serializers;
+package step.plans.parser.yaml;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
-public abstract class NamedEntityYamlSerializer<T> {
+public class SerializationUtils {
 
-    public void serialize(T value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
-        String name = resolveYamlName(value);
-        gen.writeStartObject();
-        gen.writeFieldName(name);
-        writeObject(value, gen);
-        gen.writeEndObject();
+    public static List<String> getJsonFieldNames(ObjectMapper objectMapper, Class<?> clazz) {
+        try {
+            JsonSerializer<Object> serializer = objectMapper.getSerializerProviderInstance().findValueSerializer(clazz);
+            List<String> res = new ArrayList<>();
+            serializer.properties().forEachRemaining(p -> res.add(p.getName()));
+            return res;
+        } catch (JsonMappingException e) {
+            throw new RuntimeException(e);
+        }
     }
-
-    protected void writeObject(T value, JsonGenerator gen) throws IOException {
-        gen.writeObject(value);
-    }
-
-    protected abstract String resolveYamlName(T value);
 }

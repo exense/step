@@ -21,14 +21,9 @@ package step.artefacts.automation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.artefacts.Check;
-import step.automation.packages.AutomationPackageNamedEntity;
-import step.core.artefacts.AbstractArtefact;
 import step.core.dynamicbeans.DynamicValue;
 import step.plans.parser.yaml.model.AbstractYamlArtefact;
-import step.plans.parser.yaml.model.YamlArtefact;
 
-@YamlArtefact(forClass = Check.class)
-@AutomationPackageNamedEntity(name = "check")
 public class YamlCheck extends AbstractYamlArtefact<Check> {
 
     private static final Logger log = LoggerFactory.getLogger(YamlCheck.class);

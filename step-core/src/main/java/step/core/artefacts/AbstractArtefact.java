@@ -39,10 +39,11 @@ import step.core.dynamicbeans.DynamicValue;
 import step.core.entities.EntityManager;
 import step.core.entities.EntityReference;
 
-@JsonTypeInfo(use=Id.CUSTOM,property="_class")
+@JsonTypeInfo(use=Id.CUSTOM,property= AbstractArtefact.JSON_CLASS_PROPERTY)
 @JsonTypeIdResolver(ArtefactTypeIdResolver.class)
 public abstract class AbstractArtefact extends AbstractOrganizableObject {
 
+	public static final String JSON_CLASS_PROPERTY = "_class";
 	protected DynamicValue<String> dynamicName;
 
 	protected boolean useDynamicName;

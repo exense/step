@@ -19,24 +19,21 @@
 package step.plans.parser.yaml.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import step.core.artefacts.AbstractArtefact;
+import step.plans.parser.yaml.SerializationUtils;
 
 import java.io.IOException;
+import java.util.List;
 
 public class SimpleYamlArtefact<T extends AbstractArtefact> extends AbstractYamlArtefact<T> {
 
     @JsonIgnore
-    protected JsonNode fieldValues;
+    protected ObjectNode fieldValues;
 
-    @JsonIgnore
-    protected ObjectMapper yamlObjectMapper;
-
-    public SimpleYamlArtefact(Class<T> techArtefactClass, JsonNode fieldValues, ObjectMapper yamlObjectMapper) {
+    public SimpleYamlArtefact(Class<T> techArtefactClass, ObjectNode fieldValues) {
         this.artefactClass = techArtefactClass;
         this.fieldValues = fieldValues;
-        this.yamlObjectMapper = yamlObjectMapper;
     }
 
     @Override
@@ -49,4 +46,22 @@ public class SimpleYamlArtefact<T extends AbstractArtefact> extends AbstractYaml
         }
     }
 
+    @Override
+    protected void fillYamlArtefactFields(T artefact) {
+        super.fillYamlArtefactFields(artefact);
+
+        ObjectNode jsonNode = yamlObjectMapper.valueToTree(artefact);
+        List<String> basicFieldName = SerializationUtils.getJsonFieldNames(yamlObjectMapper, AbstractArtefact.class);
+        for (String s : basicFieldName) {
+            jsonNode.remove(s);
+        }
+        jsonNode.remove(AbstractArtefact.JSON_CLASS_PROPERTY);
+        this.fieldValues = jsonNode;
+    }
+
+    public ObjectNode toFullJson() {
+        ObjectNode jsonNode = yamlObjectMapper.valueToTree(this);
+        jsonNode.setAll(fieldValues);
+        return jsonNode;
+    }
 }

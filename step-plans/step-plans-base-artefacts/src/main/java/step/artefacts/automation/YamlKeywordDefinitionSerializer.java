@@ -46,7 +46,7 @@ public class YamlKeywordDefinitionSerializer extends StepYamlSerializer<YamlKeyw
     @Override
     public void serialize(YamlKeywordDefinition value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
         DynamicValue<String> dynamicValue = value.toDynamicValue();
-        String simpleFunctionName = getSimpleFunctionName(dynamicValue, simpleObjectMapper);
+        String simpleFunctionName = getFunctionName(dynamicValue, simpleObjectMapper, true);
         if (simpleFunctionName != null) {
             gen.writeString(simpleFunctionName);
         } else {
@@ -61,38 +61,41 @@ public class YamlKeywordDefinitionSerializer extends StepYamlSerializer<YamlKeyw
         }
     }
 
-    /**
-     * Returns the simple function name for yaml format (if the function contains only the 'name' criteria).
-     * Returns null otherwise.
-     */
-    public static String getSimpleFunctionName(DynamicValue<String> dynamicSelectionCriteria, ObjectMapper jsonObjectMapper) throws JsonProcessingException {
+    public static String getFunctionName(DynamicValue<String> dynamicSelectionCriteria, ObjectMapper jsonObjectMapper, boolean asSimpleFunctionName) throws JsonProcessingException {
         if (!dynamicSelectionCriteria.getValue().trim().isEmpty()) {
-            if (dynamicSelectionCriteria.getValue().startsWith("{")) {
-                TypeReference<HashMap<String, JsonNode>> functionValueTypeRef = new TypeReference<>() {
-                };
-                HashMap<String, JsonNode> functionNameAsMap = jsonObjectMapper.readValue(dynamicSelectionCriteria.getValue(), functionValueTypeRef);
-
-                JsonNode simpleFunctionName = null;
-                if (functionNameAsMap.size() == 1) {
-                    simpleFunctionName = functionNameAsMap.get(AbstractOrganizableObject.NAME);
-                }
-
-                if (simpleFunctionName != null && !simpleFunctionName.isContainerNode()) {
-                    return simpleFunctionName.asText();
-                } else {
-                    DynamicValue<String> dynamicValue = jsonObjectMapper.treeToValue(simpleFunctionName, DynamicValue.class);
-                    if(dynamicValue != null && !dynamicValue.isDynamic()){
-                        return dynamicValue.getValue();
-                    } else {
-                        return null;
-                    }
-                }
-            } else {
-                throw new IllegalArgumentException("Invalid function. Function selector for yaml only supports function selectors as jsons, but was: " + dynamicSelectionCriteria.getValue());
-            }
-
+            String jsonValue = dynamicSelectionCriteria.getValue();
+            return getFunctionName(jsonValue, jsonObjectMapper, asSimpleFunctionName);
         } else {
             return null;
+        }
+    }
+
+    public static String getFunctionName(String jsonValue, ObjectMapper jsonObjectMapper, boolean asSimpleFunctionName) throws JsonProcessingException {
+        if (jsonValue == null || jsonValue.isEmpty()) {
+            return null;
+        }
+        if (jsonValue.startsWith("{")) {
+            TypeReference<HashMap<String, JsonNode>> functionValueTypeRef = new TypeReference<>() {
+            };
+            HashMap<String, JsonNode> functionNameAsMap = jsonObjectMapper.readValue(jsonValue, functionValueTypeRef);
+
+            JsonNode simpleFunctionName = null;
+            if (!asSimpleFunctionName || functionNameAsMap.size() == 1) {
+                simpleFunctionName = functionNameAsMap.get(AbstractOrganizableObject.NAME);
+            }
+
+            if (simpleFunctionName != null && !simpleFunctionName.isContainerNode()) {
+                return simpleFunctionName.asText();
+            } else {
+                DynamicValue<String> dynamicValue = jsonObjectMapper.treeToValue(simpleFunctionName, DynamicValue.class);
+                if (dynamicValue != null && !dynamicValue.isDynamic()) {
+                    return dynamicValue.getValue();
+                } else {
+                    return null;
+                }
+            }
+        } else {
+            throw new IllegalArgumentException("Invalid function. Function selector for yaml only supports function selectors as jsons, but was: " + jsonValue);
         }
     }
 

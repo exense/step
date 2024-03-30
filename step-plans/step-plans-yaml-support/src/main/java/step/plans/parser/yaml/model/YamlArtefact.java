@@ -18,8 +18,6 @@
  ******************************************************************************/
 package step.plans.parser.yaml.model;
 
-import step.core.artefacts.AbstractArtefact;
-
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
@@ -30,6 +28,6 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Retention(RUNTIME)
 public @interface YamlArtefact {
 
-    Class<? extends AbstractArtefact> forClass() default AbstractArtefact.None.class;
+    Class<? extends AbstractYamlArtefact<?>> model() default AbstractYamlArtefact.None.class;
 
 }

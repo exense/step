@@ -25,23 +25,48 @@ import step.plans.parser.yaml.model.AbstractYamlArtefact;
 import step.plans.parser.yaml.model.YamlArtefact;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class YamlArtefactsLookuper {
 
+    private static final Map<Class<? extends AbstractYamlArtefact<?>>, Class<? extends AbstractArtefact>> MODEL_TO_ARTEFACT_MAP = createModelToArtefactMap();
+
+    private static Map<Class<? extends AbstractYamlArtefact<?>>, Class<? extends AbstractArtefact>> createModelToArtefactMap() {
+        Map<Class<? extends AbstractYamlArtefact<?>>, Class<? extends AbstractArtefact>> res = new HashMap<>();
+        List<Class<? extends AbstractArtefact>> artefactsWithSpecialModels = getArtefactsWithSpecialModels();
+        artefactsWithSpecialModels.forEach(aClass -> res.put(getSpecialModelClassForArtefact(aClass), aClass));
+        return res;
+    }
+
+    public static Class<? extends AbstractYamlArtefact<?>> getSpecialModelClassForArtefact(Class<? extends AbstractArtefact> aClass) {
+        return !hasSpecialModelClass(aClass) ? null : aClass.getAnnotation(YamlArtefact.class).model();
+    }
+
     public static List<Class<? extends AbstractYamlArtefact<?>>> getSpecialYamlArtefactModels() {
-        return AutomationPackageNamedEntityUtils.scanNamedEntityClasses(AbstractYamlArtefact.class).stream()
+        return new ArrayList<>(MODEL_TO_ARTEFACT_MAP.keySet());
+    }
+
+    private static List<Class<? extends AbstractArtefact>> getArtefactsWithSpecialModels() {
+        return AutomationPackageNamedEntityUtils.scanNamedEntityClasses(AbstractArtefact.class).stream()
                 .filter(c -> c.isAnnotationPresent(YamlArtefact.class))
-                .map(c -> (Class<? extends AbstractYamlArtefact<?>>) c)
+                .filter(YamlArtefactsLookuper::hasSpecialModelClass)
+                .map(c -> (Class<? extends AbstractArtefact>) c)
                 .collect(Collectors.toList());
     }
 
     public static List<Class<? extends AbstractArtefact>> getSimpleYamlArtefactModels() {
         return AutomationPackageNamedEntityUtils.scanNamedEntityClasses(AbstractArtefact.class).stream()
                 .filter(c -> c.isAnnotationPresent(YamlArtefact.class))
+                .filter(c -> !hasSpecialModelClass(c))
                 .map(c -> (Class<? extends AbstractArtefact>) c)
                 .collect(Collectors.toList());
+    }
+
+    private static boolean hasSpecialModelClass(Class<?> c) {
+        return c.getAnnotation(YamlArtefact.class).model() != null && c.getAnnotation(YamlArtefact.class).model() != AbstractYamlArtefact.None.class;
     }
 
     public static boolean isRootArtefact(Class<?> yamlArtefactClass) {
@@ -61,33 +86,26 @@ public class YamlArtefactsLookuper {
     }
 
     public static Class<? extends AbstractArtefact> getArtefactClass(Class<?> yamlArtefactClass) {
-        YamlArtefact ann = yamlArtefactClass.getAnnotation(YamlArtefact.class);
-        if (ann == null) {
-            return null;
-        }
-
-        Class<? extends AbstractArtefact> artefactClass;
-        if (ann.forClass() != null && !ann.forClass().equals(AbstractArtefact.None.class)) {
-            artefactClass = ann.forClass();
+        if(MODEL_TO_ARTEFACT_MAP.get(yamlArtefactClass) != null){
+            return MODEL_TO_ARTEFACT_MAP.get(yamlArtefactClass);
         } else {
-            artefactClass = (Class<? extends AbstractArtefact>) yamlArtefactClass;
+            return (Class<? extends AbstractArtefact>) yamlArtefactClass;
         }
-        return artefactClass;
     }
 
     public static String getYamlArtefactName(Class<?> yamlArtefactClass) {
         return AutomationPackageNamedEntityUtils.getEntityNameByClass(yamlArtefactClass);
     }
 
-    public static Class<?> getArtefactClassByYamlName(String yamlName) {
-        List<Class<?>> allModels = new ArrayList<>();
-        allModels.addAll(getSpecialYamlArtefactModels());
+    public static Class<?> getArtefactModelClassByYamlName(String yamlName) {
+        List<Class<? extends AbstractArtefact>> allModels = new ArrayList<>();
+        allModels.addAll(getArtefactsWithSpecialModels());
         allModels.addAll(getSimpleYamlArtefactModels());
-        for (Class<?> annotatedClass : allModels) {
+        for (Class<? extends AbstractArtefact> annotatedClass : allModels) {
             String expectedYamlName = AutomationPackageNamedEntityUtils.getEntityNameByClass(annotatedClass);
 
             if (yamlName.equalsIgnoreCase(expectedYamlName)) {
-                return annotatedClass;
+                return hasSpecialModelClass(annotatedClass) ? getSpecialModelClassForArtefact(annotatedClass) : annotatedClass;
             }
         }
         return null;

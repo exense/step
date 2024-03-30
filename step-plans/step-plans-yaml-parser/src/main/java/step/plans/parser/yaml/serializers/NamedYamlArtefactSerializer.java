@@ -28,6 +28,7 @@ import step.core.yaml.serializers.StepYamlSerializerAddOn;
 import step.handlers.javahandler.jsonschema.FieldMetadataExtractor;
 import step.plans.parser.yaml.model.AbstractYamlArtefact;
 import step.plans.parser.yaml.model.NamedYamlArtefact;
+import step.plans.parser.yaml.model.SimpleYamlArtefact;
 import step.plans.parser.yaml.schema.YamlPlanJsonSchemaGenerator;
 
 import java.io.IOException;
@@ -117,8 +118,17 @@ public class NamedYamlArtefactSerializer extends StepYamlSerializer<NamedYamlArt
     public void serialize(NamedYamlArtefact value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
         NamedEntityYamlSerializer<AbstractYamlArtefact<?>> ser = new NamedEntityYamlSerializer<>() {
             @Override
-            protected String resolveYamlName(Class<AbstractYamlArtefact<?>> clazz) {
-                return AutomationPackageNamedEntityUtils.getEntityNameByClass(clazz);
+            protected String resolveYamlName(AbstractYamlArtefact<?> value) {
+                return AutomationPackageNamedEntityUtils.getEntityNameByClass(value.getArtefactClass());
+            }
+
+            @Override
+            protected void writeObject(AbstractYamlArtefact<?> value, JsonGenerator gen) throws IOException {
+                if (value instanceof SimpleYamlArtefact<?>) {
+                    gen.writeTree(((SimpleYamlArtefact<?>) value).toFullJson());
+                } else {
+                    super.writeObject(value, gen);
+                }
             }
         };
         ser.serialize(value.getAbstractArtefact(), gen, serializers);
