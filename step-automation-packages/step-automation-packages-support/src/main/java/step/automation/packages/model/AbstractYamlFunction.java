@@ -24,8 +24,8 @@ import step.automation.packages.AutomationPackageNamedEntityUtils;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
 import step.functions.Function;
-import step.handlers.javahandler.jsonschema.JsonSchema;
-import step.handlers.javahandler.jsonschema.JsonSchemaDefaultValueProvider;
+import step.jsonschema.JsonSchema;
+import step.jsonschema.JsonSchemaDefaultValueProvider;
 
 import java.lang.reflect.Field;
 import java.util.Map;

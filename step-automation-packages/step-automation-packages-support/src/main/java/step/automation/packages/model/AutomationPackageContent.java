@@ -18,13 +18,10 @@
  ******************************************************************************/
 package step.automation.packages.model;
 
-import step.automation.packages.AutomationPackageContext;
 import step.core.plans.Plan;
-import step.functions.Function;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class AutomationPackageContent {
 
@@ -73,10 +70,6 @@ public class AutomationPackageContent {
 
     public void setSchedules(List<AutomationPackageSchedule> schedules) {
         this.schedules = schedules;
-    }
-
-    public List<Function> prepareCompleteKeywords(AutomationPackageContext context){
-        return keywords.stream().map(keyword -> keyword.prepareKeyword(context)).collect(Collectors.toList());
     }
 
 }

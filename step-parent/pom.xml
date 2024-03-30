@@ -122,6 +122,7 @@
 		<module>../step-repositories</module>
 		<module>../step-ide</module>
 		<module>../step-libs-maven-client</module>
+		<module>../step-json-schema</module>
 	</modules>
 
     <build>

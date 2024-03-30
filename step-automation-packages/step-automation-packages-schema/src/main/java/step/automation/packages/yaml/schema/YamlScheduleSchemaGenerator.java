@@ -23,12 +23,11 @@ import jakarta.json.spi.JsonProvider;
 import step.automation.packages.model.AutomationPackageSchedule;
 import step.core.yaml.schema.AggregatedJsonSchemaFieldProcessor;
 import step.core.yaml.schema.YamlJsonSchemaHelper;
-import step.handlers.javahandler.jsonschema.DefaultFieldMetadataExtractor;
+import step.jsonschema.DefaultFieldMetadataExtractor;
 import step.handlers.javahandler.jsonschema.JsonSchemaCreator;
 import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class YamlScheduleSchemaGenerator {
 

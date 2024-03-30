@@ -43,8 +43,8 @@ public class AutomationPackageResourceUploader {
     }
 
     public Resource uploadResourceFromAutomationPackage(String resourcePath,
-                                                        String resourceType,
-                                                        AutomationPackageContext context) {
+                                                         String resourceType,
+                                                         AutomationPackageContext context) {
         if (resourcePath != null && !resourcePath.isEmpty()) {
             ResourceManager resourceManager = context.getResourceManager();
 
