@@ -36,12 +36,15 @@ import step.core.yaml.schema.AggregatedJsonSchemaFieldProcessor;
 import step.core.yaml.schema.AggregatingFieldMetadataExtractor;
 import step.core.yaml.schema.JsonSchemaDefinitionCreator;
 import step.core.yaml.schema.YamlJsonSchemaHelper;
-import step.handlers.javahandler.jsonschema.*;
+import step.handlers.javahandler.jsonschema.FieldMetadataExtractor;
+import step.handlers.javahandler.jsonschema.JsonSchemaCreator;
+import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
+import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 import step.jsonschema.DefaultFieldMetadataExtractor;
 import step.plans.parser.yaml.YamlPlanFields;
-import step.plans.parser.yaml.rules.*;
 import step.plans.parser.yaml.YamlPlanReaderExtender;
 import step.plans.parser.yaml.YamlPlanReaderExtension;
+import step.plans.parser.yaml.rules.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -225,7 +228,12 @@ public class YamlPlanJsonSchemaGenerator {
 		// prepare definitions for subclasses annotated with @Artefact
 		definitionCreators.add((defsList) -> {
 			ArtefactDefinitions artefactImplDefs = createArtefactImplDefs();
-			for (Map.Entry<String, JsonObjectBuilder> artefactImplDef : artefactImplDefs.allArtefactDefs.entrySet()) {
+
+			// sort definition to keep the stable ordering in json schema
+			List<Map.Entry<String, JsonObjectBuilder>> arefactEntries = new ArrayList<>(artefactImplDefs.allArtefactDefs.entrySet());
+			arefactEntries.sort(Map.Entry.comparingByKey());
+
+			for (Map.Entry<String, JsonObjectBuilder> artefactImplDef : arefactEntries) {
 				defsBuilder.add(artefactImplDef.getKey(), artefactImplDef.getValue());
 			}
 
