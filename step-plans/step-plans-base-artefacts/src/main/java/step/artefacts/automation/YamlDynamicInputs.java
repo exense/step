@@ -20,7 +20,7 @@ package step.artefacts.automation;
 
 import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.schema.YamlJsonSchemaHelper;
-import step.handlers.javahandler.jsonschema.JsonSchema;
+import step.jsonschema.JsonSchema;
 
 @JsonSchema(ref = YamlJsonSchemaHelper.DEFS_PREFIX + YamlJsonSchemaHelper.DYNAMIC_KEYWORD_INPUTS_DEF)
 public class YamlDynamicInputs {

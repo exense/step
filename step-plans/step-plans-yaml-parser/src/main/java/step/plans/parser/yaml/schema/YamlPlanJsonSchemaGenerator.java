@@ -32,6 +32,7 @@ import step.core.artefacts.AbstractArtefact;
 import step.core.scanner.CachedAnnotationScanner;
 import step.core.yaml.schema.*;
 import step.handlers.javahandler.jsonschema.*;
+import step.jsonschema.DefaultFieldMetadataExtractor;
 import step.plans.parser.yaml.YamlArtefactsLookuper;
 import step.plans.parser.yaml.YamlPlanFields;
 import step.plans.parser.yaml.YamlPlanReaderExtender;

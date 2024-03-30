@@ -28,8 +28,8 @@ import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.schema.YamlJsonSchemaHelper;
-import step.handlers.javahandler.jsonschema.JsonSchema;
-import step.handlers.javahandler.jsonschema.JsonSchemaDefaultValueProvider;
+import step.jsonschema.JsonSchema;
+import step.jsonschema.JsonSchemaDefaultValueProvider;
 import step.plans.parser.yaml.YamlArtefactsLookuper;
 
 import java.lang.reflect.Field;

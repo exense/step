@@ -21,7 +21,6 @@ package step.artefacts;
 import step.artefacts.reports.CallFunctionReportNode;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
-import step.handlers.javahandler.jsonschema.JsonSchema;
 
 @Artefact(name=CallFunction.ARTEFACT_NAME, report = CallFunctionReportNode.class)
 public class CallFunction extends TokenSelector {

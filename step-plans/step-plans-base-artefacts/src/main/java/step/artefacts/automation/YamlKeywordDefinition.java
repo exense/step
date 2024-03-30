@@ -25,9 +25,9 @@ import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.schema.YamlJsonSchemaHelper;
 import step.handlers.javahandler.jsonschema.FieldMetadata;
-import step.handlers.javahandler.jsonschema.JsonSchema;
 import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
 import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
+import step.jsonschema.JsonSchema;
 
 import java.lang.reflect.Field;
 import java.util.List;

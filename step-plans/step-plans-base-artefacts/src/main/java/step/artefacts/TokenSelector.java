@@ -20,7 +20,6 @@ package step.artefacts;
 
 import step.core.artefacts.AbstractArtefact;
 import step.core.dynamicbeans.DynamicValue;
-import step.handlers.javahandler.jsonschema.JsonSchema;
 
 public class TokenSelector extends AbstractArtefact {
 
