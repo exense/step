@@ -31,7 +31,10 @@ import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.artefacts.AbstractArtefact;
 import step.core.scanner.CachedAnnotationScanner;
 import step.core.yaml.schema.*;
-import step.handlers.javahandler.jsonschema.*;
+import step.handlers.javahandler.jsonschema.FieldMetadataExtractor;
+import step.handlers.javahandler.jsonschema.JsonSchemaCreator;
+import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
+import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 import step.jsonschema.DefaultFieldMetadataExtractor;
 import step.plans.parser.yaml.YamlArtefactsLookuper;
 import step.plans.parser.yaml.YamlPlanFields;
@@ -174,7 +177,12 @@ public class YamlPlanJsonSchemaGenerator {
 		// prepare definitions for artefacts
 		definitionCreators.add((defsList) -> {
 			ArtefactDefinitions artefactImplDefs = createArtefactImplDefs();
-			for (Map.Entry<String, JsonObjectBuilder> artefactImplDef : artefactImplDefs.allArtefactDefs.entrySet()) {
+
+			// sort definition to keep the stable ordering in json schema
+			List<Map.Entry<String, JsonObjectBuilder>> arefactEntries = new ArrayList<>(artefactImplDefs.allArtefactDefs.entrySet());
+			arefactEntries.sort(Map.Entry.comparingByKey());
+
+			for (Map.Entry<String, JsonObjectBuilder> artefactImplDef : arefactEntries) {
 				defsBuilder.add(artefactImplDef.getKey(), artefactImplDef.getValue());
 			}
 
