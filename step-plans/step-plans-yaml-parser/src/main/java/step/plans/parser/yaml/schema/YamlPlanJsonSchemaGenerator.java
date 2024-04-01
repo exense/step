@@ -86,8 +86,8 @@ public class YamlPlanJsonSchemaGenerator {
 		result.add(new CommonFilteredFieldProcessor());
 
 		// -- SOME DEFAULT RULES FOR ENUMS AND DYNAMIC FIELDS
-		result.add(new DynamicValueFieldProcessor(jsonProvider));
-		result.add(new EnumFieldProcessor(jsonProvider));
+		result.add(new DynamicValueFieldProcessor());
+		result.add(new EnumFieldProcessor());
 
 		return result;
 	}

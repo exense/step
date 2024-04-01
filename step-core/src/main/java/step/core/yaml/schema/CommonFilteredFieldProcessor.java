@@ -21,6 +21,7 @@ package step.core.yaml.schema;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.json.JsonObjectBuilder;
 import step.handlers.javahandler.jsonschema.FieldMetadata;
+import step.handlers.javahandler.jsonschema.JsonSchemaCreator;
 import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
 import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 
@@ -31,7 +32,7 @@ import java.util.List;
 // TODO: apply this filtering in DefaultJsonSchemaFieldProcessor instead of this class
 public class CommonFilteredFieldProcessor implements JsonSchemaFieldProcessor {
     @Override
-    public boolean applyCustomProcessing(Class<?> aClass, Field field, FieldMetadata fieldMetadata, JsonObjectBuilder jsonObjectBuilder, List<String> list) throws JsonSchemaPreparationException {
+    public boolean applyCustomProcessing(Class<?> aClass, Field field, FieldMetadata fieldMetadata, JsonObjectBuilder jsonObjectBuilder, List<String> list, JsonSchemaCreator schemaCreator) throws JsonSchemaPreparationException {
         // just skip these fields
         return isIgnoredField(field);
     }

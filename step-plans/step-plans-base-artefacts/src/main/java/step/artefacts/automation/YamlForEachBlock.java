@@ -16,19 +16,16 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plans.parser.yaml;
+package step.artefacts.automation;
 
-import step.core.yaml.YamlFields;
+import step.artefacts.ForEachBlock;
+import step.artefacts.automation.datasource.AbstractYamlDataSource;
 
-public class YamlPlanFields extends YamlFields {
+public class YamlForEachBlock extends AbstractYamlForBlock<ForEachBlock> {
 
-    public static final String NAME_YAML_FIELD = "nodeName";
+    protected AbstractYamlDataSource<?> dataSource;
 
-    public static final String DATA_SOURCE_TYPE_ORIGINAL_FIELD = "dataSourceType";
-
-    public static final String DATA_SOURCE_ORIGINAL_FIELD = "dataSource";
-
-    public static final String DATA_SOURCE_YAML_FIELD = "dataSource";
-
-
+    public YamlForEachBlock() {
+        super(ForEachBlock.class);
+    }
 }

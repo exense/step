@@ -16,19 +16,20 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plans.parser.yaml;
+package step.artefacts.automation.datasource;
 
-import step.core.yaml.YamlFields;
+import step.automation.packages.AutomationPackageNamedEntityUtils;
+import step.automation.packages.model.AbstractYamlFunction;
 
-public class YamlPlanFields extends YamlFields {
+import java.util.List;
+import java.util.stream.Collectors;
 
-    public static final String NAME_YAML_FIELD = "nodeName";
+public class YamlDataSourceLookuper {
 
-    public static final String DATA_SOURCE_TYPE_ORIGINAL_FIELD = "dataSourceType";
-
-    public static final String DATA_SOURCE_ORIGINAL_FIELD = "dataSource";
-
-    public static final String DATA_SOURCE_YAML_FIELD = "dataSource";
-
+    public static List<Class<? extends AbstractYamlDataSource<?>>> getYamlDataSources() {
+        return AutomationPackageNamedEntityUtils.scanNamedEntityClasses(AbstractYamlDataSource.class).stream()
+                .map(c -> (Class<? extends AbstractYamlDataSource<?>>) c)
+                .collect(Collectors.toList());
+    }
 
 }

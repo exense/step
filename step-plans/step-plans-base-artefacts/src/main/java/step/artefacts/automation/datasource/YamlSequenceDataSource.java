@@ -16,13 +16,14 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.artefacts.automation;
+package step.artefacts.automation.datasource;
 
-import step.artefacts.ForBlock;
+import step.automation.packages.AutomationPackageNamedEntity;
 import step.core.dynamicbeans.DynamicValue;
 import step.datapool.sequence.IntSequenceDataPool;
 
-public class YamlForBlock extends AbstractYamlForBlock<ForBlock> {
+@AutomationPackageNamedEntity(name = "sequence")
+public class YamlSequenceDataSource extends AbstractYamlDataSource<IntSequenceDataPool> {
 
     protected DynamicValue<Integer> start = new DynamicValue<Integer>(1);
 
@@ -30,29 +31,26 @@ public class YamlForBlock extends AbstractYamlForBlock<ForBlock> {
 
     protected DynamicValue<Integer> inc = new DynamicValue<Integer>(1);
 
-    public YamlForBlock() {
-        super(ForBlock.class);
+    @Override
+    public IntSequenceDataPool createDataPoolConfiguration() {
+        return new IntSequenceDataPool();
     }
 
     @Override
-    protected void fillArtefactFields(ForBlock res) {
-        super.fillArtefactFields(res);
-        IntSequenceDataPool dataPoolConfiguration = (IntSequenceDataPool) res.getDataSource();
+    public void fillDataPoolConfiguration(IntSequenceDataPool res) {
         if (start != null) {
-            dataPoolConfiguration.setStart(start);
+            res.setStart(start);
         }
         if (end != null) {
-            dataPoolConfiguration.setEnd(end);
+            res.setEnd(end);
         }
         if (inc != null) {
-            dataPoolConfiguration.setInc(inc);
+            res.setInc(inc);
         }
     }
 
     @Override
-    protected void fillYamlArtefactFields(ForBlock artefact) {
-        super.fillYamlArtefactFields(artefact);
-        IntSequenceDataPool dataPoolConfiguration = (IntSequenceDataPool) artefact.getDataSource();
+    public void fillFromDataPoolConfiguration(IntSequenceDataPool dataPoolConfiguration) {
         if (dataPoolConfiguration.getStart() != null) {
             start = dataPoolConfiguration.getStart();
         }
@@ -62,5 +60,29 @@ public class YamlForBlock extends AbstractYamlForBlock<ForBlock> {
         if (dataPoolConfiguration.getInc() != null) {
             inc = dataPoolConfiguration.getInc();
         }
+    }
+
+    public DynamicValue<Integer> getStart() {
+        return start;
+    }
+
+    public void setStart(DynamicValue<Integer> start) {
+        this.start = start;
+    }
+
+    public DynamicValue<Integer> getEnd() {
+        return end;
+    }
+
+    public void setEnd(DynamicValue<Integer> end) {
+        this.end = end;
+    }
+
+    public DynamicValue<Integer> getInc() {
+        return inc;
+    }
+
+    public void setInc(DynamicValue<Integer> inc) {
+        this.inc = inc;
     }
 }

@@ -19,9 +19,9 @@
 package step.core.yaml.schema;
 
 import jakarta.json.JsonObjectBuilder;
-import jakarta.json.spi.JsonProvider;
 import step.core.dynamicbeans.DynamicValue;
 import step.handlers.javahandler.jsonschema.FieldMetadata;
+import step.handlers.javahandler.jsonschema.JsonSchemaCreator;
 import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
 import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 
@@ -30,18 +30,15 @@ import java.util.List;
 
 public class DynamicValueFieldProcessor implements JsonSchemaFieldProcessor {
 
-    private JsonProvider jsonProvider;
-
-    public DynamicValueFieldProcessor(JsonProvider jsonProvider) {
-        this.jsonProvider = jsonProvider;
+    public DynamicValueFieldProcessor() {
     }
 
     @Override
-    public boolean applyCustomProcessing(Class<?> aClass, Field field, FieldMetadata fieldMetadata, JsonObjectBuilder jsonObjectBuilder, List<String> list) throws JsonSchemaPreparationException {
-        YamlJsonSchemaHelper dynamicValueHelper = new YamlJsonSchemaHelper(jsonProvider);
+    public boolean applyCustomProcessing(Class<?> aClass, Field field, FieldMetadata fieldMetadata, JsonObjectBuilder jsonObjectBuilder, List<String> list, JsonSchemaCreator schemaCreator) throws JsonSchemaPreparationException {
+        YamlJsonSchemaHelper dynamicValueHelper = new YamlJsonSchemaHelper(schemaCreator.getJsonProvider());
 
         if (DynamicValue.class.isAssignableFrom(field.getType())) {
-            JsonObjectBuilder nestedPropertyParamsBuilder = jsonProvider.createObjectBuilder();
+            JsonObjectBuilder nestedPropertyParamsBuilder = schemaCreator.getJsonProvider().createObjectBuilder();
             dynamicValueHelper.applyDynamicValueDefForField(field, nestedPropertyParamsBuilder);
             jsonObjectBuilder.add(fieldMetadata.getFieldName(), nestedPropertyParamsBuilder);
             return true;

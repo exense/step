@@ -20,7 +20,6 @@ package step.core.yaml.schema;
 
 import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObjectBuilder;
-import jakarta.json.spi.JsonProvider;
 import step.handlers.javahandler.jsonschema.FieldMetadata;
 import step.handlers.javahandler.jsonschema.JsonSchemaCreator;
 import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
@@ -29,21 +28,17 @@ import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 import java.lang.reflect.Field;
 import java.util.List;
 
-// TODO: support enum in DefaultJsonSchemaFieldProcessor instead of this class
 public class EnumFieldProcessor implements JsonSchemaFieldProcessor {
 
-    private JsonProvider jsonProvider;
-
-    public EnumFieldProcessor(JsonProvider jsonProvider) {
-        this.jsonProvider = jsonProvider;
+    public EnumFieldProcessor() {
     }
 
     @Override
-    public boolean applyCustomProcessing(Class<?> aClass, Field field, FieldMetadata fieldMetadata, JsonObjectBuilder jsonObjectBuilder, List<String> list) throws JsonSchemaPreparationException {
+    public boolean applyCustomProcessing(Class<?> aClass, Field field, FieldMetadata fieldMetadata, JsonObjectBuilder jsonObjectBuilder, List<String> list, JsonSchemaCreator schemaCreator) throws JsonSchemaPreparationException {
         if (field.getType().isEnum()) {
-            JsonObjectBuilder nestedPropertyParamsBuilder = jsonProvider.createObjectBuilder();
+            JsonObjectBuilder nestedPropertyParamsBuilder = schemaCreator.getJsonProvider().createObjectBuilder();
 
-            JsonArrayBuilder enumArray = jsonProvider.createArrayBuilder();
+            JsonArrayBuilder enumArray = schemaCreator.getJsonProvider().createArrayBuilder();
             for (Object enumValue : field.getType().getEnumConstants()) {
                 enumArray.add(enumValue.toString());
             }

@@ -21,7 +21,6 @@ package step.plans.parser.yaml.schema;
 import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObjectBuilder;
 import jakarta.json.spi.JsonProvider;
-import step.plans.parser.yaml.YamlPlanFields;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -29,6 +28,7 @@ import java.util.Map;
 public class YamlResourceReferenceJsonSchemaHelper {
 
     public static final String RESOURCE_REFERENCE_DEF = "resourceReference";
+    public static final String FILE_REFERENCE_RESOURCE_ID_FIELD = "id";
     private final JsonProvider jsonProvider;
 
     public YamlResourceReferenceJsonSchemaHelper(JsonProvider jsonProvider) {
@@ -43,7 +43,7 @@ public class YamlResourceReferenceJsonSchemaHelper {
                 .add("type", "object")
                 .add("additionalProperties", false)
                 .add("properties", jsonProvider.createObjectBuilder()
-                        .add(YamlPlanFields.FILE_REFERENCE_RESOURCE_ID_FIELD, jsonProvider.createObjectBuilder()
+                        .add(FILE_REFERENCE_RESOURCE_ID_FIELD, jsonProvider.createObjectBuilder()
                                 .add("type", "string")))
         );
         res.put(RESOURCE_REFERENCE_DEF, jsonProvider.createObjectBuilder().add("oneOf", oneOf));

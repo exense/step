@@ -113,8 +113,8 @@ public class YamlKeywordSchemaGenerator {
 
         // -- BASIC PROCESSING RULES
         result.add(new CommonFilteredFieldProcessor());
-        result.add(new DynamicValueFieldProcessor(jsonProvider));
-        result.add(new EnumFieldProcessor(jsonProvider));
+        result.add(new DynamicValueFieldProcessor());
+        result.add(new EnumFieldProcessor());
 
         return result;
     }

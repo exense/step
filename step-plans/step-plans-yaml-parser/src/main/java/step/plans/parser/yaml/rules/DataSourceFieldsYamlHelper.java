@@ -62,14 +62,14 @@ public class DataSourceFieldsYamlHelper {
         fieldProcessors.add(new CommonFilteredFieldProcessor());
 
         // skip technical fields from
-        fieldProcessors.add((aClass, field, fieldMetadata, jsonObjectBuilder, list) -> {
+        fieldProcessors.add((aClass, field, fieldMetadata, jsonObjectBuilder, list, jsonSchemaCreator) -> {
             if (DataPoolConfiguration.class.isAssignableFrom(aClass)) {
                 return isTechnicalDataPoolField(field, isForWriteEditable);
             }
             return false;
         });
 
-        fieldProcessors.add((aClass, field, fieldMetadata, jsonObjectBuilder, list) -> {
+        fieldProcessors.add((aClass, field, fieldMetadata, jsonObjectBuilder, list, jsonSchemaCreator) -> {
             PropertyDescriptor descriptor = getResourceReferencePropertyDescriptors(aClass).stream().filter(pd -> pd.getName().equals(field.getName())).findFirst().orElse(null);
             if (descriptor != null) {
                 jsonObjectBuilder.add(
@@ -81,8 +81,8 @@ public class DataSourceFieldsYamlHelper {
             return false;
         });
 
-        fieldProcessors.add(new DynamicValueFieldProcessor(jsonProvider));
-        fieldProcessors.add(new EnumFieldProcessor(jsonProvider));
+        fieldProcessors.add(new DynamicValueFieldProcessor());
+        fieldProcessors.add(new EnumFieldProcessor());
 
         JsonSchemaCreator jsonSchemaCreator = new JsonSchemaCreator(
                 jsonProvider,
@@ -142,7 +142,7 @@ public class DataSourceFieldsYamlHelper {
             // TODO: now the value is applied in AutomationPackagePlansAttributesApplier, but should be refactored to some common approach
             return new TextNode(fileReferenceField.asText());
         }
-        JsonNode resourceId = fileReferenceField.get(YamlPlanFields.FILE_REFERENCE_RESOURCE_ID_FIELD);
+        JsonNode resourceId = fileReferenceField.get(YamlResourceReferenceJsonSchemaHelper.FILE_REFERENCE_RESOURCE_ID_FIELD);
         if (resourceId == null) {
             throw new IllegalArgumentException("Resource id should be defined for the file reference");
         }
@@ -189,7 +189,7 @@ public class DataSourceFieldsYamlHelper {
                 if (value != null && value.getValue() != null && !value.getValue().isEmpty()) {
                     gen.writeFieldName(field.getName());
                     gen.writeStartObject();
-                    gen.writeFieldName(YamlPlanFields.FILE_REFERENCE_RESOURCE_ID_FIELD);
+                    gen.writeFieldName(YamlResourceReferenceJsonSchemaHelper.FILE_REFERENCE_RESOURCE_ID_FIELD);
                     gen.writeString(value.getValue().replaceFirst(FileResolver.RESOURCE_PREFIX, ""));
                     gen.writeEndObject();
                 }
