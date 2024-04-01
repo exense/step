@@ -38,11 +38,15 @@ public class YamlCallFunction extends YamlTokenSelector<CallFunction> {
     @Override
     protected void fillArtefactFields(CallFunction res) {
         super.fillArtefactFields(res);
-        res.setRemote(this.remote);
-        res.setResultMap(this.resultMap);
-        res.setToken(this.routing.toDynamicValue());
-        res.setArgument(this.inputs.toDynamicValue());
-        res.setFunction(this.keyword.toDynamicValue());
+        if (this.resultMap != null) {
+            res.setResultMap(this.resultMap);
+        }
+        if (this.inputs != null) {
+            res.setArgument(this.inputs.toDynamicValue());
+        }
+        if (this.keyword != null) {
+            res.setFunction(this.keyword.toDynamicValue());
+        }
 
         // for keywords we use the keyword name as default artefact name
         if (getNodeName() == null || getNodeName().isEmpty()) {
@@ -59,14 +63,8 @@ public class YamlCallFunction extends YamlTokenSelector<CallFunction> {
     @Override
     protected void fillYamlArtefactFields(CallFunction artefact) {
         super.fillYamlArtefactFields(artefact);
-        if (artefact.getRemote() != null) {
-            this.remote = artefact.getRemote();
-        }
         if (artefact.getResultMap() != null) {
             this.resultMap = artefact.getResultMap();
-        }
-        if (artefact.getToken() != null) {
-            this.routing = YamlDynamicInputs.fromDynamicValue(artefact.getToken());
         }
         if (artefact.getArgument() != null) {
             this.inputs = YamlDynamicInputs.fromDynamicValue(artefact.getArgument());

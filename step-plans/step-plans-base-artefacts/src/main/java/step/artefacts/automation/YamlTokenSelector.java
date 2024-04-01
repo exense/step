@@ -37,8 +37,12 @@ public class YamlTokenSelector<T extends TokenSelector> extends AbstractYamlArte
     @Override
     protected void fillArtefactFields(T res) {
         super.fillArtefactFields(res);
-        res.setRemote(this.remote);
-        res.setToken(this.routing.toDynamicValue());
+        if (this.remote != null) {
+            res.setRemote(this.remote);
+        }
+        if (this.routing != null) {
+            res.setToken(this.routing.toDynamicValue());
+        }
     }
 
     @Override

@@ -50,6 +50,6 @@ public class YamlDynamicValueSerializer extends StepYamlSerializer<DynamicValue<
     @Override
     public boolean isEmpty(SerializerProvider provider, DynamicValue<?> value) {
         // to avoid serialization for null-values
-        return super.isEmpty(provider, value) || value.getValue() == null;
+        return super.isEmpty(provider, value) || (!value.isDynamic() && value.getValue() == null) || (value.isDynamic() && value.getExpression() == null);
     }
 }

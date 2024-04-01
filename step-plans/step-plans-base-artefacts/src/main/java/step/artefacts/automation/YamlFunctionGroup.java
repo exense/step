@@ -36,16 +36,28 @@ public class YamlFunctionGroup extends YamlTokenSelector<FunctionGroup> {
     @Override
     protected void fillArtefactFields(FunctionGroup res) {
         super.fillArtefactFields(res);
-        res.setDockerImage(dockerImage);
-        res.setContainerCommand(containerCommand);
-        res.setContainerUser(containerUser);
+        if (dockerImage != null) {
+            res.setDockerImage(dockerImage);
+        }
+        if (containerCommand != null) {
+            res.setContainerCommand(containerCommand);
+        }
+        if (containerUser != null) {
+            res.setContainerUser(containerUser);
+        }
     }
 
     @Override
     protected void fillYamlArtefactFields(FunctionGroup artefact) {
         super.fillYamlArtefactFields(artefact);
-        this.dockerImage = artefact.getDockerImage();
-        this.containerUser = artefact.getContainerUser();
-        this.containerCommand = artefact.getContainerCommand();
+        if (artefact.getDockerImage() != null) {
+            this.dockerImage = artefact.getDockerImage();
+        }
+        if (artefact.getContainerUser() != null) {
+            this.containerUser = artefact.getContainerUser();
+        }
+        if (artefact.getContainerCommand() != null) {
+            this.containerCommand = artefact.getContainerCommand();
+        }
     }
 }

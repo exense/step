@@ -35,15 +35,23 @@ public class YamlSequence extends AbstractYamlArtefact<Sequence> {
     @Override
     protected void fillArtefactFields(Sequence res) {
         super.fillArtefactFields(res);
-        res.setContinueOnError(this.getContinueOnError());
-        res.setPacing(this.getPacing());
+        if (this.getContinueOnError() != null) {
+            res.setContinueOnError(this.getContinueOnError());
+        }
+        if (this.getPacing() != null) {
+            res.setPacing(this.getPacing());
+        }
     }
 
     @Override
     protected void fillYamlArtefactFields(Sequence artefact) {
         super.fillYamlArtefactFields(artefact);
-        this.setContinueOnError(artefact.getContinueOnError());
-        this.setPacing(artefact.getPacing());
+        if (artefact.getContinueOnError() != null) {
+            this.setContinueOnError(artefact.getContinueOnError());
+        }
+        if (artefact.getPacing() != null) {
+            this.setPacing(artefact.getPacing());
+        }
     }
 
     public DynamicValue<Boolean> getContinueOnError() {

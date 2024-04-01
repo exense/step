@@ -43,22 +43,37 @@ public class YamlPerformanceAssert extends AbstractYamlArtefact<PerformanceAsser
     @Override
     protected void fillArtefactFields(PerformanceAssert res) {
         super.fillArtefactFields(res);
-        res.setAggregator(this.aggregator);
-        res.setComparator(this.comparator);
-        res.setExpectedValue(expectedValue);
+        if (this.aggregator != null) {
+            res.setAggregator(this.aggregator);
+        }
+        if (this.comparator != null) {
+            res.setComparator(this.comparator);
+        }
+        if (this.expectedValue != null) {
+            res.setExpectedValue(expectedValue);
+        }
+
         Filter filter = new Filter();
         filter.setField(new DynamicValue<>(AbstractOrganizableObject.NAME));
         filter.setFilterType(FilterType.EQUALS);
-        filter.setFilter(this.measurementName);
+        if (this.measurementName != null) {
+            filter.setFilter(this.measurementName);
+        }
         res.setFilters(Lists.newArrayList(filter));
     }
 
     @Override
     protected void fillYamlArtefactFields(PerformanceAssert artefact) {
         super.fillYamlArtefactFields(artefact);
-        this.aggregator = artefact.getAggregator();
-        this.comparator = artefact.getComparator();
-        this.expectedValue = artefact.getExpectedValue();
+        if (artefact.getAggregator() != null) {
+            this.aggregator = artefact.getAggregator();
+        }
+        if (artefact.getComparator() != null) {
+            this.comparator = artefact.getComparator();
+        }
+        if (artefact.getExpectedValue() != null) {
+            this.expectedValue = artefact.getExpectedValue();
+        }
 
         List<Filter> filters = artefact.getFilters();
         if (filters != null && !filters.isEmpty()) {
@@ -72,7 +87,9 @@ public class YamlPerformanceAssert extends AbstractYamlArtefact<PerformanceAsser
             if (!filter.getField().get().equals(AbstractOrganizableObject.NAME)) {
                 throw new IllegalArgumentException("Filter field " + filter.getField() + " is not supported in yaml format.");
             }
-            this.measurementName = filter.getFilter();
+            if (filter.getFilter() != null) {
+                this.measurementName = filter.getFilter();
+            }
         }
     }
 }
