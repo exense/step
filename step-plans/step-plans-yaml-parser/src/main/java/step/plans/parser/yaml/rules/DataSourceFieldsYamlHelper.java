@@ -30,10 +30,7 @@ import step.core.artefacts.AbstractArtefact;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.entities.EntityManager;
 import step.core.entities.EntityReference;
-import step.core.yaml.schema.AggregatedJsonSchemaFieldProcessor;
-import step.core.yaml.schema.DynamicValueFieldProcessor;
-import step.core.yaml.schema.EnumFieldProcessor;
-import step.core.yaml.schema.YamlJsonSchemaHelper;
+import step.core.yaml.schema.*;
 import step.datapool.DataPoolConfiguration;
 import step.datapool.DataPoolFactory;
 import step.jsonschema.DefaultFieldMetadataExtractor;
@@ -62,7 +59,7 @@ public class DataSourceFieldsYamlHelper {
         List<JsonSchemaFieldProcessor> fieldProcessors = new ArrayList<>();
 
         // -- PROCESSING RULES
-        fieldProcessors.add(new CommonFilteredFieldRule().getJsonSchemaFieldProcessor(jsonProvider));
+        fieldProcessors.add(new CommonFilteredFieldProcessor());
 
         // skip technical fields from
         fieldProcessors.add((aClass, field, fieldMetadata, jsonObjectBuilder, list) -> {

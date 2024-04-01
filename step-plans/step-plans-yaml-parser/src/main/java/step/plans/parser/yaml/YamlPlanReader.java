@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.plans.parser.yaml;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
@@ -192,6 +193,8 @@ public class YamlPlanReader {
 
 	protected ObjectMapper createYamlPlanObjectMapper() {
 		ObjectMapper yamlMapper = createDefaultYamlMapper();
+		// default: include only non empty values in yaml
+		yamlMapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
 
 		// configure custom deserializers
 		yamlMapper.registerModule(registerAllSerializersAndDeserializers(new SimpleModule(), yamlMapper, true));

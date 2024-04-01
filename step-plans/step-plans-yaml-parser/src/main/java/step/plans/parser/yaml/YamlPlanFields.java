@@ -22,12 +22,6 @@ import step.core.yaml.YamlFields;
 
 public class YamlPlanFields extends YamlFields {
 
-    public static final String CALL_FUNCTION_ARGUMENT_ORIGINAL_FIELD = "argument";
-
-    public static final String CALL_FUNCTION_FUNCTION_ORIGINAL_FIELD = "function";
-
-    public static final String TOKEN_SELECTOR_TOKEN_ORIGINAL_FIELD = "token";
-
     public static final String NAME_YAML_FIELD = "nodeName";
 
     public static final String DATA_SOURCE_TYPE_ORIGINAL_FIELD = "dataSourceType";

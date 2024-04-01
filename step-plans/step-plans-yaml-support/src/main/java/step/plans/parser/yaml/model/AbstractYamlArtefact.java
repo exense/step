@@ -60,6 +60,13 @@ public abstract class AbstractYamlArtefact<T extends AbstractArtefact> {
     @JsonSchema(ref = YamlJsonSchemaHelper.DEFS_PREFIX + ARTEFACT_ARRAY_DEF)
     private List<NamedYamlArtefact> children = new ArrayList<>();
 
+    public AbstractYamlArtefact() {
+    }
+
+    protected AbstractYamlArtefact(Class<T> artefactClass) {
+        this.artefactClass = artefactClass;
+    }
+
     public final AbstractArtefact toArtefact(){
         T artefactInstance = createArtefactInstance();
         fillArtefactFields(artefactInstance);

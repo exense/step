@@ -16,23 +16,10 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plans.parser.yaml.rules;
+package step.artefacts.automation;
 
-import jakarta.json.spi.JsonProvider;
-import step.core.yaml.schema.CommonFilteredFieldProcessor;
-import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
-import step.plans.parser.yaml.serializers.YamlArtefactFieldSerializationProcessor;
+import step.artefacts.AbstractForBlock;
+import step.plans.parser.yaml.model.AbstractYamlArtefact;
 
-public class CommonFilteredFieldRule implements ArtefactFieldConversionRule {
-
-    @Override
-    public JsonSchemaFieldProcessor getJsonSchemaFieldProcessor(JsonProvider jsonProvider) {
-        return new CommonFilteredFieldProcessor();
-    }
-
-    @Override
-    public YamlArtefactFieldSerializationProcessor getArtefactFieldSerializationProcessor() {
-        return (artefact, field, fieldMetadata, gen) -> CommonFilteredFieldProcessor.isIgnoredField(field);
-    }
-
+public class AbstractYamlForBlock<T extends AbstractForBlock> extends AbstractYamlArtefact<T> {
 }

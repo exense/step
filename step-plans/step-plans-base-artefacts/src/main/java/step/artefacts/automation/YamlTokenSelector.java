@@ -18,47 +18,39 @@
  ******************************************************************************/
 package step.artefacts.automation;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import step.artefacts.Check;
+import step.artefacts.TokenSelector;
 import step.core.dynamicbeans.DynamicValue;
 import step.plans.parser.yaml.model.AbstractYamlArtefact;
 
-public class YamlCheck extends AbstractYamlArtefact<Check> {
+public class YamlTokenSelector<T extends TokenSelector> extends AbstractYamlArtefact<T> {
 
-    private static final Logger log = LoggerFactory.getLogger(YamlCheck.class);
+    protected YamlDynamicInputs routing = new YamlDynamicInputs("{}");
+    protected DynamicValue<Boolean> remote = new DynamicValue<>(true);
 
-    private String expression = null;
+    public YamlTokenSelector() {
+    }
 
-    public YamlCheck() {
-        super(Check.class);
+    protected YamlTokenSelector(Class<T> artefactClass) {
+        super(artefactClass);
     }
 
     @Override
-    protected void fillArtefactFields(Check res) {
+    protected void fillArtefactFields(T res) {
         super.fillArtefactFields(res);
-        if(getExpression() != null) {
-            res.setExpression(new DynamicValue<>(getExpression(), ""));
-        }
+        res.setRemote(this.remote);
+        res.setToken(this.routing.toDynamicValue());
     }
 
     @Override
-    protected void fillYamlArtefactFields(Check artefact) {
+    protected void fillYamlArtefactFields(T artefact) {
         super.fillYamlArtefactFields(artefact);
-        if (artefact.getExpression() != null) {
-            if (!artefact.getExpression().isDynamic()) {
-                log.warn("Static values are not supported in yaml plan format for 'expression' in " + artefact.getClass().getSimpleName());
-            } else {
-                this.setExpression(artefact.getExpression().getExpression());
-            }
+        if (artefact.getRemote() != null) {
+            this.remote = artefact.getRemote();
         }
+        if (artefact.getToken() != null) {
+            this.routing = YamlDynamicInputs.fromDynamicValue(artefact.getToken());
+        }
+
     }
 
-    public String getExpression() {
-        return expression;
-    }
-
-    public void setExpression(String expression) {
-        this.expression = expression;
-    }
 }

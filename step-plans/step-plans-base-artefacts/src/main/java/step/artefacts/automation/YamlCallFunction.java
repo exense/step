@@ -22,13 +22,8 @@ import step.artefacts.CallFunction;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.dynamicbeans.DynamicValue;
-import step.plans.parser.yaml.model.AbstractYamlArtefact;
 
-public class YamlCallFunction extends AbstractYamlArtefact<CallFunction> {
-
-    private YamlDynamicInputs routing = new YamlDynamicInputs("{}");
-
-    private DynamicValue<Boolean> remote = new DynamicValue<>(true);
+public class YamlCallFunction extends YamlTokenSelector<CallFunction> {
 
     private DynamicValue<String> resultMap = new DynamicValue<>();
 
@@ -37,7 +32,7 @@ public class YamlCallFunction extends AbstractYamlArtefact<CallFunction> {
     private YamlKeywordDefinition keyword = new YamlKeywordDefinition(null,null, "{}");
 
     public YamlCallFunction() {
-        this.artefactClass = CallFunction.class;
+        super(CallFunction.class);
     }
 
     @Override

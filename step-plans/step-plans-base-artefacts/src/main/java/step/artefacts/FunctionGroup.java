@@ -22,13 +22,18 @@ import java.util.function.BiConsumer;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import step.artefacts.automation.YamlFunctionGroup;
+import step.automation.packages.AutomationPackageNamedEntity;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.artefacts.reports.ReportNode;
 import step.core.dynamicbeans.DynamicValue;
+import step.plans.parser.yaml.model.YamlArtefact;
 
 import static step.artefacts.FunctionGroup.FUNCTION_GROUP_ARTEFACT_NAME;
 
+@YamlArtefact(model = YamlFunctionGroup.class)
+@AutomationPackageNamedEntity(name = "session")
 @Artefact(name=FUNCTION_GROUP_ARTEFACT_NAME)
 public class FunctionGroup extends TokenSelector {
 

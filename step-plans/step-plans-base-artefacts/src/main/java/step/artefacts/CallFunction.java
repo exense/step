@@ -31,8 +31,6 @@ import step.plans.parser.yaml.model.YamlArtefact;
 public class CallFunction extends TokenSelector {
 	
 	public static final String ARTEFACT_NAME = "CallKeyword";
-	public static final String CALL_FUNCTION_ARGUMENT_YAML_FIELD = "inputs";
-	public static final String CALL_FUNCTION_FUNCTION_YAML_FIELD = "keyword";
 
 	private DynamicValue<String> function = new DynamicValue<>("{}");
 

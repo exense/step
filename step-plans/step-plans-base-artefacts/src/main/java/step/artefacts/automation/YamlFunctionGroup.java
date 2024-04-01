@@ -18,47 +18,34 @@
  ******************************************************************************/
 package step.artefacts.automation;
 
-import step.artefacts.Sequence;
+import step.artefacts.FunctionGroup;
 import step.core.dynamicbeans.DynamicValue;
-import step.plans.parser.yaml.model.AbstractYamlArtefact;
 
-public class YamlSequence extends AbstractYamlArtefact<Sequence> {
+public class YamlFunctionGroup extends YamlTokenSelector<FunctionGroup> {
 
-    private DynamicValue<Boolean> continueOnError = new DynamicValue<Boolean>(false);
+    private DynamicValue<String> dockerImage = new DynamicValue<>();
 
-    private DynamicValue<Long> pacing = new DynamicValue<Long>();
+    private DynamicValue<String> containerUser = new DynamicValue<>();
 
-    public YamlSequence() {
-        super(Sequence.class);
+    private DynamicValue<String> containerCommand = new DynamicValue<>();
+
+    public YamlFunctionGroup() {
+        super(FunctionGroup.class);
     }
 
     @Override
-    protected void fillArtefactFields(Sequence res) {
+    protected void fillArtefactFields(FunctionGroup res) {
         super.fillArtefactFields(res);
-        res.setContinueOnError(this.getContinueOnError());
-        res.setPacing(this.getPacing());
+        res.setDockerImage(dockerImage);
+        res.setContainerCommand(containerCommand);
+        res.setContainerUser(containerUser);
     }
 
     @Override
-    protected void fillYamlArtefactFields(Sequence artefact) {
+    protected void fillYamlArtefactFields(FunctionGroup artefact) {
         super.fillYamlArtefactFields(artefact);
-        this.setContinueOnError(artefact.getContinueOnError());
-        this.setPacing(artefact.getPacing());
-    }
-
-    public DynamicValue<Boolean> getContinueOnError() {
-        return continueOnError;
-    }
-
-    public void setContinueOnError(DynamicValue<Boolean> continueOnError) {
-        this.continueOnError = continueOnError;
-    }
-
-    public DynamicValue<Long> getPacing() {
-        return pacing;
-    }
-
-    public void setPacing(DynamicValue<Long> pacing) {
-        this.pacing = pacing;
+        this.dockerImage = artefact.getDockerImage();
+        this.containerUser = artefact.getContainerUser();
+        this.containerCommand = artefact.getContainerCommand();
     }
 }
