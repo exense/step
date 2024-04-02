@@ -81,12 +81,11 @@ public class TestSetHandlerTest extends AbstractArtefactHandlerTest {
 	@Test
 	public void testStatusReportingError() throws Exception {
 		Plan plan = PlanBuilder.create().startBlock(new TestSet()).add(passedCheck()).add(errorCheck()).add(passedCheck()).endBlock().build();
-		DefaultPlanRunner runner = new DefaultPlanRunner();
-		
 		StringWriter writer = new StringWriter();
-		runner.run(plan).printTree(writer);
-		
-		Assert.assertTrue(writer.toString().startsWith("TestSet:"+ReportNodeStatus.TECHNICAL_ERROR));
+		try(DefaultPlanRunner runner = new DefaultPlanRunner()) {
+			runner.run(plan).printTree(writer);
+		}
+		Assert.assertTrue(writer.toString().startsWith("TestSet:" + ReportNodeStatus.TECHNICAL_ERROR));
 	}
 
 	private Check passedCheck() {

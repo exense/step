@@ -23,6 +23,7 @@ import jakarta.json.JsonObject;
 import org.junit.Test;
 import step.artefacts.*;
 import step.artefacts.handlers.FunctionGroupHandler.FunctionGroupContext;
+import step.core.AbstractStepContext;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.CheckArtefact;
 import step.core.artefacts.reports.ReportNodeStatus;
@@ -81,19 +82,19 @@ public class FunctionGroupHandlerTest {
 			functionGroupContext.addToken(token);
 			t.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED);
 		})).add(new Echo()).endBlock().build();
-		
-		ExecutionEngine engine = newEngineWithCustomTokenReleaseFunction(id->{
-			if(localToken.getID().equals(id)) {
+
+		StringWriter writer = new StringWriter();
+		try (ExecutionEngine engine = newEngineWithCustomTokenReleaseFunction(id -> {
+			if (localToken.getID().equals(id)) {
 				localTokenReturned.set(true);
 			}
-			if(token.getID().equals(id)) {
+			if (token.getID().equals(id)) {
 				tokenReturned.set(true);
 			}
-		});
-		
-		StringWriter writer = new StringWriter();
-		engine.execute(plan).printTree(writer);
-		
+		})) {
+			engine.execute(plan).printTree(writer);
+		}
+
 		// Assert that the token have been returned after Session execution
 		assertTrue(localTokenReturned.get());
 		assertTrue(tokenReturned.get());
@@ -172,20 +173,20 @@ public class FunctionGroupHandlerTest {
 			functionGroupContext.addToken(token);
 			t.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED);
 		})).add(new Echo()).endBlock().build();
-		
-		ExecutionEngine engine = newEngineWithCustomTokenReleaseFunction(id->{
-			if(localToken.getID().equals(id)) {
+
+		StringWriter writer = new StringWriter();
+		try (ExecutionEngine engine = newEngineWithCustomTokenReleaseFunction(id -> {
+			if (localToken.getID().equals(id)) {
 				localTokenReturned.set(true);
 			}
-			if(token.getID().equals(id)) {
+			if (token.getID().equals(id)) {
 				tokenReturned.set(true);
 			}
 			throw new RuntimeException("Test error");
-		});
-		
-		StringWriter writer = new StringWriter();
-		engine.execute(plan).printTree(writer);
-		
+		})) {
+			engine.execute(plan).printTree(writer);
+		}
+
 		// Assert that the token have been returned after Session execution
 		assertTrue(localTokenReturned.get());
 		assertTrue(tokenReturned.get());
@@ -208,20 +209,20 @@ public class FunctionGroupHandlerTest {
 			functionGroupContext.addToken(token);
 			t.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED);
 		})).add(new Echo()).endBlock().build();
-		
-		ExecutionEngine engine = newEngineWithCustomTokenReleaseFunction(id->{
-			if(localToken.getID().equals(id)) {
+
+		StringWriter writer = new StringWriter();
+		try (ExecutionEngine engine = newEngineWithCustomTokenReleaseFunction(id -> {
+			if (localToken.getID().equals(id)) {
 				localTokenReturned.set(true);
 			}
-			if(token.getID().equals(id)) {
+			if (token.getID().equals(id)) {
 				tokenReturned.set(true);
 				throw new RuntimeException("Test error");
 			}
-		});
-		
-		StringWriter writer = new StringWriter();
-		engine.execute(plan).printTree(writer);
-		
+		})) {
+			engine.execute(plan).printTree(writer);
+		}
+
 		// Assert that the token have been returned after Session execution
 		assertTrue(localTokenReturned.get());
 		assertTrue(tokenReturned.get());
@@ -268,8 +269,8 @@ public class FunctionGroupHandlerTest {
 		CheckArtefact check1 = new CheckArtefact(c->c.getCurrentReportNode().setStatus(ReportNodeStatus.FAILED));
 		retryIfFail.addChild(check1);	
 		InMemoryFunctionAccessorImpl functionAccessor = new InMemoryFunctionAccessorImpl();
-		functionAccessor.save(function);			
-		
+		functionAccessor.save(function);
+
 		ExecutionEngine engine = ExecutionEngine.builder().withPlugin(new BaseArtefactPlugin()).withPlugin(new AbstractExecutionEnginePlugin() {
 
 			@Override
@@ -324,17 +325,17 @@ public class FunctionGroupHandlerTest {
 								output.setAttachments(new ArrayList<>());
 								return output;
 							}
-							
+
 						};
 				executionContext.put(FunctionExecutionService.class, functionExecutionService);
 				DefaultFunctionRouterImpl functionRouter = new DefaultFunctionRouterImpl(functionExecutionService, functionTypeRegistry, new DynamicJsonObjectResolver(new DynamicJsonValueResolver(executionContext.getExpressionHandler())));
 				executionContext.put(FunctionRouter.class, functionRouter);
 			}
 		}).build();
-		
+
 		StringWriter writer = new StringWriter();
 		engine.execute(plan).printTree(writer);
-		
+
 		// Assert that the token have been returned after Session execution
 		assertEquals(1,localTokenReturned.get());
 		assertEquals(3,tokenReturned.get());
@@ -386,7 +387,7 @@ public class FunctionGroupHandlerTest {
 					}
 
 					@Override
-					public Map<String, String> getHandlerProperties(Function function) {
+					public Map<String, String> getHandlerProperties(Function function, AbstractStepContext executionContext) {
 						return null;
 					}
 

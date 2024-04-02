@@ -43,6 +43,9 @@ import step.plugins.screentemplating.*;
 import java.util.List;
 import java.util.function.BiConsumer;
 
+import static step.plugins.screentemplating.ScreenTemplatePlugin.PARAMETER_DIALOG;
+import static step.plugins.screentemplating.ScreenTemplatePlugin.PARAMETER_TABLE;
+
 @Plugin(dependencies= {ObjectHookControllerPlugin.class, ScreenTemplatePlugin.class, EncryptionManagerDependencyPlugin.class})
 public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
 
@@ -99,9 +102,6 @@ public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
 	public ExecutionEnginePlugin getExecutionEnginePlugin() {
 		return new ParameterManagerPlugin(parameterManager, encryptionManager);
 	}
-
-	private static final String PARAMETER_DIALOG = "parameterDialog";
-	private static final String PARAMETER_TABLE = "parameterTable";
 
 	private void createScreenInputDefinitionsIfNecessary(GlobalContext context) {
 		// Parameter table
