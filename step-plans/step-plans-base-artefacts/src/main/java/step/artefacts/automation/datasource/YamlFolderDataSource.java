@@ -18,29 +18,28 @@
  ******************************************************************************/
 package step.artefacts.automation.datasource;
 
-import step.automation.packages.AutomationPackageNamedEntity;
 import step.core.dynamicbeans.DynamicValue;
 import step.datapool.file.DirectoryDataPool;
 
-@AutomationPackageNamedEntity(name = "folder")
 public class YamlFolderDataSource extends AbstractYamlDataSource<DirectoryDataPool> {
 
     protected DynamicValue<String> folder = new DynamicValue<String>("");
 
-    @Override
-    public DirectoryDataPool createDataPoolConfiguration() {
-        return new DirectoryDataPool();
+    public YamlFolderDataSource() {
+        super("folder");
     }
 
     @Override
     public void fillDataPoolConfiguration(DirectoryDataPool res) {
+        super.fillDataPoolConfiguration(res);
         if (folder != null) {
             res.setFolder(this.folder);
         }
     }
 
     @Override
-    public void fillFromDataPoolConfiguration(DirectoryDataPool dataPoolConfiguration) {
+    public void fillFromDataPoolConfiguration(DirectoryDataPool dataPoolConfiguration, boolean isForWriteEditable) {
+        super.fillFromDataPoolConfiguration(dataPoolConfiguration, isForWriteEditable);
         if (dataPoolConfiguration.getFolder() != null) {
             this.folder = dataPoolConfiguration.getFolder();
         }

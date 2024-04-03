@@ -16,38 +16,37 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plans.parser.yaml.serializers;
+package step.artefacts.automation.datasource;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
+import step.automation.packages.AutomationPackageNamedEntityUtils;
+import step.core.yaml.serializers.NamedEntityYamlSerializer;
 import step.core.yaml.serializers.StepYamlSerializer;
 import step.core.yaml.serializers.StepYamlSerializerAddOn;
-import step.plans.parser.yaml.model.YamlResourceReference;
-import step.plans.parser.yaml.schema.YamlResourceReferenceJsonSchemaHelper;
 
 import java.io.IOException;
 
-@StepYamlSerializerAddOn(targetClasses = {YamlResourceReference.class})
-public class YamlResourceReferenceSerializer extends StepYamlSerializer<YamlResourceReference> {
+@StepYamlSerializerAddOn(targetClasses = {NamedYamlDataSource.class})
+public class NamedYamlDataSourceSerializer extends StepYamlSerializer<NamedYamlDataSource> {
 
-    public YamlResourceReferenceSerializer(ObjectMapper yamlObjectMapper) {
+    public NamedYamlDataSourceSerializer() {
+    }
+
+    public NamedYamlDataSourceSerializer(ObjectMapper yamlObjectMapper) {
         super(yamlObjectMapper);
     }
 
     @Override
-    public void serialize(YamlResourceReference value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
-        if (value.getSimpleString() != null && !value.getSimpleString().isEmpty()) {
-            gen.writeString(value.getSimpleString());
-        } else if (value.getResourceId() != null && !value.getResourceId().isEmpty()) {
-            gen.writeStartObject();
-            gen.writeStringField(YamlResourceReferenceJsonSchemaHelper.FILE_REFERENCE_RESOURCE_ID_FIELD, value.getResourceId());
-            gen.writeEndObject();
-        }
-    }
+    public void serialize(NamedYamlDataSource value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+        NamedEntityYamlSerializer<AbstractYamlDataSource<?>> ser = new NamedEntityYamlSerializer<>() {
+            @Override
+            protected String resolveYamlName(AbstractYamlDataSource<?> value) {
+                return AutomationPackageNamedEntityUtils.getEntityNameByClass(YamlDataSourceLookuper.resolveDataPool((Class<? extends AbstractYamlDataSource<?>>) value.getClass()));
+            }
 
-    @Override
-    public boolean isEmpty(SerializerProvider provider, YamlResourceReference value) {
-        return super.isEmpty(provider, value) || value.isEmpty();
+        };
+        ser.serialize(value.getYamlDataSource(), gen, serializers);
     }
 }

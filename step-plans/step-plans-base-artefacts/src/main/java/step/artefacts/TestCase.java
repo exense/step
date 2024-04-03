@@ -21,9 +21,9 @@ package step.artefacts;
 import step.automation.packages.AutomationPackageNamedEntity;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
-import step.plans.parser.yaml.model.YamlArtefact;
+import step.plans.parser.yaml.model.YamlModel;
 
-@YamlArtefact
+@YamlModel
 @AutomationPackageNamedEntity(name = "testCase")
 @Artefact(validAsRoot = true)
 public class TestCase extends AbstractArtefact {

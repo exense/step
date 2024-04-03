@@ -18,12 +18,16 @@
  ******************************************************************************/
 package step.datapool.excel;
 
+import step.artefacts.automation.datasource.YamlExcelDataSource;
+import step.automation.packages.AutomationPackageNamedEntity;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.entities.EntityManager;
 import step.core.entities.EntityReference;
 import step.datapool.DataPoolConfiguration;
+import step.plans.parser.yaml.model.YamlModel;
 
-
+@YamlModel(model = YamlExcelDataSource.class)
+@AutomationPackageNamedEntity(name = "excel")
 public class ExcelDataPool extends DataPoolConfiguration {
 
 	DynamicValue<String> file = new DynamicValue<>();

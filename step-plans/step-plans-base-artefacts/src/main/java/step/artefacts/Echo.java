@@ -22,9 +22,9 @@ import step.automation.packages.AutomationPackageNamedEntity;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
-import step.plans.parser.yaml.model.YamlArtefact;
+import step.plans.parser.yaml.model.YamlModel;
 
-@YamlArtefact
+@YamlModel
 @AutomationPackageNamedEntity(name = "echo")
 @Artefact(block=false)
 public class Echo extends AbstractArtefact {

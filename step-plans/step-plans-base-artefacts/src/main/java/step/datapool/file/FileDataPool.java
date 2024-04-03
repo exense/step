@@ -18,12 +18,16 @@
  ******************************************************************************/
 package step.datapool.file;
 
+import step.artefacts.automation.datasource.YamlFileDataSource;
+import step.automation.packages.AutomationPackageNamedEntity;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.entities.EntityManager;
 import step.core.entities.EntityReference;
 import step.datapool.DataPoolConfiguration;
+import step.plans.parser.yaml.model.YamlModel;
 
-
+@YamlModel(model = YamlFileDataSource.class)
+@AutomationPackageNamedEntity(name = "file")
 public class FileDataPool extends DataPoolConfiguration {
 	
 	DynamicValue<String> file = new DynamicValue<String>("");

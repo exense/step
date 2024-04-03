@@ -23,11 +23,11 @@ import step.automation.packages.AutomationPackageNamedEntity;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
 import step.datapool.DataSources;
-import step.plans.parser.yaml.model.YamlArtefact;
+import step.plans.parser.yaml.model.YamlModel;
 
 import static step.artefacts.ForBlock.FOR_BLOCK_ARTIFACT_NAME;
 
-@YamlArtefact(model = YamlForBlock.class)
+@YamlModel(model = YamlForBlock.class)
 @AutomationPackageNamedEntity(name = "for")
 @Artefact(name = FOR_BLOCK_ARTIFACT_NAME)
 public class ForBlock extends AbstractForBlock {

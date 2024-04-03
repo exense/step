@@ -18,12 +18,16 @@
  ******************************************************************************/
 package step.datapool.gsheet;
 
+import step.artefacts.automation.datasource.YamlGSheetDataSource;
+import step.automation.packages.AutomationPackageNamedEntity;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.entities.EntityManager;
 import step.core.entities.EntityReference;
 import step.datapool.DataPoolConfiguration;
+import step.plans.parser.yaml.model.YamlModel;
 
-
+@YamlModel(model = YamlGSheetDataSource.class)
+@AutomationPackageNamedEntity(name = "gsheet")
 public class GoogleSheetv4DataPoolConfiguration extends DataPoolConfiguration {
 	
 	DynamicValue<String> fileId = new DynamicValue<String>("");

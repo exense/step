@@ -84,10 +84,18 @@ public abstract class AbstractYamlArtefact<T extends AbstractArtefact> {
     protected void fillArtefactFields(T res) {
         res.addAttribute(AbstractOrganizableObject.NAME, getArtefactName());
 
-        res.setContinueParentNodeExecutionOnError(this.getContinueParentNodeExecutionOnError());
-        res.setInstrumentNode(this.getInstrumentNode());
-        res.setSkipNode(this.getSkipNode());
-        res.setDescription(this.getDescription());
+        if (this.continueParentNodeExecutionOnError != null) {
+            res.setContinueParentNodeExecutionOnError(this.continueParentNodeExecutionOnError);
+        }
+        if (this.instrumentNode != null) {
+            res.setInstrumentNode(this.instrumentNode);
+        }
+        if (this.skipNode != null) {
+            res.setSkipNode(this.skipNode);
+        }
+        if (this.description != null) {
+            res.setDescription(this.description);
+        }
         if (this.getChildren() != null) {
             for (NamedYamlArtefact child : this.getChildren()) {
                 res.getChildren().add(child.getAbstractArtefact().toArtefact());
@@ -227,8 +235,4 @@ public abstract class AbstractYamlArtefact<T extends AbstractArtefact> {
         }
     }
 
-    /**
-     * Void class to be used in annotations instead of null-values
-     */
-    public static final class None extends AbstractYamlArtefact<AbstractArtefact> {}
 }

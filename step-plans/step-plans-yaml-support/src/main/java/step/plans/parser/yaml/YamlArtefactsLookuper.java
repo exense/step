@@ -22,7 +22,7 @@ import step.automation.packages.AutomationPackageNamedEntityUtils;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.plans.parser.yaml.model.AbstractYamlArtefact;
-import step.plans.parser.yaml.model.YamlArtefact;
+import step.plans.parser.yaml.model.YamlModel;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -42,7 +42,7 @@ public class YamlArtefactsLookuper {
     }
 
     public static Class<? extends AbstractYamlArtefact<?>> getSpecialModelClassForArtefact(Class<? extends AbstractArtefact> aClass) {
-        return !hasSpecialModelClass(aClass) ? null : aClass.getAnnotation(YamlArtefact.class).model();
+        return !hasSpecialModelClass(aClass) ? null : (Class<? extends AbstractYamlArtefact<?>>) aClass.getAnnotation(YamlModel.class).model();
     }
 
     public static List<Class<? extends AbstractYamlArtefact<?>>> getSpecialYamlArtefactModels() {
@@ -51,7 +51,7 @@ public class YamlArtefactsLookuper {
 
     private static List<Class<? extends AbstractArtefact>> getArtefactsWithSpecialModels() {
         return AutomationPackageNamedEntityUtils.scanNamedEntityClasses(AbstractArtefact.class).stream()
-                .filter(c -> c.isAnnotationPresent(YamlArtefact.class))
+                .filter(c -> c.isAnnotationPresent(YamlModel.class))
                 .filter(YamlArtefactsLookuper::hasSpecialModelClass)
                 .map(c -> (Class<? extends AbstractArtefact>) c)
                 .collect(Collectors.toList());
@@ -59,14 +59,14 @@ public class YamlArtefactsLookuper {
 
     public static List<Class<? extends AbstractArtefact>> getSimpleYamlArtefactModels() {
         return AutomationPackageNamedEntityUtils.scanNamedEntityClasses(AbstractArtefact.class).stream()
-                .filter(c -> c.isAnnotationPresent(YamlArtefact.class))
+                .filter(c -> c.isAnnotationPresent(YamlModel.class))
                 .filter(c -> !hasSpecialModelClass(c))
                 .map(c -> (Class<? extends AbstractArtefact>) c)
                 .collect(Collectors.toList());
     }
 
     private static boolean hasSpecialModelClass(Class<?> c) {
-        return c.isAnnotationPresent(YamlArtefact.class) && c.getAnnotation(YamlArtefact.class).model() != null && c.getAnnotation(YamlArtefact.class).model() != AbstractYamlArtefact.None.class;
+        return c.isAnnotationPresent(YamlModel.class) && c.getAnnotation(YamlModel.class).model() != null && c.getAnnotation(YamlModel.class).model() != YamlModel.None.class;
     }
 
     public static boolean isRootArtefact(Class<?> yamlArtefactClass) {

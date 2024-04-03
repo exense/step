@@ -22,9 +22,9 @@ import step.automation.packages.AutomationPackageNamedEntity;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
-import step.plans.parser.yaml.model.YamlArtefact;
+import step.plans.parser.yaml.model.YamlModel;
 
-@YamlArtefact
+@YamlModel
 @AutomationPackageNamedEntity(name = "case")
 @Artefact()
 public class Case extends AbstractArtefact {

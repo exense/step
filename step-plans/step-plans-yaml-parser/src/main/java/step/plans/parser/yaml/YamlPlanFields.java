@@ -28,7 +28,5 @@ public class YamlPlanFields extends YamlFields {
 
     public static final String DATA_SOURCE_ORIGINAL_FIELD = "dataSource";
 
-    public static final String DATA_SOURCE_YAML_FIELD = "dataSource";
-
 
 }

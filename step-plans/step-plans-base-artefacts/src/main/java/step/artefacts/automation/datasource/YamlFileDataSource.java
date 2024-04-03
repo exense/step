@@ -18,30 +18,32 @@
  ******************************************************************************/
 package step.artefacts.automation.datasource;
 
-import step.automation.packages.AutomationPackageNamedEntity;
-import step.core.dynamicbeans.DynamicValue;
 import step.datapool.file.FileDataPool;
 import step.plans.parser.yaml.model.YamlResourceReference;
 
-@AutomationPackageNamedEntity(name = "file")
 public class YamlFileDataSource<T extends FileDataPool> extends AbstractYamlDataSource<T> {
 
     protected YamlResourceReference file = new YamlResourceReference();
 
-    @Override
-    public T createDataPoolConfiguration() {
-        return (T) new FileDataPool();
+    public YamlFileDataSource() {
+        super("file");
+    }
+
+    protected YamlFileDataSource(String dataSourceType) {
+        super(dataSourceType);
     }
 
     @Override
     public void fillDataPoolConfiguration(T res) {
+        super.fillDataPoolConfiguration(res);
         if (file != null) {
             res.setFile(file.toDynamicValue());
         }
     }
 
     @Override
-    public void fillFromDataPoolConfiguration(T dataPoolConfiguration) {
+    public void fillFromDataPoolConfiguration(T dataPoolConfiguration, boolean isForWriteEditable) {
+        super.fillFromDataPoolConfiguration(dataPoolConfiguration, isForWriteEditable);
         if (dataPoolConfiguration.getFile() != null) {
             this.file = YamlResourceReference.fromDynamicValue(dataPoolConfiguration.getFile());
         }

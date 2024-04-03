@@ -23,15 +23,15 @@ import step.core.dynamicbeans.DynamicValue;
 import step.plans.parser.yaml.model.AbstractYamlArtefact;
 
 public class AbstractYamlForBlock<T extends AbstractForBlock> extends AbstractYamlArtefact<T> {
-    protected DynamicValue<String> item = new DynamicValue<String>("row");
+    protected DynamicValue<String> item = null;
 
-    protected DynamicValue<Integer> maxFailedLoops = new DynamicValue<Integer>(null);
+    protected DynamicValue<Integer> maxFailedLoops = null;
 
-    protected DynamicValue<Integer> threads = new DynamicValue<Integer>(1);
+    protected DynamicValue<Integer> threads = null;
 
-    protected DynamicValue<String> globalCounter = new DynamicValue<String>("gcounter");
+    protected DynamicValue<String> globalCounter = null;
 
-    protected DynamicValue<String> userItem = new DynamicValue<String>("userId");
+    protected DynamicValue<String> userItem = null;
 
     public AbstractYamlForBlock() {
     }
@@ -43,21 +43,41 @@ public class AbstractYamlForBlock<T extends AbstractForBlock> extends AbstractYa
     @Override
     protected void fillArtefactFields(T res) {
         super.fillArtefactFields(res);
-        res.setItem(item);
-        res.setMaxFailedLoops(maxFailedLoops);
-        res.setThreads(threads);
-        res.setGlobalCounter(globalCounter);
-        res.setUserItem(userItem);
+        if (item != null) {
+            res.setItem(item);
+        }
+        if (maxFailedLoops != null) {
+            res.setMaxFailedLoops(maxFailedLoops);
+        }
+        if (threads != null) {
+            res.setThreads(threads);
+        }
+        if (globalCounter != null) {
+            res.setGlobalCounter(globalCounter);
+        }
+        if (userItem != null) {
+            res.setUserItem(userItem);
+        }
     }
 
     @Override
     protected void fillYamlArtefactFields(T artefact) {
         super.fillYamlArtefactFields(artefact);
-        this.item = artefact.getItem();
-        this.maxFailedLoops = artefact.getMaxFailedLoops();
-        this.threads = artefact.getThreads();
-        this.globalCounter = artefact.getGlobalCounter();
-        this.userItem = artefact.getUserItem();
+        if (artefact.getItem() != null) {
+            this.item = artefact.getItem();
+        }
+        if (artefact.getMaxFailedLoops() != null) {
+            this.maxFailedLoops = artefact.getMaxFailedLoops();
+        }
+        if (artefact.getThreads() != null) {
+            this.threads = artefact.getThreads();
+        }
+        if (artefact.getGlobalCounter() != null) {
+            this.globalCounter = artefact.getGlobalCounter();
+        }
+        if (artefact.getUserItem() != null) {
+            this.userItem = artefact.getUserItem();
+        }
     }
 
     @Override

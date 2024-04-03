@@ -18,9 +18,14 @@
  ******************************************************************************/
 package step.artefacts;
 
+import step.artefacts.automation.YamlDataSet;
+import step.automation.packages.AutomationPackageNamedEntity;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
+import step.plans.parser.yaml.model.YamlModel;
 
+@YamlModel(model = YamlDataSet.class)
+@AutomationPackageNamedEntity(name = "dataSet")
 @Artefact(name= DataSetArtefact.DATA_SET_ARTIFACT_NAME)
 public class DataSetArtefact extends AbstractForBlock {
 

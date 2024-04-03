@@ -18,11 +18,9 @@
  ******************************************************************************/
 package step.artefacts.automation.datasource;
 
-import step.automation.packages.AutomationPackageNamedEntity;
 import step.core.dynamicbeans.DynamicValue;
 import step.datapool.jdbc.SQLTableDataPoolConfiguration;
 
-@AutomationPackageNamedEntity(name = "sql")
 public class YamlSqlDataSource extends AbstractYamlDataSource<SQLTableDataPoolConfiguration> {
 
     protected DynamicValue<String> connectionString = new DynamicValue<String>("");
@@ -32,13 +30,13 @@ public class YamlSqlDataSource extends AbstractYamlDataSource<SQLTableDataPoolCo
     protected DynamicValue<String> writePKey = new DynamicValue<String>("");
     protected DynamicValue<String> driverClass = new DynamicValue<String>("");
 
-    @Override
-    public SQLTableDataPoolConfiguration createDataPoolConfiguration() {
-        return new SQLTableDataPoolConfiguration();
+    public YamlSqlDataSource() {
+        super("sql");
     }
 
     @Override
     public void fillDataPoolConfiguration(SQLTableDataPoolConfiguration config) {
+        super.fillDataPoolConfiguration(config);
         if (this.connectionString != null) {
             config.setConnectionString(connectionString);
         }
@@ -60,7 +58,8 @@ public class YamlSqlDataSource extends AbstractYamlDataSource<SQLTableDataPoolCo
     }
 
     @Override
-    public void fillFromDataPoolConfiguration(SQLTableDataPoolConfiguration dataPoolConfiguration) {
+    public void fillFromDataPoolConfiguration(SQLTableDataPoolConfiguration dataPoolConfiguration, boolean isForWriteEditable) {
+        super.fillFromDataPoolConfiguration(dataPoolConfiguration, isForWriteEditable);
         if (dataPoolConfiguration.getConnectionString() != null) {
             this.connectionString = dataPoolConfiguration.getConnectionString();
         }

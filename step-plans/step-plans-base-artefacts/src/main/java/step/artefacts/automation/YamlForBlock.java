@@ -24,11 +24,11 @@ import step.datapool.sequence.IntSequenceDataPool;
 
 public class YamlForBlock extends AbstractYamlForBlock<ForBlock> {
 
-    protected DynamicValue<Integer> start = new DynamicValue<Integer>(1);
+    protected DynamicValue<Integer> start = null;
 
-    protected DynamicValue<Integer> end = new DynamicValue<Integer>(2);
+    protected DynamicValue<Integer> end = null;
 
-    protected DynamicValue<Integer> inc = new DynamicValue<Integer>(1);
+    protected DynamicValue<Integer> inc = null;
 
     public YamlForBlock() {
         super(ForBlock.class);

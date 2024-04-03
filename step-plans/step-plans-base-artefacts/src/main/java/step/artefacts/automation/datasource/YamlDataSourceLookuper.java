@@ -19,17 +19,56 @@
 package step.artefacts.automation.datasource;
 
 import step.automation.packages.AutomationPackageNamedEntityUtils;
-import step.automation.packages.model.AbstractYamlFunction;
+import step.core.artefacts.AbstractArtefact;
+import step.datapool.DataPoolConfiguration;
+import step.plans.parser.yaml.model.YamlModel;
 
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class YamlDataSourceLookuper {
 
-    public static List<Class<? extends AbstractYamlDataSource<?>>> getYamlDataSources() {
-        return AutomationPackageNamedEntityUtils.scanNamedEntityClasses(AbstractYamlDataSource.class).stream()
-                .map(c -> (Class<? extends AbstractYamlDataSource<?>>) c)
+    private static Map<Class<? extends AbstractYamlDataSource<?>>, Class<? extends DataPoolConfiguration>> MODEL_TO_DATAPOOL_MAP =  createModelToDataPoolMap() ;
+
+    private static Map<Class<? extends AbstractYamlDataSource<?>>, Class<? extends DataPoolConfiguration>> createModelToDataPoolMap() {
+        Map<Class<? extends AbstractYamlDataSource<?>>, Class<? extends DataPoolConfiguration>> res = new HashMap<>();
+        List<Class<? extends DataPoolConfiguration>> dataPools = getDataPools();
+        dataPools.forEach(aClass -> res.put(resolveYamlDataSource(aClass), aClass));
+        return res;
+    }
+
+    private static List<Class<? extends DataPoolConfiguration>> getDataPools(){
+        return AutomationPackageNamedEntityUtils.scanNamedEntityClasses(DataPoolConfiguration.class).stream()
+                .map(c -> (Class<? extends DataPoolConfiguration>) c)
                 .collect(Collectors.toList());
+    }
+
+    public static List<Class<? extends AbstractYamlDataSource<?>>> getYamlDataSources() {
+       return new ArrayList<>(MODEL_TO_DATAPOOL_MAP.keySet());
+    }
+
+    public static Class<? extends AbstractYamlDataSource<?>> resolveYamlDataSource(Class<? extends DataPoolConfiguration> dataPoolConfiguration) {
+        if (dataPoolConfiguration.getAnnotation(YamlModel.class) != null) {
+            return (Class<? extends AbstractYamlDataSource<?>>) dataPoolConfiguration.getAnnotation(YamlModel.class).model();
+        } else {
+            return null;
+        }
+    }
+
+    public static Class<? extends DataPoolConfiguration> resolveDataPool(Class<? extends AbstractYamlDataSource<?>> yamlDataSource) {
+        return MODEL_TO_DATAPOOL_MAP.get(yamlDataSource);
+    }
+
+    public static Class<? extends AbstractYamlDataSource<?>> getModelClassByYamlName(String yamlName) {
+        Collection<Class<? extends DataPoolConfiguration>> dataPoolConfigurations = MODEL_TO_DATAPOOL_MAP.values();
+        for (Class<? extends DataPoolConfiguration> dataPool : dataPoolConfigurations) {
+            String expectedYamlName = AutomationPackageNamedEntityUtils.getEntityNameByClass(dataPool);
+
+            if (yamlName.equalsIgnoreCase(expectedYamlName)) {
+                return resolveYamlDataSource(dataPool);
+            }
+        }
+        return null;
     }
 
 }

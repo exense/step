@@ -18,12 +18,10 @@
  ******************************************************************************/
 package step.artefacts.automation.datasource;
 
-import step.automation.packages.AutomationPackageNamedEntity;
 import step.core.dynamicbeans.DynamicValue;
 import step.datapool.excel.ExcelDataPool;
 import step.plans.parser.yaml.model.YamlResourceReference;
 
-@AutomationPackageNamedEntity(name = "excel")
 public class YamlExcelDataSource extends AbstractYamlDataSource<ExcelDataPool> {
 
     protected YamlResourceReference file = new YamlResourceReference();
@@ -32,13 +30,13 @@ public class YamlExcelDataSource extends AbstractYamlDataSource<ExcelDataPool> {
 
     protected DynamicValue<Boolean> headers = new DynamicValue<>(true);
 
-    @Override
-    public ExcelDataPool createDataPoolConfiguration() {
-        return new ExcelDataPool();
+    public YamlExcelDataSource() {
+        super("excel");
     }
 
     @Override
     public void fillDataPoolConfiguration(ExcelDataPool res) {
+        super.fillDataPoolConfiguration(res);
         if (file != null) {
             res.setFile(file.toDynamicValue());
         }
@@ -51,7 +49,8 @@ public class YamlExcelDataSource extends AbstractYamlDataSource<ExcelDataPool> {
     }
 
     @Override
-    public void fillFromDataPoolConfiguration(ExcelDataPool dataPoolConfiguration) {
+    public void fillFromDataPoolConfiguration(ExcelDataPool dataPoolConfiguration, boolean isForWriteEditable) {
+        super.fillFromDataPoolConfiguration(dataPoolConfiguration, isForWriteEditable);
         if (dataPoolConfiguration.getFile() != null) {
             this.file = YamlResourceReference.fromDynamicValue(dataPoolConfiguration.getFile());
         }

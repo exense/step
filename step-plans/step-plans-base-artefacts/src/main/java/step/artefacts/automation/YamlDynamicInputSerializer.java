@@ -19,31 +19,68 @@
 package step.artefacts.automation;
 
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
+import step.core.accessors.DefaultJacksonMapperProvider;
+import step.core.dynamicbeans.DynamicValue;
+import step.core.yaml.YamlFields;
 import step.core.yaml.serializers.StepYamlSerializer;
 import step.core.yaml.serializers.StepYamlSerializerAddOn;
-import step.plans.parser.yaml.DynamicInputsSupport;
 
 import java.io.IOException;
+import java.util.Iterator;
 
 @StepYamlSerializerAddOn(targetClasses = {YamlDynamicInputs.class})
 public class YamlDynamicInputSerializer extends StepYamlSerializer<YamlDynamicInputs> {
 
-    private final DynamicInputsSupport dynamicInputsSupport;
+    public static final String EMPTY_JSON = "{}";
+
+    private static final ObjectMapper jsonObjectMapper = DefaultJacksonMapperProvider.getObjectMapper();
 
     public YamlDynamicInputSerializer(ObjectMapper yamlObjectMapper) {
         super(yamlObjectMapper);
-        this.dynamicInputsSupport = new DynamicInputsSupport();
     }
 
     @Override
     public void serialize(YamlDynamicInputs value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
-        dynamicInputsSupport.serializeDynamicInputs(gen, value.toDynamicValue());
+        DynamicValue<String> dynamicInputsValue = value.toDynamicValue();
+        gen.writeStartArray();
+        if (dynamicInputsValue.isDynamic()) {
+            throw new UnsupportedOperationException("Dynamic arguments are not supported");
+        } else {
+            String argumentValueString = dynamicInputsValue.getValue();
+            if (argumentValueString != null && !argumentValueString.isEmpty()) {
+                JsonNode argumentsJson = jsonObjectMapper.readTree(argumentValueString);
+                Iterator<String> inputs = argumentsJson.fieldNames();
+                while (inputs.hasNext()) {
+                    String inputName = inputs.next();
+                    gen.writeStartObject();
+                    JsonNode dynamicInput = argumentsJson.get(inputName);
+                    if (dynamicInput.isContainerNode() && dynamicInput.get("dynamic").asBoolean()) {
+                        // dynamic input
+                        gen.writeFieldName(inputName);
+                        gen.writeStartObject();
+                        gen.writeStringField(YamlFields.DYN_VALUE_EXPRESSION_FIELD, dynamicInput.get(YamlFields.DYN_VALUE_EXPRESSION_FIELD).asText());
+                        gen.writeEndObject();
+                    } else if (dynamicInput.isContainerNode()) {
+                        // yaml input wrapped in dynamic value
+                        gen.writeObjectField(inputName, dynamicInput.get("value"));
+                    } else {
+                        // primitive yaml input
+                        gen.writeObjectField(inputName, dynamicInput);
+                    }
+                    gen.writeEndObject();
+                }
+            }
+        }
+        gen.writeEndArray();
     }
 
     @Override
     public boolean isEmpty(SerializerProvider provider, YamlDynamicInputs value) {
-        return !dynamicInputsSupport.isNotEmptyDynamicInputs(value.toDynamicValue());
+        DynamicValue<String> dynamicInputsValue = value.toDynamicValue();
+        return !((dynamicInputsValue.getValue() != null && !dynamicInputsValue.getValue().isEmpty() && !dynamicInputsValue.getValue().equals(EMPTY_JSON))
+                || (dynamicInputsValue.getExpression() != null && !dynamicInputsValue.getExpression().isEmpty()));
     }
 }

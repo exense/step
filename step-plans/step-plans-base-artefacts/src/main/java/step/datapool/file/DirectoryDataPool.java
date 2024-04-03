@@ -18,10 +18,14 @@
  ******************************************************************************/
 package step.datapool.file;
 
+import step.artefacts.automation.datasource.YamlFolderDataSource;
+import step.automation.packages.AutomationPackageNamedEntity;
 import step.core.dynamicbeans.DynamicValue;
 import step.datapool.DataPoolConfiguration;
+import step.plans.parser.yaml.model.YamlModel;
 
-
+@YamlModel(model = YamlFolderDataSource.class)
+@AutomationPackageNamedEntity(name = "folder")
 public class DirectoryDataPool extends DataPoolConfiguration {
 	
 	DynamicValue<String> folder = new DynamicValue<String>("");

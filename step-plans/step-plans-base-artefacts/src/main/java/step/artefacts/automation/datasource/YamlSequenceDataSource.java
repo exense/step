@@ -18,11 +18,9 @@
  ******************************************************************************/
 package step.artefacts.automation.datasource;
 
-import step.automation.packages.AutomationPackageNamedEntity;
 import step.core.dynamicbeans.DynamicValue;
 import step.datapool.sequence.IntSequenceDataPool;
 
-@AutomationPackageNamedEntity(name = "sequence")
 public class YamlSequenceDataSource extends AbstractYamlDataSource<IntSequenceDataPool> {
 
     protected DynamicValue<Integer> start = new DynamicValue<Integer>(1);
@@ -31,13 +29,13 @@ public class YamlSequenceDataSource extends AbstractYamlDataSource<IntSequenceDa
 
     protected DynamicValue<Integer> inc = new DynamicValue<Integer>(1);
 
-    @Override
-    public IntSequenceDataPool createDataPoolConfiguration() {
-        return new IntSequenceDataPool();
+    public YamlSequenceDataSource() {
+        super("sequence");
     }
 
     @Override
     public void fillDataPoolConfiguration(IntSequenceDataPool res) {
+        super.fillDataPoolConfiguration(res);
         if (start != null) {
             res.setStart(start);
         }
@@ -50,7 +48,8 @@ public class YamlSequenceDataSource extends AbstractYamlDataSource<IntSequenceDa
     }
 
     @Override
-    public void fillFromDataPoolConfiguration(IntSequenceDataPool dataPoolConfiguration) {
+    public void fillFromDataPoolConfiguration(IntSequenceDataPool dataPoolConfiguration, boolean isForWriteEditable) {
+        super.fillFromDataPoolConfiguration(dataPoolConfiguration, isForWriteEditable);
         if (dataPoolConfiguration.getStart() != null) {
             start = dataPoolConfiguration.getStart();
         }

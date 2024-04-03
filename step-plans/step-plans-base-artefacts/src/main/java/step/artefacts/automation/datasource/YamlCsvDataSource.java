@@ -18,19 +18,15 @@
  ******************************************************************************/
 package step.artefacts.automation.datasource;
 
-import step.automation.packages.AutomationPackageNamedEntity;
 import step.core.dynamicbeans.DynamicValue;
 import step.datapool.file.CSVDataPool;
-import step.datapool.file.FileDataPool;
 
-@AutomationPackageNamedEntity(name = "csv")
 public class YamlCsvDataSource extends YamlFileDataSource<CSVDataPool> {
 
     protected DynamicValue<String> delimiter = new DynamicValue<String>(",");
 
-    @Override
-    public CSVDataPool createDataPoolConfiguration() {
-        return new CSVDataPool();
+    public YamlCsvDataSource() {
+        super("csv");
     }
 
     @Override
@@ -42,8 +38,8 @@ public class YamlCsvDataSource extends YamlFileDataSource<CSVDataPool> {
     }
 
     @Override
-    public void fillFromDataPoolConfiguration(CSVDataPool dataPoolConfiguration) {
-        super.fillFromDataPoolConfiguration(dataPoolConfiguration);
+    public void fillFromDataPoolConfiguration(CSVDataPool dataPoolConfiguration, boolean isForWriteEditable) {
+        super.fillFromDataPoolConfiguration(dataPoolConfiguration, isForWriteEditable);
         if (dataPoolConfiguration.getDelimiter() != null) {
             this.delimiter = dataPoolConfiguration.getDelimiter();
         }

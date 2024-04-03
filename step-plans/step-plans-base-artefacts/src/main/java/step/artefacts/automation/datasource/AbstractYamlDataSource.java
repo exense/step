@@ -18,45 +18,67 @@
  ******************************************************************************/
 package step.artefacts.automation.datasource;
 
-import jakarta.json.JsonArrayBuilder;
-import jakarta.json.JsonObjectBuilder;
-import step.automation.packages.AutomationPackageNamedEntityUtils;
-import step.core.yaml.schema.YamlJsonSchemaHelper;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import step.core.dynamicbeans.DynamicValue;
 import step.datapool.DataPoolConfiguration;
-import step.handlers.javahandler.jsonschema.FieldMetadata;
-import step.handlers.javahandler.jsonschema.JsonSchemaCreator;
-import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
-import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
-import step.jsonschema.JsonSchema;
+import step.datapool.DataPoolFactory;
 
-import java.lang.reflect.Field;
-import java.util.List;
+import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY;
+import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.NONE;
 
-@JsonSchema(customJsonSchemaProcessor = AbstractYamlDataSource.YamlDataSourceSchemaProcessor.class)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonAutoDetect(fieldVisibility = ANY, getterVisibility = NONE, setterVisibility = NONE)
 public abstract class AbstractYamlDataSource<T extends DataPoolConfiguration> {
 
-    public abstract T createDataPoolConfiguration();
+    public static final String FOR_WRITE_FIELD = "forWrite";
 
-    public abstract void fillDataPoolConfiguration(T config);
+    @JsonIgnore
+    private final String dataSourceType;
 
-    public abstract void fillFromDataPoolConfiguration(T dataPoolConfiguration);
+    protected DynamicValue<Boolean> forWrite = new DynamicValue<>(false);
 
-    public static class YamlDataSourceSchemaProcessor implements JsonSchemaFieldProcessor {
-        @Override
-        public boolean applyCustomProcessing(Class<?> objectClass, Field field, FieldMetadata fieldMetadata, JsonObjectBuilder propertiesBuilder, List<String> requiredPropertiesOutput, JsonSchemaCreator schemaCreator) {
-            try {
-                propertiesBuilder.add("type", "object");
-                JsonArrayBuilder arrayBuilder = schemaCreator.getJsonProvider().createArrayBuilder();
-                YamlJsonSchemaHelper schemaHelper = new YamlJsonSchemaHelper(schemaCreator.getJsonProvider());
-                for (Class<? extends AbstractYamlDataSource<?>> dataSourceClass : YamlDataSourceLookuper.getYamlDataSources()) {
-                    String entityName = AutomationPackageNamedEntityUtils.getEntityNameByClass(dataSourceClass);
-                    arrayBuilder.add(schemaHelper.createNamedObjectImplDef(entityName, dataSourceClass, schemaCreator, false));
-                }
-                propertiesBuilder.add("oneOf", arrayBuilder);
-                return true;
-            } catch (JsonSchemaPreparationException e) {
-                throw new RuntimeException("Unable to prepare json schema for datasource", e);
-            }
+    protected AbstractYamlDataSource(String dataSourceType) {
+        this.dataSourceType = dataSourceType;
+    }
+
+    public final T createDataPoolConfiguration() {
+        return (T) DataPoolFactory.getDefaultDataPoolConfiguration(dataSourceType);
+    }
+
+    public void fillDataPoolConfiguration(T config) {
+        if (this.forWrite != null) {
+            config.setForWrite(forWrite);
         }
+    }
+
+    public final T toDataPoolConfiguration(){
+        T res = createDataPoolConfiguration();
+        fillDataPoolConfiguration(res);
+        return res;
+    }
+
+    public void fillFromDataPoolConfiguration(T dataPoolConfiguration, boolean isForWriteEditable) {
+        if (!isForWriteEditable) {
+            this.forWrite = null;
+        } else if (dataPoolConfiguration.getForWrite() != null) {
+            this.forWrite = dataPoolConfiguration.getForWrite();
+        }
+    }
+
+    public static <T extends DataPoolConfiguration> AbstractYamlDataSource<T> fromDataPoolConfiguration(T dataPoolConfiguration, boolean isForWriteEditable) {
+        try {
+            Class<? extends AbstractYamlDataSource<?>> yamlDataSourceClass = YamlDataSourceLookuper.resolveYamlDataSource(dataPoolConfiguration.getClass());
+            AbstractYamlDataSource<T> instance = (AbstractYamlDataSource<T>) yamlDataSourceClass.getConstructor().newInstance();
+            instance.fillFromDataPoolConfiguration(dataPoolConfiguration, isForWriteEditable);
+            return instance;
+        } catch (Exception e) {
+            throw new RuntimeException("Unable to instantiate yaml datasource");
+        }
+    }
+
+    public String getDataSourceType() {
+        return dataSourceType;
     }
 }

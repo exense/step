@@ -480,7 +480,7 @@ root:
                         expression: ""
                         expressionType: null
                       useDynamicName: false
-                      description: ""
+                      description: null
                       children: []
                       customAttributes: null
                       attachments: null
@@ -520,7 +520,7 @@ root:
                         expression: ""
                         expressionType: null
                       useDynamicName: false
-                      description: ""
+                      description: null
                       children: []
                       customAttributes: null
                       attachments: null
@@ -560,7 +560,7 @@ root:
                         expression: ""
                         expressionType: null
                       useDynamicName: false
-                      description: ""
+                      description: null
                       children: []
                       customAttributes: null
                       attachments: null
@@ -1435,7 +1435,7 @@ root:
                             expression: ""
                             expressionType: null
                           useDynamicName: false
-                          description: ""
+                          description: null
                           children: []
                           customAttributes: null
                           attachments: null
@@ -1824,7 +1824,7 @@ root:
                         expression: ""
                         expressionType: null
                       useDynamicName: false
-                      description: ""
+                      description: null
                       children:
                         - _class: "CallPlan"
                           customFields: null

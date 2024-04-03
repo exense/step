@@ -18,26 +18,24 @@
  ******************************************************************************/
 package step.core.artefacts;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.bson.types.ObjectId;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.annotation.JsonTypeIdResolver;
-
+import org.bson.types.ObjectId;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.MapDeserializer;
 import step.core.accessors.MapSerializer;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.entities.EntityManager;
 import step.core.entities.EntityReference;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @JsonTypeInfo(use=Id.CUSTOM,property= AbstractArtefact.JSON_CLASS_PROPERTY)
 @JsonTypeIdResolver(ArtefactTypeIdResolver.class)

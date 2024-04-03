@@ -18,29 +18,28 @@
  ******************************************************************************/
 package step.artefacts.automation.datasource;
 
-import step.automation.packages.AutomationPackageNamedEntity;
 import step.core.dynamicbeans.DynamicValue;
 import step.datapool.json.JsonArrayDataPoolConfiguration;
 
-@AutomationPackageNamedEntity(name = "json-array")
 public class YamlJsonArrayDataSource extends AbstractYamlDataSource<JsonArrayDataPoolConfiguration> {
 
     protected DynamicValue<String> json = new DynamicValue<String>("");
 
-    @Override
-    public JsonArrayDataPoolConfiguration createDataPoolConfiguration() {
-        return new JsonArrayDataPoolConfiguration();
+    public YamlJsonArrayDataSource() {
+        super("json-array");
     }
 
     @Override
     public void fillDataPoolConfiguration(JsonArrayDataPoolConfiguration res) {
+        super.fillDataPoolConfiguration(res);
         if (json != null) {
             res.setJson(json);
         }
     }
 
     @Override
-    public void fillFromDataPoolConfiguration(JsonArrayDataPoolConfiguration dataPoolConfiguration) {
+    public void fillFromDataPoolConfiguration(JsonArrayDataPoolConfiguration dataPoolConfiguration, boolean isForWriteEditable) {
+        super.fillFromDataPoolConfiguration(dataPoolConfiguration, isForWriteEditable);
         if (dataPoolConfiguration.getJson() != null) {
             this.json = dataPoolConfiguration.getJson();
         }

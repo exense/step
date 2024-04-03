@@ -18,25 +18,23 @@
  ******************************************************************************/
 package step.artefacts.automation.datasource;
 
-import step.automation.packages.AutomationPackageNamedEntity;
 import step.core.dynamicbeans.DynamicValue;
 import step.datapool.gsheet.GoogleSheetv4DataPoolConfiguration;
 import step.plans.parser.yaml.model.YamlResourceReference;
 
-@AutomationPackageNamedEntity(name = "gsheet")
 public class YamlGSheetDataSource extends AbstractYamlDataSource<GoogleSheetv4DataPoolConfiguration> {
 
     protected DynamicValue<String> fileId = new DynamicValue<String>("");
     protected YamlResourceReference serviceAccountKey = new YamlResourceReference();
     protected DynamicValue<String> tabName = new DynamicValue<String>("");
 
-    @Override
-    public GoogleSheetv4DataPoolConfiguration createDataPoolConfiguration() {
-        return new GoogleSheetv4DataPoolConfiguration();
+    public YamlGSheetDataSource() {
+        super("gsheet");
     }
 
     @Override
     public void fillDataPoolConfiguration(GoogleSheetv4DataPoolConfiguration res) {
+        super.fillDataPoolConfiguration(res);
         if (fileId != null) {
             res.setFileId(fileId);
         }
@@ -49,7 +47,8 @@ public class YamlGSheetDataSource extends AbstractYamlDataSource<GoogleSheetv4Da
     }
 
     @Override
-    public void fillFromDataPoolConfiguration(GoogleSheetv4DataPoolConfiguration dataPoolConfiguration) {
+    public void fillFromDataPoolConfiguration(GoogleSheetv4DataPoolConfiguration dataPoolConfiguration, boolean isForWriteEditable) {
+        super.fillFromDataPoolConfiguration(dataPoolConfiguration, isForWriteEditable);
         if (dataPoolConfiguration.getFileId() != null) {
             this.fileId = dataPoolConfiguration.getFileId();
         }

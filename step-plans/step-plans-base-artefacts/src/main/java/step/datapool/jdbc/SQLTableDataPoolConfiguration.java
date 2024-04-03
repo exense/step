@@ -18,10 +18,14 @@
  ******************************************************************************/
 package step.datapool.jdbc;
 
+import step.artefacts.automation.datasource.YamlSqlDataSource;
+import step.automation.packages.AutomationPackageNamedEntity;
 import step.core.dynamicbeans.DynamicValue;
 import step.datapool.DataPoolConfiguration;
+import step.plans.parser.yaml.model.YamlModel;
 
-
+@YamlModel(model = YamlSqlDataSource.class)
+@AutomationPackageNamedEntity(name = "sql")
 public class SQLTableDataPoolConfiguration extends DataPoolConfiguration {
 	
 	DynamicValue<String> connectionString = new DynamicValue<String>("");

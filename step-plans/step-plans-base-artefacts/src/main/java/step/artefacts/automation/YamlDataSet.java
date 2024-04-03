@@ -18,21 +18,30 @@
  ******************************************************************************/
 package step.artefacts.automation;
 
-import step.artefacts.ForEachBlock;
+import step.artefacts.DataSetArtefact;
 import step.artefacts.automation.datasource.AbstractYamlDataSource;
 import step.artefacts.automation.datasource.NamedYamlDataSource;
+import step.core.dynamicbeans.DynamicValue;
+import step.jsonschema.JsonSchema;
 
-public class YamlForEachBlock extends AbstractYamlForBlock<ForEachBlock> {
+public class YamlDataSet extends AbstractYamlForBlock<DataSetArtefact> {
 
-    protected NamedYamlDataSource dataSource;
+    protected DynamicValue<Boolean> resetAtEnd = null;
 
-    public YamlForEachBlock() {
-        super(ForEachBlock.class);
+    @JsonSchema(customJsonSchemaProcessor = NamedYamlDataSource.WithForWriteSchemaProcessor.class)
+    protected NamedYamlDataSource dataSource = null;
+
+    public YamlDataSet() {
+        super(DataSetArtefact.class);
     }
 
     @Override
-    protected void fillArtefactFields(ForEachBlock res) {
+    protected void fillArtefactFields(DataSetArtefact res) {
         super.fillArtefactFields(res);
+        if (resetAtEnd != null) {
+            res.setResetAtEnd(this.resetAtEnd);
+        }
+
         if (dataSource != null) {
             res.setDataSourceType(dataSource.getYamlDataSource().getDataSourceType());
             res.setDataSource(dataSource.getYamlDataSource().toDataPoolConfiguration());
@@ -40,10 +49,13 @@ public class YamlForEachBlock extends AbstractYamlForBlock<ForEachBlock> {
     }
 
     @Override
-    protected void fillYamlArtefactFields(ForEachBlock artefact) {
+    protected void fillYamlArtefactFields(DataSetArtefact artefact) {
         super.fillYamlArtefactFields(artefact);
+        if (artefact.getResetAtEnd() != null) {
+            this.resetAtEnd = artefact.getResetAtEnd();
+        }
         if (artefact.getDataSource() != null) {
-            this.dataSource = new NamedYamlDataSource(AbstractYamlDataSource.fromDataPoolConfiguration(artefact.getDataSource(), false));
+            this.dataSource = new NamedYamlDataSource(AbstractYamlDataSource.fromDataPoolConfiguration(artefact.getDataSource(), true));
         }
     }
 }

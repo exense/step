@@ -16,28 +16,22 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plans.parser.yaml.rules;
+package step.plans.parser.yaml.model;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import step.artefacts.DataSetArtefact;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 
-public class DataSetRule extends SelectableDataSourceSupportRule {
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-    public DataSetRule(ObjectMapper stepYamlMapper) {
-        super(stepYamlMapper);
-    }
+@Target(ElementType.TYPE)
+@Retention(RUNTIME)
+public @interface YamlModel {
 
-    protected boolean applicableClass(Class<?> artefactClass) {
-        return DataSetArtefact.class.isAssignableFrom(artefactClass);
-    }
+    Class<?> model() default None.class;
 
-    protected boolean applicableArtefactName(String artefactClass) {
-        return artefactClass.equals(DataSetArtefact.DATA_SET_ARTIFACT_NAME);
-    }
-
-    @Override
-    protected boolean isForWriteEditable() {
-        return true;
-    }
-
+    /**
+     * Void class to be used in annotations instead of null-values
+     */
+    final class None {}
 }

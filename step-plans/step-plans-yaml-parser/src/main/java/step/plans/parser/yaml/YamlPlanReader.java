@@ -20,6 +20,8 @@ package step.plans.parser.yaml;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -27,10 +29,12 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.artefacts.CallFunction;
 import step.core.Version;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.artefacts.AbstractArtefact;
+import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
 import step.core.scanner.AnnotationScanner;
 import step.core.scanner.CachedAnnotationScanner;
@@ -46,7 +50,6 @@ import step.plans.parser.yaml.model.AbstractYamlArtefact;
 import step.plans.parser.yaml.model.NamedYamlArtefact;
 import step.plans.parser.yaml.model.YamlPlan;
 import step.plans.parser.yaml.model.YamlPlanVersions;
-import step.plans.parser.yaml.rules.NodeNameRule;
 import step.plans.parser.yaml.schema.YamlPlanValidationException;
 import step.repositories.parser.StepsParser;
 
@@ -143,6 +146,59 @@ public class YamlPlanReader {
 		this(null, null, true, null);
 	}
 
+	// TODO: remove this code
+	/**
+	 * Returns function name from function selection criteria (if selection criteria by function name exists).
+	 */
+	private DynamicValue<String> getFunctionNameDynamicValue(DynamicValue<String> function, ObjectMapper jsonObjectMapper) throws JsonProcessingException {
+		if (function.getValue().trim().length() > 0) {
+			if (function.getValue().startsWith("{")) {
+				TypeReference<HashMap<String, JsonNode>> functionValueTypeRef = new TypeReference<>() {
+				};
+				HashMap<String, JsonNode> functionNameAsMap = jsonObjectMapper.readValue(function.getValue(), functionValueTypeRef);
+				if (functionNameAsMap.isEmpty()) {
+					return null;
+				}
+				JsonNode functionName = functionNameAsMap.get(AbstractOrganizableObject.NAME);
+				if (functionName == null) {
+					return null;
+				}
+
+				// function name can be either the dynamic value or the simple string (if converted from the plain-text format)
+				if (functionName.isContainerNode()) {
+					return jsonObjectMapper.treeToValue(functionName, DynamicValue.class);
+				} else {
+					return new DynamicValue<>(functionName.asText());
+				}
+		   } else {
+				throw new IllegalArgumentException("Invalid function. Function selector for yaml only supports function selectors as jsons, but was: " + function.getValue());
+			}
+
+		} else {
+			return null;
+		}
+	}
+
+	// TODO: remove this code
+	private String defaultNodeName(AbstractArtefact artefact, ObjectMapper jsonObjectMapper) throws JsonProcessingException {
+		if (artefact instanceof CallFunction) {
+			// for CallFunction the default name is function name
+			DynamicValue<String> function = ((CallFunction) artefact).getFunction();
+			if (function != null) {
+				DynamicValue<String> functionName = getFunctionNameDynamicValue(function, jsonObjectMapper);
+				if (functionName != null && !functionName.isDynamic()) {
+					return functionName.getValue();
+				}
+			}
+		}
+		return artefactClassNodeName(artefact.getClass());
+	}
+
+	// TODO: remove this code
+	private String artefactClassNodeName(Class<? extends AbstractArtefact> artefactClass) {
+		return AbstractArtefact.getArtefactName(artefactClass);
+	}
+
 	/**
 	 * Read the plan from Yaml
 	 *
@@ -183,7 +239,7 @@ public class YamlPlanReader {
 		// if artefact name is default (filled by plainTextPlanParser), we replace the value with default in terms of yaml format
 		// (for example, use a keyword name as artefact name)
 		if (Objects.equals(plainTextArtefact.getAttribute(AbstractArtefact.NAME), artefactClassName)) {
-			plainTextArtefact.addAttribute(AbstractOrganizableObject.NAME, NodeNameRule.defaultNodeName(plainTextArtefact, simpleJsonObjectMapper));
+			plainTextArtefact.addAttribute(AbstractOrganizableObject.NAME, defaultNodeName(plainTextArtefact, simpleJsonObjectMapper));
 		}
 
 		for (AbstractArtefact child : plainTextArtefact.getChildren()) {
