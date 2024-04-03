@@ -111,6 +111,11 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 				.setType(MetricAttributeType.TEXT)
 				.setMetadata(Map.of("knownValues", Arrays.asList("PASSED", "FAILED", "TECHNICAL_ERROR", "INTERRUPTED")))
 				.setDisplayName("Status");
+		MetricAttribute typeAttribute = new MetricAttribute()
+				.setName("type")
+				.setType(MetricAttributeType.TEXT)
+				.setMetadata(Map.of("knownValues", Arrays.asList("keyword", "custom")))
+				.setDisplayName("Type");
 		MetricAttribute taskAttribute = new MetricAttribute()
 				.setName("taskId")
 				.setType(MetricAttributeType.TEXT)
@@ -173,7 +178,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 				new MetricType()
 						.setName(RESPONSE_TIME)
 						.setDisplayName("Response time")
-						.setAttributes(Arrays.asList(statusAttribute, nameAttribute, taskAttribute, executionAttribute, planAttribute))
+						.setAttributes(Arrays.asList(statusAttribute, typeAttribute, nameAttribute, taskAttribute, executionAttribute, planAttribute))
 						.setDefaultGroupingAttributes(Arrays.asList(nameAttribute.getName()))
 						.setUnit("ms")
 						.setDefaultAggregation(MetricAggregation.AVG)
