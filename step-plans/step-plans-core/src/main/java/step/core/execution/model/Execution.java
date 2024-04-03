@@ -18,50 +18,40 @@
  ******************************************************************************/
 package step.core.execution.model;
 
-import java.util.List;
-import java.util.Map;
-
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.objectenricher.EnricheableObject;
 import step.core.plans.Plan;
+import step.core.reports.Error;
 import step.core.repositories.ImportResult;
 import step.core.scheduler.ExecutiontTaskParameters;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 
 
 public class Execution extends AbstractOrganizableObject implements EnricheableObject {
 	
-	Long startTime;
-	
-	Long endTime;
-	
-	String description;
-	
-	String executionType;
-			
-	ExecutionStatus status;
-	
-	ReportNodeStatus result;
-	
-	String planId;
-	
-	ImportResult importResult;
-	
-	List<ReportExport> reportExports;
-			
-	String executionTaskID;
-	
+	private Long startTime;
+	private Long endTime;
+	private String description;
+	private String executionType;
+	private ExecutionStatus status;
+	private ReportNodeStatus result;
+	private List<Error> lifecycleErrors;
+	private String planId;
+	private ImportResult importResult;
+	private List<ReportExport> reportExports;
+	private String executionTaskID;
 	@JsonSerialize(using = ExecutionParameterMapSerializer.class)
 	@JsonDeserialize(using = ExecutionParameterMapDeserializer.class)
-	Map<String, String> parameters;
-	
-	ExecutionParameters executionParameters;
-	
-	ExecutiontTaskParameters executiontTaskParameters;
+	private Map<String, String> parameters;
+	private ExecutionParameters executionParameters;
+	private ExecutiontTaskParameters executiontTaskParameters;
 		
 	public Execution() {
 		super();
@@ -111,6 +101,25 @@ public class Execution extends AbstractOrganizableObject implements EnricheableO
 
 	public void setResult(ReportNodeStatus result) {
 		this.result = result;
+	}
+
+	/**
+	 * @return the list of so-called lifecycle errors. Lifecycle errors are errors that occur around the plan execution
+	 * i.e. before or after the plan execution like for instance during the provisioning or deprovisioning of execution resources
+	 */
+	public List<Error> getLifecycleErrors() {
+		return lifecycleErrors;
+	}
+
+	public synchronized void setLifecycleErrors(List<Error> lifecycleErrors) {
+		this.lifecycleErrors = lifecycleErrors;
+	}
+
+	public synchronized void addLifecyleError(Error error) {
+		if (lifecycleErrors == null) {
+			lifecycleErrors = new ArrayList<>();
+		}
+		lifecycleErrors.add(error);
 	}
 
 	/**

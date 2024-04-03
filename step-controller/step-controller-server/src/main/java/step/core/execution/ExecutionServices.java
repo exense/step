@@ -18,30 +18,13 @@
  ******************************************************************************/
 package step.core.execution;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import jakarta.annotation.PostConstruct;
-import jakarta.inject.Singleton;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.DELETE;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.QueryParam;
-import jakarta.ws.rs.core.MediaType;
-
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.annotation.PostConstruct;
+import jakarta.inject.Singleton;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.MediaType;
 import org.bson.types.ObjectId;
-
 import step.controller.services.async.AsyncTaskStatus;
 import step.core.access.User;
 import step.core.artefacts.reports.ReportNode;
@@ -51,13 +34,20 @@ import step.core.deployment.ControllerServiceException;
 import step.core.deployment.FindByCriteraParam;
 import step.core.entities.EntityManager;
 import step.core.execution.model.*;
+import step.core.repositories.RepositoryObjectReference;
 import step.framework.server.Session;
 import step.framework.server.security.Secured;
-import step.core.repositories.RepositoryObjectReference;
-import step.engine.execution.ExecutionLifecycleManager;
 import step.framework.server.tables.service.TableService;
 import step.framework.server.tables.service.bulk.TableBulkOperationReport;
 import step.framework.server.tables.service.bulk.TableBulkOperationRequest;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Singleton
 @Path("executions")
@@ -128,7 +118,7 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 	public Void abort(@PathParam("id") String executionID) {
 		ExecutionContext context = getExecutionRunnable(executionID);
 		if(context!=null) {
-			new ExecutionLifecycleManager(context).abort();
+			ExecutionEngineRunner.abort(context);
 		}
 		return null;
 	}
@@ -140,7 +130,7 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 	public Void forceStop(@PathParam("id") String executionID) {
 		ExecutionContext context = getExecutionRunnable(executionID);
 		if (context != null) {
-			new ExecutionLifecycleManager(context).forceAbort();
+			ExecutionEngineRunner.forceAbort(context);
 		}
 		return null;
 	}

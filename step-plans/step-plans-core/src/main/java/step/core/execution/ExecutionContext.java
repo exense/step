@@ -22,6 +22,7 @@ import org.bson.types.ObjectId;
 
 import step.core.artefacts.handlers.ArtefactHandlerManager;
 import step.core.artefacts.reports.ReportNode;
+import step.core.execution.model.ExecutionAccessor;
 import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.execution.model.ExecutionStatus;
@@ -31,6 +32,7 @@ import step.core.plans.Plan;
 import step.core.plugins.ExecutionCallbacks;
 import step.core.resolvers.Resolver;
 import step.core.variables.VariablesManager;
+import step.engine.execution.ExecutionManager;
 import step.engine.execution.ExecutionVetoer;
 
 import java.util.HashSet;
@@ -47,6 +49,7 @@ public class ExecutionContext extends AbstractExecutionEngineContext  {
 	private final VariablesManager variablesManager;
 	private final ReportNodeCache reportNodeCache;
 	private final EventManager eventManager;
+	private final ExecutionManager executionManager;
 	private ExecutionCallbacks executionCallbacks;
 	private final Resolver resolver;
 
@@ -64,7 +67,8 @@ public class ExecutionContext extends AbstractExecutionEngineContext  {
 		super();
 		this.executionId = executionId;
 		this.executionParameters = executionParameters;
-		
+
+		executionManager = new ExecutionManager(this);
 		reportNodeCache = new ReportNodeCache();
 		variablesManager = new VariablesManager(this);
 		artefactHandlerManager = new ArtefactHandlerManager(this);
@@ -88,6 +92,11 @@ public class ExecutionContext extends AbstractExecutionEngineContext  {
 
 	public void setExecutionType(String executionType) {
 		this.executionType = executionType;
+	}
+
+	@Override
+	public void setExecutionAccessor(ExecutionAccessor executionAccessor) {
+		super.setExecutionAccessor(executionAccessor);
 	}
 
 	public Plan getPlan() {
@@ -118,7 +127,7 @@ public class ExecutionContext extends AbstractExecutionEngineContext  {
 	public void setCurrentReportNode(ReportNode node) {
 		currentNodeRegistry.set(node);
 	}
-	
+
 	public void associateThread() {
 		getExecutionCallbacks().associateThread(this, Thread.currentThread());
 	}
@@ -175,6 +184,10 @@ public class ExecutionContext extends AbstractExecutionEngineContext  {
 	
 	public EventManager getEventManager() {
 		return eventManager;
+	}
+
+	public ExecutionManager getExecutionManager() {
+		return executionManager;
 	}
 
 	public ExecutionCallbacks getExecutionCallbacks() {

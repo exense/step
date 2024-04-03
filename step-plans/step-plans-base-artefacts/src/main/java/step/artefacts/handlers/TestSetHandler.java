@@ -18,28 +18,26 @@
  ******************************************************************************/
 package step.artefacts.handlers;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.OptionalInt;
-import java.util.function.Consumer;
-
 import step.artefacts.TestSet;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.handlers.AtomicReportNodeStatusComposer;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
-import step.core.execution.ExecutionTypeListener;
 import step.threadpool.ThreadPool;
 import step.threadpool.ThreadPool.WorkerController;
 import step.threadpool.WorkerItemConsumerFactory;
+
+import java.util.Iterator;
+import java.util.List;
+import java.util.OptionalInt;
+import java.util.function.Consumer;
 
 public class TestSetHandler extends ArtefactHandler<TestSet, ReportNode> {
 	
 	@Override
 	public void createReportSkeleton_(ReportNode node, TestSet testSet) {	
-		ExecutionTypeListener executionTypeListener = context.getExecutionManager();
-		executionTypeListener.updateExecutionType(context, "TestSet");
+		context.getExecutionManager().updateExecutionType("TestSet");
 		runParallel(node, testSet, false);
 	}
 

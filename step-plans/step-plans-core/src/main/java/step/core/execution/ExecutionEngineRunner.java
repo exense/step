@@ -18,108 +18,83 @@
  ******************************************************************************/
 package step.core.execution;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandlerManager;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
-import step.core.execution.model.Execution;
-import step.core.execution.model.ExecutionAccessor;
-import step.core.execution.model.ExecutionParameters;
-import step.core.execution.model.ExecutionStatus;
-import step.core.execution.model.ReportExport;
+import step.core.execution.model.*;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
 import step.core.plans.runner.PlanRunnerResult;
+import step.core.plugins.ExecutionCallbacks;
+import step.core.reports.Error;
+import step.core.reports.ErrorType;
 import step.core.repositories.ImportResult;
 import step.core.repositories.RepositoryObjectManager;
 import step.core.repositories.RepositoryObjectReference;
-import step.engine.execution.ExecutionLifecycleManager;
+import step.engine.execution.ExecutionManager;
 import step.engine.execution.ExecutionVeto;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 
+import java.util.*;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
+
 public class ExecutionEngineRunner {
 
 	private static final Logger logger = LoggerFactory.getLogger(ExecutionEngineRunner.class);
-	protected final ExecutionContext executionContext;
-	protected final ExecutionLifecycleManager executionLifecycleManager;
-	protected final RepositoryObjectManager repositoryObjectManager;
-	protected final PlanAccessor planAccessor; 
-	protected final FunctionAccessor functionAccessor;
-	protected final ExecutionAccessor executionAccessor;
+	private final ExecutionContext executionContext;
+	private final ExecutionCallbacks executionCallbacks;
+	private final ExecutionManager executionManager;
+	private final RepositoryObjectManager repositoryObjectManager;
+	private final PlanAccessor planAccessor;
+	private final FunctionAccessor functionAccessor;
 
 	protected ExecutionEngineRunner(ExecutionContext executionContext) {
 		super();
 		this.executionContext = executionContext;
-		this.executionLifecycleManager = new ExecutionLifecycleManager(executionContext);
+		this.executionManager = executionContext.getExecutionManager();
+		this.executionCallbacks = executionContext.getExecutionCallbacks();
 		this.repositoryObjectManager = executionContext.getRepositoryObjectManager();
 		this.planAccessor = executionContext.getPlanAccessor();
 		this.functionAccessor =  executionContext.get(FunctionAccessor.class);
-		this.executionAccessor = executionContext.getExecutionAccessor();
 	}
 	
 	protected PlanRunnerResult execute() {
 		String executionId = executionContext.getExecutionId();
 		PlanRunnerResult result = result(executionId);
 		try {
-			Plan plan = null;
-			List<ExecutionVeto> vetoes = executionLifecycleManager.getExecutionVetoes();
+			List<ExecutionVeto> vetoes = getExecutionVetoes();
 			if (!vetoes.isEmpty()) {
-				logger.info("Execution {} was vetoed.", executionContext.getExecutionId());
+				logger.info(messageWithId("Execution was vetoed."));
 				ImportResult importResult = new ImportResult();
 				importResult.setSuccessful(false);
 				importResult.setErrors(vetoes.stream().map(v -> v.reason).collect(Collectors.toList()));
-				executionLifecycleManager.afterImport(importResult);
+				addImportResultToExecution(importResult);
 				saveFailureReportWithResult(ReportNodeStatus.VETOED);
 			} else {
-				ExecutionParameters executionParameters = executionContext.getExecutionParameters();
-				plan = executionParameters.getPlan();
-
-				if (plan == null) {
-					executionLifecycleManager.beforePlanImport();
-
-					updateStatus(ExecutionStatus.IMPORTING);
-					ImportResult importResult = importPlan(executionContext);
-
-					executionLifecycleManager.afterImport(importResult);
-
-					if (importResult.isSuccessful()) {
-						PlanAccessor planAccessor = executionContext.getPlanAccessor();
-						plan = planAccessor.get(new ObjectId(importResult.getPlanId()));
-					} else {
-						saveFailureReportWithResult(ReportNodeStatus.IMPORT_ERROR);
-					}
-
-				}
-			}
-			if(plan != null) {
-				executionContext.setPlan(plan);
-				
-				logger.info("Starting test execution. Execution ID: " + executionId);
-				updateStatus(ExecutionStatus.ESTIMATING);
-				
-				executionContext.associateThread();
-				
-				ReportNode rootReportNode = executionContext.getReport();
-				executionContext.setCurrentReportNode(rootReportNode);
-				persistReportNode(rootReportNode);
-
-				executionLifecycleManager.executionStarted();
-
 				try {
+					Plan plan = getPlanFromExecutionParametersOrImport();
+					addPlanToContextAndUpdateExecution(plan);
+
+					logger.info(messageWithId("Starting execution."));
+					updateStatus(ExecutionStatus.ESTIMATING);
+
+					executionContext.associateThread();
+
+					ReportNode rootReportNode = executionContext.getReport();
+					executionContext.setCurrentReportNode(rootReportNode);
+					persistReportNode(rootReportNode);
+
+					executionCallbacks.executionStart(executionContext);
 					ReportNode planReportNode = execute(plan, rootReportNode);
 
-					if(planReportNode!=null && planReportNode.getStatus() != null) {
+					if (planReportNode != null && planReportNode.getStatus() != null) {
 						ReportNodeStatus resultStatus = planReportNode.getStatus();
 						rootReportNode.setStatus(resultStatus);
 						persistReportNode(rootReportNode);
@@ -127,35 +102,95 @@ public class ExecutionEngineRunner {
 
 					result.waitForExecutionToTerminate();
 					ReportNodeStatus resultStatus = result.getResult();
-					executionLifecycleManager.updateExecutionResult(executionContext, resultStatus);
-
-					logger.debug("Test execution ended. Reporting result.... Execution ID: " + executionId);
+					updateExecutionResult(resultStatus);
 
 					if(!executionContext.isSimulation()) {
+						logger.debug(messageWithId("Execution ended. Exporting report...."));
 						updateStatus(ExecutionStatus.EXPORTING);
 						exportExecution(executionContext);
-						logger.info("Test execution ended and reported. Execution ID: " + executionId);
+						logger.info(messageWithId("Execution report exported."));
 					} else {
-						logger.info("Test execution simulation ended. Test report isn't reported in simulation mode. Execution ID: " + executionId);
+						logger.info(messageWithId("Execution simulation ended. Skipping report export in simulation mode."));
 					}
+				} catch (PlanImportException e) {
+					saveFailureReportWithResult(ReportNodeStatus.IMPORT_ERROR);
 				} catch (ProvisioningException e) {
-					saveFailureReportWithResult(ReportNodeStatus.TECHNICAL_ERROR);
+					addLifecyleError("Error while provisioning execution resources.", e);
+				} catch (DeprovisioningException e) {
+					addLifecyleError("Error while deprovisioning execution resources.", e);
 				}
-			} else {
-				updateStatus(ExecutionStatus.ENDED);
 			}
 		} catch (Throwable e) {
-			logger.error("An error occurred while running test. Execution ID: " + executionId, e);
-			executionLifecycleManager.updateExecutionResult(executionContext, ReportNodeStatus.TECHNICAL_ERROR);
+			logger.error(messageWithId("An error occurred while running test."), e);
+			updateExecutionResult(ReportNodeStatus.TECHNICAL_ERROR);
 		} finally {
 			updateStatus(ExecutionStatus.ENDED);
-			executionLifecycleManager.executionEnded();
+			executionCallbacks.afterExecutionEnd(executionContext);
 			postExecution(executionContext);
 		}
 		return result;
 	}
 
-	protected ReportNode execute(Plan plan, ReportNode rootReportNode) throws ProvisioningException {
+	public static void abort(ExecutionContext executionContext) {
+		if(executionContext.getStatus()!=ExecutionStatus.ENDED) {
+			updateStatus(executionContext, ExecutionStatus.ABORTING);
+		}
+		executionContext.getExecutionCallbacks().beforeExecutionEnd(executionContext);
+	}
+
+	public static void forceAbort(ExecutionContext executionContext) {
+		if(executionContext.getStatus()!=ExecutionStatus.ENDED) {
+			updateStatus(executionContext, ExecutionStatus.FORCING_ABORT);
+		}
+		executionContext.getExecutionCallbacks().forceStopExecution(executionContext);
+	}
+
+	private List<ExecutionVeto> getExecutionVetoes() {
+		return executionContext.getExecutionVetoers().stream()
+				.map(v -> v.getExecutionVetoes(executionContext))
+				.filter(Objects::nonNull).flatMap(List::stream)
+				.collect(Collectors.toList());
+	}
+
+	private Plan getPlanFromExecutionParametersOrImport() throws PlanImportException {
+		ExecutionParameters executionParameters = executionContext.getExecutionParameters();
+		Plan executionParametersPlan = executionParameters.getPlan();
+
+		if (executionParametersPlan == null) {
+			ImportResult importResult = importPlan(executionContext);
+			addImportResultToExecution(importResult);
+
+			if (importResult.isSuccessful()) {
+				PlanAccessor planAccessor = executionContext.getPlanAccessor();
+				return planAccessor.get(new ObjectId(importResult.getPlanId()));
+			} else {
+				throw new PlanImportException();
+			}
+		} else {
+			return executionParametersPlan;
+		}
+	}
+
+	private void addImportResultToExecution(ImportResult importResult) {
+		updateExecution(e -> e.setImportResult(importResult));
+	}
+
+	private void addPlanToContextAndUpdateExecution(Plan plan) {
+		executionContext.setPlan(plan);
+		updateExecution(execution -> {
+			execution.setPlanId(plan.getId().toString());
+			if (execution.getDescription() == null) {
+				execution.setDescription(plan.getAttributes() != null ? plan.getAttributes().get(AbstractOrganizableObject.NAME) : null);
+			}
+		});
+	}
+
+	private String messageWithId(String message) {
+		return message + " Execution ID: " + executionContext.getExecutionId();
+	}
+
+	private ReportNode execute(Plan plan, ReportNode rootReportNode) throws ProvisioningException, DeprovisioningException {
+		// Save plan embedded functions to context accessor
 		Collection<Function> planInnerFunctions = plan.getFunctions();
 		if(planInnerFunctions!=null && planInnerFunctions.size()>0) {
 			if(functionAccessor != null) {
@@ -165,6 +200,7 @@ public class ExecutionEngineRunner {
 				throw new RuntimeException("Unable to save inner functions because no function accessor is available");
 			}
 		}
+		// Save sub plans to context accessor
 		Collection<Plan> subPlans = plan.getSubPlans();
 		if(subPlans!=null && subPlans.size()>0) {
 			planAccessor.save(subPlans);
@@ -175,34 +211,31 @@ public class ExecutionEngineRunner {
 		artefactHandlerManager.createReportSkeleton(root, rootReportNode);
 
 		// Provision the resources required for the execution before starting the execution phase
+		provisionRequiredResources();
 		try {
-			executionLifecycleManager.provisionRequiredResources();
-		} catch(Exception e) {
-			throw new ProvisioningException();
-		}
-
-		executionLifecycleManager.updateStatus(ExecutionStatus.RUNNING);
-		try {
+			updateStatus(ExecutionStatus.RUNNING);
 			return artefactHandlerManager.execute(root, rootReportNode);
 		} finally {
 			// Deprovision the resources provisioned for the execution
-			executionLifecycleManager.deprovisionRequiredResources();
+			deprovisionRequiredResources();
 		}
 	}
 	
-	protected PlanRunnerResult result(String executionId) {
+	private PlanRunnerResult result(String executionId) {
 		return new PlanRunnerResult(executionId, executionContext.getReport().getId().toString(), executionContext.getReportNodeAccessor(),
 				executionContext.getResourceManager());
 	}
 	
-	private ImportResult importPlan(ExecutionContext context) throws Exception {
+	private ImportResult importPlan(ExecutionContext context) {
+		executionCallbacks.beforePlanImport(context);
+		updateStatus(ExecutionStatus.IMPORTING);
 		ImportResult importResult;
 		RepositoryObjectReference repositoryObjectReference = context.getExecutionParameters().getRepositoryObject();
 		if(repositoryObjectReference!=null) {
 			try {
 				importResult = repositoryObjectManager.importPlan(context, repositoryObjectReference);											
 			} catch (Exception e) {
-				logger.error("Error while importing repository object "+repositoryObjectReference.toString(), e);
+				logger.error("Error while importing repository object "+repositoryObjectReference, e);
 				importResult = new ImportResult();
 				String error = "Unexpected error while importing plan: "+e.getMessage();
 				List<String> errors = new ArrayList<>();
@@ -215,48 +248,82 @@ public class ExecutionEngineRunner {
 		}
 		return importResult;
 	}
-	
-	private void exportExecution(ExecutionContext context) {	
-		String executionId = context.getExecutionId();
-		Execution execution = executionAccessor.get(executionId);
-		
-		if(execution!=null) {
-			ReportExport report = repositoryObjectManager.exportTestExecutionReport(context, execution.getExecutionParameters().getRepositoryObject());
-			List<ReportExport> exports = new ArrayList<>();
-			exports.add(report);
-			
-			execution.setReportExports(exports);
-			executionAccessor.save(execution);
-		} else {
-			// TODO decide what to do with this error
-			//throw new RuntimeException("Unable to find execution with id "+executionId);
+
+	private void provisionRequiredResources() throws ProvisioningException {
+		updateStatus(ExecutionStatus.PROVISIONING);
+		try {
+			executionCallbacks.provisionRequiredResources(executionContext);
+		} catch(Exception e) {
+			throw new ProvisioningException();
 		}
 	}
 
-	private void postExecution(ExecutionContext context) {
-		String executionId = context.getExecutionId();
-		Execution execution = executionAccessor.get(executionId);
-		Optional<RepositoryObjectReference> repositoryObjectReference = Optional.ofNullable(execution).map(Execution::getExecutionParameters).map(ExecutionParameters::getRepositoryObject);
-		if (repositoryObjectReference.isPresent()) {
-			repositoryObjectManager.postExecution(context, repositoryObjectReference.get());
+	private void deprovisionRequiredResources() throws DeprovisioningException {
+		updateStatus(ExecutionStatus.DEPROVISIONING);
+		try {
+			executionCallbacks.deprovisionRequiredResources(executionContext);
+		} catch (Exception e) {
+			throw new DeprovisioningException();
 		}
+	}
+	
+	private void exportExecution(ExecutionContext context) {	
+		updateExecution(execution -> {
+			ReportExport report = repositoryObjectManager.exportTestExecutionReport(context, execution.getExecutionParameters().getRepositoryObject());
+			List<ReportExport> exports = new ArrayList<>();
+			exports.add(report);
+			execution.setReportExports(exports);
+		});
+	}
+
+	private void postExecution(ExecutionContext context) {
+		Execution execution = executionManager.getExecution();
+		Optional<RepositoryObjectReference> repositoryObjectReference = Optional.ofNullable(execution).map(Execution::getExecutionParameters).map(ExecutionParameters::getRepositoryObject);
+		repositoryObjectReference.ifPresent(objectReference -> repositoryObjectManager.postExecution(context, objectReference));
 	}
 
 	private void persistReportNode(ReportNode rootReportNode) {
 		executionContext.getReportNodeAccessor().save(rootReportNode);
 	}
 
+	private void updateExecutionResult(ReportNodeStatus resultStatus) {
+		updateExecution(e -> e.setResult(resultStatus));
+	}
+
 	private void updateStatus(ExecutionStatus newStatus) {
-		executionLifecycleManager.updateStatus(newStatus);
+		executionManager.updateStatus(newStatus);
+	}
+
+	private static void updateStatus(ExecutionContext executionContext, ExecutionStatus newStatus) {
+		executionContext.getExecutionManager().updateStatus(newStatus);
 	}
 
 	private void saveFailureReportWithResult(ReportNodeStatus status) {
 		ReportNode report = executionContext.getReport();
 		report.setStatus(status);
 		persistReportNode(report);
-		executionLifecycleManager.updateExecutionResult(executionContext, status);
+		updateExecutionResult(status);
 	}
 
-	private class ProvisioningException extends Exception {
+	private void addLifecyleError(String message, Exception exception) {
+		logger.error(messageWithId(message), exception);
+		Error error = new Error(ErrorType.TECHNICAL, message);
+		updateExecution(e -> {
+			e.addLifecyleError(error);
+			e.setResult(ReportNodeStatus.TECHNICAL_ERROR);
+		});
+	}
+
+	private void updateExecution(Consumer<Execution> consumer) {
+		executionManager.updateExecution(consumer);
+	}
+
+	private static class ProvisioningException extends Exception {
+	}
+
+	private class PlanImportException extends Exception {
+	}
+
+	private class DeprovisioningException extends Exception {
 	}
 }

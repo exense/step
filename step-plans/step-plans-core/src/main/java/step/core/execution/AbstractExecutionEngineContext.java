@@ -28,8 +28,6 @@ import step.core.execution.model.InMemoryExecutionAccessor;
 import step.core.plans.InMemoryPlanAccessor;
 import step.core.plans.PlanAccessor;
 import step.core.repositories.RepositoryObjectManager;
-import step.engine.execution.ExecutionManager;
-import step.engine.execution.ExecutionManagerImpl;
 
 public abstract class AbstractExecutionEngineContext extends AbstractStepContext {
 
@@ -40,7 +38,6 @@ public abstract class AbstractExecutionEngineContext extends AbstractStepContext
 	private ReportNodeAccessor reportNodeAccessor;
 	private ExecutionAccessor executionAccessor;
 
-	private ExecutionManager executionManager;
 	private RepositoryObjectManager repositoryObjectManager;
 	
 	public AbstractExecutionEngineContext() {
@@ -58,7 +55,6 @@ public abstract class AbstractExecutionEngineContext extends AbstractStepContext
 		reportNodeAccessor = new InMemoryReportNodeAccessor();
 		executionAccessor = new InMemoryExecutionAccessor();
 
-		executionManager = new ExecutionManagerImpl(executionAccessor);
 		repositoryObjectManager = new RepositoryObjectManager();
 	}
 	
@@ -84,7 +80,6 @@ public abstract class AbstractExecutionEngineContext extends AbstractStepContext
 	protected void useReportingAttributesFromParentContext(AbstractExecutionEngineContext parentContext) {
 		reportNodeAccessor = parentContext.getReportNodeAccessor();
 		executionAccessor = parentContext.getExecutionAccessor();
-		executionManager = parentContext.getExecutionManager();
 	}
 
 	public Configuration getConfiguration() {
@@ -137,14 +132,6 @@ public abstract class AbstractExecutionEngineContext extends AbstractStepContext
 
 	public void setExecutionAccessor(ExecutionAccessor executionAccessor) {
 		this.executionAccessor = executionAccessor;
-	}
-
-	public ExecutionManager getExecutionManager() {
-		return executionManager;
-	}
-
-	public void setExecutionManager(ExecutionManager executionManager) {
-		this.executionManager = executionManager;
 	}
 
 	public RepositoryObjectManager getRepositoryObjectManager() {

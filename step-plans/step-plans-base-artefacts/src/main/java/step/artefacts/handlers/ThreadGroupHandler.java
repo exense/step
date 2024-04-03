@@ -19,9 +19,7 @@
 package step.artefacts.handlers;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import step.artefacts.AfterThread;
-import step.artefacts.BeforeThread;
-import step.artefacts.Sequence;
+import step.artefacts.*;
 import step.artefacts.ThreadGroup;
 import step.artefacts.handlers.functions.TokenAutoscalingExecutionPlugin;
 import step.artefacts.handlers.functions.MultiplyingTokenForecastingContext;
@@ -40,10 +38,23 @@ import step.threadpool.WorkerItemConsumerFactory;
 
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode> {
+
+	// TODO move this to parent class
+	protected void createReportNodeSkeletonInSession(AbstractArtefact artefact, ReportNode node, BiConsumer<AbstractArtefact, ReportNode> consumer, String artefactName, Map<String, Object> newVariables) {
+		FunctionGroup functionGroup = createWorkArtefact(FunctionGroup.class, artefact, artefactName, true);
+		functionGroup.setConsumer(consumer);
+		delegateCreateReportSkeleton(functionGroup, node, newVariables);
+	}
+
+	protected void createReportNodeSkeletonInSession(AbstractArtefact artefact, ReportNode node, BiConsumer<AbstractArtefact, ReportNode> consumer) {
+		createReportNodeSkeletonInSession(artefact, node, consumer, "", new HashMap<>());
+	}
 
 	public void createReportSkeleton_(ReportNode node, ThreadGroup testArtefact) {
 		Integer numberOfThreads = testArtefact.getUsers().get();
@@ -51,8 +62,13 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 		TokenForecastingContext tokenForecastingContext = TokenAutoscalingExecutionPlugin.getTokenForecastingContext(context);
 		TokenAutoscalingExecutionPlugin.pushNewTokenNumberCalculationContext(context, new MultiplyingTokenForecastingContext(tokenForecastingContext, numberOfThreads));
 
-		SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
-		scheduler.createReportSkeleton_(node, testArtefact);
+		createReportNodeSkeletonInSession(testArtefact, node, (sessionArtefact, sessionReportNode)->{
+			SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
+			scheduler.createReportSkeleton_(sessionReportNode, sessionArtefact);
+		});
+
+		//SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
+		//scheduler.createReportSkeleton_(node, testArtefact);
 	}
 
 	@Override

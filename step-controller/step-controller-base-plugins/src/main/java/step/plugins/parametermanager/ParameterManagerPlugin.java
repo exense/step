@@ -127,7 +127,14 @@ public class ParameterManagerPlugin extends AbstractExecutionEnginePlugin {
 			String value = v.getValue();
 			executionParameters.put(k, value != null ? value:"");
 		});
-		executionManager.updateParameters(context, executionParameters);
+		executionManager.updateExecution(execution-> {
+			Map<String, String> parameters = execution.getParameters();
+			if(parameters == null) {
+				parameters = new HashMap<>();
+				execution.setParameters(parameters);
+			}
+			parameters.putAll(executionParameters);
+		});
 	}
 
 	private Map<ParameterScope, Map<String, List<Parameter>>> getAllParametersByScope(Map<String, Parameter> allParameters) {

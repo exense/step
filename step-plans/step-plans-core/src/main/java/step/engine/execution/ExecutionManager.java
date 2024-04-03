@@ -1,43 +1,54 @@
-/*******************************************************************************
- * Copyright (C) 2020, exense GmbH
- *  
- * This file is part of STEP
- *  
- * STEP is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *  
- * STEP is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *  
- * You should have received a copy of the GNU Affero General Public License
- * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
- ******************************************************************************/
 package step.engine.execution;
 
-import java.util.Map;
-
-import step.core.artefacts.reports.ReportNodeStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.core.execution.ExecutionContext;
-import step.core.execution.ExecutionTypeListener;
+import step.core.execution.model.Execution;
+import step.core.execution.model.ExecutionAccessor;
 import step.core.execution.model.ExecutionStatus;
-import step.core.repositories.ImportResult;
 
-public interface ExecutionManager extends ExecutionTypeListener {
+import java.util.function.Consumer;
 
-	void updateExecutionType(ExecutionContext context, String newType);
+public class ExecutionManager {
 
-	void updateExecutionResult(ExecutionContext context, ReportNodeStatus resultStatus);
+    private static final Logger logger = LoggerFactory.getLogger(ExecutionManager.class);
+    private final ExecutionContext executionContext;
 
-	void updateStatus(ExecutionContext context, ExecutionStatus status);
+    public ExecutionManager(ExecutionContext executionContext) {
+        this.executionContext = executionContext;
+    }
 
-	void persistImportResult(ExecutionContext context, ImportResult importResult);
+    public Execution getExecution() {
+        ExecutionAccessor executionAccessor = executionContext.getExecutionAccessor();
+        return executionAccessor.get(executionContext.getExecutionId());
+    }
 
-	void persistStatus(ExecutionContext context);
+    public void updateExecutionType(String newType) {
+        executionContext.setExecutionType(newType);
+        updateExecution(e -> {
+            e.setExecutionType(newType);
+        });
+    }
 
-	void updateParameters(ExecutionContext context, Map<String, String> params);
+    public void updateStatus(ExecutionStatus newStatus) {
+        executionContext.updateStatus(newStatus);
+        updateExecution(execution->{
+            if (newStatus == ExecutionStatus.ENDED) {
+                execution.setEndTime(System.currentTimeMillis());
+            }
+            execution.setStatus(newStatus);
+        });
+    }
 
+    public void updateExecution(Consumer<Execution> consumer) {
+        ExecutionAccessor executionAccessor = executionContext.getExecutionAccessor();
+        String executionId = executionContext.getExecutionId();
+        Execution execution = executionAccessor.get(executionId);
+        if (execution != null) {
+            consumer.accept(execution);
+            executionAccessor.save(execution);
+        } else {
+            logger.warn("Unable to update execution. No execution found for id: " + executionId);
+        }
+    }
 }
