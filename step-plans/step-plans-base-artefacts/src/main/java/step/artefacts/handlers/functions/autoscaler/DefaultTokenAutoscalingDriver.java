@@ -22,6 +22,7 @@ public class DefaultTokenAutoscalingDriver implements TokenAutoscalingDriver {
         String provisioningId = UUID.randomUUID().toString();
         TokenProvisioningStatus status = new TokenProvisioningStatus();
         status.tokenCountTarget = request.requiredNumberOfTokensPerPool.values().stream().reduce(0, Integer::sum);
+        status.statusDescription = "Provisioning tokens... (MOCK)";
         provisioningRequest.put(provisioningId, status);
         return provisioningId;
     }

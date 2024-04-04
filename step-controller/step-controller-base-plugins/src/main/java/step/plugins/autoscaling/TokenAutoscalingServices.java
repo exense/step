@@ -52,7 +52,15 @@ public class TokenAutoscalingServices extends AbstractStepServices {
 	@Secured(right="execution-read")
 	public TokenProvisioningStatus getAutoscalingStatus(@PathParam("executionId") String executionId) {
 		ExecutionContext executionContext = getExecutionRunnable(executionId);
-		String provisioningRequestId = TokenAutoscalingExecutionPlugin.getProvisioningRequestId(executionContext);
-		return tokenAutoscalingDriver.getTokenProvisioningStatus(provisioningRequestId);
+		if(executionContext != null) {
+			String provisioningRequestId = TokenAutoscalingExecutionPlugin.getProvisioningRequestId(executionContext);
+			if(provisioningRequestId != null) {
+				return tokenAutoscalingDriver.getTokenProvisioningStatus(provisioningRequestId);
+			} else {
+				return null;
+			}
+		} else {
+			return null;
+		}
 	}
 }
