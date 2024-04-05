@@ -31,16 +31,14 @@ public class ScriptEditorPlugin extends AbstractControllerPlugin {
 
 	@Override
 	public void serverStart(GlobalContext context) throws Exception {
-		
-		//registerWebapp(context, "/scripteditor/");
-		
+
 		context.getServiceRegistrationCallback().registerService(ScriptEditorServices.class);
 		
 		FunctionEditor editor = new FunctionEditor() {
 			
 			@Override
 			public String getEditorPath(Function function) {
-				return "scripteditor/"+function.getId().toString();
+				return "script-editor/"+function.getId().toString();
 			}
 
 			@Override
