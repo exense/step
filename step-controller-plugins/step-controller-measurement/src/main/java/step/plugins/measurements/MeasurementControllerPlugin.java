@@ -5,11 +5,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.controller.grid.GridPlugin;
 import step.core.GlobalContext;
-import step.core.execution.model.LazyCacheExecutionAccessor;
-import step.core.plans.LazyCachePlanAccessor;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
-import step.core.scheduler.LazyCacheScheduleAccessor;
 import step.engine.plugins.ExecutionEnginePlugin;
 import step.grid.Grid;
 import step.grid.GridReportBuilder;
@@ -21,9 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static step.plugins.measurements.MeasurementPlugin.*;
-
-@Plugin(dependencies = GridPlugin.class)
+@Plugin(dependencies = {GridPlugin.class})
 public class MeasurementControllerPlugin extends AbstractControllerPlugin {
 
 	private static Logger logger = LoggerFactory.getLogger(MeasurementControllerPlugin.class);
@@ -31,21 +26,11 @@ public class MeasurementControllerPlugin extends AbstractControllerPlugin {
 	public static String GridGaugeName = "step_grid_tokens";
 	public static String ThreadgroupGaugeName = "step_threadgroup";
 	private GaugeCollectorRegistry gaugeCollectorRegistry;
-	private LazyCacheExecutionAccessor executionLazyCachedAccessor;
-	private LazyCachePlanAccessor planLazyCachedAccessor;
-	private LazyCacheScheduleAccessor scheduleLazyCachedAccessor;
 
 	@Override
 	public void serverStart(GlobalContext context) throws Exception {
 		super.serverStart(context);
 		initGaugeCollectorRegistry(context);
-
-		executionLazyCachedAccessor = new LazyCacheExecutionAccessor(context.getExecutionAccessor());
-		planLazyCachedAccessor = new LazyCachePlanAccessor(context.getPlanAccessor());
-		scheduleLazyCachedAccessor = new LazyCacheScheduleAccessor(context.getScheduleAccessor());
-		context.put(LazyCacheExecutionAccessor.class, executionLazyCachedAccessor);
-		context.put(LazyCachePlanAccessor.class, planLazyCachedAccessor);
-		context.put(LazyCacheScheduleAccessor.class, scheduleLazyCachedAccessor);
 	}
 
 	protected void initGaugeCollectorRegistry(GlobalContext context) {
@@ -115,6 +100,6 @@ public class MeasurementControllerPlugin extends AbstractControllerPlugin {
 
 	@Override
 	public ExecutionEnginePlugin getExecutionEnginePlugin() {
-		return new MeasurementPlugin(gaugeCollectorRegistry, executionLazyCachedAccessor, planLazyCachedAccessor, scheduleLazyCachedAccessor);
+		return new MeasurementPlugin(gaugeCollectorRegistry);
 	}
 }

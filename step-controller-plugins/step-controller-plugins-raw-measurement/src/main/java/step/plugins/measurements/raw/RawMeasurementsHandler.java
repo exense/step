@@ -41,6 +41,7 @@ public class RawMeasurementsHandler implements MeasurementHandler {
 		GaugeCollectorRegistry.getInstance().registerHandler(this);
 	}
 
+	@Override
 	public void processMeasurements(List<Measurement> measurements) {
 		List<?> castedMeasurements = measurements;
 		if (measurements.size()>0) {
@@ -48,6 +49,7 @@ public class RawMeasurementsHandler implements MeasurementHandler {
 		}
 	}
 
+	@Override
 	public void processGauges(List<Measurement> measurements) {
 		processMeasurements(measurements);
 	}

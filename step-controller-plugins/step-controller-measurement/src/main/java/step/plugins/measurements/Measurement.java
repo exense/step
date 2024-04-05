@@ -3,9 +3,12 @@ package step.plugins.measurements;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 public class Measurement extends HashMap<String, Object> {
 	Map<String, Object> customFields = new HashMap<>();
+
+	Map<String, String> additionalAttributes = new TreeMap<>();
 
 	public long getBegin() {
 		return (long) this.get(MeasurementPlugin.BEGIN);
@@ -55,6 +58,14 @@ public class Measurement extends HashMap<String, Object> {
 		this.put(MeasurementPlugin.ATTRIBUTE_EXECUTION_ID, execId);
 	}
 
+	public String getExecution() {
+		return (String) this.get(MeasurementPlugin.EXECUTION_DESCRIPTION);
+	}
+
+	public void setExecution(String execution) {
+		this.put(MeasurementPlugin.EXECUTION_DESCRIPTION, execution);
+	}
+
 	public String getTaskId() {
 		return (String) this.get(MeasurementPlugin.TASK_ID);
 	}
@@ -63,12 +74,28 @@ public class Measurement extends HashMap<String, Object> {
 		this.put(MeasurementPlugin.TASK_ID, taskId);
 	}
 
+	public String getSchedule() {
+		return (String) this.get(MeasurementPlugin.SCHEDULE);
+	}
+
+	public void setSchedule(String schedule) {
+		this.put(MeasurementPlugin.SCHEDULE, schedule);
+	}
+
 	public String getPlanId() {
 		return (String) this.get(MeasurementPlugin.PLAN_ID);
 	}
 
 	public void setPlanId(String planId) {
 		this.put(MeasurementPlugin.PLAN_ID, planId);
+	}
+
+	public String getPlan() {
+		return (String) this.get(MeasurementPlugin.PLAN);
+	}
+
+	public void setPlan(String plan) {
+		this.put(MeasurementPlugin.PLAN, plan);
 	}
 
 	public Map<String, Object> getCustomFields() {
@@ -84,5 +111,15 @@ public class Measurement extends HashMap<String, Object> {
 		this.customFields.putAll(fields);
 		this.putAll(fields);
 	}
+
+	public Map<String, String> getAdditionalAttributes() {
+		return additionalAttributes;
+	}
+
+	public void addAdditionalAttributes(TreeMap<String, String> additionalAttributes) {
+		this.additionalAttributes.putAll(additionalAttributes);
+		this.putAll(additionalAttributes);
+	}
+
 
 }

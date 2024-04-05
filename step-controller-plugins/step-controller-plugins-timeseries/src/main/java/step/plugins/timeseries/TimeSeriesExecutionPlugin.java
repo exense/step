@@ -43,7 +43,6 @@ public class TimeSeriesExecutionPlugin extends AbstractExecutionEnginePlugin {
 
 	private final TimeSeriesIngestionPipeline parentIngestionPipeline;
 	private final TimeSeriesAggregationPipeline aggregationPipeline;
-	private TimeSeriesIngestionPipeline ingestionPipeline;
 
 	public TimeSeriesExecutionPlugin(TimeSeriesIngestionPipeline parentIngestionPipeline, TimeSeriesAggregationPipeline aggregationPipeline) {
 		this.parentIngestionPipeline = parentIngestionPipeline;
@@ -54,7 +53,7 @@ public class TimeSeriesExecutionPlugin extends AbstractExecutionEnginePlugin {
 	public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
 		super.initializeExecutionContext(executionEngineContext, executionContext);
 		TreeMap<String, String> additionalAttributes = executionContext.getObjectEnricher().getAdditionalAttributes();
-		ingestionPipeline = new TimeSeriesIngestionPipeline(null, 0) {
+		TimeSeriesIngestionPipeline ingestionPipeline = new TimeSeriesIngestionPipeline(null, 0) {
 			@Override
 			public void ingestPoint(Map<String, Object> attributes, long timestamp, long value) {
 				attributes.putAll(additionalAttributes);
@@ -95,6 +94,7 @@ public class TimeSeriesExecutionPlugin extends AbstractExecutionEnginePlugin {
 
 	@Override
 	public void afterExecutionEnd(ExecutionContext context) {
+		TimeSeriesIngestionPipeline ingestionPipeline = context.require(TimeSeriesIngestionPipeline.class);
 		ExecutionAccessor executionAccessor = context.getExecutionAccessor();
 		Execution execution = executionAccessor.get(context.getExecutionId());
 		ViewManager viewManager = context.require(ViewManager.class);
