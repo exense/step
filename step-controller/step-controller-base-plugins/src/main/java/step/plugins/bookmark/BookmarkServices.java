@@ -11,7 +11,7 @@ import step.framework.server.security.SecuredContext;
 @Path("bookmarks")
 @Tag(name = "Bookmarks")
 @Tag(name = "Entity=UserBookmark")
-@SecuredContext(key = "entity", value = "bookmark", ignore = true) // all users/role should have rights
+@SecuredContext(key = "entity", value = "bookmark", allowAllSignedInUsers = true) // all users/role should have rights
 public class BookmarkServices extends AbstractEntityServices<UserBookmark> {
     public BookmarkServices() {
         super(EntityManager.bookmarks);
