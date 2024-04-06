@@ -280,6 +280,10 @@ public class YamlPlanJsonSchemaGenerator {
 			}
 		}
 
+		// fixed artefact ordering in json schema
+		artefactDefinitions.rootArtefactDefs.sort(Comparator.naturalOrder());
+		artefactDefinitions.controlArtefactDefs.sort(Comparator.naturalOrder());
+
 		return artefactDefinitions;
 	}
 

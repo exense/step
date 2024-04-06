@@ -1720,22 +1720,6 @@
     "ArtefactDef" : {
       "type" : "object",
       "oneOf" : [ {
-        "$ref" : "#/$defs/SequenceDef"
-      }, {
-        "$ref" : "#/$defs/CheckDef"
-      }, {
-        "$ref" : "#/$defs/CallKeywordDef"
-      }, {
-        "$ref" : "#/$defs/SessionDef"
-      }, {
-        "$ref" : "#/$defs/DataSetDef"
-      }, {
-        "$ref" : "#/$defs/ForDef"
-      }, {
-        "$ref" : "#/$defs/PerformanceAssertDef"
-      }, {
-        "$ref" : "#/$defs/ForEachDef"
-      }, {
         "$ref" : "#/$defs/AfterSequenceDef"
       }, {
         "$ref" : "#/$defs/AfterThreadDef"
@@ -1746,9 +1730,15 @@
       }, {
         "$ref" : "#/$defs/BeforeThreadDef"
       }, {
+        "$ref" : "#/$defs/CallKeywordDef"
+      }, {
         "$ref" : "#/$defs/CallPlanDef"
       }, {
         "$ref" : "#/$defs/CaseDef"
+      }, {
+        "$ref" : "#/$defs/CheckDef"
+      }, {
+        "$ref" : "#/$defs/DataSetDef"
       }, {
         "$ref" : "#/$defs/EchoDef"
       }, {
@@ -1756,7 +1746,13 @@
       }, {
         "$ref" : "#/$defs/FailureDef"
       }, {
+        "$ref" : "#/$defs/ForDef"
+      }, {
+        "$ref" : "#/$defs/ForEachDef"
+      }, {
         "$ref" : "#/$defs/IfDef"
+      }, {
+        "$ref" : "#/$defs/PerformanceAssertDef"
       }, {
         "$ref" : "#/$defs/PlaceholderDef"
       }, {
@@ -1765,6 +1761,10 @@
         "$ref" : "#/$defs/ReturnDef"
       }, {
         "$ref" : "#/$defs/ScriptDef"
+      }, {
+        "$ref" : "#/$defs/SequenceDef"
+      }, {
+        "$ref" : "#/$defs/SessionDef"
       }, {
         "$ref" : "#/$defs/SetDef"
       }, {

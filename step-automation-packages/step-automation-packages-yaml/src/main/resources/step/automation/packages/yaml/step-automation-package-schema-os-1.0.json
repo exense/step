@@ -515,6 +515,26 @@
               "oneOf" : [ {
                 "type" : "object",
                 "properties" : {
+                  "csv" : {
+                    "type" : "object",
+                    "properties" : {
+                      "forWrite" : {
+                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                      },
+                      "file" : {
+                        "$ref" : "#/$defs/resourceReference"
+                      },
+                      "delimiter" : {
+                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
+                      }
+                    },
+                    "additionalProperties" : false
+                  }
+                },
+                "additionalProperties" : false
+              }, {
+                "type" : "object",
+                "properties" : {
                   "excel" : {
                     "type" : "object",
                     "properties" : {
@@ -538,13 +558,30 @@
               }, {
                 "type" : "object",
                 "properties" : {
-                  "json-array" : {
+                  "file" : {
                     "type" : "object",
                     "properties" : {
                       "forWrite" : {
                         "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
                       },
-                      "json" : {
+                      "file" : {
+                        "$ref" : "#/$defs/resourceReference"
+                      }
+                    },
+                    "additionalProperties" : false
+                  }
+                },
+                "additionalProperties" : false
+              }, {
+                "type" : "object",
+                "properties" : {
+                  "folder" : {
+                    "type" : "object",
+                    "properties" : {
+                      "forWrite" : {
+                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                      },
+                      "folder" : {
                         "$ref" : "#/$defs/SmartDynamicValueStringDef"
                       }
                     },
@@ -578,28 +615,13 @@
               }, {
                 "type" : "object",
                 "properties" : {
-                  "sql" : {
+                  "json-array" : {
                     "type" : "object",
                     "properties" : {
                       "forWrite" : {
                         "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
                       },
-                      "driverClass" : {
-                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
-                      },
-                      "writePKey" : {
-                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
-                      },
-                      "password" : {
-                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
-                      },
-                      "user" : {
-                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
-                      },
-                      "query" : {
-                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
-                      },
-                      "connectionString" : {
+                      "json" : {
                         "$ref" : "#/$defs/SmartDynamicValueStringDef"
                       }
                     },
@@ -610,33 +632,13 @@
               }, {
                 "type" : "object",
                 "properties" : {
-                  "file" : {
+                  "json" : {
                     "type" : "object",
                     "properties" : {
                       "forWrite" : {
                         "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
                       },
-                      "file" : {
-                        "$ref" : "#/$defs/resourceReference"
-                      }
-                    },
-                    "additionalProperties" : false
-                  }
-                },
-                "additionalProperties" : false
-              }, {
-                "type" : "object",
-                "properties" : {
-                  "csv" : {
-                    "type" : "object",
-                    "properties" : {
-                      "forWrite" : {
-                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-                      },
-                      "file" : {
-                        "$ref" : "#/$defs/resourceReference"
-                      },
-                      "delimiter" : {
+                      "json" : {
                         "$ref" : "#/$defs/SmartDynamicValueStringDef"
                       }
                     },
@@ -670,30 +672,28 @@
               }, {
                 "type" : "object",
                 "properties" : {
-                  "json" : {
+                  "sql" : {
                     "type" : "object",
                     "properties" : {
                       "forWrite" : {
                         "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
                       },
-                      "json" : {
+                      "driverClass" : {
                         "$ref" : "#/$defs/SmartDynamicValueStringDef"
-                      }
-                    },
-                    "additionalProperties" : false
-                  }
-                },
-                "additionalProperties" : false
-              }, {
-                "type" : "object",
-                "properties" : {
-                  "folder" : {
-                    "type" : "object",
-                    "properties" : {
-                      "forWrite" : {
-                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
                       },
-                      "folder" : {
+                      "writePKey" : {
+                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
+                      },
+                      "password" : {
+                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
+                      },
+                      "user" : {
+                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
+                      },
+                      "query" : {
+                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
+                      },
+                      "connectionString" : {
                         "$ref" : "#/$defs/SmartDynamicValueStringDef"
                       }
                     },
@@ -921,6 +921,23 @@
               "oneOf" : [ {
                 "type" : "object",
                 "properties" : {
+                  "csv" : {
+                    "type" : "object",
+                    "properties" : {
+                      "file" : {
+                        "$ref" : "#/$defs/resourceReference"
+                      },
+                      "delimiter" : {
+                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
+                      }
+                    },
+                    "additionalProperties" : false
+                  }
+                },
+                "additionalProperties" : false
+              }, {
+                "type" : "object",
+                "properties" : {
                   "excel" : {
                     "type" : "object",
                     "properties" : {
@@ -941,10 +958,24 @@
               }, {
                 "type" : "object",
                 "properties" : {
-                  "json-array" : {
+                  "file" : {
                     "type" : "object",
                     "properties" : {
-                      "json" : {
+                      "file" : {
+                        "$ref" : "#/$defs/resourceReference"
+                      }
+                    },
+                    "additionalProperties" : false
+                  }
+                },
+                "additionalProperties" : false
+              }, {
+                "type" : "object",
+                "properties" : {
+                  "folder" : {
+                    "type" : "object",
+                    "properties" : {
+                      "folder" : {
                         "$ref" : "#/$defs/SmartDynamicValueStringDef"
                       }
                     },
@@ -975,25 +1006,10 @@
               }, {
                 "type" : "object",
                 "properties" : {
-                  "sql" : {
+                  "json-array" : {
                     "type" : "object",
                     "properties" : {
-                      "driverClass" : {
-                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
-                      },
-                      "writePKey" : {
-                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
-                      },
-                      "password" : {
-                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
-                      },
-                      "user" : {
-                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
-                      },
-                      "query" : {
-                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
-                      },
-                      "connectionString" : {
+                      "json" : {
                         "$ref" : "#/$defs/SmartDynamicValueStringDef"
                       }
                     },
@@ -1004,27 +1020,10 @@
               }, {
                 "type" : "object",
                 "properties" : {
-                  "file" : {
+                  "json" : {
                     "type" : "object",
                     "properties" : {
-                      "file" : {
-                        "$ref" : "#/$defs/resourceReference"
-                      }
-                    },
-                    "additionalProperties" : false
-                  }
-                },
-                "additionalProperties" : false
-              }, {
-                "type" : "object",
-                "properties" : {
-                  "csv" : {
-                    "type" : "object",
-                    "properties" : {
-                      "file" : {
-                        "$ref" : "#/$defs/resourceReference"
-                      },
-                      "delimiter" : {
+                      "json" : {
                         "$ref" : "#/$defs/SmartDynamicValueStringDef"
                       }
                     },
@@ -1055,24 +1054,25 @@
               }, {
                 "type" : "object",
                 "properties" : {
-                  "json" : {
+                  "sql" : {
                     "type" : "object",
                     "properties" : {
-                      "json" : {
+                      "driverClass" : {
                         "$ref" : "#/$defs/SmartDynamicValueStringDef"
-                      }
-                    },
-                    "additionalProperties" : false
-                  }
-                },
-                "additionalProperties" : false
-              }, {
-                "type" : "object",
-                "properties" : {
-                  "folder" : {
-                    "type" : "object",
-                    "properties" : {
-                      "folder" : {
+                      },
+                      "writePKey" : {
+                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
+                      },
+                      "password" : {
+                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
+                      },
+                      "user" : {
+                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
+                      },
+                      "query" : {
+                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
+                      },
+                      "connectionString" : {
                         "$ref" : "#/$defs/SmartDynamicValueStringDef"
                       }
                     },
@@ -1765,22 +1765,6 @@
     "ArtefactDef" : {
       "type" : "object",
       "oneOf" : [ {
-        "$ref" : "#/$defs/SequenceDef"
-      }, {
-        "$ref" : "#/$defs/ForDef"
-      }, {
-        "$ref" : "#/$defs/CallKeywordDef"
-      }, {
-        "$ref" : "#/$defs/CheckDef"
-      }, {
-        "$ref" : "#/$defs/SessionDef"
-      }, {
-        "$ref" : "#/$defs/PerformanceAssertDef"
-      }, {
-        "$ref" : "#/$defs/DataSetDef"
-      }, {
-        "$ref" : "#/$defs/ForEachDef"
-      }, {
         "$ref" : "#/$defs/AfterSequenceDef"
       }, {
         "$ref" : "#/$defs/AfterThreadDef"
@@ -1791,9 +1775,15 @@
       }, {
         "$ref" : "#/$defs/BeforeThreadDef"
       }, {
+        "$ref" : "#/$defs/CallKeywordDef"
+      }, {
         "$ref" : "#/$defs/CallPlanDef"
       }, {
         "$ref" : "#/$defs/CaseDef"
+      }, {
+        "$ref" : "#/$defs/CheckDef"
+      }, {
+        "$ref" : "#/$defs/DataSetDef"
       }, {
         "$ref" : "#/$defs/EchoDef"
       }, {
@@ -1801,7 +1791,13 @@
       }, {
         "$ref" : "#/$defs/FailureDef"
       }, {
+        "$ref" : "#/$defs/ForDef"
+      }, {
+        "$ref" : "#/$defs/ForEachDef"
+      }, {
         "$ref" : "#/$defs/IfDef"
+      }, {
+        "$ref" : "#/$defs/PerformanceAssertDef"
       }, {
         "$ref" : "#/$defs/PlaceholderDef"
       }, {
@@ -1810,6 +1806,10 @@
         "$ref" : "#/$defs/ReturnDef"
       }, {
         "$ref" : "#/$defs/ScriptDef"
+      }, {
+        "$ref" : "#/$defs/SequenceDef"
+      }, {
+        "$ref" : "#/$defs/SessionDef"
       }, {
         "$ref" : "#/$defs/SetDef"
       }, {
