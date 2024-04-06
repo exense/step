@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 
 public class YamlDataSourceLookuper {
 
-    private static Map<Class<? extends AbstractYamlDataSource<?>>, Class<? extends DataPoolConfiguration>> MODEL_TO_DATAPOOL_MAP =  createModelToDataPoolMap() ;
+    private static final Map<Class<? extends AbstractYamlDataSource<?>>, Class<? extends DataPoolConfiguration>> MODEL_TO_DATAPOOL_MAP =  createModelToDataPoolMap() ;
 
     private static Map<Class<? extends AbstractYamlDataSource<?>>, Class<? extends DataPoolConfiguration>> createModelToDataPoolMap() {
         Map<Class<? extends AbstractYamlDataSource<?>>, Class<? extends DataPoolConfiguration>> res = new HashMap<>();
@@ -44,7 +44,7 @@ public class YamlDataSourceLookuper {
     }
 
     public static List<Class<? extends AbstractYamlDataSource<?>>> getYamlDataSources() {
-       return new ArrayList<>(MODEL_TO_DATAPOOL_MAP.keySet());
+       return new ArrayList<>(MODEL_TO_DATAPOOL_MAP.keySet()).stream().sorted(Comparator.comparing(Class::getSimpleName)).collect(Collectors.toList());
     }
 
     public static Class<? extends AbstractYamlDataSource<?>> resolveYamlDataSource(Class<? extends DataPoolConfiguration> dataPoolConfiguration) {
