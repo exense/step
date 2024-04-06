@@ -470,69 +470,6 @@
               "oneOf" : [ {
                 "type" : "object",
                 "properties" : {
-                  "excel" : {
-                    "type" : "object",
-                    "properties" : {
-                      "forWrite" : {
-                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-                      },
-                      "headers" : {
-                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-                      },
-                      "worksheet" : {
-                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
-                      },
-                      "file" : {
-                        "$ref" : "#/$defs/resourceReference"
-                      }
-                    },
-                    "additionalProperties" : false
-                  }
-                },
-                "additionalProperties" : false
-              }, {
-                "type" : "object",
-                "properties" : {
-                  "gsheet" : {
-                    "type" : "object",
-                    "properties" : {
-                      "forWrite" : {
-                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-                      },
-                      "tabName" : {
-                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
-                      },
-                      "serviceAccountKey" : {
-                        "$ref" : "#/$defs/resourceReference"
-                      },
-                      "fileId" : {
-                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
-                      }
-                    },
-                    "additionalProperties" : false
-                  }
-                },
-                "additionalProperties" : false
-              }, {
-                "type" : "object",
-                "properties" : {
-                  "folder" : {
-                    "type" : "object",
-                    "properties" : {
-                      "forWrite" : {
-                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-                      },
-                      "folder" : {
-                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
-                      }
-                    },
-                    "additionalProperties" : false
-                  }
-                },
-                "additionalProperties" : false
-              }, {
-                "type" : "object",
-                "properties" : {
                   "sequence" : {
                     "type" : "object",
                     "properties" : {
@@ -573,34 +510,14 @@
               }, {
                 "type" : "object",
                 "properties" : {
-                  "csv" : {
+                  "folder" : {
                     "type" : "object",
                     "properties" : {
                       "forWrite" : {
                         "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
                       },
-                      "file" : {
-                        "$ref" : "#/$defs/resourceReference"
-                      },
-                      "delimiter" : {
+                      "folder" : {
                         "$ref" : "#/$defs/SmartDynamicValueStringDef"
-                      }
-                    },
-                    "additionalProperties" : false
-                  }
-                },
-                "additionalProperties" : false
-              }, {
-                "type" : "object",
-                "properties" : {
-                  "file" : {
-                    "type" : "object",
-                    "properties" : {
-                      "forWrite" : {
-                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-                      },
-                      "file" : {
-                        "$ref" : "#/$defs/resourceReference"
                       }
                     },
                     "additionalProperties" : false
@@ -642,6 +559,46 @@
               }, {
                 "type" : "object",
                 "properties" : {
+                  "file" : {
+                    "type" : "object",
+                    "properties" : {
+                      "forWrite" : {
+                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                      },
+                      "file" : {
+                        "$ref" : "#/$defs/resourceReference"
+                      }
+                    },
+                    "additionalProperties" : false
+                  }
+                },
+                "additionalProperties" : false
+              }, {
+                "type" : "object",
+                "properties" : {
+                  "gsheet" : {
+                    "type" : "object",
+                    "properties" : {
+                      "forWrite" : {
+                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                      },
+                      "tabName" : {
+                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
+                      },
+                      "serviceAccountKey" : {
+                        "$ref" : "#/$defs/resourceReference"
+                      },
+                      "fileId" : {
+                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
+                      }
+                    },
+                    "additionalProperties" : false
+                  }
+                },
+                "additionalProperties" : false
+              }, {
+                "type" : "object",
+                "properties" : {
                   "json" : {
                     "type" : "object",
                     "properties" : {
@@ -650,6 +607,49 @@
                       },
                       "json" : {
                         "$ref" : "#/$defs/SmartDynamicValueStringDef"
+                      }
+                    },
+                    "additionalProperties" : false
+                  }
+                },
+                "additionalProperties" : false
+              }, {
+                "type" : "object",
+                "properties" : {
+                  "csv" : {
+                    "type" : "object",
+                    "properties" : {
+                      "forWrite" : {
+                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                      },
+                      "file" : {
+                        "$ref" : "#/$defs/resourceReference"
+                      },
+                      "delimiter" : {
+                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
+                      }
+                    },
+                    "additionalProperties" : false
+                  }
+                },
+                "additionalProperties" : false
+              }, {
+                "type" : "object",
+                "properties" : {
+                  "excel" : {
+                    "type" : "object",
+                    "properties" : {
+                      "forWrite" : {
+                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                      },
+                      "headers" : {
+                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                      },
+                      "worksheet" : {
+                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
+                      },
+                      "file" : {
+                        "$ref" : "#/$defs/resourceReference"
                       }
                     },
                     "additionalProperties" : false
@@ -876,60 +876,6 @@
               "oneOf" : [ {
                 "type" : "object",
                 "properties" : {
-                  "excel" : {
-                    "type" : "object",
-                    "properties" : {
-                      "headers" : {
-                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-                      },
-                      "worksheet" : {
-                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
-                      },
-                      "file" : {
-                        "$ref" : "#/$defs/resourceReference"
-                      }
-                    },
-                    "additionalProperties" : false
-                  }
-                },
-                "additionalProperties" : false
-              }, {
-                "type" : "object",
-                "properties" : {
-                  "gsheet" : {
-                    "type" : "object",
-                    "properties" : {
-                      "tabName" : {
-                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
-                      },
-                      "serviceAccountKey" : {
-                        "$ref" : "#/$defs/resourceReference"
-                      },
-                      "fileId" : {
-                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
-                      }
-                    },
-                    "additionalProperties" : false
-                  }
-                },
-                "additionalProperties" : false
-              }, {
-                "type" : "object",
-                "properties" : {
-                  "folder" : {
-                    "type" : "object",
-                    "properties" : {
-                      "folder" : {
-                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
-                      }
-                    },
-                    "additionalProperties" : false
-                  }
-                },
-                "additionalProperties" : false
-              }, {
-                "type" : "object",
-                "properties" : {
                   "sequence" : {
                     "type" : "object",
                     "properties" : {
@@ -964,28 +910,11 @@
               }, {
                 "type" : "object",
                 "properties" : {
-                  "csv" : {
+                  "folder" : {
                     "type" : "object",
                     "properties" : {
-                      "file" : {
-                        "$ref" : "#/$defs/resourceReference"
-                      },
-                      "delimiter" : {
+                      "folder" : {
                         "$ref" : "#/$defs/SmartDynamicValueStringDef"
-                      }
-                    },
-                    "additionalProperties" : false
-                  }
-                },
-                "additionalProperties" : false
-              }, {
-                "type" : "object",
-                "properties" : {
-                  "file" : {
-                    "type" : "object",
-                    "properties" : {
-                      "file" : {
-                        "$ref" : "#/$defs/resourceReference"
                       }
                     },
                     "additionalProperties" : false
@@ -1024,11 +953,82 @@
               }, {
                 "type" : "object",
                 "properties" : {
+                  "file" : {
+                    "type" : "object",
+                    "properties" : {
+                      "file" : {
+                        "$ref" : "#/$defs/resourceReference"
+                      }
+                    },
+                    "additionalProperties" : false
+                  }
+                },
+                "additionalProperties" : false
+              }, {
+                "type" : "object",
+                "properties" : {
+                  "gsheet" : {
+                    "type" : "object",
+                    "properties" : {
+                      "tabName" : {
+                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
+                      },
+                      "serviceAccountKey" : {
+                        "$ref" : "#/$defs/resourceReference"
+                      },
+                      "fileId" : {
+                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
+                      }
+                    },
+                    "additionalProperties" : false
+                  }
+                },
+                "additionalProperties" : false
+              }, {
+                "type" : "object",
+                "properties" : {
                   "json" : {
                     "type" : "object",
                     "properties" : {
                       "json" : {
                         "$ref" : "#/$defs/SmartDynamicValueStringDef"
+                      }
+                    },
+                    "additionalProperties" : false
+                  }
+                },
+                "additionalProperties" : false
+              }, {
+                "type" : "object",
+                "properties" : {
+                  "csv" : {
+                    "type" : "object",
+                    "properties" : {
+                      "file" : {
+                        "$ref" : "#/$defs/resourceReference"
+                      },
+                      "delimiter" : {
+                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
+                      }
+                    },
+                    "additionalProperties" : false
+                  }
+                },
+                "additionalProperties" : false
+              }, {
+                "type" : "object",
+                "properties" : {
+                  "excel" : {
+                    "type" : "object",
+                    "properties" : {
+                      "headers" : {
+                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                      },
+                      "worksheet" : {
+                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
+                      },
+                      "file" : {
+                        "$ref" : "#/$defs/resourceReference"
                       }
                     },
                     "additionalProperties" : false
@@ -1720,21 +1720,21 @@
     "ArtefactDef" : {
       "type" : "object",
       "oneOf" : [ {
-        "$ref" : "#/$defs/CheckDef"
+        "$ref" : "#/$defs/ForEachDef"
+      }, {
+        "$ref" : "#/$defs/SessionDef"
       }, {
         "$ref" : "#/$defs/SequenceDef"
       }, {
-        "$ref" : "#/$defs/DataSetDef"
-      }, {
-        "$ref" : "#/$defs/PerformanceAssertDef"
-      }, {
         "$ref" : "#/$defs/ForDef"
       }, {
-        "$ref" : "#/$defs/ForEachDef"
+        "$ref" : "#/$defs/DataSetDef"
       }, {
         "$ref" : "#/$defs/CallKeywordDef"
       }, {
-        "$ref" : "#/$defs/SessionDef"
+        "$ref" : "#/$defs/PerformanceAssertDef"
+      }, {
+        "$ref" : "#/$defs/CheckDef"
       }, {
         "$ref" : "#/$defs/AfterSequenceDef"
       }, {
