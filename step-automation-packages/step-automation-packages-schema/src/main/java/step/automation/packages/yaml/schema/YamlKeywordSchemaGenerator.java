@@ -24,11 +24,14 @@ import jakarta.json.spi.JsonProvider;
 import step.automation.packages.AutomationPackageNamedEntityUtils;
 import step.automation.packages.model.AbstractYamlFunction;
 import step.automation.packages.yaml.AutomationPackageKeywordsLookuper;
+import step.core.scanner.CachedAnnotationScanner;
 import step.core.yaml.schema.*;
 import step.handlers.javahandler.jsonschema.*;
 import step.jsonschema.DefaultFieldMetadataExtractor;
 
 import java.util.*;
+
+import static step.core.scanner.Classes.newInstanceAs;
 
 public class YamlKeywordSchemaGenerator {
 
@@ -52,21 +55,20 @@ public class YamlKeywordSchemaGenerator {
         this.jsonSchemaCreator = new JsonSchemaCreator(jsonProvider, new AggregatedJsonSchemaFieldProcessor(processingRules), fieldMetadataExtractor);
     }
 
+    protected List<JsonSchemaDefinitionCreator> getDefinitionsExtensions() {
+        List<JsonSchemaDefinitionCreator> extensions = new ArrayList<>();
+        CachedAnnotationScanner.getClassesWithAnnotation(JsonSchemaDefinitionAddOn.LOCATION, JsonSchemaDefinitionAddOn.class, Thread.currentThread().getContextClassLoader()).stream()
+                .map(newInstanceAs(JsonSchemaDefinitionCreator.class)).forEach(extensions::add);
+        return extensions;
+    }
+
     /**
      * Prepares definitions to be reused in json subschemas
      */
     public JsonObjectBuilder createKeywordDefs() throws JsonSchemaPreparationException {
         JsonObjectBuilder defsBuilder = jsonProvider.createObjectBuilder();
 
-        List<JsonSchemaDefinitionCreator> definitionCreators = new ArrayList<>();
-
-        // prepare definitions for generic DynamicValue class
-        definitionCreators.add((defsList, schemaCreator) -> {
-            Map<String, JsonObjectBuilder> dynamicValueDefs = schemaHelper.createDynamicValueImplDefs();
-            for (Map.Entry<String, JsonObjectBuilder> dynamicValueDef : dynamicValueDefs.entrySet()) {
-                defsBuilder.add(dynamicValueDef.getKey(), dynamicValueDef.getValue());
-            }
-        });
+        List<JsonSchemaDefinitionCreator> definitionCreators = new ArrayList<>(getDefinitionsExtensions());
 
         // prepare definitions for keyword classes
         definitionCreators.add((defsList, schemaCreator) -> {
