@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.core.yaml.serializers;
+package step.core.yaml.schema;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -25,14 +25,10 @@ import java.lang.annotation.Target;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * Annotation used to mark the {@link StepYamlSerializer} to be automatically used for yaml
- * deserialization of Step entities.
+ * The annotation for {@link JsonSchemaDefinitionCreator} used for auto lookup the json schema extensions in project
  */
 @Retention(RUNTIME)
 @Target(ElementType.TYPE)
-public @interface StepYamlSerializerAddOn {
-
+public @interface JsonSchemaDefinitionAddOn {
     String LOCATION = "step";
-
-    Class<?>[] targetClasses();
 }

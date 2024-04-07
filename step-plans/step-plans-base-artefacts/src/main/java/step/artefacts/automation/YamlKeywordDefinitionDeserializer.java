@@ -37,7 +37,7 @@ import java.util.Map;
 @StepYamlDeserializerAddOn(targetClasses = {YamlKeywordDefinition.class})
 public class YamlKeywordDefinitionDeserializer extends StepYamlDeserializer<YamlKeywordDefinition> {
 
-    private final ObjectMapper simpleObjectMapper = DefaultJacksonMapperProvider.getObjectMapper();
+    private static final ObjectMapper DEFAULT_OBJECT_MAPPER = DefaultJacksonMapperProvider.getObjectMapper();
 
     public YamlKeywordDefinitionDeserializer(ObjectMapper yamlObjectMapper) {
         super(yamlObjectMapper);
@@ -48,13 +48,13 @@ public class YamlKeywordDefinitionDeserializer extends StepYamlDeserializer<Yaml
         JsonNode node = p.getCodec().readTree(p);
 
         Map<String, DynamicValue<String>> criteria = getDynamicSelectionCriteria(node);
-        String selectionCriteriaJson = simpleObjectMapper.writeValueAsString(criteria);
+        String selectionCriteriaJson = DEFAULT_OBJECT_MAPPER.writeValueAsString(criteria);
 
         if (!node.isContainerNode()) {
             // for simple function definition the node (string node) contains explicit function name
             return new YamlKeywordDefinition(node.asText(), node.asText(), selectionCriteriaJson);
         } else {
-            return new YamlKeywordDefinition(YamlKeywordDefinitionSerializer.getFunctionName(node.asText(), simpleObjectMapper, false), null, selectionCriteriaJson);
+            return new YamlKeywordDefinition(YamlKeywordDefinitionSerializer.getFunctionName(node.asText(), false), null, selectionCriteriaJson);
         }
     }
 

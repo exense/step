@@ -21,21 +21,29 @@ package step.plans.parser.yaml.schema;
 import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObjectBuilder;
 import jakarta.json.spi.JsonProvider;
+import step.core.yaml.schema.JsonSchemaDefinitionAddOn;
+import step.core.yaml.schema.JsonSchemaDefinitionCreator;
+import step.handlers.javahandler.jsonschema.JsonSchemaCreator;
+import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class YamlResourceReferenceJsonSchemaHelper {
+@JsonSchemaDefinitionAddOn
+public class YamlResourceReferenceSchemaDefinitionCreator implements JsonSchemaDefinitionCreator {
 
     public static final String RESOURCE_REFERENCE_DEF = "resourceReference";
     public static final String FILE_REFERENCE_RESOURCE_ID_FIELD = "id";
-    private final JsonProvider jsonProvider;
 
-    public YamlResourceReferenceJsonSchemaHelper(JsonProvider jsonProvider) {
-        this.jsonProvider = jsonProvider;
+    @Override
+    public void addDefinition(JsonObjectBuilder defsList, JsonSchemaCreator schemaCreator) throws JsonSchemaPreparationException {
+        Map<String, JsonObjectBuilder> dynamicValueDefs = createResourceReferenceDefs(schemaCreator.getJsonProvider());
+        for (Map.Entry<String, JsonObjectBuilder> dynamicValueDef : dynamicValueDefs.entrySet()) {
+            defsList.add(dynamicValueDef.getKey(), dynamicValueDef.getValue());
+        }
     }
 
-    public Map<String, JsonObjectBuilder> createResourceReferenceDefs() {
+    public Map<String, JsonObjectBuilder> createResourceReferenceDefs(JsonProvider jsonProvider) {
         Map<String, JsonObjectBuilder> res = new HashMap<>();
         JsonArrayBuilder oneOf = jsonProvider.createArrayBuilder();
         oneOf.add(jsonProvider.createObjectBuilder().add("type", "string"));

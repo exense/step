@@ -21,7 +21,6 @@ package step.artefacts.automation;
 import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObjectBuilder;
 import jakarta.json.spi.JsonProvider;
-import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.schema.YamlJsonSchemaHelper;
 import step.handlers.javahandler.jsonschema.FieldMetadata;
@@ -36,7 +35,7 @@ import java.util.List;
 @JsonSchema(customJsonSchemaProcessor = YamlKeywordDefinition.YamlKeywordDefinitionJsonSchemaProcessor.class)
 public class YamlKeywordDefinition {
 
-    private String keywordName;
+    private final String keywordName;
     private String simpleKeywordName;
     private String keywordSelectionCriteriaJson;
 
@@ -60,8 +59,8 @@ public class YamlKeywordDefinition {
                 throw new UnsupportedOperationException("Dynamic arguments are not supported");
             }
             return new YamlKeywordDefinition(
-                    YamlKeywordDefinitionSerializer.getFunctionName(dynamicValue, DefaultJacksonMapperProvider.getObjectMapper(), false),
-                    YamlKeywordDefinitionSerializer.getFunctionName(dynamicValue, DefaultJacksonMapperProvider.getObjectMapper(), true),
+                    YamlKeywordDefinitionSerializer.getFunctionName(dynamicValue, false),
+                    YamlKeywordDefinitionSerializer.getFunctionName(dynamicValue, true),
                     dynamicValue.getValue()
             );
         } catch (Exception ex) {

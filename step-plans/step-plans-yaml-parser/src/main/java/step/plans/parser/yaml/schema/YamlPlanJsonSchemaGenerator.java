@@ -65,7 +65,6 @@ public class YamlPlanJsonSchemaGenerator {
 
 	protected final JsonSchemaCreator jsonSchemaCreator;
 	protected final YamlJsonSchemaHelper schemaHelper = new YamlJsonSchemaHelper(jsonProvider);
-	protected final YamlResourceReferenceJsonSchemaHelper resourceReferenceJsonSchemaHelper = new YamlResourceReferenceJsonSchemaHelper(jsonProvider);
 
 	public YamlPlanJsonSchemaGenerator(String targetPackage, Version actualVersion, String schemaId) {
 		this.targetPackage = targetPackage;
@@ -92,8 +91,8 @@ public class YamlPlanJsonSchemaGenerator {
 
 	protected List<JsonSchemaDefinitionCreator> getDefinitionsExtensions() {
 		List<JsonSchemaDefinitionCreator> extensions = new ArrayList<>();
-		CachedAnnotationScanner.getClassesWithAnnotation(YamlPlanReaderExtension.LOCATION, YamlPlanReaderExtension.class, Thread.currentThread().getContextClassLoader()).stream()
-				.map(newInstanceAs(YamlPlanReaderExtender.class)).forEach(e -> extensions.addAll(e.getJsonSchemaDefinitionsExtensions()));
+		CachedAnnotationScanner.getClassesWithAnnotation(JsonSchemaDefinitionAddOn.LOCATION, JsonSchemaDefinitionAddOn.class, Thread.currentThread().getContextClassLoader()).stream()
+				.map(newInstanceAs(JsonSchemaDefinitionCreator.class)).forEach(extensions::add);
 		return extensions;
 	}
 
@@ -149,26 +148,11 @@ public class YamlPlanJsonSchemaGenerator {
 	public JsonObjectBuilder createDefs() throws JsonSchemaPreparationException {
 		JsonObjectBuilder defsBuilder = jsonProvider.createObjectBuilder();
 
-		List<JsonSchemaDefinitionCreator> definitionCreators = new ArrayList<>();
-
-		// prepare definitions for generic DynamicValue class
-		definitionCreators.add((defsList) -> {
-			Map<String, JsonObjectBuilder> dynamicValueDefs = schemaHelper.createDynamicValueImplDefs();
-			for (Map.Entry<String, JsonObjectBuilder> dynamicValueDef : dynamicValueDefs.entrySet()) {
-				defsBuilder.add(dynamicValueDef.getKey(), dynamicValueDef.getValue());
-			}
-		});
-
-		// prepare definitions for referenced resources
-		definitionCreators.add(defsList -> {
-			Map<String, JsonObjectBuilder> dynamicValueDefs = resourceReferenceJsonSchemaHelper.createResourceReferenceDefs();
-			for (Map.Entry<String, JsonObjectBuilder> dynamicValueDef : dynamicValueDefs.entrySet()) {
-				defsBuilder.add(dynamicValueDef.getKey(), dynamicValueDef.getValue());
-			}
-		});
+        // add definitions from extensions
+        List<JsonSchemaDefinitionCreator> definitionCreators = new ArrayList<>(getDefinitionsExtensions());
 
 		// prepare definitions for artefacts
-		definitionCreators.add((defsList) -> {
+		definitionCreators.add((defsList, schemaCreator) -> {
 			ArtefactDefinitions artefactImplDefs = createArtefactImplDefs();
 
 			// sort definition to keep the stable ordering in json schema
@@ -185,11 +169,8 @@ public class YamlPlanJsonSchemaGenerator {
 			defsBuilder.add(AbstractYamlArtefact.ARTEFACT_ARRAY_DEF, createArtefactArrayDef());
 		});
 
-		// add definitions from extensions (additional definitions for EE artefacts)
-		definitionCreators.addAll(getDefinitionsExtensions());
-
 		for (JsonSchemaDefinitionCreator definitionCreator : definitionCreators) {
-			definitionCreator.addDefinition(defsBuilder);
+			definitionCreator.addDefinition(defsBuilder, jsonSchemaCreator);
 		}
 
 		return defsBuilder;
@@ -299,7 +280,8 @@ public class YamlPlanJsonSchemaGenerator {
 		schemaHelper.extractPropertiesFromClass(jsonSchemaCreator, AbstractYamlArtefact.class, classPropertiesBuilder, requiredProperties, null);
 		schemaHelper.extractPropertiesFromClass(jsonSchemaCreator, simpleYamlArtefact, classPropertiesBuilder, requiredProperties, AbstractArtefact.class);
 
-		// TODO: some better workaround to apply default 'nodeName'?
+		// define the default node name explicitly
+		// TODO: find some solution to apply default 'nodeName'
 		classPropertiesBuilder.add(YamlPlanFields.NAME_YAML_FIELD,
 				jsonProvider.createObjectBuilder()
 						.add("type", "string")

@@ -59,7 +59,7 @@ public class NamedYamlArtefactSerializer extends StepYamlSerializer<NamedYamlArt
                 }
             }
         };
-        ser.serialize(value.getAbstractArtefact(), gen, serializers);
+        ser.serialize(value.getYamlArtefact(), gen, serializers);
     }
 
 }

@@ -18,18 +18,10 @@
  ******************************************************************************/
 package step.plans.parser.yaml;
 
-import step.core.yaml.schema.JsonSchemaDefinitionCreator;
-
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Allows to extend the logic of working with Yaml plans (for Step EE). To do that, there should be a class implementing the {@link YamlPlanReaderExtender}
  * and annotated with {@link YamlPlanReaderExtension}.
  * The following functionality can be extended via this class:
- * - the conversion from the Yaml plan to the {@link step.core.plans.Plan} object
- * - the serialization from {@link step.core.plans.Plan} to the Yaml format
- * - the generation of json schema for Yaml Plan format (see {@link step.plans.parser.yaml.schema.YamlPlanSchemaGenerationTool}
  * - the used json schema (for example, to switch to extended json schema in Step EE)
  */
 public interface YamlPlanReaderExtender {
@@ -42,14 +34,5 @@ public interface YamlPlanReaderExtender {
     default String getJsonSchemaPath() {
         return null;
     }
-
-
-    /**
-     * Defines the additional list of YamlPlanJsonSchemaDefinitionCreator to be used to add some type reusable definitions (sub-schemas) to json the schema
-     */
-    default List<JsonSchemaDefinitionCreator> getJsonSchemaDefinitionsExtensions(){
-        return new ArrayList<>();
-    }
-
 
 }

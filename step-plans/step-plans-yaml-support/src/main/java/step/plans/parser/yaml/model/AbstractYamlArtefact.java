@@ -98,7 +98,7 @@ public abstract class AbstractYamlArtefact<T extends AbstractArtefact> {
         }
         if (this.getChildren() != null) {
             for (NamedYamlArtefact child : this.getChildren()) {
-                res.getChildren().add(child.getAbstractArtefact().toArtefact());
+                res.getChildren().add(child.getYamlArtefact().toArtefact());
             }
         }
     }
@@ -116,7 +116,10 @@ public abstract class AbstractYamlArtefact<T extends AbstractArtefact> {
     protected void fillYamlArtefactFields(T artefact){
         // the node name is not obligatory in yaml - we skip this if the name is equal to the default one
         String nameAttribute = artefact.getAttribute(AbstractOrganizableObject.NAME);
-        if (!Objects.equals(nameAttribute, getDefaultNodeNameForYaml(artefact))) {
+
+        // If the name attribute is defined and doesn't equal to the default value,
+        // we use it as nodeName in yaml. Otherwise, we skip this field in yaml.
+        if (nameAttribute != null && !Objects.equals(nameAttribute, getDefaultNodeNameForYaml(artefact))) {
             this.setNodeName(nameAttribute);
         }
         this.setContinueParentNodeExecutionOnError(artefact.getContinueParentNodeExecutionOnError());

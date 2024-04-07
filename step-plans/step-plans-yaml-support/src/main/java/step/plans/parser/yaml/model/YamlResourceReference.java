@@ -22,11 +22,22 @@ import step.attachments.FileResolver;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.schema.YamlJsonSchemaHelper;
 import step.jsonschema.JsonSchema;
-import step.plans.parser.yaml.schema.YamlResourceReferenceJsonSchemaHelper;
+import step.plans.parser.yaml.schema.YamlResourceReferenceSchemaDefinitionCreator;
 
-@JsonSchema(ref = YamlJsonSchemaHelper.DEFS_PREFIX + YamlResourceReferenceJsonSchemaHelper.RESOURCE_REFERENCE_DEF)
+/**
+ * The reference to some static resource (file) in yaml.
+ */
+@JsonSchema(ref = YamlJsonSchemaHelper.DEFS_PREFIX + YamlResourceReferenceSchemaDefinitionCreator.RESOURCE_REFERENCE_DEF)
 public class YamlResourceReference {
+
+    /**
+     * The simple reference (file location in classpath)
+     */
     protected String simpleString;
+
+    /**
+     * The reference on the existing resource in step via resource id
+     */
     protected String resourceId;
 
     public YamlResourceReference() {

@@ -67,6 +67,7 @@ public class YamlJsonSchemaHelper {
 	/**
 	 * Prepares the json schema for class.
 	 * @return the following structure:
+	 * <pre>{@code
 	 * {
 	 *   "type": "object",
 	 *   "properties": {
@@ -75,6 +76,7 @@ public class YamlJsonSchemaHelper {
 	 *   "additionalProperties": false,
 	 *   "required": [...]
 	 * }
+	 *}</pre>
 	 */
 	public JsonObjectBuilder createJsonSchemaForClass(JsonSchemaCreator jsonSchemaCreator, Class<?> clazz, boolean additionalProperties) throws JsonSchemaPreparationException {
 		JsonObjectBuilder res = jsonProvider.createObjectBuilder();
@@ -113,6 +115,10 @@ public class YamlJsonSchemaHelper {
 		}
 	}
 
+	/**
+	 * Analyzes the class hierarchy and writes all applicable fields to the json schema (output)
+	 * @param untilParentClassIs ignores all fields of this parent class and all it's parent classes
+	 */
 	public static List<Field> getAllFieldsInHierarchy(Class<?> clazz, Class<?> untilParentClassIs) {
 		List<Field> allFieldsInHierarchy = new ArrayList<>();
 		Class<?> currentClass = clazz;
@@ -137,27 +143,36 @@ public class YamlJsonSchemaHelper {
 		}
 	}
 
+	/**
+	 *<pre>{@code
+	 * {
+	 *   "type": "array",
+	 *   "items": {
+	 *     "type": "object",
+	 *     "patternProperties": {
+	 *       ".*": {
+	 *         "oneOf": [
+	 *           {
+	 *             "type": "number"
+	 *           },
+	 *           {
+	 *             "type": "boolean"
+	 *           },
+	 *           {
+	 *             "type": "string"
+	 *           },
+	 *           {
+	 *             "$ref": "#/$defs/DynamicExpressionDef"
+	 *           }
+	 *         ]
+	 *       }
+	 *     },
+	 *     "additionalProperties": false
+	 *   }
+	 * }
+	 *}</pre>
+	 */
 	private JsonObjectBuilder createDynamicKeywordInputsDef(){
-//		{
-//			"type" : "array",
-//			"items" : {
-//			"type" : "object",
-//					"patternProperties" : {
-//				".*" : {
-//					"oneOf" : [ {
-//						"type" : "number"
-//					}, {
-//						"type" : "boolean"
-//					}, {
-//						"type" : "string"
-//					}, {
-//						"$ref" : "#/$defs/DynamicExpressionDef"
-//					} ]
-//				}
-//			},
-//			"additionalProperties": false
-//		}
-//		}
 		JsonObjectBuilder res = jsonProvider.createObjectBuilder();
 		res.add("type", "array");
 		JsonObjectBuilder arrayItemDef = createPatternPropertiesWithDynamicValues();
@@ -248,6 +263,7 @@ public class YamlJsonSchemaHelper {
 	 *
 	 * @param yamlName the top-level node name (entity name)
 	 * @return the following structure:
+	 * <pre>{@code
 	 * {
 	 *   "type" : "object",
 	 *   "properties" : {
@@ -262,7 +278,7 @@ public class YamlJsonSchemaHelper {
 	 *   },
 	 *   "additionalProperties" : false
 	 * }
-	 *
+	 *}</pre>
 	 */
 	public JsonObjectBuilder createNamedObjectImplDef(String yamlName, Class<?> clazz, JsonSchemaCreator jsonSchemaCreator, boolean additionalProperties) throws JsonSchemaPreparationException {
 		JsonObjectBuilder res = jsonProvider.createObjectBuilder();

@@ -26,7 +26,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import step.core.yaml.deserializers.StepYamlDeserializer;
 import step.core.yaml.deserializers.StepYamlDeserializerAddOn;
 import step.plans.parser.yaml.model.YamlResourceReference;
-import step.plans.parser.yaml.schema.YamlResourceReferenceJsonSchemaHelper;
+import step.plans.parser.yaml.schema.YamlResourceReferenceSchemaDefinitionCreator;
 
 import java.io.IOException;
 
@@ -46,7 +46,7 @@ public class YamlResourceReferenceDeserializer extends StepYamlDeserializer<Yaml
             return new YamlResourceReference(fileReferenceField.asText(), null);
         }
 
-        JsonNode resourceId = fileReferenceField.get(YamlResourceReferenceJsonSchemaHelper.FILE_REFERENCE_RESOURCE_ID_FIELD);
+        JsonNode resourceId = fileReferenceField.get(YamlResourceReferenceSchemaDefinitionCreator.FILE_REFERENCE_RESOURCE_ID_FIELD);
         if (resourceId == null) {
             throw new IllegalArgumentException("Resource id should be defined for the file reference");
         }

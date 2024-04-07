@@ -28,6 +28,10 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Retention(RUNTIME)
 public @interface YamlModel {
 
+    /**
+     * The reference to the special model class. If not defined, the current class itself will be used as the model
+     * class for yaml representation
+     */
     Class<?> model() default None.class;
 
     /**

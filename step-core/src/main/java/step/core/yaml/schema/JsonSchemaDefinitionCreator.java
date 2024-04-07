@@ -19,6 +19,7 @@
 package step.core.yaml.schema;
 
 import jakarta.json.JsonObjectBuilder;
+import step.handlers.javahandler.jsonschema.JsonSchemaCreator;
 import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 
 public interface JsonSchemaDefinitionCreator {
@@ -26,5 +27,5 @@ public interface JsonSchemaDefinitionCreator {
     /**
      * Adds the entry to 'definitions' section in json schema
      */
-    void addDefinition(JsonObjectBuilder defsList) throws JsonSchemaPreparationException;
+    void addDefinition(JsonObjectBuilder defsList, JsonSchemaCreator schemaCreator) throws JsonSchemaPreparationException;
 }

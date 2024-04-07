@@ -18,19 +18,23 @@
  ******************************************************************************/
 package step.plans.parser.yaml.model;
 
+/**
+ * The wrapper over {@link AbstractYamlArtefact} used for serialization/deserialization.
+ * The representation in yaml looks like:
+ */
 public class NamedYamlArtefact {
 
-    private AbstractYamlArtefact<?> abstractArtefact;
+    private AbstractYamlArtefact<?> yamlArtefact;
 
-    public NamedYamlArtefact(AbstractYamlArtefact<?> abstractArtefact) {
-        this.abstractArtefact = abstractArtefact;
+    public NamedYamlArtefact(AbstractYamlArtefact<?> yamlArtefact) {
+        this.yamlArtefact = yamlArtefact;
     }
 
-    public AbstractYamlArtefact<?> getAbstractArtefact() {
-        return abstractArtefact;
+    public AbstractYamlArtefact<?> getYamlArtefact() {
+        return yamlArtefact;
     }
 
-    public void setAbstractArtefact(AbstractYamlArtefact<?> abstractArtefact) {
-        this.abstractArtefact = abstractArtefact;
+    public void setYamlArtefact(AbstractYamlArtefact<?> yamlArtefact) {
+        this.yamlArtefact = yamlArtefact;
     }
 }

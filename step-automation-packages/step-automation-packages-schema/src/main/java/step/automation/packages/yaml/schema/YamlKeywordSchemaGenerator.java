@@ -61,7 +61,7 @@ public class YamlKeywordSchemaGenerator {
         List<JsonSchemaDefinitionCreator> definitionCreators = new ArrayList<>();
 
         // prepare definitions for generic DynamicValue class
-        definitionCreators.add((defsList) -> {
+        definitionCreators.add((defsList, schemaCreator) -> {
             Map<String, JsonObjectBuilder> dynamicValueDefs = schemaHelper.createDynamicValueImplDefs();
             for (Map.Entry<String, JsonObjectBuilder> dynamicValueDef : dynamicValueDefs.entrySet()) {
                 defsBuilder.add(dynamicValueDef.getKey(), dynamicValueDef.getValue());
@@ -69,7 +69,7 @@ public class YamlKeywordSchemaGenerator {
         });
 
         // prepare definitions for keyword classes
-        definitionCreators.add((defsList) -> {
+        definitionCreators.add((defsList, schemaCreator) -> {
             Map<String, JsonObjectBuilder> keywordImplDefs = createKeywordImplDefs();
             for (Map.Entry<String, JsonObjectBuilder> artefactImplDef : keywordImplDefs.entrySet()) {
                 defsBuilder.add(artefactImplDef.getKey(), artefactImplDef.getValue());
@@ -80,7 +80,7 @@ public class YamlKeywordSchemaGenerator {
         });
 
         for (JsonSchemaDefinitionCreator definitionCreator : definitionCreators) {
-            definitionCreator.addDefinition(defsBuilder);
+            definitionCreator.addDefinition(defsBuilder, jsonSchemaCreator);
         }
 
         return defsBuilder;

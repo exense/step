@@ -16,23 +16,21 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.core.yaml.serializers;
+package step.core.yaml.schema;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
+import jakarta.json.JsonObjectBuilder;
+import step.handlers.javahandler.jsonschema.JsonSchemaCreator;
+import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
+import java.util.Map;
 
-/**
- * Annotation used to mark the {@link StepYamlSerializer} to be automatically used for yaml
- * deserialization of Step entities.
- */
-@Retention(RUNTIME)
-@Target(ElementType.TYPE)
-public @interface StepYamlSerializerAddOn {
-
-    String LOCATION = "step";
-
-    Class<?>[] targetClasses();
+@JsonSchemaDefinitionAddOn
+public class DynamicValueSchemaDefinitionCreator implements JsonSchemaDefinitionCreator {
+    @Override
+    public void addDefinition(JsonObjectBuilder defsList, JsonSchemaCreator schemaCreator) throws JsonSchemaPreparationException {
+        Map<String, JsonObjectBuilder> dynamicValueDefs = new YamlJsonSchemaHelper(schemaCreator.getJsonProvider()).createDynamicValueImplDefs();
+        for (Map.Entry<String, JsonObjectBuilder> dynamicValueDef : dynamicValueDefs.entrySet()) {
+            defsList.add(dynamicValueDef.getKey(), dynamicValueDef.getValue());
+        }
+    }
 }

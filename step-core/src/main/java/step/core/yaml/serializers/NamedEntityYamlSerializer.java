@@ -23,6 +23,17 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 
 import java.io.IOException;
 
+/**
+ * The serialization template for generic classes having the following representation in yaml.
+ * <pre>{@code
+ * className:
+ *    fieldA: valueA
+ *    fieldA: valueB
+ *    ...
+ * }</pre>
+ * The `className` is used to resolve the target java class, and all nested fields (`fieldA`, `fieldB`) are the fields
+ * of this class.
+ */
 public abstract class NamedEntityYamlSerializer<T> {
 
     public void serialize(T value, JsonGenerator gen, SerializerProvider serializers) throws IOException {

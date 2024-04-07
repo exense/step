@@ -27,6 +27,13 @@ import step.plans.parser.yaml.SerializationUtils;
 import java.io.IOException;
 import java.util.List;
 
+/**
+ * The yaml representation for {@link AbstractArtefact} classes having the yaml representation (annotated with {@link YamlModel}),
+ * but without special model class ({@link AbstractYamlArtefact}).
+ * All the artefact-specific fields are stored in `fieldValues` json object and can be used for serialization/deserialization.
+ *
+ * @param <T>
+ */
 public class SimpleYamlArtefact<T extends AbstractArtefact> extends AbstractYamlArtefact<T> {
 
     @JsonIgnore

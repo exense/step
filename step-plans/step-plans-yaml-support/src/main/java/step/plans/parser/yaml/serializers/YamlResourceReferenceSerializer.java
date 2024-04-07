@@ -24,7 +24,7 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import step.core.yaml.serializers.StepYamlSerializer;
 import step.core.yaml.serializers.StepYamlSerializerAddOn;
 import step.plans.parser.yaml.model.YamlResourceReference;
-import step.plans.parser.yaml.schema.YamlResourceReferenceJsonSchemaHelper;
+import step.plans.parser.yaml.schema.YamlResourceReferenceSchemaDefinitionCreator;
 
 import java.io.IOException;
 
@@ -41,7 +41,7 @@ public class YamlResourceReferenceSerializer extends StepYamlSerializer<YamlReso
             gen.writeString(value.getSimpleString());
         } else if (value.getResourceId() != null && !value.getResourceId().isEmpty()) {
             gen.writeStartObject();
-            gen.writeStringField(YamlResourceReferenceJsonSchemaHelper.FILE_REFERENCE_RESOURCE_ID_FIELD, value.getResourceId());
+            gen.writeStringField(YamlResourceReferenceSchemaDefinitionCreator.FILE_REFERENCE_RESOURCE_ID_FIELD, value.getResourceId());
             gen.writeEndObject();
         }
     }

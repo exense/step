@@ -37,7 +37,7 @@ import java.util.Map;
 @StepYamlSerializerAddOn(targetClasses = {YamlKeywordDefinition.class})
 public class YamlKeywordDefinitionSerializer extends StepYamlSerializer<YamlKeywordDefinition> {
 
-    private final ObjectMapper simpleObjectMapper = DefaultJacksonMapperProvider.getObjectMapper();
+    private static final ObjectMapper DEFAULT_OBJECT_MAPPER = DefaultJacksonMapperProvider.getObjectMapper();
 
     public YamlKeywordDefinitionSerializer(ObjectMapper yamlObjectMapper) {
         super(yamlObjectMapper);
@@ -46,11 +46,11 @@ public class YamlKeywordDefinitionSerializer extends StepYamlSerializer<YamlKeyw
     @Override
     public void serialize(YamlKeywordDefinition value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
         DynamicValue<String> dynamicValue = value.toDynamicValue();
-        String simpleFunctionName = getFunctionName(dynamicValue, simpleObjectMapper, true);
+        String simpleFunctionName = getFunctionName(dynamicValue, true);
         if (simpleFunctionName != null) {
             gen.writeString(simpleFunctionName);
         } else {
-            Map<String, DynamicValue<String>> selectionCriteria = getFunctionSelectionCriteriaForYamlSerialization(dynamicValue, simpleObjectMapper);
+            Map<String, DynamicValue<String>> selectionCriteria = getFunctionSelectionCriteriaForYamlSerialization(dynamicValue);
             if (selectionCriteria != null) {
                 gen.writeStartObject();
                 for (Map.Entry<String, DynamicValue<String>> entry : selectionCriteria.entrySet()) {
@@ -61,23 +61,23 @@ public class YamlKeywordDefinitionSerializer extends StepYamlSerializer<YamlKeyw
         }
     }
 
-    public static String getFunctionName(DynamicValue<String> dynamicSelectionCriteria, ObjectMapper jsonObjectMapper, boolean asSimpleFunctionName) throws JsonProcessingException {
+    public static String getFunctionName(DynamicValue<String> dynamicSelectionCriteria, boolean asSimpleFunctionName) throws JsonProcessingException {
         if (!dynamicSelectionCriteria.getValue().trim().isEmpty()) {
             String jsonValue = dynamicSelectionCriteria.getValue();
-            return getFunctionName(jsonValue, jsonObjectMapper, asSimpleFunctionName);
+            return getFunctionName(jsonValue, asSimpleFunctionName);
         } else {
             return null;
         }
     }
 
-    public static String getFunctionName(String jsonValue, ObjectMapper jsonObjectMapper, boolean asSimpleFunctionName) throws JsonProcessingException {
+    public static String getFunctionName(String jsonValue, boolean asSimpleFunctionName) throws JsonProcessingException {
         if (jsonValue == null || jsonValue.isEmpty()) {
             return null;
         }
         if (jsonValue.startsWith("{")) {
             TypeReference<HashMap<String, JsonNode>> functionValueTypeRef = new TypeReference<>() {
             };
-            HashMap<String, JsonNode> functionNameAsMap = jsonObjectMapper.readValue(jsonValue, functionValueTypeRef);
+            HashMap<String, JsonNode> functionNameAsMap = DEFAULT_OBJECT_MAPPER.readValue(jsonValue, functionValueTypeRef);
 
             JsonNode simpleFunctionName = null;
             if (!asSimpleFunctionName || functionNameAsMap.size() == 1) {
@@ -87,7 +87,7 @@ public class YamlKeywordDefinitionSerializer extends StepYamlSerializer<YamlKeyw
             if (simpleFunctionName != null && !simpleFunctionName.isContainerNode()) {
                 return simpleFunctionName.asText();
             } else {
-                DynamicValue<String> dynamicValue = jsonObjectMapper.treeToValue(simpleFunctionName, DynamicValue.class);
+                DynamicValue<String> dynamicValue = DEFAULT_OBJECT_MAPPER.treeToValue(simpleFunctionName, DynamicValue.class);
                 if (dynamicValue != null && !dynamicValue.isDynamic()) {
                     return dynamicValue.getValue();
                 } else {
@@ -102,16 +102,16 @@ public class YamlKeywordDefinitionSerializer extends StepYamlSerializer<YamlKeyw
     /**
      * Returns all selection criteria for keyword serialization
      */
-    private Map<String, DynamicValue<String>> getFunctionSelectionCriteriaForYamlSerialization(DynamicValue<String> function, ObjectMapper jsonObjectMapper) throws JsonProcessingException {
+    private Map<String, DynamicValue<String>> getFunctionSelectionCriteriaForYamlSerialization(DynamicValue<String> function) throws JsonProcessingException {
         if (!function.getValue().trim().isEmpty()) {
             if (function.getValue().startsWith("{")) {
                 Map<String, DynamicValue<String>> result = new HashMap<>();
                 TypeReference<HashMap<String, JsonNode>> functionValueTypeRef = new TypeReference<>() {
                 };
-                HashMap<String, JsonNode> selectionCriteriaMap = jsonObjectMapper.readValue(function.getValue(), functionValueTypeRef);
+                HashMap<String, JsonNode> selectionCriteriaMap = YamlKeywordDefinitionSerializer.DEFAULT_OBJECT_MAPPER.readValue(function.getValue(), functionValueTypeRef);
                 for (Map.Entry<String, JsonNode> entry : selectionCriteriaMap.entrySet()) {
                     if (entry.getValue().isContainerNode()) {
-                        result.put(entry.getKey(), jsonObjectMapper.treeToValue(entry.getValue(), DynamicValue.class));
+                        result.put(entry.getKey(), YamlKeywordDefinitionSerializer.DEFAULT_OBJECT_MAPPER.treeToValue(entry.getValue(), DynamicValue.class));
                     } else {
                         result.put(entry.getKey(), new DynamicValue<>(entry.getValue().asText()));
                     }
