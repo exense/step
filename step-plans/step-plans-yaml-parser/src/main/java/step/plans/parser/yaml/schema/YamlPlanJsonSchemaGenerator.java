@@ -84,8 +84,6 @@ public class YamlPlanJsonSchemaGenerator {
 
 		// -- BASIC PROCESSING RULES
 		result.add(new CommonFilteredFieldProcessor());
-
-		// -- SOME DEFAULT RULES FOR ENUMS AND DYNAMIC FIELDS
 		result.add(new DynamicValueFieldProcessor());
 		result.add(new EnumFieldProcessor());
 
@@ -99,14 +97,9 @@ public class YamlPlanJsonSchemaGenerator {
 		return extensions;
 	}
 
-	// TODO: replace with annotations
 	public static FieldMetadataExtractor prepareMetadataExtractor() {
 		List<FieldMetadataExtractor> metadataExtractors = new ArrayList<>();
-
-		CachedAnnotationScanner.getClassesWithAnnotation(YamlPlanReaderExtension.LOCATION, YamlPlanReaderExtension.class, Thread.currentThread().getContextClassLoader()).stream()
-				.map(newInstanceAs(YamlPlanReaderExtender.class)).forEach(e -> metadataExtractors.addAll(e.getMetadataExtractorExtensions()));
 		metadataExtractors.add(new DefaultFieldMetadataExtractor());
-
 		return new AggregatingFieldMetadataExtractor(metadataExtractors);
 	}
 

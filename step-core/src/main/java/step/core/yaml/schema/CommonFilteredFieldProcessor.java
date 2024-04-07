@@ -29,7 +29,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.List;
 
-// TODO: apply this filtering in DefaultJsonSchemaFieldProcessor instead of this class
 public class CommonFilteredFieldProcessor implements JsonSchemaFieldProcessor {
     @Override
     public boolean applyCustomProcessing(Class<?> aClass, Field field, FieldMetadata fieldMetadata, JsonObjectBuilder jsonObjectBuilder, List<String> list, JsonSchemaCreator schemaCreator) throws JsonSchemaPreparationException {
@@ -37,7 +36,7 @@ public class CommonFilteredFieldProcessor implements JsonSchemaFieldProcessor {
         return isIgnoredField(field);
     }
 
-    public static boolean isIgnoredField(Field field) {
+    private boolean isIgnoredField(Field field) {
         return field.isSynthetic()
                 || field.isAnnotationPresent(JsonIgnore.class)
                 || field.getType().equals(Object.class)
