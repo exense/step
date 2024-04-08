@@ -48,6 +48,7 @@ import java.util.stream.Collectors;
 public class ExecutionEngineRunner {
 
 	private static final Logger logger = LoggerFactory.getLogger(ExecutionEngineRunner.class);
+	public static final String EXECUTION_ENGINE_LAYER = "executionEngine";
 	private final ExecutionContext executionContext;
 	private final ExecutionCallbacks executionCallbacks;
 	private final ExecutionManager executionManager;
@@ -112,9 +113,9 @@ public class ExecutionEngineRunner {
 				} catch (PlanImportException e) {
 					saveFailureReportWithResult(ReportNodeStatus.IMPORT_ERROR);
 				} catch (ProvisioningException e) {
-					addLifecyleError("Error while provisioning execution resources.", e);
+					addLifecyleError("Error while provisioning execution resources: " + e.getMessage(), e);
 				} catch (DeprovisioningException e) {
-					addLifecyleError("Error while deprovisioning execution resources.", e);
+					addLifecyleError("Error while deprovisioning execution resources: " + e.getMessage(), e);
 				}
 			}
 		} catch (Throwable e) {
@@ -251,7 +252,7 @@ public class ExecutionEngineRunner {
 		try {
 			executionCallbacks.provisionRequiredResources(executionContext);
 		} catch(Exception e) {
-			throw new ProvisioningException();
+			throw new ProvisioningException(e.getMessage());
 		}
 	}
 
@@ -260,7 +261,7 @@ public class ExecutionEngineRunner {
 		try {
 			executionCallbacks.deprovisionRequiredResources(executionContext);
 		} catch (Exception e) {
-			throw new DeprovisioningException();
+			throw new DeprovisioningException(e.getMessage());
 		}
 	}
 	
@@ -304,7 +305,7 @@ public class ExecutionEngineRunner {
 
 	private void addLifecyleError(String message, Exception exception) {
 		logger.error(messageWithId(message), exception);
-		Error error = new Error(ErrorType.TECHNICAL, message);
+		Error error = new Error(ErrorType.TECHNICAL, EXECUTION_ENGINE_LAYER, message, 0, true);
 		updateExecution(e -> {
 			e.addLifecyleError(error);
 			e.setResult(ReportNodeStatus.TECHNICAL_ERROR);
@@ -316,11 +317,17 @@ public class ExecutionEngineRunner {
 	}
 
 	private static class ProvisioningException extends Exception {
+		public ProvisioningException(String message) {
+			super(message);
+		}
 	}
 
 	private class PlanImportException extends Exception {
 	}
 
 	private class DeprovisioningException extends Exception {
+		public DeprovisioningException(String message) {
+			super(message);
+		}
 	}
 }

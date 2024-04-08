@@ -122,7 +122,7 @@ public class AutoscalerTest {
 		TestTokenAutoscalingDriver testDriver = createTestDriver(Map.of());
 		PlanRunnerResult result = executePlan(plan, testDriver);
 		assertEquals(ReportNodeStatus.TECHNICAL_ERROR, result.getResult());
-		assertEquals("Error while provisioning execution resources.", result.getErrorSummary());
+		assertEquals("Error while provisioning execution resources: No matching pool found for selection criteria: [{$agenttype=default}]", result.getErrorSummary());
 	}
 
 	private static TestTokenAutoscalingDriver executePlanWithSpecifiedTokenPools(Plan plan, Map<String, Map<String, String>> availableTokenPools) {

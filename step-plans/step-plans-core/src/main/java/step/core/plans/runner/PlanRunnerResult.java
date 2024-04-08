@@ -83,7 +83,7 @@ public class PlanRunnerResult {
 		return execution.getResult();
 	}
 
-	public List<Error> getLifecycleErrors() {
+	protected List<Error> getLifecycleErrors() {
 		Execution execution = executionProvider.get(executionId);
 		return execution.getLifecycleErrors();
 	}
@@ -107,7 +107,7 @@ public class PlanRunnerResult {
 	public Stream<Error> getErrors() {
 		List<Error> lifecycleErrors = getLifecycleErrors();
 		Stream<Error> reportNodeErrors = getReportNodesWithErrors().map(ReportNode::getError).filter(Objects::nonNull);
-		return Stream.concat(Optional.of(lifecycleErrors).orElse(List.of()).stream(), reportNodeErrors);
+		return Stream.concat(Optional.ofNullable(lifecycleErrors).orElse(List.of()).stream(), reportNodeErrors);
 	}
 
 	/**
