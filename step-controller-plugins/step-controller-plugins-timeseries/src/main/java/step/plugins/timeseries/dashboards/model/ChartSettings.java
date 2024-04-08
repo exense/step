@@ -14,6 +14,9 @@ public class ChartSettings {
 	private List<MetricAttribute> attributes = new ArrayList<>();
 	@NotNull
 	private AxesSettings primaryAxes;
+	
+	private AxesSettings secondaryAxes;
+	
 	@NotNull
 	private List<TimeSeriesFilterItem> filters = new ArrayList<>();
 	
@@ -118,6 +121,15 @@ public class ChartSettings {
 
 	public ChartSettings setReadonlyAggregate(boolean readonlyAggregate) {
 		this.readonlyAggregate = readonlyAggregate;
+		return this;
+	}
+
+	public AxesSettings getSecondaryAxes() {
+		return secondaryAxes;
+	}
+
+	public ChartSettings setSecondaryAxes(AxesSettings secondaryAxes) {
+		this.secondaryAxes = secondaryAxes;
 		return this;
 	}
 }
