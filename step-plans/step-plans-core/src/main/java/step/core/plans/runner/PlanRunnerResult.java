@@ -27,6 +27,7 @@ import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
@@ -43,6 +44,8 @@ import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.artefacts.reports.ReportTreeAccessor;
 import step.core.artefacts.reports.ReportTreeVisitor;
 import step.core.artefacts.reports.ReportTreeVisitor.ReportNodeEvent;
+import step.core.execution.model.Execution;
+import step.core.execution.model.ExecutionProvider;
 import step.core.reports.Error;
 import step.reporting.ReportWriter;
 import step.resources.Resource;
@@ -55,38 +58,38 @@ import step.resources.ResourceRevisionContent;
  */
 public class PlanRunnerResult {
 
+	private static final Logger logger = LoggerFactory.getLogger(PlanRunnerResult.class);
+
 	protected final String executionId;
-	
-	protected final String rootReportNodeId;
-	
+
+	protected final ExecutionProvider executionProvider;
 	protected final ReportTreeAccessor reportTreeAccessor;
 	protected final ResourceManager resourceManager;
-	
-	private static final Logger logger = LoggerFactory.getLogger(PlanRunnerResult.class);
-	
-	public PlanRunnerResult(String executionId, String rootReportNodeId, ReportTreeAccessor reportTreeAccessor) {
-		this(executionId, rootReportNodeId, reportTreeAccessor, null);
+
+	public PlanRunnerResult(String executionId, ExecutionProvider executionProvider, ReportTreeAccessor reportTreeAccessor) {
+		this(executionId, executionProvider, reportTreeAccessor, null);
 	}
 	
-	public PlanRunnerResult(String executionId, String rootReportNodeId, ReportTreeAccessor reportTreeAccessor, ResourceManager resourceManager) {
+	public PlanRunnerResult(String executionId, ExecutionProvider executionProvider, ReportTreeAccessor reportTreeAccessor, ResourceManager resourceManager) {
 		super();
 		this.executionId = executionId;
-		this.rootReportNodeId = rootReportNodeId;
+		this.executionProvider = executionProvider;
 		this.reportTreeAccessor = reportTreeAccessor;
 		this.resourceManager = resourceManager;
 	}
 	
 	public ReportNodeStatus getResult() {
-		ReportNode rootReportNode = getRootReportNode();
-		if(rootReportNode != null && rootReportNode.getStatus() != null) {
-			return rootReportNode.getStatus();
-		} else {
-			return ReportNodeStatus.NORUN;
-		}
+		Execution execution = executionProvider.get(executionId);
+		return execution.getResult();
+	}
+
+	public List<Error> getLifecycleErrors() {
+		Execution execution = executionProvider.get(executionId);
+		return execution.getLifecycleErrors();
 	}
 
 	public ReportNode getRootReportNode() {
-		return reportTreeAccessor.get(rootReportNodeId);
+		return reportTreeAccessor.get(executionId);
 	}
 
 	/**
@@ -102,7 +105,9 @@ public class PlanRunnerResult {
 	 * This returns only the so-called contributing errors according to following definition {@link ReportNode#getContributingError()}
 	 */
 	public Stream<Error> getErrors() {
-		return getReportNodesWithErrors().map(ReportNode::getError).filter(Objects::nonNull);
+		List<Error> lifecycleErrors = getLifecycleErrors();
+		Stream<Error> reportNodeErrors = getReportNodesWithErrors().map(ReportNode::getError).filter(Objects::nonNull);
+		return Stream.concat(Optional.of(lifecycleErrors).orElse(List.of()).stream(), reportNodeErrors);
 	}
 
 	/**
@@ -136,7 +141,7 @@ public class PlanRunnerResult {
 	 */
 	public PlanRunnerResult visitReportNodes(Consumer<ReportNode> consumer) {
 		ReportTreeVisitor visitor = getReportTreeVisitor();
-		visitor.visitNodes(rootReportNodeId, consumer);
+		visitor.visitNodes(executionId, consumer);
 		return this;
 	}
 	
@@ -147,7 +152,7 @@ public class PlanRunnerResult {
 	 */
 	public PlanRunnerResult visitReportTree(Consumer<ReportNodeEvent> consumer) {
 		ReportTreeVisitor visitor = getReportTreeVisitor();
-		visitor.visit(rootReportNodeId, consumer);
+		visitor.visit(executionId, consumer);
 		return this;
 	}
 

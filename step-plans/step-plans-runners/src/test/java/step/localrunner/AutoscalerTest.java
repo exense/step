@@ -121,12 +121,8 @@ public class AutoscalerTest {
 		// No matching token pool
 		TestTokenAutoscalingDriver testDriver = createTestDriver(Map.of());
 		PlanRunnerResult result = executePlan(plan, testDriver);
-		// !!!!!
-		// TODO Fix this. Correct should be TECHNICAL_ERROR!
-		// !!!!!
-		assertEquals(ReportNodeStatus.NORUN, result.getResult());
-
-		// TODO add test with TestCase as root!
+		assertEquals(ReportNodeStatus.TECHNICAL_ERROR, result.getResult());
+		assertEquals("Error while provisioning execution resources.", result.getErrorSummary());
 	}
 
 	private static TestTokenAutoscalingDriver executePlanWithSpecifiedTokenPools(Plan plan, Map<String, Map<String, String>> availableTokenPools) {

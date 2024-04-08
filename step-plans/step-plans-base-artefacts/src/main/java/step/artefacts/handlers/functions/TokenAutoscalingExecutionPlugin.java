@@ -62,8 +62,9 @@ public class TokenAutoscalingExecutionPlugin extends AbstractExecutionEnginePlug
 
         Set<Map<String, Interest>> criteriaWithoutMatch = tokenForecastingContext.getCriteriaWithoutMatch();
         if (!criteriaWithoutMatch.isEmpty()) {
-            logger.warn("No matching pool found for selection criteria: " + criteriaWithoutMatch);
-            throw new PluginCriticalException("test");
+            String message = "No matching pool found for selection criteria: " + criteriaWithoutMatch;
+            logger.warn(message);
+            throw new PluginCriticalException(message);
         }
 
         // Delegate the provisioning of the agent tokens to the driver according to the calculated forecast
@@ -73,7 +74,11 @@ public class TokenAutoscalingExecutionPlugin extends AbstractExecutionEnginePlug
         String provisioningRequestId = tokenAutoscalingDriver.initializeTokenProvisioningRequest(request);
         context.put(PROVISIONING_REQUEST_ID, provisioningRequestId);
 
-        tokenAutoscalingDriver.executeTokenProvisioningRequest(provisioningRequestId);
+        try {
+            tokenAutoscalingDriver.executeTokenProvisioningRequest(provisioningRequestId);
+        } catch (Exception e) {
+            throw new PluginCriticalException("Error while provisioning tokens", e);
+        }
         logger.info("Successfully provisioned resources for execution " + context.getExecutionId());
     }
 

@@ -32,13 +32,11 @@ import step.client.accessors.RemotePlanAccessor;
 import step.client.collections.remote.RemoteCollectionFactory;
 import step.client.credentials.ControllerCredentials;
 import step.client.executions.RemoteExecutionManager;
+import step.client.reports.RemoteExecutionProvider;
 import step.client.reports.RemoteReportTreeAccessor;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.reports.ReportTreeAccessor;
-import step.core.execution.model.Execution;
-import step.core.execution.model.ExecutionMode;
-import step.core.execution.model.ExecutionParameters;
-import step.core.execution.model.ExecutionStatus;
+import step.core.execution.model.*;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
 import step.core.plans.runner.PlanRunner;
@@ -104,14 +102,15 @@ public class RemotePlanRunner extends AbstractRemoteClient implements PlanRunner
 		String executionId = executeRequest(()->b.post(entity, String.class));
 		
 		RemoteReportTreeAccessor reportTreeAccessor = new RemoteReportTreeAccessor(credentials);
-		
-		return new RemotePlanRunnerResult(executionId, executionId, reportTreeAccessor);
+		RemoteExecutionProvider executionProvider = new RemoteExecutionProvider(credentials);
+
+		return new RemotePlanRunnerResult(executionId, reportTreeAccessor, executionProvider);
 	}
 	
 	public class RemotePlanRunnerResult extends PlanRunnerResult {
 
-		public RemotePlanRunnerResult(String executionId, String rootReportNodeId, ReportTreeAccessor reportTreeAccessor) {
-			super(executionId, rootReportNodeId, reportTreeAccessor);
+		public RemotePlanRunnerResult(String executionId, ReportTreeAccessor reportTreeAccessor, ExecutionProvider executionProvider) {
+			super(executionId, executionProvider, reportTreeAccessor);
 		}
 
 		@Override

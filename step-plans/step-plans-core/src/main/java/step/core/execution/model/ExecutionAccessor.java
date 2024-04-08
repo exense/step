@@ -26,7 +26,7 @@ import step.core.accessors.Accessor;
 import step.core.collections.SearchOrder;
 import step.core.repositories.RepositoryObjectReference;
 
-public interface ExecutionAccessor extends Accessor<Execution> {
+public interface ExecutionAccessor extends Accessor<Execution>, ExecutionProvider {
 
 	void createIndexesIfNeeded(Long ttl);
 	

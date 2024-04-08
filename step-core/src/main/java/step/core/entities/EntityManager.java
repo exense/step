@@ -68,6 +68,10 @@ public class EntityManager  {
 		return entities.get(entityName);
 	}
 
+	public Entity<?,?> getEntityByCollectionName(String collectionName) {
+		return entities.values().stream().filter(e -> e.getCollectionName().equals(collectionName)).findFirst().orElseThrow();
+	}
+
 	public Class<?> resolveClass(String entityName) {
 		Entity<?, ?> entity = entities.get(entityName);
 		Objects.requireNonNull(entity, "This entity type is not known: " + entityName);

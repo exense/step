@@ -98,11 +98,8 @@ public class ExecutionEngineRunner {
 						ReportNodeStatus resultStatus = planReportNode.getStatus();
 						rootReportNode.setStatus(resultStatus);
 						persistReportNode(rootReportNode);
+						updateExecutionResult(resultStatus);
 					}
-
-					result.waitForExecutionToTerminate();
-					ReportNodeStatus resultStatus = result.getResult();
-					updateExecutionResult(resultStatus);
 
 					if(!executionContext.isSimulation()) {
 						logger.debug(messageWithId("Execution ended. Exporting report...."));
@@ -222,7 +219,7 @@ public class ExecutionEngineRunner {
 	}
 	
 	private PlanRunnerResult result(String executionId) {
-		return new PlanRunnerResult(executionId, executionContext.getReport().getId().toString(), executionContext.getReportNodeAccessor(),
+		return new PlanRunnerResult(executionId, executionContext.getExecutionAccessor(), executionContext.getReportNodeAccessor(),
 				executionContext.getResourceManager());
 	}
 	
