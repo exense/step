@@ -49,6 +49,8 @@ public class AbstractScopeAccessor<T extends AbstractScopeObject> extends Abstra
         setting.setScope(new HashMap<>());
         //Enrich with requested scope based on session context
         settingScopeRegistry.addScopes(setting, scopes, session);
+        //TODO check if settings with higher retrieval prio exists and remove them
+        //i.e. admin update system wide settings, this should overwrite the per user settings?
         //Check if element exists for this scope, and set for update in this case
         //scope combination must be unique by setting id
         Optional<T> bySettingIdAndScope = getBySettingIdAndScope(setting.getSettingId(), scopes, session);
@@ -69,7 +71,7 @@ public class AbstractScopeAccessor<T extends AbstractScopeObject> extends Abstra
     public Optional<T> getSetting(String settingId, Session<User> session) {
         Optional<T> first = Optional.empty();
         for (Filter filter : settingScopeRegistry.getFiltersInPriorityOrder(session)) {
-            first = this.collectionDriver.find(filter, null, null, null, 0).findFirst();
+            first = this.collectionDriver.find(Filters.and(List.of(Filters.equals("settingId", settingId), filter)), null, null, null, 0).findFirst();
             if (first.isPresent()){
                 break;
             }

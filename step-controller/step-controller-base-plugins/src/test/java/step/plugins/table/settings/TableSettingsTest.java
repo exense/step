@@ -40,7 +40,16 @@ public class TableSettingsTest {
         settingScopeRegistry.register("scope2", new TestSettingScopeHandler("scope2", 2));
         TableSettingsAccessor tableSettingsAccessor = new TableSettingsAccessor(new InMemoryCollection<TableSettings>(false), settingScopeRegistry);
 
-        //Save settings for the same setting id but different scope
+        //Save settings for different setting id but different scope
+        TableSettings tableSettingsOrigOther = new TableSettings();
+        tableSettingsOrigOther.setSettingId("mySettingOther");
+        tableSettingsOrigOther.setColumnSettingList(List.of(new ScreenInputColumnSettings("column3", true, 1, new ScreenInput())));
+        Session<User> sessionOther = new Session<>();
+        sessionOther.put("scope1", "valScope1_2");
+        sessionOther.put("scope2", "valScope2_2");
+        tableSettingsAccessor.saveSetting(tableSettingsOrigOther, List.of("scope1","scope2"), sessionOther);
+
+        //First settings saved for mySetting
         TableSettings tableSettingsOrig1 = new TableSettings();
         tableSettingsOrig1.setSettingId("mySetting");
         tableSettingsOrig1.setColumnSettingList(List.of(new ColumnSettings("column1", true, 1)));
@@ -49,14 +58,17 @@ public class TableSettingsTest {
         session.put("scope2", "valScope2_1");
         tableSettingsAccessor.saveSetting(tableSettingsOrig1, List.of("scope1","scope2"), session);
 
+        //Save settings for the same setting id but different scope
         TableSettings tableSettingsOrig2 = new TableSettings();
         tableSettingsOrig2.setSettingId("mySetting");
         tableSettingsOrig2.setColumnSettingList(List.of(new ScreenInputColumnSettings("column2", true, 1, new ScreenInput())));
         Session<User> session2 = new Session<>();
         session2.put("scope1", "valScope1_2");
         session2.put("scope2", "valScope2_2");
-
         tableSettingsAccessor.saveSetting(tableSettingsOrig2, List.of("scope1","scope2"), session2);
+
+
+
 
         //Retrieve with same sessions
         Optional<TableSettings> setting = tableSettingsAccessor.getSetting("mySetting", session);

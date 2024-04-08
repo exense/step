@@ -40,6 +40,8 @@ import step.resources.ResourceManager;
 
 import java.util.List;
 
+import static step.core.Controller.USER;
+
 @Singleton
 @Path("table")
 @Tag(name = "Tables")
@@ -86,6 +88,12 @@ public class TableService extends AbstractStepServices {
     @Produces(MediaType.APPLICATION_JSON)
     @Secured
     public void saveTableSettings(@PathParam("tableName") String tableName, TableSettingsRequest tableSettingsRequest) {
+        //Scopes including the user scope don't need to check the rights, system-wide scope, or scopes not user specific need specific access right
+        if (tableSettingsRequest.scope.isEmpty()) {
+            checkRights("table-settings-system-write");
+        } else if (!tableSettingsRequest.scope.contains(USER)) {
+            checkRights("table-settings-project-write");
+        }
         tableSettingsRequest.tableSettings.setSettingId(tableName);
         tableSettingsAccessor.saveSetting(tableSettingsRequest.tableSettings, tableSettingsRequest.scope, getSession());
     }
