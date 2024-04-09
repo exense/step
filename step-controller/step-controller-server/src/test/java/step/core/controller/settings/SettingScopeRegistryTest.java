@@ -109,16 +109,6 @@ public class SettingScopeRegistryTest {
         abstractScopeObject.setSettingId("mySetting");
         abstractScopeObjectInMemoryAccessor.saveSetting(abstractScopeObject, List.of("user", "scope1"), session);
         ObjectId twoScopesId = abstractScopeObject.getId();
-        //Save setting with 1st scope only
-        abstractScopeObject = new AbstractScopeObject();
-        abstractScopeObject.setSettingId("mySetting");
-        abstractScopeObjectInMemoryAccessor.saveSetting(abstractScopeObject, List.of("user"), session);
-        ObjectId userScopeId = abstractScopeObject.getId();
-        //Save setting with 2nd scope only
-        abstractScopeObject = new AbstractScopeObject();
-        abstractScopeObject.setSettingId("mySetting");
-        abstractScopeObjectInMemoryAccessor.saveSetting(abstractScopeObject, List.of("scope1"), session);
-        ObjectId scope1Id = abstractScopeObject.getId();
 
         //make sure objects were properly enriched with scope info
         AbstractScopeObject noScope = (AbstractScopeObject) abstractScopeObjectInMemoryAccessor.get(noScopeId);
@@ -131,11 +121,31 @@ public class SettingScopeRegistryTest {
         assertEquals("test1", twoScopes.getScope().get("scope1"));
         assertNull(twoScopes.getScope().get("scope2"));
 
+        //check the logic to retrieve a settings based on scope information in the session
+        Optional<AbstractScopeObject> mySetting = abstractScopeObjectInMemoryAccessor.getSetting("mySetting", session);
+        assertSettingResolution(mySetting, twoScopesId, Map.of("user", "myUser","scope1","test1"));
+
+        //Save setting with 1st scope only, should overwrite more specific scope defined with same user and scope1
+        abstractScopeObject = new AbstractScopeObject();
+        abstractScopeObject.setSettingId("mySetting");
+        abstractScopeObjectInMemoryAccessor.saveSetting(abstractScopeObject, List.of("user"), session);
+        ObjectId userScopeId = abstractScopeObject.getId();
+
+        assertNull(abstractScopeObjectInMemoryAccessor.get(twoScopesId));
+
+        //Save setting with 2nd scope only
+        abstractScopeObject = new AbstractScopeObject();
+        abstractScopeObject.setSettingId("mySetting");
+        abstractScopeObjectInMemoryAccessor.saveSetting(abstractScopeObject, List.of("scope1"), session);
+        ObjectId scope1Id = abstractScopeObject.getId();
+
+        //Assert settings saved for user scope only
         AbstractScopeObject userScope = (AbstractScopeObject) abstractScopeObjectInMemoryAccessor.get(userScopeId);
         assertEquals("myUser", userScope.getScope().get("user"));
         assertNull(userScope.getScope().get("scope1"));
         assertNull(userScope.getScope().get("scope2"));
 
+        //Assert setting saved for scope1 only
         AbstractScopeObject scope1 = (AbstractScopeObject) abstractScopeObjectInMemoryAccessor.get(scope1Id);
         assertNull(noScope.getScope().get("user"));
         assertEquals("test1", scope1.getScope().get("scope1"));
@@ -149,9 +159,9 @@ public class SettingScopeRegistryTest {
         assertFilters(filtersInPriorityOrder.get(2), Map.of("scope.scope1","test1"), List.of("scope.scope2", "scope.user"));
         assertFilters(filtersInPriorityOrder.get(3), Map.of(), List.of("scope.scope2", "scope.scope1", "scope.user"));
 
-        //Final check the logic to retrieve a settings based on scope information in the session
-        Optional<AbstractScopeObject> mySetting = abstractScopeObjectInMemoryAccessor.getSetting("mySetting", session);
-        assertSettingResolution(mySetting, twoScopesId, Map.of("user", "myUser","scope1","test1"));
+        //Check the logic to retrieve a settings based on scope information in the session, settings with both scopes was overridden when saving for scope user only (user=myUser)
+        mySetting = abstractScopeObjectInMemoryAccessor.getSetting("mySetting", session);
+        assertSettingResolution(mySetting, userScopeId, Map.of("user", "myUser"));
 
         //Test with different scope info in session (also with scope info for which there are no settings saved
         Optional<AbstractScopeObject> noScopeSetting = abstractScopeObjectInMemoryAccessor.getSetting("mySetting", new Session<>());
@@ -177,17 +187,37 @@ public class SettingScopeRegistryTest {
         abstractScopeObjectInMemoryAccessor.saveSetting(abstractScopeObject, List.of("scope1"), sessionNewScope);
         scope1Setting = abstractScopeObjectInMemoryAccessor.getSetting("mySetting", sessionNewScope);
         assertSettingResolution(scope1Setting, abstractScopeObject.getId(), Map.of("scope1", "test2"));
-        assertEquals(5, abstractScopeObjectInMemoryAccessor.stream().count());
+        assertEquals(4, abstractScopeObjectInMemoryAccessor.stream().count());
+
+        //Finally save the setting system wide (i.e. with no scope), only this system should remain in the collections
+        abstractScopeObjectInMemoryAccessor.saveSetting(abstractScopeObject, List.of(), sessionNewScope);
+        assertEquals(1, abstractScopeObjectInMemoryAccessor.stream().count());
+        AbstractScopeObject finalObject = (AbstractScopeObject) abstractScopeObjectInMemoryAccessor.stream().findFirst().get();
+        assertTrue(finalObject.getScope().isEmpty());
+
+
     }
 
-    private void assertSettingResolution(Optional<AbstractScopeObject> scopeSetting, ObjectId scopeId, Map<String, String> scopes) {
+    /**
+     * Helper method to assert the resolution of the scope object based on the session
+     * @param scopeSetting the resolved scope setting (optional)
+     * @param scopeObjectId the expected id of the resolved object
+     * @param scopes the expected scope content of the resolved object
+     */
+    private void assertSettingResolution(Optional<AbstractScopeObject> scopeSetting, ObjectId scopeObjectId, Map<String, String> scopes) {
         assertTrue(scopeSetting.isPresent());
         AbstractScopeObject userScopeSettingObject = scopeSetting.get();
-        assertEquals(scopeId, userScopeSettingObject.getId());
+        assertEquals(scopeObjectId, userScopeSettingObject.getId());
         assertEquals(scopes.size(), userScopeSettingObject.getScope().size());
         scopes.forEach((k,v) -> assertEquals(v, userScopeSettingObject.getScope().get(k)));
     }
 
+    /**
+     * Helper to assert that the built filter contains the correct list of equals filters and "not exists" filters
+     * @param filter the built filters to be checked
+     * @param equalsFilters the expected list of equals filters
+     * @param notExistingFilters the expected list of not exists filters
+     */
     private void assertFilters(Filter filter, Map<String, String> equalsFilters, List<String> notExistingFilters) {
         assertTrue(filter instanceof And);
         And andFilter = (And) filter;

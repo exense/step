@@ -40,7 +40,7 @@ public class TableSettingsTest {
         settingScopeRegistry.register("scope2", new TestSettingScopeHandler("scope2", 2));
         TableSettingsAccessor tableSettingsAccessor = new TableSettingsAccessor(new InMemoryCollection<TableSettings>(false), settingScopeRegistry);
 
-        //Save settings for different setting id but different scope
+        //Save settings for different setting id and different scope
         TableSettings tableSettingsOrigOther = new TableSettings();
         tableSettingsOrigOther.setSettingId("mySettingOther");
         tableSettingsOrigOther.setColumnSettingList(List.of(new ScreenInputColumnSettings("column3", true, 1, new ScreenInput())));
@@ -101,11 +101,6 @@ public class TableSettingsTest {
         tableSettingsOrig3.setSettingId("mySetting");
         tableSettingsOrig3.setColumnSettingList(List.of(new ColumnSettings("column3", true, 1)));
         tableSettingsAccessor.saveSetting(tableSettingsOrig3, List.of("scope2"), session);
-        //Save with no scope
-        TableSettings tableSettingsOrig4 = new TableSettings();
-        tableSettingsOrig4.setSettingId("mySetting");
-        tableSettingsOrig4.setColumnSettingList(List.of(new ColumnSettings("column4", true, 1)));
-        tableSettingsAccessor.saveSetting(tableSettingsOrig4, List.of(), session);
 
         //Retrieve with new session scope2 value match, scope 1 is different -> should get setting only saved with scope2
         session3 = new Session<>();
@@ -115,6 +110,12 @@ public class TableSettingsTest {
         assertTrue(setting3.isPresent());
         assertEquals("column3", setting3.get().getColumnSettingList().get(0).getColumnId());
 
+        //Save with no scope
+        TableSettings tableSettingsOrig4 = new TableSettings();
+        tableSettingsOrig4.setSettingId("mySetting");
+        tableSettingsOrig4.setColumnSettingList(List.of(new ColumnSettings("column4", true, 1)));
+        tableSettingsAccessor.saveSetting(tableSettingsOrig4, List.of(), session);
+
         //Retrieve with new session scope doesn't match -> should return settings saved with no scope
         Session<User> session4 = new Session<>();
         session3.put("scope1", "different");
@@ -122,6 +123,15 @@ public class TableSettingsTest {
         Optional<TableSettings> setting4 = tableSettingsAccessor.getSetting("mySetting", session4);
         assertTrue(setting4.isPresent());
         assertEquals("column4", setting4.get().getColumnSettingList().get(0).getColumnId());
+
+        //Settings saved with no scope (system wide) removed all more specific scope settings, so we should have one left for "mySetting"
+        assertEquals(2, tableSettingsAccessor.stream().count());
+        Optional<TableSettings> mySettingOther = tableSettingsAccessor.getSetting("mySettingOther", sessionOther);
+        assertTrue(mySettingOther.isPresent());
+        assertEquals("mySettingOther", mySettingOther.get().getSettingId());
+        assertEquals("valScope1_2", mySettingOther.get().getScope().get("scope1"));
+        assertEquals("column3", mySettingOther.get().getColumnSettingList().get(0).getColumnId());
+
     }
 
     public static class TestSettingScopeHandler extends SettingScopeHandler {

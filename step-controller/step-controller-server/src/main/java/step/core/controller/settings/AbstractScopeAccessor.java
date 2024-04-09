@@ -23,6 +23,7 @@ import step.core.accessors.AbstractAccessor;
 import step.core.collections.Collection;
 import step.core.collections.Filter;
 import step.core.collections.Filters;
+import step.core.collections.filters.Equals;
 import step.framework.server.Session;
 
 import java.util.HashMap;
@@ -48,15 +49,25 @@ public class AbstractScopeAccessor<T extends AbstractScopeObject> extends Abstra
         //Override previous scope in case of update
         setting.setScope(new HashMap<>());
         //Enrich with requested scope based on session context
-        settingScopeRegistry.addScopes(setting, scopes, session);
-        //TODO check if settings with higher retrieval prio exists and remove them
-        //i.e. admin update system wide settings, this should overwrite the per user settings?
+        settingScopeRegistry.addScopesToSettings(setting, scopes, session);
+        // Cleaning up any existing settings with scopes that should be overridden by this one
+        // Example: an admin change the table settings for the whole system, this will delete the settings
+        // saved with specific (user and/or project) scope
+        cleanupSettingsWithNarrowerScopes(setting, scopes, session);
         //Check if element exists for this scope, and set for update in this case
         //scope combination must be unique by setting id
         Optional<T> bySettingIdAndScope = getBySettingIdAndScope(setting.getSettingId(), scopes, session);
         bySettingIdAndScope.ifPresent(s -> setting.setId(s.getId()));
         //Finally save or update
         save(setting);
+    }
+
+    private void cleanupSettingsWithNarrowerScopes(T setting, List<String> scopes, Session<User> session) {
+        List<Filter> filters = settingScopeRegistry.getLowerPrioScopeFilters(setting);
+        filters.forEach(f -> {
+            Equals settingId = Filters.equals("settingId", setting.getSettingId());
+            this.getCollectionDriver().remove(Filters.and(List.of(settingId, f)));
+        });
     }
 
     /**

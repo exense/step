@@ -35,7 +35,7 @@ public class SettingScopeRegistry {
         settingScopeHandlers.put(scope, settingScopeHandler);
     }
 
-    public void addScopes(AbstractScopeObject abstractScopeObject, List<String> scopes, Session<User> session) {
+    public void addScopesToSettings(AbstractScopeObject abstractScopeObject, List<String> scopes, Session<User> session) {
         Objects.requireNonNull(scopes, "Scope list cannot be null, use an empty list instead");
         scopes.forEach(s -> {
             SettingScopeHandler settingScopeHandler = settingScopeHandlers.get(s);
@@ -66,6 +66,7 @@ public class SettingScopeRegistry {
         return filters;
     }
 
+
     /**
      * This method return the list of filters to be used to retrieve settings by scope
      * The list is in priority order, the last filter search for the entry with no scope information (application scope)
@@ -95,7 +96,7 @@ public class SettingScopeRegistry {
         return filters;
     }
 
-    public List<List<SettingScopeHandler>> getAllCombination(List<SettingScopeHandler> scopeHandlers) {
+    private List<List<SettingScopeHandler>> getAllCombination(List<SettingScopeHandler> scopeHandlers) {
         int size = scopeHandlers.size();
         List<List<SettingScopeHandler>> results = new ArrayList<>();
 
@@ -106,7 +107,7 @@ public class SettingScopeRegistry {
         return results;
     }
 
-    public void getAllNCombination(List<SettingScopeHandler> scopeHandlers, List<List<SettingScopeHandler>> results, SettingScopeHandler[] nResults, int start, int index, int n) {
+    private void getAllNCombination(List<SettingScopeHandler> scopeHandlers, List<List<SettingScopeHandler>> results, SettingScopeHandler[] nResults, int start, int index, int n) {
         int size = scopeHandlers.size();
         if (index < n) {
             for (int i = start; (i < size) && ((size-i) >= (n-index)); i++) {
@@ -116,5 +117,23 @@ public class SettingScopeRegistry {
         } else {
             results.add(new ArrayList<>(Arrays.asList(nResults)));
         }
+    }
+
+    public List<Filter> getLowerPrioScopeFilters(AbstractScopeObject scopeObject) {
+        List<Filter> filterList = new ArrayList<>();
+        Map<String, String> scopes = scopeObject.getScope();
+        //Create base filters matching the current scope
+        List<Filter> baseFilters = scopes.entrySet().stream().map(e -> Filters.equals(settingScopeHandlers.get(e.getKey()).getFilterField(), e.getValue())).collect(Collectors.toList());
+        //Get all combinations for scopes handlers not part of the object scope
+        List<SettingScopeHandler> otherScopeHandlers = settingScopeHandlers.values().stream()
+                .filter(settingScopeHandler -> !scopes.containsKey(settingScopeHandler.getScopeName())).collect(Collectors.toList());
+        List<List<SettingScopeHandler>> allCombination = getAllCombination(otherScopeHandlers);
+        //Combine base filter with remaining handlers combinations
+        allCombination.forEach(c -> {
+            List<Filter> andFilters = c.stream().map(h -> Filters.exists(h.getFilterField())).collect(Collectors.toList());
+            andFilters.addAll(baseFilters);
+            filterList.add(Filters.and(andFilters));
+        });
+        return filterList;
     }
 }
