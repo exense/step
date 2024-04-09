@@ -40,6 +40,10 @@ public class Entity<A extends AbstractIdentifiableObject, T extends Accessor<A>>
 		return name;
 	}
 
+	public String getCollectionName() {
+		return accessor.getCollectionDriver().getName();
+	}
+
 	public T getAccessor() {
 		return accessor;
 	}

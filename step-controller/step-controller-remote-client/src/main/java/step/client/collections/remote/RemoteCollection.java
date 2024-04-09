@@ -19,12 +19,14 @@ import step.core.collections.Collection;
 
 public class RemoteCollection<T> implements Collection<T> {
 
+    protected final String collectionName;
     protected final String path;
     protected final Class<T> entityClass;
     protected AbstractRemoteClient client;
 
     public RemoteCollection(AbstractRemoteClient client, String collection, Class<T> entityClass){
         super();
+        this.collectionName = collection;
         this.path = "/rest/remote/" + collection;
         this.entityClass = entityClass;
         this.client = client;
@@ -176,7 +178,12 @@ public class RemoteCollection<T> implements Collection<T> {
         return new UnsupportedOperationException("This method is currently not implemented");
     }
 
-	@Override
+    @Override
+    public String getName() {
+        return collectionName;
+    }
+
+    @Override
 	public long count(Filter filter, Integer limit) {
         Invocation.Builder builder = client.requestBuilder(path + "/count");
         Entity<CountRequest> entity = Entity.entity(new CountRequest(filter, limit), MediaType.APPLICATION_JSON);

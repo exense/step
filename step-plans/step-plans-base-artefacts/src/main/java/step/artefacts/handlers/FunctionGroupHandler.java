@@ -19,6 +19,9 @@
 package step.artefacts.handlers;
 
 import step.artefacts.FunctionGroup;
+import step.artefacts.handlers.functions.TokenAutoscalingExecutionPlugin;
+import step.artefacts.handlers.functions.FunctionGroupSession;
+import step.artefacts.handlers.functions.TokenForecastingContext;
 import step.core.AbstractContext;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandler;
@@ -28,24 +31,20 @@ import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.execution.ExecutionContext;
 import step.core.functions.FunctionGroupHandle;
 import step.functions.execution.FunctionExecutionService;
-import step.functions.execution.FunctionExecutionServiceException;
-import step.grid.TokenWrapper;
 import step.grid.tokenpool.Interest;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportNode> implements FunctionGroupHandle {
 	
 	public static final String FUNCTION_GROUP_CONTEXT_KEY = "##functionGroupContext##";
 
-	private TokenSelectorHelper tokenSelectorHelper;	
-	
+	private TokenSelectorHelper tokenSelectorHelper;
+	private FunctionExecutionService functionExecutionService;
+
 	public FunctionGroupHandler() {
 		super();
 	}
@@ -53,81 +52,99 @@ public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportN
 	@Override
 	public void init(ExecutionContext context) {
 		super.init(context);
+		functionExecutionService = context.get(FunctionExecutionService.class);
 		tokenSelectorHelper = new TokenSelectorHelper(new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler())));
 
 	}
 
 	@Override
 	protected void createReportSkeleton_(ReportNode node, FunctionGroup testArtefact) {
-		SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
-		scheduler.createReportSkeleton_(node, testArtefact);
+		TokenForecastingContext tokenForecastingContext = TokenAutoscalingExecutionPlugin.getTokenForecastingContext(context);
+		// Inject the mocked function execution service of the token forecasting context instead of the function execution service of the context
+		FunctionExecutionService functionExecutionService = tokenForecastingContext.getFunctionExecutionServiceForTokenForecasting();
+		FunctionGroupContext handle = buildFunctionGroupContext(functionExecutionService, testArtefact);
+		try {
+			addFunctionGroupContextToContext(node, handle);
+			BiConsumer<AbstractArtefact, ReportNode> consumer = testArtefact.getConsumer();
+			if(consumer == null) {
+				SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
+				scheduler.createReportSkeleton_(node, testArtefact);
+			} else {
+				consumer.accept(testArtefact, node);
+			}
+		} finally {
+			try {
+				handle.session.close();
+			} catch (Exception e) {
+				// TODO
+			}
+		}
 	}
 
 	public static class FunctionGroupContext {
-		
-		final List<TokenWrapper> tokens = new ArrayList<>();
-		
-		TokenWrapper localToken;
-		
-		final Map<String, Interest> additionalSelectionCriteria;
 
-		final Optional<String> dockerImage;
+		private final FunctionGroupSession session;
 
-		final Optional<String> containerUser;
+		private final Map<String, Interest> functionGroupTokenSelectionCriteria;
 
-		final Optional<String> containerCommand;
-		
-		private long ownerThreadId = 0;
+		public final Optional<String> dockerImage;
 
-		public FunctionGroupContext(Map<String, Interest> additionalSelectionCriteria) {
-			this(additionalSelectionCriteria, Optional.empty(), Optional.empty(), Optional.empty());
+		public final Optional<String> containerUser;
+
+		public final Optional<String> containerCommand;
+
+
+		public FunctionGroupContext(FunctionExecutionService functionExecutionService, Map<String, Interest> functionGroupTokenSelectionCriteria) {
+			this(functionExecutionService, functionGroupTokenSelectionCriteria, Optional.empty(), Optional.empty(), Optional.empty());
 		}
 
-		public FunctionGroupContext(Map<String, Interest> additionalSelectionCriteria, Optional<String> dockerImage, Optional<String> containerUser, Optional<String> containerCommand) {
+		public FunctionGroupContext(FunctionExecutionService functionExecutionService, Map<String, Interest> functionGroupTokenSelectionCriteria, Optional<String> dockerImage, Optional<String> containerUser, Optional<String> containerCommand) {
 			super();
-			this.additionalSelectionCriteria = additionalSelectionCriteria;
+			this.functionGroupTokenSelectionCriteria = functionGroupTokenSelectionCriteria;
 			this.dockerImage = dockerImage;
 			this.containerUser = containerUser;
 			this.containerCommand = containerCommand;
-		}
-		
-		public List<TokenWrapper> getTokens() {
-			return tokens;
+			this.session = new FunctionGroupSession(functionExecutionService);
 		}
 
-		public boolean addToken(TokenWrapper e) {
-			return tokens.add(e);
+		public Map<String, Interest> getFunctionGroupTokenSelectionCriteria() {
+			return functionGroupTokenSelectionCriteria;
 		}
 
-		public TokenWrapper getLocalToken() {
-			return localToken;
+		public FunctionGroupSession getSession() {
+			return session;
 		}
-
-		public void setLocalToken(TokenWrapper localToken) {
-			this.localToken = localToken;
-		}
-
-		public Map<String, Interest> getAdditionalSelectionCriteria() {
-			return additionalSelectionCriteria;
-		}
-
-		public boolean isOwner(long id) {
-			if (ownerThreadId == 0) {
-				ownerThreadId = id;
-				return true;
-			} else {
-				return (ownerThreadId == id);
-			}
-		}
-		
 	}
 	
 	@Override
-	protected void execute_(ReportNode node, FunctionGroup testArtefact) throws Exception {		
-		Map<String, Interest> additionalSelectionCriteria = tokenSelectorHelper.getTokenSelectionCriteria(testArtefact, getBindings());
-		String dockerImage = testArtefact.getDockerImage().get();
-		String containerUser = testArtefact.getContainerUser().get();
-		String containerCommand = testArtefact.getContainerCommand().get();
+	protected void execute_(ReportNode node, FunctionGroup functionGroup) throws Exception {
+		FunctionGroupContext functionGroupContext = buildFunctionGroupContext(functionExecutionService, functionGroup);
+		addFunctionGroupContextToContext(node, functionGroupContext);
+		try {
+			BiConsumer<AbstractArtefact, ReportNode> consumer = functionGroup.getConsumer();
+			if(consumer == null) {
+				SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
+				scheduler.execute_(node, functionGroup);
+			} else {
+				consumer.accept(functionGroup, node);
+			}
+		} finally {
+			releaseTokens(context, true);
+		}	
+	}
+
+	private void addFunctionGroupContextToContext(ReportNode node, FunctionGroupContext functionGroupContext) {
+		context.getVariablesManager().putVariable(node, FUNCTION_GROUP_CONTEXT_KEY, functionGroupContext);
+		context.put(FunctionGroupHandle.class, this);
+	}
+
+	private FunctionGroupContext buildFunctionGroupContext(FunctionExecutionService functionExecutionService, FunctionGroup functionGroup) {
+		Map<String, Interest> additionalSelectionCriteria = tokenSelectorHelper.getTokenSelectionCriteria(functionGroup, getBindings());
+
+		// TODO refactor this: group docker related variables and logic in a class
+		String dockerImage = functionGroup.getDockerImage().get();
+		String containerUser = functionGroup.getContainerUser().get();
+		String containerCommand = functionGroup.getContainerCommand().get();
 
 		Optional<String> dockerImageOptional;
 		if(dockerImage != null && !dockerImage.isEmpty()) {
@@ -135,65 +152,17 @@ public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportN
 		} else {
 			dockerImageOptional = Optional.empty();
 		}
-
 		Optional<String> containerUserOptional = containerUser != null && !containerUser.isEmpty() ? Optional.ofNullable(containerUser) : Optional.empty();
 		Optional<String> containerCommandOptional = containerCommand != null && !containerCommand.isEmpty() ? Optional.ofNullable(containerCommand) : Optional.empty();
-
-
 		dockerImageOptional.ifPresent(image -> additionalSelectionCriteria.put("$docker", new Interest(Pattern.compile("true"), true)));
 
-		FunctionGroupContext handle = new FunctionGroupContext(additionalSelectionCriteria, dockerImageOptional,  containerUserOptional, containerCommandOptional);
-		context.getVariablesManager().putVariable(node, FUNCTION_GROUP_CONTEXT_KEY, handle);
-		context.put(FunctionGroupHandle.class, this);
-		try {
-			BiConsumer<AbstractArtefact, ReportNode> consumer = testArtefact.getConsumer();
-			if(consumer == null) {
-				SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
-				scheduler.execute_(node, testArtefact);
-			} else {
-				consumer.accept(testArtefact, node);
-			}
-		} finally {
-			releaseTokens(context, true);
-		}	
+		return new FunctionGroupContext(functionExecutionService, additionalSelectionCriteria, dockerImageOptional,  containerUserOptional, containerCommandOptional);
 	}
-	
+
 	@Override
 	public void releaseTokens(AbstractContext context, boolean local) throws Exception {
 		FunctionGroupContext handle = (FunctionGroupContext) ((ExecutionContext) context).getVariablesManager().getVariable(FunctionGroupHandler.FUNCTION_GROUP_CONTEXT_KEY);
-		FunctionExecutionService functionExecutionService = context.get(FunctionExecutionService.class);
-		List<Exception> releaseExceptions = new ArrayList<>();
-		if(handle.getTokens()!=null) {
-			handle.getTokens().forEach(t->{
-				try {
-					functionExecutionService.returnTokenHandle(t.getID());
-				} catch (FunctionExecutionServiceException e) {
-					releaseExceptions.add(e);
-				}
-			});
-			handle.getTokens().clear();
-		}
-		if(handle.getLocalToken()!=null && local) {
-			try {
-				functionExecutionService.returnTokenHandle(handle.getLocalToken().getID());
-			} catch (FunctionExecutionServiceException e) {
-				releaseExceptions.add(e);
-			} finally {
-				handle.setLocalToken(null);
-			}
-		}
-		
-		int exceptionCount = releaseExceptions.size();
-		if(exceptionCount > 0) {
-			if(exceptionCount == 1) {
-				throw releaseExceptions.get(0);
-			} else {
-				throw new Exception("Multiple errors occurred when releasing agent tokens: "+
-							releaseExceptions.stream().map(e->e.getMessage()).collect(Collectors.joining(", ")));
-			}
-		}
-	
-		
+		handle.session.releaseTokens(local);
 	}
 	
 	@Override

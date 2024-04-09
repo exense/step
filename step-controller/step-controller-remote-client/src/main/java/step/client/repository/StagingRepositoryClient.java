@@ -42,6 +42,7 @@ import com.google.common.base.Function;
 import step.client.AbstractRemoteClient;
 import step.client.credentials.ControllerCredentials;
 import step.client.planrunners.RemotePlanRunner;
+import step.client.reports.RemoteExecutionProvider;
 import step.client.reports.RemoteReportTreeAccessor;
 import step.core.plans.Plan;
 import step.core.plans.runner.PlanRunnerResult;
@@ -149,7 +150,7 @@ public class StagingRepositoryClient extends AbstractRemoteClient {
 			String executionId = executeRequest(()->b.post(entity, String.class));
 			RemotePlanRunner remotePlanRunner = new RemotePlanRunner(credentials);
 			closables.add(remotePlanRunner);
-			return remotePlanRunner.new RemotePlanRunnerResult(executionId, executionId, new RemoteReportTreeAccessor(credentials));
+			return remotePlanRunner.new RemotePlanRunnerResult(executionId, new RemoteReportTreeAccessor(credentials), new RemoteExecutionProvider(credentials));
 		}
 		
 		List<Closeable> closables = new ArrayList<>();

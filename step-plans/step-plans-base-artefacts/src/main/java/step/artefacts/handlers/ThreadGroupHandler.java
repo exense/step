@@ -18,17 +18,12 @@
  ******************************************************************************/
 package step.artefacts.handlers;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.concurrent.atomic.LongAdder;
-import java.util.function.Consumer;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
-
-import step.artefacts.AfterThread;
-import step.artefacts.BeforeThread;
-import step.artefacts.Sequence;
+import step.artefacts.*;
 import step.artefacts.ThreadGroup;
+import step.artefacts.handlers.functions.TokenAutoscalingExecutionPlugin;
+import step.artefacts.handlers.functions.MultiplyingTokenForecastingContext;
+import step.artefacts.handlers.functions.TokenForecastingContext;
 import step.artefacts.handlers.loadtesting.Pacer;
 import step.artefacts.reports.ThreadReportNode;
 import step.core.artefacts.AbstractArtefact;
@@ -41,9 +36,39 @@ import step.threadpool.ThreadPool;
 import step.threadpool.ThreadPool.WorkerController;
 import step.threadpool.WorkerItemConsumerFactory;
 
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.concurrent.atomic.LongAdder;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+
 public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode> {
-	
-	public void createReportSkeleton_(ReportNode node, ThreadGroup testArtefact) {		
+
+	// TODO move this to parent class
+	protected void createReportNodeSkeletonInSession(AbstractArtefact artefact, ReportNode node, BiConsumer<AbstractArtefact, ReportNode> consumer, String artefactName, Map<String, Object> newVariables) {
+		FunctionGroup functionGroup = createWorkArtefact(FunctionGroup.class, artefact, artefactName, true);
+		functionGroup.setConsumer(consumer);
+		delegateCreateReportSkeleton(functionGroup, node, newVariables);
+	}
+
+	protected void createReportNodeSkeletonInSession(AbstractArtefact artefact, ReportNode node, BiConsumer<AbstractArtefact, ReportNode> consumer) {
+		createReportNodeSkeletonInSession(artefact, node, consumer, "", new HashMap<>());
+	}
+
+	public void createReportSkeleton_(ReportNode node, ThreadGroup testArtefact) {
+		Integer numberOfThreads = testArtefact.getUsers().get();
+
+		TokenForecastingContext tokenForecastingContext = TokenAutoscalingExecutionPlugin.getTokenForecastingContext(context);
+		TokenAutoscalingExecutionPlugin.pushNewTokenNumberCalculationContext(context, new MultiplyingTokenForecastingContext(tokenForecastingContext, numberOfThreads));
+
+		createReportNodeSkeletonInSession(testArtefact, node, (sessionArtefact, sessionReportNode)->{
+			SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
+			scheduler.createReportSkeleton_(sessionReportNode, sessionArtefact);
+		});
+
+		//SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
+		//scheduler.createReportSkeleton_(node, testArtefact);
 	}
 
 	@Override
