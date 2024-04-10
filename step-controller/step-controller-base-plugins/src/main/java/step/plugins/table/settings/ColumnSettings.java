@@ -29,9 +29,9 @@ import static step.functions.Function.JSON_CLASS_FIELD;
 @JsonTypeInfo(use= JsonTypeInfo.Id.CLASS, property= JSON_CLASS_FIELD)
 public class ColumnSettings {
 
-    private String columnId;
-    private boolean visible;
-    private int position;
+    public String columnId;
+    public boolean visible;
+    public int position;
 
     public ColumnSettings() {
     }
@@ -41,28 +41,5 @@ public class ColumnSettings {
         this.visible = visible;
         this.position = position;
     }
-
-    public String getColumnId() {
-        return columnId;
-    }
-
-    public void setColumnId(String columnId) {
-        this.columnId = columnId;
-    }
-
-    public boolean isVisible() {
-        return visible;
-    }
-
-    public void setVisible(boolean visible) {
-        this.visible = visible;
-    }
-
-    public int getPosition() {
-        return position;
-    }
-
-    public void setPosition(int position) {
-        this.position = position;
-    }
+    
 }

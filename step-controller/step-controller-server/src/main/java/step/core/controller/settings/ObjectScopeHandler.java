@@ -24,17 +24,18 @@ import step.framework.server.Session;
 
 import java.util.Objects;
 
-public abstract class SettingScopeHandler {
+import static step.core.controller.settings.AbstractScopedObject.SCOPE_FIELD;
 
-    public static final String SCOPE = "scope";
+public abstract class ObjectScopeHandler {
+
     private final String scopeName;
 
-    protected SettingScopeHandler(String scopeName) {
+    protected ObjectScopeHandler(String scopeName) {
         this.scopeName = scopeName;
     }
 
     protected String getFilterField() {
-        return SCOPE + "." + scopeName;
+        return SCOPE_FIELD + "." + scopeName;
     }
 
     public String getScopeName() {
@@ -69,7 +70,7 @@ public abstract class SettingScopeHandler {
      */
     protected abstract int getPriority();
 
-    public void saveScopeDetails(AbstractScopeObject scopeObject, Session<?> session) {
+    public void saveScopeDetails(AbstractScopedObject scopeObject, Session<?> session) {
         String scopeValue = getScopeValue(session);
         Objects.requireNonNull(scopeValue, "Scope value is not available for requested scope '" + getScopeName() + "'.");
         scopeObject.addScope(scopeName, scopeValue);

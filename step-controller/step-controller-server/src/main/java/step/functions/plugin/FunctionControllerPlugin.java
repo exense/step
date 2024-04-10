@@ -104,21 +104,5 @@ public class FunctionControllerPlugin extends AbstractControllerPlugin {
 		tableRegistry.register(EntityManager.functions, new Table<>(functionCollection, "kw-read", true)
 				.withResultListFactory(()->new ArrayList<>(){}));
 	}
-	
-	@Override
-	public void initializeData(GlobalContext context) throws Exception {
-		createScreenInputsIfNecessary(context);
-	}
 
-	protected void createScreenInputsIfNecessary(GlobalContext context) {
-		ScreenInputAccessor screenInputAccessor = context.get(ScreenInputAccessor.class);
-		List<ScreenInput> functionTableInputs = screenInputAccessor.getScreenInputsByScreenId("functionTable");
-		functionTableInputs.forEach(i->{
-			Input input = i.getInput();
-			if(input.getId().equals("attributes.name")) {
-				input.setCustomUIComponents(List.of("functionLink"));
-				screenInputAccessor.save(i);
-			}
-		});
-	}
 }

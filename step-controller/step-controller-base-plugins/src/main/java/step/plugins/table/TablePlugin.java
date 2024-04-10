@@ -27,7 +27,7 @@ import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.framework.server.access.AuthorizationManager;
 import step.framework.server.tables.TableRegistry;
-import step.core.controller.settings.SettingScopeRegistry;
+import step.core.controller.settings.ObjectScopeRegistry;
 import step.plugins.table.settings.TableSettings;
 import step.plugins.table.settings.TableSettingsAccessor;
 
@@ -55,9 +55,9 @@ public class TablePlugin extends AbstractControllerPlugin {
         step.framework.server.tables.service.TableService tableService = new step.framework.server.tables.service.TableService(tableRegistry, objectHookRegistry, authorizationManager, maxRequestDuration, maxResultCount);
         context.put(step.framework.server.tables.service.TableService.class, tableService);
 
-        SettingScopeRegistry settingScopeRegistry = context.require(SettingScopeRegistry.class);
+        ObjectScopeRegistry objectScopeRegistry = context.require(ObjectScopeRegistry.class);
         TableSettingsAccessor tableSettingsAccessor = new TableSettingsAccessor(context.getCollectionFactory().getCollection(TableSettings.TABLE_NAME, TableSettings.class),
-                settingScopeRegistry);
+                objectScopeRegistry);
         context.put(TableSettingsAccessor.class, tableSettingsAccessor);
     }
 

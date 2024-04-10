@@ -92,23 +92,6 @@ public class PlanPlugin extends AbstractControllerPlugin {
 	protected void createScreenInputDefinitionsIfNecessary(GlobalContext context) {
 		// Plan table
 		ScreenInputAccessor screenInputAccessor = context.get(ScreenInputAccessor.class);
-		List<ScreenInput> screenInputsByScreenId = screenInputAccessor.getScreenInputsByScreenId(ScreenTemplatePlugin.PLAN_TABLE);
-		Input nameInput = new Input(InputType.TEXT, "attributes.name", "Name", null, null);
-		nameInput.setCustomUIComponents(List.of("planLink"));
-		AtomicBoolean inputExists = new AtomicBoolean(false);
-		// Force content of input 'attributes.name'
-		screenInputsByScreenId.forEach(i->{
-			Input input = i.getInput();
-			if(input.getId().equals("attributes.name")) {
-				i.setInput(nameInput);
-				i.setImmutable(true);
-				screenInputAccessor.save(i);
-				inputExists.set(true);
-			}
-		});
-		// Create it if not existing
-		if(!inputExists.get()) {
-			screenInputAccessor.save(new ScreenInput(0, "planTable", nameInput, true));
-		}
+
 	}
 }

@@ -19,11 +19,13 @@
 package step.plugins.table.settings;
 
 import step.core.collections.Collection;
-import step.core.controller.settings.AbstractScopeAccessor;
-import step.core.controller.settings.SettingScopeRegistry;
+import step.core.controller.settings.AbstractScopedObjectAccessor;
+import step.core.controller.settings.ObjectScopeRegistry;
 
-public class TableSettingsAccessor extends AbstractScopeAccessor<TableSettings> {
-    public TableSettingsAccessor(Collection<TableSettings> collectionDriver, SettingScopeRegistry settingScopeRegistry) {
-        super(collectionDriver, settingScopeRegistry);
+public class TableSettingsAccessor extends AbstractScopedObjectAccessor<TableSettings> {
+    public TableSettingsAccessor(Collection<TableSettings> collectionDriver, ObjectScopeRegistry objectScopeRegistry) {
+        super(collectionDriver, objectScopeRegistry);
     }
+
+
 }

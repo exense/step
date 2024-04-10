@@ -22,12 +22,13 @@ import java.util.HashMap;
 import java.util.Map;
 import step.core.accessors.AbstractIdentifiableObject;
 
-public class AbstractScopeObject extends AbstractIdentifiableObject {
+public class AbstractScopedObject extends AbstractIdentifiableObject {
 
-    private String settingId;
+    public static final String SCOPE_FIELD = "scope";
+
     private Map<String,String> scope = new HashMap<>();
 
-    public AbstractScopeObject() {
+    public AbstractScopedObject() {
     }
 
     public void addScope(String key, String value) {
@@ -35,14 +36,6 @@ public class AbstractScopeObject extends AbstractIdentifiableObject {
             scope = new HashMap<>();
         }
         scope.put(key, value);
-    }
-
-    public String getSettingId() {
-        return settingId;
-    }
-
-    public void setSettingId(String settingId) {
-        this.settingId = settingId;
     }
 
     public Map<String, String> getScope() {

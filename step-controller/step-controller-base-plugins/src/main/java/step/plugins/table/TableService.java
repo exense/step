@@ -39,8 +39,10 @@ import step.resources.Resource;
 import step.resources.ResourceManager;
 
 import java.util.List;
+import java.util.Map;
 
 import static step.core.Controller.USER;
+import static step.plugins.table.settings.TableSettings.SETTINGS_BASE_SCOPE_KEY;
 
 @Singleton
 @Path("table")
@@ -94,8 +96,7 @@ public class TableService extends AbstractStepServices {
         } else if (!tableSettingsRequest.scope.contains(USER)) {
             checkRights("table-settings-project-write");
         }
-        tableSettingsRequest.tableSettings.setSettingId(tableName);
-        tableSettingsAccessor.saveSetting(tableSettingsRequest.tableSettings, tableSettingsRequest.scope, getSession());
+        tableSettingsAccessor.saveScopedObject(Map.of(SETTINGS_BASE_SCOPE_KEY, tableName), tableSettingsRequest.tableSettings, tableSettingsRequest.scope, getSession());
     }
 
     public static class TableSettingsRequest {
@@ -108,6 +109,6 @@ public class TableService extends AbstractStepServices {
     @Produces(MediaType.APPLICATION_JSON)
     @Secured
     public TableSettings getTableSettings(@PathParam("tableName") String tableName) {
-        return tableSettingsAccessor.getSetting(tableName, getSession()).orElse(null); //return 204 if no setting exists yet
+        return tableSettingsAccessor.getScopedObject(Map.of(SETTINGS_BASE_SCOPE_KEY, tableName), getSession()).orElse(null); //return 204 if no setting exists yet
     }
 }

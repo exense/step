@@ -18,12 +18,13 @@
  ******************************************************************************/
 package step.plugins.table.settings;
 
-import step.core.controller.settings.AbstractScopeObject;
+import step.core.controller.settings.AbstractScopedObject;
 
 import java.util.List;
 
-public class TableSettings extends AbstractScopeObject {
+public class TableSettings extends AbstractScopedObject {
 
+    public static final String SETTINGS_BASE_SCOPE_KEY = "settingId";
     public static final String TABLE_NAME = "tablesettings";
     private List<ColumnSettings> columnSettingsList;
 

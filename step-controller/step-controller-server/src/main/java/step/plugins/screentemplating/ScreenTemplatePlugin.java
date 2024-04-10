@@ -63,25 +63,6 @@ public class ScreenTemplatePlugin extends AbstractControllerPlugin {
 	}
 
 	private void initializeScreenInputsIfNecessary() {
-		// Function table
-		List<ScreenInput> screenInputsByScreenId = screenInputAccessor.getScreenInputsByScreenId(ScreenTemplatePlugin.FUNCTION_TABLE);
-		Input nameInput = new Input(InputType.TEXT, "attributes.name", "Name", null, null);
-		AtomicBoolean inputExists = new AtomicBoolean(false);
-		// Force content of input 'attributes.name'
-		screenInputsByScreenId.forEach(i->{
-			Input input = i.getInput();
-			if(input.getId().equals("attributes.name")) {
-				i.setInput(nameInput);
-				i.setImmutable(true);
-				screenInputAccessor.save(i);
-				inputExists.set(true);
-			}
-		});
-		// Create it if not existing
-		if(!inputExists.get()) {
-			screenInputAccessor.save(new ScreenInput(0, FUNCTION_TABLE, nameInput, true));
-		}
-
 		//Execution parameters
 		if(screenInputAccessor.getScreenInputsByScreenId(EXECUTION_PARAMETERS).isEmpty()) {
 			screenInputAccessor.save(new ScreenInput(EXECUTION_PARAMETERS, new Input(InputType.DROPDOWN, "env", "Environment", Arrays.asList(new Option("TEST"),new Option("PROD")))));

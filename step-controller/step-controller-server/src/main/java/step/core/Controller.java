@@ -30,8 +30,8 @@ import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeAccessorImpl;
 import step.core.collections.*;
 import step.core.controller.SessionResponseBuilder;
-import step.core.controller.settings.SettingScopeHandler;
-import step.core.controller.settings.SettingScopeRegistry;
+import step.core.controller.settings.ObjectScopeHandler;
+import step.core.controller.settings.ObjectScopeRegistry;
 import step.core.deployment.WebApplicationConfigurationManager;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
@@ -141,8 +141,8 @@ public class Controller {
 		context.setUserAccessor(new UserAccessorImpl(userCollection));
 		tableRegistry.register("users", new Table<>(userCollection, "user-read",false));
 
-		SettingScopeRegistry settingScopeRegistry = new SettingScopeRegistry();
-		settingScopeRegistry.register(USER, new SettingScopeHandler(USER) {
+		ObjectScopeRegistry objectScopeRegistry = new ObjectScopeRegistry();
+		objectScopeRegistry.register(USER, new ObjectScopeHandler(USER) {
 			@Override
 			protected String getScopeValue(Session<?> session) {
 				AbstractUser user = session.getUser();
@@ -155,7 +155,7 @@ public class Controller {
 			}
 
 		});
-		context.put(SettingScopeRegistry.class, settingScopeRegistry);
+		context.put(ObjectScopeRegistry.class, objectScopeRegistry);
 		
 		//Im memory map to store last user activities
 		Map<String, Long> userActivityMap = new ConcurrentHashMap<>();

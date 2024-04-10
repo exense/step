@@ -22,29 +22,61 @@ import step.core.Version;
 import step.core.collections.*;
 import step.migration.MigrationContext;
 import step.migration.MigrationTask;
+import step.plugins.screentemplating.*;
+
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * This task migrates the screen inputs from screen 'functionTable' which
- * require the prefix "attributes." as of 3.11
+ * with Step 25, configuration of tables columns is changing and legacy screen templates which were only used for
+ * this purpose are deprecated.
+ * Besides attributes.name for function and plan templates become immutable
  *
  */
 public class ScreenTemplateMigrationTask25 extends MigrationTask {
 
-	private final Collection<Document> screenInputs;
+	private final Collection<Document> screenInputsCollection;
+	private final ScreenInputAccessorImpl screenInputAccessor;
 
 	public ScreenTemplateMigrationTask25(CollectionFactory collectionFactory, MigrationContext migrationContext) {
 		super(new Version(3, 25, 0), collectionFactory, migrationContext);
-		screenInputs = collectionFactory.getCollection("screenInputs", Document.class);
+		screenInputsCollection = collectionFactory.getCollection("screenInputs", Document.class);
+		screenInputAccessor = new ScreenInputAccessorImpl(
+				collectionFactory.getCollection("screenInputs", ScreenInput.class));
 	}
 
 	@Override
 	public void runUpgradeScript() {
+		createImmutableNameInput(ScreenTemplatePlugin.FUNCTION_TABLE, "functionLink");
+		createImmutableNameInput(ScreenTemplatePlugin.PLAN_TABLE, "planLink");
+
 		logger.info("Cleaning up screen inputs which are replaced by the new table and columns configurations mechanism.");
-		screenInputs.remove(Filters.equals("screenId", "executionTable"));
-		screenInputs.remove(Filters.equals("screenId", "schedulerTable"));
-		screenInputs.remove(Filters.equals("screenId", "parameterDialog"));
-		screenInputs.remove(Filters.equals("screenId", "parameterTable"));
-		screenInputs.remove(Filters.equals("screenId", "functionTableExtensions"));
+		screenInputsCollection.remove(Filters.equals("screenId", "executionTable"));
+		screenInputsCollection.remove(Filters.equals("screenId", "schedulerTable"));
+		screenInputsCollection.remove(Filters.equals("screenId", "parameterDialog"));
+		screenInputsCollection.remove(Filters.equals("screenId", "parameterTable"));
+		screenInputsCollection.remove(Filters.equals("screenId", "functionTableExtensions"));
+	}
+
+	private void createImmutableNameInput(String screeenId, String customUiComponent) {
+		List<ScreenInput> screenInputsByScreenId = screenInputAccessor.getScreenInputsByScreenId(screeenId);
+		Input nameInput = new Input(InputType.TEXT, "attributes.name", "Name", null, null);
+		nameInput.setCustomUIComponents(List.of(customUiComponent));
+		AtomicBoolean inputExists = new AtomicBoolean(false);
+		// Force content of input 'attributes.name'
+		screenInputsByScreenId.forEach(i->{
+			Input input = i.getInput();
+			if(input.getId().equals("attributes.name")) {
+				i.setInput(nameInput);
+				i.setImmutable(true);
+				screenInputAccessor.save(i);
+				inputExists.set(true);
+			}
+		});
+		// Create it if not existing
+		if(!inputExists.get()) {
+			screenInputAccessor.save(new ScreenInput(0, screeenId, nameInput, true));
+		}
 	}
 
 	@Override

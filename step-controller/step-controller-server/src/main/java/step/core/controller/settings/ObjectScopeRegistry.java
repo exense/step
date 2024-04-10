@@ -27,20 +27,22 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-public class SettingScopeRegistry {
+import static step.core.controller.settings.AbstractScopedObject.SCOPE_FIELD;
 
-    private final Map<String, SettingScopeHandler> settingScopeHandlers = new ConcurrentHashMap<>();
+public class ObjectScopeRegistry {
 
-    public void register(String scope, SettingScopeHandler settingScopeHandler) {
-        settingScopeHandlers.put(scope, settingScopeHandler);
+    private final Map<String, ObjectScopeHandler> objectScopeHandlers = new ConcurrentHashMap<>();
+
+    public void register(String scope, ObjectScopeHandler objectScopeHandler) {
+        objectScopeHandlers.put(scope, objectScopeHandler);
     }
 
-    public void addScopesToSettings(AbstractScopeObject abstractScopeObject, List<String> scopes, Session<User> session) {
+    public void addScopesToObject(AbstractScopedObject abstractScopeObject, List<String> scopes, Session<User> session) {
         Objects.requireNonNull(scopes, "Scope list cannot be null, use an empty list instead");
         scopes.forEach(s -> {
-            SettingScopeHandler settingScopeHandler = settingScopeHandlers.get(s);
-            if (settingScopeHandler != null) {
-                settingScopeHandler.saveScopeDetails(abstractScopeObject, session);
+            ObjectScopeHandler objectScopeHandler = objectScopeHandlers.get(s);
+            if (objectScopeHandler != null) {
+                objectScopeHandler.saveScopeDetails(abstractScopeObject, session);
             } else {
                 throw new UnsupportedOperationException("The scope '" + s + "' is not registered");
             }
@@ -56,7 +58,7 @@ public class SettingScopeRegistry {
     public List<Filter> buildFilters(List<String> scopes, Session session) {
         Objects.requireNonNull(scopes, "Scope list cannot be null, use an empty list instead");
         List<Filter> filters = new ArrayList<>();
-        settingScopeHandlers.forEach((k,v) -> {
+        objectScopeHandlers.forEach((k, v) -> {
             if (scopes.contains(k)) {
                 filters.add(v.getFilter(session));
             } else {
@@ -68,26 +70,22 @@ public class SettingScopeRegistry {
 
 
     /**
-     * This method return the list of filters to be used to retrieve settings by scope
+     * This method return the list of filters to be used to retrieve objects by scope
      * The list is in priority order, the last filter search for the entry with no scope information (application scope)
      * @param session the Step HTTP session from which the scope is extracted
-     * @return the list of ordered filters to retrieve the settings
+     * @return the list of ordered filters to retrieve the objects
      */
     protected List<Filter> getFiltersInPriorityOrder(Session<User> session) {
         //Get available scope information in Session and retrieve applicable handlers
         List<Filter> filters = new ArrayList<>();
-        List<SettingScopeHandler> scopeHandlers = settingScopeHandlers.values().stream()
-                .filter(settingScopeHandler -> settingScopeHandler.scopeIsApplicable(session)).collect(Collectors.toList());
+        List<ObjectScopeHandler> scopeHandlers = objectScopeHandlers.values().stream()
+                .filter(objectScopeHandler -> objectScopeHandler.scopeIsApplicable(session)).collect(Collectors.toList());
 
         //List all scope combinations, sort them from highest to lower priorities and return corresponding filters
-        filters.addAll(getAllCombination(scopeHandlers).stream().sorted(new Comparator<List<SettingScopeHandler>>() {
-            @Override
-            public int compare(List<SettingScopeHandler> o1, List<SettingScopeHandler> o2) {
-                Integer o1AggPriorities = o1.stream().map(SettingScopeHandler::getPriority).reduce(0, Integer::sum);
-                Integer o2AggPriorities = o2.stream().map(SettingScopeHandler::getPriority).reduce(0, Integer::sum);
-
-                return o2AggPriorities - o1AggPriorities;
-            }
+        filters.addAll(getAllCombination(scopeHandlers).stream().sorted((o1, o2) -> {
+            Integer o1AggPriorities = o1.stream().map(ObjectScopeHandler::getPriority).reduce(0, Integer::sum);
+            Integer o2AggPriorities = o2.stream().map(ObjectScopeHandler::getPriority).reduce(0, Integer::sum);
+            return o2AggPriorities - o1AggPriorities;
         }).map(l -> Filters.and(buildFilters(l.stream().map(h->h.getScopeName()).collect(Collectors.toList()), session)))
                 .collect(Collectors.toList()));
 
@@ -96,18 +94,18 @@ public class SettingScopeRegistry {
         return filters;
     }
 
-    private List<List<SettingScopeHandler>> getAllCombination(List<SettingScopeHandler> scopeHandlers) {
+    private List<List<ObjectScopeHandler>> getAllCombination(List<ObjectScopeHandler> scopeHandlers) {
         int size = scopeHandlers.size();
-        List<List<SettingScopeHandler>> results = new ArrayList<>();
+        List<List<ObjectScopeHandler>> results = new ArrayList<>();
 
         for (int i = size; i > 0; i--) {
-            SettingScopeHandler[] nResults = new SettingScopeHandler[i];
+            ObjectScopeHandler[] nResults = new ObjectScopeHandler[i];
             getAllNCombination(scopeHandlers, results, nResults, 0, 0, i);
         }
         return results;
     }
 
-    private void getAllNCombination(List<SettingScopeHandler> scopeHandlers, List<List<SettingScopeHandler>> results, SettingScopeHandler[] nResults, int start, int index, int n) {
+    private void getAllNCombination(List<ObjectScopeHandler> scopeHandlers, List<List<ObjectScopeHandler>> results, ObjectScopeHandler[] nResults, int start, int index, int n) {
         int size = scopeHandlers.size();
         if (index < n) {
             for (int i = start; (i < size) && ((size-i) >= (n-index)); i++) {
@@ -119,21 +117,4 @@ public class SettingScopeRegistry {
         }
     }
 
-    public List<Filter> getLowerPrioScopeFilters(AbstractScopeObject scopeObject) {
-        List<Filter> filterList = new ArrayList<>();
-        Map<String, String> scopes = scopeObject.getScope();
-        //Create base filters matching the current scope
-        List<Filter> baseFilters = scopes.entrySet().stream().map(e -> Filters.equals(settingScopeHandlers.get(e.getKey()).getFilterField(), e.getValue())).collect(Collectors.toList());
-        //Get all combinations for scopes handlers not part of the object scope
-        List<SettingScopeHandler> otherScopeHandlers = settingScopeHandlers.values().stream()
-                .filter(settingScopeHandler -> !scopes.containsKey(settingScopeHandler.getScopeName())).collect(Collectors.toList());
-        List<List<SettingScopeHandler>> allCombination = getAllCombination(otherScopeHandlers);
-        //Combine base filter with remaining handlers combinations
-        allCombination.forEach(c -> {
-            List<Filter> andFilters = c.stream().map(h -> Filters.exists(h.getFilterField())).collect(Collectors.toList());
-            andFilters.addAll(baseFilters);
-            filterList.add(Filters.and(andFilters));
-        });
-        return filterList;
-    }
 }
