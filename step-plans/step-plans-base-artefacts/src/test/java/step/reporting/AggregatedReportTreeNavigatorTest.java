@@ -94,43 +94,4 @@ public class AggregatedReportTreeNavigatorTest {
         String artefactHash = node.children.get(0).artefactHash;
         reportTree.getNodesByArtefactHash(artefactHash).forEach(System.out::println);
     }
-
-    @Test
-    public void planWithCallKeyword() throws IOException {
-        Plan subSubPlan = PlanBuilder.create()
-                .startBlock(BaseArtefacts.sequence())
-                .add(BaseArtefacts.echo("'Echo 4'"))
-                .endBlock().build();
-
-        Plan subPlan = PlanBuilder.create()
-                .startBlock(BaseArtefacts.sequence())
-                .add(BaseArtefacts.echo("'Echo 2'"))
-                .add(BaseArtefacts.echo("'Echo 3'"))
-                .startBlock(BaseArtefacts.for_(1, 2))
-                .add(BaseArtefacts.callPlan(subSubPlan.getId().toString()))
-                .endBlock()
-                .endBlock().build();
-
-        Plan plan = PlanBuilder.create()
-                .startBlock(BaseArtefacts.for_(1, 10))
-                .add(BaseArtefacts.callPlan(subPlan.getId().toString()))
-                .add(BaseArtefacts.callPlan(subPlan.getId().toString()))
-                .endBlock().build();
-        plan.setSubPlans(List.of(subPlan, subSubPlan));
-
-        PlanRunnerResult result = engine.execute(plan);
-        AggregatedReportTreeNavigator reportTree = new AggregatedReportTreeNavigator(engine.getExecutionEngineContext());
-        AggregatedReportTreeNavigator.Node node = reportTree.getAggregatedReportTree(result.getExecutionId());
-        result.printTree();
-        System.out.println("----------------------");
-        System.out.println("Aggregated report tree");
-        System.out.println("----------------------");
-        System.out.println(node.toString());
-
-        System.out.println("----------------------");
-        System.out.println("Report nodes for 1st CallPlan");
-        System.out.println("----------------------");
-        String artefactHash = node.children.get(0).artefactHash;
-        reportTree.getNodesByArtefactHash(artefactHash).forEach(System.out::println);
-    }
 }

@@ -35,6 +35,7 @@ import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.Synchronized;
 import step.artefacts.TestScenario;
 import step.artefacts.ThreadGroup;
+import step.artefacts.handlers.functions.TokenAutoscalingExecutionPlugin;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.artefacts.handlers.ArtefactHandler;
@@ -57,7 +58,7 @@ public class SynchronizedHandlerTest {
 				ExecutionContext executionContext) {
 			executionContext.getArtefactHandlerRegistry().put(TestArtefact.class, TestArtefactHandler.class);
 		}
-	}).build();
+	}).withPlugin(new TokenAutoscalingExecutionPlugin()).build();
 	
 	@Test
 	public void testUnnamedLocalLock() throws IOException {		
