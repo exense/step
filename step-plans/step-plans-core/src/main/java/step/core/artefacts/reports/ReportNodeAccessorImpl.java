@@ -32,6 +32,7 @@ import step.core.collections.Collection;
 import step.core.collections.Filter;
 import step.core.collections.Filters;
 import step.core.collections.SearchOrder;
+import step.core.collections.filters.Equals;
 
 
 public class ReportNodeAccessorImpl extends AbstractAccessor<ReportNode> implements ReportTreeAccessor, ReportNodeAccessor {
@@ -83,7 +84,21 @@ public class ReportNodeAccessorImpl extends AbstractAccessor<ReportNode> impleme
 		assert executionID != null;
 		return collectionDriver.findLazy(Filters.equals("executionID", executionID), new SearchOrder("executionTime", 1), null, null, 0);
 	}
-	
+
+	@Override
+	public Stream<ReportNode> getReportNodesByArtefactHash(String artefactPathHash) {
+		return collectionDriver.findLazy(artefactPathHashFilter(artefactPathHash), null, null, null, 0);
+	}
+
+	private static Equals artefactPathHashFilter(String artefactPathHash) {
+		return Filters.equals("artefactHash", artefactPathHash);
+	}
+
+	@Override
+	public long countReportNodesByArtefactHash(String artefactPathHash) {
+		return collectionDriver.count(artefactPathHashFilter(artefactPathHash), 1000);
+	}
+
 	@Override
 	public Stream<ReportNode> getReportNodesByExecutionIDAndClass(String executionID, String class_) {
 		assert executionID != null;

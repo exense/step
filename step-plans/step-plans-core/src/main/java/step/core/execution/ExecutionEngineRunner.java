@@ -177,6 +177,7 @@ public class ExecutionEngineRunner {
 		executionContext.setPlan(plan);
 		updateExecution(execution -> {
 			execution.setPlanId(plan.getId().toString());
+			execution.setPlanSnapshots(List.of(plan));
 			if (execution.getDescription() == null) {
 				execution.setDescription(plan.getAttributes() != null ? plan.getAttributes().get(AbstractOrganizableObject.NAME) : null);
 			}

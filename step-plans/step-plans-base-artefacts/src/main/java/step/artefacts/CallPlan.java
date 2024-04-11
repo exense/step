@@ -65,4 +65,9 @@ public class CallPlan extends AbstractArtefact {
 	public void setInput(DynamicValue<String> input) {
 		this.input = input;
 	}
+
+	@Override
+	public boolean isCallingArtefactsFromOtherPlans() {
+		return true;
+	}
 }

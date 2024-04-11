@@ -52,6 +52,7 @@ public class Execution extends AbstractOrganizableObject implements EnricheableO
 	private Map<String, String> parameters;
 	private ExecutionParameters executionParameters;
 	private ExecutiontTaskParameters executiontTaskParameters;
+	private List<Plan> planSnapshots = new ArrayList<>();
 		
 	public Execution() {
 		super();
@@ -218,6 +219,18 @@ public class Execution extends AbstractOrganizableObject implements EnricheableO
 
 	public void setExecutiontTaskParameters(ExecutiontTaskParameters executiontTaskParameters) {
 		this.executiontTaskParameters = executiontTaskParameters;
+	}
+
+	public void addPlanSnapshot(Plan plan) {
+		planSnapshots.add(plan);
+	}
+
+	public List<Plan> getPlanSnapshots() {
+		return planSnapshots;
+	}
+
+	public void setPlanSnapshots(List<Plan> planSnapshots) {
+		this.planSnapshots = planSnapshots;
 	}
 
 	@Override

@@ -56,4 +56,9 @@ public class CallFunction extends TokenSelector {
 	public void setResultMap(DynamicValue<String> resultMap) {
 		this.resultMap = resultMap;
 	}
+
+	@Override
+	public boolean isCallingArtefactsFromOtherPlans() {
+		return true;
+	}
 }

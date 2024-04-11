@@ -28,6 +28,7 @@ import org.bson.types.ObjectId;
 import step.controller.services.async.AsyncTaskStatus;
 import step.core.access.User;
 import step.core.artefacts.reports.ReportNode;
+import step.core.artefacts.reports.aggregatedtree.AggregatedReportTreeNavigator;
 import step.core.collections.SearchOrder;
 import step.core.deployment.AbstractStepAsyncServices;
 import step.core.deployment.ControllerServiceException;
@@ -207,6 +208,16 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 		limit = limit != null ? limit : 1000;
 		Stream<ReportNode> stream = getContext().getReportAccessor().getReportNodesWithContributingErrors(executionId, skip, limit);
 		return stream.collect(Collectors.toList());
+	}
+
+	@Operation(description = "Returns the aggregated report tree for the provided execution")
+	@GET
+	@Path("/{id}/report/tree")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right = "execution-read")
+	public AggregatedReportTreeNavigator.Node getReportTree(@PathParam("id") String executionId) {
+		AggregatedReportTreeNavigator reportTree = new AggregatedReportTreeNavigator(getScheduler().getExecutor().getExecutionEngine().getExecutionEngineContext());
+		return reportTree.getAggregatedReportTree(executionId);
 	}
 
 	@Operation(description = "Updates the provided execution.")

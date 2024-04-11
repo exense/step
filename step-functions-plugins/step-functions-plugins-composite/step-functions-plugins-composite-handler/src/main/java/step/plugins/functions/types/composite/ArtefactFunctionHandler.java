@@ -21,6 +21,7 @@ package step.plugins.functions.types.composite;
 import javax.json.JsonObject;
 
 import step.core.artefacts.AbstractArtefact;
+import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
@@ -28,6 +29,7 @@ import step.core.functions.ArtefactFunction;
 import step.core.reports.Error;
 import step.core.reports.ErrorType;
 import step.core.variables.VariableType;
+import step.core.variables.VariablesManager;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.handler.AbstractFunctionHandler;
@@ -35,6 +37,7 @@ import step.functions.handler.JsonBasedFunctionHandler;
 import step.functions.io.Input;
 import step.functions.io.Output;
 import step.functions.io.OutputBuilder;
+import step.grid.agent.tokenpool.TokenReservationSession;
 
 public class ArtefactFunctionHandler extends JsonBasedFunctionHandler {
 
@@ -48,8 +51,10 @@ public class ArtefactFunctionHandler extends JsonBasedFunctionHandler {
 	protected Output<JsonObject> handle(Input<JsonObject> input) {
 		OutputBuilder output = new OutputBuilder();
 
-		ExecutionContext executionContext = (ExecutionContext) getTokenReservationSession().get(AbstractFunctionHandler.EXECUTION_CONTEXT_KEY);
-		
+		TokenReservationSession tokenReservationSession = getTokenReservationSession();
+		ExecutionContext executionContext = (ExecutionContext) tokenReservationSession.get(AbstractFunctionHandler.EXECUTION_CONTEXT_KEY);
+		String artefactPath = (String) tokenReservationSession.get(ArtefactFunctionHandler.ARTEFACT_PATH);
+
 		if(executionContext == null) {
 			output.setError("Running composite Keyword on agent not supported. Please change the keyword configuration accordingly.");
 		} else {
@@ -85,9 +90,11 @@ public class ArtefactFunctionHandler extends JsonBasedFunctionHandler {
 			// Workaround: Create a clone of the root artefact in order to have a different instance of the artefact for each call
 			// This is required to avoid side effects in the ArtefactHandler (See SED-2536)
 			artefact = executionContext.getDynamicBeanResolver().cloneDynamicValues(artefact);
-			
-			executionContext.getVariablesManager().putVariable(parentNode, INPUT, input.getPayload());
-			executionContext.getVariablesManager().putVariable(parentNode, VariableType.IMMUTABLE, OUTPUT, output);
+
+			VariablesManager variablesManager = executionContext.getVariablesManager();
+			variablesManager.putVariable(parentNode, ArtefactHandler.ARTEFACT_PATH, artefactPath);
+			variablesManager.putVariable(parentNode, INPUT, input.getPayload());
+			variablesManager.putVariable(parentNode, VariableType.IMMUTABLE, OUTPUT, output);
 			
 			try {
 				ReportNode node = executionContext.getArtefactHandlerManager().execute(artefact, parentNode);
@@ -100,7 +107,7 @@ public class ArtefactFunctionHandler extends JsonBasedFunctionHandler {
 					output.setError(error);
 				}
 			} finally {
-				executionContext.getVariablesManager().removeVariable(parentNode, OUTPUT);
+				variablesManager.removeVariable(parentNode, OUTPUT);
 				executionContext.setCurrentReportNode(previousCurrentNode);
 			}
 		}
