@@ -18,6 +18,8 @@ public class AxesSettings {
 	@NotNull
 	private String unit;
 	private MetricRenderingSettings renderingSettings;
+	
+	private AxesColorizationType colorizationType;
 
 	public MetricAggregation getAggregation() {
 		return aggregation;
@@ -62,6 +64,15 @@ public class AxesSettings {
 
 	public AxesSettings setPclValue(Integer pclValue) {
 		this.pclValue = pclValue;
+		return this;
+	}
+
+	public AxesColorizationType getColorizationType() {
+		return colorizationType;
+	}
+
+	public AxesSettings setColorizationType(AxesColorizationType colorizationType) {
+		this.colorizationType = colorizationType;
 		return this;
 	}
 }
