@@ -19,15 +19,12 @@
 package step.core.controller.settings;
 
 import step.core.access.User;
-import step.core.collections.Filter;
-import step.core.collections.Filters;
 import step.framework.server.Session;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
-import static step.core.controller.settings.AbstractScopedObject.SCOPE_FIELD;
 
 public class ObjectScopeRegistry {
 
@@ -55,17 +52,11 @@ public class ObjectScopeRegistry {
      * @param session session context from which scope values are retrieved
      * @return the list of filters
      */
-    public List<Filter> buildFilters(List<String> scopes, Session session) {
+    public List<Predicate<AbstractScopedObject>> getPredicates(List<ObjectScopeHandler> scopes, Session session) {
         Objects.requireNonNull(scopes, "Scope list cannot be null, use an empty list instead");
-        List<Filter> filters = new ArrayList<>();
-        objectScopeHandlers.forEach((k, v) -> {
-            if (scopes.contains(k)) {
-                filters.add(v.getFilter(session));
-            } else {
-                filters.add(Filters.not(Filters.exists(v.getFilterField())));
-            }
-        });
-        return filters;
+        return  objectScopeHandlers.values().stream()
+                .map(h -> (scopes.contains(h)) ? h.getObjectPredicate(session) : h.getObjectPredicateIsNotSet())
+                .collect(Collectors.toList());
     }
 
 
@@ -75,23 +66,22 @@ public class ObjectScopeRegistry {
      * @param session the Step HTTP session from which the scope is extracted
      * @return the list of ordered filters to retrieve the objects
      */
-    protected List<Filter> getFiltersInPriorityOrder(Session<User> session) {
+    protected List<List<Predicate<AbstractScopedObject>>> getPredicateListsInPriorityOrder(Session<User> session) {
         //Get available scope information in Session and retrieve applicable handlers
-        List<Filter> filters = new ArrayList<>();
+        List<List<Predicate<AbstractScopedObject>>> listOfScopedObjectPredicates = new ArrayList<>();
         List<ObjectScopeHandler> scopeHandlers = objectScopeHandlers.values().stream()
                 .filter(objectScopeHandler -> objectScopeHandler.scopeIsApplicable(session)).collect(Collectors.toList());
 
         //List all scope combinations, sort them from highest to lower priorities and return corresponding filters
-        filters.addAll(getAllCombination(scopeHandlers).stream().sorted((o1, o2) -> {
+        listOfScopedObjectPredicates.addAll(getAllCombination(scopeHandlers).stream().sorted((o1, o2) -> {
             Integer o1AggPriorities = o1.stream().map(ObjectScopeHandler::getPriority).reduce(0, Integer::sum);
             Integer o2AggPriorities = o2.stream().map(ObjectScopeHandler::getPriority).reduce(0, Integer::sum);
             return o2AggPriorities - o1AggPriorities;
-        }).map(l -> Filters.and(buildFilters(l.stream().map(h->h.getScopeName()).collect(Collectors.toList()), session)))
-                .collect(Collectors.toList()));
+        }).map(l -> getPredicates(l, session)).collect(Collectors.toList()));
 
         //Final filter is the empty filter to search for application scope
-        filters.add(Filters.and(buildFilters(List.of(), session)));
-        return filters;
+        listOfScopedObjectPredicates.add(getPredicates(List.of(), session));
+        return listOfScopedObjectPredicates;
     }
 
     private List<List<ObjectScopeHandler>> getAllCombination(List<ObjectScopeHandler> scopeHandlers) {

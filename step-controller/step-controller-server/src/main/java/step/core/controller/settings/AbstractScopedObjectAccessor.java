@@ -28,6 +28,7 @@ import step.core.collections.Filters;
 import step.framework.server.Session;
 
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static step.core.controller.settings.AbstractScopedObject.SCOPE_FIELD;
@@ -85,8 +86,10 @@ public class AbstractScopedObjectAccessor<T extends AbstractScopedObject> extend
     public Optional<T> getScopedObject(Map<String, String> baseScope, Session<User> session) {
         Optional<T> first = Optional.empty();
         Filter baseFilters = getBaseFilters(baseScope);
-        for (Filter filter : objectScopeRegistry.getFiltersInPriorityOrder(session)) {
-            first = this.collectionDriver.find(Filters.and(List.of(baseFilters, filter)), null, null, null, 0).findFirst();
+        List<T> scopedObjects = this.collectionDriver.find(baseFilters, null, null, null, 0).collect(Collectors.toList());
+        List<List<Predicate<AbstractScopedObject>>> predicateListsInPriorityOrder = objectScopeRegistry.getPredicateListsInPriorityOrder(session);
+        for (List<Predicate<AbstractScopedObject>> predicateList : predicateListsInPriorityOrder) {
+            first = scopedObjects.stream().filter(predicateList.stream().reduce(Predicate::and).orElse(x -> false)).findFirst();
             if (first.isPresent()) {
                 break;
             }

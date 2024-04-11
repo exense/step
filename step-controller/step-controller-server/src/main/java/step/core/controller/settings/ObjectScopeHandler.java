@@ -18,11 +18,10 @@
  ******************************************************************************/
 package step.core.controller.settings;
 
-import step.core.collections.Filter;
-import step.core.collections.Filters;
 import step.framework.server.Session;
 
 import java.util.Objects;
+import java.util.function.Predicate;
 
 import static step.core.controller.settings.AbstractScopedObject.SCOPE_FIELD;
 
@@ -49,13 +48,23 @@ public abstract class ObjectScopeHandler {
      */
     protected abstract String getScopeValue(Session<?> session);
 
-    /**
-     * Build the filter to find this scope with the session scope's value
-     * @param session the Step session to extract the scope value from
-     * @return the filter for this scope and session
-     */
-    public Filter getFilter(Session<?> session) {
-        return Filters.equals(getFilterField(), getScopeValue(session));
+    public Predicate<AbstractScopedObject> getObjectPredicate(Session<?> session){
+        return new Predicate<AbstractScopedObject>() {
+            @Override
+            public boolean test(AbstractScopedObject abstractScopedObject) {
+                String value = abstractScopedObject.getScope().get(scopeName);
+                return value != null && value.equals(getScopeValue(session));
+            }
+        };
+    }
+
+    public Predicate<AbstractScopedObject> getObjectPredicateIsNotSet(){
+        return new Predicate<AbstractScopedObject>() {
+            @Override
+            public boolean test(AbstractScopedObject abstractScopedObject) {
+                return !abstractScopedObject.getScope().containsKey(scopeName);
+            }
+        };
     }
 
     public boolean scopeIsApplicable(Session<?> session) {

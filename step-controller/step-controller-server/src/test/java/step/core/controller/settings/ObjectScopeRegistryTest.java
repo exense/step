@@ -30,6 +30,7 @@ import step.core.collections.inmemory.InMemoryCollection;
 import step.framework.server.Session;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 import static org.junit.Assert.*;
 
@@ -148,13 +149,9 @@ public class ObjectScopeRegistryTest {
         assertEquals("test1", scope1.getScope().get("scope1"));
         assertNull(scope1.getScope().get("scope2"));
 
-        //Check orders of returned filter, first must have the higher priority
-        List<Filter> filtersInPriorityOrder = objectScopeRegistry.getFiltersInPriorityOrder(session);
-        assertEquals(4, filtersInPriorityOrder.size());
-        assertFilters(filtersInPriorityOrder.get(0), Map.of("scope.scope1","test1","scope.user","myUser"), List.of("scope.scope2"));
-        assertFilters(filtersInPriorityOrder.get(1), Map.of("scope.user","myUser"), List.of("scope.scope1", "scope.scope2"));
-        assertFilters(filtersInPriorityOrder.get(2), Map.of("scope.scope1","test1"), List.of("scope.scope2", "scope.user"));
-        assertFilters(filtersInPriorityOrder.get(3), Map.of(), List.of("scope.scope2", "scope.scope1", "scope.user"));
+        //Check size of list of predicates list, priority is tested with getScopedObject
+        List<List<Predicate<AbstractScopedObject>>> predicateListsInPriorityOrder = objectScopeRegistry.getPredicateListsInPriorityOrder(session);
+        assertEquals(4, predicateListsInPriorityOrder.size());
 
         //Check the logic to retrieve a settings based on scope information in the session, settings with both scopes was overridden when saving for scope user only (user=myUser)
         mySetting = abstractScopeObjectInMemoryAccessor.getScopedObject(baseScope, session);
