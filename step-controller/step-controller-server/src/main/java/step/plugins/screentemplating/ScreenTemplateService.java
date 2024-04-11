@@ -57,9 +57,9 @@ public class ScreenTemplateService extends AbstractStepServices {
 	protected ObjectPredicateFactory objectPredicateFactory;
 	private final Set<String> screens = new HashSet<>() {
 		{
-			add(ScreenTemplatePlugin.FUNCTION_TABLE);
+			add(ScreenTemplatePlugin.FUNCTION_SCREEN_ID);
 			add(ScreenTemplatePlugin.EXECUTION_PARAMETERS);
-			add(ScreenTemplatePlugin.PLAN_TABLE);
+			add(ScreenTemplatePlugin.PLAN_SCREEN_ID);
 		}
 	};
 

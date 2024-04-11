@@ -109,11 +109,11 @@ public class FunctionControllerPlugin extends AbstractControllerPlugin {
 
 	protected void createScreenInputsIfNecessary(GlobalContext context) {
 		ScreenInputAccessor screenInputAccessor = context.get(ScreenInputAccessor.class);
-		List<ScreenInput> functionTableInputs = screenInputAccessor.getScreenInputsByScreenId(ScreenTemplatePlugin.FUNCTION_TABLE);
+		List<ScreenInput> functionTableInputs = screenInputAccessor.getScreenInputsByScreenId(ScreenTemplatePlugin.FUNCTION_SCREEN_ID);
 		if (functionTableInputs.isEmpty()) {
 			Input nameInput = new Input(InputType.TEXT, "attributes.name", "Name", null, null);
 			nameInput.setCustomUIComponents(List.of("functionLink"));
-			screenInputAccessor.save(new ScreenInput(0, ScreenTemplatePlugin.FUNCTION_TABLE, nameInput, true));
+			screenInputAccessor.save(new ScreenInput(0, ScreenTemplatePlugin.FUNCTION_SCREEN_ID, nameInput, true));
 		}
 	}
 

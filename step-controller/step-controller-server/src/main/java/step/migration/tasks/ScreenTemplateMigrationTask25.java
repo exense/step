@@ -47,8 +47,8 @@ public class ScreenTemplateMigrationTask25 extends MigrationTask {
 
 	@Override
 	public void runUpgradeScript() {
-		createImmutableNameInput(ScreenTemplatePlugin.FUNCTION_TABLE, "functionLink");
-		createImmutableNameInput(ScreenTemplatePlugin.PLAN_TABLE, "planLink");
+		createImmutableNameInputAndRenameScreenId("functionTable", "keyword", "functionLink");
+		createImmutableNameInputAndRenameScreenId("planTable", "plan", "planLink");
 
 		logger.info("Cleaning up screen inputs which are replaced by the new table and columns configurations mechanism.");
 		screenInputsCollection.remove(Filters.equals("screenId", "executionTable"));
@@ -58,7 +58,7 @@ public class ScreenTemplateMigrationTask25 extends MigrationTask {
 		screenInputsCollection.remove(Filters.equals("screenId", "functionTableExtensions"));
 	}
 
-	private void createImmutableNameInput(String screeenId, String customUiComponent) {
+	private void createImmutableNameInputAndRenameScreenId(String screeenId, String newScreenId, String customUiComponent) {
 		List<ScreenInput> screenInputsByScreenId = screenInputAccessor.getScreenInputsByScreenId(screeenId);
 		Input nameInput = new Input(InputType.TEXT, "attributes.name", "Name", null, null);
 		nameInput.setCustomUIComponents(List.of(customUiComponent));
@@ -69,13 +69,14 @@ public class ScreenTemplateMigrationTask25 extends MigrationTask {
 			if(input.getId().equals("attributes.name")) {
 				i.setInput(nameInput);
 				i.setImmutable(true);
-				screenInputAccessor.save(i);
 				inputExists.set(true);
 			}
+			i.setScreenId(newScreenId);
+			screenInputAccessor.save(i);
 		});
 		// Create it if not existing
 		if(!inputExists.get()) {
-			screenInputAccessor.save(new ScreenInput(0, screeenId, nameInput, true));
+			screenInputAccessor.save(new ScreenInput(0, newScreenId, nameInput, true));
 		}
 	}
 

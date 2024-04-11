@@ -27,15 +27,13 @@ import step.framework.server.tables.Table;
 import step.framework.server.tables.TableRegistry;
 
 import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 @Plugin
 public class ScreenTemplatePlugin extends AbstractControllerPlugin {
 
-	public static final String FUNCTION_TABLE = "functionTable";
+	public static final String FUNCTION_SCREEN_ID = "keyword";
 	public static final String EXECUTION_PARAMETERS = "executionParameters";
-	public static final String PLAN_TABLE = "planTable";
+	public static final String PLAN_SCREEN_ID = "plan";
 
 	protected ScreenTemplateManager screenTemplateManager;
 	protected ScreenInputAccessor screenInputAccessor;
@@ -45,13 +43,11 @@ public class ScreenTemplatePlugin extends AbstractControllerPlugin {
 		screenInputAccessor = new ScreenInputAccessorImpl(
 				context.getCollectionFactory().getCollection("screenInputs", ScreenInput.class));
 		screenTemplateManager = new ScreenTemplateManager(screenInputAccessor, context.getConfiguration());
-		FunctionTableScreenInputs functionTableScreenInputs = new FunctionTableScreenInputs(screenTemplateManager);
 
 		initializeScreenInputsIfNecessary();
 		
 		context.put(ScreenInputAccessor.class, screenInputAccessor);
 		context.put(ScreenTemplateManager.class, screenTemplateManager);
-		context.put(FunctionTableScreenInputs.class, functionTableScreenInputs);
 		context.getServiceRegistrationCallback().registerService(ScreenTemplateService.class);
 		
 		context.getEntityManager().register(
