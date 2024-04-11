@@ -92,6 +92,10 @@ public class Executor {
 		return props;
 	}
 
+	public ExecutionEngine getExecutionEngine() {
+		return executionEngine;
+	}
+
 	public void shutdown() {
 		try {
 			if (scheduler != null) {
