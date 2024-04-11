@@ -5,8 +5,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.collections.*;
 import step.core.entities.EntityManager;
+import step.plugins.measurements.MeasurementPlugin;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -79,10 +81,20 @@ public class MeasurementAccessor {
                     if (o instanceof String)
                         insertables.add(convertToMongo((String) o));
                     else {
-                        if (o instanceof Map)
-                            insertables.add(new Document((Map) o));
+                        if (o instanceof Map) {
+                            Document rawMeasurement = getRawMeasurement((Map )o);
+                            insertables.add(rawMeasurement);
+                        }
                     }
                 });
         return insertables;
+    }
+
+    private static Document getRawMeasurement(Map o) {
+        Document document = new Document(new HashMap<>(o));
+        document.remove(MeasurementPlugin.SCHEDULE);
+        document.remove(MeasurementPlugin.EXECUTION_DESCRIPTION);
+        document.remove(MeasurementPlugin.PLAN);
+        return document;
     }
 }
