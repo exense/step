@@ -48,10 +48,7 @@ import step.functions.type.FunctionTypeConfiguration;
 import step.functions.type.FunctionTypeRegistry;
 import step.functions.type.FunctionTypeRegistryImpl;
 import step.grid.client.GridClient;
-import step.plugins.screentemplating.Input;
-import step.plugins.screentemplating.ScreenInput;
-import step.plugins.screentemplating.ScreenInputAccessor;
-import step.plugins.screentemplating.ScreenTemplatePlugin;
+import step.plugins.screentemplating.*;
 import step.resources.ResourceManagerControllerPlugin;
 
 import java.util.ArrayList;
@@ -103,6 +100,21 @@ public class FunctionControllerPlugin extends AbstractControllerPlugin {
 				.getCollection(EntityManager.functions, Function.class);
 		tableRegistry.register(EntityManager.functions, new Table<>(functionCollection, "kw-read", true)
 				.withResultListFactory(()->new ArrayList<>(){}));
+	}
+
+	@Override
+	public void initializeData(GlobalContext context) throws Exception {
+		createScreenInputsIfNecessary(context);
+	}
+
+	protected void createScreenInputsIfNecessary(GlobalContext context) {
+		ScreenInputAccessor screenInputAccessor = context.get(ScreenInputAccessor.class);
+		List<ScreenInput> functionTableInputs = screenInputAccessor.getScreenInputsByScreenId(ScreenTemplatePlugin.FUNCTION_TABLE);
+		if (functionTableInputs.isEmpty()) {
+			Input nameInput = new Input(InputType.TEXT, "attributes.name", "Name", null, null);
+			nameInput.setCustomUIComponents(List.of("functionLink"));
+			screenInputAccessor.save(new ScreenInput(0, ScreenTemplatePlugin.FUNCTION_TABLE, nameInput, true));
+		}
 	}
 
 }

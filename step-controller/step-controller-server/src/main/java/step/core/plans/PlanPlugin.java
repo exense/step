@@ -83,7 +83,7 @@ public class PlanPlugin extends AbstractControllerPlugin {
 		context.get(TableRegistry.class).register(EntityManager.plans, new Table<>(collection, "plan-read", true)
 				.withTableFiltersFactory(e-> Filters.equals("visible", true)));
 	}
-	
+
 	@Override
 	public void initializeData(GlobalContext context) throws Exception {
 		createScreenInputDefinitionsIfNecessary(context);
@@ -92,6 +92,12 @@ public class PlanPlugin extends AbstractControllerPlugin {
 	protected void createScreenInputDefinitionsIfNecessary(GlobalContext context) {
 		// Plan table
 		ScreenInputAccessor screenInputAccessor = context.get(ScreenInputAccessor.class);
-
+		List<ScreenInput> screenInputsByScreenId = screenInputAccessor.getScreenInputsByScreenId(ScreenTemplatePlugin.PLAN_TABLE);
+		if (screenInputsByScreenId.isEmpty()) {
+			Input nameInput = new Input(InputType.TEXT, "attributes.name", "Name", null, null);
+			nameInput.setCustomUIComponents(List.of("planLink"));
+			screenInputAccessor.save(new ScreenInput(0, ScreenTemplatePlugin.PLAN_TABLE, nameInput, true));
+		}
 	}
+
 }
