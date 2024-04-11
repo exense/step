@@ -287,7 +287,7 @@ public abstract class AbstractAutomationPackageReader<T extends AutomationPackag
         // Classes with @Plan annotation in methods
         // and filter them
         for (Method m : annotationScanner.getMethodsWithAnnotation(step.junit.runners.annotations.Plan.class)) {
-//            if (!excludedByAnnotation.contains(m.getDeclaringClass()) && !classesWithPlans.contains(m.getDeclaringClass())) {
+            if (!excludedByAnnotation.contains(m.getDeclaringClass())) {
                 log.debug("Checking if " + m.getName() + " should be filtered...");
                 String targetName = "@Plan method " + m.getName();
                 FilterResult filtered = isAnnotationFiltered(targetName, includedA, excludedA, m.getAnnotations());
@@ -297,7 +297,7 @@ public abstract class AbstractAutomationPackageReader<T extends AutomationPackag
                     excludedMethods.add(m);
                     log.debug(m.getName() + " has been filtered out");
                 }
-  //          }
+            }
         }
 
         // Filter the classes:
