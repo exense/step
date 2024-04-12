@@ -1,0 +1,55 @@
+package step.plugins.timeseries.migration;
+
+import org.apache.commons.lang3.RandomStringUtils;
+import step.core.Version;
+import step.core.collections.*;
+import step.migration.MigrationContext;
+import step.migration.MigrationTask;
+
+import java.util.Arrays;
+import java.util.List;
+
+public class MigrateDashboardsTask extends MigrationTask {
+
+    private static final List<String> ATTRIBUTES_TO_MIGRATE = Arrays.asList(
+            "metricKey", "attributes", "filters", "oql", "grouping", 
+            "inheritGlobalFilters",
+            "inheritGlobalGrouping",
+            "readonlyGrouping",
+            "readonlyAggregate");
+    
+    private final Collection<Document> dashboardsCollection;
+    
+    public MigrateDashboardsTask(CollectionFactory collectionFactory, MigrationContext migrationContext) {
+        super(new Version(3,25,0), collectionFactory, migrationContext);
+        
+        dashboardsCollection = collectionFactory.getCollection("dashboards", Document.class);
+    }
+
+    @Override
+    public void runUpgradeScript() {
+        // keep legacy dashboard unchanged
+        Filter notLegacyFilter = Filters.not(Filters.equals("metadata.isLegacy", true));
+        dashboardsCollection.find(notLegacyFilter, null, null, null, 0).forEach(dashboard -> {
+            System.out.println("dashboard: " +  dashboard.getId().toString());
+            List<DocumentObject> dashlets = dashboard.getArray("dashlets");
+            dashlets.forEach(dashlet -> {
+                dashlet.put("id", RandomStringUtils.randomAlphanumeric(10)); // dashlets must have an id
+                
+                DocumentObject chartSettings = dashlet.getObject("chartSettings");
+                
+                ATTRIBUTES_TO_MIGRATE.forEach(attribute -> {
+                    dashlet.put(attribute, chartSettings.get(attribute));
+                    chartSettings.remove(attribute);
+                });
+            });
+            dashboardsCollection.save(dashboard);
+        });
+        
+    }
+
+    @Override
+    public void runDowngradeScript() {
+
+    }
+}

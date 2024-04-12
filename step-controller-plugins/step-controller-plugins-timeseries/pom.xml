@@ -55,6 +55,12 @@
             <version>${step-framework.version}</version>
             <scope>test</scope>
         </dependency>
+         <dependency>
+            <groupId>ch.exense.step</groupId>
+            <artifactId>step-functions-plugins-jmeter-def</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>

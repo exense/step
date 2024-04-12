@@ -18,10 +18,12 @@ import step.core.timeseries.metric.*;
 import step.engine.plugins.ExecutionEnginePlugin;
 import step.framework.server.tables.Table;
 import step.framework.server.tables.TableRegistry;
+import step.migration.MigrationManager;
 import step.plugins.measurements.GaugeCollectorRegistry;
 import step.plugins.measurements.MeasurementPlugin;
 import step.plugins.timeseries.dashboards.model.*;
 import step.plugins.timeseries.dashboards.DashboardAccessor;
+import step.plugins.timeseries.migration.MigrateDashboardsTask;
 
 import java.util.*;
 
@@ -44,6 +46,9 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 
 	@Override
 	public void serverStart(GlobalContext context) {
+		MigrationManager migrationManager = context.get(MigrationManager.class);
+		migrationManager.register(MigrateDashboardsTask.class);
+		
 		Configuration configuration = context.getConfiguration();
 		Integer resolutionPeriod = configuration.getPropertyAsInteger(RESOLUTION_PERIOD_PROPERTY, 1000);
 		Long flushPeriod = configuration.getPropertyAsLong(PLUGINS_TIMESERIES_FLUSH_PERIOD, 1000L);
