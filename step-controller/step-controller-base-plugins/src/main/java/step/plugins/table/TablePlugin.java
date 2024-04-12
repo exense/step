@@ -54,11 +54,6 @@ public class TablePlugin extends AbstractControllerPlugin {
         }
         step.framework.server.tables.service.TableService tableService = new step.framework.server.tables.service.TableService(tableRegistry, objectHookRegistry, authorizationManager, maxRequestDuration, maxResultCount);
         context.put(step.framework.server.tables.service.TableService.class, tableService);
-
-        ObjectScopeRegistry objectScopeRegistry = context.require(ObjectScopeRegistry.class);
-        TableSettingsAccessor tableSettingsAccessor = new TableSettingsAccessor(context.getCollectionFactory().getCollection(TableSettings.TABLE_NAME, TableSettings.class),
-                objectScopeRegistry);
-        context.put(TableSettingsAccessor.class, tableSettingsAccessor);
     }
 
 }

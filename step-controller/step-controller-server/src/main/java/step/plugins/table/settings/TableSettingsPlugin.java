@@ -18,14 +18,26 @@
  ******************************************************************************/
 package step.plugins.table.settings;
 
-import step.core.collections.Collection;
-import step.core.controller.settings.AbstractScopedObjectAccessor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import step.core.GlobalContext;
 import step.core.controller.settings.ObjectScopeRegistry;
+import step.core.deployment.ObjectHookControllerPlugin;
+import step.core.objectenricher.ObjectHookRegistry;
+import step.core.plugins.AbstractControllerPlugin;
+import step.core.plugins.Plugin;
+import step.framework.server.access.AuthorizationManager;
+import step.framework.server.tables.TableRegistry;
 
-public class TableSettingsAccessor extends AbstractScopedObjectAccessor<TableSettings> {
-    public TableSettingsAccessor(Collection<TableSettings> collectionDriver, ObjectScopeRegistry objectScopeRegistry) {
-        super(collectionDriver, objectScopeRegistry);
+@Plugin(dependencies = {ObjectHookControllerPlugin.class})
+public class TableSettingsPlugin extends AbstractControllerPlugin {
+
+    @Override
+    public void serverStart(GlobalContext context) {
+        ObjectScopeRegistry objectScopeRegistry = context.require(ObjectScopeRegistry.class);
+        TableSettingsAccessor tableSettingsAccessor = new TableSettingsAccessor(context.getCollectionFactory().getCollection(TableSettings.TABLE_NAME, TableSettings.class),
+                objectScopeRegistry);
+        context.put(TableSettingsAccessor.class, tableSettingsAccessor);
     }
-
 
 }

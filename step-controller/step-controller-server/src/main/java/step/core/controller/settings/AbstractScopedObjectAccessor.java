@@ -101,7 +101,7 @@ public class AbstractScopedObjectAccessor<T extends AbstractScopedObject> extend
         return Filters.and(baseScope.entrySet().stream().map(e -> Filters.equals(SCOPE_FIELD + "." + e.getKey(), e.getValue())).collect(Collectors.toList()));
     }
 
-    private Optional<T> getByScope(Map<String, String> scopeMap) {
+    protected Optional<T> getByScope(Map<String, String> scopeMap) {
         //Return element which has the exact same scope, all element of the map matches and not other scope is defined
         Filter baseFilters = getBaseFilters(scopeMap);
         return this.collectionDriver.find(baseFilters, null, null, null, 0).filter(o -> o.getScope().size() == scopeMap.size()).findFirst();
