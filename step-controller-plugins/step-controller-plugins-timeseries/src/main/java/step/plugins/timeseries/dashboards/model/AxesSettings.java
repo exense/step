@@ -19,7 +19,7 @@ public class AxesSettings {
 	private String unit;
 	private MetricRenderingSettings renderingSettings;
 	
-	private AxesColorizationType colorizationType;
+	private AxesColorizationType colorizationType = AxesColorizationType.STROKE;
 
 	public MetricAggregation getAggregation() {
 		return aggregation;
