@@ -113,7 +113,7 @@ public class TokenAutoscalingExecutionPlugin extends AbstractExecutionEnginePlug
         if (driverClassname != null) {
             try {
                 Class<?> aClass = Class.forName(driverClassname);
-                return (TokenAutoscalingDriver) aClass.getConstructor().newInstance();
+                return (TokenAutoscalingDriver) aClass.getConstructor(Configuration.class).newInstance(configuration);
             } catch (Exception e) {
                 throw new PluginCriticalException("Error while creating token autoscaler driver", e);
             }
