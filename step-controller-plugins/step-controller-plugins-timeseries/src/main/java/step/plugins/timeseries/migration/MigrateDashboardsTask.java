@@ -31,7 +31,6 @@ public class MigrateDashboardsTask extends MigrationTask {
         // keep legacy dashboard unchanged
         Filter notLegacyFilter = Filters.not(Filters.equals("metadata.isLegacy", true));
         dashboardsCollection.find(notLegacyFilter, null, null, null, 0).forEach(dashboard -> {
-            System.out.println("dashboard: " +  dashboard.getId().toString());
             List<DocumentObject> dashlets = dashboard.getArray("dashlets");
             dashlets.forEach(dashlet -> {
                 dashlet.put("id", RandomStringUtils.randomAlphanumeric(10)); // dashlets must have an id
