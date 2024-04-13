@@ -18,13 +18,17 @@
  ******************************************************************************/
 package step.core.scheduler;
 
+import step.automation.packages.AutomationPackage;
+import step.automation.packages.AutomationPackageManager;
 import step.automation.packages.hooks.AutomationPackageHookRegistry;
+import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
 import step.core.GlobalContext;
 import step.core.collections.Collection;
 import step.core.controller.ControllerSettingAccessor;
 import step.core.controller.ControllerSettingPlugin;
 import step.core.deployment.ObjectHookControllerPlugin;
 import step.core.entities.EntityManager;
+import step.core.objectenricher.ObjectEnricher;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.framework.server.tables.Table;
@@ -66,17 +70,23 @@ public class SchedulerPlugin extends AbstractControllerPlugin {
 		context.setScheduler(scheduler);
 
 		AutomationPackageHookRegistry apRegistry = context.require(AutomationPackageHookRegistry.class);
-		apRegistry.register(ExecutiontTaskParameters.class, new AutomationPackageHook<ExecutiontTaskParameters>() {
+		apRegistry.register(AutomationPackageFragmentYaml.SCHEDULES_FIELD_NAME, new AutomationPackageHook<ExecutiontTaskParameters>() {
 
 			@Override
-			public void onCreate(ExecutiontTaskParameters entity) {
-				scheduler.addExecutionTask(entity, false);
+			public void onCreate(List<? extends ExecutiontTaskParameters> entities, ObjectEnricher enricher) {
+				for (ExecutiontTaskParameters entity : entities) {
+					scheduler.addExecutionTask(entity, false);
+				}
 			}
 
 			@Override
-			public void onDelete(ExecutiontTaskParameters entity) {
-				scheduler.removeExecutionTask(entity.getId().toString());
+			public void onDelete(AutomationPackage automationPackage, AutomationPackageManager manager) {
+				List<ExecutiontTaskParameters> entities = manager.getPackageSchedules(automationPackage.getId());
+				for (ExecutiontTaskParameters entity : entities) {
+					scheduler.removeExecutionTask(entity.getId().toString());
+				}
 			}
+
 		});
 	}
 

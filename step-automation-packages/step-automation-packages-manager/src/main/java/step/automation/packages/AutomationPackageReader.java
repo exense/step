@@ -21,8 +21,8 @@ package step.automation.packages;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.automation.packages.hooks.AutomationPackageHookRegistry;
 import step.automation.packages.model.AutomationPackageContent;
-import step.automation.packages.model.AutomationPackageKeyword;
 import step.automation.packages.model.JavaAutomationPackageKeyword;
 import step.automation.packages.yaml.AutomationPackageDescriptorReader;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
@@ -56,21 +56,23 @@ import java.util.stream.Collectors;
 
 /**
  * Designed to read the automation package content from some source (for instance, from jar archive).
- * It is important that the {@link AbstractAutomationPackageReader} doesn't affect the global context, i.e. it doesn't persist any plan, keyword or resource.
+ * It is important that the {@link AutomationPackageReader} doesn't affect the global context, i.e. it doesn't persist any plan, keyword or resource.
  * Instead of this, it prepares the {@link AutomationPackageContent} with {@link JavaAutomationPackageKeyword}
  * containing the draft instances of {@link Function}, without any references to uploaded resources (because
  * these resources are not stored yet).
  */
-public abstract class AbstractAutomationPackageReader<T extends AutomationPackageContent> {
+public class AutomationPackageReader {
 
-    protected static final Logger log = LoggerFactory.getLogger(AbstractAutomationPackageReader.class);
+    protected static final Logger log = LoggerFactory.getLogger(AutomationPackageReader.class);
 
-    protected final String jsonSchema;
+    protected String jsonSchemaPath;
+    protected final AutomationPackageHookRegistry hookRegistry;
     protected final StepClassParser stepClassParser;
     protected AutomationPackageDescriptorReader descriptorReader;
 
-    public AbstractAutomationPackageReader(String jsonSchema) {
-        this.jsonSchema = jsonSchema;
+    public AutomationPackageReader(String jsonSchemaPath, AutomationPackageHookRegistry hookRegistry) {
+        this.jsonSchemaPath = jsonSchemaPath;
+        this.hookRegistry = hookRegistry;
         this.stepClassParser = new StepClassParser(false);
     }
 
@@ -78,7 +80,7 @@ public abstract class AbstractAutomationPackageReader<T extends AutomationPackag
      * @param isLocalPackage true if the automation package is located in current classloader (i.e. all annotated keywords
      *                       can be read as {@link step.engine.plugins.LocalFunctionPlugin.LocalFunction}, but not as {@link GeneralScriptFunction}
      */
-    public T readAutomationPackage(AutomationPackageArchive automationPackageArchive, boolean isLocalPackage) throws AutomationPackageReadingException {
+    public AutomationPackageContent readAutomationPackage(AutomationPackageArchive automationPackageArchive, boolean isLocalPackage) throws AutomationPackageReadingException {
         return this.readAutomationPackage(automationPackageArchive, isLocalPackage, true);
     }
 
@@ -87,7 +89,7 @@ public abstract class AbstractAutomationPackageReader<T extends AutomationPackag
      *                        can be read as {@link step.engine.plugins.LocalFunctionPlugin.LocalFunction}, but not as {@link GeneralScriptFunction}
      * @param scanAnnotations true if it is required to include annotated java keywords and plans as well as located in yaml descriptor
      */
-    public T readAutomationPackage(AutomationPackageArchive automationPackageArchive, boolean isLocalPackage, boolean scanAnnotations) throws AutomationPackageReadingException {
+    public AutomationPackageContent readAutomationPackage(AutomationPackageArchive automationPackageArchive, boolean isLocalPackage, boolean scanAnnotations) throws AutomationPackageReadingException {
         try {
             if (automationPackageArchive.hasAutomationPackageDescriptor()) {
                 try (InputStream yamlInputStream = automationPackageArchive.getDescriptorYaml()) {
@@ -104,8 +106,8 @@ public abstract class AbstractAutomationPackageReader<T extends AutomationPackag
         }
     }
 
-    protected T buildAutomationPackage(AutomationPackageDescriptorYaml descriptor, AutomationPackageArchive archive, boolean isLocalPackage, boolean scanAnnotations) throws AutomationPackageReadingException {
-        T res = newContentInstance();
+    protected AutomationPackageContent buildAutomationPackage(AutomationPackageDescriptorYaml descriptor, AutomationPackageArchive archive, boolean isLocalPackage, boolean scanAnnotations) throws AutomationPackageReadingException {
+        AutomationPackageContent res = newContentInstance();
         res.setName(resolveName(descriptor, archive));
 
         if (scanAnnotations) {
@@ -127,7 +129,9 @@ public abstract class AbstractAutomationPackageReader<T extends AutomationPackag
         }
     }
 
-    protected abstract T newContentInstance();
+    protected AutomationPackageContent newContentInstance(){
+        return new AutomationPackageContent();
+    }
 
     private void fillAutomationPackageWithAnnotatedKeywordsAndPlans(AutomationPackageArchive archive, boolean isLocalPackage, AutomationPackageContent res) throws AutomationPackageReadingException {
 
@@ -226,7 +230,7 @@ public abstract class AbstractAutomationPackageReader<T extends AutomationPackag
         return annotation.planReference() != null && !annotation.planReference().isBlank();
     }
 
-    public void fillAutomationPackageWithImportedFragments(T targetPackage, AutomationPackageFragmentYaml fragment, AutomationPackageArchive archive) throws AutomationPackageReadingException {
+    public void fillAutomationPackageWithImportedFragments(AutomationPackageContent targetPackage, AutomationPackageFragmentYaml fragment, AutomationPackageArchive archive) throws AutomationPackageReadingException {
         fillContentSections(targetPackage, fragment);
 
         if (!fragment.getFragments().isEmpty()) {
@@ -241,13 +245,20 @@ public abstract class AbstractAutomationPackageReader<T extends AutomationPackag
         }
     }
 
-    protected void fillContentSections(T targetPackage, AutomationPackageFragmentYaml fragment) {
+    protected void fillContentSections(AutomationPackageContent targetPackage, AutomationPackageFragmentYaml fragment) {
         targetPackage.getKeywords().addAll(fragment.getKeywords());
         targetPackage.getPlans().addAll(fragment.getPlans().stream().map(p -> getOrCreateDescriptorReader().getPlanReader().yamlPlanToPlan(p)).collect(Collectors.toList()));
+        // TODO: fill schedules via hooks?
         targetPackage.getSchedules().addAll(fragment.getSchedules());
+        for (Map.Entry<String, List<?>> additionalField : fragment.getAdditionalFields().entrySet()) {
+            boolean hooked = hookRegistry.onAdditionalDataRead(additionalField.getKey(), additionalField.getValue(), targetPackage, this);
+            if (!hooked) {
+                log.warn("Hook not found for additional field " + additionalField.getKey() + ". The additional field has been skipped");
+            }
+        }
     }
 
-    public T readAutomationPackageFromJarFile(File automationPackageJar) throws AutomationPackageReadingException {
+    public AutomationPackageContent readAutomationPackageFromJarFile(File automationPackageJar) throws AutomationPackageReadingException {
         try (AutomationPackageArchive automationPackageArchive = new AutomationPackageArchive(automationPackageJar, automationPackageJar.getName())) {
             return readAutomationPackage(automationPackageArchive, false);
         } catch (IOException e) {
@@ -405,9 +416,15 @@ public abstract class AbstractAutomationPackageReader<T extends AutomationPackag
     protected synchronized AutomationPackageDescriptorReader getOrCreateDescriptorReader() {
         // lazy initialization of descriptor reader (performance issue)
         if (descriptorReader == null) {
-            this.descriptorReader = new AutomationPackageDescriptorReader(jsonSchema);
+            this.descriptorReader = new AutomationPackageDescriptorReader(jsonSchemaPath);
         }
         return descriptorReader;
+    }
+
+    public synchronized void updateJsonSchema(String jsonSchemaPath){
+        log.info("Change json schema for automation package to {}", jsonSchemaPath);
+        this.jsonSchemaPath = jsonSchemaPath;
+        this.descriptorReader = null;
     }
 
     private enum FilterResult {

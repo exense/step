@@ -24,6 +24,7 @@ import step.automation.packages.accessor.AutomationPackageAccessor;
 import step.automation.packages.accessor.AutomationPackageAccessorImpl;
 import step.automation.packages.execution.AutomationPackageExecutor;
 import step.automation.packages.execution.IsolatedAutomationPackageRepository;
+import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.core.GlobalContext;
 import step.core.collections.Collection;
 import step.core.deployment.ObjectHookControllerPlugin;
@@ -72,14 +73,10 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
 
         context.getServiceRegistrationCallback().registerService(AutomationPackageServices.class);
 
-        // EE implementation of AbstractAutomationPackageReader can be used
-        if (context.get(AbstractAutomationPackageReader.class) == null) {
-            log.info("Using the OS implementation of automation package accessor");
-            context.put(AbstractAutomationPackageReader.class, new AutomationPackageReaderOS());
-        }
-
         AutomationPackageHookRegistry registry = new AutomationPackageHookRegistry();
         context.put(AutomationPackageHookRegistry.class, registry);
+
+        context.put(AutomationPackageReader.class, new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, registry));
     }
 
     @Override
@@ -90,7 +87,7 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
             log.info("Using the OS implementation of automation package manager");
 
             // moved to 'afterInitializeData' to have the schedule accessor in context
-            AutomationPackageManager packageManager = new AutomationPackageManagerOS(
+            AutomationPackageManager packageManager = new AutomationPackageManager(
                     context.require(AutomationPackageAccessor.class),
                     context.require(FunctionManager.class),
                     context.require(FunctionAccessor.class),
@@ -98,7 +95,7 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
                     context.getResourceManager(),
                     context.getScheduleAccessor(),
                     context.require(AutomationPackageHookRegistry.class),
-                    context.require(AbstractAutomationPackageReader.class),
+                    context.require(AutomationPackageReader.class),
                     automationPackageLocks
             );
             context.put(AutomationPackageManager.class, packageManager);

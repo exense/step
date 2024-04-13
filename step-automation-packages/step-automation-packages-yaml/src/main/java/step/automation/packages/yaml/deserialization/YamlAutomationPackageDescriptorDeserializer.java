@@ -16,26 +16,22 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.yaml.model;
+package step.automation.packages.yaml.deserialization;
 
-import step.automation.packages.model.AutomationPackageSchedule;
-import step.automation.packages.model.YamlAutomationPackageKeyword;
-import step.plans.parser.yaml.model.YamlPlan;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import step.automation.packages.yaml.model.AutomationPackageDescriptorYamlImpl;
+import step.core.yaml.deserializers.StepYamlDeserializerAddOn;
 
-import java.util.List;
-import java.util.Map;
+@StepYamlDeserializerAddOn(targetClasses = {AutomationPackageDescriptorYamlImpl.class})
+public class YamlAutomationPackageDescriptorDeserializer extends YamlAutomationPackageFragmentDeserializer<AutomationPackageDescriptorYamlImpl> {
 
-public interface AutomationPackageFragmentYaml {
+    public YamlAutomationPackageDescriptorDeserializer(ObjectMapper yamlObjectMapper) {
+        super(yamlObjectMapper);
+    }
 
-    String SCHEDULES_FIELD_NAME = "schedules";
+    @Override
+    protected Class<?> getObjectClass() {
+        return AutomationPackageDescriptorYamlImpl.class;
+    }
 
-    List<YamlAutomationPackageKeyword> getKeywords();
-
-    List<YamlPlan> getPlans();
-
-    List<String> getFragments();
-
-    List<AutomationPackageSchedule> getSchedules();
-
-    Map<String, List<?>> getAdditionalFields();
 }

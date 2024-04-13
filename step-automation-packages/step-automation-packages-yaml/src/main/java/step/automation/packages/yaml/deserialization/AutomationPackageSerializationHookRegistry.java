@@ -16,23 +16,21 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages;
+package step.automation.packages.yaml.deserialization;
 
-import step.automation.packages.model.AutomationPackageContent;
-import step.automation.packages.yaml.YamlAutomationPackageVersions;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
-public class AutomationPackageReaderOS extends AbstractAutomationPackageReader<AutomationPackageContent> {
+public class AutomationPackageSerializationHookRegistry {
 
-    public AutomationPackageReaderOS() {
-        this(true);
+    private static final Map<String, Class<?>> registry = new ConcurrentHashMap<>();
+
+    public static void register(String fieldName, Class<?> entityClass) {
+        registry.put(fieldName, entityClass);
     }
 
-    public AutomationPackageReaderOS(boolean useJsonSchema) {
-        super(useJsonSchema ? YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH : null);
+    public static Class<?> resolveClassForYamlField(String yamlFieldName) {
+        return registry.get(yamlFieldName);
     }
 
-    @Override
-    protected AutomationPackageContent newContentInstance() {
-        return new AutomationPackageContent();
-    }
 }

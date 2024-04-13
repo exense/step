@@ -11,39 +11,39 @@ import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.ForEachBlock;
 import step.attachments.FileResolver;
 import step.automation.packages.accessor.AutomationPackageAccessorImpl;
+import step.automation.packages.hooks.AutomationPackageHook;
+import step.automation.packages.hooks.AutomationPackageHookRegistry;
+import step.automation.packages.yaml.YamlAutomationPackageVersions;
+import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.collections.inmemory.InMemoryCollection;
 import step.core.controller.ControllerSettingAccessorImpl;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
+import step.core.objectenricher.ObjectEnricher;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessorImpl;
-import step.core.scheduler.*;
 import step.core.plans.runner.PlanRunnerResult;
-import step.core.scheduler.ExecutionScheduler;
-import step.core.scheduler.ExecutionTaskAccessorImpl;
-import step.core.scheduler.ExecutiontTaskParameters;
-import step.core.scheduler.Executor;
+import step.core.scheduler.*;
 import step.datapool.excel.ExcelDataPool;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessorImpl;
 import step.functions.manager.FunctionManagerImpl;
 import step.functions.type.AbstractFunctionType;
-import step.functions.type.FunctionTypeException;
 import step.functions.type.FunctionTypeRegistry;
-import step.functions.type.SetupFunctionException;
 import step.plugins.java.GeneralScriptFunction;
 import step.plugins.java.GeneralScriptFunctionType;
 import step.plugins.jmeter.JMeterFunction;
 import step.plugins.jmeter.JMeterFunctionType;
 import step.resources.LocalResourceManagerImpl;
-import step.automation.packages.hooks.AutomationPackageHookRegistry;
-import step.automation.packages.hooks.AutomationPackageHook;
 import step.resources.Resource;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -98,19 +98,25 @@ public class AutomationPackageManagerOSTest {
         // scheduler with mocked executor
         this.executionScheduler = new ExecutionScheduler(new ControllerSettingAccessorImpl(new InMemoryCollection<>()), executionTaskAccessor, Mockito.mock(Executor.class));
         AutomationPackageHookRegistry automationPackageHookRegistry = new AutomationPackageHookRegistry();
-        automationPackageHookRegistry.register(ExecutiontTaskParameters.class, new AutomationPackageHook<ExecutiontTaskParameters>() {
+        automationPackageHookRegistry.register(AutomationPackageFragmentYaml.SCHEDULES_FIELD_NAME, new AutomationPackageHook<ExecutiontTaskParameters>() {
             @Override
-            public void onCreate(ExecutiontTaskParameters entity) {
-                executionScheduler.addExecutionTask(entity, false);
+            public void onCreate(List<? extends ExecutiontTaskParameters> entities, ObjectEnricher enricher) {
+                for (ExecutiontTaskParameters entity : entities) {
+                    executionScheduler.addExecutionTask(entity, false);
+                }
             }
 
             @Override
-            public void onDelete(ExecutiontTaskParameters entity) {
-                executionScheduler.removeExecutionTask(entity.getId().toHexString());
+            public void onDelete(AutomationPackage automationPackage, AutomationPackageManager manager) {
+                List<ExecutiontTaskParameters> entities = manager.getPackageSchedules(automationPackage.getId());
+                for (ExecutiontTaskParameters entity : entities) {
+                    executionScheduler.removeExecutionTask(entity.getId().toString());
+                }
             }
+
         });
 
-        this.manager = new AutomationPackageManagerOS(
+        this.manager = new AutomationPackageManager(
                 automationPackageAccessor,
                 functionManager,
                 functionAccessor,
@@ -118,7 +124,7 @@ public class AutomationPackageManagerOSTest {
                 resourceManager,
                 executionTaskAccessor,
                 automationPackageHookRegistry,
-                new AutomationPackageReaderOS(),
+                new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, new AutomationPackageHookRegistry()),
                 automationPackageLocks
                 );
     }
@@ -131,7 +137,7 @@ public class AutomationPackageManagerOSTest {
     }
 
     @Test
-    public void testCrud() throws IOException, SetupFunctionException, FunctionTypeException {
+    public void testCrud() throws IOException {
         // 1. Upload new package
         SampleUploadingResult r = uploadSample1WithAsserts(true, false, false);
 
@@ -229,7 +235,7 @@ public class AutomationPackageManagerOSTest {
     }
 
     @Test
-    public void testUpdateAsync() throws IOException, SetupFunctionException, FunctionTypeException, InterruptedException {
+    public void testUpdateAsync() throws IOException, InterruptedException {
         // 1. Upload new package
         SampleUploadingResult r = uploadSample1WithAsserts(true, true, false);
         uploadSample1WithAsserts(false, true, false);

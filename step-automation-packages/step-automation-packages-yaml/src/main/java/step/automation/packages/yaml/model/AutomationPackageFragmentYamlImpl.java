@@ -18,24 +18,6 @@
  ******************************************************************************/
 package step.automation.packages.yaml.model;
 
-import step.automation.packages.model.AutomationPackageSchedule;
-import step.automation.packages.model.YamlAutomationPackageKeyword;
-import step.plans.parser.yaml.model.YamlPlan;
+public class AutomationPackageFragmentYamlImpl extends AbstractAutomationPackageFragmentYaml {
 
-import java.util.List;
-import java.util.Map;
-
-public interface AutomationPackageFragmentYaml {
-
-    String SCHEDULES_FIELD_NAME = "schedules";
-
-    List<YamlAutomationPackageKeyword> getKeywords();
-
-    List<YamlPlan> getPlans();
-
-    List<String> getFragments();
-
-    List<AutomationPackageSchedule> getSchedules();
-
-    Map<String, List<?>> getAdditionalFields();
 }

@@ -21,7 +21,7 @@ package step.automation.packages.yaml.model;
 import java.util.HashMap;
 import java.util.Map;
 
-public class AutomationPackageDescriptorYamlOS extends AutomationPackageFragmentYamlOS implements AutomationPackageDescriptorYaml {
+public class AutomationPackageDescriptorYamlImpl extends AbstractAutomationPackageFragmentYaml implements AutomationPackageDescriptorYaml {
 
     private String version;
 

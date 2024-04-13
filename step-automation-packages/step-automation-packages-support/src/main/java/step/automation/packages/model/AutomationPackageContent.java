@@ -21,7 +21,9 @@ package step.automation.packages.model;
 import step.core.plans.Plan;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class AutomationPackageContent {
 
@@ -31,6 +33,7 @@ public class AutomationPackageContent {
     private List<AutomationPackageKeyword> keywords = new ArrayList<>();
     private List<Plan> plans = new ArrayList<>();
     private List<AutomationPackageSchedule> schedules = new ArrayList<>();
+    private Map<String, List<?>> additionalData = new HashMap<>();
 
     public String getName() {
         return name;
@@ -72,4 +75,11 @@ public class AutomationPackageContent {
         this.schedules = schedules;
     }
 
+    public Map<String, List<?>> getAdditionalData() {
+        return additionalData;
+    }
+
+    public void setAdditionalData(Map<String, List<?>> additionalData) {
+        this.additionalData = additionalData;
+    }
 }
