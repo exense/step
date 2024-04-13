@@ -32,6 +32,7 @@ import step.core.collections.Collection;
 import step.core.collections.Filter;
 import step.core.collections.Filters;
 import step.core.collections.SearchOrder;
+import step.core.collections.filters.And;
 import step.core.collections.filters.Equals;
 
 
@@ -49,6 +50,7 @@ public class ReportNodeAccessorImpl extends AbstractAccessor<ReportNode> impleme
 		createOrUpdateCompoundIndex("executionID", "executionTime");
 		createOrUpdateCompoundIndex("executionID", "_class");
 		createOrUpdateCompoundIndex("executionID", "parentID");
+		createOrUpdateCompoundIndex("executionID", "artefactHash");
 	}
 
 	@Override
@@ -86,8 +88,13 @@ public class ReportNodeAccessorImpl extends AbstractAccessor<ReportNode> impleme
 	}
 
 	@Override
-	public Stream<ReportNode> getReportNodesByArtefactHash(String artefactPathHash) {
-		return collectionDriver.findLazy(artefactPathHashFilter(artefactPathHash), null, null, null, 0);
+	public Stream<ReportNode> getReportNodesByArtefactHash(String executionId, String artefactPathHash) {
+		And filter = filterByExecutionIdAndArtefactHash(executionId, artefactPathHash);
+		return collectionDriver.findLazy(filter, null, null, null, 0);
+	}
+
+	private static And filterByExecutionIdAndArtefactHash(String executionId, String artefactPathHash) {
+		return Filters.and(List.of(Filters.equals("executionID", executionId), artefactPathHashFilter(artefactPathHash)));
 	}
 
 	private static Equals artefactPathHashFilter(String artefactPathHash) {
@@ -95,8 +102,9 @@ public class ReportNodeAccessorImpl extends AbstractAccessor<ReportNode> impleme
 	}
 
 	@Override
-	public long countReportNodesByArtefactHash(String artefactPathHash) {
-		return collectionDriver.count(artefactPathHashFilter(artefactPathHash), 1000);
+	public long countReportNodesByArtefactHash(String executionId, String artefactPathHash) {
+		And filter = filterByExecutionIdAndArtefactHash(executionId, artefactPathHash);
+		return collectionDriver.count(filter, 1000);
 	}
 
 	@Override

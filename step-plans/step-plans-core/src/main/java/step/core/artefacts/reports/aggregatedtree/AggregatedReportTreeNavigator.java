@@ -82,7 +82,7 @@ public class AggregatedReportTreeNavigator {
         ObjectPredicate objectPredicate = getObjectPredicate(execution);
         String planId = execution.getPlanId();
         Plan plan = execution.getPlanSnapshots().stream().filter(p -> p.getId().toString().equals(planId)).findFirst().get();
-        return buildTreeRecursively(plan.getRoot(), null, objectPredicate);
+        return buildTreeRecursively(executionId, plan.getRoot(), null, objectPredicate);
     }
 
     private ObjectPredicate getObjectPredicate(Execution execution) {
@@ -95,14 +95,14 @@ public class AggregatedReportTreeNavigator {
         return objectHookRegistry.getObjectPredicate(context);
     }
 
-    public Stream<ReportNode> getNodesByArtefactHash(String artefactHash) {
-        return reportNodeAccessor.getReportNodesByArtefactHash(artefactHash);
+    public Stream<ReportNode> getNodesByArtefactHash(String executionId, String artefactHash) {
+        return reportNodeAccessor.getReportNodesByArtefactHash(executionId, artefactHash);
     }
 
-    private Node buildTreeRecursively(AbstractArtefact artefactNode, String artefactPath, ObjectPredicate objectPredicate) {
+    private Node buildTreeRecursively(String executionId, AbstractArtefact artefactNode, String artefactPath, ObjectPredicate objectPredicate) {
         String artefactId = artefactNode.getId().toString();
         String artefactHash = artefactHashGenerator.generateArtefactHash(artefactPath, artefactId);
-        long callCount = reportNodeAccessor.countReportNodesByArtefactHash(artefactHash);
+        long callCount = reportNodeAccessor.countReportNodesByArtefactHash(executionId, artefactHash);
 
         // Resolve children
         List<AbstractArtefact> childrenArtefacts;
@@ -120,10 +120,13 @@ public class AggregatedReportTreeNavigator {
         // Recursively call children artefacts
         LinkedList<Node> childrenNodes = new LinkedList<>();
         for (AbstractArtefact child : childrenArtefacts) {
-            Node childNode = buildTreeRecursively(child, newArtefactPath, objectPredicate);
+            Node childNode = buildTreeRecursively(executionId, child, newArtefactPath, objectPredicate);
             childrenNodes.add(childNode);
         }
 
-        return new Node(artefactNode, artefactHash, callCount, childrenNodes);
+        // Create a clone of the artefact instance and remove the children
+        AbstractArtefact artefactClone = executionEngineContext.getDynamicBeanResolver().cloneDynamicValues(artefactNode);
+        artefactClone.setChildren(null);
+        return new Node(artefactClone, artefactHash, callCount, childrenNodes);
     }
 }

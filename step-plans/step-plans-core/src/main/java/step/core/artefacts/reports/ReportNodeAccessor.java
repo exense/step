@@ -44,9 +44,9 @@ public interface ReportNodeAccessor extends Accessor<ReportNode>, ReportTreeAcce
 	 */
 	Stream<ReportNode> getReportNodesByExecutionID(String executionID);
 
-	Stream<ReportNode> getReportNodesByArtefactHash(String artefactPathHash);
+	Stream<ReportNode> getReportNodesByArtefactHash(String executionId, String artefactPathHash);
 
-	long countReportNodesByArtefactHash(String artefactPathHash);
+	long countReportNodesByArtefactHash(String executionId, String artefactPathHash);
 
 	/**
 	 * Warning: this method must be used within a try-with-resources statement or similar control structure to ensure that the stream's I/O resources are closed promptly after the stream's operations have completed.
