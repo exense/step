@@ -92,7 +92,7 @@ public class AggregatedReportTreeNavigatorForCompositeKeywordTest {
         System.out.println("Report nodes for 1st CallPlan");
         System.out.println("----------------------");
         String artefactHash = node.children.get(0).artefactHash;
-        reportTree.getNodesByArtefactHash(artefactHash).forEach(System.out::println);
+        reportTree.getNodesByArtefactHash(result.getExecutionId(), artefactHash).forEach(System.out::println);
 
     }
 }
