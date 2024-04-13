@@ -511,6 +511,13 @@ public class AutomationPackageManager {
             }
         }
 
+        // save additional objects
+        for (Map.Entry<String, List<?>> additionalObjects : staging.additionalObjects.entrySet()) {
+            if (!automationPackageHookRegistry.onCreate(additionalObjects.getKey(), additionalObjects.getValue(), objectEnricher)) {
+                log.warn("Additional field in automation package has been ignored and skipped: " + additionalObjects.getKey());
+            }
+        }
+
     }
 
     protected <T extends AbstractOrganizableObject & EnricheableObject> void fillEntities(List<T> entities, List<T> oldEntities, ObjectEnricher enricher) {
