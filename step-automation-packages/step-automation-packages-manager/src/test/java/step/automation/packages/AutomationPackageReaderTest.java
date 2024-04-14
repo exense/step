@@ -4,8 +4,11 @@ import jakarta.json.spi.JsonProvider;
 import org.junit.Test;
 import step.artefacts.CallFunction;
 import step.artefacts.TestCase;
+import step.automation.packages.hooks.AutomationPackageHookRegistry;
 import step.automation.packages.model.AutomationPackageContent;
 import step.automation.packages.model.AutomationPackageKeyword;
+import step.automation.packages.yaml.YamlAutomationPackageVersions;
+import step.automation.packages.yaml.deserialization.AutomationPackageSerializationRegistry;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.plans.Plan;
 import step.plugins.java.GeneralScriptFunction;
@@ -19,13 +22,13 @@ import java.util.stream.Collectors;
 import static org.junit.Assert.*;
 import static step.automation.packages.AutomationPackageTestUtils.*;
 
-public class AutomationPackageReaderOSTest {
+public class AutomationPackageReaderTest {
 
     private static final String KEYWORD_SCHEMA_FROM_SAMPLE = "{ \"properties\": { "
             + "\"myInput\": {\"type\": \"string\", \"default\":\"defaultValueString\"}"
             + "}, \"required\" : []}";
 
-    private final AutomationPackageReaderOS reader = new AutomationPackageReaderOS();
+    private final AutomationPackageReader reader = new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, new AutomationPackageHookRegistry(), new AutomationPackageSerializationRegistry());
 
     @Test
     public void testReadFromPackage() throws AutomationPackageReadingException {

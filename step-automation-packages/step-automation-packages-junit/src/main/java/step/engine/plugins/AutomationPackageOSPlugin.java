@@ -19,8 +19,10 @@
 package step.engine.plugins;
 
 import step.automation.packages.AutomationPackageManager;
-import step.automation.packages.AutomationPackageManagerOS;
-import step.automation.packages.AutomationPackageReaderOS;
+import step.automation.packages.AutomationPackageReader;
+import step.automation.packages.hooks.AutomationPackageHookRegistry;
+import step.automation.packages.yaml.YamlAutomationPackageVersions;
+import step.automation.packages.yaml.deserialization.AutomationPackageSerializationRegistry;
 import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionEngineContext;
 import step.core.execution.OperationMode;
@@ -41,13 +43,19 @@ public class AutomationPackageOSPlugin extends AbstractExecutionEnginePlugin {
             FunctionAccessor functionAccessor = context.require(FunctionAccessor.class);
             ResourceManager resourceManager = context.getResourceManager();
 
+            AutomationPackageHookRegistry hookRegistry = context.computeIfAbsent(AutomationPackageHookRegistry.class, automationPackageHookRegistryClass -> new AutomationPackageHookRegistry());
+            AutomationPackageSerializationRegistry serRegistry = context.computeIfAbsent(AutomationPackageSerializationRegistry.class, serRegistryClass -> new AutomationPackageSerializationRegistry());
+
+            AutomationPackageReader reader = context.computeIfAbsent(AutomationPackageReader.class, automationPackageReaderClass -> new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, hookRegistry, serRegistry));
+
             context.computeIfAbsent(
                    AutomationPackageManager.class,
-                   automationPackageManagerClass -> AutomationPackageManagerOS.createLocalAutomationPackageManagerOS(
+                   automationPackageManagerClass -> AutomationPackageManager.createLocalAutomationPackageManager(
                            context.require(FunctionTypeRegistry.class),
                            functionAccessor,
                            resourceManager,
-                           new AutomationPackageReaderOS()
+                           reader,
+                           hookRegistry
                    )
            );
         }

@@ -16,16 +16,21 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.core.yaml.schema;
+package step.automation.packages.yaml.deserialization;
 
-import jakarta.json.JsonObjectBuilder;
-import step.handlers.javahandler.jsonschema.JsonSchemaCreator;
-import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
-public interface JsonSchemaDefinitionCreator {
+public class AutomationPackageSerializationRegistry {
 
-    /**
-     * Adds the entry to 'definitions' section in json schema
-     */
-    void addDefinition(JsonObjectBuilder defsList, JsonSchemaCreator schemaCreator) throws JsonSchemaPreparationException;
+    private final Map<String, Class<?>> registry = new ConcurrentHashMap<>();
+
+    public void register(String fieldName, Class<?> entityClass) {
+        registry.put(fieldName, entityClass);
+    }
+
+    public Class<?> resolveClassForYamlField(String yamlFieldName) {
+        return registry.get(yamlFieldName);
+    }
+
 }

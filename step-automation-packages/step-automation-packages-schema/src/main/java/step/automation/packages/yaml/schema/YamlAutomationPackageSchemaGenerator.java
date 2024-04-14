@@ -24,11 +24,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.json.JsonObjectBuilder;
 import jakarta.json.spi.JsonProvider;
 import step.core.Version;
+import step.core.yaml.schema.JsonSchemaExtension;
+import step.core.yaml.schema.YamlJsonSchemaHelper;
 import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 import step.plans.parser.yaml.model.YamlPlanVersions;
 import step.plans.parser.yaml.schema.YamlPlanJsonSchemaGenerator;
 
-public class YamlAutomationPackageSchemaGeneratorOS {
+import java.util.List;
+
+public class YamlAutomationPackageSchemaGenerator {
 
     protected final String targetPackage;
 
@@ -39,13 +43,15 @@ public class YamlAutomationPackageSchemaGeneratorOS {
     private final YamlKeywordSchemaGenerator keywordSchemaGenerator;
     private final YamlPlanJsonSchemaGenerator planSchemaGenerator;
     private final YamlScheduleSchemaGenerator scheduleSchemaGenerator;
+    private final List<AutomationPackageJsonSchemaExtension> extensions;
 
-    public YamlAutomationPackageSchemaGeneratorOS(String targetPackage, Version actualVersion) {
+    public YamlAutomationPackageSchemaGenerator(String targetPackage, Version actualVersion) {
         this.targetPackage = targetPackage;
         this.actualVersion = actualVersion;
         this.keywordSchemaGenerator = new YamlKeywordSchemaGenerator(jsonProvider);
         this.planSchemaGenerator = new YamlPlanJsonSchemaGenerator("step", YamlPlanVersions.ACTUAL_VERSION, null);
         this.scheduleSchemaGenerator = new YamlScheduleSchemaGenerator(jsonProvider);
+        this.extensions = AutomationPackageJsonSchemaExtensionsLookuper.scanExtensions();
     }
 
     public JsonNode generateJsonSchema() throws JsonSchemaPreparationException {
@@ -74,12 +80,22 @@ public class YamlAutomationPackageSchemaGeneratorOS {
     }
 
     protected JsonObjectBuilder prepareDefinitions() throws JsonSchemaPreparationException {
-        return keywordSchemaGenerator.createKeywordDefs()
+        JsonObjectBuilder result = keywordSchemaGenerator.createKeywordDefs()
                 .addAll(planSchemaGenerator.createDefs())
                 .addAll(scheduleSchemaGenerator.createScheduleDefs());
+
+        for (AutomationPackageJsonSchemaExtension extension : extensions) {
+            if (extension.getAdditionalAutomationPackageFields() != null) {
+                for (JsonSchemaExtension additionalField : extension.getExtendedDefinitions()) {
+                    additionalField.addToJsonSchema(result, jsonProvider);
+                }
+            }
+        }
+
+        return result;
     }
 
-    protected JsonObjectBuilder createMainAutomationPackageProperties() {
+    protected JsonObjectBuilder createMainAutomationPackageProperties() throws JsonSchemaPreparationException {
         JsonObjectBuilder objectBuilder = jsonProvider.createObjectBuilder();
 
         // in 'schemaVersion' we should either explicitly specify the current json schema version or skip this field
@@ -89,10 +105,11 @@ public class YamlAutomationPackageSchemaGeneratorOS {
         objectBuilder.add("attributes", jsonProvider.createObjectBuilder().add("type", "object"));
 
         // TODO: split keyword and plans definitions
+        JsonObjectBuilder builder = jsonProvider.createObjectBuilder();
         objectBuilder.add("keywords",
                 jsonProvider.createObjectBuilder()
                         .add("type", "array")
-                        .add("items", keywordSchemaGenerator.addRef(jsonProvider.createObjectBuilder(), YamlKeywordSchemaGenerator.KEYWORD_DEF)));
+                        .add("items", YamlJsonSchemaHelper.addRef(builder, YamlKeywordSchemaGenerator.KEYWORD_DEF)));
 
         objectBuilder.add("plans",
                 jsonProvider.createObjectBuilder()
@@ -114,6 +131,14 @@ public class YamlAutomationPackageSchemaGeneratorOS {
                         .add("type", "array")
                         .add("items", scheduleSchemaGenerator.addRef(jsonProvider.createObjectBuilder(), YamlScheduleSchemaGenerator.SCHEDULE_DEF))
         );
+
+        for (AutomationPackageJsonSchemaExtension extension : extensions) {
+            if (extension.getAdditionalAutomationPackageFields() != null) {
+                for (JsonSchemaExtension additionalField : extension.getAdditionalAutomationPackageFields()) {
+                    additionalField.addToJsonSchema(objectBuilder, jsonProvider);
+                }
+            }
+        }
 
         return objectBuilder;
     }

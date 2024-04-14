@@ -16,26 +16,16 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.yaml.model;
+package step.automation.packages.yaml.schema;
 
-import step.automation.packages.model.AutomationPackageSchedule;
-import step.automation.packages.model.YamlAutomationPackageKeyword;
-import step.plans.parser.yaml.model.YamlPlan;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 
-import java.util.List;
-import java.util.Map;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-public interface AutomationPackageFragmentYaml {
-
-    String SCHEDULES_FIELD_NAME = "schedules";
-
-    List<YamlAutomationPackageKeyword> getKeywords();
-
-    List<YamlPlan> getPlans();
-
-    List<String> getFragments();
-
-    List<AutomationPackageSchedule> getSchedules();
-
-    Map<String, List<?>> getAdditionalFields();
+@Retention(RUNTIME)
+@Target(ElementType.TYPE)
+public @interface AutomationPackageJsonSchemaAddOn {
+    String LOCATION = "step";
 }

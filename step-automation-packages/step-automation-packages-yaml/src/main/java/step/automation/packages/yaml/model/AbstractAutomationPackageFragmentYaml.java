@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.automation.packages.yaml.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.Nulls;
 import step.automation.packages.model.AutomationPackageSchedule;
@@ -26,13 +27,15 @@ import step.plans.parser.yaml.model.YamlPlan;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
-public class AutomationPackageFragmentYamlOS implements AutomationPackageFragmentYaml {
-
+public abstract class AbstractAutomationPackageFragmentYaml implements AutomationPackageFragmentYaml {
     private List<String> fragments = new ArrayList<>();
     private List<YamlAutomationPackageKeyword> keywords = new ArrayList<>();
     private List<YamlPlan> plans = new ArrayList<>();
     private List<AutomationPackageSchedule> schedules = new ArrayList<>();
+    @JsonIgnore
+    private Map<String, List<?>> additionalFields;
 
     @Override
     public List<YamlAutomationPackageKeyword> getKeywords() {
@@ -74,4 +77,12 @@ public class AutomationPackageFragmentYamlOS implements AutomationPackageFragmen
         this.schedules = schedules;
     }
 
+    @Override
+    public Map<String, List<?>> getAdditionalFields() {
+        return additionalFields;
+    }
+
+    public void setAdditionalFields(Map<String, List<?>> additionalFields) {
+        this.additionalFields = additionalFields;
+    }
 }

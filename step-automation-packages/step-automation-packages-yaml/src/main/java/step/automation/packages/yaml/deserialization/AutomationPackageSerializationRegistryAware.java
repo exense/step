@@ -16,26 +16,9 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.yaml.model;
+package step.automation.packages.yaml.deserialization;
 
-import step.automation.packages.model.AutomationPackageSchedule;
-import step.automation.packages.model.YamlAutomationPackageKeyword;
-import step.plans.parser.yaml.model.YamlPlan;
+public interface AutomationPackageSerializationRegistryAware {
 
-import java.util.List;
-import java.util.Map;
-
-public interface AutomationPackageFragmentYaml {
-
-    String SCHEDULES_FIELD_NAME = "schedules";
-
-    List<YamlAutomationPackageKeyword> getKeywords();
-
-    List<YamlPlan> getPlans();
-
-    List<String> getFragments();
-
-    List<AutomationPackageSchedule> getSchedules();
-
-    Map<String, List<?>> getAdditionalFields();
+    void setSerializationRegistry(AutomationPackageSerializationRegistry registry);
 }

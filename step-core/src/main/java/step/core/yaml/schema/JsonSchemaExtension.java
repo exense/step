@@ -16,26 +16,16 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.yaml.model;
+package step.core.yaml.schema;
 
-import step.automation.packages.model.AutomationPackageSchedule;
-import step.automation.packages.model.YamlAutomationPackageKeyword;
-import step.plans.parser.yaml.model.YamlPlan;
+import jakarta.json.JsonObjectBuilder;
+import jakarta.json.spi.JsonProvider;
+import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 
-import java.util.List;
-import java.util.Map;
+public interface JsonSchemaExtension {
 
-public interface AutomationPackageFragmentYaml {
-
-    String SCHEDULES_FIELD_NAME = "schedules";
-
-    List<YamlAutomationPackageKeyword> getKeywords();
-
-    List<YamlPlan> getPlans();
-
-    List<String> getFragments();
-
-    List<AutomationPackageSchedule> getSchedules();
-
-    Map<String, List<?>> getAdditionalFields();
+    /**
+     * Adds some entry to the json schema
+     */
+    void addToJsonSchema(JsonObjectBuilder jsonSchemaBuilder, JsonProvider jsonProvider) throws JsonSchemaPreparationException;
 }

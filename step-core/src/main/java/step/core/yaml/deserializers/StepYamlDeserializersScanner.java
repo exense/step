@@ -27,6 +27,7 @@ import step.core.scanner.CachedAnnotationScanner;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class StepYamlDeserializersScanner {
 
@@ -35,7 +36,7 @@ public class StepYamlDeserializersScanner {
     /**
      * Scans and returns all {@link StepYamlDeserializer} classes annotated with {@link StepYamlDeserializerAddOn}
      */
-    public static List<DeserializerBind<?>> scanDeserializerAddons(ObjectMapper yamlObjectMapper) {
+    public static List<DeserializerBind<?>> scanDeserializerAddons(ObjectMapper yamlObjectMapper, List<Consumer<StepYamlDeserializer<?>>> configurators) {
         List<DeserializerBind<?>> result = new ArrayList<>();
         List<Class<?>> annotatedClasses = new ArrayList<>(CachedAnnotationScanner.getClassesWithAnnotation(StepYamlDeserializerAddOn.LOCATION, StepYamlDeserializerAddOn.class, Thread.currentThread().getContextClassLoader()));
         for (Class<?> annotatedClass : annotatedClasses) {
@@ -44,6 +45,11 @@ public class StepYamlDeserializersScanner {
                 Arrays.stream(annotation.targetClasses()).forEach(aClass -> {
                     try {
                         StepYamlDeserializer<Object> newDeserializer = (StepYamlDeserializer<Object>) annotatedClass.getConstructor(ObjectMapper.class).newInstance(yamlObjectMapper);
+                        if(configurators != null) {
+                            for (Consumer<StepYamlDeserializer<?>> configurator : configurators) {
+                                configurator.accept(newDeserializer);
+                            }
+                        }
                         result.add(new DeserializerBind<>((Class<Object>) aClass, newDeserializer));
                     } catch (Exception e) {
                         throw new RuntimeException("Cannot prepare deserializer", e);
@@ -55,9 +61,20 @@ public class StepYamlDeserializersScanner {
         return result;
     }
 
+    /**
+     * Scans and returns all {@link StepYamlDeserializer} classes annotated with {@link StepYamlDeserializerAddOn}
+     */
+    public static List<DeserializerBind<?>> scanDeserializerAddons(ObjectMapper yamlObjectMapper) {
+        return scanDeserializerAddons(yamlObjectMapper, null);
+    }
+
     public static SimpleModule addAllDeserializerAddonsToModule(SimpleModule module, ObjectMapper yamlObjectMapper){
         SimpleModule res = module;
-        for (StepYamlDeserializersScanner.DeserializerBind<?> deser : StepYamlDeserializersScanner.scanDeserializerAddons(yamlObjectMapper)) {
+        addAllDeserializerAddonsToModule(module, yamlObjectMapper, null);
+    }
+
+    public static void addAllDeserializerAddonsToModule(SimpleModule module, ObjectMapper yamlObjectMapper, List<Consumer<StepYamlDeserializer<?>>> configurators){
+        for (StepYamlDeserializersScanner.DeserializerBind<?> deser : StepYamlDeserializersScanner.scanDeserializerAddons(yamlObjectMapper, configurators)) {
             res = module.addDeserializer((Class<Object>) deser.clazz, deser.deserializer);
         }
         return res;

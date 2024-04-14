@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
 
 public class StepJarParser {
 
-    private final AbstractAutomationPackageReader<?> automationPackageReader;
+    private final AutomationPackageReader automationPackageReader;
     private final StepClassParser stepClassParser;
     private final ResourceManager resourceManager;
 
@@ -43,7 +43,7 @@ public class StepJarParser {
         this(null, null);
     }
 
-    public StepJarParser(ResourceManager resourceManager, AbstractAutomationPackageReader<?> automationPackageReader) {
+    public StepJarParser(ResourceManager resourceManager, AutomationPackageReader automationPackageReader) {
         this.resourceManager = resourceManager;
         this.stepClassParser = new StepClassParser(false);
         this.automationPackageReader = automationPackageReader;
@@ -53,7 +53,7 @@ public class StepJarParser {
         try {
             // reuse logic from automation package reader to scan annotated keywords
             // BUT in contrast with automation package here we need to fill scriptFile and librariesFile references immediately
-            List<Function> functions = AbstractAutomationPackageReader
+            List<Function> functions = AutomationPackageReader
                     .extractAnnotatedKeywords(annotationScanner, false, artifact.getAbsolutePath(), libraries != null ? libraries.getAbsolutePath() : null)
                     .stream()
                     .map(JavaAutomationPackageKeyword::getKeyword)
@@ -80,7 +80,7 @@ public class StepJarParser {
             // This code is moved to automation package reader just to be reused in StepJarParser for now.
             // Further the StepJarParser should be completely replaced with automation package functionality
             AutomationPackageArchive automationPackageArchive = new AutomationPackageArchive(artifact, artifact.getName());
-            List<Plan> result = AbstractAutomationPackageReader.extractAnnotatedPlans(
+            List<Plan> result = AutomationPackageReader.extractAnnotatedPlans(
                     automationPackageArchive, annotationScanner, includedClasses, includedAnnotations, excludedClasses, excludedAnnotations, stepClassParser
             );
 

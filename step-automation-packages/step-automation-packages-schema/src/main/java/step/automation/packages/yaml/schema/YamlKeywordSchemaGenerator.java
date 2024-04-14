@@ -25,8 +25,11 @@ import step.automation.packages.AutomationPackageNamedEntityUtils;
 import step.automation.packages.model.AbstractYamlFunction;
 import step.automation.packages.yaml.AutomationPackageKeywordsLookuper;
 import step.core.scanner.CachedAnnotationScanner;
-import step.core.yaml.schema.*;
-import step.handlers.javahandler.jsonschema.*;
+import step.core.yaml.schema.AggregatedJsonSchemaFieldProcessor;
+import step.core.yaml.schema.JsonSchemaExtension;
+import step.core.yaml.schema.YamlJsonSchemaHelper;
+import step.handlers.javahandler.jsonschema.JsonSchemaCreator;
+import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 import step.jsonschema.DefaultFieldMetadataExtractor;
 
 import java.util.*;
@@ -48,11 +51,11 @@ public class YamlKeywordSchemaGenerator {
         this.jsonProvider = jsonProvider;
         this.schemaHelper = new YamlJsonSchemaHelper(jsonProvider);
 
-        // --- Fields metadata rules (fields we want to rename)
-        FieldMetadataExtractor fieldMetadataExtractor = new DefaultFieldMetadataExtractor();
-
-        List<JsonSchemaFieldProcessor> processingRules = prepareFieldProcessors();
-        this.jsonSchemaCreator = new JsonSchemaCreator(jsonProvider, new AggregatedJsonSchemaFieldProcessor(processingRules), fieldMetadataExtractor);
+        this.jsonSchemaCreator = new JsonSchemaCreator(
+                jsonProvider,
+                new AggregatedJsonSchemaFieldProcessor(YamlJsonSchemaHelper.prepareDefaultFieldProcessors(null)),
+                new DefaultFieldMetadataExtractor()
+        );
     }
 
     protected List<JsonSchemaDefinitionCreator> getDefinitionsExtensions() {
@@ -68,10 +71,18 @@ public class YamlKeywordSchemaGenerator {
     public JsonObjectBuilder createKeywordDefs() throws JsonSchemaPreparationException {
         JsonObjectBuilder defsBuilder = jsonProvider.createObjectBuilder();
 
-        List<JsonSchemaDefinitionCreator> definitionCreators = new ArrayList<>(getDefinitionsExtensions());
+        List<JsonSchemaExtension> definitionCreators = new ArrayList<>();
+
+        // prepare definitions for generic DynamicValue class
+        definitionCreators.add((defsList, provider) -> {
+            Map<String, JsonObjectBuilder> dynamicValueDefs = schemaHelper.createDynamicValueImplDefs();
+            for (Map.Entry<String, JsonObjectBuilder> dynamicValueDef : dynamicValueDefs.entrySet()) {
+                defsBuilder.add(dynamicValueDef.getKey(), dynamicValueDef.getValue());
+            }
+        });
 
         // prepare definitions for keyword classes
-        definitionCreators.add((defsList, schemaCreator) -> {
+        definitionCreators.add((defsLis, provider) -> {
             Map<String, JsonObjectBuilder> keywordImplDefs = createKeywordImplDefs();
             for (Map.Entry<String, JsonObjectBuilder> artefactImplDef : keywordImplDefs.entrySet()) {
                 defsBuilder.add(artefactImplDef.getKey(), artefactImplDef.getValue());
@@ -81,8 +92,8 @@ public class YamlKeywordSchemaGenerator {
             defsBuilder.add(KEYWORD_DEF, createKeywordDef(keywordImplDefs.keySet()));
         });
 
-        for (JsonSchemaDefinitionCreator definitionCreator : definitionCreators) {
-            definitionCreator.addDefinition(defsBuilder, jsonSchemaCreator);
+        for (JsonSchemaExtension definitionCreator : definitionCreators) {
+            definitionCreator.addToJsonSchema(defsBuilder, jsonProvider);
         }
 
         return defsBuilder;
@@ -93,7 +104,8 @@ public class YamlKeywordSchemaGenerator {
         builder.add("type", "object");
         JsonArrayBuilder arrayBuilder = jsonProvider.createArrayBuilder();
         for (String keywordImplReference : keywordDefsReferences) {
-            arrayBuilder.add(addRef(jsonProvider.createObjectBuilder(), keywordImplReference));
+            JsonObjectBuilder builder1 = jsonProvider.createObjectBuilder();
+            arrayBuilder.add(YamlJsonSchemaHelper.addRef(builder1, keywordImplReference));
         }
         builder.add("oneOf", arrayBuilder);
         return builder;
@@ -108,21 +120,6 @@ public class YamlKeywordSchemaGenerator {
             result.put(defName, schemaHelper.createNamedObjectImplDef(yamlName, automationPackageKeyword, jsonSchemaCreator, false));
         }
         return result;
-    }
-
-    protected List<JsonSchemaFieldProcessor> prepareFieldProcessors() {
-        List<JsonSchemaFieldProcessor> result = new ArrayList<>();
-
-        // -- BASIC PROCESSING RULES
-        result.add(new CommonFilteredFieldProcessor());
-        result.add(new DynamicValueFieldProcessor());
-        result.add(new EnumFieldProcessor());
-
-        return result;
-    }
-
-    public JsonObjectBuilder addRef(JsonObjectBuilder builder, String refValue){
-        return builder.add("$ref", "#/$defs/" + refValue);
     }
 
 }

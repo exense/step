@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.repositories.artifact;
 
-import step.automation.packages.AbstractAutomationPackageReader;
+import step.automation.packages.AutomationPackageReader;
 import step.core.execution.ExecutionContext;
 import step.core.plans.PlanAccessor;
 import step.core.repositories.RepositoryObjectReference;
@@ -38,7 +38,7 @@ public class ResourceArtifactRepository extends AbstractArtifactRepository {
 
 	private final ResourceManager resourceManager;
 
-	public ResourceArtifactRepository(PlanAccessor planAccessor, ResourceManager resourceManager, AbstractAutomationPackageReader<?> automationPackageReader) {
+	public ResourceArtifactRepository(PlanAccessor planAccessor, ResourceManager resourceManager, AutomationPackageReader automationPackageReader) {
 		super(Set.of(PARAM_RESOURCE_ID), planAccessor, resourceManager, automationPackageReader); // artifact_id = resource_id
 		this.resourceManager = resourceManager;
 	}

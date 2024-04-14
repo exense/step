@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import step.core.yaml.YamlFields;
 import step.handlers.javahandler.jsonschema.JsonInputConverter;
 import step.handlers.javahandler.jsonschema.JsonSchemaCreator;
+import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
 import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 
 import java.lang.reflect.Field;
@@ -298,5 +299,23 @@ public class YamlJsonSchemaHelper {
 
 	public static JsonObjectBuilder addRef(JsonObjectBuilder builder, String refValue){
 		return builder.add("$ref", DEFS_PREFIX + refValue);
+	}
+
+	public static List<JsonSchemaFieldProcessor> prepareDefaultFieldProcessors(List<JsonSchemaFieldProcessor> additionalProcessors) {
+		List<JsonSchemaFieldProcessor> result = new ArrayList<>();
+
+		// -- FILTERED FIELDS
+		result.add(new CommonFilteredFieldProcessor());
+
+		// -- CUSTOM EXTENSIONS
+		if (additionalProcessors != null) {
+			result.addAll(additionalProcessors);
+		}
+
+		// -- DEFAULT LOGIC
+		result.add(new DynamicValueFieldProcessor());
+		result.add(new EnumFieldProcessor());
+
+		return result;
 	}
 }

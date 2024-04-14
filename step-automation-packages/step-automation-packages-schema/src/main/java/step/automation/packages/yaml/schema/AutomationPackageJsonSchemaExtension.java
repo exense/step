@@ -16,23 +16,13 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages;
+package step.automation.packages.yaml.schema;
 
-import step.automation.packages.model.AutomationPackageContent;
-import step.automation.packages.yaml.YamlAutomationPackageVersions;
+import step.core.yaml.schema.JsonSchemaExtension;
 
-public class AutomationPackageReaderOS extends AbstractAutomationPackageReader<AutomationPackageContent> {
+import java.util.List;
 
-    public AutomationPackageReaderOS() {
-        this(true);
-    }
-
-    public AutomationPackageReaderOS(boolean useJsonSchema) {
-        super(useJsonSchema ? YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH : null);
-    }
-
-    @Override
-    protected AutomationPackageContent newContentInstance() {
-        return new AutomationPackageContent();
-    }
+public interface AutomationPackageJsonSchemaExtension {
+    List<JsonSchemaExtension> getExtendedDefinitions();
+    List<JsonSchemaExtension> getAdditionalAutomationPackageFields();
 }
