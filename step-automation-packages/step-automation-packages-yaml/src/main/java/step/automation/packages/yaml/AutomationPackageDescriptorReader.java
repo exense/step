@@ -32,12 +32,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.artefacts.handlers.JsonSchemaValidator;
 import step.automation.packages.AutomationPackageReadingException;
+import step.automation.packages.yaml.deserialization.AutomationPackageSerializationRegistry;
+import step.automation.packages.yaml.deserialization.AutomationPackageSerializationRegistryAware;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYamlImpl;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYamlImpl;
 import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.yaml.deserializers.CustomYamlFormat;
+import step.core.yaml.deserializers.StepYamlDeserializer;
 import step.core.yaml.deserializers.StepYamlDeserializersScanner;
 import step.plans.parser.yaml.YamlPlanReader;
 import step.plans.parser.yaml.model.YamlPlanVersions;
@@ -48,6 +51,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 public class AutomationPackageDescriptorReader {
 
@@ -57,9 +61,12 @@ public class AutomationPackageDescriptorReader {
 
     protected final YamlPlanReader planReader;
 
+    private final AutomationPackageSerializationRegistry serializationRegistry;
+
     protected String jsonSchema;
 
-    public AutomationPackageDescriptorReader(String jsonSchemaPath) {
+    public AutomationPackageDescriptorReader(String jsonSchemaPath, AutomationPackageSerializationRegistry serializationRegistry) {
+        this.serializationRegistry = serializationRegistry;
         // TODO: we need to find a way to resolve the actual json schema (controller config) depending on running server instance (EE or OS)
         // TODO: also we have to resolve the json version for plans according to the automation package version!
         this.planReader = new YamlPlanReader(null, YamlPlanVersions.ACTUAL_VERSION, false, null);
@@ -157,7 +164,11 @@ public class AutomationPackageDescriptorReader {
         planReader.registerAllSerializers(module, yamlMapper, false);
 
         // add annotated jackson deserializers
-        StepYamlDeserializersScanner.addAllDeserializerAddonsToModule(module, yamlMapper);
+        StepYamlDeserializersScanner.addAllDeserializerAddonsToModule(module, yamlMapper, List.of(stepYamlDeserializer -> {
+            if (stepYamlDeserializer instanceof AutomationPackageSerializationRegistryAware) {
+                ((AutomationPackageSerializationRegistryAware) stepYamlDeserializer).setSerializationRegistry(serializationRegistry);
+            }
+        }));
 
         yamlMapper.registerModule(module);
         yamlMapper.registerModule(new YamlFormatErrorHandlerModule());

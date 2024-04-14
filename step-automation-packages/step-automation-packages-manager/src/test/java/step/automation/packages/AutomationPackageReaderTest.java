@@ -8,6 +8,7 @@ import step.automation.packages.hooks.AutomationPackageHookRegistry;
 import step.automation.packages.model.AutomationPackageContent;
 import step.automation.packages.model.AutomationPackageKeyword;
 import step.automation.packages.yaml.YamlAutomationPackageVersions;
+import step.automation.packages.yaml.deserialization.AutomationPackageSerializationRegistry;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.plans.Plan;
 import step.plugins.java.GeneralScriptFunction;
@@ -27,7 +28,7 @@ public class AutomationPackageReaderTest {
             + "\"myInput\": {\"type\": \"string\", \"default\":\"defaultValueString\"}"
             + "}, \"required\" : []}";
 
-    private final AutomationPackageReader reader = new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, new AutomationPackageHookRegistry());
+    private final AutomationPackageReader reader = new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, new AutomationPackageHookRegistry(), new AutomationPackageSerializationRegistry());
 
     @Test
     public void testReadFromPackage() throws AutomationPackageReadingException {

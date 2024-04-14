@@ -70,6 +70,10 @@ public class SchedulerPlugin extends AbstractControllerPlugin {
 		context.setScheduler(scheduler);
 
 		AutomationPackageHookRegistry apRegistry = context.require(AutomationPackageHookRegistry.class);
+		registerSchedulerHook(apRegistry, scheduler);
+	}
+
+	public static void registerSchedulerHook(AutomationPackageHookRegistry apRegistry, ExecutionScheduler scheduler) {
 		apRegistry.register(AutomationPackageFragmentYaml.SCHEDULES_FIELD_NAME, new AutomationPackageHook<ExecutiontTaskParameters>() {
 
 			@Override

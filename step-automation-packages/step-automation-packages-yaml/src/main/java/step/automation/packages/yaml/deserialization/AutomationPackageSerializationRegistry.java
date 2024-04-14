@@ -21,15 +21,15 @@ package step.automation.packages.yaml.deserialization;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class AutomationPackageSerializationHookRegistry {
+public class AutomationPackageSerializationRegistry {
 
-    private static final Map<String, Class<?>> registry = new ConcurrentHashMap<>();
+    private final Map<String, Class<?>> registry = new ConcurrentHashMap<>();
 
-    public static void register(String fieldName, Class<?> entityClass) {
+    public void register(String fieldName, Class<?> entityClass) {
         registry.put(fieldName, entityClass);
     }
 
-    public static Class<?> resolveClassForYamlField(String yamlFieldName) {
+    public Class<?> resolveClassForYamlField(String yamlFieldName) {
         return registry.get(yamlFieldName);
     }
 

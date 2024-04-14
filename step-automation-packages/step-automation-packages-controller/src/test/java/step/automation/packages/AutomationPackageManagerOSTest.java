@@ -11,17 +11,15 @@ import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.ForEachBlock;
 import step.attachments.FileResolver;
 import step.automation.packages.accessor.AutomationPackageAccessorImpl;
-import step.automation.packages.hooks.AutomationPackageHook;
 import step.automation.packages.hooks.AutomationPackageHookRegistry;
 import step.automation.packages.yaml.YamlAutomationPackageVersions;
-import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
+import step.automation.packages.yaml.deserialization.AutomationPackageSerializationRegistry;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.collections.inmemory.InMemoryCollection;
 import step.core.controller.ControllerSettingAccessorImpl;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
-import step.core.objectenricher.ObjectEnricher;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessorImpl;
 import step.core.plans.runner.PlanRunnerResult;
@@ -98,23 +96,9 @@ public class AutomationPackageManagerOSTest {
         // scheduler with mocked executor
         this.executionScheduler = new ExecutionScheduler(new ControllerSettingAccessorImpl(new InMemoryCollection<>()), executionTaskAccessor, Mockito.mock(Executor.class));
         AutomationPackageHookRegistry automationPackageHookRegistry = new AutomationPackageHookRegistry();
-        automationPackageHookRegistry.register(AutomationPackageFragmentYaml.SCHEDULES_FIELD_NAME, new AutomationPackageHook<ExecutiontTaskParameters>() {
-            @Override
-            public void onCreate(List<? extends ExecutiontTaskParameters> entities, ObjectEnricher enricher) {
-                for (ExecutiontTaskParameters entity : entities) {
-                    executionScheduler.addExecutionTask(entity, false);
-                }
-            }
+        SchedulerPlugin.registerSchedulerHook(automationPackageHookRegistry, executionScheduler);
 
-            @Override
-            public void onDelete(AutomationPackage automationPackage, AutomationPackageManager manager) {
-                List<ExecutiontTaskParameters> entities = manager.getPackageSchedules(automationPackage.getId());
-                for (ExecutiontTaskParameters entity : entities) {
-                    executionScheduler.removeExecutionTask(entity.getId().toString());
-                }
-            }
-
-        });
+        AutomationPackageSerializationRegistry serializationRegistry = new AutomationPackageSerializationRegistry();
 
         this.manager = new AutomationPackageManager(
                 automationPackageAccessor,
@@ -124,7 +108,7 @@ public class AutomationPackageManagerOSTest {
                 resourceManager,
                 executionTaskAccessor,
                 automationPackageHookRegistry,
-                new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, new AutomationPackageHookRegistry()),
+                new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, automationPackageHookRegistry, serializationRegistry),
                 automationPackageLocks
                 );
     }

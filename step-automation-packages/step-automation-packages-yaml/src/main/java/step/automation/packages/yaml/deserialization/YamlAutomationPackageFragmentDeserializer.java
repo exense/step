@@ -33,7 +33,10 @@ import java.io.IOException;
 import java.util.*;
 
 @StepYamlDeserializerAddOn(targetClasses = {AutomationPackageFragmentYamlImpl.class})
-public class YamlAutomationPackageFragmentDeserializer<T extends AutomationPackageDescriptorYamlImpl> extends StepYamlDeserializer<AbstractAutomationPackageFragmentYaml>  {
+public class YamlAutomationPackageFragmentDeserializer<T extends AutomationPackageDescriptorYamlImpl> extends StepYamlDeserializer<AbstractAutomationPackageFragmentYaml>
+    implements AutomationPackageSerializationRegistryAware {
+
+    protected AutomationPackageSerializationRegistry registry;
 
     public YamlAutomationPackageFragmentDeserializer(ObjectMapper yamlObjectMapper) {
         super(yamlObjectMapper);
@@ -57,21 +60,23 @@ public class YamlAutomationPackageFragmentDeserializer<T extends AutomationPacka
             }
             AbstractAutomationPackageFragmentYaml res = (AbstractAutomationPackageFragmentYaml) defaultDeserializerForClass.deserialize(treeParser, ctxt);
 
-            Map<String, List<?>> nonBasicFieldsMap = new HashMap<>();
-            Iterator<Map.Entry<String, JsonNode>> fields = nonBasicFields.fields();
-            while (fields.hasNext()) {
-                Map.Entry<String, JsonNode> next = fields.next();
-                List<Object> list = new ArrayList<>();
-                if (next.getValue() != null) {
-                    // acquire reader for the right type
-                    Class<?> targetClass = AutomationPackageSerializationHookRegistry.resolveClassForYamlField(next.getKey());
-                    if (targetClass != null) {
-                        list = yamlObjectMapper.readerForListOf(targetClass).readValue(next.getValue());
+            if (registry != null) {
+                Map<String, List<?>> nonBasicFieldsMap = new HashMap<>();
+                Iterator<Map.Entry<String, JsonNode>> fields = nonBasicFields.fields();
+                while (fields.hasNext()) {
+                    Map.Entry<String, JsonNode> next = fields.next();
+                    List<Object> list = new ArrayList<>();
+                    if (next.getValue() != null) {
+                        // acquire reader for the right type
+                        Class<?> targetClass = registry.resolveClassForYamlField(next.getKey());
+                        if (targetClass != null) {
+                            list = yamlObjectMapper.readerForListOf(targetClass).readValue(next.getValue());
+                        }
                     }
+                    nonBasicFieldsMap.put(next.getKey(), list);
                 }
-                nonBasicFieldsMap.put(next.getKey(), list);
+                res.setAdditionalFields(nonBasicFieldsMap);
             }
-            res.setAdditionalFields(nonBasicFieldsMap);
             return res;
         }
 
@@ -91,5 +96,10 @@ public class YamlAutomationPackageFragmentDeserializer<T extends AutomationPacka
         } catch (JsonMappingException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public void setSerializationRegistry(AutomationPackageSerializationRegistry registry) {
+        this.registry = registry;
     }
 }

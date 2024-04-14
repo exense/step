@@ -22,6 +22,7 @@ import org.junit.Test;
 import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.model.AutomationPackageSchedule;
 import step.automation.packages.model.YamlAutomationPackageKeyword;
+import step.automation.packages.yaml.deserialization.AutomationPackageSerializationRegistry;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
 import step.plans.parser.yaml.model.YamlPlan;
 import step.plugins.jmeter.automation.YamlJMeterFunction;
@@ -37,7 +38,7 @@ import static org.junit.Assert.*;
 
 public class AutomationPackageDescriptorReaderTest {
 
-    private final AutomationPackageDescriptorReader reader = new AutomationPackageDescriptorReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH);
+    private final AutomationPackageDescriptorReader reader = new AutomationPackageDescriptorReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, new AutomationPackageSerializationRegistry());
 
     @Test
     public void jmeterKeywordReadTest() throws AutomationPackageReadingException {

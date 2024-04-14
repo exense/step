@@ -25,6 +25,7 @@ import step.automation.packages.accessor.AutomationPackageAccessorImpl;
 import step.automation.packages.execution.AutomationPackageExecutor;
 import step.automation.packages.execution.IsolatedAutomationPackageRepository;
 import step.automation.packages.yaml.YamlAutomationPackageVersions;
+import step.automation.packages.yaml.deserialization.AutomationPackageSerializationRegistry;
 import step.core.GlobalContext;
 import step.core.collections.Collection;
 import step.core.deployment.ObjectHookControllerPlugin;
@@ -73,10 +74,13 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
 
         context.getServiceRegistrationCallback().registerService(AutomationPackageServices.class);
 
-        AutomationPackageHookRegistry registry = new AutomationPackageHookRegistry();
-        context.put(AutomationPackageHookRegistry.class, registry);
+        AutomationPackageHookRegistry hookRegistry = new AutomationPackageHookRegistry();
+        context.put(AutomationPackageHookRegistry.class, hookRegistry);
 
-        context.put(AutomationPackageReader.class, new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, registry));
+        AutomationPackageSerializationRegistry serRegistry = new AutomationPackageSerializationRegistry();
+        context.put(AutomationPackageSerializationRegistry.class, serRegistry);
+
+        context.put(AutomationPackageReader.class, new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, hookRegistry, serRegistry));
     }
 
     @Override

@@ -25,6 +25,7 @@ import step.automation.packages.hooks.AutomationPackageHookRegistry;
 import step.automation.packages.model.AutomationPackageContent;
 import step.automation.packages.model.JavaAutomationPackageKeyword;
 import step.automation.packages.yaml.AutomationPackageDescriptorReader;
+import step.automation.packages.yaml.deserialization.AutomationPackageSerializationRegistry;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
 import step.core.accessors.AbstractOrganizableObject;
@@ -67,12 +68,14 @@ public class AutomationPackageReader {
 
     protected String jsonSchemaPath;
     protected final AutomationPackageHookRegistry hookRegistry;
+    private final AutomationPackageSerializationRegistry serializationRegistry;
     protected final StepClassParser stepClassParser;
     protected AutomationPackageDescriptorReader descriptorReader;
 
-    public AutomationPackageReader(String jsonSchemaPath, AutomationPackageHookRegistry hookRegistry) {
+    public AutomationPackageReader(String jsonSchemaPath, AutomationPackageHookRegistry hookRegistry, AutomationPackageSerializationRegistry serializationRegistry) {
         this.jsonSchemaPath = jsonSchemaPath;
         this.hookRegistry = hookRegistry;
+        this.serializationRegistry = serializationRegistry;
         this.stepClassParser = new StepClassParser(false);
     }
 
@@ -416,7 +419,7 @@ public class AutomationPackageReader {
     protected synchronized AutomationPackageDescriptorReader getOrCreateDescriptorReader() {
         // lazy initialization of descriptor reader (performance issue)
         if (descriptorReader == null) {
-            this.descriptorReader = new AutomationPackageDescriptorReader(jsonSchemaPath);
+            this.descriptorReader = new AutomationPackageDescriptorReader(jsonSchemaPath, serializationRegistry);
         }
         return descriptorReader;
     }
