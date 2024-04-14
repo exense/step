@@ -38,8 +38,6 @@ import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 import step.jsonschema.DefaultFieldMetadataExtractor;
 import step.plans.parser.yaml.YamlArtefactsLookuper;
 import step.plans.parser.yaml.YamlPlanFields;
-import step.plans.parser.yaml.YamlPlanReaderExtender;
-import step.plans.parser.yaml.YamlPlanReaderExtension;
 import step.plans.parser.yaml.model.AbstractYamlArtefact;
 
 import java.util.*;
@@ -74,25 +72,14 @@ public class YamlPlanJsonSchemaGenerator {
 		// --- Fields metadata rules (fields we want to rename)
 		FieldMetadataExtractor fieldMetadataExtractor = prepareMetadataExtractor();
 
-		List<JsonSchemaFieldProcessor> processingRules = prepareFieldProcessors();
+		List<JsonSchemaFieldProcessor> processingRules = YamlJsonSchemaHelper.prepareDefaultFieldProcessors(null);
 		this.jsonSchemaCreator = new JsonSchemaCreator(jsonProvider, new AggregatedJsonSchemaFieldProcessor(processingRules), fieldMetadataExtractor);
 	}
 
-	protected List<JsonSchemaFieldProcessor> prepareFieldProcessors() {
-		List<JsonSchemaFieldProcessor> result = new ArrayList<>();
-
-		// -- BASIC PROCESSING RULES
-		result.add(new CommonFilteredFieldProcessor());
-		result.add(new DynamicValueFieldProcessor());
-		result.add(new EnumFieldProcessor());
-
-		return result;
-	}
-
-	protected List<JsonSchemaDefinitionCreator> getDefinitionsExtensions() {
-		List<JsonSchemaDefinitionCreator> extensions = new ArrayList<>();
+	protected List<JsonSchemaExtension> getDefinitionsExtensions() {
+		List<JsonSchemaExtension> extensions = new ArrayList<>();
 		CachedAnnotationScanner.getClassesWithAnnotation(JsonSchemaDefinitionAddOn.LOCATION, JsonSchemaDefinitionAddOn.class, Thread.currentThread().getContextClassLoader()).stream()
-				.map(newInstanceAs(JsonSchemaDefinitionCreator.class)).forEach(extensions::add);
+				.map(newInstanceAs(JsonSchemaExtension.class)).forEach(extensions::add);
 		return extensions;
 	}
 
@@ -149,7 +136,7 @@ public class YamlPlanJsonSchemaGenerator {
 		JsonObjectBuilder defsBuilder = jsonProvider.createObjectBuilder();
 
         // add definitions from extensions
-        List<JsonSchemaDefinitionCreator> definitionCreators = new ArrayList<>(getDefinitionsExtensions());
+        List<JsonSchemaExtension> definitionCreators = new ArrayList<>(getDefinitionsExtensions());
 
 		// prepare definitions for artefacts
 		definitionCreators.add((defsList, schemaCreator) -> {
@@ -169,8 +156,8 @@ public class YamlPlanJsonSchemaGenerator {
 			defsBuilder.add(AbstractYamlArtefact.ARTEFACT_ARRAY_DEF, createArtefactArrayDef());
 		});
 
-		for (JsonSchemaDefinitionCreator definitionCreator : definitionCreators) {
-			definitionCreator.addDefinition(defsBuilder, jsonSchemaCreator);
+		for (JsonSchemaExtension definitionCreator : definitionCreators) {
+			definitionCreator.addToJsonSchema(defsBuilder, jsonProvider);
 		}
 
 		return defsBuilder;

@@ -19,16 +19,17 @@
 package step.core.yaml.schema;
 
 import jakarta.json.JsonObjectBuilder;
-import step.handlers.javahandler.jsonschema.JsonSchemaCreator;
+import jakarta.json.spi.JsonProvider;
 import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 
 import java.util.Map;
 
 @JsonSchemaDefinitionAddOn
-public class DynamicValueSchemaDefinitionCreator implements JsonSchemaDefinitionCreator {
+public class DynamicValueSchemaDefinitionCreator implements JsonSchemaExtension {
+
     @Override
-    public void addDefinition(JsonObjectBuilder defsList, JsonSchemaCreator schemaCreator) throws JsonSchemaPreparationException {
-        Map<String, JsonObjectBuilder> dynamicValueDefs = new YamlJsonSchemaHelper(schemaCreator.getJsonProvider()).createDynamicValueImplDefs();
+    public void addToJsonSchema(JsonObjectBuilder defsList, JsonProvider jsonProvider) throws JsonSchemaPreparationException {
+        Map<String, JsonObjectBuilder> dynamicValueDefs = new YamlJsonSchemaHelper(jsonProvider).createDynamicValueImplDefs();
         for (Map.Entry<String, JsonObjectBuilder> dynamicValueDef : dynamicValueDefs.entrySet()) {
             defsList.add(dynamicValueDef.getKey(), dynamicValueDef.getValue());
         }

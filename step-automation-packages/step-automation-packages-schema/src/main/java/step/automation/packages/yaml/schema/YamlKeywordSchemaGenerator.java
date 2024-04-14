@@ -26,6 +26,7 @@ import step.automation.packages.model.AbstractYamlFunction;
 import step.automation.packages.yaml.AutomationPackageKeywordsLookuper;
 import step.core.scanner.CachedAnnotationScanner;
 import step.core.yaml.schema.AggregatedJsonSchemaFieldProcessor;
+import step.core.yaml.schema.JsonSchemaDefinitionAddOn;
 import step.core.yaml.schema.JsonSchemaExtension;
 import step.core.yaml.schema.YamlJsonSchemaHelper;
 import step.handlers.javahandler.jsonschema.JsonSchemaCreator;
@@ -58,10 +59,10 @@ public class YamlKeywordSchemaGenerator {
         );
     }
 
-    protected List<JsonSchemaDefinitionCreator> getDefinitionsExtensions() {
-        List<JsonSchemaDefinitionCreator> extensions = new ArrayList<>();
+    protected List<JsonSchemaExtension> getDefinitionsExtensions() {
+        List<JsonSchemaExtension> extensions = new ArrayList<>();
         CachedAnnotationScanner.getClassesWithAnnotation(JsonSchemaDefinitionAddOn.LOCATION, JsonSchemaDefinitionAddOn.class, Thread.currentThread().getContextClassLoader()).stream()
-                .map(newInstanceAs(JsonSchemaDefinitionCreator.class)).forEach(extensions::add);
+                .map(newInstanceAs(JsonSchemaExtension.class)).forEach(extensions::add);
         return extensions;
     }
 

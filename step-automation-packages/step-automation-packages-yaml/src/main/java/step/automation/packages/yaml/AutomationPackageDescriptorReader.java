@@ -35,8 +35,6 @@ import step.automation.packages.yaml.model.AutomationPackageDescriptorYamlImpl;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYamlImpl;
 import step.core.accessors.DefaultJacksonMapperProvider;
-import step.core.yaml.deserializers.CustomYamlFormat;
-import step.core.yaml.deserializers.StepYamlDeserializer;
 import step.core.yaml.deserializers.StepYamlDeserializersScanner;
 import step.plans.parser.yaml.YamlPlanReader;
 import step.plans.parser.yaml.model.YamlPlanVersions;
@@ -47,7 +45,6 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 
 public class AutomationPackageDescriptorReader {
 

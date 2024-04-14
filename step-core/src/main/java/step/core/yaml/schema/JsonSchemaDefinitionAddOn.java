@@ -25,7 +25,7 @@ import java.lang.annotation.Target;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * The annotation for {@link JsonSchemaDefinitionCreator} used for auto lookup the json schema extensions in project
+ * The annotation for {@link JsonSchemaExtension} used for auto lookup the json schema extensions in project
  */
 @Retention(RUNTIME)
 @Target(ElementType.TYPE)

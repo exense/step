@@ -22,24 +22,23 @@ import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObjectBuilder;
 import jakarta.json.spi.JsonProvider;
 import step.core.yaml.schema.JsonSchemaDefinitionAddOn;
-import step.core.yaml.schema.JsonSchemaDefinitionCreator;
-import step.handlers.javahandler.jsonschema.JsonSchemaCreator;
+import step.core.yaml.schema.JsonSchemaExtension;
 import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 
 import java.util.HashMap;
 import java.util.Map;
 
 @JsonSchemaDefinitionAddOn
-public class YamlResourceReferenceSchemaDefinitionCreator implements JsonSchemaDefinitionCreator {
+public class YamlResourceReferenceSchemaDefinitionCreator implements JsonSchemaExtension {
 
     public static final String RESOURCE_REFERENCE_DEF = "resourceReference";
     public static final String FILE_REFERENCE_RESOURCE_ID_FIELD = "id";
 
     @Override
-    public void addDefinition(JsonObjectBuilder defsList, JsonSchemaCreator schemaCreator) throws JsonSchemaPreparationException {
-        Map<String, JsonObjectBuilder> dynamicValueDefs = createResourceReferenceDefs(schemaCreator.getJsonProvider());
+    public void addToJsonSchema(JsonObjectBuilder jsonSchemaBuilder, JsonProvider jsonProvider) throws JsonSchemaPreparationException {
+        Map<String, JsonObjectBuilder> dynamicValueDefs = createResourceReferenceDefs(jsonProvider);
         for (Map.Entry<String, JsonObjectBuilder> dynamicValueDef : dynamicValueDefs.entrySet()) {
-            defsList.add(dynamicValueDef.getKey(), dynamicValueDef.getValue());
+            jsonSchemaBuilder.add(dynamicValueDef.getKey(), dynamicValueDef.getValue());
         }
     }
 
@@ -57,4 +56,5 @@ public class YamlResourceReferenceSchemaDefinitionCreator implements JsonSchemaD
         res.put(RESOURCE_REFERENCE_DEF, jsonProvider.createObjectBuilder().add("oneOf", oneOf));
         return res;
     }
+
 }

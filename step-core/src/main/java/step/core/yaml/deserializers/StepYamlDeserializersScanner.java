@@ -69,11 +69,11 @@ public class StepYamlDeserializersScanner {
     }
 
     public static SimpleModule addAllDeserializerAddonsToModule(SimpleModule module, ObjectMapper yamlObjectMapper){
-        SimpleModule res = module;
-        addAllDeserializerAddonsToModule(module, yamlObjectMapper, null);
+        return addAllDeserializerAddonsToModule(module, yamlObjectMapper, null);
     }
 
-    public static void addAllDeserializerAddonsToModule(SimpleModule module, ObjectMapper yamlObjectMapper, List<Consumer<StepYamlDeserializer<?>>> configurators){
+    public static SimpleModule addAllDeserializerAddonsToModule(SimpleModule module, ObjectMapper yamlObjectMapper, List<Consumer<StepYamlDeserializer<?>>> configurators){
+        SimpleModule res = module;
         for (StepYamlDeserializersScanner.DeserializerBind<?> deser : StepYamlDeserializersScanner.scanDeserializerAddons(yamlObjectMapper, configurators)) {
             res = module.addDeserializer((Class<Object>) deser.clazz, deser.deserializer);
         }
