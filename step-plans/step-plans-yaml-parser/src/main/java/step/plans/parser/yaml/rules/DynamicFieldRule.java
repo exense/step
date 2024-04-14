@@ -32,7 +32,7 @@ public class DynamicFieldRule implements ArtefactFieldConversionRule {
 
     @Override
     public JsonSchemaFieldProcessor getJsonSchemaFieldProcessor(JsonProvider jsonProvider) {
-        return new DynamicValueFieldProcessor(jsonProvider);
+        return new DynamicValueFieldProcessor();
     }
 
     // SERIALIZER/DESERIALIZER IS NOT REQUIRED, BECAUSE THIS LOGIC IS INCLUDED in YamlDynamicValueSerializer/YamlDynamicValueDeserializer

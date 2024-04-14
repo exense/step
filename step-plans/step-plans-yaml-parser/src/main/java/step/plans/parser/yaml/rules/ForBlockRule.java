@@ -44,7 +44,7 @@ public class ForBlockRule implements ArtefactFieldConversionRule {
 
     @Override
     public JsonSchemaFieldProcessor getJsonSchemaFieldProcessor(JsonProvider jsonProvider) {
-        return (objectClass, field, fieldMetadata, propertiesBuilder, requiredPropertiesOutput) -> {
+        return (objectClass, field, fieldMetadata, propertiesBuilder, requiredPropertiesOutput, jsonSchemaCreator) -> {
             if (ForBlock.class.isAssignableFrom(objectClass)) {
                 if (field.getName().equals(YamlPlanFields.DATA_SOURCE_TYPE_ORIGINAL_FIELD)) {
                     // don't use 'dataSourceType' field in yaml

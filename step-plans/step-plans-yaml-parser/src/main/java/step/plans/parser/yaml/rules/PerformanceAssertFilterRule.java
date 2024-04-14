@@ -46,7 +46,7 @@ public class PerformanceAssertFilterRule implements ArtefactFieldConversionRule 
 
     @Override
     public JsonSchemaFieldProcessor getJsonSchemaFieldProcessor(JsonProvider jsonProvider) {
-         return (objectClass, field, fieldMetadata, propertiesBuilder, requiredPropertiesOutput) -> {
+         return (objectClass, field, fieldMetadata, propertiesBuilder, requiredPropertiesOutput, jsonSchemaCreator) -> {
              if (isFiltersFieldInPerformanceAssert(objectClass, field)) {
                  JsonObjectBuilder nestedPropertyParamsBuilder = jsonProvider.createObjectBuilder();
                  YamlJsonSchemaHelper.addRef(nestedPropertyParamsBuilder, YamlJsonSchemaHelper.SMART_DYNAMIC_VALUE_STRING_DEF);

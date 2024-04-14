@@ -35,7 +35,7 @@ public class KeywordRoutingRule extends DynamicInputsSupport implements Artefact
     @Override
     public JsonSchemaFieldProcessor getJsonSchemaFieldProcessor(JsonProvider jsonProvider) {
         // special syntax for 'keyword' field
-        return (objectClass, field, fieldMetadata, propertiesBuilder, requiredPropertiesOutput) -> {
+        return (objectClass, field, fieldMetadata, propertiesBuilder, requiredPropertiesOutput, jsonSchemaCreator) -> {
             boolean isCallFunction = isCallFunction(objectClass);
             if (isCallFunction) {
                 if (field.getName().equals(YamlPlanFields.TOKEN_SELECTOR_TOKEN_ORIGINAL_FIELD)) {

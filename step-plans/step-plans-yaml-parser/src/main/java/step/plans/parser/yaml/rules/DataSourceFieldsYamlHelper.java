@@ -63,14 +63,14 @@ public class DataSourceFieldsYamlHelper {
         fieldProcessors.add(new CommonFilteredFieldRule().getJsonSchemaFieldProcessor(jsonProvider));
 
         // skip technical fields from
-        fieldProcessors.add((aClass, field, fieldMetadata, jsonObjectBuilder, list) -> {
+        fieldProcessors.add((aClass, field, fieldMetadata, jsonObjectBuilder, list, jsonSchemaCreator) -> {
             if (DataPoolConfiguration.class.isAssignableFrom(aClass)) {
                 return isTechnicalDataPoolField(field, isForWriteEditable);
             }
             return false;
         });
 
-        fieldProcessors.add((aClass, field, fieldMetadata, jsonObjectBuilder, list) -> {
+        fieldProcessors.add((aClass, field, fieldMetadata, jsonObjectBuilder, list, jsonSchemaCreator) -> {
             PropertyDescriptor descriptor = getResourceReferencePropertyDescriptors(aClass).stream().filter(pd -> pd.getName().equals(field.getName())).findFirst().orElse(null);
             if (descriptor != null) {
                 jsonObjectBuilder.add(

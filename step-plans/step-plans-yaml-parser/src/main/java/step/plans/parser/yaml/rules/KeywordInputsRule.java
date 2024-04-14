@@ -34,7 +34,7 @@ public class KeywordInputsRule extends DynamicInputsSupport implements ArtefactF
 
     @Override
     public JsonSchemaFieldProcessor getJsonSchemaFieldProcessor(JsonProvider jsonProvider) {
-        return (objectClass, field, fieldMetadata, propertiesBuilder, requiredPropertiesOutput) -> {
+        return (objectClass, field, fieldMetadata, propertiesBuilder, requiredPropertiesOutput, jsonSchemaCreator) -> {
             if (objectClass.equals(CallFunction.class) && field.getName().equals(YamlPlanFields.CALL_FUNCTION_ARGUMENT_ORIGINAL_FIELD)) {
                 JsonObjectBuilder nestedPropertyParamsBuilder = jsonProvider.createObjectBuilder();
                 YamlJsonSchemaHelper.addRef(nestedPropertyParamsBuilder, YamlJsonSchemaHelper.DYNAMIC_KEYWORD_INPUTS_DEF);

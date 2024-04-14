@@ -25,7 +25,7 @@ import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
 public class EnumFieldRule implements ArtefactFieldConversionRule {
     @Override
     public JsonSchemaFieldProcessor getJsonSchemaFieldProcessor(JsonProvider jsonProvider) {
-        return new EnumFieldProcessor(jsonProvider);
+        return new EnumFieldProcessor();
     }
 
 }

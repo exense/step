@@ -51,7 +51,7 @@ public class KeywordSelectionRule implements ArtefactFieldConversionRule {
     @Override
     public JsonSchemaFieldProcessor getJsonSchemaFieldProcessor(JsonProvider jsonProvider) {
         // special syntax for 'keyword' field
-        return (objectClass, field, fieldMetadata, propertiesBuilder, requiredPropertiesOutput) -> {
+        return (objectClass, field, fieldMetadata, propertiesBuilder, requiredPropertiesOutput, jsonSchemaCreator) -> {
             boolean isCallFunction = CallFunction.class.isAssignableFrom(objectClass);
             if (isCallFunction) {
                 YamlJsonSchemaHelper jsonSchemaHelper = new YamlJsonSchemaHelper(jsonProvider);

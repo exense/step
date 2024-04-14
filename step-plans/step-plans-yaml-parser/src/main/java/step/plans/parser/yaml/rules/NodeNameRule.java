@@ -44,7 +44,7 @@ public class NodeNameRule implements ArtefactFieldConversionRule {
 
     @Override
     public JsonSchemaFieldProcessor getJsonSchemaFieldProcessor(JsonProvider jsonProvider) {
-        return (objectClass, field, fieldMetadata, propertiesBuilder, requiredPropertiesOutput) -> {
+        return (objectClass, field, fieldMetadata, propertiesBuilder, requiredPropertiesOutput, jsonSchemaCreator) -> {
             // TODO: potentially we want to extract mode fields from 'attributes'..
             if (isAttributesField(field)) {
                 // use artefact name as default

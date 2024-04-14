@@ -20,6 +20,7 @@ package step.jsonschema;
 
 import jakarta.json.JsonObjectBuilder;
 import step.handlers.javahandler.jsonschema.FieldMetadata;
+import step.handlers.javahandler.jsonschema.JsonSchemaCreator;
 import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
 import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 
@@ -35,7 +36,7 @@ public class RefJsonSchemaFieldProcessor implements JsonSchemaFieldProcessor {
     }
 
     @Override
-    public boolean applyCustomProcessing(Class<?> objectClass, Field field, FieldMetadata fieldMetadata, JsonObjectBuilder propertiesBuilder, List<String> requiredPropertiesOutput) throws JsonSchemaPreparationException {
+    public boolean applyCustomProcessing(Class<?> objectClass, Field field, FieldMetadata fieldMetadata, JsonObjectBuilder propertiesBuilder, List<String> requiredPropertiesOutput, JsonSchemaCreator jsonSchemaCreator) throws JsonSchemaPreparationException {
         propertiesBuilder.add("$ref", ref);
         return true;
     }

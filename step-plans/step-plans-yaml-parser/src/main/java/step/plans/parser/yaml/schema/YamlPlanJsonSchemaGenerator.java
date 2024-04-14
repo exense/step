@@ -92,7 +92,7 @@ public class YamlPlanJsonSchemaGenerator {
 		result.add(new CommonFilteredFieldRule().getJsonSchemaFieldProcessor(jsonProvider));
 		result.add(new TechnicalFieldRule().getJsonSchemaFieldProcessor(jsonProvider));
 
-		JsonSchemaFieldProcessor artefactChildrenProcessingRule = (objectClass, field, fieldMetadata, propertiesBuilder, requiredPropertiesOutput) -> {
+		JsonSchemaFieldProcessor artefactChildrenProcessingRule = (objectClass, field, fieldMetadata, propertiesBuilder, requiredPropertiesOutput, jsonSchemaCreator) -> {
 			if(field.getDeclaringClass().equals(AbstractArtefact.class) && field.getName().equals(ARTEFACT_CHILDREN)) {
 				propertiesBuilder.add(fieldMetadata.getFieldName(),
 						jsonProvider.createObjectBuilder()

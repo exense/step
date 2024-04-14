@@ -33,7 +33,7 @@ public class FunctionGroupSelectionRule extends DynamicInputsSupport implements 
 
     @Override
     public JsonSchemaFieldProcessor getJsonSchemaFieldProcessor(JsonProvider jsonProvider) {
-       return (objectClass, field, fieldMetadata, propertiesBuilder, requiredPropertiesOutput) -> {
+       return (objectClass, field, fieldMetadata, propertiesBuilder, requiredPropertiesOutput, jsonSchemaCreator) -> {
             if (FunctionGroup.class.isAssignableFrom(objectClass) && field.getName().equals(YamlPlanFields.TOKEN_SELECTOR_TOKEN_ORIGINAL_FIELD)) {
                 JsonObjectBuilder nestedPropertyParamsBuilder = jsonProvider.createObjectBuilder();
                 YamlJsonSchemaHelper.addRef(nestedPropertyParamsBuilder, YamlJsonSchemaHelper.DYNAMIC_KEYWORD_INPUTS_DEF);

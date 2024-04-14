@@ -46,7 +46,7 @@ public class CheckExpressionRule implements ArtefactFieldConversionRule {
 
     @Override
     public JsonSchemaFieldProcessor getJsonSchemaFieldProcessor(JsonProvider jsonProvider) {
-        return (aClass, field, fieldMetadata, jsonObjectBuilder, list) -> {
+        return (aClass, field, fieldMetadata, jsonObjectBuilder, list, jsonSchemaCreator) -> {
             if(Check.class.isAssignableFrom(field.getDeclaringClass()) && field.getName().equals(YamlPlanFields.CHECK_EXPRESSION_ORIGINAL_FIELD)){
                 JsonObjectBuilder nestedPropertyParamsBuilder = jsonProvider.createObjectBuilder();
                 nestedPropertyParamsBuilder.add("type", "string");

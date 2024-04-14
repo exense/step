@@ -31,7 +31,7 @@ import java.util.Set;
 public class TechnicalFieldRule implements ArtefactFieldConversionRule {
     @Override
     public JsonSchemaFieldProcessor getJsonSchemaFieldProcessor(JsonProvider jsonProvider) {
-        return (objectClass, field, fieldMetadata, propertiesBuilder, requiredPropertiesOutput) -> isTechnicalField(field, fieldMetadata);
+        return (objectClass, field, fieldMetadata, propertiesBuilder, requiredPropertiesOutput, jsonSchemaCreator) -> isTechnicalField(field, fieldMetadata);
     }
 
     @Override

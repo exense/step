@@ -25,6 +25,7 @@ import jakarta.json.JsonObjectBuilder;
 import jakarta.json.spi.JsonProvider;
 import step.core.Version;
 import step.core.yaml.schema.JsonSchemaExtension;
+import step.core.yaml.schema.YamlJsonSchemaHelper;
 import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 import step.plans.parser.yaml.model.YamlPlanVersions;
 import step.plans.parser.yaml.schema.YamlPlanJsonSchemaGenerator;
@@ -104,10 +105,11 @@ public class YamlAutomationPackageSchemaGenerator {
         objectBuilder.add("attributes", jsonProvider.createObjectBuilder().add("type", "object"));
 
         // TODO: split keyword and plans definitions
+        JsonObjectBuilder builder = jsonProvider.createObjectBuilder();
         objectBuilder.add("keywords",
                 jsonProvider.createObjectBuilder()
                         .add("type", "array")
-                        .add("items", keywordSchemaGenerator.addRef(jsonProvider.createObjectBuilder(), YamlKeywordSchemaGenerator.KEYWORD_DEF)));
+                        .add("items", YamlJsonSchemaHelper.addRef(builder, YamlKeywordSchemaGenerator.KEYWORD_DEF)));
 
         objectBuilder.add("plans",
                 jsonProvider.createObjectBuilder()
