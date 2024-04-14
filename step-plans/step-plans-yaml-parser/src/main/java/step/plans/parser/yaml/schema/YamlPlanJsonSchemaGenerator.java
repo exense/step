@@ -34,7 +34,7 @@ import step.core.scanner.AnnotationScanner;
 import step.core.scanner.CachedAnnotationScanner;
 import step.core.yaml.schema.AggregatedJsonSchemaFieldProcessor;
 import step.core.yaml.schema.AggregatingFieldMetadataExtractor;
-import step.core.yaml.schema.JsonSchemaDefinitionCreator;
+import step.core.yaml.schema.JsonSchemaExtension;
 import step.core.yaml.schema.YamlJsonSchemaHelper;
 import step.handlers.javahandler.jsonschema.FieldMetadataExtractor;
 import step.handlers.javahandler.jsonschema.JsonSchemaCreator;
@@ -136,8 +136,8 @@ public class YamlPlanJsonSchemaGenerator {
 		return extensions;
 	}
 
-	protected List<JsonSchemaDefinitionCreator> getDefinitionsExtensions() {
-		List<JsonSchemaDefinitionCreator> extensions = new ArrayList<>();
+	protected List<JsonSchemaExtension> getDefinitionsExtensions() {
+		List<JsonSchemaExtension> extensions = new ArrayList<>();
 		CachedAnnotationScanner.getClassesWithAnnotation(YamlPlanReaderExtension.LOCATION, YamlPlanReaderExtension.class, Thread.currentThread().getContextClassLoader()).stream()
 				.map(newInstanceAs(YamlPlanReaderExtender.class)).forEach(e -> extensions.addAll(e.getJsonSchemaDefinitionsExtensions()));
 		return extensions;
@@ -199,34 +199,34 @@ public class YamlPlanJsonSchemaGenerator {
 	public JsonObjectBuilder createDefs() throws JsonSchemaPreparationException {
 		JsonObjectBuilder defsBuilder = jsonProvider.createObjectBuilder();
 
-		List<JsonSchemaDefinitionCreator> definitionCreators = new ArrayList<>();
+		List<JsonSchemaExtension> definitionCreators = new ArrayList<>();
 
 		// prepare definitions for generic DynamicValue class
-		definitionCreators.add((defsList) -> {
+		definitionCreators.add((defsList, provider) -> {
 			Map<String, JsonObjectBuilder> dynamicValueDefs = schemaHelper.createDynamicValueImplDefs();
 			for (Map.Entry<String, JsonObjectBuilder> dynamicValueDef : dynamicValueDefs.entrySet()) {
-				defsBuilder.add(dynamicValueDef.getKey(), dynamicValueDef.getValue());
+				defsList.add(dynamicValueDef.getKey(), dynamicValueDef.getValue());
 			}
 		});
 
 		// prepare definitions for referenced resources
-		definitionCreators.add(defsList -> {
+		definitionCreators.add((defsList, provider) -> {
 			Map<String, JsonObjectBuilder> dynamicValueDefs = resourceReferenceJsonSchemaHelper.createResourceReferenceDefs();
 			for (Map.Entry<String, JsonObjectBuilder> dynamicValueDef : dynamicValueDefs.entrySet()) {
-				defsBuilder.add(dynamicValueDef.getKey(), dynamicValueDef.getValue());
+				defsList.add(dynamicValueDef.getKey(), dynamicValueDef.getValue());
 			}
 		});
 
 		// prepare definitions for referenced resources
-		definitionCreators.add(defsList -> {
+		definitionCreators.add((defsList, provider) -> {
 			Map<String, JsonObjectBuilder> dynamicValueDefs = resourceReferenceJsonSchemaHelper.createResourceReferenceDefs();
 			for (Map.Entry<String, JsonObjectBuilder> dynamicValueDef : dynamicValueDefs.entrySet()) {
-				defsBuilder.add(dynamicValueDef.getKey(), dynamicValueDef.getValue());
+				defsList.add(dynamicValueDef.getKey(), dynamicValueDef.getValue());
 			}
 		});
 
 		// prepare definitions for subclasses annotated with @Artefact
-		definitionCreators.add((defsList) -> {
+		definitionCreators.add((defsList, provider) -> {
 			ArtefactDefinitions artefactImplDefs = createArtefactImplDefs();
 
 			// sort definition to keep the stable ordering in json schema
@@ -234,19 +234,19 @@ public class YamlPlanJsonSchemaGenerator {
 			arefactEntries.sort(Map.Entry.comparingByKey());
 
 			for (Map.Entry<String, JsonObjectBuilder> artefactImplDef : arefactEntries) {
-				defsBuilder.add(artefactImplDef.getKey(), artefactImplDef.getValue());
+				defsList.add(artefactImplDef.getKey(), artefactImplDef.getValue());
 			}
 
 			// add definition for "anyOf" artefact definitions prepared above
-			defsBuilder.add(ARTEFACT_DEF, createArtefactDef(artefactImplDefs.controlArtefactDefs));
-			defsBuilder.add(ROOT_ARTEFACT_DEF, createArtefactDef(artefactImplDefs.rootArtefactDefs));
+			defsList.add(ARTEFACT_DEF, createArtefactDef(artefactImplDefs.controlArtefactDefs));
+			defsList.add(ROOT_ARTEFACT_DEF, createArtefactDef(artefactImplDefs.rootArtefactDefs));
 		});
 
 		// add definitions from extensions (additional definitions for EE artefacts)
 		definitionCreators.addAll(getDefinitionsExtensions());
 
-		for (JsonSchemaDefinitionCreator definitionCreator : definitionCreators) {
-			definitionCreator.addDefinition(defsBuilder);
+		for (JsonSchemaExtension definitionCreator : definitionCreators) {
+			definitionCreator.addToJsonSchema(defsBuilder, jsonProvider);
 		}
 
 		return defsBuilder;

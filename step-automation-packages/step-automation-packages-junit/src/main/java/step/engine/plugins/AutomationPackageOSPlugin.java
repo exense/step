@@ -31,8 +31,6 @@ import step.functions.accessor.FunctionAccessor;
 import step.functions.type.FunctionTypeRegistry;
 import step.resources.ResourceManager;
 
-import java.util.function.Function;
-
 /**
  * Registers the automation package manager for local executions in execution engine context
  */

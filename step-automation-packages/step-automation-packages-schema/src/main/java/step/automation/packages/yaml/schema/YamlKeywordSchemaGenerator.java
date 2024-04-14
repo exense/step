@@ -21,20 +21,19 @@ package step.automation.packages.yaml.schema;
 import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObjectBuilder;
 import jakarta.json.spi.JsonProvider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import step.automation.packages.AutomationPackageNamedEntityUtils;
 import step.automation.packages.model.AbstractYamlFunction;
 import step.automation.packages.yaml.AutomationPackageKeywordsLookuper;
 import step.core.yaml.schema.*;
-import step.handlers.javahandler.jsonschema.*;
+import step.handlers.javahandler.jsonschema.FieldMetadataExtractor;
+import step.handlers.javahandler.jsonschema.JsonSchemaCreator;
+import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
+import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 import step.jsonschema.DefaultFieldMetadataExtractor;
 
 import java.util.*;
 
 public class YamlKeywordSchemaGenerator {
-
-    private static final Logger log = LoggerFactory.getLogger(YamlKeywordSchemaGenerator.class);
 
     public static final String KEYWORD_DEF = "KeywordDef";
 
@@ -62,10 +61,10 @@ public class YamlKeywordSchemaGenerator {
     public JsonObjectBuilder createKeywordDefs() throws JsonSchemaPreparationException {
         JsonObjectBuilder defsBuilder = jsonProvider.createObjectBuilder();
 
-        List<JsonSchemaDefinitionCreator> definitionCreators = new ArrayList<>();
+        List<JsonSchemaExtension> definitionCreators = new ArrayList<>();
 
         // prepare definitions for generic DynamicValue class
-        definitionCreators.add((defsList) -> {
+        definitionCreators.add((defsList, provider) -> {
             Map<String, JsonObjectBuilder> dynamicValueDefs = schemaHelper.createDynamicValueImplDefs();
             for (Map.Entry<String, JsonObjectBuilder> dynamicValueDef : dynamicValueDefs.entrySet()) {
                 defsBuilder.add(dynamicValueDef.getKey(), dynamicValueDef.getValue());
@@ -73,7 +72,7 @@ public class YamlKeywordSchemaGenerator {
         });
 
         // prepare definitions for keyword classes
-        definitionCreators.add((defsList) -> {
+        definitionCreators.add((defsLis, provider) -> {
             Map<String, JsonObjectBuilder> keywordImplDefs = createKeywordImplDefs();
             for (Map.Entry<String, JsonObjectBuilder> artefactImplDef : keywordImplDefs.entrySet()) {
                 defsBuilder.add(artefactImplDef.getKey(), artefactImplDef.getValue());
@@ -83,8 +82,8 @@ public class YamlKeywordSchemaGenerator {
             defsBuilder.add(KEYWORD_DEF, createKeywordDef(keywordImplDefs.keySet()));
         });
 
-        for (JsonSchemaDefinitionCreator definitionCreator : definitionCreators) {
-            definitionCreator.addDefinition(defsBuilder);
+        for (JsonSchemaExtension definitionCreator : definitionCreators) {
+            definitionCreator.addToJsonSchema(defsBuilder, jsonProvider);
         }
 
         return defsBuilder;

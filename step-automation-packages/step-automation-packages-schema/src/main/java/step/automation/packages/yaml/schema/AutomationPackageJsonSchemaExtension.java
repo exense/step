@@ -16,15 +16,13 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.core.yaml.schema;
+package step.automation.packages.yaml.schema;
 
-import jakarta.json.JsonObjectBuilder;
-import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
+import step.core.yaml.schema.JsonSchemaExtension;
 
-public interface JsonSchemaDefinitionCreator {
+import java.util.List;
 
-    /**
-     * Adds the entry to 'definitions' section in json schema
-     */
-    void addDefinition(JsonObjectBuilder defsList) throws JsonSchemaPreparationException;
+public interface AutomationPackageJsonSchemaExtension {
+    List<JsonSchemaExtension> getExtendedDefinitions();
+    List<JsonSchemaExtension> getAdditionalAutomationPackageFields();
 }
