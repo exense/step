@@ -27,6 +27,8 @@ import step.core.access.UserAccessorImpl;
 import step.core.accessors.AbstractAccessor;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeAccessorImpl;
+import step.core.artefacts.reports.aggregated.ReportNodeTimeSeries;
+import step.core.artefacts.reports.resolvedplan.ResolvedPlanNodeAccessor;
 import step.core.collections.Collection;
 import step.core.collections.CollectionFactory;
 import step.core.collections.CollectionFactoryConfigurationParser;
@@ -129,6 +131,8 @@ public class Controller {
 
 		context.setReportNodeAccessor(
 				new ReportNodeAccessorImpl(collectionFactory.getCollection("reports", ReportNode.class)));
+		context.put(ReportNodeTimeSeries.class, new ReportNodeTimeSeries(collectionFactory));
+		context.put(ResolvedPlanNodeAccessor.class, new ResolvedPlanNodeAccessor(collectionFactory));
 		context.setScheduleAccessor(new ExecutionTaskAccessorImpl(
 				collectionFactory.getCollection("tasks", ExecutiontTaskParameters.class)));
 

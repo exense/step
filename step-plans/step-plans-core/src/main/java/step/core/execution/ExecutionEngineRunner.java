@@ -26,6 +26,8 @@ import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandlerManager;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
+import step.core.artefacts.reports.resolvedplan.ResolvedPlanBuilder;
+import step.core.artefacts.reports.resolvedplan.ResolvedPlanNode;
 import step.core.execution.model.*;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
@@ -86,6 +88,8 @@ public class ExecutionEngineRunner {
 					logger.info(messageWithId("Starting execution."));
 					updateStatus(ExecutionStatus.ESTIMATING);
 
+					buildAndPersistResolvedPlan(plan);
+
 					executionContext.associateThread();
 
 					ReportNode rootReportNode = executionContext.getReport();
@@ -127,6 +131,13 @@ public class ExecutionEngineRunner {
 			postExecution(executionContext);
 		}
 		return result;
+	}
+
+	private void buildAndPersistResolvedPlan(Plan plan) {
+		ResolvedPlanBuilder resolvedPlanBuilder = new ResolvedPlanBuilder(executionContext);
+		Map<String, Object> bindings = ExecutionContextBindings.get(executionContext);
+		ResolvedPlanNode resolvedPlanRoot = resolvedPlanBuilder.buildResolvedPlan(plan, bindings);
+		updateExecution(e -> e.setResolvedPlanRootNodeId(resolvedPlanRoot.getId().toString()));
 	}
 
 	public static void abort(ExecutionContext executionContext) {
@@ -177,7 +188,6 @@ public class ExecutionEngineRunner {
 		executionContext.setPlan(plan);
 		updateExecution(execution -> {
 			execution.setPlanId(plan.getId().toString());
-			execution.setPlanSnapshots(List.of(plan));
 			if (execution.getDescription() == null) {
 				execution.setDescription(plan.getAttributes() != null ? plan.getAttributes().get(AbstractOrganizableObject.NAME) : null);
 			}

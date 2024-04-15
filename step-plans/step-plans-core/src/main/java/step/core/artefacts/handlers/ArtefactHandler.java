@@ -27,6 +27,7 @@ import step.core.artefacts.WorkArtefactFactory;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.artefacts.reports.ReportNodeStatus;
+import step.core.artefacts.reports.aggregated.ReportNodeTimeSeries;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.execution.ExecutionContext;
@@ -75,7 +76,8 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	private VariablesManager variablesManager;
 	private ReportNodeCache reportNodeCache;
 	private DynamicBeanResolver dynamicBeanResolver;
-		
+	private ReportNodeTimeSeries reportNodeTimeSeries;
+
 	public ArtefactHandler() {
 		super();		
 	}
@@ -84,6 +86,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		this.context = context;
 		artefactHandlerManager = context.getArtefactHandlerManager();
 		reportNodeAccessor = context.getReportNodeAccessor();
+		reportNodeTimeSeries = context.require(ReportNodeTimeSeries.class);
 		reportNodeCache = context.getReportNodeCache();
 		variablesManager = context.getVariablesManager();
 		reportNodeAttachmentManager = new ReportNodeAttachmentManager(context);
@@ -203,6 +206,9 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 				saveReportNode(reportNode);
 			}
 		}
+
+		// TODO implement node pruning for timeseries
+		reportNodeTimeSeries.ingestReportNode(reportNode);
 		
 		context.getExecutionCallbacks().afterReportNodeExecution(context, reportNode);
 		

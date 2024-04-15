@@ -52,8 +52,8 @@ public class Execution extends AbstractOrganizableObject implements EnricheableO
 	private Map<String, String> parameters;
 	private ExecutionParameters executionParameters;
 	private ExecutiontTaskParameters executiontTaskParameters;
-	private List<Plan> planSnapshots = new ArrayList<>();
-		
+	private String resolvedPlanRootNodeId;
+
 	public Execution() {
 		super();
 	}
@@ -81,8 +81,8 @@ public class Execution extends AbstractOrganizableObject implements EnricheableO
 	}
 
 	/**
-	 * @return the plain text description of the description as displayed 
-	 * in the column "Description" of the execution table 
+	 * @return the plain text description of the description as displayed
+	 * in the column "Description" of the execution table
 	 */
 	public String getDescription() {
 		return description;
@@ -169,7 +169,7 @@ public class Execution extends AbstractOrganizableObject implements EnricheableO
 	}
 
 	/**
-	 * @return the ID of the scheduler task (if any) this execution has been triggered from 
+	 * @return the ID of the scheduler task (if any) this execution has been triggered from
 	 */
 	public String getExecutionTaskID() {
 		return executionTaskID;
@@ -191,7 +191,7 @@ public class Execution extends AbstractOrganizableObject implements EnricheableO
 	}
 
 	/**
-	 * @return the list of parameters used by this execution as displayed in the tab "Execution parameters" of the 
+	 * @return the list of parameters used by this execution as displayed in the tab "Execution parameters" of the
 	 * Execution view
 	 */
 	public Map<String, String> getParameters() {
@@ -221,21 +221,17 @@ public class Execution extends AbstractOrganizableObject implements EnricheableO
 		this.executiontTaskParameters = executiontTaskParameters;
 	}
 
-	public void addPlanSnapshot(Plan plan) {
-		planSnapshots.add(plan);
+	public String getResolvedPlanRootNodeId() {
+		return resolvedPlanRootNodeId;
 	}
 
-	public List<Plan> getPlanSnapshots() {
-		return planSnapshots;
-	}
-
-	public void setPlanSnapshots(List<Plan> planSnapshots) {
-		this.planSnapshots = planSnapshots;
+	public void setResolvedPlanRootNodeId(String resolvedPlanRootNodeId) {
+		this.resolvedPlanRootNodeId = resolvedPlanRootNodeId;
 	}
 
 	@Override
 	public String toString() {
-		return "Execution [startTime=" + startTime + ", endTime=" + endTime + ", description=" + description 
+		return "Execution [startTime=" + startTime + ", endTime=" + endTime + ", description=" + description
 				+ ", status=" + status + ", planID=" + planId + "]";
 	}
 }
