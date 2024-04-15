@@ -31,7 +31,8 @@ public class ResolvedPlanBuilder {
     public ResolvedPlanBuilder(ExecutionContext executionContext) {
         planAccessor = executionContext.getPlanAccessor();
         resolvedPlanNodeAccessor = executionContext.require(ResolvedPlanNodeAccessor.class);
-        functionAccessor = executionContext.require(FunctionAccessor.class);
+        // functionAccessor can be null
+        functionAccessor = executionContext.get(FunctionAccessor.class);
         artefactHandlerRegistry = executionContext.getArtefactHandlerRegistry();
         dynamicBeanResolver = executionContext.getDynamicBeanResolver();
         dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(executionContext.getExpressionHandler()));
