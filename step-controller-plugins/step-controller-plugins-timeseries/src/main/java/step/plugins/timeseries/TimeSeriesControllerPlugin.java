@@ -19,6 +19,7 @@ import step.engine.plugins.ExecutionEnginePlugin;
 import step.framework.server.tables.Table;
 import step.framework.server.tables.TableRegistry;
 import step.migration.MigrationManager;
+import step.migration.MigrationManagerPlugin;
 import step.plugins.measurements.GaugeCollectorRegistry;
 import step.plugins.measurements.MeasurementPlugin;
 import step.plugins.timeseries.dashboards.model.*;
@@ -29,7 +30,7 @@ import java.util.*;
 
 import static step.plugins.timeseries.TimeSeriesExecutionPlugin.*;
 
-@Plugin
+@Plugin(dependencies = {MigrationManagerPlugin.class})
 public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 
 	public static final String PLUGINS_TIMESERIES_FLUSH_PERIOD = "plugins.timeseries.flush.period";
@@ -46,7 +47,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 
 	@Override
 	public void serverStart(GlobalContext context) {
-		MigrationManager migrationManager = context.get(MigrationManager.class);
+		MigrationManager migrationManager = context.require(MigrationManager.class);
 		migrationManager.register(MigrateDashboardsTask.class);
 		
 		Configuration configuration = context.getConfiguration();
