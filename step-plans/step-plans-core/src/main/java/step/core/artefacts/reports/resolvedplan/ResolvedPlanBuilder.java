@@ -16,6 +16,7 @@ import step.functions.accessor.FunctionAccessor;
 
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 public class ResolvedPlanBuilder {
 
@@ -53,9 +54,15 @@ public class ResolvedPlanBuilder {
         String newArtefactPath;
         if (artefactNode.isCallingArtefactsFromOtherPlans()) {
             ArtefactHandler<AbstractArtefact, ReportNode> artefactHandler = artefactHandlerRegistry.getArtefactHandler((Class<AbstractArtefact>) artefactNode.getClass());
-            AbstractArtefact referencedChildArtefact = artefactHandler.resolveArtefactCall(artefactNode, dynamicJsonObjectResolver, bindings, objectPredicate, planAccessor, functionAccessor);
-            childrenArtefacts = List.of(referencedChildArtefact);
-            newArtefactPath = ArtefactHashGenerator.getPath(artefactPath, artefactNode.getId().toString());
+            try {
+                AbstractArtefact referencedChildArtefact = artefactHandler.resolveArtefactCall(artefactNode, dynamicJsonObjectResolver, bindings, objectPredicate, planAccessor, functionAccessor);
+                childrenArtefacts = List.of(referencedChildArtefact);
+                newArtefactPath = ArtefactHashGenerator.getPath(artefactPath, artefactNode.getId().toString());
+            } catch (NoSuchElementException e) {
+                // Unable to resolve
+                childrenArtefacts = List.of();
+                newArtefactPath = null;
+            }
         } else {
             childrenArtefacts = artefactNode.getChildren();
             newArtefactPath = artefactPath;
