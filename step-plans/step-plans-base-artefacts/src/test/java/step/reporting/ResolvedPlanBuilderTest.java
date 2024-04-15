@@ -36,7 +36,7 @@ public class ResolvedPlanBuilderTest {
     }
 
     @Test
-    public void get() throws IOException {
+    public void get() throws IOException, InterruptedException {
         Plan plan = PlanBuilder.create()
                 .startBlock(BaseArtefacts.for_(1, 10))
                 .add(BaseArtefacts.echo("'test'"))
@@ -46,10 +46,13 @@ public class ResolvedPlanBuilderTest {
                 .endBlock()
                 .endBlock().build();
         PlanRunnerResult result = engine.execute(plan);
-        AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(engine.getExecutionEngineContext(), result.getExecutionId());
-        AggregatedReportView node = aggregatedReportViewBuilder.buildAggregatedReportView();
         result.printTree();
 
+        // Sleep a few ms to ensure that the report node timeseries is flushed
+        Thread.sleep(100);
+
+        AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(engine.getExecutionEngineContext(), result.getExecutionId());
+        AggregatedReportView node = aggregatedReportViewBuilder.buildAggregatedReportView();
         assertEquals(10, node.children.get(0).countTotal());
         assertEquals(10, node.children.get(1).countTotal());
         assertEquals(50, node.children.get(1).children.get(0).countTotal());
@@ -57,7 +60,7 @@ public class ResolvedPlanBuilderTest {
     }
 
     @Test
-    public void planWithCallPlan() throws IOException {
+    public void planWithCallPlan() throws IOException, InterruptedException {
         Plan subSubPlan = PlanBuilder.create()
                 .startBlock(BaseArtefacts.sequence())
                 .add(BaseArtefacts.echo("'Echo 4'"))
@@ -81,12 +84,16 @@ public class ResolvedPlanBuilderTest {
         engine.getExecutionEngineContext().getPlanAccessor().save(List.of(subPlan, subSubPlan));
 
         PlanRunnerResult result = engine.execute(plan);
-        AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(engine.getExecutionEngineContext(), result.getExecutionId());
-        AggregatedReportView node = aggregatedReportViewBuilder.buildAggregatedReportView();
         result.printTree();
         System.out.println("----------------------");
         System.out.println("Aggregated report tree");
         System.out.println("----------------------");
+
+        // Sleep a few ms to ensure that the report node timeseries is flushed
+        Thread.sleep(100);
+
+        AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(engine.getExecutionEngineContext(), result.getExecutionId());
+        AggregatedReportView node = aggregatedReportViewBuilder.buildAggregatedReportView();
         System.out.println(node.toString());
     }
 }

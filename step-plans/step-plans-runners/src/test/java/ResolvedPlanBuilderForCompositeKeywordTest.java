@@ -55,7 +55,7 @@ public class ResolvedPlanBuilderForCompositeKeywordTest {
     }
 
     @Test
-    public void planWithCallKeyword() throws IOException {
+    public void planWithCallKeyword() throws IOException, InterruptedException {
 
         Plan compositePlan = PlanBuilder.create()
                 .startBlock(BaseArtefacts.sequence())
@@ -81,6 +81,10 @@ public class ResolvedPlanBuilderForCompositeKeywordTest {
         executionEngineContext.get(FunctionAccessor.class).save(compositeFunction);
 
         PlanRunnerResult result = engine.execute(plan);
+
+        // Sleep a few ms to ensure that the report node timeseries is flushed
+        Thread.sleep(100);
+
         AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(engine.getExecutionEngineContext(), result.getExecutionId());
         AggregatedReportView node = aggregatedReportViewBuilder.buildAggregatedReportView();
         result.printTree();
