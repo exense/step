@@ -29,6 +29,11 @@ import step.core.accessors.AbstractUser;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeAccessorImpl;
 import step.core.collections.*;
+import step.core.artefacts.reports.aggregated.ReportNodeTimeSeries;
+import step.core.artefacts.reports.resolvedplan.ResolvedPlanNodeAccessor;
+import step.core.collections.Collection;
+import step.core.collections.CollectionFactory;
+import step.core.collections.CollectionFactoryConfigurationParser;
 import step.core.controller.SessionResponseBuilder;
 import step.core.controller.settings.ObjectScopeHandler;
 import step.core.controller.settings.ObjectScopeRegistry;
@@ -133,6 +138,8 @@ public class Controller {
 
 		context.setReportNodeAccessor(
 				new ReportNodeAccessorImpl(collectionFactory.getCollection("reports", ReportNode.class)));
+		context.put(ReportNodeTimeSeries.class, new ReportNodeTimeSeries(collectionFactory));
+		context.put(ResolvedPlanNodeAccessor.class, new ResolvedPlanNodeAccessor(collectionFactory));
 		context.setScheduleAccessor(new ExecutionTaskAccessorImpl(
 				collectionFactory.getCollection("tasks", ExecutiontTaskParameters.class)));
 
@@ -155,7 +162,7 @@ public class Controller {
 
 		});
 		context.put(ObjectScopeRegistry.class, objectScopeRegistry);
-		
+
 		//Im memory map to store last user activities
 		Map<String, Long> userActivityMap = new ConcurrentHashMap<>();
 		context.put(USER_ACTIVITY_MAP_KEY, userActivityMap);

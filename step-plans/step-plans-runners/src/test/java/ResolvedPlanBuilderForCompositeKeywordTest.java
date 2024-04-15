@@ -4,7 +4,8 @@ import org.junit.Test;
 import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.handlers.functions.TokenAutoscalingExecutionPlugin;
 import step.core.accessors.AbstractOrganizableObject;
-import step.core.artefacts.reports.aggregatedtree.AggregatedReportTreeNavigator;
+import step.core.artefacts.reports.aggregated.AggregatedReportView;
+import step.core.artefacts.reports.aggregated.AggregatedReportViewBuilder;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
 import step.core.execution.ExecutionEngineContext;
@@ -26,7 +27,7 @@ import step.threadpool.ThreadPoolPlugin;
 import java.io.IOException;
 import java.util.List;
 
-public class AggregatedReportTreeNavigatorForCompositeKeywordTest {
+public class ResolvedPlanBuilderForCompositeKeywordTest {
 
     public static final String MY_COMPOSITE = "MyComposite";
 
@@ -80,19 +81,12 @@ public class AggregatedReportTreeNavigatorForCompositeKeywordTest {
         executionEngineContext.get(FunctionAccessor.class).save(compositeFunction);
 
         PlanRunnerResult result = engine.execute(plan);
-        AggregatedReportTreeNavigator reportTree = new AggregatedReportTreeNavigator(executionEngineContext);
-        AggregatedReportTreeNavigator.Node node = reportTree.getAggregatedReportTree(result.getExecutionId());
+        AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(engine.getExecutionEngineContext(), result.getExecutionId());
+        AggregatedReportView node = aggregatedReportViewBuilder.buildAggregatedReportView();
         result.printTree();
         System.out.println("----------------------");
         System.out.println("Aggregated report tree");
         System.out.println("----------------------");
         System.out.println(node.toString());
-
-        System.out.println("----------------------");
-        System.out.println("Report nodes for 1st CallPlan");
-        System.out.println("----------------------");
-        String artefactHash = node.children.get(0).artefactHash;
-        reportTree.getNodesByArtefactHash(result.getExecutionId(), artefactHash).forEach(System.out::println);
-
     }
 }

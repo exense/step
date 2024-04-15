@@ -5,7 +5,8 @@ import org.junit.Before;
 import org.junit.Test;
 import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.handlers.functions.TokenAutoscalingExecutionPlugin;
-import step.core.artefacts.reports.aggregatedtree.AggregatedReportTreeNavigator;
+import step.core.artefacts.reports.aggregated.AggregatedReportView;
+import step.core.artefacts.reports.aggregated.AggregatedReportViewBuilder;
 import step.core.execution.ExecutionEngine;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
@@ -19,7 +20,7 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
-public class AggregatedReportTreeNavigatorTest {
+public class ResolvedPlanBuilderTest {
 
     private ExecutionEngine engine;
 
@@ -45,14 +46,14 @@ public class AggregatedReportTreeNavigatorTest {
                 .endBlock()
                 .endBlock().build();
         PlanRunnerResult result = engine.execute(plan);
-        AggregatedReportTreeNavigator reportTree = new AggregatedReportTreeNavigator(engine.getExecutionEngineContext());
-        AggregatedReportTreeNavigator.Node node = reportTree.getAggregatedReportTree(result.getExecutionId());
+        AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(engine.getExecutionEngineContext(), result.getExecutionId());
+        AggregatedReportView node = aggregatedReportViewBuilder.buildAggregatedReportView();
         result.printTree();
 
-        assertEquals(10, node.children.get(0).callCount);
-        assertEquals(10, node.children.get(1).callCount);
-        assertEquals(50, node.children.get(1).children.get(0).callCount);
-        assertEquals(50, node.children.get(1).children.get(1).callCount);
+        assertEquals(10, node.children.get(0).countTotal());
+        assertEquals(10, node.children.get(1).countTotal());
+        assertEquals(50, node.children.get(1).children.get(0).countTotal());
+        assertEquals(50, node.children.get(1).children.get(1).countTotal());
     }
 
     @Test
@@ -80,18 +81,12 @@ public class AggregatedReportTreeNavigatorTest {
         engine.getExecutionEngineContext().getPlanAccessor().save(List.of(subPlan, subSubPlan));
 
         PlanRunnerResult result = engine.execute(plan);
-        AggregatedReportTreeNavigator reportTree = new AggregatedReportTreeNavigator(engine.getExecutionEngineContext());
-        AggregatedReportTreeNavigator.Node node = reportTree.getAggregatedReportTree(result.getExecutionId());
+        AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(engine.getExecutionEngineContext(), result.getExecutionId());
+        AggregatedReportView node = aggregatedReportViewBuilder.buildAggregatedReportView();
         result.printTree();
         System.out.println("----------------------");
         System.out.println("Aggregated report tree");
         System.out.println("----------------------");
         System.out.println(node.toString());
-
-        System.out.println("----------------------");
-        System.out.println("Report nodes for 1st CallPlan");
-        System.out.println("----------------------");
-        String artefactHash = node.children.get(0).artefactHash;
-        reportTree.getNodesByArtefactHash(result.getExecutionId(), artefactHash).forEach(System.out::println);
     }
 }
