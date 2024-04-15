@@ -56,8 +56,13 @@ public class ResolvedPlanBuilder {
             ArtefactHandler<AbstractArtefact, ReportNode> artefactHandler = artefactHandlerRegistry.getArtefactHandler((Class<AbstractArtefact>) artefactNode.getClass());
             try {
                 AbstractArtefact referencedChildArtefact = artefactHandler.resolveArtefactCall(artefactNode, dynamicJsonObjectResolver, bindings, objectPredicate, planAccessor, functionAccessor);
-                childrenArtefacts = List.of(referencedChildArtefact);
-                newArtefactPath = ArtefactHashGenerator.getPath(artefactPath, artefactNode.getId().toString());
+                if(referencedChildArtefact != null) {
+                    childrenArtefacts = List.of(referencedChildArtefact);
+                    newArtefactPath = ArtefactHashGenerator.getPath(artefactPath, artefactNode.getId().toString());
+                } else {
+                    childrenArtefacts = List.of();
+                    newArtefactPath = null;
+                }
             } catch (NoSuchElementException e) {
                 // Unable to resolve
                 childrenArtefacts = List.of();
