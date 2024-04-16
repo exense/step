@@ -155,6 +155,7 @@ public abstract class AbtractFunctionServices extends AbstractEntityServices<Fun
 	@Override
 	public Function clone(String id) {
 		try {
+			assertEntityIsAcceptableInContext(getEntity(id));
 			return functionManager.copyFunction(id);
 		} catch (FunctionTypeException e) {
 			throw new ControllerServiceException(e.getMessage());
@@ -164,6 +165,7 @@ public abstract class AbtractFunctionServices extends AbstractEntityServices<Fun
 	@Override
 	public void delete(String functionId) {
 		try {
+			assertEntityIsAcceptableInContext(getEntity(functionId));
 			functionManager.deleteFunction(functionId);
 		} catch (FunctionTypeException e) {
 			throw new ControllerServiceException(e.getMessage());

@@ -100,6 +100,7 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
     @Path("/{id}")
     @Secured(right = "{entity}-delete")
     public void delete(@PathParam("id") String id) {
+        assertEntityIsAcceptableInContext(getEntity(id));
         accessor.remove(new ObjectId(id));
     }
 
@@ -129,10 +130,8 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
     @Produces(MediaType.APPLICATION_JSON)
     @Secured(right = "{entity}-write")
     public T clone(@PathParam("id") String id) {
-        T entity = get(id);
-        if (entity == null) {
-            throw new ControllerServiceException("The entity with Id " + id + " doesn't exist");
-        }
+        T entity = getEntity(id);
+        assertEntityIsAcceptableInContext(entity);
         T clonedEntity = cloneEntity(entity);
 
         if (clonedEntity instanceof AbstractOrganizableObject) {
@@ -211,6 +210,7 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
     @Secured(right = "{entity}-write")
     @Path("{id}/restore/{versionId}")
     public T restoreVersion(@PathParam("id") String id, @PathParam("versionId") String versionId) {
+        assertEntityIsAcceptableInContext(getEntity(id));
         return accessor.restoreVersion(new ObjectId(id), new ObjectId(versionId));
     }
 
@@ -232,14 +232,15 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
     @Path("{id}/locked")
     public void setLocked(@PathParam("id") String id, Boolean locked) {
         T t = getEntity(id);
+        assertEntityIsAcceptableInContext(t);
         t.addCustomField(CUSTOM_FIELD_LOCKED, locked);
         accessor.save(t);
     }
 
-    private T getEntity(String id) {
+    protected T getEntity(String id) {
         T t = accessor.get(id);
         if (t == null) {
-            throw new ControllerServiceException("Entity with id '" + id + "' does not exists.");
+            throw new ControllerServiceException("The entity with id '" + id + "' does not exists.");
         } else {
             return t;
         }
