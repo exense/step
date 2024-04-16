@@ -47,6 +47,47 @@ public abstract class AbstractDataPoolTest extends AbstractArtefactHandlerTest {
 	}
 
 	@Test
+	public void testDataSetReadChunkAsJsonResetAtEnd() throws IOException {
+		context = newExecutionContext();
+
+		Plan plan = PlanBuilder.create().startBlock(BaseArtefacts.sequence()).add(getDataSetArtefact(true))
+				.add(BaseArtefacts.set("json", "dataSet.nextChunk(3).asJson()")).add(BaseArtefacts.echo("json"))
+				.endBlock().build();
+		context.getExecutionCallbacks().executionStart(context);
+		execute(plan.getRoot());
+		EchoReportNode echoReportNode = (EchoReportNode) getChildren(getChildren(context.getReport()).get(0)).get(2);
+		Assert.assertEquals("[{\"Col1\":\"row11\",\"Col2\":\"row12\"}" +
+				",{\"Col1\":\"row21\",\"Col2\":\"row22\"}" +
+				",{\"Col1\":\"row11\",\"Col2\":\"row12\"}]", echoReportNode.getEcho());
+	}
+
+	@Test
+	public void testDataSetReadChunkAsJsonNoResetAtEnd() throws IOException {
+		context = newExecutionContext();
+
+		Plan plan = PlanBuilder.create().startBlock(BaseArtefacts.sequence()).add(getDataSetArtefact(false))
+				.add(BaseArtefacts.set("json", "dataSet.nextChunk(3).asJson()")).add(BaseArtefacts.echo("json"))
+				.endBlock().build();
+		context.getExecutionCallbacks().executionStart(context);
+		execute(plan.getRoot());
+		EchoReportNode echoReportNode = (EchoReportNode) getChildren(getChildren(context.getReport()).get(0)).get(2);
+		Assert.assertEquals("[{\"Col1\":\"row11\",\"Col2\":\"row12\"},{\"Col1\":\"row21\",\"Col2\":\"row22\"}]", echoReportNode.getEcho());
+	}
+
+	@Test
+	public void testDataSetReadChunk() throws IOException {
+		context = newExecutionContext();
+
+		Plan plan = PlanBuilder.create().startBlock(BaseArtefacts.sequence()).add(getDataSetArtefact(false))
+				.add(BaseArtefacts.set("object", "dataSet.nextChunk(2).get(0)['Col1']")).add(BaseArtefacts.echo("object"))
+				.endBlock().build();
+		context.getExecutionCallbacks().executionStart(context);
+		execute(plan.getRoot());
+		EchoReportNode echoReportNode = (EchoReportNode) getChildren(getChildren(context.getReport()).get(0)).get(2);
+		Assert.assertEquals("row11", echoReportNode.getEcho());
+	}
+
+	@Test
 	public void testDataSetReadError() throws IOException {
 		context = newExecutionContext();
 
