@@ -78,7 +78,7 @@ public abstract class SimpleStringMap implements Map<String, String> {
 
 	@Override
 	public Set<java.util.Map.Entry<String, String>> entrySet() {
-		throw new RuntimeException("Not implemented");
+		return keySet().stream().collect(Collectors.toMap(k -> k, k -> get(k))).entrySet();
 	}
 
 	@Override
