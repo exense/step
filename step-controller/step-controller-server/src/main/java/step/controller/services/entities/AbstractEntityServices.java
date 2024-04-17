@@ -13,6 +13,7 @@ import step.core.accessors.Accessor;
 import step.core.deployment.AbstractStepAsyncServices;
 import step.core.deployment.ControllerServiceException;
 import step.core.entities.Entity;
+import step.core.execution.model.Execution;
 import step.framework.server.security.Secured;
 import step.framework.server.tables.service.TableRequest;
 import step.framework.server.tables.service.TableResponse;
@@ -67,6 +68,20 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
     @Secured(right = "{entity}-read")
     public List<T> findByIds(List<String> ids) {
         return accessor.findByIds(ids).collect(Collectors.toList());
+    }
+
+    @Operation(operationId = "find{Entity}NamesByIds", description = "Returns the map of entities IDs to names for the provided list of IDs")
+    @POST
+    @Path("/find/names/by/ids")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Secured(right = "{entity}-read")
+    public Map<String, String>  findNamesByIds(List<String> ids) {
+        return accessor.findByIds(ids).collect(Collectors.toMap(a -> a.getId().toHexString(), a ->
+            (a instanceof AbstractOrganizableObject) ?
+                    ((AbstractOrganizableObject) a).getAttribute(AbstractOrganizableObject.NAME) :
+                    "unresolved"
+        ));
     }
 
     @Operation(operationId = "find{Entity}sByAttributes", description = "Returns the list of entities matching the provided attributes")
