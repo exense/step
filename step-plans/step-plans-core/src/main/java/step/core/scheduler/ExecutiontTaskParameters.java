@@ -20,6 +20,8 @@ package step.core.scheduler;
 
 import org.bson.types.ObjectId;
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.entities.EntityManager;
+import step.core.entities.EntityReference;
 import step.core.execution.model.ExecutionParameters;
 import step.core.objectenricher.EnricheableObject;
 
@@ -100,6 +102,7 @@ public class ExecutiontTaskParameters extends AbstractOrganizableObject implemen
 		this.active = active;
 	}
 
+	@EntityReference(type= EntityManager.plans)
 	public ObjectId getAssertionPlan() {
 		return assertionPlan;
 	}
