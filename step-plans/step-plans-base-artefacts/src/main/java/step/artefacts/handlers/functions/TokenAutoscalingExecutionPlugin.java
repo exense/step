@@ -69,6 +69,7 @@ public class TokenAutoscalingExecutionPlugin extends AbstractExecutionEnginePlug
 
         // Delegate the provisioning of the agent tokens to the driver according to the calculated forecast
         TokenProvisioningRequest request = new TokenProvisioningRequest();
+        request.executionId = context.getExecutionId();
         request.requiredNumberOfTokensPerPool = tokenForecastPerPool;
 
         String provisioningRequestId = tokenAutoscalingDriver.initializeTokenProvisioningRequest(request);

@@ -38,6 +38,10 @@ public class FunctionGroupSession implements AutoCloseable {
     }
 
     public synchronized TokenWrapper getRemoteToken(Map<String, Interest> tokenSelectionCriteria, TokenWrapperOwner tokenWrapperOwner) throws FunctionExecutionServiceException {
+        return getRemoteToken(Map.of(), tokenSelectionCriteria, tokenWrapperOwner);
+    }
+
+    public synchronized TokenWrapper getRemoteToken(Map<String, String> ownAttributes, Map<String, Interest> tokenSelectionCriteria, TokenWrapperOwner tokenWrapperOwner) throws FunctionExecutionServiceException {
         if (!isCurrentThreadOwner()) {
             throw new RuntimeException("Tokens from this sesssion are already reserved by another thread. This usually means that you're spawning threads from wihtin a session control without creating new sessions for the new threads.");
         }
@@ -52,7 +56,7 @@ public class FunctionGroupSession implements AutoCloseable {
             token = matchingToken;
         } else {
             // No token matching the selection criteria => select a new token and add it to the function group context
-            token = selectToken(tokenSelectionCriteria, tokenWrapperOwner);
+            token = selectToken(ownAttributes, tokenSelectionCriteria, tokenWrapperOwner);
             tokens.add(token);
         }
         return token;
@@ -62,13 +66,12 @@ public class FunctionGroupSession implements AutoCloseable {
         return Thread.currentThread().getId() == ownerThreadId;
     }
 
-    private TokenWrapper selectToken(Map<String, Interest> selectionCriteria, TokenWrapperOwner tokenWrapperOwner) throws FunctionExecutionServiceException {
-        Map<String, String> pretenderAttributes = new HashMap<>();
+    private TokenWrapper selectToken(Map<String, String> ownAttributes, Map<String, Interest> selectionCriteria, TokenWrapperOwner tokenWrapperOwner) throws FunctionExecutionServiceException {
 
         TokenWrapper token;
         OperationManager.getInstance().enter("Token selection", selectionCriteria);
         try {
-            token = functionExecutionService.getTokenHandle(pretenderAttributes, selectionCriteria, true, tokenWrapperOwner);
+            token = functionExecutionService.getTokenHandle(ownAttributes, selectionCriteria, true, tokenWrapperOwner);
         } finally {
             OperationManager.getInstance().exit();
         }

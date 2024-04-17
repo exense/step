@@ -288,9 +288,17 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 			token = functionGroupSession.getLocalToken();
 		} else {
 			Map<String, Interest> tokenSelectionCriteria = tokenSelectionCriteriaMapBuilder.buildSelectionCriteriaMap(testArtefact, function, functionGroupContext, getBindings());
-			token = functionGroupSession.getRemoteToken(tokenSelectionCriteria, tokenWrapperOwner);
+			token = functionGroupSession.getRemoteToken(getOwnAttributesForTokenSelection(), tokenSelectionCriteria, tokenWrapperOwner);
 		}
 		return token;
+	}
+
+	/**
+	 * @return the map of attributes that will be presented for the token selection to the agent token.
+	 * These attributes will be used to match the right token if the agent token defines criteria for the selector (token pretender)
+	 */
+	private Map<String, String> getOwnAttributesForTokenSelection() {
+		return Map.of("executionId", context.getExecutionId());
 	}
 
 	private void validateInput(FunctionInput<JsonObject> input, Function function) {
