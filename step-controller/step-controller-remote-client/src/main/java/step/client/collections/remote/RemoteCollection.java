@@ -176,7 +176,13 @@ public class RemoteCollection<T> implements Collection<T> {
         return new UnsupportedOperationException("This method is currently not implemented");
     }
 
-	@Override
+    @Override
+    // Empty implementation to be replaced
+    public String getName() {
+        return null;
+    }
+
+    @Override
 	public long count(Filter filter, Integer limit) {
         Invocation.Builder builder = client.requestBuilder(path + "/count");
         Entity<CountRequest> entity = Entity.entity(new CountRequest(filter, limit), MediaType.APPLICATION_JSON);
