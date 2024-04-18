@@ -7,6 +7,8 @@ import step.automation.packages.AutomationPackageManager;
 import step.automation.packages.model.AutomationPackageContent;
 import step.core.objectenricher.ObjectEnricher;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -40,12 +42,14 @@ public class AutomationPackageHookRegistry {
      */
     public <T> boolean onPrepareStaging(String fieldName,
                                         AutomationPackageContext apContext,
+                                        AutomationPackageContent apContent,
                                         List<T> objects,
                                         AutomationPackage oldPackage,
-                                        step.automation.packages.AutomationPackageManager.Staging targetStaging) {
+                                        AutomationPackageManager.Staging targetStaging,
+                                        AutomationPackageManager manager) {
         AutomationPackageHook<T> hook = (AutomationPackageHook<T>) getHook(fieldName);
         if (hook != null) {
-            hook.onPrepareStaging(fieldName, apContext, objects, oldPackage, targetStaging);
+            hook.onPrepareStaging(fieldName, apContext, apContent, objects, oldPackage, targetStaging, manager);
             return true;
         } else {
             return false;
@@ -55,10 +59,10 @@ public class AutomationPackageHookRegistry {
     /**
      * Create the entities (taken from previously prepared staging) in database
      */
-    public <T> boolean onCreate(String fieldName, List<T> objects, ObjectEnricher enricher) {
+    public <T> boolean onCreate(String fieldName, List<T> objects, ObjectEnricher enricher, AutomationPackageManager manager) {
         AutomationPackageHook<T> hook = (AutomationPackageHook<T>) getHook(fieldName);
         if (hook != null) {
-            hook.onCreate(objects, enricher);
+            hook.onCreate(objects, enricher, manager);
             return true;
         } else {
             return false;
@@ -69,13 +73,19 @@ public class AutomationPackageHookRegistry {
         return getHook(fieldName) != null;
     }
 
-    public void onAutomationPackageDelete(AutomationPackage automationPackage, AutomationPackageManager manager) {
-        for (AutomationPackageHook<?> hook : registry.values()) {
-            hook.onDelete(automationPackage, manager);
+    public void onAutomationPackageDelete(AutomationPackage automationPackage, AutomationPackageManager manager, Collection<String> excludedHookNames) {
+        for (Map.Entry<String, AutomationPackageHook<?>> hook : registry.entrySet()) {
+            if (excludedHookNames == null || !excludedHookNames.contains(hook.getKey())) {
+                hook.getValue().onDelete(automationPackage, manager);
+            }
         }
     }
 
     public void register(String fieldName, AutomationPackageHook<?> automationPackageHook) {
         registry.put(fieldName, automationPackageHook);
+    }
+
+    public Map<String, AutomationPackageHook<?>> unmodifiableRegistry(){
+        return Collections.unmodifiableMap(registry);
     }
 }

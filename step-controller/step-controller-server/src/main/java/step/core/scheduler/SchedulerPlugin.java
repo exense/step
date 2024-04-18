@@ -34,7 +34,6 @@ import step.core.plugins.Plugin;
 import step.framework.server.tables.Table;
 import step.framework.server.tables.TableRegistry;
 import step.plugins.screentemplating.*;
-import step.automation.packages.hooks.AutomationPackageHook;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -74,24 +73,31 @@ public class SchedulerPlugin extends AbstractControllerPlugin {
 	}
 
 	public static void registerSchedulerHook(AutomationPackageHookRegistry apRegistry, ExecutionScheduler scheduler) {
-		apRegistry.register(AutomationPackageFragmentYaml.SCHEDULES_FIELD_NAME, new AutomationPackageHook<ExecutiontTaskParameters>() {
+		apRegistry.register(AutomationPackageFragmentYaml.SCHEDULES_FIELD_NAME, new AutomationPackageSchedulerHook(scheduler));
+	}
 
-			@Override
-			public void onCreate(List<? extends ExecutiontTaskParameters> entities, ObjectEnricher enricher) {
-				for (ExecutiontTaskParameters entity : entities) {
-					scheduler.addExecutionTask(entity, false);
-				}
+	public static class AutomationPackageSchedulerHook extends AutomationPackageManager.DefaultExecutionTaskParameterHook {
+
+		private final ExecutionScheduler scheduler;
+
+		public AutomationPackageSchedulerHook(ExecutionScheduler scheduler) {
+			this.scheduler = scheduler;
+		}
+
+		@Override
+		public void onCreate(List<? extends ExecutiontTaskParameters> entities, ObjectEnricher enricher, AutomationPackageManager manager) {
+			for (ExecutiontTaskParameters entity : entities) {
+				scheduler.addExecutionTask(entity, false);
 			}
+		}
 
-			@Override
-			public void onDelete(AutomationPackage automationPackage, AutomationPackageManager manager) {
-				List<ExecutiontTaskParameters> entities = manager.getPackageSchedules(automationPackage.getId());
-				for (ExecutiontTaskParameters entity : entities) {
-					scheduler.removeExecutionTask(entity.getId().toString());
-				}
+		@Override
+		public void onDelete(AutomationPackage automationPackage, AutomationPackageManager manager) {
+			List<ExecutiontTaskParameters> entities = manager.getPackageSchedules(automationPackage.getId());
+			for (ExecutiontTaskParameters entity : entities) {
+				scheduler.removeExecutionTask(entity.getId().toString());
 			}
-
-		});
+		}
 	}
 
 	@Override

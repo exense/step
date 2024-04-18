@@ -27,9 +27,11 @@ public interface AutomationPackageHook<T> {
      */
     default void onPrepareStaging(String fieldName,
                                   AutomationPackageContext apContext,
-                                  List<? extends T> objects,
+                                  AutomationPackageContent apContent,
+                                  List<?> objects,
                                   AutomationPackage oldPackage,
-                                  step.automation.packages.AutomationPackageManager.Staging targetStaging) {
+                                  AutomationPackageManager.Staging targetStaging,
+                                  AutomationPackageManager manager) {
         // by default, we simply put the objects to staging
         targetStaging.getAdditionalObjects().put(fieldName, (List<Object>) objects);
     }
@@ -37,7 +39,7 @@ public interface AutomationPackageHook<T> {
     /**
      * Create the entities (taken from previously prepared staging) in database
      */
-    default void onCreate(List<? extends T> entities, ObjectEnricher enricher){
+    default void onCreate(List<? extends T> entities, ObjectEnricher enricher, AutomationPackageManager manager){
     }
 
     /**
