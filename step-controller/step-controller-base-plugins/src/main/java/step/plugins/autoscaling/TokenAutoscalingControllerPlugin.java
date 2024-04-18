@@ -23,13 +23,16 @@ import step.artefacts.handlers.functions.autoscaler.TokenAutoscalingDriver;
 import step.core.GlobalContext;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
+import step.framework.server.ServiceRegistrationCallback;
 
 @Plugin
 public class TokenAutoscalingControllerPlugin extends AbstractControllerPlugin {
 
 	@Override
 	public void serverStart(GlobalContext context) throws Exception {
-		context.getServiceRegistrationCallback().registerService(TokenAutoscalingServices.class);
+		ServiceRegistrationCallback serviceRegistrationCallback = context.getServiceRegistrationCallback();
+		serviceRegistrationCallback.registerService(TokenAutoscalingServices.class);
+		serviceRegistrationCallback.registerService(TokenAutoscalingPlanServices.class);
 
 		TokenAutoscalingDriver autoscalingDriver = TokenAutoscalingExecutionPlugin.createAutoscalingDriver(context.getConfiguration());
 		context.put(TokenAutoscalingDriver.class, autoscalingDriver);

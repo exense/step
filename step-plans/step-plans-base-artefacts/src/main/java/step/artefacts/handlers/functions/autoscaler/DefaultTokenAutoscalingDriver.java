@@ -1,5 +1,7 @@
 package step.artefacts.handlers.functions.autoscaler;
 
+import ch.exense.commons.app.Configuration;
+
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.*;
@@ -9,6 +11,9 @@ public class DefaultTokenAutoscalingDriver implements TokenAutoscalingDriver {
     private final ExecutorService executorService = Executors.newCachedThreadPool();
     private final Map<String, TokenProvisioningStatus> provisioningRequest = new ConcurrentHashMap<>();
 
+    public DefaultTokenAutoscalingDriver(Configuration configuration) {
+
+    }
 
     @Override
     public TokenAutoscalingConfiguration getConfiguration() {
