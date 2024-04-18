@@ -75,6 +75,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
+import static step.artefacts.handlers.functions.TokenAutoscalingExecutionPlugin.getTokenForecastingContext;
+
 public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunctionReportNode> {
 
 	private static final String KEYWORD_OUTPUT_LEGACY_FORMAT = "keywords.output.legacy";
@@ -106,10 +108,9 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 
 	@Override
 	protected void createReportSkeleton_(CallFunctionReportNode parentNode, CallFunction testArtefact) {
-		// TODO this is a draft
 		try {
 			Function function = getFunction(testArtefact);
-			if(function instanceof CompositeFunction) {
+			if (function instanceof CompositeFunction) {
 				Plan plan = ((CompositeFunction) function).getPlan();
 				delegateCreateReportSkeleton(plan.getRoot(), parentNode);
 			} else {
@@ -117,21 +118,21 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				boolean closeFunctionGroupSessionAfterExecution = (functionGroupContext == null);
 
 				// Inject the mocked function execution service of the token forecasting context instead of the function execution service of the context
-				FunctionExecutionService functionExecutionService = TokenAutoscalingExecutionPlugin.getTokenForecastingContext(context).getFunctionExecutionServiceForTokenForecasting();
+				FunctionExecutionService functionExecutionService = getTokenForecastingContext(context).getFunctionExecutionServiceForTokenForecasting();
 				FunctionGroupSession functionGroupSession = getOrCreateFunctionGroupSession(functionExecutionService, functionGroupContext);
 				try {
 					// Do not force the local token selection in order to simulate a real token selection
 					selectToken(parentNode, testArtefact, function, functionGroupContext, functionGroupSession, false);
 				} finally {
-					if(closeFunctionGroupSessionAfterExecution) {
+					if (closeFunctionGroupSessionAfterExecution) {
 						functionGroupSession.close();
 					}
 				}
 			}
 		} catch (Exception e) {
-			// TODO improve handling
-			e.printStackTrace();
-			logger.debug("No able to find function during skeleton creation phase", e);
+			if (logger.isDebugEnabled()) {
+				logger.debug("Ignoring error during skeleton phase", e);
+			}
 		}
 	}
 

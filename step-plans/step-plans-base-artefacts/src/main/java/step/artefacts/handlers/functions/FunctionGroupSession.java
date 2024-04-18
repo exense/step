@@ -11,11 +11,14 @@ import step.grid.tokenpool.Interest;
 import step.grid.tokenpool.SimpleAffinityEvaluator;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * This class implements the underlying logic of Session artefacts
+ * It caches reserved tokens and reuse them for subsequent executions whenever it is possible
+ */
 public class FunctionGroupSession implements AutoCloseable {
 
     private final long ownerThreadId;

@@ -104,8 +104,9 @@ public class Execution extends AbstractOrganizableObject implements EnricheableO
 	}
 
 	/**
-	 * @return the list of so-called lifecycle errors. Lifecycle errors are errors that occur around the plan execution
-	 * i.e. before or after the plan execution like for instance during the provisioning or deprovisioning of execution resources
+	 * @return the list of so-called lifecycle errors or null if no lifecycle error occurred.
+	 * Lifecycle errors are errors that occur around the plan execution i.e. before or after the plan execution
+	 * like for instance during the provisioning or deprovisioning of execution resources
 	 */
 	public List<Error> getLifecycleErrors() {
 		return lifecycleErrors;

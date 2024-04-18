@@ -18,13 +18,7 @@
  ******************************************************************************/
 package step.artefacts.handlers;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.OptionalInt;
-import java.util.function.Consumer;
-
 import step.artefacts.TestScenario;
-import step.artefacts.handlers.functions.TokenAutoscalingExecutionPlugin;
 import step.artefacts.handlers.functions.MaxAndMultiplyingTokenForecastingContext;
 import step.artefacts.handlers.functions.TokenForecastingContext;
 import step.core.artefacts.AbstractArtefact;
@@ -35,19 +29,29 @@ import step.threadpool.ThreadPool;
 import step.threadpool.ThreadPool.WorkerController;
 import step.threadpool.WorkerItemConsumerFactory;
 
+import java.util.Iterator;
+import java.util.List;
+import java.util.OptionalInt;
+import java.util.function.Consumer;
+
+import static step.artefacts.handlers.functions.TokenAutoscalingExecutionPlugin.getTokenForecastingContext;
+import static step.artefacts.handlers.functions.TokenAutoscalingExecutionPlugin.pushNewTokenNumberCalculationContext;
+
 public class TestScenarioHandler extends ArtefactHandler<TestScenario, ReportNode> {
 
 	@Override
 	public void createReportSkeleton_(ReportNode node, TestScenario testArtefact) {
-		// TODO finalize
-		TokenForecastingContext tokenForecastingContext = TokenAutoscalingExecutionPlugin.getTokenForecastingContext(context);
-		MaxAndMultiplyingTokenForecastingContext calculationContext = new MaxAndMultiplyingTokenForecastingContext(tokenForecastingContext, testArtefact.getChildren().size());
-		TokenAutoscalingExecutionPlugin.pushNewTokenNumberCalculationContext(context, calculationContext);
-		for(AbstractArtefact child:getChildren(testArtefact)) {
-			delegateCreateReportSkeleton(child, node);
-			calculationContext.nextIteration();
+		TokenForecastingContext tokenForecastingContext = getTokenForecastingContext(context);
+		MaxAndMultiplyingTokenForecastingContext newTokenForecastingContext = new MaxAndMultiplyingTokenForecastingContext(tokenForecastingContext, testArtefact.getChildren().size());
+		pushNewTokenNumberCalculationContext(context, newTokenForecastingContext);
+		try {
+			for(AbstractArtefact child:getChildren(testArtefact)) {
+				delegateCreateReportSkeleton(child, node);
+				newTokenForecastingContext.nextIteration();
+			}
+		} finally {
+			newTokenForecastingContext.end();
 		}
-		calculationContext.end();
 	}
 
 	@Override

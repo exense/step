@@ -43,32 +43,33 @@ import java.util.concurrent.atomic.LongAdder;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+import static step.artefacts.handlers.functions.TokenAutoscalingExecutionPlugin.getTokenForecastingContext;
+import static step.artefacts.handlers.functions.TokenAutoscalingExecutionPlugin.pushNewTokenNumberCalculationContext;
+
 public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode> {
 
-	// TODO move this to parent class
-	protected void createReportNodeSkeletonInSession(AbstractArtefact artefact, ReportNode node, BiConsumer<AbstractArtefact, ReportNode> consumer, String artefactName, Map<String, Object> newVariables) {
+	public void createReportSkeleton_(ReportNode node, ThreadGroup artefact) {
+		Integer numberOfThreads = artefact.getUsers().get();
+
+		TokenForecastingContext tokenForecastingContext = getTokenForecastingContext(context);
+		pushNewTokenNumberCalculationContext(context, new MultiplyingTokenForecastingContext(tokenForecastingContext, numberOfThreads));
+
+		// The skeleton phase has to be executed within a session to match the behaviour of the execution
+		// and properly estimate the required number of tokens
+		createReportNodeSkeletonInSession(artefact, node, (sessionArtefact, sessionReportNode) -> {
+			SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
+			scheduler.createReportSkeleton_(sessionReportNode, sessionArtefact);
+		});
+	}
+
+	private void createReportNodeSkeletonInSession(AbstractArtefact artefact, ReportNode node, BiConsumer<AbstractArtefact, ReportNode> consumer, String artefactName, Map<String, Object> newVariables) {
 		FunctionGroup functionGroup = createWorkArtefact(FunctionGroup.class, artefact, artefactName, true);
 		functionGroup.setConsumer(consumer);
 		delegateCreateReportSkeleton(functionGroup, node, newVariables);
 	}
 
-	protected void createReportNodeSkeletonInSession(AbstractArtefact artefact, ReportNode node, BiConsumer<AbstractArtefact, ReportNode> consumer) {
+	private void createReportNodeSkeletonInSession(AbstractArtefact artefact, ReportNode node, BiConsumer<AbstractArtefact, ReportNode> consumer) {
 		createReportNodeSkeletonInSession(artefact, node, consumer, "", new HashMap<>());
-	}
-
-	public void createReportSkeleton_(ReportNode node, ThreadGroup testArtefact) {
-		Integer numberOfThreads = testArtefact.getUsers().get();
-
-		TokenForecastingContext tokenForecastingContext = TokenAutoscalingExecutionPlugin.getTokenForecastingContext(context);
-		TokenAutoscalingExecutionPlugin.pushNewTokenNumberCalculationContext(context, new MultiplyingTokenForecastingContext(tokenForecastingContext, numberOfThreads));
-
-		createReportNodeSkeletonInSession(testArtefact, node, (sessionArtefact, sessionReportNode)->{
-			SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
-			scheduler.createReportSkeleton_(sessionReportNode, sessionArtefact);
-		});
-
-		//SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
-		//scheduler.createReportSkeleton_(node, testArtefact);
 	}
 
 	@Override

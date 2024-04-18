@@ -3,7 +3,6 @@ package step.artefacts.handlers.functions;
 import ch.exense.commons.app.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.artefacts.handlers.functions.autoscaler.DefaultTokenAutoscalingDriver;
 import step.artefacts.handlers.functions.autoscaler.TokenAutoscalingConfiguration;
 import step.artefacts.handlers.functions.autoscaler.TokenAutoscalingDriver;
 import step.artefacts.handlers.functions.autoscaler.TokenProvisioningRequest;
@@ -34,7 +33,7 @@ public class TokenAutoscalingExecutionPlugin extends AbstractExecutionEnginePlug
     private TokenAutoscalingDriver tokenAutoscalingDriver;
 
     public TokenAutoscalingExecutionPlugin() {
-
+        this(null);
     }
 
     public TokenAutoscalingExecutionPlugin(TokenAutoscalingDriver tokenAutoscalingDriver) {
@@ -43,7 +42,6 @@ public class TokenAutoscalingExecutionPlugin extends AbstractExecutionEnginePlug
 
     @Override
     public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext executionEngineContext) {
-        super.initializeExecutionEngineContext(parentContext, executionEngineContext);
         if (tokenAutoscalingDriver == null) {
             // Get the autoscaling driver from the parent context or create it
             tokenAutoscalingDriver = executionEngineContext.inheritFromParentOrComputeIfAbsent(parentContext, TokenAutoscalingDriver.class, tokenAutoscalingDriverClass ->
@@ -53,44 +51,49 @@ public class TokenAutoscalingExecutionPlugin extends AbstractExecutionEnginePlug
 
     @Override
     public void provisionRequiredResources(ExecutionContext context) {
-        super.provisionRequiredResources(context);
+        if (isAutoscalingEnabled()) {
+            // Get the results of the token forecasting
+            TokenForecastingContext tokenForecastingContext = getTokenForecastingContext(context);
+            Map<String, Integer> tokenForecastPerPool = tokenForecastingContext.getTokenForecastPerPool();
+            logger.debug("Token forecast estimation result: " + tokenForecastPerPool);
 
-        // Get the results of the token forecasting
-        TokenForecastingContext tokenForecastingContext = getTokenForecastingContext(context);
-        Map<String, Integer> tokenForecastPerPool = tokenForecastingContext.getTokenForecastPerPool();
-        logger.debug("Token forecast estimation result: " + tokenForecastPerPool);
+            Set<Map<String, Interest>> criteriaWithoutMatch = tokenForecastingContext.getCriteriaWithoutMatch();
+            if (!criteriaWithoutMatch.isEmpty()) {
+                String message = "No matching pool found for selection criteria: " + criteriaWithoutMatch;
+                logger.warn(message);
+                throw new PluginCriticalException(message);
+            }
 
-        Set<Map<String, Interest>> criteriaWithoutMatch = tokenForecastingContext.getCriteriaWithoutMatch();
-        if (!criteriaWithoutMatch.isEmpty()) {
-            String message = "No matching pool found for selection criteria: " + criteriaWithoutMatch;
-            logger.warn(message);
-            throw new PluginCriticalException(message);
+            // Delegate the provisioning of the agent tokens to the driver according to the calculated forecast
+            TokenProvisioningRequest request = new TokenProvisioningRequest();
+            request.executionId = context.getExecutionId();
+            request.requiredNumberOfTokensPerPool = tokenForecastPerPool;
+
+            String provisioningRequestId = tokenAutoscalingDriver.initializeTokenProvisioningRequest(request);
+            context.put(PROVISIONING_REQUEST_ID, provisioningRequestId);
+
+            try {
+                tokenAutoscalingDriver.executeTokenProvisioningRequest(provisioningRequestId);
+            } catch (Exception e) {
+                throw new PluginCriticalException("Error while provisioning tokens", e);
+            }
+            logger.info("Successfully provisioned resources for execution " + context.getExecutionId());
         }
+    }
 
-        // Delegate the provisioning of the agent tokens to the driver according to the calculated forecast
-        TokenProvisioningRequest request = new TokenProvisioningRequest();
-        request.executionId = context.getExecutionId();
-        request.requiredNumberOfTokensPerPool = tokenForecastPerPool;
-
-        String provisioningRequestId = tokenAutoscalingDriver.initializeTokenProvisioningRequest(request);
-        context.put(PROVISIONING_REQUEST_ID, provisioningRequestId);
-
-        try {
-            tokenAutoscalingDriver.executeTokenProvisioningRequest(provisioningRequestId);
-        } catch (Exception e) {
-            throw new PluginCriticalException("Error while provisioning tokens", e);
-        }
-        logger.info("Successfully provisioned resources for execution " + context.getExecutionId());
+    private boolean isAutoscalingEnabled() {
+        return tokenAutoscalingDriver != null;
     }
 
     @Override
     public void deprovisionRequiredResources(ExecutionContext context) {
-        super.deprovisionRequiredResources(context);
-        String provisioningRequestId = getProvisioningRequestId(context);
-        if (provisioningRequestId != null) {
-            logger.info("Deprovisioning resources for execution " + context.getExecutionId());
-            tokenAutoscalingDriver.deprovisionTokens(provisioningRequestId);
-            logger.info("Successfully deprovisioned resources for execution " + context.getExecutionId());
+        if (isAutoscalingEnabled()) {
+            String provisioningRequestId = getProvisioningRequestId(context);
+            if (provisioningRequestId != null) {
+                logger.info("Deprovisioning resources for execution " + context.getExecutionId());
+                tokenAutoscalingDriver.deprovisionTokens(provisioningRequestId);
+                logger.info("Successfully deprovisioned resources for execution " + context.getExecutionId());
+            }
         }
     }
 
@@ -102,9 +105,15 @@ public class TokenAutoscalingExecutionPlugin extends AbstractExecutionEnginePlug
     public void executionStart(ExecutionContext context) {
         super.executionStart(context);
 
-        TokenAutoscalingConfiguration autoscalerConfiguration = tokenAutoscalingDriver.getConfiguration();
+        Map<String, Map<String, String>> pools;
+        if (isAutoscalingEnabled()) {
+            TokenAutoscalingConfiguration autoscalerConfiguration = tokenAutoscalingDriver.getConfiguration();
+            pools = autoscalerConfiguration.availableTokenPools;
+        } else {
+            pools = Map.of();
+        }
 
-        Map<String, Map<String, String>> pools = autoscalerConfiguration.availableTokenPools;
+        // Token forecasting is always calculated, even if the autoscaling is disabled
         TokenForecastingContext tokenForecastingContext = new TokenForecastingContext(pools);
         pushTokenForecastingContext(context, tokenForecastingContext, context.getReport());
     }
@@ -112,14 +121,16 @@ public class TokenAutoscalingExecutionPlugin extends AbstractExecutionEnginePlug
     public static TokenAutoscalingDriver createAutoscalingDriver(Configuration configuration) {
         String driverClassname = configuration.getProperty(AUTOSCALER_DRIVER_PROPERTY);
         if (driverClassname != null) {
+            logger.info("Starting token autoscaling driver: " + driverClassname);
             try {
                 Class<?> aClass = Class.forName(driverClassname);
                 return (TokenAutoscalingDriver) aClass.getConstructor(Configuration.class).newInstance(configuration);
             } catch (Exception e) {
-                throw new PluginCriticalException("Error while creating token autoscaler driver", e);
+                throw new PluginCriticalException("Error while starting autoscaling driver", e);
             }
         } else {
-            return new DefaultTokenAutoscalingDriver();
+            logger.info("No token autoscaling driver configured. Starting without autoscaling");
+            return null;
         }
     }
 
