@@ -55,7 +55,7 @@ public class TokenAutoscalingExecutionPlugin extends AbstractExecutionEnginePlug
     @Override
     public void provisionRequiredResources(ExecutionContext context) {
         if (isAutoscalingEnabled()) {
-            PlanAutoscalingSettings autoscalingSettings = context.getPlan().getCustomField(AUTOSCALING_SETTINGS, PlanAutoscalingSettings.class);
+            PlanAutoscalingSettings autoscalingSettings = getAutoscalingSettingsOrDefault(context);
             if(autoscalingSettings.enableAutoscaling) {
                 Map<String, Integer> tokenForecastPerPool;
                 if(autoscalingSettings.enableAutomaticTokenNumberCalculation) {
@@ -99,6 +99,16 @@ public class TokenAutoscalingExecutionPlugin extends AbstractExecutionEnginePlug
             } else {
                 logger.info("Token autoscaling disabled for this plan");
             }
+        }
+    }
+
+    private static PlanAutoscalingSettings getAutoscalingSettingsOrDefault(ExecutionContext context) {
+        PlanAutoscalingSettings customField = context.getPlan().getCustomField(AUTOSCALING_SETTINGS, PlanAutoscalingSettings.class);
+        if(customField != null) {
+            return customField;
+        } else {
+            // Return the default settings
+            return new PlanAutoscalingSettings();
         }
     }
 
