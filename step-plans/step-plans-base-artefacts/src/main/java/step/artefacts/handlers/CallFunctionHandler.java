@@ -75,7 +75,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
-import static step.artefacts.handlers.functions.TokenAutoscalingExecutionPlugin.getTokenForecastingContext;
+import static step.artefacts.handlers.functions.TokenForcastingExecutionPlugin.getTokenForecastingContext;
 
 public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunctionReportNode> {
 

@@ -19,7 +19,7 @@
 package step.artefacts.handlers;
 
 import step.artefacts.FunctionGroup;
-import step.artefacts.handlers.functions.TokenAutoscalingExecutionPlugin;
+import step.artefacts.handlers.functions.TokenForcastingExecutionPlugin;
 import step.artefacts.handlers.functions.FunctionGroupSession;
 import step.artefacts.handlers.functions.TokenForecastingContext;
 import step.core.AbstractContext;
@@ -59,7 +59,7 @@ public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportN
 
 	@Override
 	protected void createReportSkeleton_(ReportNode node, FunctionGroup testArtefact) {
-		TokenForecastingContext tokenForecastingContext = TokenAutoscalingExecutionPlugin.getTokenForecastingContext(context);
+		TokenForecastingContext tokenForecastingContext = TokenForcastingExecutionPlugin.getTokenForecastingContext(context);
 		// Inject the mocked function execution service of the token forecasting context instead of the function execution service of the context
 		FunctionExecutionService functionExecutionService = tokenForecastingContext.getFunctionExecutionServiceForTokenForecasting();
 		FunctionGroupContext handle = buildFunctionGroupContext(functionExecutionService, testArtefact);

@@ -23,7 +23,7 @@ import org.junit.Before;
 import org.junit.Test;
 import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.CallFunction;
-import step.artefacts.handlers.functions.TokenAutoscalingExecutionPlugin;
+import step.artefacts.handlers.functions.TokenForcastingExecutionPlugin;
 import step.artefacts.handlers.functions.test.MyFunction;
 import step.artefacts.reports.CallFunctionReportNode;
 import step.attachments.AttachmentMeta;
@@ -65,7 +65,7 @@ public class CallFunctionHandlerTest extends AbstractFunctionHandlerTest {
 	@Before
 	public void before() {
 		executionEngine = ExecutionEngine.builder().withPlugin(new FunctionPlugin()).withPlugin(newMyFunctionTypePlugin())
-				.withPlugin(new ThreadPoolPlugin()).withPlugin(new BaseArtefactPlugin()).withPlugin(new TokenAutoscalingExecutionPlugin()).build();
+				.withPlugin(new ThreadPoolPlugin()).withPlugin(new BaseArtefactPlugin()).withPlugin(new TokenForcastingExecutionPlugin()).build();
 	}
 
 	@After

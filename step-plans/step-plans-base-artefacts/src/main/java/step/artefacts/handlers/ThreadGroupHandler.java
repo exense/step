@@ -21,7 +21,6 @@ package step.artefacts.handlers;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import step.artefacts.*;
 import step.artefacts.ThreadGroup;
-import step.artefacts.handlers.functions.TokenAutoscalingExecutionPlugin;
 import step.artefacts.handlers.functions.MultiplyingTokenForecastingContext;
 import step.artefacts.handlers.functions.TokenForecastingContext;
 import step.artefacts.handlers.loadtesting.Pacer;
@@ -43,8 +42,8 @@ import java.util.concurrent.atomic.LongAdder;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import static step.artefacts.handlers.functions.TokenAutoscalingExecutionPlugin.getTokenForecastingContext;
-import static step.artefacts.handlers.functions.TokenAutoscalingExecutionPlugin.pushNewTokenNumberCalculationContext;
+import static step.artefacts.handlers.functions.TokenForcastingExecutionPlugin.getTokenForecastingContext;
+import static step.artefacts.handlers.functions.TokenForcastingExecutionPlugin.pushNewTokenNumberCalculationContext;
 
 public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode> {
 

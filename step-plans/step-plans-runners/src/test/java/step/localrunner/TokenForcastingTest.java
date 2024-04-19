@@ -22,20 +22,22 @@ import org.junit.Test;
 import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.CallFunction;
 import step.artefacts.ThreadGroup;
-import step.artefacts.handlers.functions.TokenAutoscalingExecutionPlugin;
-import step.artefacts.handlers.functions.test.TestTokenAutoscalingDriver;
+import step.artefacts.handlers.functions.TokenForcastingExecutionPlugin;
+import step.artefacts.handlers.functions.TokenForecastingContext;
 import step.artefacts.handlers.functions.autoscaler.TokenAutoscalingConfiguration;
+import step.artefacts.handlers.functions.autoscaler.TokenAutoscalingDriver;
+import step.artefacts.handlers.functions.autoscaler.TokenProvisioningRequest;
+import step.artefacts.handlers.functions.autoscaler.TokenProvisioningStatus;
 import step.artefacts.handlers.functions.test.MyFunction;
 import step.artefacts.handlers.functions.test.MyFunctionType;
 import step.core.accessors.AbstractOrganizableObject;
-import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
 import step.core.execution.ExecutionEngineContext;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
-import step.core.plans.runner.PlanRunnerResult;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.engine.plugins.FunctionPlugin;
 import step.functions.io.Output;
@@ -51,8 +53,9 @@ import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static step.artefacts.handlers.functions.TokenForcastingExecutionPlugin.getTokenForecastingContext;
 
-public class AutoscalerTest {
+public class TokenForcastingTest {
 
 	@Test
 	public void test() throws Exception {
@@ -109,29 +112,22 @@ public class AutoscalerTest {
 
 		// One matching token pool
 		Map<String, Map<String, String>> availableTokenPools = Map.of("pool1", Map.of("$agenttype", "default"));
-		TestTokenAutoscalingDriver tokenAutoscalingDriver = executePlanWithSpecifiedTokenPools(plan, availableTokenPools);
-		assertEquals(10, (int) tokenAutoscalingDriver.getRequest().requiredNumberOfTokensPerPool.get("pool1"));
+		TokenForecastingContext tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableTokenPools);
+		Map<String, Integer> tokenForecastPerPool = tokenForecastingContext.getTokenForecastPerPool();
+		assertEquals(10, (int) tokenForecastPerPool.get("pool1"));
 
 		// 2 token pools, one matching
 		availableTokenPools = Map.of("pool1", Map.of("$agenttype", "default"), "pool2", Map.of());
-		tokenAutoscalingDriver = executePlanWithSpecifiedTokenPools(plan, availableTokenPools);
-		assertEquals(10, (int) tokenAutoscalingDriver.getRequest().requiredNumberOfTokensPerPool.get("pool1"));
-		assertNull(tokenAutoscalingDriver.getRequest().requiredNumberOfTokensPerPool.get("pool2"));
+		tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableTokenPools);
+		assertEquals(10, (int) tokenForecastingContext.getTokenForecastPerPool().get("pool1"));
+		assertNull(tokenForecastingContext.getTokenForecastPerPool().get("pool2"));
 
-		// No matching token pool
-		TestTokenAutoscalingDriver testDriver = createTestDriver(Map.of());
-		PlanRunnerResult result = executePlan(plan, testDriver);
-		assertEquals(ReportNodeStatus.TECHNICAL_ERROR, result.getResult());
-		assertEquals("Error while provisioning execution resources: No matching pool found for selection criteria: [{$agenttype=default}]", result.getErrorSummary());
 	}
 
-	private static TestTokenAutoscalingDriver executePlanWithSpecifiedTokenPools(Plan plan, Map<String, Map<String, String>> availableTokenPools) {
-		TestTokenAutoscalingDriver tokenAutoscalingDriver = createTestDriver(availableTokenPools);
-		executePlan(plan, tokenAutoscalingDriver);
-		return tokenAutoscalingDriver;
-	}
 
-	private static PlanRunnerResult executePlan(Plan plan, TestTokenAutoscalingDriver tokenAutoscalingDriver) {
+
+	private static TokenForecastingContext executePlanWithSpecifiedTokenPools(Plan plan, Map<String, Map<String, String>> availableTokenPools) {
+		ForcastingTestPlugin forcastingTestPlugin = new ForcastingTestPlugin(availableTokenPools);
 		try(ExecutionEngine executionEngine = ExecutionEngine.builder().withPlugin(new FunctionPlugin()).withPlugin(new AbstractExecutionEnginePlugin() {
 			@Override
 			public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
@@ -139,19 +135,72 @@ public class AutoscalerTest {
 				FunctionTypeRegistry functionTypeRegistry = executionContext.require(FunctionTypeRegistry.class);
 				functionTypeRegistry.registerFunctionType(new CompositeFunctionType(null));
 				functionTypeRegistry.registerFunctionType(new MyFunctionType());
-			}
-		}).withPlugin(new ThreadPoolPlugin()).withPlugin(new BaseArtefactPlugin()).withPlugin(new TokenAutoscalingExecutionPlugin(tokenAutoscalingDriver)).build()) {
-			return executionEngine.execute(plan);
+				}
+		}).withPlugin(new ThreadPoolPlugin()).withPlugin(new BaseArtefactPlugin()).withPlugin(new TokenForcastingExecutionPlugin())
+				.withPlugin(forcastingTestPlugin).build()) {
+			executionEngine.execute(plan);
+		}
+		return forcastingTestPlugin.tokenForecastingContext;
+	}
+
+	public static class ForcastingTestPlugin extends AbstractExecutionEnginePlugin {
+
+		public TokenForecastingContext tokenForecastingContext;
+		Map<String, Map<String, String>> availableTokenPools;
+
+		public ForcastingTestPlugin(Map<String, Map<String, String>> availableTokenPools) {
+			this.availableTokenPools = availableTokenPools;
+		}
+
+		@Override
+		public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext executionEngineContext) {
+			super.initializeExecutionEngineContext(parentContext, executionEngineContext);
+			TokenAutoscalingConfiguration tokenAutoscalingConfiguration = new TokenAutoscalingConfiguration();
+			tokenAutoscalingConfiguration.availableTokenPools = availableTokenPools;
+			executionEngineContext.put(TokenAutoscalingDriver.class, new ForcastingTestDriver(tokenAutoscalingConfiguration));
+		}
+
+		@Override
+		public void afterExecutionEnd(ExecutionContext context) {
+			super.afterExecutionEnd(context);
+			this.tokenForecastingContext = getTokenForecastingContext(context);
 		}
 	}
 
-	private static TestTokenAutoscalingDriver createTestDriver(Map<String, Map<String, String>> availableTokenPools) {
-		// Create a test driver with a unique pool
-		TokenAutoscalingConfiguration configuration = new TokenAutoscalingConfiguration();
-		configuration.availableTokenPools = availableTokenPools;
-		TestTokenAutoscalingDriver tokenAutoscalingDriver = new TestTokenAutoscalingDriver(configuration);
-		return tokenAutoscalingDriver;
+	public static class ForcastingTestDriver implements TokenAutoscalingDriver {
+
+		TokenAutoscalingConfiguration tokenAutoscalingConfiguration;
+
+		public ForcastingTestDriver(TokenAutoscalingConfiguration tokenAutoscalingConfiguration) {
+			this.tokenAutoscalingConfiguration = tokenAutoscalingConfiguration;
+		}
+
+		@Override
+		public TokenAutoscalingConfiguration getConfiguration() {
+			return tokenAutoscalingConfiguration;
+		}
+
+		@Override
+		public String initializeTokenProvisioningRequest(TokenProvisioningRequest request) {
+			return null;
+		}
+
+		@Override
+		public void executeTokenProvisioningRequest(String provisioningRequestId) {
+
+		}
+
+		@Override
+		public TokenProvisioningStatus getTokenProvisioningStatus(String provisioningRequestId) {
+			return null;
+		}
+
+		@Override
+		public void deprovisionTokens(String provisioningRequestId) {
+
+		}
 	}
+
 
 }
 
