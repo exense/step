@@ -1,12 +1,10 @@
 package step.plugins.timeseries.dashboards.model;
 
 import jakarta.validation.constraints.NotNull;
-import step.core.timeseries.metric.MetricAttribute;
 
-import java.util.ArrayList;
 import java.util.List;
 
-public class TableSettings {
+public class TableDashletSettings {
     
     @NotNull
     private List<ColumnSelection> columns;
@@ -15,7 +13,7 @@ public class TableSettings {
         return columns;
     }
 
-    public TableSettings setColumns(List<ColumnSelection> columns) {
+    public TableDashletSettings setColumns(List<ColumnSelection> columns) {
         this.columns = columns;
         return this;
     }

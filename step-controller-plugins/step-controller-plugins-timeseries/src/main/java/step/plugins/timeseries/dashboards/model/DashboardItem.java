@@ -41,7 +41,7 @@ public class DashboardItem { // T = 'ChartSettings'. class: 'ChartSettings' @Jso
 	
 	private ChartSettings chartSettings; // for charts only
 	
-	private TableSettings tableSettings; // for tables only
+	private TableDashletSettings tableSettings; // for tables only
 	
 	@NotNull
 	private int size = 1; // full width is 2
@@ -183,11 +183,11 @@ public class DashboardItem { // T = 'ChartSettings'. class: 'ChartSettings' @Jso
 		return this;
 	}
 
-	public TableSettings getTableSettings() {
+	public TableDashletSettings getTableSettings() {
 		return tableSettings;
 	}
 
-	public DashboardItem setTableSettings(TableSettings tableSettings) {
+	public DashboardItem setTableSettings(TableDashletSettings tableSettings) {
 		this.tableSettings = tableSettings;
 		return this;
 	}
