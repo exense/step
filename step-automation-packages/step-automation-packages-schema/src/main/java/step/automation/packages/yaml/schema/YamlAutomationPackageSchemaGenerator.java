@@ -88,9 +88,9 @@ public class YamlAutomationPackageSchemaGenerator {
                 .addAll(scheduleSchemaGenerator.createScheduleDefs());
 
         for (AutomationPackageJsonSchemaExtension extension : extensions) {
-            if (extension.getAdditionalAutomationPackageFields() != null) {
-                for (JsonSchemaExtension additionalField : extension.getExtendedDefinitions()) {
-                    additionalField.addToJsonSchema(result, jsonProvider);
+            if (extension.getExtendedDefinitions() != null) {
+                for (JsonSchemaExtension additionalDefinition : extension.getExtendedDefinitions()) {
+                    additionalDefinition.addToJsonSchema(result, jsonProvider);
                 }
             }
         }

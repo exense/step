@@ -16,24 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.yaml.schema;
+package step.core.yaml.schema;
 
-import step.core.yaml.schema.JsonSchemaDefinitionExtension;
-import step.core.yaml.schema.JsonSchemaExtension;
-
-import java.util.List;
-
-public interface AutomationPackageJsonSchemaExtension {
-
-    /**
-     * Provides the extensions to be used to fill the "defs" (definitions section) in json schema, i.e. to prepare
-     * some sub-schemas to be reused in the main schema.
-     */
-    List<JsonSchemaDefinitionExtension> getExtendedDefinitions();
-
-    /**
-     * Provides the extensions to be used to add the new fields to the json schema of automation package, i.e. to add
-     * some custom fields to the automation package.
-     */
-    List<JsonSchemaExtension> getAdditionalAutomationPackageFields();
+public interface JsonSchemaDefinitionExtension extends JsonSchemaExtension {
 }
