@@ -30,6 +30,7 @@ import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 import step.plans.parser.yaml.model.YamlPlanVersions;
 import step.plans.parser.yaml.schema.YamlPlanJsonSchemaGenerator;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class YamlAutomationPackageSchemaGenerator {
@@ -43,7 +44,7 @@ public class YamlAutomationPackageSchemaGenerator {
     private final YamlKeywordSchemaGenerator keywordSchemaGenerator;
     private final YamlPlanJsonSchemaGenerator planSchemaGenerator;
     private final YamlScheduleSchemaGenerator scheduleSchemaGenerator;
-    private final List<AutomationPackageJsonSchemaExtension> extensions;
+    protected final List<AutomationPackageJsonSchemaExtension> extensions;
 
     public YamlAutomationPackageSchemaGenerator(String targetPackage, Version actualVersion) {
         this.targetPackage = targetPackage;
@@ -51,7 +52,9 @@ public class YamlAutomationPackageSchemaGenerator {
         this.keywordSchemaGenerator = new YamlKeywordSchemaGenerator(jsonProvider);
         this.planSchemaGenerator = new YamlPlanJsonSchemaGenerator("step", YamlPlanVersions.ACTUAL_VERSION, null);
         this.scheduleSchemaGenerator = new YamlScheduleSchemaGenerator(jsonProvider);
-        this.extensions = AutomationPackageJsonSchemaExtensionsLookuper.scanExtensions();
+
+        this.extensions = new ArrayList<>();
+        this.extensions.add(new AutomationPackageSchedulesJsonSchema());
     }
 
     public JsonNode generateJsonSchema() throws JsonSchemaPreparationException {
@@ -124,12 +127,6 @@ public class YamlAutomationPackageSchemaGenerator {
                 jsonProvider.createObjectBuilder()
                         .add("type", "array")
                         .add("items", jsonProvider.createObjectBuilder().add("type", "string"))
-        );
-
-        objectBuilder.add("schedules",
-                jsonProvider.createObjectBuilder()
-                        .add("type", "array")
-                        .add("items", scheduleSchemaGenerator.addRef(jsonProvider.createObjectBuilder(), YamlScheduleSchemaGenerator.SCHEDULE_DEF))
         );
 
         for (AutomationPackageJsonSchemaExtension extension : extensions) {

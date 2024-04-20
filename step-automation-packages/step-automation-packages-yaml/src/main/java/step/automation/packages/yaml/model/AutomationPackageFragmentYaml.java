@@ -18,7 +18,6 @@
  ******************************************************************************/
 package step.automation.packages.yaml.model;
 
-import step.automation.packages.model.AutomationPackageSchedule;
 import step.automation.packages.model.YamlAutomationPackageKeyword;
 import step.plans.parser.yaml.model.YamlPlan;
 
@@ -35,7 +34,9 @@ public interface AutomationPackageFragmentYaml {
 
     List<String> getFragments();
 
-    List<AutomationPackageSchedule> getSchedules();
-
     Map<String, List<?>> getAdditionalFields();
+
+    default <T> List<T> getAdditionalField(String k) {
+        return (List<T>) getAdditionalFields().get(k);
+    }
 }

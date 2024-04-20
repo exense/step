@@ -21,6 +21,8 @@ package step.core.scheduler;
 import step.automation.packages.AutomationPackage;
 import step.automation.packages.AutomationPackageManager;
 import step.automation.packages.hooks.AutomationPackageHookRegistry;
+import step.automation.packages.yaml.deserialization.AutomationPackageSerializationRegistry;
+import step.automation.packages.yaml.deserialization.Registration;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
 import step.core.GlobalContext;
 import step.core.collections.Collection;
@@ -68,12 +70,12 @@ public class SchedulerPlugin extends AbstractControllerPlugin {
 		ExecutionScheduler scheduler = new ExecutionScheduler(context.require(ControllerSettingAccessor.class), context.getScheduleAccessor(), new Executor(context));
 		context.setScheduler(scheduler);
 
-		AutomationPackageHookRegistry apRegistry = context.require(AutomationPackageHookRegistry.class);
-		registerSchedulerHook(apRegistry, scheduler);
+		registerSchedulerHooks(context.require(AutomationPackageHookRegistry.class), context.require(AutomationPackageSerializationRegistry.class), scheduler);
 	}
 
-	public static void registerSchedulerHook(AutomationPackageHookRegistry apRegistry, ExecutionScheduler scheduler) {
+	public static void registerSchedulerHooks(AutomationPackageHookRegistry apRegistry, AutomationPackageSerializationRegistry serRegistry, ExecutionScheduler scheduler) {
 		apRegistry.register(AutomationPackageFragmentYaml.SCHEDULES_FIELD_NAME, new AutomationPackageSchedulerHook(scheduler));
+		Registration.registerSerialization(serRegistry);
 	}
 
 	public static class AutomationPackageSchedulerHook extends AutomationPackageManager.DefaultExecutionTaskParameterHook {
@@ -87,6 +89,9 @@ public class SchedulerPlugin extends AbstractControllerPlugin {
 		@Override
 		public void onCreate(List<? extends ExecutiontTaskParameters> entities, ObjectEnricher enricher, AutomationPackageManager manager) {
 			for (ExecutiontTaskParameters entity : entities) {
+				//make sure the execution parameter of the schedule are enriched too (required to execute in same project
+				// as the schedule and populate event bindings
+				enricher.accept(entity.getExecutionsParameters());
 				scheduler.addExecutionTask(entity, false);
 			}
 		}

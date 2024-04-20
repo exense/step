@@ -463,9 +463,7 @@ public class AutomationPackageManager {
         staging.plans = preparePlansStaging(packageContent, automationPackageArchive, oldPackage, enricherForIncludedEntities, staging.resourceManager);
         staging.functions = prepareFunctionsStaging(automationPackageArchive, packageContent, enricherForIncludedEntities, oldPackage, staging.resourceManager);
 
-        List<HookEntry> hookEntries = new ArrayList<>();
-        hookEntries.add(new HookEntry(AutomationPackageFragmentYaml.SCHEDULES_FIELD_NAME, packageContent.getSchedules()));
-        hookEntries.addAll(packageContent.getAdditionalData().entrySet().stream().map(e -> new HookEntry(e.getKey(), e.getValue())).collect(Collectors.toList()));
+        List<HookEntry> hookEntries = packageContent.getAdditionalData().entrySet().stream().map(e -> new HookEntry(e.getKey(), e.getValue())).collect(Collectors.toList());
 
         for (HookEntry hookEntry : hookEntries) {
             boolean hooked = false;
@@ -512,17 +510,8 @@ public class AutomationPackageManager {
             planAccessor.save(plan);
         }
 
-        for (ExecutiontTaskParameters execTasksParameter : staging.taskParameters) {
-            //make sure the execution parameter of the schedule are enriched too (required to execute in same project
-            // as the schedule and populate event bindings
-            objectEnricher.accept(execTasksParameter.getExecutionsParameters());
-        }
-
         // save task parameters and additional objects via hooks
-        List<HookEntry> hookEntries = new ArrayList<>();
-        hookEntries.add(new HookEntry(AutomationPackageFragmentYaml.SCHEDULES_FIELD_NAME, staging.taskParameters));
-        hookEntries.addAll(staging.additionalObjects.entrySet().stream().map(e -> new HookEntry(e.getKey(), e.getValue())).collect(Collectors.toList()));
-
+        List<HookEntry> hookEntries = staging.additionalObjects.entrySet().stream().map(e -> new HookEntry(e.getKey(), e.getValue())).collect(Collectors.toList());
         for (HookEntry hookEntry : hookEntries) {
             boolean hooked = false;
             for (AutomationPackageHookRegistry registry : automationPackageHookRegistries) {
@@ -746,21 +735,22 @@ public class AutomationPackageManager {
         }
 
         @Override
-        public void onAdditionalDataRead(String fieldName, List<?> yamlData, AutomationPackageContent targetContent, AutomationPackageReader reader) {
-           targetContent.getSchedules().addAll((Collection<? extends AutomationPackageSchedule>) yamlData);
-        }
-
-        @Override
         public void onPrepareStaging(String fieldName, AutomationPackageContext apContext,
                                      AutomationPackageContent apContent, List<?> objects,
                                      AutomationPackage oldPackage, Staging targetStaging,
                                      AutomationPackageManager manager) {
-            targetStaging.getTaskParameters().addAll(prepareExecutionTasksParamsStaging((List<AutomationPackageSchedule>) objects, apContext.getEnricher(), apContent, oldPackage, targetStaging.getPlans(), manager));
+            targetStaging.additionalObjects.put(
+                    AutomationPackageFragmentYaml.SCHEDULES_FIELD_NAME,
+                    prepareExecutionTasksParamsStaging((List<AutomationPackageSchedule>) objects, apContext.getEnricher(), apContent, oldPackage, targetStaging.getPlans(), manager)
+            );
         }
 
         @Override
         public void onCreate(List<? extends ExecutiontTaskParameters> entities, ObjectEnricher enricher, AutomationPackageManager manager) {
             for (ExecutiontTaskParameters entity : entities) {
+                //make sure the execution parameter of the schedule are enriched too (required to execute in same project
+                // as the schedule and populate event bindings
+                enricher.accept(entity.getExecutionsParameters());
                 manager.executionTaskAccessor.save(entity);
             }
         }
@@ -834,17 +824,13 @@ public class AutomationPackageManager {
 
     public static class Staging {
         private List<Plan> plans = new ArrayList<>();
-        private List<ExecutiontTaskParameters> taskParameters = new ArrayList<>();
         private List<Function> functions = new ArrayList<>();
+        private final Map<String, List<?>> additionalObjects = new HashMap<>();
+
         private ResourceManager resourceManager = new LocalResourceManagerImpl(new File("ap_staging_resources_" + new ObjectId()));
-        private Map<String, List<?>> additionalObjects = new HashMap<>();
 
         public List<Plan> getPlans() {
             return plans;
-        }
-
-        public List<ExecutiontTaskParameters> getTaskParameters() {
-            return taskParameters;
         }
 
         public List<Function> getFunctions() {

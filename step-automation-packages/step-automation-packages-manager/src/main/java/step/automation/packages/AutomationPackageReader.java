@@ -251,7 +251,6 @@ public class AutomationPackageReader {
     protected void fillContentSections(AutomationPackageContent targetPackage, AutomationPackageFragmentYaml fragment) {
         targetPackage.getKeywords().addAll(fragment.getKeywords());
         targetPackage.getPlans().addAll(fragment.getPlans().stream().map(p -> getOrCreateDescriptorReader().getPlanReader().yamlPlanToPlan(p)).collect(Collectors.toList()));
-        targetPackage.getSchedules().addAll(fragment.getSchedules());
         for (Map.Entry<String, List<?>> additionalField : fragment.getAdditionalFields().entrySet()) {
             boolean hooked = hookRegistry.onAdditionalDataRead(additionalField.getKey(), additionalField.getValue(), targetPackage, this);
             if (!hooked) {
