@@ -50,6 +50,7 @@ import step.core.plugins.PluginManager;
 import step.core.repositories.RepositoryObjectManager;
 import step.core.scheduler.ExecutionTaskAccessorImpl;
 import step.core.scheduler.ExecutiontTaskParameters;
+import step.core.scheduler.ScheduleEntity;
 import step.engine.execution.ExecutionManagerImpl;
 import step.expressions.ExpressionHandler;
 import step.framework.server.ServerPluginManager;
@@ -68,7 +69,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class Controller {
 
-	public static final Version VERSION = new Version(3,24,3);
+	public static final Version VERSION = new Version(3,25,0);
 
 	public static String USER_ACTIVITY_MAP_KEY = "userActivityMap";
 	private Configuration configuration;
@@ -165,6 +166,7 @@ public class Controller {
 				.register(new Entity<>(EntityManager.executions, context.getExecutionAccessor(), Execution.class))
 				.register(new PlanEntity(context.getPlanAccessor(), planLocator, entityManager))
 				.register(new Entity<>(EntityManager.reports, context.getReportAccessor(), ReportNode.class))
+				.register(new ScheduleEntity(context.getScheduleAccessor(), ExecutiontTaskParameters.class, entityManager))
 				.register(new Entity<>(EntityManager.tasks, context.getScheduleAccessor(), ExecutiontTaskParameters.class))
 				.register(new Entity<>(EntityManager.users, context.getUserAccessor(), User.class))
 				.register(new ResourceEntity(resourceAccessor, resourceManager, context.getFileResolver(), entityManager))

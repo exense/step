@@ -251,8 +251,6 @@ public class AutomationPackageReader {
     protected void fillContentSections(AutomationPackageContent targetPackage, AutomationPackageFragmentYaml fragment) {
         targetPackage.getKeywords().addAll(fragment.getKeywords());
         targetPackage.getPlans().addAll(fragment.getPlans().stream().map(p -> getOrCreateDescriptorReader().getPlanReader().yamlPlanToPlan(p)).collect(Collectors.toList()));
-        // TODO: fill schedules via hooks?
-        targetPackage.getSchedules().addAll(fragment.getSchedules());
         for (Map.Entry<String, List<?>> additionalField : fragment.getAdditionalFields().entrySet()) {
             boolean hooked = hookRegistry.onAdditionalDataRead(additionalField.getKey(), additionalField.getValue(), targetPackage, this);
             if (!hooked) {
@@ -295,16 +293,19 @@ public class AutomationPackageReader {
             }
         }
 
+        Set<Method> excludedMethods = new HashSet<>();
+
         // Classes with @Plan annotation in methods
         // and filter them
         for (Method m : annotationScanner.getMethodsWithAnnotation(step.junit.runners.annotations.Plan.class)) {
-            if (!excludedByAnnotation.contains(m.getDeclaringClass()) && !classesWithPlans.contains(m.getDeclaringClass())) {
+            if (!excludedByAnnotation.contains(m.getDeclaringClass())) {
                 log.debug("Checking if " + m.getName() + " should be filtered...");
                 String targetName = "@Plan method " + m.getName();
                 FilterResult filtered = isAnnotationFiltered(targetName, includedA, excludedA, m.getAnnotations());
                 if (filtered == FilterResult.NOT_FILTERED) {
                     classesWithPlans.add(m.getDeclaringClass());
                 } else {
+                    excludedMethods.add(m);
                     log.debug(m.getName() + " has been filtered out");
                 }
             }
@@ -326,7 +327,7 @@ public class AutomationPackageReader {
         classesWithPlans = tmp;
 
         // Create plans for discovered classes
-        classesWithPlans.forEach(c -> result.addAll(getPlansForClass(annotationScanner, c, archive, stepClassParser)));
+        classesWithPlans.forEach(c -> result.addAll(getPlansForClass(annotationScanner, c, archive, stepClassParser, excludedMethods)));
 
         // replace null with empty collections to avoid NPEs
         result.forEach(plan -> {
@@ -355,12 +356,12 @@ public class AutomationPackageReader {
         return filtered;
     }
 
-    protected static List<Plan> getPlansForClass(AnnotationScanner annotationScanner, Class<?> klass, AutomationPackageArchive archive, StepClassParser stepClassParser) {
+    protected static List<Plan> getPlansForClass(AnnotationScanner annotationScanner, Class<?> klass, AutomationPackageArchive archive, StepClassParser stepClassParser, Set<Method> excludedMethods) {
 
         List<Plan> result = new ArrayList<>();
         List<StepClassParserResult> plans;
         try {
-            plans = stepClassParser.getPlanFromAnnotatedMethods(annotationScanner, klass);
+            plans = stepClassParser.getPlanFromAnnotatedMethods(annotationScanner, klass, excludedMethods);
             plans.addAll(getPlanFromPlansAnnotation(klass, archive, stepClassParser));
         } catch (Exception e) {
             throw new RuntimeException(

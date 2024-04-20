@@ -38,6 +38,10 @@ public class PrometheusCollectorRegistry {
 		return histo;
 	}
 
+	public boolean containsHistogram(String name) {
+		return histoCollectors.containsKey(name);
+	}
+
 	public synchronized Gauge getOrCreateGauge(String name, String help, String... labels) {
 		Gauge gauge;
 		if (gaugeCollectors.containsKey(name)) {

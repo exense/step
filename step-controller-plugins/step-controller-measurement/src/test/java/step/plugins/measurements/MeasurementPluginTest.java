@@ -139,8 +139,8 @@ public class MeasurementPluginTest extends AbstractKeyword {
 		}
 
 		@Override
-		public void processGauges(List<Measurement> measurements) {
-			processMeasurements(measurements);
+		public void processGauges( List<Measurement> measurements) {
+			processMeasurements( measurements);
 		}
 
 		@Override

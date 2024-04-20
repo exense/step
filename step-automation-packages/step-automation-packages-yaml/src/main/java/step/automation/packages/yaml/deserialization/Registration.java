@@ -16,16 +16,13 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.yaml.schema;
+package step.automation.packages.yaml.deserialization;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
+import step.automation.packages.model.AutomationPackageSchedule;
+import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
 
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
-
-@Retention(RUNTIME)
-@Target(ElementType.TYPE)
-public @interface AutomationPackageJsonSchemaAddOn {
-    String LOCATION = "step";
+public class Registration {
+    public static void registerSerialization(AutomationPackageSerializationRegistry serRegistry) {
+        serRegistry.register(AutomationPackageFragmentYaml.SCHEDULES_FIELD_NAME, AutomationPackageSchedule.class);
+    }
 }

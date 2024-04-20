@@ -23,7 +23,9 @@ import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.model.AutomationPackageSchedule;
 import step.automation.packages.model.YamlAutomationPackageKeyword;
 import step.automation.packages.yaml.deserialization.AutomationPackageSerializationRegistry;
+import step.automation.packages.yaml.deserialization.Registration;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
+import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
 import step.plans.parser.yaml.model.YamlPlan;
 import step.plugins.jmeter.automation.YamlJMeterFunction;
 
@@ -38,7 +40,13 @@ import static org.junit.Assert.*;
 
 public class AutomationPackageDescriptorReaderTest {
 
-    private final AutomationPackageDescriptorReader reader = new AutomationPackageDescriptorReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, new AutomationPackageSerializationRegistry());
+    private final AutomationPackageDescriptorReader reader;
+
+    public AutomationPackageDescriptorReaderTest() {
+        AutomationPackageSerializationRegistry serializationRegistry = new AutomationPackageSerializationRegistry();
+        Registration.registerSerialization(serializationRegistry);
+        reader = new AutomationPackageDescriptorReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, serializationRegistry);
+    }
 
     @Test
     public void jmeterKeywordReadTest() throws AutomationPackageReadingException {
@@ -85,7 +93,7 @@ public class AutomationPackageDescriptorReaderTest {
             assertEquals("Second Plan", plans.get(1).getName());
 
             // check parsed scheduler
-            List<AutomationPackageSchedule> schedules = descriptor.getSchedules();
+            List<AutomationPackageSchedule> schedules = descriptor.getAdditionalField(AutomationPackageFragmentYaml.SCHEDULES_FIELD_NAME);
             assertEquals(2, schedules.size());
             AutomationPackageSchedule firstTask = schedules.get(0);
             assertEquals("My first task", firstTask.getName());

@@ -1,0 +1,1001 @@
+---
+_class: step.core.plans.Plan
+attributes:
+  name: MainPlan
+root:
+  _class: TestCase
+  attributes:
+    name: MainPlan
+  dynamicName:
+    dynamic: false
+    value: ''
+    expression: ''
+  useDynamicName: false
+  children:
+    - _class: CallKeyword
+      attributes:
+        name: Composite
+      dynamicName:
+        dynamic: false
+        value: ''
+        expression: ''
+      useDynamicName: false
+      children: []
+      skipNode:
+        dynamic: false
+        value: false
+      instrumentNode:
+        dynamic: false
+        value: false
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+      remote:
+        dynamic: false
+        value: true
+      token:
+        dynamic: false
+        value: "{}"
+      function:
+        dynamic: false
+        value: "{\"name\":{\"dynamic\":false,\"value\":\"Composite\",\"expression\"\
+        :null,\"expressionType\":null}}"
+      argument:
+        dynamic: false
+        value: "{}"
+      resultMap:
+        dynamic: false
+      id: 644fbe4e38a61e07cc3a4df8
+    - _class: CallPlan
+      attributes:
+        name: SubPlan
+      dynamicName:
+        dynamic: false
+        value: ''
+        expression: ''
+      useDynamicName: false
+      children: []
+      skipNode:
+        dynamic: false
+        value: false
+      instrumentNode:
+        dynamic: false
+        value: false
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+      planId: 66155931b1484e71a63e9faf
+      selectionAttributes:
+        dynamic: false
+        value: "{}"
+      input:
+        dynamic: false
+        value: "{}"
+      id: 644fbe4e38a61e07cc3a4df8
+    - _class: CallKeyword
+      attributes:
+        name: GroovyKeyword
+      dynamicName:
+        dynamic: false
+        value: ''
+        expression: ''
+      useDynamicName: false
+      children: []
+      skipNode:
+        dynamic: false
+        value: false
+      instrumentNode:
+        dynamic: false
+        value: false
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+      remote:
+        dynamic: false
+        value: true
+      token:
+        dynamic: false
+        value: "{}"
+      function:
+        dynamic: false
+        value: "{\"name\":{\"dynamic\":false,\"value\":\"GroovyKeyword\",\"expression\"\
+        :null,\"expressionType\":null}}"
+      argument:
+        dynamic: false
+        value: "{}"
+      resultMap:
+        dynamic: false
+      id: 644fbe4e38a61e07cc3a4df8
+    - _class: AfterSequence
+      attributes:
+        name: AfterSequence
+      dynamicName:
+        dynamic: false
+        value: ''
+        expression: ''
+      useDynamicName: false
+      children: []
+      skipNode:
+        dynamic: false
+        value: false
+      instrumentNode:
+        dynamic: false
+        value: false
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+      continueOnError:
+        dynamic: false
+        value: false
+      pacing:
+        dynamic: false
+      id: 644fbe4e38a61e07cc3a4df8
+    - _class: AfterThread
+      attributes:
+        name: AfterThread
+      dynamicName:
+        dynamic: false
+        value: ''
+        expression: ''
+      useDynamicName: false
+      children: []
+      skipNode:
+        dynamic: false
+        value: false
+      instrumentNode:
+        dynamic: false
+        value: false
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+      continueOnError:
+        dynamic: false
+        value: false
+      pacing:
+        dynamic: false
+      id: 644fbe4e38a61e07cc3a4df8
+    - _class: BeforeSequence
+      attributes:
+        name: BeforeSequence
+      dynamicName:
+        dynamic: false
+        value: ''
+        expression: ''
+      useDynamicName: false
+      children: []
+      skipNode:
+        dynamic: false
+        value: false
+      instrumentNode:
+        dynamic: false
+        value: false
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+      continueOnError:
+        dynamic: false
+        value: false
+      pacing:
+        dynamic: false
+      id: 644fbe4e38a61e07cc3a4df8
+    - _class: BeforeThread
+      attributes:
+        name: BeforeThread
+      dynamicName:
+        dynamic: false
+        value: ''
+        expression: ''
+      useDynamicName: false
+      children: []
+      skipNode:
+        dynamic: false
+        value: false
+      instrumentNode:
+        dynamic: false
+        value: false
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+      continueOnError:
+        dynamic: false
+        value: false
+      pacing:
+        dynamic: false
+      id: 644fbe4e38a61e07cc3a4df8
+    - _class: CallKeyword
+      attributes:
+        name: CallKeyword
+      dynamicName:
+        dynamic: false
+        value: ''
+        expression: ''
+      useDynamicName: false
+      children:
+        - _class: Assert
+          attributes:
+            name: Assert
+          dynamicName:
+            dynamic: false
+            value: ''
+            expression: ''
+          useDynamicName: false
+          children: []
+          skipNode:
+            dynamic: false
+            value: false
+          instrumentNode:
+            dynamic: false
+            value: false
+          continueParentNodeExecutionOnError:
+            dynamic: false
+            value: true
+          actual:
+            dynamic: false
+            value: test
+          operator: IS_NULL
+          doNegate:
+            dynamic: false
+            value: false
+          expected:
+            dynamic: false
+            value: ''
+          customErrorMessage:
+            dynamic: false
+            value: ''
+          id: 644fbe4e38a61e07cc3a4df8
+      skipNode:
+        dynamic: false
+        value: false
+      instrumentNode:
+        dynamic: false
+        value: false
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+      remote:
+        dynamic: false
+        value: true
+      token:
+        dynamic: false
+        value: "{}"
+      function:
+        dynamic: false
+        value: "{\"name\":{\"dynamic\":false,\"value\":\"GroovyKeyword\",\"expression\"\
+          :null,\"expressionType\":null}}"
+      argument:
+        dynamic: false
+        value: "{}"
+      resultMap:
+        dynamic: false
+      id: 644fbe4e38a61e07cc3a4df8
+    - _class: CallPlan
+      attributes:
+        name: CallPlan
+      dynamicName:
+        dynamic: false
+        value: ''
+        expression: ''
+      useDynamicName: false
+      children: []
+      skipNode:
+        dynamic: false
+        value: false
+      instrumentNode:
+        dynamic: false
+        value: false
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+      selectionAttributes:
+        dynamic: false
+        value: "{\"name\":{\"value\":\"SubPlan\",\"dynamic\":false}}"
+      input:
+        dynamic: false
+        value: "{}"
+      id: 644fbe4e38a61e07cc3a4df8
+    - _class: Check
+      attributes:
+        name: Check
+      dynamicName:
+        dynamic: false
+        value: ''
+        expression: ''
+      useDynamicName: false
+      children: []
+      skipNode:
+        dynamic: false
+        value: false
+      instrumentNode:
+        dynamic: false
+        value: false
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+      expression:
+        dynamic: true
+        expression: 'true'
+        expressionType: ''
+      id: 644fbe4e38a61e07cc3a4df8
+    - _class: DataSet
+      attributes:
+        name: DataSet
+      dynamicName:
+        dynamic: false
+        value: ''
+        expression: ''
+      useDynamicName: false
+      children: []
+      skipNode:
+        dynamic: false
+        value: false
+      instrumentNode:
+        dynamic: false
+        value: false
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+      item:
+        dynamic: false
+        value: dataSet
+      dataSourceType: sequence
+      dataSource:
+        _class: step.datapool.sequence.IntSequenceDataPool
+        forWrite:
+          dynamic: false
+          value: false
+        start:
+          dynamic: false
+          value: 1
+        end:
+          dynamic: false
+          value: 2
+        inc:
+          dynamic: false
+          value: 1
+      maxFailedLoops:
+        dynamic: false
+      threads:
+        dynamic: false
+        value: 1
+      globalCounter:
+        dynamic: false
+        value: gcounter
+      userItem:
+        dynamic: false
+        value: userId
+      resetAtEnd:
+        dynamic: false
+        value: false
+      id: 644fbe4e38a61e07cc3a4df8
+    - _class: Echo
+      attributes:
+        name: Echo
+      dynamicName:
+        dynamic: false
+        value: ''
+        expression: ''
+      useDynamicName: false
+      children: []
+      skipNode:
+        dynamic: false
+        value: false
+      instrumentNode:
+        dynamic: false
+        value: false
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+      text:
+        dynamic: false
+        value: test
+      id: 644fbe4e38a61e07cc3a4df8
+    - _class: Export
+      attributes:
+        name: Export
+      dynamicName:
+        dynamic: false
+        value: ''
+        expression: ''
+      useDynamicName: false
+      children: []
+      skipNode:
+        dynamic: false
+        value: true
+      instrumentNode:
+        dynamic: false
+        value: false
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+      value:
+        dynamic: false
+        value: ''
+      file:
+        dynamic: false
+        value: ''
+      prefix:
+        dynamic: false
+        value: ''
+      filter:
+        dynamic: false
+        value: ''
+      id: 644fbe4e38a61e07cc3a4df8
+    - _class: For
+      attributes:
+        name: For
+      dynamicName:
+        dynamic: false
+        value: ''
+        expression: ''
+      useDynamicName: false
+      children: []
+      skipNode:
+        dynamic: false
+        value: false
+      instrumentNode:
+        dynamic: false
+        value: false
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+      item:
+        dynamic: false
+        value: counter
+      dataSourceType: sequence
+      dataSource:
+        _class: step.datapool.sequence.IntSequenceDataPool
+        forWrite:
+          dynamic: false
+          value: false
+        start:
+          dynamic: false
+          value: 1
+        end:
+          dynamic: false
+          value: 2
+        inc:
+          dynamic: false
+          value: 1
+      maxFailedLoops:
+        dynamic: false
+      threads:
+        dynamic: false
+        value: 1
+      globalCounter:
+        dynamic: false
+        value: gcounter
+      userItem:
+        dynamic: false
+        value: userId
+      id: 644fbe4e38a61e07cc3a4df8
+    - _class: ForEach
+      attributes:
+        name: ForEach
+      dynamicName:
+        dynamic: false
+        value: ''
+        expression: ''
+      useDynamicName: false
+      children: []
+      skipNode:
+        dynamic: false
+        value: false
+      instrumentNode:
+        dynamic: false
+        value: false
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+      item:
+        dynamic: false
+        value: row
+      dataSourceType: sequence
+      dataSource:
+        _class: step.datapool.sequence.IntSequenceDataPool
+        forWrite:
+          dynamic: false
+          value: false
+        start:
+          dynamic: false
+          value: 1
+        end:
+          dynamic: false
+          value: 2
+        inc:
+          dynamic: false
+          value: 1
+      maxFailedLoops:
+        dynamic: false
+      threads:
+        dynamic: false
+        value: 1
+      globalCounter:
+        dynamic: false
+        value: gcounter
+      userItem:
+        dynamic: false
+        value: userId
+      id: 644fbe4e38a61e07cc3a4df8
+    - _class: If
+      attributes:
+        name: If
+      dynamicName:
+        dynamic: false
+        value: ''
+        expression: ''
+      useDynamicName: false
+      children: []
+      skipNode:
+        dynamic: false
+        value: false
+      instrumentNode:
+        dynamic: false
+        value: false
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+      condition:
+        dynamic: true
+        expression: 'true'
+        expressionType: ''
+      id: 644fbe4e38a61e07cc3a4df8
+    - _class: PerformanceAssert
+      attributes:
+        name: PerformanceAssert
+      dynamicName:
+        dynamic: false
+        value: ''
+        expression: ''
+      useDynamicName: false
+      children: []
+      skipNode:
+        dynamic: false
+        value: false
+      instrumentNode:
+        dynamic: false
+        value: false
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+      filters:
+        - field:
+            dynamic: false
+            value: name
+          filter:
+            dynamic: false
+            value: GroovyKeyword
+          filterType: EQUALS
+      aggregator: AVG
+      comparator: LOWER_THAN
+      expectedValue:
+        dynamic: false
+        value: 3000
+      id: 644fbe4e38a61e07cc3a4df8
+    - _class: Placeholder
+      attributes:
+        name: Placeholder
+      dynamicName:
+        dynamic: false
+        value: ""
+        expression: ""
+      useDynamicName: false
+      children: []
+      skipNode:
+        dynamic: false
+        value: false
+      instrumentNode:
+        dynamic: false
+        value: false
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+      id: 644fbe4e38a61e07cc3a4df8
+    - _class: RetryIfFails
+      attributes:
+        name: RetryIfFails
+      dynamicName:
+        dynamic: false
+        value: ''
+        expression: ''
+      useDynamicName: false
+      children: []
+      skipNode:
+        dynamic: false
+        value: false
+      instrumentNode:
+        dynamic: false
+        value: false
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+      maxRetries:
+        dynamic: false
+        value: 1
+      gracePeriod:
+        dynamic: false
+        value: 1000
+      timeout:
+        dynamic: false
+        value: 0
+      releaseTokens:
+        dynamic: false
+        value: false
+      reportLastTryOnly:
+        dynamic: false
+        value: false
+      id: 644fbe4e38a61e07cc3a4df8
+    - _class: Return
+      attributes:
+        name: Return
+      dynamicName:
+        dynamic: false
+        value: ''
+        expression: ''
+      useDynamicName: false
+      children: []
+      skipNode:
+        dynamic: false
+        value: false
+      instrumentNode:
+        dynamic: false
+        value: false
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+      output:
+        dynamic: false
+      id: 644fbe4e38a61e07cc3a4df8
+    - _class: Script
+      attributes:
+        name: Script
+      dynamicName:
+        dynamic: false
+        value: ''
+        expression: ''
+      useDynamicName: false
+      children: []
+      skipNode:
+        dynamic: false
+        value: false
+      instrumentNode:
+        dynamic: false
+        value: false
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+      script: "var test=\"test\";"
+      id: 644fbe4e38a61e07cc3a4df8
+    - _class: Sequence
+      attributes:
+        name: Sequence
+      dynamicName:
+        dynamic: false
+        value: ''
+        expression: ''
+      useDynamicName: false
+      children: []
+      skipNode:
+        dynamic: false
+        value: false
+      instrumentNode:
+        dynamic: false
+        value: false
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+      continueOnError:
+        dynamic: false
+        value: false
+      pacing:
+        dynamic: false
+      id: 644fbe4e38a61e07cc3a4df8
+    - _class: Session
+      attributes:
+        name: Session
+      dynamicName:
+        dynamic: false
+        value: ''
+        expression: ''
+      useDynamicName: false
+      children: []
+      skipNode:
+        dynamic: false
+        value: false
+      instrumentNode:
+        dynamic: false
+        value: false
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+      remote:
+        dynamic: false
+        value: true
+      token:
+        dynamic: false
+        value: "{}"
+      dockerImage:
+        dynamic: false
+      containerUser:
+        dynamic: false
+      containerCommand:
+        dynamic: false
+      id: 644fbe4e38a61e07cc3a4df8
+    - _class: Set
+      attributes:
+        name: Set
+      dynamicName:
+        dynamic: false
+        value: ''
+        expression: ''
+      useDynamicName: false
+      children: []
+      skipNode:
+        dynamic: false
+        value: false
+      instrumentNode:
+        dynamic: false
+        value: false
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+      key:
+        dynamic: false
+        value: test
+      value:
+        dynamic: false
+        value: test
+      id: 644fbe4e38a61e07cc3a4df8
+    - _class: Sleep
+      attributes:
+        name: Sleep
+      dynamicName:
+        dynamic: false
+        value: ''
+        expression: ''
+      useDynamicName: false
+      children: []
+      skipNode:
+        dynamic: false
+        value: false
+      instrumentNode:
+        dynamic: false
+        value: false
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+      duration:
+        dynamic: false
+        value: 0
+      unit:
+        dynamic: false
+        value: ms
+      releaseTokens:
+        dynamic: false
+        value: false
+      id: 644fbe4e38a61e07cc3a4df8
+    - _class: Switch
+      attributes:
+        name: Switch
+      dynamicName:
+        dynamic: false
+        value: ''
+        expression: ''
+      useDynamicName: false
+      children:
+        - _class: Case
+          attributes:
+            name: Case
+          dynamicName:
+            dynamic: false
+            value: ''
+            expression: ''
+          useDynamicName: false
+          children: []
+          skipNode:
+            dynamic: false
+            value: false
+          instrumentNode:
+            dynamic: false
+            value: false
+          continueParentNodeExecutionOnError:
+            dynamic: false
+            value: false
+          value:
+            dynamic: false
+            value: test
+          id: 644fbe4e38a61e07cc3a4df8
+      skipNode:
+        dynamic: false
+        value: false
+      instrumentNode:
+        dynamic: false
+        value: false
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+      expression:
+        dynamic: true
+        expression: test
+        expressionType: ''
+      id: 644fbe4e38a61e07cc3a4df8
+    - _class: Synchronized
+      attributes:
+        name: Synchronized
+      dynamicName:
+        dynamic: false
+        value: ''
+        expression: ''
+      useDynamicName: false
+      children: []
+      skipNode:
+        dynamic: false
+        value: false
+      instrumentNode:
+        dynamic: false
+        value: false
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+      continueOnError:
+        dynamic: false
+        value: false
+      pacing:
+        dynamic: false
+      lockName:
+        dynamic: false
+        value: ''
+      globalLock:
+        dynamic: false
+        value: false
+      id: 644fbe4e38a61e07cc3a4df8
+    - _class: TestCase
+      attributes:
+        name: TestCase
+      dynamicName:
+        dynamic: false
+        value: ''
+        expression: ''
+      useDynamicName: false
+      children: []
+      skipNode:
+        dynamic: false
+        value: false
+      instrumentNode:
+        dynamic: false
+        value: false
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+      id: 644fbe4e38a61e07cc3a4df8
+    - _class: TestScenario
+      attributes:
+        name: TestScenario
+      dynamicName:
+        dynamic: false
+        value: ''
+        expression: ''
+      useDynamicName: false
+      children: []
+      skipNode:
+        dynamic: false
+        value: false
+      instrumentNode:
+        dynamic: false
+        value: false
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+      id: 644fbe4e38a61e07cc3a4df8
+    - _class: TestSet
+      attributes:
+        name: TestSet
+      dynamicName:
+        dynamic: false
+        value: ''
+        expression: ''
+      useDynamicName: false
+      children: []
+      skipNode:
+        dynamic: false
+        value: false
+      instrumentNode:
+        dynamic: false
+        value: false
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+      threads:
+        dynamic: false
+        value: 1
+      id: 644fbe4e38a61e07cc3a4df8
+    - _class: ThreadGroup
+      attributes:
+        name: ThreadGroup
+      dynamicName:
+        dynamic: false
+        value: ''
+        expression: ''
+      useDynamicName: false
+      children: []
+      skipNode:
+        dynamic: false
+        value: false
+      instrumentNode:
+        dynamic: false
+        value: false
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+      users:
+        dynamic: false
+        value: 1
+      iterations:
+        dynamic: false
+        value: 1
+      rampup:
+        dynamic: false
+      pack:
+        dynamic: false
+      pacing:
+        dynamic: false
+      startOffset:
+        dynamic: false
+        value: 0
+      maxDuration:
+        dynamic: false
+        value: 0
+      item:
+        dynamic: false
+        value: gcounter
+      localItem:
+        dynamic: false
+        value: literationId
+      userItem:
+        dynamic: false
+        value: userId
+      id: 644fbe4e38a61e07cc3a4df8
+    - _class: While
+      attributes:
+        name: While
+      dynamicName:
+        dynamic: false
+        value: ''
+        expression: ''
+      useDynamicName: false
+      children: []
+      skipNode:
+        dynamic: false
+        value: false
+      instrumentNode:
+        dynamic: false
+        value: false
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+      condition:
+        dynamic: true
+        expression: 'false'
+        expressionType: ''
+      postCondition:
+        dynamic: true
+        expression: ''
+        expressionType: ''
+      pacing:
+        dynamic: false
+      timeout:
+        dynamic: false
+      maxIterations:
+        dynamic: false
+      id: 644fbe4e38a61e07cc3a4df8
+  skipNode:
+    dynamic: false
+    value: false
+  instrumentNode:
+    dynamic: false
+    value: false
+  continueParentNodeExecutionOnError:
+    dynamic: false
+    value: false
+  id: 644fbe4e38a61e07cc3a4df8
+visible: true
+id: 644fbe4e38a61e07cc3a4df8

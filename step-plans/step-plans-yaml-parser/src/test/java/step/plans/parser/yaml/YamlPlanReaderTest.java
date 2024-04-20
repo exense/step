@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.plans.parser.yaml;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -63,7 +64,10 @@ public class YamlPlanReaderTest {
 		YAMLFactory yamlFactory = new YAMLFactory();
 		// Disable native type id to enable conversion to generic Documents
 		yamlFactory.disable(YAMLGenerator.Feature.USE_NATIVE_TYPE_ID);
-		return DefaultJacksonMapperProvider.getObjectMapper(yamlFactory);
+		ObjectMapper mapper = DefaultJacksonMapperProvider.getObjectMapper(yamlFactory);
+		// to avoid using null-values in comparison
+		mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+		return mapper;
 	}
 
 	/**
@@ -165,6 +169,19 @@ public class YamlPlanReaderTest {
 		convertPlanToYaml(
 				"src/test/resources/step/plans/parser/yaml/check/test-expected-check-tech-plan.yml",
 				"src/test/resources/step/plans/parser/yaml/check/test-converted-from-tech-check-plan.yml"
+		);
+	}
+
+	@Test
+	public void testAllControls() throws YamlPlanValidationException {
+		convertFromYamlToPlan(
+				"src/test/resources/step/plans/parser/yaml/controls/test-controls-plan.yml",
+				"src/test/resources/step/plans/parser/yaml/controls/test-expected-controls-tech-plan.yml"
+		);
+
+		convertPlanToYaml(
+				"src/test/resources/step/plans/parser/yaml/controls/test-expected-controls-tech-plan.yml",
+				"src/test/resources/step/plans/parser/yaml/controls/test-controls-plan.yml"
 		);
 	}
 

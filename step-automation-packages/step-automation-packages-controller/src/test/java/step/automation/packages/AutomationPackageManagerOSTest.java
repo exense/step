@@ -96,9 +96,8 @@ public class AutomationPackageManagerOSTest {
         // scheduler with mocked executor
         this.executionScheduler = new ExecutionScheduler(new ControllerSettingAccessorImpl(new InMemoryCollection<>()), executionTaskAccessor, Mockito.mock(Executor.class));
         AutomationPackageHookRegistry automationPackageHookRegistry = new AutomationPackageHookRegistry();
-        SchedulerPlugin.registerSchedulerHook(automationPackageHookRegistry, executionScheduler);
-
         AutomationPackageSerializationRegistry serializationRegistry = new AutomationPackageSerializationRegistry();
+        SchedulerPlugin.registerSchedulerHooks(automationPackageHookRegistry, serializationRegistry, executionScheduler);
 
         this.manager = new AutomationPackageManager(
                 automationPackageAccessor,

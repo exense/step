@@ -28,14 +28,18 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import org.bson.types.ObjectId;
+import step.artefacts.CallPlan;
+import step.artefacts.handlers.PlanLocator;
+import step.artefacts.handlers.SelectorHelper;
 import step.core.GlobalContext;
 import step.core.artefacts.AbstractArtefact;
 import step.core.deployment.AbstractStepServices;
 import step.core.deployment.ControllerServiceException;
-import step.core.plans.Plan;
-import step.core.plans.PlanAccessor;
-import step.core.plans.PlanType;
-import step.core.plans.PlanTypeRegistry;
+import step.core.dynamicbeans.DynamicJsonObjectResolver;
+import step.core.dynamicbeans.DynamicJsonValueResolver;
+import step.core.objectenricher.ObjectPredicate;
+import step.core.objectenricher.ObjectPredicateFactory;
+import step.core.plans.*;
 import step.framework.server.security.Secured;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
@@ -49,6 +53,7 @@ public class CompositeFunctionServices extends AbstractStepServices {
     private FunctionAccessor functionAccessor;
     private  PlanTypeRegistry planTypeRegistry;
     private PlanAccessor planAccessor;
+    private ObjectPredicateFactory objectPredicateFactory;
 
     @PostConstruct
     public void init() throws Exception {
@@ -57,6 +62,7 @@ public class CompositeFunctionServices extends AbstractStepServices {
         functionAccessor = getContext().get(FunctionAccessor.class);
         planAccessor = getContext().getPlanAccessor();
         planTypeRegistry = context.get(PlanTypeRegistry.class);
+        objectPredicateFactory = context.get(ObjectPredicateFactory.class);
     }
 
     @Operation(operationId = "cloneCompositePlan", description = "Clones the plan of the composite to a new plan")
@@ -82,6 +88,30 @@ public class CompositeFunctionServices extends AbstractStepServices {
         getObjectEnricher().accept(clonePlan);
         planAccessor.save(clonePlan);
         return clonePlan;
+    }
+
+    @Operation(description = "Returns the plan referenced by the given artifact within the given composite.")
+    @GET
+    @Path("/{id}/artefacts/{artefactid}/lookup/plan")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Secured(right="plan-read")
+    public Plan lookupPlan(@PathParam("id") String id, @PathParam("artefactid") String artefactId) {
+        Function function = functionAccessor.get(id);
+        if (!(function instanceof CompositeFunction)) {
+            throw new ControllerServiceException("The look of plan can only be performed for composite keywords.");
+        }
+        Plan plan = ((CompositeFunction) function).getPlan();
+        Plan result = null;
+        PlanNavigator planNavigator = new PlanNavigator(plan);
+        CallPlan artefact = (CallPlan) planNavigator.findArtefactById(artefactId);
+        DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(getContext().getExpressionHandler()));
+        SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
+        PlanLocator planLocator = new PlanLocator(getContext().getPlanAccessor(), selectorHelper);
+        ObjectPredicate objectPredicate = objectPredicateFactory.getObjectPredicate(getSession());
+        try {
+            result = planLocator.selectPlan(artefact, objectPredicate, null);
+        } catch (RuntimeException e) {}
+        return result;
     }
 
     private void assignNewId(AbstractArtefact artefact) {

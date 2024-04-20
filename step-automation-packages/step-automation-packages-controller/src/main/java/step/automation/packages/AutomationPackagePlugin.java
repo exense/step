@@ -62,15 +62,15 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
         context.put(AutomationPackageLocks.class, automationPackageLocks);
 
         AutomationPackageAccessor packageAccessor = new AutomationPackageAccessorImpl(
-                context.getCollectionFactory().getCollection("automationPackages", AutomationPackage.class)
+                context.getCollectionFactory().getCollection(AutomationPackageEntity.entityName, AutomationPackage.class)
         );
         context.put(AutomationPackageAccessor.class, packageAccessor);
         context.getEntityManager().register(new AutomationPackageEntity(packageAccessor));
 
-        Collection<AutomationPackage> automationPackageCollection = context.getCollectionFactory().getCollection("automationPackages", AutomationPackage.class);
+        Collection<AutomationPackage> automationPackageCollection = context.getCollectionFactory().getCollection(AutomationPackageEntity.entityName, AutomationPackage.class);
 
         Table<AutomationPackage> collection = new Table<>(automationPackageCollection, "automation-package-read", true);
-        context.get(TableRegistry.class).register("automationPackages", collection);
+        context.get(TableRegistry.class).register(AutomationPackageEntity.entityName, collection);
 
         context.getServiceRegistrationCallback().registerService(AutomationPackageServices.class);
 

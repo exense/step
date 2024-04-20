@@ -21,7 +21,6 @@ package step.automation.packages.yaml.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.Nulls;
-import step.automation.packages.model.AutomationPackageSchedule;
 import step.automation.packages.model.YamlAutomationPackageKeyword;
 import step.plans.parser.yaml.model.YamlPlan;
 
@@ -33,7 +32,7 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
     private List<String> fragments = new ArrayList<>();
     private List<YamlAutomationPackageKeyword> keywords = new ArrayList<>();
     private List<YamlPlan> plans = new ArrayList<>();
-    private List<AutomationPackageSchedule> schedules = new ArrayList<>();
+
     @JsonIgnore
     private Map<String, List<?>> additionalFields;
 
@@ -65,16 +64,6 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
     @JsonSetter(nulls = Nulls.AS_EMPTY)
     public void setFragments(List<String> fragments) {
         this.fragments = fragments;
-    }
-
-    @Override
-    public List<AutomationPackageSchedule> getSchedules() {
-        return schedules;
-    }
-
-    @JsonSetter(nulls = Nulls.AS_EMPTY)
-    public void setSchedules(List<AutomationPackageSchedule> schedules) {
-        this.schedules = schedules;
     }
 
     @Override

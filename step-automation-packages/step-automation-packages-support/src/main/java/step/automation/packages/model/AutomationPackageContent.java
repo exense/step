@@ -32,7 +32,6 @@ public class AutomationPackageContent {
 
     private List<AutomationPackageKeyword> keywords = new ArrayList<>();
     private List<Plan> plans = new ArrayList<>();
-    private List<AutomationPackageSchedule> schedules = new ArrayList<>();
     private Map<String, List<?>> additionalData = new HashMap<>();
 
     public String getName() {
@@ -65,14 +64,6 @@ public class AutomationPackageContent {
 
     public void setPlans(List<Plan> plans) {
         this.plans = plans;
-    }
-
-    public List<AutomationPackageSchedule> getSchedules() {
-        return schedules;
-    }
-
-    public void setSchedules(List<AutomationPackageSchedule> schedules) {
-        this.schedules = schedules;
     }
 
     public Map<String, List<?>> getAdditionalData() {
