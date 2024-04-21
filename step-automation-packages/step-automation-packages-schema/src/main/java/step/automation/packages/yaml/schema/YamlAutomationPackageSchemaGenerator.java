@@ -28,6 +28,7 @@ import step.plans.parser.yaml.automation.schema.AutomationPackageSchedulesJsonSc
 import step.core.yaml.schema.JsonSchemaExtension;
 import step.core.yaml.schema.YamlJsonSchemaHelper;
 import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
+import step.parameter.automation.AutomationPackageParameterJsonSchemaExtension;
 import step.plans.parser.yaml.model.YamlPlanVersions;
 import step.plans.parser.yaml.schema.YamlPlanJsonSchemaGenerator;
 
@@ -54,6 +55,7 @@ public class YamlAutomationPackageSchemaGenerator {
 
         this.extensions = new ArrayList<>();
         this.extensions.add(new AutomationPackageSchedulesJsonSchema());
+        this.extensions.add(new AutomationPackageParameterJsonSchemaExtension());
     }
 
     public JsonNode generateJsonSchema() throws JsonSchemaPreparationException {

@@ -38,6 +38,11 @@
             <artifactId>step-functions-plugins-jmeter-def</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>ch.exense.step</groupId>
+            <artifactId>step-automation-packages-parameters</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
         <!-- for "schedules" -->
         <dependency>
