@@ -23,9 +23,11 @@ import step.automation.packages.AutomationPackageNamedEntity;
 import step.automation.packages.AutomationPackageResourceUploader;
 import step.automation.packages.model.AbstractYamlFunction;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.yaml.YamlModel;
 import step.plugins.jmeter.JMeterFunction;
 import step.resources.ResourceManager;
 
+@YamlModel
 @AutomationPackageNamedEntity(name = "JMeter")
 public class YamlJMeterFunction extends AbstractYamlFunction<JMeterFunction> {
 
