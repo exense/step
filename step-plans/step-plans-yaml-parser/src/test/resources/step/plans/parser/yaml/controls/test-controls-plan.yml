@@ -13,7 +13,6 @@ root:
         instrumentNode: false
         skipNode: false
         remote: true
-        inputs: []
         keyword: "Composite"
     - callPlan:
         nodeName: "SubPlan"
@@ -28,7 +27,6 @@ root:
         instrumentNode: false
         skipNode: false
         remote: true
-        inputs: []
         keyword: "GroovyKeyword"
     - afterSequence:
         continueParentNodeExecutionOnError: false
@@ -66,7 +64,6 @@ root:
             operator: "IS_NULL"
             actual: "test"
         remote: true
-        inputs: []
         keyword: "GroovyKeyword"
     - callPlan:
         continueParentNodeExecutionOnError: false

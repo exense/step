@@ -319,7 +319,6 @@ root:
                         value: ""
                         expression: ""
                       useDynamicName: false
-                      description: null
                       children: []
                       skipNode:
                         dynamic: false
@@ -345,7 +344,6 @@ root:
                         value: ""
                         expression: ""
                       useDynamicName: false
-                      description: null
                       children: []
                       skipNode:
                         dynamic: false
@@ -371,7 +369,6 @@ root:
                         value: ""
                         expression: ""
                       useDynamicName: false
-                      description: null
                       children: []
                       skipNode:
                         dynamic: false
@@ -933,7 +930,6 @@ root:
                             value: ""
                             expression: ""
                           useDynamicName: false
-                          description: null
                           children: []
                           skipNode:
                             dynamic: false
@@ -1174,7 +1170,6 @@ root:
                         value: ""
                         expression: ""
                       useDynamicName: false
-                      description: null
                       children:
                         - _class: "CallPlan"
                           attributes:
