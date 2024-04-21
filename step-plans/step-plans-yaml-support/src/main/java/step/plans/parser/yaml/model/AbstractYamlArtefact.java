@@ -25,6 +25,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.yaml.AbstractYamlModel;
+import step.core.yaml.YamlFieldCustomCopy;
 import step.core.yaml.schema.YamlJsonSchemaHelper;
 import step.jsonschema.JsonSchema;
 import step.jsonschema.JsonSchemaDefaultValueProvider;
@@ -40,7 +42,7 @@ import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.NONE;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @JsonAutoDetect(fieldVisibility = ANY, getterVisibility = NONE, setterVisibility = NONE)
-public abstract class AbstractYamlArtefact<T extends AbstractArtefact> {
+public abstract class AbstractYamlArtefact<T extends AbstractArtefact> extends AbstractYamlModel {
 
     public static final String ARTEFACT_ARRAY_DEF = "ArtefactArrayDef";
 
@@ -51,14 +53,17 @@ public abstract class AbstractYamlArtefact<T extends AbstractArtefact> {
     protected Class<T> artefactClass;
 
     @JsonSchema(defaultProvider = DefaultYamlArtefactNameProvider.class)
-    private String nodeName;
-    private DynamicValue<Boolean> skipNode = new DynamicValue<>(false);
-    private DynamicValue<Boolean> instrumentNode = new DynamicValue<>(false);
-    private DynamicValue<Boolean> continueParentNodeExecutionOnError = new DynamicValue<>(false);
-    private String description;
+    @YamlFieldCustomCopy
+    protected String nodeName;
+
+    protected DynamicValue<Boolean> skipNode = new DynamicValue<>(false);
+    protected DynamicValue<Boolean> instrumentNode = new DynamicValue<>(false);
+    protected DynamicValue<Boolean> continueParentNodeExecutionOnError = new DynamicValue<>(false);
+    protected String description;
 
     @JsonSchema(ref = YamlJsonSchemaHelper.DEFS_PREFIX + ARTEFACT_ARRAY_DEF)
-    private List<NamedYamlArtefact> children = new ArrayList<>();
+    @YamlFieldCustomCopy
+    protected List<NamedYamlArtefact> children = new ArrayList<>();
 
     public AbstractYamlArtefact() {
     }
@@ -83,19 +88,7 @@ public abstract class AbstractYamlArtefact<T extends AbstractArtefact> {
 
     protected void fillArtefactFields(T res) {
         res.addAttribute(AbstractOrganizableObject.NAME, getArtefactName());
-
-        if (this.continueParentNodeExecutionOnError != null) {
-            res.setContinueParentNodeExecutionOnError(this.continueParentNodeExecutionOnError);
-        }
-        if (this.instrumentNode != null) {
-            res.setInstrumentNode(this.instrumentNode);
-        }
-        if (this.skipNode != null) {
-            res.setSkipNode(this.skipNode);
-        }
-        if (this.description != null) {
-            res.setDescription(this.description);
-        }
+        copyFieldsToObject(res, true);
         if (this.getChildren() != null) {
             for (NamedYamlArtefact child : this.getChildren()) {
                 res.getChildren().add(child.getYamlArtefact().toArtefact());
@@ -113,7 +106,7 @@ public abstract class AbstractYamlArtefact<T extends AbstractArtefact> {
         }
     }
 
-    protected void fillYamlArtefactFields(T artefact){
+    protected void fillYamlArtefactFields(T artefact) {
         // the node name is not obligatory in yaml - we skip this if the name is equal to the default one
         String nameAttribute = artefact.getAttribute(AbstractOrganizableObject.NAME);
 
@@ -122,10 +115,8 @@ public abstract class AbstractYamlArtefact<T extends AbstractArtefact> {
         if (nameAttribute != null && !Objects.equals(nameAttribute, getDefaultNodeNameForYaml(artefact))) {
             this.setNodeName(nameAttribute);
         }
-        this.setContinueParentNodeExecutionOnError(artefact.getContinueParentNodeExecutionOnError());
-        this.setInstrumentNode(artefact.getInstrumentNode());
-        this.setSkipNode(artefact.getSkipNode());
-        this.setDescription(artefact.getDescription());
+        copyFieldsFromObject(artefact, true);
+
         for (AbstractArtefact child : artefact.getChildren()) {
             this.getChildren().add(new NamedYamlArtefact(toYamlArtefact(child, yamlObjectMapper)));
         }

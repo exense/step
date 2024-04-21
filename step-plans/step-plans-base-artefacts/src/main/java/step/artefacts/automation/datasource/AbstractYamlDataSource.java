@@ -22,6 +22,8 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.yaml.AbstractYamlModel;
+import step.core.yaml.YamlFieldCustomCopy;
 import step.datapool.DataPoolConfiguration;
 import step.datapool.DataPoolFactory;
 
@@ -30,13 +32,14 @@ import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.NONE;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @JsonAutoDetect(fieldVisibility = ANY, getterVisibility = NONE, setterVisibility = NONE)
-public abstract class AbstractYamlDataSource<T extends DataPoolConfiguration> {
+public abstract class AbstractYamlDataSource<T extends DataPoolConfiguration> extends AbstractYamlModel {
 
     public static final String FOR_WRITE_FIELD = "forWrite";
 
     @JsonIgnore
     private final String dataSourceType;
 
+    @YamlFieldCustomCopy
     protected DynamicValue<Boolean> forWrite = new DynamicValue<>(false);
 
     protected AbstractYamlDataSource(String dataSourceType) {
@@ -47,19 +50,21 @@ public abstract class AbstractYamlDataSource<T extends DataPoolConfiguration> {
         return (T) DataPoolFactory.getDefaultDataPoolConfiguration(dataSourceType);
     }
 
-    public void fillDataPoolConfiguration(T config) {
+    public void fillDataPoolConfiguration(T config, boolean isForWriteEditable) {
+        copyFieldsToObject(config, true);
         if (this.forWrite != null) {
             config.setForWrite(forWrite);
         }
     }
 
-    public final T toDataPoolConfiguration(){
+    public final T toDataPoolConfiguration(boolean isForWriteEditable){
         T res = createDataPoolConfiguration();
-        fillDataPoolConfiguration(res);
+        fillDataPoolConfiguration(res, isForWriteEditable);
         return res;
     }
 
     public void fillFromDataPoolConfiguration(T dataPoolConfiguration, boolean isForWriteEditable) {
+        copyFieldsFromObject(dataPoolConfiguration, true);
         if (!isForWriteEditable) {
             this.forWrite = null;
         } else if (dataPoolConfiguration.getForWrite() != null) {

@@ -22,14 +22,17 @@ import step.artefacts.CallFunction;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.yaml.YamlFieldCustomCopy;
 
 public class YamlCallFunction extends YamlTokenSelector<CallFunction> {
 
-    private DynamicValue<String> resultMap = new DynamicValue<>();
+    protected DynamicValue<String> resultMap = new DynamicValue<>();
 
-    private YamlDynamicInputs inputs = new YamlDynamicInputs("{}");
+    @YamlFieldCustomCopy
+    protected YamlDynamicInputs inputs = new YamlDynamicInputs("{}");
 
-    private YamlKeywordDefinition keyword = new YamlKeywordDefinition(null,null, "{}");
+    @YamlFieldCustomCopy
+    protected YamlKeywordDefinition keyword = new YamlKeywordDefinition(null,null, "{}");
 
     public YamlCallFunction() {
         super(CallFunction.class);
@@ -38,9 +41,6 @@ public class YamlCallFunction extends YamlTokenSelector<CallFunction> {
     @Override
     protected void fillArtefactFields(CallFunction res) {
         super.fillArtefactFields(res);
-        if (this.resultMap != null) {
-            res.setResultMap(this.resultMap);
-        }
         if (this.inputs != null) {
             res.setArgument(this.inputs.toDynamicValue());
         }
@@ -63,9 +63,6 @@ public class YamlCallFunction extends YamlTokenSelector<CallFunction> {
     @Override
     protected void fillYamlArtefactFields(CallFunction artefact) {
         super.fillYamlArtefactFields(artefact);
-        if (artefact.getResultMap() != null) {
-            this.resultMap = artefact.getResultMap();
-        }
         if (artefact.getArgument() != null) {
             this.inputs = YamlDynamicInputs.fromDynamicValue(artefact.getArgument());
         }

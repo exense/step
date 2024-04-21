@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plans.parser.yaml.model;
+package step.core.yaml;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -24,18 +24,7 @@ import java.lang.annotation.Target;
 
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-@Target(ElementType.TYPE)
+@Target(ElementType.FIELD)
 @Retention(RUNTIME)
-public @interface YamlModel {
-
-    /**
-     * The reference to the special model class. If not defined, the current class itself will be used as the model
-     * class for yaml representation
-     */
-    Class<?> model() default None.class;
-
-    /**
-     * Void class to be used in annotations instead of null-values
-     */
-    final class None {}
+public @interface YamlFieldCustomCopy {
 }

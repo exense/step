@@ -24,7 +24,7 @@ import step.core.dynamicbeans.DynamicValue;
 import step.core.entities.EntityManager;
 import step.core.entities.EntityReference;
 import step.datapool.DataPoolConfiguration;
-import step.plans.parser.yaml.model.YamlModel;
+import step.core.yaml.YamlModel;
 
 @YamlModel(model = YamlGSheetDataSource.class)
 @AutomationPackageNamedEntity(name = "gsheet")

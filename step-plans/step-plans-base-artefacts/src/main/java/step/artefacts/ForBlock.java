@@ -23,7 +23,7 @@ import step.automation.packages.AutomationPackageNamedEntity;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
 import step.datapool.DataSources;
-import step.plans.parser.yaml.model.YamlModel;
+import step.core.yaml.YamlModel;
 
 import static step.artefacts.ForBlock.FOR_BLOCK_ARTIFACT_NAME;
 

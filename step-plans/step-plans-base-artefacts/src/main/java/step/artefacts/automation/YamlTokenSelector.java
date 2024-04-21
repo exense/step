@@ -20,11 +20,14 @@ package step.artefacts.automation;
 
 import step.artefacts.TokenSelector;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.yaml.YamlFieldCustomCopy;
 import step.plans.parser.yaml.model.AbstractYamlArtefact;
 
 public class YamlTokenSelector<T extends TokenSelector> extends AbstractYamlArtefact<T> {
 
+    @YamlFieldCustomCopy
     protected YamlDynamicInputs routing = new YamlDynamicInputs("{}");
+
     protected DynamicValue<Boolean> remote = new DynamicValue<>(true);
 
     public YamlTokenSelector() {
@@ -37,9 +40,6 @@ public class YamlTokenSelector<T extends TokenSelector> extends AbstractYamlArte
     @Override
     protected void fillArtefactFields(T res) {
         super.fillArtefactFields(res);
-        if (this.remote != null) {
-            res.setRemote(this.remote);
-        }
         if (this.routing != null) {
             res.setToken(this.routing.toDynamicValue());
         }
@@ -48,9 +48,6 @@ public class YamlTokenSelector<T extends TokenSelector> extends AbstractYamlArte
     @Override
     protected void fillYamlArtefactFields(T artefact) {
         super.fillYamlArtefactFields(artefact);
-        if (artefact.getRemote() != null) {
-            this.remote = artefact.getRemote();
-        }
         if (artefact.getToken() != null) {
             this.routing = YamlDynamicInputs.fromDynamicValue(artefact.getToken());
         }

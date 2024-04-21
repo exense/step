@@ -19,11 +19,13 @@
 package step.artefacts.automation.datasource;
 
 import step.core.dynamicbeans.DynamicValue;
+import step.core.yaml.YamlFieldCustomCopy;
 import step.datapool.excel.ExcelDataPool;
 import step.plans.parser.yaml.model.YamlResourceReference;
 
 public class YamlExcelDataSource extends AbstractYamlDataSource<ExcelDataPool> {
 
+    @YamlFieldCustomCopy
     protected YamlResourceReference file = new YamlResourceReference();
 
     protected DynamicValue<String> worksheet = new DynamicValue<>();
@@ -35,16 +37,10 @@ public class YamlExcelDataSource extends AbstractYamlDataSource<ExcelDataPool> {
     }
 
     @Override
-    public void fillDataPoolConfiguration(ExcelDataPool res) {
-        super.fillDataPoolConfiguration(res);
+    public void fillDataPoolConfiguration(ExcelDataPool res, boolean isForWriteEditable) {
+        super.fillDataPoolConfiguration(res, isForWriteEditable);
         if (file != null) {
             res.setFile(file.toDynamicValue());
-        }
-        if (worksheet != null) {
-            res.setWorksheet(worksheet);
-        }
-        if (headers != null) {
-            res.setHeaders(headers);
         }
     }
 
@@ -53,12 +49,6 @@ public class YamlExcelDataSource extends AbstractYamlDataSource<ExcelDataPool> {
         super.fillFromDataPoolConfiguration(dataPoolConfiguration, isForWriteEditable);
         if (dataPoolConfiguration.getFile() != null) {
             this.file = YamlResourceReference.fromDynamicValue(dataPoolConfiguration.getFile());
-        }
-        if (dataPoolConfiguration.getHeaders() != null) {
-            this.headers = dataPoolConfiguration.getHeaders();
-        }
-        if (dataPoolConfiguration.getWorksheet() != null) {
-            this.worksheet = dataPoolConfiguration.getWorksheet();
         }
     }
 }

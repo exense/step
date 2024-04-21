@@ -29,19 +29,4 @@ public class YamlFolderDataSource extends AbstractYamlDataSource<DirectoryDataPo
         super("folder");
     }
 
-    @Override
-    public void fillDataPoolConfiguration(DirectoryDataPool res) {
-        super.fillDataPoolConfiguration(res);
-        if (folder != null) {
-            res.setFolder(this.folder);
-        }
-    }
-
-    @Override
-    public void fillFromDataPoolConfiguration(DirectoryDataPool dataPoolConfiguration, boolean isForWriteEditable) {
-        super.fillFromDataPoolConfiguration(dataPoolConfiguration, isForWriteEditable);
-        if (dataPoolConfiguration.getFolder() != null) {
-            this.folder = dataPoolConfiguration.getFolder();
-        }
-    }
 }

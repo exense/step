@@ -21,7 +21,7 @@ package step.artefacts;
 import step.artefacts.automation.YamlForEachBlock;
 import step.automation.packages.AutomationPackageNamedEntity;
 import step.core.artefacts.Artefact;
-import step.plans.parser.yaml.model.YamlModel;
+import step.core.yaml.YamlModel;
 
 @YamlModel(model = YamlForEachBlock.class)
 @AutomationPackageNamedEntity(name = "forEach")

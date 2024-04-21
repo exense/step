@@ -34,49 +34,4 @@ public class YamlSqlDataSource extends AbstractYamlDataSource<SQLTableDataPoolCo
         super("sql");
     }
 
-    @Override
-    public void fillDataPoolConfiguration(SQLTableDataPoolConfiguration config) {
-        super.fillDataPoolConfiguration(config);
-        if (this.connectionString != null) {
-            config.setConnectionString(connectionString);
-        }
-        if (this.query != null) {
-            config.setQuery(query);
-        }
-        if (this.user != null) {
-            config.setUser(user);
-        }
-        if (this.password != null) {
-            config.setPassword(this.password);
-        }
-        if (this.writePKey != null) {
-            config.setWritePKey(this.writePKey);
-        }
-        if (this.driverClass != null) {
-            config.setDriverClass(this.driverClass);
-        }
-    }
-
-    @Override
-    public void fillFromDataPoolConfiguration(SQLTableDataPoolConfiguration dataPoolConfiguration, boolean isForWriteEditable) {
-        super.fillFromDataPoolConfiguration(dataPoolConfiguration, isForWriteEditable);
-        if (dataPoolConfiguration.getConnectionString() != null) {
-            this.connectionString = dataPoolConfiguration.getConnectionString();
-        }
-        if (dataPoolConfiguration.getQuery() != null) {
-            this.query = dataPoolConfiguration.getQuery();
-        }
-        if (dataPoolConfiguration.getUser() != null) {
-            this.user = dataPoolConfiguration.getUser();
-        }
-        if (dataPoolConfiguration.getPassword() != null) {
-            this.password = dataPoolConfiguration.getPassword();
-        }
-        if (dataPoolConfiguration.getWritePKey() != null) {
-            this.writePKey = dataPoolConfiguration.getWritePKey();
-        }
-        if (dataPoolConfiguration.getDriverClass() != null) {
-            this.driverClass = dataPoolConfiguration.getDriverClass();
-        }
-    }
 }

@@ -22,12 +22,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.artefacts.Check;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.yaml.YamlFieldCustomCopy;
 import step.plans.parser.yaml.model.AbstractYamlArtefact;
 
 public class YamlCheck extends AbstractYamlArtefact<Check> {
 
     private static final Logger log = LoggerFactory.getLogger(YamlCheck.class);
 
+    @YamlFieldCustomCopy
     private String expression = null;
 
     public YamlCheck() {

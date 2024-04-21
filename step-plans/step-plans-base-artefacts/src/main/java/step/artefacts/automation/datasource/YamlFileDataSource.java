@@ -18,11 +18,13 @@
  ******************************************************************************/
 package step.artefacts.automation.datasource;
 
+import step.core.yaml.YamlFieldCustomCopy;
 import step.datapool.file.FileDataPool;
 import step.plans.parser.yaml.model.YamlResourceReference;
 
 public class YamlFileDataSource<T extends FileDataPool> extends AbstractYamlDataSource<T> {
 
+    @YamlFieldCustomCopy
     protected YamlResourceReference file = new YamlResourceReference();
 
     public YamlFileDataSource() {
@@ -34,8 +36,8 @@ public class YamlFileDataSource<T extends FileDataPool> extends AbstractYamlData
     }
 
     @Override
-    public void fillDataPoolConfiguration(T res) {
-        super.fillDataPoolConfiguration(res);
+    public void fillDataPoolConfiguration(T res, boolean isForWriteEditable) {
+        super.fillDataPoolConfiguration(res, isForWriteEditable);
         if (file != null) {
             res.setFile(file.toDynamicValue());
         }

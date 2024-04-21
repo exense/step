@@ -22,6 +22,7 @@ import com.google.common.collect.Lists;
 import step.artefacts.*;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.yaml.YamlFieldCustomCopy;
 import step.jsonschema.JsonSchema;
 import step.plans.parser.yaml.model.AbstractYamlArtefact;
 
@@ -29,12 +30,14 @@ import java.util.List;
 
 public class YamlPerformanceAssert extends AbstractYamlArtefact<PerformanceAssert> {
 
+    @YamlFieldCustomCopy
     private DynamicValue<String> measurementName = new DynamicValue<>();
-    private Aggregator aggregator = Aggregator.AVG;
-    private Comparator comparator = Comparator.LOWER_THAN;
+
+    protected Aggregator aggregator = Aggregator.AVG;
+    protected Comparator comparator = Comparator.LOWER_THAN;
 
     @JsonSchema(defaultConstant = "3000")
-    private DynamicValue<Number> expectedValue = new DynamicValue<Number>(3000l);
+    protected DynamicValue<Number> expectedValue = new DynamicValue<Number>(3000l);
 
     public YamlPerformanceAssert() {
         super(PerformanceAssert.class);
@@ -43,15 +46,6 @@ public class YamlPerformanceAssert extends AbstractYamlArtefact<PerformanceAsser
     @Override
     protected void fillArtefactFields(PerformanceAssert res) {
         super.fillArtefactFields(res);
-        if (this.aggregator != null) {
-            res.setAggregator(this.aggregator);
-        }
-        if (this.comparator != null) {
-            res.setComparator(this.comparator);
-        }
-        if (this.expectedValue != null) {
-            res.setExpectedValue(expectedValue);
-        }
 
         Filter filter = new Filter();
         filter.setField(new DynamicValue<>(AbstractOrganizableObject.NAME));
@@ -65,15 +59,6 @@ public class YamlPerformanceAssert extends AbstractYamlArtefact<PerformanceAsser
     @Override
     protected void fillYamlArtefactFields(PerformanceAssert artefact) {
         super.fillYamlArtefactFields(artefact);
-        if (artefact.getAggregator() != null) {
-            this.aggregator = artefact.getAggregator();
-        }
-        if (artefact.getComparator() != null) {
-            this.comparator = artefact.getComparator();
-        }
-        if (artefact.getExpectedValue() != null) {
-            this.expectedValue = artefact.getExpectedValue();
-        }
 
         List<Filter> filters = artefact.getFilters();
         if (filters != null && !filters.isEmpty()) {

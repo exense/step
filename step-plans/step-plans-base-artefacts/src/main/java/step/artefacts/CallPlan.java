@@ -24,7 +24,7 @@ import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.entities.EntityManager;
 import step.core.entities.EntityReference;
-import step.plans.parser.yaml.model.YamlModel;
+import step.core.yaml.YamlModel;
 
 @YamlModel
 @AutomationPackageNamedEntity(name = "callPlan")

@@ -22,7 +22,7 @@ import step.artefacts.automation.datasource.YamlJsonArrayDataSource;
 import step.automation.packages.AutomationPackageNamedEntity;
 import step.core.dynamicbeans.DynamicValue;
 import step.datapool.DataPoolConfiguration;
-import step.plans.parser.yaml.model.YamlModel;
+import step.core.yaml.YamlModel;
 
 @YamlModel(model = YamlJsonArrayDataSource.class)
 @AutomationPackageNamedEntity(name = "json-array")

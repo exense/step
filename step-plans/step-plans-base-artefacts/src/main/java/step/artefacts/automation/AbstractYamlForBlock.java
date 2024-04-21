@@ -41,46 +41,6 @@ public class AbstractYamlForBlock<T extends AbstractForBlock> extends AbstractYa
     }
 
     @Override
-    protected void fillArtefactFields(T res) {
-        super.fillArtefactFields(res);
-        if (item != null) {
-            res.setItem(item);
-        }
-        if (maxFailedLoops != null) {
-            res.setMaxFailedLoops(maxFailedLoops);
-        }
-        if (threads != null) {
-            res.setThreads(threads);
-        }
-        if (globalCounter != null) {
-            res.setGlobalCounter(globalCounter);
-        }
-        if (userItem != null) {
-            res.setUserItem(userItem);
-        }
-    }
-
-    @Override
-    protected void fillYamlArtefactFields(T artefact) {
-        super.fillYamlArtefactFields(artefact);
-        if (artefact.getItem() != null) {
-            this.item = artefact.getItem();
-        }
-        if (artefact.getMaxFailedLoops() != null) {
-            this.maxFailedLoops = artefact.getMaxFailedLoops();
-        }
-        if (artefact.getThreads() != null) {
-            this.threads = artefact.getThreads();
-        }
-        if (artefact.getGlobalCounter() != null) {
-            this.globalCounter = artefact.getGlobalCounter();
-        }
-        if (artefact.getUserItem() != null) {
-            this.userItem = artefact.getUserItem();
-        }
-    }
-
-    @Override
     protected T createArtefactInstance() {
         T res = super.createArtefactInstance();
         res.init();

@@ -23,41 +23,14 @@ import step.core.dynamicbeans.DynamicValue;
 
 public class YamlFunctionGroup extends YamlTokenSelector<FunctionGroup> {
 
-    private DynamicValue<String> dockerImage = new DynamicValue<>();
+    protected DynamicValue<String> dockerImage = new DynamicValue<>();
 
-    private DynamicValue<String> containerUser = new DynamicValue<>();
+    protected DynamicValue<String> containerUser = new DynamicValue<>();
 
-    private DynamicValue<String> containerCommand = new DynamicValue<>();
+    protected DynamicValue<String> containerCommand = new DynamicValue<>();
 
     public YamlFunctionGroup() {
         super(FunctionGroup.class);
     }
 
-    @Override
-    protected void fillArtefactFields(FunctionGroup res) {
-        super.fillArtefactFields(res);
-        if (dockerImage != null) {
-            res.setDockerImage(dockerImage);
-        }
-        if (containerCommand != null) {
-            res.setContainerCommand(containerCommand);
-        }
-        if (containerUser != null) {
-            res.setContainerUser(containerUser);
-        }
-    }
-
-    @Override
-    protected void fillYamlArtefactFields(FunctionGroup artefact) {
-        super.fillYamlArtefactFields(artefact);
-        if (artefact.getDockerImage() != null) {
-            this.dockerImage = artefact.getDockerImage();
-        }
-        if (artefact.getContainerUser() != null) {
-            this.containerUser = artefact.getContainerUser();
-        }
-        if (artefact.getContainerCommand() != null) {
-            this.containerCommand = artefact.getContainerCommand();
-        }
-    }
 }

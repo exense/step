@@ -24,49 +24,12 @@ import step.plans.parser.yaml.model.AbstractYamlArtefact;
 
 public class YamlSequence extends AbstractYamlArtefact<Sequence> {
 
-    private DynamicValue<Boolean> continueOnError = new DynamicValue<Boolean>(false);
+    protected DynamicValue<Boolean> continueOnError = new DynamicValue<Boolean>(false);
 
-    private DynamicValue<Long> pacing = new DynamicValue<Long>();
+    protected DynamicValue<Long> pacing = new DynamicValue<Long>();
 
     public YamlSequence() {
         super(Sequence.class);
     }
 
-    @Override
-    protected void fillArtefactFields(Sequence res) {
-        super.fillArtefactFields(res);
-        if (this.getContinueOnError() != null) {
-            res.setContinueOnError(this.getContinueOnError());
-        }
-        if (this.getPacing() != null) {
-            res.setPacing(this.getPacing());
-        }
-    }
-
-    @Override
-    protected void fillYamlArtefactFields(Sequence artefact) {
-        super.fillYamlArtefactFields(artefact);
-        if (artefact.getContinueOnError() != null) {
-            this.setContinueOnError(artefact.getContinueOnError());
-        }
-        if (artefact.getPacing() != null) {
-            this.setPacing(artefact.getPacing());
-        }
-    }
-
-    public DynamicValue<Boolean> getContinueOnError() {
-        return continueOnError;
-    }
-
-    public void setContinueOnError(DynamicValue<Boolean> continueOnError) {
-        this.continueOnError = continueOnError;
-    }
-
-    public DynamicValue<Long> getPacing() {
-        return pacing;
-    }
-
-    public void setPacing(DynamicValue<Long> pacing) {
-        this.pacing = pacing;
-    }
 }

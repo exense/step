@@ -19,9 +19,8 @@
 package step.artefacts.automation.datasource;
 
 import step.automation.packages.AutomationPackageNamedEntityUtils;
-import step.core.artefacts.AbstractArtefact;
 import step.datapool.DataPoolConfiguration;
-import step.plans.parser.yaml.model.YamlModel;
+import step.core.yaml.YamlModel;
 
 import java.util.*;
 import java.util.stream.Collectors;

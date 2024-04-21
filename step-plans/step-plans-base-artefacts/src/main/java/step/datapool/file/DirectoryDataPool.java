@@ -22,7 +22,7 @@ import step.artefacts.automation.datasource.YamlFolderDataSource;
 import step.automation.packages.AutomationPackageNamedEntity;
 import step.core.dynamicbeans.DynamicValue;
 import step.datapool.DataPoolConfiguration;
-import step.plans.parser.yaml.model.YamlModel;
+import step.core.yaml.YamlModel;
 
 @YamlModel(model = YamlFolderDataSource.class)
 @AutomationPackageNamedEntity(name = "folder")

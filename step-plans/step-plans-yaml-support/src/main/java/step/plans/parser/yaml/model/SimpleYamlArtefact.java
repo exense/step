@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import step.core.artefacts.AbstractArtefact;
+import step.core.yaml.YamlModel;
 import step.plans.parser.yaml.SerializationUtils;
 
 import java.io.IOException;

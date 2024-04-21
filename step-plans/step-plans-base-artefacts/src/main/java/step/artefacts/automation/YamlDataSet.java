@@ -22,6 +22,7 @@ import step.artefacts.DataSetArtefact;
 import step.artefacts.automation.datasource.AbstractYamlDataSource;
 import step.artefacts.automation.datasource.NamedYamlDataSource;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.yaml.YamlFieldCustomCopy;
 import step.jsonschema.JsonSchema;
 
 public class YamlDataSet extends AbstractYamlForBlock<DataSetArtefact> {
@@ -29,6 +30,7 @@ public class YamlDataSet extends AbstractYamlForBlock<DataSetArtefact> {
     protected DynamicValue<Boolean> resetAtEnd = null;
 
     @JsonSchema(customJsonSchemaProcessor = NamedYamlDataSource.WithForWriteSchemaProcessor.class)
+    @YamlFieldCustomCopy
     protected NamedYamlDataSource dataSource = null;
 
     public YamlDataSet() {
@@ -38,22 +40,15 @@ public class YamlDataSet extends AbstractYamlForBlock<DataSetArtefact> {
     @Override
     protected void fillArtefactFields(DataSetArtefact res) {
         super.fillArtefactFields(res);
-        if (resetAtEnd != null) {
-            res.setResetAtEnd(this.resetAtEnd);
-        }
-
         if (dataSource != null) {
             res.setDataSourceType(dataSource.getYamlDataSource().getDataSourceType());
-            res.setDataSource(dataSource.getYamlDataSource().toDataPoolConfiguration());
+            res.setDataSource(dataSource.getYamlDataSource().toDataPoolConfiguration(true));
         }
     }
 
     @Override
     protected void fillYamlArtefactFields(DataSetArtefact artefact) {
         super.fillYamlArtefactFields(artefact);
-        if (artefact.getResetAtEnd() != null) {
-            this.resetAtEnd = artefact.getResetAtEnd();
-        }
         if (artefact.getDataSource() != null) {
             this.dataSource = new NamedYamlDataSource(AbstractYamlDataSource.fromDataPoolConfiguration(artefact.getDataSource(), true));
         }

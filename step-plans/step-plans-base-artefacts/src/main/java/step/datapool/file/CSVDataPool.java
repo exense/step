@@ -21,7 +21,7 @@ package step.datapool.file;
 import step.artefacts.automation.datasource.YamlCsvDataSource;
 import step.automation.packages.AutomationPackageNamedEntity;
 import step.core.dynamicbeans.DynamicValue;
-import step.plans.parser.yaml.model.YamlModel;
+import step.core.yaml.YamlModel;
 
 @YamlModel(model = YamlCsvDataSource.class)
 @AutomationPackageNamedEntity(name = "csv")

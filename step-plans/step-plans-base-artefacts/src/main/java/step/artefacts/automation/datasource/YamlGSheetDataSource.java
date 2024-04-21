@@ -19,13 +19,17 @@
 package step.artefacts.automation.datasource;
 
 import step.core.dynamicbeans.DynamicValue;
+import step.core.yaml.YamlFieldCustomCopy;
 import step.datapool.gsheet.GoogleSheetv4DataPoolConfiguration;
 import step.plans.parser.yaml.model.YamlResourceReference;
 
 public class YamlGSheetDataSource extends AbstractYamlDataSource<GoogleSheetv4DataPoolConfiguration> {
 
     protected DynamicValue<String> fileId = new DynamicValue<String>("");
+
+    @YamlFieldCustomCopy
     protected YamlResourceReference serviceAccountKey = new YamlResourceReference();
+
     protected DynamicValue<String> tabName = new DynamicValue<String>("");
 
     public YamlGSheetDataSource() {
@@ -33,14 +37,8 @@ public class YamlGSheetDataSource extends AbstractYamlDataSource<GoogleSheetv4Da
     }
 
     @Override
-    public void fillDataPoolConfiguration(GoogleSheetv4DataPoolConfiguration res) {
-        super.fillDataPoolConfiguration(res);
-        if (fileId != null) {
-            res.setFileId(fileId);
-        }
-        if (tabName != null) {
-            res.setTabName(tabName);
-        }
+    public void fillDataPoolConfiguration(GoogleSheetv4DataPoolConfiguration res, boolean isForWriteEditable) {
+        super.fillDataPoolConfiguration(res, isForWriteEditable);
         if (serviceAccountKey != null) {
             res.setServiceAccountKey(serviceAccountKey.toDynamicValue());
         }
@@ -49,12 +47,6 @@ public class YamlGSheetDataSource extends AbstractYamlDataSource<GoogleSheetv4Da
     @Override
     public void fillFromDataPoolConfiguration(GoogleSheetv4DataPoolConfiguration dataPoolConfiguration, boolean isForWriteEditable) {
         super.fillFromDataPoolConfiguration(dataPoolConfiguration, isForWriteEditable);
-        if (dataPoolConfiguration.getFileId() != null) {
-            this.fileId = dataPoolConfiguration.getFileId();
-        }
-        if (dataPoolConfiguration.getTabName() != null) {
-            this.tabName = dataPoolConfiguration.getTabName();
-        }
         if (dataPoolConfiguration.getServiceAccountKey() != null) {
             this.serviceAccountKey = YamlResourceReference.fromDynamicValue(dataPoolConfiguration.getServiceAccountKey());
         }

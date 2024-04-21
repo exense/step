@@ -22,7 +22,7 @@ import step.automation.packages.AutomationPackageNamedEntityUtils;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.plans.parser.yaml.model.AbstractYamlArtefact;
-import step.plans.parser.yaml.model.YamlModel;
+import step.core.yaml.YamlModel;
 
 import java.util.ArrayList;
 import java.util.HashMap;

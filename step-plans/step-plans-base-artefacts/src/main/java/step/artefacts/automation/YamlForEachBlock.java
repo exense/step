@@ -21,9 +21,11 @@ package step.artefacts.automation;
 import step.artefacts.ForEachBlock;
 import step.artefacts.automation.datasource.AbstractYamlDataSource;
 import step.artefacts.automation.datasource.NamedYamlDataSource;
+import step.core.yaml.YamlFieldCustomCopy;
 
 public class YamlForEachBlock extends AbstractYamlForBlock<ForEachBlock> {
 
+    @YamlFieldCustomCopy
     protected NamedYamlDataSource dataSource;
 
     public YamlForEachBlock() {
@@ -35,7 +37,7 @@ public class YamlForEachBlock extends AbstractYamlForBlock<ForEachBlock> {
         super.fillArtefactFields(res);
         if (dataSource != null) {
             res.setDataSourceType(dataSource.getYamlDataSource().getDataSourceType());
-            res.setDataSource(dataSource.getYamlDataSource().toDataPoolConfiguration());
+            res.setDataSource(dataSource.getYamlDataSource().toDataPoolConfiguration(false));
         }
     }
 

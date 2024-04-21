@@ -16,17 +16,26 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.artefacts.automation.datasource;
+package step.core.yaml;
 
-import step.core.dynamicbeans.DynamicValue;
-import step.datapool.file.CSVDataPool;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 
-public class YamlCsvDataSource extends YamlFileDataSource<CSVDataPool> {
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-    protected DynamicValue<String> delimiter = new DynamicValue<String>(",");
+@Target(ElementType.TYPE)
+@Retention(RUNTIME)
+public @interface YamlModel {
 
-    public YamlCsvDataSource() {
-        super("csv");
-    }
+    /**
+     * The reference to the special model class. If not defined, the current class itself will be used as the model
+     * class for yaml representation
+     */
+    Class<?> model() default None.class;
 
+    /**
+     * Void class to be used in annotations instead of null-values
+     */
+    final class None {}
 }

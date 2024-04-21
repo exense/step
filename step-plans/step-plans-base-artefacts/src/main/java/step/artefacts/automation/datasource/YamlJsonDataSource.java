@@ -29,19 +29,4 @@ public class YamlJsonDataSource extends AbstractYamlDataSource<JsonStringDataPoo
         super("json");
     }
 
-    @Override
-    public void fillDataPoolConfiguration(JsonStringDataPoolConfiguration res) {
-        super.fillDataPoolConfiguration(res);
-        if (json != null) {
-            res.setJson(json);
-        }
-    }
-
-    @Override
-    public void fillFromDataPoolConfiguration(JsonStringDataPoolConfiguration dataPoolConfiguration, boolean isForWriteEditable) {
-        super.fillFromDataPoolConfiguration(dataPoolConfiguration, isForWriteEditable);
-        if (dataPoolConfiguration.getJson() != null) {
-            this.json = dataPoolConfiguration.getJson();
-        }
-    }
 }
