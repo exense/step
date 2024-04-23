@@ -16,11 +16,11 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.yaml.schema;
+package step.plans.parser.yaml.automation.schema;
 
 import jakarta.json.JsonObjectBuilder;
-import step.automation.packages.model.AutomationPackageSchedule;
-import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
+import step.automation.packages.yaml.schema.AutomationPackageJsonSchemaExtension;
+import step.plans.parser.yaml.automation.model.AutomationPackageSchedule;
 import step.core.yaml.schema.AggregatedJsonSchemaFieldProcessor;
 import step.core.yaml.schema.JsonSchemaExtension;
 import step.core.yaml.schema.YamlJsonSchemaHelper;
@@ -30,9 +30,10 @@ import step.jsonschema.DefaultFieldMetadataExtractor;
 import java.util.ArrayList;
 import java.util.List;
 
-import static step.automation.packages.yaml.schema.YamlScheduleSchemaGenerator.SCHEDULE_DEF;
-
 public class AutomationPackageSchedulesJsonSchema implements AutomationPackageJsonSchemaExtension {
+
+    public static final String SCHEDULE_DEF = "ScheduleDef";
+    public static final String SCHEDULES_FIELD_NAME = "schedules";
 
     @Override
     public List<JsonSchemaExtension> getExtendedDefinitions() {
@@ -46,7 +47,7 @@ public class AutomationPackageSchedulesJsonSchema implements AutomationPackageJs
 
     @Override
     public List<JsonSchemaExtension> getAdditionalAutomationPackageFields() {
-        return List.of((jsonSchemaBuilder, jsonProvider) -> jsonSchemaBuilder.add(AutomationPackageFragmentYaml.SCHEDULES_FIELD_NAME,
+        return List.of((jsonSchemaBuilder, jsonProvider) -> jsonSchemaBuilder.add(SCHEDULES_FIELD_NAME,
                 jsonProvider.createObjectBuilder()
                         .add("type", "array")
                         .add("items", YamlJsonSchemaHelper.addRef(jsonProvider.createObjectBuilder(), SCHEDULE_DEF))

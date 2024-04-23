@@ -19,7 +19,7 @@
 package step.automation.packages.client;
 
 import step.automation.packages.AutomationPackageUpdateResult;
-import step.automation.packages.execution.AutomationPackageExecutionParameters;
+import step.core.execution.model.AutomationPackageExecutionParameters;
 
 import java.io.Closeable;
 import java.io.File;

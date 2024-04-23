@@ -20,12 +20,12 @@ package step.automation.packages.yaml;
 
 import org.junit.Test;
 import step.automation.packages.AutomationPackageReadingException;
-import step.automation.packages.model.AutomationPackageSchedule;
 import step.automation.packages.model.YamlAutomationPackageKeyword;
 import step.automation.packages.yaml.deserialization.AutomationPackageSerializationRegistry;
-import step.automation.packages.yaml.deserialization.Registration;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
-import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
+import step.plans.parser.yaml.automation.model.AutomationPackageSchedule;
+import step.plans.parser.yaml.automation.schema.AutomationPackageSchedulesJsonSchema;
+import step.plans.parser.yaml.automation.serialization.AutomationPackageSchedulesRegistration;
 import step.plans.parser.yaml.model.YamlPlan;
 import step.plugins.jmeter.automation.YamlJMeterFunction;
 
@@ -44,7 +44,7 @@ public class AutomationPackageDescriptorReaderTest {
 
     public AutomationPackageDescriptorReaderTest() {
         AutomationPackageSerializationRegistry serializationRegistry = new AutomationPackageSerializationRegistry();
-        Registration.registerSerialization(serializationRegistry);
+        AutomationPackageSchedulesRegistration.registerSerialization(serializationRegistry);
         reader = new AutomationPackageDescriptorReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, serializationRegistry);
     }
 
@@ -93,7 +93,7 @@ public class AutomationPackageDescriptorReaderTest {
             assertEquals("Second Plan", plans.get(1).getName());
 
             // check parsed scheduler
-            List<AutomationPackageSchedule> schedules = descriptor.getAdditionalField(AutomationPackageFragmentYaml.SCHEDULES_FIELD_NAME);
+            List<AutomationPackageSchedule> schedules = descriptor.getAdditionalField(AutomationPackageSchedulesJsonSchema.SCHEDULES_FIELD_NAME);
             assertEquals(2, schedules.size());
             AutomationPackageSchedule firstTask = schedules.get(0);
             assertEquals("My first task", firstTask.getName());

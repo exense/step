@@ -16,13 +16,14 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.yaml.deserialization;
+package step.plans.parser.yaml.automation.serialization;
 
-import step.automation.packages.model.AutomationPackageSchedule;
-import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
+import step.automation.packages.yaml.deserialization.AutomationPackageSerializationRegistry;
+import step.plans.parser.yaml.automation.model.AutomationPackageSchedule;
+import step.plans.parser.yaml.automation.schema.AutomationPackageSchedulesJsonSchema;
 
-public class Registration {
+public class AutomationPackageSchedulesRegistration {
     public static void registerSerialization(AutomationPackageSerializationRegistry serRegistry) {
-        serRegistry.register(AutomationPackageFragmentYaml.SCHEDULES_FIELD_NAME, AutomationPackageSchedule.class);
+        serRegistry.register(AutomationPackageSchedulesJsonSchema.SCHEDULES_FIELD_NAME, AutomationPackageSchedule.class);
     }
 }

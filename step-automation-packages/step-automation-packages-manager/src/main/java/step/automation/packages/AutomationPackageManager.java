@@ -23,15 +23,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.automation.packages.accessor.AutomationPackageAccessor;
 import step.automation.packages.accessor.InMemoryAutomationPackageAccessorImpl;
-import step.automation.packages.hooks.AutomationPackageHook;
 import step.automation.packages.hooks.AutomationPackageHookRegistry;
 import step.automation.packages.model.AutomationPackageContent;
-import step.automation.packages.model.AutomationPackageSchedule;
-import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.collections.IndexField;
 import step.core.collections.Order;
-import step.core.execution.model.ExecutionParameters;
 import step.core.objectenricher.EnricheableObject;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectEnricherComposer;
@@ -39,8 +35,6 @@ import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.InMemoryPlanAccessor;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
-import step.core.repositories.RepositoryObjectReference;
-import step.core.scheduler.CronExclusion;
 import step.core.scheduler.ExecutionTaskAccessor;
 import step.core.scheduler.ExecutiontTaskParameters;
 import step.core.scheduler.InMemoryExecutionTaskAccessor;
@@ -81,8 +75,7 @@ public class AutomationPackageManager {
     protected final AutomationPackageReader packageReader;
 
     protected final ResourceManager resourceManager;
-    protected final AutomationPackageHookRegistry mainAutomationPackageHookRegistry;
-    protected final List<AutomationPackageHookRegistry> automationPackageHookRegistries;
+    protected final AutomationPackageHookRegistry automationPackageHookRegistry;
     protected boolean isIsolated = false;
     protected final AutomationPackageLocks automationPackageLocks;
 
@@ -114,14 +107,11 @@ public class AutomationPackageManager {
         this.executionTaskAccessor = executionTaskAccessor;
         this.executionTaskAccessor.createIndexIfNeeded(indexField);
 
-        this.mainAutomationPackageHookRegistry = automationPackageHookRegistry;
+        this.automationPackageHookRegistry = automationPackageHookRegistry;
         this.packageReader = packageReader;
         this.resourceManager = resourceManager;
         this.automationPackageLocks = automationPackageLocks;
 
-        AutomationPackageHookRegistry defaultHookRegistry = new AutomationPackageHookRegistry();
-        defaultHookRegistry.register(AutomationPackageFragmentYaml.SCHEDULES_FIELD_NAME, new DefaultExecutionTaskParameterHook());
-        this.automationPackageHookRegistries = List.of(this.mainAutomationPackageHookRegistry, defaultHookRegistry);
     }
 
     /**
@@ -185,7 +175,7 @@ public class AutomationPackageManager {
      * @return the automation manager with in-memory accessors for plans and keywords
      */
     public AutomationPackageManager createIsolated(ObjectId isolatedContextId, FunctionTypeRegistry functionTypeRegistry, FunctionAccessor mainFunctionAccessor){
-        return createIsolatedAutomationPackageManager(isolatedContextId, functionTypeRegistry, mainFunctionAccessor, getPackageReader(), mainAutomationPackageHookRegistry);
+        return createIsolatedAutomationPackageManager(isolatedContextId, functionTypeRegistry, mainFunctionAccessor, getPackageReader(), automationPackageHookRegistry);
     }
 
     public AutomationPackage getAutomationPackageById(ObjectId id, ObjectPredicate objectPredicate) {
@@ -445,8 +435,7 @@ public class AutomationPackageManager {
             message.append(String.format("New automation package saved (%s).", newPackage.getAttribute(AbstractOrganizableObject.NAME)));
         }
         message.append(String.format(" Plans: %s.", staging.plans.size()));
-        message.append(String.format(" Functions: %s.", staging.plans.size()));
-        message.append(String.format(" Schedules: %s.", staging.plans.size()));
+        message.append(String.format(" Functions: %s.", staging.functions.size()));
 
         for (Map.Entry<String, List<?>> additionalObjects : staging.additionalObjects.entrySet()) {
             message.append(String.format(" %s: %s.", additionalObjects.getKey(), additionalObjects.getValue().size()));
@@ -466,18 +455,12 @@ public class AutomationPackageManager {
         List<HookEntry> hookEntries = packageContent.getAdditionalData().entrySet().stream().map(e -> new HookEntry(e.getKey(), e.getValue())).collect(Collectors.toList());
 
         for (HookEntry hookEntry : hookEntries) {
-            boolean hooked = false;
-            for (AutomationPackageHookRegistry registry : automationPackageHookRegistries) {
-                hooked = registry.onPrepareStaging(
-                        hookEntry.fieldName,
-                        new AutomationPackageContext(staging.resourceManager, automationPackageArchive, enricherForIncludedEntities),
-                        packageContent,
-                        hookEntry.values,
-                        oldPackage, staging, this);
-                if (hooked) {
-                    break;
-                }
-            }
+            boolean hooked =  automationPackageHookRegistry.onPrepareStaging(
+                    hookEntry.fieldName,
+                    new AutomationPackageContext(staging.resourceManager, automationPackageArchive, enricherForIncludedEntities),
+                    packageContent,
+                    hookEntry.values,
+                    oldPackage, staging, this);
 
             if (!hooked) {
                 log.warn("Additional field in automation package has been ignored and skipped: " + hookEntry.fieldName);
@@ -513,21 +496,14 @@ public class AutomationPackageManager {
         // save task parameters and additional objects via hooks
         List<HookEntry> hookEntries = staging.additionalObjects.entrySet().stream().map(e -> new HookEntry(e.getKey(), e.getValue())).collect(Collectors.toList());
         for (HookEntry hookEntry : hookEntries) {
-            boolean hooked = false;
-            for (AutomationPackageHookRegistry registry : automationPackageHookRegistries) {
-                hooked = registry.onCreate(hookEntry.fieldName, hookEntry.values, objectEnricher, this);
-                if (hooked) {
-                    break;
-                }
-            }
-
+            boolean hooked = automationPackageHookRegistry.onCreate(hookEntry.fieldName, hookEntry.values, objectEnricher, this);
             if (!hooked) {
                 log.warn("Additional field in automation package has been ignored and skipped: " + hookEntry.fieldName);
             }
         }
     }
 
-    protected <T extends AbstractOrganizableObject & EnricheableObject> void fillEntities(List<T> entities, List<T> oldEntities, ObjectEnricher enricher) {
+    public <T extends AbstractOrganizableObject & EnricheableObject> void fillEntities(List<T> entities, List<T> oldEntities, ObjectEnricher enricher) {
         Map<String, ObjectId> nameToIdMap = createNameToIdMap(oldEntities);
 
         for (T e : entities) {
@@ -563,7 +539,7 @@ public class AutomationPackageManager {
         return completeFunctions;
     }
 
-    private Plan lookupPlanByName(List<Plan> plansStaging, String planName) {
+    public Plan lookupPlanByName(List<Plan> plansStaging, String planName) {
         Plan plan = plansStaging.stream().filter(p -> Objects.equals(p.getAttribute(AbstractOrganizableObject.NAME), planName)).findFirst().orElse(null);
         if (plan == null) {
             // schedule can reference the existing persisted plan (not defined inside the automation package)
@@ -654,19 +630,11 @@ public class AutomationPackageManager {
     }
 
     protected void deleteAdditionalData(AutomationPackage automationPackage) {
-        Set<String> alreadyCalledHooks = new HashSet<>();
-        for (AutomationPackageHookRegistry automationPackageHookRegistry : automationPackageHookRegistries) {
-            automationPackageHookRegistry.onAutomationPackageDelete(automationPackage, this, alreadyCalledHooks);
-            alreadyCalledHooks.addAll(automationPackageHookRegistry.unmodifiableRegistry().keySet());
-        }
+        automationPackageHookRegistry.onAutomationPackageDelete(automationPackage, this, null);
     }
 
     protected List<Function> getFunctionsByCriteria(Map<String, String> criteria) {
         return functionAccessor.findManyByCriteria(criteria).collect(Collectors.toList());
-    }
-
-    protected List<Function> getFunctionsByAttributes(Map<String, String> criteria) {
-        return StreamSupport.stream(functionAccessor.findManyByAttributes(criteria), false).collect(Collectors.toList());
     }
 
     public List<Function> getPackageFunctions(ObjectId automationPackageId) {
@@ -726,99 +694,6 @@ public class AutomationPackageManager {
             this.resourceManager.cleanup();
         } else {
             log.info("Skip automation package cleanup. Cleanup is only supported for isolated (in-memory) automation package manager");
-        }
-    }
-
-    public static class DefaultExecutionTaskParameterHook implements AutomationPackageHook<ExecutiontTaskParameters> {
-
-        public DefaultExecutionTaskParameterHook() {
-        }
-
-        @Override
-        public void onPrepareStaging(String fieldName, AutomationPackageContext apContext,
-                                     AutomationPackageContent apContent, List<?> objects,
-                                     AutomationPackage oldPackage, Staging targetStaging,
-                                     AutomationPackageManager manager) {
-            targetStaging.additionalObjects.put(
-                    AutomationPackageFragmentYaml.SCHEDULES_FIELD_NAME,
-                    prepareExecutionTasksParamsStaging((List<AutomationPackageSchedule>) objects, apContext.getEnricher(), apContent, oldPackage, targetStaging.getPlans(), manager)
-            );
-        }
-
-        @Override
-        public void onCreate(List<? extends ExecutiontTaskParameters> entities, ObjectEnricher enricher, AutomationPackageManager manager) {
-            for (ExecutiontTaskParameters entity : entities) {
-                //make sure the execution parameter of the schedule are enriched too (required to execute in same project
-                // as the schedule and populate event bindings
-                enricher.accept(entity.getExecutionsParameters());
-                manager.executionTaskAccessor.save(entity);
-            }
-        }
-
-        @Override
-        public void onDelete(AutomationPackage automationPackage, AutomationPackageManager manager) {
-            List<ExecutiontTaskParameters> schedules = manager.getPackageSchedules(automationPackage.getId());
-            for (ExecutiontTaskParameters schedule : schedules) {
-                try {
-                    manager.executionTaskAccessor.remove(schedule.getId());
-                } catch (Exception e) {
-                    log.error("Error while deleting task {} for automation package {}",
-                            schedule.getId().toString(), automationPackage.getAttribute(AbstractOrganizableObject.NAME), e
-                    );
-                }
-            }
-        }
-
-        protected List<ExecutiontTaskParameters> prepareExecutionTasksParamsStaging(List<AutomationPackageSchedule> objects,
-                                                                                    ObjectEnricher enricher,
-                                                                                    AutomationPackageContent packageContent,
-                                                                                    AutomationPackage oldPackage,
-                                                                                    List<Plan> plansStaging,
-                                                                                    AutomationPackageManager manager) {
-            List<ExecutiontTaskParameters> completeExecTasksParameters = new ArrayList<>();
-            for (AutomationPackageSchedule schedule : objects) {
-                ExecutiontTaskParameters execTaskParameters = new ExecutiontTaskParameters();
-
-                execTaskParameters.setActive(schedule.getActive() == null || schedule.getActive());
-                execTaskParameters.addAttribute(AbstractOrganizableObject.NAME, schedule.getName());
-                execTaskParameters.setCronExpression(schedule.getCron());
-                List<String> cronExclusionsAsStrings = schedule.getCronExclusions();
-                if (cronExclusionsAsStrings != null && cronExclusionsAsStrings.size() > 1) {
-                    List<CronExclusion> cronExclusions = cronExclusionsAsStrings.stream().map(s -> new CronExclusion(s, "")).collect(Collectors.toList());
-                    execTaskParameters.setCronExclusions(cronExclusions);
-                }
-                String assertionPlanName = schedule.getAssertionPlanName();
-                if (assertionPlanName != null && !assertionPlanName.isEmpty()) {
-                    Plan assertionPlan = manager.lookupPlanByName(plansStaging, assertionPlanName);
-                    if (assertionPlan == null) {
-                        throw new AutomationPackageManagerException("Invalid automation package: " + packageContent.getName() +
-                                ". No assertion plan with '" + assertionPlanName + "' name found for schedule " + schedule.getName());
-                    }
-                    execTaskParameters.setAssertionPlan(assertionPlan.getId());
-                }
-
-                String planNameFromSchedule = schedule.getPlanName();
-                if (planNameFromSchedule == null || planNameFromSchedule.isEmpty()) {
-                    throw new AutomationPackageManagerException("Invalid automation package: " + packageContent.getName() +
-                            ". Plan name is not defined for schedule " + schedule.getName());
-                }
-
-                Plan plan = manager.lookupPlanByName(plansStaging, planNameFromSchedule);
-                if (plan == null) {
-                    throw new AutomationPackageManagerException("Invalid automation package: " + packageContent.getName() +
-                            ". No plan with '" + planNameFromSchedule + "' name found for schedule " + schedule.getName());
-                }
-
-                RepositoryObjectReference repositoryObjectReference = new RepositoryObjectReference(
-                        RepositoryObjectReference.LOCAL_REPOSITORY_ID, Map.of(RepositoryObjectReference.PLAN_ID, plan.getId().toString())
-                );
-                ExecutionParameters executionParameters = new ExecutionParameters(repositoryObjectReference, plan.getAttribute(AbstractOrganizableObject.NAME),
-                        schedule.getExecutionParameters());
-                execTaskParameters.setExecutionsParameters(executionParameters);
-                completeExecTasksParameters.add(execTaskParameters);
-            }
-            manager.fillEntities(completeExecTasksParameters, oldPackage != null ? manager.getPackageSchedules(oldPackage.getId()) : new ArrayList<>(), enricher);
-            return completeExecTasksParameters;
         }
     }
 

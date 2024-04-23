@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.json.JsonObjectBuilder;
 import jakarta.json.spi.JsonProvider;
 import step.core.Version;
+import step.plans.parser.yaml.automation.schema.AutomationPackageSchedulesJsonSchema;
 import step.core.yaml.schema.JsonSchemaExtension;
 import step.core.yaml.schema.YamlJsonSchemaHelper;
 import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
@@ -43,7 +44,6 @@ public class YamlAutomationPackageSchemaGenerator {
     protected final JsonProvider jsonProvider = JsonProvider.provider();
     private final YamlKeywordSchemaGenerator keywordSchemaGenerator;
     private final YamlPlanJsonSchemaGenerator planSchemaGenerator;
-    private final YamlScheduleSchemaGenerator scheduleSchemaGenerator;
     protected final List<AutomationPackageJsonSchemaExtension> extensions;
 
     public YamlAutomationPackageSchemaGenerator(String targetPackage, Version actualVersion) {
@@ -51,7 +51,6 @@ public class YamlAutomationPackageSchemaGenerator {
         this.actualVersion = actualVersion;
         this.keywordSchemaGenerator = new YamlKeywordSchemaGenerator(jsonProvider);
         this.planSchemaGenerator = new YamlPlanJsonSchemaGenerator("step", YamlPlanVersions.ACTUAL_VERSION, null);
-        this.scheduleSchemaGenerator = new YamlScheduleSchemaGenerator(jsonProvider);
 
         this.extensions = new ArrayList<>();
         this.extensions.add(new AutomationPackageSchedulesJsonSchema());
@@ -84,8 +83,7 @@ public class YamlAutomationPackageSchemaGenerator {
 
     protected JsonObjectBuilder prepareDefinitions() throws JsonSchemaPreparationException {
         JsonObjectBuilder result = keywordSchemaGenerator.createKeywordDefs()
-                .addAll(planSchemaGenerator.createDefs())
-                .addAll(scheduleSchemaGenerator.createScheduleDefs());
+                .addAll(planSchemaGenerator.createDefs());
 
         for (AutomationPackageJsonSchemaExtension extension : extensions) {
             if (extension.getAdditionalAutomationPackageFields() != null) {
