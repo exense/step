@@ -18,14 +18,13 @@
  ******************************************************************************/
 package step.artefacts;
 
-import step.automation.packages.AutomationPackageNamedEntity;
+
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.YamlModel;
 
-@YamlModel
-@AutomationPackageNamedEntity(name = "sleep")
+@YamlModel(name = "sleep")
 @Artefact(block=false)
 public class Sleep extends AbstractArtefact {
 

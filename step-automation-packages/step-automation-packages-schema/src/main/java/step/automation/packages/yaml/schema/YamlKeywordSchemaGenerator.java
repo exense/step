@@ -21,7 +21,7 @@ package step.automation.packages.yaml.schema;
 import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObjectBuilder;
 import jakarta.json.spi.JsonProvider;
-import step.automation.packages.AutomationPackageNamedEntityUtils;
+import step.automation.packages.YamlModelUtils;
 import step.automation.packages.model.AbstractYamlFunction;
 import step.automation.packages.yaml.AutomationPackageKeywordsLookuper;
 import step.core.scanner.CachedAnnotationScanner;
@@ -116,7 +116,7 @@ public class YamlKeywordSchemaGenerator {
         HashMap<String, JsonObjectBuilder> result = new HashMap<>();
         List<Class<? extends AbstractYamlFunction<?>>> automationPackageKeywords = automationPackageKeywordsLookuper.getAutomationPackageKeywords();
         for (Class<? extends AbstractYamlFunction<?>> automationPackageKeyword : automationPackageKeywords) {
-            String yamlName = AutomationPackageNamedEntityUtils.getEntityNameByClass(automationPackageKeyword);
+            String yamlName = YamlModelUtils.getEntityNameByClass(automationPackageKeyword);
             String defName = yamlName + "Def";
             result.put(defName, schemaHelper.createNamedObjectImplDef(yamlName, automationPackageKeyword, jsonSchemaCreator, false));
         }

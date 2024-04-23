@@ -18,12 +18,10 @@
  ******************************************************************************/
 package step.artefacts;
 
-import step.automation.packages.AutomationPackageNamedEntity;
 import step.core.artefacts.Artefact;
 import step.core.yaml.YamlModel;
 
-@YamlModel
-@AutomationPackageNamedEntity(name = "afterThread")
+@YamlModel(name = "afterThread")
 @Artefact()
 public class AfterThread extends Sequence {
 	

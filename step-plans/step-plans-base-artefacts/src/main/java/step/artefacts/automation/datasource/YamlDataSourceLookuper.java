@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.artefacts.automation.datasource;
 
-import step.automation.packages.AutomationPackageNamedEntityUtils;
+import step.automation.packages.YamlModelUtils;
 import step.datapool.DataPoolConfiguration;
 import step.core.yaml.YamlModel;
 
@@ -37,9 +37,7 @@ public class YamlDataSourceLookuper {
     }
 
     private static List<Class<? extends DataPoolConfiguration>> getDataPools(){
-        return AutomationPackageNamedEntityUtils.scanNamedEntityClasses(DataPoolConfiguration.class).stream()
-                .map(c -> (Class<? extends DataPoolConfiguration>) c)
-                .collect(Collectors.toList());
+        return new ArrayList<>(YamlModelUtils.scanNamedYamlModels(DataPoolConfiguration.class));
     }
 
     public static List<Class<? extends AbstractYamlDataSource<?>>> getYamlDataSources() {
@@ -61,7 +59,7 @@ public class YamlDataSourceLookuper {
     public static Class<? extends AbstractYamlDataSource<?>> getModelClassByYamlName(String yamlName) {
         Collection<Class<? extends DataPoolConfiguration>> dataPoolConfigurations = MODEL_TO_DATAPOOL_MAP.values();
         for (Class<? extends DataPoolConfiguration> dataPool : dataPoolConfigurations) {
-            String expectedYamlName = AutomationPackageNamedEntityUtils.getEntityNameByClass(dataPool);
+            String expectedYamlName = YamlModelUtils.getEntityNameByClass(dataPool);
 
             if (yamlName.equalsIgnoreCase(expectedYamlName)) {
                 return resolveYamlDataSource(dataPool);

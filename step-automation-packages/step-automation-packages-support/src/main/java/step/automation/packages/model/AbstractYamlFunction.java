@@ -20,7 +20,7 @@ package step.automation.packages.model;
 
 import jakarta.json.JsonObject;
 import step.automation.packages.AutomationPackageContext;
-import step.automation.packages.AutomationPackageNamedEntityUtils;
+import step.automation.packages.YamlModelUtils;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.AbstractYamlModel;
@@ -127,7 +127,7 @@ public abstract class AbstractYamlFunction<T extends Function> extends AbstractY
 
         @Override
         public String getDefaultValue(Class<?> objectClass, Field field) {
-            return AutomationPackageNamedEntityUtils.getEntityNameByClass(objectClass);
+            return YamlModelUtils.getEntityNameByClass(objectClass);
         }
     }
 }

@@ -19,39 +19,49 @@
 package step.automation.packages;
 
 import step.core.scanner.CachedAnnotationScanner;
+import step.core.yaml.YamlModel;
 
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
-public class AutomationPackageNamedEntityUtils {
+public class YamlModelUtils {
 
-    public static List<Class<?>> scanNamedEntityClasses(Class<?> applicableClass) {
-        return CachedAnnotationScanner.getClassesWithAnnotation(AutomationPackageNamedEntity.LOCATION, AutomationPackageNamedEntity.class, Thread.currentThread().getContextClassLoader())
+    public static <T> List<Class<? extends T>> scanYamlModels(Class<T> applicableClass) {
+        return CachedAnnotationScanner.getClassesWithAnnotation(YamlModel.LOCATION, YamlModel.class, Thread.currentThread().getContextClassLoader())
                 .stream()
                 .filter(applicableClass::isAssignableFrom)
+                .map(c -> (Class<? extends T>) c)
                 .sorted(Comparator.comparing(Class::getSimpleName))
                 .collect(Collectors.toList());
     }
 
-    public static String getEntityNameByClass(Class<?> namedEntityClass) {
-        boolean annotationPresent = namedEntityClass.isAnnotationPresent(AutomationPackageNamedEntity.class);
+    public static <T> List<Class<? extends T>> scanNamedYamlModels(Class<T> applicableClass) {
+        return scanYamlModels(applicableClass).stream().filter(c -> c.getAnnotation(YamlModel.class).named()).collect(Collectors.toList());
+    }
+
+    public static String getEntityNameByClass(Class<?> yamlModelClass) {
+        boolean annotationPresent = yamlModelClass.isAnnotationPresent(YamlModel.class);
         String nameFromAnnotation = null;
         if (annotationPresent) {
-            nameFromAnnotation = namedEntityClass.getAnnotation(AutomationPackageNamedEntity.class).name();
+            if(!yamlModelClass.getAnnotation(YamlModel.class).named()){
+                return null;
+            }
+            nameFromAnnotation = yamlModelClass.getAnnotation(YamlModel.class).name();
         }
 
         if (nameFromAnnotation == null || nameFromAnnotation.isEmpty()) {
-            return namedEntityClass.getSimpleName();
+            return yamlModelClass.getSimpleName();
         } else {
             return nameFromAnnotation;
         }
     }
 
-    public static Class<?> getClassByEntityName(String entityName, Collection<Class<?>> candidates) {
-        for (Class<?> candidate : candidates) {
-            if (entityName.equals(getEntityNameByClass(candidate))) {
+    public static <T> Class<? extends T> getClassByEntityName(String entityName, Collection<Class<? extends T>> candidates) {
+        for (Class<? extends T> candidate : candidates) {
+            if (Objects.equals(entityName, getEntityNameByClass(candidate))) {
                 return candidate;
             }
         }

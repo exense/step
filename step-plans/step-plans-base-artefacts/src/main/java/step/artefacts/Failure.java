@@ -18,7 +18,6 @@
  ******************************************************************************/
 package step.artefacts;
 
-import step.automation.packages.AutomationPackageNamedEntity;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.yaml.YamlModel;
@@ -26,8 +25,7 @@ import step.core.yaml.YamlModel;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
-@YamlModel
-@AutomationPackageNamedEntity(name = "failure")
+@YamlModel(name = "failure")
 @Artefact(block = false)
 public class Failure extends AbstractArtefact {
 

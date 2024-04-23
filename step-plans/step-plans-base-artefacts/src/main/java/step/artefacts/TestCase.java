@@ -18,13 +18,12 @@
  ******************************************************************************/
 package step.artefacts;
 
-import step.automation.packages.AutomationPackageNamedEntity;
+
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.yaml.YamlModel;
 
-@YamlModel
-@AutomationPackageNamedEntity(name = "testCase")
+@YamlModel(name = "testCase")
 @Artefact(validAsRoot = true)
 public class TestCase extends AbstractArtefact {
 

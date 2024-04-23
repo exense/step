@@ -23,7 +23,7 @@ import java.util.function.BiConsumer;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import step.artefacts.automation.YamlFunctionGroup;
-import step.automation.packages.AutomationPackageNamedEntity;
+
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.artefacts.reports.ReportNode;
@@ -32,8 +32,7 @@ import step.core.yaml.YamlModel;
 
 import static step.artefacts.FunctionGroup.FUNCTION_GROUP_ARTEFACT_NAME;
 
-@YamlModel(model = YamlFunctionGroup.class)
-@AutomationPackageNamedEntity(name = "session")
+@YamlModel(model = YamlFunctionGroup.class, name = "session")
 @Artefact(name=FUNCTION_GROUP_ARTEFACT_NAME)
 public class FunctionGroup extends TokenSelector {
 

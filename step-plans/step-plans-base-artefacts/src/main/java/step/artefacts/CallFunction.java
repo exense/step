@@ -20,13 +20,11 @@ package step.artefacts;
 
 import step.artefacts.automation.YamlCallFunction;
 import step.artefacts.reports.CallFunctionReportNode;
-import step.automation.packages.AutomationPackageNamedEntity;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.YamlModel;
 
-@YamlModel(model = YamlCallFunction.class)
-@AutomationPackageNamedEntity(name = "callKeyword")
+@YamlModel(model = YamlCallFunction.class, name = "callKeyword")
 @Artefact(name=CallFunction.ARTEFACT_NAME, report = CallFunctionReportNode.class)
 public class CallFunction extends TokenSelector {
 	

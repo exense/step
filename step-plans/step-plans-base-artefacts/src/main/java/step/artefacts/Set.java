@@ -19,14 +19,13 @@
 package step.artefacts;
 
 import step.artefacts.reports.SetReportNode;
-import step.automation.packages.AutomationPackageNamedEntity;
+
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.YamlModel;
 
-@YamlModel
-@AutomationPackageNamedEntity(name = "set")
+@YamlModel(name = "set")
 @Artefact(report = SetReportNode.class, block=false)
 public class Set extends AbstractArtefact {
 

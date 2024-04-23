@@ -19,7 +19,7 @@
 package step.artefacts.automation.datasource;
 
 import jakarta.json.*;
-import step.automation.packages.AutomationPackageNamedEntityUtils;
+import step.automation.packages.YamlModelUtils;
 import step.core.yaml.schema.YamlJsonSchemaHelper;
 import step.handlers.javahandler.jsonschema.FieldMetadata;
 import step.handlers.javahandler.jsonschema.JsonSchemaCreator;
@@ -55,7 +55,7 @@ public class NamedYamlDataSource {
                 JsonArrayBuilder arrayBuilder = schemaCreator.getJsonProvider().createArrayBuilder();
                 YamlJsonSchemaHelper schemaHelper = new YamlJsonSchemaHelper(schemaCreator.getJsonProvider());
                 for (Class<? extends AbstractYamlDataSource<?>> yamlDataSourceClass : YamlDataSourceLookuper.getYamlDataSources()) {
-                    String entityName = AutomationPackageNamedEntityUtils.getEntityNameByClass(YamlDataSourceLookuper.resolveDataPool(yamlDataSourceClass));
+                    String entityName = YamlModelUtils.getEntityNameByClass(YamlDataSourceLookuper.resolveDataPool(yamlDataSourceClass));
                     JsonObjectBuilder dataPoolBuilder = schemaHelper.createNamedObjectImplDef(entityName, yamlDataSourceClass, schemaCreator, false);
                     if (!isForWriteEditable()) {
                         // remove "forWrite" field

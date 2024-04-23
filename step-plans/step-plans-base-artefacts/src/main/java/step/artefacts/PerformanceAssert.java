@@ -5,15 +5,14 @@ import java.util.Arrays;
 import java.util.List;
 
 import step.artefacts.automation.YamlPerformanceAssert;
-import step.automation.packages.AutomationPackageNamedEntity;
+
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.ContainsDynamicValues;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.YamlModel;
 
-@YamlModel(model = YamlPerformanceAssert.class)
-@AutomationPackageNamedEntity(name = "performanceAssert")
+@YamlModel(model = YamlPerformanceAssert.class, name = "performanceAssert")
 @Artefact
 public class PerformanceAssert extends AbstractArtefact {
 

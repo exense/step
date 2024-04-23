@@ -18,15 +18,13 @@
  ******************************************************************************/
 package step.artefacts;
 
-import step.automation.packages.AutomationPackageNamedEntity;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.artefacts.reports.ReportNode;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.YamlModel;
 
-@YamlModel
-@AutomationPackageNamedEntity(name = "export")
+@YamlModel(name = "export")
 @Artefact(report = ReportNode.class, block=false)
 public class Export extends AbstractArtefact {
 

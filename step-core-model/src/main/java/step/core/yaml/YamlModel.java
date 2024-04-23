@@ -28,6 +28,8 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Retention(RUNTIME)
 public @interface YamlModel {
 
+    String LOCATION = "step";
+
     /**
      * The reference to the special model class. If not defined, the current class itself will be used as the model
      * class for yaml representation
@@ -35,7 +37,24 @@ public @interface YamlModel {
     Class<?> model() default None.class;
 
     /**
+     * True for yaml models having the following representation in yaml
+     * <pre>{@code
+     * name:
+     *    fieldA: valueA
+     *    fieldA: valueB
+     *    ...
+     * }</pre>
+     */
+    boolean named() default true;
+
+    /**
+     * For named yaml models specifies the custom name. If not specified, the class name will be used
+     */
+    String name() default "";
+
+    /**
      * Void class to be used in annotations instead of null-values
      */
-    final class None {}
+    final class None {
+    }
 }

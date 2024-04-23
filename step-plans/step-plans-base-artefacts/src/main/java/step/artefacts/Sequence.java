@@ -19,14 +19,13 @@
 package step.artefacts;
 
 import step.artefacts.automation.YamlSequence;
-import step.automation.packages.AutomationPackageNamedEntity;
+
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.YamlModel;
 
-@YamlModel(model = YamlSequence.class)
-@AutomationPackageNamedEntity(name = "sequence")
+@YamlModel(model = YamlSequence.class, name = "sequence")
 @Artefact(validAsRoot = true)
 public class Sequence extends AbstractArtefact {
 	

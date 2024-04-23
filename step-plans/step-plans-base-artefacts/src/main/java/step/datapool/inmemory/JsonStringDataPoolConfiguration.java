@@ -19,13 +19,12 @@
 package step.datapool.inmemory;
 
 import step.artefacts.automation.datasource.YamlJsonDataSource;
-import step.automation.packages.AutomationPackageNamedEntity;
+
 import step.core.dynamicbeans.DynamicValue;
 import step.datapool.DataPoolConfiguration;
 import step.core.yaml.YamlModel;
 
-@YamlModel(model = YamlJsonDataSource.class)
-@AutomationPackageNamedEntity(name = "json")
+@YamlModel(model = YamlJsonDataSource.class, name = "json")
 public class JsonStringDataPoolConfiguration extends DataPoolConfiguration {
 	
 	DynamicValue<String> json = new DynamicValue<String>("");

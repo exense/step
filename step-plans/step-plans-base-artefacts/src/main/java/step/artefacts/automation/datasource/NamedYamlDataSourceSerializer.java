@@ -21,7 +21,7 @@ package step.artefacts.automation.datasource;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
-import step.automation.packages.AutomationPackageNamedEntityUtils;
+import step.automation.packages.YamlModelUtils;
 import step.core.yaml.serializers.NamedEntityYamlSerializer;
 import step.core.yaml.serializers.StepYamlSerializer;
 import step.core.yaml.serializers.StepYamlSerializerAddOn;
@@ -43,7 +43,7 @@ public class NamedYamlDataSourceSerializer extends StepYamlSerializer<NamedYamlD
         NamedEntityYamlSerializer<AbstractYamlDataSource<?>> ser = new NamedEntityYamlSerializer<>() {
             @Override
             protected String resolveYamlName(AbstractYamlDataSource<?> value) {
-                return AutomationPackageNamedEntityUtils.getEntityNameByClass(YamlDataSourceLookuper.resolveDataPool((Class<? extends AbstractYamlDataSource<?>>) value.getClass()));
+                return YamlModelUtils.getEntityNameByClass(YamlDataSourceLookuper.resolveDataPool((Class<? extends AbstractYamlDataSource<?>>) value.getClass()));
             }
 
         };
