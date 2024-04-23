@@ -26,8 +26,6 @@ import java.util.Map;
 
 public interface AutomationPackageFragmentYaml {
 
-    String SCHEDULES_FIELD_NAME = "schedules";
-
     List<YamlAutomationPackageKeyword> getKeywords();
 
     List<YamlPlan> getPlans();

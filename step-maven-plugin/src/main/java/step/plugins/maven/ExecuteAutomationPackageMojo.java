@@ -26,7 +26,7 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import step.automation.packages.client.AutomationPackageClientException;
 import step.automation.packages.client.RemoteAutomationPackageClientImpl;
-import step.automation.packages.execution.AutomationPackageExecutionParameters;
+import step.core.execution.model.AutomationPackageExecutionParameters;
 import step.client.credentials.ControllerCredentials;
 import step.client.executions.RemoteExecutionManager;
 import step.controller.multitenancy.client.MultitenancyClient;

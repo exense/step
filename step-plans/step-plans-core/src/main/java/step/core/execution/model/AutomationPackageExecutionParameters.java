@@ -16,12 +16,9 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.execution;
+package step.core.execution.model;
 
 import step.core.artefacts.ArtefactFilter;
-import step.core.execution.model.CommonExecutionParameters;
-import step.core.execution.model.ExecutionMode;
-import step.core.execution.model.ExecutionParameters;
 import step.core.plans.PlanFilter;
 
 import java.util.Map;
