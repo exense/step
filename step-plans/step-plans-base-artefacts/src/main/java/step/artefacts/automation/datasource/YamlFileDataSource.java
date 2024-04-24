@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.artefacts.automation.datasource;
 
+import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.YamlFieldCustomCopy;
 import step.datapool.file.FileDataPool;
 import step.plans.parser.yaml.model.YamlResourceReference;
@@ -46,8 +47,12 @@ public class YamlFileDataSource<T extends FileDataPool> extends AbstractYamlData
     @Override
     public void fillFromDataPoolConfiguration(T dataPoolConfiguration, boolean isForWriteEditable) {
         super.fillFromDataPoolConfiguration(dataPoolConfiguration, isForWriteEditable);
-        if (dataPoolConfiguration.getFile() != null) {
-            this.file = YamlResourceReference.fromDynamicValue(dataPoolConfiguration.getFile());
+        DynamicValue<String> resolvedFile = dataPoolConfiguration.getFile();
+        if (resolvedFile != null) {
+            String value = resolvedFile.getValue();
+            if (value != null && !value.isBlank()) {
+                this.file = YamlResourceReference.fromDynamicValue(resolvedFile);
+            }
         }
     }
 }
