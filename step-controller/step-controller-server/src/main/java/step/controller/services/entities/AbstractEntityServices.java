@@ -13,6 +13,7 @@ import step.core.accessors.Accessor;
 import step.core.deployment.AbstractStepAsyncServices;
 import step.core.deployment.ControllerServiceException;
 import step.core.entities.Entity;
+import step.core.execution.model.Execution;
 import step.framework.server.security.Secured;
 import step.framework.server.tables.service.TableRequest;
 import step.framework.server.tables.service.TableResponse;
@@ -69,6 +70,20 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
         return accessor.findByIds(ids).collect(Collectors.toList());
     }
 
+    @Operation(operationId = "find{Entity}NamesByIds", description = "Returns the map of entities IDs to names for the provided list of IDs")
+    @POST
+    @Path("/find/names/by/ids")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Secured(right = "{entity}-read")
+    public Map<String, String>  findNamesByIds(List<String> ids) {
+        return accessor.findByIds(ids).collect(Collectors.toMap(a -> a.getId().toHexString(), a ->
+            (a instanceof AbstractOrganizableObject) ?
+                    ((AbstractOrganizableObject) a).getAttribute(AbstractOrganizableObject.NAME) :
+                    "unresolved"
+        ));
+    }
+
     @Operation(operationId = "find{Entity}sByAttributes", description = "Returns the list of entities matching the provided attributes")
     @POST
     @Path("/find")
@@ -85,6 +100,7 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
     @Path("/{id}")
     @Secured(right = "{entity}-delete")
     public void delete(@PathParam("id") String id) {
+        assertEntityIsAcceptableInContext(getEntity(id));
         accessor.remove(new ObjectId(id));
     }
 
@@ -114,10 +130,8 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
     @Produces(MediaType.APPLICATION_JSON)
     @Secured(right = "{entity}-write")
     public T clone(@PathParam("id") String id) {
-        T entity = get(id);
-        if (entity == null) {
-            throw new ControllerServiceException("The entity with Id " + id + " doesn't exist");
-        }
+        T entity = getEntity(id);
+        assertEntityIsAcceptableInContext(entity);
         T clonedEntity = cloneEntity(entity);
 
         if (clonedEntity instanceof AbstractOrganizableObject) {
@@ -196,6 +210,7 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
     @Secured(right = "{entity}-write")
     @Path("{id}/restore/{versionId}")
     public T restoreVersion(@PathParam("id") String id, @PathParam("versionId") String versionId) {
+        assertEntityIsAcceptableInContext(getEntity(id));
         return accessor.restoreVersion(new ObjectId(id), new ObjectId(versionId));
     }
 
@@ -217,14 +232,15 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
     @Path("{id}/locked")
     public void setLocked(@PathParam("id") String id, Boolean locked) {
         T t = getEntity(id);
+        assertEntityIsAcceptableInContext(t);
         t.addCustomField(CUSTOM_FIELD_LOCKED, locked);
         accessor.save(t);
     }
 
-    private T getEntity(String id) {
+    protected T getEntity(String id) {
         T t = accessor.get(id);
         if (t == null) {
-            throw new ControllerServiceException("Entity with id '" + id + "' does not exists.");
+            throw new ControllerServiceException("The entity with id '" + id + "' does not exists.");
         } else {
             return t;
         }

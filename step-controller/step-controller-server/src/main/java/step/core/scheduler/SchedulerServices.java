@@ -150,6 +150,7 @@ public class SchedulerServices extends AbstractEntityServices<ExecutiontTaskPara
 
     @Override
     public void delete(String id) {
+        assertEntityIsAcceptableInContext(getEntity(id));
         scheduler.removeExecutionTask(id);
     }
 }
