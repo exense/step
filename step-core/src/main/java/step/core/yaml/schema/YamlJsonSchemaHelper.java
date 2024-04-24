@@ -23,9 +23,11 @@ import jakarta.json.JsonObjectBuilder;
 import jakarta.json.spi.JsonProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.core.ReflectionUtils;
 import step.core.yaml.YamlFields;
 import step.handlers.javahandler.jsonschema.JsonInputConverter;
 import step.handlers.javahandler.jsonschema.JsonSchemaCreator;
+import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
 import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 
 import java.lang.reflect.Field;
@@ -44,6 +46,7 @@ public class YamlJsonSchemaHelper {
 	public static final String SMART_DYNAMIC_VALUE_BOOLEAN_DEF = "SmartDynamicValueBooleanDef";
 
 	public static final String DYNAMIC_KEYWORD_INPUTS_DEF = "DynamicKeywordInputsDef";
+	public static final String DEFS_PREFIX = "#/$defs/";
 	private final JsonProvider jsonProvider;
 
 	public YamlJsonSchemaHelper(JsonProvider jsonProvider) {
@@ -63,6 +66,7 @@ public class YamlJsonSchemaHelper {
 	/**
 	 * Prepares the json schema for class.
 	 * @return the following structure:
+	 * <pre>{@code
 	 * {
 	 *   "type": "object",
 	 *   "properties": {
@@ -71,6 +75,7 @@ public class YamlJsonSchemaHelper {
 	 *   "additionalProperties": false,
 	 *   "required": [...]
 	 * }
+	 *}</pre>
 	 */
 	public JsonObjectBuilder createJsonSchemaForClass(JsonSchemaCreator jsonSchemaCreator, Class<?> clazz, boolean additionalProperties) throws JsonSchemaPreparationException {
 		JsonObjectBuilder res = jsonProvider.createObjectBuilder();
@@ -79,7 +84,7 @@ public class YamlJsonSchemaHelper {
 		JsonObjectBuilder propertiesBuilder = jsonProvider.createObjectBuilder();
 
 		List<String> requiredProperties = new ArrayList<>();
-		extractPropertiesFromClass(jsonSchemaCreator, clazz, propertiesBuilder, requiredProperties);
+		extractPropertiesFromClass(jsonSchemaCreator, clazz, propertiesBuilder, requiredProperties, null);
 
 		res.add("properties", propertiesBuilder);
 		if(!additionalProperties) {
@@ -92,28 +97,24 @@ public class YamlJsonSchemaHelper {
 	/**
 	 * Analyzes the class hierarchy and writes all applicable fields to the json schema (output)
 	 */
-	public void extractPropertiesFromClass(JsonSchemaCreator jsonSchemaCreator, Class<?> clazz, JsonObjectBuilder output, List<String> requiredPropertiesOutput) throws JsonSchemaPreparationException {
+	public void extractPropertiesFromClass(JsonSchemaCreator jsonSchemaCreator, Class<?> clazz,
+										   JsonObjectBuilder output, List<String> requiredPropertiesOutput,
+										   Class<?> untilParentClassIs) throws JsonSchemaPreparationException {
 		log.info("Preparing json schema for class {}...", clazz);
 
 		// analyze the class hierarchy
-		List<Field> allFieldsInHierarchy = new ArrayList<>();
-		Class<?> currentClass = clazz;
-		while (currentClass != null) {
-			allFieldsInHierarchy.addAll(List.of(currentClass.getDeclaredFields()));
-			currentClass = currentClass.getSuperclass();
-		}
-		Collections.reverse(allFieldsInHierarchy);
+		List<Field> allFieldsInHierarchy = ReflectionUtils.getAllFieldsInHierarchy(clazz, untilParentClassIs);
 
 		// for each field we want either build the json schema via reflection
 		// or use some predefined schemas for some special classes (like step.core.dynamicbeans.DynamicValue)
 		try {
 			jsonSchemaCreator.processFields(clazz, output, allFieldsInHierarchy, requiredPropertiesOutput);
 		} catch (Exception ex) {
-			throw new JsonSchemaPreparationException("Unable to json schema for class " + clazz, ex);
+			throw new JsonSchemaPreparationException("Unable to prepare json schema for " + clazz, ex);
 		}
 	}
 
-	protected void addRequiredProperties(List<String> requiredProperties, JsonObjectBuilder propertiesBuilder) {
+	public void addRequiredProperties(List<String> requiredProperties, JsonObjectBuilder propertiesBuilder) {
 		if (requiredProperties != null && !requiredProperties.isEmpty()) {
 			JsonArrayBuilder requiredBuilder = jsonProvider.createArrayBuilder();
 			for (String requiredProperty : requiredProperties) {
@@ -123,27 +124,36 @@ public class YamlJsonSchemaHelper {
 		}
 	}
 
+	/**
+	 *<pre>{@code
+	 * {
+	 *   "type": "array",
+	 *   "items": {
+	 *     "type": "object",
+	 *     "patternProperties": {
+	 *       ".*": {
+	 *         "oneOf": [
+	 *           {
+	 *             "type": "number"
+	 *           },
+	 *           {
+	 *             "type": "boolean"
+	 *           },
+	 *           {
+	 *             "type": "string"
+	 *           },
+	 *           {
+	 *             "$ref": "#/$defs/DynamicExpressionDef"
+	 *           }
+	 *         ]
+	 *       }
+	 *     },
+	 *     "additionalProperties": false
+	 *   }
+	 * }
+	 *}</pre>
+	 */
 	private JsonObjectBuilder createDynamicKeywordInputsDef(){
-//		{
-//			"type" : "array",
-//			"items" : {
-//			"type" : "object",
-//					"patternProperties" : {
-//				".*" : {
-//					"oneOf" : [ {
-//						"type" : "number"
-//					}, {
-//						"type" : "boolean"
-//					}, {
-//						"type" : "string"
-//					}, {
-//						"$ref" : "#/$defs/DynamicExpressionDef"
-//					} ]
-//				}
-//			},
-//			"additionalProperties": false
-//		}
-//		}
 		JsonObjectBuilder res = jsonProvider.createObjectBuilder();
 		res.add("type", "array");
 		JsonObjectBuilder arrayItemDef = createPatternPropertiesWithDynamicValues();
@@ -234,6 +244,7 @@ public class YamlJsonSchemaHelper {
 	 *
 	 * @param yamlName the top-level node name (entity name)
 	 * @return the following structure:
+	 * <pre>{@code
 	 * {
 	 *   "type" : "object",
 	 *   "properties" : {
@@ -248,7 +259,7 @@ public class YamlJsonSchemaHelper {
 	 *   },
 	 *   "additionalProperties" : false
 	 * }
-	 *
+	 *}</pre>
 	 */
 	public JsonObjectBuilder createNamedObjectImplDef(String yamlName, Class<?> clazz, JsonSchemaCreator jsonSchemaCreator, boolean additionalProperties) throws JsonSchemaPreparationException {
 		JsonObjectBuilder res = jsonProvider.createObjectBuilder();
@@ -267,6 +278,24 @@ public class YamlJsonSchemaHelper {
 	}
 
 	public static JsonObjectBuilder addRef(JsonObjectBuilder builder, String refValue){
-		return builder.add("$ref", "#/$defs/" + refValue);
+		return builder.add("$ref", DEFS_PREFIX + refValue);
+	}
+
+	public static List<JsonSchemaFieldProcessor> prepareDefaultFieldProcessors(List<JsonSchemaFieldProcessor> additionalProcessors) {
+		List<JsonSchemaFieldProcessor> result = new ArrayList<>();
+
+		// -- FILTERED FIELDS
+		result.add(new CommonFilteredFieldProcessor());
+
+		// -- CUSTOM EXTENSIONS
+		if (additionalProcessors != null) {
+			result.addAll(additionalProcessors);
+		}
+
+		// -- DEFAULT LOGIC
+		result.add(new DynamicValueFieldProcessor());
+		result.add(new EnumFieldProcessor());
+
+		return result;
 	}
 }

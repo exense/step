@@ -4,62 +4,61 @@ name: "converted plaintext plan"
 root:
   testCase:
     nodeName: "converted plaintext plan"
-    continueParentNodeExecutionOnError: false
-    instrumentNode: false
     skipNode: false
+    instrumentNode: false
+    continueParentNodeExecutionOnError: false
     children:
       - set:
-          continueParentNodeExecutionOnError: false
-          instrumentNode: false
           skipNode: false
+          instrumentNode: false
+          continueParentNodeExecutionOnError: false
+          key: "key"
           value:
             expression: "\"value with space\""
-          key: "key"
       - set:
-          continueParentNodeExecutionOnError: false
-          instrumentNode: false
           skipNode: false
+          instrumentNode: false
+          continueParentNodeExecutionOnError: false
+          key: "key2"
           value:
             expression: "\"value2\""
-          key: "key2"
       - check:
           nodeName: "works"
-          continueParentNodeExecutionOnError: false
-          instrumentNode: false
           skipNode: false
+          instrumentNode: false
+          continueParentNodeExecutionOnError: false
           expression: "key2.toString().equals('value2')"
       - check:
           nodeName: "compile error"
-          continueParentNodeExecutionOnError: false
-          instrumentNode: false
           skipNode: false
+          instrumentNode: false
+          continueParentNodeExecutionOnError: false
           expression: "key2.toString().equals(\"value2\")"
       - check:
           nodeName: "compile error"
-          continueParentNodeExecutionOnError: false
-          instrumentNode: false
           skipNode: false
+          instrumentNode: false
+          continueParentNodeExecutionOnError: false
           expression: "key.toString().equals('value with space')"
       - check:
-          continueParentNodeExecutionOnError: false
-          instrumentNode: false
           skipNode: false
+          instrumentNode: false
+          continueParentNodeExecutionOnError: false
           expression: "key.toString().equals('value with space')"
       - callKeyword:
-          continueParentNodeExecutionOnError: false
-          instrumentNode: false
           skipNode: false
+          instrumentNode: false
+          continueParentNodeExecutionOnError: false
           children:
             - assert:
-                continueParentNodeExecutionOnError: false
-                instrumentNode: false
                 skipNode: false
-                customErrorMessage: ""
+                instrumentNode: false
+                continueParentNodeExecutionOnError: false
+                actual: "isSendSuccess"
+                operator: "EQUALS"
+                doNegate: false
                 expected:
                   expression: "\"true\""
-                doNegate: false
-                operator: "EQUALS"
-                actual: "isSendSuccess"
+                customErrorMessage: ""
           remote: true
-          inputs: []
           keyword: "GroovyCheck"

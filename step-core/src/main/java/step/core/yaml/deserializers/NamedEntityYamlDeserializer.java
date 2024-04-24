@@ -29,6 +29,17 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * The deserialization template for generic classes having the following representation in yaml.
+ * <pre>{@code
+ * className:
+ *    fieldA: valueA
+ *    fieldA: valueB
+ *    ...
+ *}</pre>
+ * The `className` is used to resolve the target java class, and all nested fields (`fieldA`, `fieldB`) are the fields
+ * of this class.
+ */
 public abstract class NamedEntityYamlDeserializer<T>  {
 
     public NamedEntityYamlDeserializer() {
@@ -46,54 +57,41 @@ public abstract class NamedEntityYamlDeserializer<T>  {
         String yamlName = getEntityNameFromYaml(namedEntity);
 
         String targetClass = resolveTargetClassNameByYamlName(yamlName);
-        if (targetClass == null) {
-            throw new RuntimeException("Unable to resolve implementation class for entity " + yamlName);
-        }
 
         // move entity name into the target '_class' field
         JsonNode allYamlFields = namedEntity.get(yamlName);
-        techYaml.put(getTargetClassField(), targetClass);
+
+        String targetClassField = getTargetClassField();
+        if (targetClassField != null) {
+            if (targetClass == null) {
+                throw new RuntimeException("Unable to resolve implementation class for entity " + yamlName);
+            }
+            techYaml.put(targetClassField, targetClass);
+        }
 
         Iterator<Map.Entry<String, JsonNode>> fields = allYamlFields.fields();
         while (fields.hasNext()) {
             Map.Entry<String, JsonNode> next = fields.next();
 
-            // process some fields in special way
-            boolean processedAsSpecialField = false;
-            for (YamlFieldDeserializationProcessor proc : deserializationProcessors()) {
-                if (proc.deserializeField(targetClass, next, techYaml, codec)) {
-                    processedAsSpecialField = true;
-                }
-            }
-
-            // copy all other fields (parameters)
-            if (!processedAsSpecialField) {
-                techYaml.set(next.getKey(), next.getValue().deepCopy());
-            }
+            // copy all other fields
+            techYaml.set(next.getKey(), next.getValue().deepCopy());
         }
         return techYaml;
     }
 
     public JsonNode getAllYamlFields(JsonNode node){
         String yamlName = getEntityNameFromYaml(node);
-
-        String targetClass = resolveTargetClassNameByYamlName(yamlName);
-        if (targetClass == null) {
-            throw new RuntimeException("Unable to resolve implementation class for entity " + yamlName);
-        }
-
-        // move entity name into the target '_class' field
         return node.get(yamlName);
     }
 
-    protected String resolveTargetClassNameByYamlName(String yamlName){
+    protected String resolveTargetClassNameByYamlName(String yamlName)  {
         Class<?> clazz = resolveTargetClassByYamlName(yamlName);
         return clazz == null ? null : clazz.getName();
     }
 
     protected abstract Class<?> resolveTargetClassByYamlName(String yamlName);
 
-    protected String getEntityNameFromYaml(JsonNode yamlNode) {
+    public String getEntityNameFromYaml(JsonNode yamlNode) {
         Iterator<String> nameIterator = yamlNode.fieldNames();
 
         List<String> names = new ArrayList<String>();
@@ -114,9 +112,9 @@ public abstract class NamedEntityYamlDeserializer<T>  {
         return yamlName;
     }
 
-    protected abstract List<YamlFieldDeserializationProcessor> deserializationProcessors();
-
-    protected abstract String getTargetClassField();
+    protected String getTargetClassField(){
+        return null;
+    }
 
     private static ObjectNode createObjectNode(ObjectCodec codec) {
         return (ObjectNode) codec.createObjectNode();

@@ -24,6 +24,10 @@ import java.lang.annotation.Target;
 
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
+/**
+ * Annotation used to mark the {@link StepYamlDeserializer} to be automatically used for yaml
+ * deserialization of Step entities.
+ */
 @Retention(RUNTIME)
 @Target(ElementType.TYPE)
 public @interface StepYamlDeserializerAddOn {

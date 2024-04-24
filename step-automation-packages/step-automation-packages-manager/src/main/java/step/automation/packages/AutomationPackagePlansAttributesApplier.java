@@ -18,17 +18,18 @@
  ******************************************************************************/
 package step.automation.packages;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import step.attachments.FileResolver;
 import step.core.artefacts.AbstractArtefact;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.entities.EntityManager;
+import step.core.entities.EntityReference;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.plans.Plan;
-import step.plans.parser.yaml.rules.DataSourceFieldsYamlHelper;
 import step.resources.Resource;
 import step.resources.ResourceManager;
 
+import java.beans.IntrospectionException;
+import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -53,23 +54,22 @@ public class AutomationPackagePlansAttributesApplier {
     public void applySpecialAttributesToPlans(List<Plan> plans,
                                               AutomationPackageArchive automationPackageArchive,
                                               ObjectEnricher objectEnricher) {
-        AutomationPackageAttributesApplyingContext apContext = prepareContext(automationPackageArchive, objectEnricher);
+        AutomationPackageContext apContext = prepareContext(automationPackageArchive, objectEnricher);
         for (Plan plan : plans) {
             applySpecialValuesForArtifact(plan.getRoot(), apContext);
         }
     }
 
-    protected AutomationPackageAttributesApplyingContext prepareContext(AutomationPackageArchive automationPackageArchive, ObjectEnricher enricher) {
-        return new AutomationPackageAttributesApplyingContext(resourceManager, automationPackageArchive, enricher);
+    protected AutomationPackageContext prepareContext(AutomationPackageArchive automationPackageArchive, ObjectEnricher enricher) {
+        return new AutomationPackageContext(resourceManager, automationPackageArchive, enricher);
     }
 
-    private void applySpecialValuesForArtifact(AbstractArtefact artifact, AutomationPackageAttributesApplyingContext apContext) {
+    private void applySpecialValuesForArtifact(AbstractArtefact artifact, AutomationPackageContext apContext) {
         fillResources(artifact, apContext);
         applySpecialValuesForChildren(artifact, apContext);
     }
 
-    // TODO: some common pluggable approach should be used for keyword resources and plan resources
-    private void fillResources(Object object, AutomationPackageAttributesApplyingContext apContext) {
+    private void fillResources(Object object, AutomationPackageContext apContext) {
         try {
             applyResourcePropertyRecursively(object, apContext);
         } catch (Exception e) {
@@ -77,13 +77,32 @@ public class AutomationPackagePlansAttributesApplier {
         }
     }
 
-    private void applyResourcePropertyRecursively(Object object, AutomationPackageAttributesApplyingContext apContext) throws InvocationTargetException, IllegalAccessException {
+    // TODO: some common pluggable approach should be used for keyword resources and plan resources
+    private List<PropertyDescriptor> getResourceReferencePropertyDescriptors(Class<?> aClass) {
+        try {
+            PropertyDescriptor[] propertyDescriptors = Introspector.getBeanInfo(aClass).getPropertyDescriptors();
+            List<PropertyDescriptor> entityReferenceDescriptors = new ArrayList<>();
+            for (PropertyDescriptor pd : propertyDescriptors) {
+                Method readMethod = pd.getReadMethod();
+                if (readMethod != null) {
+                    EntityReference entityReference = readMethod.getAnnotation(EntityReference.class);
+                    if (entityReference != null && EntityManager.resources.equals(entityReference.type())) {
+                        entityReferenceDescriptors.add(pd);
+                    }
+                }
+            }
+            return entityReferenceDescriptors;
+        } catch (IntrospectionException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void applyResourcePropertyRecursively(Object object, AutomationPackageContext apContext) throws InvocationTargetException, IllegalAccessException {
         if (object == null) {
             return;
         }
 
-        DataSourceFieldsYamlHelper dsFieldHelper = new DataSourceFieldsYamlHelper();
-        for (PropertyDescriptor pd : dsFieldHelper.getResourceReferencePropertyDescriptors(object.getClass())) {
+        for (PropertyDescriptor pd : getResourceReferencePropertyDescriptors(object.getClass())) {
             Method setter = pd.getWriteMethod();
             if (setter != null) {
                 Object value = pd.getReadMethod().invoke(object);
@@ -124,7 +143,7 @@ public class AutomationPackagePlansAttributesApplier {
         }
     }
 
-    private String uploadAutomationPackageResource(String yamlResourceRef, AutomationPackageAttributesApplyingContext apContext) {
+    private String uploadAutomationPackageResource(String yamlResourceRef, AutomationPackageContext apContext) {
         AutomationPackageResourceUploader resourceUploader = new AutomationPackageResourceUploader();
         Resource resource = resourceUploader.uploadResourceFromAutomationPackage(yamlResourceRef, ResourceManager.RESOURCE_TYPE_FUNCTIONS, apContext);
         String result = null;
@@ -134,7 +153,7 @@ public class AutomationPackagePlansAttributesApplier {
         return result;
     }
 
-    private void applySpecialValuesForChildren(AbstractArtefact parent, AutomationPackageAttributesApplyingContext apContext) {
+    private void applySpecialValuesForChildren(AbstractArtefact parent, AutomationPackageContext apContext) {
         List<AbstractArtefact> children = parent.getChildren();
         if (children != null) {
             for (AbstractArtefact child : children) {

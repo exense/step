@@ -18,18 +18,20 @@
  ******************************************************************************/
 package step.artefacts;
 
+import step.artefacts.automation.YamlCallFunction;
 import step.artefacts.reports.CallFunctionReportNode;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
-import step.core.entities.EntityManager;
-import step.core.entities.EntityReference;
+import step.core.yaml.YamlModel;
 
+@YamlModel(model = YamlCallFunction.class, name = "callKeyword")
 @Artefact(name=CallFunction.ARTEFACT_NAME, report = CallFunctionReportNode.class)
 public class CallFunction extends TokenSelector {
 	
 	public static final String ARTEFACT_NAME = "CallKeyword";
 
 	private DynamicValue<String> function = new DynamicValue<>("{}");
+
 	private DynamicValue<String> argument = new DynamicValue<>("{}");
 	private DynamicValue<String> resultMap = new DynamicValue<>();
 

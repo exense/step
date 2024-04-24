@@ -47,7 +47,7 @@ public class ArtefactTypeCache {
 		artefactRegister = new ConcurrentHashMap<>();
 		artefactNameCache = new ConcurrentHashMap<>();
 		
-		Set<Class<?>> artefactClasses = CachedAnnotationScanner.getClassesWithAnnotation(Artefact.class);
+		Set<Class<?>> artefactClasses = CachedAnnotationScanner.getClassesWithAnnotation(Artefact.LOCATION, Artefact.class, Thread.currentThread().getContextClassLoader());
 		for (Class<?> artefactClass_ : artefactClasses) {
 			Class<? extends AbstractArtefact> artefactClass = (Class<? extends AbstractArtefact>) artefactClass_; 
 			String artefactName = AbstractArtefact.getArtefactName((Class<AbstractArtefact>)artefactClass);

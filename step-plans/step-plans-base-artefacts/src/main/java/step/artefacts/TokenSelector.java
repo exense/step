@@ -23,8 +23,9 @@ import step.core.dynamicbeans.DynamicValue;
 
 public class TokenSelector extends AbstractArtefact {
 
-	DynamicValue<Boolean> remote = new DynamicValue<Boolean>(true);
-	
+    public static final String TOKEN_SELECTOR_TOKEN_YAML_FIELD = "routing";
+    DynamicValue<Boolean> remote = new DynamicValue<Boolean>(true);
+
 	DynamicValue<String> token = new DynamicValue<>("{}");
 
 	public DynamicValue<Boolean> getRemote() {

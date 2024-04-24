@@ -26,7 +26,6 @@ import step.core.collections.Document;
 import step.core.collections.DocumentObject;
 import step.core.collections.Filters;
 import step.migration.MigrationContext;
-import step.plans.parser.yaml.YamlPlanFields;
 
 import java.util.List;
 import java.util.Objects;
@@ -37,6 +36,7 @@ import java.util.stream.Stream;
 @YamlPlanMigration
 public class TestYamlPlanMigrationTaskV0 extends AbstractYamlPlanMigrationTask {
 
+    public static final String ARTEFACT_CHILDREN = "children";
     private static final Logger log = LoggerFactory.getLogger(TestYamlPlanMigrationTaskV0.class);
 
     public TestYamlPlanMigrationTaskV0(CollectionFactory collectionFactory, MigrationContext migrationContext) {
@@ -69,7 +69,7 @@ public class TestYamlPlanMigrationTaskV0 extends AbstractYamlPlanMigrationTask {
                 artifact.remove(artefactName);
             }
 
-            List<DocumentObject> children = artifactProperties.getArray(YamlPlanFields.ARTEFACT_CHILDREN);
+            List<DocumentObject> children = artifactProperties.getArray(ARTEFACT_CHILDREN);
             if (children != null && !children.isEmpty()) {
                 for (DocumentObject child : children) {
                     renameArtefacts(child);

@@ -27,7 +27,7 @@ import org.bson.types.ObjectId;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
-import step.automation.packages.execution.AutomationPackageExecutionParameters;
+import step.core.execution.model.AutomationPackageExecutionParameters;
 import step.automation.packages.execution.AutomationPackageExecutor;
 import step.core.access.User;
 import step.core.deployment.AbstractStepServices;

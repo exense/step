@@ -22,7 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.artefacts.TestCase;
 import step.artefacts.TestSet;
-import step.automation.packages.AbstractAutomationPackageReader;
+import step.automation.packages.AutomationPackageReader;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.reports.ReportNodeStatus;
@@ -53,7 +53,7 @@ public abstract class AbstractArtifactRepository extends AbstractRepository {
 	protected final ResourceManager resourceManager;
 	protected final StepJarParser stepJarParser;
 
-	public AbstractArtifactRepository(Set<String> canonicalRepositoryParameters, PlanAccessor planAccessor, ResourceManager resourceManager, AbstractAutomationPackageReader<?> automationPackageReader) {
+	public AbstractArtifactRepository(Set<String> canonicalRepositoryParameters, PlanAccessor planAccessor, ResourceManager resourceManager, AutomationPackageReader automationPackageReader) {
 		super(canonicalRepositoryParameters);
 		this.planAccessor = planAccessor;
 		this.resourceManager = resourceManager;

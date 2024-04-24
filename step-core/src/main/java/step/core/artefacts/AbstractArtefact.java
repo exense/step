@@ -18,20 +18,13 @@
  ******************************************************************************/
 package step.core.artefacts;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.bson.types.ObjectId;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.annotation.JsonTypeIdResolver;
-
+import org.bson.types.ObjectId;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.MapDeserializer;
 import step.core.accessors.MapSerializer;
@@ -39,10 +32,16 @@ import step.core.dynamicbeans.DynamicValue;
 import step.core.entities.EntityManager;
 import step.core.entities.EntityReference;
 
-@JsonTypeInfo(use=Id.CUSTOM,property="_class")
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@JsonTypeInfo(use=Id.CUSTOM,property= AbstractArtefact.JSON_CLASS_PROPERTY)
 @JsonTypeIdResolver(ArtefactTypeIdResolver.class)
 public abstract class AbstractArtefact extends AbstractOrganizableObject {
 
+	public static final String JSON_CLASS_PROPERTY = "_class";
 	protected DynamicValue<String> dynamicName;
 
 	protected boolean useDynamicName;
@@ -73,7 +72,7 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
 	
 	public static String getArtefactName(Class<? extends AbstractArtefact> artefactClass) {
 		Artefact annotation = artefactClass.getAnnotation(Artefact.class);
-		return annotation.name().length() > 0 ? annotation.name() : artefactClass.getSimpleName();
+		return !annotation.name().isEmpty() ? annotation.name() : artefactClass.getSimpleName();
 	}
 
 	public String getDescription() {
@@ -267,4 +266,9 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
 			return false;
 		return true;
 	}
+
+	/**
+	 * Void class to be used in annotations instead of null-values
+	 */
+	public static final class None extends AbstractArtefact {}
 }
