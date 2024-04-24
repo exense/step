@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.automation.packages.yaml.schema;
 
+import step.core.yaml.schema.JsonSchemaDefinitionExtension;
 import step.core.yaml.schema.JsonSchemaExtension;
 
 import java.util.List;
@@ -28,7 +29,7 @@ public interface AutomationPackageJsonSchemaExtension {
      * Provides the extensions to be used to fill the "defs" (definitions section) in json schema, i.e. to prepare
      * some sub-schemas to be reused in the main schema.
      */
-    List<JsonSchemaExtension> getExtendedDefinitions();
+    List<JsonSchemaDefinitionExtension> getExtendedDefinitions();
 
     /**
      * Provides the extensions to be used to add the new fields to the json schema of automation package, i.e. to add

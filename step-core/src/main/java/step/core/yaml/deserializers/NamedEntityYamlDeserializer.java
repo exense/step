@@ -29,6 +29,17 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * The deserialization template for generic classes having the following representation in yaml.
+ * <pre>{@code
+ * className:
+ *    fieldA: valueA
+ *    fieldA: valueB
+ *    ...
+ *}</pre>
+ * The `className` is used to resolve the target java class, and all nested fields (`fieldA`, `fieldB`) are the fields
+ * of this class.
+ */
 public abstract class NamedEntityYamlDeserializer<T>  {
 
     public NamedEntityYamlDeserializer() {
@@ -70,8 +81,6 @@ public abstract class NamedEntityYamlDeserializer<T>  {
 
     public JsonNode getAllYamlFields(JsonNode node){
         String yamlName = getEntityNameFromYaml(node);
-
-        // move entity name into the target '_class' field
         return node.get(yamlName);
     }
 
@@ -82,7 +91,7 @@ public abstract class NamedEntityYamlDeserializer<T>  {
 
     protected abstract Class<?> resolveTargetClassByYamlName(String yamlName);
 
-    protected String getEntityNameFromYaml(JsonNode yamlNode) {
+    public String getEntityNameFromYaml(JsonNode yamlNode) {
         Iterator<String> nameIterator = yamlNode.fieldNames();
 
         List<String> names = new ArrayList<String>();

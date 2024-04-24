@@ -21,10 +21,12 @@ package step.automation.packages.yaml.schema;
 import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObjectBuilder;
 import jakarta.json.spi.JsonProvider;
-import step.automation.packages.AutomationPackageNamedEntityUtils;
+import step.automation.packages.YamlModelUtils;
 import step.automation.packages.model.AbstractYamlFunction;
 import step.automation.packages.yaml.AutomationPackageKeywordsLookuper;
+import step.core.scanner.CachedAnnotationScanner;
 import step.core.yaml.schema.AggregatedJsonSchemaFieldProcessor;
+import step.core.yaml.schema.JsonSchemaDefinitionAddOn;
 import step.core.yaml.schema.JsonSchemaExtension;
 import step.core.yaml.schema.YamlJsonSchemaHelper;
 import step.handlers.javahandler.jsonschema.JsonSchemaCreator;
@@ -32,6 +34,8 @@ import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 import step.jsonschema.DefaultFieldMetadataExtractor;
 
 import java.util.*;
+
+import static step.core.scanner.Classes.newInstanceAs;
 
 public class YamlKeywordSchemaGenerator {
 
@@ -53,6 +57,13 @@ public class YamlKeywordSchemaGenerator {
                 new AggregatedJsonSchemaFieldProcessor(YamlJsonSchemaHelper.prepareDefaultFieldProcessors(null)),
                 new DefaultFieldMetadataExtractor()
         );
+    }
+
+    protected List<JsonSchemaExtension> getDefinitionsExtensions() {
+        List<JsonSchemaExtension> extensions = new ArrayList<>();
+        CachedAnnotationScanner.getClassesWithAnnotation(JsonSchemaDefinitionAddOn.LOCATION, JsonSchemaDefinitionAddOn.class, Thread.currentThread().getContextClassLoader()).stream()
+                .map(newInstanceAs(JsonSchemaExtension.class)).forEach(extensions::add);
+        return extensions;
     }
 
     /**
@@ -105,7 +116,7 @@ public class YamlKeywordSchemaGenerator {
         HashMap<String, JsonObjectBuilder> result = new HashMap<>();
         List<Class<? extends AbstractYamlFunction<?>>> automationPackageKeywords = automationPackageKeywordsLookuper.getAutomationPackageKeywords();
         for (Class<? extends AbstractYamlFunction<?>> automationPackageKeyword : automationPackageKeywords) {
-            String yamlName = AutomationPackageNamedEntityUtils.getEntityNameByClass(automationPackageKeyword);
+            String yamlName = YamlModelUtils.getEntityNameByClass(automationPackageKeyword);
             String defName = yamlName + "Def";
             result.put(defName, schemaHelper.createNamedObjectImplDef(yamlName, automationPackageKeyword, jsonSchemaCreator, false));
         }

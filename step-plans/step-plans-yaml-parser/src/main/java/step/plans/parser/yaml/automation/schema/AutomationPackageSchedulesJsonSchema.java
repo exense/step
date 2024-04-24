@@ -22,6 +22,7 @@ import jakarta.json.JsonObjectBuilder;
 import step.automation.packages.yaml.schema.AutomationPackageJsonSchemaExtension;
 import step.plans.parser.yaml.automation.model.AutomationPackageSchedule;
 import step.core.yaml.schema.AggregatedJsonSchemaFieldProcessor;
+import step.core.yaml.schema.JsonSchemaDefinitionExtension;
 import step.core.yaml.schema.JsonSchemaExtension;
 import step.core.yaml.schema.YamlJsonSchemaHelper;
 import step.handlers.javahandler.jsonschema.JsonSchemaCreator;
@@ -36,7 +37,7 @@ public class AutomationPackageSchedulesJsonSchema implements AutomationPackageJs
     public static final String SCHEDULES_FIELD_NAME = "schedules";
 
     @Override
-    public List<JsonSchemaExtension> getExtendedDefinitions() {
+    public List<JsonSchemaDefinitionExtension> getExtendedDefinitions() {
         return List.of((jsonSchemaBuilder, jsonProvider) -> {
             YamlJsonSchemaHelper schemaHelper = new YamlJsonSchemaHelper(jsonProvider);
             JsonSchemaCreator jsonSchemaCreator = new JsonSchemaCreator(jsonProvider, new AggregatedJsonSchemaFieldProcessor(new ArrayList<>()), new DefaultFieldMetadataExtractor());

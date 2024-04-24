@@ -5,8 +5,6 @@ import step.core.dynamicbeans.DynamicValue;
 
 public class Filter {
 
-	public static final String FIELD_FIELD = "field";
-
 	private DynamicValue<String> field;
 	private DynamicValue<String> filter;
 	private FilterType filterType;

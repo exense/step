@@ -18,8 +18,11 @@
  ******************************************************************************/
 package step.artefacts;
 
-import step.core.artefacts.Artefact;
 
+import step.core.artefacts.Artefact;
+import step.core.yaml.YamlModel;
+
+@YamlModel(name = "beforeThread")
 @Artefact()
 public class BeforeThread extends Sequence {
 	

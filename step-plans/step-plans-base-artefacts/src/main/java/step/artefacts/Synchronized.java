@@ -18,9 +18,12 @@
  ******************************************************************************/
 package step.artefacts;
 
+
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.yaml.YamlModel;
 
+@YamlModel(name = "synchronized")
 @Artefact()
 public class Synchronized extends Sequence {
 	

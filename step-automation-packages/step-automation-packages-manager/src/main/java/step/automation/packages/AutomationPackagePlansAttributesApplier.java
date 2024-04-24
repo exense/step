@@ -21,12 +21,15 @@ package step.automation.packages;
 import step.attachments.FileResolver;
 import step.core.artefacts.AbstractArtefact;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.entities.EntityManager;
+import step.core.entities.EntityReference;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.plans.Plan;
-import step.plans.parser.yaml.rules.DataSourceFieldsYamlHelper;
 import step.resources.Resource;
 import step.resources.ResourceManager;
 
+import java.beans.IntrospectionException;
+import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -66,7 +69,6 @@ public class AutomationPackagePlansAttributesApplier {
         applySpecialValuesForChildren(artifact, apContext);
     }
 
-    // TODO: some common pluggable approach should be used for keyword resources and plan resources
     private void fillResources(Object object, AutomationPackageContext apContext) {
         try {
             applyResourcePropertyRecursively(object, apContext);
@@ -75,13 +77,32 @@ public class AutomationPackagePlansAttributesApplier {
         }
     }
 
+    // TODO: some common pluggable approach should be used for keyword resources and plan resources
+    private List<PropertyDescriptor> getResourceReferencePropertyDescriptors(Class<?> aClass) {
+        try {
+            PropertyDescriptor[] propertyDescriptors = Introspector.getBeanInfo(aClass).getPropertyDescriptors();
+            List<PropertyDescriptor> entityReferenceDescriptors = new ArrayList<>();
+            for (PropertyDescriptor pd : propertyDescriptors) {
+                Method readMethod = pd.getReadMethod();
+                if (readMethod != null) {
+                    EntityReference entityReference = readMethod.getAnnotation(EntityReference.class);
+                    if (entityReference != null && EntityManager.resources.equals(entityReference.type())) {
+                        entityReferenceDescriptors.add(pd);
+                    }
+                }
+            }
+            return entityReferenceDescriptors;
+        } catch (IntrospectionException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private void applyResourcePropertyRecursively(Object object, AutomationPackageContext apContext) throws InvocationTargetException, IllegalAccessException {
         if (object == null) {
             return;
         }
 
-        DataSourceFieldsYamlHelper dsFieldHelper = new DataSourceFieldsYamlHelper();
-        for (PropertyDescriptor pd : dsFieldHelper.getResourceReferencePropertyDescriptors(object.getClass())) {
+        for (PropertyDescriptor pd : getResourceReferencePropertyDescriptors(object.getClass())) {
             Method setter = pd.getWriteMethod();
             if (setter != null) {
                 Object value = pd.getReadMethod().invoke(object);

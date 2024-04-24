@@ -20,9 +20,11 @@ package step.automation.packages.model;
 
 import jakarta.json.JsonObject;
 import step.automation.packages.AutomationPackageContext;
-import step.automation.packages.AutomationPackageNamedEntityUtils;
+import step.automation.packages.YamlModelUtils;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.yaml.AbstractYamlModel;
+import step.core.yaml.YamlFieldCustomCopy;
 import step.functions.Function;
 import step.jsonschema.JsonSchema;
 import step.jsonschema.JsonSchemaDefaultValueProvider;
@@ -30,8 +32,9 @@ import step.jsonschema.JsonSchemaDefaultValueProvider;
 import java.lang.reflect.Field;
 import java.util.Map;
 
-public abstract class AbstractYamlFunction<T extends Function> implements AutomationPackageContextual<T> {
+public abstract class AbstractYamlFunction<T extends Function> extends AbstractYamlModel implements AutomationPackageContextual<T> {
 
+    @YamlFieldCustomCopy
     @JsonSchema(defaultProvider = DefaultYamlFunctionNameProvider.class)
     private String name;
 
@@ -39,6 +42,8 @@ public abstract class AbstractYamlFunction<T extends Function> implements Automa
     private JsonObject schema;
 
     private boolean executeLocally;
+
+    @YamlFieldCustomCopy
     private Map<String, String> routing;
 
     private boolean useCustomTemplate=false;
@@ -103,15 +108,7 @@ public abstract class AbstractYamlFunction<T extends Function> implements Automa
 
     protected void fillDeclaredFields(T res, AutomationPackageContext context){
         res.addAttribute(AbstractOrganizableObject.NAME, this.getName());
-        res.setDescription(this.getDescription());
-        if (this.getCallTimeout() != null) {
-            res.setCallTimeout(this.getCallTimeout());
-        }
-        if (this.getSchema() != null) {
-            res.setSchema(this.getSchema());
-        }
-        res.setExecuteLocally(this.isExecuteLocally());
-        res.setTokenSelectionCriteria(this.getRouting());
+        copyFieldsToObject(res, true);
     }
 
     protected abstract T createFunctionInstance();
@@ -130,7 +127,7 @@ public abstract class AbstractYamlFunction<T extends Function> implements Automa
 
         @Override
         public String getDefaultValue(Class<?> objectClass, Field field) {
-            return AutomationPackageNamedEntityUtils.getEntityNameByClass(objectClass);
+            return YamlModelUtils.getEntityNameByClass(objectClass);
         }
     }
 }

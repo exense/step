@@ -20,6 +20,8 @@ package step.core.yaml.deserializers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.core.scanner.CachedAnnotationScanner;
 
 import java.util.ArrayList;
@@ -28,6 +30,8 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public class StepYamlDeserializersScanner {
+
+    private static final Logger log = LoggerFactory.getLogger(StepYamlDeserializersScanner.class);
 
     /**
      * Scans and returns all {@link StepYamlDeserializer} classes annotated with {@link StepYamlDeserializerAddOn}
@@ -64,14 +68,16 @@ public class StepYamlDeserializersScanner {
         return scanDeserializerAddons(yamlObjectMapper, null);
     }
 
-    public static void addAllDeserializerAddonsToModule(SimpleModule module, ObjectMapper yamlObjectMapper){
-        addAllDeserializerAddonsToModule(module, yamlObjectMapper, null);
+    public static SimpleModule addAllDeserializerAddonsToModule(SimpleModule module, ObjectMapper yamlObjectMapper){
+        return addAllDeserializerAddonsToModule(module, yamlObjectMapper, null);
     }
 
-    public static void addAllDeserializerAddonsToModule(SimpleModule module, ObjectMapper yamlObjectMapper, List<Consumer<StepYamlDeserializer<?>>> configurators){
+    public static SimpleModule addAllDeserializerAddonsToModule(SimpleModule module, ObjectMapper yamlObjectMapper, List<Consumer<StepYamlDeserializer<?>>> configurators){
+        SimpleModule res = module;
         for (StepYamlDeserializersScanner.DeserializerBind<?> deser : StepYamlDeserializersScanner.scanDeserializerAddons(yamlObjectMapper, configurators)) {
-            module.addDeserializer((Class<Object>) deser.clazz, deser.deserializer);
+            res = module.addDeserializer((Class<Object>) deser.clazz, deser.deserializer);
         }
+        return res;
     }
 
     public static class DeserializerBind<T> {

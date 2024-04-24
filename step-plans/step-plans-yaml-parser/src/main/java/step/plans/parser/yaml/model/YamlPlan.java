@@ -26,7 +26,7 @@ public class YamlPlan {
 	private String version;
 	private String name;
 
-	private YamlRootArtefact root;
+	private NamedYamlArtefact root;
 
 	public String getName() {
 		return name;
@@ -36,11 +36,11 @@ public class YamlPlan {
 		this.name = name;
 	}
 
-	public YamlRootArtefact getRoot() {
+	public NamedYamlArtefact getRoot() {
 		return root;
 	}
 
-	public void setRoot(YamlRootArtefact root) {
+	public void setRoot(NamedYamlArtefact root) {
 		this.root = root;
 	}
 

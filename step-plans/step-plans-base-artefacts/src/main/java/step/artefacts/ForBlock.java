@@ -18,12 +18,15 @@
  ******************************************************************************/
 package step.artefacts;
 
+import step.artefacts.automation.YamlForBlock;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.yaml.YamlModel;
 import step.datapool.DataSources;
 
 import static step.artefacts.ForBlock.FOR_BLOCK_ARTIFACT_NAME;
 
+@YamlModel(model = YamlForBlock.class, name = "for")
 @Artefact(name = FOR_BLOCK_ARTIFACT_NAME)
 public class ForBlock extends AbstractForBlock {
 

@@ -18,8 +18,7 @@
  ******************************************************************************/
 package step.automation.packages.yaml;
 
-import step.automation.packages.AutomationPackageNamedEntity;
-import step.automation.packages.AutomationPackageNamedEntityUtils;
+import step.automation.packages.YamlModelUtils;
 import step.automation.packages.model.AbstractYamlFunction;
 
 import java.util.List;
@@ -33,13 +32,7 @@ public class AutomationPackageKeywordsLookuper {
     public String yamlKeywordClassToJava(String yamlKeywordClass) {
         List<Class<? extends AbstractYamlFunction<?>>> annotatedClasses = getAutomationPackageKeywords();
         for (Class<? extends AbstractYamlFunction<?>> annotatedClass : annotatedClasses) {
-            AutomationPackageNamedEntity ann = annotatedClass.getAnnotation(AutomationPackageNamedEntity.class);
-            String expectedYamlName;
-            if (ann.name() != null && !ann.name().isEmpty()) {
-                expectedYamlName = ann.name();
-            } else {
-                expectedYamlName = annotatedClass.getSimpleName();
-            }
+            String expectedYamlName = YamlModelUtils.getEntityNameByClass(annotatedClass);
 
             if (yamlKeywordClass.equalsIgnoreCase(expectedYamlName)) {
                 return annotatedClass.getName();
@@ -49,7 +42,7 @@ public class AutomationPackageKeywordsLookuper {
     }
 
     public List<Class<? extends AbstractYamlFunction<?>>> getAutomationPackageKeywords() {
-        return AutomationPackageNamedEntityUtils.scanNamedEntityClasses(AbstractYamlFunction.class).stream()
+        return YamlModelUtils.scanNamedYamlModels(AbstractYamlFunction.class).stream()
                 .map(c -> (Class<? extends AbstractYamlFunction<?>>) c)
                 .collect(Collectors.toList());
     }

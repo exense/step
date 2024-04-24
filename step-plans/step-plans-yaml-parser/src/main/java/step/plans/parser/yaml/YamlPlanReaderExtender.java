@@ -18,66 +18,13 @@
  ******************************************************************************/
 package step.plans.parser.yaml;
 
-import step.handlers.javahandler.jsonschema.FieldMetadataExtractor;
-import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
-import step.plans.parser.yaml.deserializers.YamlArtefactFieldDeserializationProcessor;
-import step.core.yaml.schema.JsonSchemaExtension;
-import step.plans.parser.yaml.serializers.YamlArtefactFieldSerializationProcessor;
-
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Allows to extend the logic of working with Yaml plans (for Step EE). To do that, there should be a class implementing the {@link YamlPlanReaderExtender}
  * and annotated with {@link YamlPlanReaderExtension}.
  * The following functionality can be extended via this class:
- * - the conversion from the Yaml plan to the {@link step.core.plans.Plan} object
- * - the serialization from {@link step.core.plans.Plan} to the Yaml format
- * - the generation of json schema for Yaml Plan format (see {@link step.plans.parser.yaml.schema.YamlPlanSchemaGenerationTool}
  * - the used json schema (for example, to switch to extended json schema in Step EE)
  */
 public interface YamlPlanReaderExtender {
-
-    /**
-     * Defines the additional list of YamlArtefactFieldSerializationProcessors to be used during serialization
-     * from {@link step.core.plans.Plan} to the Yaml format. This allows to add some special logic for Step EE artefacts
-     * (custom field processing for Step EE artefacts).
-     */
-    default List<YamlArtefactFieldSerializationProcessor> getSerializationExtensions(){
-        return new ArrayList<>();
-    }
-
-    /**
-     * Defines the additional list of YamlArtefactFieldDeserializationProcessor to be used during reading the Yaml Plan
-     * and convert it to the {@link step.core.plans.Plan}. This allows to add some special logic for Step EE artefacts
-     * (custom field processing for Step EE artefacts).
-     */
-    default List<YamlArtefactFieldDeserializationProcessor> getDeserializationExtensions(){
-        return new ArrayList<>();
-    }
-
-    /**
-     * Defines the additional list of JsonSchemaFieldProcessor to be used during the json schema preparation. This allows
-     * to add some custom json schema parts for Step EE artefacts (see {@link step.plans.parser.yaml.schema.YamlPlanSchemaGenerationTool}).
-     */
-    default List<JsonSchemaFieldProcessor> getJsonSchemaFieldProcessingExtensions() {
-        return new ArrayList<>();
-    }
-
-    /**
-     * Defines the additional list of YamlPlanJsonSchemaDefinitionCreator to be used to add some type reusable definitions (sub-schemas) to json the schema
-     */
-    default List<JsonSchemaExtension> getJsonSchemaDefinitionsExtensions(){
-        return new ArrayList<>();
-    }
-
-    /**
-     * Defines the additional list of FieldMetadataExtractor to specify some custom metadata
-     * (custom name, default value, 'required' flag) for special fields
-     */
-    default List<FieldMetadataExtractor> getMetadataExtractorExtensions() {
-        return new ArrayList<>();
-    }
 
     /**
      * Allows to redefine the json schema (for instance, switch used json schema to extended one for Step EE).
