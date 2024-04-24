@@ -33,6 +33,7 @@ import step.framework.server.ServiceRegistrationCallback;
 import step.framework.server.tables.TableRegistry;
 import step.handlers.javahandler.AbstractKeyword;
 import step.handlers.javahandler.Keyword;
+import step.migration.MigrationManager;
 import step.planbuilder.BaseArtefacts;
 import step.planbuilder.FunctionArtefacts;
 import step.plugins.measurements.GaugeCollectorRegistry;
@@ -60,6 +61,7 @@ public class TimeSeriesExecutionPluginTest extends AbstractKeyword {
 	@Before
 	public void setUp() throws Exception {
 		globalContext = new GlobalContext();
+		globalContext.put(MigrationManager.class, new MigrationManager());
 		globalContext.setEntityManager(new EntityManager());
 		globalContext.put(TableRegistry.class, new TableRegistry());
 		globalContext.setCollectionFactory(new InMemoryCollectionFactory(null));
