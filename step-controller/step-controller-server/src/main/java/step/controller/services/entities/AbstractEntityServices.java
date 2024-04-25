@@ -232,6 +232,10 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
     @Path("{id}/locked")
     public void setLocked(@PathParam("id") String id, Boolean locked) {
         T t = getEntity(id);
+        //when unlocking we need to set the new state before calling assertEntityIsAcceptableInContext
+        if (!locked) {
+            t.addCustomField(CUSTOM_FIELD_LOCKED, locked);
+        }
         assertEntityIsAcceptableInContext(t);
         t.addCustomField(CUSTOM_FIELD_LOCKED, locked);
         accessor.save(t);
