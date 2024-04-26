@@ -17,13 +17,16 @@ public class TimeSeriesAPIResponse {
     private final List<List<BucketResponse>> matrix;
     @NotNull
     private final List<BucketAttributes> matrixKeys;
+    @NotNull
+    private final boolean truncated;
 
-    public TimeSeriesAPIResponse(long start, long interval, long end, List<List<BucketResponse>> matrix, List<BucketAttributes> matrixKeys) {
+    public TimeSeriesAPIResponse(long start, long interval, long end, List<List<BucketResponse>> matrix, List<BucketAttributes> matrixKeys, boolean truncated) {
         this.start = start;
         this.interval = interval;
         this.end = end;
         this.matrix = matrix;
         this.matrixKeys = matrixKeys;
+        this.truncated = truncated;
     }
 
     public long getStart() {
@@ -44,5 +47,9 @@ public class TimeSeriesAPIResponse {
 
     public List<BucketAttributes> getMatrixKeys() {
         return matrixKeys;
+    }
+
+    public boolean isTruncated() {
+        return truncated;
     }
 }

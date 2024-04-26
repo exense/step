@@ -310,7 +310,7 @@ public class TimeSeriesHandler {
 
         List<BucketAttributes> matrixKeys = new ArrayList<>();
         List<List<BucketResponse>> matrix = new ArrayList<>();
-        series.keySet().forEach(key -> {
+        series.keySet().stream().limit(request.getMaxNumberOfSeries()).forEach(key -> {
             Map<Long, Bucket> currentSeries = series.get(key);
             List<BucketResponse> bucketResponses = new ArrayList<>();
             axis.forEach(index -> {
@@ -340,6 +340,7 @@ public class TimeSeriesHandler {
                 .withInterval(intervalSize)
                 .withMatrixKeys(matrixKeys)
                 .withMatrix(matrix)
+                .withTruncated(series.size() > request.getMaxNumberOfSeries())
                 .build();
     }
 

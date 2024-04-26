@@ -106,6 +106,7 @@ public class TimeSeriesHandlerTest {
         request.setPercentiles(Arrays.asList(10, 20, 50));
         request.setOqlFilter("");
         request.setParams(Map.of("eId", "abc"));
+        request.setMaxNumberOfSeries(100);
         TimeSeriesAPIResponse response = handler.getOrBuildTimeSeries(request);
         Assert.assertEquals(0, response.getStart());
         Assert.assertEquals(BUCKET_RESOLUTION, response.getEnd());
@@ -127,6 +128,7 @@ public class TimeSeriesHandlerTest {
         request.setPercentiles(Arrays.asList(10, 20, 50));
         request.setOqlFilter("");
         request.setParams(Map.of("key", key));
+        request.setMaxNumberOfSeries(100);
 
         TimeSeriesAPIResponse response = handler.getOrBuildTimeSeries(request);
         Assert.assertEquals(0, response.getStart());
@@ -158,6 +160,7 @@ public class TimeSeriesHandlerTest {
         request.setStart(0);
         request.setEnd(bucketsCount * 1000);
         request.setGroupDimensions(Collections.emptySet());
+        request.setMaxNumberOfSeries(100);
         int responseBucketsCount = bucketsCount / 2;
         request.setNumberOfBuckets(responseBucketsCount); // 5
         request.setPercentiles(Arrays.asList(10, 20, 50));
@@ -187,6 +190,48 @@ public class TimeSeriesHandlerTest {
     }
 
     @Test
+    public void fetchMultipleBucketsWithGroupingTest() {
+        String key = RandomStringUtils.randomAlphabetic(5);
+        int bucketsCount = 10;
+        List<Bucket> buckets = generateBuckets(key, bucketsCount);
+        bucketsCollection.save(buckets);
+        String key2 = RandomStringUtils.randomAlphabetic(5);
+        buckets = generateBuckets(key2, bucketsCount);
+        bucketsCollection.save(buckets);
+        FetchBucketsRequest request = new FetchBucketsRequest();
+        request.setStart(0);
+        request.setEnd(bucketsCount * 1000);
+        request.setGroupDimensions(Set.of("key"));
+        request.setMaxNumberOfSeries(100);
+        int responseBucketsCount = bucketsCount / 2;
+        request.setNumberOfBuckets(responseBucketsCount); // 5
+        request.setPercentiles(Arrays.asList(10, 20, 50));
+        request.setOqlFilter("attributes.key = " + key + " or attributes.key = " + key2);
+
+        TimeSeriesAPIResponse response = handler.getOrBuildTimeSeries(request);
+        Assert.assertEquals(0, response.getStart());
+        Assert.assertEquals(bucketsCount * 1000, response.getEnd());
+        Assert.assertEquals(responseBucketsCount, response.getMatrix().get(0).size());
+        Assert.assertEquals(2, response.getMatrixKeys().size());
+
+        //Test with a limit of 1
+        request = new FetchBucketsRequest();
+        request.setStart(0);
+        request.setEnd(bucketsCount * 1000);
+        request.setGroupDimensions(Set.of("key"));
+        request.setMaxNumberOfSeries(1);
+        request.setNumberOfBuckets(responseBucketsCount); // 5
+        request.setPercentiles(Arrays.asList(10, 20, 50));
+        request.setOqlFilter("attributes.key = " + key);
+
+        response = handler.getOrBuildTimeSeries(request);
+        Assert.assertEquals(0, response.getStart());
+        Assert.assertEquals(bucketsCount * 1000, response.getEnd());
+        Assert.assertEquals(responseBucketsCount, response.getMatrix().get(0).size());
+        Assert.assertEquals(1, response.getMatrixKeys().size());
+    }
+
+    @Test
     public void fetchRawMeasurementsTest() {
         String key = RandomStringUtils.randomAlphabetic(5);
         int bucketsCount = 10;
@@ -201,6 +246,7 @@ public class TimeSeriesHandlerTest {
         request.setNumberOfBuckets(responseBucketsCount); // 5
         request.setPercentiles(Arrays.asList(10, 20, 50));
         request.setOqlFilter("attributes.unknownKey = " + key); // this is not a known field, so it will fall over on RAW data.
+        request.setMaxNumberOfSeries(100);
 
         TimeSeriesAPIResponse response = handler.getOrBuildTimeSeries(request);
         Assert.assertEquals(0, response.getMatrix().size()); // we don't have measurements with unknown key
@@ -231,6 +277,7 @@ public class TimeSeriesHandlerTest {
         request.setNumberOfBuckets(responseBucketsCount); // 5
         request.setPercentiles(Arrays.asList(10, 20, 50));
         request.setOqlFilter("attributes.key = " + key);
+        request.setMaxNumberOfSeries(100);
 
         TimeSeriesAPIResponse response = handler.getOrBuildTimeSeries(request);
         Assert.assertEquals(1, response.getMatrix().size());

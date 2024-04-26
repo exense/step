@@ -13,6 +13,7 @@ public class FetchBucketsRequest {
     private List<Integer> percentiles = Collections.emptyList();
     private Set<String> collectAttributeKeys;
     private int collectAttributesValuesLimit;
+    private int maxNumberOfSeries;
 
     public Long getStart() {
         return start;
@@ -94,5 +95,13 @@ public class FetchBucketsRequest {
 
     public void setCollectAttributesValuesLimit(int collectAttributesValuesLimit) {
         this.collectAttributesValuesLimit = collectAttributesValuesLimit;
+    }
+
+    public int getMaxNumberOfSeries() {
+        return maxNumberOfSeries;
+    }
+
+    public void setMaxNumberOfSeries(int maxNumberOfSeries) {
+        this.maxNumberOfSeries = maxNumberOfSeries;
     }
 }
