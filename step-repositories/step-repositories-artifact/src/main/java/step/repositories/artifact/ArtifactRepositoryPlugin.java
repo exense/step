@@ -21,7 +21,7 @@ package step.repositories.artifact;
 import ch.exense.commons.app.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.automation.packages.AbstractAutomationPackageReader;
+import step.automation.packages.AutomationPackageReader;
 import step.automation.packages.AutomationPackagePlugin;
 import step.core.GlobalContext;
 import step.core.controller.ControllerSettingAccessor;
@@ -44,7 +44,7 @@ public class ArtifactRepositoryPlugin extends AbstractControllerPlugin {
         PlanAccessor planAccessor = context.getPlanAccessor();
         ControllerSettingAccessor controllerSettingAccessor = context.require(ControllerSettingAccessor.class);
         Configuration configuration = context.getConfiguration();
-        AbstractAutomationPackageReader<?> automationPackageReader = context.require(AbstractAutomationPackageReader.class);
+        AutomationPackageReader automationPackageReader = context.require(AutomationPackageReader.class);
         MavenArtifactRepository mavenRepository = new MavenArtifactRepository(planAccessor, context.getResourceManager(), controllerSettingAccessor, configuration, automationPackageReader);
         ResourceArtifactRepository resourceRepository = new ResourceArtifactRepository(planAccessor, context.getResourceManager(), automationPackageReader);
         context.getRepositoryObjectManager().registerRepository(MAVEN_REPO_ID, mavenRepository);

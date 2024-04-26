@@ -18,8 +18,12 @@
  ******************************************************************************/
 package step.datapool.file;
 
-import step.core.dynamicbeans.DynamicValue;
+import step.artefacts.automation.datasource.YamlCsvDataSource;
 
+import step.core.dynamicbeans.DynamicValue;
+import step.core.yaml.YamlModel;
+
+@YamlModel(model = YamlCsvDataSource.class, name = "csv")
 public class CSVDataPool extends FileDataPool {
 	
 	DynamicValue<String> delimiter = new DynamicValue<String>(",");

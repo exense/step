@@ -22,13 +22,12 @@ import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 
 import ch.exense.commons.app.Configuration;
+import org.apache.http.HttpStatus;
 import step.core.GlobalContext;
 import step.core.access.User;
+import step.core.accessors.AbstractIdentifiableObject;
 import step.core.execution.ExecutionContext;
-import step.core.objectenricher.ObjectEnricher;
-import step.core.objectenricher.ObjectFilter;
-import step.core.objectenricher.ObjectHookRegistry;
-import step.core.objectenricher.ObjectPredicate;
+import step.core.objectenricher.*;
 import step.core.scheduler.ExecutionScheduler;
 import step.framework.server.AbstractServices;
 import step.framework.server.Session;
@@ -107,6 +106,21 @@ public abstract class AbstractStepServices extends AbstractServices<User> {
 		} catch (NotMemberOfProjectException ex){
 			// if 'userOnBehalf' is not a member of the project, we want to return 'access denied' error
 			throw new AuthorizationException(ex.getMessage());
+		}
+	}
+
+	/**
+	 * The ObjectHookInterceptor.aroundReadFrom can only be used for POST request passing an entity as request BODY
+	 * This method can be used as helper for all other cases where checking if the entity is acceptable in given context (i.e. DELETE request...(
+	 * @param entity the entity to be asserted
+	 */
+	protected void assertEntityIsAcceptableInContext(AbstractIdentifiableObject entity) {
+		if(entity instanceof EnricheableObject) {
+			EnricheableObject enricheableObject = (EnricheableObject) entity;
+			Session session = getSession();
+			if (!objectHookRegistry.isObjectAcceptableInContext(session, enricheableObject)) {
+				throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, "Authorization error", "You're not allowed to edit this object from within this context");
+			}
 		}
 	}
 }

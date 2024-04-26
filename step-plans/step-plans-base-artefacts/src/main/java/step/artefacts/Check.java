@@ -18,10 +18,13 @@
  ******************************************************************************/
 package step.artefacts;
 
+import step.artefacts.automation.YamlCheck;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.yaml.YamlModel;
 
+@YamlModel(model = YamlCheck.class, name = "check")
 @Artefact(block=false)
 public class Check extends AbstractArtefact {
 

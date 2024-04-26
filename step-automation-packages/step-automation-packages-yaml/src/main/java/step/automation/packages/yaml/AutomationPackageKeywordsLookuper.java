@@ -18,17 +18,11 @@
  ******************************************************************************/
 package step.automation.packages.yaml;
 
-import step.automation.packages.AutomationPackageNamedEntity;
-import step.automation.packages.AutomationPackageNamedEntityUtils;
-import step.automation.packages.yaml.rules.YamlConversionRuleAddOn;
-import step.automation.packages.yaml.rules.YamlKeywordConversionRule;
-import step.core.scanner.CachedAnnotationScanner;
-import step.functions.Function;
+import step.automation.packages.YamlModelUtils;
+import step.automation.packages.model.AbstractYamlFunction;
 
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static step.core.scanner.Classes.newInstanceAs;
 
 public class AutomationPackageKeywordsLookuper {
 
@@ -36,15 +30,9 @@ public class AutomationPackageKeywordsLookuper {
     }
 
     public String yamlKeywordClassToJava(String yamlKeywordClass) {
-        List<Class<? extends Function>> annotatedClasses = getAutomationPackageKeywords();
-        for (Class<? extends Function> annotatedClass : annotatedClasses) {
-            AutomationPackageNamedEntity ann = annotatedClass.getAnnotation(AutomationPackageNamedEntity.class);
-            String expectedYamlName;
-            if (ann.name() != null && !ann.name().isEmpty()) {
-                expectedYamlName = ann.name();
-            } else {
-                expectedYamlName = annotatedClass.getSimpleName();
-            }
+        List<Class<? extends AbstractYamlFunction<?>>> annotatedClasses = getAutomationPackageKeywords();
+        for (Class<? extends AbstractYamlFunction<?>> annotatedClass : annotatedClasses) {
+            String expectedYamlName = YamlModelUtils.getEntityNameByClass(annotatedClass);
 
             if (yamlKeywordClass.equalsIgnoreCase(expectedYamlName)) {
                 return annotatedClass.getName();
@@ -53,37 +41,10 @@ public class AutomationPackageKeywordsLookuper {
         return null;
     }
 
-    public List<YamlKeywordConversionRule> getConversionRulesForKeyword(Function function) {
-        return getAllConversionRules().stream().filter(r -> {
-            YamlConversionRuleAddOn annotation = r.getClass().getAnnotation(YamlConversionRuleAddOn.class);
-            if (annotation == null) {
-                return false;
-            }
-
-            if (annotation.targetClasses() == null) {
-                return true;
-            }
-
-            Class<?>[] functions = annotation.targetClasses();
-            for (Class<?> aClass : functions) {
-                if (aClass.isAssignableFrom(function.getClass())) {
-                    return true;
-                }
-            }
-            return false;
-        }).collect(Collectors.toList());
-    }
-
-    public List<Class<? extends Function>> getAutomationPackageKeywords() {
-        return AutomationPackageNamedEntityUtils.scanNamedEntityClasses(Function.class).stream()
-                .map(c -> (Class<? extends Function>) c)
+    public List<Class<? extends AbstractYamlFunction<?>>> getAutomationPackageKeywords() {
+        return YamlModelUtils.scanNamedYamlModels(AbstractYamlFunction.class).stream()
+                .map(c -> (Class<? extends AbstractYamlFunction<?>>) c)
                 .collect(Collectors.toList());
     }
 
-    public List<YamlKeywordConversionRule> getAllConversionRules() {
-        return CachedAnnotationScanner.getClassesWithAnnotation(YamlConversionRuleAddOn.LOCATION, YamlConversionRuleAddOn.class, Thread.currentThread().getContextClassLoader()).stream()
-                .filter(YamlKeywordConversionRule.class::isAssignableFrom)
-                .map(newInstanceAs(YamlKeywordConversionRule.class))
-                .collect(Collectors.toList());
-    }
 }

@@ -18,10 +18,13 @@
  ******************************************************************************/
 package step.artefacts;
 
+
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.yaml.YamlModel;
 
+@YamlModel(name = "testSet")
 @Artefact(name = "TestSet", validAsRoot = true)
 public class TestSet extends AbstractArtefact {
 

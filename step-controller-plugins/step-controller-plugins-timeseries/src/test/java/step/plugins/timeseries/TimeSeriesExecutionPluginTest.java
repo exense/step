@@ -16,7 +16,6 @@ import step.core.collections.inmemory.InMemoryCollectionFactory;
 import step.core.deployment.WebApplicationConfigurationManager;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.entities.EntityManager;
-import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
 import step.core.execution.model.Execution;
 import step.core.execution.type.ExecutionTypePlugin;
@@ -28,13 +27,13 @@ import step.core.timeseries.TimeSeriesIngestionPipeline;
 import step.core.timeseries.aggregation.TimeSeriesAggregationPipeline;
 import step.core.timeseries.aggregation.TimeSeriesAggregationResponse;
 import step.core.views.ViewPlugin;
-import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.engine.plugins.FunctionPlugin;
 import step.engine.plugins.LocalFunctionPlugin;
 import step.framework.server.ServiceRegistrationCallback;
 import step.framework.server.tables.TableRegistry;
 import step.handlers.javahandler.AbstractKeyword;
 import step.handlers.javahandler.Keyword;
+import step.migration.MigrationManager;
 import step.planbuilder.BaseArtefacts;
 import step.planbuilder.FunctionArtefacts;
 import step.plugins.measurements.GaugeCollectorRegistry;
@@ -62,6 +61,7 @@ public class TimeSeriesExecutionPluginTest extends AbstractKeyword {
 	@Before
 	public void setUp() throws Exception {
 		globalContext = new GlobalContext();
+		globalContext.put(MigrationManager.class, new MigrationManager());
 		globalContext.setEntityManager(new EntityManager());
 		globalContext.put(TableRegistry.class, new TableRegistry());
 		globalContext.setCollectionFactory(new InMemoryCollectionFactory(null));

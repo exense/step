@@ -19,12 +19,14 @@ import step.core.collections.Collection;
 
 public class RemoteCollection<T> implements Collection<T> {
 
+    protected final String collectionName;
     protected final String path;
     protected final Class<T> entityClass;
     protected AbstractRemoteClient client;
 
     public RemoteCollection(AbstractRemoteClient client, String collection, Class<T> entityClass){
         super();
+        this.collectionName = collection;
         this.path = "/rest/remote/" + collection;
         this.entityClass = entityClass;
         this.client = client;
@@ -178,11 +180,10 @@ public class RemoteCollection<T> implements Collection<T> {
 
     @Override
     public String getName() {
-        //Temporary fix conflicts introduce by SED-2693 directly implemented on master
-        return path;
+        return collectionName;
     }
 
-    @Override
+	@Override
 	public long count(Filter filter, Integer limit) {
         Invocation.Builder builder = client.requestBuilder(path + "/count");
         Entity<CountRequest> entity = Entity.entity(new CountRequest(filter, limit), MediaType.APPLICATION_JSON);

@@ -29,6 +29,16 @@ import step.datapool.DataPoolRow;
 import step.datapool.DataSet;
 import step.datapool.DataSetHandle;
 
+import javax.json.Json;
+import javax.json.JsonArrayBuilder;
+import javax.json.JsonObjectBuilder;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
 public class DataSetHandler extends ArtefactHandler<DataSetArtefact, ReportNode> {
 		
 	@Override
@@ -64,6 +74,30 @@ public class DataSetHandler extends ArtefactHandler<DataSetArtefact, ReportNode>
 					}
 				}				
 				return row!=null?row.getValue():null;
+			}
+		}
+
+		public synchronized DataPoolChunk nextChunk(int size) {
+			return new DataPoolChunk(IntStream.range(0, size).mapToObj(i -> next()).filter(Objects::nonNull).collect(Collectors.toList()));
+		}
+
+		public static class DataPoolChunk extends ArrayList<Object> {
+
+			public DataPoolChunk(Collection<? extends Object> c) {
+				super(c);
+			}
+
+			public String asJson() {
+				JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
+				stream().forEach(row -> {
+					JsonObjectBuilder objectBuilder = Json.createObjectBuilder();
+					if(row instanceof Map) {
+						Map<Object, Object> map = (Map) row;
+						map.entrySet().forEach(e -> objectBuilder.add(e.getKey().toString(), e.getValue().toString()));
+					}
+					arrayBuilder.add(objectBuilder.build());
+				});
+				return arrayBuilder.build().toString();
 			}
 		}
 		

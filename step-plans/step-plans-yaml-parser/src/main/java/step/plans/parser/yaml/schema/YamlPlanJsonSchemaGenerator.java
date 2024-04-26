@@ -29,24 +29,22 @@ import org.slf4j.LoggerFactory;
 import step.core.Version;
 import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.artefacts.AbstractArtefact;
-import step.core.artefacts.Artefact;
-import step.core.scanner.AnnotationScanner;
 import step.core.scanner.CachedAnnotationScanner;
-import step.core.yaml.schema.AggregatedJsonSchemaFieldProcessor;
-import step.core.yaml.schema.AggregatingFieldMetadataExtractor;
-import step.core.yaml.schema.JsonSchemaDefinitionCreator;
-import step.core.yaml.schema.YamlJsonSchemaHelper;
-import step.handlers.javahandler.jsonschema.*;
+import step.core.yaml.schema.*;
+import step.handlers.javahandler.jsonschema.FieldMetadataExtractor;
+import step.handlers.javahandler.jsonschema.JsonSchemaCreator;
+import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
+import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
+import step.jsonschema.DefaultFieldMetadataExtractor;
+import step.plans.parser.yaml.YamlArtefactsLookuper;
 import step.plans.parser.yaml.YamlPlanFields;
-import step.plans.parser.yaml.rules.*;
-import step.plans.parser.yaml.YamlPlanReaderExtender;
-import step.plans.parser.yaml.YamlPlanReaderExtension;
+import step.plans.parser.yaml.model.AbstractYamlArtefact;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static step.core.scanner.Classes.newInstanceAs;
-import static step.plans.parser.yaml.YamlPlanFields.ARTEFACT_CHILDREN;
 
 public class YamlPlanJsonSchemaGenerator {
 
@@ -65,87 +63,29 @@ public class YamlPlanJsonSchemaGenerator {
 
 	protected final JsonSchemaCreator jsonSchemaCreator;
 	protected final YamlJsonSchemaHelper schemaHelper = new YamlJsonSchemaHelper(jsonProvider);
-	protected final YamlResourceReferenceJsonSchemaHelper resourceReferenceJsonSchemaHelper = new YamlResourceReferenceJsonSchemaHelper(jsonProvider);
 
 	public YamlPlanJsonSchemaGenerator(String targetPackage, Version actualVersion, String schemaId) {
 		this.targetPackage = targetPackage;
 		this.actualVersion = actualVersion;
 		this.schemaId = schemaId;
 
-		// TODO: further we can replace this hardcoded logic for some custom field metadata and processing with some enhanced solution (java annotations?)
-
 		// --- Fields metadata rules (fields we want to rename)
 		FieldMetadataExtractor fieldMetadataExtractor = prepareMetadataExtractor();
 
-		List<JsonSchemaFieldProcessor> processingRules = prepareFieldProcessors();
+		List<JsonSchemaFieldProcessor> processingRules = YamlJsonSchemaHelper.prepareDefaultFieldProcessors(null);
 		this.jsonSchemaCreator = new JsonSchemaCreator(jsonProvider, new AggregatedJsonSchemaFieldProcessor(processingRules), fieldMetadataExtractor);
 	}
 
-	protected List<JsonSchemaFieldProcessor> prepareFieldProcessors() {
-		List<JsonSchemaFieldProcessor> result = new ArrayList<>();
-
-		// -- BASIC PROCESSING RULES
-		result.add(new CommonFilteredFieldRule().getJsonSchemaFieldProcessor(jsonProvider));
-		result.add(new TechnicalFieldRule().getJsonSchemaFieldProcessor(jsonProvider));
-
-		JsonSchemaFieldProcessor artefactChildrenProcessingRule = (objectClass, field, fieldMetadata, propertiesBuilder, requiredPropertiesOutput) -> {
-			if(field.getDeclaringClass().equals(AbstractArtefact.class) && field.getName().equals(ARTEFACT_CHILDREN)) {
-				propertiesBuilder.add(fieldMetadata.getFieldName(),
-						jsonProvider.createObjectBuilder()
-								.add("type", "array")
-								.add("items", YamlJsonSchemaHelper.addRef(jsonProvider.createObjectBuilder(), ARTEFACT_DEF))
-				);
-				return true;
-			} else {
-				return false;
-			}
-		};
-		result.add(artefactChildrenProcessingRule);
-
-		// -- RULES FROM EXTENSIONS HAVE LESS PRIORITY THAN BASIC RULES, BUT MORE PRIORITY THAN OTHER RULES
-		result.addAll(getFieldExtensions());
-
-		// TODO: all these rules for OS artefacts should be taken in the same way (pluggable) via getFieldExtensions
-		// -- RULES FOR OS ARTEFACTS
-		result.add(new NodeNameRule().getJsonSchemaFieldProcessor(jsonProvider));
-		result.add(new KeywordSelectionRule().getJsonSchemaFieldProcessor(jsonProvider));
-		result.add(new KeywordRoutingRule().getJsonSchemaFieldProcessor(jsonProvider));
-		result.add(new KeywordInputsRule().getJsonSchemaFieldProcessor(jsonProvider));
-		result.add(new FunctionGroupSelectionRule().getJsonSchemaFieldProcessor(jsonProvider));
-		result.add(new CheckExpressionRule().getJsonSchemaFieldProcessor(jsonProvider));
-		result.add(new ForBlockRule(null).getJsonSchemaFieldProcessor(jsonProvider));
-		result.add(new ForEachBlockRule(null).getJsonSchemaFieldProcessor(jsonProvider));
-		result.add(new DataSetRule(null).getJsonSchemaFieldProcessor(jsonProvider));
-		result.add(new PerformanceAssertFilterRule().getJsonSchemaFieldProcessor(jsonProvider));
-
-		// -- SOME DEFAULT RULES FOR ENUMS AND DYNAMIC FIELDS
-		result.add(new DynamicFieldRule().getJsonSchemaFieldProcessor(jsonProvider));
-		result.add(new EnumFieldRule().getJsonSchemaFieldProcessor(jsonProvider));
-
-		return result;
-	}
-
-	protected List<JsonSchemaFieldProcessor> getFieldExtensions() {
-		List<JsonSchemaFieldProcessor> extensions = new ArrayList<>();
-		CachedAnnotationScanner.getClassesWithAnnotation(YamlPlanReaderExtension.LOCATION, YamlPlanReaderExtension.class, Thread.currentThread().getContextClassLoader()).stream()
-				.map(newInstanceAs(YamlPlanReaderExtender.class)).forEach(e -> extensions.addAll(e.getJsonSchemaFieldProcessingExtensions()));
-		return extensions;
-	}
-
-	protected List<JsonSchemaDefinitionCreator> getDefinitionsExtensions() {
-		List<JsonSchemaDefinitionCreator> extensions = new ArrayList<>();
-		CachedAnnotationScanner.getClassesWithAnnotation(YamlPlanReaderExtension.LOCATION, YamlPlanReaderExtension.class, Thread.currentThread().getContextClassLoader()).stream()
-				.map(newInstanceAs(YamlPlanReaderExtender.class)).forEach(e -> extensions.addAll(e.getJsonSchemaDefinitionsExtensions()));
+	protected List<JsonSchemaExtension> getDefinitionsExtensions() {
+		List<JsonSchemaExtension> extensions = new ArrayList<>();
+		CachedAnnotationScanner.getClassesWithAnnotation(JsonSchemaDefinitionAddOn.LOCATION, JsonSchemaDefinitionAddOn.class, Thread.currentThread().getContextClassLoader()).stream()
+				.map(newInstanceAs(JsonSchemaExtension.class)).forEach(extensions::add);
 		return extensions;
 	}
 
 	public static FieldMetadataExtractor prepareMetadataExtractor() {
 		List<FieldMetadataExtractor> metadataExtractors = new ArrayList<>();
-
-		CachedAnnotationScanner.getClassesWithAnnotation(YamlPlanReaderExtension.LOCATION, YamlPlanReaderExtension.class, Thread.currentThread().getContextClassLoader()).stream()
-				.map(newInstanceAs(YamlPlanReaderExtender.class)).forEach(e -> metadataExtractors.addAll(e.getMetadataExtractorExtensions()));
 		metadataExtractors.add(new DefaultFieldMetadataExtractor());
-
 		return new AggregatingFieldMetadataExtractor(metadataExtractors);
 	}
 
@@ -195,110 +135,153 @@ public class YamlPlanJsonSchemaGenerator {
 	public JsonObjectBuilder createDefs() throws JsonSchemaPreparationException {
 		JsonObjectBuilder defsBuilder = jsonProvider.createObjectBuilder();
 
-		List<JsonSchemaDefinitionCreator> definitionCreators = new ArrayList<>();
+        // add definitions from extensions
+        List<JsonSchemaExtension> definitionCreators = new ArrayList<>(getDefinitionsExtensions());
 
-		// prepare definitions for generic DynamicValue class
-		definitionCreators.add((defsList) -> {
-			Map<String, JsonObjectBuilder> dynamicValueDefs = schemaHelper.createDynamicValueImplDefs();
-			for (Map.Entry<String, JsonObjectBuilder> dynamicValueDef : dynamicValueDefs.entrySet()) {
-				defsBuilder.add(dynamicValueDef.getKey(), dynamicValueDef.getValue());
-			}
-		});
-
-		// prepare definitions for referenced resources
-		definitionCreators.add(defsList -> {
-			Map<String, JsonObjectBuilder> dynamicValueDefs = resourceReferenceJsonSchemaHelper.createResourceReferenceDefs();
-			for (Map.Entry<String, JsonObjectBuilder> dynamicValueDef : dynamicValueDefs.entrySet()) {
-				defsBuilder.add(dynamicValueDef.getKey(), dynamicValueDef.getValue());
-			}
-		});
-
-		// prepare definitions for referenced resources
-		definitionCreators.add(defsList -> {
-			Map<String, JsonObjectBuilder> dynamicValueDefs = resourceReferenceJsonSchemaHelper.createResourceReferenceDefs();
-			for (Map.Entry<String, JsonObjectBuilder> dynamicValueDef : dynamicValueDefs.entrySet()) {
-				defsBuilder.add(dynamicValueDef.getKey(), dynamicValueDef.getValue());
-			}
-		});
-
-		// prepare definitions for subclasses annotated with @Artefact
-		definitionCreators.add((defsList) -> {
+		// prepare definitions for artefacts
+		definitionCreators.add((defsList, schemaCreator) -> {
 			ArtefactDefinitions artefactImplDefs = createArtefactImplDefs();
-			for (Map.Entry<String, JsonObjectBuilder> artefactImplDef : artefactImplDefs.allArtefactDefs.entrySet()) {
+
+			// sort definition to keep the stable ordering in json schema
+			List<Map.Entry<String, JsonObjectBuilder>> arefactEntries = new ArrayList<>(artefactImplDefs.allArtefactDefs.entrySet());
+			arefactEntries.sort(Map.Entry.comparingByKey());
+
+			for (Map.Entry<String, JsonObjectBuilder> artefactImplDef : arefactEntries) {
 				defsBuilder.add(artefactImplDef.getKey(), artefactImplDef.getValue());
 			}
 
 			// add definition for "anyOf" artefact definitions prepared above
 			defsBuilder.add(ARTEFACT_DEF, createArtefactDef(artefactImplDefs.controlArtefactDefs));
 			defsBuilder.add(ROOT_ARTEFACT_DEF, createArtefactDef(artefactImplDefs.rootArtefactDefs));
+			defsBuilder.add(AbstractYamlArtefact.ARTEFACT_ARRAY_DEF, createArtefactArrayDef());
 		});
 
-		// add definitions from extensions (additional definitions for EE artefacts)
-		definitionCreators.addAll(getDefinitionsExtensions());
-
-		for (JsonSchemaDefinitionCreator definitionCreator : definitionCreators) {
-			definitionCreator.addDefinition(defsBuilder);
+		for (JsonSchemaExtension definitionCreator : definitionCreators) {
+			definitionCreator.addToJsonSchema(defsBuilder, jsonProvider);
 		}
 
 		return defsBuilder;
 	}
 
+	private JsonObjectBuilder createArtefactArrayDef() {
+		JsonObjectBuilder builder = jsonProvider.createObjectBuilder();
+		builder.add("type", "array");
+		builder.add("items", YamlJsonSchemaHelper.addRef(jsonProvider.createObjectBuilder(), ARTEFACT_DEF));
+		return builder;
+	}
+
 	private ArtefactDefinitions createArtefactImplDefs() throws JsonSchemaPreparationException {
-		try (AnnotationScanner annotationScanner = AnnotationScanner.forAllClassesFromContextClassLoader()) {
-			ArtefactDefinitions artefactDefinitions = new ArtefactDefinitions();
+		ArtefactDefinitions artefactDefinitions = new ArtefactDefinitions();
 
-			// scan all @Artefact classes in classpath and automatically prepare definitions for them
-			List<Class<?>> artefactClasses = annotationScanner.getClassesWithAnnotation(Artefact.class)
-					.stream()
-					.filter(c -> !c.getAnnotation(Artefact.class).test()) // exclude test artefacts
-					.sorted(Comparator.comparing(Class::getSimpleName))
-					.collect(Collectors.toList());
-			log.info("The following {} artefact classes detected: {}", artefactClasses.size(), artefactClasses);
+		List<Class<? extends AbstractYamlArtefact<?>>> specialYamlModels = YamlArtefactsLookuper.getSpecialYamlArtefactModels();
+		log.info("The following {} special artefact yaml models detected: {}", specialYamlModels.size(), specialYamlModels);
 
-			// find allowed control artefacts
-			Set<Class<?>> controlArtefactClasses = artefactClasses.stream().filter(c -> {
-				Artefact ann = c.getAnnotation(Artefact.class);
-				if (ann == null) {
-					return false;
-				}
-				return ann.validAsControl();
-			}).collect(Collectors.toSet());
+		List<Class<? extends AbstractArtefact>> simpleYamlModels = YamlArtefactsLookuper.getSimpleYamlArtefactModels();
+		log.info("The following {} simple artefact yaml models detected: {}", simpleYamlModels.size(), simpleYamlModels);
 
-			// find allowed root artefacts
-			Set<Class<?>> rootArtefactClasses = artefactClasses.stream().filter(c -> {
-				Artefact ann = c.getAnnotation(Artefact.class);
-				if (ann == null) {
-					return false;
-				}
-				return ann.validAsRoot();
-			}).collect(Collectors.toSet());
-			log.info("The following {} artefact classes detected: {}", rootArtefactClasses.size(), rootArtefactClasses);
+		// find allowed control artefacts
+		Set<Class<?>> controlArtefactClasses = Stream.concat(specialYamlModels.stream(), simpleYamlModels.stream())
+				.filter(YamlArtefactsLookuper::isControlArtefact)
+				.collect(Collectors.toSet());
 
-			for (Class<?> artefactClass : artefactClasses) {
-				// use the name of artefact as definition name
-				String name = AbstractArtefact.getArtefactName((Class<? extends AbstractArtefact>) artefactClass);
+		// find allowed root artefacts
+		Set<Class<?>> rootArtefactClasses = Stream.concat(specialYamlModels.stream(), simpleYamlModels.stream())
+				.filter(YamlArtefactsLookuper::isRootArtefact)
+				.collect(Collectors.toSet());
+		log.info("The following {} root artefact classes detected: {}", rootArtefactClasses.size(), rootArtefactClasses);
+
+		// prepare json schemas for SPECIAL models
+		for (Class<? extends AbstractYamlArtefact<?>> yamlArtefactClass : specialYamlModels) {
+			// use the name of artefact as definition name
+			Class<? extends AbstractArtefact> artefactClass = YamlArtefactsLookuper.getArtefactClass(yamlArtefactClass);
+
+			if (artefactClass != null) {
+				String name = AbstractArtefact.getArtefactName(artefactClass);
 				String defName = name + "Def";
 
-				// scan all fields in artefact class and put them to artefact definition
-				JsonObjectBuilder def = createArtefactImplDef(name, artefactClass);
+				JsonObjectBuilder def = schemaHelper.createNamedObjectImplDef(
+						YamlArtefactsLookuper.getYamlArtefactName(artefactClass),
+						yamlArtefactClass,
+						jsonSchemaCreator,
+						true
+				);
+
 				artefactDefinitions.allArtefactDefs.put(defName, def);
 
 				// for root artefacts we only support the subset of all artefact definitions
-				if (rootArtefactClasses.contains(artefactClass)) {
+				if (rootArtefactClasses.contains(yamlArtefactClass)) {
 					artefactDefinitions.rootArtefactDefs.add(defName);
 				}
-				if (controlArtefactClasses.contains(artefactClass)) {
+				if (controlArtefactClasses.contains(yamlArtefactClass)) {
 					artefactDefinitions.controlArtefactDefs.add(defName);
 				}
 			}
-			return artefactDefinitions;
 		}
+
+		// prepare json schemas for SIMPLE models
+		for (Class<? extends AbstractArtefact> simpleYamlModel : simpleYamlModels) {
+			// use the name of artefact as definition name
+			Class<? extends AbstractArtefact> artefactClass = YamlArtefactsLookuper.getArtefactClass(simpleYamlModel);
+
+			if (artefactClass != null) {
+				String name = AbstractArtefact.getArtefactName(artefactClass);
+				String defName = name + "Def";
+
+				JsonObjectBuilder def = createJsonSchemaForSimpleArtefact(simpleYamlModel);
+
+				artefactDefinitions.allArtefactDefs.put(defName, def);
+
+				// for root artefacts we only support the subset of all artefact definitions
+				if (rootArtefactClasses.contains(simpleYamlModel)) {
+					artefactDefinitions.rootArtefactDefs.add(defName);
+				}
+				if (controlArtefactClasses.contains(simpleYamlModel)) {
+					artefactDefinitions.controlArtefactDefs.add(defName);
+				}
+			}
+		}
+
+		// fixed artefact ordering in json schema
+		artefactDefinitions.rootArtefactDefs.sort(Comparator.naturalOrder());
+		artefactDefinitions.controlArtefactDefs.sort(Comparator.naturalOrder());
+
+		return artefactDefinitions;
 	}
 
-	private JsonObjectBuilder createArtefactImplDef(String name, Class<?> artefactClass) throws JsonSchemaPreparationException {
-		// artefact has the top-level property matching the artefact name
-		String yamlName = YamlPlanFields.javaArtefactNameToYaml(name);
-		return schemaHelper.createNamedObjectImplDef(yamlName, artefactClass, jsonSchemaCreator, true);
+	private JsonObjectBuilder createJsonSchemaForSimpleArtefact(Class<? extends AbstractArtefact> simpleYamlArtefact) throws JsonSchemaPreparationException {
+		JsonObjectBuilder res = jsonProvider.createObjectBuilder();
+		res.add("type", "object");
+
+		// on the top level there is a name only
+		JsonObjectBuilder schemaBuilder = jsonProvider.createObjectBuilder();
+
+		// other properties are located in nested object and automatically prepared via reflection
+		JsonObjectBuilder propertiesBuilder = jsonProvider.createObjectBuilder();
+		propertiesBuilder.add("type", "object");
+
+		JsonObjectBuilder classPropertiesBuilder = jsonProvider.createObjectBuilder();
+
+		List<String> requiredProperties = new ArrayList<>();
+
+		// properties declared in AbstractArtefact are taken from AbstractYamlArtefact
+		schemaHelper.extractPropertiesFromClass(jsonSchemaCreator, AbstractYamlArtefact.class, classPropertiesBuilder, requiredProperties, null);
+		schemaHelper.extractPropertiesFromClass(jsonSchemaCreator, simpleYamlArtefact, classPropertiesBuilder, requiredProperties, AbstractArtefact.class);
+
+		// define the default node name explicitly
+		// TODO: find some solution to apply default 'nodeName'
+		classPropertiesBuilder.add(YamlPlanFields.NAME_YAML_FIELD,
+				jsonProvider.createObjectBuilder()
+						.add("type", "string")
+						.add("default", new AbstractYamlArtefact.DefaultYamlArtefactNameProvider().getDefaultValue(simpleYamlArtefact, null))
+		);
+
+		propertiesBuilder.add("properties", classPropertiesBuilder);
+		schemaHelper.addRequiredProperties(requiredProperties, propertiesBuilder);
+
+		schemaBuilder.add(YamlArtefactsLookuper.getYamlArtefactName(simpleYamlArtefact), propertiesBuilder);
+		res.add("properties", schemaBuilder);
+		res.add("additionalProperties", false);
+		return res;
 	}
 
 	private JsonObjectBuilder createArtefactDef(Collection<String> artefactImplReferences) {

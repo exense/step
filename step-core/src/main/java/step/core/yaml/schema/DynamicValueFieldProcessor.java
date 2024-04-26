@@ -19,7 +19,6 @@
 package step.core.yaml.schema;
 
 import jakarta.json.JsonObjectBuilder;
-import jakarta.json.spi.JsonProvider;
 import step.core.dynamicbeans.DynamicValue;
 import step.handlers.javahandler.jsonschema.FieldMetadata;
 import step.handlers.javahandler.jsonschema.JsonSchemaCreator;
@@ -31,26 +30,16 @@ import java.util.List;
 
 public class DynamicValueFieldProcessor implements JsonSchemaFieldProcessor {
 
-    private JsonProvider jsonProvider;
-
-    public DynamicValueFieldProcessor(JsonProvider jsonProvider) {
-        this.jsonProvider = jsonProvider;
+    public DynamicValueFieldProcessor() {
     }
 
     @Override
-    public boolean applyCustomProcessing(Class<?> aClass, Field field, FieldMetadata fieldMetadata, JsonObjectBuilder jsonObjectBuilder, List<String> list) throws JsonSchemaPreparationException {
-        YamlJsonSchemaHelper dynamicValueHelper = new YamlJsonSchemaHelper(jsonProvider);
+    public boolean applyCustomProcessing(Class<?> aClass, Field field, FieldMetadata fieldMetadata, JsonObjectBuilder jsonObjectBuilder, List<String> list, JsonSchemaCreator schemaCreator) throws JsonSchemaPreparationException {
+        YamlJsonSchemaHelper dynamicValueHelper = new YamlJsonSchemaHelper(schemaCreator.getJsonProvider());
 
         if (DynamicValue.class.isAssignableFrom(field.getType())) {
-            JsonObjectBuilder nestedPropertyParamsBuilder = jsonProvider.createObjectBuilder();
-
+            JsonObjectBuilder nestedPropertyParamsBuilder = schemaCreator.getJsonProvider().createObjectBuilder();
             dynamicValueHelper.applyDynamicValueDefForField(field, nestedPropertyParamsBuilder);
-
-            // TODO: apply some generic approach to apply default values in json schemas and deserialization
-            if (fieldMetadata.getDefaultValue() != null) {
-                JsonSchemaCreator.addDefaultValue(fieldMetadata.getDefaultValue(), nestedPropertyParamsBuilder, fieldMetadata.getType(), fieldMetadata.getFieldName());
-            }
-
             jsonObjectBuilder.add(fieldMetadata.getFieldName(), nestedPropertyParamsBuilder);
             return true;
         }

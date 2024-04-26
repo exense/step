@@ -18,9 +18,12 @@
  ******************************************************************************/
 package step.artefacts;
 
+
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
+import step.core.yaml.YamlModel;
 
+@YamlModel(name = "testCase")
 @Artefact(validAsRoot = true)
 public class TestCase extends AbstractArtefact {
 

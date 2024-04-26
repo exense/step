@@ -149,6 +149,7 @@ public class ParameterServices extends AbstractEntityServices<Parameter> {
 	@Override
 	public Parameter clone(String id) {
 		Parameter sourceParameter = parameterAccessor.get(new ObjectId(id));
+		assertEntityIsAcceptableInContext(sourceParameter);
 		// Create a clone of the source parameter
 		Parameter newParameter = parameterAccessor.get(new ObjectId(id));
 		newParameter.setId(new ObjectId());
@@ -158,6 +159,7 @@ public class ParameterServices extends AbstractEntityServices<Parameter> {
 	@Override
 	public void delete(String id) {
 		Parameter parameter = get(id);
+		assertEntityIsAcceptableInContext(parameter);
 		assertRights(parameter);
 
 		parameterAccessor.remove(new ObjectId(id));
@@ -213,7 +215,9 @@ public class ParameterServices extends AbstractEntityServices<Parameter> {
 
 	@Override
 	public Parameter restoreVersion(String id, String versionId) {
-		assertRights(parameterAccessor.get(id));
+		Parameter parameter = parameterAccessor.get(id);
+		assertEntityIsAcceptableInContext(parameter);
+		assertRights(parameter);
 		return super.restoreVersion(id, versionId);
 	}
 }

@@ -49,7 +49,7 @@ public class CSVReaderDataPoolTest extends AbstractArtefactTest {
 	
 	@Test
 	public void testCSVReaderDataPool() {		
-		DataSet<?> pool = getDataPool("File.csv");
+		DataSet<?> pool = getDataPool("File2.csv");
 		Assert.assertEquals("row12", ((SimpleStringMap)pool.next().getValue()).get("Col2").toString());
 		// Test empty string
 		Assert.assertEquals("", ((SimpleStringMap)pool.next().getValue()).get("Col4").toString());
@@ -85,7 +85,7 @@ public class CSVReaderDataPoolTest extends AbstractArtefactTest {
 	
 	@Test
 	public void testCSVReaderDataPoolToString() {		
-		DataSet<?> pool = getDataPool("File.csv");
+		DataSet<?> pool = getDataPool("File2.csv");
 		Assert.assertEquals("Col1=row11 Col2=row12 Col3=row13 Col4= Col5=", ((SimpleStringMap)pool.next().getValue()).toString());
 		pool.close();
 	}

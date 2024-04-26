@@ -21,23 +21,23 @@ package step.automation.packages.yaml.schema;
 import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObjectBuilder;
 import jakarta.json.spi.JsonProvider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import step.automation.packages.AutomationPackageNamedEntityUtils;
+import step.automation.packages.YamlModelUtils;
+import step.automation.packages.model.AbstractYamlFunction;
 import step.automation.packages.yaml.AutomationPackageKeywordsLookuper;
-import step.automation.packages.yaml.rules.keywords.KeywordNameRule;
-import step.automation.packages.yaml.rules.keywords.TechnicalFieldRule;
-import step.automation.packages.yaml.rules.keywords.TokenSelectionCriteriaRule;
-import step.core.yaml.schema.*;
-import step.functions.Function;
-import step.handlers.javahandler.jsonschema.*;
+import step.core.scanner.CachedAnnotationScanner;
+import step.core.yaml.schema.AggregatedJsonSchemaFieldProcessor;
+import step.core.yaml.schema.JsonSchemaDefinitionAddOn;
+import step.core.yaml.schema.JsonSchemaExtension;
+import step.core.yaml.schema.YamlJsonSchemaHelper;
+import step.handlers.javahandler.jsonschema.JsonSchemaCreator;
+import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
+import step.jsonschema.DefaultFieldMetadataExtractor;
 
 import java.util.*;
-import java.util.stream.Collectors;
+
+import static step.core.scanner.Classes.newInstanceAs;
 
 public class YamlKeywordSchemaGenerator {
-
-    private static final Logger log = LoggerFactory.getLogger(YamlKeywordSchemaGenerator.class);
 
     public static final String KEYWORD_DEF = "KeywordDef";
 
@@ -52,11 +52,18 @@ public class YamlKeywordSchemaGenerator {
         this.jsonProvider = jsonProvider;
         this.schemaHelper = new YamlJsonSchemaHelper(jsonProvider);
 
-        // --- Fields metadata rules (fields we want to rename)
-        FieldMetadataExtractor fieldMetadataExtractor = prepareMetadataExtractor();
+        this.jsonSchemaCreator = new JsonSchemaCreator(
+                jsonProvider,
+                new AggregatedJsonSchemaFieldProcessor(YamlJsonSchemaHelper.prepareDefaultFieldProcessors(null)),
+                new DefaultFieldMetadataExtractor()
+        );
+    }
 
-        List<JsonSchemaFieldProcessor> processingRules = prepareFieldProcessors();
-        this.jsonSchemaCreator = new JsonSchemaCreator(jsonProvider, new AggregatedJsonSchemaFieldProcessor(processingRules), fieldMetadataExtractor);
+    protected List<JsonSchemaExtension> getDefinitionsExtensions() {
+        List<JsonSchemaExtension> extensions = new ArrayList<>();
+        CachedAnnotationScanner.getClassesWithAnnotation(JsonSchemaDefinitionAddOn.LOCATION, JsonSchemaDefinitionAddOn.class, Thread.currentThread().getContextClassLoader()).stream()
+                .map(newInstanceAs(JsonSchemaExtension.class)).forEach(extensions::add);
+        return extensions;
     }
 
     /**
@@ -65,10 +72,10 @@ public class YamlKeywordSchemaGenerator {
     public JsonObjectBuilder createKeywordDefs() throws JsonSchemaPreparationException {
         JsonObjectBuilder defsBuilder = jsonProvider.createObjectBuilder();
 
-        List<JsonSchemaDefinitionCreator> definitionCreators = new ArrayList<>();
+        List<JsonSchemaExtension> definitionCreators = new ArrayList<>();
 
         // prepare definitions for generic DynamicValue class
-        definitionCreators.add((defsList) -> {
+        definitionCreators.add((defsList, provider) -> {
             Map<String, JsonObjectBuilder> dynamicValueDefs = schemaHelper.createDynamicValueImplDefs();
             for (Map.Entry<String, JsonObjectBuilder> dynamicValueDef : dynamicValueDefs.entrySet()) {
                 defsBuilder.add(dynamicValueDef.getKey(), dynamicValueDef.getValue());
@@ -76,7 +83,7 @@ public class YamlKeywordSchemaGenerator {
         });
 
         // prepare definitions for keyword classes
-        definitionCreators.add((defsList) -> {
+        definitionCreators.add((defsLis, provider) -> {
             Map<String, JsonObjectBuilder> keywordImplDefs = createKeywordImplDefs();
             for (Map.Entry<String, JsonObjectBuilder> artefactImplDef : keywordImplDefs.entrySet()) {
                 defsBuilder.add(artefactImplDef.getKey(), artefactImplDef.getValue());
@@ -86,8 +93,8 @@ public class YamlKeywordSchemaGenerator {
             defsBuilder.add(KEYWORD_DEF, createKeywordDef(keywordImplDefs.keySet()));
         });
 
-        for (JsonSchemaDefinitionCreator definitionCreator : definitionCreators) {
-            definitionCreator.addDefinition(defsBuilder);
+        for (JsonSchemaExtension definitionCreator : definitionCreators) {
+            definitionCreator.addToJsonSchema(defsBuilder, jsonProvider);
         }
 
         return defsBuilder;
@@ -98,7 +105,8 @@ public class YamlKeywordSchemaGenerator {
         builder.add("type", "object");
         JsonArrayBuilder arrayBuilder = jsonProvider.createArrayBuilder();
         for (String keywordImplReference : keywordDefsReferences) {
-            arrayBuilder.add(addRef(jsonProvider.createObjectBuilder(), keywordImplReference));
+            JsonObjectBuilder builder1 = jsonProvider.createObjectBuilder();
+            arrayBuilder.add(YamlJsonSchemaHelper.addRef(builder1, keywordImplReference));
         }
         builder.add("oneOf", arrayBuilder);
         return builder;
@@ -106,54 +114,13 @@ public class YamlKeywordSchemaGenerator {
 
     protected Map<String, JsonObjectBuilder> createKeywordImplDefs() throws JsonSchemaPreparationException {
         HashMap<String, JsonObjectBuilder> result = new HashMap<>();
-        List<Class<? extends Function>> automationPackageKeywords = automationPackageKeywordsLookuper.getAutomationPackageKeywords();
-        for (Class<? extends Function> automationPackageKeyword : automationPackageKeywords) {
-            String yamlName = AutomationPackageNamedEntityUtils.getEntityNameByClass(automationPackageKeyword);
+        List<Class<? extends AbstractYamlFunction<?>>> automationPackageKeywords = automationPackageKeywordsLookuper.getAutomationPackageKeywords();
+        for (Class<? extends AbstractYamlFunction<?>> automationPackageKeyword : automationPackageKeywords) {
+            String yamlName = YamlModelUtils.getEntityNameByClass(automationPackageKeyword);
             String defName = yamlName + "Def";
             result.put(defName, schemaHelper.createNamedObjectImplDef(yamlName, automationPackageKeyword, jsonSchemaCreator, false));
         }
         return result;
-    }
-
-    protected FieldMetadataExtractor prepareMetadataExtractor() {
-        List<FieldMetadataExtractor> extractors = new ArrayList<>();
-
-        extractors.add(new TokenSelectionCriteriaRule().getFieldMetadataExtractor());
-        extractors.add(new DefaultFieldMetadataExtractor());
-
-        return new AggregatingFieldMetadataExtractor(extractors);
-    }
-
-    protected List<JsonSchemaFieldProcessor> prepareFieldProcessors() {
-        List<JsonSchemaFieldProcessor> result = new ArrayList<>();
-
-        // -- BASIC PROCESSING RULES
-        result.add(new CommonFilteredFieldProcessor());
-        result.add(new KeywordNameRule().getJsonSchemaFieldProcessor(jsonProvider));
-        result.add(new TechnicalFieldRule().getJsonSchemaFieldProcessor(jsonProvider));
-        result.add(new TokenSelectionCriteriaRule().getJsonSchemaFieldProcessor(jsonProvider));
-
-        // -- RULES FROM EXTENSIONS HAVE LESS PRIORITY THAN BASIC RULES, BUT MORE PRIORITY THAN OTHER RULES
-        result.addAll(getFieldExtensions());
-
-        // -- RULES FOR OS KEYWORDS
-
-        // -- SOME DEFAULT RULES FOR ENUMS AND DYNAMIC FIELDS
-        result.add(new DynamicValueFieldProcessor(jsonProvider));
-        result.add(new EnumFieldProcessor(jsonProvider));
-
-        return result;
-    }
-
-    protected List<JsonSchemaFieldProcessor> getFieldExtensions() {
-        return automationPackageKeywordsLookuper.getAllConversionRules()
-                .stream()
-                .map(r -> r.getJsonSchemaFieldProcessor(jsonProvider))
-                .filter(Objects::nonNull).collect(Collectors.toList());
-    }
-
-    public JsonObjectBuilder addRef(JsonObjectBuilder builder, String refValue){
-        return builder.add("$ref", "#/$defs/" + refValue);
     }
 
 }

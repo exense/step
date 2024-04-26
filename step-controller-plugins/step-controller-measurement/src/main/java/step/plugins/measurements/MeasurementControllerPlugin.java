@@ -18,17 +18,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static step.plugins.measurements.MeasurementPlugin.*;
-
-@Plugin(dependencies = GridPlugin.class)
+@Plugin(dependencies = {GridPlugin.class})
 public class MeasurementControllerPlugin extends AbstractControllerPlugin {
 
 	private static Logger logger = LoggerFactory.getLogger(MeasurementControllerPlugin.class);
 
 	public static String GridGaugeName = "step_grid_tokens";
 	public static String ThreadgroupGaugeName = "step_threadgroup";
-
-	GaugeCollectorRegistry gaugeCollectorRegistry;
+	private GaugeCollectorRegistry gaugeCollectorRegistry;
 
 	@Override
 	public void serverStart(GlobalContext context) throws Exception {

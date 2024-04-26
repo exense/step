@@ -35,6 +35,7 @@
 		<module>step-plans-yaml-parser</module>
 		<module>step-plans-runners</module>
 		<module>step-plans-base-artefacts</module>
+    	<module>step-plans-yaml-support</module>
 	</modules>
 
 	<dependencies>

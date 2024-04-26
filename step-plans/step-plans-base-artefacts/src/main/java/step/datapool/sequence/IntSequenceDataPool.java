@@ -18,9 +18,13 @@
  ******************************************************************************/
 package step.datapool.sequence;
 
+import step.artefacts.automation.datasource.YamlSequenceDataSource;
+
 import step.core.dynamicbeans.DynamicValue;
 import step.datapool.DataPoolConfiguration;
+import step.core.yaml.YamlModel;
 
+@YamlModel(model = YamlSequenceDataSource.class, name = "sequence")
 public class IntSequenceDataPool extends DataPoolConfiguration {
 	
 	DynamicValue<Integer> start = new DynamicValue<Integer>(1);
