@@ -21,8 +21,10 @@ package step.core.scheduler;
 import step.automation.packages.AutomationPackage;
 import step.automation.packages.AutomationPackageManager;
 import step.automation.packages.hooks.AutomationPackageHookRegistry;
-import step.automation.packages.yaml.deserialization.AutomationPackageSerializationRegistry;
-import step.plans.parser.yaml.automation.serialization.AutomationPackageSchedulesRegistration;
+import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
+import step.automation.packages.deserialization.AutomationPackageSchedulesRegistration;
+import step.automation.packages.hooks.ExecutionTaskParameterWithoutSchedulerHook;
+import step.automation.packages.model.AutomationPackageSchedule;
 import step.core.GlobalContext;
 import step.core.collections.Collection;
 import step.core.controller.ControllerSettingAccessor;
@@ -32,7 +34,6 @@ import step.core.entities.EntityManager;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
-import step.plans.parser.yaml.automation.schema.AutomationPackageSchedulesJsonSchema;
 import step.framework.server.tables.Table;
 import step.framework.server.tables.TableRegistry;
 import step.plugins.screentemplating.*;
@@ -74,7 +75,7 @@ public class SchedulerPlugin extends AbstractControllerPlugin {
 	}
 
 	public static void registerSchedulerHooks(AutomationPackageHookRegistry apRegistry, AutomationPackageSerializationRegistry serRegistry, ExecutionScheduler scheduler) {
-		apRegistry.register(AutomationPackageSchedulesJsonSchema.SCHEDULES_FIELD_NAME, new AutomationPackageSchedulerHook(scheduler));
+		apRegistry.register(AutomationPackageSchedule.FIELD_NAME_IN_AP, new AutomationPackageSchedulerHook(scheduler));
 		AutomationPackageSchedulesRegistration.registerSerialization(serRegistry);
 	}
 

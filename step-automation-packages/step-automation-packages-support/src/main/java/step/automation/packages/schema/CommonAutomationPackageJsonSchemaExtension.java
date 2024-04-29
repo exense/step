@@ -16,40 +16,52 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.parameter.automation;
+package step.automation.packages.schema;
 
 import jakarta.json.JsonObjectBuilder;
-import step.automation.packages.model.AutomationPackageSchedule;
-import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
-import step.automation.packages.yaml.schema.AutomationPackageJsonSchemaExtension;
 import step.core.yaml.schema.AggregatedJsonSchemaFieldProcessor;
 import step.core.yaml.schema.JsonSchemaDefinitionExtension;
 import step.core.yaml.schema.JsonSchemaExtension;
 import step.core.yaml.schema.YamlJsonSchemaHelper;
 import step.handlers.javahandler.jsonschema.JsonSchemaCreator;
+import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
 import step.jsonschema.DefaultFieldMetadataExtractor;
 
-import java.util.ArrayList;
 import java.util.List;
 
-public class AutomationPackageParameterJsonSchemaExtension implements AutomationPackageJsonSchemaExtension {
+public abstract class CommonAutomationPackageJsonSchemaExtension implements AutomationPackageJsonSchemaExtension {
+
+    protected String fieldName;
+    protected String defName;
+    protected Class<?> objectClass;
+
+    public CommonAutomationPackageJsonSchemaExtension(String defName, String fieldName, Class<?> objectClass) {
+        this.defName = defName;
+        this.fieldName = fieldName;
+        this.objectClass = objectClass;
+    }
 
     @Override
     public List<JsonSchemaDefinitionExtension> getExtendedDefinitions() {
         return List.of((jsonSchemaBuilder, jsonProvider) -> {
             YamlJsonSchemaHelper schemaHelper = new YamlJsonSchemaHelper(jsonProvider);
-            JsonSchemaCreator jsonSchemaCreator = new JsonSchemaCreator(jsonProvider, new AggregatedJsonSchemaFieldProcessor(new ArrayList<>()), new DefaultFieldMetadataExtractor());
-            JsonObjectBuilder res = schemaHelper.createJsonSchemaForClass(jsonSchemaCreator, AutomationPackageParameter.class, false);
-            jsonSchemaBuilder.add(AutomationPackageParameter.DEF_NAME_IN_JSON_SCHEMA, res);
+            JsonSchemaCreator jsonSchemaCreator = new JsonSchemaCreator(jsonProvider, new AggregatedJsonSchemaFieldProcessor(getFieldProcessors()), new DefaultFieldMetadataExtractor());
+            JsonObjectBuilder res = schemaHelper.createJsonSchemaForClass(jsonSchemaCreator, objectClass, false);
+            jsonSchemaBuilder.add(defName, res);
         });
+    }
+
+    protected List<JsonSchemaFieldProcessor> getFieldProcessors() {
+        return YamlJsonSchemaHelper.prepareDefaultFieldProcessors(null);
     }
 
     @Override
     public List<JsonSchemaExtension> getAdditionalAutomationPackageFields() {
-        return List.of((jsonSchemaBuilder, jsonProvider) -> jsonSchemaBuilder.add(AutomationPackageParameter.DEF_NAME_IN_JSON_SCHEMA,
+        return List.of((jsonSchemaBuilder, jsonProvider) -> jsonSchemaBuilder.add(fieldName,
                 jsonProvider.createObjectBuilder()
                         .add("type", "array")
-                        .add("items", YamlJsonSchemaHelper.addRef(jsonProvider.createObjectBuilder(), AutomationPackageParameter.DEF_NAME_IN_JSON_SCHEMA))
+                        .add("items", YamlJsonSchemaHelper.addRef(jsonProvider.createObjectBuilder(), defName))
         ));
     }
+
 }

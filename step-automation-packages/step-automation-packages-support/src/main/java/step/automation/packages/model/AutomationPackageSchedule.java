@@ -16,13 +16,15 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plans.parser.yaml.automation.model;
+package step.automation.packages.model;
 
 import java.util.Map;
 import java.util.List;
 
 public class AutomationPackageSchedule {
 
+    public static final String SCHEDULE_DEF = "ScheduleDef";
+    public static final String FIELD_NAME_IN_AP = "schedules";
     private String name;
     private Boolean active = true;
     private String cron;

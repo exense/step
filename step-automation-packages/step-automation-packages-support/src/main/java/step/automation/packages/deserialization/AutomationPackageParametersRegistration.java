@@ -16,9 +16,13 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.yaml.deserialization;
+package step.automation.packages.deserialization;
 
-public interface AutomationPackageSerializationRegistryAware {
+import step.automation.packages.model.AutomationPackageParameter;
+import step.automation.packages.model.AutomationPackageSchedule;
 
-    void setSerializationRegistry(AutomationPackageSerializationRegistry registry);
+public class AutomationPackageParametersRegistration {
+    public static void registerSerialization(AutomationPackageSerializationRegistry serRegistry) {
+        serRegistry.register(AutomationPackageParameter.FIELD_NAME_IN_AP, AutomationPackageParameter.class);
+    }
 }

@@ -2,15 +2,25 @@ package step.automation.packages;
 
 import jakarta.json.spi.JsonProvider;
 import org.junit.Test;
+import org.mockito.Mockito;
 import step.artefacts.CallFunction;
 import step.artefacts.TestCase;
+import step.automation.packages.deserialization.AutomationPackageParametersRegistration;
+import step.automation.packages.deserialization.AutomationPackageSchedulesRegistration;
 import step.automation.packages.hooks.AutomationPackageHookRegistry;
+import step.automation.packages.hooks.AutomationPackageParameterHook;
+import step.automation.packages.hooks.ExecutionTaskParameterWithoutSchedulerHook;
 import step.automation.packages.model.AutomationPackageContent;
 import step.automation.packages.model.AutomationPackageKeyword;
+import step.automation.packages.model.AutomationPackageParameter;
+import step.automation.packages.model.AutomationPackageSchedule;
 import step.automation.packages.yaml.YamlAutomationPackageVersions;
-import step.automation.packages.yaml.deserialization.AutomationPackageSerializationRegistry;
+import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.plans.Plan;
+import step.parameter.Parameter;
+import step.parameter.ParameterAccessor;
+import step.parameter.ParameterScope;
 import step.plugins.java.GeneralScriptFunction;
 import step.plugins.jmeter.automation.YamlJMeterFunction;
 
@@ -28,7 +38,19 @@ public class AutomationPackageReaderTest {
             + "\"myInput\": {\"type\": \"string\", \"default\":\"defaultValueString\"}"
             + "}, \"required\" : []}";
 
-    private final AutomationPackageReader reader = new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, new AutomationPackageHookRegistry(), new AutomationPackageSerializationRegistry());
+    private final AutomationPackageReader reader;
+
+    public AutomationPackageReaderTest() {
+        AutomationPackageSerializationRegistry serializationRegistry = new AutomationPackageSerializationRegistry();
+        AutomationPackageSchedulesRegistration.registerSerialization(serializationRegistry);
+        AutomationPackageParametersRegistration.registerSerialization(serializationRegistry);
+
+        AutomationPackageHookRegistry hookRegistry = new AutomationPackageHookRegistry();
+        hookRegistry.register(AutomationPackageSchedule.FIELD_NAME_IN_AP, new ExecutionTaskParameterWithoutSchedulerHook());
+        // accessor is not required in this test - we only read the yaml and don't store the result anywhere
+        hookRegistry.register(AutomationPackageParameter.FIELD_NAME_IN_AP, new AutomationPackageParameterHook(Mockito.mock(ParameterAccessor.class)));
+        this.reader = new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, hookRegistry, serializationRegistry);
+    }
 
     @Test
     public void testReadFromPackage() throws AutomationPackageReadingException {
@@ -70,6 +92,20 @@ public class AutomationPackageReaderTest {
         assertNotNull(callKeyword);
         assertFalse(callKeyword.getArgument().isDynamic());
         assertEquals("{\"myInput\":{\"dynamic\":false,\"value\":\"myValue\"}}", callKeyword.getArgument().get());
+
+        // 1 parameter
+        List<AutomationPackageParameter> parameters = (List<AutomationPackageParameter>) automationPackageContent.getAdditionalData().get(AutomationPackageParameter.FIELD_NAME_IN_AP);
+        assertNotNull(parameters);
+        assertEquals(1, parameters.size());
+        AutomationPackageParameter parameter = parameters.get(0);
+        assertEquals("myKey", parameter.getKey());
+        assertEquals("myValue", parameter.getValue());
+        assertEquals("some description", parameter.getDescription());
+        assertEquals("abc", parameter.getActivationScript());
+        assertEquals((Integer) 10, parameter.getPriority());
+        assertEquals(true, parameter.getProtectedValue());
+        assertEquals(ParameterScope.GLOBAL, parameter.getScope());
+        assertEquals("entity", parameter.getScopeEntity());
     }
 
 }

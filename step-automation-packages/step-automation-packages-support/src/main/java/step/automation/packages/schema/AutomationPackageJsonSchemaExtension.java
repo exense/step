@@ -16,28 +16,24 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.parameter.automation;
+package step.automation.packages.schema;
 
-import step.parameter.Parameter;
+import step.core.yaml.schema.JsonSchemaDefinitionExtension;
+import step.core.yaml.schema.JsonSchemaExtension;
 
-public class AutomationPackageParameter {
+import java.util.List;
 
-    // the field name in automation package yaml
-    public static final String FIELD_NAME_IN_AP = "parameters";
+public interface AutomationPackageJsonSchemaExtension {
 
-    // the subschema name in json schema
-    public static final String DEF_NAME_IN_JSON_SCHEMA = "StepParameterDef";
+    /**
+     * Provides the extensions to be used to fill the "defs" (definitions section) in json schema, i.e. to prepare
+     * some sub-schemas to be reused in the main schema.
+     */
+    List<JsonSchemaDefinitionExtension> getExtendedDefinitions();
 
-    protected String key;
-    protected String value;
-    protected String description;
-
-    public Parameter toParameter() {
-        Parameter res = new Parameter();
-        res.setKey(key);
-        res.setValue(value);
-        res.setDescription(description);
-        // ...
-        return res;
-    }
+    /**
+     * Provides the extensions to be used to add the new fields to the json schema of automation package, i.e. to add
+     * some custom fields to the automation package.
+     */
+    List<JsonSchemaExtension> getAdditionalAutomationPackageFields();
 }

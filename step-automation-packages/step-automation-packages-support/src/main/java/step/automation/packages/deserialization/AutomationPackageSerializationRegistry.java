@@ -16,14 +16,21 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plans.parser.yaml.automation.serialization;
+package step.automation.packages.deserialization;
 
-import step.automation.packages.yaml.deserialization.AutomationPackageSerializationRegistry;
-import step.plans.parser.yaml.automation.model.AutomationPackageSchedule;
-import step.plans.parser.yaml.automation.schema.AutomationPackageSchedulesJsonSchema;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
-public class AutomationPackageSchedulesRegistration {
-    public static void registerSerialization(AutomationPackageSerializationRegistry serRegistry) {
-        serRegistry.register(AutomationPackageSchedulesJsonSchema.SCHEDULES_FIELD_NAME, AutomationPackageSchedule.class);
+public class AutomationPackageSerializationRegistry {
+
+    private final Map<String, Class<?>> registry = new ConcurrentHashMap<>();
+
+    public void register(String fieldName, Class<?> entityClass) {
+        registry.put(fieldName, entityClass);
     }
+
+    public Class<?> resolveClassForYamlField(String yamlFieldName) {
+        return registry.get(yamlFieldName);
+    }
+
 }

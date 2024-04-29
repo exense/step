@@ -18,8 +18,6 @@
  ******************************************************************************/
 package step.parameter;
 
-import com.fasterxml.jackson.annotation.JsonSetter;
-import com.fasterxml.jackson.annotation.Nulls;
 import step.commons.activation.ActivableObject;
 import step.commons.activation.Expression;
 import step.core.accessors.AbstractTrackedObject;

@@ -16,15 +16,18 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.parameter.automation;
+package step.automation.packages.hooks;
 
 import org.bson.types.ObjectId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.automation.packages.AutomationPackage;
 import step.automation.packages.AutomationPackageContext;
 import step.automation.packages.AutomationPackageEntity;
 import step.automation.packages.AutomationPackageManager;
-import step.automation.packages.hooks.AutomationPackageHook;
 import step.automation.packages.model.AutomationPackageContent;
+import step.automation.packages.model.AutomationPackageParameter;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.objectenricher.ObjectEnricher;
 import step.parameter.Parameter;
 import step.parameter.ParameterAccessor;
@@ -33,9 +36,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static step.parameter.automation.AutomationPackageParameter.FIELD_NAME_IN_AP;
+import static step.automation.packages.model.AutomationPackageParameter.FIELD_NAME_IN_AP;
 
 public class AutomationPackageParameterHook implements AutomationPackageHook<Parameter> {
+
+    private static final Logger log = LoggerFactory.getLogger(AutomationPackageParameterHook.class);
 
     private final ParameterAccessor accessor;
 
@@ -65,7 +70,7 @@ public class AutomationPackageParameterHook implements AutomationPackageHook<Par
             try {
                 accessor.remove(parameter.getId());
             } catch (Exception e){
-                // handle exception
+                 log.error("The automation package parameter {} cannot be deleted for automation package {}.", parameter.getId(), automationPackage.getAttribute(AbstractOrganizableObject.NAME), e);
             }
         }
     }

@@ -19,8 +19,11 @@
 package step.parameter.automation;
 
 import step.automation.packages.AutomationPackagePlugin;
+import step.automation.packages.deserialization.AutomationPackageParametersRegistration;
 import step.automation.packages.hooks.AutomationPackageHookRegistry;
-import step.automation.packages.yaml.deserialization.AutomationPackageSerializationRegistry;
+import step.automation.packages.hooks.AutomationPackageParameterHook;
+import step.automation.packages.model.AutomationPackageParameter;
+import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 import step.core.GlobalContext;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
@@ -36,7 +39,6 @@ public class AutomationPackageParameterPlugin extends AbstractControllerPlugin {
                 AutomationPackageParameter.FIELD_NAME_IN_AP,
                 new AutomationPackageParameterHook((ParameterAccessor) context.get("ParameterAccessor"))
         );
-
-        context.require(AutomationPackageSerializationRegistry.class).register(AutomationPackageParameter.FIELD_NAME_IN_AP, AutomationPackageParameter.class);
+        AutomationPackageParametersRegistration.registerSerialization(context.require(AutomationPackageSerializationRegistry.class));
     }
 }
