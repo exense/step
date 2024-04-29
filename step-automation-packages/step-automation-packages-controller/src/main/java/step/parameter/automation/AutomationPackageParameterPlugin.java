@@ -36,7 +36,7 @@ public class AutomationPackageParameterPlugin extends AbstractControllerPlugin {
 
     @Override
     public void serverStart(GlobalContext context) throws Exception {
-        registerParametersHooks(context.require(AutomationPackageHookRegistry.class), context.require(AutomationPackageSerializationRegistry.class), (Accessor<Parameter>) context.get("ParameterAccessor"));
+        registerParametersHooks(context.require(AutomationPackageHookRegistry.class), context.require(AutomationPackageSerializationRegistry.class), (Accessor<Parameter>) context.require("ParameterAccessor"));
     }
 
     public static void registerParametersHooks(AutomationPackageHookRegistry hookRegistry, AutomationPackageSerializationRegistry serRegistry, Accessor<Parameter> parameterAccessor) {
