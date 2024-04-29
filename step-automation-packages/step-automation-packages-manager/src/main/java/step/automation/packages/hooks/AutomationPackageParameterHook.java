@@ -28,9 +28,9 @@ import step.automation.packages.AutomationPackageManager;
 import step.automation.packages.model.AutomationPackageContent;
 import step.automation.packages.model.AutomationPackageParameter;
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.accessors.Accessor;
 import step.core.objectenricher.ObjectEnricher;
 import step.parameter.Parameter;
-import step.parameter.ParameterAccessor;
 
 import java.util.List;
 import java.util.Map;
@@ -42,9 +42,9 @@ public class AutomationPackageParameterHook implements AutomationPackageHook<Par
 
     private static final Logger log = LoggerFactory.getLogger(AutomationPackageParameterHook.class);
 
-    private final ParameterAccessor accessor;
+    private final Accessor<Parameter> accessor;
 
-    public AutomationPackageParameterHook(ParameterAccessor accessor) {
+    public AutomationPackageParameterHook(Accessor<Parameter> accessor) {
         this.accessor = accessor;
     }
 
@@ -59,6 +59,8 @@ public class AutomationPackageParameterHook implements AutomationPackageHook<Par
     @Override
     public void onCreate(List<? extends Parameter> entities, ObjectEnricher enricher, AutomationPackageManager manager) {
         for (Parameter entity : entities) {
+            // enrich with automation package id
+            enricher.accept(entity);
             accessor.save(entity);
         }
     }

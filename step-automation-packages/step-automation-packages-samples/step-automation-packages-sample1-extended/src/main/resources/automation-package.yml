@@ -4,3 +4,5 @@ fragments:
   - "keywords.yml"
   - "plans.yml"
   - "schedules.yml"
+  - "parameters.yml"
+  - "unknown.yml"

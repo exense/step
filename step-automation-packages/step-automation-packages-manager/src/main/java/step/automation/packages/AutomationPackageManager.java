@@ -332,7 +332,13 @@ public class AutomationPackageManager {
 
             // prepare staging collections
             Staging staging = createStaging();
-            ObjectEnricher enricherForIncludedEntities = ObjectEnricherComposer.compose(Arrays.asList(enricher, new AutomationPackageLinkEnricher(newPackage.getId().toString())));
+            List<ObjectEnricher> enrichers = new ArrayList<>();
+            if (enricher != null) {
+                enrichers.add(enricher);
+            }
+            enrichers.add(new AutomationPackageLinkEnricher(newPackage.getId().toString()));
+
+            ObjectEnricher enricherForIncludedEntities = ObjectEnricherComposer.compose(enrichers);
             fillStaging(staging, packageContent, oldPackage, enricherForIncludedEntities, automationPackageArchive);
 
             // persist and activate automation package
