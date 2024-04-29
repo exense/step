@@ -25,6 +25,7 @@ import step.core.artefacts.reports.ReportNode;
 
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Artefact {
+	String LOCATION = "step";
 
 	String name() default ""; 
 

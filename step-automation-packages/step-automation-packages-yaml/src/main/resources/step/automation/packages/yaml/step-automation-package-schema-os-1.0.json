@@ -59,10 +59,6 @@
         "JMeter" : {
           "type" : "object",
           "properties" : {
-            "name" : {
-              "type" : "string",
-              "default" : "JMeter"
-            },
             "description" : {
               "type" : "string"
             },
@@ -70,7 +66,8 @@
               "type" : "boolean"
             },
             "routing" : {
-              "type" : "object"
+              "type" : "object",
+              "properties" : { }
             },
             "executeLocally" : {
               "type" : "boolean"
@@ -81,6 +78,10 @@
             },
             "callTimeout" : {
               "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            },
+            "name" : {
+              "default" : "JMeter",
+              "type" : "string"
             },
             "jmeterTestplan" : {
               "$ref" : "#/$defs/SmartDynamicValueStringDef"
@@ -116,28 +117,25 @@
         "afterSequence" : {
           "type" : "object",
           "properties" : {
+            "children" : {
+              "$ref" : "#/$defs/ArtefactArrayDef"
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "continueParentNodeExecutionOnError" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
             "nodeName" : {
               "type" : "string",
               "default" : "AfterSequence"
             },
-            "continueParentNodeExecutionOnError" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "instrumentNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "skipNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "children" : {
-              "type" : "array",
-              "items" : {
-                "$ref" : "#/$defs/ArtefactDef"
-              }
-            },
-            "description" : {
-              "type" : "string"
-            },
             "pacing" : {
               "$ref" : "#/$defs/SmartDynamicValueNumDef"
             },
@@ -149,15 +147,17 @@
       },
       "additionalProperties" : false
     },
-    "SetDef" : {
+    "AfterThreadDef" : {
       "type" : "object",
       "properties" : {
-        "set" : {
+        "afterThread" : {
           "type" : "object",
           "properties" : {
-            "nodeName" : {
-              "type" : "string",
-              "default" : "Set"
+            "children" : {
+              "$ref" : "#/$defs/ArtefactArrayDef"
+            },
+            "description" : {
+              "type" : "string"
             },
             "continueParentNodeExecutionOnError" : {
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
@@ -168,1473 +168,15 @@
             "skipNode" : {
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
-            "children" : {
-              "type" : "array",
-              "items" : {
-                "$ref" : "#/$defs/ArtefactDef"
-              }
-            },
-            "description" : {
-              "type" : "string"
-            },
-            "value" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            },
-            "key" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            }
-          }
-        }
-      },
-      "additionalProperties" : false
-    },
-    "CheckDef" : {
-      "type" : "object",
-      "properties" : {
-        "check" : {
-          "type" : "object",
-          "properties" : {
             "nodeName" : {
               "type" : "string",
-              "default" : "Check"
-            },
-            "continueParentNodeExecutionOnError" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "instrumentNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "skipNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "children" : {
-              "type" : "array",
-              "items" : {
-                "$ref" : "#/$defs/ArtefactDef"
-              }
-            },
-            "description" : {
-              "type" : "string"
-            },
-            "expression" : {
-              "type" : "string"
-            }
-          }
-        }
-      },
-      "additionalProperties" : false
-    },
-    "CheckArtefactDef" : {
-      "type" : "object",
-      "properties" : {
-        "checkArtefact" : {
-          "type" : "object",
-          "properties" : {
-            "nodeName" : {
-              "type" : "string",
-              "default" : "CheckArtefact"
-            },
-            "continueParentNodeExecutionOnError" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "instrumentNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "skipNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "children" : {
-              "type" : "array",
-              "items" : {
-                "$ref" : "#/$defs/ArtefactDef"
-              }
-            },
-            "description" : {
-              "type" : "string"
-            },
-            "executionRunnable" : {
-              "type" : "object",
-              "properties" : { }
-            }
-          }
-        }
-      },
-      "additionalProperties" : false
-    },
-    "ScriptDef" : {
-      "type" : "object",
-      "properties" : {
-        "script" : {
-          "type" : "object",
-          "properties" : {
-            "nodeName" : {
-              "type" : "string",
-              "default" : "Script"
-            },
-            "continueParentNodeExecutionOnError" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "instrumentNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "skipNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "children" : {
-              "type" : "array",
-              "items" : {
-                "$ref" : "#/$defs/ArtefactDef"
-              }
-            },
-            "description" : {
-              "type" : "string"
-            },
-            "script" : {
-              "type" : "string"
-            }
-          }
-        }
-      },
-      "additionalProperties" : false
-    },
-    "BeforeThreadDef" : {
-      "type" : "object",
-      "properties" : {
-        "beforeThread" : {
-          "type" : "object",
-          "properties" : {
-            "nodeName" : {
-              "type" : "string",
-              "default" : "BeforeThread"
-            },
-            "continueParentNodeExecutionOnError" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "instrumentNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "skipNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "children" : {
-              "type" : "array",
-              "items" : {
-                "$ref" : "#/$defs/ArtefactDef"
-              }
-            },
-            "description" : {
-              "type" : "string"
+              "default" : "AfterThread"
             },
             "pacing" : {
               "$ref" : "#/$defs/SmartDynamicValueNumDef"
             },
             "continueOnError" : {
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            }
-          }
-        }
-      },
-      "additionalProperties" : false
-    },
-    "CallKeywordDef" : {
-      "type" : "object",
-      "properties" : {
-        "callKeyword" : {
-          "type" : "object",
-          "properties" : {
-            "nodeName" : {
-              "type" : "string",
-              "default" : "CallKeyword"
-            },
-            "continueParentNodeExecutionOnError" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "instrumentNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "skipNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "children" : {
-              "type" : "array",
-              "items" : {
-                "$ref" : "#/$defs/ArtefactDef"
-              }
-            },
-            "description" : {
-              "type" : "string"
-            },
-            "routing" : {
-              "$ref" : "#/$defs/DynamicKeywordInputsDef"
-            },
-            "remote" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "resultMap" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            },
-            "inputs" : {
-              "$ref" : "#/$defs/DynamicKeywordInputsDef"
-            },
-            "keyword" : {
-              "oneOf" : [ {
-                "type" : "string"
-              }, {
-                "type" : "object",
-                "patternProperties" : {
-                  ".*" : {
-                    "oneOf" : [ {
-                      "type" : "number"
-                    }, {
-                      "type" : "boolean"
-                    }, {
-                      "type" : "string"
-                    }, {
-                      "$ref" : "#/$defs/DynamicExpressionDef"
-                    } ]
-                  }
-                },
-                "additionalProperties" : false
-              } ]
-            }
-          }
-        }
-      },
-      "additionalProperties" : false
-    },
-    "ExportDef" : {
-      "type" : "object",
-      "properties" : {
-        "export" : {
-          "type" : "object",
-          "properties" : {
-            "nodeName" : {
-              "type" : "string",
-              "default" : "Export"
-            },
-            "continueParentNodeExecutionOnError" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "instrumentNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "skipNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "children" : {
-              "type" : "array",
-              "items" : {
-                "$ref" : "#/$defs/ArtefactDef"
-              }
-            },
-            "description" : {
-              "type" : "string"
-            },
-            "filter" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            },
-            "prefix" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            },
-            "file" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            },
-            "value" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            }
-          }
-        }
-      },
-      "additionalProperties" : false
-    },
-    "SequenceDef" : {
-      "type" : "object",
-      "properties" : {
-        "sequence" : {
-          "type" : "object",
-          "properties" : {
-            "nodeName" : {
-              "type" : "string",
-              "default" : "Sequence"
-            },
-            "continueParentNodeExecutionOnError" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "instrumentNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "skipNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "children" : {
-              "type" : "array",
-              "items" : {
-                "$ref" : "#/$defs/ArtefactDef"
-              }
-            },
-            "description" : {
-              "type" : "string"
-            },
-            "pacing" : {
-              "$ref" : "#/$defs/SmartDynamicValueNumDef"
-            },
-            "continueOnError" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            }
-          }
-        }
-      },
-      "additionalProperties" : false
-    },
-    "SwitchDef" : {
-      "type" : "object",
-      "properties" : {
-        "switch" : {
-          "type" : "object",
-          "properties" : {
-            "nodeName" : {
-              "type" : "string",
-              "default" : "Switch"
-            },
-            "continueParentNodeExecutionOnError" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "instrumentNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "skipNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "children" : {
-              "type" : "array",
-              "items" : {
-                "$ref" : "#/$defs/ArtefactDef"
-              }
-            },
-            "description" : {
-              "type" : "string"
-            },
-            "expression" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            }
-          }
-        }
-      },
-      "additionalProperties" : false
-    },
-    "StreamingArtefactDef" : {
-      "type" : "object",
-      "properties" : {
-        "streamingArtefact" : {
-          "type" : "object",
-          "properties" : {
-            "nodeName" : {
-              "type" : "string",
-              "default" : "StreamingArtefact"
-            },
-            "continueParentNodeExecutionOnError" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "instrumentNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "skipNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "children" : {
-              "type" : "array",
-              "items" : {
-                "$ref" : "#/$defs/ArtefactDef"
-              }
-            },
-            "description" : {
-              "type" : "string"
-            }
-          }
-        }
-      },
-      "additionalProperties" : false
-    },
-    "ForDef" : {
-      "type" : "object",
-      "properties" : {
-        "for" : {
-          "type" : "object",
-          "properties" : {
-            "nodeName" : {
-              "type" : "string",
-              "default" : "For"
-            },
-            "continueParentNodeExecutionOnError" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "instrumentNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "skipNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "children" : {
-              "type" : "array",
-              "items" : {
-                "$ref" : "#/$defs/ArtefactDef"
-              }
-            },
-            "description" : {
-              "type" : "string"
-            },
-            "userItem" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            },
-            "globalCounter" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            },
-            "threads" : {
-              "$ref" : "#/$defs/SmartDynamicValueNumDef"
-            },
-            "maxFailedLoops" : {
-              "$ref" : "#/$defs/SmartDynamicValueNumDef"
-            },
-            "inc" : {
-              "$ref" : "#/$defs/SmartDynamicValueNumDef"
-            },
-            "end" : {
-              "$ref" : "#/$defs/SmartDynamicValueNumDef"
-            },
-            "start" : {
-              "$ref" : "#/$defs/SmartDynamicValueNumDef"
-            },
-            "item" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            }
-          }
-        }
-      },
-      "additionalProperties" : false
-    },
-    "CaseDef" : {
-      "type" : "object",
-      "properties" : {
-        "case" : {
-          "type" : "object",
-          "properties" : {
-            "nodeName" : {
-              "type" : "string",
-              "default" : "Case"
-            },
-            "continueParentNodeExecutionOnError" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "instrumentNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "skipNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "children" : {
-              "type" : "array",
-              "items" : {
-                "$ref" : "#/$defs/ArtefactDef"
-              }
-            },
-            "description" : {
-              "type" : "string"
-            },
-            "value" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            }
-          }
-        }
-      },
-      "additionalProperties" : false
-    },
-    "FailureDef" : {
-      "type" : "object",
-      "properties" : {
-        "failure" : {
-          "type" : "object",
-          "properties" : {
-            "nodeName" : {
-              "type" : "string",
-              "default" : "Failure"
-            },
-            "continueParentNodeExecutionOnError" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "instrumentNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "skipNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "children" : {
-              "type" : "array",
-              "items" : {
-                "$ref" : "#/$defs/ArtefactDef"
-              }
-            },
-            "description" : {
-              "type" : "string"
-            },
-            "stackTrace" : {
-              "type" : "string"
-            },
-            "message" : {
-              "type" : "string"
-            }
-          }
-        }
-      },
-      "additionalProperties" : false
-    },
-    "ReturnDef" : {
-      "type" : "object",
-      "properties" : {
-        "return" : {
-          "type" : "object",
-          "properties" : {
-            "nodeName" : {
-              "type" : "string",
-              "default" : "Return"
-            },
-            "continueParentNodeExecutionOnError" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "instrumentNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "skipNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "children" : {
-              "type" : "array",
-              "items" : {
-                "$ref" : "#/$defs/ArtefactDef"
-              }
-            },
-            "description" : {
-              "type" : "string"
-            },
-            "output" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            }
-          }
-        }
-      },
-      "additionalProperties" : false
-    },
-    "ForEachDef" : {
-      "type" : "object",
-      "properties" : {
-        "forEach" : {
-          "type" : "object",
-          "properties" : {
-            "nodeName" : {
-              "type" : "string",
-              "default" : "ForEach"
-            },
-            "continueParentNodeExecutionOnError" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "instrumentNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "skipNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "children" : {
-              "type" : "array",
-              "items" : {
-                "$ref" : "#/$defs/ArtefactDef"
-              }
-            },
-            "description" : {
-              "type" : "string"
-            },
-            "userItem" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            },
-            "globalCounter" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            },
-            "threads" : {
-              "$ref" : "#/$defs/SmartDynamicValueNumDef"
-            },
-            "maxFailedLoops" : {
-              "$ref" : "#/$defs/SmartDynamicValueNumDef"
-            },
-            "dataSource" : {
-              "oneOf" : [ {
-                "type" : "object",
-                "additionalProperties" : false,
-                "properties" : {
-                  "sequence" : {
-                    "type" : "object",
-                    "additionalProperties" : false,
-                    "properties" : {
-                      "inc" : {
-                        "$ref" : "#/$defs/SmartDynamicValueNumDef"
-                      },
-                      "end" : {
-                        "$ref" : "#/$defs/SmartDynamicValueNumDef"
-                      },
-                      "start" : {
-                        "$ref" : "#/$defs/SmartDynamicValueNumDef"
-                      }
-                    }
-                  }
-                }
-              }, {
-                "type" : "object",
-                "additionalProperties" : false,
-                "properties" : {
-                  "csv" : {
-                    "type" : "object",
-                    "additionalProperties" : false,
-                    "properties" : {
-                      "file" : {
-                        "$ref" : "#/$defs/resourceReference"
-                      },
-                      "delimiter" : {
-                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
-                      }
-                    }
-                  }
-                }
-              }, {
-                "type" : "object",
-                "additionalProperties" : false,
-                "properties" : {
-                  "excel" : {
-                    "type" : "object",
-                    "additionalProperties" : false,
-                    "properties" : {
-                      "headers" : {
-                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-                      },
-                      "worksheet" : {
-                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
-                      },
-                      "file" : {
-                        "$ref" : "#/$defs/resourceReference"
-                      }
-                    }
-                  }
-                }
-              }, {
-                "type" : "object",
-                "additionalProperties" : false,
-                "properties" : {
-                  "json" : {
-                    "type" : "object",
-                    "additionalProperties" : false,
-                    "properties" : {
-                      "json" : {
-                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
-                      }
-                    }
-                  }
-                }
-              }, {
-                "type" : "object",
-                "additionalProperties" : false,
-                "properties" : {
-                  "folder" : {
-                    "type" : "object",
-                    "additionalProperties" : false,
-                    "properties" : {
-                      "folder" : {
-                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
-                      }
-                    }
-                  }
-                }
-              }, {
-                "type" : "object",
-                "additionalProperties" : false,
-                "properties" : {
-                  "gsheet" : {
-                    "type" : "object",
-                    "additionalProperties" : false,
-                    "properties" : {
-                      "tabName" : {
-                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
-                      },
-                      "serviceAccountKey" : {
-                        "$ref" : "#/$defs/resourceReference"
-                      },
-                      "fileId" : {
-                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
-                      }
-                    }
-                  }
-                }
-              }, {
-                "type" : "object",
-                "additionalProperties" : false,
-                "properties" : {
-                  "json-array" : {
-                    "type" : "object",
-                    "additionalProperties" : false,
-                    "properties" : {
-                      "json" : {
-                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
-                      }
-                    }
-                  }
-                }
-              }, {
-                "type" : "object",
-                "additionalProperties" : false,
-                "properties" : {
-                  "sql" : {
-                    "type" : "object",
-                    "additionalProperties" : false,
-                    "properties" : {
-                      "driverClass" : {
-                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
-                      },
-                      "writePKey" : {
-                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
-                      },
-                      "password" : {
-                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
-                      },
-                      "user" : {
-                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
-                      },
-                      "query" : {
-                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
-                      },
-                      "connectionString" : {
-                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
-                      }
-                    }
-                  }
-                }
-              }, {
-                "type" : "object",
-                "additionalProperties" : false,
-                "properties" : {
-                  "file" : {
-                    "type" : "object",
-                    "additionalProperties" : false,
-                    "properties" : {
-                      "file" : {
-                        "$ref" : "#/$defs/resourceReference"
-                      }
-                    }
-                  }
-                }
-              } ]
-            },
-            "item" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            }
-          }
-        }
-      },
-      "additionalProperties" : false
-    },
-    "RetryIfFailsDef" : {
-      "type" : "object",
-      "properties" : {
-        "retryIfFails" : {
-          "type" : "object",
-          "properties" : {
-            "nodeName" : {
-              "type" : "string",
-              "default" : "RetryIfFails"
-            },
-            "continueParentNodeExecutionOnError" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "instrumentNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "skipNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "children" : {
-              "type" : "array",
-              "items" : {
-                "$ref" : "#/$defs/ArtefactDef"
-              }
-            },
-            "description" : {
-              "type" : "string"
-            },
-            "reportLastTryOnly" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "releaseTokens" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "timeout" : {
-              "$ref" : "#/$defs/SmartDynamicValueNumDef"
-            },
-            "gracePeriod" : {
-              "$ref" : "#/$defs/SmartDynamicValueNumDef"
-            },
-            "maxRetries" : {
-              "$ref" : "#/$defs/SmartDynamicValueNumDef"
-            }
-          }
-        }
-      },
-      "additionalProperties" : false
-    },
-    "WhileDef" : {
-      "type" : "object",
-      "properties" : {
-        "while" : {
-          "type" : "object",
-          "properties" : {
-            "nodeName" : {
-              "type" : "string",
-              "default" : "While"
-            },
-            "continueParentNodeExecutionOnError" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "instrumentNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "skipNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "children" : {
-              "type" : "array",
-              "items" : {
-                "$ref" : "#/$defs/ArtefactDef"
-              }
-            },
-            "description" : {
-              "type" : "string"
-            },
-            "maxIterations" : {
-              "$ref" : "#/$defs/SmartDynamicValueNumDef"
-            },
-            "timeout" : {
-              "$ref" : "#/$defs/SmartDynamicValueNumDef"
-            },
-            "pacing" : {
-              "$ref" : "#/$defs/SmartDynamicValueNumDef"
-            },
-            "postCondition" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "condition" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            }
-          }
-        }
-      },
-      "additionalProperties" : false
-    },
-    "CallPlanDef" : {
-      "type" : "object",
-      "properties" : {
-        "callPlan" : {
-          "type" : "object",
-          "properties" : {
-            "nodeName" : {
-              "type" : "string",
-              "default" : "CallPlan"
-            },
-            "continueParentNodeExecutionOnError" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "instrumentNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "skipNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "children" : {
-              "type" : "array",
-              "items" : {
-                "$ref" : "#/$defs/ArtefactDef"
-              }
-            },
-            "description" : {
-              "type" : "string"
-            },
-            "input" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            },
-            "selectionAttributes" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            },
-            "planId" : {
-              "type" : "string"
-            }
-          }
-        }
-      },
-      "additionalProperties" : false
-    },
-    "EchoDef" : {
-      "type" : "object",
-      "properties" : {
-        "echo" : {
-          "type" : "object",
-          "properties" : {
-            "nodeName" : {
-              "type" : "string",
-              "default" : "Echo"
-            },
-            "continueParentNodeExecutionOnError" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "instrumentNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "skipNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "children" : {
-              "type" : "array",
-              "items" : {
-                "$ref" : "#/$defs/ArtefactDef"
-              }
-            },
-            "description" : {
-              "type" : "string"
-            },
-            "text" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            }
-          }
-        }
-      },
-      "additionalProperties" : false
-    },
-    "TestScenarioDef" : {
-      "type" : "object",
-      "properties" : {
-        "testScenario" : {
-          "type" : "object",
-          "properties" : {
-            "nodeName" : {
-              "type" : "string",
-              "default" : "TestScenario"
-            },
-            "continueParentNodeExecutionOnError" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "instrumentNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "skipNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "children" : {
-              "type" : "array",
-              "items" : {
-                "$ref" : "#/$defs/ArtefactDef"
-              }
-            },
-            "description" : {
-              "type" : "string"
-            }
-          }
-        }
-      },
-      "additionalProperties" : false
-    },
-    "PerformanceAssertDef" : {
-      "type" : "object",
-      "properties" : {
-        "performanceAssert" : {
-          "type" : "object",
-          "properties" : {
-            "nodeName" : {
-              "type" : "string",
-              "default" : "PerformanceAssert"
-            },
-            "continueParentNodeExecutionOnError" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "instrumentNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "skipNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "children" : {
-              "type" : "array",
-              "items" : {
-                "$ref" : "#/$defs/ArtefactDef"
-              }
-            },
-            "description" : {
-              "type" : "string"
-            },
-            "expectedValue" : {
-              "$ref" : "#/$defs/SmartDynamicValueNumDef"
-            },
-            "comparator" : {
-              "enum" : [ "EQUALS", "HIGHER_THAN", "LOWER_THAN" ]
-            },
-            "aggregator" : {
-              "enum" : [ "AVG", "MAX", "MIN", "COUNT", "SUM" ]
-            },
-            "measurementName" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            }
-          }
-        }
-      },
-      "additionalProperties" : false
-    },
-    "SynchronizedDef" : {
-      "type" : "object",
-      "properties" : {
-        "synchronized" : {
-          "type" : "object",
-          "properties" : {
-            "nodeName" : {
-              "type" : "string",
-              "default" : "Synchronized"
-            },
-            "continueParentNodeExecutionOnError" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "instrumentNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "skipNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "children" : {
-              "type" : "array",
-              "items" : {
-                "$ref" : "#/$defs/ArtefactDef"
-              }
-            },
-            "description" : {
-              "type" : "string"
-            },
-            "pacing" : {
-              "$ref" : "#/$defs/SmartDynamicValueNumDef"
-            },
-            "continueOnError" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "globalLock" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "lockName" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            }
-          }
-        }
-      },
-      "additionalProperties" : false
-    },
-    "BeforeSequenceDef" : {
-      "type" : "object",
-      "properties" : {
-        "beforeSequence" : {
-          "type" : "object",
-          "properties" : {
-            "nodeName" : {
-              "type" : "string",
-              "default" : "BeforeSequence"
-            },
-            "continueParentNodeExecutionOnError" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "instrumentNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "skipNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "children" : {
-              "type" : "array",
-              "items" : {
-                "$ref" : "#/$defs/ArtefactDef"
-              }
-            },
-            "description" : {
-              "type" : "string"
-            },
-            "pacing" : {
-              "$ref" : "#/$defs/SmartDynamicValueNumDef"
-            },
-            "continueOnError" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            }
-          }
-        }
-      },
-      "additionalProperties" : false
-    },
-    "TestSetDef" : {
-      "type" : "object",
-      "properties" : {
-        "testSet" : {
-          "type" : "object",
-          "properties" : {
-            "nodeName" : {
-              "type" : "string",
-              "default" : "TestSet"
-            },
-            "continueParentNodeExecutionOnError" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "instrumentNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "skipNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "children" : {
-              "type" : "array",
-              "items" : {
-                "$ref" : "#/$defs/ArtefactDef"
-              }
-            },
-            "description" : {
-              "type" : "string"
-            },
-            "threads" : {
-              "$ref" : "#/$defs/SmartDynamicValueNumDef"
-            }
-          }
-        }
-      },
-      "additionalProperties" : false
-    },
-    "SessionDef" : {
-      "type" : "object",
-      "properties" : {
-        "session" : {
-          "type" : "object",
-          "properties" : {
-            "nodeName" : {
-              "type" : "string",
-              "default" : "Session"
-            },
-            "continueParentNodeExecutionOnError" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "instrumentNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "skipNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "children" : {
-              "type" : "array",
-              "items" : {
-                "$ref" : "#/$defs/ArtefactDef"
-              }
-            },
-            "description" : {
-              "type" : "string"
-            },
-            "routing" : {
-              "$ref" : "#/$defs/DynamicKeywordInputsDef"
-            },
-            "remote" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "containerCommand" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            },
-            "containerUser" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            },
-            "dockerImage" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            }
-          }
-        }
-      },
-      "additionalProperties" : false
-    },
-    "DataSetDef" : {
-      "type" : "object",
-      "properties" : {
-        "dataSet" : {
-          "type" : "object",
-          "properties" : {
-            "nodeName" : {
-              "type" : "string",
-              "default" : "DataSet"
-            },
-            "continueParentNodeExecutionOnError" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "instrumentNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "skipNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "children" : {
-              "type" : "array",
-              "items" : {
-                "$ref" : "#/$defs/ArtefactDef"
-              }
-            },
-            "description" : {
-              "type" : "string"
-            },
-            "userItem" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            },
-            "globalCounter" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            },
-            "threads" : {
-              "$ref" : "#/$defs/SmartDynamicValueNumDef"
-            },
-            "maxFailedLoops" : {
-              "$ref" : "#/$defs/SmartDynamicValueNumDef"
-            },
-            "dataSource" : {
-              "oneOf" : [ {
-                "type" : "object",
-                "additionalProperties" : false,
-                "properties" : {
-                  "sequence" : {
-                    "type" : "object",
-                    "additionalProperties" : false,
-                    "properties" : {
-                      "forWrite" : {
-                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-                      },
-                      "inc" : {
-                        "$ref" : "#/$defs/SmartDynamicValueNumDef"
-                      },
-                      "end" : {
-                        "$ref" : "#/$defs/SmartDynamicValueNumDef"
-                      },
-                      "start" : {
-                        "$ref" : "#/$defs/SmartDynamicValueNumDef"
-                      }
-                    }
-                  }
-                }
-              }, {
-                "type" : "object",
-                "additionalProperties" : false,
-                "properties" : {
-                  "csv" : {
-                    "type" : "object",
-                    "additionalProperties" : false,
-                    "properties" : {
-                      "forWrite" : {
-                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-                      },
-                      "file" : {
-                        "$ref" : "#/$defs/resourceReference"
-                      },
-                      "delimiter" : {
-                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
-                      }
-                    }
-                  }
-                }
-              }, {
-                "type" : "object",
-                "additionalProperties" : false,
-                "properties" : {
-                  "excel" : {
-                    "type" : "object",
-                    "additionalProperties" : false,
-                    "properties" : {
-                      "forWrite" : {
-                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-                      },
-                      "headers" : {
-                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-                      },
-                      "worksheet" : {
-                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
-                      },
-                      "file" : {
-                        "$ref" : "#/$defs/resourceReference"
-                      }
-                    }
-                  }
-                }
-              }, {
-                "type" : "object",
-                "additionalProperties" : false,
-                "properties" : {
-                  "json" : {
-                    "type" : "object",
-                    "additionalProperties" : false,
-                    "properties" : {
-                      "forWrite" : {
-                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-                      },
-                      "json" : {
-                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
-                      }
-                    }
-                  }
-                }
-              }, {
-                "type" : "object",
-                "additionalProperties" : false,
-                "properties" : {
-                  "folder" : {
-                    "type" : "object",
-                    "additionalProperties" : false,
-                    "properties" : {
-                      "forWrite" : {
-                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-                      },
-                      "folder" : {
-                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
-                      }
-                    }
-                  }
-                }
-              }, {
-                "type" : "object",
-                "additionalProperties" : false,
-                "properties" : {
-                  "gsheet" : {
-                    "type" : "object",
-                    "additionalProperties" : false,
-                    "properties" : {
-                      "forWrite" : {
-                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-                      },
-                      "tabName" : {
-                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
-                      },
-                      "serviceAccountKey" : {
-                        "$ref" : "#/$defs/resourceReference"
-                      },
-                      "fileId" : {
-                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
-                      }
-                    }
-                  }
-                }
-              }, {
-                "type" : "object",
-                "additionalProperties" : false,
-                "properties" : {
-                  "json-array" : {
-                    "type" : "object",
-                    "additionalProperties" : false,
-                    "properties" : {
-                      "forWrite" : {
-                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-                      },
-                      "json" : {
-                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
-                      }
-                    }
-                  }
-                }
-              }, {
-                "type" : "object",
-                "additionalProperties" : false,
-                "properties" : {
-                  "sql" : {
-                    "type" : "object",
-                    "additionalProperties" : false,
-                    "properties" : {
-                      "forWrite" : {
-                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-                      },
-                      "driverClass" : {
-                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
-                      },
-                      "writePKey" : {
-                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
-                      },
-                      "password" : {
-                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
-                      },
-                      "user" : {
-                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
-                      },
-                      "query" : {
-                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
-                      },
-                      "connectionString" : {
-                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
-                      }
-                    }
-                  }
-                }
-              }, {
-                "type" : "object",
-                "additionalProperties" : false,
-                "properties" : {
-                  "file" : {
-                    "type" : "object",
-                    "additionalProperties" : false,
-                    "properties" : {
-                      "forWrite" : {
-                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-                      },
-                      "file" : {
-                        "$ref" : "#/$defs/resourceReference"
-                      }
-                    }
-                  }
-                }
-              } ]
-            },
-            "item" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            },
-            "resetAtEnd" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            }
-          }
-        }
-      },
-      "additionalProperties" : false
-    },
-    "SleepDef" : {
-      "type" : "object",
-      "properties" : {
-        "sleep" : {
-          "type" : "object",
-          "properties" : {
-            "nodeName" : {
-              "type" : "string",
-              "default" : "Sleep"
-            },
-            "continueParentNodeExecutionOnError" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "instrumentNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "skipNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "children" : {
-              "type" : "array",
-              "items" : {
-                "$ref" : "#/$defs/ArtefactDef"
-              }
-            },
-            "description" : {
-              "type" : "string"
-            },
-            "releaseTokens" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "unit" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            },
-            "duration" : {
-              "$ref" : "#/$defs/SmartDynamicValueNumDef"
             }
           }
         }
@@ -1647,9 +189,11 @@
         "assert" : {
           "type" : "object",
           "properties" : {
-            "nodeName" : {
-              "type" : "string",
-              "default" : "Assert"
+            "children" : {
+              "$ref" : "#/$defs/ArtefactArrayDef"
+            },
+            "description" : {
+              "type" : "string"
             },
             "continueParentNodeExecutionOnError" : {
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
@@ -1660,14 +204,9 @@
             "skipNode" : {
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
-            "children" : {
-              "type" : "array",
-              "items" : {
-                "$ref" : "#/$defs/ArtefactDef"
-              }
-            },
-            "description" : {
-              "type" : "string"
+            "nodeName" : {
+              "type" : "string",
+              "default" : "Assert"
             },
             "customErrorMessage" : {
               "$ref" : "#/$defs/SmartDynamicValueStringDef"
@@ -1689,15 +228,17 @@
       },
       "additionalProperties" : false
     },
-    "TestCaseDef" : {
+    "BeforeSequenceDef" : {
       "type" : "object",
       "properties" : {
-        "testCase" : {
+        "beforeSequence" : {
           "type" : "object",
           "properties" : {
-            "nodeName" : {
-              "type" : "string",
-              "default" : "TestCase"
+            "children" : {
+              "$ref" : "#/$defs/ArtefactArrayDef"
+            },
+            "description" : {
+              "type" : "string"
             },
             "continueParentNodeExecutionOnError" : {
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
@@ -1708,13 +249,154 @@
             "skipNode" : {
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
+            "nodeName" : {
+              "type" : "string",
+              "default" : "BeforeSequence"
+            },
+            "pacing" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            },
+            "continueOnError" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            }
+          }
+        }
+      },
+      "additionalProperties" : false
+    },
+    "BeforeThreadDef" : {
+      "type" : "object",
+      "properties" : {
+        "beforeThread" : {
+          "type" : "object",
+          "properties" : {
             "children" : {
-              "type" : "array",
-              "items" : {
-                "$ref" : "#/$defs/ArtefactDef"
-              }
+              "$ref" : "#/$defs/ArtefactArrayDef"
             },
             "description" : {
+              "type" : "string"
+            },
+            "continueParentNodeExecutionOnError" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "nodeName" : {
+              "type" : "string",
+              "default" : "BeforeThread"
+            },
+            "pacing" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            },
+            "continueOnError" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            }
+          }
+        }
+      },
+      "additionalProperties" : false
+    },
+    "CallKeywordDef" : {
+      "type" : "object",
+      "properties" : {
+        "callKeyword" : {
+          "type" : "object",
+          "properties" : {
+            "children" : {
+              "$ref" : "#/$defs/ArtefactArrayDef"
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "continueParentNodeExecutionOnError" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "nodeName" : {
+              "default" : "CallKeyword",
+              "type" : "string"
+            },
+            "remote" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "routing" : {
+              "$ref" : "#/$defs/DynamicKeywordInputsDef"
+            },
+            "keyword" : {
+              "keyword" : {
+                "oneOf" : [ {
+                  "type" : "string"
+                }, {
+                  "type" : "object",
+                  "patternProperties" : {
+                    ".*" : {
+                      "oneOf" : [ {
+                        "type" : "number"
+                      }, {
+                        "type" : "boolean"
+                      }, {
+                        "type" : "string"
+                      }, {
+                        "$ref" : "#/$defs/DynamicExpressionDef"
+                      } ]
+                    }
+                  },
+                  "additionalProperties" : false
+                } ]
+              }
+            },
+            "inputs" : {
+              "$ref" : "#/$defs/DynamicKeywordInputsDef"
+            },
+            "resultMap" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            }
+          }
+        }
+      },
+      "additionalProperties" : false
+    },
+    "CallPlanDef" : {
+      "type" : "object",
+      "properties" : {
+        "callPlan" : {
+          "type" : "object",
+          "properties" : {
+            "children" : {
+              "$ref" : "#/$defs/ArtefactArrayDef"
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "continueParentNodeExecutionOnError" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "nodeName" : {
+              "type" : "string",
+              "default" : "CallPlan"
+            },
+            "input" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            },
+            "selectionAttributes" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            },
+            "planId" : {
               "type" : "string"
             }
           }
@@ -1722,15 +404,17 @@
       },
       "additionalProperties" : false
     },
-    "AfterThreadDef" : {
+    "CaseDef" : {
       "type" : "object",
       "properties" : {
-        "afterThread" : {
+        "case" : {
           "type" : "object",
           "properties" : {
-            "nodeName" : {
-              "type" : "string",
-              "default" : "AfterThread"
+            "children" : {
+              "$ref" : "#/$defs/ArtefactArrayDef"
+            },
+            "description" : {
+              "type" : "string"
             },
             "continueParentNodeExecutionOnError" : {
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
@@ -1741,13 +425,907 @@
             "skipNode" : {
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
+            "nodeName" : {
+              "type" : "string",
+              "default" : "Case"
+            },
+            "value" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            }
+          }
+        }
+      },
+      "additionalProperties" : false
+    },
+    "CheckDef" : {
+      "type" : "object",
+      "properties" : {
+        "check" : {
+          "type" : "object",
+          "properties" : {
             "children" : {
-              "type" : "array",
-              "items" : {
-                "$ref" : "#/$defs/ArtefactDef"
-              }
+              "$ref" : "#/$defs/ArtefactArrayDef"
             },
             "description" : {
+              "type" : "string"
+            },
+            "continueParentNodeExecutionOnError" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "nodeName" : {
+              "default" : "Check",
+              "type" : "string"
+            },
+            "expression" : {
+              "type" : "string"
+            }
+          }
+        }
+      },
+      "additionalProperties" : false
+    },
+    "DataSetDef" : {
+      "type" : "object",
+      "properties" : {
+        "dataSet" : {
+          "type" : "object",
+          "properties" : {
+            "children" : {
+              "$ref" : "#/$defs/ArtefactArrayDef"
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "continueParentNodeExecutionOnError" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "nodeName" : {
+              "default" : "DataSet",
+              "type" : "string"
+            },
+            "userItem" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            },
+            "globalCounter" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            },
+            "threads" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            },
+            "maxFailedLoops" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            },
+            "item" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            },
+            "dataSource" : {
+              "type" : "object",
+              "oneOf" : [ {
+                "type" : "object",
+                "properties" : {
+                  "csv" : {
+                    "type" : "object",
+                    "properties" : {
+                      "forWrite" : {
+                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                      },
+                      "file" : {
+                        "$ref" : "#/$defs/resourceReference"
+                      },
+                      "delimiter" : {
+                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
+                      }
+                    },
+                    "additionalProperties" : false
+                  }
+                },
+                "additionalProperties" : false
+              }, {
+                "type" : "object",
+                "properties" : {
+                  "excel" : {
+                    "type" : "object",
+                    "properties" : {
+                      "forWrite" : {
+                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                      },
+                      "headers" : {
+                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                      },
+                      "worksheet" : {
+                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
+                      },
+                      "file" : {
+                        "$ref" : "#/$defs/resourceReference"
+                      }
+                    },
+                    "additionalProperties" : false
+                  }
+                },
+                "additionalProperties" : false
+              }, {
+                "type" : "object",
+                "properties" : {
+                  "file" : {
+                    "type" : "object",
+                    "properties" : {
+                      "forWrite" : {
+                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                      },
+                      "file" : {
+                        "$ref" : "#/$defs/resourceReference"
+                      }
+                    },
+                    "additionalProperties" : false
+                  }
+                },
+                "additionalProperties" : false
+              }, {
+                "type" : "object",
+                "properties" : {
+                  "folder" : {
+                    "type" : "object",
+                    "properties" : {
+                      "forWrite" : {
+                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                      },
+                      "folder" : {
+                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
+                      }
+                    },
+                    "additionalProperties" : false
+                  }
+                },
+                "additionalProperties" : false
+              }, {
+                "type" : "object",
+                "properties" : {
+                  "gsheet" : {
+                    "type" : "object",
+                    "properties" : {
+                      "forWrite" : {
+                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                      },
+                      "tabName" : {
+                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
+                      },
+                      "serviceAccountKey" : {
+                        "$ref" : "#/$defs/resourceReference"
+                      },
+                      "fileId" : {
+                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
+                      }
+                    },
+                    "additionalProperties" : false
+                  }
+                },
+                "additionalProperties" : false
+              }, {
+                "type" : "object",
+                "properties" : {
+                  "json-array" : {
+                    "type" : "object",
+                    "properties" : {
+                      "forWrite" : {
+                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                      },
+                      "json" : {
+                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
+                      }
+                    },
+                    "additionalProperties" : false
+                  }
+                },
+                "additionalProperties" : false
+              }, {
+                "type" : "object",
+                "properties" : {
+                  "json" : {
+                    "type" : "object",
+                    "properties" : {
+                      "forWrite" : {
+                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                      },
+                      "json" : {
+                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
+                      }
+                    },
+                    "additionalProperties" : false
+                  }
+                },
+                "additionalProperties" : false
+              }, {
+                "type" : "object",
+                "properties" : {
+                  "sequence" : {
+                    "type" : "object",
+                    "properties" : {
+                      "forWrite" : {
+                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                      },
+                      "inc" : {
+                        "$ref" : "#/$defs/SmartDynamicValueNumDef"
+                      },
+                      "end" : {
+                        "$ref" : "#/$defs/SmartDynamicValueNumDef"
+                      },
+                      "start" : {
+                        "$ref" : "#/$defs/SmartDynamicValueNumDef"
+                      }
+                    },
+                    "additionalProperties" : false
+                  }
+                },
+                "additionalProperties" : false
+              }, {
+                "type" : "object",
+                "properties" : {
+                  "sql" : {
+                    "type" : "object",
+                    "properties" : {
+                      "forWrite" : {
+                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                      },
+                      "driverClass" : {
+                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
+                      },
+                      "writePKey" : {
+                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
+                      },
+                      "password" : {
+                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
+                      },
+                      "user" : {
+                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
+                      },
+                      "query" : {
+                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
+                      },
+                      "connectionString" : {
+                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
+                      }
+                    },
+                    "additionalProperties" : false
+                  }
+                },
+                "additionalProperties" : false
+              } ]
+            },
+            "resetAtEnd" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            }
+          }
+        }
+      },
+      "additionalProperties" : false
+    },
+    "EchoDef" : {
+      "type" : "object",
+      "properties" : {
+        "echo" : {
+          "type" : "object",
+          "properties" : {
+            "children" : {
+              "$ref" : "#/$defs/ArtefactArrayDef"
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "continueParentNodeExecutionOnError" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "nodeName" : {
+              "type" : "string",
+              "default" : "Echo"
+            },
+            "text" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            }
+          }
+        }
+      },
+      "additionalProperties" : false
+    },
+    "ExportDef" : {
+      "type" : "object",
+      "properties" : {
+        "export" : {
+          "type" : "object",
+          "properties" : {
+            "children" : {
+              "$ref" : "#/$defs/ArtefactArrayDef"
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "continueParentNodeExecutionOnError" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "nodeName" : {
+              "type" : "string",
+              "default" : "Export"
+            },
+            "filter" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            },
+            "prefix" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            },
+            "file" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            },
+            "value" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            }
+          }
+        }
+      },
+      "additionalProperties" : false
+    },
+    "FailureDef" : {
+      "type" : "object",
+      "properties" : {
+        "failure" : {
+          "type" : "object",
+          "properties" : {
+            "children" : {
+              "$ref" : "#/$defs/ArtefactArrayDef"
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "continueParentNodeExecutionOnError" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "nodeName" : {
+              "type" : "string",
+              "default" : "Failure"
+            },
+            "stackTrace" : {
+              "type" : "string"
+            },
+            "message" : {
+              "type" : "string"
+            }
+          }
+        }
+      },
+      "additionalProperties" : false
+    },
+    "ForDef" : {
+      "type" : "object",
+      "properties" : {
+        "for" : {
+          "type" : "object",
+          "properties" : {
+            "children" : {
+              "$ref" : "#/$defs/ArtefactArrayDef"
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "continueParentNodeExecutionOnError" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "nodeName" : {
+              "default" : "For",
+              "type" : "string"
+            },
+            "userItem" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            },
+            "globalCounter" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            },
+            "threads" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            },
+            "maxFailedLoops" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            },
+            "item" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            },
+            "inc" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            },
+            "end" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            },
+            "start" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            }
+          }
+        }
+      },
+      "additionalProperties" : false
+    },
+    "ForEachDef" : {
+      "type" : "object",
+      "properties" : {
+        "forEach" : {
+          "type" : "object",
+          "properties" : {
+            "children" : {
+              "$ref" : "#/$defs/ArtefactArrayDef"
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "continueParentNodeExecutionOnError" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "nodeName" : {
+              "default" : "ForEach",
+              "type" : "string"
+            },
+            "userItem" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            },
+            "globalCounter" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            },
+            "threads" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            },
+            "maxFailedLoops" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            },
+            "item" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            },
+            "dataSource" : {
+              "type" : "object",
+              "oneOf" : [ {
+                "type" : "object",
+                "properties" : {
+                  "csv" : {
+                    "type" : "object",
+                    "properties" : {
+                      "file" : {
+                        "$ref" : "#/$defs/resourceReference"
+                      },
+                      "delimiter" : {
+                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
+                      }
+                    },
+                    "additionalProperties" : false
+                  }
+                },
+                "additionalProperties" : false
+              }, {
+                "type" : "object",
+                "properties" : {
+                  "excel" : {
+                    "type" : "object",
+                    "properties" : {
+                      "headers" : {
+                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                      },
+                      "worksheet" : {
+                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
+                      },
+                      "file" : {
+                        "$ref" : "#/$defs/resourceReference"
+                      }
+                    },
+                    "additionalProperties" : false
+                  }
+                },
+                "additionalProperties" : false
+              }, {
+                "type" : "object",
+                "properties" : {
+                  "file" : {
+                    "type" : "object",
+                    "properties" : {
+                      "file" : {
+                        "$ref" : "#/$defs/resourceReference"
+                      }
+                    },
+                    "additionalProperties" : false
+                  }
+                },
+                "additionalProperties" : false
+              }, {
+                "type" : "object",
+                "properties" : {
+                  "folder" : {
+                    "type" : "object",
+                    "properties" : {
+                      "folder" : {
+                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
+                      }
+                    },
+                    "additionalProperties" : false
+                  }
+                },
+                "additionalProperties" : false
+              }, {
+                "type" : "object",
+                "properties" : {
+                  "gsheet" : {
+                    "type" : "object",
+                    "properties" : {
+                      "tabName" : {
+                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
+                      },
+                      "serviceAccountKey" : {
+                        "$ref" : "#/$defs/resourceReference"
+                      },
+                      "fileId" : {
+                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
+                      }
+                    },
+                    "additionalProperties" : false
+                  }
+                },
+                "additionalProperties" : false
+              }, {
+                "type" : "object",
+                "properties" : {
+                  "json-array" : {
+                    "type" : "object",
+                    "properties" : {
+                      "json" : {
+                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
+                      }
+                    },
+                    "additionalProperties" : false
+                  }
+                },
+                "additionalProperties" : false
+              }, {
+                "type" : "object",
+                "properties" : {
+                  "json" : {
+                    "type" : "object",
+                    "properties" : {
+                      "json" : {
+                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
+                      }
+                    },
+                    "additionalProperties" : false
+                  }
+                },
+                "additionalProperties" : false
+              }, {
+                "type" : "object",
+                "properties" : {
+                  "sequence" : {
+                    "type" : "object",
+                    "properties" : {
+                      "inc" : {
+                        "$ref" : "#/$defs/SmartDynamicValueNumDef"
+                      },
+                      "end" : {
+                        "$ref" : "#/$defs/SmartDynamicValueNumDef"
+                      },
+                      "start" : {
+                        "$ref" : "#/$defs/SmartDynamicValueNumDef"
+                      }
+                    },
+                    "additionalProperties" : false
+                  }
+                },
+                "additionalProperties" : false
+              }, {
+                "type" : "object",
+                "properties" : {
+                  "sql" : {
+                    "type" : "object",
+                    "properties" : {
+                      "driverClass" : {
+                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
+                      },
+                      "writePKey" : {
+                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
+                      },
+                      "password" : {
+                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
+                      },
+                      "user" : {
+                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
+                      },
+                      "query" : {
+                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
+                      },
+                      "connectionString" : {
+                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
+                      }
+                    },
+                    "additionalProperties" : false
+                  }
+                },
+                "additionalProperties" : false
+              } ]
+            }
+          }
+        }
+      },
+      "additionalProperties" : false
+    },
+    "IfDef" : {
+      "type" : "object",
+      "properties" : {
+        "if" : {
+          "type" : "object",
+          "properties" : {
+            "children" : {
+              "$ref" : "#/$defs/ArtefactArrayDef"
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "continueParentNodeExecutionOnError" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "nodeName" : {
+              "type" : "string",
+              "default" : "If"
+            },
+            "condition" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            }
+          }
+        }
+      },
+      "additionalProperties" : false
+    },
+    "PerformanceAssertDef" : {
+      "type" : "object",
+      "properties" : {
+        "performanceAssert" : {
+          "type" : "object",
+          "properties" : {
+            "children" : {
+              "$ref" : "#/$defs/ArtefactArrayDef"
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "continueParentNodeExecutionOnError" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "nodeName" : {
+              "default" : "PerformanceAssert",
+              "type" : "string"
+            },
+            "expectedValue" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            },
+            "comparator" : {
+              "enum" : [ "EQUALS", "HIGHER_THAN", "LOWER_THAN" ]
+            },
+            "aggregator" : {
+              "enum" : [ "AVG", "MAX", "MIN", "COUNT", "SUM" ]
+            },
+            "measurementName" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            }
+          }
+        }
+      },
+      "additionalProperties" : false
+    },
+    "PlaceholderDef" : {
+      "type" : "object",
+      "properties" : {
+        "placeholder" : {
+          "type" : "object",
+          "properties" : {
+            "children" : {
+              "$ref" : "#/$defs/ArtefactArrayDef"
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "continueParentNodeExecutionOnError" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "nodeName" : {
+              "type" : "string",
+              "default" : "Placeholder"
+            }
+          }
+        }
+      },
+      "additionalProperties" : false
+    },
+    "RetryIfFailsDef" : {
+      "type" : "object",
+      "properties" : {
+        "retryIfFails" : {
+          "type" : "object",
+          "properties" : {
+            "children" : {
+              "$ref" : "#/$defs/ArtefactArrayDef"
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "continueParentNodeExecutionOnError" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "nodeName" : {
+              "type" : "string",
+              "default" : "RetryIfFails"
+            },
+            "reportLastTryOnly" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "releaseTokens" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "timeout" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            },
+            "gracePeriod" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            },
+            "maxRetries" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            }
+          }
+        }
+      },
+      "additionalProperties" : false
+    },
+    "ReturnDef" : {
+      "type" : "object",
+      "properties" : {
+        "return" : {
+          "type" : "object",
+          "properties" : {
+            "children" : {
+              "$ref" : "#/$defs/ArtefactArrayDef"
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "continueParentNodeExecutionOnError" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "nodeName" : {
+              "type" : "string",
+              "default" : "Return"
+            },
+            "output" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            }
+          }
+        }
+      },
+      "additionalProperties" : false
+    },
+    "ScriptDef" : {
+      "type" : "object",
+      "properties" : {
+        "script" : {
+          "type" : "object",
+          "properties" : {
+            "children" : {
+              "$ref" : "#/$defs/ArtefactArrayDef"
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "continueParentNodeExecutionOnError" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "nodeName" : {
+              "type" : "string",
+              "default" : "Script"
+            },
+            "script" : {
+              "type" : "string"
+            }
+          }
+        }
+      },
+      "additionalProperties" : false
+    },
+    "SequenceDef" : {
+      "type" : "object",
+      "properties" : {
+        "sequence" : {
+          "type" : "object",
+          "properties" : {
+            "children" : {
+              "$ref" : "#/$defs/ArtefactArrayDef"
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "continueParentNodeExecutionOnError" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "nodeName" : {
+              "default" : "Sequence",
               "type" : "string"
             },
             "pacing" : {
@@ -1761,15 +1339,17 @@
       },
       "additionalProperties" : false
     },
-    "PlaceholderDef" : {
+    "SessionDef" : {
       "type" : "object",
       "properties" : {
-        "placeholder" : {
+        "session" : {
           "type" : "object",
           "properties" : {
-            "nodeName" : {
-              "type" : "string",
-              "default" : "Placeholder"
+            "children" : {
+              "$ref" : "#/$defs/ArtefactArrayDef"
+            },
+            "description" : {
+              "type" : "string"
             },
             "continueParentNodeExecutionOnError" : {
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
@@ -1780,29 +1360,41 @@
             "skipNode" : {
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
-            "children" : {
-              "type" : "array",
-              "items" : {
-                "$ref" : "#/$defs/ArtefactDef"
-              }
-            },
-            "description" : {
+            "nodeName" : {
+              "default" : "Session",
               "type" : "string"
+            },
+            "remote" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "routing" : {
+              "$ref" : "#/$defs/DynamicKeywordInputsDef"
+            },
+            "containerCommand" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            },
+            "containerUser" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            },
+            "dockerImage" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
             }
           }
         }
       },
       "additionalProperties" : false
     },
-    "IfDef" : {
+    "SetDef" : {
       "type" : "object",
       "properties" : {
-        "if" : {
+        "set" : {
           "type" : "object",
           "properties" : {
-            "nodeName" : {
-              "type" : "string",
-              "default" : "If"
+            "children" : {
+              "$ref" : "#/$defs/ArtefactArrayDef"
+            },
+            "description" : {
+              "type" : "string"
             },
             "continueParentNodeExecutionOnError" : {
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
@@ -1813,17 +1405,252 @@
             "skipNode" : {
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
+            "nodeName" : {
+              "type" : "string",
+              "default" : "Set"
+            },
+            "value" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            },
+            "key" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            }
+          }
+        }
+      },
+      "additionalProperties" : false
+    },
+    "SleepDef" : {
+      "type" : "object",
+      "properties" : {
+        "sleep" : {
+          "type" : "object",
+          "properties" : {
             "children" : {
-              "type" : "array",
-              "items" : {
-                "$ref" : "#/$defs/ArtefactDef"
-              }
+              "$ref" : "#/$defs/ArtefactArrayDef"
             },
             "description" : {
               "type" : "string"
             },
-            "condition" : {
+            "continueParentNodeExecutionOnError" : {
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "nodeName" : {
+              "type" : "string",
+              "default" : "Sleep"
+            },
+            "releaseTokens" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "unit" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            },
+            "duration" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            }
+          }
+        }
+      },
+      "additionalProperties" : false
+    },
+    "StreamingArtefactDef" : {
+      "type" : "object",
+      "properties" : {
+        "streamingArtefact" : {
+          "type" : "object",
+          "properties" : {
+            "children" : {
+              "$ref" : "#/$defs/ArtefactArrayDef"
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "continueParentNodeExecutionOnError" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "nodeName" : {
+              "type" : "string",
+              "default" : "StreamingArtefact"
+            }
+          }
+        }
+      },
+      "additionalProperties" : false
+    },
+    "SwitchDef" : {
+      "type" : "object",
+      "properties" : {
+        "switch" : {
+          "type" : "object",
+          "properties" : {
+            "children" : {
+              "$ref" : "#/$defs/ArtefactArrayDef"
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "continueParentNodeExecutionOnError" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "nodeName" : {
+              "type" : "string",
+              "default" : "Switch"
+            },
+            "expression" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            }
+          }
+        }
+      },
+      "additionalProperties" : false
+    },
+    "SynchronizedDef" : {
+      "type" : "object",
+      "properties" : {
+        "synchronized" : {
+          "type" : "object",
+          "properties" : {
+            "children" : {
+              "$ref" : "#/$defs/ArtefactArrayDef"
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "continueParentNodeExecutionOnError" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "nodeName" : {
+              "type" : "string",
+              "default" : "Synchronized"
+            },
+            "pacing" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            },
+            "continueOnError" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "globalLock" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "lockName" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            }
+          }
+        }
+      },
+      "additionalProperties" : false
+    },
+    "TestCaseDef" : {
+      "type" : "object",
+      "properties" : {
+        "testCase" : {
+          "type" : "object",
+          "properties" : {
+            "children" : {
+              "$ref" : "#/$defs/ArtefactArrayDef"
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "continueParentNodeExecutionOnError" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "nodeName" : {
+              "type" : "string",
+              "default" : "TestCase"
+            }
+          }
+        }
+      },
+      "additionalProperties" : false
+    },
+    "TestScenarioDef" : {
+      "type" : "object",
+      "properties" : {
+        "testScenario" : {
+          "type" : "object",
+          "properties" : {
+            "children" : {
+              "$ref" : "#/$defs/ArtefactArrayDef"
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "continueParentNodeExecutionOnError" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "nodeName" : {
+              "type" : "string",
+              "default" : "TestScenario"
+            }
+          }
+        }
+      },
+      "additionalProperties" : false
+    },
+    "TestSetDef" : {
+      "type" : "object",
+      "properties" : {
+        "testSet" : {
+          "type" : "object",
+          "properties" : {
+            "children" : {
+              "$ref" : "#/$defs/ArtefactArrayDef"
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "continueParentNodeExecutionOnError" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "nodeName" : {
+              "type" : "string",
+              "default" : "TestSet"
+            },
+            "threads" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
             }
           }
         }
@@ -1836,9 +1663,11 @@
         "threadGroup" : {
           "type" : "object",
           "properties" : {
-            "nodeName" : {
-              "type" : "string",
-              "default" : "ThreadGroup"
+            "children" : {
+              "$ref" : "#/$defs/ArtefactArrayDef"
+            },
+            "description" : {
+              "type" : "string"
             },
             "continueParentNodeExecutionOnError" : {
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
@@ -1849,14 +1678,9 @@
             "skipNode" : {
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
-            "children" : {
-              "type" : "array",
-              "items" : {
-                "$ref" : "#/$defs/ArtefactDef"
-              }
-            },
-            "description" : {
-              "type" : "string"
+            "nodeName" : {
+              "type" : "string",
+              "default" : "ThreadGroup"
             },
             "userItem" : {
               "$ref" : "#/$defs/SmartDynamicValueStringDef"
@@ -1893,6 +1717,51 @@
       },
       "additionalProperties" : false
     },
+    "WhileDef" : {
+      "type" : "object",
+      "properties" : {
+        "while" : {
+          "type" : "object",
+          "properties" : {
+            "children" : {
+              "$ref" : "#/$defs/ArtefactArrayDef"
+            },
+            "description" : {
+              "type" : "string"
+            },
+            "continueParentNodeExecutionOnError" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "instrumentNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "skipNode" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "nodeName" : {
+              "type" : "string",
+              "default" : "While"
+            },
+            "maxIterations" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            },
+            "timeout" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            },
+            "pacing" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            },
+            "postCondition" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            },
+            "condition" : {
+              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+            }
+          }
+        }
+      },
+      "additionalProperties" : false
+    },
     "ArtefactDef" : {
       "type" : "object",
       "oneOf" : [ {
@@ -1914,8 +1783,6 @@
       }, {
         "$ref" : "#/$defs/CheckDef"
       }, {
-        "$ref" : "#/$defs/CheckArtefactDef"
-      }, {
         "$ref" : "#/$defs/DataSetDef"
       }, {
         "$ref" : "#/$defs/EchoDef"
@@ -1927,8 +1794,6 @@
         "$ref" : "#/$defs/ForDef"
       }, {
         "$ref" : "#/$defs/ForEachDef"
-      }, {
-        "$ref" : "#/$defs/SessionDef"
       }, {
         "$ref" : "#/$defs/IfDef"
       }, {
@@ -1943,6 +1808,8 @@
         "$ref" : "#/$defs/ScriptDef"
       }, {
         "$ref" : "#/$defs/SequenceDef"
+      }, {
+        "$ref" : "#/$defs/SessionDef"
       }, {
         "$ref" : "#/$defs/SetDef"
       }, {
@@ -1979,6 +1846,12 @@
         "$ref" : "#/$defs/ThreadGroupDef"
       } ]
     },
+    "ArtefactArrayDef" : {
+      "type" : "array",
+      "items" : {
+        "$ref" : "#/$defs/ArtefactDef"
+      }
+    },
     "ScheduleDef" : {
       "type" : "object",
       "properties" : {
@@ -1993,7 +1866,10 @@
           "type" : "string"
         },
         "cronExclusions" : {
-          "type" : "array"
+          "type" : "array",
+          "items" : {
+            "type" : "string"
+          }
         },
         "cron" : {
           "type" : "string"

@@ -26,7 +26,7 @@ import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.MultiPart;
 import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
 import step.automation.packages.AutomationPackageUpdateResult;
-import step.automation.packages.execution.AutomationPackageExecutionParameters;
+import step.core.execution.model.AutomationPackageExecutionParameters;
 import step.client.AbstractRemoteClient;
 import step.client.credentials.ControllerCredentials;
 

@@ -20,12 +20,14 @@ package step.automation.packages.yaml;
 
 import org.junit.Test;
 import step.automation.packages.AutomationPackageReadingException;
-import step.automation.packages.model.AutomationPackageKeyword;
-import step.automation.packages.model.AutomationPackageSchedule;
+import step.automation.packages.model.YamlAutomationPackageKeyword;
+import step.automation.packages.yaml.deserialization.AutomationPackageSerializationRegistry;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
-import step.functions.Function;
+import step.plans.parser.yaml.automation.model.AutomationPackageSchedule;
+import step.plans.parser.yaml.automation.schema.AutomationPackageSchedulesJsonSchema;
+import step.plans.parser.yaml.automation.serialization.AutomationPackageSchedulesRegistration;
 import step.plans.parser.yaml.model.YamlPlan;
-import step.plugins.jmeter.automation.JMeterFunctionTestplanConversionRule;
+import step.plugins.jmeter.automation.YamlJMeterFunction;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -38,7 +40,13 @@ import static org.junit.Assert.*;
 
 public class AutomationPackageDescriptorReaderTest {
 
-    private final AutomationPackageDescriptorReader reader = new AutomationPackageDescriptorReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH);
+    private final AutomationPackageDescriptorReader reader;
+
+    public AutomationPackageDescriptorReaderTest() {
+        AutomationPackageSerializationRegistry serializationRegistry = new AutomationPackageSerializationRegistry();
+        AutomationPackageSchedulesRegistration.registerSerialization(serializationRegistry);
+        reader = new AutomationPackageDescriptorReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, serializationRegistry);
+    }
 
     @Test
     public void jmeterKeywordReadTest() throws AutomationPackageReadingException {
@@ -46,22 +54,21 @@ public class AutomationPackageDescriptorReaderTest {
         try (InputStream is = new FileInputStream(descriptor)) {
             AutomationPackageDescriptorYaml automationPackage = reader.readAutomationPackageDescriptor(is, "");
             assertNotNull(automationPackage);
-            List<AutomationPackageKeyword> keywords = automationPackage.getKeywords();
+            List<YamlAutomationPackageKeyword> keywords = automationPackage.getKeywords();
             assertEquals(1, keywords.size());
-            AutomationPackageKeyword jmeterKeyword = keywords.get(0);
-            Function k = jmeterKeyword.getDraftKeyword();
-            assertEquals("JMeter keyword from automation package", k.getAttribute("name"));
+            YamlAutomationPackageKeyword jmeterKeyword = keywords.get(0);
+            YamlJMeterFunction k = (YamlJMeterFunction) jmeterKeyword.getYamlKeyword();
+            assertEquals("JMeter keyword from automation package", k.getName());
             assertEquals("JMeter keyword 1", k.getDescription());
             assertFalse(k.isExecuteLocally());
             assertTrue(k.isUseCustomTemplate());
-            assertFalse(k.isManaged());
             assertEquals((Integer) 1000, k.getCallTimeout().get());
             assertNotNull("string", k.getSchema().getJsonObject("properties").getJsonObject("firstName").getJsonString("type"));
 
-            assertEquals("jmeterProject1/jmeterProject1.xml", jmeterKeyword.getSpecialAttributes().get(JMeterFunctionTestplanConversionRule.JMETER_TESTPLAN_ATTR));
+            assertEquals("jmeterProject1/jmeterProject1.xml", k.getJmeterTestplan().get());
 
-            assertEquals("valueA", jmeterKeyword.getDraftKeyword().getTokenSelectionCriteria().get("criteriaA"));
-            assertEquals("valueB", jmeterKeyword.getDraftKeyword().getTokenSelectionCriteria().get("criteriaB"));
+            assertEquals("valueA", k.getRouting().get("criteriaA"));
+            assertEquals("valueB", k.getRouting().get("criteriaB"));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -73,11 +80,11 @@ public class AutomationPackageDescriptorReaderTest {
         try (InputStream is = new FileInputStream(file)) {
             AutomationPackageDescriptorYaml descriptor = reader.readAutomationPackageDescriptor(is, "");
             assertNotNull(descriptor);
-            List<AutomationPackageKeyword> keywords = descriptor.getKeywords();
+            List<YamlAutomationPackageKeyword> keywords = descriptor.getKeywords();
             assertEquals(1, keywords.size());
-            AutomationPackageKeyword jmeterKeyword = keywords.get(0);
-            Function k = jmeterKeyword.getDraftKeyword();
-            assertEquals("JMeter keyword from automation package", k.getAttribute("name"));
+            YamlAutomationPackageKeyword jmeterKeyword = keywords.get(0);
+            YamlJMeterFunction k = (YamlJMeterFunction) jmeterKeyword.getYamlKeyword();
+            assertEquals("JMeter keyword from automation package", k.getName());
 
             // check parsed plans
             List<YamlPlan> plans = descriptor.getPlans();
@@ -86,7 +93,7 @@ public class AutomationPackageDescriptorReaderTest {
             assertEquals("Second Plan", plans.get(1).getName());
 
             // check parsed scheduler
-            List<AutomationPackageSchedule> schedules = descriptor.getSchedules();
+            List<AutomationPackageSchedule> schedules = descriptor.getAdditionalField(AutomationPackageSchedulesJsonSchema.SCHEDULES_FIELD_NAME);
             assertEquals(2, schedules.size());
             AutomationPackageSchedule firstTask = schedules.get(0);
             assertEquals("My first task", firstTask.getName());
@@ -106,7 +113,7 @@ public class AutomationPackageDescriptorReaderTest {
         try (InputStream is = new FileInputStream(file)) {
             AutomationPackageDescriptorYaml descriptor = reader.readAutomationPackageDescriptor(is, "");
             assertNotNull(descriptor);
-            List<AutomationPackageKeyword> keywords = descriptor.getKeywords();
+            List<YamlAutomationPackageKeyword> keywords = descriptor.getKeywords();
             assertEquals(0, keywords.size());
         } catch (IOException e) {
             throw new RuntimeException(e);

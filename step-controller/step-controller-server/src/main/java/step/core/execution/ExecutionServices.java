@@ -155,6 +155,16 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 		return executionAccessor.findByIds(ids).collect(Collectors.toList());
 	}
 
+	@Operation(description = "Returns a map of execution ID to names by the provided ids.")
+	@POST
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Path("/search/names/by/ids")
+	@Secured(right="execution-read")
+	public Map<String, String> getExecutionsNamesByIds(List<String> ids) {
+		return executionAccessor.findByIds(ids).collect(Collectors.toMap(e -> e.getId().toHexString(), Execution::getDescription));
+	}
+
 	@Operation(description = "Returns the execution matching the provided repository object reference.")
 	@POST
 	@Path("/search/by/ref")

@@ -20,7 +20,7 @@ package step.repositories.artifact;
 
 import step.automation.packages.*;
 import step.automation.packages.model.AutomationPackageContent;
-import step.automation.packages.model.AutomationPackageKeyword;
+import step.automation.packages.model.JavaAutomationPackageKeyword;
 import step.core.plans.Plan;
 import step.core.scanner.AnnotationScanner;
 import step.functions.Function;
@@ -35,28 +35,28 @@ import java.util.stream.Collectors;
 
 public class StepJarParser {
 
-    private final AbstractAutomationPackageReader<?> automationPackageReader;
-    private final AutomationPackageKeywordsAttributesApplier automationPackagesKeywordAttributesApplier;
+    private final AutomationPackageReader automationPackageReader;
     private final StepClassParser stepClassParser;
+    private final ResourceManager resourceManager;
 
     public StepJarParser() {
         this(null, null);
     }
 
-    public StepJarParser(ResourceManager resourceManager, AbstractAutomationPackageReader<?> automationPackageReader) {
+    public StepJarParser(ResourceManager resourceManager, AutomationPackageReader automationPackageReader) {
+        this.resourceManager = resourceManager;
         this.stepClassParser = new StepClassParser(false);
         this.automationPackageReader = automationPackageReader;
-        this.automationPackagesKeywordAttributesApplier = new AutomationPackageKeywordsAttributesApplier(resourceManager);
     }
 
     private List<Function> getFunctions(AnnotationScanner annotationScanner, File artifact, File libraries) {
         try {
             // reuse logic from automation package reader to scan annotated keywords
             // BUT in contrast with automation package here we need to fill scriptFile and librariesFile references immediately
-            List<Function> functions = AbstractAutomationPackageReader
+            List<Function> functions = AutomationPackageReader
                     .extractAnnotatedKeywords(annotationScanner, false, artifact.getAbsolutePath(), libraries != null ? libraries.getAbsolutePath() : null)
                     .stream()
-                    .map(AutomationPackageKeyword::getDraftKeyword)
+                    .map(JavaAutomationPackageKeyword::getKeyword)
                     .collect(Collectors.toList());
 
             // if artifact is an automation package we need to add keywords from yaml descriptors (annotated keywords have already been included above)
@@ -64,9 +64,8 @@ public class StepJarParser {
                 // add functions from automation package
                 if (automationPackageArchive.hasAutomationPackageDescriptor() && automationPackageReader != null) {
                     AutomationPackageContent content = automationPackageReader.readAutomationPackage(automationPackageArchive, false, false);
-                    functions.addAll(automationPackagesKeywordAttributesApplier.applySpecialAttributesToKeyword(
-                            content.getKeywords(), automationPackageArchive, null, null)
-                    );
+                    AutomationPackageContext apContext = new AutomationPackageContext(resourceManager, automationPackageArchive, null);
+                    functions.addAll(content.getKeywords().stream().map(keyword -> keyword.prepareKeyword(apContext)).collect(Collectors.toList()));
                 }
             }
             return functions;
@@ -81,7 +80,7 @@ public class StepJarParser {
             // This code is moved to automation package reader just to be reused in StepJarParser for now.
             // Further the StepJarParser should be completely replaced with automation package functionality
             AutomationPackageArchive automationPackageArchive = new AutomationPackageArchive(artifact, artifact.getName());
-            List<Plan> result = AbstractAutomationPackageReader.extractAnnotatedPlans(
+            List<Plan> result = AutomationPackageReader.extractAnnotatedPlans(
                     automationPackageArchive, annotationScanner, includedClasses, includedAnnotations, excludedClasses, excludedAnnotations, stepClassParser
             );
 

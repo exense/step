@@ -19,7 +19,9 @@
 package step.artefacts;
 
 import step.core.artefacts.Artefact;
+import step.core.yaml.YamlModel;
 
+@YamlModel(name = "beforeSequence")
 @Artefact()
 public class BeforeSequence extends Sequence {
 	

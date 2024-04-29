@@ -20,6 +20,7 @@ package step.core.yaml.schema;
 
 import jakarta.json.JsonObjectBuilder;
 import step.handlers.javahandler.jsonschema.FieldMetadata;
+import step.handlers.javahandler.jsonschema.JsonSchemaCreator;
 import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
 import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 
@@ -38,9 +39,9 @@ public class AggregatedJsonSchemaFieldProcessor implements JsonSchemaFieldProces
 	}
 
 	@Override
-	public boolean applyCustomProcessing(Class<?> objectClass, Field field, FieldMetadata fieldMetadata, JsonObjectBuilder propertiesBuilder, List<String> requiredPropertiesOutput) throws JsonSchemaFieldProcessingException, JsonSchemaPreparationException {
+	public boolean applyCustomProcessing(Class<?> objectClass, Field field, FieldMetadata fieldMetadata, JsonObjectBuilder propertiesBuilder, List<String> requiredPropertiesOutput, JsonSchemaCreator schemaCreator) throws JsonSchemaFieldProcessingException, JsonSchemaPreparationException {
 		for (JsonSchemaFieldProcessor processingRule : processingRules) {
-			if (processingRule.applyCustomProcessing(objectClass, field, fieldMetadata, propertiesBuilder, requiredPropertiesOutput)) {
+			if (processingRule.applyCustomProcessing(objectClass, field, fieldMetadata, propertiesBuilder, requiredPropertiesOutput, schemaCreator)) {
 				return true;
 			}
 		}

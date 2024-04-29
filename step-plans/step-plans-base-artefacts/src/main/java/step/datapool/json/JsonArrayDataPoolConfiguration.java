@@ -18,10 +18,13 @@
  ******************************************************************************/
 package step.datapool.json;
 
+import step.artefacts.automation.datasource.YamlJsonArrayDataSource;
+
 import step.core.dynamicbeans.DynamicValue;
 import step.datapool.DataPoolConfiguration;
+import step.core.yaml.YamlModel;
 
-
+@YamlModel(model = YamlJsonArrayDataSource.class, name = "json-array")
 public class JsonArrayDataPoolConfiguration extends DataPoolConfiguration {
 	
 	private DynamicValue<String> json = new DynamicValue<String>("");

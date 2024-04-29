@@ -18,10 +18,13 @@
  ******************************************************************************/
 package step.artefacts;
 
+
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.yaml.YamlModel;
 
+@YamlModel(name = "while")
 @Artefact(name = "While")
 public class While extends AbstractArtefact {
 

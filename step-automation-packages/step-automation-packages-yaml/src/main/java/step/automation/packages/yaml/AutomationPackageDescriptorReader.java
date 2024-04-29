@@ -18,11 +18,7 @@
  ******************************************************************************/
 package step.automation.packages.yaml;
 
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.deser.DeserializationProblemHandler;
-import com.fasterxml.jackson.databind.jsontype.TypeIdResolver;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
@@ -32,12 +28,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.artefacts.handlers.JsonSchemaValidator;
 import step.automation.packages.AutomationPackageReadingException;
+import step.automation.packages.yaml.deserialization.AutomationPackageSerializationRegistry;
+import step.automation.packages.yaml.deserialization.AutomationPackageSerializationRegistryAware;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
-import step.automation.packages.yaml.model.AutomationPackageDescriptorYamlOS;
+import step.automation.packages.yaml.model.AutomationPackageDescriptorYamlImpl;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
-import step.automation.packages.yaml.model.AutomationPackageFragmentYamlOS;
+import step.automation.packages.yaml.model.AutomationPackageFragmentYamlImpl;
 import step.core.accessors.DefaultJacksonMapperProvider;
-import step.core.yaml.deserializers.CustomYamlFormat;
 import step.core.yaml.deserializers.StepYamlDeserializersScanner;
 import step.plans.parser.yaml.YamlPlanReader;
 import step.plans.parser.yaml.model.YamlPlanVersions;
@@ -46,6 +43,8 @@ import step.plans.parser.yaml.schema.YamlPlanValidationException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Map;
 
 public class AutomationPackageDescriptorReader {
 
@@ -55,16 +54,19 @@ public class AutomationPackageDescriptorReader {
 
     protected final YamlPlanReader planReader;
 
+    private final AutomationPackageSerializationRegistry serializationRegistry;
+
     protected String jsonSchema;
 
-    public AutomationPackageDescriptorReader(String jsonSchema) {
+    public AutomationPackageDescriptorReader(String jsonSchemaPath, AutomationPackageSerializationRegistry serializationRegistry) {
+        this.serializationRegistry = serializationRegistry;
         // TODO: we need to find a way to resolve the actual json schema (controller config) depending on running server instance (EE or OS)
         // TODO: also we have to resolve the json version for plans according to the automation package version!
         this.planReader = new YamlPlanReader(null, YamlPlanVersions.ACTUAL_VERSION, false, null);
         this.yamlObjectMapper = createYamlObjectMapper();
 
-        if (jsonSchema != null) {
-            this.jsonSchema = readJsonSchema(jsonSchema);
+        if (jsonSchemaPath != null) {
+            this.jsonSchema = readJsonSchema(jsonSchemaPath);
         }
     }
 
@@ -74,7 +76,7 @@ public class AutomationPackageDescriptorReader {
     }
 
     protected Class<? extends AutomationPackageDescriptorYaml> getDescriptorClass() {
-        return AutomationPackageDescriptorYamlOS.class;
+        return AutomationPackageDescriptorYamlImpl.class;
     }
 
     public AutomationPackageFragmentYaml readAutomationPackageFragment(InputStream yamlFragment, String fragmentName, String packageFileName) throws AutomationPackageReadingException {
@@ -83,7 +85,7 @@ public class AutomationPackageDescriptorReader {
     }
 
     protected Class<? extends AutomationPackageFragmentYaml> getFragmentClass() {
-        return AutomationPackageFragmentYamlOS.class;
+        return AutomationPackageFragmentYamlImpl.class;
     }
 
     protected <T extends AutomationPackageFragmentYaml> T readAutomationPackageYamlFile(InputStream yaml, Class<T> targetClass, String packageFileName) throws AutomationPackageReadingException {
@@ -119,8 +121,8 @@ public class AutomationPackageDescriptorReader {
         if (!res.getPlans().isEmpty()) {
             log.info("{} plan(s) found in automation package {}", res.getPlans().size(), StringUtils.defaultString(packageFileName));
         }
-        if (!res.getSchedules().isEmpty()) {
-            log.info("{} schedule(s) found in automation package {}", res.getSchedules().size(), StringUtils.defaultString(packageFileName));
+        for (Map.Entry<String, List<?>> additionalEntry : res.getAdditionalFields().entrySet()) {
+            log.info("{} {} found in automation package {}", additionalEntry.getValue().size(), additionalEntry.getKey(), StringUtils.defaultString(packageFileName));
         }
         if (!res.getFragments().isEmpty()) {
             log.info("{} imported fragment(s) found in automation package {}", res.getFragments().size(), StringUtils.defaultString(packageFileName));
@@ -149,51 +151,23 @@ public class AutomationPackageDescriptorReader {
         SimpleModule module = new SimpleModule();
 
         // register deserializers to read yaml plans
-        planReader.registerAllSerializers(module, yamlMapper, false);
+        planReader.registerAllSerializersAndDeserializers(module, yamlMapper, false);
 
         // add annotated jackson deserializers
-        StepYamlDeserializersScanner.addAllDeserializerAddonsToModule(module, yamlObjectMapper);
+        StepYamlDeserializersScanner.addAllDeserializerAddonsToModule(module, yamlMapper, List.of(stepYamlDeserializer -> {
+            if (stepYamlDeserializer instanceof AutomationPackageSerializationRegistryAware) {
+                ((AutomationPackageSerializationRegistryAware) stepYamlDeserializer).setSerializationRegistry(serializationRegistry);
+            }
+        }));
+
 
         yamlMapper.registerModule(module);
-        yamlMapper.registerModule(new YamlFormatErrorHandlerModule());
 
         return yamlMapper;
     }
 
-    /**
-     * Some classes may be annotated with @JsonTypeInfo, but in yaml format we don't use
-     * special fields to provide the typeInfo. By default, this will cause the 'missingTypeId' error
-     * and break the deserialization.
-     * That's why here we return the baseType for these classes and force jackson to
-     * run our custom yaml deserializer for this class anyway.
-     */
-    private static class YamlFormatErrorHandlerModule extends SimpleModule {
-        @Override
-        public void setupModule(SetupContext context) {
-            super.setupModule(context);
-            context.addDeserializationProblemHandler(new DeserializationProblemHandler() {
-                @Override
-                public JavaType handleMissingTypeId(DeserializationContext ctxt, JavaType baseType, TypeIdResolver idResolver, String failureMsg) throws IOException {
-                    if (baseType.getRawClass().getAnnotation(CustomYamlFormat.class) != null) {
-                        return baseType;
-                    }
-                    return super.handleMissingTypeId(ctxt, baseType, idResolver, failureMsg);
-                }
-
-                @Override
-                public JavaType handleUnknownTypeId(DeserializationContext ctxt, JavaType baseType, String subTypeId, TypeIdResolver idResolver, String failureMsg) throws IOException {
-                    if (baseType.getRawClass().getAnnotation(CustomYamlFormat.class) != null) {
-                        return baseType;
-                    }
-                    return super.handleUnknownTypeId(ctxt, baseType, subTypeId, idResolver, failureMsg);
-                }
-            });
-        }
-    }
-
-
-
     public YamlPlanReader getPlanReader(){
         return this.planReader;
     }
+
 }
