@@ -118,21 +118,6 @@ public abstract class AbstractFunctionType<T extends Function> {
 
 	/**
 	 * Register the provided file in the grid's file manager for a given property. Enrich the map with the resulting file and version ids.
-	 * @deprecated
-	 * This method register cleanable resource only, use {@link #registerFile(DynamicValue, String, Map, boolean, AbstractStepContext)} instead
-	 * to specifically define whether the registered file can be cleaned up at runtime
-	 *
-	 * @param dynamicValue the {@link DynamicValue} of the file's path to be registered
-	 * @param propertyName the name of the property for which we register the file
-	 * @param props the map will be enriched with the propertyName id and version of the registered file that can be later used to retrieve the file
-	 * @throws RuntimeException
-	 */
-	protected void registerFile(DynamicValue<String> dynamicValue, String propertyName, Map<String, String> props) {
-		registerFile(dynamicValue, propertyName, props, true, null);
-	}
-
-	/**
-	 * Register the provided file in the grid's file manager for a given property. Enrich the map with the resulting file and version ids.
 	 *
 	 * @param dynamicValue     the {@link DynamicValue} of the file's path to be registered
 	 * @param propertyName     the name of the property for which we register the file
