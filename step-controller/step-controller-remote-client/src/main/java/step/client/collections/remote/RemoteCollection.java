@@ -19,12 +19,14 @@ import step.core.collections.Collection;
 
 public class RemoteCollection<T> implements Collection<T> {
 
+    protected final String collectionName;
     protected final String path;
     protected final Class<T> entityClass;
     protected AbstractRemoteClient client;
 
     public RemoteCollection(AbstractRemoteClient client, String collection, Class<T> entityClass){
         super();
+        this.collectionName = collection;
         this.path = "/rest/remote/" + collection;
         this.entityClass = entityClass;
         this.client = client;
@@ -177,9 +179,8 @@ public class RemoteCollection<T> implements Collection<T> {
     }
 
     @Override
-    // Empty implementation to be replaced
     public String getName() {
-        return null;
+        return collectionName;
     }
 
     @Override

@@ -198,11 +198,6 @@ public class ExecutionContextWrapper extends ExecutionContext {
     }
 
     @Override
-    public void setExecutionManager(ExecutionManager executionManager) {
-        wrappedContext.setExecutionManager(executionManager);
-    }
-
-    @Override
     public RepositoryObjectManager getRepositoryObjectManager() {
         return wrappedContext.getRepositoryObjectManager();
     }
