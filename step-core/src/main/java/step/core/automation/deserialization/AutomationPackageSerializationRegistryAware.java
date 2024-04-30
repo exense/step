@@ -16,21 +16,9 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.deserialization;
+package step.core.automation.deserialization;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+public interface AutomationPackageSerializationRegistryAware {
 
-public class AutomationPackageSerializationRegistry {
-
-    private final Map<String, Class<?>> registry = new ConcurrentHashMap<>();
-
-    public void register(String fieldName, Class<?> entityClass) {
-        registry.put(fieldName, entityClass);
-    }
-
-    public Class<?> resolveClassForYamlField(String yamlFieldName) {
-        return registry.get(yamlFieldName);
-    }
-
+    void setSerializationRegistry(AutomationPackageSerializationRegistry registry);
 }

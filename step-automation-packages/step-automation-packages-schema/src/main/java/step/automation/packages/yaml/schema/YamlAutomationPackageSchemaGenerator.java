@@ -23,10 +23,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.json.JsonObjectBuilder;
 import jakarta.json.spi.JsonProvider;
-import step.automation.packages.schema.AutomationPackageJsonSchemaExtension;
-import step.automation.packages.schema.AutomationPackageParameterJsonSchema;
+import step.parameter.automation.AutomationPackageParameterJsonSchema;
 import step.core.Version;
-import step.automation.packages.schema.AutomationPackageSchedulesJsonSchema;
+import step.core.scheduler.automation.AutomationPackageScheduleJsonSchema;
+import step.core.automation.schema.AutomationPackageJsonSchemaExtension;
 import step.core.yaml.schema.JsonSchemaExtension;
 import step.core.yaml.schema.YamlJsonSchemaHelper;
 import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
@@ -55,7 +55,7 @@ public class YamlAutomationPackageSchemaGenerator {
         this.planSchemaGenerator = new YamlPlanJsonSchemaGenerator("step", YamlPlanVersions.ACTUAL_VERSION, null);
 
         this.extensions = new ArrayList<>();
-        this.extensions.add(new AutomationPackageSchedulesJsonSchema());
+        this.extensions.add(new AutomationPackageScheduleJsonSchema());
         this.extensions.add(new AutomationPackageParameterJsonSchema());
     }
 

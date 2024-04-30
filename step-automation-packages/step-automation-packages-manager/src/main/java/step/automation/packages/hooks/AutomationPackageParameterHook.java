@@ -26,17 +26,16 @@ import step.automation.packages.AutomationPackageContext;
 import step.automation.packages.AutomationPackageEntity;
 import step.automation.packages.AutomationPackageManager;
 import step.automation.packages.model.AutomationPackageContent;
-import step.automation.packages.model.AutomationPackageParameter;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.Accessor;
 import step.core.objectenricher.ObjectEnricher;
 import step.parameter.Parameter;
+import step.parameter.automation.AutomationPackageParameterJsonSchema;
+import step.parameter.automation.AutomationPackageParameter;
 
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
-import static step.automation.packages.model.AutomationPackageParameter.FIELD_NAME_IN_AP;
 
 public class AutomationPackageParameterHook implements AutomationPackageHook<Parameter> {
 
@@ -51,7 +50,7 @@ public class AutomationPackageParameterHook implements AutomationPackageHook<Par
     @Override
     public void onPrepareStaging(String fieldName, AutomationPackageContext apContext, AutomationPackageContent apContent, List<?> objects, AutomationPackage oldPackage, AutomationPackageManager.Staging targetStaging, AutomationPackageManager manager) {
         targetStaging.getAdditionalObjects().put(
-                FIELD_NAME_IN_AP,
+                AutomationPackageParameterJsonSchema.FIELD_NAME_IN_AP,
                 objects.stream().map(p -> ((AutomationPackageParameter)p).toParameter()).collect(Collectors.toList())
         );
     }

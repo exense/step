@@ -16,10 +16,9 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages;
+package step.core.yaml;
 
 import step.core.scanner.CachedAnnotationScanner;
-import step.core.yaml.YamlModel;
 
 import java.util.Collection;
 import java.util.Comparator;

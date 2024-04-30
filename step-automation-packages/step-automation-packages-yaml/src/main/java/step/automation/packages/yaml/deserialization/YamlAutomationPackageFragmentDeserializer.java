@@ -23,13 +23,14 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
-import step.automation.packages.deserialization.AutomationPackageSerializationRegistryAware;
+import step.core.automation.deserialization.AutomationPackageSerializationRegistry;
+import step.core.automation.deserialization.AutomationPackageSerializationRegistryAware;
 import step.automation.packages.yaml.model.AbstractAutomationPackageFragmentYaml;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYamlImpl;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYamlImpl;
 import step.core.yaml.deserializers.StepYamlDeserializer;
 import step.core.yaml.deserializers.StepYamlDeserializerAddOn;
+import step.core.yaml.SerializationUtils;
 
 import java.io.IOException;
 import java.util.*;
@@ -51,7 +52,8 @@ public class YamlAutomationPackageFragmentDeserializer<T extends AutomationPacka
         JsonNode node = oc.readTree(p);
 
         ObjectNode nonBasicFields = node.deepCopy();
-        List<String> basicFields = getJsonFieldNames(yamlObjectMapper, getObjectClass());
+        Class<?> clazz = getObjectClass();
+        List<String> basicFields = SerializationUtils.getJsonFieldNames(yamlObjectMapper, clazz);
         nonBasicFields.remove(basicFields);
 
         try (JsonParser treeParser = oc.treeAsTokens(node)) {
@@ -86,18 +88,6 @@ public class YamlAutomationPackageFragmentDeserializer<T extends AutomationPacka
 
     protected Class<?> getObjectClass() {
         return AutomationPackageFragmentYamlImpl.class;
-    }
-
-    // TODO: reuse SerializationUtils from new branch
-    public static List<String> getJsonFieldNames(ObjectMapper objectMapper, Class<?> clazz) {
-        try {
-            JsonSerializer<Object> serializer = objectMapper.getSerializerProviderInstance().findValueSerializer(clazz);
-            List<String> res = new ArrayList<>();
-            serializer.properties().forEachRemaining(p -> res.add(p.getName()));
-            return res;
-        } catch (JsonMappingException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     @Override

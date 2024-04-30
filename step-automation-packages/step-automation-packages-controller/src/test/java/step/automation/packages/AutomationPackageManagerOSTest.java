@@ -11,7 +11,8 @@ import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.ForEachBlock;
 import step.attachments.FileResolver;
 import step.automation.packages.accessor.AutomationPackageAccessorImpl;
-import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
+import step.automation.packages.scheduler.AutomationPackageSchedulerPlugin;
+import step.core.automation.deserialization.AutomationPackageSerializationRegistry;
 import step.automation.packages.hooks.AutomationPackageHookRegistry;
 import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.core.accessors.AbstractAccessor;
@@ -35,7 +36,7 @@ import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionTypeRegistry;
 import step.parameter.Parameter;
 import step.parameter.ParameterScope;
-import step.parameter.automation.AutomationPackageParameterPlugin;
+import step.automation.packages.parameter.AutomationPackageParameterPlugin;
 import step.plugins.java.GeneralScriptFunction;
 import step.plugins.java.GeneralScriptFunctionType;
 import step.plugins.jmeter.JMeterFunction;
@@ -106,7 +107,7 @@ public class AutomationPackageManagerOSTest {
         this.executionScheduler = new ExecutionScheduler(new ControllerSettingAccessorImpl(new InMemoryCollection<>()), executionTaskAccessor, Mockito.mock(Executor.class));
         AutomationPackageHookRegistry automationPackageHookRegistry = new AutomationPackageHookRegistry();
         AutomationPackageSerializationRegistry serializationRegistry = new AutomationPackageSerializationRegistry();
-        SchedulerPlugin.registerSchedulerHooks(automationPackageHookRegistry, serializationRegistry, executionScheduler);
+        AutomationPackageSchedulerPlugin.registerSchedulerHooks(automationPackageHookRegistry, serializationRegistry, executionScheduler);
         AutomationPackageParameterPlugin.registerParametersHooks(automationPackageHookRegistry, serializationRegistry, parameterAccessor);
 
         this.manager = new AutomationPackageManager(

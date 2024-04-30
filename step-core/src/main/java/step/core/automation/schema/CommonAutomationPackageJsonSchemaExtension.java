@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.schema;
+package step.core.automation.schema;
 
 import jakarta.json.JsonObjectBuilder;
 import step.core.yaml.schema.AggregatedJsonSchemaFieldProcessor;

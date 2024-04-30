@@ -16,25 +16,19 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plans.parser.yaml;
+package step.parameter.automation;
 
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import step.core.automation.schema.CommonAutomationPackageJsonSchemaExtension;
 
-import java.util.ArrayList;
-import java.util.List;
+public class AutomationPackageParameterJsonSchema extends CommonAutomationPackageJsonSchemaExtension {
 
-public class SerializationUtils {
+    // the subschema name in json schema
+    public static final String DEF_NAME_IN_JSON_SCHEMA = "StepParameterDef";
+    // the field name in automation package yaml
+    public static final String FIELD_NAME_IN_AP = "parameters";
 
-    public static List<String> getJsonFieldNames(ObjectMapper objectMapper, Class<?> clazz) {
-        try {
-            JsonSerializer<Object> serializer = objectMapper.getSerializerProviderInstance().findValueSerializer(clazz);
-            List<String> res = new ArrayList<>();
-            serializer.properties().forEachRemaining(p -> res.add(p.getName()));
-            return res;
-        } catch (JsonMappingException e) {
-            throw new RuntimeException(e);
-        }
+    public AutomationPackageParameterJsonSchema() {
+        super(DEF_NAME_IN_JSON_SCHEMA, FIELD_NAME_IN_AP, AutomationPackageParameter.class);
     }
+
 }

@@ -16,13 +16,12 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.deserialization;
+package step.parameter.automation;
 
-import step.automation.packages.model.AutomationPackageParameter;
-import step.automation.packages.model.AutomationPackageSchedule;
+import step.core.automation.deserialization.AutomationPackageSerializationRegistry;
 
 public class AutomationPackageParametersRegistration {
     public static void registerSerialization(AutomationPackageSerializationRegistry serRegistry) {
-        serRegistry.register(AutomationPackageParameter.FIELD_NAME_IN_AP, AutomationPackageParameter.class);
+        serRegistry.register(AutomationPackageParameterJsonSchema.FIELD_NAME_IN_AP, AutomationPackageParameter.class);
     }
 }

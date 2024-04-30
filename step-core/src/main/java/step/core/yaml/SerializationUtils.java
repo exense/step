@@ -16,24 +16,25 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.schema;
+package step.core.yaml;
 
-import step.core.yaml.schema.JsonSchemaDefinitionExtension;
-import step.core.yaml.schema.JsonSchemaExtension;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public interface AutomationPackageJsonSchemaExtension {
+public class SerializationUtils {
 
-    /**
-     * Provides the extensions to be used to fill the "defs" (definitions section) in json schema, i.e. to prepare
-     * some sub-schemas to be reused in the main schema.
-     */
-    List<JsonSchemaDefinitionExtension> getExtendedDefinitions();
-
-    /**
-     * Provides the extensions to be used to add the new fields to the json schema of automation package, i.e. to add
-     * some custom fields to the automation package.
-     */
-    List<JsonSchemaExtension> getAdditionalAutomationPackageFields();
+    public static List<String> getJsonFieldNames(ObjectMapper objectMapper, Class<?> clazz) {
+        try {
+            JsonSerializer<Object> serializer = objectMapper.getSerializerProviderInstance().findValueSerializer(clazz);
+            List<String> res = new ArrayList<>();
+            serializer.properties().forEachRemaining(p -> res.add(p.getName()));
+            return res;
+        } catch (JsonMappingException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

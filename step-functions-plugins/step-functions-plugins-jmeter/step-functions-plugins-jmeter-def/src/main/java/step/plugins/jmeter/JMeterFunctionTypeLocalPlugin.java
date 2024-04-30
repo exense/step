@@ -27,7 +27,6 @@ import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.engine.plugins.FunctionPlugin;
 import step.functions.type.FunctionTypeRegistry;
 
-// TODO: maybe move this class to another package (local)?
 @Plugin(dependencies= {FunctionPlugin.class})
 public class JMeterFunctionTypeLocalPlugin extends AbstractExecutionEnginePlugin {
     public static final String JMETER_HOME_ENV_VAR = "JMETER_HOME";

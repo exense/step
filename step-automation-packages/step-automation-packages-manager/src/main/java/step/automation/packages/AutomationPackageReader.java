@@ -25,7 +25,7 @@ import step.automation.packages.hooks.AutomationPackageHookRegistry;
 import step.automation.packages.model.AutomationPackageContent;
 import step.automation.packages.model.JavaAutomationPackageKeyword;
 import step.automation.packages.yaml.AutomationPackageDescriptorReader;
-import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
+import step.core.automation.deserialization.AutomationPackageSerializationRegistry;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
 import step.core.accessors.AbstractOrganizableObject;
@@ -252,7 +252,7 @@ public class AutomationPackageReader {
         targetPackage.getKeywords().addAll(fragment.getKeywords());
         targetPackage.getPlans().addAll(fragment.getPlans().stream().map(p -> getOrCreateDescriptorReader().getPlanReader().yamlPlanToPlan(p)).collect(Collectors.toList()));
         for (Map.Entry<String, List<?>> additionalField : fragment.getAdditionalFields().entrySet()) {
-            boolean hooked = hookRegistry.onAdditionalDataRead(additionalField.getKey(), additionalField.getValue(), targetPackage, this);
+            boolean hooked = hookRegistry.onAdditionalDataRead(additionalField.getKey(), additionalField.getValue(), targetPackage);
             if (!hooked) {
                 log.warn("Hook not found for additional field " + additionalField.getKey() + ". The additional field has been skipped");
             }

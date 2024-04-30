@@ -20,7 +20,7 @@ package step.automation.packages.model;
 
 import jakarta.json.JsonObject;
 import step.automation.packages.AutomationPackageContext;
-import step.automation.packages.YamlModelUtils;
+import step.core.yaml.YamlModelUtils;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.AbstractYamlModel;

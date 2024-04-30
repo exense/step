@@ -1,6 +1,5 @@
 package step.automation.packages.hooks;
 
-import step.automation.packages.AutomationPackageReader;
 import step.automation.packages.AutomationPackage;
 import step.automation.packages.AutomationPackageContext;
 import step.automation.packages.AutomationPackageManager;
@@ -27,10 +26,10 @@ public class AutomationPackageHookRegistry {
     /**
      * On reading the additional fields in yaml representation (additional data should be stored in AutomationPackageContent)
      */
-    public boolean onAdditionalDataRead(String fieldName, List<?> yamlData, AutomationPackageContent targetContent, AutomationPackageReader reader){
+    public boolean onAdditionalDataRead(String fieldName, List<?> yamlData, AutomationPackageContent targetContent){
         AutomationPackageHook<?> hook = getHook(fieldName);
         if(hook != null){
-            hook.onAdditionalDataRead(fieldName, yamlData, targetContent, reader);
+            hook.onAdditionalDataRead(fieldName, yamlData, targetContent);
             return true;
         } else {
             return false;

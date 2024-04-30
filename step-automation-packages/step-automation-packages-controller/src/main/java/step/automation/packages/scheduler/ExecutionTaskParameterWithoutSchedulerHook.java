@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.hooks;
+package step.automation.packages.scheduler;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,13 +24,14 @@ import step.automation.packages.AutomationPackage;
 import step.automation.packages.AutomationPackageContext;
 import step.automation.packages.AutomationPackageManager;
 import step.automation.packages.AutomationPackageManagerException;
+import step.automation.packages.hooks.AutomationPackageHook;
 import step.automation.packages.model.AutomationPackageContent;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.execution.model.ExecutionParameters;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.plans.Plan;
 import step.core.repositories.RepositoryObjectReference;
-import step.automation.packages.model.AutomationPackageSchedule;
+import step.core.scheduler.automation.AutomationPackageSchedule;
 import step.core.scheduler.CronExclusion;
 import step.core.scheduler.ExecutiontTaskParameters;
 

@@ -1,6 +1,5 @@
 package step.automation.packages.hooks;
 
-import step.automation.packages.AutomationPackageReader;
 import step.automation.packages.AutomationPackage;
 import step.automation.packages.AutomationPackageContext;
 import step.automation.packages.AutomationPackageManager;
@@ -16,8 +15,7 @@ public interface AutomationPackageHook<T> {
      */
     default void onAdditionalDataRead(String fieldName,
                                       List<?> yamlData,
-                                      AutomationPackageContent targetContent,
-                                      AutomationPackageReader reader) {
+                                      AutomationPackageContent targetContent) {
         // by default, just copy the yaml objects to automation package content
         targetContent.getAdditionalData().put(fieldName, yamlData);
     }

@@ -16,19 +16,19 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.parameter.automation;
+package step.automation.packages.parameter;
 
 import step.automation.packages.AutomationPackagePlugin;
-import step.automation.packages.deserialization.AutomationPackageParametersRegistration;
-import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
+import step.core.automation.deserialization.AutomationPackageSerializationRegistry;
 import step.automation.packages.hooks.AutomationPackageHookRegistry;
 import step.automation.packages.hooks.AutomationPackageParameterHook;
-import step.automation.packages.model.AutomationPackageParameter;
 import step.core.GlobalContext;
 import step.core.accessors.Accessor;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.parameter.Parameter;
+import step.parameter.automation.AutomationPackageParameterJsonSchema;
+import step.parameter.automation.AutomationPackageParametersRegistration;
 import step.plugins.parametermanager.ParameterManagerControllerPlugin;
 
 @Plugin(dependencies= {AutomationPackagePlugin.class, ParameterManagerControllerPlugin.class})
@@ -41,7 +41,7 @@ public class AutomationPackageParameterPlugin extends AbstractControllerPlugin {
 
     public static void registerParametersHooks(AutomationPackageHookRegistry hookRegistry, AutomationPackageSerializationRegistry serRegistry, Accessor<Parameter> parameterAccessor) {
         hookRegistry.register(
-                AutomationPackageParameter.FIELD_NAME_IN_AP,
+                AutomationPackageParameterJsonSchema.FIELD_NAME_IN_AP,
                 new AutomationPackageParameterHook(parameterAccessor)
         );
         AutomationPackageParametersRegistration.registerSerialization(serRegistry);

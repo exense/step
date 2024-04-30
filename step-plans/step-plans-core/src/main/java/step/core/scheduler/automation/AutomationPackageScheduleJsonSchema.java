@@ -16,12 +16,13 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.deserialization;
+package step.core.scheduler.automation;
 
-import step.automation.packages.model.AutomationPackageSchedule;
+import step.core.automation.schema.CommonAutomationPackageJsonSchemaExtension;
 
-public class AutomationPackageSchedulesRegistration {
-    public static void registerSerialization(AutomationPackageSerializationRegistry serRegistry) {
-        serRegistry.register(AutomationPackageSchedule.FIELD_NAME_IN_AP, AutomationPackageSchedule.class);
+public class AutomationPackageScheduleJsonSchema extends CommonAutomationPackageJsonSchemaExtension {
+
+    public AutomationPackageScheduleJsonSchema() {
+        super(AutomationPackageSchedule.SCHEDULE_DEF, AutomationPackageSchedule.FIELD_NAME_IN_AP, AutomationPackageSchedule.class);
     }
 }

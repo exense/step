@@ -21,10 +21,10 @@ package step.automation.packages.yaml;
 import org.junit.Test;
 import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.model.YamlAutomationPackageKeyword;
-import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
+import step.core.automation.deserialization.AutomationPackageSerializationRegistry;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
-import step.automation.packages.model.AutomationPackageSchedule;
-import step.automation.packages.deserialization.AutomationPackageSchedulesRegistration;
+import step.core.scheduler.automation.AutomationPackageSchedule;
+import step.core.scheduler.automation.AutomationPackageScheduleRegistration;
 import step.plans.parser.yaml.model.YamlPlan;
 import step.plugins.jmeter.automation.YamlJMeterFunction;
 
@@ -43,7 +43,7 @@ public class AutomationPackageDescriptorReaderTest {
 
     public AutomationPackageDescriptorReaderTest() {
         AutomationPackageSerializationRegistry serializationRegistry = new AutomationPackageSerializationRegistry();
-        AutomationPackageSchedulesRegistration.registerSerialization(serializationRegistry);
+        AutomationPackageScheduleRegistration.registerSerialization(serializationRegistry);
         reader = new AutomationPackageDescriptorReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, serializationRegistry);
     }
 

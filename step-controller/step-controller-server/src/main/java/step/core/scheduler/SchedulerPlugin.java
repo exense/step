@@ -18,20 +18,12 @@
  ******************************************************************************/
 package step.core.scheduler;
 
-import step.automation.packages.AutomationPackage;
-import step.automation.packages.AutomationPackageManager;
-import step.automation.packages.hooks.AutomationPackageHookRegistry;
-import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
-import step.automation.packages.deserialization.AutomationPackageSchedulesRegistration;
-import step.automation.packages.hooks.ExecutionTaskParameterWithoutSchedulerHook;
-import step.automation.packages.model.AutomationPackageSchedule;
 import step.core.GlobalContext;
 import step.core.collections.Collection;
 import step.core.controller.ControllerSettingAccessor;
 import step.core.controller.ControllerSettingPlugin;
 import step.core.deployment.ObjectHookControllerPlugin;
 import step.core.entities.EntityManager;
-import step.core.objectenricher.ObjectEnricher;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.framework.server.tables.Table;
@@ -70,40 +62,6 @@ public class SchedulerPlugin extends AbstractControllerPlugin {
 	public void afterInitializeData(GlobalContext context) throws Exception {
 		ExecutionScheduler scheduler = new ExecutionScheduler(context.require(ControllerSettingAccessor.class), context.getScheduleAccessor(), new Executor(context));
 		context.setScheduler(scheduler);
-
-		registerSchedulerHooks(context.require(AutomationPackageHookRegistry.class), context.require(AutomationPackageSerializationRegistry.class), scheduler);
-	}
-
-	public static void registerSchedulerHooks(AutomationPackageHookRegistry apRegistry, AutomationPackageSerializationRegistry serRegistry, ExecutionScheduler scheduler) {
-		apRegistry.register(AutomationPackageSchedule.FIELD_NAME_IN_AP, new AutomationPackageSchedulerHook(scheduler));
-		AutomationPackageSchedulesRegistration.registerSerialization(serRegistry);
-	}
-
-	public static class AutomationPackageSchedulerHook extends ExecutionTaskParameterWithoutSchedulerHook {
-
-		private final ExecutionScheduler scheduler;
-
-		public AutomationPackageSchedulerHook(ExecutionScheduler scheduler) {
-			this.scheduler = scheduler;
-		}
-
-		@Override
-		public void onCreate(List<? extends ExecutiontTaskParameters> entities, ObjectEnricher enricher, AutomationPackageManager manager) {
-			for (ExecutiontTaskParameters entity : entities) {
-				//make sure the execution parameter of the schedule are enriched too (required to execute in same project
-				// as the schedule and populate event bindings
-				enricher.accept(entity.getExecutionsParameters());
-				scheduler.addExecutionTask(entity, false);
-			}
-		}
-
-		@Override
-		public void onDelete(AutomationPackage automationPackage, AutomationPackageManager manager) {
-			List<ExecutiontTaskParameters> entities = manager.getPackageSchedules(automationPackage.getId());
-			for (ExecutiontTaskParameters entity : entities) {
-				scheduler.removeExecutionTask(entity.getId().toString());
-			}
-		}
 	}
 
 	@Override
