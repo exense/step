@@ -1,10 +1,4 @@
-package step.automation.packages.hooks;
-
-import step.automation.packages.AutomationPackage;
-import step.automation.packages.AutomationPackageContext;
-import step.automation.packages.AutomationPackageHook;
-import step.automation.packages.AutomationPackageStaging;
-import step.automation.packages.AutomationPackageContent;
+package step.automation.packages;
 
 import java.util.Collection;
 import java.util.Collections;

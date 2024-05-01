@@ -7,6 +7,9 @@ plans:
         children:
           - echo:
               text: "Just echo"
+          - echo:
+              text:
+                expression: "myParam"
   - name: JMeter Plan
     root:
       testCase:
@@ -22,4 +25,7 @@ keywords:
       useCustomTemplate: true
       callTimeout: 1000
       jmeterTestplan: "jmeterProject1/jmeterProject1.jmx"
+parameters:
+  - key: "myParam"
+    value: "myParamValue"
       

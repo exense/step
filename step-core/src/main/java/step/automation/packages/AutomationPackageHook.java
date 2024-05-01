@@ -14,7 +14,7 @@ public interface AutomationPackageHook<T> {
     }
 
     default void onLocalAutomationPackageManagerCreate(Map<String, Object> extensions){
-        onIsolatedAutomationPackageManagerCreate(extensions);
+        onMainAutomationPackageManagerCreate(extensions);
     }
 
     /**

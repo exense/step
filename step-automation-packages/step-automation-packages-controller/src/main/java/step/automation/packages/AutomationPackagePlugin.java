@@ -41,7 +41,6 @@ import step.functions.manager.FunctionManager;
 import step.functions.plugin.FunctionControllerPlugin;
 import step.functions.type.FunctionTypeRegistry;
 import step.resources.ResourceManagerControllerPlugin;
-import step.automation.packages.hooks.AutomationPackageHookRegistry;
 
 @Plugin(dependencies = {ObjectHookControllerPlugin.class, ResourceManagerControllerPlugin.class, FunctionControllerPlugin.class, SchedulerPlugin.class})
 public class AutomationPackagePlugin extends AbstractControllerPlugin {

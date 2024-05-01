@@ -13,7 +13,6 @@ import step.attachments.FileResolver;
 import step.automation.packages.accessor.AutomationPackageAccessorImpl;
 import step.automation.packages.scheduler.AutomationPackageSchedulerPlugin;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
-import step.automation.packages.hooks.AutomationPackageHookRegistry;
 import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.core.accessors.AbstractAccessor;
 import step.core.accessors.AbstractOrganizableObject;
@@ -36,7 +35,7 @@ import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionTypeRegistry;
 import step.parameter.Parameter;
 import step.parameter.ParameterScope;
-import step.automation.packages.parameter.AutomationPackageParameterPlugin;
+import step.parameter.automation.AutomationPackageParametersRegistration;
 import step.plugins.java.GeneralScriptFunction;
 import step.plugins.java.GeneralScriptFunctionType;
 import step.plugins.jmeter.JMeterFunction;
@@ -108,7 +107,7 @@ public class AutomationPackageManagerOSTest {
         AutomationPackageHookRegistry automationPackageHookRegistry = new AutomationPackageHookRegistry();
         AutomationPackageSerializationRegistry serializationRegistry = new AutomationPackageSerializationRegistry();
         AutomationPackageSchedulerPlugin.registerSchedulerHooks(automationPackageHookRegistry, serializationRegistry, executionScheduler);
-        AutomationPackageParameterPlugin.registerParametersHooks(automationPackageHookRegistry, serializationRegistry, parameterAccessor);
+        AutomationPackageParametersRegistration.registerParametersHooks(automationPackageHookRegistry, serializationRegistry, parameterAccessor);
 
         this.manager = AutomationPackageManager.createMainAutomationPackageManager(
                 automationPackageAccessor,

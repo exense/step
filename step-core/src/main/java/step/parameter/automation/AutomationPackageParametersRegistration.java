@@ -18,10 +18,18 @@
  ******************************************************************************/
 package step.parameter.automation;
 
+import step.automation.packages.AutomationPackageHookRegistry;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
+import step.core.accessors.Accessor;
+import step.parameter.Parameter;
 
 public class AutomationPackageParametersRegistration {
-    public static void registerSerialization(AutomationPackageSerializationRegistry serRegistry) {
+
+    public static void registerParametersHooks(AutomationPackageHookRegistry hookRegistry, AutomationPackageSerializationRegistry serRegistry, Accessor<Parameter> mainParameterAccessor) {
+        hookRegistry.register(
+                AutomationPackageParameterJsonSchema.FIELD_NAME_IN_AP,
+                new AutomationPackageParameterHook(mainParameterAccessor)
+        );
         serRegistry.register(AutomationPackageParameterJsonSchema.FIELD_NAME_IN_AP, AutomationPackageParameter.class);
     }
 }

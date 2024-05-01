@@ -18,17 +18,23 @@
  ******************************************************************************/
 package step.engine.plugins;
 
+import step.automation.packages.AutomationPackageHookRegistry;
 import step.automation.packages.AutomationPackageManager;
 import step.automation.packages.AutomationPackageReader;
-import step.automation.packages.hooks.AutomationPackageHookRegistry;
-import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
+import step.automation.packages.yaml.YamlAutomationPackageVersions;
+import step.core.accessors.AbstractAccessor;
+import step.core.accessors.Accessor;
+import step.core.collections.Collection;
+import step.core.collections.inmemory.InMemoryCollection;
 import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionEngineContext;
 import step.core.execution.OperationMode;
 import step.core.plugins.Plugin;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.type.FunctionTypeRegistry;
+import step.parameter.Parameter;
+import step.parameter.automation.AutomationPackageParametersRegistration;
 import step.resources.ResourceManager;
 
 /**
@@ -43,8 +49,14 @@ public class AutomationPackageOSPlugin extends AbstractExecutionEnginePlugin {
             FunctionAccessor functionAccessor = context.require(FunctionAccessor.class);
             ResourceManager resourceManager = context.getResourceManager();
 
+            // TODO: use ParameterManagerPlugin to support parameters in bindings?
+            Accessor<Parameter> parameterAccessor = new AbstractAccessor<>(new InMemoryCollection<>());
+            context.put("ParameterAccessor", parameterAccessor);
+
             AutomationPackageHookRegistry hookRegistry = context.computeIfAbsent(AutomationPackageHookRegistry.class, automationPackageHookRegistryClass -> new AutomationPackageHookRegistry());
             AutomationPackageSerializationRegistry serRegistry = context.computeIfAbsent(AutomationPackageSerializationRegistry.class, serRegistryClass -> new AutomationPackageSerializationRegistry());
+
+            AutomationPackageParametersRegistration.registerParametersHooks(hookRegistry, serRegistry, parameterAccessor);
 
             AutomationPackageReader reader = context.computeIfAbsent(AutomationPackageReader.class, automationPackageReaderClass -> new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, hookRegistry, serRegistry));
 
