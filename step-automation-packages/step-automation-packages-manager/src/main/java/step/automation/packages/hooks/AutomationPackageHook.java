@@ -4,11 +4,22 @@ import step.automation.packages.AutomationPackage;
 import step.automation.packages.AutomationPackageContext;
 import step.automation.packages.AutomationPackageManager;
 import step.automation.packages.model.AutomationPackageContent;
-import step.core.objectenricher.ObjectEnricher;
+import step.core.objectenricher.EnricheableObject;
 
 import java.util.List;
+import java.util.Map;
 
 public interface AutomationPackageHook<T> {
+
+    default void onMainAutomationPackageManagerCreate(Map<String, Object> extensions){
+    }
+
+    default void onIsolatedAutomationPackageManagerCreate(Map<String, Object> extensions){
+    }
+
+    default void onLocalAutomationPackageManagerCreate(Map<String, Object> extensions){
+        onIsolatedAutomationPackageManagerCreate(extensions);
+    }
 
     /**
      * On reading the additional fields in yaml representation (additional data should be stored in AutomationPackageContent)
@@ -28,8 +39,7 @@ public interface AutomationPackageHook<T> {
                                   AutomationPackageContent apContent,
                                   List<?> objects,
                                   AutomationPackage oldPackage,
-                                  AutomationPackageManager.Staging targetStaging,
-                                  AutomationPackageManager manager) {
+                                  AutomationPackageManager.Staging targetStaging) {
         // by default, we simply put the objects to staging
         targetStaging.getAdditionalObjects().put(fieldName, (List<Object>) objects);
     }
@@ -37,13 +47,18 @@ public interface AutomationPackageHook<T> {
     /**
      * Create the entities (taken from previously prepared staging) in database
      */
-    default void onCreate(List<? extends T> entities, ObjectEnricher enricher, AutomationPackageManager manager){
+    default void onCreate(List<? extends T> entities, AutomationPackageContext context){
+        for (T entity : entities) {
+            if(entity instanceof EnricheableObject) {
+                context.getEnricher().accept((EnricheableObject) entity);
+            }
+        }
     }
 
     /**
      * Delete the entities from database
      */
-    default void onDelete(AutomationPackage automationPackage, AutomationPackageManager manager) {
+    default void onDelete(AutomationPackage automationPackage, AutomationPackageContext context) {
     }
 
 }

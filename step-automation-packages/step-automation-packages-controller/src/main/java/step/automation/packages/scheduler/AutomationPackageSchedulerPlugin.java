@@ -19,13 +19,12 @@
 package step.automation.packages.scheduler;
 
 import step.automation.packages.AutomationPackage;
-import step.automation.packages.AutomationPackageManager;
+import step.automation.packages.AutomationPackageContext;
 import step.core.scheduler.automation.AutomationPackageScheduleRegistration;
 import step.automation.packages.hooks.AutomationPackageHookRegistry;
 import step.core.scheduler.automation.AutomationPackageSchedule;
 import step.core.GlobalContext;
-import step.core.automation.deserialization.AutomationPackageSerializationRegistry;
-import step.core.objectenricher.ObjectEnricher;
+import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.core.scheduler.ExecutionScheduler;
@@ -42,7 +41,9 @@ public class AutomationPackageSchedulerPlugin extends AbstractControllerPlugin {
 		registerSchedulerHooks(context.require(AutomationPackageHookRegistry.class), context.require(AutomationPackageSerializationRegistry.class), context.getScheduler());
 	}
 
-	public static void registerSchedulerHooks(AutomationPackageHookRegistry apRegistry, AutomationPackageSerializationRegistry serRegistry, ExecutionScheduler scheduler) {
+	public static void registerSchedulerHooks(AutomationPackageHookRegistry apRegistry,
+											  AutomationPackageSerializationRegistry serRegistry,
+											  ExecutionScheduler scheduler) {
 		apRegistry.register(AutomationPackageSchedule.FIELD_NAME_IN_AP, new AutomationPackageSchedulerHook(scheduler));
 		AutomationPackageScheduleRegistration.registerSerialization(serRegistry);
 	}
@@ -52,22 +53,23 @@ public class AutomationPackageSchedulerPlugin extends AbstractControllerPlugin {
 		private final ExecutionScheduler scheduler;
 
 		public AutomationPackageSchedulerHook(ExecutionScheduler scheduler) {
+			super(scheduler.getExecutionTaskAccessor());
 			this.scheduler = scheduler;
 		}
 
 		@Override
-		public void onCreate(List<? extends ExecutiontTaskParameters> entities, ObjectEnricher enricher, AutomationPackageManager manager) {
+		public void onCreate(List<? extends ExecutiontTaskParameters> entities, AutomationPackageContext context) {
 			for (ExecutiontTaskParameters entity : entities) {
 				//make sure the execution parameter of the schedule are enriched too (required to execute in same project
 				// as the schedule and populate event bindings
-				enricher.accept(entity.getExecutionsParameters());
+				context.getEnricher().accept(entity.getExecutionsParameters());
 				scheduler.addExecutionTask(entity, false);
 			}
 		}
 
 		@Override
-		public void onDelete(AutomationPackage automationPackage, AutomationPackageManager manager) {
-			List<ExecutiontTaskParameters> entities = manager.getPackageSchedules(automationPackage.getId());
+		public void onDelete(AutomationPackage automationPackage, AutomationPackageContext context) {
+			List<ExecutiontTaskParameters> entities = getPackageSchedules(automationPackage.getId(), context);
 			for (ExecutiontTaskParameters entity : entities) {
 				scheduler.removeExecutionTask(entity.getId().toString());
 			}

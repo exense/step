@@ -12,7 +12,7 @@ import step.artefacts.ForEachBlock;
 import step.attachments.FileResolver;
 import step.automation.packages.accessor.AutomationPackageAccessorImpl;
 import step.automation.packages.scheduler.AutomationPackageSchedulerPlugin;
-import step.core.automation.deserialization.AutomationPackageSerializationRegistry;
+import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 import step.automation.packages.hooks.AutomationPackageHookRegistry;
 import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.core.accessors.AbstractAccessor;
@@ -110,13 +110,12 @@ public class AutomationPackageManagerOSTest {
         AutomationPackageSchedulerPlugin.registerSchedulerHooks(automationPackageHookRegistry, serializationRegistry, executionScheduler);
         AutomationPackageParameterPlugin.registerParametersHooks(automationPackageHookRegistry, serializationRegistry, parameterAccessor);
 
-        this.manager = new AutomationPackageManager(
+        this.manager = AutomationPackageManager.createMainAutomationPackageManager(
                 automationPackageAccessor,
                 functionManager,
                 functionAccessor,
                 planAccessor,
                 resourceManager,
-                executionTaskAccessor,
                 automationPackageHookRegistry,
                 new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, automationPackageHookRegistry, serializationRegistry),
                 automationPackageLocks

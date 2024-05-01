@@ -30,6 +30,7 @@ import step.resources.ResourceManager;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -64,7 +65,7 @@ public class StepJarParser {
                 // add functions from automation package
                 if (automationPackageArchive.hasAutomationPackageDescriptor() && automationPackageReader != null) {
                     AutomationPackageContent content = automationPackageReader.readAutomationPackage(automationPackageArchive, false, false);
-                    AutomationPackageContext apContext = new AutomationPackageContext(resourceManager, automationPackageArchive, null);
+                    AutomationPackageContext apContext = new AutomationPackageContext(resourceManager, automationPackageArchive, null, new HashMap<>());
                     functions.addAll(content.getKeywords().stream().map(keyword -> keyword.prepareKeyword(apContext)).collect(Collectors.toList()));
                 }
             }

@@ -36,6 +36,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -53,15 +54,15 @@ public class AutomationPackagePlansAttributesApplier {
 
     public void applySpecialAttributesToPlans(List<Plan> plans,
                                               AutomationPackageArchive automationPackageArchive,
-                                              ObjectEnricher objectEnricher) {
-        AutomationPackageContext apContext = prepareContext(automationPackageArchive, objectEnricher);
+                                              ObjectEnricher objectEnricher, Map<String, Object> extensions) {
+        AutomationPackageContext apContext = prepareContext(automationPackageArchive, objectEnricher, extensions);
         for (Plan plan : plans) {
             applySpecialValuesForArtifact(plan.getRoot(), apContext);
         }
     }
 
-    protected AutomationPackageContext prepareContext(AutomationPackageArchive automationPackageArchive, ObjectEnricher enricher) {
-        return new AutomationPackageContext(resourceManager, automationPackageArchive, enricher);
+    protected AutomationPackageContext prepareContext(AutomationPackageArchive automationPackageArchive, ObjectEnricher enricher, Map<String, Object> extensions) {
+        return new AutomationPackageContext(resourceManager, automationPackageArchive, enricher, extensions);
     }
 
     private void applySpecialValuesForArtifact(AbstractArtefact artifact, AutomationPackageContext apContext) {

@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.core.scheduler.automation;
 
-import step.core.automation.schema.CommonAutomationPackageJsonSchemaExtension;
+import step.automation.packages.schema.CommonAutomationPackageJsonSchemaExtension;
 
 public class AutomationPackageScheduleJsonSchema extends CommonAutomationPackageJsonSchemaExtension {
 

@@ -16,21 +16,24 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.core.automation.deserialization;
+package step.automation.packages.schema;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import step.core.yaml.schema.JsonSchemaDefinitionExtension;
+import step.core.yaml.schema.JsonSchemaExtension;
 
-public class AutomationPackageSerializationRegistry {
+import java.util.List;
 
-    private final Map<String, Class<?>> registry = new ConcurrentHashMap<>();
+public interface AutomationPackageJsonSchemaExtension {
 
-    public void register(String fieldName, Class<?> entityClass) {
-        registry.put(fieldName, entityClass);
-    }
+    /**
+     * Provides the extensions to be used to fill the "defs" (definitions section) in json schema, i.e. to prepare
+     * some sub-schemas to be reused in the main schema.
+     */
+    List<JsonSchemaDefinitionExtension> getExtendedDefinitions();
 
-    public Class<?> resolveClassForYamlField(String yamlFieldName) {
-        return registry.get(yamlFieldName);
-    }
-
+    /**
+     * Provides the extensions to be used to add the new fields to the json schema of automation package, i.e. to add
+     * some custom fields to the automation package.
+     */
+    List<JsonSchemaExtension> getAdditionalAutomationPackageFields();
 }

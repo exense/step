@@ -28,10 +28,10 @@ import step.automation.packages.AutomationPackageManager;
 import step.automation.packages.model.AutomationPackageContent;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.Accessor;
-import step.core.objectenricher.ObjectEnricher;
+import step.core.accessors.InMemoryAccessor;
 import step.parameter.Parameter;
-import step.parameter.automation.AutomationPackageParameterJsonSchema;
 import step.parameter.automation.AutomationPackageParameter;
+import step.parameter.automation.AutomationPackageParameterJsonSchema;
 
 import java.util.List;
 import java.util.Map;
@@ -41,14 +41,26 @@ public class AutomationPackageParameterHook implements AutomationPackageHook<Par
 
     private static final Logger log = LoggerFactory.getLogger(AutomationPackageParameterHook.class);
 
-    private final Accessor<Parameter> accessor;
+    public static final String PARAMETER_ACCESSOR_EXTENSION = "parameterAccessor";
 
-    public AutomationPackageParameterHook(Accessor<Parameter> accessor) {
-        this.accessor = accessor;
+    private final Accessor<Parameter> mainAccessor;
+
+    public AutomationPackageParameterHook(Accessor<Parameter> mainAccessor) {
+        this.mainAccessor = mainAccessor;
     }
 
     @Override
-    public void onPrepareStaging(String fieldName, AutomationPackageContext apContext, AutomationPackageContent apContent, List<?> objects, AutomationPackage oldPackage, AutomationPackageManager.Staging targetStaging, AutomationPackageManager manager) {
+    public void onMainAutomationPackageManagerCreate(Map<String, Object> extensions) {
+        extensions.put(PARAMETER_ACCESSOR_EXTENSION, this.mainAccessor);
+    }
+
+    @Override
+    public void onIsolatedAutomationPackageManagerCreate(Map<String, Object> extensions) {
+        extensions.put(PARAMETER_ACCESSOR_EXTENSION, new InMemoryAccessor<>());
+    }
+
+    @Override
+    public void onPrepareStaging(String fieldName, AutomationPackageContext apContext, AutomationPackageContent apContent, List<?> objects, AutomationPackage oldPackage, AutomationPackageManager.Staging targetStaging) {
         targetStaging.getAdditionalObjects().put(
                 AutomationPackageParameterJsonSchema.FIELD_NAME_IN_AP,
                 objects.stream().map(p -> ((AutomationPackageParameter)p).toParameter()).collect(Collectors.toList())
@@ -56,20 +68,20 @@ public class AutomationPackageParameterHook implements AutomationPackageHook<Par
     }
 
     @Override
-    public void onCreate(List<? extends Parameter> entities, ObjectEnricher enricher, AutomationPackageManager manager) {
+    public void onCreate(List<? extends Parameter> entities, AutomationPackageContext context) {
         for (Parameter entity : entities) {
             // enrich with automation package id
-            enricher.accept(entity);
-            accessor.save(entity);
+            context.getEnricher().accept(entity);
+            getParameterAccessor(context).save(entity);
         }
     }
 
     @Override
-    public void onDelete(AutomationPackage automationPackage, AutomationPackageManager manager) {
-        List<Parameter> parameters = accessor.findManyByCriteria(getAutomationPackageIdCriteria(automationPackage.getId())).collect(Collectors.toList());
+    public void onDelete(AutomationPackage automationPackage, AutomationPackageContext context) {
+        List<Parameter> parameters = getParameterAccessor(context).findManyByCriteria(getAutomationPackageIdCriteria(automationPackage.getId())).collect(Collectors.toList());
         for (Parameter parameter : parameters) {
             try {
-                accessor.remove(parameter.getId());
+                getParameterAccessor(context).remove(parameter.getId());
             } catch (Exception e){
                  log.error("The automation package parameter {} cannot be deleted for automation package {}.", parameter.getId(), automationPackage.getAttribute(AbstractOrganizableObject.NAME), e);
             }
@@ -82,6 +94,10 @@ public class AutomationPackageParameterHook implements AutomationPackageHook<Par
 
     protected String getAutomationPackageTrackingField() {
         return "customFields." + AutomationPackageEntity.AUTOMATION_PACKAGE_ID;
+    }
+
+    protected Accessor<Parameter> getParameterAccessor(AutomationPackageContext context){
+        return (Accessor<Parameter>) context.getExtensions().get(PARAMETER_ACCESSOR_EXTENSION);
     }
 
 }

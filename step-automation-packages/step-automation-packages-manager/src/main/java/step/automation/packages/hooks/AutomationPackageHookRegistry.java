@@ -44,11 +44,10 @@ public class AutomationPackageHookRegistry {
                                         AutomationPackageContent apContent,
                                         List<T> objects,
                                         AutomationPackage oldPackage,
-                                        AutomationPackageManager.Staging targetStaging,
-                                        AutomationPackageManager manager) {
+                                        AutomationPackageManager.Staging targetStaging) {
         AutomationPackageHook<T> hook = (AutomationPackageHook<T>) getHook(fieldName);
         if (hook != null) {
-            hook.onPrepareStaging(fieldName, apContext, apContent, objects, oldPackage, targetStaging, manager);
+            hook.onPrepareStaging(fieldName, apContext, apContent, objects, oldPackage, targetStaging);
             return true;
         } else {
             return false;
@@ -58,10 +57,10 @@ public class AutomationPackageHookRegistry {
     /**
      * Create the entities (taken from previously prepared staging) in database
      */
-    public <T> boolean onCreate(String fieldName, List<T> objects, ObjectEnricher enricher, AutomationPackageManager manager) {
+    public <T> boolean onCreate(String fieldName, List<T> objects, AutomationPackageContext context) {
         AutomationPackageHook<T> hook = (AutomationPackageHook<T>) getHook(fieldName);
         if (hook != null) {
-            hook.onCreate(objects, enricher, manager);
+            hook.onCreate(objects, context);
             return true;
         } else {
             return false;
@@ -72,11 +71,29 @@ public class AutomationPackageHookRegistry {
         return getHook(fieldName) != null;
     }
 
-    public void onAutomationPackageDelete(AutomationPackage automationPackage, AutomationPackageManager manager, Collection<String> excludedHookNames) {
+    public void onAutomationPackageDelete(AutomationPackage automationPackage, AutomationPackageContext context, Collection<String> excludedHookNames) {
         for (Map.Entry<String, AutomationPackageHook<?>> hook : registry.entrySet()) {
             if (excludedHookNames == null || !excludedHookNames.contains(hook.getKey())) {
-                hook.getValue().onDelete(automationPackage, manager);
+                hook.getValue().onDelete(automationPackage, context);
             }
+        }
+    }
+
+    public void onMainAutomationPackageManagerCreate(Map<String, Object> extensions) {
+        for (Map.Entry<String, AutomationPackageHook<?>> hook : registry.entrySet()) {
+            hook.getValue().onMainAutomationPackageManagerCreate(extensions);
+        }
+    }
+
+    public void onIsolatedAutomationPackageManagerCreate(Map<String, Object> extensions) {
+        for (Map.Entry<String, AutomationPackageHook<?>> hook : registry.entrySet()) {
+            hook.getValue().onIsolatedAutomationPackageManagerCreate(extensions);
+        }
+    }
+
+    public void onLocalAutomationPackageManagerCreate(Map<String, Object> extensions) {
+        for (Map.Entry<String, AutomationPackageHook<?>> hook : registry.entrySet()) {
+            hook.getValue().onLocalAutomationPackageManagerCreate(extensions);
         }
     }
 

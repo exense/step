@@ -18,19 +18,20 @@
  ******************************************************************************/
 package step.automation.packages.scheduler;
 
+import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.automation.packages.AutomationPackage;
-import step.automation.packages.AutomationPackageContext;
-import step.automation.packages.AutomationPackageManager;
-import step.automation.packages.AutomationPackageManagerException;
+import step.automation.packages.*;
 import step.automation.packages.hooks.AutomationPackageHook;
 import step.automation.packages.model.AutomationPackageContent;
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.entities.Entity;
 import step.core.execution.model.ExecutionParameters;
-import step.core.objectenricher.ObjectEnricher;
 import step.core.plans.Plan;
+import step.core.plans.PlanAccessor;
 import step.core.repositories.RepositoryObjectReference;
+import step.core.scheduler.ExecutionTaskAccessor;
+import step.core.scheduler.InMemoryExecutionTaskAccessor;
 import step.core.scheduler.automation.AutomationPackageSchedule;
 import step.core.scheduler.CronExclusion;
 import step.core.scheduler.ExecutiontTaskParameters;
@@ -38,42 +39,64 @@ import step.core.scheduler.ExecutiontTaskParameters;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class ExecutionTaskParameterWithoutSchedulerHook implements AutomationPackageHook<ExecutiontTaskParameters> {
 
     private static final Logger log = LoggerFactory.getLogger(ExecutionTaskParameterWithoutSchedulerHook.class);
+    protected static final String EXECUTION_TASK_ACCESSOR_EXTENSION = "executionTaskAccessor";
 
-    public ExecutionTaskParameterWithoutSchedulerHook() {
+    private final ExecutionTaskAccessor mainExecutionTaskAccessor;
+
+    public ExecutionTaskParameterWithoutSchedulerHook(ExecutionTaskAccessor mainExecutionTaskAccessor) {
+        this.mainExecutionTaskAccessor = mainExecutionTaskAccessor;
+        this.mainExecutionTaskAccessor.createIndexIfNeeded(AutomationPackageEntity.getIndexField());
+    }
+
+    @Override
+    public void onMainAutomationPackageManagerCreate(Map<String, Object> extensions) {
+       extensions.put(EXECUTION_TASK_ACCESSOR_EXTENSION, mainExecutionTaskAccessor);
+    }
+
+    @Override
+    public void onIsolatedAutomationPackageManagerCreate(Map<String, Object> extensions) {
+        InMemoryExecutionTaskAccessor inMemoryAccessor = new InMemoryExecutionTaskAccessor();
+        inMemoryAccessor.createIndexIfNeeded(AutomationPackageEntity.getIndexField());
+        extensions.put(EXECUTION_TASK_ACCESSOR_EXTENSION, inMemoryAccessor);
     }
 
     @Override
     public void onPrepareStaging(String fieldName, AutomationPackageContext apContext,
                                  AutomationPackageContent apContent, List<?> objects,
-                                 AutomationPackage oldPackage, AutomationPackageManager.Staging targetStaging,
-                                 AutomationPackageManager manager) {
+                                 AutomationPackage oldPackage, AutomationPackageManager.Staging targetStaging) {
         targetStaging.getAdditionalObjects().put(
                 AutomationPackageSchedule.FIELD_NAME_IN_AP,
-                prepareExecutionTasksParamsStaging((List<AutomationPackageSchedule>) objects, apContext.getEnricher(), apContent, oldPackage, targetStaging.getPlans(), manager)
+                prepareExecutionTasksParamsStaging((List<AutomationPackageSchedule>) objects,
+                        apContent,
+                        apContext,
+                        oldPackage,
+                        targetStaging.getPlans()
+                )
         );
     }
 
     @Override
-    public void onCreate(List<? extends ExecutiontTaskParameters> entities, ObjectEnricher enricher, AutomationPackageManager manager) {
+    public void onCreate(List<? extends ExecutiontTaskParameters> entities, AutomationPackageContext context) {
         for (ExecutiontTaskParameters entity : entities) {
-            //make sure the execution parameter of the schedule are enriched too (required to execute in same project
+            // make sure the execution parameter of the schedule are enriched too (required to execute in same project
             // as the schedule and populate event bindings
-            enricher.accept(entity.getExecutionsParameters());
-            manager.getExecutionTaskAccessor().save(entity);
+            context.getEnricher().accept(entity.getExecutionsParameters());
+            mainExecutionTaskAccessor.save(entity);
         }
     }
 
     @Override
-    public void onDelete(AutomationPackage automationPackage, AutomationPackageManager manager) {
-        List<ExecutiontTaskParameters> schedules = manager.getPackageSchedules(automationPackage.getId());
+    public void onDelete(AutomationPackage automationPackage, AutomationPackageContext context) {
+        List<ExecutiontTaskParameters> schedules = getPackageSchedules(automationPackage.getId(), context);
         for (ExecutiontTaskParameters schedule : schedules) {
             try {
-                manager.getExecutionTaskAccessor().remove(schedule.getId());
+                mainExecutionTaskAccessor.remove(schedule.getId());
             } catch (Exception e) {
                 log.error("Error while deleting task {} for automation package {}",
                         schedule.getId().toString(), automationPackage.getAttribute(AbstractOrganizableObject.NAME), e
@@ -83,11 +106,10 @@ public class ExecutionTaskParameterWithoutSchedulerHook implements AutomationPac
     }
 
     protected List<ExecutiontTaskParameters> prepareExecutionTasksParamsStaging(List<AutomationPackageSchedule> objects,
-                                                                                ObjectEnricher enricher,
                                                                                 AutomationPackageContent packageContent,
+                                                                                AutomationPackageContext packageContext,
                                                                                 AutomationPackage oldPackage,
-                                                                                List<Plan> plansStaging,
-                                                                                AutomationPackageManager manager) {
+                                                                                List<Plan> plansStaging) {
         List<ExecutiontTaskParameters> completeExecTasksParameters = new ArrayList<>();
         for (AutomationPackageSchedule schedule : objects) {
             ExecutiontTaskParameters execTaskParameters = new ExecutiontTaskParameters();
@@ -102,7 +124,7 @@ public class ExecutionTaskParameterWithoutSchedulerHook implements AutomationPac
             }
             String assertionPlanName = schedule.getAssertionPlanName();
             if (assertionPlanName != null && !assertionPlanName.isEmpty()) {
-                Plan assertionPlan = manager.lookupPlanByName(plansStaging, assertionPlanName);
+                Plan assertionPlan = lookupPlanByName(plansStaging, assertionPlanName, packageContext);
                 if (assertionPlan == null) {
                     throw new AutomationPackageManagerException("Invalid automation package: " + packageContent.getName() +
                             ". No assertion plan with '" + assertionPlanName + "' name found for schedule " + schedule.getName());
@@ -116,7 +138,7 @@ public class ExecutionTaskParameterWithoutSchedulerHook implements AutomationPac
                         ". Plan name is not defined for schedule " + schedule.getName());
             }
 
-            Plan plan = manager.lookupPlanByName(plansStaging, planNameFromSchedule);
+            Plan plan = lookupPlanByName(plansStaging, planNameFromSchedule, packageContext);
             if (plan == null) {
                 throw new AutomationPackageManagerException("Invalid automation package: " + packageContent.getName() +
                         ". No plan with '" + planNameFromSchedule + "' name found for schedule " + schedule.getName());
@@ -130,7 +152,29 @@ public class ExecutionTaskParameterWithoutSchedulerHook implements AutomationPac
             execTaskParameters.setExecutionsParameters(executionParameters);
             completeExecTasksParameters.add(execTaskParameters);
         }
-        manager.fillEntities(completeExecTasksParameters, oldPackage != null ? manager.getPackageSchedules(oldPackage.getId()) : new ArrayList<>(), enricher);
+        Entity.reuseOldIds(completeExecTasksParameters, oldPackage != null ? getPackageSchedules(oldPackage.getId(), packageContext) : new ArrayList<>());
+        completeExecTasksParameters.forEach(packageContext.getEnricher());
         return completeExecTasksParameters;
+    }
+
+    protected Plan lookupPlanByName(List<Plan> plansStaging, String planName, AutomationPackageContext context) {
+        Plan plan = plansStaging.stream().filter(p -> Objects.equals(p.getAttribute(AbstractOrganizableObject.NAME), planName)).findFirst().orElse(null);
+        if (plan == null) {
+            // schedule can reference the existing persisted plan (not defined inside the automation package)
+            plan = getPlanAccessor(context).findByAttributes(Map.of(AbstractOrganizableObject.NAME, planName));
+        }
+        return plan;
+    }
+
+    private static PlanAccessor getPlanAccessor(AutomationPackageContext context) {
+        return (PlanAccessor) context.getExtensions().get(AutomationPackageContext.PLAN_ACCESSOR);
+    }
+
+    protected List<ExecutiontTaskParameters> getPackageSchedules(ObjectId automationPackageId, AutomationPackageContext context) {
+        return getExecutionTaskAccessor(context).findManyByCriteria(AutomationPackageEntity.getAutomationPackageIdCriteria(automationPackageId)).collect(Collectors.toList());
+    }
+
+    protected ExecutionTaskAccessor getExecutionTaskAccessor(AutomationPackageContext context){
+        return (ExecutionTaskAccessor) context.getExtensions().get(EXECUTION_TASK_ACCESSOR_EXTENSION);
     }
 }

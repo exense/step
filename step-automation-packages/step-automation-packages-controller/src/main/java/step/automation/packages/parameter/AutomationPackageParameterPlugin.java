@@ -19,7 +19,7 @@
 package step.automation.packages.parameter;
 
 import step.automation.packages.AutomationPackagePlugin;
-import step.core.automation.deserialization.AutomationPackageSerializationRegistry;
+import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 import step.automation.packages.hooks.AutomationPackageHookRegistry;
 import step.automation.packages.hooks.AutomationPackageParameterHook;
 import step.core.GlobalContext;

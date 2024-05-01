@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.parameter.automation;
 
-import step.core.automation.deserialization.AutomationPackageSerializationRegistry;
+import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 
 public class AutomationPackageParametersRegistration {
     public static void registerSerialization(AutomationPackageSerializationRegistry serRegistry) {

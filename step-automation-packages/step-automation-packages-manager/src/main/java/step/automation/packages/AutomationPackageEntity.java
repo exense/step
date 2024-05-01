@@ -18,8 +18,13 @@
  ******************************************************************************/
 package step.automation.packages;
 
+import org.bson.types.ObjectId;
 import step.automation.packages.accessor.AutomationPackageAccessor;
+import step.core.collections.IndexField;
+import step.core.collections.Order;
 import step.core.entities.Entity;
+
+import java.util.Map;
 
 public class AutomationPackageEntity extends Entity<AutomationPackage, AutomationPackageAccessor> {
 
@@ -30,5 +35,17 @@ public class AutomationPackageEntity extends Entity<AutomationPackage, Automatio
 
     public AutomationPackageEntity(AutomationPackageAccessor accessor) {
         super(entityName, accessor, AutomationPackage.class);
+    }
+
+    public static Map<String, String> getAutomationPackageIdCriteria(ObjectId automationPackageId) {
+        return Map.of(getAutomationPackageTrackingField(), automationPackageId.toString());
+    }
+
+    public static String getAutomationPackageTrackingField() {
+        return "customFields." + AutomationPackageEntity.AUTOMATION_PACKAGE_ID;
+    }
+
+    public static IndexField getIndexField() {
+        return new IndexField(getAutomationPackageTrackingField(), Order.ASC, String.class);
     }
 }

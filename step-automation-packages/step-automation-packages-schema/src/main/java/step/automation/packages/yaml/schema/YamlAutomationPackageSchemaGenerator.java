@@ -26,7 +26,7 @@ import jakarta.json.spi.JsonProvider;
 import step.parameter.automation.AutomationPackageParameterJsonSchema;
 import step.core.Version;
 import step.core.scheduler.automation.AutomationPackageScheduleJsonSchema;
-import step.core.automation.schema.AutomationPackageJsonSchemaExtension;
+import step.automation.packages.schema.AutomationPackageJsonSchemaExtension;
 import step.core.yaml.schema.JsonSchemaExtension;
 import step.core.yaml.schema.YamlJsonSchemaHelper;
 import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;

@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.core.scheduler.automation;
 
-import step.core.automation.deserialization.AutomationPackageSerializationRegistry;
+import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 
 public class AutomationPackageScheduleRegistration {
     public static void registerSerialization(AutomationPackageSerializationRegistry serRegistry) {

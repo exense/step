@@ -26,7 +26,7 @@ import step.automation.packages.execution.AutomationPackageExecutor;
 import step.automation.packages.execution.IsolatedAutomationPackageRepository;
 import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.core.GlobalContext;
-import step.core.automation.deserialization.AutomationPackageSerializationRegistry;
+import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 import step.core.collections.Collection;
 import step.core.deployment.ObjectHookControllerPlugin;
 import step.core.execution.model.ExecutionAccessor;
@@ -91,13 +91,12 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
             log.info("Using the OS implementation of automation package manager");
 
             // moved to 'afterInitializeData' to have the schedule accessor in context
-            AutomationPackageManager packageManager = new AutomationPackageManager(
+            AutomationPackageManager packageManager = AutomationPackageManager.createMainAutomationPackageManager(
                     context.require(AutomationPackageAccessor.class),
                     context.require(FunctionManager.class),
                     context.require(FunctionAccessor.class),
                     context.getPlanAccessor(),
                     context.getResourceManager(),
-                    context.getScheduleAccessor(),
                     context.require(AutomationPackageHookRegistry.class),
                     context.require(AutomationPackageReader.class),
                     automationPackageLocks

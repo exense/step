@@ -21,17 +21,25 @@ package step.automation.packages;
 import step.core.objectenricher.ObjectEnricher;
 import step.resources.ResourceManager;
 
+import java.util.Map;
+
 public class AutomationPackageContext {
+
+    public static final String PLAN_ACCESSOR = "planAccessor";
+    public static final String FUNCTION_ACCESSOR = "functionAccessor";
+
     private ResourceManager resourceManager;
     private AutomationPackageArchive automationPackageArchive;
     private ObjectEnricher enricher;
 
     private String uploadedPackageFileResource;
+    private final Map<String, Object> extensions;
 
-    public AutomationPackageContext(ResourceManager resourceManager, AutomationPackageArchive automationPackageArchive, ObjectEnricher enricher) {
+    public AutomationPackageContext(ResourceManager resourceManager, AutomationPackageArchive automationPackageArchive, ObjectEnricher enricher, Map<String, Object> extensions) {
         this.resourceManager = resourceManager;
         this.automationPackageArchive = automationPackageArchive;
         this.enricher = enricher;
+        this.extensions = extensions;
     }
 
     public ResourceManager getResourceManager() {
@@ -64,5 +72,9 @@ public class AutomationPackageContext {
 
     public void setEnricher(ObjectEnricher enricher) {
         this.enricher = enricher;
+    }
+
+    public Map<String, Object> getExtensions() {
+        return extensions;
     }
 }

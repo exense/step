@@ -21,7 +21,7 @@ package step.automation.packages.yaml;
 import org.junit.Test;
 import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.model.YamlAutomationPackageKeyword;
-import step.core.automation.deserialization.AutomationPackageSerializationRegistry;
+import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
 import step.core.scheduler.automation.AutomationPackageSchedule;
 import step.core.scheduler.automation.AutomationPackageScheduleRegistration;
