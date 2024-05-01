@@ -28,7 +28,7 @@
         </dependency>
         <dependency>
             <groupId>ch.exense.step</groupId>
-            <artifactId>step-automation-packages-support</artifactId>
+            <artifactId>step-core</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>

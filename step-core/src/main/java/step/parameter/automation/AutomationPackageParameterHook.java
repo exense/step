@@ -16,22 +16,16 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.hooks;
+package step.parameter.automation;
 
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.automation.packages.AutomationPackage;
-import step.automation.packages.AutomationPackageContext;
-import step.automation.packages.AutomationPackageEntity;
-import step.automation.packages.AutomationPackageManager;
-import step.automation.packages.model.AutomationPackageContent;
+import step.automation.packages.*;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.Accessor;
 import step.core.accessors.InMemoryAccessor;
 import step.parameter.Parameter;
-import step.parameter.automation.AutomationPackageParameter;
-import step.parameter.automation.AutomationPackageParameterJsonSchema;
 
 import java.util.List;
 import java.util.Map;
@@ -60,7 +54,7 @@ public class AutomationPackageParameterHook implements AutomationPackageHook<Par
     }
 
     @Override
-    public void onPrepareStaging(String fieldName, AutomationPackageContext apContext, AutomationPackageContent apContent, List<?> objects, AutomationPackage oldPackage, AutomationPackageManager.Staging targetStaging) {
+    public void onPrepareStaging(String fieldName, AutomationPackageContext apContext, AutomationPackageContent apContent, List<?> objects, AutomationPackage oldPackage, AutomationPackageStaging targetStaging) {
         targetStaging.getAdditionalObjects().put(
                 AutomationPackageParameterJsonSchema.FIELD_NAME_IN_AP,
                 objects.stream().map(p -> ((AutomationPackageParameter)p).toParameter()).collect(Collectors.toList())

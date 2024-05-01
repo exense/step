@@ -1,9 +1,5 @@
-package step.automation.packages.hooks;
+package step.automation.packages;
 
-import step.automation.packages.AutomationPackage;
-import step.automation.packages.AutomationPackageContext;
-import step.automation.packages.AutomationPackageManager;
-import step.automation.packages.model.AutomationPackageContent;
 import step.core.objectenricher.EnricheableObject;
 
 import java.util.List;
@@ -39,7 +35,7 @@ public interface AutomationPackageHook<T> {
                                   AutomationPackageContent apContent,
                                   List<?> objects,
                                   AutomationPackage oldPackage,
-                                  AutomationPackageManager.Staging targetStaging) {
+                                  AutomationPackageStaging targetStaging) {
         // by default, we simply put the objects to staging
         targetStaging.getAdditionalObjects().put(fieldName, (List<Object>) objects);
     }

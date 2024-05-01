@@ -22,7 +22,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.automation.packages.hooks.AutomationPackageHookRegistry;
-import step.automation.packages.model.AutomationPackageContent;
 import step.automation.packages.model.JavaAutomationPackageKeyword;
 import step.automation.packages.yaml.AutomationPackageDescriptorReader;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;

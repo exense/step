@@ -19,7 +19,7 @@
 package step.repositories.artifact;
 
 import step.automation.packages.*;
-import step.automation.packages.model.AutomationPackageContent;
+import step.automation.packages.AutomationPackageContent;
 import step.automation.packages.model.JavaAutomationPackageKeyword;
 import step.core.plans.Plan;
 import step.core.scanner.AnnotationScanner;

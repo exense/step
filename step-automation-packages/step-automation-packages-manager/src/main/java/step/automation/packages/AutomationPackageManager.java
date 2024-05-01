@@ -24,7 +24,6 @@ import org.slf4j.LoggerFactory;
 import step.automation.packages.accessor.AutomationPackageAccessor;
 import step.automation.packages.accessor.InMemoryAutomationPackageAccessorImpl;
 import step.automation.packages.hooks.AutomationPackageHookRegistry;
-import step.automation.packages.model.AutomationPackageContent;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.collections.IndexField;
 import step.core.entities.Entity;
@@ -363,7 +362,7 @@ public class AutomationPackageManager {
             newPackage = createNewInstance(automationPackageArchive.getOriginalFileName(), packageContent, oldPackage, enricher);
 
             // prepare staging collections
-            Staging staging = createStaging();
+            AutomationPackageStaging staging = createStaging();
             List<ObjectEnricher> enrichers = new ArrayList<>();
             if (enricher != null) {
                 enrichers.add(enricher);
@@ -410,7 +409,7 @@ public class AutomationPackageManager {
     }
 
     private ObjectId updateAutomationPackage(AutomationPackage oldPackage, AutomationPackage newPackage,
-                                             Staging staging, ObjectEnricher enricherForIncludedEntities,
+                                             AutomationPackageStaging staging, ObjectEnricher enricherForIncludedEntities,
                                              boolean alreadyLocked, AutomationPackageArchive automationPackageArchive) {
         try {
             //If not already locked (i.e. was not able to acquire an immediate write lock)
@@ -465,37 +464,37 @@ public class AutomationPackageManager {
         automationPackageLocks.writeUnlock(newPackage.getId().toHexString());
     }
 
-    protected void logAfterSave(Staging staging, AutomationPackage oldPackage, AutomationPackage newPackage) {
+    protected void logAfterSave(AutomationPackageStaging staging, AutomationPackage oldPackage, AutomationPackage newPackage) {
         StringBuilder message = new StringBuilder();
         if (oldPackage != null) {
             message.append(String.format("Automation package has been updated (%s).", newPackage.getAttribute(AbstractOrganizableObject.NAME)));
         } else {
             message.append(String.format("New automation package saved (%s).", newPackage.getAttribute(AbstractOrganizableObject.NAME)));
         }
-        message.append(String.format(" Plans: %s.", staging.plans.size()));
-        message.append(String.format(" Functions: %s.", staging.functions.size()));
+        message.append(String.format(" Plans: %s.", staging.getPlans().size()));
+        message.append(String.format(" Functions: %s.", staging.getFunctions().size()));
 
-        for (Map.Entry<String, List<?>> additionalObjects : staging.additionalObjects.entrySet()) {
+        for (Map.Entry<String, List<?>> additionalObjects : staging.getAdditionalObjects().entrySet()) {
             message.append(String.format(" %s: %s.", additionalObjects.getKey(), additionalObjects.getValue().size()));
         }
 
         log.info(message.toString());
     }
 
-    protected Staging createStaging(){
-        return new Staging();
+    protected AutomationPackageStaging createStaging(){
+        return new AutomationPackageStaging();
     }
 
-    protected void fillStaging(Staging staging, AutomationPackageContent packageContent, AutomationPackage oldPackage, ObjectEnricher enricherForIncludedEntities, AutomationPackageArchive automationPackageArchive) {
-        staging.plans = preparePlansStaging(packageContent, automationPackageArchive, oldPackage, enricherForIncludedEntities, staging.resourceManager);
-        staging.functions = prepareFunctionsStaging(automationPackageArchive, packageContent, enricherForIncludedEntities, oldPackage, staging.resourceManager);
+    protected void fillStaging(AutomationPackageStaging staging, AutomationPackageContent packageContent, AutomationPackage oldPackage, ObjectEnricher enricherForIncludedEntities, AutomationPackageArchive automationPackageArchive) {
+        staging.getPlans().addAll(preparePlansStaging(packageContent, automationPackageArchive, oldPackage, enricherForIncludedEntities, staging.getResourceManager()));
+        staging.getFunctions().addAll(prepareFunctionsStaging(automationPackageArchive, packageContent, enricherForIncludedEntities, oldPackage, staging.getResourceManager()));
 
         List<HookEntry> hookEntries = packageContent.getAdditionalData().entrySet().stream().map(e -> new HookEntry(e.getKey(), e.getValue())).collect(Collectors.toList());
 
         for (HookEntry hookEntry : hookEntries) {
             boolean hooked =  automationPackageHookRegistry.onPrepareStaging(
                     hookEntry.fieldName,
-                    new AutomationPackageContext(staging.resourceManager, automationPackageArchive, enricherForIncludedEntities, extensions),
+                    new AutomationPackageContext(staging.getResourceManager(), automationPackageArchive, enricherForIncludedEntities, extensions),
                     packageContent,
                     hookEntry.values,
                     oldPackage, staging);
@@ -506,34 +505,34 @@ public class AutomationPackageManager {
         }
     }
 
-    protected void persistStagedEntities(Staging staging,
+    protected void persistStagedEntities(AutomationPackageStaging staging,
                                          ObjectEnricher objectEnricher,
                                          AutomationPackageArchive automationPackageArchive) {
-        List<Resource> stagingResources = staging.resourceManager.findManyByCriteria(null);
+        List<Resource> stagingResources = staging.getResourceManager().findManyByCriteria(null);
         try {
             for (Resource resource: stagingResources) {
-                resourceManager.copyResource(resource, staging.resourceManager);
+                resourceManager.copyResource(resource, staging.getResourceManager());
             }
         } catch (IOException | SimilarResourceExistingException | InvalidResourceFormatException e) {
             throw new AutomationPackageManagerException("Unable to persist a resource in automation package", e);
         } finally {
-            staging.resourceManager.cleanup();
+            staging.getResourceManager().cleanup();
         }
 
         try {
-            for (Function completeFunction : staging.functions) {
+            for (Function completeFunction : staging.getFunctions()) {
                 functionManager.saveFunction(completeFunction);
             }
         } catch (SetupFunctionException | FunctionTypeException e) {
             throw new AutomationPackageManagerException("Unable to persist a keyword in automation package", e);
         }
 
-        for (Plan plan : staging.plans) {
+        for (Plan plan : staging.getPlans()) {
             planAccessor.save(plan);
         }
 
         // save task parameters and additional objects via hooks
-        List<HookEntry> hookEntries = staging.additionalObjects.entrySet().stream().map(e -> new HookEntry(e.getKey(), e.getValue())).collect(Collectors.toList());
+        List<HookEntry> hookEntries = staging.getAdditionalObjects().entrySet().stream().map(e -> new HookEntry(e.getKey(), e.getValue())).collect(Collectors.toList());
         for (HookEntry hookEntry : hookEntries) {
             boolean hooked = automationPackageHookRegistry.onCreate(
                     hookEntry.fieldName, hookEntry.values,
@@ -689,30 +688,6 @@ public class AutomationPackageManager {
             this.resourceManager.cleanup();
         } else {
             log.info("Skip automation package cleanup. Cleanup is only supported for isolated (in-memory) automation package manager");
-        }
-    }
-
-    public static class Staging {
-        private List<Plan> plans = new ArrayList<>();
-        private List<Function> functions = new ArrayList<>();
-        private final Map<String, List<?>> additionalObjects = new HashMap<>();
-
-        private ResourceManager resourceManager = new LocalResourceManagerImpl(new File("ap_staging_resources_" + new ObjectId()));
-
-        public List<Plan> getPlans() {
-            return plans;
-        }
-
-        public List<Function> getFunctions() {
-            return functions;
-        }
-
-        public ResourceManager getResourceManager() {
-            return resourceManager;
-        }
-
-        public Map<String, List<?>> getAdditionalObjects() {
-            return additionalObjects;
         }
     }
 

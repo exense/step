@@ -16,61 +16,40 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.model;
+package step.automation.packages;
 
+import org.bson.types.ObjectId;
 import step.core.plans.Plan;
+import step.functions.Function;
+import step.resources.LocalResourceManagerImpl;
+import step.resources.ResourceManager;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class AutomationPackageContent {
-
-    private String version;
-    private String name;
-
-    private List<AutomationPackageKeyword> keywords = new ArrayList<>();
+public class AutomationPackageStaging {
     private List<Plan> plans = new ArrayList<>();
-    private Map<String, List<?>> additionalData = new HashMap<>();
+    private List<Function> functions = new ArrayList<>();
+    private final Map<String, List<?>> additionalObjects = new HashMap<>();
 
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public List<AutomationPackageKeyword> getKeywords() {
-        return keywords;
-    }
-
-    public void setKeywords(List<AutomationPackageKeyword> keywords) {
-        this.keywords = keywords;
-    }
-
-    public String getVersion() {
-        return version;
-    }
-
-    public void setVersion(String version) {
-        this.version = version;
-    }
+    private ResourceManager resourceManager = new LocalResourceManagerImpl(new File("ap_staging_resources_" + new ObjectId()));
 
     public List<Plan> getPlans() {
         return plans;
     }
 
-    public void setPlans(List<Plan> plans) {
-        this.plans = plans;
+    public List<Function> getFunctions() {
+        return functions;
     }
 
-    public Map<String, List<?>> getAdditionalData() {
-        return additionalData;
+    public ResourceManager getResourceManager() {
+        return resourceManager;
     }
 
-    public void setAdditionalData(Map<String, List<?>> additionalData) {
-        this.additionalData = additionalData;
+    public Map<String, List<?>> getAdditionalObjects() {
+        return additionalObjects;
     }
 }

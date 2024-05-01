@@ -2,9 +2,9 @@ package step.automation.packages.hooks;
 
 import step.automation.packages.AutomationPackage;
 import step.automation.packages.AutomationPackageContext;
-import step.automation.packages.AutomationPackageManager;
-import step.automation.packages.model.AutomationPackageContent;
-import step.core.objectenricher.ObjectEnricher;
+import step.automation.packages.AutomationPackageHook;
+import step.automation.packages.AutomationPackageStaging;
+import step.automation.packages.AutomationPackageContent;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -44,7 +44,7 @@ public class AutomationPackageHookRegistry {
                                         AutomationPackageContent apContent,
                                         List<T> objects,
                                         AutomationPackage oldPackage,
-                                        AutomationPackageManager.Staging targetStaging) {
+                                        AutomationPackageStaging targetStaging) {
         AutomationPackageHook<T> hook = (AutomationPackageHook<T>) getHook(fieldName);
         if (hook != null) {
             hook.onPrepareStaging(fieldName, apContext, apContent, objects, oldPackage, targetStaging);

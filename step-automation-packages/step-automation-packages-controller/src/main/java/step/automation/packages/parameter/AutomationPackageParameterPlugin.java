@@ -21,7 +21,7 @@ package step.automation.packages.parameter;
 import step.automation.packages.AutomationPackagePlugin;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 import step.automation.packages.hooks.AutomationPackageHookRegistry;
-import step.automation.packages.hooks.AutomationPackageParameterHook;
+import step.parameter.automation.AutomationPackageParameterHook;
 import step.core.GlobalContext;
 import step.core.accessors.Accessor;
 import step.core.plugins.AbstractControllerPlugin;

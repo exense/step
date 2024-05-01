@@ -22,8 +22,8 @@ import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.automation.packages.*;
-import step.automation.packages.hooks.AutomationPackageHook;
-import step.automation.packages.model.AutomationPackageContent;
+import step.automation.packages.AutomationPackageHook;
+import step.automation.packages.AutomationPackageContent;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.entities.Entity;
 import step.core.execution.model.ExecutionParameters;
@@ -69,7 +69,7 @@ public class ExecutionTaskParameterWithoutSchedulerHook implements AutomationPac
     @Override
     public void onPrepareStaging(String fieldName, AutomationPackageContext apContext,
                                  AutomationPackageContent apContent, List<?> objects,
-                                 AutomationPackage oldPackage, AutomationPackageManager.Staging targetStaging) {
+                                 AutomationPackage oldPackage, AutomationPackageStaging targetStaging) {
         targetStaging.getAdditionalObjects().put(
                 AutomationPackageSchedule.FIELD_NAME_IN_AP,
                 prepareExecutionTasksParamsStaging((List<AutomationPackageSchedule>) objects,

@@ -32,7 +32,7 @@ public class AutomationPackageArchiveTest {
             Assert.assertTrue(validPackage.hasAutomationPackageDescriptor());
 
             JsonNode actualDescriptor = yamlObjectMapper.readTree(validPackage.getDescriptorYaml());
-            JsonNode expectedDescriptor = yamlObjectMapper.readTree(new File("src/test/resources/step/automation/packages/yaml/expectedTestpackDescriptor.yml"));
+            JsonNode expectedDescriptor = yamlObjectMapper.readTree(new File("src/test/resources/step/automation/packages/expectedTestpackDescriptor.yml"));
             Assert.assertEquals(expectedDescriptor, actualDescriptor);
 
             URL resource = validPackage.getResource("jmeterProject1/jmeterProject1.xml");
