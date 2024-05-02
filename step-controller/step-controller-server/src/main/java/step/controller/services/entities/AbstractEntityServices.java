@@ -231,7 +231,14 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
     @Secured(right = "{entity}-write")
     @Path("{id}/locked")
     public void setLocked(@PathParam("id") String id, Boolean locked) {
+        if (locked == null) {
+            locked = false;
+        }
         T t = getEntity(id);
+        //when unlocking we need to set the new state before calling assertEntityIsAcceptableInContext
+        if (!locked) {
+            t.addCustomField(CUSTOM_FIELD_LOCKED, locked);
+        }
         assertEntityIsAcceptableInContext(t);
         t.addCustomField(CUSTOM_FIELD_LOCKED, locked);
         accessor.save(t);
