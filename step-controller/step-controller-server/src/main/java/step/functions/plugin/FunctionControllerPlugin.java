@@ -19,9 +19,7 @@
 package step.functions.plugin;
 
 import ch.exense.commons.app.Configuration;
-import step.artefacts.handlers.DefaultFunctionRouterImpl;
 import step.artefacts.handlers.FunctionLocator;
-import step.artefacts.handlers.FunctionRouter;
 import step.artefacts.handlers.SelectorHelper;
 import step.attachments.FileResolver;
 import step.controller.grid.GridPlugin;
@@ -83,7 +81,6 @@ public class FunctionControllerPlugin extends AbstractControllerPlugin {
 		FunctionExecutionService functionExecutionService = new FunctionExecutionServiceImpl(gridClient, functionTypeRegistry, context.getDynamicBeanResolver());
 		
 		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));
-		FunctionRouter functionRouter = new DefaultFunctionRouterImpl(functionExecutionService, functionTypeRegistry, dynamicJsonObjectResolver);
 
 		context.put(FunctionAccessor.class, functionAccessor);
 		SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
@@ -92,11 +89,9 @@ public class FunctionControllerPlugin extends AbstractControllerPlugin {
 		entityManager.register(new FunctionEntity(functionAccessor, functionLocator, entityManager));
 		context.put(FunctionManager.class, functionManager);
 		context.put(FunctionTypeRegistry.class, functionTypeRegistry);
-		
 		context.put(FunctionEditorRegistry.class, editorRegistry);
 		context.put(FunctionExecutionService.class, functionExecutionService);
-		context.put(FunctionRouter.class, functionRouter);
-		
+
 		context.getServiceRegistrationCallback().registerService(FunctionServices.class);
 		
 		TableRegistry tableRegistry = context.get(TableRegistry.class);

@@ -18,11 +18,12 @@
  ******************************************************************************/
 package step.client.executions;
 
-import java.util.concurrent.TimeoutException;
-
+import step.client.reports.RemoteExecutionProvider;
 import step.client.reports.RemoteReportTreeAccessor;
 import step.core.execution.model.Execution;
 import step.core.plans.runner.PlanRunnerResult;
+
+import java.util.concurrent.TimeoutException;
 
 /**
  * This class represents a future of a controller execution
@@ -33,7 +34,8 @@ public class RemoteExecutionFuture extends PlanRunnerResult {
 	private RemoteExecutionManager executionManager;
 	
 	public RemoteExecutionFuture(RemoteExecutionManager executionManager, String executionId) {
-		super(executionId, executionId, new RemoteReportTreeAccessor(executionManager.getControllerCredentials()));
+		super(executionId, new RemoteExecutionProvider(executionManager.getControllerCredentials()),
+				new RemoteReportTreeAccessor(executionManager.getControllerCredentials()));
 		this.executionManager = executionManager;
 	}
 

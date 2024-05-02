@@ -62,7 +62,7 @@ public class ForBlockHandler extends AbstractSessionArtefactHandler<AbstractForB
 					
 					createReportNodeSkeletonInSession(testArtefact, node, (sessionArtefact, sessionReportNode)->{
 						SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
-						scheduler.execute_(sessionReportNode, sessionArtefact);
+						scheduler.createReportSkeleton_(sessionReportNode, sessionArtefact);
 					}, "Iteration "+rowCount, newVariable);
 				} finally {
 					nextValue.commit();

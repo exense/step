@@ -51,7 +51,6 @@ import step.core.repositories.RepositoryObjectManager;
 import step.core.scheduler.ExecutionTaskAccessorImpl;
 import step.core.scheduler.ExecutiontTaskParameters;
 import step.core.scheduler.ScheduleEntity;
-import step.engine.execution.ExecutionManagerImpl;
 import step.expressions.ExpressionHandler;
 import step.framework.server.ServerPluginManager;
 import step.framework.server.ServiceRegistrationCallback;
@@ -128,8 +127,7 @@ public class Controller {
 		ExecutionAccessorImpl executionAccessor = new ExecutionAccessorImpl(
 				collectionFactory.getCollection("executions", Execution.class));
 		context.setExecutionAccessor(executionAccessor);		
-		context.setExecutionManager(new ExecutionManagerImpl(executionAccessor));
-		
+
 		PlanAccessorImpl plans = new PlanAccessorImpl(collectionFactory.getCollection("plans", Plan.class));
 		context.setPlanAccessor(plans);
 
