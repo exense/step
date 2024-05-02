@@ -289,7 +289,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 			token = functionGroupSession.getLocalToken();
 		} else {
 			Map<String, Interest> tokenSelectionCriteria = tokenSelectionCriteriaMapBuilder.buildSelectionCriteriaMap(testArtefact, function, functionGroupContext, getBindings());
-			token = functionGroupSession.getRemoteToken(getOwnAttributesForTokenSelection(), tokenSelectionCriteria, tokenWrapperOwner);
+			token = functionGroupSession.getRemoteToken(getOwnAttributesForTokenSelection(), tokenSelectionCriteria, tokenWrapperOwner, (functionGroupContext != null));
 		}
 		return token;
 	}
