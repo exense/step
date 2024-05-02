@@ -25,12 +25,13 @@ import step.artefacts.handlers.SelectorHelper;
 import step.core.access.User;
 import step.core.access.UserAccessorImpl;
 import step.core.accessors.AbstractAccessor;
+import step.core.accessors.AbstractUser;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeAccessorImpl;
-import step.core.collections.Collection;
-import step.core.collections.CollectionFactory;
-import step.core.collections.CollectionFactoryConfigurationParser;
+import step.core.collections.*;
 import step.core.controller.SessionResponseBuilder;
+import step.core.controller.settings.ObjectScopeHandler;
+import step.core.controller.settings.ObjectScopeRegistry;
 import step.core.deployment.WebApplicationConfigurationManager;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
@@ -53,6 +54,7 @@ import step.core.scheduler.ScheduleEntity;
 import step.expressions.ExpressionHandler;
 import step.framework.server.ServerPluginManager;
 import step.framework.server.ServiceRegistrationCallback;
+import step.framework.server.Session;
 import step.framework.server.access.AuthorizationManager;
 import step.framework.server.access.NoAuthorizationManager;
 import step.framework.server.tables.Table;
@@ -70,6 +72,7 @@ public class Controller {
 	public static final Version VERSION = new Version(3,25,0);
 
 	public static String USER_ACTIVITY_MAP_KEY = "userActivityMap";
+	public static final String USER = "user";
 	private Configuration configuration;
 	
 	private GlobalContext context;
@@ -136,6 +139,22 @@ public class Controller {
 		Collection<User> userCollection = collectionFactory.getCollection("users", User.class);
 		context.setUserAccessor(new UserAccessorImpl(userCollection));
 		tableRegistry.register("users", new Table<>(userCollection, "user-read",false));
+
+		ObjectScopeRegistry objectScopeRegistry = new ObjectScopeRegistry();
+		objectScopeRegistry.register(USER, new ObjectScopeHandler(USER) {
+			@Override
+			protected String getScopeValue(Session<?> session) {
+				AbstractUser user = session.getUser();
+				return (user != null) ? user.getSessionUsername() : null;
+			}
+
+			@Override
+			public int getPriority() {
+				return 1000;
+			}
+
+		});
+		context.put(ObjectScopeRegistry.class, objectScopeRegistry);
 		
 		//Im memory map to store last user activities
 		Map<String, Long> userActivityMap = new ConcurrentHashMap<>();
