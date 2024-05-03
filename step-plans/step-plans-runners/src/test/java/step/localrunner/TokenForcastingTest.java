@@ -21,6 +21,7 @@ package step.localrunner;
 import org.junit.Test;
 import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.CallFunction;
+import step.artefacts.FunctionGroup;
 import step.artefacts.ThreadGroup;
 import step.artefacts.handlers.functions.TokenForcastingExecutionPlugin;
 import step.artefacts.handlers.functions.TokenForecastingContext;
@@ -121,6 +122,118 @@ public class TokenForcastingTest {
 		tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableTokenPools);
 		assertEquals(10, (int) tokenForecastingContext.getTokenForecastPerPool().get("pool1"));
 		assertNull(tokenForecastingContext.getTokenForecastPerPool().get("pool2"));
+
+	}
+
+	@Test
+	public void testWithSelectionCriteria() throws Exception {
+		ThreadGroup threadGroup = new ThreadGroup();
+		threadGroup.setUsers(new DynamicValue<>("1*1", ""));
+
+		ThreadGroup threadGroup2 = new ThreadGroup();
+		threadGroup2.setUsers(new DynamicValue<>(2));
+
+		ThreadGroup threadGroup3 = new ThreadGroup();
+		threadGroup3.setUsers(new DynamicValue<>("1*3", ""));
+
+		ThreadGroup threadGroup4 = new ThreadGroup();
+		threadGroup4.setUsers(new DynamicValue<>(4));
+
+		CallFunction testKeyword = FunctionArtefacts.keyword("test");
+		testKeyword.setToken(new DynamicValue<>("{\"type\":{\"value\":\"pool3\",\"dynamic\":false}}"));
+
+		Plan otherPlan = PlanBuilder.create()
+				.startBlock(threadGroup3)
+					.add(testKeyword)
+				.endBlock().build();
+		otherPlan.addAttribute(AbstractOrganizableObject.NAME, "MyOtherPlan");
+
+		CallFunction callFunction = FunctionArtefacts.keyword("test");
+		callFunction.setToken(new DynamicValue<>("{\"type\":{\"value\":\"pool2\",\"dynamic\":false}}"));
+		Plan compositePlan = PlanBuilder.create()
+				.startBlock(threadGroup4)
+					.add(callFunction)
+				.endBlock().build();
+
+		FunctionGroup session = FunctionArtefacts.session();
+		session.setToken(new DynamicValue<>("{\"type\":{\"value\":\"pool1\",\"dynamic\":false}}"));
+		FunctionGroup session2 = FunctionArtefacts.session();
+		session2.setToken(new DynamicValue<>("{\"type\":{\"value\":\"pool2\",\"dynamic\":false}}"));
+		Plan plan = PlanBuilder.create()
+				.startBlock(BaseArtefacts.testScenario())
+					.startBlock(threadGroup)
+						.startBlock(session)
+							.add(FunctionArtefacts.keyword("test"))
+							.add(FunctionArtefacts.keyword("test"))
+						.endBlock()
+					.endBlock()
+					.startBlock(threadGroup2)
+						.startBlock(session2)
+							.add(FunctionArtefacts.keyword("test"))
+						.endBlock()
+					.endBlock()
+					.add(BaseArtefacts.callPlan(otherPlan.getId().toString()))
+					.add(FunctionArtefacts.keyword("MyComposite"))
+				.endBlock().build();
+		plan.setSubPlans(List.of(otherPlan));
+
+		CompositeFunction compositeFunction = new CompositeFunction();
+		compositeFunction.addAttribute(AbstractOrganizableObject.NAME, "MyComposite");
+		compositeFunction.setPlan(compositePlan);
+
+		MyFunction function = new MyFunction(jsonObjectInput -> new Output<>());
+		function.addAttribute(AbstractOrganizableObject.NAME, "test");
+
+		plan.setFunctions(List.of(function, compositeFunction));
+
+		// One matching token pool
+		Map<String, Map<String, String>> availableTokenPools = Map.of("pool1", Map.of("$agenttype", "default", "type", "pool1"),
+				"pool2", Map.of("$agenttype", "default", "type", "pool2"),
+				"pool3", Map.of("$agenttype", "default", "type", "pool3"));
+		TokenForecastingContext tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableTokenPools);
+		Map<String, Integer> tokenForecastPerPool = tokenForecastingContext.getTokenForecastPerPool();
+		assertEquals(1, (int) tokenForecastPerPool.get("pool1"));
+		assertEquals(6, (int) tokenForecastPerPool.get("pool2"));
+		assertEquals(3, (int) tokenForecastPerPool.get("pool3"));
+
+	}
+
+
+	@Test
+	public void testWithNestedSessions() throws Exception {
+		ThreadGroup threadGroup = new ThreadGroup();
+		threadGroup.setUsers(new DynamicValue<>("1*4", ""));
+
+		CallFunction testKeyword = FunctionArtefacts.keyword("test");
+		testKeyword.setToken(new DynamicValue<>("{\"type\":{\"value\":\"pool3\",\"dynamic\":false}}"));
+
+		FunctionGroup session = FunctionArtefacts.session();
+		session.setToken(new DynamicValue<>("{\"type\":{\"value\":\"pool2\",\"dynamic\":false}}"));
+
+		Plan plan = PlanBuilder.create()
+				.startBlock(BaseArtefacts.testCase())
+					.startBlock(threadGroup)
+						.startBlock(session)
+							.startBlock(BaseArtefacts.for_(1, 5))
+								.add(testKeyword)
+								.add(testKeyword)
+							.endBlock()
+						.endBlock()
+				.endBlock()
+				.endBlock().build();
+		MyFunction function = new MyFunction(jsonObjectInput -> new Output<>());
+		function.addAttribute(AbstractOrganizableObject.NAME, "test");
+		plan.setFunctions(List.of(function));
+
+		// One matching token pool
+		Map<String, Map<String, String>> availableTokenPools = Map.of("pool1", Map.of("$agenttype", "default", "type", "pool1"),
+				"pool2", Map.of("$agenttype", "default", "type", "pool2"),
+				"pool3", Map.of("$agenttype", "default", "type", "pool3"));
+		TokenForecastingContext tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableTokenPools);
+		Map<String, Integer> tokenForecastPerPool = tokenForecastingContext.getTokenForecastPerPool();
+		assertEquals(4, (int) tokenForecastPerPool.get("pool2"));
+		assertNull(tokenForecastingContext.getTokenForecastPerPool().get("pool1"));
+		assertNull(tokenForecastingContext.getTokenForecastPerPool().get("pool3"));
 
 	}
 

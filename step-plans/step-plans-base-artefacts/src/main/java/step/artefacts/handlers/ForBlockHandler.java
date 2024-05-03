@@ -20,6 +20,7 @@ package step.artefacts.handlers;
 
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
@@ -59,11 +60,19 @@ public class ForBlockHandler extends AbstractSessionArtefactHandler<AbstractForB
 					newVariable.put(testArtefact.getItem().get(), nextValue.getValue());
 					newVariable.put(testArtefact.getGlobalCounter().get(), rowCount);
 					newVariable.put(testArtefact.getUserItem().get(), 1);
-					
-					createReportNodeSkeletonInSession(testArtefact, node, (sessionArtefact, sessionReportNode)->{
+
+					Integer numberOfThreads = testArtefact.getThreads().get();
+					ThreadPool threadPool = context.get(ThreadPool.class);
+					Integer autoNumberOfThreads = Objects.requireNonNullElse(threadPool.getAutoNumberOfThreads(), 0);
+					if (numberOfThreads > 1 || autoNumberOfThreads > 1) {
+						createReportNodeSkeletonInSession(testArtefact, node, (sessionArtefact, sessionReportNode) -> {
+							SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
+							scheduler.createReportSkeleton_(sessionReportNode, sessionArtefact);
+						}, "Iteration " + rowCount, newVariable);
+					} else {
 						SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
-						scheduler.createReportSkeleton_(sessionReportNode, sessionArtefact);
-					}, "Iteration "+rowCount, newVariable);
+						scheduler.createReportSkeleton_(node, testArtefact);
+					}
 				} finally {
 					nextValue.commit();
 				}
