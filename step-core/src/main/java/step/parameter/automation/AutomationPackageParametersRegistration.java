@@ -20,15 +20,16 @@ package step.parameter.automation;
 
 import step.automation.packages.AutomationPackageHookRegistry;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
-import step.core.accessors.Accessor;
-import step.parameter.Parameter;
+import step.parameter.ParameterManager;
 
 public class AutomationPackageParametersRegistration {
 
-    public static void registerParametersHooks(AutomationPackageHookRegistry hookRegistry, AutomationPackageSerializationRegistry serRegistry, Accessor<Parameter> mainParameterAccessor) {
+    public static void registerParametersHooks(AutomationPackageHookRegistry hookRegistry,
+                                               AutomationPackageSerializationRegistry serRegistry,
+                                               ParameterManager parameterManager) {
         hookRegistry.register(
                 AutomationPackageParameterJsonSchema.FIELD_NAME_IN_AP,
-                new AutomationPackageParameterHook(mainParameterAccessor)
+                new AutomationPackageParameterHook(parameterManager)
         );
         serRegistry.register(AutomationPackageParameterJsonSchema.FIELD_NAME_IN_AP, AutomationPackageParameter.class);
     }

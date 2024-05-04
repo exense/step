@@ -18,14 +18,13 @@
  ******************************************************************************/
 package step.automation.packages.parameter;
 
+import step.automation.packages.AutomationPackageHookRegistry;
 import step.automation.packages.AutomationPackagePlugin;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
-import step.automation.packages.AutomationPackageHookRegistry;
 import step.core.GlobalContext;
-import step.core.accessors.Accessor;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
-import step.parameter.Parameter;
+import step.parameter.ParameterManager;
 import step.parameter.automation.AutomationPackageParametersRegistration;
 import step.plugins.parametermanager.ParameterManagerControllerPlugin;
 
@@ -37,7 +36,7 @@ public class AutomationPackageParameterPlugin extends AbstractControllerPlugin {
         AutomationPackageParametersRegistration.registerParametersHooks(
                 context.require(AutomationPackageHookRegistry.class),
                 context.require(AutomationPackageSerializationRegistry.class),
-                (Accessor<Parameter>) context.require("ParameterAccessor")
+                context.require(ParameterManager.class)
         );
     }
 

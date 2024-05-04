@@ -100,7 +100,7 @@ public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
 
 	@Override
 	public ExecutionEnginePlugin getExecutionEnginePlugin() {
-		return new ParameterManagerPlugin(parameterManager, encryptionManager);
+		return new ParameterManagerPlugin(parameterManager);
 	}
 
 	private void createScreenInputDefinitionsIfNecessary(GlobalContext context) {

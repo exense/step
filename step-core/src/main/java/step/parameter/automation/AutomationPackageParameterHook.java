@@ -23,9 +23,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.automation.packages.*;
 import step.core.accessors.AbstractOrganizableObject;
-import step.core.accessors.Accessor;
 import step.core.accessors.InMemoryAccessor;
 import step.parameter.Parameter;
+import step.parameter.ParameterManager;
 
 import java.util.List;
 import java.util.Map;
@@ -35,22 +35,22 @@ public class AutomationPackageParameterHook implements AutomationPackageHook<Par
 
     private static final Logger log = LoggerFactory.getLogger(AutomationPackageParameterHook.class);
 
-    public static final String PARAMETER_ACCESSOR_EXTENSION = "parameterAccessor";
+    public static final String PARAMETER_MANAGER_EXTENSION = "parameterManager";
 
-    private final Accessor<Parameter> mainAccessor;
+    private final ParameterManager parameterManager;
 
-    public AutomationPackageParameterHook(Accessor<Parameter> mainAccessor) {
-        this.mainAccessor = mainAccessor;
+    public AutomationPackageParameterHook(ParameterManager parameterManager) {
+        this.parameterManager = parameterManager;
     }
 
     @Override
     public void onMainAutomationPackageManagerCreate(Map<String, Object> extensions) {
-        extensions.put(PARAMETER_ACCESSOR_EXTENSION, this.mainAccessor);
+        extensions.put(PARAMETER_MANAGER_EXTENSION, this.parameterManager);
     }
 
     @Override
     public void onIsolatedAutomationPackageManagerCreate(Map<String, Object> extensions) {
-        extensions.put(PARAMETER_ACCESSOR_EXTENSION, new InMemoryAccessor<>());
+        extensions.put(PARAMETER_MANAGER_EXTENSION, ParameterManager.copy(this.parameterManager, new InMemoryAccessor<>()));
     }
 
     @Override
@@ -66,16 +66,16 @@ public class AutomationPackageParameterHook implements AutomationPackageHook<Par
         for (Parameter entity : entities) {
             // enrich with automation package id
             context.getEnricher().accept(entity);
-            getParameterAccessor(context).save(entity);
+            getParameterManager(context).getParameterAccessor().save(entity);
         }
     }
 
     @Override
     public void onDelete(AutomationPackage automationPackage, AutomationPackageContext context) {
-        List<Parameter> parameters = getParameterAccessor(context).findManyByCriteria(getAutomationPackageIdCriteria(automationPackage.getId())).collect(Collectors.toList());
+        List<Parameter> parameters = getParameterManager(context).getParameterAccessor().findManyByCriteria(getAutomationPackageIdCriteria(automationPackage.getId())).collect(Collectors.toList());
         for (Parameter parameter : parameters) {
             try {
-                getParameterAccessor(context).remove(parameter.getId());
+                getParameterManager(context).getParameterAccessor().remove(parameter.getId());
             } catch (Exception e){
                  log.error("The automation package parameter {} cannot be deleted for automation package {}.", parameter.getId(), automationPackage.getAttribute(AbstractOrganizableObject.NAME), e);
             }
@@ -90,8 +90,8 @@ public class AutomationPackageParameterHook implements AutomationPackageHook<Par
         return "customFields." + AutomationPackageEntity.AUTOMATION_PACKAGE_ID;
     }
 
-    protected Accessor<Parameter> getParameterAccessor(AutomationPackageContext context){
-        return (Accessor<Parameter>) context.getExtensions().get(PARAMETER_ACCESSOR_EXTENSION);
+    protected ParameterManager getParameterManager(AutomationPackageContext context){
+        return (ParameterManager) context.getExtensions().get(PARAMETER_MANAGER_EXTENSION);
     }
 
 }

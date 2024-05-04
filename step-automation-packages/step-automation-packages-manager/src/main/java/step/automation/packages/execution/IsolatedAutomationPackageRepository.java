@@ -32,15 +32,13 @@ import step.core.plans.PlanAccessor;
 import step.core.repositories.*;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
-import step.resources.LayeredResourceAccessor;
+import step.parameter.Parameter;
+import step.parameter.ParameterManager;
+import step.parameter.automation.AutomationPackageParameterHook;
 import step.resources.LayeredResourceManager;
-import step.resources.ResourceAccessor;
 import step.resources.ResourceManager;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class IsolatedAutomationPackageRepository extends AbstractRepository {
@@ -126,6 +124,26 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
         // import all resources from automation package to execution context by adding the layer to contextResourceManager
         // resource manager used in isolated package manager is non-permanent
         ((LayeredResourceManager) contextResourceManager).pushManager(automationPackageManager.getResourceManager(), false);
+
+        Object parameterManagerExtension = automationPackageManager.getExtensions().get(AutomationPackageParameterHook.PARAMETER_MANAGER_EXTENSION);
+        if (parameterManagerExtension != null) {
+            ParameterManager apParameterManager = (ParameterManager) parameterManagerExtension;
+
+            // automation package has it's own in-memory accessor for parsed parameters - these parameters should be merged
+            // with other parameters prepared in execution context
+            // TODO: do it in pluggable way
+            ParameterManager contextParameterManager = context.get(ParameterManager.class);
+            if (contextParameterManager != null) {
+                if (!isLayeredAccessor(contextParameterManager.getParameterAccessor())) {
+                    result.setErrors(List.of(contextParameterManager.getParameterAccessor().getClass() + " is not layered"));
+                }
+                Iterator<Parameter> iterator = apParameterManager.getParameterAccessor().getAll();
+                while (iterator.hasNext()) {
+                    Parameter next = iterator.next();
+                    contextParameterManager.getParameterAccessor().save(next);
+                }
+            }
+        }
 
         result.setSuccessful(true);
 

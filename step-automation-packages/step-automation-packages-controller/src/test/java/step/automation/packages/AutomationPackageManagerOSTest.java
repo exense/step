@@ -34,6 +34,7 @@ import step.functions.manager.FunctionManagerImpl;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionTypeRegistry;
 import step.parameter.Parameter;
+import step.parameter.ParameterManager;
 import step.parameter.ParameterScope;
 import step.parameter.automation.AutomationPackageParametersRegistration;
 import step.plugins.java.GeneralScriptFunction;
@@ -78,6 +79,7 @@ public class AutomationPackageManagerOSTest {
         this.automationPackageAccessor = new AutomationPackageAccessorImpl(new InMemoryCollection<>());
         this.functionAccessor = new FunctionAccessorImpl(new InMemoryCollection<>());
         this.parameterAccessor = new AbstractAccessor<>(new InMemoryCollection<>());
+        ParameterManager parameterManager = new ParameterManager(this.parameterAccessor, null, "groovy");
 
         FunctionTypeRegistry functionTypeRegistry = Mockito.mock(FunctionTypeRegistry.class);
 
@@ -107,7 +109,7 @@ public class AutomationPackageManagerOSTest {
         AutomationPackageHookRegistry automationPackageHookRegistry = new AutomationPackageHookRegistry();
         AutomationPackageSerializationRegistry serializationRegistry = new AutomationPackageSerializationRegistry();
         AutomationPackageSchedulerPlugin.registerSchedulerHooks(automationPackageHookRegistry, serializationRegistry, executionScheduler);
-        AutomationPackageParametersRegistration.registerParametersHooks(automationPackageHookRegistry, serializationRegistry, parameterAccessor);
+        AutomationPackageParametersRegistration.registerParametersHooks(automationPackageHookRegistry, serializationRegistry, parameterManager);
 
         this.manager = AutomationPackageManager.createMainAutomationPackageManager(
                 automationPackageAccessor,

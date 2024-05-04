@@ -339,7 +339,7 @@ public class ParameterManagerPluginTest {
 		}
 
 		public LocalParameterManagerPlugin(InMemoryAccessor<Parameter> parameterAccessor, EncryptionManager encryptionManager, ExecutionContext executionContext) {
-			super(new ParameterManager(parameterAccessor, encryptionManager, executionContext.getConfiguration()), encryptionManager);
+			super(new ParameterManager(parameterAccessor, encryptionManager, executionContext.getConfiguration()));
 		}
 		
 		

@@ -143,7 +143,15 @@ public class AutomationPackageManager {
     }
 
     /**
-     * Creates the automation package manager to be used for isolated executions (based on in-memory accessors)
+     * Creates the automation package manager for isolated (not persisted) execution. Based on in-memory accessors
+     * for plans and keywords.
+     *
+     * @param isolatedContextId    the unique id of isolated context (isolated execution)
+     * @param functionTypeRegistry the function type registry
+     * @param mainFunctionAccessor the main (persisted) accessor for keywords. it is used in read-only mode to lookup
+     *                             existing keywords and override (reuse their ids) them in in-memory layer to avoid
+     *                             keywords with duplicated names
+     * @return the automation manager with in-memory accessors for plans and keywords
      */
     public static AutomationPackageManager createIsolatedAutomationPackageManager(ObjectId isolatedContextId,
                                                                                   FunctionTypeRegistry functionTypeRegistry,
@@ -680,6 +688,10 @@ public class AutomationPackageManager {
 
     public ResourceManager getResourceManager() {
         return resourceManager;
+    }
+
+    public Map<String, Object> getExtensions() {
+        return extensions;
     }
 
     public void cleanup() {

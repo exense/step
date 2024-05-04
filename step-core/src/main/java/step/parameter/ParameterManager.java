@@ -48,12 +48,19 @@ public class ParameterManager {
 	private EncryptionManager encryptionManager;
 
 	private String defaultScriptEngine;
-	
+
 	public ParameterManager(Accessor<Parameter> parameterAccessor, EncryptionManager encryptionManager, Configuration configuration) {
-		super();
+		this(parameterAccessor, encryptionManager, configuration.getProperty("tec.activator.scriptEngine", Activator.DEFAULT_SCRIPT_ENGINE));
+	}
+
+	public ParameterManager(Accessor<Parameter> parameterAccessor, EncryptionManager encryptionManager, String defaultScriptEngine) {
 		this.parameterAccessor = parameterAccessor;
 		this.encryptionManager = encryptionManager;
-		this.defaultScriptEngine = configuration.getProperty("tec.activator.scriptEngine", Activator.DEFAULT_SCRIPT_ENGINE);
+		this.defaultScriptEngine = defaultScriptEngine;
+	}
+
+	public static ParameterManager copy(ParameterManager from, Accessor<Parameter> parameterAccessor){
+		return new ParameterManager(parameterAccessor, from.encryptionManager, from.defaultScriptEngine);
 	}
 
 	public Map<String, String> getAllParameterValues(Map<String, Object> contextBindings, ObjectPredicate objectPredicate) {
@@ -139,4 +146,11 @@ public class ParameterManager {
 		return defaultScriptEngine;
 	}
 
+	public Accessor<Parameter> getParameterAccessor() {
+		return parameterAccessor;
+	}
+
+	public EncryptionManager getEncryptionManager() {
+		return encryptionManager;
+	}
 }

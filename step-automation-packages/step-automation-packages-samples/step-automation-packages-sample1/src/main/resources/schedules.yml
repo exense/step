@@ -2,6 +2,6 @@ schedules:
   - name: "firstSchedule"
     cron: "0 15 10 ? * *"
     cronExclusions:
-      - "*/5 * * * *"
-      - "0 * * * *"
+      - "*/5 * * * * ?"
+      - "0 * * * * ?"
     planName: "Test Plan"

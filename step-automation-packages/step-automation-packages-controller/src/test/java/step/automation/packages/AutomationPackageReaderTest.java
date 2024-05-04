@@ -14,7 +14,7 @@ import step.core.plans.Plan;
 import step.core.scheduler.ExecutionTaskAccessor;
 import step.core.scheduler.automation.AutomationPackageSchedule;
 import step.core.scheduler.automation.AutomationPackageScheduleRegistration;
-import step.parameter.ParameterAccessor;
+import step.parameter.ParameterManager;
 import step.parameter.ParameterScope;
 import step.parameter.automation.AutomationPackageParameter;
 import step.parameter.automation.AutomationPackageParameterJsonSchema;
@@ -47,7 +47,7 @@ public class AutomationPackageReaderTest {
         hookRegistry.register(AutomationPackageSchedule.FIELD_NAME_IN_AP, new ExecutionTaskParameterWithoutSchedulerHook(Mockito.mock(ExecutionTaskAccessor.class)));
 
         // accessor is not required in this test - we only read the yaml and don't store the result anywhere
-        AutomationPackageParametersRegistration.registerParametersHooks(hookRegistry, serializationRegistry, Mockito.mock(ParameterAccessor.class));
+        AutomationPackageParametersRegistration.registerParametersHooks(hookRegistry, serializationRegistry, Mockito.mock(ParameterManager.class));
 
         this.reader = new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, hookRegistry, serializationRegistry);
     }
