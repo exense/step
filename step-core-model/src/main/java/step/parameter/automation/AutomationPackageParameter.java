@@ -37,7 +37,7 @@ public class AutomationPackageParameter extends AbstractYamlModel {
 
     protected Integer priority;
     protected Boolean protectedValue = false;
-    protected ParameterScope scope;
+    protected ParameterScope scope = ParameterScope.GLOBAL;
     protected String scopeEntity;
 
     public Parameter toParameter() {

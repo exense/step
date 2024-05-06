@@ -5,7 +5,7 @@ parameters:
     activationScript: abc
     priority: 10
     protectedValue: true
-    scope: GLOBAL
+    scope: APPLICATION
     scopeEntity: entity
   - key: mySimpleKey
     value: mySimpleValue

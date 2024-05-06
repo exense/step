@@ -32,7 +32,7 @@ import static step.automation.packages.AutomationPackageTestUtils.*;
 
 public class AutomationPackageReaderTest {
 
-    private static final String KEYWORD_SCHEMA_FROM_SAMPLE = "{ \"properties\": { "
+    private static final String KEYWORD_SCHEMA_FROM_SAMPLE = "{\"type\":\"object\", \"properties\": { "
             + "\"myInput\": {\"type\": \"string\", \"default\":\"defaultValueString\"}"
             + "}, \"required\" : []}";
 
@@ -104,11 +104,12 @@ public class AutomationPackageReaderTest {
         assertEquals("abc", parameter.getActivationScript());
         assertEquals((Integer) 10, parameter.getPriority());
         assertEquals(true, parameter.getProtectedValue());
-        assertEquals(ParameterScope.GLOBAL, parameter.getScope());
+        assertEquals(ParameterScope.APPLICATION, parameter.getScope());
         assertEquals("entity", parameter.getScopeEntity());
         parameter = parameters.get(1);
         assertEquals("mySimpleKey", parameter.getKey());
         assertEquals("mySimpleValue", parameter.getValue());
+        assertEquals(ParameterScope.GLOBAL, parameter.getScope()); // global is default value
         assertEquals(false, parameter.getProtectedValue());
     }
 

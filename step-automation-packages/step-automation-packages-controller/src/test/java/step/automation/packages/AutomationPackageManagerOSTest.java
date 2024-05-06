@@ -316,6 +316,24 @@ public class AutomationPackageManagerOSTest {
             Assert.assertTrue(r.storedTask.isActive());
             Assert.assertEquals("local", r.storedTask.getExecutionsParameters().getRepositoryObject().getRepositoryID());
             Assert.assertEquals(planFromDescriptor.getId().toHexString(), r.storedTask.getExecutionsParameters().getRepositoryObject().getRepositoryParameters().get("planid"));
+
+            List<Parameter> allParameters = parameterAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
+            Assert.assertEquals(2, allParameters.size());
+            Parameter parameter = allParameters.get(0);
+            assertEquals("myKey", parameter.getKey());
+            assertEquals("myValue", parameter.getValue());
+            assertEquals("some description", parameter.getDescription());
+            assertEquals("abc", parameter.getActivationExpression().getScript());
+            assertNull(parameter.getActivationExpression().getScriptEngine());
+            assertEquals((Integer) 10, parameter.getPriority());
+            assertEquals(true, parameter.getProtectedValue());
+            assertEquals(ParameterScope.APPLICATION, parameter.getScope());
+            assertEquals("entity", parameter.getScopeEntity());
+
+            parameter = allParameters.get(1);
+            assertEquals("mySimpleKey", parameter.getKey());
+            assertEquals("mySimpleValue", parameter.getValue());
+            assertEquals(ParameterScope.GLOBAL, parameter.getScope()); // global by default
         }
         return r;
     }
