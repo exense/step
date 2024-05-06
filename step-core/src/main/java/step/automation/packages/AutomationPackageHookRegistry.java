@@ -1,5 +1,8 @@
 package step.automation.packages;
 
+import step.core.AbstractStepContext;
+import step.core.repositories.ImportResult;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -88,6 +91,12 @@ public class AutomationPackageHookRegistry {
     public void onLocalAutomationPackageManagerCreate(Map<String, Object> extensions) {
         for (Map.Entry<String, AutomationPackageHook<?>> hook : registry.entrySet()) {
             hook.getValue().onLocalAutomationPackageManagerCreate(extensions);
+        }
+    }
+
+    public void beforeIsolatedExecution(AutomationPackage automationPackage, AbstractStepContext executionContext, Map<String, Object> apManagerExtensions, ImportResult importResult){
+        for (Map.Entry<String, AutomationPackageHook<?>> hook : registry.entrySet()) {
+            hook.getValue().beforeIsolatedExecution(automationPackage, executionContext, apManagerExtensions, importResult);
         }
     }
 

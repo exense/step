@@ -1,6 +1,8 @@
 package step.automation.packages;
 
+import step.core.AbstractStepContext;
 import step.core.objectenricher.EnricheableObject;
+import step.core.repositories.ImportResult;
 
 import java.util.List;
 import java.util.Map;
@@ -37,7 +39,7 @@ public interface AutomationPackageHook<T> {
                                   AutomationPackage oldPackage,
                                   AutomationPackageStaging targetStaging) {
         // by default, we simply put the objects to staging
-        targetStaging.getAdditionalObjects().put(fieldName, (List<Object>) objects);
+        targetStaging.getAdditionalObjects().put(fieldName, objects);
     }
 
     /**
@@ -57,4 +59,10 @@ public interface AutomationPackageHook<T> {
     default void onDelete(AutomationPackage automationPackage, AutomationPackageContext context) {
     }
 
+    /**
+     * Prepare execution context before isolated execution
+     */
+    default void beforeIsolatedExecution(AutomationPackage automationPackage, AbstractStepContext executionContext, Map<String, Object> apManagerExtensions, ImportResult importResult){
+
+    }
 }

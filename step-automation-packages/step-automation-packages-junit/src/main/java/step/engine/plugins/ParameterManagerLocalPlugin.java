@@ -48,6 +48,7 @@ public class ParameterManagerLocalPlugin extends ParameterManagerPlugin {
 
         Accessor<Parameter> parameterAccessor = new AbstractAccessor<>(new InMemoryCollection<>());
         EncryptionManager encryptionManager = executionEngineContext.get(EncryptionManager.class);
+
         // TODO: default script engine + encryption manager
         ParameterManager parameterManager = new ParameterManager(parameterAccessor, encryptionManager, "groovy");
         executionEngineContext.put(ParameterManager.class, parameterManager);

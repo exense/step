@@ -22,12 +22,17 @@ import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.automation.packages.*;
+import step.core.AbstractStepContext;
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.accessors.Accessor;
 import step.core.accessors.InMemoryAccessor;
+import step.core.accessors.LayeredAccessor;
 import step.core.encryption.EncryptionManagerException;
+import step.core.repositories.ImportResult;
 import step.parameter.Parameter;
 import step.parameter.ParameterManager;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -68,24 +73,49 @@ public class AutomationPackageParameterHook implements AutomationPackageHook<Par
             // enrich with automation package id
             context.getEnricher().accept(entity);
             try {
-                getParameterManager(context).encryptParameterValueIfEncryptionManagerAvailable(entity);
+                getParameterManager(context.getExtensions()).encryptParameterValueIfEncryptionManagerAvailable(entity);
             } catch (EncryptionManagerException e) {
                 log.error("The automation package parameter {} cannot be encrypted for automation package {}.", entity.getKey(), context.getAutomationPackageArchive().getOriginalFileName(), e);
             }
-            getParameterManager(context).getParameterAccessor().save(entity);
+            getParameterManager(context.getExtensions()).getParameterAccessor().save(entity);
         }
     }
 
     @Override
     public void onDelete(AutomationPackage automationPackage, AutomationPackageContext context) {
-        List<Parameter> parameters = getParameterManager(context).getParameterAccessor().findManyByCriteria(getAutomationPackageIdCriteria(automationPackage.getId())).collect(Collectors.toList());
+        List<Parameter> parameters = getParameterManager(context.getExtensions()).getParameterAccessor().findManyByCriteria(getAutomationPackageIdCriteria(automationPackage.getId())).collect(Collectors.toList());
         for (Parameter parameter : parameters) {
             try {
-                getParameterManager(context).getParameterAccessor().remove(parameter.getId());
+                getParameterManager(context.getExtensions()).getParameterAccessor().remove(parameter.getId());
             } catch (Exception e){
                  log.error("The automation package parameter {} cannot be deleted for automation package {}.", parameter.getKey(), automationPackage.getAttribute(AbstractOrganizableObject.NAME), e);
             }
         }
+    }
+
+    @Override
+    public void beforeIsolatedExecution(AutomationPackage automationPackage, AbstractStepContext executionContext, Map<String, Object> apManagerExtensions, ImportResult importResult) {
+        ParameterManager apParameterManager = getParameterManager(apManagerExtensions);
+        if (apParameterManager != null) {
+
+            // automation package has its own in-memory accessor for parsed parameters - these parameters should be merged
+            // with other parameters prepared in execution context
+            ParameterManager contextParameterManager = executionContext.get(ParameterManager.class);
+            if (contextParameterManager != null) {
+                if (!isLayeredAccessor(contextParameterManager.getParameterAccessor())) {
+                    importResult.setErrors(List.of(contextParameterManager.getParameterAccessor().getClass() + " is not layered"));
+                }
+                Iterator<Parameter> iterator = apParameterManager.getParameterAccessor().getAll();
+                while (iterator.hasNext()) {
+                    Parameter next = iterator.next();
+                    contextParameterManager.getParameterAccessor().save(next);
+                }
+            }
+        }
+    }
+
+    private boolean isLayeredAccessor(Accessor<?> accessor) {
+        return accessor instanceof LayeredAccessor;
     }
 
     protected Map<String, String> getAutomationPackageIdCriteria(ObjectId automationPackageId) {
@@ -96,8 +126,8 @@ public class AutomationPackageParameterHook implements AutomationPackageHook<Par
         return "customFields." + AutomationPackageEntity.AUTOMATION_PACKAGE_ID;
     }
 
-    protected ParameterManager getParameterManager(AutomationPackageContext context){
-        return (ParameterManager) context.getExtensions().get(PARAMETER_MANAGER_EXTENSION);
+    protected ParameterManager getParameterManager(Map<String, Object> extensions){
+        return (ParameterManager) extensions.get(PARAMETER_MANAGER_EXTENSION);
     }
 
 }
