@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import step.automation.packages.*;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.InMemoryAccessor;
+import step.core.encryption.EncryptionManagerException;
 import step.parameter.Parameter;
 import step.parameter.ParameterManager;
 
@@ -66,6 +67,11 @@ public class AutomationPackageParameterHook implements AutomationPackageHook<Par
         for (Parameter entity : entities) {
             // enrich with automation package id
             context.getEnricher().accept(entity);
+            try {
+                getParameterManager(context).encryptParameterValueIfEncryptionManagerAvailable(entity);
+            } catch (EncryptionManagerException e) {
+                log.error("The automation package parameter {} cannot be encrypted for automation package {}.", entity.getKey(), context.getAutomationPackageArchive().getOriginalFileName(), e);
+            }
             getParameterManager(context).getParameterAccessor().save(entity);
         }
     }
@@ -77,7 +83,7 @@ public class AutomationPackageParameterHook implements AutomationPackageHook<Par
             try {
                 getParameterManager(context).getParameterAccessor().remove(parameter.getId());
             } catch (Exception e){
-                 log.error("The automation package parameter {} cannot be deleted for automation package {}.", parameter.getId(), automationPackage.getAttribute(AbstractOrganizableObject.NAME), e);
+                 log.error("The automation package parameter {} cannot be deleted for automation package {}.", parameter.getKey(), automationPackage.getAttribute(AbstractOrganizableObject.NAME), e);
             }
         }
     }

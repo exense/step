@@ -96,7 +96,7 @@ public class AutomationPackageReaderTest {
         // 1 parameter
         List<AutomationPackageParameter> parameters = (List<AutomationPackageParameter>) automationPackageContent.getAdditionalData().get(AutomationPackageParameterJsonSchema.FIELD_NAME_IN_AP);
         assertNotNull(parameters);
-        assertEquals(1, parameters.size());
+        assertEquals(2, parameters.size());
         AutomationPackageParameter parameter = parameters.get(0);
         assertEquals("myKey", parameter.getKey());
         assertEquals("myValue", parameter.getValue());
@@ -106,6 +106,10 @@ public class AutomationPackageReaderTest {
         assertEquals(true, parameter.getProtectedValue());
         assertEquals(ParameterScope.GLOBAL, parameter.getScope());
         assertEquals("entity", parameter.getScopeEntity());
+        parameter = parameters.get(1);
+        assertEquals("mySimpleKey", parameter.getKey());
+        assertEquals("mySimpleValue", parameter.getValue());
+        assertEquals(false, parameter.getProtectedValue());
     }
 
 }

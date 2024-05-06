@@ -312,7 +312,7 @@ public class AutomationPackageManagerOSTest {
             Assert.assertEquals(SCHEDULE_1, r.storedTask.getAttribute(AbstractOrganizableObject.NAME));
             Assert.assertEquals("0 15 10 ? * *", r.storedTask.getCronExpression());
             Assert.assertNotNull(r.storedTask.getCronExclusions());
-            Assert.assertEquals(List.of("*/5 * * * *", "0 * * * *"), r.storedTask.getCronExclusions().stream().map(CronExclusion::getCronExpression).collect(Collectors.toList()));
+            Assert.assertEquals(List.of("*/5 * * * * ?", "0 * * * * ?"), r.storedTask.getCronExclusions().stream().map(CronExclusion::getCronExpression).collect(Collectors.toList()));
             Assert.assertTrue(r.storedTask.isActive());
             Assert.assertEquals("local", r.storedTask.getExecutionsParameters().getRepositoryObject().getRepositoryID());
             Assert.assertEquals(planFromDescriptor.getId().toHexString(), r.storedTask.getExecutionsParameters().getRepositoryObject().getRepositoryParameters().get("planid"));
