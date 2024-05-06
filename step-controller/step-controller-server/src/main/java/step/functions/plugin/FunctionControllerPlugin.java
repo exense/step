@@ -19,9 +19,7 @@
 package step.functions.plugin;
 
 import ch.exense.commons.app.Configuration;
-import step.artefacts.handlers.DefaultFunctionRouterImpl;
 import step.artefacts.handlers.FunctionLocator;
-import step.artefacts.handlers.FunctionRouter;
 import step.artefacts.handlers.SelectorHelper;
 import step.attachments.FileResolver;
 import step.controller.grid.GridPlugin;
@@ -48,16 +46,18 @@ import step.functions.type.FunctionTypeConfiguration;
 import step.functions.type.FunctionTypeRegistry;
 import step.functions.type.FunctionTypeRegistryImpl;
 import step.grid.client.GridClient;
-import step.plugins.screentemplating.Input;
-import step.plugins.screentemplating.ScreenInput;
-import step.plugins.screentemplating.ScreenInputAccessor;
-import step.plugins.screentemplating.ScreenTemplatePlugin;
+import step.plugins.screentemplating.*;
+import step.plugins.table.settings.TableSettings;
+import step.plugins.table.settings.TableSettingsAccessor;
+import step.plugins.table.settings.TableSettingsBuilder;
+import step.plugins.table.settings.TableSettingsPlugin;
 import step.resources.ResourceManagerControllerPlugin;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
-@Plugin(dependencies= {ScreenTemplatePlugin.class, GridPlugin.class, ResourceManagerControllerPlugin.class})
+@Plugin(dependencies= {ScreenTemplatePlugin.class, TableSettingsPlugin.class, GridPlugin.class, ResourceManagerControllerPlugin.class})
 public class FunctionControllerPlugin extends AbstractControllerPlugin {
 
 	@Override
@@ -81,7 +81,6 @@ public class FunctionControllerPlugin extends AbstractControllerPlugin {
 		FunctionExecutionService functionExecutionService = new FunctionExecutionServiceImpl(gridClient, functionTypeRegistry, context.getDynamicBeanResolver());
 		
 		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));
-		FunctionRouter functionRouter = new DefaultFunctionRouterImpl(functionExecutionService, functionTypeRegistry, dynamicJsonObjectResolver);
 
 		context.put(FunctionAccessor.class, functionAccessor);
 		SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
@@ -90,11 +89,9 @@ public class FunctionControllerPlugin extends AbstractControllerPlugin {
 		entityManager.register(new FunctionEntity(functionAccessor, functionLocator, entityManager));
 		context.put(FunctionManager.class, functionManager);
 		context.put(FunctionTypeRegistry.class, functionTypeRegistry);
-		
 		context.put(FunctionEditorRegistry.class, editorRegistry);
 		context.put(FunctionExecutionService.class, functionExecutionService);
-		context.put(FunctionRouter.class, functionRouter);
-		
+
 		context.getServiceRegistrationCallback().registerService(FunctionServices.class);
 		
 		TableRegistry tableRegistry = context.get(TableRegistry.class);
@@ -104,21 +101,43 @@ public class FunctionControllerPlugin extends AbstractControllerPlugin {
 		tableRegistry.register(EntityManager.functions, new Table<>(functionCollection, "kw-read", true)
 				.withResultListFactory(()->new ArrayList<>(){}));
 	}
-	
+
 	@Override
 	public void initializeData(GlobalContext context) throws Exception {
-		createScreenInputsIfNecessary(context);
+		createScreenInputsAndTableSettingsIfNecessary(context);
 	}
 
-	protected void createScreenInputsIfNecessary(GlobalContext context) {
+	protected void createScreenInputsAndTableSettingsIfNecessary(GlobalContext context) {
 		ScreenInputAccessor screenInputAccessor = context.get(ScreenInputAccessor.class);
-		List<ScreenInput> functionTableInputs = screenInputAccessor.getScreenInputsByScreenId("functionTable");
-		functionTableInputs.forEach(i->{
-			Input input = i.getInput();
-			if(input.getId().equals("attributes.name")) {
-				input.setCustomUIComponents(List.of("functionLink"));
-				screenInputAccessor.save(i);
-			}
-		});
+		List<ScreenInput> functionTableInputs = screenInputAccessor.getScreenInputsByScreenId(ScreenTemplatePlugin.FUNCTION_SCREEN_ID);
+		// Search name input
+		Optional<ScreenInput> nameInputOrig = functionTableInputs.stream().filter(i -> i.getInput().getId().equals("attributes.name")).findFirst();
+		// Create it if not existing
+		if(nameInputOrig.isEmpty()) {
+			Input nameInput = new Input(InputType.TEXT, "attributes.name", "Name", null, null);
+			nameInput.setCustomUIComponents(List.of("functionLink"));
+			ScreenInput savedInput = screenInputAccessor.save(new ScreenInput(0, ScreenTemplatePlugin.FUNCTION_SCREEN_ID, nameInput, true));
+			//Create table settings
+			createTableSettingsIfNecessary(context, savedInput);
+		} else {
+			//Create table settings
+			createTableSettingsIfNecessary(context, nameInputOrig.get());
+		}
+	}
+
+	private void createTableSettingsIfNecessary(GlobalContext context, ScreenInput nameInput) {
+		TableSettingsAccessor tableSettingsAccessor = context.get(TableSettingsAccessor.class);
+		if (tableSettingsAccessor.findSystemTableSettings(EntityManager.functions).isEmpty()) {
+			TableSettings setting = TableSettingsBuilder.builder().withSettingId(EntityManager.functions)
+					.addColumn("bulkSelection", true)
+					.addColumn("attributes.project", true)
+					.addColumn("attributes.name", true, nameInput)
+					.addColumn("type", true)
+					.addColumn("customFields.functionPackageId", true)
+					.addColumn("automationPackage", true)
+					.addColumn("actions", true)
+					.build();
+			tableSettingsAccessor.save(setting);
+		}
 	}
 }

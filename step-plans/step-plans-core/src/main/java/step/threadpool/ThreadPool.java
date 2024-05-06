@@ -215,7 +215,7 @@ public class ThreadPool implements Closeable {
 		return !batchContextStack.get().isEmpty();
 	}
 
-	protected Integer getAutoNumberOfThreads() {
+	public Integer getAutoNumberOfThreads() {
 		Object autoNumberOfThreads = executionContext.getVariablesManager().getVariableAsString(EXECUTION_THREADS_AUTO, null);
 		if(autoNumberOfThreads != null && autoNumberOfThreads.toString().trim().length() > 0) {
 			return Integer.parseInt(autoNumberOfThreads.toString());

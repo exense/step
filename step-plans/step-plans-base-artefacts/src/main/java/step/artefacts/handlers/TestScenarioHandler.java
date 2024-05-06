@@ -18,12 +18,9 @@
  ******************************************************************************/
 package step.artefacts.handlers;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.OptionalInt;
-import java.util.function.Consumer;
-
 import step.artefacts.TestScenario;
+import step.artefacts.handlers.functions.MaxAndMultiplyingTokenForecastingContext;
+import step.artefacts.handlers.functions.TokenForecastingContext;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.handlers.AtomicReportNodeStatusComposer;
@@ -32,12 +29,28 @@ import step.threadpool.ThreadPool;
 import step.threadpool.ThreadPool.WorkerController;
 import step.threadpool.WorkerItemConsumerFactory;
 
+import java.util.Iterator;
+import java.util.List;
+import java.util.OptionalInt;
+import java.util.function.Consumer;
+
+import static step.artefacts.handlers.functions.TokenForcastingExecutionPlugin.getTokenForecastingContext;
+import static step.artefacts.handlers.functions.TokenForcastingExecutionPlugin.pushNewTokenNumberCalculationContext;
+
 public class TestScenarioHandler extends ArtefactHandler<TestScenario, ReportNode> {
 
 	@Override
 	public void createReportSkeleton_(ReportNode node, TestScenario testArtefact) {
-		for(AbstractArtefact child:getChildren(testArtefact)) {
-			delegateCreateReportSkeleton(child, node);
+		TokenForecastingContext tokenForecastingContext = getTokenForecastingContext(context);
+		MaxAndMultiplyingTokenForecastingContext newTokenForecastingContext = new MaxAndMultiplyingTokenForecastingContext(tokenForecastingContext, testArtefact.getChildren().size());
+		pushNewTokenNumberCalculationContext(context, newTokenForecastingContext);
+		try {
+			for(AbstractArtefact child:getChildren(testArtefact)) {
+				delegateCreateReportSkeleton(child, node);
+				newTokenForecastingContext.nextIteration();
+			}
+		} finally {
+			newTokenForecastingContext.end();
 		}
 	}
 
