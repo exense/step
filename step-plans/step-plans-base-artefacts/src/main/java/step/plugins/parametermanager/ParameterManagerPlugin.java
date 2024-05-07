@@ -36,6 +36,7 @@ import step.core.variables.VariableType;
 import step.core.variables.VariablesManager;
 import step.engine.execution.ExecutionManager;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
+import step.engine.plugins.BasePlugin;
 import step.functions.Function;
 import step.parameter.Parameter;
 import step.parameter.ParameterManager;
@@ -50,7 +51,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
-@Plugin(dependencies = {})
+@Plugin(dependencies = {BasePlugin.class})
 @IgnoreDuringAutoDiscovery
 public class ParameterManagerPlugin extends AbstractExecutionEnginePlugin {
 	
