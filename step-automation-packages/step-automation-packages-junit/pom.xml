@@ -28,11 +28,6 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>ch.exense.step</groupId>
-            <artifactId>step-plans-core</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>${junit.version}</version>

@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.automation.packages.yaml;
 
-import step.automation.packages.YamlModelUtils;
+import step.core.yaml.YamlModelUtils;
 import step.automation.packages.model.AbstractYamlFunction;
 
 import java.util.List;

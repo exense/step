@@ -95,7 +95,7 @@ public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
 
 	@Override
 	public ExecutionEnginePlugin getExecutionEnginePlugin() {
-		return new ParameterManagerPlugin(parameterManager, encryptionManager);
+		return new ParameterManagerPlugin(parameterManager);
 	}
 
 	public static String EXPORT_PROTECT_PARAM_WARN = "The parameter list contains protected parameter. The values of these parameters won't be exported and will have to be reset at import.";

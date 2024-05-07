@@ -21,7 +21,7 @@ package step.automation.packages.yaml.schema;
 import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObjectBuilder;
 import jakarta.json.spi.JsonProvider;
-import step.automation.packages.YamlModelUtils;
+import step.core.yaml.YamlModelUtils;
 import step.automation.packages.model.AbstractYamlFunction;
 import step.automation.packages.yaml.AutomationPackageKeywordsLookuper;
 import step.core.scanner.CachedAnnotationScanner;

@@ -5,6 +5,9 @@ plans:
         children:
           - echo:
               text: "Just echo"
+          - echo:
+              text:
+                expression: "mySimpleKey"
           - callKeyword:
               nodeName: CallMyKeyword2
               keyword: "MyKeyword2"

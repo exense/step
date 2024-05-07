@@ -197,4 +197,8 @@ public class ExecutionScheduler {
 	private void runOnRemoveExecutionTasks(String executionTaskId){
 		executionSchedulerHooks.forEach(e -> e.onRemoveExecutionTask(executionTaskId));
 	}
+
+	public ExecutionTaskAccessor getExecutionTaskAccessor() {
+		return executionTaskAccessor;
+	}
 }
