@@ -90,10 +90,12 @@ public class TableService extends AbstractStepServices {
     @Produces(MediaType.APPLICATION_JSON)
     @Secured
     public void saveTableSettings(@PathParam("tableName") String tableName, TableSettingsRequest tableSettingsRequest) {
-        //Scopes including the user scope don't need to check the rights, system-wide scope, or scopes not user specific need specific access right
+        //No scope means system-wide, if user is in scope user right is required, otherwise it is in scope project (i.e. for all user in project)
         if (tableSettingsRequest.scope.isEmpty()) {
             checkRights("table-settings-system-write");
-        } else if (!tableSettingsRequest.scope.contains(USER)) {
+        } else if (tableSettingsRequest.scope.contains(USER)) {
+            checkRights("table-settings-user-write");
+        } else {
             checkRights("table-settings-project-write");
         }
         tableSettingsAccessor.saveScopedObject(Map.of(SETTINGS_BASE_SCOPE_KEY, tableName), tableSettingsRequest.tableSettings, tableSettingsRequest.scope, getSession());

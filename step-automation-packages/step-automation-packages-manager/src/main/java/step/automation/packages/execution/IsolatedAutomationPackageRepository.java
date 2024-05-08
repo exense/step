@@ -32,9 +32,7 @@ import step.core.plans.PlanAccessor;
 import step.core.repositories.*;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
-import step.resources.LayeredResourceAccessor;
 import step.resources.LayeredResourceManager;
-import step.resources.ResourceAccessor;
 import step.resources.ResourceManager;
 
 import java.util.ArrayList;
@@ -126,6 +124,9 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
         // import all resources from automation package to execution context by adding the layer to contextResourceManager
         // resource manager used in isolated package manager is non-permanent
         ((LayeredResourceManager) contextResourceManager).pushManager(automationPackageManager.getResourceManager(), false);
+
+        // call some hooks on import
+        automationPackageManager.runExtensionsBeforeIsolatedExecution(automationPackage, context, automationPackageManager.getExtensions(), result);
 
         result.setSuccessful(true);
 

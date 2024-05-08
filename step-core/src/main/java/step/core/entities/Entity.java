@@ -18,9 +18,16 @@
  ******************************************************************************/
 package step.core.entities;
 
+import org.bson.types.ObjectId;
 import step.core.accessors.AbstractIdentifiableObject;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.Accessor;
 import step.core.entities.EntityDependencyTreeVisitor.EntityTreeVisitorContext;
+import step.core.objectenricher.EnricheableObject;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class Entity<A extends AbstractIdentifiableObject, T extends Accessor<A>> {
 
@@ -84,5 +91,28 @@ public class Entity<A extends AbstractIdentifiableObject, T extends Accessor<A>>
 	public Object updateAtomicReference(Object atomicReference, String newEntityId,
 			EntityTreeVisitorContext visitorContext) {
 		return null;
+	}
+
+	public static  <T extends AbstractOrganizableObject & EnricheableObject> void reuseOldIds(List<T> entities, List<T> oldEntities) {
+		Map<String, ObjectId> nameToIdMap = createNameToIdMap(oldEntities);
+
+		for (T e : entities) {
+			// keep old id
+			ObjectId oldId = nameToIdMap.get(e.getAttribute(AbstractOrganizableObject.NAME));
+			if (oldId != null) {
+				e.setId(oldId);
+			}
+		}
+	}
+
+	private static Map<String, ObjectId> createNameToIdMap(List<? extends AbstractOrganizableObject> objects) {
+		Map<String, ObjectId> nameToIdMap = new HashMap<>();
+		for (AbstractOrganizableObject o : objects) {
+			String name = o.getAttribute(AbstractOrganizableObject.NAME);
+			if (name != null) {
+				nameToIdMap.put(name, o.getId());
+			}
+		}
+		return nameToIdMap;
 	}
 }

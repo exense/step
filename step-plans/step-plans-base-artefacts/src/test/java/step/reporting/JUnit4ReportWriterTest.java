@@ -28,6 +28,7 @@ import step.artefacts.ForBlock;
 import step.artefacts.Sequence;
 import step.artefacts.TestCase;
 import step.artefacts.TestSet;
+import step.artefacts.handlers.functions.TokenForcastingExecutionPlugin;
 import step.core.artefacts.CheckArtefact;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionEngine;
@@ -80,7 +81,7 @@ public class JUnit4ReportWriterTest {
 		File report = new File("TEST-JUnit4ReportWriterTest-testTestset.xml");
 		report.deleteOnExit();
 
-		try (ExecutionEngine engine = ExecutionEngine.builder().withPlugin(new ThreadPoolPlugin()).withPlugin(new BaseArtefactPlugin()).build()) {
+		try (ExecutionEngine engine = ExecutionEngine.builder().withPlugin(new ThreadPoolPlugin()).withPlugin(new BaseArtefactPlugin()).withPlugin(new TokenForcastingExecutionPlugin()).build()) {
 			engine.execute(plan).writeReport(new JUnit4ReportWriter(), report);
 		}
 
@@ -110,7 +111,7 @@ public class JUnit4ReportWriterTest {
 		File report = new File("TEST-JUnit4ReportWriterTest-testSimpleSequence.xml");
 		report.deleteOnExit();
 
-		try (ExecutionEngine engine = ExecutionEngine.builder().withPlugin(new BaseArtefactPlugin()).build()) {
+		try (ExecutionEngine engine = ExecutionEngine.builder().withPlugin(new BaseArtefactPlugin()).withPlugin(new TokenForcastingExecutionPlugin()).build()) {
 			engine.execute(plan).writeReport(new JUnit4ReportWriter(), report);
 		}
 

@@ -42,11 +42,6 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>ch.exense.step</groupId>
-			<artifactId>step-plans-base-artefacts</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-		<dependency>
 			<groupId>com.thoughtworks.xstream</groupId>
 			<artifactId>xstream</artifactId>
 			<version>1.4.19</version>

@@ -1882,6 +1882,36 @@
         }
       },
       "additionalProperties" : false
+    },
+    "StepParameterDef" : {
+      "type" : "object",
+      "properties" : {
+        "scopeEntity" : {
+          "type" : "string"
+        },
+        "scope" : {
+          "enum" : [ "GLOBAL", "APPLICATION", "FUNCTION" ]
+        },
+        "protectedValue" : {
+          "type" : "boolean"
+        },
+        "priority" : {
+          "type" : "number"
+        },
+        "activationScript" : {
+          "type" : "string"
+        },
+        "description" : {
+          "type" : "string"
+        },
+        "value" : {
+          "type" : "string"
+        },
+        "key" : {
+          "type" : "string"
+        }
+      },
+      "additionalProperties" : false
     }
   },
   "properties" : {
@@ -1929,8 +1959,14 @@
       "items" : {
         "$ref" : "#/$defs/ScheduleDef"
       }
+    },
+    "parameters" : {
+      "type" : "array",
+      "items" : {
+        "$ref" : "#/$defs/StepParameterDef"
+      }
     }
   },
   "required" : [ ],
-  "additionalProperties" : false
+  "additionalProperties" : true
 }

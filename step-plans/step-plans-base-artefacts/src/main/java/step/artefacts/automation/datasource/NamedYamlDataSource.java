@@ -19,7 +19,7 @@
 package step.artefacts.automation.datasource;
 
 import jakarta.json.*;
-import step.automation.packages.YamlModelUtils;
+import step.core.yaml.YamlModelUtils;
 import step.core.yaml.schema.YamlJsonSchemaHelper;
 import step.handlers.javahandler.jsonschema.FieldMetadata;
 import step.handlers.javahandler.jsonschema.JsonSchemaCreator;
