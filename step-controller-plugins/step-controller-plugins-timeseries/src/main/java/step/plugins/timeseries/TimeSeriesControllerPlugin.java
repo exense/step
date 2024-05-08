@@ -2,6 +2,7 @@ package step.plugins.timeseries;
 
 import ch.exense.commons.app.Configuration;
 import step.core.GlobalContext;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.collections.Collection;
 import step.core.collections.CollectionFactory;
 import step.core.collections.IndexField;
@@ -96,7 +97,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 		boolean legacyDashboardExists = dashboardAccessor.findLegacyDashboards().findFirst().isPresent();
 		if (!legacyDashboardExists) {
 			DashboardView dashboard = new DashboardView();
-			dashboard.setName("Performance Dashboard");
+			dashboard.addAttribute(AbstractOrganizableObject.NAME, "Performance Dashboard");
 			dashboard.setDescription("Default dashboard displaying performance of all executions");
 			dashboard.getMetadata().put("isLegacy", true);
 			dashboard.getMetadata().put("link", "analytics");
