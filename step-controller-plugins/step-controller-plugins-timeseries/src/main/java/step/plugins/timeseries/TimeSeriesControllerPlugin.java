@@ -188,6 +188,14 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 						.setDefaultGroupingAttributes(Arrays.asList(nameAttribute.getName()))
 						.setUnit("ms")
 						.setDefaultAggregation(MetricAggregation.AVG)
+						.setRenderingSettings(new MetricRenderingSettings()),
+				new MetricType()
+						.setName(THREAD_GROUP)
+						.setDisplayName("Thread group")
+						.setAttributes(Arrays.asList(typeAttribute, nameAttribute, taskAttribute, executionAttribute, planAttribute))
+						.setDefaultGroupingAttributes(Arrays.asList(nameAttribute.getName()))
+						.setUnit("1")
+						.setDefaultAggregation(MetricAggregation.SUM)
 						.setRenderingSettings(new MetricRenderingSettings())
 		);
 		metrics.forEach(m -> {
