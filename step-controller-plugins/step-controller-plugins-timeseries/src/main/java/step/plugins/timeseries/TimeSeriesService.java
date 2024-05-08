@@ -51,7 +51,7 @@ public class TimeSeriesService extends AbstractStepServices {
         ExecutionAccessor executionAccessor = context.getExecutionAccessor();
         int resolution = configuration.getPropertyAsInteger(RESOLUTION_PERIOD_PROPERTY, 1000);
         int fieldsSamplingLimit = configuration.getPropertyAsInteger(TIME_SERIES_SAMPLING_LIMIT, 1000);
-        maxNumberOfSeries = configuration.getPropertyAsInteger(TIME_SERIES_MAX_NUMBER_OF_SERIES, 5000);
+        maxNumberOfSeries = configuration.getPropertyAsInteger(TIME_SERIES_MAX_NUMBER_OF_SERIES, 1000);
         this.handler = new TimeSeriesHandler(resolution, timeSeriesAttributes, measurementCollection, executionAccessor, timeSeries, aggregationPipeline, asyncTaskManager, fieldsSamplingLimit);
     }
 
@@ -61,10 +61,7 @@ public class TimeSeriesService extends AbstractStepServices {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public TimeSeriesAPIResponse getTimeSeries(@NotNull FetchBucketsRequest request) {
-        enrichRequestFilter(request);
-        if (request.getMaxNumberOfSeries() <= 0) {
-            request.setMaxNumberOfSeries(maxNumberOfSeries);
-        }
+        enrichRequest(request);
         return handler.getTimeSeries(request);
     }
     
@@ -75,12 +72,15 @@ public class TimeSeriesService extends AbstractStepServices {
     @Produces(MediaType.APPLICATION_JSON)
     // TODO this method should be renamed as it doesn't return measurements but a timeseries
     public TimeSeriesAPIResponse getMeasurements(@NotNull FetchBucketsRequest request) {
-        enrichRequestFilter(request);
+        enrichRequest(request);
         return handler.getOrBuildTimeSeries(request);
     }
 
-    private void enrichRequestFilter(FetchBucketsRequest request) {
+    private void enrichRequest(FetchBucketsRequest request) {
         request.setOqlFilter(enrichOqlFilter(request.getOqlFilter()));
+        if (request.getMaxNumberOfSeries() <= 0) {
+            request.setMaxNumberOfSeries(maxNumberOfSeries);
+        }
     }
 
     private String enrichOqlFilter(String oqlFilter) {
