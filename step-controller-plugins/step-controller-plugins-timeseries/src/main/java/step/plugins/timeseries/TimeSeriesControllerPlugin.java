@@ -195,7 +195,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 						.setAttributes(Arrays.asList(typeAttribute, nameAttribute, taskAttribute, executionAttribute, planAttribute))
 						.setDefaultGroupingAttributes(Arrays.asList(nameAttribute.getName()))
 						.setUnit("1")
-						.setDefaultAggregation(MetricAggregation.SUM)
+						.setDefaultAggregation(MetricAggregation.MAX)
 						.setRenderingSettings(new MetricRenderingSettings())
 		);
 		metrics.forEach(m -> {
