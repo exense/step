@@ -18,21 +18,14 @@
  ******************************************************************************/
 package step.core.scheduler;
 
-import step.automation.packages.AutomationPackage;
-import step.automation.packages.AutomationPackageManager;
-import step.automation.packages.hooks.AutomationPackageHookRegistry;
-import step.automation.packages.yaml.deserialization.AutomationPackageSerializationRegistry;
-import step.plans.parser.yaml.automation.serialization.AutomationPackageSchedulesRegistration;
 import step.core.GlobalContext;
 import step.core.collections.Collection;
 import step.core.controller.ControllerSettingAccessor;
 import step.core.controller.ControllerSettingPlugin;
 import step.core.deployment.ObjectHookControllerPlugin;
 import step.core.entities.EntityManager;
-import step.core.objectenricher.ObjectEnricher;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
-import step.plans.parser.yaml.automation.schema.AutomationPackageSchedulesJsonSchema;
 import step.framework.server.tables.Table;
 import step.framework.server.tables.TableRegistry;
 import step.plugins.screentemplating.*;
@@ -61,7 +54,6 @@ public class SchedulerPlugin extends AbstractControllerPlugin {
 
 	@Override
 	public void initializeData(GlobalContext context) throws Exception {
-		createScreenInputDefinitionsIfNecessary(context);
 		createSchedulerSettingsIfNecessary(context);
 	}
 
@@ -69,40 +61,6 @@ public class SchedulerPlugin extends AbstractControllerPlugin {
 	public void afterInitializeData(GlobalContext context) throws Exception {
 		ExecutionScheduler scheduler = new ExecutionScheduler(context.require(ControllerSettingAccessor.class), context.getScheduleAccessor(), new Executor(context));
 		context.setScheduler(scheduler);
-
-		registerSchedulerHooks(context.require(AutomationPackageHookRegistry.class), context.require(AutomationPackageSerializationRegistry.class), scheduler);
-	}
-
-	public static void registerSchedulerHooks(AutomationPackageHookRegistry apRegistry, AutomationPackageSerializationRegistry serRegistry, ExecutionScheduler scheduler) {
-		apRegistry.register(AutomationPackageSchedulesJsonSchema.SCHEDULES_FIELD_NAME, new AutomationPackageSchedulerHook(scheduler));
-		AutomationPackageSchedulesRegistration.registerSerialization(serRegistry);
-	}
-
-	public static class AutomationPackageSchedulerHook extends ExecutionTaskParameterWithoutSchedulerHook {
-
-		private final ExecutionScheduler scheduler;
-
-		public AutomationPackageSchedulerHook(ExecutionScheduler scheduler) {
-			this.scheduler = scheduler;
-		}
-
-		@Override
-		public void onCreate(List<? extends ExecutiontTaskParameters> entities, ObjectEnricher enricher, AutomationPackageManager manager) {
-			for (ExecutiontTaskParameters entity : entities) {
-				//make sure the execution parameter of the schedule are enriched too (required to execute in same project
-				// as the schedule and populate event bindings
-				enricher.accept(entity.getExecutionsParameters());
-				scheduler.addExecutionTask(entity, false);
-			}
-		}
-
-		@Override
-		public void onDelete(AutomationPackage automationPackage, AutomationPackageManager manager) {
-			List<ExecutiontTaskParameters> entities = manager.getPackageSchedules(automationPackage.getId());
-			for (ExecutiontTaskParameters entity : entities) {
-				scheduler.removeExecutionTask(entity.getId().toString());
-			}
-		}
 	}
 
 	@Override
@@ -114,30 +72,4 @@ public class SchedulerPlugin extends AbstractControllerPlugin {
 		controllerSettingAccessor.createSettingIfNotExisting(ExecutionScheduler.SETTING_SCHEDULER_ENABLED, "true");
 	}
 
-	protected void createScreenInputDefinitionsIfNecessary(GlobalContext context) {
-		// Plan table
-		ScreenInputAccessor screenInputAccessor = context.get(ScreenInputAccessor.class);
-		List<ScreenInput> screenInputsByScreenId = screenInputAccessor.getScreenInputsByScreenId(ScreenTemplatePlugin.SCHEDULER_TABLE);
-		Input nameInput = new Input(InputType.TEXT, "attributes.name", "Name", null, null);
-		nameInput.setCustomUIComponents(List.of("schedulerTaskLink"));
-		AtomicBoolean inputExists = new AtomicBoolean(false);
-		// Force content of input 'attributes.name'
-		screenInputsByScreenId.forEach(i->{
-			Input input = i.getInput();
-			if(input.getId().equals("attributes.name")) {
-				i.setInput(nameInput);
-				screenInputAccessor.save(i);
-				inputExists.set(true);
-			}
-		});
-		// Create it if not existing
-		if(!inputExists.get()) {
-			screenInputAccessor.save(new ScreenInput(0, ScreenTemplatePlugin.SCHEDULER_TABLE, nameInput));
-		}
-		
-		if(screenInputsByScreenId.isEmpty()) {
-			screenInputAccessor.save(new ScreenInput(1, ScreenTemplatePlugin.SCHEDULER_TABLE,
-					new Input(InputType.TEXT, "executionsParameters.customParameters.env", "Environment", null, null)));
-		}
-	}
 }

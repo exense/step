@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.plans.parser.yaml;
 
-import step.automation.packages.YamlModelUtils;
+import step.core.yaml.YamlModelUtils;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.plans.parser.yaml.model.AbstractYamlArtefact;

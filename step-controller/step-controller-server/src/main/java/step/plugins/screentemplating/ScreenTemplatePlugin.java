@@ -31,14 +31,9 @@ import java.util.Arrays;
 @Plugin
 public class ScreenTemplatePlugin extends AbstractControllerPlugin {
 
-	public static final String EXECUTION_TABLE = "executionTable";
-	public static final String FUNCTION_TABLE = "functionTable";
+	public static final String FUNCTION_SCREEN_ID = "keyword";
 	public static final String EXECUTION_PARAMETERS = "executionParameters";
-	public static final String SCHEDULER_TABLE = "schedulerTable";
-	public static final String PARAMETER_DIALOG = "parameterDialog";
-	public static final String PARAMETER_TABLE = "parameterTable";
-	public static final String PLAN_TABLE = "planTable";
-	public static final String FUNCTION_TABLE_EXTENSIONS = "functionTableExtensions";
+	public static final String PLAN_SCREEN_ID = "plan";
 
 	protected ScreenTemplateManager screenTemplateManager;
 	protected ScreenInputAccessor screenInputAccessor;
@@ -48,13 +43,11 @@ public class ScreenTemplatePlugin extends AbstractControllerPlugin {
 		screenInputAccessor = new ScreenInputAccessorImpl(
 				context.getCollectionFactory().getCollection("screenInputs", ScreenInput.class));
 		screenTemplateManager = new ScreenTemplateManager(screenInputAccessor, context.getConfiguration());
-		FunctionTableScreenInputs functionTableScreenInputs = new FunctionTableScreenInputs(screenTemplateManager);
 
 		initializeScreenInputsIfNecessary();
 		
 		context.put(ScreenInputAccessor.class, screenInputAccessor);
 		context.put(ScreenTemplateManager.class, screenTemplateManager);
-		context.put(FunctionTableScreenInputs.class, functionTableScreenInputs);
 		context.getServiceRegistrationCallback().registerService(ScreenTemplateService.class);
 		
 		context.getEntityManager().register(
@@ -66,12 +59,7 @@ public class ScreenTemplatePlugin extends AbstractControllerPlugin {
 	}
 
 	private void initializeScreenInputsIfNecessary() {
-		if(screenInputAccessor.getScreenInputsByScreenId(FUNCTION_TABLE).isEmpty()) {
-			screenInputAccessor.save(new ScreenInput(FUNCTION_TABLE, new Input(InputType.TEXT, "attributes.name", "Name", null)));
-		}
-		if(screenInputAccessor.getScreenInputsByScreenId(EXECUTION_TABLE).isEmpty()) {
-			screenInputAccessor.save(new ScreenInput(EXECUTION_TABLE, new Input(InputType.TEXT, "executionParameters.customParameters.env", "Environment", null)));
-		}
+		//Execution parameters
 		if(screenInputAccessor.getScreenInputsByScreenId(EXECUTION_PARAMETERS).isEmpty()) {
 			screenInputAccessor.save(new ScreenInput(EXECUTION_PARAMETERS, new Input(InputType.DROPDOWN, "env", "Environment", Arrays.asList(new Option("TEST"),new Option("PROD")))));
 		}

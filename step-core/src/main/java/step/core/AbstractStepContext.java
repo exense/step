@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.core;
 
+import ch.exense.commons.io.FileHelper;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -52,9 +53,9 @@ public abstract class AbstractStepContext extends AbstractContext {
 	}
 
 	private File getContextFolderAsFile() {
-		//TODO: currently, this will create a directory relative to $CWD.
-		// We may (or may not) want to consolidate this, e.g. to use a common temporary dir.
-		String dirName =  "stepContext_" + getClass().getSimpleName() + "_" + contextId;
+		String tmpPath = System.getProperty("java.io.tmpdir");
+		tmpPath = (tmpPath.endsWith(File.separator)) ? tmpPath : tmpPath + File.separator;
+		String dirName = tmpPath + "stepContext_" + getClass().getSimpleName() + "_" + contextId;
 		return new File(dirName);
 	}
 

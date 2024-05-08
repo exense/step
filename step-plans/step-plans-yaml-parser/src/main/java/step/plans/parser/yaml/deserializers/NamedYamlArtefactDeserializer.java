@@ -28,7 +28,7 @@ import step.core.yaml.deserializers.NamedEntityYamlDeserializer;
 import step.core.yaml.deserializers.StepYamlDeserializer;
 import step.core.yaml.deserializers.StepYamlDeserializerAddOn;
 import step.plans.parser.yaml.YamlArtefactsLookuper;
-import step.plans.parser.yaml.SerializationUtils;
+import step.core.yaml.SerializationUtils;
 import step.plans.parser.yaml.model.AbstractYamlArtefact;
 import step.plans.parser.yaml.model.NamedYamlArtefact;
 import step.plans.parser.yaml.model.SimpleYamlArtefact;

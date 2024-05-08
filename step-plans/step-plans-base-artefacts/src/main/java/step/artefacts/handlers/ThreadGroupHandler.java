@@ -18,17 +18,11 @@
  ******************************************************************************/
 package step.artefacts.handlers;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.concurrent.atomic.LongAdder;
-import java.util.function.Consumer;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
-
-import step.artefacts.AfterThread;
-import step.artefacts.BeforeThread;
-import step.artefacts.Sequence;
+import step.artefacts.*;
 import step.artefacts.ThreadGroup;
+import step.artefacts.handlers.functions.MultiplyingTokenForecastingContext;
+import step.artefacts.handlers.functions.TokenForecastingContext;
 import step.artefacts.handlers.loadtesting.Pacer;
 import step.artefacts.reports.ThreadReportNode;
 import step.core.artefacts.AbstractArtefact;
@@ -41,9 +35,40 @@ import step.threadpool.ThreadPool;
 import step.threadpool.ThreadPool.WorkerController;
 import step.threadpool.WorkerItemConsumerFactory;
 
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.concurrent.atomic.LongAdder;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+
+import static step.artefacts.handlers.functions.TokenForcastingExecutionPlugin.getTokenForecastingContext;
+import static step.artefacts.handlers.functions.TokenForcastingExecutionPlugin.pushNewTokenNumberCalculationContext;
+
 public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode> {
-	
-	public void createReportSkeleton_(ReportNode node, ThreadGroup testArtefact) {		
+
+	public void createReportSkeleton_(ReportNode node, ThreadGroup artefact) {
+		Integer numberOfThreads = artefact.getUsers().get();
+
+		TokenForecastingContext tokenForecastingContext = getTokenForecastingContext(context);
+		pushNewTokenNumberCalculationContext(context, new MultiplyingTokenForecastingContext(tokenForecastingContext, numberOfThreads));
+
+		// The skeleton phase has to be executed within a session to match the behaviour of the execution
+		// and properly estimate the required number of tokens
+		createReportNodeSkeletonInSession(artefact, node, (sessionArtefact, sessionReportNode) -> {
+			SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
+			scheduler.createReportSkeleton_(sessionReportNode, sessionArtefact);
+		});
+	}
+
+	private void createReportNodeSkeletonInSession(AbstractArtefact artefact, ReportNode node, BiConsumer<AbstractArtefact, ReportNode> consumer, String artefactName, Map<String, Object> newVariables) {
+		FunctionGroup functionGroup = createWorkArtefact(FunctionGroup.class, artefact, artefactName, true);
+		functionGroup.setConsumer(consumer);
+		delegateCreateReportSkeleton(functionGroup, node, newVariables);
+	}
+
+	private void createReportNodeSkeletonInSession(AbstractArtefact artefact, ReportNode node, BiConsumer<AbstractArtefact, ReportNode> consumer) {
+		createReportNodeSkeletonInSession(artefact, node, consumer, "", new HashMap<>());
 	}
 
 	@Override

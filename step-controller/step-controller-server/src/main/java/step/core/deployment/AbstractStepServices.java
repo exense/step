@@ -83,6 +83,19 @@ public abstract class AbstractStepServices extends AbstractServices<User> {
 		return getContext().require(AuthorizationManager.class);
 	}
 
+	protected void checkRights(String right) {
+		Session<User> session = getSession();
+		try {
+			if (!getAuthorizationManager().checkRightInContext(session, right)) {
+				User user = session.getUser();
+				throw new AuthorizationException("User " + (user == null ? "" : user.getUsername()) + " has no permission on '" + right + "'");
+			}
+		} catch (NotMemberOfProjectException ex){
+			// if user is not a member of the project, we want to return 'access denied' error
+			throw new AuthorizationException(ex.getMessage());
+		}
+	}
+
 	protected void checkRightsOnBehalfOf(String right, String userOnBehalfOf) {
 		Session<User> session = getSession();
 		try {

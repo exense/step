@@ -19,6 +19,7 @@
 package step.automation.packages.functions;
 
 import step.handlers.javahandler.AbstractKeyword;
+import step.handlers.javahandler.Input;
 import step.handlers.javahandler.Keyword;
 import step.junit.runners.annotations.Plan;
 import step.junit.runners.annotations.Plans;
@@ -26,10 +27,8 @@ import step.junit.runners.annotations.Plans;
 @Plans({"plan.plan"})
 public class MyKeywordLibraryAutopack extends AbstractKeyword {
 
-	@Keyword(schema = "{ \"properties\": { "
-			+ "\"myInput\": {\"type\": \"string\", \"default\":\"defaultValueString\"}"
-			+ "}, \"required\" : []}")
-	public void MyKeyword2(String myInput) {
+	@Keyword
+	public void MyKeyword2(@Input(name = "myInput", required = false, defaultValue = "defaultValueString") String myInput) {
 		System.out.println("MyKeyword2 called!");
 		output.add("MyKey", myInput);
 		if (properties != null) {

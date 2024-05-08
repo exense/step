@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.artefacts.automation.datasource;
 
-import step.automation.packages.YamlModelUtils;
+import step.core.yaml.YamlModelUtils;
 import step.datapool.DataPoolConfiguration;
 import step.core.yaml.YamlModel;
 

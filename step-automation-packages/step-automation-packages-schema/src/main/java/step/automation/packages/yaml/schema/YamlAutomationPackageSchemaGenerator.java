@@ -23,8 +23,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.json.JsonObjectBuilder;
 import jakarta.json.spi.JsonProvider;
+import step.parameter.automation.AutomationPackageParameterJsonSchema;
 import step.core.Version;
-import step.plans.parser.yaml.automation.schema.AutomationPackageSchedulesJsonSchema;
+import step.core.scheduler.automation.AutomationPackageScheduleJsonSchema;
+import step.automation.packages.schema.AutomationPackageJsonSchemaExtension;
 import step.core.yaml.schema.JsonSchemaExtension;
 import step.core.yaml.schema.YamlJsonSchemaHelper;
 import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
@@ -53,7 +55,8 @@ public class YamlAutomationPackageSchemaGenerator {
         this.planSchemaGenerator = new YamlPlanJsonSchemaGenerator("step", YamlPlanVersions.ACTUAL_VERSION, null);
 
         this.extensions = new ArrayList<>();
-        this.extensions.add(new AutomationPackageSchedulesJsonSchema());
+        this.extensions.add(new AutomationPackageScheduleJsonSchema());
+        this.extensions.add(new AutomationPackageParameterJsonSchema());
     }
 
     public JsonNode generateJsonSchema() throws JsonSchemaPreparationException {
@@ -71,7 +74,8 @@ public class YamlAutomationPackageSchemaGenerator {
         // add properties for top-level
         topLevelBuilder.add("properties", createMainAutomationPackageProperties());
         topLevelBuilder.add("required", jsonProvider.createArrayBuilder());
-        topLevelBuilder.add("additionalProperties", false);
+        // additional properties allowed to support extensions (for instance, in Step EE)
+        topLevelBuilder.add("additionalProperties", true);
 
         // convert jakarta objects to jackson JsonNode
         try {

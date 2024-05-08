@@ -27,6 +27,9 @@ import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.framework.server.access.AuthorizationManager;
 import step.framework.server.tables.TableRegistry;
+import step.core.controller.settings.ObjectScopeRegistry;
+import step.plugins.table.settings.TableSettings;
+import step.plugins.table.settings.TableSettingsAccessor;
 
 @Plugin(dependencies = {ObjectHookControllerPlugin.class})
 public class TablePlugin extends AbstractControllerPlugin {

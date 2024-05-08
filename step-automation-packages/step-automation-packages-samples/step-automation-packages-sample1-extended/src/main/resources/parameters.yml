@@ -1,0 +1,9 @@
+parameters:
+  - key: myKey
+    value: myValue
+    description: some description
+    activationScript: abc
+    priority: 10
+    protectedValue: true
+    scope: GLOBAL
+    scopeEntity: entity

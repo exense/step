@@ -49,7 +49,6 @@ import step.core.execution.OperationMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.execution.model.InMemoryExecutionAccessor;
 import step.core.objectenricher.ObjectHookRegistry;
-import step.core.objectenricher.ObjectPredicate;
 import step.core.objectenricher.ObjectPredicateFactory;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
@@ -64,7 +63,6 @@ import step.grid.client.AbstractGridClientImpl.AgentCommunicationException;
 import step.parameter.ParameterManager;
 import step.planbuilder.FunctionArtefacts;
 import step.plugins.parametermanager.ParameterManagerPlugin;
-import step.plugins.screentemplating.FunctionTableScreenInputs;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -73,13 +71,10 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.*;
-
-import static step.core.accessors.AbstractOrganizableObject.NAME;
 
 @Singleton
 @Path("interactive")
@@ -91,8 +86,6 @@ public class InteractiveServices extends AbstractStepServices {
 	private ExecutionEngine executionEngine;
 	private final ExecutorService executorService;
 	private PlanAccessor planAccessor;
-	private ObjectPredicateFactory objectPredicateFactory;
-	private FunctionTableScreenInputs functionTableScreenInputs;
 	private FunctionManager functionManager;
 
 	private static class InteractiveSession {
@@ -150,7 +143,6 @@ public class InteractiveServices extends AbstractStepServices {
 		planAccessor = context.getPlanAccessor();
 		ObjectHookRegistry objectHookRegistry = context.require(ObjectHookRegistry.class);
 		// the encryption manager might be null
-		EncryptionManager encryptionManager = context.get(EncryptionManager.class);
 		executionEngine = ExecutionEngine.builder().withOperationMode(OperationMode.CONTROLLER)
 				.withParentContext(context).withPluginsFromClasspath().withPlugin(new AbstractExecutionEnginePlugin() {
 
@@ -159,9 +151,7 @@ public class InteractiveServices extends AbstractStepServices {
 							ExecutionEngineContext executionEngineContext) {
 						executionEngineContext.setExecutionAccessor(new InMemoryExecutionAccessor());
 					}
-				}).withPlugin(new ParameterManagerPlugin(context.get(ParameterManager.class), encryptionManager)).withObjectHookRegistry(objectHookRegistry).build();
-		objectPredicateFactory = context.require(ObjectPredicateFactory.class);
-		functionTableScreenInputs = getContext().require(FunctionTableScreenInputs.class);
+                }).withPlugin(new ParameterManagerPlugin(context.get(ParameterManager.class))).withObjectHookRegistry(objectHookRegistry).build();
 		functionManager = getContext().get(FunctionManager.class);
 	}
 	
