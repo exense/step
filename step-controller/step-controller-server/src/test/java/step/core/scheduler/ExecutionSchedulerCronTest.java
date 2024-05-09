@@ -32,7 +32,7 @@ public class ExecutionSchedulerCronTest {
 
 	public static class TestExecutor extends Executor {
 		public TestExecutor(Scheduler scheduler) {
-			super(scheduler);
+			super(scheduler, scheduler);
 
 		}
 	}

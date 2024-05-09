@@ -82,8 +82,9 @@ public class Executor {
 	protected Executor() {
 	}
 
-	protected Executor(Scheduler scheduler) {
+	protected Executor(Scheduler scheduler, Scheduler nestedScheduler) {
 		this.scheduler = scheduler;
+		this.nestedScheduler = nestedScheduler;
 	}
 
 	private Properties getProperties() {
