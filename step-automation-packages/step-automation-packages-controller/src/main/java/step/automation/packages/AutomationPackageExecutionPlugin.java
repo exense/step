@@ -2,6 +2,7 @@ package step.automation.packages;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.execution.ExecutionContext;
 import step.core.plans.Plan;
 import step.core.plugins.IgnoreDuringAutoDiscovery;
@@ -9,6 +10,7 @@ import step.core.plugins.Plugin;
 import step.core.plugins.exceptions.PluginCriticalException;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 
+import static step.automation.packages.AutomationPackageLocks.BYPASS_AUTOMATION_PACKAGE_LOCK;
 import static step.automation.packages.AutomationPackagePlugin.AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS;
 import static step.automation.packages.AutomationPackagePlugin.AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS_DEFAULT;
 
@@ -30,19 +32,43 @@ public class AutomationPackageExecutionPlugin extends AbstractExecutionEnginePlu
     @Override
     public void executionStart(ExecutionContext context) {
         super.executionStart(context);
-        String automationPackageId = getAutomationPackageId(context);
-        if (automationPackageId != null) {
+        if (shouldLock(context)) {
+            String automationPackageId = getAutomationPackageId(context);
             try {
+                debugLog(context, "Trying to acquire read lock on automation package.");
                 boolean locked = automationPackageLocks.tryReadLock(automationPackageId);
                 if (!locked) {
-                    logger.debug("Timeout while acquiring read lock on automation package " + automationPackageId);
+                    debugLog(context, "Timeout while acquiring read lock on automation package.");
                     throw new PluginCriticalException("Timeout while acquiring lock on automation package with id " +
                             automationPackageId + ". This usually means that an update of this automation package is on-going and took more than the property " +
                             AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS + " (default " + AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS_DEFAULT + " seconds)");
                 }
-                logger.debug("Acquired read lock on automation package " + automationPackageId);
+                debugLog(context,"Acquired read lock on automation package.");
             } catch (InterruptedException e) {
                 throw new PluginCriticalException("Thread interrupted while acquiring lock on automation package with id " + automationPackageId);
+            }
+        }
+    }
+
+    private void debugLog(ExecutionContext context, String message) {
+        if (logger.isDebugEnabled()) {
+            Plan plan = context.getPlan();
+            String planName = (plan != null) ? plan.getAttribute(AbstractOrganizableObject.NAME) : "unresolved";
+            String automationPackageId = getAutomationPackageId(context);
+            logger.debug(message + " Id: " + automationPackageId + ", execution id: " +
+                    context.getExecutionId() + ",  plan: " + planName);
+        }
+    }
+
+    public boolean shouldLock(ExecutionContext context) {
+        if (getAutomationPackageId(context) == null) {
+            return false;
+        } else {
+            Object byPass = context.getExecutionParameters().getCustomField(BYPASS_AUTOMATION_PACKAGE_LOCK);
+            if (byPass == null || !(byPass instanceof Boolean)) {
+                return true;
+            } else {
+                return !(Boolean) byPass;
             }
         }
     }
@@ -54,16 +80,16 @@ public class AutomationPackageExecutionPlugin extends AbstractExecutionEnginePlu
     }
 
     @Override
-    public void afterExecutionEnd(ExecutionContext context) {
-        super.afterExecutionEnd(context);
-        String automationPackageId = getAutomationPackageId(context);
-        if (automationPackageId != null) {
+    public void executionFinally(ExecutionContext context) {
+        super.executionFinally(context);
+        if (shouldLock(context)) {
+            String automationPackageId = getAutomationPackageId(context);
             try {
                 automationPackageLocks.readUnlock(automationPackageId);
-                logger.debug("Released read lock on automation package " + automationPackageId);
+                debugLog(context, "Released read lock on automation package.");
             } catch (java.lang.IllegalMonitorStateException e) {
                 //occurs whenever the lock was not acquired in execution start due to timeout
-                logger.debug("No read lock to be released for automation package " + automationPackageId);
+                debugLog(context, "No read lock to be released for automation package.");
             }
         }
     }

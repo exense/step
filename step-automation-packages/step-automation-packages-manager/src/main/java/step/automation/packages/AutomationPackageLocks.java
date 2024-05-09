@@ -8,6 +8,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class AutomationPackageLocks {
 
+    public static final String BYPASS_AUTOMATION_PACKAGE_LOCK = "BYPASS_AUTOMATION_PACKAGE_LOCK";
+
     private final Map<String, ReadWriteLock> locksMap = new ConcurrentHashMap<>();
     private final int readLockTimeoutSeconds;
 

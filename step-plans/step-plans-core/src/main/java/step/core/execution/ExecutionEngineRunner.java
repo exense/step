@@ -37,6 +37,7 @@ import step.core.execution.model.ExecutionAccessor;
 import step.core.execution.model.ExecutionParameters;
 import step.core.execution.model.ExecutionStatus;
 import step.core.execution.model.ReportExport;
+import step.core.miscellaneous.ReportNodeAttachmentManager;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
 import step.core.plans.runner.PlanRunnerResult;
@@ -143,10 +144,26 @@ public class ExecutionEngineRunner {
 		} catch (Throwable e) {
 			logger.error("An error occurred while running test. Execution ID: " + executionId, e);
 			executionLifecycleManager.updateExecutionResult(executionContext, ReportNodeStatus.TECHNICAL_ERROR);
+			ReportNode report = executionContext.getReport();
+			ReportNodeAttachmentManager attachmentManager = new ReportNodeAttachmentManager(executionContext);
+            try {
+                report.addAttachment(attachmentManager.createAttachment(e));
+            } catch (ReportNodeAttachmentManager.AttachmentQuotaException ex) {
+                logger.info("Exception could not be attached to root report node due to attachments quota.");
+            }
+			report.addError(e.getMessage());
+			persistReportNode(report);
+
 		} finally {
 			updateStatus(ExecutionStatus.ENDED);
-			executionLifecycleManager.executionEnded();
-			postExecution(executionContext);
+			try {
+				executionLifecycleManager.executionEnded();
+			} finally {
+				//Make sure that even plugin critical exception occurs the mandatory hooks and postExecutions are performed
+				executionLifecycleManager.executionFinally();
+				postExecution(executionContext);
+			}
+
 		}
 		return result;
 	}

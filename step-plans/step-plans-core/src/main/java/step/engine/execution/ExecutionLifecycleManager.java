@@ -72,6 +72,10 @@ public class ExecutionLifecycleManager {
 	public void executionEnded() {
 		executionCallbacks.afterExecutionEnd(context);
 	}
+
+	public void executionFinally() {
+		executionCallbacks.executionFinally(context);
+	}
 	
 	public void updateStatus(ExecutionStatus newStatus) {
 		executionManager.updateStatus(context,newStatus);
