@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 
 import static step.controller.services.entities.AbstractEntityServices.CUSTOM_FIELD_LOCKED;
 import static step.plugins.timeseries.MetricsConstants.*;
+import static step.plugins.timeseries.TimeSeriesControllerPlugin.IS_GENERATED_CUSTOM_ATTRIBUTE;
 import static step.plugins.timeseries.TimeSeriesExecutionPlugin.RESPONSE_TIME;
 import static step.plugins.timeseries.TimeSeriesExecutionPlugin.THREAD_GROUP;
 
@@ -47,11 +48,10 @@ public class DashboardsGenerator {
                 .setExactMatch(exactMatch)
                 .setRemovable(false);
     }
-
+    
     public DashboardView createExecutionDashboard() {
         MetricType responseTimeMetric = getMetricByName(metricsByNames, RESPONSE_TIME);
         MetricType threadGroupMetric = getMetricByName(metricsByNames, THREAD_GROUP);
-
 
         DashboardItem tableDashlet = createTableDashlet(responseTimeMetric);
         DashboardItem responseTimeDashlet = createResponseTimeDashlet(responseTimeMetric);
@@ -63,10 +63,11 @@ public class DashboardsGenerator {
 
         DashboardView dashboard = new DashboardView();
         dashboard.addCustomField(CUSTOM_FIELD_LOCKED, true);
+        dashboard.addCustomField(IS_GENERATED_CUSTOM_ATTRIBUTE, true);
         dashboard
                 .setName(TimeSeriesControllerPlugin.EXECUTION_DASHBOARD_PREPOPULATED_NAME) // @TODO Deprecated
                 .setGrouping(List.of("name"))
-                .setDescription("Readonly dashboard used for executions display")
+                .setDescription("Readonly default dashboard used for analytics display")
                 .setTimeRange(new TimeRangeSelection().setType(TimeRangeSelectionType.RELATIVE).setRelativeSelection(new TimeRangeRelativeSelection().setTimeInMs(60000L)))
                 .setFilters(Arrays.asList(
                         emptyFilterFromAttribute(STATUS_ATTRIBUTE, TimeSeriesFilterItemType.OPTIONS, true),
@@ -87,7 +88,45 @@ public class DashboardsGenerator {
     }
 
     public DashboardView createAnalyticsDashboard() {
-        return null;
+        MetricType responseTimeMetric = getMetricByName(metricsByNames, RESPONSE_TIME);
+        MetricType threadGroupMetric = getMetricByName(metricsByNames, THREAD_GROUP);
+
+
+        DashboardItem tableDashlet = createTableDashlet(responseTimeMetric);
+        DashboardItem responseTimeDashlet = createResponseTimeDashlet(responseTimeMetric);
+        DashboardItem throughputDashlet = createThroughputDashlet(responseTimeMetric);
+
+        responseTimeDashlet.setMasterChartId(tableDashlet.getId());
+        throughputDashlet.setMasterChartId(tableDashlet.getId());
+
+
+        DashboardView dashboard = new DashboardView();
+        dashboard.addCustomField(CUSTOM_FIELD_LOCKED, true);
+        dashboard.addCustomField(IS_GENERATED_CUSTOM_ATTRIBUTE, true);
+        dashboard
+                .setName(TimeSeriesControllerPlugin.ANALYTICS_DASHBOARD_PREPOPULATED_NAME) // @TODO Deprecated
+                .setGrouping(List.of("name"))
+                .setDescription("Readonly default dashboard used for executions display")
+                .setTimeRange(new TimeRangeSelection().setType(TimeRangeSelectionType.RELATIVE).setRelativeSelection(new TimeRangeRelativeSelection().setTimeInMs(60000L * 60)))
+                .setFilters(Arrays.asList(
+                        emptyFilterFromAttribute(STATUS_ATTRIBUTE, TimeSeriesFilterItemType.OPTIONS, true),
+                        emptyFilterFromAttribute(TYPE_ATRIBUTE, TimeSeriesFilterItemType.OPTIONS, true),
+                        emptyFilterFromAttribute(NAME_ATTRIBUTE, TimeSeriesFilterItemType.FREE_TEXT, false),
+                        emptyFilterFromAttribute(EXECUTION_ATTRIBUTE, TimeSeriesFilterItemType.EXECUTION, true),
+                        emptyFilterFromAttribute(TASK_ATTRIBUTE, TimeSeriesFilterItemType.TASK, true),
+                        emptyFilterFromAttribute(PLAN_ATTRIBUTE, TimeSeriesFilterItemType.PLAN, true)
+                ))
+                .setDashlets(Arrays.asList(
+                        createSummaryDashlet(responseTimeMetric),
+                        createStatusDashlet(responseTimeMetric),
+                        responseTimeDashlet,
+                        throughputDashlet,
+                        tableDashlet,
+                        createThreadGroupDashlet(threadGroupMetric)
+                ))
+                .addAttribute("name", TimeSeriesControllerPlugin.ANALYTICS_DASHBOARD_PREPOPULATED_NAME);
+
+        return dashboard;
     }
 
 

@@ -47,6 +47,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 	public static final String PREPOPULATED_NAME_FIELD = "prepopulatedName";
 	public static final String EXECUTION_DASHBOARD_PREPOPULATED_NAME = "Execution Dashboard";
 	public static final String ANALYTICS_DASHBOARD_PREPOPULATED_NAME = "Analytics Dashboard";
+	public static final String IS_GENERATED_CUSTOM_ATTRIBUTE = "generated";
 
 	private TimeSeriesIngestionPipeline mainIngestionPipeline;
 	private TimeSeriesAggregationPipeline aggregationPipeline;
@@ -106,28 +107,30 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 		timeSeries.createIndexes(new LinkedHashSet<>(List.of(new IndexField("eId", Order.ASC, String.class))));
 		List<MetricType> metrics = getOrCreateMetricsIfNeeded(context.require(MetricTypeAccessor.class));
 
-		DashboardView existingExecutionDashboard = dashboardAccessor.findByCriteria(Map.of("attributes.name", EXECUTION_DASHBOARD_PREPOPULATED_NAME));
-		DashboardView analyticsDashboard = dashboardAccessor.findByCriteria(Map.of("attributes.name", ANALYTICS_DASHBOARD_PREPOPULATED_NAME));
+		DashboardView existingExecutionDashboard = dashboardAccessor.findByCriteria(
+				Map.of(
+						"attributes.name", EXECUTION_DASHBOARD_PREPOPULATED_NAME,
+						"customFields." + IS_GENERATED_CUSTOM_ATTRIBUTE, "true")
+		);
+		DashboardView existingAnalyticsDashboard = dashboardAccessor.findByCriteria(
+				Map.of("attributes.name", ANALYTICS_DASHBOARD_PREPOPULATED_NAME,
+						"customFields." + IS_GENERATED_CUSTOM_ATTRIBUTE, "true"));
 
 		DashboardsGenerator dashboardsGenerator = new DashboardsGenerator(metrics);
 		DashboardView newExecutionDashboard = dashboardsGenerator.createExecutionDashboard();
+		DashboardView newAnalyticsDashboard = dashboardsGenerator.createAnalyticsDashboard();
 		if (existingExecutionDashboard != null) {
 			newExecutionDashboard.setId(existingExecutionDashboard.getId());
 		}
-		dashboardAccessor.save(newExecutionDashboard);
-		
-		if (analyticsDashboard == null) {
-			analyticsDashboard = dashboardsGenerator.createAnalyticsDashboard();
-//			dashboardAccessor.save(existingExecutionDashboard);
+		if (existingAnalyticsDashboard != null) {
+			newAnalyticsDashboard.setId(existingAnalyticsDashboard.getId());
 		}
-
-		System.out.println("=============" + existingExecutionDashboard.getId());
-
+		dashboardAccessor.save(newExecutionDashboard);
+		dashboardAccessor.save(newAnalyticsDashboard);
+		
 		WebApplicationConfigurationManager configurationManager = context.require(WebApplicationConfigurationManager.class);
-		DashboardView finalExecutionDashboard = existingExecutionDashboard;
-		DashboardView finalAnalyticsDashboard = analyticsDashboard;
-		configurationManager.registerHook(s -> Map.of(PARAM_KEY_EXECUTION_DASHBOARD_ID, newExecutionDashboard.getId().toString()));
-		configurationManager.registerHook(s -> Map.of(PARAM_KEY_ANALYTICS_DASHBOARD_ID, "dashboardid2"));
+        configurationManager.registerHook(s -> Map.of(PARAM_KEY_EXECUTION_DASHBOARD_ID, newExecutionDashboard.getId().toString()));
+		configurationManager.registerHook(s -> Map.of(PARAM_KEY_ANALYTICS_DASHBOARD_ID, newAnalyticsDashboard.getId().toString()));
 		
 	}
 	
