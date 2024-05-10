@@ -12,6 +12,7 @@ public final class TimeSeriesAPIResponseBuilder {
     private Long end;
     private List<List<BucketResponse>> matrix;
     private List<BucketAttributes> matrixKeys;
+    private boolean truncated;
 
     public TimeSeriesAPIResponseBuilder withStart(long start) {
         this.start = start;
@@ -38,12 +39,18 @@ public final class TimeSeriesAPIResponseBuilder {
         return this;
     }
 
+    public TimeSeriesAPIResponseBuilder withTruncated(boolean truncated) {
+        this.truncated = truncated;
+        return this;
+    }
+
     public TimeSeriesAPIResponse build() {
         Objects.requireNonNull(start);
         Objects.requireNonNull(interval);
         Objects.requireNonNull(end);
         Objects.requireNonNull(matrix);
         Objects.requireNonNull(matrixKeys);
-        return new TimeSeriesAPIResponse(start, interval, end, matrix, matrixKeys);
+        Objects.requireNonNull(truncated);
+        return new TimeSeriesAPIResponse(start, interval, end, matrix, matrixKeys, truncated);
     }
 }
