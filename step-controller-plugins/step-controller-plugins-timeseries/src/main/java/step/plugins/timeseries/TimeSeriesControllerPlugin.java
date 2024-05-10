@@ -106,26 +106,27 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 		timeSeries.createIndexes(new LinkedHashSet<>(List.of(new IndexField("eId", Order.ASC, String.class))));
 		List<MetricType> metrics = getOrCreateMetricsIfNeeded(context.require(MetricTypeAccessor.class));
 
-		DashboardView executionDashboard = dashboardAccessor.findByCriteria(Map.of("attributes.name", EXECUTION_DASHBOARD_PREPOPULATED_NAME));
+		DashboardView existingExecutionDashboard = dashboardAccessor.findByCriteria(Map.of("attributes.name", EXECUTION_DASHBOARD_PREPOPULATED_NAME));
 		DashboardView analyticsDashboard = dashboardAccessor.findByCriteria(Map.of("attributes.name", ANALYTICS_DASHBOARD_PREPOPULATED_NAME));
-		
-		if (executionDashboard == null) {
-			DashboardsGenerator dashboardsGenerator = new DashboardsGenerator(metrics);
-			executionDashboard = dashboardsGenerator.createExecutionDashboard();
-			dashboardAccessor.save(executionDashboard);
+
+		DashboardsGenerator dashboardsGenerator = new DashboardsGenerator(metrics);
+		DashboardView newExecutionDashboard = dashboardsGenerator.createExecutionDashboard();
+		if (existingExecutionDashboard != null) {
+			newExecutionDashboard.setId(existingExecutionDashboard.getId());
 		}
+		dashboardAccessor.save(newExecutionDashboard);
+		
 		if (analyticsDashboard == null) {
-			DashboardsGenerator dashboardsGenerator = new DashboardsGenerator(metrics);
 			analyticsDashboard = dashboardsGenerator.createAnalyticsDashboard();
-//			dashboardAccessor.save(executionDashboard);
+//			dashboardAccessor.save(existingExecutionDashboard);
 		}
 
-		System.out.println("=============" + executionDashboard.getId());
+		System.out.println("=============" + existingExecutionDashboard.getId());
 
 		WebApplicationConfigurationManager configurationManager = context.require(WebApplicationConfigurationManager.class);
-		DashboardView finalExecutionDashboard = executionDashboard;
+		DashboardView finalExecutionDashboard = existingExecutionDashboard;
 		DashboardView finalAnalyticsDashboard = analyticsDashboard;
-		configurationManager.registerHook(s -> Map.of(PARAM_KEY_EXECUTION_DASHBOARD_ID, finalExecutionDashboard.getId().toString()));
+		configurationManager.registerHook(s -> Map.of(PARAM_KEY_EXECUTION_DASHBOARD_ID, newExecutionDashboard.getId().toString()));
 		configurationManager.registerHook(s -> Map.of(PARAM_KEY_ANALYTICS_DASHBOARD_ID, "dashboardid2"));
 		
 	}
