@@ -18,32 +18,28 @@
  ******************************************************************************/
 package step.client;
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.util.Map;
-import java.util.function.Supplier;
-
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.client.Invocation.Builder;
 import jakarta.ws.rs.client.WebTarget;
-import jakarta.ws.rs.core.Feature;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.NewCookie;
-import jakarta.ws.rs.core.Response;
-
+import jakarta.ws.rs.core.*;
 import org.glassfish.jersey.client.oauth2.OAuth2ClientSupport;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import step.core.auth.Credentials;
 import step.client.credentials.ControllerCredentials;
 import step.client.credentials.SyspropCredendialsBuilder;
+import step.core.auth.Credentials;
 import step.core.deployment.JacksonMapperProvider;
+
+import java.io.Closeable;
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Supplier;
 
 public class AbstractRemoteClient implements Closeable {
 
@@ -52,6 +48,8 @@ public class AbstractRemoteClient implements Closeable {
 	protected Client client;
 
 	protected Map<String, NewCookie> cookies;
+
+	protected MultivaluedMap<String, Object> headers = new MultivaluedHashMap<>();
 	
 	protected ControllerCredentials credentials;
 	
@@ -109,6 +107,9 @@ public class AbstractRemoteClient implements Closeable {
 				b.cookie(c);
 			}			
 		}
+		if(!headers.isEmpty()){
+			b.headers(headers);
+		}
 		return b;
 	}
 
@@ -164,6 +165,18 @@ public class AbstractRemoteClient implements Closeable {
 		if(client!=null) {
 			client.close();
 		}
+	}
+
+	public void addHeader(String key, Object value){
+		headers.add(key, value);
+	}
+
+	public List<Object> getHeaders(String key){
+		return headers.get(key);
+	}
+
+	public boolean removeHeader(String key){
+		return headers.remove(key) != null;
 	}
 
 	protected UnsupportedOperationException notImplemented()  {

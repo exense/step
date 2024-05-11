@@ -24,19 +24,16 @@ import org.bson.types.ObjectId;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import step.automation.packages.AutomationPackageUpdateResult;
 import step.automation.packages.AutomationPackageUpdateStatus;
 import step.automation.packages.client.AutomationPackageClientException;
 import step.automation.packages.client.RemoteAutomationPackageClientImpl;
-import step.controller.multitenancy.client.RemoteMultitenancyClientImpl;
 
 import java.io.File;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 
 public class DeployAutomationPackageMojoTest extends AbstractMojoTest {
 
@@ -45,15 +42,11 @@ public class DeployAutomationPackageMojoTest extends AbstractMojoTest {
     @Test
     public void testUpload() throws Exception {
         RemoteAutomationPackageClientImpl automationPackageClient = createRemoteAutomationPackageClientMock();
-        RemoteMultitenancyClientImpl multitenancyClientMock = createRemoteMultitenancyClientMock();
-        DeployAutomationPackageMojoTestable mojo = new DeployAutomationPackageMojoTestable(automationPackageClient, multitenancyClientMock);
+        DeployAutomationPackageMojoTestable mojo = new DeployAutomationPackageMojoTestable(automationPackageClient);
 
         // configure mojo with test parameters and mocked Maven Project
         configureMojo(mojo);
         mojo.execute();
-
-        // tenant should be chosen according to project name
-        Mockito.verify(multitenancyClientMock, Mockito.times(1)).selectTenant(Mockito.eq(TENANT_1.getName()));
 
         // attributes used to search for existing function packages
         ArgumentCaptor<File> packageFileCaptor = ArgumentCaptor.forClass(File.class);
@@ -94,30 +87,17 @@ public class DeployAutomationPackageMojoTest extends AbstractMojoTest {
         return remoteClient;
     }
 
-    private RemoteMultitenancyClientImpl createRemoteMultitenancyClientMock(){
-        RemoteMultitenancyClientImpl mock = Mockito.mock(RemoteMultitenancyClientImpl.class);
-        Mockito.when(mock.getAvailableTenants()).thenReturn(List.of(TENANT_1, TENANT_2));
-        return mock;
-    }
-
     private static class DeployAutomationPackageMojoTestable extends DeployAutomationPackageMojo {
 
         private RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock;
-        private final RemoteMultitenancyClientImpl remoteMultitenancyClientMock;
 
-        public DeployAutomationPackageMojoTestable(RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock,
-                                                   RemoteMultitenancyClientImpl remoteMultitenancyClientMock) {
+        public DeployAutomationPackageMojoTestable(RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock) {
             this.remoteAutomationPackageClientMock = remoteAutomationPackageClientMock;
-            this.remoteMultitenancyClientMock = remoteMultitenancyClientMock;
         }
 
         protected RemoteAutomationPackageClientImpl createRemoteAutomationPackageClient() {
             return remoteAutomationPackageClientMock;
         }
 
-        @Override
-        protected RemoteMultitenancyClientImpl createMultitenancyClient() {
-            return remoteMultitenancyClientMock;
-        }
     }
 }

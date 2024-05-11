@@ -31,14 +31,15 @@ import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
 import org.eclipse.aether.resolution.ArtifactResult;
+import step.client.AbstractRemoteClient;
 import step.client.accessors.RemoteAccessors;
 import step.client.collections.remote.RemoteCollectionFactory;
 import step.client.credentials.ControllerCredentials;
 import step.client.resources.RemoteResourceManager;
+import step.controller.multitenancy.Constants;
 import step.core.accessors.AbstractAccessor;
 import step.core.accessors.AbstractIdentifiableObject;
 import step.core.entities.EntityManager;
-import step.functions.packages.FunctionPackage;
 import step.functions.packages.client.LibFileReference;
 import step.resources.Resource;
 import step.resources.ResourceManager;
@@ -264,6 +265,12 @@ public abstract class AbstractStepPluginMojo extends AbstractMojo {
 		}
 		s = s + ":" + version;
 		return s;
+	}
+
+	protected void addProjectHeaderToRemoteClient(String stepProjectName, AbstractRemoteClient remoteClient) {
+		if (stepProjectName != null && !stepProjectName.isEmpty()) {
+			remoteClient.addHeader(Constants.TENANT_HEADER, stepProjectName);
+		}
 	}
 
 }
