@@ -44,10 +44,9 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 	
 	public static final String PARAM_KEY_EXECUTION_DASHBOARD_ID = "plugins.timeseries.execution.dashboard.id";
 	public static final String PARAM_KEY_ANALYTICS_DASHBOARD_ID = "plugins.timeseries.analytics.dashboard.id";
-	public static final String PREPOPULATED_NAME_FIELD = "prepopulatedName";
 	public static final String EXECUTION_DASHBOARD_PREPOPULATED_NAME = "Execution Dashboard";
 	public static final String ANALYTICS_DASHBOARD_PREPOPULATED_NAME = "Analytics Dashboard";
-	public static final String IS_GENERATED_CUSTOM_ATTRIBUTE = "generated";
+	public static final String GENERATION_NAME = "generationName";
 
 	private TimeSeriesIngestionPipeline mainIngestionPipeline;
 	private TimeSeriesAggregationPipeline aggregationPipeline;
@@ -110,11 +109,11 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 		DashboardView existingExecutionDashboard = dashboardAccessor.findByCriteria(
 				Map.of(
 						"attributes.name", EXECUTION_DASHBOARD_PREPOPULATED_NAME,
-						"customFields." + IS_GENERATED_CUSTOM_ATTRIBUTE, "true")
+						"customFields." + GENERATION_NAME, EXECUTION_DASHBOARD_PREPOPULATED_NAME)
 		);
 		DashboardView existingAnalyticsDashboard = dashboardAccessor.findByCriteria(
 				Map.of("attributes.name", ANALYTICS_DASHBOARD_PREPOPULATED_NAME,
-						"customFields." + IS_GENERATED_CUSTOM_ATTRIBUTE, "true"));
+						"customFields." + GENERATION_NAME, ANALYTICS_DASHBOARD_PREPOPULATED_NAME));
 
 		DashboardsGenerator dashboardsGenerator = new DashboardsGenerator(metrics);
 		DashboardView newExecutionDashboard = dashboardsGenerator.createExecutionDashboard();

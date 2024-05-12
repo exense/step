@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 
 import static step.controller.services.entities.AbstractEntityServices.CUSTOM_FIELD_LOCKED;
 import static step.plugins.timeseries.MetricsConstants.*;
-import static step.plugins.timeseries.TimeSeriesControllerPlugin.IS_GENERATED_CUSTOM_ATTRIBUTE;
+import static step.plugins.timeseries.TimeSeriesControllerPlugin.GENERATION_NAME;
 import static step.plugins.timeseries.TimeSeriesExecutionPlugin.RESPONSE_TIME;
 import static step.plugins.timeseries.TimeSeriesExecutionPlugin.THREAD_GROUP;
 
@@ -63,7 +63,7 @@ public class DashboardsGenerator {
 
         DashboardView dashboard = new DashboardView();
         dashboard.addCustomField(CUSTOM_FIELD_LOCKED, true);
-        dashboard.addCustomField(IS_GENERATED_CUSTOM_ATTRIBUTE, true);
+        dashboard.addCustomField(GENERATION_NAME, TimeSeriesControllerPlugin.EXECUTION_DASHBOARD_PREPOPULATED_NAME);
         dashboard
                 .setName(TimeSeriesControllerPlugin.EXECUTION_DASHBOARD_PREPOPULATED_NAME) // @TODO Deprecated
                 .setGrouping(List.of("name"))
@@ -102,7 +102,7 @@ public class DashboardsGenerator {
 
         DashboardView dashboard = new DashboardView();
         dashboard.addCustomField(CUSTOM_FIELD_LOCKED, true);
-        dashboard.addCustomField(IS_GENERATED_CUSTOM_ATTRIBUTE, true);
+        dashboard.addCustomField(GENERATION_NAME, TimeSeriesControllerPlugin.ANALYTICS_DASHBOARD_PREPOPULATED_NAME);
         dashboard
                 .setName(TimeSeriesControllerPlugin.ANALYTICS_DASHBOARD_PREPOPULATED_NAME) // @TODO Deprecated
                 .setGrouping(List.of("name"))
