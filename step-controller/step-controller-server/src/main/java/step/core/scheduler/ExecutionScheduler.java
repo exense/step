@@ -147,6 +147,10 @@ public class ExecutionScheduler {
 		return executor.execute(executionParameters);
 	}
 
+	public String executeNested(ExecutionParameters executionParameters) {
+		return executor.executeNested(executionParameters);
+	}
+
 	public String executeExecutionTask(String executionTaskID, String user) {
 		ExecutiontTaskParameters task = get(executionTaskID);
 		task.getExecutionsParameters().setUserID(user);

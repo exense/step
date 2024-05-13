@@ -102,4 +102,9 @@ public abstract class AbstractExecutionEnginePlugin extends AbstractPlugin imple
 
 	@Override
 	public void forceStopExecution(ExecutionContext context) {}
+
+	@Override
+	public void executionFinally(ExecutionContext context) {
+
+	}
 }
