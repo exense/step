@@ -65,10 +65,12 @@ public class AutomationPackageExecutionPlugin extends AbstractExecutionEnginePlu
             return false;
         } else {
             Object byPass = context.getExecutionParameters().getCustomField(BYPASS_AUTOMATION_PACKAGE_LOCK);
-            if (byPass == null || !(byPass instanceof Boolean)) {
+            if (byPass == null) {
                 return true;
-            } else {
+            } else if (byPass instanceof Boolean) {
                 return !(Boolean) byPass;
+            } else {
+                throw new RuntimeException(BYPASS_AUTOMATION_PACKAGE_LOCK + " is set in context but its value is not a boolean: " + byPass);
             }
         }
     }
