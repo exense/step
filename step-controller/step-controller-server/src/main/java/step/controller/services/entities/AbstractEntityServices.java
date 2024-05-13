@@ -140,8 +140,10 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
             String name = organizableObject.getAttribute(AbstractOrganizableObject.NAME);
             String newName = name + "_Copy";
             organizableObject.addAttribute(AbstractOrganizableObject.NAME, newName);
+            //Remove flags
+            organizableObject.getCustomFields().remove(CUSTOM_FIELD_LOCKED);
         }
-        // Save the cloned plan
+        // Save the cloned entity
         save(clonedEntity);
         return clonedEntity;
     }
