@@ -65,7 +65,6 @@ public class DashboardsGenerator {
         dashboard.addCustomField(CUSTOM_FIELD_LOCKED, true);
         dashboard.addCustomField(GENERATION_NAME, TimeSeriesControllerPlugin.EXECUTION_DASHBOARD_PREPOPULATED_NAME);
         dashboard
-                .setName(TimeSeriesControllerPlugin.EXECUTION_DASHBOARD_PREPOPULATED_NAME) // @TODO Deprecated
                 .setGrouping(List.of("name"))
                 .setDescription("Readonly default dashboard used for analytics display")
                 .setTimeRange(new TimeRangeSelection().setType(TimeRangeSelectionType.RELATIVE).setRelativeSelection(new TimeRangeRelativeSelection().setTimeInMs(60000L)))
@@ -104,7 +103,6 @@ public class DashboardsGenerator {
         dashboard.addCustomField(CUSTOM_FIELD_LOCKED, true);
         dashboard.addCustomField(GENERATION_NAME, TimeSeriesControllerPlugin.ANALYTICS_DASHBOARD_PREPOPULATED_NAME);
         dashboard
-                .setName(TimeSeriesControllerPlugin.ANALYTICS_DASHBOARD_PREPOPULATED_NAME) // @TODO Deprecated
                 .setGrouping(List.of("name"))
                 .setDescription("Readonly default dashboard used for executions display")
                 .setTimeRange(new TimeRangeSelection().setType(TimeRangeSelectionType.RELATIVE).setRelativeSelection(new TimeRangeRelativeSelection().setTimeInMs(60000L * 60)))
