@@ -116,7 +116,11 @@ public class ResourceServices extends AbstractStepServices {
 	@Path("/{id}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Resource getResource(@PathParam("id") String resourceId) throws IOException {
-		return resourceManager.getResource(resourceId);
+		try {
+			return resourceManager.getResource(resourceId);
+		} catch (ResourceMissingException e) {
+			throw new ControllerServiceException(404, e.getMessage());
+		}
 	}
 	
 	@GET

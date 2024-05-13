@@ -38,6 +38,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 	public static final String PLUGINS_TIMESERIES_FLUSH_PERIOD = "plugins.timeseries.flush.period";
 	public static final String RESOLUTION_PERIOD_PROPERTY = "plugins.timeseries.resolution.period";
 	public static final String TIME_SERIES_SAMPLING_LIMIT = "plugins.timeseries.sampling.limit";
+	public static final String TIME_SERIES_MAX_NUMBER_OF_SERIES = "plugins.timeseries.response.series.limit";
 	public static final String TIME_SERIES_COLLECTION_PROPERTY = "timeseries";
 	public static final String TIME_SERIES_ATTRIBUTES_PROPERTY = "plugins.timeseries.attributes";
 	public static final String TIME_SERIES_ATTRIBUTES_DEFAULT = EXECUTION_ID + "," + TASK_ID + "," + PLAN_ID + ",metricType,origin,name,rnStatus,project,type";
