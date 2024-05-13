@@ -140,7 +140,10 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
             String newName = name + "_Copy";
             organizableObject.addAttribute(AbstractOrganizableObject.NAME, newName);
             //Remove flags
-            organizableObject.getCustomFields().remove(CUSTOM_FIELD_LOCKED);
+            Map<String, Object> customFields = organizableObject.getCustomFields();
+            if (customFields != null) {
+                customFields.remove(CUSTOM_FIELD_LOCKED);
+            }
         }
         // Save the cloned entity
         assertEntityIsAcceptableInContext(clonedEntity);
