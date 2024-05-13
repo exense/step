@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
 
@@ -58,7 +59,7 @@ public class CSVReaderDataPoolTest extends AbstractArtefactTest {
 
 	
 	@Test
-	public void testCSVReaderDataPoolPut() throws IOException {		
+	public void testCSVReaderDataPoolPut() throws IOException, InterruptedException {
 		File tempFile = FileHelper.extractResourceToTempFile(this.getClass(), "testCSVReaderDataPoolPut.csv");
 		
 		DataSet<?> pool = getDataPool(tempFile, true);
@@ -78,6 +79,8 @@ public class CSVReaderDataPoolTest extends AbstractArtefactTest {
 				}
 			});
 		}
+		threadPool.shutdown();
+		threadPool.awaitTermination(1, TimeUnit.MINUTES);
 		pool.close();
 		
 		PlanRunnerResultAssert.assertEquals(getClass(), "testCSVReaderDataPoolPut.expected.csv", tempFile);
