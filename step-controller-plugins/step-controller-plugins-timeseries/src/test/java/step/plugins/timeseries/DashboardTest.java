@@ -3,6 +3,7 @@ package step.plugins.timeseries;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.collections.Collection;
 import step.core.collections.Filter;
 import step.core.collections.Filters;
@@ -40,7 +41,7 @@ public class DashboardTest {
 		List<DashboardView> foundDashboards = dashboardAccessor.findByIds(List.of(testDashboard.getId().toString())).collect(Collectors.toList());
 		Assert.assertEquals(1, foundDashboards.size());
 		DashboardView foundDashboard = foundDashboards.get(0);
-		Assert.assertEquals(foundDashboard.getName(), testDashboard.getName());
+		Assert.assertEquals(foundDashboard.getAttribute(AbstractOrganizableObject.NAME), testDashboard.getAttribute(AbstractOrganizableObject.NAME));
 		Assert.assertEquals(foundDashboard.getDescription(), testDashboard.getDescription());
 		Assert.assertEquals(foundDashboard.getTimeRange(), testDashboard.getTimeRange());
 		Assert.assertEquals(foundDashboard.getResolution(), testDashboard.getResolution());
@@ -53,16 +54,16 @@ public class DashboardTest {
 	
 	@Test
 	public void findLegacyDashboardTest() {
-		DashboardView legacyDashboard = new DashboardView()
-				.setName("Legacy")
-				.setMetadata(Map.of("isLegacy", true));
+		DashboardView legacyDashboard = new DashboardView();
+		legacyDashboard.addAttribute(AbstractOrganizableObject.NAME, "Legacy");
+		legacyDashboard.setMetadata(Map.of("isLegacy", true));
 		DashboardView normalDashboard = createTestDashboard();
 		legacyDashboard = dashboardAccessor.save(legacyDashboard);
 		normalDashboard = dashboardAccessor.save(normalDashboard);
 		List<DashboardView> foundDashboards = dashboardAccessor.findLegacyDashboards().collect(Collectors.toList());
 		Assert.assertEquals(1, foundDashboards.size());
 		Assert.assertEquals(legacyDashboard.getId(), foundDashboards.get(0).getId());
-		Assert.assertEquals(legacyDashboard.getName(), foundDashboards.get(0).getName());
+		Assert.assertEquals(legacyDashboard.getAttribute(AbstractOrganizableObject.NAME), foundDashboards.get(0).getAttribute(AbstractOrganizableObject.NAME));
 	}
 	
 	private void assertTimeRangeEquals(TimeRange t1, TimeRange t2) {
@@ -79,8 +80,7 @@ public class DashboardTest {
 		MetricAttribute planAttribute = new MetricAttribute().setName("planId").setDisplayName("Plan");
 		MetricAttribute nameAttribute = new MetricAttribute().setName("name").setDisplayName("Name");
 
-		return new DashboardView()
-				.setName("Initial Dashboard")
+		DashboardView dashboardView = new DashboardView()
 				.setDescription("This is a generated dashboard, for development")
 				.setTimeRange(new TimeRangeSelection()
 						.setType(TimeRangeSelectionType.ABSOLUTE)
@@ -126,9 +126,9 @@ public class DashboardTest {
 								.setName("Response times dashlet")
 								.setType(DashletType.CHART)
 								.setAttributes(Arrays.asList(nameAttribute, taskAttribute, executionAttribute, planAttribute))
-										.setMetricKey("response-time")
-										.setInheritGlobalFilters(true)
-										.setGrouping(Arrays.asList("name"))
+								.setMetricKey("response-time")
+								.setInheritGlobalFilters(true)
+								.setGrouping(Arrays.asList("name"))
 								.setChartSettings(new ChartSettings()
 										.setPrimaryAxes(new AxesSettings()
 												.setAggregation(MetricAggregation.AVG)
@@ -140,9 +140,9 @@ public class DashboardTest {
 								.setName("Executions count")
 								.setType(DashletType.CHART)
 								.setMetricKey(EXECUTIONS_COUNT)
-										.setInheritGlobalFilters(false)
-										.setGrouping(List.of())
-										.setAttributes(Arrays.asList(taskAttribute, executionAttribute, planAttribute))
+								.setInheritGlobalFilters(false)
+								.setGrouping(List.of())
+								.setAttributes(Arrays.asList(taskAttribute, executionAttribute, planAttribute))
 								.setChartSettings(new ChartSettings()
 										.setPrimaryAxes(new AxesSettings()
 												.setAggregation(MetricAggregation.SUM)
@@ -154,10 +154,10 @@ public class DashboardTest {
 								.setName("Statuses")
 								.setType(DashletType.CHART)
 								.setMetricKey(RESPONSE_TIME)
-										.setInheritGlobalFilters(false)
-										.setGrouping(List.of("rnStatus"))
-										.setReadonlyGrouping(true)
-										.setAttributes(Arrays.asList(nameAttribute, taskAttribute, executionAttribute, planAttribute))
+								.setInheritGlobalFilters(false)
+								.setGrouping(List.of("rnStatus"))
+								.setReadonlyGrouping(true)
+								.setAttributes(Arrays.asList(nameAttribute, taskAttribute, executionAttribute, planAttribute))
 								.setChartSettings(new ChartSettings()
 										.setPrimaryAxes(new AxesSettings()
 												.setAggregation(MetricAggregation.COUNT)
@@ -172,7 +172,8 @@ public class DashboardTest {
 										)
 								)
 				));
-		
+		dashboardView.addAttribute(AbstractOrganizableObject.NAME, "Initial Dashboard");
+		return dashboardView;
 	}
 
 }
