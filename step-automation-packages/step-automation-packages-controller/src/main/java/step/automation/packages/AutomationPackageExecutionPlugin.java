@@ -10,6 +10,7 @@ import step.core.plugins.Plugin;
 import step.core.plugins.exceptions.PluginCriticalException;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 
+import static step.automation.packages.AutomationPackageLocks.BYPASS_AUTOMATION_PACKAGE_LOCK_FOR_ID;
 import static step.automation.packages.AutomationPackagePlugin.AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS;
 import static step.automation.packages.AutomationPackagePlugin.AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS_DEFAULT;
 
@@ -60,7 +61,20 @@ public class AutomationPackageExecutionPlugin extends AbstractExecutionEnginePlu
     }
 
     public boolean shouldLock(ExecutionContext context) {
-        return getAutomationPackageId(context) != null;
+        String automationPackageId = getAutomationPackageId(context);
+        if (automationPackageId == null) {
+            return false;
+        } else {
+            Object byPassId = context.getExecutionParameters().getCustomField(BYPASS_AUTOMATION_PACKAGE_LOCK_FOR_ID);
+            if (byPassId == null) {
+                return true;
+            } else if (byPassId instanceof String) {
+                //Bypass lock if same automation package is already locked
+                return !automationPackageId.equals(byPassId);
+            } else {
+                throw new RuntimeException(BYPASS_AUTOMATION_PACKAGE_LOCK_FOR_ID + " is set in context but its value is not a string: " + byPassId);
+            }
+        }
     }
 
     private static String getAutomationPackageId(ExecutionContext context) {
