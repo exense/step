@@ -19,6 +19,8 @@
 package step.artefacts.handlers;
 
 import step.artefacts.TestSet;
+import step.artefacts.handlers.functions.MultiplyingTokenForecastingContext;
+import step.artefacts.handlers.functions.TokenForecastingContext;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.handlers.AtomicReportNodeStatusComposer;
@@ -33,11 +35,18 @@ import java.util.List;
 import java.util.OptionalInt;
 import java.util.function.Consumer;
 
+import static step.artefacts.handlers.functions.TokenForcastingExecutionPlugin.getTokenForecastingContext;
+import static step.artefacts.handlers.functions.TokenForcastingExecutionPlugin.pushNewTokenNumberCalculationContext;
+
 public class TestSetHandler extends ArtefactHandler<TestSet, ReportNode> {
 	
 	@Override
 	public void createReportSkeleton_(ReportNode node, TestSet testSet) {	
 		context.getExecutionManager().updateExecutionType("TestSet");
+
+		TokenForecastingContext tokenForecastingContext = getTokenForecastingContext(context);
+		pushNewTokenNumberCalculationContext(context, new MultiplyingTokenForecastingContext(tokenForecastingContext, testSet.getThreads().getOrDefault(1)));
+
 		runParallel(node, testSet, false);
 	}
 
