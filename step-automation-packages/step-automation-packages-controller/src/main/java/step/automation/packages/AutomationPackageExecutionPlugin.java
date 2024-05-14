@@ -24,6 +24,7 @@ public class AutomationPackageExecutionPlugin extends AbstractExecutionEnginePlu
 
     private static final Logger logger = LoggerFactory.getLogger(AutomationPackageExecutionPlugin.class);
     private final AutomationPackageLocks automationPackageLocks;
+    private static final String EXECUTION_CONTEXT_LOCK_ID = "EXECUTION_CONTEXT_LOCK_ID";
 
     public AutomationPackageExecutionPlugin(AutomationPackageLocks automationPackageLocks) {
         this.automationPackageLocks = automationPackageLocks;
@@ -43,6 +44,7 @@ public class AutomationPackageExecutionPlugin extends AbstractExecutionEnginePlu
                             automationPackageId + ". This usually means that an update of this automation package is on-going and took more than the property " +
                             AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS + " (default " + AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS_DEFAULT + " seconds)");
                 }
+                context.put(EXECUTION_CONTEXT_LOCK_ID, automationPackageId);
                 debugLog(context,"Acquired read lock on automation package.");
             } catch (InterruptedException e) {
                 throw new PluginCriticalException("Thread interrupted while acquiring lock on automation package with id " + automationPackageId);
@@ -86,8 +88,9 @@ public class AutomationPackageExecutionPlugin extends AbstractExecutionEnginePlu
     @Override
     public void executionFinally(ExecutionContext context) {
         super.executionFinally(context);
-        if (shouldLock(context)) {
-            String automationPackageId = getAutomationPackageId(context);
+        Object lockId = context.get(EXECUTION_CONTEXT_LOCK_ID);
+        if (lockId != null && lockId instanceof String) {
+            String automationPackageId = (String) lockId;
             try {
                 automationPackageLocks.readUnlock(automationPackageId);
                 debugLog(context, "Released read lock on automation package.");
