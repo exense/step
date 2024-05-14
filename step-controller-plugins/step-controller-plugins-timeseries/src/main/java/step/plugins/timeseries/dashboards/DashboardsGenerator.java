@@ -246,7 +246,7 @@ public class DashboardsGenerator {
                 .setAttributes(metric.getAttributes())
                 .setFilters(Collections.emptyList())
                 .setMetricKey(metric.getName())
-                .setInheritGlobalFilters(false)
+                .setInheritGlobalFilters(true)
                 .setInheritGlobalGrouping(false)
                 .setReadonlyAggregate(true)
                 .setReadonlyGrouping(true)
