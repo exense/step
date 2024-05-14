@@ -269,7 +269,7 @@ public abstract class AbstractStepPluginMojo extends AbstractMojo {
 
 	protected void addProjectHeaderToRemoteClient(String stepProjectName, AbstractRemoteClient remoteClient) {
 		if (stepProjectName != null && !stepProjectName.isEmpty()) {
-			remoteClient.addHeader(Constants.TENANT_HEADER, stepProjectName);
+			remoteClient.getHeaders().addProjectName(stepProjectName);
 		}
 	}
 

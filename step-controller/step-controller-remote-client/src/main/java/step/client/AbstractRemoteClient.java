@@ -32,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.client.credentials.ControllerCredentials;
 import step.client.credentials.SyspropCredendialsBuilder;
+import step.controller.multitenancy.Constants;
 import step.core.auth.Credentials;
 import step.core.deployment.JacksonMapperProvider;
 
@@ -49,10 +50,10 @@ public class AbstractRemoteClient implements Closeable {
 
 	protected Map<String, NewCookie> cookies;
 
-	protected MultivaluedMap<String, Object> headers = new MultivaluedHashMap<>();
+	protected AdditionalHeaders headers = new AdditionalHeaders();
 	
 	protected ControllerCredentials credentials;
-	
+
 	public AbstractRemoteClient(ControllerCredentials credentials){
 		this.credentials = credentials;
 		createClient();
@@ -107,8 +108,8 @@ public class AbstractRemoteClient implements Closeable {
 				b.cookie(c);
 			}			
 		}
-		if(!headers.isEmpty()){
-			b.headers(headers);
+		if(!headers.getAllHeaders().isEmpty()){
+			b.headers(headers.getAllHeaders());
 		}
 		return b;
 	}
@@ -160,6 +161,14 @@ public class AbstractRemoteClient implements Closeable {
 		}
 	}
 
+	public AdditionalHeaders getHeaders() {
+		return headers;
+	}
+
+	public void setHeaders(AdditionalHeaders headers) {
+		this.headers = headers;
+	}
+
 	@Override
 	public void close() throws IOException {
 		if(client!=null) {
@@ -167,19 +176,32 @@ public class AbstractRemoteClient implements Closeable {
 		}
 	}
 
-	public void addHeader(String key, Object value){
-		headers.add(key, value);
-	}
-
-	public List<Object> getHeaders(String key){
-		return headers.get(key);
-	}
-
-	public boolean removeHeader(String key){
-		return headers.remove(key) != null;
-	}
-
 	protected UnsupportedOperationException notImplemented()  {
 		return new UnsupportedOperationException("This method is currently not implemented");
+	}
+
+	public static class AdditionalHeaders {
+		private MultivaluedMap<String, Object> map = new MultivaluedHashMap<>();
+
+		public AdditionalHeaders addProjectName(String projectName) {
+			return addCustomHeader(Constants.TENANT_HEADER, projectName);
+		}
+
+		public AdditionalHeaders addCustomHeader(String name, Object value) {
+			map.add(name, value);
+			return this;
+		}
+
+		public List<Object> getHeaders(String key) {
+			return map.get(key);
+		}
+
+		public boolean removeHeader(String key){
+			return map.remove(key) != null;
+		}
+
+		public MultivaluedMap<String, Object> getAllHeaders() {
+			return map;
+		}
 	}
 }

@@ -19,5 +19,5 @@
 package step.controller.multitenancy;
 
 public interface Constants {
-    String TENANT_HEADER = "StepProject";
+    String TENANT_HEADER = "Step-Project";
 }
