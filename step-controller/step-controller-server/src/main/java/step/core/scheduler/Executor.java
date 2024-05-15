@@ -46,7 +46,7 @@ public class Executor {
 	private final Logger logger = LoggerFactory.getLogger(Executor.class);
 			
 	private Scheduler scheduler;
-	private SchedulerFactory schedulerFactory;
+	private Scheduler nestedScheduler;
 	private ExecutionEngine executionEngine;
 	private Configuration configuration;
 	
@@ -64,9 +64,15 @@ public class Executor {
 		
 		try {
 			Properties props = getProperties();
-			schedulerFactory = new StdSchedulerFactory(props);
+			StdSchedulerFactory schedulerFactory = new StdSchedulerFactory(props);
 			scheduler = schedulerFactory.getScheduler();
 			scheduler.setJobFactory(new ExecutionJobFactory(globalContext, executionEngine));
+			//Create another scheduler with same number of threads for nested executions to avoid deadlock
+			Properties propsNested = getProperties();
+			propsNested.put("org.quartz.scheduler.instanceName","NestedExecutionsScheduler");
+			StdSchedulerFactory nestedSchedulerFactory = new StdSchedulerFactory(propsNested);
+			nestedScheduler = nestedSchedulerFactory.getScheduler();
+			nestedScheduler.setJobFactory(new ExecutionJobFactory(globalContext, executionEngine));
 		} catch (SchedulerException e) {
 			throw new RuntimeException(e);
 		}
@@ -75,8 +81,9 @@ public class Executor {
 	protected Executor() {
 	}
 
-	protected Executor(Scheduler scheduler) {
+	protected Executor(Scheduler scheduler, Scheduler nestedScheduler) {
 		this.scheduler = scheduler;
+		this.nestedScheduler = nestedScheduler;
 	}
 
 	private Properties getProperties() {
@@ -87,7 +94,12 @@ public class Executor {
 
 	public void shutdown() {
 		try {
-			scheduler.shutdown(true);
+			if (scheduler != null) {
+				scheduler.shutdown(true);
+			}
+			if (nestedScheduler != null) {
+				nestedScheduler.shutdown(true);
+			}
 		} catch (SchedulerException e) {
 			throw new RuntimeException(e);
 		}
@@ -96,6 +108,7 @@ public class Executor {
 	public void start() {
 		try {
 			scheduler.start();
+			nestedScheduler.start();
 		} catch (SchedulerException e) {
 			throw new RuntimeException(e);
 		}
@@ -182,6 +195,18 @@ public class Executor {
 	public String execute(ExecutionParameters executionParameters) {
 		String executionID = executionEngine.initializeExecution(executionParameters);
 		scheduleExistingExecutionNow(executionID);
+		return executionID;
+	}
+
+	public String executeNested(ExecutionParameters executionParameters) {
+		String executionID = executionEngine.initializeExecution(executionParameters);
+		Trigger trigger = TriggerBuilder.newTrigger().startNow().build();
+		JobDetail job = buildSingleJob(executionID);
+		try {
+			nestedScheduler.scheduleJob(job, trigger);
+		} catch (SchedulerException e) {
+			throw new RuntimeException("An unexpected error occurred while scheduling job "+ job.toString(), e);
+		}
 		return executionID;
 	}
 	

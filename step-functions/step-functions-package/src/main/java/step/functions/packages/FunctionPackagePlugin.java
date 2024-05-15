@@ -77,7 +77,9 @@ public class FunctionPackagePlugin extends AbstractControllerPlugin {
 	@Override
 	public void serverStop(GlobalContext context) {
 		try {
-			packageManager.close();
+			if (packageManager != null) {
+				packageManager.close();
+			}
 		} catch (IOException e) {
 			logger.error("Error while closing package manager", e);
 		}

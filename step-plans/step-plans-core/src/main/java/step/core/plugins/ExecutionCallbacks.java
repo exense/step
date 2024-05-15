@@ -87,4 +87,11 @@ public interface ExecutionCallbacks {
 	void forceStopExecution(ExecutionContext context);
 
 	void afterExecutionEnd(ExecutionContext context);
+
+	/**
+	 *  This method is called after afterExecutionEnd. It is meant to be used for code that should
+	 * always be executed, i.e. even if some PluginCriticalException occurred. This method should never throw
+	 * a PluginCriticalException to make sure all plugins executionFinally are invoked
+	 */
+	void executionFinally(ExecutionContext context);
 }

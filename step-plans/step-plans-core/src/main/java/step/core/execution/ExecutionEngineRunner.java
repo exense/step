@@ -119,12 +119,16 @@ public class ExecutionEngineRunner {
 				}
 			}
 		} catch (Throwable e) {
-			logger.error(messageWithId("An error occurred while running test."), e);
-			updateExecutionResult(ReportNodeStatus.TECHNICAL_ERROR);
+			addLifecyleError("An error occurred while running test. " +  e.getMessage(), e);
 		} finally {
 			updateStatus(ExecutionStatus.ENDED);
-			executionCallbacks.afterExecutionEnd(executionContext);
-			postExecution(executionContext);
+			try {
+				executionCallbacks.afterExecutionEnd(executionContext);
+			} finally {
+				//Make sure that even if plugin critical exception occurs the mandatory hooks and postExecutions are performed
+				executionCallbacks.executionFinally(executionContext);
+				postExecution(executionContext);
+			}
 		}
 		return result;
 	}
@@ -303,7 +307,7 @@ public class ExecutionEngineRunner {
 		updateExecutionResult(status);
 	}
 
-	private void addLifecyleError(String message, Exception exception) {
+	private void addLifecyleError(String message, Throwable exception) {
 		logger.error(messageWithId(message), exception);
 		Error error = new Error(ErrorType.TECHNICAL, EXECUTION_ENGINE_LAYER, message, 0, true);
 		updateExecution(e -> {
