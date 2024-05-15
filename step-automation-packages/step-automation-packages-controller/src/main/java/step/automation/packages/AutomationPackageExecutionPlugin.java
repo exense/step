@@ -43,9 +43,10 @@ public class AutomationPackageExecutionPlugin extends AbstractExecutionEnginePlu
                     throw new PluginCriticalException("Timeout while acquiring lock on automation package with id " +
                             automationPackageId + ". This usually means that an update of this automation package is on-going and took more than the property " +
                             AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS + " (default " + AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS_DEFAULT + " seconds)");
+                } else {
+                    context.put(EXECUTION_CONTEXT_LOCK_ID, automationPackageId);
+                    debugLog(context, "Acquired read lock on automation package.");
                 }
-                context.put(EXECUTION_CONTEXT_LOCK_ID, automationPackageId);
-                debugLog(context,"Acquired read lock on automation package.");
             } catch (InterruptedException e) {
                 throw new PluginCriticalException("Thread interrupted while acquiring lock on automation package with id " + automationPackageId);
             }
