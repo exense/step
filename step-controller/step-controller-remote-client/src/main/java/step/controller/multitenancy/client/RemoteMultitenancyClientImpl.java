@@ -29,6 +29,7 @@ import step.client.AbstractRemoteClient;
 import step.client.credentials.ControllerCredentials;
 import step.controller.multitenancy.Tenant;
 
+@Deprecated
 public class RemoteMultitenancyClientImpl extends AbstractRemoteClient implements MultitenancyClient {
 
 	public RemoteMultitenancyClientImpl(ControllerCredentials credentials) {

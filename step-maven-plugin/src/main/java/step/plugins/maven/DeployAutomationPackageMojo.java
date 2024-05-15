@@ -27,8 +27,6 @@ import step.automation.packages.AutomationPackageUpdateResult;
 import step.automation.packages.client.AutomationPackageClientException;
 import step.automation.packages.client.RemoteAutomationPackageClientImpl;
 import step.client.credentials.ControllerCredentials;
-import step.controller.multitenancy.client.MultitenancyClient;
-import step.controller.multitenancy.client.RemoteMultitenancyClientImpl;
 
 import java.io.File;
 
@@ -64,7 +62,6 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
-        switchTenant();
         try (RemoteAutomationPackageClientImpl automationPackageClient = createRemoteAutomationPackageClient()) {
             File packagedTarget = getFileToUpload();
 
@@ -86,23 +83,6 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
         }
     }
 
-    protected void switchTenant() throws MojoExecutionException {
-        if (getStepProjectName() != null && !getStepProjectName().isEmpty()) {
-            getLog().info("Step project name: " + getStepProjectName());
-
-            new TenantSwitcher() {
-                @Override
-                protected MultitenancyClient createClient() {
-                    return createMultitenancyClient();
-                }
-            }.switchTenant(getStepProjectName(), getLog());
-        }
-    }
-
-    protected MultitenancyClient createMultitenancyClient() {
-        return new RemoteMultitenancyClientImpl(getControllerCredentials());
-    }
-
     protected File getFileToUpload() throws MojoExecutionException {
         Artifact artifact = getProjectArtifact(getArtifactClassifier(), getGroupId(), getArtifactId(), getArtifactVersion());
 
@@ -114,7 +94,9 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
     }
 
     protected RemoteAutomationPackageClientImpl createRemoteAutomationPackageClient() {
-        return new RemoteAutomationPackageClientImpl(getControllerCredentials());
+        RemoteAutomationPackageClientImpl client = new RemoteAutomationPackageClientImpl(getControllerCredentials());
+        addProjectHeaderToRemoteClient(getStepProjectName(), client);
+        return client;
     }
 
     public String getArtifactClassifier() {
@@ -148,7 +130,6 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
     public void setArtifactVersion(String artifactVersion) {
         this.artifactVersion = artifactVersion;
     }
-
 
     public String getStepProjectName() {
         return stepProjectName;

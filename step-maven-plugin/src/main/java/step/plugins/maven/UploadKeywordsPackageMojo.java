@@ -26,7 +26,6 @@ import org.apache.maven.plugins.annotations.Parameter;
 import step.client.accessors.RemoteAccessors;
 import step.client.collections.remote.RemoteCollectionFactory;
 import step.client.credentials.ControllerCredentials;
-import step.controller.multitenancy.Tenant;
 import step.controller.multitenancy.client.MultitenancyClient;
 import step.controller.multitenancy.client.RemoteMultitenancyClientImpl;
 import step.core.accessors.AbstractAccessor;
@@ -162,22 +161,24 @@ public class UploadKeywordsPackageMojo extends AbstractStepPluginMojo {
 	}
 
 	protected RemoteFunctionPackageClientImpl createRemoteFunctionPackageClient() {
-		return new RemoteFunctionPackageClientImpl(getControllerCredentials());
+		RemoteFunctionPackageClientImpl client = new RemoteFunctionPackageClientImpl(getControllerCredentials());
+		addProjectHeaderToRemoteClient(getStepProjectName(), client);
+		return client;
 	}
 
 	protected void fillAdditionalPackageSearchCriteria(Map<String, String> searchCriteria) throws MojoExecutionException {
 		if (getStepProjectName() != null && !getStepProjectName().isEmpty()) {
 			getLog().info("Step project name: " + getStepProjectName());
 
-			Tenant currentTenant = new TenantSwitcher() {
+			String projectId = new TenantHelper() {
 				@Override
 				protected MultitenancyClient createClient() {
 					return createMultitenancyClient();
 				}
-			}.switchTenant(getStepProjectName());
+			}.getProjectIdByName(getStepProjectName());
 
 			// setup Step project and use it to search fo existing packages
-			searchCriteria.put("attributes.project", currentTenant.getProjectId());
+			searchCriteria.put("attributes.project", projectId);
 		}
 	}
 
@@ -186,7 +187,10 @@ public class UploadKeywordsPackageMojo extends AbstractStepPluginMojo {
 	}
 
 	protected AbstractAccessor<FunctionPackage> createRemoteFunctionPackageAccessor() {
-		RemoteAccessors remoteAccessors = new RemoteAccessors(new RemoteCollectionFactory(getControllerCredentials()));
+		RemoteCollectionFactory remoteCollectionFactory = new RemoteCollectionFactory(getControllerCredentials());
+		addProjectHeaderToRemoteClient(getStepProjectName(), remoteCollectionFactory.getClient());
+
+		RemoteAccessors remoteAccessors = new RemoteAccessors(remoteCollectionFactory);
 		return remoteAccessors.getAbstractAccessor("functionPackage", FunctionPackage.class);
 	}
 
