@@ -29,8 +29,8 @@ public class MigrateDashboardsTask extends MigrationTask {
     @Override
     public void runUpgradeScript() {
         cleanupGrafanaDashboard();
+        cleanupAndMigrateCustomDashboards();
         migrateNamePropertyToAttributes();
-        migrateCustomDashboards();
     }
 
     private void cleanupGrafanaDashboard() {
@@ -50,10 +50,10 @@ public class MigrateDashboardsTask extends MigrationTask {
         });
     }
 
-    private void migrateCustomDashboards() {
+    private void cleanupAndMigrateCustomDashboards() {
         // keep legacy dashboard unchanged
-        Filter notLegacyFilter = Filters.not(Filters.equals("metadata.isLegacy", true));
-        dashboardsCollection.find(notLegacyFilter, null, null, null, 0).forEach(dashboard -> {
+        dashboardsCollection.remove(Filters.equals("metadata.isLegacy", true));
+        dashboardsCollection.find(Filters.empty(), null, null, null, 0).forEach(dashboard -> {
             List<DocumentObject> dashlets = dashboard.getArray("dashlets");
             dashlets.forEach(dashlet -> {
                 dashlet.put("id", RandomStringUtils.randomAlphanumeric(10)); // dashlets must have an id
