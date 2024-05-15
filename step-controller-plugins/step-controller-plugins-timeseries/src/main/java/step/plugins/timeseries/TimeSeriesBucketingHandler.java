@@ -65,7 +65,7 @@ public class TimeSeriesBucketingHandler implements MeasurementHandler {
         measurements.forEach(measurement -> {
             if (measurement != null) {
                 BucketAttributes bucketAttributes = measurementToBucketAttributes(measurement);
-                bucketAttributes.put(METRIC_TYPE_KEY, METRIC_TYPE_SAMPLER);
+                bucketAttributes.put(METRIC_TYPE_KEY, measurement.getType());
                 this.ingestionPipeline.ingestPoint(bucketAttributes, measurement.getBegin(), measurement.getValue());
             }
         });

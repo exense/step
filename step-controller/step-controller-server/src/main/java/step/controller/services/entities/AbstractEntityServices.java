@@ -131,7 +131,6 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
     @Secured(right = "{entity}-write")
     public T clone(@PathParam("id") String id) {
         T entity = getEntity(id);
-        assertEntityIsAcceptableInContext(entity);
         T clonedEntity = cloneEntity(entity);
 
         if (clonedEntity instanceof AbstractOrganizableObject) {
@@ -140,8 +139,14 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
             String name = organizableObject.getAttribute(AbstractOrganizableObject.NAME);
             String newName = name + "_Copy";
             organizableObject.addAttribute(AbstractOrganizableObject.NAME, newName);
+            //Remove flags
+            Map<String, Object> customFields = organizableObject.getCustomFields();
+            if (customFields != null) {
+                customFields.remove(CUSTOM_FIELD_LOCKED);
+            }
         }
-        // Save the cloned plan
+        // Save the cloned entity
+        assertEntityIsAcceptableInContext(clonedEntity);
         save(clonedEntity);
         return clonedEntity;
     }

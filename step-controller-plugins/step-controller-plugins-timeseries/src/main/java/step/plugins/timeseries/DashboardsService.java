@@ -14,7 +14,10 @@ import step.plugins.timeseries.dashboards.DashboardAccessor;
 import step.plugins.timeseries.dashboards.model.DashboardView;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+
+import static step.plugins.timeseries.TimeSeriesControllerPlugin.GENERATION_NAME;
 
 
 @Singleton
@@ -46,4 +49,14 @@ public class DashboardsService extends AbstractEntityServices<DashboardView> { /
 	}
 
 
+	@Override
+	public DashboardView clone(String id) {
+		DashboardView clone = super.clone(id);
+		Map<String, Object> customFields = clone.getCustomFields();
+		if (customFields != null) {
+			customFields.remove(GENERATION_NAME);
+		}
+		save(clone);
+		return  clone;
+	}
 }

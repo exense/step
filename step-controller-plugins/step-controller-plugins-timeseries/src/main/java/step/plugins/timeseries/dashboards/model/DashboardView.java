@@ -12,7 +12,7 @@ public class DashboardView extends AbstractOrganizableObject implements Enrichea
 
 	private String description;
 	private Long resolution;
-	private Long refreshInterval;
+	private long refreshInterval;
 	@NotNull
 	private TimeRangeSelection timeRange;
 	@NotNull
@@ -87,11 +87,11 @@ public class DashboardView extends AbstractOrganizableObject implements Enrichea
 		return this;
 	}
 
-	public Long getRefreshInterval() {
+	public long getRefreshInterval() {
 		return refreshInterval;
 	}
 
-	public DashboardView setRefreshInterval(Long refreshInterval) {
+	public DashboardView setRefreshInterval(long refreshInterval) {
 		this.refreshInterval = refreshInterval;
 		return this;
 	}
