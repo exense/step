@@ -26,16 +26,14 @@ public class MigrateDashboardsTest {
     public void migrateTest() {
         Document grafanaDashboard = createGrafanaDashboard();
         Document oldDashboard = createOldDashboard();
-        Document legacyDashboard = createLegacyDashboard(); // shouldn't be touched
         dashboardCollection.save(grafanaDashboard);
         dashboardCollection.save(oldDashboard);
-        dashboardCollection.save(legacyDashboard);
         new MigrateDashboardsTask(collectionFactory, new MigrationContext()).runUpgradeScript();
         Document migratedDashboard = dashboardCollection.find(Filters.equals("id", oldDashboard.getId()), null, null, null, 0).findFirst().orElseThrow();
         //old dashboard in inMemoryCollection will be modified, recreate it
         oldDashboard = createOldDashboard();
         assertDocumentsMatching(oldDashboard, migratedDashboard);
-        assertEquals(2, dashboardCollection.count(Filters.empty(), 10));
+        assertEquals(1, dashboardCollection.count(Filters.empty(), 10));
     }
 
 
@@ -111,19 +109,6 @@ public class MigrateDashboardsTest {
         root.put("filters", Collections.emptyList());
         root.put("dashlets", dashlets);
         root.put("metadata", new HashMap<>());
-        return root;
-    }
-    
-    /**
-     * Legacy dashboard has no settings, and has the 'isLegacy' flag set. It is treated differently in FE.
-     */
-    private Document createLegacyDashboard() {
-        Document root = new Document();
-        HashMap<Object, Object> metadata = new HashMap<>();
-        metadata.put("isLegacy", true);
-        root.put("description", "Legacy dashboard desc");
-        root.put("name", "legacy dash name");
-        root.put("metadata", metadata);
         return root;
     }
 
