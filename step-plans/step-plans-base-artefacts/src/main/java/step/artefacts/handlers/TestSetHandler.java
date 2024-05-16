@@ -45,7 +45,7 @@ public class TestSetHandler extends ArtefactHandler<TestSet, ReportNode> {
 		context.getExecutionManager().updateExecutionType("TestSet");
 
 		TokenForecastingContext tokenForecastingContext = getTokenForecastingContext(context);
-		MaxAndMultiplyingTokenForecastingContext newTokenForecastingContext = new MaxAndMultiplyingTokenForecastingContext(tokenForecastingContext, testSet.getChildren().size());
+		MaxAndMultiplyingTokenForecastingContext newTokenForecastingContext = new MaxAndMultiplyingTokenForecastingContext(tokenForecastingContext, testSet.getThreads().getOrDefault(1));
 		pushNewTokenNumberCalculationContext(context, newTokenForecastingContext);
 		try {
 			for(AbstractArtefact child:getChildren(testSet)) {
