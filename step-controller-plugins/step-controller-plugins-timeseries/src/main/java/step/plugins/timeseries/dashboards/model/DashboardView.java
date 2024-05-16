@@ -9,12 +9,10 @@ import java.util.List;
 import java.util.Map;
 
 public class DashboardView extends AbstractOrganizableObject implements EnricheableObject {
-	
-	@NotNull
-	private String name;
+
 	private String description;
 	private Long resolution;
-	private Long refreshInterval;
+	private long refreshInterval;
 	@NotNull
 	private TimeRangeSelection timeRange;
 	@NotNull
@@ -25,15 +23,6 @@ public class DashboardView extends AbstractOrganizableObject implements Enrichea
 	private List<DashboardItem> dashlets;
 	
 	private Map<String, Object> metadata = new HashMap<>();
-
-	public String getName() {
-		return name;
-	}
-
-	public DashboardView setName(String name) {
-		this.name = name;
-		return this;
-	}
 
 	public Long getResolution() {
 		return resolution;
@@ -98,12 +87,13 @@ public class DashboardView extends AbstractOrganizableObject implements Enrichea
 		return this;
 	}
 
-	public Long getRefreshInterval() {
+	public long getRefreshInterval() {
 		return refreshInterval;
 	}
 
-	public DashboardView setRefreshInterval(Long refreshInterval) {
+	public DashboardView setRefreshInterval(long refreshInterval) {
 		this.refreshInterval = refreshInterval;
 		return this;
 	}
+
 }

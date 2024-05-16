@@ -18,32 +18,29 @@
  ******************************************************************************/
 package step.client;
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.util.Map;
-import java.util.function.Supplier;
-
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.client.Invocation.Builder;
 import jakarta.ws.rs.client.WebTarget;
-import jakarta.ws.rs.core.Feature;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.NewCookie;
-import jakarta.ws.rs.core.Response;
-
+import jakarta.ws.rs.core.*;
 import org.glassfish.jersey.client.oauth2.OAuth2ClientSupport;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import step.core.auth.Credentials;
 import step.client.credentials.ControllerCredentials;
 import step.client.credentials.SyspropCredendialsBuilder;
+import step.controller.multitenancy.Constants;
+import step.core.auth.Credentials;
 import step.core.deployment.JacksonMapperProvider;
+
+import java.io.Closeable;
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Supplier;
 
 public class AbstractRemoteClient implements Closeable {
 
@@ -52,9 +49,11 @@ public class AbstractRemoteClient implements Closeable {
 	protected Client client;
 
 	protected Map<String, NewCookie> cookies;
+
+	protected AdditionalHeaders headers = new AdditionalHeaders();
 	
 	protected ControllerCredentials credentials;
-	
+
 	public AbstractRemoteClient(ControllerCredentials credentials){
 		this.credentials = credentials;
 		createClient();
@@ -109,6 +108,9 @@ public class AbstractRemoteClient implements Closeable {
 				b.cookie(c);
 			}			
 		}
+		if(!headers.getAllHeaders().isEmpty()){
+			b.headers(headers.getAllHeaders());
+		}
 		return b;
 	}
 
@@ -159,6 +161,14 @@ public class AbstractRemoteClient implements Closeable {
 		}
 	}
 
+	public AdditionalHeaders getHeaders() {
+		return headers;
+	}
+
+	public void setHeaders(AdditionalHeaders headers) {
+		this.headers = headers;
+	}
+
 	@Override
 	public void close() throws IOException {
 		if(client!=null) {
@@ -168,5 +178,30 @@ public class AbstractRemoteClient implements Closeable {
 
 	protected UnsupportedOperationException notImplemented()  {
 		return new UnsupportedOperationException("This method is currently not implemented");
+	}
+
+	public static class AdditionalHeaders {
+		private MultivaluedMap<String, Object> map = new MultivaluedHashMap<>();
+
+		public AdditionalHeaders addProjectName(String projectName) {
+			return addCustomHeader(Constants.TENANT_HEADER, projectName);
+		}
+
+		public AdditionalHeaders addCustomHeader(String name, Object value) {
+			map.add(name, value);
+			return this;
+		}
+
+		public List<Object> getHeaders(String key) {
+			return map.get(key);
+		}
+
+		public boolean removeHeader(String key){
+			return map.remove(key) != null;
+		}
+
+		public MultivaluedMap<String, Object> getAllHeaders() {
+			return map;
+		}
 	}
 }

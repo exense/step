@@ -108,4 +108,7 @@ public abstract class AbstractExecutionEnginePlugin extends AbstractPlugin imple
 
 	@Override
 	public void deprovisionRequiredResources(ExecutionContext context) {}
+
+	@Override
+	public void executionFinally(ExecutionContext context) {}
 }

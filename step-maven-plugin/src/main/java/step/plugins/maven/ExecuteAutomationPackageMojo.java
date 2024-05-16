@@ -20,18 +20,16 @@ package step.plugins.maven;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import step.automation.packages.client.AutomationPackageClientException;
 import step.automation.packages.client.RemoteAutomationPackageClientImpl;
-import step.core.execution.model.AutomationPackageExecutionParameters;
+import step.client.AbstractRemoteClient;
 import step.client.credentials.ControllerCredentials;
 import step.client.executions.RemoteExecutionManager;
-import step.controller.multitenancy.client.MultitenancyClient;
-import step.controller.multitenancy.client.RemoteMultitenancyClientImpl;
 import step.core.artefacts.reports.ReportNodeStatus;
+import step.core.execution.model.AutomationPackageExecutionParameters;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionMode;
 import step.core.plans.PlanFilter;
@@ -80,18 +78,7 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
     private String excludePlans;
 
     @Override
-    public void execute() throws MojoExecutionException, MojoFailureException {
-        if (getStepProjectName() != null && !getStepProjectName().isEmpty()) {
-            getLog().info("Step project name: " + getStepProjectName());
-
-            new TenantSwitcher() {
-                @Override
-                protected MultitenancyClient createClient() {
-                    return createMultitenancyClient();
-                }
-            }.switchTenant(getStepProjectName(), getLog());
-        }
-
+    public void execute() throws MojoExecutionException {
         executePackageOnStep();
     }
 
@@ -200,16 +187,20 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
         return new ControllerCredentials(getUrl(), authToken == null || authToken.isEmpty() ? null : authToken);
     }
 
-    protected MultitenancyClient createMultitenancyClient() {
-        return new RemoteMultitenancyClientImpl(getControllerCredentials());
-    }
-
     protected RemoteAutomationPackageClientImpl createRemoteAutomationPackageClient() {
-        return new RemoteAutomationPackageClientImpl(getControllerCredentials());
+        RemoteAutomationPackageClientImpl client = new RemoteAutomationPackageClientImpl(getControllerCredentials());
+        addProjectHeaderToRemoteClient(client);
+        return client;
     }
 
     protected RemoteExecutionManager createRemoteExecutionManager() {
-        return new RemoteExecutionManager(getControllerCredentials());
+        RemoteExecutionManager remoteExecutionManager = new RemoteExecutionManager(getControllerCredentials());
+        addProjectHeaderToRemoteClient(remoteExecutionManager);
+        return remoteExecutionManager;
+    }
+
+    private void addProjectHeaderToRemoteClient(AbstractRemoteClient remoteClient) {
+        addProjectHeaderToRemoteClient(getStepProjectName(), remoteClient);
     }
 
     protected AutomationPackageExecutionParameters prepareExecutionParameters() throws MojoExecutionException {

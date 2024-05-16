@@ -18,7 +18,9 @@ public class ExecutionTypePlugin extends AbstractExecutionEnginePlugin {
     }
 
     @Override
-    public void executionStart(ExecutionContext context) {
-        context.put(ExecutionTypeManager.class, executionTypeManager);
+    public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
+        super.initializeExecutionContext(executionEngineContext, executionContext);
+        executionContext.put(ExecutionTypeManager.class, executionTypeManager);
     }
+
 }

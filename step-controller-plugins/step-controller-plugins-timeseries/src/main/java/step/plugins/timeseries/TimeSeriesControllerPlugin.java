@@ -22,12 +22,14 @@ import step.migration.MigrationManager;
 import step.migration.MigrationManagerPlugin;
 import step.plugins.measurements.GaugeCollectorRegistry;
 import step.plugins.measurements.MeasurementPlugin;
+import step.plugins.timeseries.dashboards.DashboardsGenerator;
 import step.plugins.timeseries.dashboards.model.*;
 import step.plugins.timeseries.dashboards.DashboardAccessor;
 import step.plugins.timeseries.migration.MigrateDashboardsTask;
 
 import java.util.*;
 
+import static step.plugins.timeseries.MetricsConstants.*;
 import static step.plugins.timeseries.TimeSeriesExecutionPlugin.*;
 
 @Plugin(dependencies = {MigrationManagerPlugin.class})
@@ -40,12 +42,18 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 	public static final String TIME_SERIES_COLLECTION_PROPERTY = "timeseries";
 	public static final String TIME_SERIES_ATTRIBUTES_PROPERTY = "plugins.timeseries.attributes";
 	public static final String TIME_SERIES_ATTRIBUTES_DEFAULT = EXECUTION_ID + "," + TASK_ID + "," + PLAN_ID + ",metricType,origin,name,rnStatus,project,type";
+	
+	public static final String PARAM_KEY_EXECUTION_DASHBOARD_ID = "plugins.timeseries.execution.dashboard.id";
+	public static final String PARAM_KEY_ANALYTICS_DASHBOARD_ID = "plugins.timeseries.analytics.dashboard.id";
+	public static final String EXECUTION_DASHBOARD_PREPOPULATED_NAME = "Execution Dashboard";
+	public static final String ANALYTICS_DASHBOARD_PREPOPULATED_NAME = "Analytics Dashboard";
+	public static final String GENERATION_NAME = "generationName";
 
 	private TimeSeriesIngestionPipeline mainIngestionPipeline;
 	private TimeSeriesAggregationPipeline aggregationPipeline;
 	private DashboardAccessor dashboardAccessor;
 	private TimeSeries timeSeries;
-
+	
 	@Override
 	public void serverStart(GlobalContext context) {
 		MigrationManager migrationManager = context.require(MigrationManager.class);
@@ -93,68 +101,48 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 		return new TimeSeriesExecutionPlugin(mainIngestionPipeline, aggregationPipeline);
 	}
 
-	private void createLegacyDashboard() {
-		boolean legacyDashboardExists = dashboardAccessor.findLegacyDashboards().findFirst().isPresent();
-		if (!legacyDashboardExists) {
-			DashboardView dashboard = new DashboardView();
-			dashboard.setName("Performance Dashboard");
-			dashboard.setDescription("Default dashboard displaying performance of all executions");
-			dashboard.getMetadata().put("isLegacy", true);
-			dashboard.getMetadata().put("link", "analytics");
-			dashboardAccessor.save(dashboard);
-		}
-
-	}
-
 	@Override
-	public void initializeData(GlobalContext context) {
+	public void initializeData(GlobalContext context) throws Exception {
+		super.initializeData(context);
 		timeSeries.createIndexes(new LinkedHashSet<>(List.of(new IndexField("eId", Order.ASC, String.class))));
+		List<MetricType> metrics = getOrCreateMetricsIfNeeded(context.require(MetricTypeAccessor.class));
 
-		//Create legacy dashboards
-		createLegacyDashboard();
+		DashboardView existingExecutionDashboard = dashboardAccessor.findByCriteria(
+				Map.of(
+						"attributes.name", EXECUTION_DASHBOARD_PREPOPULATED_NAME,
+						"customFields." + GENERATION_NAME, EXECUTION_DASHBOARD_PREPOPULATED_NAME)
+		);
+		DashboardView existingAnalyticsDashboard = dashboardAccessor.findByCriteria(
+				Map.of("attributes.name", ANALYTICS_DASHBOARD_PREPOPULATED_NAME,
+						"customFields." + GENERATION_NAME, ANALYTICS_DASHBOARD_PREPOPULATED_NAME));
 
-		MetricAttribute statusAttribute = new MetricAttribute()
-				.setName("rnStatus")
-				.setType(MetricAttributeType.TEXT)
-				.setMetadata(Map.of("knownValues", Arrays.asList("PASSED", "FAILED", "TECHNICAL_ERROR", "INTERRUPTED")))
-				.setDisplayName("Status");
-		MetricAttribute typeAttribute = new MetricAttribute()
-				.setName("type")
-				.setType(MetricAttributeType.TEXT)
-				.setMetadata(Map.of("knownValues", Arrays.asList("keyword", "custom")))
-				.setDisplayName("Type");
-		MetricAttribute taskAttribute = new MetricAttribute()
-				.setName("taskId")
-				.setType(MetricAttributeType.TEXT)
-				.setMetadata(Map.of("entity", "task"))
-				.setDisplayName("Task");
-		MetricAttribute executionAttribute = new MetricAttribute()
-				.setName("eId")
-				.setType(MetricAttributeType.TEXT)
-				.setMetadata(Map.of("entity", "execution"))
-				.setDisplayName("Execution");
-		MetricAttribute planAttribute = new MetricAttribute()
-				.setName("planId")
-				.setType(MetricAttributeType.TEXT)
-				.setMetadata(Map.of("entity", "plan"))
-				.setDisplayName("Plan");
-		MetricAttribute nameAttribute = new MetricAttribute()
-				.setName("name")
-				.setType(MetricAttributeType.TEXT)
-				.setDisplayName("Name");
-		MetricAttribute errorCodeAttribute = new MetricAttribute()
-				.setName("errorCode")
-				.setType(MetricAttributeType.TEXT)
-				.setDisplayName("Error Code");
-
+		DashboardsGenerator dashboardsGenerator = new DashboardsGenerator(metrics);
+		DashboardView newExecutionDashboard = dashboardsGenerator.createExecutionDashboard();
+		DashboardView newAnalyticsDashboard = dashboardsGenerator.createAnalyticsDashboard();
+		if (existingExecutionDashboard != null) {
+			newExecutionDashboard.setId(existingExecutionDashboard.getId());
+		}
+		if (existingAnalyticsDashboard != null) {
+			newAnalyticsDashboard.setId(existingAnalyticsDashboard.getId());
+		}
+		dashboardAccessor.save(newExecutionDashboard);
+		dashboardAccessor.save(newAnalyticsDashboard);
+		
+		WebApplicationConfigurationManager configurationManager = context.require(WebApplicationConfigurationManager.class);
+        configurationManager.registerHook(s -> Map.of(PARAM_KEY_EXECUTION_DASHBOARD_ID, newExecutionDashboard.getId().toString()));
+		configurationManager.registerHook(s -> Map.of(PARAM_KEY_ANALYTICS_DASHBOARD_ID, newAnalyticsDashboard.getId().toString()));
+		
+	}
+	
+	
+	private List<MetricType> getOrCreateMetricsIfNeeded(MetricTypeAccessor metricTypeAccessor) {
 		// TODO create a builder for units
 		// TODO metrics shouldn't be defined centrally but in each plugin they belong to. Implement a central registration service
-		MetricTypeAccessor metricTypeAccessor = context.require(MetricTypeAccessor.class);
 		List<MetricType> metrics = Arrays.asList(
 				new MetricType()
 						.setName(EXECUTIONS_COUNT)
 						.setDisplayName("Execution count")
-						.setAttributes(Arrays.asList(taskAttribute, executionAttribute, planAttribute))
+						.setAttributes(Arrays.asList(TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE))
 						.setDefaultAggregation(MetricAggregation.SUM)
 						.setUnit("1")
 						.setRenderingSettings(new MetricRenderingSettings()
@@ -163,7 +151,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 						// AVG calculation is enough here. the value is either 0 or 100 for each exec.
 						.setName(FAILURE_PERCENTAGE)
 						.setDisplayName("Execution failure percentage")
-						.setAttributes(Arrays.asList(taskAttribute, executionAttribute, planAttribute))
+						.setAttributes(Arrays.asList(TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE))
 						.setUnit("%")
 						.setDefaultAggregation(MetricAggregation.AVG)
 						.setRenderingSettings(new MetricRenderingSettings()),
@@ -171,24 +159,32 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 						.setName(FAILURE_COUNT)
 						.setUnit("1")
 						.setDisplayName("Execution failure count")
-						.setAttributes(Arrays.asList(taskAttribute, executionAttribute, planAttribute))
+						.setAttributes(Arrays.asList(TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE))
 						.setDefaultAggregation(MetricAggregation.SUM)
 						.setRenderingSettings(new MetricRenderingSettings()),
 				new MetricType()
 						.setName(FAILURES_COUNT_BY_ERROR_CODE)
 						.setDisplayName("Execution failure count by error code")
 						.setUnit("1")
-						.setDefaultGroupingAttributes(Arrays.asList(errorCodeAttribute.getName()))
+						.setDefaultGroupingAttributes(Arrays.asList(ERROR_CODE_ATTRIBUTE.getName()))
 						.setDefaultAggregation(MetricAggregation.SUM)
-						.setAttributes(Arrays.asList(taskAttribute, executionAttribute, planAttribute, errorCodeAttribute))
+						.setAttributes(Arrays.asList(TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE, ERROR_CODE_ATTRIBUTE))
 						.setRenderingSettings(new MetricRenderingSettings()),
 				new MetricType()
 						.setName(RESPONSE_TIME)
 						.setDisplayName("Response time")
-						.setAttributes(Arrays.asList(statusAttribute, typeAttribute, nameAttribute, taskAttribute, executionAttribute, planAttribute))
-						.setDefaultGroupingAttributes(Arrays.asList(nameAttribute.getName()))
+						.setAttributes(Arrays.asList(STATUS_ATTRIBUTE, TYPE_ATRIBUTE, NAME_ATTRIBUTE, TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE))
+						.setDefaultGroupingAttributes(Arrays.asList(NAME_ATTRIBUTE.getName()))
 						.setUnit("ms")
 						.setDefaultAggregation(MetricAggregation.AVG)
+						.setRenderingSettings(new MetricRenderingSettings()),
+				new MetricType()
+						.setName(THREAD_GROUP)
+						.setDisplayName("Thread group")
+						.setAttributes(Arrays.asList(TYPE_ATRIBUTE, NAME_ATTRIBUTE, TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE))
+						.setDefaultGroupingAttributes(Arrays.asList(NAME_ATTRIBUTE.getName()))
+						.setUnit("1")
+						.setDefaultAggregation(MetricAggregation.MAX)
 						.setRenderingSettings(new MetricRenderingSettings())
 		);
 		metrics.forEach(m -> {
@@ -198,8 +194,9 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 			}
 			metricTypeAccessor.save(m);
 		});
+		return metrics;
 	}
-
+	
 	@Override
 	public void serverStop(GlobalContext context) {
 		mainIngestionPipeline.close();

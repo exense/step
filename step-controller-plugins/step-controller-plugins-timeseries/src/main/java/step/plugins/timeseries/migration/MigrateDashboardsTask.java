@@ -28,15 +28,38 @@ public class MigrateDashboardsTask extends MigrationTask {
 
     @Override
     public void runUpgradeScript() {
+        cleanupGrafanaDashboard();
+        cleanupAndMigrateCustomDashboards();
+        migrateNamePropertyToAttributes();
+    }
+
+    private void cleanupGrafanaDashboard() {
+        dashboardsCollection.remove(Filters.exists("uid"));
+    }
+
+    private void migrateNamePropertyToAttributes() {
+        dashboardsCollection.find(Filters.empty(), null, null, null, 0).forEach(dashboard -> {
+            DocumentObject attributes = dashboard.getObject("attributes");
+            if (attributes == null) {
+                attributes = new DocumentObject();
+                dashboard.put("attributes", attributes);
+            }
+            String name = (String) dashboard.remove("name");
+            attributes.put("name", name);
+            dashboardsCollection.save(dashboard);
+        });
+    }
+
+    private void cleanupAndMigrateCustomDashboards() {
         // keep legacy dashboard unchanged
-        Filter notLegacyFilter = Filters.not(Filters.equals("metadata.isLegacy", true));
-        dashboardsCollection.find(notLegacyFilter, null, null, null, 0).forEach(dashboard -> {
+        dashboardsCollection.remove(Filters.equals("metadata.isLegacy", true));
+        dashboardsCollection.find(Filters.empty(), null, null, null, 0).forEach(dashboard -> {
             List<DocumentObject> dashlets = dashboard.getArray("dashlets");
             dashlets.forEach(dashlet -> {
                 dashlet.put("id", RandomStringUtils.randomAlphanumeric(10)); // dashlets must have an id
-                
+
                 DocumentObject chartSettings = dashlet.getObject("chartSettings");
-                
+
                 ATTRIBUTES_TO_MIGRATE.forEach(attribute -> {
                     dashlet.put(attribute, chartSettings.get(attribute));
                     chartSettings.remove(attribute);
@@ -44,7 +67,6 @@ public class MigrateDashboardsTask extends MigrationTask {
             });
             dashboardsCollection.save(dashboard);
         });
-        
     }
 
     @Override

@@ -51,4 +51,8 @@ public class RemoteCollectionFactory implements CollectionFactory {
     public Collection<EntityVersion> getVersionedCollection(String name) {
         return new RemoteCollection(client, name + CollectionFactory.VERSION_COLLECTION_SUFFIX, EntityVersion.class);
     }
+
+    public AbstractRemoteClient getClient() {
+        return client;
+    }
 }

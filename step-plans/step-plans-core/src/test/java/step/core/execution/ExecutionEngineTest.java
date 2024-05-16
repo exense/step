@@ -61,13 +61,14 @@ public class ExecutionEngineTest {
 
 	@Test
 	public void test() throws ExecutionEngineException, IOException {
-		ExecutionEngine executionEngine = newExecutionEngine();
-		
-		Plan plan = PlanBuilder.create().startBlock(new CheckArtefact()).endBlock().build();
-		PlanRunnerResult result = executionEngine.execute(plan);
-		
-		assertEquals("CheckArtefact:PASSED:\n", result.getTreeAsString());
-		assertEquals(ReportNodeStatus.PASSED, result.getResult());
+		try (ExecutionEngine executionEngine = newExecutionEngine()) {
+
+			Plan plan = PlanBuilder.create().startBlock(new CheckArtefact()).endBlock().build();
+			PlanRunnerResult result = executionEngine.execute(plan);
+
+			assertEquals("CheckArtefact:PASSED:\n", result.getTreeAsString());
+			assertEquals(ReportNodeStatus.PASSED, result.getResult());
+		}
 	}
 
 	protected ExecutionEngine newExecutionEngine() {
@@ -88,14 +89,15 @@ public class ExecutionEngineTest {
 	
 	@Test
 	public void test2PhasesExecution() throws ExecutionEngineException, IOException {
-		ExecutionEngine executionEngine = newExecutionEngine();
-		
-		Plan plan = PlanBuilder.create().startBlock(new CheckArtefact()).endBlock().build();
-		String executionId = executionEngine.initializeExecution(new ExecutionParameters(plan, null));
-		PlanRunnerResult result = executionEngine.execute(executionId);
-		
-		assertEquals("CheckArtefact:PASSED:\n", result.getTreeAsString());
-		assertEquals(ReportNodeStatus.PASSED, result.getResult());
+		try (ExecutionEngine executionEngine = newExecutionEngine()) {
+
+			Plan plan = PlanBuilder.create().startBlock(new CheckArtefact()).endBlock().build();
+			String executionId = executionEngine.initializeExecution(new ExecutionParameters(plan, null));
+			PlanRunnerResult result = executionEngine.execute(executionId);
+
+			assertEquals("CheckArtefact:PASSED:\n", result.getTreeAsString());
+			assertEquals(ReportNodeStatus.PASSED, result.getResult());
+		}
 	}
 	
 	@Test

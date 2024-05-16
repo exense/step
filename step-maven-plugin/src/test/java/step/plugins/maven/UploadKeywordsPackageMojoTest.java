@@ -66,9 +66,6 @@ public class UploadKeywordsPackageMojoTest extends AbstractMojoTest {
 		configureMojo(mojo);
 		mojo.execute();
 
-		// tenant should be chosen according to project name
-		Mockito.verify(multitenancyClientMock, Mockito.times(1)).selectTenant(Mockito.eq(TENANT_1.getName()));
-
 		// attributes used to search for existing function packages
 		ArgumentCaptor<Map<String, String>> searchCriteriaCaptor = ArgumentCaptor.forClass(Map.class);
 		Mockito.verify(functionAccessorMock, Mockito.times(1)).findByCriteria(searchCriteriaCaptor.capture());
