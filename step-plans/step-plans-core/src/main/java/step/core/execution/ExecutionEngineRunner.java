@@ -256,6 +256,7 @@ public class ExecutionEngineRunner {
 		try {
 			executionCallbacks.provisionRequiredResources(executionContext);
 		} catch(Exception e) {
+			logger.error("Error while provisioning resources",e);
 			throw new ProvisioningException(e.getMessage());
 		}
 	}
@@ -265,6 +266,7 @@ public class ExecutionEngineRunner {
 		try {
 			executionCallbacks.deprovisionRequiredResources(executionContext);
 		} catch (Exception e) {
+			logger.error("Error while de-provisioning resources",e);
 			throw new DeprovisioningException(e.getMessage());
 		}
 	}

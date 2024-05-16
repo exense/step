@@ -2,10 +2,7 @@ package step.artefacts.handlers.functions;
 
 import step.grid.tokenpool.Interest;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * This implementation of the {@link TokenForecastingContext} tries to calculate the
@@ -43,7 +40,7 @@ public class MaxAndMultiplyingTokenForecastingContext extends TokenForecastingCo
 
     public void end() {
         pools.keySet().forEach(poolName -> {
-            Integer sum = iterations.stream().map(i -> i.getTokenForecastPerPool().get(poolName)).filter(Objects::nonNull).sorted().limit(numberOfThreads).reduce(0, Integer::sum);
+            Integer sum = iterations.stream().map(i -> i.getTokenForecastPerPool().get(poolName)).filter(Objects::nonNull).sorted(Comparator.reverseOrder()).limit(numberOfThreads).reduce(0, Integer::sum);
             if(sum > 0) {
                 parentContext.requireToken(poolName, sum);
                 parentContext.releaseRequiredToken(poolName, sum);

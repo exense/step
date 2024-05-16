@@ -19,6 +19,8 @@
 package step.artefacts.handlers;
 
 import step.artefacts.TestSet;
+import step.artefacts.handlers.functions.MaxAndMultiplyingTokenForecastingContext;
+import step.artefacts.handlers.functions.TokenForecastingContext;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.handlers.AtomicReportNodeStatusComposer;
@@ -33,12 +35,38 @@ import java.util.List;
 import java.util.OptionalInt;
 import java.util.function.Consumer;
 
+import static step.artefacts.handlers.functions.TokenForcastingExecutionPlugin.getTokenForecastingContext;
+import static step.artefacts.handlers.functions.TokenForcastingExecutionPlugin.pushNewTokenNumberCalculationContext;
+
 public class TestSetHandler extends ArtefactHandler<TestSet, ReportNode> {
 	
 	@Override
 	public void createReportSkeleton_(ReportNode node, TestSet testSet) {	
 		context.getExecutionManager().updateExecutionType("TestSet");
-		runParallel(node, testSet, false);
+
+		TokenForecastingContext tokenForecastingContext = getTokenForecastingContext(context);
+
+		int threads = getNumberThreads(testSet);
+
+		MaxAndMultiplyingTokenForecastingContext newTokenForecastingContext = new MaxAndMultiplyingTokenForecastingContext(tokenForecastingContext, threads);
+		pushNewTokenNumberCalculationContext(context, newTokenForecastingContext);
+		try {
+			for(AbstractArtefact child:getChildren(testSet)) {
+				delegateCreateReportSkeleton(child, node);
+				newTokenForecastingContext.nextIteration();
+			}
+		} finally {
+			newTokenForecastingContext.end();
+		}
+	}
+
+	private int getNumberThreads(TestSet testSet) {
+		int threads = testSet.getThreads().get();
+
+		if(threads == 0) {
+			threads = context.getVariablesManager().getVariableAsInteger("tec.execution.threads", 1);
+		}
+		return threads;
 	}
 
 	@Override
@@ -47,12 +75,8 @@ public class TestSetHandler extends ArtefactHandler<TestSet, ReportNode> {
 	}
 
 	private void runParallel(ReportNode node, TestSet testSet, boolean execution) {
-		int numberOfThreads = testSet.getThreads().get();
-		
-		if(numberOfThreads == 0) {
-			numberOfThreads = context.getVariablesManager().getVariableAsInteger("tec.execution.threads", 1);
-		}
-		
+		int numberOfThreads = getNumberThreads(testSet);
+
 		AtomicReportNodeStatusComposer reportNodeStatusComposer = new AtomicReportNodeStatusComposer(ReportNodeStatus.NORUN);
 		
 		List<AbstractArtefact> children = getChildren(testSet);
