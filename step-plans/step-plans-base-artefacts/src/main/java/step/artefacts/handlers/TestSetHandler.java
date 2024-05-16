@@ -45,7 +45,10 @@ public class TestSetHandler extends ArtefactHandler<TestSet, ReportNode> {
 		context.getExecutionManager().updateExecutionType("TestSet");
 
 		TokenForecastingContext tokenForecastingContext = getTokenForecastingContext(context);
-		MaxAndMultiplyingTokenForecastingContext newTokenForecastingContext = new MaxAndMultiplyingTokenForecastingContext(tokenForecastingContext, testSet.getThreads().getOrDefault(1));
+
+		int threads = getNumberThreads(testSet);
+
+		MaxAndMultiplyingTokenForecastingContext newTokenForecastingContext = new MaxAndMultiplyingTokenForecastingContext(tokenForecastingContext, threads);
 		pushNewTokenNumberCalculationContext(context, newTokenForecastingContext);
 		try {
 			for(AbstractArtefact child:getChildren(testSet)) {
@@ -57,18 +60,23 @@ public class TestSetHandler extends ArtefactHandler<TestSet, ReportNode> {
 		}
 	}
 
+	private int getNumberThreads(TestSet testSet) {
+		int threads = testSet.getThreads().get();
+
+		if(threads == 0) {
+			threads = context.getVariablesManager().getVariableAsInteger("tec.execution.threads", 1);
+		}
+		return threads;
+	}
+
 	@Override
 	public void execute_(ReportNode node, TestSet testSet) {
 		runParallel(node, testSet, true);
 	}
 
 	private void runParallel(ReportNode node, TestSet testSet, boolean execution) {
-		int numberOfThreads = testSet.getThreads().get();
-		
-		if(numberOfThreads == 0) {
-			numberOfThreads = context.getVariablesManager().getVariableAsInteger("tec.execution.threads", 1);
-		}
-		
+		int numberOfThreads = getNumberThreads(testSet);
+
 		AtomicReportNodeStatusComposer reportNodeStatusComposer = new AtomicReportNodeStatusComposer(ReportNodeStatus.NORUN);
 		
 		List<AbstractArtefact> children = getChildren(testSet);
