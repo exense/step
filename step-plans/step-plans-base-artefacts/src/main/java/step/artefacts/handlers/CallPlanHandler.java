@@ -18,11 +18,9 @@
  ******************************************************************************/
 package step.artefacts.handlers;
 
-import java.io.StringReader;
-
 import jakarta.json.JsonObject;
-
 import step.artefacts.CallPlan;
+import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
@@ -30,7 +28,13 @@ import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionContextBindings;
 import step.core.json.JsonProviderCache;
+import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.Plan;
+import step.core.plans.PlanAccessor;
+import step.functions.accessor.FunctionAccessor;
+
+import java.io.StringReader;
+import java.util.Map;
 
 public class CallPlanHandler extends ArtefactHandler<CallPlan, ReportNode> {
 
@@ -66,10 +70,20 @@ public class CallPlanHandler extends ArtefactHandler<CallPlan, ReportNode> {
 	protected void execute_(ReportNode node, CallPlan testArtefact) {
 		beforeDelegation(node, testArtefact);
 
+		// Append the artefactId of the current artefact to the path
+		pushArtefactPath(node, testArtefact);
+
 		Plan a = selectPlan(testArtefact);
 		
 		ReportNode resultNode = delegateExecute(a.getRoot(), node);
 		node.setStatus(resultNode.getStatus());
+	}
+
+	@Override
+	public AbstractArtefact resolveArtefactCall(AbstractArtefact artefact, DynamicJsonObjectResolver dynamicJsonObjectResolver, Map<String, Object> bindings, ObjectPredicate objectPredicate, PlanAccessor planAccessor, FunctionAccessor functionAccessor) {
+		PlanLocator planLocator = new PlanLocator(planAccessor, new SelectorHelper(dynamicJsonObjectResolver));
+		Plan plan = planLocator.selectPlan((CallPlan) artefact, objectPredicate, bindings);
+		return plan != null ? plan.getRoot() : null;
 	}
 
 	protected Plan selectPlan(CallPlan testArtefact) {

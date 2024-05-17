@@ -42,7 +42,7 @@ public class PerformanceAssert extends AbstractArtefact {
 	}
 
 	@Override
-	public boolean isPropertyArefact() {
+	public boolean isPropertyArtefact() {
 		return true;
 	}
 

@@ -28,6 +28,8 @@ import org.bson.types.ObjectId;
 import step.controller.services.async.AsyncTaskStatus;
 import step.core.access.User;
 import step.core.artefacts.reports.ReportNode;
+import step.core.artefacts.reports.aggregated.AggregatedReportView;
+import step.core.artefacts.reports.aggregated.AggregatedReportViewBuilder;
 import step.core.collections.SearchOrder;
 import step.core.deployment.AbstractStepAsyncServices;
 import step.core.deployment.ControllerServiceException;
@@ -217,6 +219,27 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 		limit = limit != null ? limit : 1000;
 		Stream<ReportNode> stream = getContext().getReportAccessor().getReportNodesWithContributingErrors(executionId, skip, limit);
 		return stream.collect(Collectors.toList());
+	}
+
+	@Operation(description = "Returns the full aggregated report view for the provided execution.")
+	@GET
+	@Path("/{id}/report/aggregated")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right = "execution-read")
+	public AggregatedReportView getFullAggregatedReportView(@PathParam("id") String executionId) {
+		return getAggregatedReportView(executionId, new AggregatedReportViewBuilder.AggregatedReportViewRequest());
+	}
+
+	@Operation(description = "Returns the aggregated report view for the provided execution.")
+	@POST
+	@Path("/{id}/report/aggregated")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right = "execution-read")
+	public AggregatedReportView getAggregatedReportView(@PathParam("id") String executionId, AggregatedReportViewBuilder.AggregatedReportViewRequest request) {
+		ExecutionEngineContext executionEngineContext = getScheduler().getExecutor().getExecutionEngine().getExecutionEngineContext();
+		AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(executionEngineContext, executionId);
+		return aggregatedReportViewBuilder.buildAggregatedReportView(request);
 	}
 
 	@Operation(description = "Updates the provided execution.")

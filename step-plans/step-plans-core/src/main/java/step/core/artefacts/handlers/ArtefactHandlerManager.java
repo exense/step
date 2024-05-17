@@ -66,28 +66,9 @@ public class ArtefactHandlerManager {
 	
 	@SuppressWarnings("unchecked")
 	private ArtefactHandler<AbstractArtefact, ReportNode> getArtefactHandler(Class<AbstractArtefact> artefactClass, ExecutionContext context) {
-		// Be careful not to cache the ArtefactHandlerRegistry as this is a mutable variable of the context...
-		ArtefactHandlerRegistry artefactHandlerRegistry = context.getArtefactHandlerRegistry();
-		Artefact artefact = artefactClass.getAnnotation(Artefact.class);
-		if(artefact!=null) {
-			Class<ArtefactHandler<AbstractArtefact, ReportNode>> artefactHandlerClass;
-			artefactHandlerClass = (Class<ArtefactHandler<AbstractArtefact, ReportNode>>) artefactHandlerRegistry.get(artefactClass);
-			if(artefactHandlerClass!=null) {
-				ArtefactHandler<AbstractArtefact, ReportNode> artefactHandler;
-				try {
-					artefactHandler = artefactHandlerClass.newInstance();
-				} catch (InstantiationException | IllegalAccessException e) {
-					throw new RuntimeException("Unable to instanciate artefact handler for the artefact class " + artefactClass, e);
-				}
-				
-				artefactHandler.init(context);
-				return artefactHandler;
-			} else {
-				throw new RuntimeException("No artefact handler found for the artefact class " + artefactClass);			
-			}	
-		} else {
-			throw new RuntimeException("The class " + artefactClass + " is not annotated as artefact!");	
-		}
+		ArtefactHandler<AbstractArtefact, ReportNode> artefactHandler = context.getArtefactHandlerRegistry().getArtefactHandler(artefactClass);
+		artefactHandler.init(context);
+		return artefactHandler;
 	}
 	
 }
