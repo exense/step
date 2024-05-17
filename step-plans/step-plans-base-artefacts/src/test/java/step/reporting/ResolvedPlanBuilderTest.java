@@ -4,7 +4,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import step.artefacts.BaseArtefactPlugin;
-import step.artefacts.handlers.functions.TokenAutoscalingExecutionPlugin;
+import step.artefacts.handlers.functions.TokenForcastingExecutionPlugin;
 import step.core.artefacts.reports.aggregated.AggregatedReportView;
 import step.core.artefacts.reports.aggregated.AggregatedReportViewBuilder;
 import step.core.execution.ExecutionEngine;
@@ -27,7 +27,7 @@ public class ResolvedPlanBuilderTest {
     @Before
     public void before() {
         engine = new ExecutionEngine.Builder().withPlugin(new BaseArtefactPlugin()).withPlugin(new ThreadPoolPlugin())
-                .withPlugin(new FunctionPlugin()).withPlugin(new TokenAutoscalingExecutionPlugin()).build();
+                .withPlugin(new FunctionPlugin()).withPlugin(new TokenForcastingExecutionPlugin()).build();
     }
 
     @After

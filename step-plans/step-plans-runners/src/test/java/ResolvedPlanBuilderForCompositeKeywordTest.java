@@ -2,7 +2,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import step.artefacts.BaseArtefactPlugin;
-import step.artefacts.handlers.functions.TokenAutoscalingExecutionPlugin;
+import step.artefacts.handlers.functions.TokenForcastingExecutionPlugin;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.reports.aggregated.AggregatedReportView;
 import step.core.artefacts.reports.aggregated.AggregatedReportViewBuilder;
@@ -39,7 +39,7 @@ public class ResolvedPlanBuilderForCompositeKeywordTest {
         InMemoryFunctionAccessorImpl functionAccessor = new InMemoryFunctionAccessorImpl();
         parentContext.put(FunctionAccessor.class, functionAccessor);
         engine = new ExecutionEngine.Builder().withParentContext(parentContext).withPlugin(new FunctionPlugin())
-                .withPlugin(new BaseArtefactPlugin()).withPlugin(new TokenAutoscalingExecutionPlugin()).withPlugin(new ThreadPoolPlugin()).withPlugin(new AbstractExecutionEnginePlugin() {
+                .withPlugin(new BaseArtefactPlugin()).withPlugin(new TokenForcastingExecutionPlugin()).withPlugin(new ThreadPoolPlugin()).withPlugin(new AbstractExecutionEnginePlugin() {
                     @Override
                     public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
                         super.initializeExecutionContext(executionEngineContext, executionContext);
