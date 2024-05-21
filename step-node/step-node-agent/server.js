@@ -1,18 +1,27 @@
 const minimist = require('minimist')
 const path = require('path')
+const YAML = require('yaml')
 
 let args = minimist(process.argv.slice(2), {
   default: {
     f: path.join(__dirname, 'AgentConf.json')
   }
 })
-console.log('[Agent] Using arguments ' + args)
+console.log('[Agent] Using arguments ' + JSON.stringify(args))
 
 const agentConfFile = args.f
 console.log('[Agent] Reading agent configuration ' + agentConfFile)
 const fs = require('fs')
-const content = fs.readFileSync(agentConfFile)
-const agentConf = JSON.parse(content)
+const content = fs.readFileSync(agentConfFile, 'utf8')
+const agentConfFileExt = path.extname(agentConfFile)
+var agentConf
+if(agentConfFileExt === '.yaml') {
+  agentConf = YAML.parse(content)
+} else if(agentConfFileExt === '.json') {
+  agentConf = JSON.parse(content)
+} else {
+  throw new Error('Unsupported extension ' + agentConfFileExt + " for agent configuration " + content);
+}
 
 console.log('[Agent] Creating agent context and tokens')
 const uuid = require('uuid/v4')
