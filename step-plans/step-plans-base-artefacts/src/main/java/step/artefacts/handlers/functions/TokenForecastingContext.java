@@ -31,7 +31,7 @@ public class TokenForecastingContext {
 
     public TokenForecastingContext(TokenForecastingContext parentContext) {
         this.parentContext = parentContext;
-        this.pools = parentContext.pools;
+        this.pools = parentContext == null ? new HashMap<>() : parentContext.pools;
     }
 
     protected String requireToken(Map<String, Interest> criteria, int count) throws NoMatchingTokenPoolException {

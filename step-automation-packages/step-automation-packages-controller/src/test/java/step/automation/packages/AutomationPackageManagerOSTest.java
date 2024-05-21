@@ -136,8 +136,8 @@ public class AutomationPackageManagerOSTest {
         SampleUploadingResult r = uploadSample1WithAsserts(true, false, false);
 
         // 2. Update the package - some entities are updated, some entities are added
-        String fileName = "samples/step-automation-packages-sample1-extended.jar";
-        File automationPackageJar = new File("src/test/resources/" + fileName);
+        String fileName = "step-automation-packages-sample1-extended.jar";
+        File automationPackageJar = new File("src/test/resources/samples/" + fileName);
         try (InputStream is = new FileInputStream(automationPackageJar)) {
             AutomationPackageUpdateResult result = manager.createOrUpdateAutomationPackage(true, true, null, is, fileName, null, null, false);
             Assert.assertEquals(AutomationPackageUpdateStatus.UPDATED, result.getStatus());
@@ -219,8 +219,8 @@ public class AutomationPackageManagerOSTest {
 
     @Test
     public void testResourcesInKeywordsAndPlans() throws IOException {
-        String fileName = "samples/step-automation-packages-sample2.jar";
-        File automationPackageJar = new File("src/test/resources/" + fileName);
+        String fileName = "step-automation-packages-sample2.jar";
+        File automationPackageJar = new File("src/test/resources/samples/" + fileName);
 
         try (InputStream is = new FileInputStream(automationPackageJar)) {
             ObjectId result;
@@ -269,8 +269,8 @@ public class AutomationPackageManagerOSTest {
     }
 
     private SampleUploadingResult uploadSample1WithAsserts(boolean createNew, boolean async, boolean expectedDelay) throws IOException {
-        String fileName = "samples/step-automation-packages-sample1.jar";
-        File automationPackageJar = new File("src/test/resources/" + fileName);
+        String fileName = "step-automation-packages-sample1.jar";
+        File automationPackageJar = new File("src/test/resources/samples/" + fileName);
 
         SampleUploadingResult r = new SampleUploadingResult();
         try (InputStream is = new FileInputStream(automationPackageJar)) {
