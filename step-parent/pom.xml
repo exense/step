@@ -123,6 +123,7 @@
 		<module>../step-ide</module>
 		<module>../step-libs-maven-client</module>
 		<module>../step-json-schema</module>
+		<module>../step-cli</module>
 	</modules>
 
     <build>

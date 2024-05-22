@@ -95,9 +95,5 @@ public class DeployAutomationPackageMojoTest extends AbstractMojoTest {
             this.remoteAutomationPackageClientMock = remoteAutomationPackageClientMock;
         }
 
-        protected RemoteAutomationPackageClientImpl createRemoteAutomationPackageClient() {
-            return remoteAutomationPackageClientMock;
-        }
-
     }
 }

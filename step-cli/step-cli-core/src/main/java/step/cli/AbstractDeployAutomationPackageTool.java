@@ -16,41 +16,41 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plugins.maven;
+package step.cli;
 
-import org.apache.maven.artifact.Artifact;
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugins.annotations.Mojo;
-import org.apache.maven.plugins.annotations.Parameter;
-import step.cli.AbstractDeployAutomationPackageTool;
-import step.cli.StepCliExecutionException;
+import step.automation.packages.AutomationPackageUpdateResult;
+import step.automation.packages.client.AutomationPackageClientException;
+import step.automation.packages.client.RemoteAutomationPackageClientImpl;
 import step.client.credentials.ControllerCredentials;
 
 import java.io.File;
 
-@Mojo(name = "deploy-automation-package")
-public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
+public abstract class AbstractDeployAutomationPackageTool extends AbstractCliTool {
 
-    @Parameter(defaultValue = "${project.groupId}", readonly = true, required = true)
     private String groupId;
 
-    @Parameter(defaultValue = "${project.artifactId}", readonly = true, required = true)
     private String artifactId;
 
-    @Parameter(defaultValue = "${project.version}", readonly = true, required = true)
     private String artifactVersion;
 
-    @Parameter(property = "step-deploy-automation-package.artifact-classifier")
     private String artifactClassifier;
 
-    @Parameter(property = "step.step-project-name")
     private String stepProjectName;
 
-    @Parameter(property = "step.auth-token")
     private String authToken;
 
-    @Parameter(property = "step-deploy-automation-package.async")
     private Boolean async;
+
+    public AbstractDeployAutomationPackageTool(String url, String groupId, String artifactId, String artifactVersion, String artifactClassifier, String stepProjectName, String authToken, Boolean async) {
+        super(url);
+        this.groupId = groupId;
+        this.artifactId = artifactId;
+        this.artifactVersion = artifactVersion;
+        this.artifactClassifier = artifactClassifier;
+        this.stepProjectName = stepProjectName;
+        this.authToken = authToken;
+        this.async = async;
+    }
 
     @Override
     protected ControllerCredentials getControllerCredentials() {
@@ -58,52 +58,34 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
         return new ControllerCredentials(getUrl(), authToken == null || authToken.isEmpty() ? null : authToken);
     }
 
-    @Override
-    public void execute() throws MojoExecutionException {
-        try {
-            new AbstractDeployAutomationPackageTool(getUrl(), getGroupId(), getArtifactId(), getArtifactVersion(), getArtifactClassifier(), getStepProjectName(), getAuthToken(), getAsync()) {
-                @Override
-                protected File getFileToUpload() throws StepCliExecutionException {
-                    try {
-                        return DeployAutomationPackageMojo.this.getFileToUpload();
-                    } catch (MojoExecutionException ex) {
-                        throw new StepCliExecutionException(ex);
-                    }
-                }
+    public void execute() throws StepCliExecutionException {
+        try (RemoteAutomationPackageClientImpl automationPackageClient = createRemoteAutomationPackageClient()) {
+            File packagedTarget = getFileToUpload();
 
-                @Override
-                protected void logError(String errorText, Throwable e) {
-                    if (e != null) {
-                        DeployAutomationPackageMojo.this.getLog().error(errorText, e);
-                    } else {
-                        DeployAutomationPackageMojo.this.getLog().error(errorText);
-                    }
+            logInfo("Uploading the automation package...", null);
+            try {
+                AutomationPackageUpdateResult updateResult = automationPackageClient.createOrUpdateAutomationPackage(packagedTarget, getAsync() != null && getAsync());
+                if (updateResult != null && updateResult.getId() != null) {
+                    logInfo("Automation package successfully uploaded. With status " + updateResult.getStatus() + ". Id: " + updateResult.getId(), null);
+                } else {
+                    throw logAndThrow("Unexpected response from Step. The returned automation package id is null. Please check the controller logs.");
                 }
-
-                @Override
-                protected void logInfo(String infoText, Throwable e) {
-                    if (e != null) {
-                        DeployAutomationPackageMojo.this.getLog().info(infoText, e);
-                    } else {
-                        DeployAutomationPackageMojo.this.getLog().info(infoText);
-                    }
-                }
-            }.execute();
+            } catch (AutomationPackageClientException e) {
+                throw logAndThrow("Error while uploading automation package to Step: " + e.getMessage());
+            }
         } catch (StepCliExecutionException e) {
-            throw new MojoExecutionException("Execution exception", e);
+            throw e;
         } catch (Exception e) {
             throw logAndThrow("Unexpected error while uploading automation package to Step", e);
         }
     }
 
-    protected File getFileToUpload() throws MojoExecutionException {
-        Artifact artifact = getProjectArtifact(getArtifactClassifier(), getGroupId(), getArtifactId(), getArtifactVersion());
+    protected abstract File getFileToUpload() throws StepCliExecutionException;
 
-        if (artifact == null || artifact.getFile() == null) {
-            throw new MojoExecutionException("Unable to resolve artifact to upload.");
-        }
-
-        return artifact.getFile();
+    protected RemoteAutomationPackageClientImpl createRemoteAutomationPackageClient() {
+        RemoteAutomationPackageClientImpl client = new RemoteAutomationPackageClientImpl(getControllerCredentials());
+        addProjectHeaderToRemoteClient(getStepProjectName(), client);
+        return client;
     }
 
     public String getArtifactClassifier() {
