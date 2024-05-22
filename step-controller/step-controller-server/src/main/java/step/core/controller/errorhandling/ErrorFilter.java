@@ -40,6 +40,7 @@ public class ErrorFilter extends AbstractStepServices implements ExceptionMapper
 	@Override
 	public Response toResponse(Exception exception) {
 		if(exception instanceof ControllerServiceException) {
+			logger.warn("A controller service exception occurred", exception);
 			ControllerServiceException portalException = (ControllerServiceException) exception;
 			ControllerServiceError portalServiceError = new ControllerServiceError();
 			portalServiceError.setErrorName(portalException.getErrorName());
