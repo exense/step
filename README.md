@@ -8,6 +8,7 @@
 
 ## Instructions for developers
 
+
 ### Git hooks setup
 
 After cloning the project, issue the following command to set up the git hooks (git version >= 2.9 required):
