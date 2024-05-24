@@ -52,7 +52,8 @@
     "underscore",
     "unzip-stream",
     "uuid",
-    "yaml"
+    "yaml",
+    "get-fqdn"
   ],
   "bin": {
     "step-node-agent": "./bin/step-node-agent"
