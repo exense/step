@@ -51,7 +51,8 @@
     "shelljs",
     "underscore",
     "unzip-stream",
-    "uuid"
+    "uuid",
+    "yaml"
   ],
   "bin": {
     "step-node-agent": "./bin/step-node-agent"
