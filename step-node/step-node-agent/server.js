@@ -84,7 +84,7 @@ if(agentConf.agentUrl) {
 } else {
   const getFQDN = require('get-fqdn');
   getFQDN().then(FQDN => {
-    startWithAgentUrl(FQDN) 
+    startWithAgentUrl('http://' + FQDN + ':' + port) 
   }).catch(e => {
     console.log('[Agent] Error while getting FQDN ' + e)
   })
