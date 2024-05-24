@@ -1,18 +1,27 @@
 const minimist = require('minimist')
 const path = require('path')
+const YAML = require('yaml')
 
 let args = minimist(process.argv.slice(2), {
   default: {
     f: path.join(__dirname, 'AgentConf.json')
   }
 })
-console.log('[Agent] Using arguments ' + args)
+console.log('[Agent] Using arguments ' + JSON.stringify(args))
 
 const agentConfFile = args.f
 console.log('[Agent] Reading agent configuration ' + agentConfFile)
 const fs = require('fs')
-const content = fs.readFileSync(agentConfFile)
-const agentConf = JSON.parse(content)
+const content = fs.readFileSync(agentConfFile, 'utf8')
+const agentConfFileExt = path.extname(agentConfFile)
+var agentConf
+if(agentConfFileExt === '.yaml') {
+  agentConf = YAML.parse(content)
+} else if(agentConfFileExt === '.json') {
+  agentConf = JSON.parse(content)
+} else {
+  throw new Error('Unsupported extension ' + agentConfFileExt + " for agent configuration " + content);
+}
 
 console.log('[Agent] Creating agent context and tokens')
 const uuid = require('uuid/v4')
@@ -49,24 +58,34 @@ routes(app, agentContext)
 var server = app.listen(port)
 server.setTimeout(timeout)
 
-const os = require('os')
-const agentServicesUrl = agentConf.agentUrl || 'http://' + os.hostname() + ':' + port
-console.log('[Agent] Registering agent as ' + agentServicesUrl + ' to grid ' + agentConf.gridHost)
+startWithAgentUrl = function(agentUrl) {
+  console.log('[Agent] Registering agent as ' + agentUrl + ' to grid ' + agentConf.gridHost)
+  console.log('[Agent] Creating registration timer')
+  const registrationPeriod = agentConf.registrationPeriod || 5000
+  const request = require('request')
+  setInterval(function () {
+    request({
+      uri: agentConf.gridHost + '/grid/register',
+      method: 'POST',
+      json: true,
+      body: { agentRef: { agentId: agent.id, agentUrl: agentUrl, agentType: agentType }, tokens: agentContext.tokens }
+    }, function (err, res, body) {
+      if (err) {
+        console.log(err)
+      }
+    })
+  }, registrationPeriod)
+  
+  console.log('[Agent] Successfully started on: ' + port)  
+}
 
-console.log('[Agent] Creating registration timer')
-const registrationPeriod = agentConf.registrationPeriod || 5000
-const request = require('request')
-setInterval(function () {
-  request({
-    uri: agentConf.gridHost + '/grid/register',
-    method: 'POST',
-    json: true,
-    body: { agentRef: { agentId: agent.id, agentUrl: agentServicesUrl, agentType: agentType }, tokens: agentContext.tokens }
-  }, function (err, res, body) {
-    if (err) {
-      console.log(err)
-    }
+if(agentConf.agentUrl) {
+  startWithAgentUrl(agentConf.agentUrl)
+} else {
+  const getFQDN = require('get-fqdn');
+  getFQDN().then(FQDN => {
+    startWithAgentUrl('http://' + FQDN + ':' + port) 
+  }).catch(e => {
+    console.log('[Agent] Error while getting FQDN ' + e)
   })
-}, registrationPeriod)
-
-console.log('[Agent] Successfully started on: ' + port)
+}

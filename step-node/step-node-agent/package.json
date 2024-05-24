@@ -30,6 +30,7 @@
   "dependencies": {
     "body-parser": "^1.19.1",
     "express": "^4.17.1",
+    "get-fqdn": "^1.0.0",
     "http": "0.0.0",
     "minimist": "^1.2.5",
     "npm": "^6.14.15",
@@ -37,7 +38,8 @@
     "shelljs": "^0.8.4",
     "underscore": "^1.13.1",
     "unzip-stream": "^0.3.1",
-    "uuid": "^3.4.0"
+    "uuid": "^3.4.0",
+    "yaml": "^2.4.2"
   },
   "bundledDependencies": [
     "body-parser",
@@ -49,7 +51,9 @@
     "shelljs",
     "underscore",
     "unzip-stream",
-    "uuid"
+    "uuid",
+    "yaml",
+    "get-fqdn"
   ],
   "bin": {
     "step-node-agent": "./bin/step-node-agent"
