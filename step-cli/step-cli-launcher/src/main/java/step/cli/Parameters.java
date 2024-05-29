@@ -20,14 +20,4 @@ package step.cli;
 
 public class Parameters {
     public static final String CONFIG = "config";
-    public static final String AP_FILE = "apFile";
-    public static final String STEP_URL = "stepUrl";
-    public static final String ARTIFACT_GROUP_ID = "artifactGroupId";
-    public static final String ARTIFACT_VERSION = "artifactVersion";
-    public static final String ARTIFACT_CLASSIFIER = "artifactClassifier";
-    public static final String PROJECT_NAME = "projectName";
-    public static final String TOKEN = "token";
-    public static final String ASYNC = "async";
-    public static final String PREFIX = "--";
-    public static final String ARTIFACT_ID = "artifactId";
 }
