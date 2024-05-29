@@ -26,79 +26,112 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.util.Arrays;
+import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.Callable;
 
-@Command(name = "manageAP", mixinStandardHelpOptions = true, version = "manageAP 1.0",
-        description = "Deploys or executes the automation package")
+import static step.cli.Parameters.*;
+import static step.cli.Parameters.ARTIFACT_ID;
+
+@Command(name = "step", mixinStandardHelpOptions = true, version = "step 1.0",
+        description = "The CLI interface to communicate with Step server")
 public class AutomationPackageConsole implements Callable<Integer> {
+
+    public static final String DEFAULT_CONFIG_FILE = "C://temp/stepCliConfig.properties";
 
     private static final Logger log = LoggerFactory.getLogger(AutomationPackageConsole.class);
 
     @Parameters(index = "0", description = "\"Deploy\" or \"Execute\"")
     private String command;
 
-    @Parameters(index = "1", description = "The file with automation package")
-    private File file;
+    // TODO: valid default path to config file
+    @Option(names = {PREFIX + CONFIG}, description = "The custom configuration file", defaultValue = DEFAULT_CONFIG_FILE)
+    private String config;
 
-    @Option(names = {"--url"}, required = true)
-    private String url;
+    @Option(names = {PREFIX + AP_FILE}, description = "The file with automation package")
+    private String apFile;
 
-    @Option(names = {"--groupId"})
-    private String groupId;
+    @Option(names = {PREFIX + STEP_URL})
+    private String stepUrl;
 
-    @Option(names = {"--artifactId"})
+    @Option(names = {PREFIX + ARTIFACT_GROUP_ID})
+    private String artifactGroupId;
+
+    @Option(names = {PREFIX + ARTIFACT_ID})
     private String artifactId;
 
-    @Option(names = {"--artifactVersion"})
+    @Option(names = {PREFIX + ARTIFACT_VERSION})
     private String artifactVersion;
 
-    @Option(names = {"--artifactClassifier"})
+    @Option(names = {PREFIX + ARTIFACT_CLASSIFIER})
     private String artifactClassifier;
 
-    @Option(names = {"--projectName"})
+    @Option(names = {PREFIX + PROJECT_NAME})
     private String stepProjectName;
 
-    @Option(names = {"--token"})
+    @Option(names = {PREFIX + TOKEN})
     private String authToken;
 
-    @Option(names = {"--async"})
-    private Boolean async;
+    @Option(names = {PREFIX + ASYNC}, defaultValue = "true")
+    private String async;
+
+    private CliCommandHandler apDeployHandler = new ApDeployCliHandler();
 
     @Override
     public Integer call() throws Exception {
+        CliConfig config = readConfig();
         switch (command.toLowerCase()) {
             case "deploy":
-                new AbstractDeployAutomationPackageTool(url, groupId, artifactId, artifactVersion, artifactClassifier, stepProjectName, authToken, async) {
-                    @Override
-                    protected File getFileToUpload() throws StepCliExecutionException {
-                        return file;
-                    }
-
-                    @Override
-                    protected void logError(String errorText, Throwable e) {
-                        if (e != null) {
-                            log.error(errorText, e);
-                        } else {
-                            log.error(errorText);
-                        }
-                    }
-
-                    @Override
-                    protected void logInfo(String infoText, Throwable e) {
-                        if (e != null) {
-                            log.info(infoText, e);
-                        } else {
-                            log.info(infoText);
-                        }
-                    }
-                }.execute();
+                apDeployHandler.execute(config);
                 break;
             default:
                 System.out.println("Unknown command: " + command);
                 return -1;
         }
         return 0;
+    }
+
+    private CliConfig readConfig() {
+        CliConfig res = readConfigFile(config);
+        // TODO: run over all fields annotated with @Option via reflection
+        addConsoleParam(STEP_URL, stepUrl, res);
+        addConsoleParam(AP_FILE, apFile, res);
+        addConsoleParam(STEP_URL, stepUrl, res);
+        addConsoleParam(ARTIFACT_GROUP_ID, artifactGroupId, res);
+        addConsoleParam(ARTIFACT_ID, artifactId, res);
+        addConsoleParam(ARTIFACT_VERSION, artifactVersion, res);
+        addConsoleParam(ARTIFACT_CLASSIFIER, artifactClassifier, res);
+        addConsoleParam(PROJECT_NAME, stepProjectName, res);
+        addConsoleParam(TOKEN, authToken, res);
+        addConsoleParam(ASYNC, async, res);
+        return res;
+    }
+
+    private void addConsoleParam(String name, String value, CliConfig res) {
+        if (value != null) {
+            res.getConfig().put(name, value);
+        }
+    }
+
+    public CliConfig readConfigFile(String configFilePath) throws StepCliExecutionException {
+        try {
+            CliConfig res = new CliConfig();
+            File configFile = new File(configFilePath);
+            if (configFile.exists() && configFile.isFile()) {
+                Properties configProperties = new Properties();
+                try (FileInputStream is = new FileInputStream(configFile)) {
+                    configProperties.load(is);
+                }
+                for (Map.Entry<Object, Object> entries : configProperties.entrySet()) {
+                    res.getConfig().put(entries.getKey().toString(), entries.getValue().toString());
+                }
+            }
+            return res;
+        } catch (Exception ex) {
+            throw new StepCliExecutionException("Unable to read config file: " + configFilePath, ex);
+        }
     }
 
     // this example implements Callable, so parsing, error handling and handling user
@@ -108,5 +141,53 @@ public class AutomationPackageConsole implements Callable<Integer> {
         log.info("args: " + Arrays.asList(args));
         int exitCode = new CommandLine(new AutomationPackageConsole()).execute(args);
         System.exit(exitCode);
+    }
+
+    public void setCommand(String command) {
+        this.command = command;
+    }
+
+    public void setApFile(String apFile) {
+        this.apFile = apFile;
+    }
+
+    public void setConfig(String config) {
+        this.config = config;
+    }
+
+    public void setUrl(String url) {
+        this.stepUrl = url;
+    }
+
+    public void setArtifactGroupId(String artifactGroupId) {
+        this.artifactGroupId = artifactGroupId;
+    }
+
+    public void setArtifactId(String artifactId) {
+        this.artifactId = artifactId;
+    }
+
+    public void setArtifactVersion(String artifactVersion) {
+        this.artifactVersion = artifactVersion;
+    }
+
+    public void setArtifactClassifier(String artifactClassifier) {
+        this.artifactClassifier = artifactClassifier;
+    }
+
+    public void setStepProjectName(String stepProjectName) {
+        this.stepProjectName = stepProjectName;
+    }
+
+    public void setAuthToken(String authToken) {
+        this.authToken = authToken;
+    }
+
+    public void setAsync(String async) {
+        this.async = async;
+    }
+
+    public void setApDeployHandler(CliCommandHandler apDeployHandler) {
+        this.apDeployHandler = apDeployHandler;
     }
 }
