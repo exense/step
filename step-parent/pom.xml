@@ -105,6 +105,12 @@
 			<artifactId>logback-classic</artifactId>
 			<version>${logback.version}</version>
 		</dependency>
+		<!-- make sure exense common version defined in Step has precedence -->
+		<dependency>
+			<groupId>ch.exense.commons</groupId>
+			<artifactId>exense-basic-commons</artifactId>
+			<version>${exense-commons.version}</version>
+		</dependency>
 	</dependencies>
 
 	<modules>
