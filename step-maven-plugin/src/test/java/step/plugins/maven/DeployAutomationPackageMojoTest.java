@@ -87,6 +87,7 @@ public class DeployAutomationPackageMojoTest extends AbstractMojoTest {
         return remoteClient;
     }
 
+    // TODO: fix test
     private static class DeployAutomationPackageMojoTestable extends DeployAutomationPackageMojo {
 
         private RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock;

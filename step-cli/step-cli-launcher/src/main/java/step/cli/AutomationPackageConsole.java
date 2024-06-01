@@ -26,6 +26,7 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 import java.io.File;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 import static step.cli.Parameters.CONFIG;
@@ -72,11 +73,36 @@ public class AutomationPackageConsole implements Callable<Integer> {
     @Option(names = {"--async"}, defaultValue = "true")
     private Boolean async;
 
+    @Option(names = {"--stepUserId"})
+    private String stepUserId;
+
+    @Option(names = {"--executionTimeoutS"})
+    private Integer executionTimeoutS;
+
+    // TODO: how to pass execution parameters
+    @Option(names = {"--executionParameters"})
+    private Map<String, String> executionParameters;
+
+    @Option(names = {"--waitForExecution"})
+    private Boolean waitForExecution;
+
+    @Option(names = {"--ensureExecutionSuccess"})
+    private Boolean ensureExecutionSuccess;
+
+    @Option(names = {"--includePlans"})
+    private String includePlans;
+
+    @Option(names = {"--excludePlans"})
+    private String excludePlans;
+
     @Override
     public Integer call() throws Exception {
         switch (command.toLowerCase()) {
             case "deploy":
                 handleDeployCommand();
+                break;
+            case "execute":
+                handleExecuteCommand();
                 break;
             default:
                 log.error("Unknown command: " + command);
@@ -85,29 +111,20 @@ public class AutomationPackageConsole implements Callable<Integer> {
         return 0;
     }
 
+    private void handleExecuteCommand() {
+        new AbstractExecuteAutomationPackageTool(stepUrl, stepProjectName, stepUserId, authToken, artifactGroupId, artifactId, artifactVersion, artifactClassifier, executionParameters, executionTimeoutS, waitForExecution, ensureExecutionSuccess, includePlans, excludePlans) {
+            @Override
+            protected File getAutomationPackageFile() throws StepCliExecutionException {
+                return apFile;
+            }
+        }.execute();
+    }
+
     protected void handleDeployCommand() {
         new AbstractDeployAutomationPackageTool(stepUrl, artifactGroupId, artifactId, artifactVersion, artifactClassifier, stepProjectName, authToken, async) {
             @Override
             protected File getFileToUpload() throws StepCliExecutionException {
                 return apFile;
-            }
-
-            @Override
-            protected void logError(String errorText, Throwable e) {
-                if (e != null) {
-                    log.error(errorText, e);
-                } else {
-                    log.error(errorText);
-                }
-            }
-
-            @Override
-            protected void logInfo(String infoText, Throwable e) {
-                if (e != null) {
-                    log.info(infoText, e);
-                } else {
-                    log.info(infoText);
-                }
             }
         }.execute();
     }
@@ -161,4 +178,35 @@ public class AutomationPackageConsole implements Callable<Integer> {
         this.async = async;
     }
 
+    public void setStepUrl(String stepUrl) {
+        this.stepUrl = stepUrl;
+    }
+
+    public void setStepUserId(String stepUserId) {
+        this.stepUserId = stepUserId;
+    }
+
+    public void setExecutionTimeoutS(Integer executionTimeoutS) {
+        this.executionTimeoutS = executionTimeoutS;
+    }
+
+    public void setExecutionParameters(Map<String, String> executionParameters) {
+        this.executionParameters = executionParameters;
+    }
+
+    public void setWaitForExecution(Boolean waitForExecution) {
+        this.waitForExecution = waitForExecution;
+    }
+
+    public void setEnsureExecutionSuccess(Boolean ensureExecutionSuccess) {
+        this.ensureExecutionSuccess = ensureExecutionSuccess;
+    }
+
+    public void setIncludePlans(String includePlans) {
+        this.includePlans = includePlans;
+    }
+
+    public void setExcludePlans(String excludePlans) {
+        this.excludePlans = excludePlans;
+    }
 }

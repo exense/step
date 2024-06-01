@@ -18,6 +18,8 @@
  ******************************************************************************/
 package step.cli;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.client.AbstractRemoteClient;
 import step.client.accessors.RemoteAccessors;
 import step.client.collections.remote.RemoteCollectionFactory;
@@ -35,6 +37,8 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 public abstract class AbstractCliTool {
+
+    private static final Logger log = LoggerFactory.getLogger(AbstractCliTool.class);
 
     private String url;
 
@@ -62,9 +66,21 @@ public abstract class AbstractCliTool {
         return new StepCliExecutionException(errorText);
     }
 
-    protected abstract void logError(String errorText, Throwable e);
+    protected void logError(String errorText, Throwable e) {
+        if (e != null) {
+            log.error(errorText, e);
+        } else {
+            log.error(errorText);
+        }
+    }
 
-    protected abstract void logInfo(String infoText, Throwable e);
+    protected void logInfo(String infoText, Throwable e) {
+        if (e != null) {
+            log.info(infoText, e);
+        } else {
+            log.info(infoText);
+        }
+    }
 
     protected ControllerCredentials getControllerCredentials() {
         return new ControllerCredentials(getUrl(), null);

@@ -213,25 +213,11 @@ public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 		return params;
 	}
 
+	// TODO: fix test
 	private static class RunAutomationPackageMojoTestable extends ExecuteAutomationPackageMojo {
-
-		private final RemoteExecutionManager remoteExecutionManagerMock;
-		private final RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock;
 
 		public RunAutomationPackageMojoTestable(RemoteExecutionManager remoteExecutionManagerMock, RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock) {
 			super();
-			this.remoteExecutionManagerMock = remoteExecutionManagerMock;
-			this.remoteAutomationPackageClientMock = remoteAutomationPackageClientMock;
-		}
-
-		@Override
-		protected RemoteExecutionManager createRemoteExecutionManager() {
-			return remoteExecutionManagerMock;
-		}
-
-		@Override
-		protected RemoteAutomationPackageClientImpl createRemoteAutomationPackageClient() {
-			return remoteAutomationPackageClientMock;
 		}
 
     }
