@@ -20,40 +20,30 @@ package step.plugins.maven;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.project.MavenProject;
-import org.bson.types.ObjectId;
 import org.junit.Assert;
 import org.junit.Test;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
-import step.automation.packages.AutomationPackageUpdateResult;
-import step.automation.packages.AutomationPackageUpdateStatus;
-import step.automation.packages.client.AutomationPackageClientException;
-import step.automation.packages.client.RemoteAutomationPackageClientImpl;
+import step.cli.AbstractDeployAutomationPackageTool;
 
-import java.io.File;
 import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.HashSet;
 
 public class DeployAutomationPackageMojoTest extends AbstractMojoTest {
 
-    private static final ObjectId UPDATED_PACK_ID = new ObjectId();
-
     @Test
     public void testUpload() throws Exception {
-        RemoteAutomationPackageClientImpl automationPackageClient = createRemoteAutomationPackageClientMock();
-        DeployAutomationPackageMojoTestable mojo = new DeployAutomationPackageMojoTestable(automationPackageClient);
+        DeployAutomationPackageMojoTestable mojo = new DeployAutomationPackageMojoTestable();
 
         // configure mojo with test parameters and mocked Maven Project
         configureMojo(mojo);
         mojo.execute();
 
-        // attributes used to search for existing function packages
-        ArgumentCaptor<File> packageFileCaptor = ArgumentCaptor.forClass(File.class);
-        Mockito.verify(automationPackageClient, Mockito.times(1)).createOrUpdateAutomationPackage(packageFileCaptor.capture(), Mockito.anyBoolean());
-        Mockito.verify(automationPackageClient, Mockito.times(1)).close();
-        Mockito.verifyNoMoreInteractions(automationPackageClient);
-        Assert.assertEquals(mojo.getProject().getAttachedArtifacts().get(0).getFile(), packageFileCaptor.getValue());
+        Mockito.verify(mojo.mockedTool, Mockito.times(1)).execute();
+        Assert.assertEquals("http://localhost:8080", mojo.toolUrl);
+        Assert.assertEquals(false, mojo.toolAsync);
+        Assert.assertEquals(TENANT_1.getName(), mojo.toolProjectName);
+        Assert.assertNull(mojo.toolAuthToken);
     }
 
     private void configureMojo(DeployAutomationPackageMojoTestable mojo) throws URISyntaxException {
@@ -80,21 +70,25 @@ public class DeployAutomationPackageMojoTest extends AbstractMojoTest {
         mojo.setProject(mockedProject);
     }
 
-
-    private RemoteAutomationPackageClientImpl createRemoteAutomationPackageClientMock() throws AutomationPackageClientException {
-        RemoteAutomationPackageClientImpl remoteClient = Mockito.mock(RemoteAutomationPackageClientImpl.class);
-        Mockito.when(remoteClient.createOrUpdateAutomationPackage(Mockito.any(), Mockito.anyBoolean())).thenReturn(new AutomationPackageUpdateResult(AutomationPackageUpdateStatus.CREATED, UPDATED_PACK_ID));
-        return remoteClient;
-    }
-
-    // TODO: fix test
     private static class DeployAutomationPackageMojoTestable extends DeployAutomationPackageMojo {
 
-        private RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock;
+        private final AbstractDeployAutomationPackageTool mockedTool = Mockito.mock(AbstractDeployAutomationPackageTool.class);
 
-        public DeployAutomationPackageMojoTestable(RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock) {
-            this.remoteAutomationPackageClientMock = remoteAutomationPackageClientMock;
+        private String toolUrl;
+        private String toolProjectName;
+        private String toolAuthToken;
+        private Boolean toolAsync;
+
+        public DeployAutomationPackageMojoTestable() {
         }
 
+        @Override
+        protected AbstractDeployAutomationPackageTool createTool(String url, String projectName, String authToken, Boolean async) {
+            this.toolAsync = async;
+            this.toolUrl = url;
+            this.toolProjectName = projectName;
+            this.toolAuthToken = authToken;
+            return mockedTool;
+        }
     }
 }

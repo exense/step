@@ -61,39 +61,16 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
     @Override
     public void execute() throws MojoExecutionException {
         try {
-            new AbstractDeployAutomationPackageTool(getUrl(), getStepProjectName(), getAuthToken(), getAsync()) {
-                @Override
-                protected File getFileToUpload() throws StepCliExecutionException {
-                    try {
-                        return DeployAutomationPackageMojo.this.getFileToUpload();
-                    } catch (MojoExecutionException ex) {
-                        throw new StepCliExecutionException(ex);
-                    }
-                }
-
-                @Override
-                protected void logError(String errorText, Throwable e) {
-                    if (e != null) {
-                        DeployAutomationPackageMojo.this.getLog().error(errorText, e);
-                    } else {
-                        DeployAutomationPackageMojo.this.getLog().error(errorText);
-                    }
-                }
-
-                @Override
-                protected void logInfo(String infoText, Throwable e) {
-                    if (e != null) {
-                        DeployAutomationPackageMojo.this.getLog().info(infoText, e);
-                    } else {
-                        DeployAutomationPackageMojo.this.getLog().info(infoText);
-                    }
-                }
-            }.execute();
+            createTool(getUrl(), getStepProjectName(), getAuthToken(), getAsync()).execute();
         } catch (StepCliExecutionException e) {
             throw new MojoExecutionException("Execution exception", e);
         } catch (Exception e) {
             throw logAndThrow("Unexpected error while uploading automation package to Step", e);
         }
+    }
+
+    protected AbstractDeployAutomationPackageTool createTool(final String url, final String projectName, final String authToken, final Boolean async) {
+        return new MavenDeployAutomationPackageTool(url, projectName, authToken, async);
     }
 
     protected File getFileToUpload() throws MojoExecutionException {
@@ -160,5 +137,38 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
 
     public void setAsync(Boolean async) {
         this.async = async;
+    }
+
+    protected class MavenDeployAutomationPackageTool extends AbstractDeployAutomationPackageTool {
+        public MavenDeployAutomationPackageTool(String url, String projectName, String authToken, Boolean async) {
+            super(url, projectName, authToken, async);
+        }
+
+        @Override
+        protected File getFileToUpload() throws StepCliExecutionException {
+            try {
+                return DeployAutomationPackageMojo.this.getFileToUpload();
+            } catch (MojoExecutionException ex) {
+                throw new StepCliExecutionException(ex);
+            }
+        }
+
+        @Override
+        protected void logError(String errorText, Throwable e) {
+            if (e != null) {
+                DeployAutomationPackageMojo.this.getLog().error(errorText, e);
+            } else {
+                DeployAutomationPackageMojo.this.getLog().error(errorText);
+            }
+        }
+
+        @Override
+        protected void logInfo(String infoText, Throwable e) {
+            if (e != null) {
+                DeployAutomationPackageMojo.this.getLog().info(infoText, e);
+            } else {
+                DeployAutomationPackageMojo.this.getLog().info(infoText);
+            }
+        }
     }
 }
