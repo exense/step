@@ -52,35 +52,50 @@ public class StepConsoleConsole implements Callable<Integer> {
     @Option(names = {"--stepUrl"})
     private String stepUrl;
 
-    @Option(names = {"--projectName"})
-    private String stepProjectName;
+    @CommandLine.ArgGroup(validate = false, heading = "The security parameters (for Step EE only)%n")
+    protected SecurityParams securityParams = new SecurityParams();
 
-    @Option(names = {"--token"})
-    private String authToken;
+    @CommandLine.ArgGroup(validate = false, heading = "The parameters for AP deployment%n")
+    protected ApDeployParams apDeployParams = new ApDeployParams();
 
-    @Option(names = {"--async"}, defaultValue = "true")
-    private Boolean async;
+    @CommandLine.ArgGroup(validate = false, heading = "The parameters for AP execution%n")
+    protected ApExecuteParams apExecuteParams = new ApExecuteParams();
 
-    @Option(names = {"--stepUserId"})
-    private String stepUserId;
+    protected static class SecurityParams {
+        @Option(names = {"--projectName"})
+        private String stepProjectName;
 
-    @Option(names = {"--executionTimeoutS"}, defaultValue = "3600")
-    private Integer executionTimeoutS;
+        @Option(names = {"--token"})
+        private String authToken;
 
-    @Option(names = {"-ep", "--executionParameters"})
-    private Map<String, String> executionParameters;
+        @Option(names = {"--stepUserId"})
+        private String stepUserId;
+    }
 
-    @Option(names = {"--waitForExecution"}, defaultValue = "true")
-    private Boolean waitForExecution;
+    protected static class ApDeployParams {
+        @Option(names = {"--async"}, defaultValue = "true")
+        protected Boolean async;
+    }
 
-    @Option(names = {"--ensureExecutionSuccess"}, defaultValue = "true")
-    private Boolean ensureExecutionSuccess;
+    protected static class ApExecuteParams {
+        @Option(names = {"--executionTimeoutS"}, defaultValue = "3600")
+        protected Integer executionTimeoutS;
 
-    @Option(names = {"--includePlans"})
-    private String includePlans;
+        @Option(names = {"-ep", "--executionParameters"})
+        protected Map<String, String> executionParameters;
 
-    @Option(names = {"--excludePlans"})
-    private String excludePlans;
+        @Option(names = {"--waitForExecution"}, defaultValue = "true")
+        protected Boolean waitForExecution;
+
+        @Option(names = {"--ensureExecutionSuccess"}, defaultValue = "true")
+        protected Boolean ensureExecutionSuccess;
+
+        @Option(names = {"--includePlans"})
+        protected String includePlans;
+
+        @Option(names = {"--excludePlans"})
+        protected String excludePlans;
+    }
 
     public static void main(String... args) {
         int exitCode = new CommandLine(new StepConsoleConsole()).execute(args);
@@ -104,7 +119,12 @@ public class StepConsoleConsole implements Callable<Integer> {
     }
 
     private void handleExecuteCommand() {
-        new AbstractExecuteAutomationPackageTool(stepUrl, stepProjectName, stepUserId, authToken, executionParameters, executionTimeoutS, waitForExecution, ensureExecutionSuccess, includePlans, excludePlans) {
+        new AbstractExecuteAutomationPackageTool(
+                stepUrl, securityParams.stepProjectName, securityParams.stepUserId, securityParams.authToken,
+                apExecuteParams.executionParameters, apExecuteParams.executionTimeoutS,
+                apExecuteParams.waitForExecution, apExecuteParams.ensureExecutionSuccess,
+                apExecuteParams.includePlans, apExecuteParams.excludePlans
+        ) {
             @Override
             protected File getAutomationPackageFile() throws StepCliExecutionException {
                 return prepareApFile(apFile);
@@ -113,7 +133,7 @@ public class StepConsoleConsole implements Callable<Integer> {
     }
 
     protected void handleDeployCommand() {
-        new AbstractDeployAutomationPackageTool(stepUrl, stepProjectName, authToken, async) {
+        new AbstractDeployAutomationPackageTool(stepUrl, securityParams.stepProjectName, securityParams.authToken, apDeployParams.async) {
             @Override
             protected File getFileToUpload() throws StepCliExecutionException {
                 return prepareApFile(apFile);
@@ -155,15 +175,15 @@ public class StepConsoleConsole implements Callable<Integer> {
     }
 
     public void setStepProjectName(String stepProjectName) {
-        this.stepProjectName = stepProjectName;
+        this.securityParams.stepProjectName = stepProjectName;
     }
 
     public void setAuthToken(String authToken) {
-        this.authToken = authToken;
+        this.securityParams.authToken = authToken;
     }
 
     public void setAsync(Boolean async) {
-        this.async = async;
+        this.apDeployParams.async = async;
     }
 
     public void setStepUrl(String stepUrl) {
@@ -171,30 +191,30 @@ public class StepConsoleConsole implements Callable<Integer> {
     }
 
     public void setStepUserId(String stepUserId) {
-        this.stepUserId = stepUserId;
+        this.securityParams.stepUserId = stepUserId;
     }
 
     public void setExecutionTimeoutS(Integer executionTimeoutS) {
-        this.executionTimeoutS = executionTimeoutS;
+        this.apExecuteParams.executionTimeoutS = executionTimeoutS;
     }
 
     public void setExecutionParameters(Map<String, String> executionParameters) {
-        this.executionParameters = executionParameters;
+        this.apExecuteParams.executionParameters = executionParameters;
     }
 
     public void setWaitForExecution(Boolean waitForExecution) {
-        this.waitForExecution = waitForExecution;
+        this.apExecuteParams.waitForExecution = waitForExecution;
     }
 
     public void setEnsureExecutionSuccess(Boolean ensureExecutionSuccess) {
-        this.ensureExecutionSuccess = ensureExecutionSuccess;
+        this.apExecuteParams.ensureExecutionSuccess = ensureExecutionSuccess;
     }
 
     public void setIncludePlans(String includePlans) {
-        this.includePlans = includePlans;
+        this.apExecuteParams.includePlans = includePlans;
     }
 
     public void setExcludePlans(String excludePlans) {
-        this.excludePlans = excludePlans;
+        this.apExecuteParams.excludePlans = excludePlans;
     }
 }
