@@ -63,7 +63,7 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
     @Override
     public void execute() throws MojoExecutionException {
         try {
-            new AbstractExecuteAutomationPackageTool(getUrl(), getStepProjectName(), getUserId(), getAuthToken(), getGroupId(), getGroupId(), getArtifactVersion(), getArtifactClassifier(), getExecutionParameters(), getExecutionResultTimeoutS(), getWaitForExecution(), getEnsureExecutionSuccess(), getIncludePlans(), getExcludePlans()) {
+            new AbstractExecuteAutomationPackageTool(getUrl(), getStepProjectName(), getUserId(), getAuthToken(), getExecutionParameters(), getExecutionResultTimeoutS(), getWaitForExecution(), getEnsureExecutionSuccess(), getIncludePlans(), getExcludePlans()) {
                 @Override
                 protected File getAutomationPackageFile() throws StepCliExecutionException {
                     return getAutomationPackageFile();

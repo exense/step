@@ -61,7 +61,7 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
     @Override
     public void execute() throws MojoExecutionException {
         try {
-            new AbstractDeployAutomationPackageTool(getUrl(), getGroupId(), getArtifactId(), getArtifactVersion(), getArtifactClassifier(), getStepProjectName(), getAuthToken(), getAsync()) {
+            new AbstractDeployAutomationPackageTool(getUrl(), getStepProjectName(), getAuthToken(), getAsync()) {
                 @Override
                 protected File getFileToUpload() throws StepCliExecutionException {
                     try {

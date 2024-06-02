@@ -45,11 +45,6 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
     private String userId;
     private String authToken;
 
-    private String groupId;
-    private String artifactId;
-    private String artifactVersion;
-    private String artifactClassifier;
-
     private Map<String, String> executionParameters;
     private Integer executionResultTimeoutS;
     private Boolean waitForExecution;
@@ -60,8 +55,6 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
 
     public AbstractExecuteAutomationPackageTool(String url, String stepProjectName,
                                                 String userId, String authToken,
-                                                String groupId, String artifactGroupId,
-                                                String artifactVersion, String artifactClassifier,
                                                 Map<String, String> executionParameters,
                                                 Integer executionResultTimeoutS, Boolean waitForExecution,
                                                 Boolean ensureExecutionSuccess, String includePlans,
@@ -70,10 +63,6 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
         this.stepProjectName = stepProjectName;
         this.userId = userId;
         this.authToken = authToken;
-        this.groupId = groupId;
-        this.artifactId = artifactGroupId;
-        this.artifactVersion = artifactVersion;
-        this.artifactClassifier = artifactClassifier;
         this.executionParameters = executionParameters;
         this.executionResultTimeoutS = executionResultTimeoutS;
         this.waitForExecution = waitForExecution;
@@ -243,38 +232,6 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
 
     public void setAuthToken(String authToken) {
         this.authToken = authToken;
-    }
-
-    public String getGroupId() {
-        return groupId;
-    }
-
-    public void setGroupId(String groupId) {
-        this.groupId = groupId;
-    }
-
-    public String getArtifactId() {
-        return artifactId;
-    }
-
-    public void setArtifactId(String artifactId) {
-        this.artifactId = artifactId;
-    }
-
-    public String getArtifactVersion() {
-        return artifactVersion;
-    }
-
-    public void setArtifactVersion(String artifactVersion) {
-        this.artifactVersion = artifactVersion;
-    }
-
-    public String getArtifactClassifier() {
-        return artifactClassifier;
-    }
-
-    public void setArtifactClassifier(String artifactClassifier) {
-        this.artifactClassifier = artifactClassifier;
     }
 
     public Map<String, String> getExecutionParameters() {

@@ -27,26 +27,14 @@ import java.io.File;
 
 public abstract class AbstractDeployAutomationPackageTool extends AbstractCliTool {
 
-    private String groupId;
-
-    private String artifactId;
-
-    private String artifactVersion;
-
-    private String artifactClassifier;
-
     private String stepProjectName;
 
     private String authToken;
 
     private Boolean async;
 
-    public AbstractDeployAutomationPackageTool(String url, String groupId, String artifactId, String artifactVersion, String artifactClassifier, String stepProjectName, String authToken, Boolean async) {
+    public AbstractDeployAutomationPackageTool(String url, String stepProjectName, String authToken, Boolean async) {
         super(url);
-        this.groupId = groupId;
-        this.artifactId = artifactId;
-        this.artifactVersion = artifactVersion;
-        this.artifactClassifier = artifactClassifier;
         this.stepProjectName = stepProjectName;
         this.authToken = authToken;
         this.async = async;
@@ -86,38 +74,6 @@ public abstract class AbstractDeployAutomationPackageTool extends AbstractCliToo
         RemoteAutomationPackageClientImpl client = new RemoteAutomationPackageClientImpl(getControllerCredentials());
         addProjectHeaderToRemoteClient(getStepProjectName(), client);
         return client;
-    }
-
-    public String getArtifactClassifier() {
-        return artifactClassifier;
-    }
-
-    public void setArtifactClassifier(String artifactClassifier) {
-        this.artifactClassifier = artifactClassifier;
-    }
-
-    public String getGroupId() {
-        return groupId;
-    }
-
-    public void setGroupId(String groupId) {
-        this.groupId = groupId;
-    }
-
-    public String getArtifactId() {
-        return artifactId;
-    }
-
-    public void setArtifactId(String artifactId) {
-        this.artifactId = artifactId;
-    }
-
-    public String getArtifactVersion() {
-        return artifactVersion;
-    }
-
-    public void setArtifactVersion(String artifactVersion) {
-        this.artifactVersion = artifactVersion;
     }
 
     public String getStepProjectName() {

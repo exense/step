@@ -26,6 +26,8 @@ import java.io.File;
 
 class StepDefaultValuesProvider implements CommandLine.IDefaultValueProvider {
 
+    public static final String DEFAULT_CONFIG_FILE = System.getProperty("user.home") + "/stepCli.properties";
+
     private static final Logger log = LoggerFactory.getLogger(StepDefaultValuesProvider.class);
 
     private boolean configOptionApplied = false;
@@ -43,6 +45,10 @@ class StepDefaultValuesProvider implements CommandLine.IDefaultValueProvider {
                 String pathToCustomConfig = customConfigFile.originalStringValues().isEmpty() ? null : customConfigFile.originalStringValues().get(0);
                 if (pathToCustomConfig == null) {
                     pathToCustomConfig = customConfigFile.defaultValue();
+                    if(pathToCustomConfig == null){
+                        // superdefault - in user home
+                        pathToCustomConfig = DEFAULT_CONFIG_FILE;
+                    }
                     isDefaultConfigFile = true;
                 }
 

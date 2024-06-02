@@ -20,12 +20,15 @@ package step.cli;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.zeroturnaround.zip.ZipUtil;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
@@ -33,17 +36,14 @@ import static step.cli.Parameters.CONFIG;
 
 @Command(name = "step", mixinStandardHelpOptions = true, version = "step 1.0",
         description = "The CLI interface to communicate with Step server", defaultValueProvider = StepDefaultValuesProvider.class)
-public class AutomationPackageConsole implements Callable<Integer> {
+public class StepConsoleConsole implements Callable<Integer> {
 
-    // TODO: valid config file
-    public static final String DEFAULT_CONFIG_FILE = "C://temp/stepCliConfig.properties";
-
-    private static final Logger log = LoggerFactory.getLogger(AutomationPackageConsole.class);
+    private static final Logger log = LoggerFactory.getLogger(StepConsoleConsole.class);
 
     @Parameters(index = "0", description = "\"Deploy\" or \"Execute\"")
     private String command;
 
-    @Option(names = {"--" + CONFIG}, description = "The custom configuration file", defaultValue = DEFAULT_CONFIG_FILE, showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
+    @Option(names = {"--" + CONFIG}, description = "The custom configuration file")
     private String config;
 
     @Option(names = {"--apFile"}, description = "The file with automation package")
@@ -51,18 +51,6 @@ public class AutomationPackageConsole implements Callable<Integer> {
 
     @Option(names = {"--stepUrl"})
     private String stepUrl;
-
-    @Option(names = {"--artifactGroupId"})
-    private String artifactGroupId;
-
-    @Option(names = {"--artifactId"})
-    private String artifactId;
-
-    @Option(names = {"--artifactVersion"})
-    private String artifactVersion;
-
-    @Option(names = {"--artifactClassifier"})
-    private String artifactClassifier;
 
     @Option(names = {"--projectName"})
     private String stepProjectName;
@@ -76,17 +64,16 @@ public class AutomationPackageConsole implements Callable<Integer> {
     @Option(names = {"--stepUserId"})
     private String stepUserId;
 
-    @Option(names = {"--executionTimeoutS"})
+    @Option(names = {"--executionTimeoutS"}, defaultValue = "3600")
     private Integer executionTimeoutS;
 
-    // TODO: how to pass execution parameters
-    @Option(names = {"--executionParameters"})
+    @Option(names = {"-ep", "--executionParameters"})
     private Map<String, String> executionParameters;
 
-    @Option(names = {"--waitForExecution"})
+    @Option(names = {"--waitForExecution"}, defaultValue = "true")
     private Boolean waitForExecution;
 
-    @Option(names = {"--ensureExecutionSuccess"})
+    @Option(names = {"--ensureExecutionSuccess"}, defaultValue = "true")
     private Boolean ensureExecutionSuccess;
 
     @Option(names = {"--includePlans"})
@@ -94,6 +81,11 @@ public class AutomationPackageConsole implements Callable<Integer> {
 
     @Option(names = {"--excludePlans"})
     private String excludePlans;
+
+    public static void main(String... args) {
+        int exitCode = new CommandLine(new StepConsoleConsole()).execute(args);
+        System.exit(exitCode);
+    }
 
     @Override
     public Integer call() throws Exception {
@@ -112,26 +104,38 @@ public class AutomationPackageConsole implements Callable<Integer> {
     }
 
     private void handleExecuteCommand() {
-        new AbstractExecuteAutomationPackageTool(stepUrl, stepProjectName, stepUserId, authToken, artifactGroupId, artifactId, artifactVersion, artifactClassifier, executionParameters, executionTimeoutS, waitForExecution, ensureExecutionSuccess, includePlans, excludePlans) {
+        new AbstractExecuteAutomationPackageTool(stepUrl, stepProjectName, stepUserId, authToken, executionParameters, executionTimeoutS, waitForExecution, ensureExecutionSuccess, includePlans, excludePlans) {
             @Override
             protected File getAutomationPackageFile() throws StepCliExecutionException {
-                return apFile;
+                return prepareApFile(apFile);
             }
         }.execute();
     }
 
     protected void handleDeployCommand() {
-        new AbstractDeployAutomationPackageTool(stepUrl, artifactGroupId, artifactId, artifactVersion, artifactClassifier, stepProjectName, authToken, async) {
+        new AbstractDeployAutomationPackageTool(stepUrl, stepProjectName, authToken, async) {
             @Override
             protected File getFileToUpload() throws StepCliExecutionException {
-                return apFile;
+                return prepareApFile(apFile);
             }
         }.execute();
     }
 
-    public static void main(String... args) {
-        int exitCode = new CommandLine(new AutomationPackageConsole()).execute(args);
-        System.exit(exitCode);
+    protected File prepareApFile(File param) {
+        try {
+            if (param == null) {
+                return null;
+            } else if (param.isDirectory()) {
+                File tempFile = Files.createTempFile(param.getName(), null).toFile();
+                tempFile.deleteOnExit();
+                ZipUtil.pack(param, tempFile);
+                return tempFile;
+            } else {
+                return param;
+            }
+        } catch (IOException ex) {
+            throw new StepCliExecutionException("Unable to prepare automation package file", ex);
+        }
     }
 
     public void setCommand(String command) {
@@ -148,22 +152,6 @@ public class AutomationPackageConsole implements Callable<Integer> {
 
     public void setUrl(String url) {
         this.stepUrl = url;
-    }
-
-    public void setArtifactGroupId(String artifactGroupId) {
-        this.artifactGroupId = artifactGroupId;
-    }
-
-    public void setArtifactId(String artifactId) {
-        this.artifactId = artifactId;
-    }
-
-    public void setArtifactVersion(String artifactVersion) {
-        this.artifactVersion = artifactVersion;
-    }
-
-    public void setArtifactClassifier(String artifactClassifier) {
-        this.artifactClassifier = artifactClassifier;
     }
 
     public void setStepProjectName(String stepProjectName) {
