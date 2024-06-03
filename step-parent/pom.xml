@@ -55,9 +55,9 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<!-- internal dependencies -->
-		<exense-commons.version>2.0.7</exense-commons.version>
-		<step-framework.version>2.0.15</step-framework.version>
-		<step-grid.version>2.0.4</step-grid.version>
+		<exense-commons.version>2.0.8</exense-commons.version>
+		<step-framework.version>2024.6.3-665d828c0bc9f273da508775</step-framework.version>
+		<step-grid.version>2024.6.3-665d82130bc9f273da5073f5</step-grid.version>
 		<step-api.version>1.2.4</step-api.version>
 		<!-- external dependencies -->
 		<junit.version>4.13.1</junit.version>
