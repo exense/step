@@ -2,6 +2,7 @@ package step.core.docker;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import step.core.accessors.AbstractIdentifiableObject;
+import step.functions.handler.DockerRegistry;
 
 public class DockerRegistryConfiguration extends AbstractIdentifiableObject {
     @JsonProperty
@@ -33,5 +34,13 @@ public class DockerRegistryConfiguration extends AbstractIdentifiableObject {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public DockerRegistry toDockerRegistry() {
+        DockerRegistry dockerRegistry = new DockerRegistry();
+        dockerRegistry.registryUrl = url;
+        dockerRegistry.registryUsername = username;
+        dockerRegistry.registryPassword = password;
+        return dockerRegistry;
     }
 }

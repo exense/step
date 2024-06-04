@@ -56,14 +56,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 
-	public static final String INPUT_PROPERTY_DOCKER_IMAGE = "docker.image";
-	public static final String INPUT_PROPERTY_CONTAINER_USER = "container.user";
-	public static final String INPUT_PROPERTY_CONTAINER_CMD = "container.cmd";
-
-	public static final String INPUT_PROPERTY_DOCKER_REGISTRY_URL = "docker.registryUrl";
-	public static final String INPUT_PROPERTY_DOCKER_REGISTRY_USERNAME = "docker.registryUsername";
-	public static final String INPUT_PROPERTY_DOCKER_REGISTRY_PASSWORD = "docker.registryPassword";
-
+	public static final String INPUT_PROPERTY_DOCKER_INPUT = "docker.input";
 
 	private final GridClient gridClient;
 
@@ -234,26 +227,20 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 			JsonNode node = jakartaMapper.valueToTree(input);
 
 			String functionMessageHandler = FunctionMessageHandler.class.getName();
-			boolean inDocker = properties.containsKey(INPUT_PROPERTY_DOCKER_IMAGE);
+			boolean inDocker = properties.containsKey(INPUT_PROPERTY_DOCKER_INPUT);
 
 			String messageHandler;
 			FileVersionId messageHandlerPackage;
 			OutputMessage outputMessage;
 			try {
 				if(inDocker) {
-					// Using the proxy message handler in order to forward calls to the sub agent
-					messageHandler = ProxyMessageHandler.class.getName();
+					// Using the docker message handler in order to forward calls to the sub agent
+					messageHandler = DockerMessageHandler.class.getName();
 					messageHandlerPackage = dockerHandlerPackageVersionId;
-					messageProperties.put(ProxyMessageHandler.MESSAGE_HANDLER, functionMessageHandler);
-					messageProperties.put(ProxyMessageHandler.MESSAGE_HANDLER_FILE_ID, functionHandlerPackage.getFileId());
-					messageProperties.put(ProxyMessageHandler.MESSAGE_HANDLER_FILE_VERSION, functionHandlerPackage.getVersion());
-
-					messageProperties.put(DockerContainer.MESSAGE_PROP_DOCKER_REGISTRY_URL, properties.get(INPUT_PROPERTY_DOCKER_REGISTRY_URL));
-					messageProperties.put(DockerContainer.MESSAGE_PROP_DOCKER_REGISTRY_USERNAME, properties.get(INPUT_PROPERTY_DOCKER_REGISTRY_USERNAME));
-					messageProperties.put(DockerContainer.MESSAGE_PROP_DOCKER_REGISTRY_PASSWORD, properties.get(INPUT_PROPERTY_DOCKER_REGISTRY_PASSWORD));
-					messageProperties.put(DockerContainer.MESSAGE_PROP_DOCKER_IMAGE, properties.get(INPUT_PROPERTY_DOCKER_IMAGE));
-					messageProperties.put(DockerContainer.MESSAGE_PROP_CONTAINER_USER, properties.get(INPUT_PROPERTY_CONTAINER_USER));
-					messageProperties.put(DockerContainer.MESSAGE_PROP_CONTAINER_CMD, properties.get(INPUT_PROPERTY_CONTAINER_CMD));
+					messageProperties.put(DockerMessageHandler.MESSAGE_HANDLER, functionMessageHandler);
+					messageProperties.put(DockerMessageHandler.MESSAGE_HANDLER_FILE_ID, functionHandlerPackage.getFileId());
+					messageProperties.put(DockerMessageHandler.MESSAGE_HANDLER_FILE_VERSION, functionHandlerPackage.getVersion());
+					messageProperties.put(DockerMessageHandler.MESSAGE_HANDLER_INPUT, properties.get(INPUT_PROPERTY_DOCKER_INPUT));
 				} else {
 					messageHandler = functionMessageHandler;
 					messageHandlerPackage = functionHandlerPackage;

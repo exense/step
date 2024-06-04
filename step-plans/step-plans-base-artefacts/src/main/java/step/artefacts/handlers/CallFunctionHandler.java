@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.artefacts.handlers;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonValue;
@@ -56,6 +57,8 @@ import step.functions.execution.FunctionExecutionService;
 import step.functions.execution.FunctionExecutionServiceException;
 import step.functions.execution.FunctionExecutionServiceImpl;
 import step.functions.handler.AbstractFunctionHandler;
+import step.functions.handler.DockerMessageHandlerInput;
+import step.functions.handler.DockerRegistry;
 import step.functions.io.FunctionInput;
 import step.functions.io.Output;
 import step.functions.type.FunctionTypeRegistry;
@@ -70,10 +73,8 @@ import step.plugins.functions.types.CompositeFunction;
 import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.NoSuchElementException;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static step.artefacts.handlers.functions.TokenForcastingExecutionPlugin.getTokenForecastingContext;
 
@@ -187,25 +188,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				// Add the docker image if present within the session
 				if(functionGroupContext != null) {
 					functionGroupContext.dockerImage.ifPresent(image -> {
-						DockerRegistryConfigurationAccessor dockerRegistryConfigurationAccessor = context.require(DockerRegistryConfigurationAccessor.class);
-						DockerRegistryConfiguration dockerRegistryConfiguration = dockerRegistryConfigurationAccessor
-								.stream()
-								.filter(registryConfiguration -> {
-											try {
-												return image.contains(new URL(registryConfiguration.getUrl()).getAuthority());
-											} catch (MalformedURLException e) {
-												throw new RuntimeException(e);
-											}
-										})
-								.findFirst().orElseThrow(()	-> new NoSuchElementException(String.format("No docker registry matching image path %s found, it must first be created", image)));
-						Map<String, String> inputProperties = input.getProperties();
-						inputProperties.put(FunctionExecutionServiceImpl.INPUT_PROPERTY_DOCKER_IMAGE, image);
-						inputProperties.put(FunctionExecutionServiceImpl.INPUT_PROPERTY_CONTAINER_USER, functionGroupContext.containerUser.orElseThrow(() -> new NoSuchElementException("No container user has been specified, this is mandatory")));
-						inputProperties.put(FunctionExecutionServiceImpl.INPUT_PROPERTY_CONTAINER_CMD, functionGroupContext.containerCommand.orElse(""));
-						inputProperties.put(FunctionExecutionServiceImpl.INPUT_PROPERTY_DOCKER_REGISTRY_URL, dockerRegistryConfiguration.getUrl());
-						inputProperties.put(FunctionExecutionServiceImpl.INPUT_PROPERTY_DOCKER_REGISTRY_USERNAME, dockerRegistryConfiguration.getUsername());
-						inputProperties.put(FunctionExecutionServiceImpl.INPUT_PROPERTY_DOCKER_REGISTRY_PASSWORD, dockerRegistryConfiguration.getPassword());
-						input.setProperties(inputProperties);
+						addDockerContainerPropertiesToInput(input, functionGroupContext, image);
 					});
 				}
 				try {
@@ -265,6 +248,34 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 			node.setOutput(output.getPayload().toString());
 			node.setStatus(ReportNodeStatus.PASSED);
 		}
+	}
+
+	private void addDockerContainerPropertiesToInput(FunctionInput<JsonObject> input, FunctionGroupContext functionGroupContext, String image) {
+		DockerRegistryConfigurationAccessor dockerRegistryConfigurationAccessor = context.require(DockerRegistryConfigurationAccessor.class);
+		DockerRegistryConfiguration dockerRegistryConfiguration = dockerRegistryConfigurationAccessor
+				.stream()
+				.filter(registryConfiguration -> {
+					try {
+						return image.contains(new URL(registryConfiguration.getUrl()).getAuthority());
+					} catch (MalformedURLException e) {
+						throw new RuntimeException(e);
+					}
+				})
+				.findFirst().orElseThrow(() -> new NoSuchElementException(String.format("No docker registry matching image path %s found. Please define a registry in the settings.", image)));
+
+		DockerMessageHandlerInput dockerMessageHandlerInput = new DockerMessageHandlerInput();
+		dockerMessageHandlerInput.dockerImage = image;
+		dockerMessageHandlerInput.containerUser = functionGroupContext.containerUser.orElseThrow(() -> new NoSuchElementException("No container user has been specified, this is mandatory."));
+		dockerMessageHandlerInput.containerCmd = functionGroupContext.containerCommand.orElse(null);
+		dockerMessageHandlerInput.dockerRegistry = dockerRegistryConfiguration.toDockerRegistry();
+
+		Map<String, String> inputProperties = input.getProperties();
+		try {
+			inputProperties.put(FunctionExecutionServiceImpl.INPUT_PROPERTY_DOCKER_INPUT, dockerMessageHandlerInput.writeAsString());
+		} catch (JsonProcessingException e) {
+			throw new RuntimeException(e);
+		}
+		input.setProperties(inputProperties);
 	}
 
 	private FunctionGroupContext getFunctionGroupContext() {
