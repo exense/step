@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.cli;
 
+import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeroturnaround.zip.ZipUtil;
@@ -25,22 +26,34 @@ import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
+import step.automation.packages.AutomationPackageFromInputStreamProvider;
+import step.automation.packages.AutomationPackageManager;
+import step.automation.packages.AutomationPackageReadingException;
+import step.automation.packages.junit.AbstractLocalPlanRunner;
+import step.core.accessors.AbstractOrganizableObject;
+import step.core.artefacts.Artefact;
+import step.core.execution.ExecutionContext;
+import step.core.execution.ExecutionEngine;
+import step.core.plans.runner.PlanRunnerResult;
+import step.engine.plugins.AbstractExecutionEnginePlugin;
+import step.junit.runner.StepClassParserResult;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 
 import static step.cli.Parameters.CONFIG;
 
 @Command(name = "step", mixinStandardHelpOptions = true, version = "step 1.0",
         description = "The CLI interface to communicate with Step server", defaultValueProvider = StepDefaultValuesProvider.class)
-public class StepConsoleConsole implements Callable<Integer> {
+public class StepConsole implements Callable<Integer> {
 
-    private static final Logger log = LoggerFactory.getLogger(StepConsoleConsole.class);
+    private static final Logger log = LoggerFactory.getLogger(StepConsole.class);
 
-    @Parameters(index = "0", description = "\"Deploy\" or \"Execute\"")
+    @Parameters(index = "0", description = "\"Deploy\" or \"Execute\" or \"RunTests\"")
     private String command;
 
     @Option(names = {"--" + CONFIG}, description = "The custom configuration file")
@@ -52,6 +65,9 @@ public class StepConsoleConsole implements Callable<Integer> {
     @Option(names = {"--stepUrl"})
     private String stepUrl;
 
+    @Option(names = {"-ep", "--executionParameters"}, description = "The execution parameters to be used in \"Execute\" or \"RunTests\"")
+    protected Map<String, String> executionParameters;
+
     @CommandLine.ArgGroup(validate = false, heading = "The security parameters (for Step EE only)%n")
     protected SecurityParams securityParams = new SecurityParams();
 
@@ -60,6 +76,9 @@ public class StepConsoleConsole implements Callable<Integer> {
 
     @CommandLine.ArgGroup(validate = false, heading = "The parameters for AP execution%n")
     protected ApExecuteParams apExecuteParams = new ApExecuteParams();
+
+    @CommandLine.ArgGroup(validate = false, heading = "The parameters to run tests for AP%n")
+    protected ApRunTestsParams apRunTestsParams = new ApRunTestsParams();
 
     protected static class SecurityParams {
         @Option(names = {"--projectName"})
@@ -77,12 +96,14 @@ public class StepConsoleConsole implements Callable<Integer> {
         protected Boolean async;
     }
 
+    protected static class ApRunTestsParams {
+        @Option(names = {"--test-plans"})
+        protected List<String> testPlans;
+    }
+
     protected static class ApExecuteParams {
         @Option(names = {"--executionTimeoutS"}, defaultValue = "3600")
         protected Integer executionTimeoutS;
-
-        @Option(names = {"-ep", "--executionParameters"})
-        protected Map<String, String> executionParameters;
 
         @Option(names = {"--waitForExecution"}, defaultValue = "true")
         protected Boolean waitForExecution;
@@ -98,7 +119,7 @@ public class StepConsoleConsole implements Callable<Integer> {
     }
 
     public static void main(String... args) {
-        int exitCode = new CommandLine(new StepConsoleConsole()).execute(args);
+        int exitCode = new CommandLine(new StepConsole()).execute(args);
         System.exit(exitCode);
     }
 
@@ -111,6 +132,9 @@ public class StepConsoleConsole implements Callable<Integer> {
             case "execute":
                 handleExecuteCommand();
                 break;
+            case "runtests":
+                handleRunTestsCommand();
+                break;
             default:
                 log.error("Unknown command: " + command);
                 return -1;
@@ -118,10 +142,84 @@ public class StepConsoleConsole implements Callable<Integer> {
         return 0;
     }
 
-    private void handleExecuteCommand() {
+    private void handleRunTestsCommand() {
+        try (ExecutionEngine executionEngine = ExecutionEngine.builder().withPlugin(new AbstractExecutionEnginePlugin() {
+            @Override
+            public void afterExecutionEnd(ExecutionContext context) {
+                super.afterExecutionEnd(context);
+            }
+        }).withPluginsFromClasspath().build()) {
+            AutomationPackageManager automationPackageManager = executionEngine.getExecutionEngineContext().require(AutomationPackageManager.class);
+
+            File file = prepareApFile(apFile);
+            if (file == null) {
+                throw new StepCliExecutionException("AP file is not defined");
+            }
+
+            try (InputStream is = new FileInputStream(file)) {
+                AutomationPackageFromInputStreamProvider automationPackageProvider = new AutomationPackageFromInputStreamProvider(is, apFile.getName());
+                ObjectId automationPackageId = automationPackageManager.createOrUpdateAutomationPackage(
+                        false, true, null, automationPackageProvider,
+                        true, null, null, false
+                ).getId();
+
+                // TODO: apply filter for plans
+                List<StepClassParserResult> listPlans = automationPackageManager.getPackagePlans(automationPackageId)
+                        .stream()
+                        .filter(p -> p.getRoot().getClass().getAnnotation(Artefact.class).validForStandaloneExecution())
+                        .map(p -> new StepClassParserResult(p.getAttribute(AbstractOrganizableObject.NAME), p, null))
+                        .collect(Collectors.toList());
+
+                log.info("The following plans will be executed: {}", listPlans.stream().map(StepClassParserResult::getName).collect(Collectors.toList()));
+
+                for (StepClassParserResult parserResult : listPlans) {
+                    String planName = parserResult.getName();
+                    new AbstractLocalPlanRunner() {
+                        @Override
+                        protected void onExecutionStart() {
+                            log.info("Execution has been started for plan {}", planName);
+                        }
+
+                        @Override
+                        protected void onExecutionError(PlanRunnerResult result, String errorText, boolean assertionError) {
+                            log.error("Execution has been failed for plan {}. {}", planName, errorText);
+                        }
+
+                        @Override
+                        protected void onInitializingException(Exception exception) {
+                            log.error("Execution initialization exception for plan {}.", planName, exception);
+                        }
+
+                        @Override
+                        protected void onExecutionException(Exception exception) {
+                            log.error("Execution exception for plan {}", planName, exception);
+                        }
+
+                        @Override
+                        protected void onTestFinished() {
+                            log.info("Execution has been finished for plan {}", planName);
+                        }
+
+                        @Override
+                        protected Map<String, String> getExecutionParameters() {
+                            return executionParameters;
+                        }
+                    }.runPlan(parserResult, executionEngine);
+                }
+            } catch (FileNotFoundException e) {
+                throw new StepCliExecutionException("File not found: " + apFile.getAbsolutePath(), e);
+            } catch (IOException e) {
+                throw new RuntimeException("IO exception for " + apFile.getAbsolutePath(), e);
+            } catch (AutomationPackageReadingException e) {
+                throw new RuntimeException("AP reading exception", e);
+            }
+        }
+    }
+
+    protected void handleExecuteCommand() {
         new AbstractExecuteAutomationPackageTool(
                 stepUrl, securityParams.stepProjectName, securityParams.stepUserId, securityParams.authToken,
-                apExecuteParams.executionParameters, apExecuteParams.executionTimeoutS,
+                executionParameters, apExecuteParams.executionTimeoutS,
                 apExecuteParams.waitForExecution, apExecuteParams.ensureExecutionSuccess,
                 apExecuteParams.includePlans, apExecuteParams.excludePlans
         ) {
@@ -199,7 +297,7 @@ public class StepConsoleConsole implements Callable<Integer> {
     }
 
     public void setExecutionParameters(Map<String, String> executionParameters) {
-        this.apExecuteParams.executionParameters = executionParameters;
+        this.executionParameters = executionParameters;
     }
 
     public void setWaitForExecution(Boolean waitForExecution) {
