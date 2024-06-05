@@ -61,16 +61,31 @@ public class DockerContainerManager {
      * @throws IOException
      */
     public DockerContainerManager(DockerContainerManagerConfiguration configuration, FileManagerClient fileManagerClient, File gridLibs) throws IOException {
-        this.gridLibs = gridLibs;
         dockerSock = configuration.dockerSocket;
         inK8s = configuration.kubernetesMode;
         // Start grid
         grid = createLocalGrid(fileManagerClient);
         gridClient = createLocalGridClient();
         localGridPort = grid.getServerPort();
+
+        String agentStartScript;
+        if(gridLibs.isDirectory()) {
+            // If the gridLibs is a directory we assume it points to the lib folder of an agent distribution.
+            // In this case we use the standard start script of the agent
+            agentStartScript = "startAgent.sh";
+            this.gridLibs = gridLibs;
+        } else {
+            // If the gridLibs is a single file we assume it points to the uber jar of the agent distribution.
+            // In this case we have to use a special start script of the agent with a different main class
+            agentStartScript = "startAgentLocal.sh";
+            File agentLibFolder = FileHelper.createTempFolder();
+            Files.move(gridLibs.toPath(), agentLibFolder.toPath().resolve(gridLibs.getName()));
+            this.gridLibs = agentLibFolder;
+        }
+
         // Read the agent configuration files from the CL and cache them on the filesystem
         File tempFolder = FileHelper.createTempFolder();
-        startupScriptFilePath = writeResourceToTempFolder(tempFolder, "startAgent.sh");
+        startupScriptFilePath = writeResourceToTempFolder(tempFolder, agentStartScript, "startAgent.sh");
         configurationFileFilePath = writeResourceToTempFolder(tempFolder, "AgentConf.yaml");
         logbackConfigurationFilePath = writeResourceToTempFolder(tempFolder, "logback.xml");
     }
@@ -83,7 +98,11 @@ public class DockerContainerManager {
     }
 
     private static Path writeResourceToTempFolder(File tempFolder, String resourceName) throws IOException {
-        Path path = tempFolder.toPath().resolve(resourceName);
+        return writeResourceToTempFolder(tempFolder, resourceName, resourceName);
+    }
+
+    private static Path writeResourceToTempFolder(File tempFolder, String resourceName, String targetFilename) throws IOException {
+        Path path = tempFolder.toPath().resolve(targetFilename);
         Files.writeString(path, readResource(resourceName));
         return path;
     }
@@ -214,9 +233,10 @@ public class DockerContainerManager {
         }, 1000, 50);
 
         String agentPort = Arrays.stream(inspectContainerResponse.get().getNetworkSettings().getPorts().getBindings().get(ExposedPort.parse(CONTAINER_AGENT_INTERNAL_PORT + "/tcp"))).findFirst().orElseThrow().getHostPortSpec();
+        String agentIp = inspectContainerResponse.get().getNetworkSettings().getIpAddress();
 
         logger.debug("Container startup response : " + inspectContainerResponse);
-        return new StartContainerResponse(container.getId(), agentPort);
+        return new StartContainerResponse(container.getId(), agentIp, agentPort);
     }
 
     private void copyAgentMaterialAndStart(DockerClient dockerClient, String containerId, String containerUser, String agentPort) throws InterruptedException, IOException {
@@ -331,11 +351,13 @@ public class DockerContainerManager {
 
     private static class StartContainerResponse {
         public final String containerId;
+        public final String agentIp;
         public final String agentPort;
 
-        public StartContainerResponse(String id, String agentPort) {
+        public StartContainerResponse(String id, String agentIp, String agentPort) {
             this.containerId = id;
             this.agentPort = agentPort;
+            this.agentIp = agentIp;
         }
     }
 }

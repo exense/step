@@ -32,10 +32,8 @@ public class DockerContainerManagerTest {
 
         File testJar = ResourceExtractor.extractResource(this.getClass().getClassLoader(), "step-functions-docker-handler-test.jar");
         File agentLib = ResourceExtractor.extractResource(this.getClass().getClassLoader(), "agentlibs/step-grid-agent.jar");
-        File agentLibFolder = FileHelper.createTempFolder();
-        Files.move(agentLib, agentLibFolder.toPath().resolve(agentLib.getName()).toFile());
 
-        DockerContainerManager dockerContainerManager = new DockerContainerManager(configuration, null, agentLibFolder);
+        DockerContainerManager dockerContainerManager = new DockerContainerManager(configuration, null, agentLib);
 
         FileVersion fileVersion = dockerContainerManager.getGrid().registerFile(testJar, true);
 
