@@ -10,5 +10,9 @@ public class DockerContainerManagerConfiguration {
      * If running in Kubernetes
      */
     public boolean kubernetesMode;
+    /**
+     * The maximum time in ms that the container agent should take to start and join the docker grid
+     */
+    public long containerAgentStartupTimeoutMs = 20_000;
 
 }

@@ -33,6 +33,7 @@ public class DockerMessageHandler implements MessageHandler {
     public static final String AGENT_CONF_DOCKER_SOCK_DEFAULT = "unix:///var/run/docker.sock";
     public static final String AGENT_CONF_KUBERNETES_MODE = "docker.kubernetes";
     public static final String AGENT_CONF_DOCKER_AGENTLIB = "docker.agentlib";
+    public static final String AGENT_CONF_DOCKER_CONTAINER_AGENT_STARTUP_TIMEOUT = "docker.container.agent.startup.timeoutms";
 
     @Override
     public OutputMessage handle(AgentTokenWrapper agentTokenWrapper, InputMessage inputMessage) throws Exception {
@@ -69,6 +70,9 @@ public class DockerMessageHandler implements MessageHandler {
         DockerContainerManagerConfiguration dockerContainerManagerConfiguration = new DockerContainerManagerConfiguration();
         dockerContainerManagerConfiguration.dockerSocket = agentProperties.getOrDefault(AGENT_CONF_DOCKER_SOCK, AGENT_CONF_DOCKER_SOCK_DEFAULT);
         dockerContainerManagerConfiguration.kubernetesMode = Boolean.parseBoolean(agentProperties.getOrDefault(AGENT_CONF_KUBERNETES_MODE, Boolean.FALSE.toString()));
+        if(agentProperties.containsKey(AGENT_CONF_DOCKER_CONTAINER_AGENT_STARTUP_TIMEOUT)) {
+            dockerContainerManagerConfiguration.containerAgentStartupTimeoutMs = Long.parseLong(agentProperties.get(AGENT_CONF_DOCKER_CONTAINER_AGENT_STARTUP_TIMEOUT));
+        }
         File agentLib;
         String agentLibProperty = agentProperties.get(AGENT_CONF_DOCKER_AGENTLIB);
         if(agentLibProperty != null) {

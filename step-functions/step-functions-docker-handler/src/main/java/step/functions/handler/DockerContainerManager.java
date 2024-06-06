@@ -11,13 +11,17 @@ import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
 import com.github.dockerjava.httpclient5.ApacheDockerHttpClient;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.grid.GridImpl;
 import step.grid.ProxyGridServices;
 import step.grid.TokenWrapper;
 import step.grid.client.*;
-import step.grid.filemanager.*;
+import step.grid.filemanager.FileManagerClient;
+import step.grid.filemanager.FileManagerException;
+import step.grid.filemanager.FileVersion;
+import step.grid.filemanager.FileVersionId;
 import step.grid.io.OutputMessage;
 
 import java.io.File;
@@ -30,15 +34,14 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class DockerContainerManager {
 
     private static final Logger logger = LoggerFactory.getLogger(DockerContainerManager.class);
-    private static final long CONTAINER_STARTUP_TIMEOUT_MS = 120_000;
     private static final String CONTAINER_AGENT_INTERNAL_PORT = "8082";
     public static final String DEFAULT_CONTAINER_CMD = "bash,-c,sleep infinity";
     public static final String DEFAULT_CONTAINER_USER = "root";
@@ -49,27 +52,29 @@ public class DockerContainerManager {
     private final GridImpl grid;
     private final GridClient gridClient;
     private final boolean inK8s;
+    private final long containerStartupTimeoutMs;
     private final int localGridPort;
     private final File gridLibs;
     private final String dockerSock;
 
     /**
-     * @param configuration the configuration to be used for this instance
+     * @param configuration     the configuration to be used for this instance
      * @param fileManagerClient the {@link FileManagerClient} that should be used to serve incoming file manager request from the sub agents of the Docker container.
      *                          If null the file manager of the local grid of this class will be user
-     * @param gridLibs the path to the lib folder containing the libs of the agent to be used to start the sub agent within the Docker containers.
+     * @param gridLibs          the path to the lib folder containing the libs of the agent to be used to start the sub agent within the Docker containers.
      * @throws IOException
      */
     public DockerContainerManager(DockerContainerManagerConfiguration configuration, FileManagerClient fileManagerClient, File gridLibs) throws IOException {
         dockerSock = configuration.dockerSocket;
         inK8s = configuration.kubernetesMode;
+        this.containerStartupTimeoutMs = configuration.containerAgentStartupTimeoutMs;
         // Start grid
         grid = createLocalGrid(fileManagerClient);
         gridClient = createLocalGridClient();
         localGridPort = grid.getServerPort();
 
         String agentStartScript;
-        if(gridLibs.isDirectory()) {
+        if (gridLibs.isDirectory()) {
             // If the gridLibs is a directory we assume it points to the lib folder of an agent distribution.
             // In this case we use the standard start script of the agent
             agentStartScript = "startAgent.sh";
@@ -93,7 +98,7 @@ public class DockerContainerManager {
     private GridClient createLocalGridClient() {
         GridClientConfiguration gridClientConfiguration = new GridClientConfiguration();
         // Configure the selection timeout (this should be higher than the start time of the container)
-        gridClientConfiguration.setNoMatchExistsTimeout(CONTAINER_STARTUP_TIMEOUT_MS);
+        gridClientConfiguration.setNoMatchExistsTimeout(containerStartupTimeoutMs);
         return new LocalGridClientImpl(gridClientConfiguration, grid);
     }
 
@@ -143,12 +148,7 @@ public class DockerContainerManager {
             throw new RuntimeException("Error while starting local grid", e);
         }
         logger.info("Local grid started on port " + grid.getServerPort());
-        if(fileManagerClient == null) {
-            FileManagerClient localFileManagerClient = getDelegatingFileManagerClient(grid);
-            ProxyGridServices.fileManagerClient = localFileManagerClient;
-        } else {
-            ProxyGridServices.fileManagerClient = fileManagerClient;
-        }
+        ProxyGridServices.fileManagerClient = Objects.requireNonNullElseGet(fileManagerClient, () -> getDelegatingFileManagerClient(grid));
         return grid;
     }
 
@@ -179,9 +179,10 @@ public class DockerContainerManager {
 
     /**
      * Start a new container
+     *
      * @param dockerRegistry the configuration of the docker registry to be used to pull the specified image
-     * @param dockerImage the docker image to be used (ex: docker.io/openjdk:latest)
-     * @param containerUser the user to be used to start the sub agent within the container. If null, 'root' is used per default
+     * @param dockerImage    the docker image to be used (ex: docker.io/openjdk:latest)
+     * @param containerUser  the user to be used to start the sub agent within the container. If null, 'root' is used per default
      * @param containerCmd
      * @return
      * @throws Exception
@@ -202,7 +203,15 @@ public class DockerContainerManager {
             try {
                 token = gridClient.getTokenHandle(Map.of(), Map.of(), true);
             } catch (Exception e) {
-                throw new RuntimeException("Error while waiting for container to connect to the Grid. An error might have occurred during the container startup or the startup took longer than the configured timeout", e);
+                String message = "Error while waiting for container to connect to the Grid. An error might have occurred during the container startup or the startup took longer than the configured timeout.";
+                try {
+                    String agentOut = readContainerFileFromContainer(dockerClient, containerId, "/home/" + containerUser + "/agent/bin/agent.out");
+                    message += " The output of the agent was: "+agentOut;
+                } catch (Exception e1) {
+                    logger.error(message);
+                    logger.error("Error while reading container output", e1);
+                }
+                throw new RuntimeException(message, e);
             }
             logger.info("Container ready to execute commands");
             return new DockerContainer(this, dockerClient, containerId, token);
@@ -233,10 +242,9 @@ public class DockerContainerManager {
         }, 1000, 50);
 
         String agentPort = Arrays.stream(inspectContainerResponse.get().getNetworkSettings().getPorts().getBindings().get(ExposedPort.parse(CONTAINER_AGENT_INTERNAL_PORT + "/tcp"))).findFirst().orElseThrow().getHostPortSpec();
-        String agentIp = inspectContainerResponse.get().getNetworkSettings().getIpAddress();
 
         logger.debug("Container startup response : " + inspectContainerResponse);
-        return new StartContainerResponse(container.getId(), agentIp, agentPort);
+        return new StartContainerResponse(container.getId(), agentPort);
     }
 
     private void copyAgentMaterialAndStart(DockerClient dockerClient, String containerId, String containerUser, String agentPort) throws InterruptedException, IOException {
@@ -261,11 +269,11 @@ public class DockerContainerManager {
         } else {
             // The following requires port forwarding to work with WSL2:
             // netsh interface portproxy add v4tov4 listenport="8090" connectaddress="172.21.26.204" connectport="8090"
-            gridHost = "host.docker.internal"; //getIPAddressOfEth0(); //"host.docker.internal" ; //localhost";
+            gridHost = "host.docker.internal";
         }
         logger.info("Starting agent in container...");
         String subGridUrl = "http://" + gridHost + ":" + localGridPort;
-        String command = String.format("./startAgent.sh -agentUrl=http://localhost:%s -agentHost=localhost -agentPort=%s -gridHost=%s -fileServerHost=%s/proxy >> subagent.out 2>&1 &", agentPort, CONTAINER_AGENT_INTERNAL_PORT, subGridUrl, subGridUrl);
+        String command = String.format("./startAgent.sh -agentUrl=http://localhost:%s -agentHost=localhost -agentPort=%s -gridHost=%s -fileServerHost=%s/proxy >> agent.out 2>&1 &", agentPort, CONTAINER_AGENT_INTERNAL_PORT, subGridUrl, subGridUrl);
         executeContainerCmd(dockerClient, containerId, containerUser, command, String.format("/home/%s/agent/bin/", containerUser));
     }
 
@@ -291,14 +299,16 @@ public class DockerContainerManager {
         }
         execCreateCmdResponse = builder.exec();
         dockerClient.execStartCmd(execCreateCmdResponse.getId()).exec(callback);
-        logger.debug("Executed command '" + commandStr + "'");
-        callback.awaitCompletion(5, TimeUnit.SECONDS);
-        logger.debug(stringBuilder.toString());
+        callback.awaitCompletion();
+        if (logger.isDebugEnabled()) {
+            logger.debug("Executed command '" + commandStr + "'");
+            logger.debug(stringBuilder.toString());
+        }
     }
 
     private void copyLocalFileToContainer(DockerClient dockerClient, String containerId, File localFile, String remotePath) throws IOException {
         String pathToCopy = localFile.getCanonicalPath();
-        if(localFile.isDirectory()) {
+        if (localFile.isDirectory()) {
             pathToCopy = pathToCopy + "/.";
         }
         logger.debug(String.format("Copying local file %s to container %s at path %s", pathToCopy, containerId, remotePath));
@@ -306,6 +316,13 @@ public class DockerContainerManager {
                 .withHostResource(pathToCopy)
                 .withRemotePath(remotePath)
                 .exec();
+    }
+
+    private String readContainerFileFromContainer(DockerClient dockerClient, String containerId, String remotePath) throws IOException {
+        try(TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(dockerClient.copyArchiveFromContainerCmd(containerId, remotePath).exec())) {
+            tarArchiveInputStream.getNextTarEntry();
+            return new String(tarArchiveInputStream.readAllBytes(), StandardCharsets.UTF_8);
+        }
     }
 
     private void createFolderInContainer(DockerClient dockerClient, String containerId, String containerFolderPath) throws InterruptedException {
@@ -351,13 +368,11 @@ public class DockerContainerManager {
 
     private static class StartContainerResponse {
         public final String containerId;
-        public final String agentIp;
         public final String agentPort;
 
-        public StartContainerResponse(String id, String agentIp, String agentPort) {
+        public StartContainerResponse(String id, String agentPort) {
             this.containerId = id;
             this.agentPort = agentPort;
-            this.agentIp = agentIp;
         }
     }
 }

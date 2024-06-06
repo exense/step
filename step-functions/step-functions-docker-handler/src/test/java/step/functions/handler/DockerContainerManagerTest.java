@@ -1,9 +1,7 @@
 package step.functions.handler;
 
-import ch.exense.commons.io.FileHelper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.io.Files;
 import org.junit.Ignore;
 import org.junit.Test;
 import step.grid.bootstrap.ResourceExtractor;
@@ -26,6 +24,7 @@ public class DockerContainerManagerTest {
         DockerContainerManagerConfiguration configuration = new DockerContainerManagerConfiguration();
         configuration.dockerSocket = isWindows() ? "tcp://localhost:2375" : "unix:///var/run/docker.sock";
         configuration.kubernetesMode = false;
+        configuration.containerAgentStartupTimeoutMs = 120_000;
 
         DockerRegistry dockerRegistry = new DockerRegistry();
         dockerRegistry.registryUrl = "docker.io";
