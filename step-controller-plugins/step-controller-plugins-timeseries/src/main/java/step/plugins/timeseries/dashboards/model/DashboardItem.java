@@ -25,6 +25,12 @@ public class DashboardItem { // T = 'ChartSettings'. class: 'ChartSettings' @Jso
 	@NotNull
 	private List<TimeSeriesFilterItem> filters = new ArrayList<>();
 	
+	@NotNull
+	private boolean inheritSpecificFiltersOnly;
+	
+	@NotNull
+	private List<String> specificFiltersToInherit = new ArrayList<>();
+	
 	private String oql;
 	
 	@NotNull
@@ -189,6 +195,24 @@ public class DashboardItem { // T = 'ChartSettings'. class: 'ChartSettings' @Jso
 
 	public DashboardItem setTableSettings(TableDashletSettings tableSettings) {
 		this.tableSettings = tableSettings;
+		return this;
+	}
+
+	public boolean isInheritSpecificFiltersOnly() {
+		return inheritSpecificFiltersOnly;
+	}
+
+	public DashboardItem setInheritSpecificFiltersOnly(boolean inheritSpecificFiltersOnly) {
+		this.inheritSpecificFiltersOnly = inheritSpecificFiltersOnly;
+		return this;
+	}
+
+	public List<String> getSpecificFiltersToInherit() {
+		return specificFiltersToInherit;
+	}
+
+	public DashboardItem setSpecificFiltersToInherit(List<String> specificFiltersToInherit) {
+		this.specificFiltersToInherit = specificFiltersToInherit;
 		return this;
 	}
 }
