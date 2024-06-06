@@ -39,7 +39,7 @@ public class PlanStepParser implements StepParser<PlanStep> {
 	}
 
 	private static final String ASSERT_TOKEN = "Assert";
-	private static final String ASSERT_CHECK_REGEX = "( *Assert .+|.*Assert$)";
+	private static final String ASSERT_CHECK_REGEX = "([ \t]*Assert .+|[ \t]*Assert[\r\n]*)";
 	
 	@Override
 	public void parseStep(ParsingContext parsingContext, PlanStep step) {
