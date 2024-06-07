@@ -250,6 +250,8 @@ public class DashboardsGenerator {
                 .setInheritGlobalGrouping(false)
                 .setReadonlyAggregate(true)
                 .setReadonlyGrouping(true)
+                .setInheritSpecificFiltersOnly(true)
+                .setSpecificFiltersToInherit(Arrays.asList(PLAN_ATTRIBUTE.getName(), EXECUTION_ATTRIBUTE.getName(), TASK_ATTRIBUTE.getName()))
                 .setSize(1)
                 .setChartSettings(new ChartSettings()
                         .setPrimaryAxes(new AxesSettings()
