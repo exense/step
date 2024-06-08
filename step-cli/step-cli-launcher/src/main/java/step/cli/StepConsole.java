@@ -18,7 +18,6 @@
  ******************************************************************************/
 package step.cli;
 
-import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeroturnaround.zip.ZipUtil;
@@ -26,24 +25,12 @@ import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
-import step.automation.packages.AutomationPackageFromInputStreamProvider;
-import step.automation.packages.AutomationPackageManager;
-import step.automation.packages.AutomationPackageReadingException;
-import step.automation.packages.junit.AbstractLocalPlanRunner;
-import step.core.accessors.AbstractOrganizableObject;
-import step.core.artefacts.Artefact;
-import step.core.execution.ExecutionContext;
-import step.core.execution.ExecutionEngine;
-import step.core.plans.runner.PlanRunnerResult;
-import step.engine.plugins.AbstractExecutionEnginePlugin;
-import step.junit.runner.StepClassParserResult;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
-import java.util.stream.Collectors;
 
 import static step.cli.Parameters.CONFIG;
 
@@ -53,32 +40,29 @@ public class StepConsole implements Callable<Integer> {
 
     private static final Logger log = LoggerFactory.getLogger(StepConsole.class);
 
-    @Parameters(index = "0", description = "\"Deploy\" or \"Execute\" or \"RunTests\"")
+    @Parameters(index = "0", description = "The context of command. Supported values: \"ap\"")
+    private String context;
+
+    @Parameters(index = "1", description = "For \"ap\": \"deploy\", \"execute\"")
     private String command;
 
     @Option(names = {"--" + CONFIG}, description = "The custom configuration file(s)")
     private List<String> config;
 
-    @Option(names = {"--apFile"}, description = "The file with automation package")
+    @Option(names = {"-p", "--package"}, description = "The file or folder with automation package")
     private File apFile;
 
-    @Option(names = {"--stepUrl"})
+    @Option(names = {"-u", "--stepUrl"}, description = "The URL of Step server")
     private String stepUrl;
-
-    @Option(names = {"-ep", "--executionParameters"}, description = "The execution parameters to be used in \"Execute\" or \"RunTests\"")
-    protected Map<String, String> executionParameters;
 
     @CommandLine.ArgGroup(validate = false, heading = "The security parameters (for Step EE only)%n")
     protected SecurityParams securityParams = new SecurityParams();
 
-    @CommandLine.ArgGroup(validate = false, heading = "The parameters for AP deployment%n")
+    @CommandLine.ArgGroup(validate = false, heading = "Special parameters for \"ap deploy\"%n")
     protected ApDeployParams apDeployParams = new ApDeployParams();
 
-    @CommandLine.ArgGroup(validate = false, heading = "The parameters for AP execution%n")
+    @CommandLine.ArgGroup(validate = false, heading = "The parameters for \"ap execute\"%n")
     protected ApExecuteParams apExecuteParams = new ApExecuteParams();
-
-    @CommandLine.ArgGroup(validate = false, heading = "The parameters to run tests for AP%n")
-    protected ApRunTestsParams apRunTestsParams = new ApRunTestsParams();
 
     protected static class SecurityParams {
         @Option(names = {"--projectName"})
@@ -96,11 +80,6 @@ public class StepConsole implements Callable<Integer> {
         protected Boolean async;
     }
 
-    protected static class ApRunTestsParams {
-        @Option(names = {"--test-plans"})
-        protected List<String> testPlans;
-    }
-
     protected static class ApExecuteParams {
         @Option(names = {"--executionTimeoutS"}, defaultValue = "3600")
         protected Integer executionTimeoutS;
@@ -111,11 +90,17 @@ public class StepConsole implements Callable<Integer> {
         @Option(names = {"--ensureExecutionSuccess"}, defaultValue = "true")
         protected Boolean ensureExecutionSuccess;
 
-        @Option(names = {"--includePlans"})
+        @Option(names = {"--includePlans"}, description = "The comma separated list of plans to be executed in \"ap execute\" command")
         protected String includePlans;
 
-        @Option(names = {"--excludePlans"})
+        @Option(names = {"--excludePlans"}, description = "The comma separated list of plans to be excluded from execution in \"ap execute\" command")
         protected String excludePlans;
+
+        @Option(names = {"--local"}, defaultValue = "false", description = "Flag to run AP locally for \"ap execute\" command")
+        private boolean local;
+
+        @Option(names = {"-ep", "--executionParameters"}, description = "The execution parameters to be used in \"ap execute\" command")
+        protected Map<String, String> executionParameters;
     }
 
     public static void main(String... args) {
@@ -125,100 +110,41 @@ public class StepConsole implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
-        switch (command.toLowerCase()) {
-            case "deploy":
-                handleDeployCommand();
-                break;
-            case "execute":
-                handleExecuteCommand();
-                break;
-            case "runtests":
-                handleRunTestsCommand();
-                break;
-            default:
-                log.error("Unknown command: " + command);
-                return -1;
+        if ("ap".equalsIgnoreCase(context)) {
+            switch (command.toLowerCase()) {
+                case "deploy":
+                    handleApDeployCommand();
+                    break;
+                case "execute":
+                    if (!apExecuteParams.local) {
+                        handleApRemoteExecuteCommand();
+                    } else {
+                        handleApLocalExecuteCommand();
+                    }
+                    break;
+                default:
+                    log.error("Unknown command: " + command);
+                    return -1;
+            }
+        } else {
+            log.error("Unknown context: " + context);
+            return -1;
         }
         return 0;
     }
 
-    private void handleRunTestsCommand() {
-        try (ExecutionEngine executionEngine = ExecutionEngine.builder().withPlugin(new AbstractExecutionEnginePlugin() {
-            @Override
-            public void afterExecutionEnd(ExecutionContext context) {
-                super.afterExecutionEnd(context);
-            }
-        }).withPluginsFromClasspath().build()) {
-            AutomationPackageManager automationPackageManager = executionEngine.getExecutionEngineContext().require(AutomationPackageManager.class);
-
-            File file = prepareApFile(apFile);
-            if (file == null) {
-                throw new StepCliExecutionException("AP file is not defined");
-            }
-
-            try (InputStream is = new FileInputStream(file)) {
-                AutomationPackageFromInputStreamProvider automationPackageProvider = new AutomationPackageFromInputStreamProvider(is, apFile.getName());
-                ObjectId automationPackageId = automationPackageManager.createOrUpdateAutomationPackage(
-                        false, true, null, automationPackageProvider,
-                        true, null, null, false
-                ).getId();
-
-                List<StepClassParserResult> listPlans = automationPackageManager.getPackagePlans(automationPackageId)
-                        .stream()
-                        .filter(p -> apRunTestsParams.testPlans == null || apRunTestsParams.testPlans.isEmpty() || apRunTestsParams.testPlans.contains(p.getAttribute(AbstractOrganizableObject.NAME)))
-                        .filter(p -> p.getRoot().getClass().getAnnotation(Artefact.class).validForStandaloneExecution())
-                        .map(p -> new StepClassParserResult(p.getAttribute(AbstractOrganizableObject.NAME), p, null))
-                        .collect(Collectors.toList());
-
-                log.info("The following plans will be executed: {}", listPlans.stream().map(StepClassParserResult::getName).collect(Collectors.toList()));
-
-                for (StepClassParserResult parserResult : listPlans) {
-                    new AbstractLocalPlanRunner(parserResult, executionEngine) {
-                        @Override
-                        protected void onExecutionStart() {
-                            log.info("Execution has been started for plan {}", parserResult.getName());
-                        }
-
-                        @Override
-                        protected void onExecutionError(PlanRunnerResult result, String errorText, boolean assertionError) {
-                            log.error("Execution has been failed for plan {}. {}", parserResult.getName(), errorText);
-                        }
-
-                        @Override
-                        protected void onInitializingException(Exception exception) {
-                            log.error("Execution initialization exception for plan {}.", parserResult.getName(), exception);
-                        }
-
-                        @Override
-                        protected void onExecutionException(Exception exception) {
-                            log.error("Execution exception for plan {}", parserResult.getName(), exception);
-                        }
-
-                        @Override
-                        protected void onTestFinished() {
-                            log.info("Execution has been finished for plan {}", parserResult.getName());
-                        }
-
-                        @Override
-                        protected Map<String, String> getExecutionParameters() {
-                            return executionParameters;
-                        }
-                    }.runPlan();
-                }
-            } catch (FileNotFoundException e) {
-                throw new StepCliExecutionException("File not found: " + apFile.getAbsolutePath(), e);
-            } catch (IOException e) {
-                throw new RuntimeException("IO exception for " + apFile.getAbsolutePath(), e);
-            } catch (AutomationPackageReadingException e) {
-                throw new RuntimeException("AP reading exception", e);
-            }
+    private void handleApLocalExecuteCommand() {
+        File file = prepareApFile(apFile);
+        if (file == null) {
+            throw new StepCliExecutionException("AP file is not defined");
         }
+        new ApLocalExecuteCommandHandler().execute(file, apExecuteParams.includePlans, apExecuteParams.excludePlans, apExecuteParams.executionParameters);
     }
 
-    protected void handleExecuteCommand() {
+    protected void handleApRemoteExecuteCommand() {
         new AbstractExecuteAutomationPackageTool(
                 stepUrl, securityParams.stepProjectName, securityParams.stepUserId, securityParams.authToken,
-                executionParameters, apExecuteParams.executionTimeoutS,
+                apExecuteParams.executionParameters, apExecuteParams.executionTimeoutS,
                 apExecuteParams.waitForExecution, apExecuteParams.ensureExecutionSuccess,
                 apExecuteParams.includePlans, apExecuteParams.excludePlans
         ) {
@@ -229,7 +155,7 @@ public class StepConsole implements Callable<Integer> {
         }.execute();
     }
 
-    protected void handleDeployCommand() {
+    protected void handleApDeployCommand() {
         new AbstractDeployAutomationPackageTool(stepUrl, securityParams.stepProjectName, securityParams.authToken, apDeployParams.async) {
             @Override
             protected File getFileToUpload() throws StepCliExecutionException {
@@ -238,13 +164,26 @@ public class StepConsole implements Callable<Integer> {
         }.execute();
     }
 
+    /**
+     * If the param points to the folder, prepares the zipped AP file with .stz extension.
+     * Otherwise, if the param is a simple file, just returns this file
+     *
+     * @param param the source of AP
+     */
     protected File prepareApFile(File param) {
         try {
             if (param == null) {
-                return null;
-            } else if (param.isDirectory()) {
-                File tempFile = Files.createTempFile(param.getName(), null).toFile();
+                // use the current folder by default
+                param = new File(new File("").getAbsolutePath());
+            }
+            log.info("The automation package source is {}", param.getAbsolutePath());
+
+            if (param.isDirectory()) {
+                File tempDirectory = Files.createTempDirectory("stepcli").toFile();
+                tempDirectory.deleteOnExit();
+                File tempFile = new File(tempDirectory, param.getName() + ".stz");
                 tempFile.deleteOnExit();
+                log.info("Preparing AP archive: {}", tempFile.getAbsolutePath());
                 ZipUtil.pack(param, tempFile);
                 return tempFile;
             } else {
@@ -296,7 +235,7 @@ public class StepConsole implements Callable<Integer> {
     }
 
     public void setExecutionParameters(Map<String, String> executionParameters) {
-        this.executionParameters = executionParameters;
+        this.apExecuteParams.executionParameters = executionParameters;
     }
 
     public void setWaitForExecution(Boolean waitForExecution) {
@@ -313,5 +252,13 @@ public class StepConsole implements Callable<Integer> {
 
     public void setExcludePlans(String excludePlans) {
         this.apExecuteParams.excludePlans = excludePlans;
+    }
+
+    public void setLocal(boolean local) {
+        this.apExecuteParams.local = local;
+    }
+
+    public void setContext(String context) {
+        this.context = context;
     }
 }
