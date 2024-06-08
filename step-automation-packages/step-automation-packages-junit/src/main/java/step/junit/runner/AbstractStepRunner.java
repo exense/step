@@ -93,7 +93,7 @@ public abstract class AbstractStepRunner extends ParentRunner<StepClassParserRes
         Description desc = Description.createTestDescription(klass, child.getName());
         EachTestNotifier childNotifier = new EachTestNotifier(notifier, desc);
 
-        new AbstractLocalPlanRunner() {
+        new AbstractLocalPlanRunner(child, executionEngine) {
             @Override
             protected void onExecutionStart() {
                 childNotifier.fireTestStarted();
@@ -123,7 +123,7 @@ public abstract class AbstractStepRunner extends ParentRunner<StepClassParserRes
             protected Map<String, String> getExecutionParameters() {
                 return AbstractStepRunner.this.getExecutionParameters();
             }
-        }.runPlan(child, executionEngine);
+        }.runPlan();
     }
 
     protected Map<String, String> getExecutionParameters() {

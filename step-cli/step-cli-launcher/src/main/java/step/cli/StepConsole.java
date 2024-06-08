@@ -56,8 +56,8 @@ public class StepConsole implements Callable<Integer> {
     @Parameters(index = "0", description = "\"Deploy\" or \"Execute\" or \"RunTests\"")
     private String command;
 
-    @Option(names = {"--" + CONFIG}, description = "The custom configuration file")
-    private String config;
+    @Option(names = {"--" + CONFIG}, description = "The custom configuration file(s)")
+    private List<String> config;
 
     @Option(names = {"--apFile"}, description = "The file with automation package")
     private File apFile;
@@ -163,9 +163,9 @@ public class StepConsole implements Callable<Integer> {
                         true, null, null, false
                 ).getId();
 
-                // TODO: apply filter for plans
                 List<StepClassParserResult> listPlans = automationPackageManager.getPackagePlans(automationPackageId)
                         .stream()
+                        .filter(p -> apRunTestsParams.testPlans == null || apRunTestsParams.testPlans.isEmpty() || apRunTestsParams.testPlans.contains(p.getAttribute(AbstractOrganizableObject.NAME)))
                         .filter(p -> p.getRoot().getClass().getAnnotation(Artefact.class).validForStandaloneExecution())
                         .map(p -> new StepClassParserResult(p.getAttribute(AbstractOrganizableObject.NAME), p, null))
                         .collect(Collectors.toList());
@@ -173,38 +173,37 @@ public class StepConsole implements Callable<Integer> {
                 log.info("The following plans will be executed: {}", listPlans.stream().map(StepClassParserResult::getName).collect(Collectors.toList()));
 
                 for (StepClassParserResult parserResult : listPlans) {
-                    String planName = parserResult.getName();
-                    new AbstractLocalPlanRunner() {
+                    new AbstractLocalPlanRunner(parserResult, executionEngine) {
                         @Override
                         protected void onExecutionStart() {
-                            log.info("Execution has been started for plan {}", planName);
+                            log.info("Execution has been started for plan {}", parserResult.getName());
                         }
 
                         @Override
                         protected void onExecutionError(PlanRunnerResult result, String errorText, boolean assertionError) {
-                            log.error("Execution has been failed for plan {}. {}", planName, errorText);
+                            log.error("Execution has been failed for plan {}. {}", parserResult.getName(), errorText);
                         }
 
                         @Override
                         protected void onInitializingException(Exception exception) {
-                            log.error("Execution initialization exception for plan {}.", planName, exception);
+                            log.error("Execution initialization exception for plan {}.", parserResult.getName(), exception);
                         }
 
                         @Override
                         protected void onExecutionException(Exception exception) {
-                            log.error("Execution exception for plan {}", planName, exception);
+                            log.error("Execution exception for plan {}", parserResult.getName(), exception);
                         }
 
                         @Override
                         protected void onTestFinished() {
-                            log.info("Execution has been finished for plan {}", planName);
+                            log.info("Execution has been finished for plan {}", parserResult.getName());
                         }
 
                         @Override
                         protected Map<String, String> getExecutionParameters() {
                             return executionParameters;
                         }
-                    }.runPlan(parserResult, executionEngine);
+                    }.runPlan();
                 }
             } catch (FileNotFoundException e) {
                 throw new StepCliExecutionException("File not found: " + apFile.getAbsolutePath(), e);
@@ -264,7 +263,7 @@ public class StepConsole implements Callable<Integer> {
         this.apFile = apFile;
     }
 
-    public void setConfig(String config) {
+    public void setConfig(List<String> config) {
         this.config = config;
     }
 

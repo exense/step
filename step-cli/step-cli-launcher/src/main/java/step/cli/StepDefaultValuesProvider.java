@@ -23,10 +23,14 @@ import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.List;
+import java.util.Properties;
 
 class StepDefaultValuesProvider implements CommandLine.IDefaultValueProvider {
 
-    public static final String DEFAULT_CONFIG_FILE = System.getProperty("user.home") + "/stepCli.properties";
+    public static final String DEFAULT_CONFIG_FILE = System.getProperty("user.home") + "/stepcli.properties";
 
     private static final Logger log = LoggerFactory.getLogger(StepDefaultValuesProvider.class);
 
@@ -41,26 +45,23 @@ class StepDefaultValuesProvider implements CommandLine.IDefaultValueProvider {
             if (customConfigFile != null) {
                 configOptionApplied = true;
 
-                boolean isDefaultConfigFile = false;
-                String pathToCustomConfig = customConfigFile.originalStringValues().isEmpty() ? null : customConfigFile.originalStringValues().get(0);
-                if (pathToCustomConfig == null) {
-                    pathToCustomConfig = customConfigFile.defaultValue();
-                    if(pathToCustomConfig == null){
-                        // superdefault - in user home
-                        pathToCustomConfig = DEFAULT_CONFIG_FILE;
-                    }
-                    isDefaultConfigFile = true;
+                List<String> customConfigFiles = customConfigFile.originalStringValues();
+
+                // default value defined in annotation
+                String defaultConfigFile = customConfigFile.defaultValue();
+
+                if (defaultConfigFile == null) {
+                    // superdefault - in user home (if there is no default value in annotation)
+                    defaultConfigFile = DEFAULT_CONFIG_FILE;
                 }
 
-                if (pathToCustomConfig != null) {
-                    log.info("Setup default properties source: " + pathToCustomConfig);
-                    File configFile = new File(pathToCustomConfig);
-                    if (configFile.exists() && configFile.canRead()) {
-                        this.delegate = new CommandLine.PropertiesDefaultProvider(configFile);
-                    } else if (!isDefaultConfigFile) {
-                        throw new RuntimeException("Invalid custom config file configured: " + pathToCustomConfig);
-                    }
-                }
+                String infoText = "Applying";
+                infoText += " properties from " + customConfigFiles + " and";
+                infoText += " default config from " + defaultConfigFile;
+                log.info(infoText) ;
+                Properties properties = mergeProperties(customConfigFiles, defaultConfigFile);
+
+                this.delegate = new CommandLine.PropertiesDefaultProvider(properties);
             }
         }
         if (delegate != null) {
@@ -68,5 +69,33 @@ class StepDefaultValuesProvider implements CommandLine.IDefaultValueProvider {
         } else {
             return argSpec.defaultValue();
         }
+    }
+
+    private Properties mergeProperties(List<String> customConfigFiles, String defaultConfigFile) throws IOException {
+        Properties res = new Properties();
+
+        if (defaultConfigFile != null) {
+            addFileToProperties(defaultConfigFile, res);
+        }
+
+        for (String pathToFile : customConfigFiles) {
+            boolean fileExists = addFileToProperties(pathToFile, res);
+            if (!fileExists) {
+                throw new RuntimeException("Invalid custom config file configured: " + customConfigFiles);
+            }
+        }
+
+        return res;
+    }
+
+    private boolean addFileToProperties(String pathToFile, Properties res) throws IOException {
+        File configFile = new File(pathToFile);
+        if (configFile.exists() && configFile.canRead()) {
+            try (FileInputStream fis = new FileInputStream(configFile)) {
+                res.load(fis);
+            }
+            return true;
+        }
+        return false;
     }
 }

@@ -28,7 +28,15 @@ import java.util.Map;
 
 public abstract class AbstractLocalPlanRunner {
 
-    public void runPlan(StepClassParserResult parserResult, ExecutionEngine executionEngine){
+    protected final StepClassParserResult parserResult;
+    protected final ExecutionEngine executionEngine;
+
+    public AbstractLocalPlanRunner(StepClassParserResult parserResult, ExecutionEngine executionEngine) {
+        this.parserResult = parserResult;
+        this.executionEngine = executionEngine;
+    }
+
+    public void runPlan(){
         onExecutionStart();
 
         try {
@@ -69,7 +77,6 @@ public abstract class AbstractLocalPlanRunner {
 
     protected abstract void onTestFinished();
 
-    // TODO: use execution parameters from env and system properties in CLI?
     protected abstract Map<String, String> getExecutionParameters();
 
 }
