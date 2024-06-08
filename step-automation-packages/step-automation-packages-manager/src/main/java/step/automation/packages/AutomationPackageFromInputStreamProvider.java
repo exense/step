@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.automation.packages;
 
+import ch.exense.commons.io.FileHelper;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,17 +34,18 @@ public class AutomationPackageFromInputStreamProvider implements AutomationPacka
 
     private final AutomationPackageArchive archive;
     private File tempFile;
+    private File tempFolder;
 
     public AutomationPackageFromInputStreamProvider(InputStream packageStream, String fileName) throws AutomationPackageReadingException {
         // store automation package into temp file
         this.tempFile = null;
         try {
-            tempFile = stream2file(packageStream, fileName);
+            copyStreamToTempFile(packageStream, fileName);
         } catch (Exception ex) {
-            throw new AutomationPackageManagerException("Unable to store automation package file");
+            throw new AutomationPackageManagerException("Unable to store automation package file", ex);
         }
 
-        this.archive = new AutomationPackageArchive(tempFile, fileName);
+        this.archive = new AutomationPackageArchive(tempFile);
     }
 
     @Override
@@ -51,13 +53,18 @@ public class AutomationPackageFromInputStreamProvider implements AutomationPacka
         return this.archive;
     }
 
-    private static File stream2file(InputStream in, String fileName) throws IOException {
-        final File tempFile = File.createTempFile(fileName, ".tmp");
-        tempFile.deleteOnExit();
-        try (FileOutputStream out = new FileOutputStream(tempFile)) {
+    private void copyStreamToTempFile(InputStream in, String fileName) throws IOException {
+        // create temp folder to keep the original file name
+        File newFolder = FileHelper.createTempFolder();
+        newFolder.deleteOnExit();
+        File newFile = new File(newFolder, fileName);
+        newFile.deleteOnExit();
+
+        try (FileOutputStream out = new FileOutputStream(newFile)) {
             IOUtils.copy(in, out);
         }
-        return tempFile;
+        this.tempFile = newFile;
+        this.tempFolder = newFolder;
     }
 
     @Override
@@ -67,6 +74,10 @@ public class AutomationPackageFromInputStreamProvider implements AutomationPacka
             if (this.tempFile != null && tempFile.exists()) {
                 //noinspection ResultOfMethodCallIgnored
                 tempFile.delete();
+            }
+            if (this.tempFolder != null && tempFolder.exists()) {
+                //noinspection ResultOfMethodCallIgnored
+                tempFolder.delete();
             }
         } catch (Exception e) {
             log.warn("Cannot cleanup temp file {}", this.tempFile == null ? "" : this.tempFile.getName(), e);
