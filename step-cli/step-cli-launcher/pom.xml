@@ -89,6 +89,7 @@
                         </goals>
                         <configuration>
                             <executable>true</executable>
+                            <finalName>step</finalName>
                         </configuration>
                     </execution>
                 </executions>

@@ -25,6 +25,8 @@ import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
+import step.automation.packages.AutomationPackageFromFolderProvider;
+import step.automation.packages.AutomationPackageReadingException;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -179,6 +181,9 @@ public class StepConsole implements Callable<Integer> {
             log.info("The automation package source is {}", param.getAbsolutePath());
 
             if (param.isDirectory()) {
+                // check if the folder is AP (contains the yaml descriptor)
+                checkApFolder(param);
+
                 File tempDirectory = Files.createTempDirectory("stepcli").toFile();
                 tempDirectory.deleteOnExit();
                 File tempFile = new File(tempDirectory, param.getName() + ".stz");
@@ -191,6 +196,18 @@ public class StepConsole implements Callable<Integer> {
             }
         } catch (IOException ex) {
             throw new StepCliExecutionException("Unable to prepare automation package file", ex);
+        }
+    }
+
+    private void checkApFolder(File param) throws IOException {
+        try (AutomationPackageFromFolderProvider apProvider = new AutomationPackageFromFolderProvider(param)) {
+            try {
+                if (!apProvider.getAutomationPackageArchive().hasAutomationPackageDescriptor()) {
+                    throw new StepCliExecutionException("The AP folder " + param.getAbsolutePath() + " doesn't contain the AP descriptor file");
+                }
+            } catch (AutomationPackageReadingException e) {
+                throw new StepCliExecutionException("Unable to read automation package from folder " + param.getAbsolutePath(), e);
+            }
         }
     }
 
