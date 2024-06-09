@@ -299,7 +299,8 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	 * These attributes will be used to match the right token if the agent token defines criteria for the selector (token pretender)
 	 */
 	private Map<String, String> getOwnAttributesForTokenSelection() {
-		return Map.of("executionId", context.getExecutionId());
+		String executionId = context.getExecutionId();
+		return Map.of("tokenPartition", executionId, "executionId", executionId);
 	}
 
 	private void validateInput(FunctionInput<JsonObject> input, Function function) {
