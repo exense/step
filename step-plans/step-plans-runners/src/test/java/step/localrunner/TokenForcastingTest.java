@@ -312,6 +312,11 @@ public class TokenForcastingTest {
 		public void deprovisionTokens(String provisioningRequestId) {
 
 		}
+
+		@Override
+		public void cleanupResources() {
+			
+		}
 	}
 
 

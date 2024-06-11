@@ -72,6 +72,11 @@ public class DefaultTokenAutoscalingDriver implements TokenAutoscalingDriver {
     }
 
     @Override
+    public void cleanupResources() {
+        
+    }
+
+    @Override
     public TokenProvisioningStatus getTokenProvisioningStatus(String provisioningRequestId) {
         return provisioningRequest.get(provisioningRequestId);
     }
