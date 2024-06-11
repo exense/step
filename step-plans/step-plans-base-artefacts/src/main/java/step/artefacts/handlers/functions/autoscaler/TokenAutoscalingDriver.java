@@ -36,4 +36,9 @@ public interface TokenAutoscalingDriver {
      * @param provisioningRequestId the unique id of the provisioning request
      */
     void deprovisionTokens(String provisioningRequestId);
+
+    /**
+     * Performs cleanup of leaked resources
+     */
+    void cleanupResources();
 }
