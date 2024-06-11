@@ -2,7 +2,7 @@ package step.plugins.timeseries;
 
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.Filter;
-import junit.framework.Assert;
+import org.junit.Assert;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletHolder;

@@ -21,7 +21,7 @@
 				{
 					"NAME": "PRODUCTION",
 					"URL": "sonatype::https://oss.sonatype.org/service/local/staging/deploy/maven2",
-					"CONFIG": "DefaultBuild"
+					"CONFIG": "SignedBuild"
 				}
 			]
 		},

@@ -25,7 +25,7 @@ import java.util.UUID;
 
 import ch.exense.commons.app.Configuration;
 import ch.exense.commons.test.categories.PerformanceTest;
-import junit.framework.Assert;
+import org.junit.Assert;
 import ch.exense.commons.io.FileHelper;
 
 import org.apache.poi.util.IOUtils;

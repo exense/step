@@ -31,7 +31,7 @@ import org.bson.types.ObjectId;
 import org.junit.Test;
 
 import ch.exense.commons.app.Configuration;
-import junit.framework.Assert;
+import org.junit.Assert;
 import step.commons.activation.Expression;
 import step.core.collections.Collection;
 import step.core.collections.EntityVersion;

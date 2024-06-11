@@ -18,14 +18,14 @@
  ******************************************************************************/
 package step.artefacts.handlers;
 
-import static junit.framework.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
 
 import java.io.StringWriter;
 import java.util.HashSet;
 
 import org.junit.Test;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import step.artefacts.Check;
 import step.artefacts.TestSet;
 import step.core.artefacts.CheckArtefact;
