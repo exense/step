@@ -1,6 +1,5 @@
 package step.plugins.timeseries.dashboards.model;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
@@ -22,6 +21,8 @@ public class TableDashletSettings {
     public static class ColumnSelection {
         @NotNull
         private TableChartColumn column;
+        
+        private Integer pclValue; // can override when column is PCL
         @NotNull
         private boolean isSelected;
         
@@ -29,6 +30,12 @@ public class TableDashletSettings {
         
         public ColumnSelection(TableChartColumn column, boolean isSelected) {
             this.column = column;
+            this.isSelected = isSelected;
+        }
+        
+        public ColumnSelection(TableChartColumn column, Integer pclValue, boolean isSelected) {
+            this.column = column;
+            this.pclValue = pclValue;
             this.isSelected = isSelected;
         }
 
@@ -47,6 +54,15 @@ public class TableDashletSettings {
 
         public ColumnSelection setSelected(boolean selected) {
             isSelected = selected;
+            return this;
+        }
+
+        public Integer getPclValue() {
+            return pclValue;
+        }
+
+        public ColumnSelection setPclValue(Integer pclValue) {
+            this.pclValue = pclValue;
             return this;
         }
     }
