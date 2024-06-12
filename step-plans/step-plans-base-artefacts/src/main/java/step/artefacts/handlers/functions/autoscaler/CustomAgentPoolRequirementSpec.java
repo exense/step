@@ -6,6 +6,14 @@ public class CustomAgentPoolRequirementSpec extends AgentPoolRequirementSpec {
 
     public String dockerImage;
 
+    public CustomAgentPoolRequirementSpec() {
+    }
+
+    public CustomAgentPoolRequirementSpec(String dockerImage, int numberOfAgents) {
+        this.dockerImage = dockerImage;
+        this.numberOfAgents = numberOfAgents;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

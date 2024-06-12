@@ -4,6 +4,9 @@ import java.util.Objects;
 
 public class TemplateStsAgentPoolRequirementSpec extends AgentPoolRequirementSpec {
 
+    public TemplateStsAgentPoolRequirementSpec() {
+    }
+
     public TemplateStsAgentPoolRequirementSpec(String templateStatefulSetName, int numberOfAgents) {
         this.templateStatefulSetName = templateStatefulSetName;
         this.numberOfAgents = numberOfAgents;
