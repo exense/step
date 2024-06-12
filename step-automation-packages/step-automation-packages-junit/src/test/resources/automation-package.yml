@@ -18,6 +18,14 @@ plans:
               keyword: "JMeterAutomation"
               inputs:
                 - url: "www.exense.ch"
+  - name: Test Plan with Composite
+    root:
+      testCase:
+        children:
+          - echo:
+              text: "Calling composite"
+          - callKeyword:
+              keyword: "Composite keyword from AP"
 keywords:
   - JMeter:
       name: "JMeterAutomation"
@@ -25,6 +33,9 @@ keywords:
       useCustomTemplate: true
       callTimeout: 1000
       jmeterTestplan: "jmeterProject1/jmeterProject1.jmx"
+  - Composite:
+      name: "Composite keyword from AP"
+      plan: "Test Plan"
 parameters:
   - key: "myParam"
     value: "myParamValue"

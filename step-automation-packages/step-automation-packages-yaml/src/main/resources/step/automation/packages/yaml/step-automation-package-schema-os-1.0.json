@@ -53,6 +53,45 @@
         "additionalProperties" : false
       }
     },
+    "CompositeDef" : {
+      "type" : "object",
+      "properties" : {
+        "Composite" : {
+          "type" : "object",
+          "properties" : {
+            "description" : {
+              "type" : "string"
+            },
+            "useCustomTemplate" : {
+              "type" : "boolean"
+            },
+            "routing" : {
+              "type" : "object",
+              "properties" : { }
+            },
+            "executeLocally" : {
+              "type" : "boolean"
+            },
+            "schema" : {
+              "type" : "object",
+              "properties" : { }
+            },
+            "callTimeout" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            },
+            "name" : {
+              "default" : "Composite",
+              "type" : "string"
+            },
+            "plan" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            }
+          },
+          "additionalProperties" : false
+        }
+      },
+      "additionalProperties" : false
+    },
     "JMeterDef" : {
       "type" : "object",
       "properties" : {
@@ -95,6 +134,8 @@
     "KeywordDef" : {
       "type" : "object",
       "oneOf" : [ {
+        "$ref" : "#/$defs/CompositeDef"
+      }, {
         "$ref" : "#/$defs/JMeterDef"
       } ]
     },

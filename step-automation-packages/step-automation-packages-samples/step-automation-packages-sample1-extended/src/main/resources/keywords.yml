@@ -10,4 +10,7 @@ keywords:
       name: "Another JMeter keyword from automation package"
       description: "JMeter keyword 2"
       jmeterTestplan: "jmeterProject2/jmeterProject2.xml"
+  - Composite:
+        name: "Composite keyword from AP"
+        plan: "Test Plan"
       
