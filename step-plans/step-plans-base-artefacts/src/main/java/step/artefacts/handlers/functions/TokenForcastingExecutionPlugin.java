@@ -2,13 +2,15 @@ package step.artefacts.handlers.functions;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.artefacts.handlers.functions.autoscaler.AgentPoolSpec;
 import step.artefacts.handlers.functions.autoscaler.TokenAutoscalingDriver;
 import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;
 import step.core.plugins.Plugin;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
-import java.util.Map;
+
+import java.util.Set;
 
 /**
  * This plugin is responsible for the autoscaling of agent tokens.
@@ -21,7 +23,7 @@ public class TokenForcastingExecutionPlugin extends AbstractExecutionEnginePlugi
     private static final Logger logger = LoggerFactory.getLogger(TokenForcastingExecutionPlugin.class);
     public static final String CONTEXT_OBJECT_KEY = "$tokenForecastingContext";
 
-    Map<String, Map<String, String>> pools;
+    private Set<AgentPoolSpec> pools;
 
     public TokenForcastingExecutionPlugin() {
     }
@@ -31,8 +33,8 @@ public class TokenForcastingExecutionPlugin extends AbstractExecutionEnginePlugi
         if (pools == null) {
             TokenAutoscalingDriver tokenAutoscalingDriver = executionEngineContext.get(TokenAutoscalingDriver.class);
             pools = (tokenAutoscalingDriver != null) ?
-                    tokenAutoscalingDriver.getConfiguration().availableTokenPools :
-                    Map.of();
+                    tokenAutoscalingDriver.getConfiguration().availableAgentPools :
+                    Set.of();
         }
     }
 

@@ -25,10 +25,7 @@ import step.artefacts.FunctionGroup;
 import step.artefacts.ThreadGroup;
 import step.artefacts.handlers.functions.TokenForcastingExecutionPlugin;
 import step.artefacts.handlers.functions.TokenForecastingContext;
-import step.artefacts.handlers.functions.autoscaler.TokenAutoscalingConfiguration;
-import step.artefacts.handlers.functions.autoscaler.TokenAutoscalingDriver;
-import step.artefacts.handlers.functions.autoscaler.TokenProvisioningRequest;
-import step.artefacts.handlers.functions.autoscaler.TokenProvisioningStatus;
+import step.artefacts.handlers.functions.autoscaler.*;
 import step.artefacts.handlers.functions.test.MyFunction;
 import step.artefacts.handlers.functions.test.MyFunctionType;
 import step.core.accessors.AbstractOrganizableObject;
@@ -51,6 +48,7 @@ import step.threadpool.ThreadPoolPlugin;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -112,16 +110,25 @@ public class TokenForcastingTest {
 		plan.setFunctions(List.of(function, compositeFunction));
 
 		// One matching token pool
-		Map<String, Map<String, String>> availableTokenPools = Map.of("pool1", Map.of("$agenttype", "default"));
-		TokenForecastingContext tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableTokenPools);
-		Map<String, Integer> tokenForecastPerPool = tokenForecastingContext.getTokenForecastPerPool();
-		assertEquals(10, (int) tokenForecastPerPool.get("pool1"));
+		Set<AgentPoolSpec> availableAgentPools = Set.of(new AgentPoolSpec("pool1", Map.of("$agenttype", "default"), 1));
+		TokenForecastingContext tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableAgentPools);
+		assertEquals(Set.of(new TemplateStsAgentPoolRequirementSpec("pool1", 10)), tokenForecastingContext.getAgentPoolRequirementSpec());
 
 		// 2 token pools, one matching
-		availableTokenPools = Map.of("pool1", Map.of("$agenttype", "default"), "pool2", Map.of());
-		tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableTokenPools);
-		assertEquals(10, (int) tokenForecastingContext.getTokenForecastPerPool().get("pool1"));
-		assertNull(tokenForecastingContext.getTokenForecastPerPool().get("pool2"));
+		availableAgentPools = Set.of(new AgentPoolSpec("pool1", Map.of("$agenttype", "default"), 1), new AgentPoolSpec("pool2", Map.of(), 1));
+		tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableAgentPools);
+		assertEquals(Set.of(new TemplateStsAgentPoolRequirementSpec("pool1", 10)), tokenForecastingContext.getAgentPoolRequirementSpec());
+
+		// One matching token pool
+		availableAgentPools = Set.of(new AgentPoolSpec("pool1", Map.of("$agenttype", "default"), 2));
+		tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableAgentPools);
+		// 5 agents should be required as each agent has 2 tokens
+		assertEquals(Set.of(new TemplateStsAgentPoolRequirementSpec("pool1", 5)), tokenForecastingContext.getAgentPoolRequirementSpec());
+
+		availableAgentPools = Set.of(new AgentPoolSpec("pool1", Map.of("$agenttype", "default"), 3));
+		tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableAgentPools);
+		// 4 agents should be required as each agent has 2 tokens
+		assertEquals(Set.of(new TemplateStsAgentPoolRequirementSpec("pool1", 4)), tokenForecastingContext.getAgentPoolRequirementSpec());
 
 	}
 
@@ -187,15 +194,17 @@ public class TokenForcastingTest {
 		plan.setFunctions(List.of(function, compositeFunction));
 
 		// One matching token pool
-		Map<String, Map<String, String>> availableTokenPools = Map.of("pool1", Map.of("$agenttype", "default", "type", "pool1"),
-				"pool2", Map.of("$agenttype", "default", "type", "pool2"),
-				"pool3", Map.of("$agenttype", "default", "type", "pool3"));
-		TokenForecastingContext tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableTokenPools);
-		Map<String, Integer> tokenForecastPerPool = tokenForecastingContext.getTokenForecastPerPool();
-		assertEquals(1, (int) tokenForecastPerPool.get("pool1"));
-		assertEquals(6, (int) tokenForecastPerPool.get("pool2"));
-		assertEquals(3, (int) tokenForecastPerPool.get("pool3"));
+		Set<AgentPoolSpec> availableAgentPools = Set.of(
+				new AgentPoolSpec("pool1", Map.of("$agenttype", "default", "type", "pool1"), 1),
+				new AgentPoolSpec("pool2", Map.of("$agenttype", "default", "type", "pool2"), 1),
+				new AgentPoolSpec("pool3", Map.of("$agenttype", "default", "type", "pool3"), 1));
 
+		TokenForecastingContext tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableAgentPools);
+
+		assertEquals(Set.of(new TemplateStsAgentPoolRequirementSpec("pool1", 1),
+				new TemplateStsAgentPoolRequirementSpec("pool2", 6),
+				new TemplateStsAgentPoolRequirementSpec("pool3", 3)),
+				tokenForecastingContext.getAgentPoolRequirementSpec());
 	}
 
 
@@ -226,21 +235,18 @@ public class TokenForcastingTest {
 		plan.setFunctions(List.of(function));
 
 		// One matching token pool
-		Map<String, Map<String, String>> availableTokenPools = Map.of("pool1", Map.of("$agenttype", "default", "type", "pool1"),
-				"pool2", Map.of("$agenttype", "default", "type", "pool2"),
-				"pool3", Map.of("$agenttype", "default", "type", "pool3"));
-		TokenForecastingContext tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableTokenPools);
-		Map<String, Integer> tokenForecastPerPool = tokenForecastingContext.getTokenForecastPerPool();
-		assertEquals(4, (int) tokenForecastPerPool.get("pool2"));
-		assertNull(tokenForecastingContext.getTokenForecastPerPool().get("pool1"));
-		assertNull(tokenForecastingContext.getTokenForecastPerPool().get("pool3"));
+		Set<AgentPoolSpec> availableAgentPools = Set.of(
+				new AgentPoolSpec("pool1", Map.of("$agenttype", "default", "type", "pool1"), 1),
+				new AgentPoolSpec("pool2", Map.of("$agenttype", "default", "type", "pool2"), 1),
+				new AgentPoolSpec("pool3", Map.of("$agenttype", "default", "type", "pool3"), 1));
+		TokenForecastingContext tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableAgentPools);
 
+		assertEquals(Set.of(new TemplateStsAgentPoolRequirementSpec("pool2", 4)),
+				tokenForecastingContext.getAgentPoolRequirementSpec());
 	}
 
-
-
-	private static TokenForecastingContext executePlanWithSpecifiedTokenPools(Plan plan, Map<String, Map<String, String>> availableTokenPools) {
-		ForcastingTestPlugin forcastingTestPlugin = new ForcastingTestPlugin(availableTokenPools);
+	private static TokenForecastingContext executePlanWithSpecifiedTokenPools(Plan plan, Set<AgentPoolSpec> availableAgentPools) {
+		ForcastingTestPlugin forcastingTestPlugin = new ForcastingTestPlugin(availableAgentPools);
 		try(ExecutionEngine executionEngine = ExecutionEngine.builder().withPlugin(new FunctionPlugin()).withPlugin(new AbstractExecutionEnginePlugin() {
 			@Override
 			public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
@@ -259,9 +265,9 @@ public class TokenForcastingTest {
 	public static class ForcastingTestPlugin extends AbstractExecutionEnginePlugin {
 
 		public TokenForecastingContext tokenForecastingContext;
-		Map<String, Map<String, String>> availableTokenPools;
+		Set<AgentPoolSpec> availableTokenPools;
 
-		public ForcastingTestPlugin(Map<String, Map<String, String>> availableTokenPools) {
+		public ForcastingTestPlugin(Set<AgentPoolSpec> availableTokenPools) {
 			this.availableTokenPools = availableTokenPools;
 		}
 
@@ -269,7 +275,7 @@ public class TokenForcastingTest {
 		public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext executionEngineContext) {
 			super.initializeExecutionEngineContext(parentContext, executionEngineContext);
 			TokenAutoscalingConfiguration tokenAutoscalingConfiguration = new TokenAutoscalingConfiguration();
-			tokenAutoscalingConfiguration.availableTokenPools = availableTokenPools;
+			tokenAutoscalingConfiguration.availableAgentPools = availableTokenPools;
 			executionEngineContext.put(TokenAutoscalingDriver.class, new ForcastingTestDriver(tokenAutoscalingConfiguration));
 		}
 

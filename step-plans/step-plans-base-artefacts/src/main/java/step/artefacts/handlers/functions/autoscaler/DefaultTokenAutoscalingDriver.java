@@ -3,6 +3,7 @@ package step.artefacts.handlers.functions.autoscaler;
 import ch.exense.commons.app.Configuration;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.*;
 
@@ -18,7 +19,7 @@ public class DefaultTokenAutoscalingDriver implements TokenAutoscalingDriver {
     @Override
     public TokenAutoscalingConfiguration getConfiguration() {
         TokenAutoscalingConfiguration autoscalerConfiguration = new TokenAutoscalingConfiguration();
-        autoscalerConfiguration.availableTokenPools = Map.of("DefaultPool", Map.of("$agenttype", "default"));
+        autoscalerConfiguration.availableAgentPools = Set.of(new AgentPoolSpec("DefaultPool", Map.of("$agenttype", "default"), 1));
         return autoscalerConfiguration;
     }
 
@@ -26,7 +27,8 @@ public class DefaultTokenAutoscalingDriver implements TokenAutoscalingDriver {
     public String initializeTokenProvisioningRequest(TokenProvisioningRequest request) {
         String provisioningId = UUID.randomUUID().toString();
         TokenProvisioningStatus status = new TokenProvisioningStatus();
-        status.tokenCountTarget = request.requiredNumberOfTokensPerPool.values().stream().reduce(0, Integer::sum);
+        // TODO reimplement
+        //status.tokenCountTarget = request.requiredNumberOfTokensPerPool.values().stream().reduce(0, Integer::sum);
         status.statusDescription = "Provisioning tokens... (MOCK)";
         provisioningRequest.put(provisioningId, status);
         return provisioningId;

@@ -1,14 +1,14 @@
 package step.artefacts.handlers.functions.autoscaler;
 
-import java.util.Map;
+import java.util.Set;
 
 public class TokenAutoscalingConfiguration {
 
-    public Map<String, Map<String, String>> availableTokenPools;
+    public Set<AgentPoolSpec> availableAgentPools;
 
     public TokenAutoscalingConfiguration() {}
 
-    public TokenAutoscalingConfiguration(Map<String, Map<String, String>> availableTokenPools) {
-        this.availableTokenPools = availableTokenPools;
+    public TokenAutoscalingConfiguration(Set<AgentPoolSpec> availableAgentPools) {
+        this.availableAgentPools = availableAgentPools;
     }
 }
