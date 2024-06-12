@@ -92,6 +92,51 @@
       },
       "additionalProperties" : false
     },
+    "GeneralScriptDef" : {
+      "type" : "object",
+      "properties" : {
+        "GeneralScript" : {
+          "type" : "object",
+          "properties" : {
+            "description" : {
+              "type" : "string"
+            },
+            "useCustomTemplate" : {
+              "type" : "boolean"
+            },
+            "routing" : {
+              "type" : "object",
+              "properties" : { }
+            },
+            "executeLocally" : {
+              "type" : "boolean"
+            },
+            "schema" : {
+              "type" : "object",
+              "properties" : { }
+            },
+            "callTimeout" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            },
+            "name" : {
+              "default" : "GeneralScript",
+              "type" : "string"
+            },
+            "scriptLanguage" : {
+              "enum" : [ "java", "javascript", "groovy" ]
+            },
+            "librariesFile" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            },
+            "scriptFile" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            }
+          },
+          "additionalProperties" : false
+        }
+      },
+      "additionalProperties" : false
+    },
     "JMeterDef" : {
       "type" : "object",
       "properties" : {
@@ -135,6 +180,8 @@
       "type" : "object",
       "oneOf" : [ {
         "$ref" : "#/$defs/CompositeDef"
+      }, {
+        "$ref" : "#/$defs/GeneralScriptDef"
       }, {
         "$ref" : "#/$defs/JMeterDef"
       } ]

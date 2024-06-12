@@ -20,7 +20,9 @@ import step.parameter.automation.AutomationPackageParameter;
 import step.parameter.automation.AutomationPackageParameterJsonSchema;
 import step.parameter.automation.AutomationPackageParametersRegistration;
 import step.plugins.functions.types.automation.YamlCompositeFunction;
+import step.plugins.java.GeneralFunctionScriptLanguage;
 import step.plugins.java.GeneralScriptFunction;
+import step.plugins.java.automation.YamlGeneralScriptFunction;
 import step.plugins.jmeter.automation.YamlJMeterFunction;
 
 import java.io.File;
@@ -60,9 +62,9 @@ public class AutomationPackageReaderTest {
         AutomationPackageContent automationPackageContent = reader.readAutomationPackageFromJarFile(automationPackageJar);
         assertNotNull(automationPackageContent);
 
-        // 3 keywords: two from descriptor and two from java class with @Keyword annotation
+        // 5 keywords: 3 from descriptor and two from java class with @Keyword annotation
         List<AutomationPackageKeyword> keywords = automationPackageContent.getKeywords();
-        assertEquals(4, keywords.size());
+        assertEquals(5, keywords.size());
 
         YamlJMeterFunction jmeterKeyword = (YamlJMeterFunction) AutomationPackageTestUtils.findYamlKeywordByClassAndName(keywords, YamlJMeterFunction.class, J_METER_KEYWORD_1);
         assertEquals(
@@ -74,6 +76,20 @@ public class AutomationPackageReaderTest {
         assertEquals(
                 "Test Plan",
                 compositeKeyword.getPlan().get()
+        );
+
+        YamlGeneralScriptFunction generalScriptKeyword = (YamlGeneralScriptFunction) AutomationPackageTestUtils.findYamlKeywordByClassAndName(keywords, YamlGeneralScriptFunction.class, GENERAL_SCRIPT_KEYWORD);
+        assertEquals(
+                GeneralFunctionScriptLanguage.javascript,
+                generalScriptKeyword.getScriptLanguage()
+        );
+        assertEquals(
+                "jsProject/jsSample.js",
+                generalScriptKeyword.getScriptFile().get()
+        );
+        assertEquals(
+                "lib/fakeLib.jar",
+                generalScriptKeyword.getLibrariesFile().get()
         );
 
         GeneralScriptFunction myKeyword2 = (GeneralScriptFunction) findJavaKeywordByClassAndName(keywords, GeneralScriptFunction.class, ANNOTATED_KEYWORD);
