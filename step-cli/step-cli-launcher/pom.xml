@@ -94,6 +94,26 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <!-- TO remove the .jar extension from generated executable file -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.7</version>
+                <executions>
+                    <execution>
+                        <phase>install</phase>
+                        <configuration>
+                            <target>
+                                <rename src="${project.build.directory}/step.jar" dest="${project.build.directory}/step"/>
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 

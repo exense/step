@@ -48,7 +48,7 @@ public class StepConsole implements Callable<Integer> {
     @Parameters(index = "1", description = "For \"ap\": \"deploy\", \"execute\"")
     private String command;
 
-    @Option(names = {"--" + CONFIG}, description = "The custom configuration file(s)")
+    @Option(names = {"-" + CONFIG}, description = "The custom configuration file(s)")
     private List<String> config;
 
     @Option(names = {"-p", "--package"}, description = "The file or folder with automation package")

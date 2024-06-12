@@ -19,5 +19,5 @@
 package step.cli;
 
 public class Parameters {
-    public static final String CONFIG = "config";
+    public static final String CONFIG = "c";
 }
