@@ -31,7 +31,7 @@ public class AutomationPackageFromFolderProvider implements AutomationPackageArc
 
     @Override
     public AutomationPackageArchive getAutomationPackageArchive() throws AutomationPackageReadingException {
-        return new AutomationPackageArchive(apFolder, apFolder.getName());
+        return new AutomationPackageArchive(apFolder);
     }
 
     @Override
