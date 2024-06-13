@@ -68,6 +68,7 @@
 		<!-- external, non-transitive, dependencies -->
 		<dep.groovy.version>3.0.10</dep.groovy.version>
 		<dep.apache-jmeter.version>5.4.3</dep.apache-jmeter.version>
+		<dep.apache-poi.version>5.2.3</dep.apache-poi.version>
 		<dep.aether.version>1.1.0</dep.aether.version>
 
 
@@ -251,12 +252,54 @@
 				<artifactId>aether-transport-http</artifactId>
 				<version>${dep.aether.version}</version>
 			</dependency>
+
+			<dependency>
+				<groupId>javax.json</groupId>
+				<artifactId>javax.json-api</artifactId>
+				<version>1.1.4</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.apache.poi</groupId>
+				<artifactId>poi</artifactId>
+				<version>${dep.apache-poi.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.poi</groupId>
+				<artifactId>poi-ooxml</artifactId>
+				<version>${dep.apache-poi.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>com.google.apis</groupId>
+				<artifactId>google-api-services-sheets</artifactId>
+				<version>v4-rev20190109-1.27.0</version>
+			</dependency>
+			<dependency>
+				<groupId>com.google.apis</groupId>
+				<artifactId>google-api-services-drive</artifactId>
+				<version>v3-rev20181213-1.27.0</version>
+			</dependency>
+			<dependency>
+				<groupId>org.everit.json</groupId>
+				<artifactId>org.everit.json.schema</artifactId>
+				<version>1.5.1</version>
+			</dependency>
+
+
+
+
+			<!-- These are is not for the maven builds, but for the actual sources implementing maven functionality -->
 			<dependency>
 				<groupId>org.apache.maven</groupId>
 				<artifactId>maven-aether-provider</artifactId>
 				<version>3.3.9</version>
 			</dependency>
-
+			<dependency>
+				<groupId>org.apache.maven</groupId>
+				<artifactId>maven-settings-builder</artifactId>
+				<version>3.8.6</version>
+			</dependency>
 		</dependencies>
 	</dependencyManagement>
 
@@ -282,11 +325,6 @@
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.mockito</groupId>
-			<artifactId>mockito-core</artifactId>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
