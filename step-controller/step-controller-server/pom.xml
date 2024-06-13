@@ -30,11 +30,6 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>org.ldaptive</groupId>
-			<artifactId>ldaptive</artifactId>
-			<version>2.1.1</version>
-		</dependency>
-		<dependency>
 			<groupId>ch.exense.step</groupId>
 			<artifactId>step-commons</artifactId>
 			<version>${project.version}</version>
@@ -89,19 +84,31 @@
 			<version>${step-framework.version}</version>
 		</dependency>
 		<dependency>
+			<groupId>ch.exense.step</groupId>
+			<artifactId>step-framework-server</artifactId>
+			<version>${step-framework.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>ch.exense.step</groupId>
+			<artifactId>step-framework-server-plugins</artifactId>
+			<version>${step-framework.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.ldaptive</groupId>
+			<artifactId>ldaptive</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>org.json</groupId>
 			<artifactId>json</artifactId>
-			<version>20220320</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-lang3</artifactId>
-			<version>${commons-lang.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>commons-codec</groupId>
 			<artifactId>commons-codec</artifactId>
-			<version>1.15</version>
 		</dependency>
 		<dependency>
 			<groupId>org.codehaus.groovy</groupId>
@@ -115,33 +122,18 @@
 		<dependency>
 			<groupId>org.openjdk.nashorn</groupId>
 			<artifactId>nashorn-core</artifactId>
-			<version>15.4</version>
 		</dependency>
 		<dependency>
 			<groupId>org.quartz-scheduler</groupId>
 			<artifactId>quartz</artifactId>
-			<version>2.3.2</version>
 		</dependency>
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt</artifactId>
-			<version>0.9.1</version>
-		</dependency>
-
-		<dependency>
-			<groupId>ch.exense.step</groupId>
-			<artifactId>step-framework-server</artifactId>
-			<version>${step-framework.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>ch.exense.step</groupId>
-			<artifactId>step-framework-server-plugins</artifactId>
-			<version>${step-framework.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.jayway.jsonpath</groupId>
 			<artifactId>json-path</artifactId>
-			<version>2.7.0</version>
 		</dependency>
     </dependencies>
 
