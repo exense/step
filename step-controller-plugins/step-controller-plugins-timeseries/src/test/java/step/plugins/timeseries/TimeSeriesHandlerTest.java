@@ -103,7 +103,7 @@ public class TimeSeriesHandlerTest {
         request.setEnd(9);
         request.setGroupDimensions(Collections.emptySet());
         request.setNumberOfBuckets(1);
-        request.setPercentiles(Arrays.asList(10, 20, 50));
+        request.setPercentiles(Arrays.asList(10D, 20D, 50D));
         request.setOqlFilter("");
         request.setParams(Map.of("eId", "abc"));
         request.setMaxNumberOfSeries(100);
@@ -125,7 +125,7 @@ public class TimeSeriesHandlerTest {
         request.setEnd(bucketsCount * 1000);
         request.setGroupDimensions(Collections.emptySet());
         request.setNumberOfBuckets(1);
-        request.setPercentiles(Arrays.asList(10, 20, 50));
+        request.setPercentiles(Arrays.asList(10D, 20D, 50D));
         request.setOqlFilter("");
         request.setParams(Map.of("key", key));
         request.setMaxNumberOfSeries(100);
@@ -221,7 +221,7 @@ public class TimeSeriesHandlerTest {
         request.setGroupDimensions(Set.of("key"));
         request.setMaxNumberOfSeries(1);
         request.setNumberOfBuckets(responseBucketsCount); // 5
-        request.setPercentiles(Arrays.asList(10, 20, 50));
+        request.setPercentiles(Arrays.asList(10D, 20D, 50D));
         request.setOqlFilter("attributes.key = " + key);
 
         response = handler.getOrBuildTimeSeries(request);
@@ -244,7 +244,7 @@ public class TimeSeriesHandlerTest {
         request.setGroupDimensions(Collections.emptySet());
 
         request.setNumberOfBuckets(responseBucketsCount); // 5
-        request.setPercentiles(Arrays.asList(10, 20, 50));
+        request.setPercentiles(Arrays.asList(10D, 20D, 50D));
         request.setOqlFilter("attributes.unknownKey = " + key); // this is not a known field, so it will fall over on RAW data.
         request.setMaxNumberOfSeries(100);
 
@@ -275,7 +275,7 @@ public class TimeSeriesHandlerTest {
         request.setGroupDimensions(Collections.emptySet());
 
         request.setNumberOfBuckets(responseBucketsCount); // 5
-        request.setPercentiles(Arrays.asList(10, 20, 50));
+        request.setPercentiles(Arrays.asList(10D, 20D, 50D));
         request.setOqlFilter("attributes.key = " + key);
         request.setMaxNumberOfSeries(100);
 
