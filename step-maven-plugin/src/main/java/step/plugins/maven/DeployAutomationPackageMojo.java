@@ -20,12 +20,10 @@ package step.plugins.maven;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
-import step.automation.packages.AutomationPackageUpdateResult;
-import step.automation.packages.client.AutomationPackageClientException;
-import step.automation.packages.client.RemoteAutomationPackageClientImpl;
+import step.cli.AbstractDeployAutomationPackageTool;
+import step.cli.StepCliExecutionException;
 import step.client.credentials.ControllerCredentials;
 
 import java.io.File;
@@ -61,26 +59,18 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
     }
 
     @Override
-    public void execute() throws MojoExecutionException, MojoFailureException {
-        try (RemoteAutomationPackageClientImpl automationPackageClient = createRemoteAutomationPackageClient()) {
-            File packagedTarget = getFileToUpload();
-
-            getLog().info("Uploading the automation package...");
-            try {
-                AutomationPackageUpdateResult updateResult = automationPackageClient.createOrUpdateAutomationPackage(packagedTarget, async != null && async);
-                if (updateResult != null && updateResult.getId() != null) {
-                    getLog().info("Automation package successfully uploaded. With status " + updateResult.getStatus() + ". Id: " + updateResult.getId());
-                } else {
-                    throw logAndThrow("Unexpected response from Step. The returned automation package id is null. Please check the controller logs.");
-                }
-            } catch (AutomationPackageClientException e) {
-                throw logAndThrow("Error while uploading automation package to Step: " + e.getMessage());
-            }
-        } catch (MojoExecutionException e) {
-            throw e;
+    public void execute() throws MojoExecutionException {
+        try {
+            createTool(getUrl(), getStepProjectName(), getAuthToken(), getAsync()).execute();
+        } catch (StepCliExecutionException e) {
+            throw new MojoExecutionException("Execution exception", e);
         } catch (Exception e) {
             throw logAndThrow("Unexpected error while uploading automation package to Step", e);
         }
+    }
+
+    protected AbstractDeployAutomationPackageTool createTool(final String url, final String projectName, final String authToken, final Boolean async) {
+        return new MavenDeployAutomationPackageTool(url, projectName, authToken, async);
     }
 
     protected File getFileToUpload() throws MojoExecutionException {
@@ -91,12 +81,6 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
         }
 
         return artifact.getFile();
-    }
-
-    protected RemoteAutomationPackageClientImpl createRemoteAutomationPackageClient() {
-        RemoteAutomationPackageClientImpl client = new RemoteAutomationPackageClientImpl(getControllerCredentials());
-        addProjectHeaderToRemoteClient(getStepProjectName(), client);
-        return client;
     }
 
     public String getArtifactClassifier() {
@@ -153,5 +137,38 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
 
     public void setAsync(Boolean async) {
         this.async = async;
+    }
+
+    protected class MavenDeployAutomationPackageTool extends AbstractDeployAutomationPackageTool {
+        public MavenDeployAutomationPackageTool(String url, String projectName, String authToken, Boolean async) {
+            super(url, projectName, authToken, async);
+        }
+
+        @Override
+        protected File getFileToUpload() throws StepCliExecutionException {
+            try {
+                return DeployAutomationPackageMojo.this.getFileToUpload();
+            } catch (MojoExecutionException ex) {
+                throw new StepCliExecutionException(ex);
+            }
+        }
+
+        @Override
+        protected void logError(String errorText, Throwable e) {
+            if (e != null) {
+                DeployAutomationPackageMojo.this.getLog().error(errorText, e);
+            } else {
+                DeployAutomationPackageMojo.this.getLog().error(errorText);
+            }
+        }
+
+        @Override
+        protected void logInfo(String infoText, Throwable e) {
+            if (e != null) {
+                DeployAutomationPackageMojo.this.getLog().info(infoText, e);
+            } else {
+                DeployAutomationPackageMojo.this.getLog().info(infoText);
+            }
+        }
     }
 }
