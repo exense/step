@@ -21,22 +21,7 @@ package step.planbuilder;
 import java.io.File;
 import java.util.function.Consumer;
 
-import step.artefacts.AfterSequence;
-import step.artefacts.AfterThread;
-import step.artefacts.BeforeSequence;
-import step.artefacts.BeforeThread;
-import step.artefacts.CallPlan;
-import step.artefacts.Check;
-import step.artefacts.Echo;
-import step.artefacts.ForBlock;
-import step.artefacts.ForEachBlock;
-import step.artefacts.Sequence;
-import step.artefacts.Set;
-import step.artefacts.Sleep;
-import step.artefacts.Synchronized;
-import step.artefacts.TestCase;
-import step.artefacts.TestScenario;
-import step.artefacts.TestSet;
+import step.artefacts.*;
 import step.artefacts.ThreadGroup;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.CheckArtefact;
@@ -175,5 +160,13 @@ public class BaseArtefacts {
 	public static CheckArtefact runnable(Consumer<ExecutionContext> executionRunnable) {
 		CheckArtefact checkArtefact = new CheckArtefact(executionRunnable);
 		return checkArtefact;
+	}
+
+	public static Assert assertEqualArtefact(String field, String expression) {
+		Assert anAssert = new Assert();
+		anAssert.setActual(new DynamicValue<>(field));
+		anAssert.setOperator(Assert.AssertOperator.EQUALS);
+		anAssert.setExpected(new DynamicValue<>(expression));
+		return anAssert;
 	}
 }
