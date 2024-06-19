@@ -47,33 +47,4 @@ public class AutomationPackageSchedulerPlugin extends AbstractControllerPlugin {
 		apRegistry.register(AutomationPackageSchedule.FIELD_NAME_IN_AP, new AutomationPackageSchedulerHook(scheduler));
 		AutomationPackageScheduleRegistration.registerSerialization(serRegistry);
 	}
-
-	public static class AutomationPackageSchedulerHook extends ExecutionTaskParameterWithoutSchedulerHook {
-
-		private final ExecutionScheduler scheduler;
-
-		public AutomationPackageSchedulerHook(ExecutionScheduler scheduler) {
-			super(scheduler.getExecutionTaskAccessor());
-			this.scheduler = scheduler;
-		}
-
-		@Override
-		public void onCreate(List<? extends ExecutiontTaskParameters> entities, AutomationPackageContext context) {
-			for (ExecutiontTaskParameters entity : entities) {
-				//make sure the execution parameter of the schedule are enriched too (required to execute in same project
-				// as the schedule and populate event bindings
-				context.getEnricher().accept(entity.getExecutionsParameters());
-				scheduler.addExecutionTask(entity, false);
-			}
-		}
-
-		@Override
-		public void onDelete(AutomationPackage automationPackage, AutomationPackageContext context) {
-			List<ExecutiontTaskParameters> entities = getPackageSchedules(automationPackage.getId(), context);
-			for (ExecutiontTaskParameters entity : entities) {
-				scheduler.removeExecutionTask(entity.getId().toString());
-			}
-		}
-	}
-
 }
