@@ -225,7 +225,7 @@ public class CallFunctionHandlerTest extends AbstractFunctionHandlerTest {
 		assertEquals(true, output.get("testBoolean"));
 		assertEquals(123456.789456789, ((Number) output.get("testDouble")).doubleValue(),0); //Return a bid deci otherwise
 		assertEquals(1222222222222222111L, output.get("testBigInteger")); //ouptut is Long instead of Big Int
-		assertEquals(new BigDecimal("333333333333.44444444444444444444444"), output.get("testBigDecimal"));
+		assertEquals(new BigDecimal("333333333333.44444444444444444444444").doubleValue(), output.get("testBigDecimal"));
 		assertEquals("test1", ((List<String>) output.get("testArray")).get(0));
 		assertEquals(1L, ((Map) output.get("nested")).get("nestedInt")); //Some how return a Long
 	}

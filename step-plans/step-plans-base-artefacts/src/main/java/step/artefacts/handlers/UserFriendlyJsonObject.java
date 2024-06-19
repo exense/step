@@ -53,7 +53,11 @@ public class UserFriendlyJsonObject implements OutputJsonObject {
             simpleValue = null;
         } else if (fieldValue.getValueType() == ValueType.NUMBER) {
             JsonNumber numberValue = (JsonNumber) fieldValue;
-            simpleValue = numberValue.numberValue();
+            if (numberValue.isIntegral()) {
+                simpleValue = numberValue.longValue();
+            } else {
+                simpleValue = numberValue.doubleValue();
+            }
         } else if (fieldValue.getValueType() == ValueType.FALSE) {
             simpleValue = false;
         } else if (fieldValue.getValueType() == ValueType.TRUE) {

@@ -18,7 +18,6 @@ import static org.junit.Assert.assertEquals;
 public class UserFriendlyJsonObjectTest {
 
     @Test
-    @Ignore
     public void testUnwrapping(){
         JsonProvider provider = JsonProvider.provider();
         JsonObjectBuilder builder = provider.createObjectBuilder();
@@ -54,11 +53,11 @@ public class UserFriendlyJsonObjectTest {
         expectedList.add("b");
         expectedList.add("c");
         assertEquals(expectedList, ufJson.get("arrayKey"));
-        assertEquals(77, ufJson.get("intKey"));
+        assertEquals(77L, ufJson.get("intKey"));
         assertEquals(77777777777777777L, ufJson.get("longKey"));
-        assertEquals(bigDecimal, ufJson.get("bigDecimalKey"));
-        assertEquals(new BigDecimal(bigInteger), ufJson.get("bigIntegerKey"));
-        assertEquals(BigDecimal.valueOf(777.77), ufJson.get("doubleKey"));
+        assertEquals(bigDecimal.doubleValue(), ufJson.get("bigDecimalKey"));
+        assertEquals(bigInteger.longValue(), ufJson.get("bigIntegerKey"));
+        assertEquals(777.77, ufJson.get("doubleKey"));
         assertEquals("n2", ((Map<String, Object>) ufJson.get("nestedObject")).get("nestedKey2"));
     }
 }
