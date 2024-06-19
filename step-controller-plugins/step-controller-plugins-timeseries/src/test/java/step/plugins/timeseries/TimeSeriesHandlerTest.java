@@ -163,7 +163,7 @@ public class TimeSeriesHandlerTest {
         request.setMaxNumberOfSeries(100);
         int responseBucketsCount = bucketsCount / 2;
         request.setNumberOfBuckets(responseBucketsCount); // 5
-        request.setPercentiles(Arrays.asList(10, 20, 50));
+        request.setPercentiles(Arrays.asList(10D, 20D, 50D));
         request.setOqlFilter("attributes.key = " + key);
 
         TimeSeriesAPIResponse response = handler.getOrBuildTimeSeries(request);
@@ -205,7 +205,7 @@ public class TimeSeriesHandlerTest {
         request.setMaxNumberOfSeries(100);
         int responseBucketsCount = bucketsCount / 2;
         request.setNumberOfBuckets(responseBucketsCount); // 5
-        request.setPercentiles(Arrays.asList(10, 20, 50));
+        request.setPercentiles(Arrays.asList(10D, 20D, 50D));
         request.setOqlFilter("attributes.key = " + key + " or attributes.key = " + key2);
 
         TimeSeriesAPIResponse response = handler.getOrBuildTimeSeries(request);
