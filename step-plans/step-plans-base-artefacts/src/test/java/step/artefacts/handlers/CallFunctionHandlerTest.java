@@ -19,10 +19,12 @@
 package step.artefacts.handlers;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.CallFunction;
+import step.artefacts.Check;
 import step.artefacts.handlers.functions.TokenForcastingExecutionPlugin;
 import step.artefacts.handlers.functions.test.MyFunction;
 import step.artefacts.reports.CallFunctionReportNode;
@@ -43,20 +45,24 @@ import step.core.reports.Measure;
 import step.datapool.DataSetHandle;
 import step.engine.plugins.FunctionPlugin;
 import step.functions.io.Output;
+import step.functions.io.OutputBuilder;
 import step.grid.io.Attachment;
 import step.planbuilder.FunctionArtefacts;
 import step.threadpool.ThreadPoolPlugin;
 
 import javax.json.Json;
+import javax.json.JsonArray;
 import javax.json.JsonObject;
+import java.lang.reflect.Array;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static step.planbuilder.BaseArtefacts.sequence;
+import static org.junit.Assert.*;
+import static step.planbuilder.BaseArtefacts.*;
 
 public class CallFunctionHandlerTest extends AbstractFunctionHandlerTest {
 
@@ -175,6 +181,55 @@ public class CallFunctionHandlerTest extends AbstractFunctionHandlerTest {
 		assertNull(node.getError());
 	}
 
+	@Test
+	public void testOutputs() {
+		MyFunction function = newFunctionWithOutputs();
+		CallFunction callFunction = FunctionArtefacts.keyword(function.getAttribute(AbstractOrganizableObject.NAME));
+		callFunction.addChild(check("output.testString == \"test\""));
+		callFunction.addChild(check("output.testLong == 111111111111111111L"));
+		callFunction.addChild(check("output.testInt == 123"));
+		callFunction.addChild(check("output.testBoolean"));
+		callFunction.addChild(check("output.testDouble == 123456.789456789"));
+		callFunction.addChild(check("output.testBigInteger == 1222222222222222111"));
+		callFunction.addChild(check("output.testBigDecimal == 333333333333.44444444444444444444444"));
+		callFunction.addChild(check("output.testArray[0] == \"test1\""));
+		callFunction.addChild(check("output.nested.nestedInt == 1"));
+		callFunction.addChild(assertEqualArtefact("testString", "test"));
+		callFunction.addChild(assertEqualArtefact("testLong", "111111111111111111"));
+		callFunction.addChild(assertEqualArtefact("testInt", "123"));
+		callFunction.addChild(assertEqualArtefact("testBoolean", "true"));
+		callFunction.addChild(assertEqualArtefact("testDouble", "123456.789456789"));
+		callFunction.addChild(assertEqualArtefact("testBigInteger", "1222222222222222111"));
+		callFunction.addChild(assertEqualArtefact("testBigDecimal", "333333333333.44444444444444444444444"));
+
+		Map<String, Object> results = new HashMap<>();
+		Plan plan = PlanBuilder.create().startBlock(sequence())
+				.add(callFunction)
+				.add(new CheckArtefact(executionContext -> {
+					Object previous = executionContext.getVariablesManager().getVariable("previous");
+					results.put("previous", previous);
+				}))
+				.endBlock().build();
+		plan.setFunctions(List.of(function));
+
+		PlanRunnerResult result = executionEngine.execute(plan);
+        assertEquals("PASSED", result.getResult().name());
+
+		Object previous = results.get("previous");
+		assertTrue(Map.class.isAssignableFrom(previous.getClass()));
+		Map output = (Map) previous;
+		assertEquals("test", output.get("testString"));
+		assertEquals(111111111111111111L, output.get("testLong"));
+		//added as BigDecimal by javax json, same for jarkarta and then deserialized to Long
+		assertTrue(123 == ((Number) output.get("testInt")).intValue());
+		assertEquals(true, output.get("testBoolean"));
+		assertEquals(123456.789456789, ((Number) output.get("testDouble")).doubleValue(),0); //Return a bid deci otherwise
+		assertEquals(1222222222222222111L, output.get("testBigInteger")); //ouptut is Long instead of Big Int
+		assertEquals(new BigDecimal("333333333333.44444444444444444444444"), output.get("testBigDecimal"));
+		assertEquals("test1", ((List<String>) output.get("testArray")).get(0));
+		assertEquals(1L, ((Map) output.get("nested")).get("nestedInt")); //Some how return a Long
+	}
+
 	private static Plan newCallFunctionPlan(MyFunction function) {
 		CallFunction callFunction = FunctionArtefacts.keyword(function.getAttribute(AbstractOrganizableObject.NAME));
 		return newPlan(function, callFunction);
@@ -228,6 +283,27 @@ public class CallFunctionHandlerTest extends AbstractFunctionHandlerTest {
 
 		assertEquals("{\"Output1\":\"Value1\"}", node.getOutput());
 		assertEquals(ReportNodeStatus.PASSED, node.getStatus());
+	}
+
+	private static MyFunction newFunctionWithOutputs() {
+		MyFunction function = new MyFunction(input -> {
+			OutputBuilder builder = new OutputBuilder();
+			JsonArray array = Json.createArrayBuilder().add("test1").add("test2").build();
+			JsonObject nestedInt = Json.createObjectBuilder().add("nestedInt", 1).build();
+			builder.getPayloadBuilder()
+					.add("testString", "test")
+					.add("testLong", 111111111111111111L);
+			builder.getPayloadBuilder().add("testInt", 123);
+			builder.getPayloadBuilder().add("testBoolean", true)
+					.add("testDouble", 123456.789456789)
+					.add("testBigInteger", BigInteger.valueOf(1222222222222222111L))
+					.add("testBigDecimal", new BigDecimal("333333333333.44444444444444444444444"))
+					.add("testArray", array)
+					.add("nested", nestedInt);
+			return builder.build();
+		});
+		function.addAttribute(AbstractOrganizableObject.NAME, "MyFunction");
+		return function;
 	}
 }
 
