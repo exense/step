@@ -35,6 +35,12 @@
         </dependency>
         <dependency>
             <groupId>ch.exense.step</groupId>
+            <artifactId>step-functions-plugins-node-def</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>ch.exense.step</groupId>
             <artifactId>step-automation-packages-manager</artifactId>
             <version>${project.version}</version>
             <type>test-jar</type>

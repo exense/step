@@ -44,6 +44,8 @@ import step.plugins.java.GeneralScriptFunction;
 import step.plugins.java.GeneralScriptFunctionType;
 import step.plugins.jmeter.JMeterFunction;
 import step.plugins.jmeter.JMeterFunctionType;
+import step.plugins.node.NodeFunction;
+import step.plugins.node.NodeFunctionType;
 import step.resources.LocalResourceManagerImpl;
 import step.resources.Resource;
 
@@ -64,6 +66,9 @@ import static step.automation.packages.AutomationPackagePlugin.AUTOMATION_PACKAG
 import static step.automation.packages.AutomationPackageTestUtils.*;
 
 public class AutomationPackageManagerOSTest {
+
+    // how many keywords are defined in original sample
+    public static final int KEYWORDS_COUNT = 6;
 
     private AutomationPackageManager manager;
     private AutomationPackageAccessorImpl automationPackageAccessor;
@@ -90,6 +95,7 @@ public class AutomationPackageManagerOSTest {
         AbstractFunctionType<?> jMeterFunctionType = new JMeterFunctionType(configuration);
         AbstractFunctionType<?> generalScriptFunctionType = new GeneralScriptFunctionType(configuration);
         AbstractFunctionType<?> compositeFunctionType = new CompositeFunctionType(new ObjectHookRegistry());
+        AbstractFunctionType<?> nodeFunctionType = new NodeFunctionType();
 
         Mockito.when(functionTypeRegistry.getFunctionTypeByFunction(Mockito.any())).thenAnswer(invocationOnMock -> {
             Object function = invocationOnMock.getArgument(0);
@@ -99,7 +105,10 @@ public class AutomationPackageManagerOSTest {
                 return generalScriptFunctionType;
             } else if (function instanceof CompositeFunction){
                 return compositeFunctionType;
-            }  else {
+            } else if (function instanceof NodeFunction){
+                return nodeFunctionType;
+            }
+            else {
                 return null;
             }
         });
@@ -165,9 +174,9 @@ public class AutomationPackageManagerOSTest {
 
             Assert.assertNotNull(storedPlans.stream().filter(p -> p.getAttribute(AbstractOrganizableObject.NAME).equals(PLAN_NAME_FROM_DESCRIPTOR_2)).findFirst().orElse(null));
 
-            // 5 functions have been updated, 1 function has been added
+            // 6 functions have been updated, 1 function has been added
             List<Function> storedFunctions = functionAccessor.findManyByCriteria(getAutomationPackageIdCriteria(resultId)).collect(Collectors.toList());
-            Assert.assertEquals(6, storedFunctions.size());
+            Assert.assertEquals(KEYWORDS_COUNT + 1, storedFunctions.size());
 
             Function updatedFunction = storedFunctions.stream().filter(f -> f.getAttribute(AbstractOrganizableObject.NAME).equals(J_METER_KEYWORD_1)).findFirst().orElse(null);
             Assert.assertNotNull(updatedFunction);
@@ -308,10 +317,11 @@ public class AutomationPackageManagerOSTest {
             Assert.assertNotNull(findPlanByName(storedPlans, PLAN_NAME_WITH_COMPOSITE));
 
             r.storedFunctions = functionAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
-            Assert.assertEquals(5, r.storedFunctions.size());
+            Assert.assertEquals(KEYWORDS_COUNT, r.storedFunctions.size());
             findFunctionByClassAndName(r.storedFunctions, JMeterFunction.class, J_METER_KEYWORD_1);
             findFunctionByClassAndName(r.storedFunctions, GeneralScriptFunction.class, ANNOTATED_KEYWORD);
             findFunctionByClassAndName(r.storedFunctions, GeneralScriptFunction.class, INLINE_PLAN);
+            findFunctionByClassAndName(r.storedFunctions, NodeFunction.class, NODE_KEYWORD);
             CompositeFunction compositeKeyword = (CompositeFunction) findFunctionByClassAndName(r.storedFunctions, CompositeFunction.class, COMPOSITE_KEYWORD);
             Assert.assertNotNull(compositeKeyword.getPlan());
             Assert.assertEquals(planFromDescriptor.getId(), compositeKeyword.getPlan().getId());

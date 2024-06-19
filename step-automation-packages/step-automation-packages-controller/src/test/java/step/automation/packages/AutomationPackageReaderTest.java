@@ -24,6 +24,7 @@ import step.plugins.java.GeneralFunctionScriptLanguage;
 import step.plugins.java.GeneralScriptFunction;
 import step.plugins.java.automation.YamlGeneralScriptFunction;
 import step.plugins.jmeter.automation.YamlJMeterFunction;
+import step.plugins.node.automation.YamlNodeFunction;
 
 import java.io.File;
 import java.io.StringReader;
@@ -62,9 +63,9 @@ public class AutomationPackageReaderTest {
         AutomationPackageContent automationPackageContent = reader.readAutomationPackageFromJarFile(automationPackageJar);
         assertNotNull(automationPackageContent);
 
-        // 5 keywords: 3 from descriptor and two from java class with @Keyword annotation
+        // 6 keywords: 4 from descriptor and two from java class with @Keyword annotation
         List<AutomationPackageKeyword> keywords = automationPackageContent.getKeywords();
-        assertEquals(5, keywords.size());
+        assertEquals(6, keywords.size());
 
         YamlJMeterFunction jmeterKeyword = (YamlJMeterFunction) AutomationPackageTestUtils.findYamlKeywordByClassAndName(keywords, YamlJMeterFunction.class, J_METER_KEYWORD_1);
         assertEquals(
@@ -90,6 +91,12 @@ public class AutomationPackageReaderTest {
         assertEquals(
                 "lib/fakeLib.jar",
                 generalScriptKeyword.getLibrariesFile().get()
+        );
+
+        YamlNodeFunction nodeFunction = (YamlNodeFunction) AutomationPackageTestUtils.findYamlKeywordByClassAndName(keywords, YamlNodeFunction.class, NODE_KEYWORD);
+        assertEquals(
+                "nodeProject/nodeSample.ts",
+                nodeFunction.getJsfile().get()
         );
 
         GeneralScriptFunction myKeyword2 = (GeneralScriptFunction) findJavaKeywordByClassAndName(keywords, GeneralScriptFunction.class, ANNOTATED_KEYWORD);

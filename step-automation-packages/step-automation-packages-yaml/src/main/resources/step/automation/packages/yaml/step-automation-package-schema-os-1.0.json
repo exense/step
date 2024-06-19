@@ -53,6 +53,45 @@
         "additionalProperties" : false
       }
     },
+    "NodeDef" : {
+      "type" : "object",
+      "properties" : {
+        "Node" : {
+          "type" : "object",
+          "properties" : {
+            "description" : {
+              "type" : "string"
+            },
+            "useCustomTemplate" : {
+              "type" : "boolean"
+            },
+            "routing" : {
+              "type" : "object",
+              "properties" : { }
+            },
+            "executeLocally" : {
+              "type" : "boolean"
+            },
+            "schema" : {
+              "type" : "object",
+              "properties" : { }
+            },
+            "callTimeout" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            },
+            "name" : {
+              "default" : "Node",
+              "type" : "string"
+            },
+            "jsfile" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            }
+          },
+          "additionalProperties" : false
+        }
+      },
+      "additionalProperties" : false
+    },
     "CompositeDef" : {
       "type" : "object",
       "properties" : {
@@ -179,6 +218,8 @@
     "KeywordDef" : {
       "type" : "object",
       "oneOf" : [ {
+        "$ref" : "#/$defs/NodeDef"
+      }, {
         "$ref" : "#/$defs/CompositeDef"
       }, {
         "$ref" : "#/$defs/GeneralScriptDef"

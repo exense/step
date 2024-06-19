@@ -14,4 +14,7 @@ keywords:
       scriptLanguage: javascript
       scriptFile: "jsProject/jsSample.js"
       librariesFile: "lib/fakeLib.jar"
+  - Node:
+      name: "NodeAutomation"
+      jsfile: "nodeProject/nodeSample.ts"
       

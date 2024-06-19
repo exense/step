@@ -27,10 +27,15 @@
             <version>${project.version}</version>
         </dependency>
 
-        <!-- To include jmeter keyword to schema-->
+        <!-- To include keywords in json schema-->
         <dependency>
             <groupId>ch.exense.step</groupId>
             <artifactId>step-functions-plugins-jmeter-def</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ch.exense.step</groupId>
+            <artifactId>step-functions-plugins-node-def</artifactId>
             <version>${project.version}</version>
         </dependency>
 

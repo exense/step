@@ -44,6 +44,7 @@ public class AutomationPackageTestUtils {
     public static final String J_METER_KEYWORD_2 = "Another JMeter keyword from automation package";
     public static final String COMPOSITE_KEYWORD = "Composite keyword from AP";
     public static final String GENERAL_SCRIPT_KEYWORD = "GeneralScript keyword from AP";
+    public static final String NODE_KEYWORD = "NodeAutomation";
     public static final String ANNOTATED_KEYWORD = "MyKeyword2";
 
     public static final String SCHEDULE_1 = "firstSchedule";

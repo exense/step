@@ -70,7 +70,7 @@
 		</dependency>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
-			<artifactId>step-functions-plugins-node</artifactId>
+			<artifactId>step-functions-plugins-node-controller-def</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
