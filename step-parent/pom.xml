@@ -279,12 +279,12 @@
 			<dependency>
 				<groupId>com.google.apis</groupId>
 				<artifactId>google-api-services-sheets</artifactId>
-				<version>v4-rev20240514-2.0.0</version>
+				<version>v4-rev20190109-1.27.0</version>
 			</dependency>
 			<dependency>
 				<groupId>com.google.apis</groupId>
 				<artifactId>google-api-services-drive</artifactId>
-				<version>v3-rev20240521-2.0.0</version>
+				<version>v3-rev20181213-1.27.0</version>
 			</dependency>
 			<dependency>
 				<groupId>org.everit.json</groupId>
