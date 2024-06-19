@@ -123,7 +123,7 @@
               "type" : "string"
             },
             "plan" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+              "$ref" : "#/$defs/PlanDef"
             }
           },
           "additionalProperties" : false
@@ -1981,6 +1981,18 @@
         "$ref" : "#/$defs/ArtefactDef"
       }
     },
+    "PlanDef" : {
+      "properties" : {
+        "name" : {
+          "type" : "string"
+        },
+        "root" : {
+          "$ref" : "#/$defs/RootArtefactDef"
+        }
+      },
+      "required" : [ "name", "root" ],
+      "additionalProperties" : false
+    },
     "ScheduleDef" : {
       "type" : "object",
       "properties" : {
@@ -2065,17 +2077,8 @@
     "plans" : {
       "type" : "array",
       "items" : {
-        "type" : "object",
-        "properties" : {
-          "name" : {
-            "type" : "string"
-          },
-          "root" : {
-            "$ref" : "#/$defs/RootArtefactDef"
-          }
-        }
-      },
-      "required" : [ "name", "root" ]
+        "$ref" : "#/$defs/PlanDef"
+      }
     },
     "fragments" : {
       "type" : "array",

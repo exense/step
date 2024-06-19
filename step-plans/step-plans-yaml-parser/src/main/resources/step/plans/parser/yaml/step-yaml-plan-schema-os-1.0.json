@@ -1,8 +1,20 @@
 {
   "$schema" : "http://json-schema.org/draft-07/schema#",
   "title" : "Plan",
-  "type" : "object",
   "$defs" : {
+    "resourceReference" : {
+      "oneOf" : [ {
+        "type" : "string"
+      }, {
+        "type" : "object",
+        "additionalProperties" : false,
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          }
+        }
+      } ]
+    },
     "SmartDynamicValueBooleanDef" : {
       "oneOf" : [ {
         "type" : "boolean"
@@ -52,19 +64,6 @@
         },
         "additionalProperties" : false
       }
-    },
-    "resourceReference" : {
-      "oneOf" : [ {
-        "type" : "string"
-      }, {
-        "type" : "object",
-        "additionalProperties" : false,
-        "properties" : {
-          "id" : {
-            "type" : "string"
-          }
-        }
-      } ]
     },
     "AfterSequenceDef" : {
       "type" : "object",
@@ -1806,19 +1805,22 @@
       "items" : {
         "$ref" : "#/$defs/ArtefactDef"
       }
+    },
+    "PlanDef" : {
+      "properties" : {
+        "name" : {
+          "type" : "string"
+        },
+        "version" : {
+          "const" : "1.0.0"
+        },
+        "root" : {
+          "$ref" : "#/$defs/RootArtefactDef"
+        }
+      },
+      "required" : [ "name", "root" ],
+      "additionalProperties" : false
     }
   },
-  "properties" : {
-    "name" : {
-      "type" : "string"
-    },
-    "version" : {
-      "const" : "1.0.0"
-    },
-    "root" : {
-      "$ref" : "#/$defs/RootArtefactDef"
-    }
-  },
-  "required" : [ "name", "root" ],
-  "additionalProperties" : false
+  "$ref" : "#/$defs/PlanDef"
 }

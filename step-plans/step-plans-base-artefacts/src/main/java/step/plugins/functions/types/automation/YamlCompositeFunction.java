@@ -27,6 +27,9 @@ import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
 import step.core.yaml.YamlFieldCustomCopy;
 import step.core.yaml.YamlModel;
+import step.core.yaml.schema.YamlJsonSchemaHelper;
+import step.jsonschema.JsonSchema;
+import step.plans.parser.yaml.YamlPlan;
 import step.plugins.functions.types.CompositeFunction;
 
 import java.util.Map;
@@ -36,26 +39,30 @@ import java.util.Objects;
 public class YamlCompositeFunction extends AbstractYamlFunction<CompositeFunction> {
 
     @YamlFieldCustomCopy
-    private DynamicValue<String> plan = new DynamicValue<>();
+    @JsonSchema(ref = YamlJsonSchemaHelper.DEFS_PREFIX + YamlJsonSchemaHelper.PLAN_DEF)
+    private YamlPlan plan = null;
 
-    public DynamicValue<String> getPlan() {
+    public YamlPlan getPlan() {
         return plan;
     }
 
-    public void setPlan(DynamicValue<String> plan) {
+    public void setPlan(YamlPlan plan) {
         this.plan = plan;
     }
 
     @Override
     protected void fillDeclaredFields(CompositeFunction res, AutomationPackageContext context) {
         super.fillDeclaredFields(res, context);
-        if (plan != null && plan.get() != null && !plan.get().isEmpty()) {
-            Plan foundPlan = getPlanFromApOrAccessor(plan.get(), context);
-            if (foundPlan == null) {
-                throw new RuntimeException("Plan hasn't been not found by name '" + plan.get() + "' in keyword '" + getName() + "'");
-            }
-            res.setPlan(foundPlan);
+        if (plan != null) {
+            res.setPlan(yamlPlanToPlan(plan));
         }
+    }
+
+    // TODO: the same is implemented in YamlPlanReader - duplicated code
+    public Plan yamlPlanToPlan(YamlPlan yamlPlan) {
+        Plan plan = new Plan(yamlPlan.getRoot().getYamlArtefact().toArtefact());
+        plan.addAttribute(AbstractOrganizableObject.NAME, yamlPlan.getName());
+        return plan;
     }
 
     @Override
@@ -63,15 +70,4 @@ public class YamlCompositeFunction extends AbstractYamlFunction<CompositeFunctio
         return new CompositeFunction();
     }
 
-    protected Plan getPlanFromApOrAccessor(String planName, AutomationPackageContext context) {
-        Plan res = null;
-        if (context.getPackageContent() != null) {
-            res = context.getPackageContent().getPlans().stream().filter(p -> Objects.equals(planName, p.getAttribute(AbstractOrganizableObject.NAME))).findFirst().orElse(null);
-        }
-        if (res == null && context.getExtensions().get(AutomationPackageContext.PLAN_ACCESSOR) != null) {
-            PlanAccessor planAccessor = (PlanAccessor) context.getExtensions().get(AutomationPackageContext.PLAN_ACCESSOR);
-            res = planAccessor.findByAttributes(Map.of(AbstractOrganizableObject.NAME, planName));
-        }
-        return res;
-    }
 }

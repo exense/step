@@ -8,7 +8,13 @@ keywords:
       jmeterTestplan: "jmeterProject1/jmeterProject1.xml"
   - Composite:
       name: "Composite keyword from AP"
-      plan: "Test Plan"
+      plan:
+        name: "Embedded composite plan"
+        root:
+          testCase:
+            children:
+              - echo:
+                  text: "Just echo"
   - GeneralScript:
       name: "GeneralScript keyword from AP"
       scriptLanguage: javascript
