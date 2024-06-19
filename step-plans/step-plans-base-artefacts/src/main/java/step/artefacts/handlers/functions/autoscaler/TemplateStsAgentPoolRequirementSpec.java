@@ -4,6 +4,9 @@ import java.util.Objects;
 
 public class TemplateStsAgentPoolRequirementSpec extends AgentPoolRequirementSpec {
 
+    public String templateStatefulSetName;
+    public String dockerImage;
+
     public TemplateStsAgentPoolRequirementSpec() {
     }
 
@@ -11,8 +14,6 @@ public class TemplateStsAgentPoolRequirementSpec extends AgentPoolRequirementSpe
         this.templateStatefulSetName = templateStatefulSetName;
         this.numberOfAgents = numberOfAgents;
     }
-
-    public String templateStatefulSetName;
 
     @Override
     public boolean equals(Object o) {
