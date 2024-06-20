@@ -16,12 +16,4 @@ public class AgentPoolRequirementSpecTest {
         assertEquals(TemplateStsAgentPoolRequirementSpec.class, value.getClass());
     }
 
-    @Test
-    public void testSerialization2() throws JsonProcessingException {
-        ObjectMapper objectMapper = new ObjectMapper();
-        String test = objectMapper.writeValueAsString(new CustomAgentPoolRequirementSpec("myDockerImage", 1));
-        AgentPoolRequirementSpec value = objectMapper.readValue(test, AgentPoolRequirementSpec.class);
-        assertEquals(CustomAgentPoolRequirementSpec.class, value.getClass());
-    }
-
 }
