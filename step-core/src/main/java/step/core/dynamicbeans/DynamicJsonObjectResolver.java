@@ -67,7 +67,11 @@ public class DynamicJsonObjectResolver {
 		if(v instanceof JsonObject) {
 			JsonObject jsonObject = (JsonObject) v;
 			if(jsonObject.containsKey("dynamic")) {
-				return valueResolver.evaluate(jsonObject, bindings);
+				Object evaluate = valueResolver.evaluate(jsonObject, bindings);
+				if (evaluate instanceof JsonObject) {
+					return evaluate((JsonObject) evaluate, bindings);
+				}
+				return evaluate;
 			} else {
 				return evaluate(jsonObject, bindings);
 			}
