@@ -39,7 +39,7 @@
         "type" : "object",
         "patternProperties" : {
           ".*" : {
-            "oneOf" : [ {
+            "anyOf" : [ {
               "type" : "number"
             }, {
               "type" : "boolean"
@@ -341,7 +341,7 @@
                   "type" : "object",
                   "patternProperties" : {
                     ".*" : {
-                      "oneOf" : [ {
+                      "anyOf" : [ {
                         "type" : "number"
                       }, {
                         "type" : "boolean"
