@@ -46,6 +46,8 @@
             }, {
               "type" : "string"
             }, {
+              "type" : "object"
+            }, {
               "$ref" : "#/$defs/DynamicExpressionDef"
             } ]
           }
@@ -300,6 +302,8 @@
                         "type" : "boolean"
                       }, {
                         "type" : "string"
+                      }, {
+                        "type" : "object"
                       }, {
                         "$ref" : "#/$defs/DynamicExpressionDef"
                       } ]

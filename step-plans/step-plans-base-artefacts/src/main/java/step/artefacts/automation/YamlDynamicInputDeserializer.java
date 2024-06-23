@@ -72,11 +72,20 @@ public class YamlDynamicInputDeserializer extends StepYamlDeserializer<YamlDynam
                     }
                     inputDynamicValues.set(inputName, dynamicValue);
                 } else {
-                    ObjectNode dynamicValue = (ObjectNode) codec.createObjectNode();
-                    dynamicValue.put("dynamic", true);
                     JsonNode expression = argumentValue.get(YamlFields.DYN_VALUE_EXPRESSION_FIELD);
-                    dynamicValue.put(YamlFields.DYN_VALUE_EXPRESSION_FIELD, expression == null ? "" : expression.asText());
-                    inputDynamicValues.set(inputName, dynamicValue);
+                    if (expression != null) {
+                        // input value is a dynamic expression
+                        ObjectNode dynamicValue = (ObjectNode) codec.createObjectNode();
+                        dynamicValue.put("dynamic", true);
+                        dynamicValue.put(YamlFields.DYN_VALUE_EXPRESSION_FIELD, expression.asText());
+                        inputDynamicValues.set(inputName, dynamicValue);
+                    } else {
+                        // input value is some complex object (for instance, map)
+                        ObjectNode dynamicValue = (ObjectNode) codec.createObjectNode();
+                        dynamicValue.put("dynamic", false);
+                        dynamicValue.set(YamlFields.DYN_VALUE_VALUE_FIELD, argumentValue);
+                        inputDynamicValues.set(inputName, dynamicValue);
+                    }
                 }
             }
 

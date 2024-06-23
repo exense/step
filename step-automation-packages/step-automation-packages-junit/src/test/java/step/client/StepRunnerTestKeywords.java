@@ -23,6 +23,8 @@ import step.handlers.javahandler.AbstractKeyword;
 import step.handlers.javahandler.Input;
 import step.handlers.javahandler.Keyword;
 
+import java.util.Map;
+
 public class StepRunnerTestKeywords extends AbstractKeyword {
 
 	@Keyword
@@ -50,5 +52,16 @@ public class StepRunnerTestKeywords extends AbstractKeyword {
 			description = "Keyword used to explicitly close the current driver.", name="MyCompoInPackage")
 	public void composite1() {
 
+	}
+
+	@Keyword
+	public void customKeywordWithMapInput(@Input(name = "URL") String url,
+										  @Input(name = "Name") String name,
+										  @Input(name = "Headers") Map<String, String> headers
+	){
+		System.out.println("Custom keyword with map input has been called");
+		System.out.println("URL: " + url);
+		System.out.println("Name: " + name);
+		System.out.println("Headers: " + headers);
 	}
 }
