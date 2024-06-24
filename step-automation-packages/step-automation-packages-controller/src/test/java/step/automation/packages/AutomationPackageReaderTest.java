@@ -7,10 +7,11 @@ import step.artefacts.CallFunction;
 import step.artefacts.TestCase;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 import step.automation.packages.model.AutomationPackageKeyword;
-import step.automation.packages.scheduler.ExecutionTaskParameterWithoutSchedulerHook;
+import step.automation.packages.scheduler.AutomationPackageSchedulerHook;
 import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.plans.Plan;
+import step.core.scheduler.ExecutionScheduler;
 import step.core.scheduler.ExecutionTaskAccessor;
 import step.core.scheduler.automation.AutomationPackageSchedule;
 import step.core.scheduler.automation.AutomationPackageScheduleRegistration;
@@ -48,7 +49,7 @@ public class AutomationPackageReaderTest {
 
         AutomationPackageScheduleRegistration.registerSerialization(serializationRegistry);
 
-        hookRegistry.register(AutomationPackageSchedule.FIELD_NAME_IN_AP, new ExecutionTaskParameterWithoutSchedulerHook(Mockito.mock(ExecutionTaskAccessor.class)));
+        hookRegistry.register(AutomationPackageSchedule.FIELD_NAME_IN_AP, new AutomationPackageSchedulerHook(Mockito.mock(ExecutionScheduler.class)));
 
         // accessor is not required in this test - we only read the yaml and don't store the result anywhere
         AutomationPackageParametersRegistration.registerParametersHooks(hookRegistry, serializationRegistry, Mockito.mock(ParameterManager.class));
