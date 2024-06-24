@@ -19,6 +19,7 @@
 package step.expressions;
 
 import org.apache.commons.pool2.impl.GenericKeyedObjectPool;
+import org.apache.commons.pool2.impl.GenericKeyedObjectPoolConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +33,9 @@ public class GroovyPool {
 		super();
 		
 		try {
-			pool = new GenericKeyedObjectPool<>(new GroovyPoolFactory(scriptBaseClass));
+			GenericKeyedObjectPoolConfig genericKeyedObjectPoolConfig = new GenericKeyedObjectPoolConfig();
+			genericKeyedObjectPoolConfig.setJmxEnabled(false);
+			pool = new GenericKeyedObjectPool<>(new GroovyPoolFactory(scriptBaseClass), genericKeyedObjectPoolConfig);
 			pool.setTestOnBorrow(true);
 			pool.setMaxTotal(poolMaxTotal);
 			//pool.setMaxActive(-1);
