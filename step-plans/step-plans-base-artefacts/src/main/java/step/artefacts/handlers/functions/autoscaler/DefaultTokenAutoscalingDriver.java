@@ -1,6 +1,7 @@
 package step.artefacts.handlers.functions.autoscaler;
 
 import ch.exense.commons.app.Configuration;
+import step.engine.plugins.StepTokenAffinityEvaluator;
 
 import java.util.Map;
 import java.util.Set;
@@ -19,7 +20,7 @@ public class DefaultTokenAutoscalingDriver implements TokenAutoscalingDriver {
     @Override
     public TokenAutoscalingConfiguration getConfiguration() {
         TokenAutoscalingConfiguration autoscalerConfiguration = new TokenAutoscalingConfiguration();
-        autoscalerConfiguration.availableAgentPools = Set.of(new AgentPoolSpec("DefaultPool", Map.of("$agenttype", "default"), 1));
+        autoscalerConfiguration.availableAgentPools = Set.of(new AgentPoolSpec("DefaultPool", Map.of("$agenttype", "default", StepTokenAffinityEvaluator.TOKEN_ATTRIBUTE_DOCKER_SUPPORT, "true"), 1));
         return autoscalerConfiguration;
     }
 

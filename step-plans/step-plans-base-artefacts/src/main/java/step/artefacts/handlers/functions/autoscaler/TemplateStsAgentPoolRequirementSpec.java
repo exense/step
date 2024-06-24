@@ -15,16 +15,22 @@ public class TemplateStsAgentPoolRequirementSpec extends AgentPoolRequirementSpe
         this.numberOfAgents = numberOfAgents;
     }
 
+    public TemplateStsAgentPoolRequirementSpec(String templateStatefulSetName, String dockerImage, int numberOfAgents) {
+        this.templateStatefulSetName = templateStatefulSetName;
+        this.dockerImage = dockerImage;
+        this.numberOfAgents = numberOfAgents;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         TemplateStsAgentPoolRequirementSpec that = (TemplateStsAgentPoolRequirementSpec) o;
-        return Objects.equals(templateStatefulSetName, that.templateStatefulSetName);
+        return Objects.equals(templateStatefulSetName, that.templateStatefulSetName) && Objects.equals(dockerImage, that.dockerImage);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(templateStatefulSetName);
+        return Objects.hash(templateStatefulSetName, dockerImage);
     }
 }

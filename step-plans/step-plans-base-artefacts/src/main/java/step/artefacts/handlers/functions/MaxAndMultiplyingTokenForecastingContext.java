@@ -15,6 +15,7 @@ public class MaxAndMultiplyingTokenForecastingContext extends TokenForecastingCo
     private final int numberOfThreads;
 
     private final List<TokenForecastingContext> iterations = new ArrayList<>();
+    private final Set<Key> keys = new HashSet<>();
     private TokenForecastingContext currentIteration;
 
     public MaxAndMultiplyingTokenForecastingContext(TokenForecastingContext parentContext, int numberOfThreads) {
@@ -29,22 +30,23 @@ public class MaxAndMultiplyingTokenForecastingContext extends TokenForecastingCo
     }
 
     @Override
-    public String requireToken(Map<String, Interest> criteria, int count) throws NoMatchingTokenPoolException {
-        return currentIteration.requireToken(criteria, count);
+    public Key requireToken(Map<String, Interest> criteria, int count) throws NoMatchingTokenPoolException {
+        Key key = currentIteration.requireToken(criteria, count);
+        keys.add(key);
+        return key;
     }
 
     @Override
-    public void releaseRequiredToken(String pool, int count) {
-        currentIteration.releaseRequiredToken(pool, count);
+    public void releaseRequiredToken(Key key, int count) {
+        currentIteration.releaseRequiredToken(key, count);
     }
 
     public void end() {
-        availableAgentPools.forEach(pool -> {
-            String poolName = pool.name;
-            Integer sum = iterations.stream().map(i -> i.getTokenForecastPerPool().get(poolName)).filter(Objects::nonNull).sorted(Comparator.reverseOrder()).limit(numberOfThreads).reduce(0, Integer::sum);
+        keys.forEach(key -> {
+            Integer sum = iterations.stream().map(i -> i.getTokenForecastPerPool().get(key)).filter(Objects::nonNull).sorted(Comparator.reverseOrder()).limit(numberOfThreads).reduce(0, Integer::sum);
             if(sum > 0) {
-                parentContext.requireToken(poolName, sum);
-                parentContext.releaseRequiredToken(poolName, sum);
+                parentContext.requireToken(key, sum);
+                parentContext.releaseRequiredToken(key, sum);
             }
         });
     }

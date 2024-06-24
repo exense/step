@@ -21,12 +21,12 @@ public class MultiplyingTokenForecastingContext extends TokenForecastingContext 
     }
 
     @Override
-    public String requireToken(Map<String, Interest> criteria, int count) throws NoMatchingTokenPoolException {
+    public Key requireToken(Map<String, Interest> criteria, int count) throws NoMatchingTokenPoolException {
         return parentContext.requireToken(criteria, count * numberOfThreads);
     }
 
     @Override
-    public void releaseRequiredToken(String pool, int count) {
-        parentContext.releaseRequiredToken(pool, count * numberOfThreads);
+    public void releaseRequiredToken(Key key, int count) {
+        parentContext.releaseRequiredToken(key, count * numberOfThreads);
     }
 }
