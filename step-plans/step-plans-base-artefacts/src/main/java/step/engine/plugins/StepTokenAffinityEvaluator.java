@@ -19,13 +19,19 @@ public class StepTokenAffinityEvaluator extends SimpleAffinityEvaluator {
     }
 
     private static TokenPretender replaceCriteria(Identity i1) {
-        Map<String, Interest> newInterests = i1.getInterests().entrySet().stream().map(e -> {
-            if (e.getKey().equals(TOKEN_ATTRIBUTE_DOCKER_IMAGE)) {
-                return Map.entry(TOKEN_ATTRIBUTE_DOCKER_SUPPORT, new Interest(Pattern.compile("true"), true));
-            } else {
-                return e;
-            }
-        }).collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
+        Map<String, Interest> newInterests;
+        Map<String, Interest> interests = i1.getInterests();
+        if(interests != null) {
+            newInterests = interests.entrySet().stream().map(e -> {
+                if (e.getKey().equals(TOKEN_ATTRIBUTE_DOCKER_IMAGE)) {
+                    return Map.entry(TOKEN_ATTRIBUTE_DOCKER_SUPPORT, new Interest(Pattern.compile("true"), true));
+                } else {
+                    return e;
+                }
+            }).collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
+        } else {
+            newInterests = null;
+        }
         TokenPretender changedI1 = new TokenPretender(i1.getAttributes(), newInterests);
         return changedI1;
     }
