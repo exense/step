@@ -36,12 +36,7 @@
         </dependency>
         <dependency>
             <groupId>ch.exense.step</groupId>
-            <artifactId>step-functions-plugins-jmeter-def</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>ch.exense.step</groupId>
-            <artifactId>step-functions-plugins-node-def</artifactId>
+            <artifactId>step-functions-plugins-defs-all-os</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
