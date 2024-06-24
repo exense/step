@@ -11,7 +11,7 @@ public class AxesSettings {
 	@NotNull
 	private MetricAggregation aggregation;
 	
-	private Integer pclValue; // for PCL aggregation
+	private Double pclValue; // for PCL aggregation
 	
 	@NotNull
 	private AxesDisplayType displayType;
@@ -59,11 +59,11 @@ public class AxesSettings {
 		return this;
 	}
 
-	public Integer getPclValue() {
+	public Double getPclValue() {
 		return pclValue;
 	}
 
-	public AxesSettings setPclValue(Integer pclValue) {
+	public AxesSettings setPclValue(Double pclValue) {
 		this.pclValue = pclValue;
 		return this;
 	}

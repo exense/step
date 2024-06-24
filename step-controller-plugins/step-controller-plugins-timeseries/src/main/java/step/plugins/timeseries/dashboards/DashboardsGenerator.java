@@ -270,9 +270,9 @@ public class DashboardsGenerator {
                 new TableDashletSettings.ColumnSelection(TableChartColumn.AVG, true),
                 new TableDashletSettings.ColumnSelection(TableChartColumn.MIN, true),
                 new TableDashletSettings.ColumnSelection(TableChartColumn.MAX, true),
-                new TableDashletSettings.ColumnSelection(TableChartColumn.PCL_80, 80, true),
-                new TableDashletSettings.ColumnSelection(TableChartColumn.PCL_90, 90, true),
-                new TableDashletSettings.ColumnSelection(TableChartColumn.PCL_99, 99, true),
+                new TableDashletSettings.ColumnSelection(TableChartColumn.PCL_80, 80D, true),
+                new TableDashletSettings.ColumnSelection(TableChartColumn.PCL_90, 90D, true),
+                new TableDashletSettings.ColumnSelection(TableChartColumn.PCL_99, 99D, true),
                 new TableDashletSettings.ColumnSelection(TableChartColumn.TPS, true),
                 new TableDashletSettings.ColumnSelection(TableChartColumn.TPH, true)
         );

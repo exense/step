@@ -22,7 +22,7 @@ public class TableDashletSettings {
         @NotNull
         private TableChartColumn column;
         
-        private Integer pclValue; // can override when column is PCL
+        private Double pclValue; // can override when column is PCL
         @NotNull
         private boolean isSelected;
         
@@ -33,7 +33,7 @@ public class TableDashletSettings {
             this.isSelected = isSelected;
         }
         
-        public ColumnSelection(TableChartColumn column, Integer pclValue, boolean isSelected) {
+        public ColumnSelection(TableChartColumn column, Double pclValue, boolean isSelected) {
             this.column = column;
             this.pclValue = pclValue;
             this.isSelected = isSelected;
@@ -57,11 +57,11 @@ public class TableDashletSettings {
             return this;
         }
 
-        public Integer getPclValue() {
+        public Double getPclValue() {
             return pclValue;
         }
 
-        public ColumnSelection setPclValue(Integer pclValue) {
+        public ColumnSelection setPclValue(Double pclValue) {
             this.pclValue = pclValue;
             return this;
         }
