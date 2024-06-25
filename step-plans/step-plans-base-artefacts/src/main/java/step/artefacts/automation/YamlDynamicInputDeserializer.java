@@ -55,7 +55,13 @@ public class YamlDynamicInputDeserializer extends StepYamlDeserializer<YamlDynam
             while (fieldNames.hasNext()) {
                 String inputName = fieldNames.next();
                 JsonNode argumentValue = next.get(inputName);
-                if (!argumentValue.isContainerNode()) {
+                if (argumentValue.isArray()) {
+                    // input value is array (non-dynamic)
+                    ObjectNode dynamicValue = (ObjectNode) codec.createObjectNode();
+                    dynamicValue.put("dynamic", false);
+                    dynamicValue.set(YamlFields.DYN_VALUE_VALUE_FIELD, argumentValue);
+                    inputDynamicValues.set(inputName, dynamicValue);
+                } else if (!argumentValue.isContainerNode()) {
                     // for simplified input values we also convert them to full dynamic values format (technical format)
                     // the technical format is used for persistence and UI
                     ObjectNode dynamicValue = (ObjectNode) codec.createObjectNode();

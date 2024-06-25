@@ -24,6 +24,13 @@ root:
             - stringInput:
                 expression: "'abc'"
             - intInput: 777
+            - mapInput:
+                keyA: "valueA"
+                keyB: "valueB"
+            - arrayInput:
+                - 1
+                - 3
+                - 5
       - callKeyword:
           nodeName: "myKeyword5"
           keyword:

@@ -145,7 +145,9 @@ root:
       argument:
         dynamic: false
         value: "{\"stringInput\":{\"dynamic\":true,\"expression\":\"'abc'\"},\"intInput\"\
-        :{\"dynamic\":false,\"value\":777}}"
+        :{\"dynamic\":false,\"value\":777},\"mapInput\":{\"dynamic\":false,\"value\"\
+        :{\"keyA\":\"valueA\",\"keyB\":\"valueB\"}},\"arrayInput\":{\"dynamic\":false,\"\
+        value\":[1,3,5]}}"
       resultMap:
         dynamic: false
       id: "644fbe4e38a61e07cc3a4df8"

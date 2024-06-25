@@ -3,6 +3,19 @@
   "title" : "Plan",
   "type" : "object",
   "$defs" : {
+    "resourceReference" : {
+      "oneOf" : [ {
+        "type" : "string"
+      }, {
+        "type" : "object",
+        "additionalProperties" : false,
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          }
+        }
+      } ]
+    },
     "SmartDynamicValueBooleanDef" : {
       "oneOf" : [ {
         "type" : "boolean"
@@ -48,25 +61,14 @@
             }, {
               "type" : "object"
             }, {
+              "type" : "array"
+            }, {
               "$ref" : "#/$defs/DynamicExpressionDef"
             } ]
           }
         },
         "additionalProperties" : false
       }
-    },
-    "resourceReference" : {
-      "oneOf" : [ {
-        "type" : "string"
-      }, {
-        "type" : "object",
-        "additionalProperties" : false,
-        "properties" : {
-          "id" : {
-            "type" : "string"
-          }
-        }
-      } ]
     },
     "AfterSequenceDef" : {
       "type" : "object",
@@ -304,6 +306,8 @@
                         "type" : "string"
                       }, {
                         "type" : "object"
+                      }, {
+                        "type" : "array"
                       }, {
                         "$ref" : "#/$defs/DynamicExpressionDef"
                       } ]

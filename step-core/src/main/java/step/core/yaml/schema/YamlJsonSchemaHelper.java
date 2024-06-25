@@ -173,6 +173,7 @@ public class YamlJsonSchemaHelper {
 				.add(jsonProvider.createObjectBuilder().add("type", "boolean"))
 				.add(jsonProvider.createObjectBuilder().add("type", "string"))
 				.add(jsonProvider.createObjectBuilder().add("type", "object"))
+				.add(jsonProvider.createObjectBuilder().add("type", "array"))
 				.add(addRef(jsonProvider.createObjectBuilder(), YamlJsonSchemaHelper.DYNAMIC_EXPRESSION_DEF));
 
 		JsonObjectBuilder properties = jsonProvider.createObjectBuilder()
