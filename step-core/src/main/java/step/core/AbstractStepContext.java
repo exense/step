@@ -18,7 +18,6 @@
  ******************************************************************************/
 package step.core;
 
-import ch.exense.commons.io.FileHelper;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -30,6 +29,7 @@ import step.resources.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -42,14 +42,33 @@ public abstract class AbstractStepContext extends AbstractContext {
 	private FileResolver fileResolver;
 	private LoadingCache<String, File> fileResolverCache;
 	// Keep track of the default resource manager created at initialization of the context
-	private LocalResourceManagerImpl localResourceManager;
+	private LazyInitializer<LocalResourceManagerImpl> localResourceManager;
+	private LazyInitializer<ExpressionHandler> localExpressionHandler;
+	private LazyInitializer<DynamicBeanResolver> localDynamicBeanResolver;
 
 	protected void setDefaultAttributes() {
-		expressionHandler = new ExpressionHandler();
-		dynamicBeanResolver = new DynamicBeanResolver(new DynamicValueResolver(expressionHandler));
+		localExpressionHandler = new LazyInitializer<>() {
+            @Override
+            protected ExpressionHandler initialize() {
+                return new ExpressionHandler();
+            }
+        };
+		localDynamicBeanResolver = new LazyInitializer<>() {
+			@Override
+			protected DynamicBeanResolver initialize() {
+				return new DynamicBeanResolver(new DynamicValueResolver(localExpressionHandler.get()));
+			}
+		};
+
 		// Create a local resource manager in a dedicated folder per default
-		localResourceManager = new LocalResourceManagerImpl(getContextFolderAsFile(), new InMemoryResourceAccessor(), new InMemoryResourceRevisionAccessor());
-		setResourceManager(localResourceManager);
+		localResourceManager = new LazyInitializer<>() {
+			@Override
+			protected LocalResourceManagerImpl initialize() {
+				LocalResourceManagerImpl localResourceManager1 = new LocalResourceManagerImpl(getContextFolderAsFile(), new InMemoryResourceAccessor(), new InMemoryResourceRevisionAccessor());
+				updateFileResolver(localResourceManager1);
+				return localResourceManager1;
+			}
+		};
 	}
 
 	private File getContextFolderAsFile() {
@@ -70,15 +89,16 @@ public abstract class AbstractStepContext extends AbstractContext {
 	}
 
 	public ExpressionHandler getExpressionHandler() {
-		return expressionHandler;
+		return (expressionHandler != null) ? expressionHandler : localExpressionHandler.get();
 	}
+
 
 	public void setExpressionHandler(ExpressionHandler expressionHandler) {
 		this.expressionHandler = expressionHandler;
 	}
 
 	public DynamicBeanResolver getDynamicBeanResolver() {
-		return dynamicBeanResolver;
+		return (dynamicBeanResolver != null) ? dynamicBeanResolver : localDynamicBeanResolver.get();
 	}
 
 	public void setDynamicBeanResolver(DynamicBeanResolver dynamicBeanResolver) {
@@ -86,19 +106,19 @@ public abstract class AbstractStepContext extends AbstractContext {
 	}
 
 	public ResourceManager getResourceManager() {
-		return resourceManager;
+		return (resourceManager != null) ? resourceManager : localResourceManager.get();
 	}
 
 	public void setResourceManager(ResourceManager resourceManager) {
 		this.resourceManager = resourceManager;
-		updateFileResolver();
+		updateFileResolver(resourceManager);
 	}
 
 	public FileResolver getFileResolver() {
 		return fileResolver;
 	}
 
-	private void updateFileResolver() {
+	private void updateFileResolver(ResourceManager resourceManager) {
 		this.fileResolver = new FileResolver(resourceManager);
 		this.fileResolverCache = CacheBuilder.newBuilder().concurrencyLevel(4)
 				.maximumSize(1000)
@@ -117,7 +137,12 @@ public abstract class AbstractStepContext extends AbstractContext {
 	@Override
 	public void close() throws IOException {
 		// Cleanup the default resource manager
-		localResourceManager.cleanup();
+		if (localResourceManager.isInitialized()) {
+			localResourceManager.get().cleanup();
+		}
+		if (localExpressionHandler.isInitialized()) {
+			localExpressionHandler.get().close();
+		}
 		super.close();
 	}
 }
