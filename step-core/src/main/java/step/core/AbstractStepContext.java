@@ -29,7 +29,6 @@ import step.resources.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -48,11 +47,11 @@ public abstract class AbstractStepContext extends AbstractContext {
 
 	protected void setDefaultAttributes() {
 		localExpressionHandler = new LazyInitializer<>() {
-            @Override
-            protected ExpressionHandler initialize() {
-                return new ExpressionHandler();
-            }
-        };
+			@Override
+			protected ExpressionHandler initialize() {
+				return new ExpressionHandler();
+			}
+		};
 		localDynamicBeanResolver = new LazyInitializer<>() {
 			@Override
 			protected DynamicBeanResolver initialize() {
