@@ -35,7 +35,7 @@
 		</dependency>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
-			<artifactId>step-functions-package</artifactId>
+			<artifactId>step-functions-package-controller</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
