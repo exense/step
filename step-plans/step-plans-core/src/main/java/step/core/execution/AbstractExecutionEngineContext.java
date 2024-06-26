@@ -42,7 +42,6 @@ public abstract class AbstractExecutionEngineContext extends AbstractStepContext
 	
 	public AbstractExecutionEngineContext() {
 		super();
-		setDefaultAttributes();
 	}
 
 	protected void setDefaultAttributes() {

@@ -22,6 +22,7 @@ public class ExecutionEngineContext extends AbstractExecutionEngineContext {
 
 	public ExecutionEngineContext(OperationMode operationMode) {
 		super();
+		setDefaultAttributes();
 		setOperationMode(operationMode);
 	}
 }
