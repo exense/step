@@ -34,7 +34,6 @@ import step.core.GlobalContext;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.core.plugins.exceptions.PluginCriticalException;
-import step.engine.plugins.StepTokenAffinityEvaluator;
 import step.functions.execution.ConfigurableTokenLifecycleStrategy;
 import step.grid.Grid;
 import step.grid.GridImpl;
@@ -73,8 +72,10 @@ public class GridPlugin extends AbstractControllerPlugin {
 		GridImplConfig gridConfig = new GridImplConfig();
 		gridConfig.setTtl(tokenTTL);
 
-		// TODO deprecate custom token affinity
-		gridConfig.setTokenAffinityEvaluatorClass(StepTokenAffinityEvaluator.class.getName());
+		gridConfig.setTokenAffinityEvaluatorClass(configuration.getProperty("grid.tokens.affinityevaluator.classname"));
+		Map<String, String> tokenAffinityEvaluatorProperties = configuration.getPropertyNames().stream().filter(p->(p instanceof String && p.toString().startsWith("grid.tokens.affinityevaluator")))
+			.collect(Collectors.toMap(p->p.toString().replace("grid.tokens.affinityevaluator.", ""), p->configuration.getProperty(p.toString())));
+		gridConfig.setTokenAffinityEvaluatorProperties(tokenAffinityEvaluatorProperties);
 
 		FileManagerImplConfig fileManagerConfig = new FileManagerImplConfig();
 		fileManagerConfig.setFileLastModificationCacheConcurrencyLevel(configuration.getPropertyAsInteger(GRID_FILEMANAGER_CACHE_CONCURRENCYLEVEL_KEY, 4));

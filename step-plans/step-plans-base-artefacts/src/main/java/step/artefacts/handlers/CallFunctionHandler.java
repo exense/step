@@ -300,7 +300,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	 */
 	private Map<String, String> getOwnAttributesForTokenSelection() {
 		String executionId = context.getExecutionId();
-		return Map.of("tokenPartition", executionId, "executionId", executionId);
+		return Map.of("tokenPartition", executionId);
 	}
 
 	private void validateInput(FunctionInput<JsonObject> input, Function function) {

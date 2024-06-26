@@ -3,7 +3,6 @@ package step.artefacts.handlers.functions;
 import step.artefacts.handlers.functions.autoscaler.AgentPoolRequirementSpec;
 import step.artefacts.handlers.functions.autoscaler.AgentPoolSpec;
 import step.artefacts.handlers.functions.autoscaler.TemplateStsAgentPoolRequirementSpec;
-import step.engine.plugins.StepTokenAffinityEvaluator;
 import step.functions.Function;
 import step.functions.execution.FunctionExecutionService;
 import step.functions.execution.TokenLifecycleInterceptor;
@@ -19,7 +18,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import static step.engine.plugins.StepTokenAffinityEvaluator.TOKEN_ATTRIBUTE_DOCKER_IMAGE;
+import static step.artefacts.handlers.functions.PreProvisioningTokenAffinityEvaluator.TOKEN_ATTRIBUTE_DOCKER_IMAGE;
 
 public class TokenForecastingContext {
     protected final Map<Key, PoolReservationTracker> poolResourceReservations = new HashMap<>();
@@ -80,7 +79,7 @@ public class TokenForecastingContext {
     }
 
     private Optional<AgentPoolSpec> getBestMatchingPool(Map<String, Interest> criteria) {
-        StepTokenAffinityEvaluator affinityEvaluator = new StepTokenAffinityEvaluator();
+        PreProvisioningTokenAffinityEvaluator affinityEvaluator = new PreProvisioningTokenAffinityEvaluator();
         return availableAgentPools.stream()
                 .map(entry -> new Object[]{affinityEvaluator.getAffinityScore(new TokenPretender(Map.of(), criteria), new TokenPretender(entry.attributes, Map.of())), entry})
                 .filter(o -> ((int) o[0]) >= 0).sorted(Comparator.comparingInt(o -> (int) o[0])).map(o -> (AgentPoolSpec) o[1])
