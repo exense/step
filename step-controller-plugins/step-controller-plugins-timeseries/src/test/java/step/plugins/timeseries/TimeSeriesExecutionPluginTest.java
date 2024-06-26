@@ -11,6 +11,7 @@ import org.junit.Test;
 import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.ThreadGroup;
 import step.core.GlobalContext;
+import step.core.GlobalContextBuilder;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.collections.inmemory.InMemoryCollectionFactory;
 import step.core.deployment.WebApplicationConfigurationManager;
@@ -60,7 +61,7 @@ public class TimeSeriesExecutionPluginTest extends AbstractKeyword {
 
 	@Before
 	public void setUp() throws Exception {
-		globalContext = new GlobalContext();
+		globalContext = GlobalContextBuilder.createGlobalContext();
 		globalContext.put(MigrationManager.class, new MigrationManager());
 		globalContext.setEntityManager(new EntityManager());
 		globalContext.put(TableRegistry.class, new TableRegistry());
