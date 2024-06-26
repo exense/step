@@ -41,17 +41,14 @@ public abstract class AbstractStepContext extends AbstractContext {
 	private FileResolver fileResolver;
 	private LoadingCache<String, File> fileResolverCache;
 	// Keep track of the default resource manager created at initialization of the context
-	private final LocalResourceManagerImpl localResourceManager;
-
-	public AbstractStepContext() {
-		// Create a local resource manager in a dedicated folder per default
-		localResourceManager = new LocalResourceManagerImpl(getContextFolderAsFile(), new InMemoryResourceAccessor(), new InMemoryResourceRevisionAccessor());
-		setResourceManager(localResourceManager);
-	}
+	private LocalResourceManagerImpl localResourceManager;
 
 	protected void setDefaultAttributes() {
 		expressionHandler = new ExpressionHandler();
 		dynamicBeanResolver = new DynamicBeanResolver(new DynamicValueResolver(expressionHandler));
+		// Create a local resource manager in a dedicated folder per default
+		localResourceManager = new LocalResourceManagerImpl(getContextFolderAsFile(), new InMemoryResourceAccessor(), new InMemoryResourceRevisionAccessor());
+		setResourceManager(localResourceManager);
 	}
 
 	private File getContextFolderAsFile() {
@@ -119,7 +116,9 @@ public abstract class AbstractStepContext extends AbstractContext {
 	@Override
 	public void close() throws IOException {
 		// Cleanup the default resource manager
-		localResourceManager.cleanup();
+		if(localResourceManager != null) {
+			localResourceManager.cleanup();
+		}
 		super.close();
 	}
 }
