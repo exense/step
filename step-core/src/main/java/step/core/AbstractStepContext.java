@@ -58,12 +58,9 @@ public abstract class AbstractStepContext extends AbstractContext {
 		return new File(dirName);
 	}
 
-	protected void useSourceAttributesFromParentContext(AbstractStepContext parentContext) {
+	protected void useAllAttributesFromParentContext(AbstractStepContext parentContext) {
 		ResourceManager resourceManager = new LayeredResourceManager(parentContext.getResourceManager(), true);
 		setResourceManager(resourceManager);
-	}
-
-	protected void useStandardAttributesFromParentContext(AbstractStepContext parentContext) {
 		expressionHandler = parentContext.getExpressionHandler();
 		dynamicBeanResolver = parentContext.getDynamicBeanResolver();
 	}
