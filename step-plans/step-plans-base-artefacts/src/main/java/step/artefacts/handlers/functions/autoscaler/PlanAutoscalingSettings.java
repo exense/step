@@ -1,6 +1,6 @@
 package step.artefacts.handlers.functions.autoscaler;
 
-import java.util.Set;
+import java.util.List;
 
 public class PlanAutoscalingSettings {
 
@@ -8,5 +8,5 @@ public class PlanAutoscalingSettings {
 
     public boolean enableAutoscaling = true;
     public boolean enableAutomaticTokenNumberCalculation = true;
-    public Set<AgentPoolRequirementSpec> requiredAgentPools;
+    public List<AgentPoolRequirementSpec> requiredAgentPools;
 }

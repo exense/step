@@ -1,13 +1,16 @@
 package step.artefacts.handlers.functions;
 
+import step.artefacts.handlers.functions.autoscaler.AgentPoolProvisioningParameters;
 import step.grid.TokenPretender;
 import step.grid.tokenpool.Identity;
 import step.grid.tokenpool.Interest;
 import step.grid.tokenpool.SimpleAffinityEvaluator;
 
 import java.util.Map;
-import java.util.regex.Pattern;
+import java.util.Objects;
 import java.util.stream.Collectors;
+
+import static step.artefacts.handlers.functions.autoscaler.AgentPoolProvisioningParameters.TOKEN_ATTRIBUTE_DOCKER_IMAGE;
 
 /**
  * This {@link step.grid.tokenpool.AffinityEvaluator} is used to match agent token pools before their provisioning.
@@ -15,29 +18,15 @@ import java.util.stream.Collectors;
  * $dockerImage which is only populated after provisioning of the agent pool
  */
 public class PreProvisioningTokenAffinityEvaluator extends SimpleAffinityEvaluator {
-    public static final String TOKEN_ATTRIBUTE_DOCKER_IMAGE = "$dockerImage";
-    public static final String TOKEN_ATTRIBUTE_DOCKER_SUPPORT = "$supportsCustomDockerImage";
-
     @Override
     public int getAffinityScore(Identity i1, Identity i2) {
         return super.getAffinityScore(replaceCriteria(i1), replaceCriteria(i2));
     }
 
     private static TokenPretender replaceCriteria(Identity i1) {
-        Map<String, Interest> newInterests;
-        Map<String, Interest> interests = i1.getInterests();
-        if(interests != null && interests.containsKey(TOKEN_ATTRIBUTE_DOCKER_IMAGE)) {
-            newInterests = interests.entrySet().stream().map(e -> {
-                // Replace the $dockerImage criteria by the generic $supportsCustomDockerImage criteria
-                if (e.getKey().equals(TOKEN_ATTRIBUTE_DOCKER_IMAGE)) {
-                    return Map.entry(TOKEN_ATTRIBUTE_DOCKER_SUPPORT, new Interest(Pattern.compile("true"), true));
-                } else {
-                    return e;
-                }
-            }).collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
-        } else {
-            newInterests = interests;
-        }
+        // Delegate the transformation of the selection criteria to the registered agent pool provisioning parameters. The first non-null transformation is returned
+        Map<String, Interest> newInterests = i1.getInterests().entrySet().stream().map(e -> AgentPoolProvisioningParameters.supportedParameters.stream()
+                .map(p -> p.preProvisioningTokenSelectionCriteriaTransformer.apply(e)).filter(Objects::nonNull).findFirst().orElse(e)).collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
         TokenPretender changedI1 = new TokenPretender(i1.getAttributes(), newInterests);
         return changedI1;
     }

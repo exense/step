@@ -1,9 +1,9 @@
 package step.artefacts.handlers.functions.autoscaler;
 
-import java.util.Set;
+import java.util.List;
 
 public class TokenProvisioningRequest {
 
     public String executionId;
-    public Set<AgentPoolRequirementSpec> agentPoolRequirementSpecs;
+    public List<AgentPoolRequirementSpec> agentPoolRequirementSpecs;
 }

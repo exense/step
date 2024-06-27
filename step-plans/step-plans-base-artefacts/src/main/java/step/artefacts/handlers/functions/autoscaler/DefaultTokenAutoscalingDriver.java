@@ -1,12 +1,13 @@
 package step.artefacts.handlers.functions.autoscaler;
 
 import ch.exense.commons.app.Configuration;
-import step.artefacts.handlers.functions.PreProvisioningTokenAffinityEvaluator;
 
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.*;
+
+import static step.artefacts.handlers.functions.autoscaler.AgentPoolProvisioningParameters.TOKEN_ATTRIBUTE_DOCKER_SUPPORT;
 
 public class DefaultTokenAutoscalingDriver implements TokenAutoscalingDriver {
 
@@ -20,7 +21,7 @@ public class DefaultTokenAutoscalingDriver implements TokenAutoscalingDriver {
     @Override
     public TokenAutoscalingConfiguration getConfiguration() {
         TokenAutoscalingConfiguration autoscalerConfiguration = new TokenAutoscalingConfiguration();
-        autoscalerConfiguration.availableAgentPools = Set.of(new AgentPoolSpec("DefaultPool", Map.of("$agenttype", "default", PreProvisioningTokenAffinityEvaluator.TOKEN_ATTRIBUTE_DOCKER_SUPPORT, "true"), 1));
+        autoscalerConfiguration.availableAgentPools = Set.of(new AgentPoolSpec("DefaultPool", Map.of("$agenttype", "default", TOKEN_ATTRIBUTE_DOCKER_SUPPORT, "true"), 1));
         return autoscalerConfiguration;
     }
 
@@ -28,8 +29,6 @@ public class DefaultTokenAutoscalingDriver implements TokenAutoscalingDriver {
     public String initializeTokenProvisioningRequest(TokenProvisioningRequest request) {
         String provisioningId = UUID.randomUUID().toString();
         TokenProvisioningStatus status = new TokenProvisioningStatus();
-        // TODO reimplement
-        //status.tokenCountTarget = request.requiredNumberOfTokensPerPool.values().stream().reduce(0, Integer::sum);
         status.statusDescription = "Provisioning tokens... (MOCK)";
         provisioningRequest.put(provisioningId, status);
         return provisioningId;

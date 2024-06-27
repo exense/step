@@ -2,7 +2,6 @@ package step.artefacts.handlers.functions;
 
 import step.artefacts.handlers.functions.autoscaler.AgentPoolRequirementSpec;
 import step.artefacts.handlers.functions.autoscaler.AgentPoolSpec;
-import step.artefacts.handlers.functions.autoscaler.TemplateStsAgentPoolRequirementSpec;
 import step.functions.Function;
 import step.functions.execution.FunctionExecutionService;
 import step.functions.execution.TokenLifecycleInterceptor;
@@ -18,7 +17,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import static step.artefacts.handlers.functions.PreProvisioningTokenAffinityEvaluator.TOKEN_ATTRIBUTE_DOCKER_IMAGE;
+import static step.artefacts.handlers.functions.autoscaler.AgentPoolProvisioningParameters.supportedParameters;
 
 public class TokenForecastingContext {
     protected final Map<Key, PoolReservationTracker> poolResourceReservations = new HashMap<>();
@@ -39,8 +38,12 @@ public class TokenForecastingContext {
     protected Key requireToken(Map<String, Interest> criteria, int count) throws NoMatchingTokenPoolException {
         AgentPoolSpec bestMatchingPool = getBestMatchingPool(criteria).orElseThrow(NoMatchingTokenPoolException::new);
         String poolName = bestMatchingPool.name;
-        String dockerImage = criteria.containsKey(TOKEN_ATTRIBUTE_DOCKER_IMAGE) ? criteria.get(TOKEN_ATTRIBUTE_DOCKER_IMAGE).getSelectionPattern().pattern() : null;
-        Key key = new Key(poolName, dockerImage, criteria);
+
+        // Delegate the creation of the provisioning parameters map to the registered parameter types
+        HashMap<String, String> provisioningParameters = new HashMap<>();
+        supportedParameters.forEach(p -> p.tokenSelectionCriteriaToAgentPoolProvisioningParameters.accept(criteria, provisioningParameters));
+
+        Key key = new Key(poolName, provisioningParameters, criteria);
         requireToken(key, count);
         return key;
     }
@@ -50,13 +53,13 @@ public class TokenForecastingContext {
     }
 
     protected static class Key {
-        String templateName;
-        String dockerImage;
+        String poolTemplateName;
+        Map<String, String> provisioningParameters;
         Map<String, Interest> criteria;
 
-        public Key(String templateName, String dockerImage, Map<String, Interest> criteria) {
-            this.templateName = templateName;
-            this.dockerImage = dockerImage;
+        public Key(String poolTemplateName, Map<String, String> provisioningParameters, Map<String, Interest> criteria) {
+            this.poolTemplateName = poolTemplateName;
+            this.provisioningParameters = provisioningParameters;
             this.criteria = criteria;
         }
 
@@ -65,12 +68,12 @@ public class TokenForecastingContext {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             Key key = (Key) o;
-            return Objects.equals(templateName, key.templateName) && Objects.equals(dockerImage, key.dockerImage);
+            return Objects.equals(poolTemplateName, key.poolTemplateName) && Objects.equals(provisioningParameters, key.provisioningParameters);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(templateName, dockerImage);
+            return Objects.hash(poolTemplateName, provisioningParameters);
         }
     }
 
@@ -93,14 +96,12 @@ public class TokenForecastingContext {
         return poolResourceReservations.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().maxReservationCount));
     }
 
-    public Set<AgentPoolRequirementSpec> getAgentPoolRequirementSpec() {
+    public List<AgentPoolRequirementSpec> getAgentPoolRequirementSpec() {
         return getTokenForecastPerPool().entrySet().stream().map(s -> {
-            AgentPoolSpec agentPoolSpec = availableAgentPools.stream().filter(p -> p.name.equals(s.getKey().templateName)).findFirst().orElseThrow();
+            AgentPoolSpec agentPoolSpec = availableAgentPools.stream().filter(p -> p.name.equals(s.getKey().poolTemplateName)).findFirst().orElseThrow();
             int requiredReplicas = calculateRequiredReplicas(s.getValue(), agentPoolSpec.numberOfTokens);
-            TemplateStsAgentPoolRequirementSpec requirementSpec = new TemplateStsAgentPoolRequirementSpec(s.getKey().templateName, requiredReplicas);
-            requirementSpec.dockerImage = s.getKey().dockerImage;
-            return requirementSpec;
-        }).collect(Collectors.toSet());
+            return new AgentPoolRequirementSpec(s.getKey().poolTemplateName, s.getKey().provisioningParameters, requiredReplicas);
+        }).collect(Collectors.toList());
     }
 
     private int calculateRequiredReplicas(int requiredTokens, int tokenGroupCapacity) {
@@ -151,7 +152,7 @@ public class TokenForecastingContext {
                 TokenWrapper tokenWrapper = new TokenWrapper();
                 Token token = new Token();
                 token.setAgentid(isLocal ? "local" : "remote");
-                token.setAttributes(pool != null ? availableAgentPools.stream().filter(p -> p.name.equals(pool.templateName)).findFirst().orElseThrow().attributes : Map.of());
+                token.setAttributes(pool != null ? availableAgentPools.stream().filter(p -> p.name.equals(pool.poolTemplateName)).findFirst().orElseThrow().attributes : Map.of());
                 token.setId(UUID.randomUUID().toString());
                 tokenWrapper.setToken(token);
                 return tokenWrapper;

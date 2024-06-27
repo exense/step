@@ -51,7 +51,6 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 import static step.artefacts.handlers.functions.TokenForcastingExecutionPlugin.getTokenForecastingContext;
 
 public class TokenForcastingTest {
@@ -112,23 +111,23 @@ public class TokenForcastingTest {
 		// One matching token pool
 		Set<AgentPoolSpec> availableAgentPools = Set.of(new AgentPoolSpec("pool1", Map.of("$agenttype", "default"), 1));
 		TokenForecastingContext tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableAgentPools);
-		assertEquals(Set.of(new TemplateStsAgentPoolRequirementSpec("pool1", 10)), tokenForecastingContext.getAgentPoolRequirementSpec());
+		assertEquals(Set.of(new AgentPoolRequirementSpec("pool1", 10)), Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
 
 		// 2 token pools, one matching
 		availableAgentPools = Set.of(new AgentPoolSpec("pool1", Map.of("$agenttype", "default"), 1), new AgentPoolSpec("pool2", Map.of(), 1));
 		tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableAgentPools);
-		assertEquals(Set.of(new TemplateStsAgentPoolRequirementSpec("pool1", 10)), tokenForecastingContext.getAgentPoolRequirementSpec());
+		assertEquals(Set.of(new AgentPoolRequirementSpec("pool1", 10)), Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
 
 		// One matching token pool
 		availableAgentPools = Set.of(new AgentPoolSpec("pool1", Map.of("$agenttype", "default"), 2));
 		tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableAgentPools);
 		// 5 agents should be required as each agent has 2 tokens
-		assertEquals(Set.of(new TemplateStsAgentPoolRequirementSpec("pool1", 5)), tokenForecastingContext.getAgentPoolRequirementSpec());
+		assertEquals(Set.of(new AgentPoolRequirementSpec("pool1", 5)), Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
 
 		availableAgentPools = Set.of(new AgentPoolSpec("pool1", Map.of("$agenttype", "default"), 3));
 		tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableAgentPools);
 		// 4 agents should be required as each agent has 2 tokens
-		assertEquals(Set.of(new TemplateStsAgentPoolRequirementSpec("pool1", 4)), tokenForecastingContext.getAgentPoolRequirementSpec());
+		assertEquals(Set.of(new AgentPoolRequirementSpec("pool1", 4)), Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
 
 	}
 
@@ -201,10 +200,10 @@ public class TokenForcastingTest {
 
 		TokenForecastingContext tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableAgentPools);
 
-		assertEquals(Set.of(new TemplateStsAgentPoolRequirementSpec("pool1", 1),
-				new TemplateStsAgentPoolRequirementSpec("pool2", 6),
-				new TemplateStsAgentPoolRequirementSpec("pool3", 3)),
-				tokenForecastingContext.getAgentPoolRequirementSpec());
+		assertEquals(Set.of(new AgentPoolRequirementSpec("pool1", 1),
+				new AgentPoolRequirementSpec("pool2", 6),
+				new AgentPoolRequirementSpec("pool3", 3)),
+				Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
 	}
 
 
@@ -241,8 +240,8 @@ public class TokenForcastingTest {
 				new AgentPoolSpec("pool3", Map.of("$agenttype", "default", "type", "pool3"), 1));
 		TokenForecastingContext tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableAgentPools);
 
-		assertEquals(Set.of(new TemplateStsAgentPoolRequirementSpec("pool2", 4)),
-				tokenForecastingContext.getAgentPoolRequirementSpec());
+		assertEquals(Set.of(new AgentPoolRequirementSpec("pool2", 4)),
+				Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
 	}
 
 	private static TokenForecastingContext executePlanWithSpecifiedTokenPools(Plan plan, Set<AgentPoolSpec> availableAgentPools) {
