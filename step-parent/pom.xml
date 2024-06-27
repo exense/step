@@ -58,7 +58,7 @@
 		<exense-commons.version>2.0.8</exense-commons.version>
 		<step-framework.version>2.0.16</step-framework.version>
 		<step-grid.version>2.0.6</step-grid.version>
-		<step-api.version>1.2.6</step-api.version>
+		<step-api.version>2024.6.25-667b03f7c8a00f7255e9f7e9</step-api.version>
 		<!-- external dependencies -->
 		<junit.version>4.13.1</junit.version>
 		<mockito.version>5.1.1</mockito.version>

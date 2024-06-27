@@ -23,7 +23,7 @@ import step.handlers.javahandler.AbstractKeyword;
 import step.handlers.javahandler.Input;
 import step.handlers.javahandler.Keyword;
 
-import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class StepRunnerTestKeywords extends AbstractKeyword {
@@ -55,12 +55,11 @@ public class StepRunnerTestKeywords extends AbstractKeyword {
 
 	}
 
-	// TODO: support List instead of ArrayList we should apply the fix in step-api
 	@Keyword
 	public void customKeywordWithMapInput(@Input(name = "URL") String url,
 										  @Input(name = "Name") String name,
 										  @Input(name = "Headers") Map<String, String> headers,
-										  @Input(name = "ArrayInput") ArrayList<Integer> arrayInput
+										  @Input(name = "ArrayInput") List<Integer> arrayInput
 	){
 		System.out.println("Custom keyword with map input has been called");
 		System.out.println("URL: " + url);
