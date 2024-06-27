@@ -198,6 +198,11 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 			dynamicBeanResolver.evaluate(function, Collections.<String, Object>unmodifiableMap(properties));
 
 			String handlerChain = functionType.getHandlerChain(function);
+			if (handlerChain == null || handlerChain.isEmpty()) {
+				String msg = "There is no supported handler for function \"" + function.getAttribute(AbstractOrganizableObject.NAME)
+						+ "\" (" + function.getClass().getSimpleName() + ")";
+				throw new FunctionExecutionException(new Error(ErrorType.TECHNICAL, msg), null);
+			}
 			FileVersionId handlerPackage = functionType.getHandlerPackage(function);
 
 			// Build the property map used for the agent layer

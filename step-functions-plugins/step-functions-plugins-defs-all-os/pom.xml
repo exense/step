@@ -27,6 +27,7 @@
     </parent>
 
     <artifactId>step-functions-plugins-defs-all-os</artifactId>
+    <packaging>pom</packaging>
 
     <properties>
     </properties>
