@@ -76,6 +76,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 
 import static step.artefacts.handlers.functions.TokenForcastingExecutionPlugin.getTokenForecastingContext;
+import static step.artefacts.handlers.functions.autoscaler.AgentPoolConstants.TOKEN_ATTRIBUTE_PARTITION;
 
 public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunctionReportNode> {
 
@@ -300,7 +301,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	 */
 	private Map<String, String> getOwnAttributesForTokenSelection() {
 		String executionId = context.getExecutionId();
-		return Map.of("tokenPartition", executionId);
+		return Map.of(TOKEN_ATTRIBUTE_PARTITION, executionId);
 	}
 
 	private void validateInput(FunctionInput<JsonObject> input, Function function) {
