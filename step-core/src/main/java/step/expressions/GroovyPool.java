@@ -22,7 +22,7 @@ import org.apache.commons.pool2.impl.GenericKeyedObjectPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class GroovyPool {
+public class GroovyPool implements AutoCloseable{
 	
 	private static final Logger logger = LoggerFactory.getLogger(GroovyPool.class);
 		
@@ -69,5 +69,10 @@ public class GroovyPool {
 		} catch (Exception e) {
 			logger.warn("An error occurred while returning script: " + (String)((entry!=null&&entry.key!=null)?entry.key.getScript():"N/A"), e);
 		}
+	}
+
+	@Override
+	public void close() {
+		pool.close();
 	}
 }
