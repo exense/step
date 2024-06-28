@@ -264,7 +264,18 @@ public class DashboardsGenerator {
 
 
     private static List<TableDashletSettings.ColumnSelection> getFullVisibleColumns() {
-        return Arrays.stream(TableChartColumn.values()).map(c -> new TableDashletSettings.ColumnSelection(c, true)).collect(Collectors.toList());
+        return Arrays.asList(
+                new TableDashletSettings.ColumnSelection(TableChartColumn.COUNT, true),
+                new TableDashletSettings.ColumnSelection(TableChartColumn.SUM, true),
+                new TableDashletSettings.ColumnSelection(TableChartColumn.AVG, true),
+                new TableDashletSettings.ColumnSelection(TableChartColumn.MIN, true),
+                new TableDashletSettings.ColumnSelection(TableChartColumn.MAX, true),
+                new TableDashletSettings.ColumnSelection(TableChartColumn.PCL_80, 80D, true),
+                new TableDashletSettings.ColumnSelection(TableChartColumn.PCL_90, 90D, true),
+                new TableDashletSettings.ColumnSelection(TableChartColumn.PCL_99, 99D, true),
+                new TableDashletSettings.ColumnSelection(TableChartColumn.TPS, true),
+                new TableDashletSettings.ColumnSelection(TableChartColumn.TPH, true)
+        );
     }
 
 }

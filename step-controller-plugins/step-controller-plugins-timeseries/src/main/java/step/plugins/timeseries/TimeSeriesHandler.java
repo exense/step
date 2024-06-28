@@ -324,7 +324,7 @@ public class TimeSeriesHandler {
                             .withMax(b.getMax())
                             .withSum(b.getSum())
                             .withThroughputPerHour(3600 * 1000 * b.getCount() / (b.getEnd() - b.getBegin()))
-                            .withPclValues(request.getPercentiles().stream().collect(Collectors.toMap(p -> p, b::getPercentile)))
+                            .withPclValues(request.getPercentiles().stream().collect(Collectors.toMap(p -> p, b::getPercentile, (existing, replacement) -> existing)))
                             .withAttributes(b.getAttributes())
                             .build();
                 }
