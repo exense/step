@@ -276,7 +276,6 @@ public class DashboardsGenerator {
                 new TableDashletSettings.ColumnSelection(TableChartColumn.TPS, true),
                 new TableDashletSettings.ColumnSelection(TableChartColumn.TPH, true)
         );
-//        return Arrays.stream(TableChartColumn.values()).map(c -> new TableDashletSettings.ColumnSelection(c, true)).collect(Collectors.toList());
     }
 
 }
