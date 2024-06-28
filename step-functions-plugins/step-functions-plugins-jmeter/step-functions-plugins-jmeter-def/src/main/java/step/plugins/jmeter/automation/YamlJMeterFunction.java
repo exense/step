@@ -22,6 +22,7 @@ import step.automation.packages.AutomationPackageContext;
 import step.automation.packages.AutomationPackageResourceUploader;
 import step.automation.packages.model.AbstractYamlFunction;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.yaml.YamlFieldCustomCopy;
 import step.core.yaml.YamlModel;
 import step.plugins.jmeter.JMeterFunction;
 import step.resources.ResourceManager;
@@ -29,6 +30,7 @@ import step.resources.ResourceManager;
 @YamlModel(name = "JMeter")
 public class YamlJMeterFunction extends AbstractYamlFunction<JMeterFunction> {
 
+    @YamlFieldCustomCopy
     private DynamicValue<String> jmeterTestplan = new DynamicValue<>();
 
     public DynamicValue<String> getJmeterTestplan() {

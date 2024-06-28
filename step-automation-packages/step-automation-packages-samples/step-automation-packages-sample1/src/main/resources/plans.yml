@@ -13,3 +13,11 @@ plans:
               keyword: "MyKeyword2"
               inputs:
                 - myInput: "myValue"
+  - name: Test Plan with Composite
+    root:
+      testCase:
+        children:
+          - echo:
+              text: "Calling composite"
+          - callKeyword:
+              keyword: "Composite keyword from AP"

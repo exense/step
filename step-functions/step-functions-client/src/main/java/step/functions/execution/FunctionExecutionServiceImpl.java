@@ -203,6 +203,7 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 			// Build the property map used for the agent layer
 			Map<String, String> messageProperties = new HashMap<>();
 			messageProperties.put(FunctionMessageHandler.FUNCTION_HANDLER_KEY, handlerChain);
+			messageProperties.put(FunctionMessageHandler.FUNCTION_TYPE_KEY, functionType.getClass().getName());
 			if(handlerPackage != null) {
 				messageProperties.putAll(fileVersionIdToMap(FunctionMessageHandler.FUNCTION_HANDLER_PACKAGE_KEY, handlerPackage));
 			}

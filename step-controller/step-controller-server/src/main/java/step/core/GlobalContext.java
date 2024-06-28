@@ -21,6 +21,7 @@ package step.core;
 import step.core.access.UserAccessor;
 import step.core.collections.CollectionFactory;
 import step.core.entities.EntityManager;
+import step.core.entities.EntityManagerSupplier;
 import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.plugins.ControllerPluginManager;
@@ -29,7 +30,7 @@ import step.core.scheduler.ExecutionTaskAccessor;
 import step.framework.server.ServiceRegistrationCallback;
 
 @OverrideServerContext
-public class GlobalContext extends AbstractExecutionEngineContext {
+public class GlobalContext extends AbstractExecutionEngineContext implements EntityManagerSupplier {
 
 	public GlobalContext() {
 		super();
@@ -88,10 +89,12 @@ public class GlobalContext extends AbstractExecutionEngineContext {
 		return this.require(Version.class);
 	}
 
+	@Override
 	public EntityManager getEntityManager() {
 		return this.get(EntityManager.class);
 	}
 
+	@Override
 	public void setEntityManager(EntityManager entityManager) {
 		this.put(EntityManager.class,entityManager);
 	}

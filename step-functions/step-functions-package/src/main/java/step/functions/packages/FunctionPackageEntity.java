@@ -1,10 +1,10 @@
 package step.functions.packages;
 
-import step.core.GlobalContext;
 import step.core.entities.Entity;
 import step.core.entities.EntityDependencyTreeVisitor.EntityTreeVisitorContext;
 import step.core.entities.EntityManager;
 import step.core.entities.DependencyTreeVisitorHook;
+import step.core.entities.EntityManagerSupplier;
 import step.functions.Function;
 
 public class FunctionPackageEntity extends Entity<FunctionPackage,FunctionPackageAccessor> {
@@ -12,7 +12,7 @@ public class FunctionPackageEntity extends Entity<FunctionPackage,FunctionPackag
 	public static final String FUNCTION_PACKAGE_ID = "functionPackageId";
 	public static final String entityName = "functionPackage";
 	
-	public FunctionPackageEntity(String name, FunctionPackageAccessor accessor, GlobalContext context) {
+	public FunctionPackageEntity(String name, FunctionPackageAccessor accessor, EntityManagerSupplier context) {
 		super(name, accessor, FunctionPackage.class);
 
 		//Add hooks for function entity

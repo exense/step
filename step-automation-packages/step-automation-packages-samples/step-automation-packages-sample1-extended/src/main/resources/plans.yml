@@ -5,6 +5,14 @@ plans:
         children:
           - echo:
               text: "Just echo"
+  - name: Test Plan with Composite
+    root:
+      testCase:
+        children:
+          - echo:
+              text: "Calling composite"
+          - callKeyword:
+              keyword: "Composite keyword from AP"
   - name: Test Plan 2
     root:
       testCase:

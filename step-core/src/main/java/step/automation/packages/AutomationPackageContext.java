@@ -30,14 +30,19 @@ public class AutomationPackageContext {
 
     private ResourceManager resourceManager;
     private AutomationPackageArchive automationPackageArchive;
+    private AutomationPackageContent packageContent;
+
     private ObjectEnricher enricher;
 
     private String uploadedPackageFileResource;
     private final Map<String, Object> extensions;
 
-    public AutomationPackageContext(ResourceManager resourceManager, AutomationPackageArchive automationPackageArchive, ObjectEnricher enricher, Map<String, Object> extensions) {
+    public AutomationPackageContext(ResourceManager resourceManager, AutomationPackageArchive automationPackageArchive,
+                                    AutomationPackageContent packageContent,
+                                    ObjectEnricher enricher, Map<String, Object> extensions) {
         this.resourceManager = resourceManager;
         this.automationPackageArchive = automationPackageArchive;
+        this.packageContent = packageContent;
         this.enricher = enricher;
         this.extensions = extensions;
     }
@@ -76,5 +81,9 @@ public class AutomationPackageContext {
 
     public Map<String, Object> getExtensions() {
         return extensions;
+    }
+
+    public AutomationPackageContent getPackageContent() {
+        return packageContent;
     }
 }

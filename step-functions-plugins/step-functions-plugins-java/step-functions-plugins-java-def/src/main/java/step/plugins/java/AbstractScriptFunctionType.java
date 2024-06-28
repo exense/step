@@ -29,6 +29,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import ch.exense.commons.app.Configuration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.attachments.FileResolver;
 import step.core.AbstractStepContext;
 import step.core.accessors.AbstractOrganizableObject;
@@ -42,6 +44,8 @@ import step.plugins.java.handler.GeneralScriptHandler;
 import step.plugins.js223.handler.ScriptHandler;
 
 public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction> extends AbstractFunctionType<T> {
+
+	private static final Logger log = LoggerFactory.getLogger(AbstractScriptFunctionType.class);
 
 	protected FileVersionId daemonJar;
 	
@@ -118,13 +122,17 @@ public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction
 	protected String getScriptLanguage(GeneralScriptFunction conf) {
 		return conf.getScriptLanguage().get();
 	}
-	
+
 	protected File setupScriptFile(GeneralScriptFunction function, String templateFilename) throws SetupFunctionException {
-		File templateScript = new File(configuration.getProperty("controller.dir")+"/data/templates/"+templateFilename);
+		File templateScript = new File(configuration.getProperty("controller.dir") + "/data/templates/" + templateFilename);
 		try {
-			return setupScriptFile(function,new FileInputStream(templateScript));
+			boolean templateExists = templateScript.exists();
+			if (!templateExists) {
+				log.warn("Default template file not found: " + templateScript.getAbsolutePath());
+			}
+			return setupScriptFile(function, templateExists ? new FileInputStream(templateScript) : null);
 		} catch (FileNotFoundException e) {
-			throw new SetupFunctionException("Unable to apply template. The file '"+templateScript.getAbsolutePath()+"' doesn't exist");
+			throw new SetupFunctionException("Unable to apply template. The file '" + templateScript.getAbsolutePath() + "' doesn't exist");
 		}
 	}
 

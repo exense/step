@@ -53,6 +53,129 @@
         "additionalProperties" : false
       }
     },
+    "NodeDef" : {
+      "type" : "object",
+      "properties" : {
+        "Node" : {
+          "type" : "object",
+          "properties" : {
+            "description" : {
+              "type" : "string"
+            },
+            "useCustomTemplate" : {
+              "type" : "boolean"
+            },
+            "routing" : {
+              "type" : "object",
+              "properties" : { }
+            },
+            "executeLocally" : {
+              "type" : "boolean"
+            },
+            "schema" : {
+              "type" : "object",
+              "properties" : { }
+            },
+            "callTimeout" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            },
+            "name" : {
+              "default" : "Node",
+              "type" : "string"
+            },
+            "jsfile" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            }
+          },
+          "additionalProperties" : false
+        }
+      },
+      "additionalProperties" : false
+    },
+    "CompositeDef" : {
+      "type" : "object",
+      "properties" : {
+        "Composite" : {
+          "type" : "object",
+          "properties" : {
+            "description" : {
+              "type" : "string"
+            },
+            "useCustomTemplate" : {
+              "type" : "boolean"
+            },
+            "routing" : {
+              "type" : "object",
+              "properties" : { }
+            },
+            "executeLocally" : {
+              "type" : "boolean"
+            },
+            "schema" : {
+              "type" : "object",
+              "properties" : { }
+            },
+            "callTimeout" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            },
+            "name" : {
+              "default" : "Composite",
+              "type" : "string"
+            },
+            "plan" : {
+              "$ref" : "#/$defs/PlanDef"
+            }
+          },
+          "additionalProperties" : false
+        }
+      },
+      "additionalProperties" : false
+    },
+    "GeneralScriptDef" : {
+      "type" : "object",
+      "properties" : {
+        "GeneralScript" : {
+          "type" : "object",
+          "properties" : {
+            "description" : {
+              "type" : "string"
+            },
+            "useCustomTemplate" : {
+              "type" : "boolean"
+            },
+            "routing" : {
+              "type" : "object",
+              "properties" : { }
+            },
+            "executeLocally" : {
+              "type" : "boolean"
+            },
+            "schema" : {
+              "type" : "object",
+              "properties" : { }
+            },
+            "callTimeout" : {
+              "$ref" : "#/$defs/SmartDynamicValueNumDef"
+            },
+            "name" : {
+              "default" : "GeneralScript",
+              "type" : "string"
+            },
+            "scriptLanguage" : {
+              "enum" : [ "java", "javascript", "groovy" ]
+            },
+            "librariesFile" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            },
+            "scriptFile" : {
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+            }
+          },
+          "additionalProperties" : false
+        }
+      },
+      "additionalProperties" : false
+    },
     "JMeterDef" : {
       "type" : "object",
       "properties" : {
@@ -95,6 +218,12 @@
     "KeywordDef" : {
       "type" : "object",
       "oneOf" : [ {
+        "$ref" : "#/$defs/NodeDef"
+      }, {
+        "$ref" : "#/$defs/CompositeDef"
+      }, {
+        "$ref" : "#/$defs/GeneralScriptDef"
+      }, {
         "$ref" : "#/$defs/JMeterDef"
       } ]
     },
@@ -1852,6 +1981,18 @@
         "$ref" : "#/$defs/ArtefactDef"
       }
     },
+    "PlanDef" : {
+      "properties" : {
+        "name" : {
+          "type" : "string"
+        },
+        "root" : {
+          "$ref" : "#/$defs/RootArtefactDef"
+        }
+      },
+      "required" : [ "name", "root" ],
+      "additionalProperties" : false
+    },
     "ScheduleDef" : {
       "type" : "object",
       "properties" : {
@@ -1936,17 +2077,8 @@
     "plans" : {
       "type" : "array",
       "items" : {
-        "type" : "object",
-        "properties" : {
-          "name" : {
-            "type" : "string"
-          },
-          "root" : {
-            "$ref" : "#/$defs/RootArtefactDef"
-          }
-        }
-      },
-      "required" : [ "name", "root" ]
+        "$ref" : "#/$defs/PlanDef"
+      }
     },
     "fragments" : {
       "type" : "array",
