@@ -70,33 +70,41 @@ public class DynamicJsonObjectResolver {
 				Object evaluate = valueResolver.evaluate(jsonObject, bindings);
 				if (evaluate instanceof JsonObject) {
 					return evaluate((JsonObject) evaluate, bindings);
+				} else if (evaluate instanceof JsonArray) {
+					JsonArray jsonArray = (JsonArray) evaluate;
+					return evaluateJsonArray(jsonArray, bindings);
+				} else {
+					return evaluate;
 				}
-				return evaluate;
 			} else {
 				return evaluate(jsonObject, bindings);
 			}
 		} else if (v instanceof JsonArray) {
-			JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
 			JsonArray jsonArray = (JsonArray) v;
-			for(int i=0;i<jsonArray.size();i++) {
-				JsonValue jsonValue = jsonArray.get(i);
-				Object o = evaluateJsonValue(jsonValue, bindings);
-				if(o instanceof JsonValue) {
-					arrayBuilder.add((JsonValue)o);
-				} else if(o instanceof Boolean) {
-					arrayBuilder.add((Boolean)o);					
-				} else if(o instanceof Integer) {
-					arrayBuilder.add((Integer)o);
-				} else if(o instanceof String) {
-					arrayBuilder.add((String)o);
-				} else {
-					arrayBuilder.add((String)o.toString());
-				}
-			}
-			return arrayBuilder.build();
+			return evaluateJsonArray(jsonArray, bindings);
 		} else {
 			// in this case we have a primitive, so nothing to do
 			return v;
 		}
+	}
+
+	private JsonArray evaluateJsonArray(JsonArray jsonArray, Map<String, Object> bindings) {
+		JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
+		for(int i=0;i<jsonArray.size();i++) {
+			JsonValue jsonValue = jsonArray.get(i);
+			Object o = evaluateJsonValue(jsonValue, bindings);
+			if(o instanceof JsonValue) {
+				arrayBuilder.add((JsonValue)o);
+			} else if(o instanceof Boolean) {
+				arrayBuilder.add((Boolean)o);
+			} else if(o instanceof Integer) {
+				arrayBuilder.add((Integer)o);
+			} else if(o instanceof String) {
+				arrayBuilder.add((String)o);
+			} else {
+				arrayBuilder.add((String)o.toString());
+			}
+		}
+		return arrayBuilder.build();
 	}
 }
