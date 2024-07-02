@@ -26,6 +26,7 @@ import step.core.access.User;
 import step.core.access.UserAccessorImpl;
 import step.core.accessors.AbstractAccessor;
 import step.core.accessors.AbstractUser;
+import step.core.artefacts.handlers.ArtefactHandlerRegistry;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeAccessorImpl;
 import step.core.collections.*;
@@ -97,6 +98,7 @@ public class Controller {
 	
 	private void initContext() throws ClassNotFoundException, PluginManager.Builder.CircularDependencyException, InstantiationException, IllegalAccessException {
 		context.setConfiguration(configuration);
+		context.setArtefactHandlerRegistry(new ArtefactHandlerRegistry());
 		//Set version here for now
 		context.put(Version.class, Controller.VERSION);
 		

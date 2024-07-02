@@ -123,21 +123,6 @@ public class ExecutionContextWrapper extends ExecutionContext {
     }
 
     @Override
-    public void useStandardAttributesFromParentContext(AbstractExecutionEngineContext parentContext) {
-        wrappedContext.useStandardAttributesFromParentContext(parentContext);
-    }
-
-    @Override
-    public void useSourceAttributesFromParentContext(AbstractExecutionEngineContext parentContext) {
-        wrappedContext.useSourceAttributesFromParentContext(parentContext);
-    }
-
-    @Override
-    public void useReportingAttributesFromParentContext(AbstractExecutionEngineContext parentContext) {
-        wrappedContext.useReportingAttributesFromParentContext(parentContext);
-    }
-
-    @Override
     public Configuration getConfiguration() {
         return wrappedContext.getConfiguration();
     }

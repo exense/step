@@ -42,7 +42,6 @@ public abstract class AbstractExecutionEngineContext extends AbstractStepContext
 	
 	public AbstractExecutionEngineContext() {
 		super();
-		setDefaultAttributes();
 	}
 
 	protected void setDefaultAttributes() {
@@ -59,27 +58,17 @@ public abstract class AbstractExecutionEngineContext extends AbstractStepContext
 	}
 	
 	protected void useAllAttributesFromParentContext(AbstractExecutionEngineContext parentContext) {
-		useStandardAttributesFromParentContext(parentContext);
-		useSourceAttributesFromParentContext(parentContext);
-		useReportingAttributesFromParentContext(parentContext);
-	}
-	
-	protected void useStandardAttributesFromParentContext(AbstractExecutionEngineContext parentContext) {
-		super.useStandardAttributesFromParentContext(parentContext);
+		super.useAllAttributesFromParentContext(parentContext);
 		setConfiguration(parentContext.getConfiguration());
-		repositoryObjectManager = parentContext.getRepositoryObjectManager();
-		artefactHandlerRegistry = parentContext.getArtefactHandlerRegistry();
+
 		operationMode = parentContext.getOperationMode();
-	}
-	
-	protected void useSourceAttributesFromParentContext(AbstractExecutionEngineContext parentContext) {
-		super.useSourceAttributesFromParentContext(parentContext);
+		artefactHandlerRegistry = parentContext.getArtefactHandlerRegistry();
+
 		planAccessor = parentContext.getPlanAccessor();
-	}
-	
-	protected void useReportingAttributesFromParentContext(AbstractExecutionEngineContext parentContext) {
 		reportNodeAccessor = parentContext.getReportNodeAccessor();
 		executionAccessor = parentContext.getExecutionAccessor();
+
+		repositoryObjectManager = parentContext.getRepositoryObjectManager();
 	}
 
 	public Configuration getConfiguration() {
