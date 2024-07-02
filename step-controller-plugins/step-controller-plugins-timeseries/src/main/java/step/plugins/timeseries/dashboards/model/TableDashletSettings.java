@@ -1,8 +1,13 @@
 package step.plugins.timeseries.dashboards.model;
 
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import jakarta.validation.constraints.NotNull;
+import step.plugins.table.settings.ScreenInputColumnSettings;
 
 import java.util.List;
+
+import static step.functions.Function.JSON_CLASS_FIELD;
 
 public class TableDashletSettings {
     
@@ -17,25 +22,47 @@ public class TableDashletSettings {
         this.columns = columns;
         return this;
     }
+    
+    public static class PclColumnSelection extends ColumnSelection {
+        
+        @NotNull
+        private Double pclValue; // can override when column is PCL
+        
+        public PclColumnSelection() {
+            super();
+        }
+        
+        public PclColumnSelection(TableChartColumn column, boolean isSelected, Double pclValue) {
+            super(column, isSelected);
+            this.pclValue = pclValue;
+        }
+        
+        public Double getPclValue() {
+            return pclValue;
+        }
 
+        public ColumnSelection setPclValue(Double pclValue) {
+            this.pclValue = pclValue;
+            return this;
+        }
+    }
+
+    @JsonSubTypes({
+            @JsonSubTypes.Type(value = PclColumnSelection.class)
+    })
+    @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = JSON_CLASS_FIELD)
     public static class ColumnSelection {
         @NotNull
         private TableChartColumn column;
         
-        private Double pclValue; // can override when column is PCL
         @NotNull
         private boolean isSelected;
         
-        public ColumnSelection() {}
-        
+        public ColumnSelection() {
+            
+        }
         public ColumnSelection(TableChartColumn column, boolean isSelected) {
             this.column = column;
-            this.isSelected = isSelected;
-        }
-        
-        public ColumnSelection(TableChartColumn column, Double pclValue, boolean isSelected) {
-            this.column = column;
-            this.pclValue = pclValue;
             this.isSelected = isSelected;
         }
 
@@ -54,15 +81,6 @@ public class TableDashletSettings {
 
         public ColumnSelection setSelected(boolean selected) {
             isSelected = selected;
-            return this;
-        }
-
-        public Double getPclValue() {
-            return pclValue;
-        }
-
-        public ColumnSelection setPclValue(Double pclValue) {
-            this.pclValue = pclValue;
             return this;
         }
     }
