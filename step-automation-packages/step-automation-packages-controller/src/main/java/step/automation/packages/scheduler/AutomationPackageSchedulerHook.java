@@ -114,7 +114,7 @@ public class AutomationPackageSchedulerHook implements AutomationPackageHook<Exe
             execTaskParameters.addAttribute(AbstractOrganizableObject.NAME, schedule.getName());
             execTaskParameters.setCronExpression(schedule.getCron());
             List<String> cronExclusionsAsStrings = schedule.getCronExclusions();
-            if (cronExclusionsAsStrings != null && cronExclusionsAsStrings.size() > 1) {
+            if (cronExclusionsAsStrings != null && !cronExclusionsAsStrings.isEmpty()) {
                 List<CronExclusion> cronExclusions = cronExclusionsAsStrings.stream().map(s -> new CronExclusion(s, "")).collect(Collectors.toList());
                 execTaskParameters.setCronExclusions(cronExclusions);
             }
