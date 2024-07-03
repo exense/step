@@ -50,8 +50,9 @@ public class TableDashletSettings {
     @JsonSubTypes({
             @JsonSubTypes.Type(value = PclColumnSelection.class)
     })
-    @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = JSON_CLASS_FIELD)
+    @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "class", defaultImpl = ColumnSelection.class)
     public static class ColumnSelection {
+        
         @NotNull
         private TableChartColumn column;
         
@@ -83,6 +84,7 @@ public class TableDashletSettings {
             isSelected = selected;
             return this;
         }
+
     }
 
 }
