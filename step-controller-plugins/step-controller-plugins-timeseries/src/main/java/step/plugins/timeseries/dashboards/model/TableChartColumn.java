@@ -8,8 +8,8 @@ public enum TableChartColumn {
     MIN,
     MAX,
     PCL_80,
-    PCL_90,
     PCL_95,
+    PCL_99,
     TPS,
     TPH
     
