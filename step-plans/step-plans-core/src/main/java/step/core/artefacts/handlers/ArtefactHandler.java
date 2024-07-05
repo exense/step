@@ -39,10 +39,7 @@ import step.core.variables.VariablesManager;
 import step.resources.ResourceManager;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
@@ -423,7 +420,10 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		List<AbstractArtefact> children = artefact.getChildren();
 		if(children!=null) {
 			for(AbstractArtefact child:children) {
-				result.add(dynamicBeanResolver.cloneDynamicValues(child));
+				//since we update the attributes (like name based on dynamic expression we should also clone the attributes
+				AbstractArtefact abstractArtefact = dynamicBeanResolver.cloneDynamicValues(child);
+				abstractArtefact.setAttributes(new HashMap<>(child.getAttributes()));
+				result.add(abstractArtefact);
 			}
 		}
 		return result;
