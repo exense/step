@@ -143,7 +143,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 						.setName(EXECUTIONS_COUNT)
 						.setDisplayName("Execution count")
 						.setAttributes(Arrays.asList(TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE))
-						.setDefaultAggregation(MetricAggregation.SUM)
+						.setDefaultAggregation(new MetricAggregation(MetricAggregationType.SUM))
 						.setUnit("1")
 						.setRenderingSettings(new MetricRenderingSettings()
 						),
@@ -153,21 +153,21 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 						.setDisplayName("Execution failure percentage")
 						.setAttributes(Arrays.asList(TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE))
 						.setUnit("%")
-						.setDefaultAggregation(MetricAggregation.AVG)
+						.setDefaultAggregation(new MetricAggregation(MetricAggregationType.AVG))
 						.setRenderingSettings(new MetricRenderingSettings()),
 				new MetricType()
 						.setName(FAILURE_COUNT)
 						.setUnit("1")
 						.setDisplayName("Execution failure count")
 						.setAttributes(Arrays.asList(TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE))
-						.setDefaultAggregation(MetricAggregation.SUM)
+						.setDefaultAggregation(new MetricAggregation(MetricAggregationType.SUM))
 						.setRenderingSettings(new MetricRenderingSettings()),
 				new MetricType()
 						.setName(FAILURES_COUNT_BY_ERROR_CODE)
 						.setDisplayName("Execution failure count by error code")
 						.setUnit("1")
 						.setDefaultGroupingAttributes(Arrays.asList(ERROR_CODE_ATTRIBUTE.getName()))
-						.setDefaultAggregation(MetricAggregation.SUM)
+						.setDefaultAggregation(new MetricAggregation(MetricAggregationType.SUM))
 						.setAttributes(Arrays.asList(TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE, ERROR_CODE_ATTRIBUTE))
 						.setRenderingSettings(new MetricRenderingSettings()),
 				new MetricType()
@@ -176,7 +176,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 						.setAttributes(Arrays.asList(STATUS_ATTRIBUTE, TYPE_ATRIBUTE, NAME_ATTRIBUTE, TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE))
 						.setDefaultGroupingAttributes(Arrays.asList(NAME_ATTRIBUTE.getName()))
 						.setUnit("ms")
-						.setDefaultAggregation(MetricAggregation.AVG)
+						.setDefaultAggregation(new MetricAggregation(MetricAggregationType.AVG))
 						.setRenderingSettings(new MetricRenderingSettings()),
 				new MetricType()
 						.setName(THREAD_GROUP)
@@ -184,7 +184,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 						.setAttributes(Arrays.asList(TYPE_ATRIBUTE, NAME_ATTRIBUTE, TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE))
 						.setDefaultGroupingAttributes(Arrays.asList(NAME_ATTRIBUTE.getName()))
 						.setUnit("1")
-						.setDefaultAggregation(MetricAggregation.MAX)
+						.setDefaultAggregation(new MetricAggregation(MetricAggregationType.MAX))
 						.setRenderingSettings(new MetricRenderingSettings())
 		);
 		metrics.forEach(m -> {

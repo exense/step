@@ -3,6 +3,7 @@ package step.plugins.timeseries.dashboards.model;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import jakarta.validation.constraints.NotNull;
+import step.core.timeseries.metric.MetricAggregation;
 import step.plugins.table.settings.ScreenInputColumnSettings;
 
 import java.util.List;
@@ -23,47 +24,27 @@ public class TableDashletSettings {
         return this;
     }
     
-    public static class PclColumnSelection extends ColumnSelection {
-        
-        @NotNull
-        private Double pclValue; // can override when column is PCL
-        
-        public PclColumnSelection() {
-            super();
-        }
-        
-        public PclColumnSelection(TableChartColumn column, boolean isSelected, Double pclValue) {
-            super(column, isSelected);
-            this.pclValue = pclValue;
-        }
-        
-        public Double getPclValue() {
-            return pclValue;
-        }
-
-        public ColumnSelection setPclValue(Double pclValue) {
-            this.pclValue = pclValue;
-            return this;
-        }
-    }
-
-    @JsonSubTypes({
-            @JsonSubTypes.Type(value = PclColumnSelection.class)
-    })
-    @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "class", defaultImpl = ColumnSelection.class)
     public static class ColumnSelection {
         
         @NotNull
         private TableChartColumn column;
         
+        private MetricAggregation aggregation;
+        
         @NotNull
-        private boolean isSelected;
+        private boolean isSelected = true;
         
         public ColumnSelection() {
             
         }
-        public ColumnSelection(TableChartColumn column, boolean isSelected) {
+        
+        public ColumnSelection(TableChartColumn column, MetricAggregation aggregation) {
             this.column = column;
+            this.aggregation = aggregation;
+        }
+        public ColumnSelection(TableChartColumn column, MetricAggregation aggregation, boolean isSelected) {
+            this.column = column;
+            this.aggregation = aggregation;
             this.isSelected = isSelected;
         }
 
