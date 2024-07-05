@@ -18,17 +18,20 @@
  ******************************************************************************/
 package step.plugins.table;
 
+import com.mongodb.MongoQueryException;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
+import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.controller.services.async.AsyncTaskManager;
 import step.controller.services.async.AsyncTaskStatus;
 import step.core.GlobalContext;
 import step.core.deployment.AbstractStepServices;
+import step.core.deployment.ControllerServiceException;
 import step.framework.server.security.Secured;
 import step.framework.server.tables.service.TableRequest;
 import step.framework.server.tables.service.TableResponse;
@@ -71,8 +74,12 @@ public class TableService extends AbstractStepServices {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Secured
-    public TableResponse<?> request(@PathParam("tableName") String tableName, TableRequest request) throws TableServiceException {
-        return tableService.request(tableName, request, getSession());
+    public TableResponse<?> request(@PathParam("tableName") String tableName, TableRequest request)  {
+        try {
+            return tableService.request(tableName, request, getSession());
+        } catch (Exception e) {
+            throw new ControllerServiceException(e.getMessage());
+        }
     }
 
     @POST
@@ -80,7 +87,7 @@ public class TableService extends AbstractStepServices {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Secured
-    public AsyncTaskStatus<Resource> createExport(@PathParam("tableName") String tableName, TableExportRequest exportRequest) throws Exception {
+    public AsyncTaskStatus<Resource> createExport(@PathParam("tableName") String tableName, TableExportRequest exportRequest) {
         return asyncTaskManager.scheduleAsyncTask(new TableExportTask(tableService, resourceManager, tableName, exportRequest, getSession()));
     }
 
