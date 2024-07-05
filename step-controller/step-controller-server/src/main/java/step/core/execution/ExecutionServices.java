@@ -245,7 +245,7 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 	@POST
 	@Path("/bulk/restart")
 	@Consumes(MediaType.APPLICATION_JSON)
-	@Secured(right="plan-execute")
+	@Secured(right="plan-bulk-execute")
 	public AsyncTaskStatus<TableBulkOperationReport> restartExecutions(TableBulkOperationRequest request) {
 		Consumer<String> consumer = t -> {
 			try {
@@ -264,7 +264,7 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 	@POST
 	@Path("/bulk/stop")
 	@Consumes(MediaType.APPLICATION_JSON)
-	@Secured(right="plan-execute")
+	@Secured(right="plan-bulk-execute")
 	public AsyncTaskStatus<TableBulkOperationReport> stopExecutions(TableBulkOperationRequest request) {
 		Consumer<String> consumer = t -> {
 			try {
