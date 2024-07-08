@@ -47,6 +47,8 @@ import static step.cli.Parameters.CONFIG;
         })
 public class StepConsole implements Callable<Integer> {
 
+    public static final String REQUIRED_ERR_MESSAGE = "Illegal parameters. One of the following options is required: '%s'";
+
     private static final Logger log = LoggerFactory.getLogger(StepConsole.class);
 
     @Override
@@ -57,10 +59,16 @@ public class StepConsole implements Callable<Integer> {
 
     public static abstract class AbstractStepCommand {
 
+        public static final String STEP_URL_SHORT = "-u";
+        public static final String STEP_URL = "--stepUrl";
+
+        @CommandLine.Spec
+        protected CommandLine.Model.CommandSpec spec;
+
         @Option(names = {"-" + CONFIG}, description = "The custom configuration file(s)")
         protected List<String> config;
 
-        @Option(names = {"-u", "--stepUrl"}, description = "The URL of Step server")
+        @Option(names = {STEP_URL_SHORT, STEP_URL}, description = "The URL of Step server")
         protected String stepUrl;
 
         @Option(names = {"--projectName"}, description = "The project name in Step")
@@ -71,6 +79,17 @@ public class StepConsole implements Callable<Integer> {
 
         @Option(names = {"--stepUserId"})
         protected String stepUserId;
+
+        public void checkRequiredParam(CommandLine.Model.CommandSpec spec, String value, String... optionLabels) {
+            if (value == null || value.isEmpty()) {
+                String optionsList = String.join(",", optionLabels);
+                throw new CommandLine.ParameterException(spec.commandLine(), String.format(REQUIRED_ERR_MESSAGE, optionsList));
+            }
+        }
+
+        public void checkStepUrlRequired() {
+            checkRequiredParam(spec, stepUrl, STEP_URL_SHORT, STEP_URL);
+        }
     }
 
     @Command(name = "ap",
@@ -155,6 +174,7 @@ public class StepConsole implements Callable<Integer> {
             }
 
             protected void handleApDeployCommand() {
+                checkStepUrlRequired();
                 new AbstractDeployAutomationPackageTool(stepUrl, stepProjectName, authToken, async) {
                     @Override
                     protected File getFileToUpload() throws StepCliExecutionException {
@@ -212,6 +232,7 @@ public class StepConsole implements Callable<Integer> {
             }
 
             protected void handleApRemoteExecuteCommand() {
+                checkStepUrlRequired();
                 new AbstractExecuteAutomationPackageTool(
                         stepUrl, stepProjectName, stepUserId, authToken,
                         executionParameters, executionTimeoutS,
