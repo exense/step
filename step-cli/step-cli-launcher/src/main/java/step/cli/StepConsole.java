@@ -164,8 +164,8 @@ public class StepConsole implements Callable<Integer> {
                 subcommands = {CommandLine.HelpCommand.class})
         public static class ApDeployCommand extends AbstractApCommand implements Callable<Integer> {
 
-            @Option(names = {"--async"}, defaultValue = "true", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
-            protected Boolean async;
+            @Option(names = {"--async"}, defaultValue = "false", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
+            protected boolean async;
 
             @Override
             public Integer call() throws Exception {
@@ -195,11 +195,11 @@ public class StepConsole implements Callable<Integer> {
             @Option(names = {"--executionTimeoutS"}, defaultValue = "3600")
             protected Integer executionTimeoutS;
 
-            @Option(names = {"--waitForExecution"}, defaultValue = "true", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
-            protected Boolean waitForExecution;
+            @Option(names = {"--async"}, defaultValue = "false", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
+            protected boolean async;
 
             @Option(names = {"--ensureExecutionSuccess"}, defaultValue = "true", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
-            protected Boolean ensureExecutionSuccess;
+            protected boolean ensureExecutionSuccess;
 
             @Option(names = {"--includePlans"}, description = "The comma separated list of plans to be executed")
             protected String includePlans;
@@ -236,7 +236,7 @@ public class StepConsole implements Callable<Integer> {
                 new AbstractExecuteAutomationPackageTool(
                         stepUrl, stepProjectName, stepUserId, authToken,
                         executionParameters, executionTimeoutS,
-                        waitForExecution, ensureExecutionSuccess,
+                        !async, ensureExecutionSuccess,
                         includePlans, excludePlans
                 ) {
                     @Override
