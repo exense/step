@@ -111,13 +111,6 @@
 			<artifactId>exense-basic-commons</artifactId>
 			<version>${exense-commons.version}</version>
 		</dependency>
-<!--		<dependency>-->
-<!--			<groupId>ch.exense.commons</groupId>-->
-<!--			<artifactId>exense-basic-commons</artifactId>-->
-<!--			<version>${exense-commons.version}</version>-->
-<!--			<classifier>tests</classifier>-->
-<!--			<scope>test</scope>-->
-<!--		</dependency>-->
 	</dependencies>
 
 	<modules>
