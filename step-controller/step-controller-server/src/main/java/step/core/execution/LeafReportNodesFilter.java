@@ -48,8 +48,8 @@ public class LeafReportNodesFilter {
 		List<Filter> nodeFilters = new ArrayList<>();
 		nodeFilters.add(Filters.equals("_class","step.artefacts.reports.CallFunctionReportNode"));
 		//Filter on error.root=true excluding assert report (since they are reported as part of the call Keywords)
-		And rootErrrors = Filters.and(List.of(Filters.equals("error.root", true), Filters.not(Filters.equals("_class", "step.artefacts.reports.AssertReportNode"))));
-		nodeFilters.add(rootErrrors);
+		And rootErrors = Filters.and(List.of(Filters.equals("error.root", true), Filters.not(Filters.equals("_class", "step.artefacts.reports.AssertReportNode"))));
+		nodeFilters.add(rootErrors);
 		if(optionalReportNodesFilter != null) {
 			for (String[] kv: optionalReportNodesFilter) {
 				nodeFilters.add(Filters.equals(kv[0], kv[1]));	
