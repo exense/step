@@ -39,12 +39,16 @@
         "type" : "object",
         "patternProperties" : {
           ".*" : {
-            "oneOf" : [ {
+            "anyOf" : [ {
               "type" : "number"
             }, {
               "type" : "boolean"
             }, {
               "type" : "string"
+            }, {
+              "type" : "object"
+            }, {
+              "type" : "array"
             }, {
               "$ref" : "#/$defs/DynamicExpressionDef"
             } ]
@@ -468,12 +472,16 @@
                   "type" : "object",
                   "patternProperties" : {
                     ".*" : {
-                      "oneOf" : [ {
+                      "anyOf" : [ {
                         "type" : "number"
                       }, {
                         "type" : "boolean"
                       }, {
                         "type" : "string"
+                      }, {
+                        "type" : "object"
+                      }, {
+                        "type" : "array"
                       }, {
                         "$ref" : "#/$defs/DynamicExpressionDef"
                       } ]

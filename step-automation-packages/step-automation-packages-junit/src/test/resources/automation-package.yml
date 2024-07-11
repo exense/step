@@ -10,6 +10,19 @@ plans:
           - echo:
               text:
                 expression: "myParam"
+          - callKeyword:
+              keyword: "callExisting"
+          - callKeyword:
+              keyword: "customKeywordWithMapInput"
+              inputs:
+                - URL: "https://postman-echo.com/headers"
+                - Name: "my test"
+                - Headers:
+                    myHeader: "myHeadervalue"
+                - ArrayInput:
+                    - 1
+                    - 3
+                    - 5
   - name: JMeter Plan
     root:
       testCase:

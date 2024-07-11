@@ -21,14 +21,26 @@ package step.repositories.parser;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import step.expressions.ExpressionHandler;
 
 public class BaseScriptTest {
 	
-	ExpressionHandler h = new ExpressionHandler("step.repositories.parser.BaseScript");
+	ExpressionHandler h;
+
+	@Before
+	public void setup() {
+		h = new ExpressionHandler("step.repositories.parser.BaseScript");
+	}
+
+	@After
+	public void tearDown() {
+		h.close();
+	}
 
 	@Test
 	public void test() {

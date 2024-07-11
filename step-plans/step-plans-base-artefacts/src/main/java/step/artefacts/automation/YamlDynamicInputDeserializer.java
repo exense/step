@@ -25,6 +25,7 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ContainerNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.yaml.YamlFields;
@@ -33,6 +34,8 @@ import step.core.yaml.deserializers.StepYamlDeserializerAddOn;
 
 import java.io.IOException;
 import java.util.Iterator;
+
+import static step.core.yaml.YamlFields.DYN_VALUE_DYNAMIC_FIELD;
 
 @StepYamlDeserializerAddOn(targetClasses = {YamlDynamicInputs.class})
 public class YamlDynamicInputDeserializer extends StepYamlDeserializer<YamlDynamicInputs> {
@@ -55,11 +58,31 @@ public class YamlDynamicInputDeserializer extends StepYamlDeserializer<YamlDynam
             while (fieldNames.hasNext()) {
                 String inputName = fieldNames.next();
                 JsonNode argumentValue = next.get(inputName);
-                if (!argumentValue.isContainerNode()) {
+                if (argumentValue.isArray()) {
+                    // input value is array (non-dynamic)
+                    ArrayNode arrayNode = (ArrayNode) argumentValue;
+                    ObjectNode dynamicValue = (ObjectNode) codec.createObjectNode();
+                    dynamicValue.put(DYN_VALUE_DYNAMIC_FIELD, false);
+                    ArrayNode argumentValueFormatted = (ArrayNode) codec.createArrayNode();
+                    arrayNode.iterator().forEachRemaining(e -> {
+                        ObjectNode dynamicValueNested = (ObjectNode) codec.createObjectNode();
+                        JsonNode expression = e.get(YamlFields.DYN_VALUE_EXPRESSION_FIELD);
+                        if (expression != null) {
+                            dynamicValueNested.put(DYN_VALUE_DYNAMIC_FIELD, true);
+                            dynamicValueNested.set(YamlFields.DYN_VALUE_EXPRESSION_FIELD, expression);
+                        } else {
+                            dynamicValueNested.put(DYN_VALUE_DYNAMIC_FIELD, false);
+                            dynamicValueNested.set(YamlFields.DYN_VALUE_VALUE_FIELD, e);
+                        }
+                        argumentValueFormatted.add( dynamicValueNested);
+                    });
+                    dynamicValue.set(YamlFields.DYN_VALUE_VALUE_FIELD, argumentValueFormatted);
+                    inputDynamicValues.set(inputName, dynamicValue);
+                } else if (!argumentValue.isContainerNode()) {
                     // for simplified input values we also convert them to full dynamic values format (technical format)
                     // the technical format is used for persistence and UI
                     ObjectNode dynamicValue = (ObjectNode) codec.createObjectNode();
-                    dynamicValue.put("dynamic", false);
+                    dynamicValue.put(DYN_VALUE_DYNAMIC_FIELD, false);
 
                     if (argumentValue.isTextual()) {
                         dynamicValue.put(YamlFields.DYN_VALUE_VALUE_FIELD, argumentValue.asText());
@@ -72,11 +95,33 @@ public class YamlDynamicInputDeserializer extends StepYamlDeserializer<YamlDynam
                     }
                     inputDynamicValues.set(inputName, dynamicValue);
                 } else {
-                    ObjectNode dynamicValue = (ObjectNode) codec.createObjectNode();
-                    dynamicValue.put("dynamic", true);
                     JsonNode expression = argumentValue.get(YamlFields.DYN_VALUE_EXPRESSION_FIELD);
-                    dynamicValue.put(YamlFields.DYN_VALUE_EXPRESSION_FIELD, expression == null ? "" : expression.asText());
-                    inputDynamicValues.set(inputName, dynamicValue);
+                    if (expression != null) {
+                        // input value is a dynamic expression
+                        ObjectNode dynamicValue = (ObjectNode) codec.createObjectNode();
+                        dynamicValue.put(DYN_VALUE_DYNAMIC_FIELD, true);
+                        dynamicValue.put(YamlFields.DYN_VALUE_EXPRESSION_FIELD, expression.asText());
+                        inputDynamicValues.set(inputName, dynamicValue);
+                    } else {
+                        // input value is some complex object (for instance, map)
+                        ObjectNode dynamicValue = (ObjectNode) codec.createObjectNode();
+                        dynamicValue.put(DYN_VALUE_DYNAMIC_FIELD, false);
+                        ObjectNode argumentValueFormatted = (ObjectNode) codec.createObjectNode();
+                        argumentValue.fields().forEachRemaining(e -> {
+                            ObjectNode dynamicValueNested = (ObjectNode) codec.createObjectNode();
+                            JsonNode nestedExpression = e.getValue().get(YamlFields.DYN_VALUE_EXPRESSION_FIELD);
+                            if (nestedExpression != null) {
+                                dynamicValueNested.put(DYN_VALUE_DYNAMIC_FIELD, true);
+                                dynamicValueNested.set(YamlFields.DYN_VALUE_EXPRESSION_FIELD, nestedExpression);
+                            } else {
+                                dynamicValueNested.put(DYN_VALUE_DYNAMIC_FIELD, false);
+                                dynamicValueNested.set(YamlFields.DYN_VALUE_VALUE_FIELD, e.getValue());
+                            }
+                            argumentValueFormatted.putIfAbsent(e.getKey(), dynamicValueNested);
+                        });
+                        dynamicValue.set(YamlFields.DYN_VALUE_VALUE_FIELD, argumentValueFormatted);
+                        inputDynamicValues.set(inputName, dynamicValue);
+                    }
                 }
             }
 

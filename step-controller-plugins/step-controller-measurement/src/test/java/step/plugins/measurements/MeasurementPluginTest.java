@@ -23,7 +23,7 @@ import org.junit.Before;
 import org.junit.Test;
 import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.ThreadGroup;
-import step.core.GlobalContext;
+import step.core.GlobalContextBuilder;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.execution.ExecutionContext;
@@ -56,7 +56,7 @@ public class MeasurementPluginTest extends AbstractKeyword {
 	@Before
 	public void setUp() throws Exception {
 		MeasurementControllerPlugin mc = new MeasurementControllerPlugin();
-		mc.initGaugeCollectorRegistry(new GlobalContext());
+		mc.initGaugeCollectorRegistry(GlobalContextBuilder.createGlobalContext());
 		MeasurementPlugin.registerMeasurementHandlers(new TestMeasurementHandler());
 		engine = ExecutionEngine.builder().withPlugin(new MeasurementPlugin(GaugeCollectorRegistry.getInstance()))
 				.withPlugin(new FunctionPlugin()).withPlugin(new ThreadPoolPlugin())
