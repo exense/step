@@ -59,11 +59,11 @@
 <!--		<step-framework.version>2024.6.11-66681ba898006b6beeed4b43</step-framework.version>-->
 <!--		<step-grid.version>2024.6.3-665d806d0bc9f273da5043e5</step-grid.version>-->
 <!--		<step-api.version>1.2.5</step-api.version>-->
-		<dependencies.version>2024.6.19-6672de8798006b6bee29c2ad</dependencies.version>
-		<exense-commons.version>2024.6.19-6672e10298006b6bee2c613b</exense-commons.version>
-		<step-grid.version>2024.6.19-6672e5c798006b6bee31c532</step-grid.version>
-		<step-api.version>2024.6.19-6672e13898006b6bee2cbe00</step-api.version>
-		<step-framework.version>2024.6.19-6672e3f498006b6bee2ffdf7</step-framework.version>
+		<dependencies.version>2024.7.12-669121da4fe7006fcd2fe5c4</dependencies.version>
+		<exense-commons.version>2024.7.12-669123e04fe7006fcd32085a</exense-commons.version>
+		<step-grid.version>2024.7.12-669125e94fe7006fcd344e1e</step-grid.version>
+		<step-api.version>2024.7.12-669124384fe7006fcd326a96</step-api.version>
+		<step-framework.version>2024.7.12-669126464fe7006fcd34a914</step-framework.version>
 
 <!--		<dependencies.version>0.0.0-SNAPSHOT</dependencies.version>-->
 <!--		<exense-commons.version>0.0.0-SNAPSHOT</exense-commons.version>-->
