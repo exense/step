@@ -74,17 +74,23 @@ public class StepConsole implements Callable<Integer> {
         @Option(names = {STEP_URL_SHORT, STEP_URL}, description = "The URL of Step server")
         protected String stepUrl;
 
-        @Option(names = {"--projectName"}, description = "The project name in Step")
-        protected String stepProjectName;
-
-        @Option(names = {"--token"})
-        protected String authToken;
+        // The auth token for Step EE and the project name (for EE) must be used together
+        @CommandLine.ArgGroup(exclusive = false)
+        protected StepEeRequiredOptions stepEeRequiredOptions;
 
         @Option(names = {"--stepUserId"})
         protected String stepUserId;
 
         @Option(names = {VERBOSE}, defaultValue = "false")
         protected boolean verbose;
+
+        public static class StepEeRequiredOptions {
+            @Option(names = {"--projectName"}, description = "The project name in Step", required = true)
+            protected String stepProjectName;
+
+            @Option(names = {"--token"}, required = true)
+            protected String authToken;
+        }
 
         public void checkRequiredParam(CommandLine.Model.CommandSpec spec, String value, String... optionLabels) {
             if (value == null || value.isEmpty()) {
@@ -181,7 +187,7 @@ public class StepConsole implements Callable<Integer> {
 
             protected void handleApDeployCommand() {
                 checkStepUrlRequired();
-                new AbstractDeployAutomationPackageTool(stepUrl, stepProjectName, authToken, async) {
+                new AbstractDeployAutomationPackageTool(stepUrl, stepEeRequiredOptions.stepProjectName, stepEeRequiredOptions.authToken, async) {
                     @Override
                     protected File getFileToUpload() throws StepCliExecutionException {
                         return prepareApFile(apFile);
@@ -240,7 +246,7 @@ public class StepConsole implements Callable<Integer> {
             protected void handleApRemoteExecuteCommand() {
                 checkStepUrlRequired();
                 new AbstractExecuteAutomationPackageTool(
-                        stepUrl, stepProjectName, stepUserId, authToken,
+                        stepUrl, stepEeRequiredOptions.stepProjectName, stepUserId, stepEeRequiredOptions.authToken,
                         executionParameters, executionTimeoutS,
                         !async, ensureExecutionSuccess,
                         includePlans, excludePlans
