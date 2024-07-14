@@ -83,6 +83,14 @@ public class ApLocalExecuteCommandHandler {
                         @Override
                         protected void onExecutionError(PlanRunnerResult result, String errorText, boolean assertionError) {
                             log.error("Execution has been failed for plan {}. {}", parserResult.getName(), errorText);
+
+                            String executionTree = AbstractExecuteAutomationPackageTool.getExecutionTreeAsString(result);
+                            String detailMessage = errorText + "\n" + executionTree;
+                            if(assertionError){
+                                detailMessage += "Assertion error. ";
+                            }
+                            detailMessage += "Execution tree is: " + executionTree;
+                            log.error(detailMessage);
                         }
 
                         @Override

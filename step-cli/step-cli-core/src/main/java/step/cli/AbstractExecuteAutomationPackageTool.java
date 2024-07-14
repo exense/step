@@ -18,6 +18,8 @@
  ******************************************************************************/
 package step.cli;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.automation.packages.client.AutomationPackageClientException;
 import step.automation.packages.client.RemoteAutomationPackageClientImpl;
 import step.client.AbstractRemoteClient;
@@ -30,8 +32,12 @@ import step.core.execution.model.ExecutionMode;
 import step.core.plans.PlanFilter;
 import step.core.plans.filters.PlanByExcludedNamesFilter;
 import step.core.plans.filters.PlanByIncludedNamesFilter;
+import step.core.plans.runner.PlanRunnerResult;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +46,8 @@ import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTool {
+
+    private static final Logger logger = LoggerFactory.getLogger(AbstractExecuteAutomationPackageTool.class);
 
     private String stepProjectName;
     private String userId;
@@ -69,6 +77,19 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
         this.ensureExecutionSuccess = ensureExecutionSuccess;
         this.includePlans = includePlans;
         this.excludePlans = excludePlans;
+    }
+
+    public static String getExecutionTreeAsString(PlanRunnerResult res) {
+        String executionTree;
+        Writer w = new StringWriter();
+        try {
+            res.printTree(w, true, true);
+            executionTree = w.toString();
+        } catch (IOException e) {
+            logger.error("Error while writing execution tree: {}", w);
+            executionTree = "Error while writing tree. See logs for details.";
+        }
+        return executionTree;
     }
 
     public void execute() throws StepCliExecutionException {
