@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.plugins.maven;
 
+import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
@@ -75,7 +76,13 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
         return new AbstractExecuteAutomationPackageTool(url, projectName, userId, authToken, parameters, executionResultTimeoutS, waitForExecution, ensureExecutionSuccess, includePlans, excludePlans) {
             @Override
             protected File getAutomationPackageFile() throws StepCliExecutionException {
-                return getAutomationPackageFile();
+                Artifact applicableArtifact = getProjectArtifact(getArtifactClassifier(), getGroupId(), getArtifactId(), getArtifactVersion());
+
+                if (applicableArtifact != null) {
+                    return applicableArtifact.getFile();
+                } else {
+                    throw logAndThrow("Unable to resolve automation package file " + artifactToString(getGroupId(), getArtifactId(), getArtifactClassifier(), getArtifactVersion()));
+                }
             }
         };
     }

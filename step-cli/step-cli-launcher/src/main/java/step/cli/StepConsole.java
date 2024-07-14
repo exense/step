@@ -54,13 +54,16 @@ public class StepConsole implements Callable<Integer> {
     @Override
     public Integer call() throws Exception {
         // call help by default
-        return new CommandLine(new StepConsole()).execute("help");
+        return new CommandLine(new StepConsole())
+                .setExecutionExceptionHandler(new StepExecutionExceptionHandler())
+                .execute("help");
     }
 
     public static abstract class AbstractStepCommand {
 
         public static final String STEP_URL_SHORT = "-u";
         public static final String STEP_URL = "--stepUrl";
+        public static final String VERBOSE = "--verbose";
 
         @CommandLine.Spec
         protected CommandLine.Model.CommandSpec spec;
@@ -79,6 +82,9 @@ public class StepConsole implements Callable<Integer> {
 
         @Option(names = {"--stepUserId"})
         protected String stepUserId;
+
+        @Option(names = {VERBOSE}, defaultValue = "false")
+        protected boolean verbose;
 
         public void checkRequiredParam(CommandLine.Model.CommandSpec spec, String value, String... optionLabels) {
             if (value == null || value.isEmpty()) {
@@ -251,13 +257,18 @@ public class StepConsole implements Callable<Integer> {
         @Override
         public Integer call() throws Exception {
             // call help by default
-            return new CommandLine(new ApCommand()).execute("help");
+            return new CommandLine(new ApCommand())
+                    .setExecutionExceptionHandler(new StepExecutionExceptionHandler())
+                    .execute("help");
         }
 
     }
 
     public static void main(String... args) {
-        int exitCode = new CommandLine(new StepConsole()).setCaseInsensitiveEnumValuesAllowed(true).execute(args);
+        int exitCode = new CommandLine(new StepConsole())
+                .setCaseInsensitiveEnumValuesAllowed(true)
+                .setExecutionExceptionHandler(new StepExecutionExceptionHandler())
+                .execute(args);
         System.exit(exitCode);
     }
 

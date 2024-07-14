@@ -81,7 +81,7 @@ class StepDefaultValuesProvider implements CommandLine.IDefaultValueProvider {
         for (String pathToFile : customConfigFiles) {
             boolean fileExists = addFileToProperties(pathToFile, res);
             if (!fileExists) {
-                throw new RuntimeException("Invalid custom config file configured: " + customConfigFiles);
+                log.error("Invalid config file configured (file doesn't exist): " + pathToFile + ". This config file will be ignored.");
             }
         }
 
