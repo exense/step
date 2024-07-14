@@ -1396,11 +1396,11 @@
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
             "nodeName" : {
-              "type" : "string",
-              "default" : "Return"
+              "default" : "Return",
+              "type" : "string"
             },
             "output" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+              "$ref" : "#/$defs/DynamicKeywordInputsDef"
             }
           }
         }

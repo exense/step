@@ -1,0 +1,54 @@
+---
+_class: "step.core.plans.Plan"
+attributes:
+  name: "Plan with return"
+root:
+  _class: "Sequence"
+  attributes:
+    name: "Sequence"
+  dynamicName:
+    dynamic: false
+    value: ""
+    expression: ""
+  useDynamicName: false
+  children:
+    - _class: "Return"
+      attributes:
+        name: "Return"
+      dynamicName:
+        dynamic: false
+        value: ""
+        expression: ""
+      useDynamicName: false
+      children: []
+      skipNode:
+        dynamic: false
+        value: false
+      instrumentNode:
+        dynamic: false
+        value: false
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+      output:
+        dynamic: false
+        value: "{\"output1\":{\"dynamic\":false,\"value\":\"value\"},\"output2\":{\"\
+        dynamic\":true,\"expression\":\"some thing dynamic\"}}"
+      id: "644fbe4e38a61e07cc3a4df8"
+  skipNode:
+    dynamic: false
+    value: false
+  instrumentNode:
+    dynamic: false
+    value: false
+  continueParentNodeExecutionOnError:
+    dynamic: false
+    value: false
+  continueOnError:
+    dynamic: false
+    value: false
+  pacing:
+    dynamic: false
+  id: "644fbe4e38a61e07cc3a4df8"
+visible: true
+id: "644fbe4e38a61e07cc3a4df8"

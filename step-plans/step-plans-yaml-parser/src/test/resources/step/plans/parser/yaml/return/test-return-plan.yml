@@ -1,0 +1,9 @@
+name: "Plan with return"
+root:
+  sequence:
+    children:
+      - return:
+          output:
+            - output1: "value"
+            - output2:
+                expression: "some thing dynamic"
