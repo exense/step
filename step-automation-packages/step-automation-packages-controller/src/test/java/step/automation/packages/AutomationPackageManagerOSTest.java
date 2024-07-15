@@ -323,6 +323,8 @@ public class AutomationPackageManagerOSTest {
             findFunctionByClassAndName(r.storedFunctions, GeneralScriptFunction.class, INLINE_PLAN);
             findFunctionByClassAndName(r.storedFunctions, NodeFunction.class, NODE_KEYWORD);
             CompositeFunction compositeKeyword = (CompositeFunction) findFunctionByClassAndName(r.storedFunctions, CompositeFunction.class, COMPOSITE_KEYWORD);
+            // by default, the 'executeLocally' flag for composite is 'true'
+            Assert.assertTrue(compositeKeyword.isExecuteLocally());
             Assert.assertNotNull(compositeKeyword.getPlan());
 
             // the default plan name is taken from keyword name

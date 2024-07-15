@@ -50,6 +50,13 @@ public class YamlCompositeFunction extends AbstractYamlFunction<CompositeFunctio
         this.plan = plan;
     }
 
+    public YamlCompositeFunction() {
+        super();
+
+        // executeLocally is true by default
+        this.setExecuteLocally(true);
+    }
+
     @Override
     protected void fillDeclaredFields(CompositeFunction res, AutomationPackageContext context) {
         super.fillDeclaredFields(res, context);
