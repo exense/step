@@ -73,19 +73,23 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 	@Secured(right="plan-execute")
 	public String execute(ExecutionParameters executionParams) {
 		checkRightsOnBehalfOf("plan-execute", executionParams.getUserID());
-		applyUserIdFromSession(executionParams);
+		applyUserIdFromSessionIfNotSpecified(executionParams);
 		return getScheduler().execute(executionParams);
 	}
 
-	private void applyUserIdFromSession(ExecutionParameters executionParams) {
+	private void applyUserIdFromSessionIfNotSpecified(ExecutionParameters executionParams) {
 		// explicitly defined user id has a priority
 		if (executionParams.getUserID() == null) {
-			Session<User> session = getSession();
-			if (session != null) {
-				User user = session.getUser();
-				if (user != null) {
-					executionParams.setUserID(user.getUsername());
-				}
+			applyUserIdFromSession(executionParams);
+		}
+	}
+
+	private void applyUserIdFromSession(ExecutionParameters executionParams) {
+		Session<User> session = getSession();
+		if (session != null) {
+			User user = session.getUser();
+			if (user != null) {
+				executionParams.setUserID(user.getUsername());
 			}
 		}
 	}
