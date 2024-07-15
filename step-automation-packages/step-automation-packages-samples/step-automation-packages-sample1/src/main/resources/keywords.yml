@@ -9,7 +9,6 @@ keywords:
   - Composite:
       name: "Composite keyword from AP"
       plan:
-        name: "Embedded composite plan"
         root:
           testCase:
             children:

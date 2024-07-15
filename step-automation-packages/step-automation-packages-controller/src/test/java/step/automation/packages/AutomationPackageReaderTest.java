@@ -76,8 +76,8 @@ public class AutomationPackageReaderTest {
 
         YamlCompositeFunction compositeKeyword = (YamlCompositeFunction) AutomationPackageTestUtils.findYamlKeywordByClassAndName(keywords, YamlCompositeFunction.class, COMPOSITE_KEYWORD);
         assertEquals(
-                "Embedded composite plan",
-                compositeKeyword.getPlan().getName()
+                "Composite keyword from AP",
+                compositeKeyword.getName()
         );
 
         YamlGeneralScriptFunction generalScriptKeyword = (YamlGeneralScriptFunction) AutomationPackageTestUtils.findYamlKeywordByClassAndName(keywords, YamlGeneralScriptFunction.class, GENERAL_SCRIPT_KEYWORD);

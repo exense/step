@@ -324,7 +324,9 @@ public class AutomationPackageManagerOSTest {
             findFunctionByClassAndName(r.storedFunctions, NodeFunction.class, NODE_KEYWORD);
             CompositeFunction compositeKeyword = (CompositeFunction) findFunctionByClassAndName(r.storedFunctions, CompositeFunction.class, COMPOSITE_KEYWORD);
             Assert.assertNotNull(compositeKeyword.getPlan());
-            Assert.assertEquals("Embedded composite plan", compositeKeyword.getPlan().getAttribute(AbstractOrganizableObject.NAME));
+
+            // the default plan name is taken from keyword name
+            Assert.assertEquals("Composite keyword from AP", compositeKeyword.getPlan().getAttribute(AbstractOrganizableObject.NAME));
 
             List<ExecutiontTaskParameters> storedTasks = executionTaskAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
             Assert.assertEquals(1, storedTasks.size());

@@ -39,7 +39,7 @@ import java.util.Objects;
 public class YamlCompositeFunction extends AbstractYamlFunction<CompositeFunction> {
 
     @YamlFieldCustomCopy
-    @JsonSchema(ref = YamlJsonSchemaHelper.DEFS_PREFIX + YamlJsonSchemaHelper.PLAN_DEF)
+    @JsonSchema(ref = YamlJsonSchemaHelper.DEFS_PREFIX + YamlJsonSchemaHelper.COMPOSITE_PLAN_DEF)
     private YamlPlan plan = null;
 
     public YamlPlan getPlan() {
@@ -58,10 +58,15 @@ public class YamlCompositeFunction extends AbstractYamlFunction<CompositeFunctio
         }
     }
 
-    // TODO: the same is implemented in YamlPlanReader - duplicated code
     public Plan yamlPlanToPlan(YamlPlan yamlPlan) {
         Plan plan = new Plan(yamlPlan.getRoot().getYamlArtefact().toArtefact());
-        plan.addAttribute(AbstractOrganizableObject.NAME, yamlPlan.getName());
+
+        // plan name is optional, the composite function name is used by default
+        if (yamlPlan.getName() != null && !yamlPlan.getName().isEmpty()) {
+            plan.addAttribute(AbstractOrganizableObject.NAME, yamlPlan.getName());
+        } else {
+            plan.addAttribute(AbstractOrganizableObject.NAME, getName());
+        }
         return plan;
     }
 

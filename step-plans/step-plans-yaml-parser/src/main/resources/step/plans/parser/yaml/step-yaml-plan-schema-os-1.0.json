@@ -2,19 +2,6 @@
   "$schema" : "http://json-schema.org/draft-07/schema#",
   "title" : "Plan",
   "$defs" : {
-    "resourceReference" : {
-      "oneOf" : [ {
-        "type" : "string"
-      }, {
-        "type" : "object",
-        "additionalProperties" : false,
-        "properties" : {
-          "id" : {
-            "type" : "string"
-          }
-        }
-      } ]
-    },
     "SmartDynamicValueBooleanDef" : {
       "oneOf" : [ {
         "type" : "boolean"
@@ -68,6 +55,19 @@
         },
         "additionalProperties" : false
       }
+    },
+    "resourceReference" : {
+      "oneOf" : [ {
+        "type" : "string"
+      }, {
+        "type" : "object",
+        "additionalProperties" : false,
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          }
+        }
+      } ]
     },
     "AfterSequenceDef" : {
       "type" : "object",
@@ -1827,6 +1827,21 @@
         }
       },
       "required" : [ "name", "root" ],
+      "additionalProperties" : false
+    },
+    "CompositePlanDef" : {
+      "properties" : {
+        "name" : {
+          "type" : "string"
+        },
+        "version" : {
+          "const" : "1.0.0"
+        },
+        "root" : {
+          "$ref" : "#/$defs/RootArtefactDef"
+        }
+      },
+      "required" : [ "root" ],
       "additionalProperties" : false
     }
   },

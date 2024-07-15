@@ -127,7 +127,7 @@
               "type" : "string"
             },
             "plan" : {
-              "$ref" : "#/$defs/PlanDef"
+              "$ref" : "#/$defs/CompositePlanDef"
             }
           },
           "additionalProperties" : false
@@ -1999,6 +1999,18 @@
         }
       },
       "required" : [ "name", "root" ],
+      "additionalProperties" : false
+    },
+    "CompositePlanDef" : {
+      "properties" : {
+        "name" : {
+          "type" : "string"
+        },
+        "root" : {
+          "$ref" : "#/$defs/RootArtefactDef"
+        }
+      },
+      "required" : [ "root" ],
       "additionalProperties" : false
     },
     "ScheduleDef" : {

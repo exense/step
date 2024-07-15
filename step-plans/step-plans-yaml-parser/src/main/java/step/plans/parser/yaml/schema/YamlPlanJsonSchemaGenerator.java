@@ -150,7 +150,8 @@ public class YamlPlanJsonSchemaGenerator {
 			defsBuilder.add(ROOT_ARTEFACT_DEF, createArtefactDef(artefactImplDefs.rootArtefactDefs));
 			defsBuilder.add(AbstractYamlArtefact.ARTEFACT_ARRAY_DEF, createArtefactArrayDef());
 
-			defsBuilder.add(YamlJsonSchemaHelper.PLAN_DEF, createPlanDef(versionedPlans));
+			defsBuilder.add(YamlJsonSchemaHelper.PLAN_DEF, createPlanDef(versionedPlans, false));
+			defsBuilder.add(YamlJsonSchemaHelper.COMPOSITE_PLAN_DEF, createPlanDef(versionedPlans, true));
 		});
 
 		for (JsonSchemaExtension definitionCreator : definitionCreators) {
@@ -281,12 +282,18 @@ public class YamlPlanJsonSchemaGenerator {
 		return res;
 	}
 
-	private JsonObjectBuilder createPlanDef(boolean versionedPlans){
+	private JsonObjectBuilder createPlanDef(boolean versionedPlans, boolean isCompositePlan) {
 		JsonObjectBuilder yamlPlanDef = jsonProvider.createObjectBuilder();
 		// add properties for top-level "plan" object
 		yamlPlanDef.add("properties", createYamlPlanProperties(versionedPlans));
-		yamlPlanDef.add("required", jsonProvider.createArrayBuilder().add("name").add("root"));
-		yamlPlanDef.add( "additionalProperties", false);
+		JsonArrayBuilder arrayBuilder = jsonProvider.createArrayBuilder();
+		if (!isCompositePlan) {
+			// for composite plan the name is not required
+			arrayBuilder.add("name");
+		}
+		arrayBuilder.add("root");
+		yamlPlanDef.add("required", arrayBuilder);
+		yamlPlanDef.add("additionalProperties", false);
 		return yamlPlanDef;
 	}
 
