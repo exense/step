@@ -14,5 +14,5 @@ root:
           output:
             - output1: "value"
             - output2:
-                expression: "some thing dynamic"
+                expression: "'some thing dynamic'"
     continueOnError: false

@@ -33,7 +33,7 @@ root:
       output:
         dynamic: false
         value: "{\"output1\":{\"dynamic\":false,\"value\":\"value\"},\"output2\":{\"\
-        dynamic\":true,\"expression\":\"some thing dynamic\"}}"
+        dynamic\":true,\"expression\":\"'some thing dynamic'\"}}"
       id: "644fbe4e38a61e07cc3a4df8"
   skipNode:
     dynamic: false
