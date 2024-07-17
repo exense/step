@@ -46,7 +46,10 @@ import step.resources.LayeredResourceManager;
 import step.resources.ResourceManager;
 
 public abstract class AbstractFunctionType<T extends Function> {
-	
+
+	public static final String MISSING_ENV_VARIABLE_MESSAGE = "The '%s' environment variable is not set.";
+	public static final String MISSING_HOME_CONFIG_MESSAGE_PROPERTY = "plugins.home.missing.message";
+
 	protected FileResolver fileResolver;
 	protected LoadingCache<String, File> fileResolverCache;
 	

@@ -71,7 +71,10 @@ public class JMeterFunctionType extends AbstractFunctionType<JMeterFunction> {
 			registerFile(homeFile, "$jmeter.libraries", props);
 			return props;
 		} else {
-			throw new RuntimeException("Property 'plugins.jmeter.home' in step.properties isn't set. Please set it to path of the home folder of JMeter");
+			throw new RuntimeException(
+					configuration.getProperty(MISSING_HOME_CONFIG_MESSAGE_PROPERTY,
+							"Property 'plugins.jmeter.home' in step.properties isn't set. Please set it to path of the home folder of JMeter")
+			);
 		}
 	}
 

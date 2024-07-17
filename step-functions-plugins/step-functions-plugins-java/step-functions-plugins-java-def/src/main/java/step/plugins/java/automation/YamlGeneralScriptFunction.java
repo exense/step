@@ -45,6 +45,9 @@ public class YamlGeneralScriptFunction extends AbstractYamlFunction<GeneralScrip
         super.fillDeclaredFields(res, context);
         if (scriptLanguage != null) {
             res.setScriptLanguage(new DynamicValue<>(scriptLanguage.name()));
+        } else {
+            // groovy is default value
+            res.setScriptLanguage(new DynamicValue<>(GeneralFunctionScriptLanguage.groovy.name()));
         }
 
         AutomationPackageResourceUploader resourceUploader = new AutomationPackageResourceUploader();
