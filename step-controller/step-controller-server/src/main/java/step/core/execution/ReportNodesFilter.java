@@ -25,27 +25,25 @@ import step.core.collections.Filters;
 import java.util.ArrayList;
 import java.util.List;
 
-public class LeafReportNodesFilter extends ReportNodesFilter{
-	
-	protected List<String[]> optionalReportNodesFilter;
-	
-	public LeafReportNodesFilter(List<String[]> optionalReportNodesFilter) {
+public class ReportNodesFilter {
+
+	public ReportNodesFilter() {
 		super();
-		this.optionalReportNodesFilter = optionalReportNodesFilter;
 	}
 
-	@Override
 	public List<Filter> buildAdditionalQuery(ReportNodesTableParameters parameters) {
-		List<Filter> fragments = super.buildAdditionalQuery(parameters);
-		List<Filter> nodeFilters = new ArrayList<>();
-		nodeFilters.add(Filters.equals("_class","step.artefacts.reports.CallFunctionReportNode"));
-		nodeFilters.add(Filters.equals("error.root",true));
-		if(optionalReportNodesFilter != null) {
-			for (String[] kv: optionalReportNodesFilter) {
-				nodeFilters.add(Filters.equals(kv[0], kv[1]));	
+		List<Filter> fragments = new ArrayList<>();
+		if(parameters != null) {
+			String eid = parameters.getEid();
+			if(eid != null) {
+				fragments.add(Filters.equals("executionID", eid));
+			}
+
+			List<String> testcases = parameters.getTestcases();
+			if(testcases != null) {
+				fragments.add(Filters.in("customAttributes.TestCase", testcases));
 			}
 		}
-		fragments.add(Filters.or(nodeFilters));
 		
 		return fragments;
 	}
