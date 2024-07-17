@@ -25,6 +25,8 @@ import java.util.function.BiConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import step.core.collections.Filter;
+import step.core.collections.Filters;
 import step.core.entities.EntityDependencyTreeVisitor.EntityTreeVisitor;
 import step.core.export.ExportContext;
 import step.core.imports.ImportContext;
@@ -50,6 +52,7 @@ public class EntityManager  {
 	public final static String bookmarks = "bookmarks";
 
 	private final Map<String, Entity<?,?>> entities = new ConcurrentHashMap<String, Entity<?,?>>();
+	private final Map<String, Filter> exportAllFilters = new ConcurrentHashMap<>();
 
 	private final List<DependencyTreeVisitorHook> dependencyTreeVisitorHooks = new ArrayList<>();
 
@@ -91,9 +94,12 @@ public class EntityManager  {
 		if (entity == null ) {
 			throw new RuntimeException("Entity of type " + entityType + " is not supported");
 		}
-		entity.getAccessor().getAll().forEachRemaining(a -> {
+		//Some entity types may define a filter to exclude/include specific entities when exporting all
+		// (i.e. excludes hidden plans when exporting all plans)
+		Filter exportAllFilters = Objects.requireNonNullElse(getExportAllFilters(entityType), Filters.empty());
+		entity.getAccessor().getCollectionDriver().find(exportAllFilters,null,null,null,0).forEach(a -> {
 			if ((entity.isByPassObjectPredicate() || (!(a instanceof EnricheableObject) || objectPredicate.test((EnricheableObject) a)))) {
-				getEntitiesReferences(entityType,a.getId().toHexString(), objectPredicate, refs, recursively);	
+				getEntitiesReferences(entityType,a.getId().toHexString(), objectPredicate, refs, recursively);
 			}
 		});
 	}
@@ -183,5 +189,12 @@ public class EntityManager  {
 			importContext.getImportConfiguration().getObjectEnricher().accept((EnricheableObject) o);
 		}
 	}
-	
+
+	public void registerExportAllFilters(String entity, Filter filter) {
+		exportAllFilters.put(entity, filter);
+	}
+
+	public Filter getExportAllFilters(String entity) {
+		return exportAllFilters.get(entity);
+	}
 }
