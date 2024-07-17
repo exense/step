@@ -92,6 +92,14 @@ public class StepConsole implements Callable<Integer> {
             protected String authToken;
         }
 
+        protected String getStepProjectName() {
+            return stepEeRequiredOptions == null ? null : stepEeRequiredOptions.stepProjectName;
+        }
+
+        protected String getAuthToken() {
+            return stepEeRequiredOptions == null ? null : stepEeRequiredOptions.authToken;
+        }
+
         public void checkRequiredParam(CommandLine.Model.CommandSpec spec, String value, String... optionLabels) {
             if (value == null || value.isEmpty()) {
                 String optionsList = String.join(",", optionLabels);
@@ -246,7 +254,7 @@ public class StepConsole implements Callable<Integer> {
             protected void handleApRemoteExecuteCommand() {
                 checkStepUrlRequired();
                 new AbstractExecuteAutomationPackageTool(
-                        stepUrl, stepEeRequiredOptions.stepProjectName, stepUserId, stepEeRequiredOptions.authToken,
+                        stepUrl, getStepProjectName(), stepUserId, getAuthToken(),
                         executionParameters, executionTimeoutS,
                         !async, ensureExecutionSuccess,
                         includePlans, excludePlans
