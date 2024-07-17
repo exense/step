@@ -94,6 +94,8 @@ public class EntityManager  {
 		if (entity == null ) {
 			throw new RuntimeException("Entity of type " + entityType + " is not supported");
 		}
+		//Some entity types may define a filter to exclude/include specific entities when exporting all
+		// (i.e. excludes hidden plans when exporting all plans)
 		Filter exportAllFilters = Objects.requireNonNullElse(getExportAllFilters(entityType), Filters.empty());
 		entity.getAccessor().getCollectionDriver().find(exportAllFilters,null,null,null,0).forEach(a -> {
 			if ((entity.isByPassObjectPredicate() || (!(a instanceof EnricheableObject) || objectPredicate.test((EnricheableObject) a)))) {

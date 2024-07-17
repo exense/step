@@ -86,7 +86,7 @@ public class PlanPlugin extends AbstractControllerPlugin {
 		context.get(TableRegistry.class).register(EntityManager.plans, new Table<>(collection, "plan-read", true)
 				.withTableFiltersFactory(e-> Filters.equals("visible", true)));
 
-		context.getEntityManager().registerExportHook(new PlanExportBiConsumer());
+		context.getEntityManager().registerExportHook(new ModifyPlanAtExportHook());
 		context.getEntityManager().registerExportAllFilters(EntityManager.plans, Filters.equals("visible", true));
 	}
 
@@ -128,7 +128,7 @@ public class PlanPlugin extends AbstractControllerPlugin {
 		}
 	}
 
-	public static class PlanExportBiConsumer implements BiConsumer<Object, ExportContext> {
+	public static class ModifyPlanAtExportHook implements BiConsumer<Object, ExportContext> {
 
 		@Override
 		public void accept(Object object_, ExportContext exportContext) {
