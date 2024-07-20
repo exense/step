@@ -43,7 +43,7 @@ public class JMeterFunctionTypeLocalPlugin extends AbstractExecutionEnginePlugin
                 config.putProperty(JMeterFunctionType.JMETER_HOME_CONFIG_PROPERTY, jMeterHome);
             }
             config.putProperty(
-                    AbstractFunctionType.MISSING_HOME_CONFIG_MESSAGE_PROPERTY,
+                    JMeterFunctionType.MISSING_JMETER_HOME_MESSAGE_PROPERTY,
                     String.format(AbstractFunctionType.MISSING_ENV_VARIABLE_MESSAGE, JMETER_HOME_ENV_VAR)
             );
 
