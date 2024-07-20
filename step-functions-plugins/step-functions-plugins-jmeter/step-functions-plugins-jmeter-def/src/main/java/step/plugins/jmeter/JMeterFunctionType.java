@@ -35,7 +35,7 @@ public class JMeterFunctionType extends AbstractFunctionType<JMeterFunction> {
 
 	private static final Logger log = LoggerFactory.getLogger(JMeterFunctionType.class);
 	public static final String JMETER_HOME_CONFIG_PROPERTY = "plugins.jmeter.home";
-	public static final String MISSING_JMETER_HOME_MESSAGE_PROPERTY = "plugins.home.missing.message";
+	public static final String MISSING_JMETER_HOME_MESSAGE_PROPERTY = "plugins.jmeter.home.missing.message";
 
 	private FileVersionId handlerJar;
 	protected final Configuration configuration;
