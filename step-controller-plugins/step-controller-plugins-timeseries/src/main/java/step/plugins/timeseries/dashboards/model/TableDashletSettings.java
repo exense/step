@@ -1,14 +1,10 @@
 package step.plugins.timeseries.dashboards.model;
 
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import jakarta.validation.constraints.NotNull;
 import step.core.timeseries.metric.MetricAggregation;
 import step.plugins.table.settings.ScreenInputColumnSettings;
 
 import java.util.List;
-
-import static step.functions.Function.JSON_CLASS_FIELD;
 
 public class TableDashletSettings {
     
@@ -29,6 +25,7 @@ public class TableDashletSettings {
         @NotNull
         private TableChartColumn column;
         
+        @NotNull
         private MetricAggregation aggregation;
         
         @NotNull
@@ -66,6 +63,14 @@ public class TableDashletSettings {
             return this;
         }
 
+        public MetricAggregation getAggregation() {
+            return aggregation;
+        }
+
+        public ColumnSelection setAggregation(MetricAggregation aggregation) {
+            this.aggregation = aggregation;
+            return this;
+        }
     }
 
 }

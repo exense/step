@@ -277,8 +277,8 @@ public class DashboardsGenerator {
                 new TableDashletSettings.ColumnSelection(TableChartColumn.PCL_1, new MetricAggregation(MetricAggregationType.PERCENTILE, Map.of(PCL_VALUE_KEY, 80D))),
                 new TableDashletSettings.ColumnSelection(TableChartColumn.PCL_2, new MetricAggregation(MetricAggregationType.PERCENTILE, Map.of(PCL_VALUE_KEY, 90D))),
                 new TableDashletSettings.ColumnSelection(TableChartColumn.PCL_3, new MetricAggregation(MetricAggregationType.PERCENTILE, Map.of(PCL_VALUE_KEY, 99D))),
-                new TableDashletSettings.ColumnSelection(TableChartColumn.TPS, new MetricAggregation(MetricAggregationType.RATE, Map.of(RATE_UNIT_KEY, "second"))),
-                new TableDashletSettings.ColumnSelection(TableChartColumn.TPH, new MetricAggregation(MetricAggregationType.RATE, Map.of(RATE_UNIT_KEY, "hour")))
+                new TableDashletSettings.ColumnSelection(TableChartColumn.TPS, new MetricAggregation(MetricAggregationType.RATE, Map.of(RATE_UNIT_KEY, "s"))),
+                new TableDashletSettings.ColumnSelection(TableChartColumn.TPH, new MetricAggregation(MetricAggregationType.RATE, Map.of(RATE_UNIT_KEY, "h")))
         );
     }
 
