@@ -105,7 +105,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 	public void initializeData(GlobalContext context) throws Exception {
 		super.initializeData(context);
 		timeSeries.createIndexes(new LinkedHashSet<>(List.of(new IndexField("eId", Order.ASC, String.class))));
-		List<MetricType> metrics = getOrCreateMetricsIfNeeded(context.require(MetricTypeAccessor.class));
+		List<MetricType> metrics = createOrUpdateMetrics(context.require(MetricTypeAccessor.class));
 
 		DashboardView existingExecutionDashboard = dashboardAccessor.findByCriteria(
 				Map.of(
@@ -135,7 +135,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 	}
 	
 	
-	private List<MetricType> getOrCreateMetricsIfNeeded(MetricTypeAccessor metricTypeAccessor) {
+	private List<MetricType> createOrUpdateMetrics(MetricTypeAccessor metricTypeAccessor) {
 		// TODO create a builder for units
 		// TODO metrics shouldn't be defined centrally but in each plugin they belong to. Implement a central registration service
 		List<MetricType> metrics = Arrays.asList(
