@@ -24,6 +24,7 @@ import step.core.artefacts.AbstractArtefact;
 import step.core.collections.Collection;
 import step.core.collections.Filters;
 import step.core.entities.EntityManager;
+import step.core.export.ExportContext;
 import step.core.plans.builder.PlanBuilder;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
@@ -34,6 +35,7 @@ import step.plugins.table.settings.*;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.BiConsumer;
 
 @Plugin(dependencies= {ScreenTemplatePlugin.class, TableSettingsPlugin.class})
 public class PlanPlugin extends AbstractControllerPlugin {
@@ -83,6 +85,9 @@ public class PlanPlugin extends AbstractControllerPlugin {
 		Collection<Plan> collection = context.getCollectionFactory().getCollection(EntityManager.plans, Plan.class);
 		context.get(TableRegistry.class).register(EntityManager.plans, new Table<>(collection, "plan-read", true)
 				.withTableFiltersFactory(e-> Filters.equals("visible", true)));
+
+		context.getEntityManager().registerExportHook(new ModifyPlanAtExportHook());
+		context.getEntityManager().registerExportAllFilters(EntityManager.plans, Filters.equals("visible", true));
 	}
 
 	@Override
@@ -123,5 +128,18 @@ public class PlanPlugin extends AbstractControllerPlugin {
 		}
 	}
 
+	public static class ModifyPlanAtExportHook implements BiConsumer<Object, ExportContext> {
+
+		@Override
+		public void accept(Object object_, ExportContext exportContext) {
+			if (object_ instanceof Plan) {
+				Plan plan = (Plan) object_;
+				//change visibility of plans
+				if (!plan.isVisible()) {
+					plan.setVisible(true);
+				}
+			}
+		}
+	}
 
 }
