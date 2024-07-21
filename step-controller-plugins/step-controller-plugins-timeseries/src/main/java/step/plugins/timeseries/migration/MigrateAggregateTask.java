@@ -25,12 +25,22 @@ public class MigrateAggregateTask extends MigrationTask {
 
     @Override
     public void runUpgradeScript() {
+        System.out.println("RUNNING MIGRATION SCRIPT");
+        updateMetricTypes();
         updateCustomDashboards();
     }
 
     @Override
     public void runDowngradeScript() {
 
+    }
+    
+    private void updateMetricTypes() {
+        metricsCollection.find(Filters.empty(), null, null, null, 0).forEach(metric -> {
+            String aggregation = metric.getString("defaultAggregation");
+            metric.put("defaultAggregation", transformAggregation(aggregation, null));
+            metricsCollection.save(metric);
+        });
     }
     
      private void updateCustomDashboards() {
@@ -44,9 +54,11 @@ public class MigrateAggregateTask extends MigrationTask {
                         DocumentObject chartSettings = dashlet.getObject("chartSettings");
                         updateAxesSettings(chartSettings.getObject("primaryAxes"));
                         updateAxesSettings(chartSettings.getObject("secondaryAxes"));
+                        break;
                     case "TABLE":
                         DocumentObject tableSettings = dashlet.getObject("tableSettings");
                         updateTableSettings(tableSettings);
+                        break;
                     default: throw new IllegalStateException("Invalid dashlet type found: " + dashletType);
                 }
 

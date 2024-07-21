@@ -25,6 +25,7 @@ import step.plugins.measurements.MeasurementPlugin;
 import step.plugins.timeseries.dashboards.DashboardsGenerator;
 import step.plugins.timeseries.dashboards.model.*;
 import step.plugins.timeseries.dashboards.DashboardAccessor;
+import step.plugins.timeseries.migration.MigrateAggregateTask;
 import step.plugins.timeseries.migration.MigrateDashboardsTask;
 
 import java.util.*;
@@ -58,6 +59,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 	public void serverStart(GlobalContext context) {
 		MigrationManager migrationManager = context.require(MigrationManager.class);
 		migrationManager.register(MigrateDashboardsTask.class);
+		migrationManager.register(MigrateAggregateTask.class);
 		
 		Configuration configuration = context.getConfiguration();
 		Integer resolutionPeriod = configuration.getPropertyAsInteger(RESOLUTION_PERIOD_PROPERTY, 1000);
