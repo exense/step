@@ -22,6 +22,7 @@ import step.core.controller.ControllerSettingAccessorImpl;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
+import step.core.objectenricher.ObjectHookRegistry;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessorImpl;
 import step.core.plans.runner.PlanRunnerResult;
@@ -37,10 +38,14 @@ import step.parameter.Parameter;
 import step.parameter.ParameterManager;
 import step.parameter.ParameterScope;
 import step.parameter.automation.AutomationPackageParametersRegistration;
+import step.plugins.functions.types.CompositeFunction;
+import step.plugins.functions.types.CompositeFunctionType;
 import step.plugins.java.GeneralScriptFunction;
 import step.plugins.java.GeneralScriptFunctionType;
 import step.plugins.jmeter.JMeterFunction;
 import step.plugins.jmeter.JMeterFunctionType;
+import step.plugins.node.NodeFunction;
+import step.plugins.node.NodeFunctionType;
 import step.resources.LocalResourceManagerImpl;
 import step.resources.Resource;
 
@@ -61,6 +66,9 @@ import static step.automation.packages.AutomationPackagePlugin.AUTOMATION_PACKAG
 import static step.automation.packages.AutomationPackageTestUtils.*;
 
 public class AutomationPackageManagerOSTest {
+
+    // how many keywords are defined in original sample
+    public static final int KEYWORDS_COUNT = 6;
 
     private AutomationPackageManager manager;
     private AutomationPackageAccessorImpl automationPackageAccessor;
@@ -86,6 +94,8 @@ public class AutomationPackageManagerOSTest {
         Configuration configuration = new Configuration();
         AbstractFunctionType<?> jMeterFunctionType = new JMeterFunctionType(configuration);
         AbstractFunctionType<?> generalScriptFunctionType = new GeneralScriptFunctionType(configuration);
+        AbstractFunctionType<?> compositeFunctionType = new CompositeFunctionType(new ObjectHookRegistry());
+        AbstractFunctionType<?> nodeFunctionType = new NodeFunctionType();
 
         Mockito.when(functionTypeRegistry.getFunctionTypeByFunction(Mockito.any())).thenAnswer(invocationOnMock -> {
             Object function = invocationOnMock.getArgument(0);
@@ -93,7 +103,12 @@ public class AutomationPackageManagerOSTest {
                 return jMeterFunctionType;
             } else if (function instanceof GeneralScriptFunction) {
                 return generalScriptFunctionType;
-            } else {
+            } else if (function instanceof CompositeFunction){
+                return compositeFunctionType;
+            } else if (function instanceof NodeFunction){
+                return nodeFunctionType;
+            }
+            else {
                 return null;
             }
         });
@@ -149,9 +164,9 @@ public class AutomationPackageManagerOSTest {
             r.storedPackage = automationPackageAccessor.get(resultId);
             Assert.assertEquals("My package", r.storedPackage.getAttribute(AbstractOrganizableObject.NAME));
 
-            // 3 plans have been updated, 1 plan has been added
+            // 4 plans have been updated, 1 plan has been added
             List<Plan> storedPlans = planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(resultId)).collect(Collectors.toList());
-            Assert.assertEquals(4, storedPlans.size());
+            Assert.assertEquals(5, storedPlans.size());
 
             Plan updatedPlan = storedPlans.stream().filter(p -> p.getAttribute(AbstractOrganizableObject.NAME).equals(PLAN_NAME_FROM_DESCRIPTOR)).findFirst().orElse(null);
             Assert.assertNotNull(updatedPlan);
@@ -159,9 +174,9 @@ public class AutomationPackageManagerOSTest {
 
             Assert.assertNotNull(storedPlans.stream().filter(p -> p.getAttribute(AbstractOrganizableObject.NAME).equals(PLAN_NAME_FROM_DESCRIPTOR_2)).findFirst().orElse(null));
 
-            // 3 functions have been updated, 1 function has been added
+            // 6 functions have been updated, 1 function has been added
             List<Function> storedFunctions = functionAccessor.findManyByCriteria(getAutomationPackageIdCriteria(resultId)).collect(Collectors.toList());
-            Assert.assertEquals(4, storedFunctions.size());
+            Assert.assertEquals(KEYWORDS_COUNT + 1, storedFunctions.size());
 
             Function updatedFunction = storedFunctions.stream().filter(f -> f.getAttribute(AbstractOrganizableObject.NAME).equals(J_METER_KEYWORD_1)).findFirst().orElse(null);
             Assert.assertNotNull(updatedFunction);
@@ -290,21 +305,30 @@ public class AutomationPackageManagerOSTest {
             r.storedPackage = automationPackageAccessor.get(result);
             Assert.assertEquals("My package", r.storedPackage.getAttribute(AbstractOrganizableObject.NAME));
 
-            // 2 annotated plans and 1 plan from yaml descriptor
+            // 2 annotated plans and 2 plans from yaml descriptor
             List<Plan> storedPlans = planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
-            Assert.assertEquals(3, storedPlans.size());
+            Assert.assertEquals(4, storedPlans.size());
 
             r.storedPlans = storedPlans;
             Plan planFromDescriptor = findPlanByName(storedPlans, PLAN_NAME_FROM_DESCRIPTOR);
             Assert.assertNotNull(planFromDescriptor);
             Assert.assertNotNull(findPlanByName(storedPlans, PLAN_FROM_PLANS_ANNOTATION));
             Assert.assertNotNull(findPlanByName(storedPlans, INLINE_PLAN));
+            Assert.assertNotNull(findPlanByName(storedPlans, PLAN_NAME_WITH_COMPOSITE));
 
             r.storedFunctions = functionAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
-            Assert.assertEquals(3, r.storedFunctions.size());
+            Assert.assertEquals(KEYWORDS_COUNT, r.storedFunctions.size());
             findFunctionByClassAndName(r.storedFunctions, JMeterFunction.class, J_METER_KEYWORD_1);
             findFunctionByClassAndName(r.storedFunctions, GeneralScriptFunction.class, ANNOTATED_KEYWORD);
             findFunctionByClassAndName(r.storedFunctions, GeneralScriptFunction.class, INLINE_PLAN);
+            findFunctionByClassAndName(r.storedFunctions, NodeFunction.class, NODE_KEYWORD);
+            CompositeFunction compositeKeyword = (CompositeFunction) findFunctionByClassAndName(r.storedFunctions, CompositeFunction.class, COMPOSITE_KEYWORD);
+            // by default, the 'executeLocally' flag for composite is 'true'
+            Assert.assertTrue(compositeKeyword.isExecuteLocally());
+            Assert.assertNotNull(compositeKeyword.getPlan());
+
+            // the default plan name is taken from keyword name
+            Assert.assertEquals("Composite keyword from AP", compositeKeyword.getPlan().getAttribute(AbstractOrganizableObject.NAME));
 
             List<ExecutiontTaskParameters> storedTasks = executionTaskAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
             Assert.assertEquals(1, storedTasks.size());

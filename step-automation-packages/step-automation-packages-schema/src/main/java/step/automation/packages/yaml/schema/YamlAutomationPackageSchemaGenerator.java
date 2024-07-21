@@ -87,7 +87,7 @@ public class YamlAutomationPackageSchemaGenerator {
 
     protected JsonObjectBuilder prepareDefinitions() throws JsonSchemaPreparationException {
         JsonObjectBuilder result = keywordSchemaGenerator.createKeywordDefs()
-                .addAll(planSchemaGenerator.createDefs());
+                .addAll(planSchemaGenerator.createDefs(false));
 
         for (AutomationPackageJsonSchemaExtension extension : extensions) {
             if (extension.getExtendedDefinitions() != null) {
@@ -119,10 +119,7 @@ public class YamlAutomationPackageSchemaGenerator {
         objectBuilder.add("plans",
                 jsonProvider.createObjectBuilder()
                         .add("type", "array")
-                        .add("items", jsonProvider.createObjectBuilder()
-                                .add("type", "object")
-                                .add("properties", planSchemaGenerator.createYamlPlanProperties(false)))
-                        .add("required", jsonProvider.createArrayBuilder().add("name").add("root"))
+                        .add("items", YamlJsonSchemaHelper.addRef(jsonProvider.createObjectBuilder(), YamlJsonSchemaHelper.PLAN_DEF))
         );
 
         objectBuilder.add("fragments",
