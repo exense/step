@@ -43,7 +43,7 @@ public class TokenForecastingContext {
         HashMap<String, String> provisioningParameters = new HashMap<>();
         supportedParameters.forEach(p -> p.tokenSelectionCriteriaToAgentPoolProvisioningParameters.accept(criteria, provisioningParameters));
 
-        Key key = new Key(poolName, provisioningParameters, criteria);
+        Key key = new Key(poolName, provisioningParameters);
         requireToken(key, count);
         return key;
     }
@@ -55,12 +55,10 @@ public class TokenForecastingContext {
     protected static class Key {
         String poolTemplateName;
         Map<String, String> provisioningParameters;
-        Map<String, Interest> criteria;
 
-        public Key(String poolTemplateName, Map<String, String> provisioningParameters, Map<String, Interest> criteria) {
+        public Key(String poolTemplateName, Map<String, String> provisioningParameters) {
             this.poolTemplateName = poolTemplateName;
             this.provisioningParameters = provisioningParameters;
-            this.criteria = criteria;
         }
 
         @Override
@@ -83,6 +81,11 @@ public class TokenForecastingContext {
 
     private Optional<AgentPoolSpec> getBestMatchingPool(Map<String, Interest> criteria) {
         PreProvisioningTokenAffinityEvaluator affinityEvaluator = new PreProvisioningTokenAffinityEvaluator();
+        // Find the agent pool that best matches the criteria among the available agent pools
+        // Technically we search the pool that has with the highest affinity score as follows:
+        // - for each available pool we calculate the affinity score with the criteria using the configured affinityEvaluator
+        // - we sort the resulting stream by descending score
+        // - from this list we take the first element
         return availableAgentPools.stream()
                 .map(entry -> new Object[]{affinityEvaluator.getAffinityScore(new TokenPretender(Map.of(), criteria), new TokenPretender(entry.attributes, Map.of())), entry})
                 .filter(o -> ((int) o[0]) >= 0).sorted(Comparator.comparingInt(o -> (int) o[0])).map(o -> (AgentPoolSpec) o[1])
