@@ -1913,7 +1913,7 @@
           "type" : "string"
         },
         "value" : {
-          "type" : "string"
+          "$ref" : "#/$defs/SmartDynamicValueStringDef"
         },
         "key" : {
           "type" : "string"

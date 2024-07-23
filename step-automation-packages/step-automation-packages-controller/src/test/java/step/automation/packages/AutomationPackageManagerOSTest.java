@@ -19,7 +19,9 @@ import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.Accessor;
 import step.core.collections.inmemory.InMemoryCollection;
 import step.core.controller.ControllerSettingAccessorImpl;
+import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.dynamicbeans.DynamicValueResolver;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
 import step.core.plans.Plan;
@@ -28,6 +30,7 @@ import step.core.plans.runner.PlanRunnerResult;
 import step.core.scheduler.*;
 import step.datapool.excel.ExcelDataPool;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
+import step.expressions.ExpressionHandler;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessorImpl;
 import step.functions.manager.FunctionManagerImpl;
@@ -55,8 +58,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 import static step.automation.packages.AutomationPackagePlugin.AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS_DEFAULT;
 import static step.automation.packages.AutomationPackageTestUtils.*;
 
@@ -79,7 +81,7 @@ public class AutomationPackageManagerOSTest {
         this.automationPackageAccessor = new AutomationPackageAccessorImpl(new InMemoryCollection<>());
         this.functionAccessor = new FunctionAccessorImpl(new InMemoryCollection<>());
         this.parameterAccessor = new AbstractAccessor<>(new InMemoryCollection<>());
-        ParameterManager parameterManager = new ParameterManager(this.parameterAccessor, null, "groovy");
+        ParameterManager parameterManager = new ParameterManager(this.parameterAccessor, null, "groovy", new DynamicBeanResolver(new DynamicValueResolver(new ExpressionHandler())));
 
         FunctionTypeRegistry functionTypeRegistry = Mockito.mock(FunctionTypeRegistry.class);
 
@@ -181,21 +183,21 @@ public class AutomationPackageManagerOSTest {
             // new task is configured as inactive in sample
             ExecutiontTaskParameters newTask = storedTasks.stream().filter(t -> t.getAttribute(AbstractOrganizableObject.NAME).equals(SCHEDULE_2)).findFirst().orElse(null);
             Assert.assertNotNull(newTask);
-            Assert.assertFalse(newTask.isActive());
+            assertFalse(newTask.isActive());
 
             // 1 parameter is saved
             List<Parameter> allParameters = parameterAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result.getId())).collect(Collectors.toList());
             Assert.assertEquals(1, allParameters.size());
             Parameter parameter = allParameters.get(0);
             assertEquals("myKey", parameter.getKey());
-            assertEquals("myValue", parameter.getValue());
+            assertEquals("myValue", parameter.getValue().get());
             assertEquals("some description", parameter.getDescription());
             assertEquals("abc", parameter.getActivationExpression().getScript());
             assertNull(parameter.getActivationExpression().getScriptEngine());
             assertEquals((Integer) 10, parameter.getPriority());
             assertEquals(true, parameter.getProtectedValue());
             assertEquals(ParameterScope.GLOBAL, parameter.getScope());
-            assertEquals("entity", parameter.getScopeEntity());
+            assertEquals(null, parameter.getScopeEntity());
         }
 
         // 3. Upload the original sample again - added plans/functions/tasks from step 2 should be removed
@@ -318,10 +320,10 @@ public class AutomationPackageManagerOSTest {
             Assert.assertEquals(planFromDescriptor.getId().toHexString(), r.storedTask.getExecutionsParameters().getRepositoryObject().getRepositoryParameters().get("planid"));
 
             List<Parameter> allParameters = parameterAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
-            Assert.assertEquals(2, allParameters.size());
+            Assert.assertEquals(3, allParameters.size());
             Parameter parameter = allParameters.get(0);
             assertEquals("myKey", parameter.getKey());
-            assertEquals("myValue", parameter.getValue());
+            assertEquals("myValue", parameter.getValue().get());
             assertEquals("some description", parameter.getDescription());
             assertEquals("abc", parameter.getActivationExpression().getScript());
             assertNull(parameter.getActivationExpression().getScriptEngine());
@@ -332,7 +334,14 @@ public class AutomationPackageManagerOSTest {
 
             parameter = allParameters.get(1);
             assertEquals("mySimpleKey", parameter.getKey());
-            assertEquals("mySimpleValue", parameter.getValue());
+            assertFalse(parameter.getValue().isDynamic());
+            assertEquals("mySimpleValue", parameter.getValue().get());
+            assertEquals(ParameterScope.GLOBAL, parameter.getScope()); // global by default
+
+            parameter = allParameters.get(2);
+            assertEquals("myDynamicParam", parameter.getKey());
+            assertTrue(parameter.getValue().isDynamic());
+            assertEquals("mySimpleKey", parameter.getValue().getExpression());
             assertEquals(ParameterScope.GLOBAL, parameter.getScope()); // global by default
         }
         return r;
