@@ -45,6 +45,14 @@
             <artifactId>simpleclient</artifactId>
             <version>${prometheus-client.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>ch.exense.step</groupId>
+            <artifactId>step-controller-server</artifactId>
+            <version>${project.version}</version>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>

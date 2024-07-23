@@ -31,7 +31,7 @@ import groovy.lang.Binding;
 import groovy.lang.MissingPropertyException;
 import groovy.lang.Script;
 
-public class ExpressionHandler {
+public class ExpressionHandler implements AutoCloseable {
 		
 	private static Logger logger = LoggerFactory.getLogger(ExpressionHandler.class);
 	
@@ -133,5 +133,10 @@ public class ExpressionHandler {
 			}
 			throw e;
 		}
+	}
+
+	@Override
+	public void close() {
+		groovyPool.close();
 	}
 }

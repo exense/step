@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import step.core.access.InMemoryUserAccessor;
 import step.core.access.User;
 import step.core.access.UserAccessor;
+import step.core.artefacts.handlers.ArtefactHandlerRegistry;
 import step.core.artefacts.reports.InMemoryReportNodeAccessor;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeAccessor;
@@ -116,6 +117,7 @@ public class GlobalContextBuilder {
 				.register(new Entity<ResourceRevision, ResourceRevisionAccessor>(EntityManager.resourceRevisions,
 						resourceRevisionAccessor, ResourceRevision.class));
 
+		context.setArtefactHandlerRegistry(new ArtefactHandlerRegistry());
 		return context;
 	}
 }

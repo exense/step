@@ -299,9 +299,7 @@ public class ExecutionEngine implements AutoCloseable {
 
 	public ExecutionContext newExecutionContext(String executionId, ExecutionParameters executionParameters, ExecutiontTaskParameters executiontTaskParameters) {
 		ExecutionContext executionContext = new ExecutionContext(executionId, executionParameters);
-		executionContext.useStandardAttributesFromParentContext(executionEngineContext);
-		executionContext.useReportingAttributesFromParentContext(executionEngineContext);
-		executionContext.useSourceAttributesFromParentContext(executionEngineContext);
+		executionContext.useAllAttributesFromParentContext(executionEngineContext);
 
 		// Use a layered plan accessor to isolate the local context from the parent one
 		// This allow temporary persistence of plans for the duration of the execution

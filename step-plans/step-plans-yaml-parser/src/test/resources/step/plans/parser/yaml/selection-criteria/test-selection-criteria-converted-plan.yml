@@ -42,6 +42,14 @@ root:
             - stringInput:
                 expression: "'abc'"
             - intInput: 777
+            - mapInput:
+                keyA:
+                  expression: "expressionA"
+                keyB: "valueB"
+            - arrayInput:
+                - expression: "expressionB"
+                - 3
+                - 5
           keyword:
             name:
               expression: "'myKeyword4'"
