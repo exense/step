@@ -34,8 +34,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-import static step.cli.Parameters.CONFIG;
-
 
 @Command(name = "step",
         mixinStandardHelpOptions = true,
@@ -59,11 +57,14 @@ public class StepConsole implements Callable<Integer> {
                 .execute("help");
     }
 
-    public static abstract class AbstractStepCommand {
+    public static abstract class AbstractStepCommand implements Callable<Integer> {
 
         public static final String STEP_URL_SHORT = "-u";
         public static final String STEP_URL = "--stepUrl";
+        public static final String PROJECT_NAME = "--projectName";
+        public static final String TOKEN = "--token";
         public static final String VERBOSE = "--verbose";
+        public static final String CONFIG = "c";
 
         @CommandLine.Spec
         protected CommandLine.Model.CommandSpec spec;
@@ -74,9 +75,11 @@ public class StepConsole implements Callable<Integer> {
         @Option(names = {STEP_URL_SHORT, STEP_URL}, description = "The URL of Step server")
         protected String stepUrl;
 
-        // The auth token for Step EE and the project name (for EE) must be used together
-        @CommandLine.ArgGroup(exclusive = false)
-        protected StepEeRequiredOptions stepEeRequiredOptions;
+        @Option(names = {PROJECT_NAME}, description = "The project name in Step", required = true)
+        protected String stepProjectName;
+
+        @Option(names = {TOKEN}, required = true)
+        protected String authToken;
 
         @Option(names = {"--stepUserId"})
         protected String stepUserId;
@@ -84,20 +87,12 @@ public class StepConsole implements Callable<Integer> {
         @Option(names = {VERBOSE}, defaultValue = "false")
         protected boolean verbose;
 
-        public static class StepEeRequiredOptions {
-            @Option(names = {"--projectName"}, description = "The project name in Step", required = true)
-            protected String stepProjectName;
-
-            @Option(names = {"--token"}, required = true)
-            protected String authToken;
-        }
-
         protected String getStepProjectName() {
-            return stepEeRequiredOptions == null ? null : stepEeRequiredOptions.stepProjectName;
+            return stepProjectName;
         }
 
         protected String getAuthToken() {
-            return stepEeRequiredOptions == null ? null : stepEeRequiredOptions.authToken;
+            return authToken;
         }
 
         public void checkRequiredParam(CommandLine.Model.CommandSpec spec, String value, String... optionLabels) {
@@ -107,8 +102,31 @@ public class StepConsole implements Callable<Integer> {
             }
         }
 
+        public void checkEeOptionsConsistency(CommandLine.Model.CommandSpec spec) {
+            // The auth token for Step EE and the project name (for EE) must be used together
+            if(getAuthToken() != null && !getAuthToken().isEmpty()){
+                checkRequiredParam(spec, getStepProjectName(), PROJECT_NAME);
+            }
+
+            if(getStepProjectName() != null && !getStepProjectName().isEmpty()){
+                checkRequiredParam(spec, getAuthToken(), TOKEN);
+            }
+        }
+
         public void checkStepUrlRequired() {
             checkRequiredParam(spec, stepUrl, STEP_URL_SHORT, STEP_URL);
+        }
+
+        public void printConfigIfRequired() {
+            if (verbose && spec.defaultValueProvider() instanceof StepDefaultValuesProvider) {
+                ((StepDefaultValuesProvider) spec.defaultValueProvider()).printAppliedConfig();
+            }
+        }
+
+        @Override
+        public Integer call() throws Exception {
+            printConfigIfRequired();
+            return 0;
         }
     }
 
@@ -182,20 +200,23 @@ public class StepConsole implements Callable<Integer> {
                 description = "The CLI interface to deploy automation packages in Step",
                 defaultValueProvider = StepDefaultValuesProvider.class,
                 subcommands = {CommandLine.HelpCommand.class})
-        public static class ApDeployCommand extends AbstractApCommand implements Callable<Integer> {
+        public static class ApDeployCommand extends AbstractApCommand {
 
             @Option(names = {"--async"}, defaultValue = "false", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
             protected boolean async;
 
             @Override
             public Integer call() throws Exception {
+                super.call();
                 handleApDeployCommand();
                 return 0;
             }
 
             protected void handleApDeployCommand() {
+                printConfigIfRequired();
                 checkStepUrlRequired();
-                new AbstractDeployAutomationPackageTool(stepUrl, stepEeRequiredOptions.stepProjectName, stepEeRequiredOptions.authToken, async) {
+                checkEeOptionsConsistency(spec);
+                new AbstractDeployAutomationPackageTool(stepUrl, getStepProjectName(), getAuthToken(), async) {
                     @Override
                     protected File getFileToUpload() throws StepCliExecutionException {
                         return prepareApFile(apFile);
@@ -235,6 +256,7 @@ public class StepConsole implements Callable<Integer> {
 
             @Override
             public Integer call() throws Exception {
+                super.call();
                 if (!local) {
                     handleApRemoteExecuteCommand();
                 } else {
@@ -253,6 +275,7 @@ public class StepConsole implements Callable<Integer> {
 
             protected void handleApRemoteExecuteCommand() {
                 checkStepUrlRequired();
+                checkEeOptionsConsistency(spec);
                 new AbstractExecuteAutomationPackageTool(
                         stepUrl, getStepProjectName(), stepUserId, getAuthToken(),
                         executionParameters, executionTimeoutS,

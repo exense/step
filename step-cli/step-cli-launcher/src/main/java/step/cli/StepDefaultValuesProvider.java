@@ -26,9 +26,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
-class StepDefaultValuesProvider implements CommandLine.IDefaultValueProvider {
+public class StepDefaultValuesProvider implements CommandLine.IDefaultValueProvider {
 
     public static final String DEFAULT_CONFIG_FILE = System.getProperty("user.home") + "/stepcli.properties";
 
@@ -36,11 +37,12 @@ class StepDefaultValuesProvider implements CommandLine.IDefaultValueProvider {
 
     private boolean configOptionApplied = false;
     private CommandLine.PropertiesDefaultProvider delegate;
+    private Properties mergedProperties;
 
     @Override
     public String defaultValue(CommandLine.Model.ArgSpec argSpec) throws Exception {
         if (!configOptionApplied) {
-            CommandLine.Model.OptionSpec customConfigFile = argSpec.command().findOption(Parameters.CONFIG);
+            CommandLine.Model.OptionSpec customConfigFile = argSpec.command().findOption(StepConsole.AbstractStepCommand.CONFIG);
 
             if (customConfigFile != null) {
                 configOptionApplied = true;
@@ -59,9 +61,9 @@ class StepDefaultValuesProvider implements CommandLine.IDefaultValueProvider {
                 infoText += " properties from " + customConfigFiles + " and";
                 infoText += " default config from " + defaultConfigFile;
                 log.info(infoText) ;
-                Properties properties = mergeProperties(customConfigFiles, defaultConfigFile);
+                this.mergedProperties = mergeProperties(customConfigFiles, defaultConfigFile);
 
-                this.delegate = new CommandLine.PropertiesDefaultProvider(properties);
+                this.delegate = new CommandLine.PropertiesDefaultProvider(mergedProperties);
             }
         }
         if (delegate != null) {
@@ -97,5 +99,15 @@ class StepDefaultValuesProvider implements CommandLine.IDefaultValueProvider {
             return true;
         }
         return false;
+    }
+
+    public void printAppliedConfig() {
+        if (mergedProperties != null) {
+            StringBuilder builder = new StringBuilder("Merged configuration files:");
+            for (Map.Entry<Object, Object> entries : mergedProperties.entrySet()) {
+                builder.append("\n").append("- ").append(entries.getKey().toString()).append("=").append(entries.getValue().toString());
+            }
+            log.info(builder.toString());
+        }
     }
 }
