@@ -213,7 +213,6 @@ public class StepConsole implements Callable<Integer> {
             }
 
             protected void handleApDeployCommand() {
-                printConfigIfRequired();
                 checkStepUrlRequired();
                 checkEeOptionsConsistency(spec);
                 new AbstractDeployAutomationPackageTool(stepUrl, getStepProjectName(), getAuthToken(), async) {
