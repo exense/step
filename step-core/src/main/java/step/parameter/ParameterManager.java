@@ -76,16 +76,13 @@ public class ParameterManager {
 			throw new ParameterManagerException("Scope entity cannot be set for parameters with GLOBAL scope.");
 		}
 
-		if(sourceParameter != null) {
-			// the parameter has been updated but the value hasn't been changed
+		if(sourceParameter != null && isProtected(sourceParameter)) {
+			// protected value should not be changed
+			newParameter.setProtectedValue(true);
+			// if the protected mask is set as value, reuse source value (i.e. value hasn't been changed)
 			DynamicValue<String> newParameterValue = newParameter.getValue();
 			if(newParameterValue != null && !newParameterValue.isDynamic() && newParameterValue.get().equals(PROTECTED_VALUE)) {
 				newParameter.setValue(sourceParameter.getValue());
-			}
-
-			if(isProtected(sourceParameter)) {
-				// protected value should not be changed
-				newParameter.setProtectedValue(true);
 			}
 		}
 
