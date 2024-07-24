@@ -85,6 +85,9 @@ public class MigrateAggregateTask extends MigrationTask {
         if (Objects.equals(oldAggregation, "PERCENTILE")) {
             newAggregation.put("params", Map.of("pclValue", oldPclValue != null ? oldPclValue : 90));
         }
+        if (Objects.equals(oldAggregation, "RATE")) {
+            newAggregation.put("params", Map.of("rateUnit", "h"));
+        }
         return newAggregation;
     }
     
