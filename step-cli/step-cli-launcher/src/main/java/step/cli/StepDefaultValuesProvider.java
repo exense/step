@@ -25,6 +25,7 @@ import picocli.CommandLine;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -35,21 +36,23 @@ public class StepDefaultValuesProvider implements CommandLine.IDefaultValueProvi
 
     private static final Logger log = LoggerFactory.getLogger(StepDefaultValuesProvider.class);
 
-    private boolean configOptionApplied = false;
     private CommandLine.PropertiesDefaultProvider delegate;
+    private List<String> configFilesForDelegate = null;
     private Properties mergedProperties;
 
     @Override
     public String defaultValue(CommandLine.Model.ArgSpec argSpec) throws Exception {
-        if (!configOptionApplied) {
-            CommandLine.Model.OptionSpec customConfigFile = argSpec.command().findOption(StepConsole.AbstractStepCommand.CONFIG);
+        CommandLine.Model.OptionSpec customConfigFile = argSpec.command().findOption(StepConsole.AbstractStepCommand.CONFIG);
 
-            if (customConfigFile != null) {
-                configOptionApplied = true;
+        if (customConfigFile != null) {
+            List<String> customConfigFiles = customConfigFile.originalStringValues();
 
-                List<String> customConfigFiles = customConfigFile.originalStringValues();
+            if (configFilesForDelegate == null || !configFilesForDelegate.equals(customConfigFiles)) {
+                // for some parameters (like boolean flags) the value for customConfigFiles is for some reason not passed
+                // https://github.com/remkop/picocli/issues/2326
+                // so for each argSpec we need to make a recheck to be sure that we don't miss the value of used --config option
 
-                // default value defined in annotation
+                // default value defined in field
                 String defaultConfigFile = customConfigFile.defaultValue();
 
                 if (defaultConfigFile == null) {
@@ -60,12 +63,14 @@ public class StepDefaultValuesProvider implements CommandLine.IDefaultValueProvi
                 String infoText = "Applying";
                 infoText += " properties from " + customConfigFiles + " and";
                 infoText += " default config from " + defaultConfigFile;
-                log.info(infoText) ;
+                log.info(infoText);
                 this.mergedProperties = mergeProperties(customConfigFiles, defaultConfigFile);
 
                 this.delegate = new CommandLine.PropertiesDefaultProvider(mergedProperties);
+                this.configFilesForDelegate = new ArrayList<>(customConfigFiles);
             }
         }
+
         if (delegate != null) {
             return delegate.defaultValue(argSpec);
         } else {

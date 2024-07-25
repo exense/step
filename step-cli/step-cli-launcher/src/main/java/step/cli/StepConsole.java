@@ -64,21 +64,21 @@ public class StepConsole implements Callable<Integer> {
         public static final String PROJECT_NAME = "--projectName";
         public static final String TOKEN = "--token";
         public static final String VERBOSE = "--verbose";
-        public static final String CONFIG = "c";
+        public static final String CONFIG = "-c";
 
         @CommandLine.Spec
         protected CommandLine.Model.CommandSpec spec;
 
-        @Option(names = {"-" + CONFIG}, description = "The custom configuration file(s)")
+        @Option(names = {CONFIG}, description = "The custom configuration file(s)")
         protected List<String> config;
 
         @Option(names = {STEP_URL_SHORT, STEP_URL}, description = "The URL of Step server")
         protected String stepUrl;
 
-        @Option(names = {PROJECT_NAME}, description = "The project name in Step", required = true)
+        @Option(names = {PROJECT_NAME}, description = "The project name in Step")
         protected String stepProjectName;
 
-        @Option(names = {TOKEN}, required = true)
+        @Option(names = {TOKEN})
         protected String authToken;
 
         @Option(names = {"--stepUserId"})
