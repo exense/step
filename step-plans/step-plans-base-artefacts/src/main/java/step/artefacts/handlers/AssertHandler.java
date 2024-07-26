@@ -32,6 +32,8 @@ import step.artefacts.reports.CallFunctionReportNode;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
+import step.core.reports.Error;
+import step.core.reports.ErrorType;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -63,8 +65,9 @@ public class AssertHandler extends ArtefactHandler<Assert, AssertReportNode> {
 	protected void execute_(AssertReportNode node, Assert artefact) {
 		CallFunctionReportNode callFunctionReport = (CallFunctionReportNode) context.getVariablesManager().getVariable("callReport");
 		if (callFunctionReport == null) {
-			// TODO externalize error messages and use error codes at this place.
-			throw new RuntimeException("Keyword report unreachable. Asserts should be wrapped in Keyword nodes in the test plan.");
+			node.setError(new Error(ErrorType.TECHNICAL, "Keyword report unreachable. Asserts should be wrapped in Keyword nodes in the test plan."));
+			node.setStatus(ReportNodeStatus.TECHNICAL_ERROR);
+			return;
 		}
 		if (callFunctionReport.getStatus() == ReportNodeStatus.PASSED) {
 			JsonObject outputJson = callFunctionReport.getOutputObject();
@@ -103,6 +106,7 @@ public class AssertHandler extends ArtefactHandler<Assert, AssertReportNode> {
 				if (customErrorMessage != null && !customErrorMessage.isEmpty()) {
 					node.setMessage(customErrorMessage);
 				}
+				node.setError(new Error(ErrorType.BUSINESS, node.getMessage()));
 			}
 		} else {
 			node.setStatus(ReportNodeStatus.NORUN);

@@ -2,6 +2,7 @@ package step.plugins.timeseries.dashboards;
 
 import step.core.deployment.ControllerServiceException;
 import step.core.timeseries.metric.MetricAggregation;
+import step.core.timeseries.metric.MetricAggregationType;
 import step.core.timeseries.metric.MetricAttribute;
 import step.core.timeseries.metric.MetricType;
 import step.plugins.timeseries.TimeSeriesControllerPlugin;
@@ -18,6 +19,9 @@ import static step.plugins.timeseries.TimeSeriesExecutionPlugin.THREAD_GROUP;
 
 public class DashboardsGenerator {
 
+    private final static String PCL_VALUE_KEY = "pclValue";
+    private final static String RATE_UNIT_KEY = "rateUnit";
+    
     private final Map<String, MetricType> metricsByNames = new HashMap<>();
 
     public DashboardsGenerator(List<MetricType> metrics) {
@@ -161,12 +165,12 @@ public class DashboardsGenerator {
                 .setSize(1)
                 .setChartSettings(new ChartSettings()
                         .setPrimaryAxes(new AxesSettings()
-                                .setAggregation(MetricAggregation.AVG)
+                                .setAggregation(new MetricAggregation(MetricAggregationType.AVG))
                                 .setUnit("ms")
                                 .setDisplayType(AxesDisplayType.LINE)
                                 .setColorizationType(AxesColorizationType.STROKE))
                         .setSecondaryAxes(new AxesSettings()
-                                .setAggregation(MetricAggregation.RATE)
+                                .setAggregation(new MetricAggregation(MetricAggregationType.RATE))
                                 .setDisplayType(AxesDisplayType.BAR_CHART)
                         ));
     }
@@ -186,7 +190,7 @@ public class DashboardsGenerator {
                 .setSize(1)
                 .setChartSettings(new ChartSettings()
                         .setPrimaryAxes(new AxesSettings()
-                                .setAggregation(MetricAggregation.COUNT)
+                                .setAggregation(new MetricAggregation(MetricAggregationType.COUNT))
                                 .setUnit("1")
                                 .setDisplayType(AxesDisplayType.LINE)
                                 .setColorizationType(AxesColorizationType.FILL)));
@@ -207,7 +211,7 @@ public class DashboardsGenerator {
                 .setSize(1)
                 .setChartSettings(new ChartSettings()
                         .setPrimaryAxes(new AxesSettings()
-                                .setAggregation(MetricAggregation.AVG)
+                                .setAggregation(new MetricAggregation(MetricAggregationType.AVG))
                                 .setUnit("ms")
                                 .setDisplayType(AxesDisplayType.LINE)
                                 .setColorizationType(AxesColorizationType.STROKE)));
@@ -228,13 +232,13 @@ public class DashboardsGenerator {
                 .setSize(1)
                 .setChartSettings(new ChartSettings()
                         .setPrimaryAxes(new AxesSettings()
-                                .setAggregation(MetricAggregation.RATE)
+                                .setAggregation(new MetricAggregation(MetricAggregationType.RATE))
                                 .setUnit(null)
                                 .setDisplayType(AxesDisplayType.LINE)
                                 .setColorizationType(AxesColorizationType.STROKE))
                         .setSecondaryAxes(new AxesSettings()
                                 .setDisplayType(AxesDisplayType.BAR_CHART)
-                                .setAggregation(MetricAggregation.RATE)));
+                                .setAggregation(new MetricAggregation(MetricAggregationType.RATE))));
     }
 
     private static DashboardItem createThreadGroupDashlet(MetricType metric) {
@@ -255,16 +259,27 @@ public class DashboardsGenerator {
                 .setSize(1)
                 .setChartSettings(new ChartSettings()
                         .setPrimaryAxes(new AxesSettings()
-                                .setAggregation(MetricAggregation.MAX)
+                                .setAggregation(new MetricAggregation(MetricAggregationType.MAX))
                                 .setUnit("1")
                                 .setDisplayType(AxesDisplayType.LINE)
                                 .setColorizationType(AxesColorizationType.STROKE))
-                        .setSecondaryAxes(new AxesSettings().setAggregation(MetricAggregation.MAX)));
+                        .setSecondaryAxes(new AxesSettings().setAggregation(new MetricAggregation(MetricAggregationType.MAX))));
     }
 
 
     private static List<TableDashletSettings.ColumnSelection> getFullVisibleColumns() {
-        return Arrays.stream(TableChartColumn.values()).map(c -> new TableDashletSettings.ColumnSelection(c, true)).collect(Collectors.toList());
+        return Arrays.asList(
+                new TableDashletSettings.ColumnSelection(TableChartColumn.COUNT, new MetricAggregation(MetricAggregationType.COUNT)),
+                new TableDashletSettings.ColumnSelection(TableChartColumn.SUM, new MetricAggregation(MetricAggregationType.SUM)),
+                new TableDashletSettings.ColumnSelection(TableChartColumn.AVG, new MetricAggregation(MetricAggregationType.AVG)),
+                new TableDashletSettings.ColumnSelection(TableChartColumn.MIN, new MetricAggregation(MetricAggregationType.MIN)),
+                new TableDashletSettings.ColumnSelection(TableChartColumn.MAX, new MetricAggregation(MetricAggregationType.MAX)),
+                new TableDashletSettings.ColumnSelection(TableChartColumn.PCL_1, new MetricAggregation(MetricAggregationType.PERCENTILE, Map.of(PCL_VALUE_KEY, 80D))),
+                new TableDashletSettings.ColumnSelection(TableChartColumn.PCL_2, new MetricAggregation(MetricAggregationType.PERCENTILE, Map.of(PCL_VALUE_KEY, 90D))),
+                new TableDashletSettings.ColumnSelection(TableChartColumn.PCL_3, new MetricAggregation(MetricAggregationType.PERCENTILE, Map.of(PCL_VALUE_KEY, 99D))),
+                new TableDashletSettings.ColumnSelection(TableChartColumn.TPS, new MetricAggregation(MetricAggregationType.RATE, Map.of(RATE_UNIT_KEY, "s"))),
+                new TableDashletSettings.ColumnSelection(TableChartColumn.TPH, new MetricAggregation(MetricAggregationType.RATE, Map.of(RATE_UNIT_KEY, "h")))
+        );
     }
 
 }
