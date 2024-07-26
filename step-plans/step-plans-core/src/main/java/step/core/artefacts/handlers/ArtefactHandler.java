@@ -99,8 +99,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 
 		try {
 			dynamicBeanResolver.evaluate(artefact, getBindings());
-			artefact.setNameDynamically();
-			reportNode.setName(getReportNodeName(artefact));
+			reportNode.setName(getReportNodeNameDynamically(artefact));
 			if(filterArtefact(artefact)) {
 				reportNode.setStatus(ReportNodeStatus.SKIPPED);
 			} else {
@@ -148,8 +147,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 			context.getExecutionCallbacks().beforeReportNodeExecution(context, reportNode);
 			
 			dynamicBeanResolver.evaluate(artefact, getBindings());
-			artefact.setNameDynamically();
-			reportNode.setName(getReportNodeName(artefact));
+			reportNode.setName(getReportNodeNameDynamically(artefact));
 			reportNode.setArtefactInstance(artefact);
 			reportNode.setResolvedArtefact(artefact);
 
@@ -393,6 +391,16 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		return node;
 	}
 
+	private String getReportNodeNameDynamically(ARTEFACT artefact) {
+		String name = null;
+		if (artefact.isUseDynamicName()) {
+			name = artefact.getDynamicName().get();
+		} else {
+			name = artefact.getAttribute(AbstractArtefact.NAME);
+		}
+		return name != null ? name : "Unnamed";
+	}
+
 	private String getReportNodeName(ARTEFACT artefact) {
 		String name = artefact.getAttribute(AbstractArtefact.NAME);
 		return name != null ? name : "Unnamed";
@@ -420,10 +428,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		List<AbstractArtefact> children = artefact.getChildren();
 		if(children!=null) {
 			for(AbstractArtefact child:children) {
-				//since we update the attributes (like name based on dynamic expression we should also clone the attributes
-				AbstractArtefact abstractArtefact = dynamicBeanResolver.cloneDynamicValues(child);
-				abstractArtefact.setAttributes(new HashMap<>(child.getAttributes()));
-				result.add(abstractArtefact);
+				result.add(dynamicBeanResolver.cloneDynamicValues(child));
 			}
 		}
 		return result;
