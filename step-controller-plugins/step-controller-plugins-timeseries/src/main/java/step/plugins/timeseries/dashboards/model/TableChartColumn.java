@@ -7,9 +7,9 @@ public enum TableChartColumn {
     AVG,
     MIN,
     MAX,
-    PCL_80,
-    PCL_90,
-    PCL_99,
+    PCL_1,
+    PCL_2,
+    PCL_3,
     TPS,
     TPH
     

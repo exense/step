@@ -10,7 +10,7 @@ public class FetchBucketsRequest {
     private Set<String> groupDimensions = new HashSet<>();
     private Integer numberOfBuckets;
     private long intervalSize; // in ms
-    private List<Integer> percentiles = Collections.emptyList();
+    private List<Double> percentiles = Collections.emptyList();
     private Set<String> collectAttributeKeys;
     private int collectAttributesValuesLimit;
     private int maxNumberOfSeries;
@@ -63,11 +63,11 @@ public class FetchBucketsRequest {
         this.intervalSize = intervalSize;
     }
 
-    public List<Integer> getPercentiles() {
+    public List<Double> getPercentiles() {
         return percentiles;
     }
 
-    public FetchBucketsRequest setPercentiles(List<Integer> percentiles) {
+    public FetchBucketsRequest setPercentiles(List<Double> percentiles) {
         this.percentiles = percentiles;
         return this;
     }

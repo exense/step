@@ -13,7 +13,7 @@ public final class BucketResponseBuilder {
     private long sum;
     private long min;
     private long max;
-    private Map<Integer, Long> pclValues;
+    private Map<Double, Long> pclValues;
     private long throughputPerHour;
 
 
@@ -47,7 +47,7 @@ public final class BucketResponseBuilder {
         return this;
     }
 
-    public BucketResponseBuilder withPclValues(Map<Integer, Long> withPclValues) {
+    public BucketResponseBuilder withPclValues(Map<Double, Long> withPclValues) {
         this.pclValues = withPclValues;
         return this;
     }
