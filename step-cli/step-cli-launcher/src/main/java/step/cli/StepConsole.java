@@ -30,8 +30,10 @@ import step.automation.packages.AutomationPackageReadingException;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 
 
@@ -118,8 +120,17 @@ public class StepConsole implements Callable<Integer> {
         }
 
         public void printConfigIfRequired() {
-            if (verbose && spec.defaultValueProvider() instanceof StepDefaultValuesProvider) {
-                ((StepDefaultValuesProvider) spec.defaultValueProvider()).printAppliedConfig();
+            StepDefaultValuesProvider defaultValuesProvider = getStepDefaultValuesProvider();
+            if (verbose && defaultValuesProvider != null) {
+                defaultValuesProvider.printAppliedConfig();
+            }
+        }
+
+        protected StepDefaultValuesProvider getStepDefaultValuesProvider() {
+            if (spec.defaultValueProvider() instanceof StepDefaultValuesProvider) {
+                return (StepDefaultValuesProvider) spec.defaultValueProvider();
+            } else {
+                return null;
             }
         }
 
@@ -130,17 +141,18 @@ public class StepConsole implements Callable<Integer> {
         }
     }
 
-    @Command(name = "ap",
+    @Command(name = ApCommand.AP_COMMAND,
             mixinStandardHelpOptions = true,
             version = "step.ap 1.0",
             description = "The CLI interface to manage automation packages in Step",
-            defaultValueProvider = StepDefaultValuesProvider.class,
             subcommands = {
                     ApCommand.ApDeployCommand.class,
                     ApCommand.ApExecuteCommand.class,
                     CommandLine.HelpCommand.class
             })
     public static class ApCommand implements Callable<Integer> {
+
+        public static final String AP_COMMAND = "ap";
 
         public static abstract class AbstractApCommand extends AbstractStepCommand {
 
@@ -198,7 +210,6 @@ public class StepConsole implements Callable<Integer> {
                 mixinStandardHelpOptions = true,
                 version = "step.ap.deploy 1.0",
                 description = "The CLI interface to deploy automation packages in Step",
-                defaultValueProvider = StepDefaultValuesProvider.class,
                 subcommands = {CommandLine.HelpCommand.class})
         public static class ApDeployCommand extends AbstractApCommand {
 
@@ -228,9 +239,10 @@ public class StepConsole implements Callable<Integer> {
                 mixinStandardHelpOptions = true,
                 version = "step.ap.execute 1.0",
                 description = "The CLI interface to execute automation packages in Step",
-                defaultValueProvider = StepDefaultValuesProvider.class,
                 subcommands = {CommandLine.HelpCommand.class})
         public static class ApExecuteCommand extends AbstractApCommand implements Callable<Integer> {
+
+            public static final String EP_DESCRIPTION_KEY = "executionParameters";
 
             @Option(names = {"--executionTimeoutS"}, defaultValue = "3600")
             protected Integer executionTimeoutS;
@@ -250,12 +262,34 @@ public class StepConsole implements Callable<Integer> {
             @Option(names = {"--local"}, defaultValue = "false", description = "The flag to run AP locally ", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
             protected boolean local;
 
-            @Option(names = {"-ep", "--executionParameters"}, description = "The execution parameters to be used ")
+            @Option(descriptionKey = EP_DESCRIPTION_KEY, names = {"-ep", "--executionParameters"}, description = "The execution parameters to be used ", split = "\\|", splitSynopsisLabel = "|")
             protected Map<String, String> executionParameters;
 
             @Override
             public Integer call() throws Exception {
                 super.call();
+
+                // The tricky way to take default values for execution parameters
+                // We run the command without any arguments, but with pre-configured default values provider,
+                // which will take default values from .properties files specified in original command.
+                // After that we can look up the executionParameters in ApExecuteCommand and add them to non-default in our current command
+                StepDefaultValuesProvider customDefaultValuesProvider = getStepDefaultValuesProvider();
+                if (this.executionParameters == null) {
+                    this.executionParameters = new HashMap<>();
+                }
+                if (customDefaultValuesProvider != null) {
+                    ApExecuteCommand defaultExecutionParametersLookup = new ApExecuteCommand();
+                    new CommandLine(defaultExecutionParametersLookup).setDefaultValueProvider(customDefaultValuesProvider).parseArgs();
+
+                    if (defaultExecutionParametersLookup.executionParameters != null) {
+                        // apply default execution parameters from config files
+                        for (Map.Entry<String, String> defaultEp : defaultExecutionParametersLookup.executionParameters.entrySet()) {
+                            this.executionParameters.putIfAbsent(defaultEp.getKey(), defaultEp.getValue());
+                        }
+                    }
+                }
+
+                log.info("Execute automation package with parameters: {}", executionParameters);
                 if (!local) {
                     handleApRemoteExecuteCommand();
                 } else {
@@ -301,8 +335,23 @@ public class StepConsole implements Callable<Integer> {
     }
 
     public static void main(String... args) {
-        int exitCode = new CommandLine(new StepConsole())
+        StepConsole configFinder = new StepConsole();
+
+        // parse arguments just to resolve configuration files and setup default values provider programmatically
+        CommandLine.ParseResult parseResult = new CommandLine(configFinder).parseArgs(args);
+        List<String> customConfigFiles = null;
+
+        // custom configuration files are only applied for "ap" command
+        if (Objects.equals(parseResult.subcommand().commandSpec().name(), ApCommand.AP_COMMAND)) {
+            Object configsList = parseResult.subcommand().subcommand().commandSpec().findOption(AbstractStepCommand.CONFIG).getValue();
+            if (configsList != null) {
+                customConfigFiles = ((List<String>) configsList);
+            }
+        }
+
+        int exitCode = new CommandLine(configFinder)
                 .setCaseInsensitiveEnumValuesAllowed(true)
+                .setDefaultValueProvider(new StepDefaultValuesProvider(customConfigFiles))
                 .setExecutionExceptionHandler(new StepExecutionExceptionHandler())
                 .execute(args);
         System.exit(exitCode);

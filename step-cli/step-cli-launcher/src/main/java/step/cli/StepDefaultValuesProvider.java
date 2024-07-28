@@ -37,45 +37,47 @@ public class StepDefaultValuesProvider implements CommandLine.IDefaultValueProvi
     private static final Logger log = LoggerFactory.getLogger(StepDefaultValuesProvider.class);
 
     private CommandLine.PropertiesDefaultProvider delegate;
-    private List<String> configFilesForDelegate = null;
     private Properties mergedProperties;
+
+    public StepDefaultValuesProvider() {
+        this(new ArrayList<>());
+    }
+
+    public StepDefaultValuesProvider(List<String> customConfigFiles) {
+        try {
+            applyCustomConfigFiles(customConfigFiles == null ? new ArrayList<>() : customConfigFiles);
+        } catch (IOException ex) {
+            throw new RuntimeException("Invalid configuration detected. " + ex.getMessage(), ex);
+        }
+    }
 
     @Override
     public String defaultValue(CommandLine.Model.ArgSpec argSpec) throws Exception {
-        CommandLine.Model.OptionSpec customConfigFile = argSpec.command().findOption(StepConsole.AbstractStepCommand.CONFIG);
-
-        if (customConfigFile != null) {
-            List<String> customConfigFiles = customConfigFile.originalStringValues();
-
-            if (configFilesForDelegate == null || !configFilesForDelegate.equals(customConfigFiles)) {
-                // for some parameters (like boolean flags) the value for customConfigFiles is for some reason not passed
-                // https://github.com/remkop/picocli/issues/2326
-                // so for each argSpec we need to make a recheck to be sure that we don't miss the value of used --config option
-
-                // default value defined in field
-                String defaultConfigFile = customConfigFile.defaultValue();
-
-                if (defaultConfigFile == null) {
-                    // superdefault - in user home (if there is no default value in annotation)
-                    defaultConfigFile = DEFAULT_CONFIG_FILE;
-                }
-
-                String infoText = "Applying";
-                infoText += " properties from " + customConfigFiles + " and";
-                infoText += " default config from " + defaultConfigFile;
-                log.info(infoText);
-                this.mergedProperties = mergeProperties(customConfigFiles, defaultConfigFile);
-
-                this.delegate = new CommandLine.PropertiesDefaultProvider(mergedProperties);
-                this.configFilesForDelegate = new ArrayList<>(customConfigFiles);
-            }
-        }
-
         if (delegate != null) {
             return delegate.defaultValue(argSpec);
         } else {
             return argSpec.defaultValue();
         }
+    }
+
+    protected void applyCustomConfigFiles(List<String> customConfigFiles) throws IOException {
+        // for some parameters (like boolean flags) the value for customConfigFiles is for some reason not passed
+        // https://github.com/remkop/picocli/issues/2326
+        // so for each argSpec we need to make a recheck to be sure that we don't miss the value of used --config option
+
+        // default value defined in field
+        String defaultConfigFile = DEFAULT_CONFIG_FILE;
+
+        String infoText = "Applying";
+        infoText += " properties from ";
+        if (!customConfigFiles.isEmpty()) {
+            infoText += customConfigFiles + " and";
+        }
+        infoText += " default config from " + defaultConfigFile;
+        log.info(infoText);
+        this.mergedProperties = mergeProperties(customConfigFiles, defaultConfigFile);
+
+        this.delegate = new CommandLine.PropertiesDefaultProvider(mergedProperties);
     }
 
     private Properties mergeProperties(List<String> customConfigFiles, String defaultConfigFile) throws IOException {
@@ -99,7 +101,24 @@ public class StepDefaultValuesProvider implements CommandLine.IDefaultValueProvi
         File configFile = new File(pathToFile);
         if (configFile.exists() && configFile.canRead()) {
             try (FileInputStream fis = new FileInputStream(configFile)) {
-                res.load(fis);
+                Properties tempProperties = new Properties();
+                tempProperties.load(fis);
+                for (Map.Entry<Object, Object> temp : tempProperties.entrySet()) {
+                    // for "execution parameters" we should merge values but not replace them
+                    if (StepConsole.ApCommand.ApExecuteCommand.EP_DESCRIPTION_KEY.equals(temp.getKey())) {
+                        res.merge(temp.getKey(), temp.getValue(), (object, object2) -> {
+                            if (object2 == null || object.toString().isEmpty()) {
+                                return object;
+                            }
+                            if (object.toString().isEmpty()) {
+                                return object2;
+                            }
+                            return object + "|" + object2;
+                        });
+                    } else {
+                        res.put(temp.getKey(), temp.getValue());
+                    }
+                }
             }
             return true;
         }
