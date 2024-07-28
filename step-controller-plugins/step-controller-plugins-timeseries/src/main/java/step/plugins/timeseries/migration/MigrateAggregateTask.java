@@ -25,7 +25,6 @@ public class MigrateAggregateTask extends MigrationTask {
 
     @Override
     public void runUpgradeScript() {
-        System.out.println("RUNNING MIGRATION SCRIPT");
         updateMetricTypes();
         updateCustomDashboards();
     }
@@ -73,7 +72,6 @@ public class MigrateAggregateTask extends MigrationTask {
         }
         Object oldPclValue = axesSettings.get("pclValue");
         axesSettings.remove("pclValue");
-        DocumentObject newAggregation = new Document();
         String oldAggregation = axesSettings.getString("aggregation");
         axesSettings.put("aggregation", transformAggregation(oldAggregation, oldPclValue));
         
@@ -84,8 +82,7 @@ public class MigrateAggregateTask extends MigrationTask {
         newAggregation.put("type", oldAggregation);
         if (Objects.equals(oldAggregation, "PERCENTILE")) {
             newAggregation.put("params", Map.of("pclValue", oldPclValue != null ? oldPclValue : 90));
-        }
-        if (Objects.equals(oldAggregation, "RATE")) {
+        } else if (Objects.equals(oldAggregation, "RATE")) {
             newAggregation.put("params", Map.of("rateUnit", "h"));
         }
         return newAggregation;
