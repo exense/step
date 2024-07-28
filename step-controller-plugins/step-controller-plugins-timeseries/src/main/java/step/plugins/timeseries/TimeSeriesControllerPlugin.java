@@ -12,8 +12,11 @@ import step.core.entities.EntityManager;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.core.timeseries.TimeSeries;
-import step.core.timeseries.TimeSeriesIngestionPipeline;
+import step.core.timeseries.TimeSeriesBuilder;
+import step.core.timeseries.TimeSeriesCollection;
 import step.core.timeseries.aggregation.TimeSeriesAggregationPipeline;
+import step.core.timeseries.bucket.Bucket;
+import step.core.timeseries.ingestion.TimeSeriesIngestionPipeline;
 import step.core.timeseries.metric.*;
 import step.engine.plugins.ExecutionEnginePlugin;
 import step.framework.server.tables.Table;
@@ -22,9 +25,13 @@ import step.migration.MigrationManager;
 import step.migration.MigrationManagerPlugin;
 import step.plugins.measurements.GaugeCollectorRegistry;
 import step.plugins.measurements.MeasurementPlugin;
+import step.plugins.timeseries.collections.DailyTimeSeriesCollection;
+import step.plugins.timeseries.collections.HourlyTimeSeriesCollection;
+import step.plugins.timeseries.collections.WeeklyTimeSeriesCollection;
 import step.plugins.timeseries.dashboards.DashboardsGenerator;
 import step.plugins.timeseries.dashboards.model.*;
 import step.plugins.timeseries.dashboards.DashboardAccessor;
+import step.plugins.timeseries.collections.PerMinuteTimeSeriesCollection;
 import step.plugins.timeseries.migration.MigrateAggregateTask;
 import step.plugins.timeseries.migration.MigrateDashboardsTask;
 
@@ -40,7 +47,11 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 	public static final String RESOLUTION_PERIOD_PROPERTY = "plugins.timeseries.resolution.period";
 	public static final String TIME_SERIES_SAMPLING_LIMIT = "plugins.timeseries.sampling.limit";
 	public static final String TIME_SERIES_MAX_NUMBER_OF_SERIES = "plugins.timeseries.response.series.limit";
-	public static final String TIME_SERIES_COLLECTION_PROPERTY = "timeseries";
+	public static final String TIME_SERIES_MAIN_COLLECTION = "timeseries";
+	public static final String TIME_SERIES_BY_MINUTE_COLLECTION = "timeseries_minute";
+	public static final String TIME_SERIES_HOURLY_COLLECTION = "timeseries_hour";
+	public static final String TIME_SERIES_DAILY_COLLECTION = "timeseries_day";
+	public static final String TIME_SERIES_WEEKLY_COLLECTION = "timeseries_week";
 	public static final String TIME_SERIES_ATTRIBUTES_PROPERTY = "plugins.timeseries.attributes";
 	public static final String TIME_SERIES_ATTRIBUTES_DEFAULT = EXECUTION_ID + "," + TASK_ID + "," + PLAN_ID + ",metricType,origin,name,rnStatus,project,type";
 	
@@ -63,16 +74,28 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 		
 		Configuration configuration = context.getConfiguration();
 		Integer resolutionPeriod = configuration.getPropertyAsInteger(RESOLUTION_PERIOD_PROPERTY, 1000);
+		validateMainResolutionParam(resolutionPeriod);
 		Long flushPeriod = configuration.getPropertyAsLong(PLUGINS_TIMESERIES_FLUSH_PERIOD, 1000L);
 		List<String> attributes = Arrays.asList(configuration.getProperty(TIME_SERIES_ATTRIBUTES_PROPERTY, TIME_SERIES_ATTRIBUTES_DEFAULT).split(","));
 		CollectionFactory collectionFactory = context.getCollectionFactory();
 
-		timeSeries = new TimeSeries(collectionFactory, TIME_SERIES_COLLECTION_PROPERTY, resolutionPeriod);
-		mainIngestionPipeline = timeSeries.newIngestionPipeline(flushPeriod);
-		aggregationPipeline = timeSeries.getAggregationPipeline();
-		TimeSeriesAggregationPipeline aggregationPipeline = timeSeries.getAggregationPipeline();
+		validateMainResolutionParam(resolutionPeriod);
+		
+		TimeSeriesCollection mainCollection = new TimeSeriesCollection(collectionFactory.getCollection(TIME_SERIES_MAIN_COLLECTION, Bucket.class), resolutionPeriod);
+		mainIngestionPipeline = new TimeSeriesIngestionPipeline(collectionFactory.getCollection(TIME_SERIES_MAIN_COLLECTION, Bucket.class), resolutionPeriod, flushPeriod);
+		// timeseries will have a list of registered collection.
+		timeSeries = new TimeSeriesBuilder()
+				.registerCollection(mainCollection)
+				.registerCollection(new PerMinuteTimeSeriesCollection(collectionFactory))
+				.registerCollection(new HourlyTimeSeriesCollection(collectionFactory))
+				.registerCollection(new DailyTimeSeriesCollection(collectionFactory))
+				.registerCollection(new WeeklyTimeSeriesCollection(collectionFactory))
+				.build();
+		
+//		aggregationPipeline = timeSeries.getAggregationPipeline();
+//		TimeSeriesAggregationPipeline aggregationPipeline = timeSeries.getAggregationPipeline();
 		MetricTypeAccessor metricTypeAccessor = new MetricTypeAccessor(context.getCollectionFactory().getCollection(EntityManager.metricTypes, MetricType.class));
-		TimeSeriesBucketingHandler handler = new TimeSeriesBucketingHandler(mainIngestionPipeline, attributes);
+		TimeSeriesBucketingHandler handler = new TimeSeriesBucketingHandler(timeSeries, attributes);
 
 		context.put(TimeSeries.class, timeSeries);
 		context.put(TimeSeriesIngestionPipeline.class, mainIngestionPipeline);
@@ -96,6 +119,13 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 
 		WebApplicationConfigurationManager configurationManager = context.require(WebApplicationConfigurationManager.class);
 		configurationManager.registerHook(s -> Map.of(RESOLUTION_PERIOD_PROPERTY, resolutionPeriod.toString()));
+	}
+	
+	private void validateMainResolutionParam(long resolution) {
+		double msInMinute = 60.0 * 1000;
+        if (msInMinute % resolution != 0) {
+            throw new IllegalArgumentException("Invalid interval: " + resolution + " seconds. The interval must be a divisor of one minute (60 seconds).");
+        }
 	}
 
 	@Override
