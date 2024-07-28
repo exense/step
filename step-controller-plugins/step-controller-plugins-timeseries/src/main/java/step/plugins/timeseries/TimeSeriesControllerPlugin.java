@@ -90,6 +90,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 				.registerCollection(new HourlyTimeSeriesCollection(collectionFactory))
 				.registerCollection(new DailyTimeSeriesCollection(collectionFactory))
 				.registerCollection(new WeeklyTimeSeriesCollection(collectionFactory))
+				.linkIngestionPipelines()
 				.build();
 		
 //		aggregationPipeline = timeSeries.getAggregationPipeline();
