@@ -156,13 +156,14 @@ public class ScreenTemplateService extends AbstractStepServices {
 	@Path("/input")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
-	public void saveInput(ScreenInput screenInput) {
+	public ScreenInput saveInput(ScreenInput screenInput) {
 		ScreenInput screenInputOrig = screenInputAccessor.get(screenInput.getId());
 		if (screenInputOrig != null && screenInputOrig.getImmutable()) {
 			throw new ControllerServiceException("This screen input is immutable.");
 		}
 		screenInputAccessor.save(screenInput);
 		screenTemplateManager.notifyChange();
+		return screenInput;
 	}
 
 	private Map<String, Object> getContextBindings(UriInfo uriInfo) {
