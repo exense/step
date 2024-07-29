@@ -71,9 +71,9 @@ public class StepDefaultValuesProvider implements CommandLine.IDefaultValueProvi
         String infoText = "Applying";
         infoText += " properties from ";
         if (!customConfigFiles.isEmpty()) {
-            infoText += customConfigFiles + " and";
+            infoText += customConfigFiles + " and ";
         }
-        infoText += " default config from " + defaultConfigFile;
+        infoText += "default config in " + defaultConfigFile;
         log.info(infoText);
         this.mergedProperties = mergeProperties(customConfigFiles, defaultConfigFile);
 

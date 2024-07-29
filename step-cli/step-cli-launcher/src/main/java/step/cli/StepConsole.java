@@ -35,16 +35,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Callable;
+import java.util.function.Supplier;
 
 
 @Command(name = "step",
         mixinStandardHelpOptions = true,
         version = "step 1.0",
-        description = "The CLI interface to communicate with Step server",
-        subcommands = {
-                StepConsole.ApCommand.class,
-                CommandLine.HelpCommand.class
-        })
+        description = "The CLI interface to communicate with Step server"
+)
 public class StepConsole implements Callable<Integer> {
 
     public static final String REQUIRED_ERR_MESSAGE = "Illegal parameters. One of the following options is required: '%s'";
@@ -144,12 +142,8 @@ public class StepConsole implements Callable<Integer> {
     @Command(name = ApCommand.AP_COMMAND,
             mixinStandardHelpOptions = true,
             version = "step.ap 1.0",
-            description = "The CLI interface to manage automation packages in Step",
-            subcommands = {
-                    ApCommand.ApDeployCommand.class,
-                    ApCommand.ApExecuteCommand.class,
-                    CommandLine.HelpCommand.class
-            })
+            description = "The CLI interface to manage automation packages in Step"
+    )
     public static class ApCommand implements Callable<Integer> {
 
         public static final String AP_COMMAND = "ap";
@@ -226,7 +220,12 @@ public class StepConsole implements Callable<Integer> {
             protected void handleApDeployCommand() {
                 checkStepUrlRequired();
                 checkEeOptionsConsistency(spec);
-                new AbstractDeployAutomationPackageTool(stepUrl, getStepProjectName(), getAuthToken(), async) {
+                executeTool(stepUrl, getStepProjectName(), getAuthToken(), async);
+            }
+
+            // for tests
+            protected void executeTool(final String stepUrl1, final String projectName, final String authToken1, final boolean async1) {
+                new AbstractDeployAutomationPackageTool(stepUrl1, projectName, authToken1, async1) {
                     @Override
                     protected File getFileToUpload() throws StepCliExecutionException {
                         return prepareApFile(apFile);
@@ -309,11 +308,25 @@ public class StepConsole implements Callable<Integer> {
             protected void handleApRemoteExecuteCommand() {
                 checkStepUrlRequired();
                 checkEeOptionsConsistency(spec);
+                executeRemotely(stepUrl, getStepProjectName(), stepUserId, getAuthToken(), executionParameters, executionTimeoutS, async, ensureExecutionSuccess, includePlans, excludePlans);
+            }
+
+            // for tests
+            protected void executeRemotely(final String stepUrl1,
+                                           final String projectName,
+                                           final String stepUserId1,
+                                           final String authToken1,
+                                           final Map<String, String> executionParameters1,
+                                           final Integer executionTimeoutS1,
+                                           final boolean async1,
+                                           final boolean ensureExecutionSuccess1,
+                                           final String includePlans1,
+                                           final String excludePlans1) {
                 new AbstractExecuteAutomationPackageTool(
-                        stepUrl, getStepProjectName(), stepUserId, getAuthToken(),
-                        executionParameters, executionTimeoutS,
-                        !async, ensureExecutionSuccess,
-                        includePlans, excludePlans
+                        stepUrl1, projectName, stepUserId1, authToken1,
+                        executionParameters1, executionTimeoutS1,
+                        !async1, ensureExecutionSuccess1,
+                        includePlans1, excludePlans1
                 ) {
                     @Override
                     protected File getAutomationPackageFile() throws StepCliExecutionException {
@@ -335,26 +348,51 @@ public class StepConsole implements Callable<Integer> {
     }
 
     public static void main(String... args) {
-        StepConsole configFinder = new StepConsole();
+        int exitCode = executeMain(StepConsole::new, ApCommand::new, ApCommand.ApDeployCommand::new, ApCommand.ApExecuteCommand::new, args);
+        System.exit(exitCode);
+    }
+
+    static int executeMain(Supplier<StepConsole> stepConsoleSupplier,
+                           Supplier<ApCommand> apCommandSupplier,
+                           Supplier<ApCommand.ApDeployCommand> deployCommandSupplier,
+                           Supplier<ApCommand.ApExecuteCommand> executeCommandSupplier,
+                           String... args) {
+        StepConsole configFinder = stepConsoleSupplier.get();
 
         // parse arguments just to resolve configuration files and setup default values provider programmatically
-        CommandLine.ParseResult parseResult = new CommandLine(configFinder).parseArgs(args);
+        CommandLine.ParseResult parseResult = addStepSubcommands(new CommandLine(configFinder), apCommandSupplier, deployCommandSupplier, executeCommandSupplier).parseArgs(args);
         List<String> customConfigFiles = null;
 
         // custom configuration files are only applied for "ap" command
-        if (Objects.equals(parseResult.subcommand().commandSpec().name(), ApCommand.AP_COMMAND)) {
-            Object configsList = parseResult.subcommand().subcommand().commandSpec().findOption(AbstractStepCommand.CONFIG).getValue();
-            if (configsList != null) {
-                customConfigFiles = ((List<String>) configsList);
+        CommandLine.ParseResult subcommand1 = parseResult.subcommand();
+        if (subcommand1 != null && Objects.equals(subcommand1.commandSpec().name(), ApCommand.AP_COMMAND)) {
+            CommandLine.ParseResult subcommand2 = subcommand1.subcommand();
+            if (subcommand2 != null) {
+                CommandLine.Model.OptionSpec configOptionSpec = subcommand2.commandSpec().findOption(AbstractStepCommand.CONFIG);
+                Object configsList = configOptionSpec == null ? null : configOptionSpec.getValue();
+                if (configsList != null) {
+                    customConfigFiles = ((List<String>) configsList);
+                }
             }
         }
 
-        int exitCode = new CommandLine(configFinder)
+        return addStepSubcommands(new CommandLine(stepConsoleSupplier.get()), apCommandSupplier, deployCommandSupplier, executeCommandSupplier)
                 .setCaseInsensitiveEnumValuesAllowed(true)
                 .setDefaultValueProvider(new StepDefaultValuesProvider(customConfigFiles))
                 .setExecutionExceptionHandler(new StepExecutionExceptionHandler())
                 .execute(args);
-        System.exit(exitCode);
+    }
+
+    private static CommandLine addStepSubcommands(CommandLine cl,
+                                                  Supplier<ApCommand> apCommandSupplier,
+                                                  Supplier<ApCommand.ApDeployCommand> deployCommandSupplier,
+                                                  Supplier<ApCommand.ApExecuteCommand> executeCommandSupplier) {
+        return cl.addSubcommand("help", new CommandLine.HelpCommand())
+                .addSubcommand(ApCommand.AP_COMMAND, new CommandLine(apCommandSupplier.get())
+                        .addSubcommand("help", new CommandLine.HelpCommand())
+                        .addSubcommand("deploy", deployCommandSupplier.get())
+                        .addSubcommand("execute", executeCommandSupplier.get())
+                );
     }
 
 }
