@@ -161,4 +161,11 @@ public class AutomationPackageServices extends AbstractStepServices {
         }
     }
 
+    @GET
+    @Path("/schema")
+    @Produces(MediaType.APPLICATION_JSON)
+    public String getAutomationPackageDescriptorSchema() {
+        return automationPackageManager.getDescriptorJsonSchema();
+    }
+
 }

@@ -708,6 +708,10 @@ public class AutomationPackageManager {
         }
     }
 
+    public String getDescriptorJsonSchema() {
+        return packageReader.getDescriptorJsonSchema();
+    }
+
     private static class HookEntry {
         private final String fieldName;
         private final List<?> values;

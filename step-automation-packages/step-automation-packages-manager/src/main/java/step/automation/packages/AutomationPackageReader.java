@@ -434,4 +434,8 @@ public class AutomationPackageReader {
         FILTERED_BY_INCLUDED,
         FILTERED_BY_EXCLUDED
     }
+
+    public String getDescriptorJsonSchema() {
+        return getOrCreateDescriptorReader().getJsonSchema();
+    }
 }
