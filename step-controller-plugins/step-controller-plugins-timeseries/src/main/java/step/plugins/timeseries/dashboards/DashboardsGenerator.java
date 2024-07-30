@@ -227,7 +227,7 @@ public class DashboardsGenerator {
                 .setMetricKey(metric.getName())
                 .setInheritGlobalFilters(true)
                 .setInheritGlobalGrouping(true)
-                .setReadonlyAggregate(false)
+                .setReadonlyAggregate(true)
                 .setReadonlyGrouping(true)
                 .setSize(1)
                 .setChartSettings(new ChartSettings()
