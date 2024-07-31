@@ -22,6 +22,7 @@ import step.core.objectenricher.ObjectEnricher;
 import step.resources.ResourceManager;
 
 import java.util.Map;
+import java.util.Objects;
 
 public class AutomationPackageContext {
 
@@ -35,7 +36,10 @@ public class AutomationPackageContext {
     private String uploadedPackageFileResource;
     private final Map<String, Object> extensions;
 
-    public AutomationPackageContext(ResourceManager resourceManager, AutomationPackageArchive automationPackageArchive, ObjectEnricher enricher, Map<String, Object> extensions) {
+    public final AutomationPackageOperationMode operationMode;
+
+    public AutomationPackageContext(AutomationPackageOperationMode operationMode, ResourceManager resourceManager, AutomationPackageArchive automationPackageArchive, ObjectEnricher enricher, Map<String, Object> extensions) {
+        this.operationMode = Objects.requireNonNull(operationMode);
         this.resourceManager = resourceManager;
         this.automationPackageArchive = automationPackageArchive;
         this.enricher = enricher;
