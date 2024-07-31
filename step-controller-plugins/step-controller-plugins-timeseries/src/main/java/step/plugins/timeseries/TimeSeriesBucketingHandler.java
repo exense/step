@@ -4,7 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;
-import step.core.timeseries.TimeSeriesIngestionPipeline;
+import step.core.timeseries.TimeSeries;
 import step.core.timeseries.bucket.BucketAttributes;
 import step.plugins.measurements.Measurement;
 import step.plugins.measurements.MeasurementHandler;
@@ -22,12 +22,12 @@ public class TimeSeriesBucketingHandler implements MeasurementHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(TimeSeriesBucketingHandler.class);
 
-    private final TimeSeriesIngestionPipeline ingestionPipeline;
+    private final TimeSeries timeSeries;
 
     private final List<String> attributes;
 
-    public TimeSeriesBucketingHandler(TimeSeriesIngestionPipeline ingestionPipeline, List<String> attributes) {
-        this.ingestionPipeline = ingestionPipeline;
+    public TimeSeriesBucketingHandler(TimeSeries timeSeries, List<String> attributes) {
+        this.timeSeries = timeSeries;
         this.attributes = attributes;
     }
 
@@ -47,7 +47,7 @@ public class TimeSeriesBucketingHandler implements MeasurementHandler {
 
         BucketAttributes bucketAttributes = measurementToBucketAttributes(measurement);
         bucketAttributes.put(METRIC_TYPE_KEY, METRIC_TYPE_RESPONSE_TIME);
-        this.ingestionPipeline.ingestPoint(bucketAttributes, begin, value);
+        this.timeSeries.ingestPoint(bucketAttributes, begin, value);
     }
 
     private BucketAttributes measurementToBucketAttributes(Measurement measurement) {
@@ -66,7 +66,7 @@ public class TimeSeriesBucketingHandler implements MeasurementHandler {
             if (measurement != null) {
                 BucketAttributes bucketAttributes = measurementToBucketAttributes(measurement);
                 bucketAttributes.put(METRIC_TYPE_KEY, measurement.getType());
-                this.ingestionPipeline.ingestPoint(bucketAttributes, measurement.getBegin(), measurement.getValue());
+                this.timeSeries.ingestPoint(bucketAttributes, measurement.getBegin(), measurement.getValue());
             }
         });
     }
