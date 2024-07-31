@@ -170,7 +170,7 @@ public class DashboardsGenerator {
                                 .setDisplayType(AxesDisplayType.LINE)
                                 .setColorizationType(AxesColorizationType.STROKE))
                         .setSecondaryAxes(new AxesSettings()
-                                .setAggregation(new MetricAggregation(MetricAggregationType.RATE))
+                                .setAggregation(new MetricAggregation(MetricAggregationType.RATE, Map.of(RATE_UNIT_KEY, "h")))
                                 .setDisplayType(AxesDisplayType.BAR_CHART)
                         ));
     }
@@ -232,13 +232,13 @@ public class DashboardsGenerator {
                 .setSize(1)
                 .setChartSettings(new ChartSettings()
                         .setPrimaryAxes(new AxesSettings()
-                                .setAggregation(new MetricAggregation(MetricAggregationType.RATE))
+                                .setAggregation(new MetricAggregation(MetricAggregationType.RATE, Map.of(RATE_UNIT_KEY, "h")))
                                 .setUnit(null)
                                 .setDisplayType(AxesDisplayType.LINE)
                                 .setColorizationType(AxesColorizationType.STROKE))
                         .setSecondaryAxes(new AxesSettings()
                                 .setDisplayType(AxesDisplayType.BAR_CHART)
-                                .setAggregation(new MetricAggregation(MetricAggregationType.RATE))));
+                                .setAggregation(new MetricAggregation(MetricAggregationType.RATE, Map.of(RATE_UNIT_KEY, "h")))));
     }
 
     private static DashboardItem createThreadGroupDashlet(MetricType metric) {
