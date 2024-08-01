@@ -40,12 +40,12 @@ public class StepDefaultValuesProvider implements CommandLine.IDefaultValueProvi
     private Properties mergedProperties;
 
     public StepDefaultValuesProvider() {
-        this(new ArrayList<>());
+        this(new ArrayList<>(), true);
     }
 
-    public StepDefaultValuesProvider(List<String> customConfigFiles) {
+    public StepDefaultValuesProvider(List<String> customConfigFiles, boolean lookupDefaultFile) {
         try {
-            applyCustomConfigFiles(customConfigFiles == null ? new ArrayList<>() : customConfigFiles);
+            applyCustomConfigFiles(customConfigFiles == null ? new ArrayList<>() : customConfigFiles, lookupDefaultFile);
         } catch (IOException ex) {
             throw new RuntimeException("Invalid configuration detected. " + ex.getMessage(), ex);
         }
@@ -60,13 +60,13 @@ public class StepDefaultValuesProvider implements CommandLine.IDefaultValueProvi
         }
     }
 
-    protected void applyCustomConfigFiles(List<String> customConfigFiles) throws IOException {
+    protected void applyCustomConfigFiles(List<String> customConfigFiles, boolean lookupDefaultFile) throws IOException {
         // for some parameters (like boolean flags) the value for customConfigFiles is for some reason not passed
         // https://github.com/remkop/picocli/issues/2326
         // so for each argSpec we need to make a recheck to be sure that we don't miss the value of used --config option
 
         // default value defined in field
-        String defaultConfigFile = DEFAULT_CONFIG_FILE;
+        String defaultConfigFile = lookupDefaultFile ? DEFAULT_CONFIG_FILE : null;
 
         String infoText = "Applying";
         infoText += " properties from ";

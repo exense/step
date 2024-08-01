@@ -249,9 +249,6 @@ public class StepConsole implements Callable<Integer> {
             @Option(names = {"--async"}, defaultValue = "false", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
             protected boolean async;
 
-            @Option(names = {"--ensureExecutionSuccess"}, defaultValue = "true", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
-            protected boolean ensureExecutionSuccess;
-
             @Option(names = {"--includePlans"}, description = "The comma separated list of plans to be executed")
             protected String includePlans;
 
@@ -302,31 +299,34 @@ public class StepConsole implements Callable<Integer> {
                 if (file == null) {
                     throw new StepCliExecutionException("AP file is not defined");
                 }
+                executeLocally(file, includePlans, excludePlans, executionParameters);
+            }
+
+            protected void executeLocally(File file, String includePlans, String excludePlans, Map<String, String> executionParameters) {
                 new ApLocalExecuteCommandHandler().execute(file, includePlans, excludePlans, executionParameters);
             }
 
             protected void handleApRemoteExecuteCommand() {
                 checkStepUrlRequired();
                 checkEeOptionsConsistency(spec);
-                executeRemotely(stepUrl, getStepProjectName(), stepUserId, getAuthToken(), executionParameters, executionTimeoutS, async, ensureExecutionSuccess, includePlans, excludePlans);
+                executeRemotely(stepUrl, getStepProjectName(), stepUserId, getAuthToken(), executionParameters, executionTimeoutS, async, includePlans, excludePlans);
             }
 
             // for tests
-            protected void executeRemotely(final String stepUrl1,
+            protected void executeRemotely(final String stepUrl,
                                            final String projectName,
-                                           final String stepUserId1,
-                                           final String authToken1,
-                                           final Map<String, String> executionParameters1,
-                                           final Integer executionTimeoutS1,
-                                           final boolean async1,
-                                           final boolean ensureExecutionSuccess1,
-                                           final String includePlans1,
-                                           final String excludePlans1) {
+                                           final String stepUserId,
+                                           final String authToken,
+                                           final Map<String, String> executionParameters,
+                                           final Integer executionTimeoutS,
+                                           final boolean async,
+                                           final String includePlans,
+                                           final String excludePlans) {
                 new AbstractExecuteAutomationPackageTool(
-                        stepUrl1, projectName, stepUserId1, authToken1,
-                        executionParameters1, executionTimeoutS1,
-                        !async1, ensureExecutionSuccess1,
-                        includePlans1, excludePlans1
+                        stepUrl, projectName, stepUserId, authToken,
+                        executionParameters, executionTimeoutS,
+                        !async, true,
+                        includePlans, excludePlans
                 ) {
                     @Override
                     protected File getAutomationPackageFile() throws StepCliExecutionException {
@@ -348,7 +348,7 @@ public class StepConsole implements Callable<Integer> {
     }
 
     public static void main(String... args) {
-        int exitCode = executeMain(StepConsole::new, ApCommand::new, ApCommand.ApDeployCommand::new, ApCommand.ApExecuteCommand::new, args);
+        int exitCode = executeMain(StepConsole::new, ApCommand::new, ApCommand.ApDeployCommand::new, ApCommand.ApExecuteCommand::new, true, args);
         System.exit(exitCode);
     }
 
@@ -356,6 +356,7 @@ public class StepConsole implements Callable<Integer> {
                            Supplier<ApCommand> apCommandSupplier,
                            Supplier<ApCommand.ApDeployCommand> deployCommandSupplier,
                            Supplier<ApCommand.ApExecuteCommand> executeCommandSupplier,
+                           boolean lookupDefaultConfigFile,
                            String... args) {
         StepConsole configFinder = stepConsoleSupplier.get();
 
@@ -378,7 +379,7 @@ public class StepConsole implements Callable<Integer> {
 
         return addStepSubcommands(new CommandLine(stepConsoleSupplier.get()), apCommandSupplier, deployCommandSupplier, executeCommandSupplier)
                 .setCaseInsensitiveEnumValuesAllowed(true)
-                .setDefaultValueProvider(new StepDefaultValuesProvider(customConfigFiles))
+                .setDefaultValueProvider(new StepDefaultValuesProvider(customConfigFiles, lookupDefaultConfigFile))
                 .setExecutionExceptionHandler(new StepExecutionExceptionHandler())
                 .execute(args);
     }
