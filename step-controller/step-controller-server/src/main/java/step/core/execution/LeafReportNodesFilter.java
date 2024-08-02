@@ -21,6 +21,7 @@ package step.core.execution;
 
 import step.core.collections.Filter;
 import step.core.collections.Filters;
+import step.core.collections.filters.And;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,7 +40,9 @@ public class LeafReportNodesFilter extends ReportNodesFilter{
 		List<Filter> fragments = super.buildAdditionalQuery(parameters);
 		List<Filter> nodeFilters = new ArrayList<>();
 		nodeFilters.add(Filters.equals("_class","step.artefacts.reports.CallFunctionReportNode"));
-		nodeFilters.add(Filters.equals("error.root",true));
+		//Filter on error.root=true excluding assert report (since they are reported as part of the call Keywords)
+		And rootErrors = Filters.and(List.of(Filters.equals("error.root", true), Filters.not(Filters.equals("_class", "step.artefacts.reports.AssertReportNode"))));
+		nodeFilters.add(rootErrors);
 		if(optionalReportNodesFilter != null) {
 			for (String[] kv: optionalReportNodesFilter) {
 				nodeFilters.add(Filters.equals(kv[0], kv[1]));	

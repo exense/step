@@ -22,6 +22,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.YamlFields;
@@ -30,6 +31,9 @@ import step.core.yaml.serializers.StepYamlSerializerAddOn;
 
 import java.io.IOException;
 import java.util.Iterator;
+
+import static step.core.yaml.YamlFields.DYN_VALUE_DYNAMIC_FIELD;
+import static step.core.yaml.YamlFields.DYN_VALUE_VALUE_FIELD;
 
 @StepYamlSerializerAddOn(targetClasses = {YamlDynamicInputs.class})
 public class YamlDynamicInputSerializer extends StepYamlSerializer<YamlDynamicInputs> {
@@ -57,15 +61,60 @@ public class YamlDynamicInputSerializer extends StepYamlSerializer<YamlDynamicIn
                     String inputName = inputs.next();
                     gen.writeStartObject();
                     JsonNode dynamicInput = argumentsJson.get(inputName);
-                    if (dynamicInput.isContainerNode() && dynamicInput.get("dynamic").asBoolean()) {
+                    if (dynamicInput.isContainerNode() && dynamicInput.get(DYN_VALUE_DYNAMIC_FIELD).asBoolean()) {
                         // dynamic input
                         gen.writeFieldName(inputName);
                         gen.writeStartObject();
                         gen.writeStringField(YamlFields.DYN_VALUE_EXPRESSION_FIELD, dynamicInput.get(YamlFields.DYN_VALUE_EXPRESSION_FIELD).asText());
                         gen.writeEndObject();
-                    } else if (dynamicInput.isContainerNode()) {
+                    } else if (dynamicInput.isContainerNode() && dynamicInput.has(DYN_VALUE_DYNAMIC_FIELD)) {
                         // yaml input wrapped in dynamic value
-                        gen.writeObjectField(inputName, dynamicInput.get("value"));
+                        JsonNode dynamicInputValue = dynamicInput.get(DYN_VALUE_VALUE_FIELD);
+                        //For arrays and objects the items or properties values (1st level)  can be dynamic too
+                        if (dynamicInputValue.isObject()) {
+                            gen.writeFieldName(inputName);
+                            gen.writeStartObject();
+                            //browse object properties and convert dynamic values if present
+                            Iterator<String> nestedInputs = dynamicInputValue.fieldNames();
+                            while (nestedInputs.hasNext()) {
+                                String nestedInput = nestedInputs.next();
+                                JsonNode nestedDynamicInput = dynamicInputValue.get(nestedInput);
+                                if (nestedDynamicInput.get(DYN_VALUE_DYNAMIC_FIELD).asBoolean()) {
+                                    gen.writeFieldName(nestedInput);
+                                    gen.writeStartObject();
+                                    gen.writeStringField(YamlFields.DYN_VALUE_EXPRESSION_FIELD, nestedDynamicInput.get(YamlFields.DYN_VALUE_EXPRESSION_FIELD).asText());
+                                    gen.writeEndObject();
+                                } else if (nestedDynamicInput.has(DYN_VALUE_DYNAMIC_FIELD)) {
+                                    gen.writeObjectField(nestedInput, nestedDynamicInput.get(DYN_VALUE_VALUE_FIELD));
+                                } else {
+                                    gen.writeObjectField(nestedInput, nestedDynamicInput);
+                                }
+                            }
+                            gen.writeEndObject();
+                        } else if (dynamicInputValue.isArray()) {
+                            gen.writeFieldName(inputName);
+                            gen.writeStartArray();
+                            ArrayNode arrayNode = (ArrayNode) dynamicInputValue;
+                            for (int i=0; i < arrayNode.size(); i++) {
+                                JsonNode itemNode = arrayNode.get(i);
+                                if (itemNode.isContainerNode()) {
+                                    if (itemNode.get(DYN_VALUE_DYNAMIC_FIELD).asBoolean()) {
+                                        gen.writeStartObject();
+                                        gen.writeStringField(YamlFields.DYN_VALUE_EXPRESSION_FIELD, itemNode.get(YamlFields.DYN_VALUE_EXPRESSION_FIELD).asText());
+                                        gen.writeEndObject();
+                                    } else if (itemNode.has(DYN_VALUE_DYNAMIC_FIELD)) {
+                                        gen.writeObject(itemNode.get(DYN_VALUE_VALUE_FIELD));
+                                    } else {
+                                        gen.writeObject(itemNode);
+                                    }
+                                } else {
+                                    gen.writeObject(itemNode);
+                                }
+                            }
+                            gen.writeEndArray();
+                        } else {
+                            gen.writeObjectField(inputName, dynamicInputValue);
+                        }
                     } else {
                         // primitive yaml input
                         gen.writeObjectField(inputName, dynamicInput);

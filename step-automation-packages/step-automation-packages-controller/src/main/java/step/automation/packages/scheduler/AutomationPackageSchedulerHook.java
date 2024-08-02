@@ -30,11 +30,8 @@ import step.core.execution.model.ExecutionParameters;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
 import step.core.repositories.RepositoryObjectReference;
-import step.core.scheduler.ExecutionTaskAccessor;
-import step.core.scheduler.InMemoryExecutionTaskAccessor;
+import step.core.scheduler.*;
 import step.core.scheduler.automation.AutomationPackageSchedule;
-import step.core.scheduler.CronExclusion;
-import step.core.scheduler.ExecutiontTaskParameters;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,66 +39,65 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-public class ExecutionTaskParameterWithoutSchedulerHook implements AutomationPackageHook<ExecutiontTaskParameters> {
+public class AutomationPackageSchedulerHook implements AutomationPackageHook<ExecutiontTaskParameters> {
 
-    private static final Logger log = LoggerFactory.getLogger(ExecutionTaskParameterWithoutSchedulerHook.class);
-    protected static final String EXECUTION_TASK_ACCESSOR_EXTENSION = "executionTaskAccessor";
+    private static final Logger log = LoggerFactory.getLogger(AutomationPackageSchedulerHook.class);
+    protected static final String EXECUTION_SCHEDULER_EXTENSION = "executionScheduler";
 
-    private final ExecutionTaskAccessor mainExecutionTaskAccessor;
+    private final ExecutionScheduler scheduler;
 
-    public ExecutionTaskParameterWithoutSchedulerHook(ExecutionTaskAccessor mainExecutionTaskAccessor) {
-        this.mainExecutionTaskAccessor = mainExecutionTaskAccessor;
-        this.mainExecutionTaskAccessor.createIndexIfNeeded(AutomationPackageEntity.getIndexField());
+    public AutomationPackageSchedulerHook(ExecutionScheduler scheduler) {
+        this.scheduler = scheduler;
+    }
+
+    @Override
+    public void onCreate(List<? extends ExecutiontTaskParameters> entities, AutomationPackageContext context) {
+        if (isSchedulerInContext(context)) {
+            ExecutionScheduler executionScheduler = getExecutionScheduler(context);
+            for (ExecutiontTaskParameters entity : entities) {
+                //make sure the execution parameter of the schedule are enriched too (required to execute in same project
+                // as the schedule and populate event bindings
+                context.getEnricher().accept(entity.getExecutionsParameters());
+                executionScheduler.addExecutionTask(entity, false);
+            }
+        }
+    }
+
+    @Override
+    public void onDelete(AutomationPackage automationPackage, AutomationPackageContext context) {
+        if (isSchedulerInContext(context)) {
+            ExecutionScheduler executionScheduler = getExecutionScheduler(context);
+            List<ExecutiontTaskParameters> entities = getPackageSchedules(automationPackage.getId(), context);
+            for (ExecutiontTaskParameters entity : entities) {
+                executionScheduler.removeExecutionTask(entity.getId().toString());
+            }
+        }
     }
 
     @Override
     public void onMainAutomationPackageManagerCreate(Map<String, Object> extensions) {
-       extensions.put(EXECUTION_TASK_ACCESSOR_EXTENSION, mainExecutionTaskAccessor);
+       extensions.put(EXECUTION_SCHEDULER_EXTENSION, scheduler);
     }
 
     @Override
     public void onIsolatedAutomationPackageManagerCreate(Map<String, Object> extensions) {
-        InMemoryExecutionTaskAccessor inMemoryAccessor = new InMemoryExecutionTaskAccessor();
-        inMemoryAccessor.createIndexIfNeeded(AutomationPackageEntity.getIndexField());
-        extensions.put(EXECUTION_TASK_ACCESSOR_EXTENSION, inMemoryAccessor);
+        extensions.put(EXECUTION_SCHEDULER_EXTENSION, null);
     }
 
     @Override
     public void onPrepareStaging(String fieldName, AutomationPackageContext apContext,
                                  AutomationPackageContent apContent, List<?> objects,
                                  AutomationPackage oldPackage, AutomationPackageStaging targetStaging) {
-        targetStaging.getAdditionalObjects().put(
-                AutomationPackageSchedule.FIELD_NAME_IN_AP,
-                prepareExecutionTasksParamsStaging((List<AutomationPackageSchedule>) objects,
-                        apContent,
-                        apContext,
-                        oldPackage,
-                        targetStaging.getPlans()
-                )
-        );
-    }
-
-    @Override
-    public void onCreate(List<? extends ExecutiontTaskParameters> entities, AutomationPackageContext context) {
-        for (ExecutiontTaskParameters entity : entities) {
-            // make sure the execution parameter of the schedule are enriched too (required to execute in same project
-            // as the schedule and populate event bindings
-            context.getEnricher().accept(entity.getExecutionsParameters());
-            mainExecutionTaskAccessor.save(entity);
-        }
-    }
-
-    @Override
-    public void onDelete(AutomationPackage automationPackage, AutomationPackageContext context) {
-        List<ExecutiontTaskParameters> schedules = getPackageSchedules(automationPackage.getId(), context);
-        for (ExecutiontTaskParameters schedule : schedules) {
-            try {
-                mainExecutionTaskAccessor.remove(schedule.getId());
-            } catch (Exception e) {
-                log.error("Error while deleting task {} for automation package {}",
-                        schedule.getId().toString(), automationPackage.getAttribute(AbstractOrganizableObject.NAME), e
-                );
-            }
+        if (isSchedulerInContext(apContext)) {
+            targetStaging.getAdditionalObjects().put(
+                    AutomationPackageSchedule.FIELD_NAME_IN_AP,
+                    prepareExecutionTasksParamsStaging((List<AutomationPackageSchedule>) objects,
+                            apContent,
+                            apContext,
+                            oldPackage,
+                            targetStaging.getPlans()
+                    )
+            );
         }
     }
 
@@ -118,7 +114,7 @@ public class ExecutionTaskParameterWithoutSchedulerHook implements AutomationPac
             execTaskParameters.addAttribute(AbstractOrganizableObject.NAME, schedule.getName());
             execTaskParameters.setCronExpression(schedule.getCron());
             List<String> cronExclusionsAsStrings = schedule.getCronExclusions();
-            if (cronExclusionsAsStrings != null && cronExclusionsAsStrings.size() > 1) {
+            if (cronExclusionsAsStrings != null && !cronExclusionsAsStrings.isEmpty()) {
                 List<CronExclusion> cronExclusions = cronExclusionsAsStrings.stream().map(s -> new CronExclusion(s, "")).collect(Collectors.toList());
                 execTaskParameters.setCronExclusions(cronExclusions);
             }
@@ -171,10 +167,14 @@ public class ExecutionTaskParameterWithoutSchedulerHook implements AutomationPac
     }
 
     protected List<ExecutiontTaskParameters> getPackageSchedules(ObjectId automationPackageId, AutomationPackageContext context) {
-        return getExecutionTaskAccessor(context).findManyByCriteria(AutomationPackageEntity.getAutomationPackageIdCriteria(automationPackageId)).collect(Collectors.toList());
+        return getExecutionScheduler(context).getExecutionTaskAccessor().findManyByCriteria(AutomationPackageEntity.getAutomationPackageIdCriteria(automationPackageId)).collect(Collectors.toList());
     }
 
-    protected ExecutionTaskAccessor getExecutionTaskAccessor(AutomationPackageContext context){
-        return (ExecutionTaskAccessor) context.getExtensions().get(EXECUTION_TASK_ACCESSOR_EXTENSION);
+    protected boolean isSchedulerInContext(AutomationPackageContext context)  {
+        return context.getExtensions().get(EXECUTION_SCHEDULER_EXTENSION) != null;
+    }
+
+    protected ExecutionScheduler getExecutionScheduler(AutomationPackageContext context){
+        return (ExecutionScheduler) context.getExtensions().get(EXECUTION_SCHEDULER_EXTENSION);
     }
 }

@@ -44,10 +44,7 @@ import step.functions.accessor.FunctionAccessor;
 import step.resources.ResourceManager;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
@@ -112,8 +109,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 
 		try {
 			dynamicBeanResolver.evaluate(artefact, getBindings());
-			artefact.setNameDynamically();
-			reportNode.setName(getReportNodeName(artefact));
+			reportNode.setName(getReportNodeNameDynamically(artefact));
 			if(filterArtefact(artefact)) {
 				reportNode.setStatus(ReportNodeStatus.SKIPPED);
 			} else {
@@ -161,8 +157,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 			context.getExecutionCallbacks().beforeReportNodeExecution(context, reportNode);
 			
 			dynamicBeanResolver.evaluate(artefact, getBindings());
-			artefact.setNameDynamically();
-			reportNode.setName(getReportNodeName(artefact));
+			reportNode.setName(getReportNodeNameDynamically(artefact));
 			reportNode.setArtefactInstance(artefact);
 			reportNode.setResolvedArtefact(artefact);
 
@@ -424,6 +419,16 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		node.setExecutionID(context.getExecutionId().toString());
 		node.setStatus(ReportNodeStatus.NORUN);
 		return node;
+	}
+
+	private String getReportNodeNameDynamically(ARTEFACT artefact) {
+		String name = null;
+		if (artefact.isUseDynamicName()) {
+			name = artefact.getDynamicName().get();
+		} else {
+			name = artefact.getAttribute(AbstractArtefact.NAME);
+		}
+		return name != null ? name : "Unnamed";
 	}
 
 	private String getReportNodeName(ARTEFACT artefact) {
