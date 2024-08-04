@@ -102,14 +102,22 @@ public class AutomationPackageServices extends AbstractStepServices {
             executionParameters = new AutomationPackageExecutionParameters();
         }
 
-        User user = getSession().getUser();
+        // in executionParameters we can define the user 'onBehalfOf'
+        // if this user is not defined, the user from session is taken
+        checkRightsOnBehalfOf("automation-package-execute", executionParameters.getUserID());
+        if (executionParameters.getUserID() == null) {
+            User user = getSession().getUser();
+            if (user != null) {
+                executionParameters.setUserID(user.getUsername());
+            }
+        }
+
         try {
             return automationPackageExecutor.runInIsolation(
                     automationPackageInputStream,
                     fileDetail.getFileName(),
                     executionParameters,
                     getObjectEnricher(),
-                    user == null ? null : user.getUsername(),
                     getObjectPredicate()
             );
         } catch (AutomationPackageManagerException e) {
