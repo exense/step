@@ -275,7 +275,17 @@ public class StepConsole implements Callable<Integer> {
                 }
                 if (customDefaultValuesProvider != null) {
                     ApExecuteCommand defaultExecutionParametersLookup = new ApExecuteCommand();
-                    new CommandLine(defaultExecutionParametersLookup).setDefaultValueProvider(customDefaultValuesProvider).parseArgs();
+                    CommandLine clForLookup = new CommandLine(defaultExecutionParametersLookup).setDefaultValueProvider(customDefaultValuesProvider);
+                    try {
+                        clForLookup.parseArgs();
+                    } catch (CommandLine.ParameterException ex) {
+                        try {
+                            return clForLookup.getParameterExceptionHandler().handleParseException(ex, new String[]{});
+                        } catch (Exception handlerException) {
+                            // exception during exception handling
+                            throw new RuntimeException("Unexpected exception", ex);
+                        }
+                    }
 
                     if (defaultExecutionParametersLookup.executionParameters != null) {
                         // apply default execution parameters from config files
@@ -361,7 +371,19 @@ public class StepConsole implements Callable<Integer> {
         StepConsole configFinder = stepConsoleSupplier.get();
 
         // parse arguments just to resolve configuration files and setup default values provider programmatically
-        CommandLine.ParseResult parseResult = addStepSubcommands(new CommandLine(configFinder), apCommandSupplier, deployCommandSupplier, executeCommandSupplier).parseArgs(args);
+        CommandLine clForFinder = addStepSubcommands(new CommandLine(configFinder), apCommandSupplier, deployCommandSupplier, executeCommandSupplier);
+        CommandLine.ParseResult parseResult = null;
+        try {
+            parseResult = clForFinder.parseArgs(args);
+        } catch (CommandLine.ParameterException ex){
+            try {
+                return clForFinder.getParameterExceptionHandler().handleParseException(ex, args);
+            } catch (Exception handlerException){
+                // exception during exception handling
+                throw new RuntimeException("Unexpected exception", ex);
+            }
+        }
+
         List<String> customConfigFiles = null;
 
         // custom configuration files are only applied for "ap" command
