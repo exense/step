@@ -2,6 +2,8 @@ package step.cli;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -9,6 +11,8 @@ import java.util.List;
 import java.util.Map;
 
 public class StepConsoleTest {
+
+    private static final Logger log = LoggerFactory.getLogger(StepConsoleTest.class);
 
     @Test
     public void testHelp() {
@@ -36,6 +40,19 @@ public class StepConsoleTest {
         Assert.assertEquals(0, localExecutionParams.size());
 
         res = runMain(histories, "ap", "execute", "help");
+        Assert.assertEquals(0, res);
+        Assert.assertEquals(0, deployExecRegistry.size());
+        Assert.assertEquals(0, remoteExecutionParams.size());
+        Assert.assertEquals(0, localExecutionParams.size());
+
+        // help is called by default for intermediate subcommands
+        res = runMain(histories);
+        Assert.assertEquals(0, res);
+        Assert.assertEquals(0, deployExecRegistry.size());
+        Assert.assertEquals(0, remoteExecutionParams.size());
+        Assert.assertEquals(0, localExecutionParams.size());
+
+        res = runMain(histories, "ap");
         Assert.assertEquals(0, res);
         Assert.assertEquals(0, deployExecRegistry.size());
         Assert.assertEquals(0, remoteExecutionParams.size());
@@ -175,14 +192,15 @@ public class StepConsoleTest {
     }
 
     private int runMain(Histories histories, String... args) {
-        return StepConsole.executeMain(
-                StepConsole::new,
-                StepConsole.ApCommand::new,
+        log.info("--- Run CLI - BEGIN ---");
+        int res = StepConsole.executeMain(
                 () -> new TestApDeployCommand(histories.deployHistory),
                 () -> new TestApExecuteCommand(histories.remoteExecuteHistory, histories.localExecuteHistory),
                 false,
                 args
         );
+        log.info("--- Run CLI - END ---" + "\n");
+        return res;
     }
 
     private static class Histories {

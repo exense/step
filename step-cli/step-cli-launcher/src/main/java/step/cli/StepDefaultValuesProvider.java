@@ -68,15 +68,7 @@ public class StepDefaultValuesProvider implements CommandLine.IDefaultValueProvi
         // default value defined in field
         String defaultConfigFile = lookupDefaultFile ? DEFAULT_CONFIG_FILE : null;
 
-        String infoText = "Applying";
-        infoText += " properties from ";
-        if (!customConfigFiles.isEmpty()) {
-            infoText += customConfigFiles + " and ";
-        }
-        infoText += "default config in " + defaultConfigFile;
-        log.info(infoText);
         this.mergedProperties = mergeProperties(customConfigFiles, defaultConfigFile);
-
         this.delegate = new CommandLine.PropertiesDefaultProvider(mergedProperties);
     }
 
@@ -100,6 +92,7 @@ public class StepDefaultValuesProvider implements CommandLine.IDefaultValueProvi
     private boolean addFileToProperties(String pathToFile, Properties res) throws IOException {
         File configFile = new File(pathToFile);
         if (configFile.exists() && configFile.canRead()) {
+            log.info("Applying properties from {}...", pathToFile);
             try (FileInputStream fis = new FileInputStream(configFile)) {
                 Properties tempProperties = new Properties();
                 tempProperties.load(fis);
