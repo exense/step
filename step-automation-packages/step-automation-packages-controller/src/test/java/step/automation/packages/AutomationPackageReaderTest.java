@@ -20,8 +20,12 @@ import step.parameter.ParameterScope;
 import step.parameter.automation.AutomationPackageParameter;
 import step.parameter.automation.AutomationPackageParameterJsonSchema;
 import step.parameter.automation.AutomationPackageParametersRegistration;
+import step.plugins.functions.types.automation.YamlCompositeFunction;
+import step.plugins.java.GeneralFunctionScriptLanguage;
 import step.plugins.java.GeneralScriptFunction;
+import step.plugins.java.automation.YamlGeneralScriptFunction;
 import step.plugins.jmeter.automation.YamlJMeterFunction;
+import step.plugins.node.automation.YamlNodeFunction;
 
 import java.io.File;
 import java.io.StringReader;
@@ -60,14 +64,40 @@ public class AutomationPackageReaderTest {
         AutomationPackageContent automationPackageContent = reader.readAutomationPackageFromJarFile(automationPackageJar);
         assertNotNull(automationPackageContent);
 
-        // 2 keywords: one from descriptor and two from java class with @Keyword annotation
+        // 6 keywords: 4 from descriptor and two from java class with @Keyword annotation
         List<AutomationPackageKeyword> keywords = automationPackageContent.getKeywords();
-        assertEquals(3, keywords.size());
+        assertEquals(6, keywords.size());
 
         YamlJMeterFunction jmeterKeyword = (YamlJMeterFunction) AutomationPackageTestUtils.findYamlKeywordByClassAndName(keywords, YamlJMeterFunction.class, J_METER_KEYWORD_1);
         assertEquals(
                 "jmeterProject1/jmeterProject1.xml",
                 jmeterKeyword.getJmeterTestplan().get()
+        );
+
+        YamlCompositeFunction compositeKeyword = (YamlCompositeFunction) AutomationPackageTestUtils.findYamlKeywordByClassAndName(keywords, YamlCompositeFunction.class, COMPOSITE_KEYWORD);
+        assertEquals(
+                "Composite keyword from AP",
+                compositeKeyword.getName()
+        );
+
+        YamlGeneralScriptFunction generalScriptKeyword = (YamlGeneralScriptFunction) AutomationPackageTestUtils.findYamlKeywordByClassAndName(keywords, YamlGeneralScriptFunction.class, GENERAL_SCRIPT_KEYWORD);
+        assertEquals(
+                GeneralFunctionScriptLanguage.javascript,
+                generalScriptKeyword.getScriptLanguage()
+        );
+        assertEquals(
+                "jsProject/jsSample.js",
+                generalScriptKeyword.getScriptFile().get()
+        );
+        assertEquals(
+                "lib/fakeLib.jar",
+                generalScriptKeyword.getLibrariesFile().get()
+        );
+
+        YamlNodeFunction nodeFunction = (YamlNodeFunction) AutomationPackageTestUtils.findYamlKeywordByClassAndName(keywords, YamlNodeFunction.class, NODE_KEYWORD);
+        assertEquals(
+                "nodeProject/nodeSample.ts",
+                nodeFunction.getJsfile().get()
         );
 
         GeneralScriptFunction myKeyword2 = (GeneralScriptFunction) findJavaKeywordByClassAndName(keywords, GeneralScriptFunction.class, ANNOTATED_KEYWORD);
@@ -76,9 +106,9 @@ public class AutomationPackageReaderTest {
 
         AutomationPackageTestUtils.findJavaKeywordByClassAndName(keywords, GeneralScriptFunction.class, INLINE_PLAN);
 
-        // 2 annotated plans and 1 plan in yaml descriptor
+        // 2 annotated plans and 2 plans in yaml descriptor
         List<Plan> plans = automationPackageContent.getPlans();
-        assertEquals("Detected plans: " + plans.stream().map(p -> p.getAttribute(AbstractOrganizableObject.NAME)).collect(Collectors.toList()), 3, plans.size());
+        assertEquals("Detected plans: " + plans.stream().map(p -> p.getAttribute(AbstractOrganizableObject.NAME)).collect(Collectors.toList()), 4, plans.size());
         Plan testPlan = findPlanByName(plans, PLAN_NAME_FROM_DESCRIPTOR);
         assertEquals(TestCase.class, testPlan.getRoot().getClass());
         assertEquals(TestCase.class, AutomationPackageTestUtils.findPlanByName(plans, PLAN_FROM_PLANS_ANNOTATION).getRoot().getClass());
