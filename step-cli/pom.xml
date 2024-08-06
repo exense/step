@@ -19,26 +19,22 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <parent>
-        <artifactId>step-automation-packages</artifactId>
-        <groupId>ch.exense.step</groupId>
-        <version>0.0.0-SNAPSHOT</version>
-    </parent>
     <modelVersion>4.0.0</modelVersion>
-
-    <artifactId>step-automation-packages-samples</artifactId>
+    <artifactId>step-cli</artifactId>
     <packaging>pom</packaging>
+    <modules>
+        <module>step-cli-launcher</module>
+        <module>step-cli-core</module>
+    </modules>
+
+    <parent>
+        <groupId>ch.exense.step</groupId>
+        <artifactId>step-parent</artifactId>
+        <version>0.0.0-SNAPSHOT</version>
+        <relativePath>../step-parent</relativePath>
+    </parent>
 
     <properties>
     </properties>
-
-    <modules>
-        <module>step-automation-packages-sample1</module>
-        <module>step-automation-packages-sample1-extended</module>
-        <module>step-automation-packages-sample2</module>
-        <module>step-automation-packages-malformed</module>
-        <module>step-automation-packages-sample-junit</module>
-        <module>step-automation-packages-sample-echo</module>
-    </modules>
 
 </project>
