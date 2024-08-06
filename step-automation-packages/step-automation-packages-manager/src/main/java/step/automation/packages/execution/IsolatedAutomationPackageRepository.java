@@ -35,6 +35,7 @@ import step.functions.accessor.FunctionAccessor;
 import step.resources.LayeredResourceManager;
 import step.resources.ResourceManager;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -48,6 +49,9 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
     public static final Logger log = LoggerFactory.getLogger(IsolatedAutomationPackageRepository.class);
 
     private final ConcurrentHashMap<String, AutomationPackageManager> inMemoryPackageManagers = new ConcurrentHashMap<>();
+
+    // TODO: use persistent storage with cleanup
+    private final ConcurrentHashMap<String, File> apFiles = new ConcurrentHashMap<>();
 
     protected IsolatedAutomationPackageRepository() {
         super(Set.of(REPOSITORY_PARAM_CONTEXTID));
@@ -159,5 +163,13 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
             throw new IllegalArgumentException("Context " + contextId + " already exists");
         }
         this.inMemoryPackageManagers.put(contextId, automationPackageManager);
+    }
+
+    public void putFile(String contextId, File apFile){
+        this.apFiles.put(contextId, apFile);
+    }
+
+    public File getFile(String contextId) {
+        return this.apFiles.get(contextId);
     }
 }
