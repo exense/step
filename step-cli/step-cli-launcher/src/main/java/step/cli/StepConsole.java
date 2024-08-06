@@ -41,7 +41,8 @@ import java.util.function.Supplier;
 @Command(name = "step",
         mixinStandardHelpOptions = true,
         version = "step 1.0",
-        description = "The CLI interface to communicate with Step server"
+        description = "The command-line interface (CLI) to interact with Step",
+        usageHelpAutoWidth = true
 )
 public class StepConsole implements Callable<Integer> {
 
@@ -65,24 +66,25 @@ public class StepConsole implements Callable<Integer> {
         public static final String TOKEN = "--token";
         public static final String VERBOSE = "--verbose";
         public static final String CONFIG = "-c";
+        public static final String LOCAL = "--local";
 
         @CommandLine.Spec
         protected CommandLine.Model.CommandSpec spec;
 
-        @Option(names = {CONFIG}, description = "The custom configuration file(s)")
+        @Option(names = {CONFIG}, paramLabel = "<configFile>", description = "Optional configuration file(s) containing CLI options (ex: projectName=Common)")
         protected List<String> config;
 
-        @Option(names = {STEP_URL_SHORT, STEP_URL}, description = "The URL of Step server")
+        @Option(names = {STEP_URL_SHORT, STEP_URL}, description = "The URL of the remote Step server")
         protected String stepUrl;
 
-        @Option(names = {PROJECT_NAME}, description = "The project name in Step")
+        @Option(names = {PROJECT_NAME}, description = "The target project name in Step")
         protected String stepProjectName;
 
-        @Option(names = {TOKEN})
+        @Option(names = {TOKEN}, paramLabel = "<API key>", description = "The API key (token) to authenticate to the remote Step server")
         protected String authToken;
 
-        @Option(names = {"--stepUserId"})
-        protected String stepUserId;
+        @Option(names = {"--stepUser"}, description = "To execute on behalf of the provided user")
+        protected String stepUser;
 
         @Option(names = {VERBOSE}, defaultValue = "false")
         protected boolean verbose;
@@ -113,10 +115,6 @@ public class StepConsole implements Callable<Integer> {
             }
         }
 
-        public void checkStepUrlRequired() {
-            checkRequiredParam(spec, stepUrl, STEP_URL_SHORT, STEP_URL);
-        }
-
         public void printConfigIfRequired() {
             StepDefaultValuesProvider defaultValuesProvider = getStepDefaultValuesProvider();
             if (verbose && defaultValuesProvider != null) {
@@ -142,7 +140,8 @@ public class StepConsole implements Callable<Integer> {
     @Command(name = ApCommand.AP_COMMAND,
             mixinStandardHelpOptions = true,
             version = "step.ap 1.0",
-            description = "The CLI interface to manage automation packages in Step"
+            description = "The CLI interface to manage automation packages in Step",
+            usageHelpAutoWidth = true
     )
     public static class ApCommand implements Callable<Integer> {
 
@@ -150,7 +149,7 @@ public class StepConsole implements Callable<Integer> {
 
         public static abstract class AbstractApCommand extends AbstractStepCommand {
 
-            @Option(names = {"-p", "--package"}, description = "The file or folder with automation package")
+            @Option(names = {"-p", "--package"}, paramLabel = "<AutomationPackage>", description = "The automation-package.yaml file or the folder containing it")
             protected File apFile;
 
             /**
@@ -204,10 +203,12 @@ public class StepConsole implements Callable<Integer> {
                 mixinStandardHelpOptions = true,
                 version = "step.ap.deploy 1.0",
                 description = "The CLI interface to deploy automation packages in Step",
+                usageHelpAutoWidth = true,
                 subcommands = {CommandLine.HelpCommand.class})
         public static class ApDeployCommand extends AbstractApCommand {
 
-            @Option(names = {"--async"}, defaultValue = "false", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
+            @Option(names = {"--async"}, defaultValue = "false", showDefaultValue = CommandLine.Help.Visibility.ALWAYS,
+                    description = "Whether to waits for the deployment to complete")
             protected boolean async;
 
             @Override
@@ -215,6 +216,10 @@ public class StepConsole implements Callable<Integer> {
                 super.call();
                 handleApDeployCommand();
                 return 0;
+            }
+
+            public void checkStepUrlRequired() {
+                checkRequiredParam(spec, stepUrl, STEP_URL_SHORT, STEP_URL);
             }
 
             protected void handleApDeployCommand() {
@@ -238,15 +243,17 @@ public class StepConsole implements Callable<Integer> {
                 mixinStandardHelpOptions = true,
                 version = "step.ap.execute 1.0",
                 description = "The CLI interface to execute automation packages in Step",
+                usageHelpAutoWidth = true,
                 subcommands = {CommandLine.HelpCommand.class})
         public static class ApExecuteCommand extends AbstractApCommand implements Callable<Integer> {
 
             public static final String EP_DESCRIPTION_KEY = "executionParameters";
 
-            @Option(names = {"--executionTimeoutS"}, defaultValue = "3600")
+            @Option(names = {"--executionTimeoutS"}, defaultValue = "3600", description = "Maximum time in seconds to wait for executions completeness")
             protected Integer executionTimeoutS;
 
-            @Option(names = {"--async"}, defaultValue = "false", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
+            @Option(names = {"--async"}, defaultValue = "false", showDefaultValue = CommandLine.Help.Visibility.ALWAYS,
+                    description = "Whether to wait for execution completeness")
             protected boolean async;
 
             @Option(names = {"--includePlans"}, description = "The comma separated list of plans to be executed")
@@ -255,10 +262,10 @@ public class StepConsole implements Callable<Integer> {
             @Option(names = {"--excludePlans"}, description = "The comma separated list of plans to be excluded from execution")
             protected String excludePlans;
 
-            @Option(names = {"--local"}, defaultValue = "false", description = "The flag to run AP locally ", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
+            @Option(names = {LOCAL}, defaultValue = "false", description = "To execute the Automation Package locally ", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
             protected boolean local;
 
-            @Option(descriptionKey = EP_DESCRIPTION_KEY, names = {"-ep", "--executionParameters"}, description = "The execution parameters to be used ", split = "\\|", splitSynopsisLabel = "|")
+            @Option(descriptionKey = EP_DESCRIPTION_KEY, names = {"-ep", "--executionParameters"}, description = "Set execution parameters for local and remote executions ", split = "\\|", splitSynopsisLabel = "|")
             protected Map<String, String> executionParameters;
 
             @Override
@@ -316,10 +323,14 @@ public class StepConsole implements Callable<Integer> {
                 new ApLocalExecuteCommandHandler().execute(file, includePlans, excludePlans, executionParameters);
             }
 
+            public void checkStepUrlRequired() {
+                checkRequiredParam(spec, stepUrl, STEP_URL_SHORT, STEP_URL, LOCAL);
+            }
+
             protected void handleApRemoteExecuteCommand() {
                 checkStepUrlRequired();
                 checkEeOptionsConsistency(spec);
-                executeRemotely(stepUrl, getStepProjectName(), stepUserId, getAuthToken(), executionParameters, executionTimeoutS, async, includePlans, excludePlans);
+                executeRemotely(stepUrl, getStepProjectName(), stepUser, getAuthToken(), executionParameters, executionTimeoutS, async, includePlans, excludePlans);
             }
 
             // for tests
