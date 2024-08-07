@@ -53,7 +53,7 @@ public class ParameterManagerLocalPlugin extends ParameterManagerPlugin {
         EncryptionManager encryptionManager = executionEngineContext.get(EncryptionManager.class);
 
         String scriptEngine = getScriptEngine();
-        ParameterManager parameterManager = new ParameterManager(parameterAccessor, encryptionManager, scriptEngine);
+        ParameterManager parameterManager = new ParameterManager(parameterAccessor, encryptionManager, scriptEngine, executionEngineContext.getDynamicBeanResolver());
         executionEngineContext.put(ParameterManager.class, parameterManager);
 
         configure(parameterManager);

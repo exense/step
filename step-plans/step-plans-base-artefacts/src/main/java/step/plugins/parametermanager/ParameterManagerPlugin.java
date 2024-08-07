@@ -24,6 +24,7 @@ import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.InMemoryAccessor;
 import step.core.accessors.LayeredAccessor;
 import step.core.artefacts.reports.ReportNode;
+import step.core.dynamicbeans.DynamicValue;
 import step.core.encryption.EncryptionManagerException;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionContextBindings;
@@ -155,8 +156,8 @@ public class ParameterManagerPlugin extends AbstractExecutionEnginePlugin {
 		// which lists the parameters available in the plan after activation (evaluation of the activation expressions)
 		Map<String, String> executionParameters = new HashMap<>();
 		allParameters.forEach((k,v)->{
-			String value = v.getValue();
-			executionParameters.put(k, value != null ? value:"");
+			DynamicValue<String> value = v.getValue();
+			executionParameters.put(k, value != null ? value.get():"");
 		});
 		executionManager.updateExecution(execution-> {
 			Map<String, String> parameters = execution.getParameters();
@@ -237,7 +238,7 @@ public class ParameterManagerPlugin extends AbstractExecutionEnginePlugin {
 				throw new PluginCriticalException("Unable to decrypt value of parameter "+p.getKey()+". No encryption manager available");
 			}
 		} else {
-			value = p.getValue();
+			value = p.getValue().get();
 		}
 		return value;
 	}

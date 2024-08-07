@@ -23,14 +23,14 @@ public class PacerTest {
 	public void test() throws InterruptedException {
 		final int durationInSeconds = 5;
 		// Target throughput in 1/s
-		final int expectedThroughput = 100;
+		final int expectedThroughput = 10;
 		final AtomicInteger executionCount = new AtomicInteger(0);
 
-		// Variable sleep between 3s and 12s
+		// Variable sleep between 3ms and 12ms
 		// The variable sleep will temporarily exceed the pacing
-		// of 10ms corresponding to the throughput of 100/s
-		final int minSleep = 3;
-		final int maxMaxSleep = 12;
+		// of 100ms corresponding to the throughput of 10/s
+		final int minSleep = 30;
+		final int maxMaxSleep = 120;
 		final int increment = 1;
 
 		try (ExecutionEngine executionEngine = ExecutionEngine.builder().build()) {

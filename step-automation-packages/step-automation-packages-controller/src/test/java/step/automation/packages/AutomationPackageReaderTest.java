@@ -127,10 +127,10 @@ public class AutomationPackageReaderTest {
         // 1 parameter
         List<AutomationPackageParameter> parameters = (List<AutomationPackageParameter>) automationPackageContent.getAdditionalData().get(AutomationPackageParameterJsonSchema.FIELD_NAME_IN_AP);
         assertNotNull(parameters);
-        assertEquals(2, parameters.size());
+        assertEquals(3, parameters.size());
         AutomationPackageParameter parameter = parameters.get(0);
         assertEquals("myKey", parameter.getKey());
-        assertEquals("myValue", parameter.getValue());
+        assertEquals("myValue", parameter.getValue().get());
         assertEquals("some description", parameter.getDescription());
         assertEquals("abc", parameter.getActivationScript());
         assertEquals((Integer) 10, parameter.getPriority());
@@ -139,7 +139,14 @@ public class AutomationPackageReaderTest {
         assertEquals("entity", parameter.getScopeEntity());
         parameter = parameters.get(1);
         assertEquals("mySimpleKey", parameter.getKey());
-        assertEquals("mySimpleValue", parameter.getValue());
+        assertFalse(parameter.getValue().isDynamic());
+        assertEquals("mySimpleValue", parameter.getValue().get());
+        assertEquals(ParameterScope.GLOBAL, parameter.getScope()); // global is default value
+        assertEquals(false, parameter.getProtectedValue());
+        parameter = parameters.get(2);
+        assertEquals("myDynamicParam", parameter.getKey());
+        assertTrue(parameter.getValue().isDynamic());
+        assertEquals("mySimpleKey", parameter.getValue().getExpression());
         assertEquals(ParameterScope.GLOBAL, parameter.getScope()); // global is default value
         assertEquals(false, parameter.getProtectedValue());
     }

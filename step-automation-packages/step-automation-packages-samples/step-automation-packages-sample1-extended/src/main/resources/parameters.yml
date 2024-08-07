@@ -6,4 +6,3 @@ parameters:
     priority: 10
     protectedValue: true
     scope: GLOBAL
-    scopeEntity: entity

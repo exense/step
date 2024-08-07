@@ -44,6 +44,9 @@ import step.core.accessors.AbstractAccessor;
 import step.core.collections.Collection;
 import step.core.collections.Filters;
 import step.core.collections.mongodb.MongoDBCollectionFactory;
+import step.core.dynamicbeans.DynamicBeanResolver;
+import step.core.dynamicbeans.DynamicValueResolver;
+import step.expressions.ExpressionHandler;
 import step.parameter.Parameter;
 import step.commons.activation.Expression;
 import step.core.accessors.InMemoryAccessor;
@@ -52,6 +55,8 @@ import step.parameter.ParameterManager;
 public class ParameterManagerTest {
 
 	private static final Logger logger = LoggerFactory.getLogger(ParameterManagerTest.class);
+
+	private final DynamicBeanResolver resolver = new DynamicBeanResolver(new DynamicValueResolver(new ExpressionHandler()));
 
 	@Test
 	public void testJavascript() throws ScriptException {
@@ -69,7 +74,7 @@ public class ParameterManagerTest {
 
 	public void test1Common(Configuration configuration) throws ScriptException {
 		InMemoryAccessor<Parameter> accessor = new InMemoryAccessor<>();
-		ParameterManager m = new ParameterManager(accessor, null, configuration);
+		ParameterManager m = new ParameterManager(accessor, null, configuration, resolver);
 
 		accessor.save(new Parameter(new Expression("user=='pomme'"), "key1", "pommier", "desc"));
 		accessor.save(new Parameter(new Expression("user=='pomme'"), "key1", "pommier", "desc"));
@@ -109,7 +114,7 @@ public class ParameterManagerTest {
 		Collection<Parameter> collection = new MongoDBCollectionFactory(properties).getCollection("perfParameters", Parameter.class);
 		AbstractAccessor<Parameter> accessor = new AbstractAccessor<>(collection);
 		accessor.getCollectionDriver().remove(Filters.empty());
-		ParameterManager m = new ParameterManager(accessor, null, new Configuration());
+		ParameterManager m = new ParameterManager(accessor, null, new Configuration(), resolver);
 		
 		int nIt = 100;
 		for(int i=1;i<=nIt;i++) {
@@ -135,7 +140,7 @@ public class ParameterManagerTest {
 	@Test
 	public void testParallel() throws ScriptException, InterruptedException, ExecutionException {
 		InMemoryAccessor<Parameter> accessor = new InMemoryAccessor<>();
-		ParameterManager m = new ParameterManager(accessor, null, new Configuration());
+		ParameterManager m = new ParameterManager(accessor, null, new Configuration(), resolver);
 		
 		int nIt = 100;
 		for(int i=1;i<=nIt;i++) {
