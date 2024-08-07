@@ -25,18 +25,13 @@ import org.junit.runner.notification.RunNotifier;
 import org.junit.runners.ParentRunner;
 import org.junit.runners.model.InitializationError;
 import org.junit.runners.model.Statement;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import step.core.artefacts.reports.ReportNodeStatus;
+import step.automation.packages.junit.AbstractLocalPlanRunner;
+import step.cli.AbstractExecuteAutomationPackageTool;
 import step.core.execution.ExecutionEngine;
-import step.core.plans.Plan;
 import step.core.plans.runner.PlanRunnerResult;
 import step.junit.runners.annotations.ExecutionParameters;
 import step.resources.ResourceManager;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.io.Writer;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,7 +40,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public abstract class AbstractStepRunner extends ParentRunner<StepClassParserResult> {
-    private static final Logger logger = LoggerFactory.getLogger(Step.class);
     private final static Pattern SYSTEM_PROPERTIES_PREFIX = Pattern.compile("STEP_(.+?)");
 
     protected final Class<?> klass;
@@ -56,19 +50,6 @@ public abstract class AbstractStepRunner extends ParentRunner<StepClassParserRes
     public AbstractStepRunner(Class<?> testClass, Class<?> klass) throws InitializationError {
         super(testClass);
         this.klass = klass;
-    }
-
-    private static String getExecutionTreeAsString(PlanRunnerResult res) {
-        String executionTree;
-        Writer w = new StringWriter();
-        try {
-            res.printTree(w, true, true);
-            executionTree = w.toString();
-        } catch (IOException e) {
-            logger.error("Error while writing execution tree", w);
-            executionTree = "Error while writing tree. See logs for details.";
-        }
-        return executionTree;
     }
 
     @Override
@@ -94,35 +75,37 @@ public abstract class AbstractStepRunner extends ParentRunner<StepClassParserRes
         Description desc = Description.createTestDescription(klass, child.getName());
         EachTestNotifier childNotifier = new EachTestNotifier(notifier, desc);
 
-        childNotifier.fireTestStarted();
-
-        try {
-            Exception initializingException = child.getInitializingException();
-            if (initializingException == null) {
-                Plan plan = child.getPlan();
-                Map<String, String> executionParameters = getExecutionParameters();
-                PlanRunnerResult result = executionEngine.execute(plan, executionParameters);
-                ReportNodeStatus resultStatus = result.getResult();
-
-                if (resultStatus == ReportNodeStatus.PASSED) {
-                    // We actually also want to see results when tests complete successfully
-                    result.printTree();
-                } else if (resultStatus == ReportNodeStatus.FAILED) {
-                    notifyFailure(childNotifier, result, "Plan execution failed", true);
-                } else if (resultStatus == ReportNodeStatus.TECHNICAL_ERROR) {
-                    notifyFailure(childNotifier, result, "Technical error while executing plan", false);
-                } else {
-                    notifyFailure(childNotifier, result, "The plan execution returned an unexpected status\" + result",
-                            false);
-                }
-            } else {
-                childNotifier.addFailure(initializingException);
+        new AbstractLocalPlanRunner(child, executionEngine) {
+            @Override
+            protected void onExecutionStart() {
+                childNotifier.fireTestStarted();
             }
-        } catch (Exception e) {
-            childNotifier.addFailure(e);
-        } finally {
-            childNotifier.fireTestFinished();
-        }
+
+            @Override
+            protected void onExecutionError(PlanRunnerResult result, String errorText, boolean assertionError) {
+                notifyFailure(childNotifier, result, errorText, assertionError);
+            }
+
+            @Override
+            protected void onInitializingException(Exception exception) {
+                childNotifier.addFailure(exception);
+            }
+
+            @Override
+            protected void onExecutionException(Exception exception) {
+                childNotifier.addFailure(exception);
+            }
+
+            @Override
+            protected void onTestFinished() {
+                childNotifier.fireTestFinished();
+            }
+
+            @Override
+            protected Map<String, String> getExecutionParameters() {
+                return AbstractStepRunner.this.getExecutionParameters();
+            }
+        }.runPlan();
     }
 
     protected Map<String, String> getExecutionParameters() {
@@ -178,7 +161,7 @@ public abstract class AbstractStepRunner extends ParentRunner<StepClassParserRes
 
     protected void notifyFailure(EachTestNotifier childNotifier, PlanRunnerResult res, String errorMsg,
                                  boolean assertionError) {
-        String executionTree = AbstractStepRunner.getExecutionTreeAsString(res);
+        String executionTree = AbstractExecuteAutomationPackageTool.getExecutionTreeAsString(res);
         String detailMessage = errorMsg + "\nExecution tree is:\n" + executionTree;
         if (assertionError) {
             childNotifier.addFailure(new AssertionError(detailMessage));

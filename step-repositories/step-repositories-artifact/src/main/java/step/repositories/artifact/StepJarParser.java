@@ -66,7 +66,7 @@ public class StepJarParser {
                 if (automationPackageArchive.hasAutomationPackageDescriptor() && automationPackageReader != null) {
                     AutomationPackageContent content = automationPackageReader.readAutomationPackage(automationPackageArchive, false, false);
                     // FIXME: what is the correct operation mode here?
-                    AutomationPackageContext apContext = new AutomationPackageContext(AutomationPackageOperationMode.MAIN, resourceManager, automationPackageArchive, null, new HashMap<>());
+                    AutomationPackageContext apContext = new AutomationPackageContext(AutomationPackageOperationMode.MAIN, resourceManager, automationPackageArchive, content, null, new HashMap<>());
                     functions.addAll(content.getKeywords().stream().map(keyword -> keyword.prepareKeyword(apContext)).collect(Collectors.toList()));
                 }
             }

@@ -54,15 +54,16 @@ public class AutomationPackagePlansAttributesApplier {
 
     public void applySpecialAttributesToPlans(List<Plan> plans,
                                               AutomationPackageArchive automationPackageArchive,
+                                              AutomationPackageContent packageContent,
                                               ObjectEnricher objectEnricher, Map<String, Object> extensions, AutomationPackageOperationMode operationMode) {
-        AutomationPackageContext apContext = prepareContext(operationMode, automationPackageArchive, objectEnricher, extensions);
+        AutomationPackageContext apContext = prepareContext(operationMode, automationPackageArchive, packageContent, objectEnricher, extensions);
         for (Plan plan : plans) {
             applySpecialValuesForArtifact(plan.getRoot(), apContext);
         }
     }
 
-    protected AutomationPackageContext prepareContext(AutomationPackageOperationMode operationMode, AutomationPackageArchive automationPackageArchive, ObjectEnricher enricher, Map<String, Object> extensions) {
-        return new AutomationPackageContext(operationMode, resourceManager, automationPackageArchive, enricher, extensions);
+    protected AutomationPackageContext prepareContext(AutomationPackageOperationMode operationMode, AutomationPackageArchive automationPackageArchive, AutomationPackageContent packageContent, ObjectEnricher enricher, Map<String, Object> extensions) {
+        return new AutomationPackageContext(operationMode, resourceManager, automationPackageArchive, packageContent, enricher, extensions);
     }
 
     private void applySpecialValuesForArtifact(AbstractArtefact artifact, AutomationPackageContext apContext) {

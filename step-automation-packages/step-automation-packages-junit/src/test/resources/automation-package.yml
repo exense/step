@@ -10,6 +10,19 @@ plans:
           - echo:
               text:
                 expression: "myParam"
+          - callKeyword:
+              keyword: "callExisting"
+          - callKeyword:
+              keyword: "customKeywordWithMapInput"
+              inputs:
+                - URL: "https://postman-echo.com/headers"
+                - Name: "my test"
+                - Headers:
+                    myHeader: "myHeadervalue"
+                - ArrayInput:
+                    - 1
+                    - 3
+                    - 5
   - name: JMeter Plan
     root:
       testCase:
@@ -18,6 +31,25 @@ plans:
               keyword: "JMeterAutomation"
               inputs:
                 - url: "www.exense.ch"
+  - name: General Script Plan
+    root:
+      testCase:
+        children:
+          - callKeyword:
+              keyword: "GeneralScriptAutomation"
+  - name: Test Plan with Composite
+    root:
+      testCase:
+        children:
+          - echo:
+              text: "Calling composite"
+          - callKeyword:
+              keyword: "Composite keyword from AP"
+              children:
+                - check:
+                    expression: "output.output1.equals('value')"
+                - check:
+                    expression: "output.output2.equals('some thing dynamic')"
 keywords:
   - JMeter:
       name: "JMeterAutomation"
@@ -25,6 +57,23 @@ keywords:
       useCustomTemplate: true
       callTimeout: 1000
       jmeterTestplan: "jmeterProject1/jmeterProject1.jmx"
+  - Composite:
+      name: "Composite keyword from AP"
+      plan:
+        root:
+          testCase:
+            children:
+              - echo:
+                  text: "Just echo"
+              - return:
+                  output:
+                    - output1: "value"
+                    - output2:
+                        expression: "'some thing dynamic'"
+  - GeneralScript:
+      name: "GeneralScriptAutomation"
+      scriptLanguage: javascript
+      scriptFile: jsProject/jsSample.js
 parameters:
   - key: "myParam"
     value: "myParamValue"

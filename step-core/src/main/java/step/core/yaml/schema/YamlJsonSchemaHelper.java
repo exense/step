@@ -46,6 +46,8 @@ public class YamlJsonSchemaHelper {
 	public static final String SMART_DYNAMIC_VALUE_BOOLEAN_DEF = "SmartDynamicValueBooleanDef";
 
 	public static final String DYNAMIC_KEYWORD_INPUTS_DEF = "DynamicKeywordInputsDef";
+	public static final String PLAN_DEF = "PlanDef";
+	public static final String COMPOSITE_PLAN_DEF = "CompositePlanDef";
 	public static final String DEFS_PREFIX = "#/$defs/";
 	private final JsonProvider jsonProvider;
 
@@ -132,7 +134,7 @@ public class YamlJsonSchemaHelper {
 	 *     "type": "object",
 	 *     "patternProperties": {
 	 *       ".*": {
-	 *         "oneOf": [
+	 *         "anyOf": [
 	 *           {
 	 *             "type": "number"
 	 *           },
@@ -141,6 +143,9 @@ public class YamlJsonSchemaHelper {
 	 *           },
 	 *           {
 	 *             "type": "string"
+	 *           },
+	 *           {
+	 *             "type": "object"
 	 *           },
 	 *           {
 	 *             "$ref": "#/$defs/DynamicExpressionDef"
@@ -165,14 +170,16 @@ public class YamlJsonSchemaHelper {
 		JsonObjectBuilder arrayItemDef = jsonProvider.createObjectBuilder();
 		arrayItemDef.add("type", "object");
 
-		JsonArrayBuilder oneOfArray = jsonProvider.createArrayBuilder()
+		JsonArrayBuilder anyOfArray = jsonProvider.createArrayBuilder()
 				.add(jsonProvider.createObjectBuilder().add("type", "number"))
 				.add(jsonProvider.createObjectBuilder().add("type", "boolean"))
 				.add(jsonProvider.createObjectBuilder().add("type", "string"))
+				.add(jsonProvider.createObjectBuilder().add("type", "object"))
+				.add(jsonProvider.createObjectBuilder().add("type", "array"))
 				.add(addRef(jsonProvider.createObjectBuilder(), YamlJsonSchemaHelper.DYNAMIC_EXPRESSION_DEF));
 
 		JsonObjectBuilder properties = jsonProvider.createObjectBuilder()
-				.add(".*", jsonProvider.createObjectBuilder().add("oneOf", oneOfArray));
+				.add(".*", jsonProvider.createObjectBuilder().add("anyOf", anyOfArray));
 		arrayItemDef.add("patternProperties", properties);
 		arrayItemDef.add("additionalProperties", false);
 		return arrayItemDef;

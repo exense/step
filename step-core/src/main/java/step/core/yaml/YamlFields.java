@@ -20,5 +20,6 @@ package step.core.yaml;
 
 public class YamlFields {
     public static final String DYN_VALUE_EXPRESSION_FIELD = "expression";
+    public static final String DYN_VALUE_DYNAMIC_FIELD = "dynamic";
     public static final String DYN_VALUE_VALUE_FIELD = "value";
 }

@@ -48,12 +48,12 @@ public class AutomationPackageArchive implements Closeable {
         this.type = JAVA;
     }
 
-    public AutomationPackageArchive(File automationPackageJar) throws AutomationPackageReadingException {
+    public AutomationPackageArchive(File automationPackageFile) throws AutomationPackageReadingException {
         this.internalClassLoader = true;
-        this.originalFile = automationPackageJar;
+        this.originalFile = automationPackageFile;
         this.type = JAVA; //Only supported type for now
         try {
-            this.classLoader = new URLClassLoader(new URL[]{automationPackageJar.toURI().toURL()}, null);
+            this.classLoader = new URLClassLoader(new URL[]{automationPackageFile.toURI().toURL()}, null);
         } catch (MalformedURLException ex) {
             throw new AutomationPackageReadingException("Unable to read automation package", ex);
         }
