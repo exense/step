@@ -56,9 +56,13 @@ public class YamlKeywordDeserializer extends StepYamlDeserializer<YamlAutomation
 
             protected Class<?> resolveTargetClassByYamlName(String yamlName) {
                 try {
-                    return Class.forName(keywordsLookuper.yamlKeywordClassToJava(yamlName));
+                    String className = keywordsLookuper.yamlKeywordClassToJava(yamlName);
+                    if (className == null) {
+                        throw new RuntimeException("Unable to resolve keyword class for '" + yamlName + "'");
+                    }
+                    return Class.forName(className);
                 } catch (ClassNotFoundException e) {
-                    throw new RuntimeException("Unable to resolve keyword class", e);
+                    throw new RuntimeException("Unable to resolve keyword class for '" + yamlName + "'");
                 }
             }
         };
