@@ -503,6 +503,9 @@ public class AutomationPackageManager {
         staging.getFunctions().addAll(prepareFunctionsStaging(automationPackageArchive, packageContent, enricherForIncludedEntities, oldPackage, staging.getResourceManager()));
 
         List<HookEntry> hookEntries = packageContent.getAdditionalData().entrySet().stream().map(e -> new HookEntry(e.getKey(), e.getValue())).collect(Collectors.toList());
+        List<String> orderedEntryNames = automationPackageHookRegistry.getOrderedHookFieldNames();
+        // sort the hook entries according to their "natural" order defined by the registry
+        hookEntries.sort(Comparator.comparingInt(he -> orderedEntryNames.indexOf(he.fieldName)));
 
         for (HookEntry hookEntry : hookEntries) {
             boolean hooked =  automationPackageHookRegistry.onPrepareStaging(
