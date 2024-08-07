@@ -18,7 +18,6 @@
  ******************************************************************************/
 package step.core;
 
-import ch.exense.commons.io.FileHelper;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -59,12 +58,9 @@ public abstract class AbstractStepContext extends AbstractContext {
 		return new File(dirName);
 	}
 
-	protected void useSourceAttributesFromParentContext(AbstractStepContext parentContext) {
+	protected void useAllAttributesFromParentContext(AbstractStepContext parentContext) {
 		ResourceManager resourceManager = new LayeredResourceManager(parentContext.getResourceManager(), true);
 		setResourceManager(resourceManager);
-	}
-
-	protected void useStandardAttributesFromParentContext(AbstractStepContext parentContext) {
 		expressionHandler = parentContext.getExpressionHandler();
 		dynamicBeanResolver = parentContext.getDynamicBeanResolver();
 	}
@@ -117,7 +113,9 @@ public abstract class AbstractStepContext extends AbstractContext {
 	@Override
 	public void close() throws IOException {
 		// Cleanup the default resource manager
-		localResourceManager.cleanup();
+		if(localResourceManager != null) {
+			localResourceManager.cleanup();
+		}
 		super.close();
 	}
 }

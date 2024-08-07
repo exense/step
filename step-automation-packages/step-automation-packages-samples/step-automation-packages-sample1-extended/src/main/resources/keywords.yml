@@ -10,4 +10,25 @@ keywords:
       name: "Another JMeter keyword from automation package"
       description: "JMeter keyword 2"
       jmeterTestplan: "jmeterProject2/jmeterProject2.xml"
+  - Composite:
+      name: "Composite keyword from AP"
+      plan:
+        root:
+          testCase:
+            children:
+              - echo:
+                  text: "Just echo"
+              - return:
+                  output:
+                    - output1: "value"
+                    - output2:
+                        expression: "'some thing dynamic'"
+  - GeneralScript:
+      name: "GeneralScript keyword from AP"
+      scriptLanguage: javascript
+      scriptFile: "jsProject/jsSample.js"
+      librariesFile: "lib/fakeLib.jar"
+  - Node:
+      name: "NodeAutomation"
+      jsfile: "nodeProject/nodeSample.ts"
       

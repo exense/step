@@ -22,11 +22,11 @@ public class BucketResponse {
     @NotNull
     private final long max;
 
-    private final Map<Integer, Long> pclValues;
+    private final Map<Double, Long> pclValues;
     @NotNull
     private final long throughputPerHour;
 
-    public BucketResponse(long begin, BucketAttributes attributes, long count, long sum, long min, long max, Map<Integer, Long> getPclValues, long throughputPerHour) {
+    public BucketResponse(long begin, BucketAttributes attributes, long count, long sum, long min, long max, Map<Double, Long> getPclValues, long throughputPerHour) {
         this.begin = begin;
         this.attributes = attributes != null ? attributes : new BucketAttributes();
         this.count = count;
@@ -61,7 +61,7 @@ public class BucketResponse {
         return max;
     }
 
-    public Map<Integer, Long> getPclValues() {
+    public Map<Double, Long> getPclValues() {
         return pclValues;
     }
 

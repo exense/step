@@ -9,6 +9,7 @@ import step.core.collections.Filter;
 import step.core.collections.Filters;
 import step.core.collections.inmemory.InMemoryCollection;
 import step.core.timeseries.metric.MetricAggregation;
+import step.core.timeseries.metric.MetricAggregationType;
 import step.core.timeseries.metric.MetricAttribute;
 import step.core.timeseries.metric.MetricRenderingSettings;
 import step.plugins.timeseries.dashboards.DashboardAccessor;
@@ -131,7 +132,7 @@ public class DashboardTest {
 								.setGrouping(Arrays.asList("name"))
 								.setChartSettings(new ChartSettings()
 										.setPrimaryAxes(new AxesSettings()
-												.setAggregation(MetricAggregation.AVG)
+												.setAggregation(new MetricAggregation(MetricAggregationType.AVG))
 												.setDisplayType(AxesDisplayType.LINE)
 												.setUnit("ms")
 										)
@@ -145,7 +146,7 @@ public class DashboardTest {
 								.setAttributes(Arrays.asList(taskAttribute, executionAttribute, planAttribute))
 								.setChartSettings(new ChartSettings()
 										.setPrimaryAxes(new AxesSettings()
-												.setAggregation(MetricAggregation.SUM)
+												.setAggregation(new MetricAggregation(MetricAggregationType.SUM))
 												.setDisplayType(AxesDisplayType.LINE)
 												.setUnit("1")
 										)
@@ -160,7 +161,7 @@ public class DashboardTest {
 								.setAttributes(Arrays.asList(nameAttribute, taskAttribute, executionAttribute, planAttribute))
 								.setChartSettings(new ChartSettings()
 										.setPrimaryAxes(new AxesSettings()
-												.setAggregation(MetricAggregation.COUNT)
+												.setAggregation(new MetricAggregation(MetricAggregationType.COUNT))
 												.setDisplayType(AxesDisplayType.LINE)
 												.setUnit("1")
 												.setRenderingSettings(new MetricRenderingSettings()

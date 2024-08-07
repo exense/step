@@ -1,7 +1,6 @@
 {
   "$schema" : "http://json-schema.org/draft-07/schema#",
   "title" : "Plan",
-  "type" : "object",
   "$defs" : {
     "SmartDynamicValueBooleanDef" : {
       "oneOf" : [ {
@@ -39,12 +38,16 @@
         "type" : "object",
         "patternProperties" : {
           ".*" : {
-            "oneOf" : [ {
+            "anyOf" : [ {
               "type" : "number"
             }, {
               "type" : "boolean"
             }, {
               "type" : "string"
+            }, {
+              "type" : "object"
+            }, {
+              "type" : "array"
             }, {
               "$ref" : "#/$defs/DynamicExpressionDef"
             } ]
@@ -294,12 +297,16 @@
                   "type" : "object",
                   "patternProperties" : {
                     ".*" : {
-                      "oneOf" : [ {
+                      "anyOf" : [ {
                         "type" : "number"
                       }, {
                         "type" : "boolean"
                       }, {
                         "type" : "string"
+                      }, {
+                        "type" : "object"
+                      }, {
+                        "type" : "array"
                       }, {
                         "$ref" : "#/$defs/DynamicExpressionDef"
                       } ]
@@ -1214,11 +1221,11 @@
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
             "nodeName" : {
-              "type" : "string",
-              "default" : "Return"
+              "default" : "Return",
+              "type" : "string"
             },
             "output" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+              "$ref" : "#/$defs/DynamicKeywordInputsDef"
             }
           }
         }
@@ -1806,19 +1813,37 @@
       "items" : {
         "$ref" : "#/$defs/ArtefactDef"
       }
+    },
+    "PlanDef" : {
+      "properties" : {
+        "name" : {
+          "type" : "string"
+        },
+        "version" : {
+          "const" : "1.0.0"
+        },
+        "root" : {
+          "$ref" : "#/$defs/RootArtefactDef"
+        }
+      },
+      "required" : [ "name", "root" ],
+      "additionalProperties" : false
+    },
+    "CompositePlanDef" : {
+      "properties" : {
+        "name" : {
+          "type" : "string"
+        },
+        "version" : {
+          "const" : "1.0.0"
+        },
+        "root" : {
+          "$ref" : "#/$defs/RootArtefactDef"
+        }
+      },
+      "required" : [ "root" ],
+      "additionalProperties" : false
     }
   },
-  "properties" : {
-    "name" : {
-      "type" : "string"
-    },
-    "version" : {
-      "const" : "1.0.0"
-    },
-    "root" : {
-      "$ref" : "#/$defs/RootArtefactDef"
-    }
-  },
-  "required" : [ "name", "root" ],
-  "additionalProperties" : false
+  "$ref" : "#/$defs/PlanDef"
 }

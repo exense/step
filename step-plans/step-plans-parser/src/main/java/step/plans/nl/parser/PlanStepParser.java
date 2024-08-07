@@ -39,12 +39,13 @@ public class PlanStepParser implements StepParser<PlanStep> {
 	}
 
 	private static final String ASSERT_TOKEN = "Assert";
+	private static final String ASSERT_CHECK_REGEX = "([ \t]*Assert .+|[ \t]*Assert[\r\n]*)";
 	
 	@Override
 	public void parseStep(ParsingContext parsingContext, PlanStep step) {
 		AbstractStep subStep;
 		if(step.command.trim().length()>0) {
-			if(step.command.trim().startsWith(ASSERT_TOKEN)) {
+			if(step.command.matches(ASSERT_CHECK_REGEX)) {
 				AbstractArtefact current = parsingContext.peekCurrentArtefact();
 				subStep = new ExpectedStep(step.getCommand().replaceFirst(ASSERT_TOKEN, "").trim());
 				// Expected block is parsed only if the current artefact is a CallFunction or if the last child of the current artefact is a CallFunction
