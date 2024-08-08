@@ -30,7 +30,6 @@
 		<dependency>
 			<groupId>ch.exense.step</groupId>
 			<artifactId>step-grid-api</artifactId>
-			<version>${step-grid.version}</version>
 		</dependency>
 	</dependencies>
 
@@ -51,7 +50,7 @@
 								<artifactItem>
 									<groupId>ch.exense.step</groupId>
 									<artifactId>step-grid-agent</artifactId>
-									<version>${step-grid.version}</version>
+<!--									<version>${step-grid.version}</version>-->
 									<type>jar</type>
 									<classifier>jar-with-dependencies</classifier>
 									<overWrite>true</overWrite>

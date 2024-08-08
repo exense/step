@@ -35,12 +35,10 @@
 		<dependency>
 			<groupId>ch.exense.step</groupId>
 			<artifactId>step-grid-api</artifactId>
-			<version>${step-grid.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
 			<artifactId>step-api-function</artifactId>
-			<version>${step-api.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>

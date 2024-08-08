@@ -37,7 +37,6 @@
 		<dependency>
 			<groupId>ch.exense.step</groupId>
 			<artifactId>step-grid-api</artifactId>
-			<version>${step-grid.version}</version>
 		</dependency>
 	</dependencies>
 	
