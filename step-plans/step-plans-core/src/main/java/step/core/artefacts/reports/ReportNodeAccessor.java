@@ -47,10 +47,32 @@ public interface ReportNodeAccessor extends Accessor<ReportNode>, ReportTreeAcce
 	/**
 	 * Warning: this method must be used within a try-with-resources statement or similar control structure to ensure that the stream's I/O resources are closed promptly after the stream's operations have completed.
 	 * @param executionID the id of the execution
+	 * @param limit the maximum number of records to return
+	 * @return a {@link Stream} with all report nodes of this execution
+	 */
+	Stream<ReportNode> getReportNodesByExecutionID(String executionID, Integer limit);
+
+	Stream<ReportNode> getReportNodesByArtefactHash(String executionId, String artefactPathHash, Integer skip, Integer limit);
+
+	long countReportNodesByArtefactHash(String executionId, String artefactPathHash);
+
+	/**
+	 * Warning: this method must be used within a try-with-resources statement or similar control structure to ensure that the stream's I/O resources are closed promptly after the stream's operations have completed.
+	 * @param executionID the id of the execution
 	 * @param class_ the _class of the report node
 	 * @return a {@link Stream} with all report nodes of this execution with type class_
 	 */
 	Stream<ReportNode> getReportNodesByExecutionIDAndClass(String executionID, String class_);
+
+	/**
+	 * Warning: this method must be used within a try-with-resources statement or similar control structure to ensure that the stream's I/O resources are closed promptly after the stream's operations have completed.
+	 * @param executionID the id of the execution
+	 * @param class_ the _class of the report node
+	 * @param limit the maximum number of records to return
+	 * @return a {@link Stream} with all report nodes of this execution with type class_
+	 */
+	Stream<ReportNode> getReportNodesByExecutionIDAndClass(String executionID, String class_, Integer limit);
+
 
 	/**
 	 * Warning: this method must be used within a try-with-resources statement or similar control structure to ensure that the stream's I/O resources are closed promptly after the stream's operations have completed.

@@ -25,8 +25,9 @@ import step.artefacts.reports.RetryIfFailsReportNode;
 import step.artefacts.reports.SleepReportNode;
 import step.core.GlobalContext;
 import step.core.collections.Filter;
+import step.core.collections.Filters;
 import step.core.execution.LeafReportNodesFilter;
-import step.core.execution.LeafReportNodesTableParameters;
+import step.core.execution.ReportNodesTableParameters;
 import step.framework.server.tables.service.TableParameters;
 
 import java.util.ArrayList;
@@ -53,6 +54,7 @@ public class LeafReportNodeTableFilterFactory implements Function<TableParameter
 
 	@Override
 	public Filter apply(TableParameters tableParameters) {
-		return new LeafReportNodesFilter(optionalReportNodesFilter).buildAdditionalQuery((LeafReportNodesTableParameters) tableParameters);
+		List<Filter> fragments = new LeafReportNodesFilter(optionalReportNodesFilter).buildAdditionalQuery((ReportNodesTableParameters) tableParameters);
+		return Filters.and(fragments);
 	}
 }

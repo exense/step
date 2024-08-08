@@ -21,10 +21,7 @@ package step.core.execution;
 import step.core.GlobalContext;
 import step.core.artefacts.reports.ReportNode;
 import step.core.collections.Collection;
-import step.core.execution.table.ExecutionSummaryProvider;
-import step.core.execution.table.ExecutionWrapper;
-import step.core.execution.table.LeafReportNodeTableFilterFactory;
-import step.core.execution.table.RootReportNodeProvider;
+import step.core.execution.table.*;
 import step.core.execution.type.ExecutionTypeControllerPlugin;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
@@ -59,7 +56,7 @@ public class ExecutionPlugin extends AbstractControllerPlugin {
 		tableRegistry.register("leafReports", new Table<>(reportsCollection, "execution-read", false)
 				.withTableFiltersFactory(new LeafReportNodeTableFilterFactory(context)).withResultListFactory(()->new ArrayList<>(){}));
 		tableRegistry.register("reports", new Table<>(reportsCollection, "execution-read", false)
-				.withResultListFactory(()->new ArrayList<>(){}));
+				.withTableFiltersFactory(new ReportNodeTableFilterFactory()).withResultListFactory(()->new ArrayList<>(){}));
 		context.getServiceRegistrationCallback().registerService(ExecutionServices.class);
 	}
 }

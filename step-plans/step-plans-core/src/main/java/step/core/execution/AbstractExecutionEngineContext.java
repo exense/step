@@ -23,6 +23,9 @@ import step.core.AbstractStepContext;
 import step.core.artefacts.handlers.ArtefactHandlerRegistry;
 import step.core.artefacts.reports.InMemoryReportNodeAccessor;
 import step.core.artefacts.reports.ReportNodeAccessor;
+import step.core.artefacts.reports.aggregated.ReportNodeTimeSeries;
+import step.core.artefacts.reports.resolvedplan.ResolvedPlanNodeAccessor;
+import step.core.collections.inmemory.InMemoryCollectionFactory;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.execution.model.InMemoryExecutionAccessor;
 import step.core.plans.InMemoryPlanAccessor;
@@ -55,6 +58,10 @@ public abstract class AbstractExecutionEngineContext extends AbstractStepContext
 		executionAccessor = new InMemoryExecutionAccessor();
 
 		repositoryObjectManager = new RepositoryObjectManager();
+
+		InMemoryCollectionFactory collectionFactory = new InMemoryCollectionFactory(null);
+		put(ResolvedPlanNodeAccessor.class, new ResolvedPlanNodeAccessor(collectionFactory));
+		put(ReportNodeTimeSeries.class, new ReportNodeTimeSeries(collectionFactory));
 	}
 	
 	protected void useAllAttributesFromParentContext(AbstractExecutionEngineContext parentContext) {
@@ -69,6 +76,10 @@ public abstract class AbstractExecutionEngineContext extends AbstractStepContext
 		executionAccessor = parentContext.getExecutionAccessor();
 
 		repositoryObjectManager = parentContext.getRepositoryObjectManager();
+
+        InMemoryCollectionFactory collectionFactory = new InMemoryCollectionFactory(null);
+        inheritFromParentOrComputeIfAbsent(parentContext, ResolvedPlanNodeAccessor.class, x -> new ResolvedPlanNodeAccessor(collectionFactory));
+        inheritFromParentOrComputeIfAbsent(parentContext, ReportNodeTimeSeries.class, x -> new ReportNodeTimeSeries(collectionFactory));
 	}
 
 	public Configuration getConfiguration() {

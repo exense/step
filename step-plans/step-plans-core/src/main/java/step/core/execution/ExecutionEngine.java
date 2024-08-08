@@ -58,16 +58,12 @@ public class ExecutionEngine implements AutoCloseable {
 	private final ExecutionEnginePlugin plugins;
 	private final ConcurrentHashMap<String, ExecutionContext> currentExecutions = new ConcurrentHashMap<>();
 	
-	private ExecutionEngine(ExecutionEngineContext executionEngineContext, ExecutionEnginePlugin plugins, ObjectHookRegistry objectHookRegistry) {
+	private ExecutionEngine(ExecutionEngineContext executionEngineContext, ExecutionEnginePlugin plugins) {
 		super();
 		
 		this.executionEngineContext = executionEngineContext;
 		this.plugins = plugins;
-		if(objectHookRegistry != null) {
-			this.objectHookRegistry = objectHookRegistry;
-		} else {
-			this.objectHookRegistry = new ObjectHookRegistry();
-		}
+		this.objectHookRegistry = executionEngineContext.require(ObjectHookRegistry.class);
 	}
 
 	@Override
@@ -176,11 +172,13 @@ public class ExecutionEngine implements AutoCloseable {
 			}
 			if(objectHookRegistry != null) {
 				executionEngineContext.put(ObjectHookRegistry.class, objectHookRegistry);
+			} else {
+				executionEngineContext.put(ObjectHookRegistry.class, new ObjectHookRegistry());
 			}
 			ExecutionEnginePlugin plugins = pluginManager.getProxy();
 			plugins.initializeExecutionEngineContext(parentContext, executionEngineContext);
 			
-			return new ExecutionEngine(executionEngineContext, plugins, objectHookRegistry);
+			return new ExecutionEngine(executionEngineContext, plugins);
 		}
 	}
 	
