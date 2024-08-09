@@ -5,7 +5,7 @@
 		{
 			"ACTION": "COMPILE",
 			"TYPE": "POM",
-			"FOLDER": "step-parent/",
+			"FOLDER": ".",
 			"PARALLELISM": "2C",
 			"PARAMETERS": [
 				{
