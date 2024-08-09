@@ -119,6 +119,7 @@
 		<module>step-cli</module>
 	</modules>
 
+	<!-- available dependencies, can be used in modules and dependent projects WITHOUT specifying a version number -->
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
@@ -299,8 +300,6 @@
 				<version>1.5.1</version>
 			</dependency>
 
-			<!-- TRANSITIVES: These are not directly used by ourselves, but transitively imported in multiple dependencies,
-             with different versions; declare these here to ensure consistent versions. -->
 			<dependency>
 				<groupId>org.ow2.asm</groupId>
 				<artifactId>asm</artifactId>
@@ -374,10 +373,6 @@
 				<version>4.5.14</version>
 			</dependency>
 
-			<!-- END TRANSITIVES -->
-
-
-
 			<!-- These are not for the maven builds, but for the actual sources implementing maven functionality -->
 			<dependency>
 				<groupId>org.apache.maven</groupId>
@@ -392,6 +387,7 @@
 		</dependencies>
 	</dependencyManagement>
 
+	<!-- actually used dependencies, exported to all modules (but not externally referring projects) -->
 	<dependencies>
 		<!-- common dependencies, thus automatically available in all modules (but not external projects) -->
 		<dependency>
@@ -402,13 +398,6 @@
 			<groupId>ch.qos.logback</groupId>
 			<artifactId>logback-classic</artifactId>
 		</dependency>
-
-<!--		&lt;!&ndash; make sure exense common version defined in Step has precedence &ndash;&gt;-->
-<!--		<dependency>-->
-<!--			<groupId>ch.exense.commons</groupId>-->
-<!--			<artifactId>exense-basic-commons</artifactId>-->
-<!--			<version>${exense-commons.version}</version>-->
-<!--		</dependency>-->
 
 		<!-- Unit Tests -->
 		<dependency>

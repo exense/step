@@ -28,7 +28,7 @@
 	</parent>
 	
 	<modules>
-		<module>step-controller-measurement</module>
+		<module>step-controller-plugins-measurement</module>
 		<module>step-controller-plugins-raw-measurement</module>
 		<module>step-controller-plugins-script-editor</module>
         <module>step-controller-plugins-timeseries</module>
