@@ -87,9 +87,9 @@ public class AutomationPackageExecutor {
         if (oldContextId == null) {
             throw new AutomationPackageManagerException(IsolatedAutomationPackageRepository.REPOSITORY_PARAM_CONTEXTID + " is undefined");
         }
-        String oldPlanName = rerunParameters.getRepositoryObject().getRepositoryParameters().get(RepositoryObjectReference.PLAN_NAME);
+        String oldPlanName = rerunParameters.getPlan() == null ? null : rerunParameters.getPlan().getAttribute(AbstractOrganizableObject.NAME);
         if (oldPlanName == null) {
-            throw new AutomationPackageManagerException(RepositoryObjectReference.PLAN_NAME + " is undefined");
+            throw new AutomationPackageManagerException("Plan name is undefined");
         }
         File file = isolatedAutomationPackageRepository.getFile(oldContextId);
         if (file == null) {
@@ -172,9 +172,6 @@ public class AutomationPackageExecutor {
                     HashMap<String, String> repositoryParameters = new HashMap<>();
                     repositoryParameters.put(IsolatedAutomationPackageRepository.REPOSITORY_PARAM_CONTEXTID, contextId.toString());
                     repositoryParameters.put(RepositoryObjectReference.PLAN_ID, plan.getId().toString());
-
-                    // store plan name to support re-run for this plan (plan_id is not enough for in-memory executions)
-                    repositoryParameters.put(RepositoryObjectReference.PLAN_NAME, plan.getAttribute(AbstractOrganizableObject.NAME));
 
                     params.setRepositoryObject(new RepositoryObjectReference(ISOLATED_AUTOMATION_PACKAGE, repositoryParameters));
                     params.setDescription(CommonExecutionParameters.defaultDescription(plan));
