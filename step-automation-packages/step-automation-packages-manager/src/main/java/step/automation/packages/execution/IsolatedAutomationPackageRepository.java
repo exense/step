@@ -18,8 +18,6 @@
  ******************************************************************************/
 package step.automation.packages.execution;
 
-import ch.exense.commons.io.FileHelper;
-import org.apache.commons.io.IOUtils;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,6 +36,7 @@ import step.core.repositories.*;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.type.FunctionTypeRegistry;
+import step.resources.InvalidResourceFormatException;
 import step.resources.LayeredResourceManager;
 import step.resources.ResourceManager;
 
@@ -57,21 +56,21 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
     // context id -> automation package manager (cache)
     private final ConcurrentHashMap<String, PackageExecutionContext> sharedPackageExecutionContexts = new ConcurrentHashMap<>();
 
-    // TODO: use persistent storage with cleanup
-    // context id -> File
-    private final ConcurrentHashMap<String, File> apFiles = new ConcurrentHashMap<>();
+    private final IsolatedAutomationPackageResourceService resourceService;
 
     private final AutomationPackageManager manager;
     private final FunctionTypeRegistry functionTypeRegistry;
     private final FunctionAccessor functionAccessor;
 
-    protected IsolatedAutomationPackageRepository(AutomationPackageManager manager, 
+    protected IsolatedAutomationPackageRepository(AutomationPackageManager manager,
+                                                  IsolatedAutomationPackageResourceService resourceService,
                                                   FunctionTypeRegistry functionTypeRegistry, 
                                                   FunctionAccessor functionAccessor) {
         super(Set.of(REPOSITORY_PARAM_CONTEXTID));
         this.manager = manager;
         this.functionTypeRegistry = functionTypeRegistry;
         this.functionAccessor = functionAccessor;
+        this.resourceService = resourceService;
     }
 
     @Override
@@ -107,7 +106,7 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
             // Here we resolve the original AP file used for previous isolated execution and re-use it to create the execution context
 
             // TODO: store files not by contextId but for ap name
-            File apFile = apFiles.get(contextId);
+            File apFile = resourceService.getResourceFile(contextId);
             if (apFile == null) {
                 throw new AutomationPackageManagerException("AP file is not stored for execution context " + contextId);
             }
@@ -206,13 +205,10 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
 
     public PackageExecutionContext createPackageExecutionContext(String contextId, InputStream apStream, String fileName, ObjectEnricher enricher, ObjectPredicate predicate) {
         // store file in temporary storage to support rerun
-        // TODO: temp solution - finally we need rewrite files for the same automation package (don't store separate file per context)
-        File file = null;
         try {
-            file = copyStreamToTempFile(apStream, fileName);
-            this.apFiles.put(contextId, file);
-        } catch (IOException ex) {
-            throw new AutomationPackageManagerException("Cannot execute automation package " + fileName, ex);
+            resourceService.createOrUpdateResource(contextId, apStream, fileName, enricher);
+        } catch (IOException | InvalidResourceFormatException ex) {
+            throw new AutomationPackageManagerException("Cannot save automation package as resource: " + fileName, ex);
         }
 
         // prepare the isolated in-memory automation package manager with the only one automation package
@@ -227,20 +223,6 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
         PackageExecutionContext ctx = new PackageExecutionContext(contextId, inMemoryPackageManager, true);
         sharedPackageExecutionContexts.put(contextId, ctx);
         return ctx;
-    }
-
-    // TODO: temp solution
-    private File copyStreamToTempFile(InputStream in, String fileName) throws IOException {
-        // create temp folder to keep the original file name
-        File newFolder = FileHelper.createTempFolder();
-        newFolder.deleteOnExit();
-        File newFile = new File(newFolder, fileName);
-        newFile.deleteOnExit();
-
-        try (FileOutputStream out = new FileOutputStream(newFile)) {
-            IOUtils.copy(in, out);
-        }
-        return newFile;
     }
 
     public class PackageExecutionContext implements Closeable {
