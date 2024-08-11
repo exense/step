@@ -18,19 +18,41 @@
  ******************************************************************************/
 package step.automation.packages.execution;
 
+import step.automation.packages.AutomationPackageManager;
+import step.automation.packages.AutomationPackagePlugin;
 import step.core.GlobalContext;
+import step.core.execution.model.ExecutionAccessor;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
+import step.functions.accessor.FunctionAccessor;
+import step.functions.type.FunctionTypeRegistry;
 
-@Plugin
+@Plugin(dependencies = {AutomationPackagePlugin.class})
 public class IsolatedAutomationPackageRepositoryPlugin extends AbstractControllerPlugin {
 
     @Override
     public void serverStart(GlobalContext context) throws Exception {
         super.serverStart(context);
-        IsolatedAutomationPackageRepository repository = new IsolatedAutomationPackageRepository();
+    }
+
+    @Override
+    public void afterInitializeData(GlobalContext context) throws Exception {
+        super.afterInitializeData(context);
+
+        IsolatedAutomationPackageRepository repository = new IsolatedAutomationPackageRepository(
+                context.require(AutomationPackageManager.class),
+                context.require(FunctionTypeRegistry.class),
+                context.require(FunctionAccessor.class)
+        );
 
         context.getRepositoryObjectManager().registerRepository(AutomationPackageExecutor.ISOLATED_AUTOMATION_PACKAGE, repository);
         context.put(IsolatedAutomationPackageRepository.class, repository);
+
+        AutomationPackageExecutor packageExecutor = new AutomationPackageExecutor(
+                context.getScheduler(),
+                context.require(ExecutionAccessor.class),
+                repository
+        );
+        context.put(AutomationPackageExecutor.class, packageExecutor);
     }
 }

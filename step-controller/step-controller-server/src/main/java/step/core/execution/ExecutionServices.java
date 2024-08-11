@@ -28,6 +28,7 @@ import org.bson.types.ObjectId;
 import step.automation.packages.execution.AutomationPackageExecutor;
 import step.controller.services.async.AsyncTaskStatus;
 import step.core.access.User;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.reports.ReportNode;
 import step.core.collections.SearchOrder;
 import step.core.deployment.AbstractStepAsyncServices;
@@ -35,6 +36,7 @@ import step.core.deployment.ControllerServiceException;
 import step.core.deployment.FindByCriteraParam;
 import step.core.entities.EntityManager;
 import step.core.execution.model.*;
+import step.core.repositories.RepositoryObjectManager;
 import step.core.repositories.RepositoryObjectReference;
 import step.framework.server.Session;
 import step.framework.server.security.Secured;
@@ -54,14 +56,12 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 
 	protected ExecutionAccessor executionAccessor;
 	private TableService tableService;
-	private AutomationPackageExecutor automationPackageExecutor;
 
 	@PostConstruct
 	public void init() throws Exception {
 		super.init();
 		executionAccessor = getContext().getExecutionAccessor();
 		tableService = getContext().require(TableService.class);
-		automationPackageExecutor = getContext().get(AutomationPackageExecutor.class);
 	}
 
 	@Operation(description = "Starts an execution with the given parameters.")
@@ -75,13 +75,15 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 		applyUserIdFromSessionIfNotSpecified(executionParams);
 		if (executionParams.getRepositoryObject() != null && Objects.equals(executionParams.getRepositoryObject().getRepositoryID(), AutomationPackageExecutor.ISOLATED_AUTOMATION_PACKAGE)) {
 			// if the plan is executed in isolated ap context, we need to apply special logic, but not just call the scheduler
-			if (automationPackageExecutor == null) {
-				throw new RuntimeException("There is not automation package executor in context");
+			if (executionParams.getRepositoryObject().getRepositoryParameters().get(RepositoryObjectReference.PLAN_NAME) == null) {
+				// for some old executions the PLAN_NAME is not stored in repository parameters, so we need to set is explicitly (workaround)
+				if (executionParams.getPlan() == null) {
+					throw new ControllerServiceException("Unable to re-execute the plan from automation package. Plan name is undefined");
+				}
+				executionParams.getRepositoryObject().getRepositoryParameters().put(RepositoryObjectReference.PLAN_NAME, executionParams.getPlan().getAttribute(AbstractOrganizableObject.NAME));
 			}
-			return automationPackageExecutor.rerunPlan(executionParams, getObjectEnricher(), getObjectPredicate());
-		} else {
-			return getScheduler().execute(executionParams);
 		}
+		return getScheduler().execute(executionParams);
 	}
 
 	private void applyUserIdFromSessionIfNotSpecified(ExecutionParameters executionParams) {
