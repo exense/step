@@ -22,7 +22,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>ch.exense.step</groupId>
-	<artifactId>step-parent</artifactId>
+	<artifactId>step</artifactId>
 	<version>0.0.0-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
@@ -56,33 +56,15 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<!-- internal dependencies -->
 		<dependencies.version>2024.7.12-669121da4fe7006fcd2fe5c4</dependencies.version>
-		<exense-commons.version>2024.7.12-669123e04fe7006fcd32085a</exense-commons.version>
-		<step-grid.version>2024.8.7-66b3b7e8b1668669f220c960</step-grid.version>
-		<step-api.version>2024.8.7-66b3b544b1668669f22092e1</step-api.version>
-		<step-framework.version>2024.8.7-66b3b87bb1668669f220d6c9</step-framework.version>
+<!--		<exense-commons.version>2024.7.12-669123e04fe7006fcd32085a</exense-commons.version>-->
+		<step-grid.version>2024.8.8-66b4e6af62cc6a1a098c8ac1</step-grid.version>
+		<step-framework.version>2024.8.8-66b4d05562cc6a1a095a3415</step-framework.version>
 
 		<!-- external, non-transitive, dependencies -->
 		<dep.groovy.version>3.0.10</dep.groovy.version>
 		<dep.apache-jmeter.version>5.4.3</dep.apache-jmeter.version>
 		<dep.apache-poi.version>5.2.3</dep.apache-poi.version>
 		<dep.aether.version>1.1.0</dep.aether.version>
-
-<!--		<exense-commons.version>2.0.8</exense-commons.version>-->
-<!--		<step-framework.version>2024.7.23-669f8b2b4ae5023f0ba6c500</step-framework.version>-->
-<!--		<step-grid.version>2024.7.10-668e2c6d4fe7006fcd4febe2</step-grid.version>-->
-<!--		<step-api.version>2024.6.28-667eafb5375f7b0be27f6b9e</step-api.version>-->
-<!--		&lt;!&ndash; external dependencies &ndash;&gt;-->
-<!--		<junit.version>4.13.1</junit.version>-->
-<!--		<mockito.version>5.1.1</mockito.version>-->
-<!--		<groovy.version>3.0.10</groovy.version>-->
-<!--		<jackson.version>2.13.3</jackson.version>-->
-<!--		<jersey.version>3.0.4</jersey.version>-->
-<!--		<annotation.version>1.3.2</annotation.version>-->
-<!--		<commons-lang.version>3.10</commons-lang.version>-->
-<!--		<jaxb.version>2.3.1</jaxb.version>-->
-<!--		<slf4j.version>2.0.9</slf4j.version>-->
-<!--		<apache-jmeter.version>5.4.3</apache-jmeter.version>-->
-<!--		<logback.version>1.3.12</logback.version>-->
 
 		<excluded.jmeter.group>step.junit.categories.LocalJMeter</excluded.jmeter.group>
 
@@ -91,7 +73,7 @@
 		<dep.mvn.clean.version>3.1.0</dep.mvn.clean.version>
 		<dep.mvn.compiler.version>3.8.0</dep.mvn.compiler.version>
 		<dep.mvn.dependency.version>3.1.1</dep.mvn.dependency.version>
-		<dep.mvn.dependency-check.version>9.2.0</dep.mvn.dependency-check.version>
+		<dep.mvn.dependency-check.version>10.0.3</dep.mvn.dependency-check.version>
 		<dep.mvn.deploy.version>3.0.0-M1</dep.mvn.deploy.version>
 		<dep.mvn.download.version>1.2.1</dep.mvn.download.version>
 		<dep.mvn.enforcer.version>3.1.0</dep.mvn.enforcer.version>
@@ -118,11 +100,31 @@
 		</repository>
 	</repositories>
 
+	<modules>
+		<module>step-commons</module>
+		<module>step-agent</module>
+		<module>step-core-model</module>
+		<module>step-core</module>
+		<module>step-automation-packages</module>
+		<module>step-functions</module>
+		<module>step-functions-plugins</module>
+		<module>step-plans</module>
+		<module>step-controller</module>
+		<module>step-controller-plugins</module>
+		<module>step-maven-plugin</module>
+		<module>step-repositories</module>
+		<module>step-ide</module>
+		<module>step-libs-maven-client</module>
+		<module>step-json-schema</module>
+		<module>step-cli</module>
+	</modules>
+
+	<!-- available dependencies, can be used in modules and dependent projects WITHOUT specifying a version number -->
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
 				<groupId>ch.exense.step</groupId>
-				<artifactId>step-framework-parent</artifactId>
+				<artifactId>step-framework</artifactId>
 				<version>${step-framework.version}</version>
 				<type>pom</type>
 				<scope>import</scope>
@@ -130,7 +132,7 @@
 
 			<dependency>
 				<groupId>ch.exense.step</groupId>
-				<artifactId>step-grid-parent</artifactId>
+				<artifactId>step-grid</artifactId>
 				<version>${step-grid.version}</version>
 				<type>pom</type>
 				<scope>import</scope>
@@ -298,8 +300,6 @@
 				<version>1.5.1</version>
 			</dependency>
 
-			<!-- TRANSITIVES: These are not directly used by ourselves, but transitively imported in multiple dependencies,
-             with different versions; declare these here to ensure consistent versions. -->
 			<dependency>
 				<groupId>org.ow2.asm</groupId>
 				<artifactId>asm</artifactId>
@@ -373,10 +373,6 @@
 				<version>4.5.14</version>
 			</dependency>
 
-			<!-- END TRANSITIVES -->
-
-
-
 			<!-- These are not for the maven builds, but for the actual sources implementing maven functionality -->
 			<dependency>
 				<groupId>org.apache.maven</groupId>
@@ -391,6 +387,7 @@
 		</dependencies>
 	</dependencyManagement>
 
+	<!-- actually used dependencies, exported to all modules (but not externally referring projects) -->
 	<dependencies>
 		<!-- common dependencies, thus automatically available in all modules (but not external projects) -->
 		<dependency>
@@ -402,13 +399,6 @@
 			<artifactId>logback-classic</artifactId>
 		</dependency>
 
-		<!-- make sure exense common version defined in Step has precedence -->
-		<dependency>
-			<groupId>ch.exense.commons</groupId>
-			<artifactId>exense-basic-commons</artifactId>
-			<version>${exense-commons.version}</version>
-		</dependency>
-
 		<!-- Unit Tests -->
 		<dependency>
 			<groupId>junit</groupId>
@@ -416,25 +406,6 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
-
-	<modules>
-		<module>../step-commons</module>
-		<module>../step-agent</module>
-		<module>../step-core-model</module>
-		<module>../step-core</module>
-		<module>../step-automation-packages</module>
-		<module>../step-functions</module>
-		<module>../step-functions-plugins</module>
-		<module>../step-plans</module>
-		<module>../step-controller</module>
-		<module>../step-controller-plugins</module>
-		<module>../step-maven-plugin</module>
-		<module>../step-repositories</module>
-		<module>../step-ide</module>
-		<module>../step-libs-maven-client</module>
-		<module>../step-json-schema</module>
-		<module>../step-cli</module>
-	</modules>
 
     <build>
 		<pluginManagement>
