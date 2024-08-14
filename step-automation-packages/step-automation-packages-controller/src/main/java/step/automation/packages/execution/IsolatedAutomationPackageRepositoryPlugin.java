@@ -21,37 +21,14 @@ package step.automation.packages.execution;
 import step.automation.packages.AutomationPackageManager;
 import step.automation.packages.AutomationPackagePlugin;
 import step.core.GlobalContext;
-import step.core.collections.CollectionFactory;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.type.FunctionTypeRegistry;
-import step.resources.*;
-
-import java.io.File;
 
 @Plugin(dependencies = {AutomationPackagePlugin.class})
 public class IsolatedAutomationPackageRepositoryPlugin extends AbstractControllerPlugin {
-
-    private IsolatedAutomationPackageResourceService resourceService;
-
-    @Override
-    public void serverStart(GlobalContext context) throws Exception {
-        super.serverStart(context);
-
-        CollectionFactory collectionFactory = context.require(CollectionFactory.class);
-
-        ResourceAccessor resourceAccessor = new ResourceAccessorImpl(collectionFactory.getCollection("resources", Resource.class));
-        ResourceRevisionAccessor resourceRevisionAccessor = new ResourceRevisionAccessorImpl(
-                collectionFactory.getCollection("resourceRevisions", ResourceRevision.class));
-
-        // TODO: configurable folder
-        String resourceRootDir = "isolated_ap_resources";
-        ResourceManagerImpl resourceManager = new ResourceManagerImpl(new File(resourceRootDir), resourceAccessor, resourceRevisionAccessor);
-        this.resourceService = new IsolatedAutomationPackageResourceService(resourceManager);
-        context.put(IsolatedAutomationPackageResourceService.class, resourceService);
-    }
 
     @Override
     public void afterInitializeData(GlobalContext context) throws Exception {
@@ -59,7 +36,7 @@ public class IsolatedAutomationPackageRepositoryPlugin extends AbstractControlle
 
         IsolatedAutomationPackageRepository repository = new IsolatedAutomationPackageRepository(
                 context.require(AutomationPackageManager.class),
-                resourceService,
+                context.getResourceManager(),
                 context.require(FunctionTypeRegistry.class),
                 context.require(FunctionAccessor.class)
         );

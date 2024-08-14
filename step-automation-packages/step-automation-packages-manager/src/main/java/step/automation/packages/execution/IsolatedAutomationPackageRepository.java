@@ -36,9 +36,7 @@ import step.core.repositories.*;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.type.FunctionTypeRegistry;
-import step.resources.InvalidResourceFormatException;
-import step.resources.LayeredResourceManager;
-import step.resources.ResourceManager;
+import step.resources.*;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -52,31 +50,32 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
     public static final String REPOSITORY_PARAM_CONTEXTID = "contextid";
 
     public static final Logger log = LoggerFactory.getLogger(IsolatedAutomationPackageRepository.class);
+    public static final String CONTEXT_ID_CUSTOM_FIELD = "contextId";
+    public static final String AP_NAME_CUSTOM_FIELD = "apName";
 
     // context id -> automation package manager (cache)
     private final ConcurrentHashMap<String, PackageExecutionContext> sharedPackageExecutionContexts = new ConcurrentHashMap<>();
 
-    private final IsolatedAutomationPackageResourceService resourceService;
-
     private final AutomationPackageManager manager;
+    private final ResourceManager resourceManager;
     private final FunctionTypeRegistry functionTypeRegistry;
     private final FunctionAccessor functionAccessor;
 
     protected IsolatedAutomationPackageRepository(AutomationPackageManager manager,
-                                                  IsolatedAutomationPackageResourceService resourceService,
+                                                  ResourceManager resourceManager,
                                                   FunctionTypeRegistry functionTypeRegistry, 
                                                   FunctionAccessor functionAccessor) {
         super(Set.of(REPOSITORY_PARAM_CONTEXTID));
         this.manager = manager;
+        this.resourceManager = resourceManager;
         this.functionTypeRegistry = functionTypeRegistry;
         this.functionAccessor = functionAccessor;
-        this.resourceService = resourceService;
     }
 
     @Override
     public ArtefactInfo getArtefactInfo(Map<String, String> repositoryParameters) throws Exception {
         // we expect, that there is only one automation package stored per context
-        PackageExecutionContext ctx = getOrRestorePackageExecutionContext(repositoryParameters.get(REPOSITORY_PARAM_CONTEXTID), null, null);
+        PackageExecutionContext ctx = getOrRestorePackageExecutionContext(repositoryParameters,null, null);
         try {
             AutomationPackage automationPackage = ctx.getAutomationPackage();
             if (automationPackage == null) {
@@ -98,17 +97,30 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
         return new TestSetStatusOverview();
     }
 
-    private PackageExecutionContext getOrRestorePackageExecutionContext(String contextId, ObjectEnricher enricher, ObjectPredicate predicate) {
+    private PackageExecutionContext getOrRestorePackageExecutionContext(Map<String, String> repositoryParameters, ObjectEnricher enricher, ObjectPredicate predicate) {
+        String apName = repositoryParameters.get(RepositoryObjectReference.AP_NAME);
+        String contextId = repositoryParameters.get(REPOSITORY_PARAM_CONTEXTID);
+
         // Execution context can be created in-advance and shared between several plans
         PackageExecutionContext current = sharedPackageExecutionContexts.get(contextId);
         if (current == null) {
             // But in case of re-run for local plan it can be not yet prepared
             // Here we resolve the original AP file used for previous isolated execution and re-use it to create the execution context
 
-            // TODO: store files not by contextId but for ap name
-            File apFile = resourceService.getResourceFile(contextId);
+            File apFile = null;
+            List<Resource> foundResources = resourceManager.findManyByCriteria(
+                    Map.of("customFields." + CONTEXT_ID_CUSTOM_FIELD, contextId,
+                            "customFields." + AP_NAME_CUSTOM_FIELD, apName)
+            );
+            if (!foundResources.isEmpty()) {
+                ResourceRevisionFileHandle fileHandle = resourceManager.getResourceFile(foundResources.get(0).getId().toString());
+                if (fileHandle != null) {
+                    apFile = fileHandle.getResourceFile();
+                }
+            }
+
             if (apFile == null) {
-                throw new AutomationPackageManagerException("AP file is not stored for execution context " + contextId);
+                throw new AutomationPackageManagerException("Automation package file is not found for automation package '" + apName + "' and execution context " + contextId);
             }
 
             // prepare the isolated in-memory automation package manager with the only one automation package
@@ -134,7 +146,7 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
         PackageExecutionContext ctx = null;
 
         try {
-            ctx = getOrRestorePackageExecutionContext(repositoryParameters.get(REPOSITORY_PARAM_CONTEXTID), context.getObjectEnricher(), context.getObjectPredicate());
+            ctx = getOrRestorePackageExecutionContext(repositoryParameters, context.getObjectEnricher(), context.getObjectPredicate());
             AutomationPackage automationPackage = ctx.getAutomationPackage();
 
             // PLAN_NAME but not PLAN_ID is used, because plan id is not persisted for isolated execution
@@ -204,13 +216,6 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
     }
 
     public PackageExecutionContext createPackageExecutionContext(String contextId, InputStream apStream, String fileName, ObjectEnricher enricher, ObjectPredicate predicate) {
-        // store file in temporary storage to support rerun
-        try {
-            resourceService.createOrUpdateResource(contextId, apStream, fileName, enricher);
-        } catch (IOException | InvalidResourceFormatException ex) {
-            throw new AutomationPackageManagerException("Cannot save automation package as resource: " + fileName, ex);
-        }
-
         // prepare the isolated in-memory automation package manager with the only one automation package
         AutomationPackageManager inMemoryPackageManager = manager.createIsolated(
                 new ObjectId(contextId), functionTypeRegistry,
@@ -223,6 +228,38 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
         PackageExecutionContext ctx = new PackageExecutionContext(contextId, inMemoryPackageManager, true);
         sharedPackageExecutionContexts.put(contextId, ctx);
         return ctx;
+    }
+
+    public Resource saveApResource(String contextId, InputStream apStream, String fileName) {
+        // store file in temporary storage to support rerun
+        try {
+            // find by resource type and contextId (or apName and override)
+            ResourceRevisionContainer resourceContainer = resourceManager.createResourceContainer(ResourceManagerImpl.RESOURCE_TYPE_ISOLATED_AP, fileName);
+
+            Resource resource = resourceContainer.getResource();
+            resource.addCustomField(CONTEXT_ID_CUSTOM_FIELD, contextId);
+            resourceManager.saveResource(resource);
+
+            resource = resourceManager.saveResourceContent(resource.getId().toString(), apStream, fileName);
+
+            return resource;
+        } catch (IOException | InvalidResourceFormatException ex) {
+            throw new AutomationPackageManagerException("Cannot save automation package as resource: " + fileName, ex);
+        }
+    }
+
+    public File getApFile(Resource resource) {
+        return resourceManager.getResourceFile(resource.getId().toString()).getResourceFile();
+    }
+
+    public void setApNameForResource(Resource resource, String apName){
+        // store file in temporary storage to support rerun
+        try {
+            resource.addCustomField(AP_NAME_CUSTOM_FIELD, apName);
+            resourceManager.saveResource(resource);
+        } catch (IOException ex) {
+            throw new AutomationPackageManagerException("Cannot update the automation package name in resource: " + resource.getId(), ex);
+        }
     }
 
     public class PackageExecutionContext implements Closeable {
