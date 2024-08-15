@@ -90,10 +90,9 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 				.registerCollection(new HourlyTimeSeriesCollection(collectionFactory))
 				.registerCollection(new DailyTimeSeriesCollection(collectionFactory))
 				.registerCollection(new WeeklyTimeSeriesCollection(collectionFactory))
-				.linkIngestionPipelines()
 				.build();
 		
-//		aggregationPipeline = timeSeries.getAggregationPipeline();
+		aggregationPipeline = timeSeries.getAggregationPipeline();
 //		TimeSeriesAggregationPipeline aggregationPipeline = timeSeries.getAggregationPipeline();
 		MetricTypeAccessor metricTypeAccessor = new MetricTypeAccessor(context.getCollectionFactory().getCollection(EntityManager.metricTypes, MetricType.class));
 		TimeSeriesBucketingHandler handler = new TimeSeriesBucketingHandler(timeSeries, attributes);
@@ -131,7 +130,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 
 	@Override
 	public ExecutionEnginePlugin getExecutionEnginePlugin() {
-		return new TimeSeriesExecutionPlugin(mainIngestionPipeline, aggregationPipeline);
+		return new TimeSeriesExecutionPlugin(this.timeSeries);
 	}
 
 	@Override

@@ -51,13 +51,13 @@ public class TimeSeriesExecutionPlugin extends AbstractExecutionEnginePlugin {
 	@Override
 	public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
 		super.initializeExecutionContext(executionEngineContext, executionContext);
-		TimeSeriesIngestionPipeline mainIngestionPipeline = timeSeries.getMainCollection().getIngestionPipeline();
+		TimeSeriesIngestionPipeline mainIngestionPipeline = timeSeries.getIngestionPipeline();
 		TreeMap<String, String> additionalAttributes = executionContext.getObjectEnricher().getAdditionalAttributes();
 		TimeSeriesIngestionPipeline ingestionPipeline = new TimeSeriesIngestionPipeline(null, 0) {
 			@Override
 			public void ingestPoint(Map<String, Object> attributes, long timestamp, long value) {
 				attributes.putAll(additionalAttributes);
-				timeSeries.ingestPoint(attributes, timestamp, value);
+				mainIngestionPipeline.ingestPoint(attributes, timestamp, value);
 			}
 
 			@Override

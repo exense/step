@@ -13,7 +13,6 @@ import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.timeseries.TimeSeries;
 import step.core.timeseries.TimeSeriesFilterBuilder;
-import step.core.timeseries.TimeSeriesIngestionPipeline;
 import step.core.timeseries.aggregation.TimeSeriesAggregationPipeline;
 import step.core.timeseries.aggregation.TimeSeriesAggregationQuery;
 import step.core.timeseries.aggregation.TimeSeriesAggregationQueryBuilder;
@@ -84,42 +83,43 @@ public class TimeSeriesHandler {
      * This method fetches and group the RAW measurements into a bucket structure.
      */
     private TimeSeriesAPIResponse getTimeSeriesFromRawMeasurements(FetchBucketsRequest request, Collection<String> fields) {
-        int resolutionMs = getResolution(request);
-        step.core.collections.Collection<Bucket> inmemoryBuckets = new InMemoryCollection<>();
-        TimeSeries timeSeries = new TimeSeries(inmemoryBuckets, resolutionMs);
-
-        try (TimeSeriesIngestionPipeline ingestionPipeline = timeSeries.newIngestionPipeline(30000)) {
-            List<String> standardAttributes = new ArrayList<>(timeSeriesAttributes);
-            standardAttributes.addAll(fields.stream().map(attributesPrefixRemoval).collect(Collectors.toList()));
-            standardAttributes.addAll(request.getGroupDimensions());
-            TimeSeriesBucketingHandler timeSeriesBucketingHandler = new TimeSeriesBucketingHandler(ingestionPipeline, standardAttributes);
-            LongAdder count = new LongAdder();
-            ArrayList<Filter> timestampClauses = new ArrayList<>(List.of(Filters.empty()));
-            if (request.getStart() != null) {
-                timestampClauses.add(Filters.gte(TIMESTAMP_ATTRIBUTE, request.getStart()));
-            }
-            if (request.getEnd() != null) {
-                timestampClauses.add(Filters.lt(TIMESTAMP_ATTRIBUTE, request.getEnd()));
-            }
-            Filter filter = Filters.and(Arrays.asList(
-                    Filters.and(timestampClauses),
-                    OQLTimeSeriesFilterBuilder.getFilter(request.getOqlFilter(), attributesPrefixRemoval, MEASUREMENTS_FILTER_IGNORE_ATTRIBUTES)
-            ));
-            SearchOrder searchOrder = new SearchOrder(TIMESTAMP_ATTRIBUTE, 1);
-            // Iterate over each measurement and ingest it again
-            try (Stream<Measurement> stream = measurementCollection.findLazy(filter, searchOrder, null, null, 0)) {
-                stream.forEach(measurement -> {
-                    count.increment();
-                    timeSeriesBucketingHandler.ingestExistingMeasurement(measurement);
-                });
-            }
-        }
-
-        TimeSeriesAggregationPipeline aggregationPipeline = new TimeSeriesAggregationPipeline(inmemoryBuckets, resolutionMs);
-        TimeSeriesAggregationQuery query = mapToQuery(request, aggregationPipeline);
-        TimeSeriesAggregationResponse response = query.run();
-
-        return mapToApiResponse(request, response);
+//        int resolutionMs = getResolution(request);
+//        step.core.collections.Collection<Bucket> inmemoryBuckets = new InMemoryCollection<>();
+//        TimeSeries timeSeries = new TimeSeries(inmemoryBuckets, resolutionMs);
+//
+//        try (TimeSeriesIngestionPipeline ingestionPipeline = timeSeries.newIngestionPipeline(30000)) {
+//            List<String> standardAttributes = new ArrayList<>(timeSeriesAttributes);
+//            standardAttributes.addAll(fields.stream().map(attributesPrefixRemoval).collect(Collectors.toList()));
+//            standardAttributes.addAll(request.getGroupDimensions());
+//            TimeSeriesBucketingHandler timeSeriesBucketingHandler = new TimeSeriesBucketingHandler(ingestionPipeline, standardAttributes);
+//            LongAdder count = new LongAdder();
+//            ArrayList<Filter> timestampClauses = new ArrayList<>(List.of(Filters.empty()));
+//            if (request.getStart() != null) {
+//                timestampClauses.add(Filters.gte(TIMESTAMP_ATTRIBUTE, request.getStart()));
+//            }
+//            if (request.getEnd() != null) {
+//                timestampClauses.add(Filters.lt(TIMESTAMP_ATTRIBUTE, request.getEnd()));
+//            }
+//            Filter filter = Filters.and(Arrays.asList(
+//                    Filters.and(timestampClauses),
+//                    OQLTimeSeriesFilterBuilder.getFilter(request.getOqlFilter(), attributesPrefixRemoval, MEASUREMENTS_FILTER_IGNORE_ATTRIBUTES)
+//            ));
+//            SearchOrder searchOrder = new SearchOrder(TIMESTAMP_ATTRIBUTE, 1);
+//            // Iterate over each measurement and ingest it again
+//            try (Stream<Measurement> stream = measurementCollection.findLazy(filter, searchOrder, null, null, 0)) {
+//                stream.forEach(measurement -> {
+//                    count.increment();
+//                    timeSeriesBucketingHandler.ingestExistingMeasurement(measurement);
+//                });
+//            }
+//        }
+//
+//        TimeSeriesAggregationPipeline aggregationPipeline = new TimeSeriesAggregationPipeline(inmemoryBuckets, resolutionMs);
+//        TimeSeriesAggregationQuery query = mapToQuery(request, aggregationPipeline);
+//        TimeSeriesAggregationResponse response = query.run();
+//
+//        return mapToApiResponse(request, response);
+        return null;
     }
 
     public List<Measurement> getRawMeasurements(String oqlFilter, int skip, int limit) {
@@ -179,7 +179,7 @@ public class TimeSeriesHandler {
     public TimeSeriesAPIResponse getTimeSeries(FetchBucketsRequest request) {
         validateFetchRequest(request);
         TimeSeriesAggregationQuery query = mapToQuery(request, this.aggregationPipeline);
-        TimeSeriesAggregationResponse response = query.run();
+        TimeSeriesAggregationResponse response = this.aggregationPipeline.collect(query);
         return mapToApiResponse(request, response);
     }
 
@@ -242,45 +242,46 @@ public class TimeSeriesHandler {
     }
 
     public AsyncTaskStatus<Object> rebuildTimeSeries(String executionId) {
-        if (this.timeSeriesIsBuilt(executionId)) {
-            throw new ControllerServiceException("Time series already exist for this execution. Unable to rebuild it");
-        } else {
-            //Update execution
-            Execution execution = executionAccessor.get(executionId);
-            execution.addCustomField(TIMESERIES_FLAG, true);
-            executionAccessor.save(execution);
-            // we need to check if measurements exists
-            Equals measurementFilter = Filters.equals(MeasurementPlugin.ATTRIBUTE_EXECUTION_ID, executionId);
-            Measurement firstMeasurement = measurementCollection.find(measurementFilter,
-                    new SearchOrder(MeasurementPlugin.BEGIN, 1), 0, 1, 0).findFirst().orElse(null);
-            Measurement lastMeasurement = measurementCollection.find(measurementFilter,
-                    new SearchOrder(MeasurementPlugin.BEGIN, -1), 0, 1, 0).findFirst().orElse(null);
-            if (firstMeasurement != null && lastMeasurement != null) {
-                return asyncTaskManager.scheduleAsyncTask(t -> {
-                    // the flushing period can be a big value, because we will force flush every time.
-                    // we create a new pipeline for every migration
-                    try (TimeSeriesIngestionPipeline ingestionPipeline = timeSeries.newIngestionPipeline(3000)) {
-                        TimeSeriesBucketingHandler timeSeriesBucketingHandler = new TimeSeriesBucketingHandler(ingestionPipeline, timeSeriesAttributes);
-                        LongAdder count = new LongAdder();
-                        SearchOrder searchOrder = new SearchOrder("begin", 1);
-                        // Iterate over each measurement and ingest it again
-                        try (Stream<Measurement> stream = measurementCollection.findLazy(measurementFilter, searchOrder, null, null, 0)) {
-                            stream.forEach(measurement -> {
-                                count.increment();
-                                timeSeriesBucketingHandler.ingestExistingMeasurement(measurement);
-                            });
-                        }
-                        return new TimeSeriesRebuildResponse(count.longValue());
-                    }
-                });
-            } else {
-                throw new ControllerServiceException("No measurement found matching this execution id");
-            }
-        }
+        return null;
+//        if (this.timeSeriesIsBuilt(executionId)) {
+//            throw new ControllerServiceException("Time series already exist for this execution. Unable to rebuild it");
+//        } else {
+//            //Update execution
+//            Execution execution = executionAccessor.get(executionId);
+//            execution.addCustomField(TIMESERIES_FLAG, true);
+//            executionAccessor.save(execution);
+//            // we need to check if measurements exists
+//            Equals measurementFilter = Filters.equals(MeasurementPlugin.ATTRIBUTE_EXECUTION_ID, executionId);
+//            Measurement firstMeasurement = measurementCollection.find(measurementFilter,
+//                    new SearchOrder(MeasurementPlugin.BEGIN, 1), 0, 1, 0).findFirst().orElse(null);
+//            Measurement lastMeasurement = measurementCollection.find(measurementFilter,
+//                    new SearchOrder(MeasurementPlugin.BEGIN, -1), 0, 1, 0).findFirst().orElse(null);
+//            if (firstMeasurement != null && lastMeasurement != null) {
+//                return asyncTaskManager.scheduleAsyncTask(t -> {
+//                    // the flushing period can be a big value, because we will force flush every time.
+//                    // we create a new pipeline for every migration
+//                    try (TimeSeriesIngestionPipeline ingestionPipeline = timeSeries.newIngestionPipeline(3000)) {
+//                        TimeSeriesBucketingHandler timeSeriesBucketingHandler = new TimeSeriesBucketingHandler(ingestionPipeline, timeSeriesAttributes);
+//                        LongAdder count = new LongAdder();
+//                        SearchOrder searchOrder = new SearchOrder("begin", 1);
+//                        // Iterate over each measurement and ingest it again
+//                        try (Stream<Measurement> stream = measurementCollection.findLazy(measurementFilter, searchOrder, null, null, 0)) {
+//                            stream.forEach(measurement -> {
+//                                count.increment();
+//                                timeSeriesBucketingHandler.ingestExistingMeasurement(measurement);
+//                            });
+//                        }
+//                        return new TimeSeriesRebuildResponse(count.longValue());
+//                    }
+//                });
+//            } else {
+//                throw new ControllerServiceException("No measurement found matching this execution id");
+//            }
+//        }
     }
 
     private TimeSeriesAggregationQuery mapToQuery(FetchBucketsRequest request, TimeSeriesAggregationPipeline pipeline) {
-        TimeSeriesAggregationQueryBuilder timeSeriesAggregationQuery = pipeline.newQueryBuilder()
+        TimeSeriesAggregationQueryBuilder timeSeriesAggregationQuery = new TimeSeriesAggregationQueryBuilder(null)
                 .range(request.getStart(), request.getEnd())
                 .withFilter(Filters.and(
                         Arrays.asList(
@@ -355,19 +356,3 @@ public class TimeSeriesHandler {
 
 }
 
-class AttributeValuesStats {
-    private Map<Object, AtomicInteger> valuesCount = new HashMap<>();
-    private int totalCount;
-
-    public Map<Object, AtomicInteger> getValuesCount() {
-        return valuesCount;
-    }
-
-    public void incrementTotalCount() {
-        totalCount++;
-    }
-
-    public int getTotalCount() {
-        return totalCount;
-    }
-}

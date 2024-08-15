@@ -6,6 +6,7 @@ import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;
 import step.core.timeseries.TimeSeries;
 import step.core.timeseries.bucket.BucketAttributes;
+import step.core.timeseries.ingestion.TimeSeriesIngestionPipeline;
 import step.plugins.measurements.Measurement;
 import step.plugins.measurements.MeasurementHandler;
 
@@ -47,7 +48,8 @@ public class TimeSeriesBucketingHandler implements MeasurementHandler {
 
         BucketAttributes bucketAttributes = measurementToBucketAttributes(measurement);
         bucketAttributes.put(METRIC_TYPE_KEY, METRIC_TYPE_RESPONSE_TIME);
-        this.timeSeries.ingestPoint(bucketAttributes, begin, value);
+        TimeSeriesIngestionPipeline ingestionPipeline = this.timeSeries.getIngestionPipeline();
+        ingestionPipeline.ingestPoint(bucketAttributes, begin, value);
     }
 
     private BucketAttributes measurementToBucketAttributes(Measurement measurement) {
@@ -66,7 +68,8 @@ public class TimeSeriesBucketingHandler implements MeasurementHandler {
             if (measurement != null) {
                 BucketAttributes bucketAttributes = measurementToBucketAttributes(measurement);
                 bucketAttributes.put(METRIC_TYPE_KEY, measurement.getType());
-                this.timeSeries.ingestPoint(bucketAttributes, measurement.getBegin(), measurement.getValue());
+                TimeSeriesIngestionPipeline ingestionPipeline = this.timeSeries.getIngestionPipeline();
+                ingestionPipeline.ingestPoint(bucketAttributes, measurement.getBegin(), measurement.getValue());
             }
         });
     }
