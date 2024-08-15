@@ -38,7 +38,8 @@ public class IsolatedAutomationPackageRepositoryPlugin extends AbstractControlle
                 context.require(AutomationPackageManager.class),
                 context.getResourceManager(),
                 context.require(FunctionTypeRegistry.class),
-                context.require(FunctionAccessor.class)
+                context.require(FunctionAccessor.class),
+                context.getConfiguration()
         );
 
         context.getRepositoryObjectManager().registerRepository(AutomationPackageExecutor.ISOLATED_AUTOMATION_PACKAGE, repository);
