@@ -222,7 +222,7 @@
 				<artifactId>maven-surefire-plugin</artifactId>
 				<configuration>
 					<systemPropertyVariables>
-						<logback.configurationFile>${basedir}/../parent/logback-maven.xml</logback.configurationFile>
+						<logback.configurationFile>${basedir}/../step-parent/logback-maven.xml</logback.configurationFile>
 					</systemPropertyVariables>
 				</configuration>
 			</plugin>
