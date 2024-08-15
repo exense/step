@@ -73,16 +73,6 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 	public String execute(ExecutionParameters executionParams) {
 		checkRightsOnBehalfOf("plan-execute", executionParams.getUserID());
 		applyUserIdFromSessionIfNotSpecified(executionParams);
-		if (executionParams.getRepositoryObject() != null && Objects.equals(executionParams.getRepositoryObject().getRepositoryID(), AutomationPackageExecutor.ISOLATED_AUTOMATION_PACKAGE)) {
-			// if the plan is executed in isolated ap context, we need to apply special logic, but not just call the scheduler
-			if (executionParams.getRepositoryObject().getRepositoryParameters().get(RepositoryObjectReference.PLAN_NAME) == null) {
-				// for some old executions the PLAN_NAME is not stored in repository parameters, so we need to set is explicitly (workaround)
-				if (executionParams.getPlan() == null) {
-					throw new ControllerServiceException("Unable to re-execute the plan from automation package. Plan name is undefined");
-				}
-				executionParams.getRepositoryObject().getRepositoryParameters().put(RepositoryObjectReference.PLAN_NAME, executionParams.getPlan().getAttribute(AbstractOrganizableObject.NAME));
-			}
-		}
 		return getScheduler().execute(executionParams);
 	}
 
