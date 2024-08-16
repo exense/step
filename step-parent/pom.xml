@@ -134,27 +134,6 @@
 
     <build>
         <plugins>
-			<plugin>
-				<groupId>org.commonjava.maven.plugins</groupId>
-				<artifactId>directory-maven-plugin</artifactId>
-				<version>0.1</version>
-				<executions>
-					<execution>
-						<id>directories</id>
-						<goals>
-							<goal>directory-of</goal>
-						</goals>
-						<phase>initialize</phase>
-						<configuration>
-							<property>step-parent-dir</property>
-							<project>
-								<groupId>ch.exense.step</groupId>
-								<artifactId>step-parent</artifactId>
-							</project>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
@@ -243,7 +222,7 @@
 				<artifactId>maven-surefire-plugin</artifactId>
 				<configuration>
 					<systemPropertyVariables>
-						<logback.configurationFile>${step-parent-dir}/logback-maven.xml</logback.configurationFile>
+						<logback.configurationFile>logback-for-test.xml</logback.configurationFile>
 					</systemPropertyVariables>
 				</configuration>
 			</plugin>
