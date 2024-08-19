@@ -48,12 +48,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 
 public class IsolatedAutomationPackageRepository extends AbstractRepository {
 
     public static final String REPOSITORY_PARAM_CONTEXTID = "contextid";
-
-    public static final String AP_RESOURCES_CLEANUP_TTL_PROPERTY = "ap.resources.cleanup.ttl";
 
     public static final Logger log = LoggerFactory.getLogger(IsolatedAutomationPackageRepository.class);
     public static final String CONTEXT_ID_CUSTOM_FIELD = "contextId";
@@ -67,19 +66,19 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
     private final ResourceManager resourceManager;
     private final FunctionTypeRegistry functionTypeRegistry;
     private final FunctionAccessor functionAccessor;
-    private final Configuration configuration;
+    private final Supplier<String> ttlValueSupplier;
 
     protected IsolatedAutomationPackageRepository(AutomationPackageManager manager,
                                                   ResourceManager resourceManager,
                                                   FunctionTypeRegistry functionTypeRegistry,
                                                   FunctionAccessor functionAccessor,
-                                                  Configuration configuration) {
+                                                  Supplier<String> ttlValueSupplier) {
         super(Set.of(REPOSITORY_PARAM_CONTEXTID));
         this.manager = manager;
         this.resourceManager = resourceManager;
         this.functionTypeRegistry = functionTypeRegistry;
         this.functionAccessor = functionAccessor;
-        this.configuration = configuration;
+        this.ttlValueSupplier = ttlValueSupplier;
     }
 
     @Override
@@ -167,7 +166,8 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
     }
 
     public void cleanUpOutdatedResources() {
-        String ttlString = configuration.getProperty(AP_RESOURCES_CLEANUP_TTL_PROPERTY, "P1D");
+        log.info("Cleanup outdated automation packages...");
+        String ttlString = ttlValueSupplier.get();
 
         Duration ttlDuration = Duration.parse(ttlString);
         OffsetDateTime minExecutionTime = OffsetDateTime.now().minus(ttlDuration);
@@ -176,6 +176,7 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
                 Map.of("resourceType", ResourceManager.RESOURCE_TYPE_ISOLATED_AP)
         );
 
+        int removed = 0;
         for (Resource foundResource : foundResources) {
             String apResourceInfo = getApResourceInfo(foundResource);
             try {
@@ -185,6 +186,7 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
                     if (executionTime.isBefore(minExecutionTime)) {
                         log.info("Cleanup the outdated resource for automation package {} ...", apResourceInfo);
                         resourceManager.deleteResource(foundResource.getId().toString());
+                        removed++;
                     }
                 } else {
                     log.warn("The last execution time is unknown for automation package {}", apResourceInfo);
@@ -193,6 +195,7 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
                 log.error("Unable to cleanup outdated resource for automation package {}", apResourceInfo);
             }
         }
+        log.info("Cleanup outdated automation packages finished. {} of {} packages have been removed", removed, foundResources.size());
     }
 
     private String getApResourceInfo(Resource resource){
