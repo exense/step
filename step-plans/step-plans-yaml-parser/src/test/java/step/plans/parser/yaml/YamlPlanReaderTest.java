@@ -146,6 +146,18 @@ public class YamlPlanReaderTest {
 	}
 
 	@Test
+	public void testReturn() throws YamlPlanValidationException {
+		convertFromYamlToPlan(
+				"src/test/resources/step/plans/parser/yaml/return/test-return-plan.yml",
+				"src/test/resources/step/plans/parser/yaml/return/test-expected-return-tech-plan.yml"
+		);
+
+		convertPlanToYaml("src/test/resources/step/plans/parser/yaml/return/test-expected-return-tech-plan.yml",
+				"src/test/resources/step/plans/parser/yaml/return/test-return-converted-plan.yml"
+		);
+	}
+
+	@Test
 	public void readBenchmarkSampleYamlPlan() throws YamlPlanValidationException {
 		convertFromYamlToPlan(
 				"src/test/resources/step/plans/parser/yaml/benchmark/test-benchmark-sample-plan.yml",

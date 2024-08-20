@@ -80,7 +80,11 @@ public class SampleListenerImpl extends AbstractTestElement implements SampleLis
 	@Override
 	public void sampleStopped(SampleEvent e) {}
 
-	public void collect() {
+	/**
+	 * Collect the Jmeter samples and set business errors in any sample contain an error
+	 * @return true if not errors occurred, false otherwise
+	 */
+	public boolean collect() {
 		JsonArrayBuilder array = Json.createArrayBuilder();
 		Map<String, Long> erroredSamples = new LinkedHashMap<>();
 
@@ -101,6 +105,9 @@ public class SampleListenerImpl extends AbstractTestElement implements SampleLis
 			String message = "The following samples returned errors (error count in parentheses): ";
 			message += erroredSamples.entrySet().stream().map(e -> e.getKey() + " (" + e.getValue() + ")").collect(Collectors.joining(", "));
 			outputBuilder.setBusinessError(message);
+			return false;
+		} else {
+			return true;
 		}
 	}
 	

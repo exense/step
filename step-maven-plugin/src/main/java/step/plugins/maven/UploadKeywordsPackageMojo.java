@@ -26,16 +26,26 @@ import org.apache.maven.plugins.annotations.Parameter;
 import step.client.accessors.RemoteAccessors;
 import step.client.collections.remote.RemoteCollectionFactory;
 import step.client.credentials.ControllerCredentials;
+import step.client.resources.RemoteResourceManager;
 import step.controller.multitenancy.client.MultitenancyClient;
 import step.controller.multitenancy.client.RemoteMultitenancyClientImpl;
 import step.core.accessors.AbstractAccessor;
+import step.core.accessors.AbstractIdentifiableObject;
+import step.core.entities.EntityManager;
 import step.functions.packages.FunctionPackage;
 import step.functions.packages.client.LibFileReference;
 import step.functions.packages.client.RemoteFunctionPackageClientImpl;
+import step.resources.Resource;
+import step.resources.ResourceManager;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @Mojo(name = "upload-keywords-package")
 public class UploadKeywordsPackageMojo extends AbstractStepPluginMojo {
@@ -158,6 +168,84 @@ public class UploadKeywordsPackageMojo extends AbstractStepPluginMojo {
 		} else {
 			return null;
 		}
+	}
+
+	protected String resolveKeywordLibResourceByCriteria(Map<String, String> libStepResourceSearchCriteria) throws MojoExecutionException {
+		getLog().info("Using Step resource " + libStepResourceSearchCriteria + " as library file");
+
+		if (libStepResourceSearchCriteria.containsKey(ID_FIELD)) {
+			// just use the specified id
+			return libStepResourceSearchCriteria.get(ID_FIELD);
+		} else {
+			// search resources by attributes except for id
+			Map<String, String> attributes = new HashMap<>(libStepResourceSearchCriteria);
+			attributes.remove(ID_FIELD);
+			AbstractAccessor<Resource> remoteResourcesAccessor = createRemoteResourcesAccessor();
+			List<Resource> foundResources = StreamSupport.stream(remoteResourcesAccessor.findManyByAttributes(attributes), false).collect(Collectors.toList());
+			if (foundResources.isEmpty()) {
+				throw new MojoExecutionException("Library resource is not resolved by attributes: " + attributes);
+			} else if (foundResources.size() > 1) {
+				throw new MojoExecutionException("Ambiguous library resources ( " + foundResources.stream().map(AbstractIdentifiableObject::getId).collect(Collectors.toList()) + " ) are resolved by attributes: " + attributes);
+			} else {
+				return foundResources.get(0).getId().toString();
+			}
+		}
+	}
+
+	/**
+	 * Tries to find the existing step resource with the specified tracking attribute and use this resource as library file for keyword package.
+	 * Otherwise, uploads the remote artifact to Step and uses this just uploaded resource as library file
+	 */
+	protected LibFileReference prepareLibraryFileReferenceForMavenArtifact(org.eclipse.aether.artifact.Artifact remoteLibArtifact) throws MojoExecutionException {
+		getLog().info("Using maven artifact " + remoteLibArtifact.getGroupId() + ":" + remoteLibArtifact.getArtifactId() + ":" + remoteLibArtifact.getVersion() + " as library file");
+
+		try (RemoteResourceManager resourceManager = createResourceManager()) {
+
+			String actualTrackingAttribute = artifactToString(remoteLibArtifact);
+
+			Map<String, String> searchAttributes = new HashMap<>();
+			searchAttributes.put("customFields." + Resource.TRACKING_FIELD, actualTrackingAttribute);
+
+			getLog().info("Search for library resource with tracking value: " + searchAttributes);
+
+			Resource previousResource = resourceManager.findManyByCriteria(searchAttributes).stream().findFirst().orElse(null);
+			if (previousResource != null) {
+				getLog().info("Existing library resource will be reused: " + previousResource.getId().toString());
+
+				// for snapshot artifacts we re-upload (actualize) the resource in Step
+				if (remoteLibArtifact.isSnapshot()) {
+					getLog().info("Actualizing snapshot library resource " + previousResource.getId());
+					try (FileInputStream is = new FileInputStream(remoteLibArtifact.getFile())) {
+						resourceManager.saveResourceContent(previousResource.getId().toString(), is, remoteLibArtifact.getFile().getName());
+					} catch (IOException e) {
+						throw new MojoExecutionException("Library file uploading exception", e);
+					}
+				}
+				return LibFileReference.resourceId(previousResource.getId().toString());
+			} else {
+				try (FileInputStream is = new FileInputStream(remoteLibArtifact.getFile())) {
+					Resource created = resourceManager.createResource(
+							ResourceManager.RESOURCE_TYPE_FUNCTIONS,
+							false,
+							is,
+							remoteLibArtifact.getFile().getName(),
+							false, null,
+							actualTrackingAttribute
+					);
+					getLog().info("Library resource has been created: " + created.getId().toString());
+					return LibFileReference.resourceId(created.getId().toString());
+				} catch (IOException e) {
+					throw new MojoExecutionException("Library file uploading exception", e);
+				}
+			}
+		} catch (IOException e) {
+			throw new MojoExecutionException("Resource manager IO Exception", e);
+		}
+	}
+
+	protected AbstractAccessor<Resource> createRemoteResourcesAccessor() {
+		RemoteAccessors remoteAccessors = new RemoteAccessors(new RemoteCollectionFactory(getControllerCredentials()));
+		return remoteAccessors.getAbstractAccessor(EntityManager.resources, Resource.class);
 	}
 
 	protected RemoteFunctionPackageClientImpl createRemoteFunctionPackageClient() {
