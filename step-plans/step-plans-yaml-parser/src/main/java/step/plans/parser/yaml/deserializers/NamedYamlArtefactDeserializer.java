@@ -27,11 +27,11 @@ import step.core.artefacts.AbstractArtefact;
 import step.core.yaml.deserializers.NamedEntityYamlDeserializer;
 import step.core.yaml.deserializers.StepYamlDeserializer;
 import step.core.yaml.deserializers.StepYamlDeserializerAddOn;
-import step.plans.parser.yaml.YamlArtefactsLookuper;
+import step.core.yaml.YamlArtefactsLookuper;
 import step.core.yaml.SerializationUtils;
-import step.plans.parser.yaml.model.AbstractYamlArtefact;
-import step.plans.parser.yaml.model.NamedYamlArtefact;
-import step.plans.parser.yaml.model.SimpleYamlArtefact;
+import step.core.yaml.model.AbstractYamlArtefact;
+import step.core.yaml.model.NamedYamlArtefact;
+import step.core.yaml.model.SimpleYamlArtefact;
 
 import java.io.IOException;
 import java.util.List;

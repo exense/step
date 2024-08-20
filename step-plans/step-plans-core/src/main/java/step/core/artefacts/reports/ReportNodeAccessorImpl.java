@@ -80,7 +80,18 @@ public class ReportNodeAccessorImpl extends AbstractAccessor<ReportNode> impleme
 	public Iterator<ReportNode> getChildren(ObjectId parentID, int skip, int limit) {   
     	return collectionDriver.find(Filters.equals("parentID", parentID), new SearchOrder("executionTime", 1), skip, limit, 0).iterator();
     }
-    
+
+	@Override
+	public Iterator<ReportNode> getChildrenByParentSource(ObjectId parentID, ParentSource parentSource) {
+		return collectionDriver.find(Filters.and(List.of(Filters.equals("parentID", parentID), Filters.equals("parentSource", parentSource.name()))), new SearchOrder("executionTime", 1), null, null, 0).iterator();
+	}
+
+	@Override
+	public Iterator<ReportNode> getChildrenByParentSource(ObjectId parentID, ParentSource parentSource, int skip, int limit) {
+		return collectionDriver.find(Filters.and(List.of(Filters.equals("parentID", parentID), Filters.equals("parentSource", parentSource.name()))), new SearchOrder("executionTime", 1), skip, limit, 0).iterator();
+	}
+
+
 	@Override
 	public Stream<ReportNode> getReportNodesByExecutionID(String executionID) {
 		assert executionID != null;
@@ -163,6 +174,11 @@ public class ReportNodeAccessorImpl extends AbstractAccessor<ReportNode> impleme
 	@Override
 	public Iterator<ReportNode> getChildren(String parentID) {
 		return getChildren(new ObjectId(parentID));
+	}
+
+	@Override
+	public Iterator<ReportNode> getChildrenByParentSource(String parentID, ParentSource parentSource) {
+		return getChildrenByParentSource(new ObjectId(parentID), parentSource);
 	}
 
 	@Override

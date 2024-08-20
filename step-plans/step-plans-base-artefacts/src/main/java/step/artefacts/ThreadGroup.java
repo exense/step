@@ -21,6 +21,7 @@ package step.artefacts;
 
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
+import step.core.artefacts.ChildrenBlock;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.YamlModel;
 
@@ -47,6 +48,10 @@ public class ThreadGroup extends AbstractArtefact {
 	DynamicValue<String> localItem = new DynamicValue<String>("literationId");
 
 	DynamicValue<String> userItem = new DynamicValue<String>("userId");
+
+	ChildrenBlock beforeThread;
+
+	ChildrenBlock afterThread;
 
 	public DynamicValue<Integer> getUsers() {
 		return users;
@@ -127,6 +132,20 @@ public class ThreadGroup extends AbstractArtefact {
 	public void setUserItem(DynamicValue<String> userItem) {
 		this.userItem = userItem;
 	}
-	
 
+	public ChildrenBlock getBeforeThread() {
+		return beforeThread;
+	}
+
+	public void setBeforeThread(ChildrenBlock beforeThread) {
+		this.beforeThread = beforeThread;
+	}
+
+	public ChildrenBlock getAfterThread() {
+		return afterThread;
+	}
+
+	public void setAfterThread(ChildrenBlock afterThread) {
+		this.afterThread = afterThread;
+	}
 }

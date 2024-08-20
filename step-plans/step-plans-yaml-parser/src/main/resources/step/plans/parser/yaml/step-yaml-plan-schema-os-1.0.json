@@ -2,6 +2,19 @@
   "$schema" : "http://json-schema.org/draft-07/schema#",
   "title" : "Plan",
   "$defs" : {
+    "resourceReference" : {
+      "oneOf" : [ {
+        "type" : "string"
+      }, {
+        "type" : "object",
+        "additionalProperties" : false,
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          }
+        }
+      } ]
+    },
     "SmartDynamicValueBooleanDef" : {
       "oneOf" : [ {
         "type" : "boolean"
@@ -56,97 +69,34 @@
         "additionalProperties" : false
       }
     },
-    "resourceReference" : {
-      "oneOf" : [ {
-        "type" : "string"
-      }, {
-        "type" : "object",
-        "additionalProperties" : false,
-        "properties" : {
-          "id" : {
-            "type" : "string"
-          }
-        }
-      } ]
-    },
-    "AfterSequenceDef" : {
-      "type" : "object",
-      "properties" : {
-        "afterSequence" : {
-          "type" : "object",
-          "properties" : {
-            "children" : {
-              "$ref" : "#/$defs/ArtefactArrayDef"
-            },
-            "description" : {
-              "type" : "string"
-            },
-            "continueParentNodeExecutionOnError" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "instrumentNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "skipNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "nodeName" : {
-              "type" : "string",
-              "default" : "AfterSequence"
-            },
-            "pacing" : {
-              "$ref" : "#/$defs/SmartDynamicValueNumDef"
-            },
-            "continueOnError" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            }
-          }
-        }
-      },
-      "additionalProperties" : false
-    },
-    "AfterThreadDef" : {
-      "type" : "object",
-      "properties" : {
-        "afterThread" : {
-          "type" : "object",
-          "properties" : {
-            "children" : {
-              "$ref" : "#/$defs/ArtefactArrayDef"
-            },
-            "description" : {
-              "type" : "string"
-            },
-            "continueParentNodeExecutionOnError" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "instrumentNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "skipNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "nodeName" : {
-              "type" : "string",
-              "default" : "AfterThread"
-            },
-            "pacing" : {
-              "$ref" : "#/$defs/SmartDynamicValueNumDef"
-            },
-            "continueOnError" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            }
-          }
-        }
-      },
-      "additionalProperties" : false
-    },
     "AssertDef" : {
       "type" : "object",
       "properties" : {
         "assert" : {
           "type" : "object",
           "properties" : {
+            "after" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
+            "before" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
             "children" : {
               "$ref" : "#/$defs/ArtefactArrayDef"
             },
@@ -186,84 +136,34 @@
       },
       "additionalProperties" : false
     },
-    "BeforeSequenceDef" : {
-      "type" : "object",
-      "properties" : {
-        "beforeSequence" : {
-          "type" : "object",
-          "properties" : {
-            "children" : {
-              "$ref" : "#/$defs/ArtefactArrayDef"
-            },
-            "description" : {
-              "type" : "string"
-            },
-            "continueParentNodeExecutionOnError" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "instrumentNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "skipNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "nodeName" : {
-              "type" : "string",
-              "default" : "BeforeSequence"
-            },
-            "pacing" : {
-              "$ref" : "#/$defs/SmartDynamicValueNumDef"
-            },
-            "continueOnError" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            }
-          }
-        }
-      },
-      "additionalProperties" : false
-    },
-    "BeforeThreadDef" : {
-      "type" : "object",
-      "properties" : {
-        "beforeThread" : {
-          "type" : "object",
-          "properties" : {
-            "children" : {
-              "$ref" : "#/$defs/ArtefactArrayDef"
-            },
-            "description" : {
-              "type" : "string"
-            },
-            "continueParentNodeExecutionOnError" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "instrumentNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "skipNode" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            },
-            "nodeName" : {
-              "type" : "string",
-              "default" : "BeforeThread"
-            },
-            "pacing" : {
-              "$ref" : "#/$defs/SmartDynamicValueNumDef"
-            },
-            "continueOnError" : {
-              "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
-            }
-          }
-        }
-      },
-      "additionalProperties" : false
-    },
     "CallKeywordDef" : {
       "type" : "object",
       "properties" : {
         "callKeyword" : {
           "type" : "object",
           "properties" : {
+            "after" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
+            "before" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
             "children" : {
               "$ref" : "#/$defs/ArtefactArrayDef"
             },
@@ -333,6 +233,28 @@
         "callPlan" : {
           "type" : "object",
           "properties" : {
+            "after" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
+            "before" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
             "children" : {
               "$ref" : "#/$defs/ArtefactArrayDef"
             },
@@ -372,6 +294,28 @@
         "case" : {
           "type" : "object",
           "properties" : {
+            "after" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
+            "before" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
             "children" : {
               "$ref" : "#/$defs/ArtefactArrayDef"
             },
@@ -405,6 +349,28 @@
         "check" : {
           "type" : "object",
           "properties" : {
+            "after" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
+            "before" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
             "children" : {
               "$ref" : "#/$defs/ArtefactArrayDef"
             },
@@ -438,6 +404,28 @@
         "dataSet" : {
           "type" : "object",
           "properties" : {
+            "after" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
+            "before" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
             "children" : {
               "$ref" : "#/$defs/ArtefactArrayDef"
             },
@@ -679,6 +667,28 @@
         "echo" : {
           "type" : "object",
           "properties" : {
+            "after" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
+            "before" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
             "children" : {
               "$ref" : "#/$defs/ArtefactArrayDef"
             },
@@ -712,6 +722,28 @@
         "export" : {
           "type" : "object",
           "properties" : {
+            "after" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
+            "before" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
             "children" : {
               "$ref" : "#/$defs/ArtefactArrayDef"
             },
@@ -754,6 +786,28 @@
         "failure" : {
           "type" : "object",
           "properties" : {
+            "after" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
+            "before" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
             "children" : {
               "$ref" : "#/$defs/ArtefactArrayDef"
             },
@@ -790,6 +844,28 @@
         "for" : {
           "type" : "object",
           "properties" : {
+            "after" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
+            "before" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
             "children" : {
               "$ref" : "#/$defs/ArtefactArrayDef"
             },
@@ -844,6 +920,28 @@
         "forEach" : {
           "type" : "object",
           "properties" : {
+            "after" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
+            "before" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
             "children" : {
               "$ref" : "#/$defs/ArtefactArrayDef"
             },
@@ -1055,6 +1153,28 @@
         "if" : {
           "type" : "object",
           "properties" : {
+            "after" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
+            "before" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
             "children" : {
               "$ref" : "#/$defs/ArtefactArrayDef"
             },
@@ -1088,6 +1208,28 @@
         "performanceAssert" : {
           "type" : "object",
           "properties" : {
+            "after" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
+            "before" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
             "children" : {
               "$ref" : "#/$defs/ArtefactArrayDef"
             },
@@ -1130,6 +1272,28 @@
         "placeholder" : {
           "type" : "object",
           "properties" : {
+            "after" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
+            "before" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
             "children" : {
               "$ref" : "#/$defs/ArtefactArrayDef"
             },
@@ -1160,6 +1324,28 @@
         "retryIfFails" : {
           "type" : "object",
           "properties" : {
+            "after" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
+            "before" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
             "children" : {
               "$ref" : "#/$defs/ArtefactArrayDef"
             },
@@ -1205,6 +1391,28 @@
         "return" : {
           "type" : "object",
           "properties" : {
+            "after" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
+            "before" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
             "children" : {
               "$ref" : "#/$defs/ArtefactArrayDef"
             },
@@ -1238,6 +1446,28 @@
         "script" : {
           "type" : "object",
           "properties" : {
+            "after" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
+            "before" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
             "children" : {
               "$ref" : "#/$defs/ArtefactArrayDef"
             },
@@ -1271,6 +1501,28 @@
         "sequence" : {
           "type" : "object",
           "properties" : {
+            "after" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
+            "before" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
             "children" : {
               "$ref" : "#/$defs/ArtefactArrayDef"
             },
@@ -1307,6 +1559,28 @@
         "session" : {
           "type" : "object",
           "properties" : {
+            "after" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
+            "before" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
             "children" : {
               "$ref" : "#/$defs/ArtefactArrayDef"
             },
@@ -1352,6 +1626,28 @@
         "set" : {
           "type" : "object",
           "properties" : {
+            "after" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
+            "before" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
             "children" : {
               "$ref" : "#/$defs/ArtefactArrayDef"
             },
@@ -1388,6 +1684,28 @@
         "sleep" : {
           "type" : "object",
           "properties" : {
+            "after" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
+            "before" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
             "children" : {
               "$ref" : "#/$defs/ArtefactArrayDef"
             },
@@ -1427,6 +1745,28 @@
         "streamingArtefact" : {
           "type" : "object",
           "properties" : {
+            "after" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
+            "before" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
             "children" : {
               "$ref" : "#/$defs/ArtefactArrayDef"
             },
@@ -1457,6 +1797,28 @@
         "switch" : {
           "type" : "object",
           "properties" : {
+            "after" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
+            "before" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
             "children" : {
               "$ref" : "#/$defs/ArtefactArrayDef"
             },
@@ -1490,6 +1852,28 @@
         "synchronized" : {
           "type" : "object",
           "properties" : {
+            "after" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
+            "before" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
             "children" : {
               "$ref" : "#/$defs/ArtefactArrayDef"
             },
@@ -1532,6 +1916,28 @@
         "testCase" : {
           "type" : "object",
           "properties" : {
+            "after" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
+            "before" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
             "children" : {
               "$ref" : "#/$defs/ArtefactArrayDef"
             },
@@ -1562,6 +1968,28 @@
         "testScenario" : {
           "type" : "object",
           "properties" : {
+            "after" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
+            "before" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
             "children" : {
               "$ref" : "#/$defs/ArtefactArrayDef"
             },
@@ -1592,6 +2020,28 @@
         "testSet" : {
           "type" : "object",
           "properties" : {
+            "after" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
+            "before" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
             "children" : {
               "$ref" : "#/$defs/ArtefactArrayDef"
             },
@@ -1625,6 +2075,28 @@
         "threadGroup" : {
           "type" : "object",
           "properties" : {
+            "after" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
+            "before" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
             "children" : {
               "$ref" : "#/$defs/ArtefactArrayDef"
             },
@@ -1643,6 +2115,28 @@
             "nodeName" : {
               "type" : "string",
               "default" : "ThreadGroup"
+            },
+            "afterThread" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
+            "beforeThread" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
             },
             "userItem" : {
               "$ref" : "#/$defs/SmartDynamicValueStringDef"
@@ -1685,6 +2179,28 @@
         "while" : {
           "type" : "object",
           "properties" : {
+            "after" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
+            "before" : {
+              "type" : "object",
+              "properties" : {
+                "steps" : {
+                  "$ref" : "#/$defs/ArtefactArrayDef"
+                },
+                "continueOnError" : {
+                  "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                }
+              }
+            },
             "children" : {
               "$ref" : "#/$defs/ArtefactArrayDef"
             },
@@ -1727,15 +2243,7 @@
     "ArtefactDef" : {
       "type" : "object",
       "oneOf" : [ {
-        "$ref" : "#/$defs/AfterSequenceDef"
-      }, {
-        "$ref" : "#/$defs/AfterThreadDef"
-      }, {
         "$ref" : "#/$defs/AssertDef"
-      }, {
-        "$ref" : "#/$defs/BeforeSequenceDef"
-      }, {
-        "$ref" : "#/$defs/BeforeThreadDef"
       }, {
         "$ref" : "#/$defs/CallKeywordDef"
       }, {

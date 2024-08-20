@@ -19,11 +19,8 @@
 package step.artefacts.handlers;
 
 import static junit.framework.Assert.assertEquals;
-import static step.planbuilder.BaseArtefacts.afterSequence;
-import static step.planbuilder.BaseArtefacts.beforeSequence;
-import static step.planbuilder.BaseArtefacts.check;
-import static step.planbuilder.BaseArtefacts.echo;
-import static step.planbuilder.BaseArtefacts.sequence;
+import static step.planbuilder.BaseArtefacts.*;
+import static step.planbuilder.BaseArtefacts.set;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -36,6 +33,7 @@ import step.artefacts.Check;
 import step.artefacts.Echo;
 import step.artefacts.Sequence;
 import step.core.artefacts.CheckArtefact;
+import step.core.artefacts.ChildrenBlock;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicValue;
@@ -46,6 +44,7 @@ import step.core.plans.builder.PlanBuilder;
 import step.core.plans.runner.DefaultPlanRunner;
 import step.core.plans.runner.PlanRunner;
 import step.core.plans.runner.PlanRunnerResult;
+import step.planbuilder.BaseArtefacts;
 import step.planbuilder.FunctionArtefacts;
 
 public class SequenceHandlerTest extends AbstractArtefactHandlerTest {
@@ -398,115 +397,221 @@ public class SequenceHandlerTest extends AbstractArtefactHandlerTest {
 		
 		Assert.assertEquals(ReportNodeStatus.PASSED, result.getResult());				
 	}
-	
+
 	@Test
-	public void testBeforeAndAfterSequenceHappyPath() throws Exception {
+	public void testBeforeAndAfter() throws Exception {
 		// Create a plan with an empty sequence block
 		Plan plan = PlanBuilder.create()
 				.startBlock(sequence())
-					.startBlock(beforeSequence())
-						.add(echo("'Before 1'"))
-					.endBlock()
-					.startBlock(beforeSequence())
-						.add(echo("'Before 2'"))
-					.endBlock()
-					.startBlock(afterSequence())
-						.add(echo("'After 1'"))
-					.endBlock()
+				.startBlock(sequence()).withBefore(set("myVar", "'value'")).withAfter(echo("'after sequence'"))
+				.add(echo("'in main sequence'"))
+				.add(echo("'myVar value is : ' + myVar"))
+				.endBlock()
 				.endBlock()
 				.build();
-		
+
 		// Run the plan
 		PlanRunner planRunner = new DefaultPlanRunner();
-		PlanRunnerResult result = planRunner.run(plan);	
-		
+		PlanRunnerResult result = planRunner.run(plan);
+
 		result.waitForExecutionToTerminate();
-		
+
 		StringWriter writer = new StringWriter();
-		result.printTree(writer);
-		
-		Assert.assertEquals("Sequence:PASSED:\n" + 
-				" BeforeSequence:PASSED:\n" + 
-				"  Echo:PASSED:\n" + 
-				" BeforeSequence:PASSED:\n" + 
-				"  Echo:PASSED:\n" + 
-				" AfterSequence:PASSED:\n" + 
-				"  Echo:PASSED:\n", writer.toString());	
-		
-		Assert.assertEquals(ReportNodeStatus.PASSED, result.getResult());				
+		result.printTree(writer, true, false);
+
+		Assert.assertEquals("Sequence:PASSED:\n" +
+				" Sequence:PASSED:\n" +
+				"  [BEFORE]\n" +
+				"   Set(myVar = value):PASSED:\n" +
+				"  Echo(in main sequence):PASSED:\n" +
+				"  Echo(myVar value is : value):PASSED:\n" +
+				"  [AFTER]\n" +
+				"   Echo(after sequence):PASSED:\n" , writer.toString());
 	}
-	
+
 	@Test
-	public void testBeforeAndAfterSequenceErrorInChildren() throws Exception {
+	public void testBeforeAndAfterRoot() throws Exception {
 		// Create a plan with an empty sequence block
 		Plan plan = PlanBuilder.create()
-				.startBlock(sequence())
-					.startBlock(beforeSequence())
-						.add(echo("'Before 1'"))
-					.endBlock()
-					.startBlock(beforeSequence())
-						.add(echo("'Before 2'"))
-					.endBlock()
-					.startBlock(beforeSequence())
-						.add(check("false"))
-					.endBlock()
-					.startBlock(afterSequence())
-						.add(echo("'After 1'"))
-					.endBlock()
+				.startBlock(sequence()).withBefore(echo("'In Before'"), set("myVar", "'value'"))
+				.withAfter(echo("'after sequence'"))
+				.add(echo("'in main sequence'"))
 				.endBlock()
 				.build();
-		
+
 		// Run the plan
 		PlanRunner planRunner = new DefaultPlanRunner();
-		PlanRunnerResult result = planRunner.run(plan);	
-		
+		PlanRunnerResult result = planRunner.run(plan);
+
 		result.waitForExecutionToTerminate();
-		
+
 		StringWriter writer = new StringWriter();
-		result.printTree(writer);
-		
-		Assert.assertEquals("Sequence:FAILED:\n" + 
-				" BeforeSequence:PASSED:\n" + 
-				"  Echo:PASSED:\n" + 
-				" BeforeSequence:PASSED:\n" + 
-				"  Echo:PASSED:\n" + 
-				" BeforeSequence:FAILED:\n" + 
-				"  Check:FAILED:The expression 'false' returned false\n" +
-				" AfterSequence:PASSED:\n" + 
-				"  Echo:PASSED:\n" , writer.toString());	
+		result.printTree(writer, true, false);
+
+		Assert.assertEquals("Sequence:PASSED:\n" +
+				" [BEFORE]\n" +
+				"  Echo(In Before):PASSED:\n" +
+				"  Set(myVar = value):PASSED:\n" +
+				" Echo(in main sequence):PASSED:\n" +
+				" [AFTER]\n" +
+				"  Echo(after sequence):PASSED:\n" , writer.toString());
 	}
-	
+
 	@Test
-	public void testBeforeAndAfterSequenceErrorInAfter() throws Exception {
+	public void testTechErrorInBefore() throws Exception {
 		// Create a plan with an empty sequence block
 		Plan plan = PlanBuilder.create()
-				.startBlock(sequence())
-					.startBlock(beforeSequence())
-					.endBlock()
-					.startBlock(beforeSequence())
-						.add(check("true"))
-					.endBlock()
-					.startBlock(afterSequence())
-						.add(check("false"))
-					.endBlock()
+				.startBlock(sequence()).withBefore(echo("'In Before'"), set("myVar", "test")).withAfter(echo("'after sequence'"))
+				.add(echo("'in main sequence'"))
 				.endBlock()
 				.build();
-		
+
 		// Run the plan
 		PlanRunner planRunner = new DefaultPlanRunner();
-		PlanRunnerResult result = planRunner.run(plan);	
-		
+		PlanRunnerResult result = planRunner.run(plan);
+
 		result.waitForExecutionToTerminate();
-		
+
 		StringWriter writer = new StringWriter();
-		result.printTree(writer);
-		
-		Assert.assertEquals("Sequence:FAILED:\n" + 
-				" BeforeSequence:PASSED:\n" + 
-				" BeforeSequence:PASSED:\n" + 
-				"  Check:PASSED:\n" + 
-				" AfterSequence:FAILED:\n" + 
-				"  Check:FAILED:The expression 'false' returned false\n" , writer.toString());
+		result.printTree(writer, true, false);
+		Assert.assertEquals("Sequence:TECHNICAL_ERROR:\n" +
+				" [BEFORE]\n" +
+				"  Echo(In Before):PASSED:\n" +
+				"  Set(null = null):TECHNICAL_ERROR:Error while resolving groovy properties in expression: 'test'. The property 'test' could not be found (or accessed). Make sure that the property is defined as variable or parameter and accesible in current scope.. Groovy error: >>> No such property: test for class: Script1 <<<\n" +
+				" [AFTER]\n" +
+				"  Echo(after sequence):PASSED:\n" , writer.toString());
+	}
+
+	@Test
+	public void testFailedErrorInBefore() throws Exception {
+		// Create a plan with an empty sequence block
+		Plan plan = PlanBuilder.create()
+				.startBlock(sequence()).withBefore(echo("'In Before'"), check("false")).withAfter(echo("'after sequence'"))
+				.add(echo("'in main sequence'"))
+				.endBlock()
+				.build();
+		// Run the plan
+		PlanRunner planRunner = new DefaultPlanRunner();
+		PlanRunnerResult result = planRunner.run(plan);
+		result.waitForExecutionToTerminate();
+		//Check the results
+		StringWriter writer = new StringWriter();
+		result.printTree(writer, true, false);
+		Assert.assertEquals("Sequence:FAILED:\n" +
+				" [BEFORE]\n" +
+				"  Echo(In Before):PASSED:\n" +
+				"  Check(false):FAILED:The expression 'false' returned false\n" +
+				" [AFTER]\n" +
+				"  Echo(after sequence):PASSED:\n" , writer.toString());
+	}
+
+	@Test
+	public void testTechnicalErrorInChildren() throws Exception {
+		// Create a plan with an empty sequence block
+		Plan plan = PlanBuilder.create()
+				.startBlock(sequence()).withBefore(echo("'In Before'"), set("myVar","'test'")).withAfter(echo("'after sequence'"))
+				.add(echo("'in main sequence'"))
+				.add(echo("'myVar is ' + myVarNotExists"))
+				.endBlock()
+				.build();
+		// Run the plan
+		PlanRunner planRunner = new DefaultPlanRunner();
+		PlanRunnerResult result = planRunner.run(plan);
+		result.waitForExecutionToTerminate();
+		//Check the results
+		StringWriter writer = new StringWriter();
+		result.printTree(writer, true, false);
+		System.out.println(writer.toString());
+		Assert.assertEquals("Sequence:TECHNICAL_ERROR:\n" +
+				" [BEFORE]\n" +
+				"  Echo(In Before):PASSED:\n" +
+				"  Set(myVar = test):PASSED:\n" +
+				" Echo(in main sequence):PASSED:\n" +
+				" Echo:TECHNICAL_ERROR:Error while resolving groovy properties in expression: ''myVar is ' + myVarNotExists'. The property 'myVarNotExists' could not be found (or accessed). Make sure that the property is defined as variable or parameter and accesible in current scope.. Groovy error: >>> No such property: myVarNotExists for class: Script1 <<<\n" +
+				" [AFTER]\n" +
+				"  Echo(after sequence):PASSED:\n" , writer.toString());
+	}
+
+	@Test
+	public void testFailedErrorInChildren() throws Exception {
+		// Create a plan with an empty sequence block
+		Plan plan = PlanBuilder.create()
+				.startBlock(sequence()).withBefore(echo("'In Before'"),set("myVar","'test'")).withAfter(echo("'after sequence'"))
+				.add(echo("'in main sequence'"))
+				.add(check("false"))
+				.endBlock()
+				.build();
+		// Run the plan
+		PlanRunner planRunner = new DefaultPlanRunner();
+		PlanRunnerResult result = planRunner.run(plan);
+		result.waitForExecutionToTerminate();
+		//Check the results
+		StringWriter writer = new StringWriter();
+		result.printTree(writer, true, false);
+		System.out.println(writer.toString());
+		Assert.assertEquals("Sequence:FAILED:\n" +
+				" [BEFORE]\n" +
+				"  Echo(In Before):PASSED:\n" +
+				"  Set(myVar = test):PASSED:\n" +
+				" Echo(in main sequence):PASSED:\n" +
+				" Check(false):FAILED:The expression 'false' returned false\n" +
+				" [AFTER]\n" +
+				"  Echo(after sequence):PASSED:\n" , writer.toString());
+	}
+
+	@Test
+	public void testFailedErrorInAfter() throws Exception {
+		// Create a plan with an empty sequence block
+		Plan plan = PlanBuilder.create()
+				.startBlock(sequence()).withBefore(echo("'In Before'"), set("myVar","'test'")).withAfter(echo("'after sequence'"), check("false"))
+				.add(echo("'in main sequence'"))
+				.add(check("myVar == 'test'"))
+				.endBlock()
+				.build();
+		// Run the plan
+		PlanRunner planRunner = new DefaultPlanRunner();
+		PlanRunnerResult result = planRunner.run(plan);
+		result.waitForExecutionToTerminate();
+		//Check the results
+		StringWriter writer = new StringWriter();
+		result.printTree(writer, true, false);
+		System.out.println(writer.toString());
+		Assert.assertEquals("Sequence:FAILED:\n" +
+				" [BEFORE]\n" +
+				"  Echo(In Before):PASSED:\n" +
+				"  Set(myVar = test):PASSED:\n" +
+				" Echo(in main sequence):PASSED:\n" +
+				" Check(myVar == 'test'):PASSED:\n" +
+				" [AFTER]\n" +
+				"  Echo(after sequence):PASSED:\n" +
+				"  Check(false):FAILED:The expression 'false' returned false\n" , writer.toString());
+	}
+
+	@Test
+	public void testBeforeAndAfterSkip() throws Exception {
+		// Create a plan with an empty sequence block
+		Plan plan = PlanBuilder.create()
+				.startBlock(sequence()).add(echo("'in root sequence'"))
+				.startBlock(sequence()).withBefore(set("myVar", "'value'")).withAfter(echo("'after sequence'")).withSkip()
+				.add(echo("'in main sequence'"))
+				.add(echo("'myVar value is : ' + myVar"))
+				.endBlock()
+				.endBlock()
+				.build();
+
+		// Run the plan
+		PlanRunner planRunner = new DefaultPlanRunner();
+		PlanRunnerResult result = planRunner.run(plan);
+
+		result.waitForExecutionToTerminate();
+
+		StringWriter writer = new StringWriter();
+		result.printTree(writer, true, false);
+
+
+		Assert.assertEquals("Sequence:PASSED:\n" +
+				" Echo(in root sequence):PASSED:\n" +
+				" Sequence:SKIPPED:\n" , writer.toString());
 	}
 	
 	@Test

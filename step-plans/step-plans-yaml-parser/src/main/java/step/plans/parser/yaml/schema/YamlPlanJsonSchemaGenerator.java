@@ -36,9 +36,9 @@ import step.handlers.javahandler.jsonschema.JsonSchemaCreator;
 import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
 import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 import step.jsonschema.DefaultFieldMetadataExtractor;
-import step.plans.parser.yaml.YamlArtefactsLookuper;
+import step.core.yaml.YamlArtefactsLookuper;
 import step.plans.parser.yaml.YamlPlanFields;
-import step.plans.parser.yaml.model.AbstractYamlArtefact;
+import step.core.yaml.model.AbstractYamlArtefact;
 
 import java.util.*;
 import java.util.stream.Collectors;

@@ -16,17 +16,11 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.artefacts.handlers;
+package step.artefacts;
 
-import step.artefacts.Sequence;
-import step.artefacts.reports.BeforeSequenceReportNode;
-import step.core.artefacts.reports.ReportNode;
+import step.core.artefacts.Artefact;
 
-public class BeforeSequenceHandler extends SequenceHandler {
-
-	@Override
-	public BeforeSequenceReportNode createReportNode_(ReportNode parentNode, Sequence testArtefact) {
-		return new BeforeSequenceReportNode();
-	}
-
+@Artefact()
+public class AfterThreadDeprecated extends Sequence {
+	
 }

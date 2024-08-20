@@ -19,11 +19,15 @@
 package step.core.plans.builder;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Stack;
+import java.util.function.Consumer;
 
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
+import step.core.artefacts.ChildrenBlock;
+import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
 
 /**
@@ -102,5 +106,36 @@ public class PlanBuilder {
 	private void addToCurrentParent(AbstractArtefact artefact) {
 		AbstractArtefact parent = stack.peek();
 		parent.addChild(artefact);
+	}
+
+
+	public PlanBuilder withBefore(AbstractArtefact... before) {
+		ChildrenBlock childrenBlock = new ChildrenBlock();
+		childrenBlock.setSteps(List.of(before));
+		applyToLastNode((a) -> a.setBefore(childrenBlock));
+		return this;
+	}
+
+	public PlanBuilder withAfter(AbstractArtefact... after) {
+		ChildrenBlock childrenBlock = new ChildrenBlock();
+		childrenBlock.setSteps(List.of(after));
+		applyToLastNode((a) -> a.setAfter(childrenBlock));
+		return this;
+	}
+
+	public PlanBuilder withSkip() {
+		return applyToLastNode(a -> a.setSkipNode(new DynamicValue<>(true)));
+	}
+
+	private PlanBuilder applyToLastNode(Consumer<AbstractArtefact> c) {
+		AbstractArtefact parent = stack.peek();
+		int nbChildren = parent.getChildren().size();
+		if (nbChildren > 0 ){
+			AbstractArtefact latestChild = parent.getChildren().get(nbChildren-1);
+			c.accept(latestChild);
+		} else {
+			c.accept(parent);
+		}
+		return this;
 	}
 }

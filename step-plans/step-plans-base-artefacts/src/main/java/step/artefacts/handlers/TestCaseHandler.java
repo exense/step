@@ -22,6 +22,7 @@ import step.artefacts.TestCase;
 import step.artefacts.reports.TestCaseReportNode;
 import step.core.artefacts.handlers.AtomicReportNodeStatusComposer;
 import step.core.artefacts.handlers.ReportNodeAttributesManager;
+import step.core.artefacts.handlers.SequentialArtefactScheduler;
 import step.core.artefacts.reports.ReportNode;
 
 public class TestCaseHandler extends AbstractSessionArtefactHandler<TestCase, ReportNode> {

@@ -20,6 +20,7 @@ package step.artefacts.handlers;
 
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -65,7 +66,7 @@ public class PlanLocator {
 			Stream<Plan> stream = StreamSupport.stream(accessor.findManyByAttributes(selectionAttributes), false);
 			stream = stream.filter(objectPredicate);
 			List<Plan> matchingFunctions = stream.collect(Collectors.toList());
-			a = matchingFunctions.stream().findFirst().orElseThrow(()->new RuntimeException("Unable to find plan with attributes: "+selectionAttributes.toString()));
+			a = matchingFunctions.stream().findFirst().orElseThrow(()->new NoSuchElementException("Unable to find plan with attributes: "+selectionAttributes.toString()));
 		}
 		return a;
 	}

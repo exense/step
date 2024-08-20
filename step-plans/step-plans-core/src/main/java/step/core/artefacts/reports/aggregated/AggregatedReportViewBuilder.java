@@ -1,5 +1,6 @@
 package step.core.artefacts.reports.aggregated;
 
+import step.core.artefacts.reports.ParentSource;
 import step.core.artefacts.reports.resolvedplan.ResolvedPlanNode;
 import step.core.artefacts.reports.resolvedplan.ResolvedPlanNodeAccessor;
 import step.core.execution.ExecutionEngineContext;
@@ -9,6 +10,7 @@ import step.core.execution.model.ExecutionAccessor;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class AggregatedReportViewBuilder {
@@ -42,10 +44,12 @@ public class AggregatedReportViewBuilder {
     }
 
     private AggregatedReportView recursivelyBuildAggregatedReportTree(ResolvedPlanNode resolvedPlanNode, AggregatedReportViewRequest request) {
-        List<AggregatedReportView> children = resolvedPlanNodeAccessor.getByParentId(resolvedPlanNode.getId().toString()).map(n -> recursivelyBuildAggregatedReportTree(n, request)).collect(Collectors.toList());
+        List<AggregatedReportView> children = resolvedPlanNodeAccessor.getByParentId(resolvedPlanNode.getId().toString())
+                .map(n -> recursivelyBuildAggregatedReportTree(n, request))
+                .collect(Collectors.toList());
         String artefactHash = resolvedPlanNode.artefactHash;
         Map<String, Long> countByStatus = reportNodesTimeSeries.queryByExecutionIdAndArtefactHash(executionId, artefactHash, request.range);
-        return new AggregatedReportView(resolvedPlanNode.artefact, artefactHash, countByStatus, children);
+        return new AggregatedReportView(resolvedPlanNode.artefact, artefactHash, countByStatus, children, resolvedPlanNode.parentSource);
     }
 
 }

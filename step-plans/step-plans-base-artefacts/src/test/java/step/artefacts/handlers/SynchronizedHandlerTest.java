@@ -31,6 +31,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Test;
 
 import junit.framework.Assert;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.Synchronized;
 import step.artefacts.TestScenario;
@@ -47,10 +49,13 @@ import step.core.execution.ExecutionEngine;
 import step.core.execution.ExecutionEngineContext;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
+import step.core.plans.runner.PlanRunnerResult;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.threadpool.ThreadPoolPlugin;
 
 public class SynchronizedHandlerTest {
+
+	public static Logger logger = LoggerFactory.getLogger(SynchronizedHandlerTest.class);
 	
 	private ExecutionEngine engine = ExecutionEngine.builder().withPlugin(new ThreadPoolPlugin()).withPlugin(new BaseArtefactPlugin()).withPlugin(new AbstractExecutionEnginePlugin() {
 		@Override
@@ -79,8 +84,13 @@ public class SynchronizedHandlerTest {
 											.endBlock()
 										.endBlock()
 									.build();
-		
-		engine.execute(plan).visitReportNodes(node->{
+
+		PlanRunnerResult results = engine.execute(plan);
+		String errorSummary = results.getErrorSummary();
+		if (errorSummary != null && !errorSummary.isBlank()) {
+			logger.error(errorSummary);
+		}
+		results.visitReportNodes(node->{
 			Assert.assertEquals(ReportNodeStatus.PASSED, node.getStatus());
 		});
 		// Unnamed lock are equivalent to a lock using the artefactID as lock name and is therefore local to a specific artefact
@@ -113,8 +123,13 @@ public class SynchronizedHandlerTest {
 											.endBlock()
 										.endBlock()
 									.build();
-		
-		engine.execute(plan).visitReportNodes(node->{
+
+		PlanRunnerResult results = engine.execute(plan);
+		String errorSummary = results.getErrorSummary();
+		if (errorSummary != null && !errorSummary.isBlank()) {
+			logger.error(errorSummary);
+		}
+		results.visitReportNodes(node->{
 			Assert.assertEquals(ReportNodeStatus.PASSED, node.getStatus());
 		});
 		Assert.assertEquals(2, maxParallelism.get());
@@ -199,8 +214,13 @@ public class SynchronizedHandlerTest {
 											.endBlock()
 										.endBlock()
 									.build();
-		
-		engine.execute(plan).visitReportNodes(node->{
+
+		PlanRunnerResult results = engine.execute(plan);
+		String errorSummary = results.getErrorSummary();
+		if (errorSummary != null && !errorSummary.isBlank()) {
+			logger.error(errorSummary);
+		}
+		results.visitReportNodes(node->{
 			Assert.assertEquals(ReportNodeStatus.PASSED, node.getStatus());
 		});
 		Assert.assertEquals(2, maxParallelism.get());

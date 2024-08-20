@@ -18,6 +18,8 @@
  ******************************************************************************/
 package step.plans.parser.yaml.model;
 
+import step.core.yaml.model.NamedYamlArtefact;
+
 public class YamlPlan {
 
 	// this name should be kept untouched to support the migrations for old versions

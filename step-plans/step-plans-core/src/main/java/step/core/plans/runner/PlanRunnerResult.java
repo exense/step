@@ -39,10 +39,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import step.attachments.AttachmentMeta;
-import step.core.artefacts.reports.ReportNode;
-import step.core.artefacts.reports.ReportNodeStatus;
-import step.core.artefacts.reports.ReportTreeAccessor;
-import step.core.artefacts.reports.ReportTreeVisitor;
+import step.core.artefacts.reports.*;
 import step.core.artefacts.reports.ReportTreeVisitor.ReportNodeEvent;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionProvider;
@@ -239,7 +236,9 @@ public class PlanRunnerResult {
 				if (printNodeDetails && reportAsString != null) {
 					row.append("(" + reportAsString + ")");
 				}
-				row.append(":" + node.getStatus() + ":");
+				if (node.getStatus() != null) {
+					row.append(":" + node.getStatus() + ":");
+				}
 				if (node.getError() != null) {
 					row.append(node.getError().getMsg());
 				}

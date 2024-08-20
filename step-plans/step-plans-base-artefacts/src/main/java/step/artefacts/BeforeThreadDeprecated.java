@@ -18,11 +18,10 @@
  ******************************************************************************/
 package step.artefacts;
 
-import step.core.artefacts.Artefact;
-import step.core.yaml.YamlModel;
 
-@YamlModel(name = "afterThread")
+import step.core.artefacts.Artefact;
+
 @Artefact()
-public class AfterThread extends Sequence {
+public class BeforeThreadDeprecated extends Sequence {
 	
 }

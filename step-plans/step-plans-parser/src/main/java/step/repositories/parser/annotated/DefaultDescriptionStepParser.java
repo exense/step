@@ -184,13 +184,13 @@ public class DefaultDescriptionStepParser extends AbstractDescriptionStepParser 
 
 	@Step("BeforeThread(.*)$")
 	public static void beforeThread(ParsingContext parsingContext, String selectionCriteriaExpr) {
-		BeforeThread result = new BeforeThread();
+		BeforeThreadDeprecated result = new BeforeThreadDeprecated();
 		parsingContext.addArtefactToCurrentParentAndPush(result);
 	}
 	
 	@Step("AfterThread(.*)$")
 	public static void afterThread(ParsingContext parsingContext, String selectionCriteriaExpr) {
-		AfterThread result = new AfterThread();
+		AfterThreadDeprecated result = new AfterThreadDeprecated();
 		parsingContext.addArtefactToCurrentParentAndPush(result);
 	}
 	

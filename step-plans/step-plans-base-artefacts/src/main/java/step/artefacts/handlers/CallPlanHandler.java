@@ -19,22 +19,26 @@
 package step.artefacts.handlers;
 
 import jakarta.json.JsonObject;
+import step.artefacts.CallFunction;
 import step.artefacts.CallPlan;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandler;
+import step.core.artefacts.handlers.ArtefactHashGenerator;
+import step.core.artefacts.reports.ParentSource;
 import step.core.artefacts.reports.ReportNode;
+import step.core.artefacts.reports.resolvedplan.ResolvedChildren;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionContextBindings;
 import step.core.json.JsonProviderCache;
-import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.Plan;
-import step.core.plans.PlanAccessor;
-import step.functions.accessor.FunctionAccessor;
 
 import java.io.StringReader;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.NoSuchElementException;
 
 public class CallPlanHandler extends ArtefactHandler<CallPlan, ReportNode> {
 
@@ -80,10 +84,19 @@ public class CallPlanHandler extends ArtefactHandler<CallPlan, ReportNode> {
 	}
 
 	@Override
-	public AbstractArtefact resolveArtefactCall(AbstractArtefact artefact, DynamicJsonObjectResolver dynamicJsonObjectResolver, Map<String, Object> bindings, ObjectPredicate objectPredicate, PlanAccessor planAccessor, FunctionAccessor functionAccessor) {
-		PlanLocator planLocator = new PlanLocator(planAccessor, new SelectorHelper(dynamicJsonObjectResolver));
-		Plan plan = planLocator.selectPlan((CallPlan) artefact, objectPredicate, bindings);
-		return plan != null ? plan.getRoot() : null;
+	protected List<ResolvedChildren> resolveChildrenArtefactBySource_(CallPlan artefactNode, String currentPath) {
+		String newPath = ArtefactHashGenerator.getPath(currentPath, artefactNode.getId().toString());
+		List<ResolvedChildren> results = new ArrayList<>();
+		try {
+			Plan plan = selectPlan(artefactNode);
+			if (plan != null) {
+				results.add(new ResolvedChildren(ParentSource.SUB_PLAN, List.of(plan.getRoot()), newPath));
+			}
+		} catch (NoSuchElementException e) {
+			logger.warn("Unable to resolve plan", e);
+		}
+		//For call plans with do not add the call plan children since they are not executed
+		return results;
 	}
 
 	protected Plan selectPlan(CallPlan testArtefact) {

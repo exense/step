@@ -21,7 +21,6 @@ package step.artefacts;
 import step.core.artefacts.Artefact;
 import step.core.yaml.YamlModel;
 
-@YamlModel(name = "afterSequence")
 @Artefact()
 public class AfterSequence extends Sequence {
 	

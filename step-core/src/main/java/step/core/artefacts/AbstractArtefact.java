@@ -59,6 +59,9 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
 	private DynamicValue<Boolean> skipNode = new DynamicValue<>(false);
 	private DynamicValue<Boolean> instrumentNode = new DynamicValue<>(false);
 	private DynamicValue<Boolean> continueParentNodeExecutionOnError = new DynamicValue<>(false);
+
+	private ChildrenBlock before;
+	private ChildrenBlock after;
 	
 	public AbstractArtefact() {
 		super();
@@ -239,6 +242,24 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
 
 	public void setContinueParentNodeExecutionOnError(DynamicValue<Boolean> continueOnError) {
 		this.continueParentNodeExecutionOnError = continueOnError;
+	}
+
+	@EntityReference(type= EntityManager.recursive)
+	public ChildrenBlock getBefore() {
+		return before;
+	}
+
+	public void setBefore(ChildrenBlock before) {
+		this.before = before;
+	}
+
+	@EntityReference(type= EntityManager.recursive)
+	public ChildrenBlock getAfter() {
+		return after;
+	}
+
+	public void setAfter(ChildrenBlock after) {
+		this.after = after;
 	}
 
 	@Override

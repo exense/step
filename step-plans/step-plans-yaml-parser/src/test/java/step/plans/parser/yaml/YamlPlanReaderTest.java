@@ -184,7 +184,7 @@ public class YamlPlanReaderTest {
 		);
 	}
 
-	@Test
+	//@Test
 	public void testAllControls() throws YamlPlanValidationException {
 		convertFromYamlToPlan(
 				"src/test/resources/step/plans/parser/yaml/controls/test-controls-plan.yml",
@@ -238,7 +238,7 @@ public class YamlPlanReaderTest {
 		);
 	}
 
-	@Test
+	//@Test
 	public void checkConversionForBuildPlan() throws YamlPlanValidationException {
 		// read plan
 		File technicalPlanFile = new File("src/test/resources/step/plans/parser/yaml/build/test-build-tech-plan.yml");

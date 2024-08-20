@@ -82,21 +82,24 @@ public class JUnit4ReportWriter implements ReportWriter {
 				@Override
 				public void startReportNode(ReportNodeEvent event) {
 					ReportNode node = event.getNode();
-					try {
-						// as a convention report the children of the first level as testcases
-						if(event.getStack().size()==1) {
-							if(!skipReportNode(node)) {
-								writer.write("<testcase classname=\""+node.getClass().getName()+"\" name=\""+node.getName()+"\" time=\""+formatTime(node.getDuration())+"\">");
-								errorWritten.set(false);
+					//Wrapper report nodes have no status and are ignored for junit reports
+					if (node.getStatus() != null) {
+						try {
+							// as a convention report the children of the first level as testcases
+							if (event.getStack().size() == 1) {
+								if (!skipReportNode(node)) {
+									writer.write("<testcase classname=\"" + node.getClass().getName() + "\" name=\"" + node.getName() + "\" time=\"" + formatTime(node.getDuration()) + "\">");
+									errorWritten.set(false);
+								}
+							} else if (event.getStack().size() > 1) {
+								// report all the errors of the sub nodes (level > 1)
+								if (node.getError() != null) {
+									writeErrorOrFailure(writer, node, errorWritten);
+								}
 							}
-						} else if (event.getStack().size()>1) {
-							// report all the errors of the sub nodes (level > 1)
-							if(node.getError() != null) {
-								writeErrorOrFailure(writer, node, errorWritten);
-							}							
+						} catch (IOException e1) {
+							throw new RuntimeException(e1);
 						}
-					} catch (IOException e1) {
-						throw new RuntimeException(e1);
 					}
 				}
 				
@@ -104,17 +107,20 @@ public class JUnit4ReportWriter implements ReportWriter {
 				public void endReportNode(ReportNodeEvent event) {
 					if(event.getStack().size()==1) {
 						ReportNode node = event.getNode();
-						if(!skipReportNode(node)) {
-							try {
-								// if no error has been found in the sub-nodes, report the error for this node
-								if(node.getStatus()!=ReportNodeStatus.PASSED && !errorWritten.get()) {
-									writeErrorOrFailure(writer, node, errorWritten);
+						//Wrapper report nodes have no status and are ignored for junit reports
+						if (node.getStatus() != null) {
+							if (!skipReportNode(node)) {
+								try {
+									// if no error has been found in the sub-nodes, report the error for this node
+									if (node.getStatus() != ReportNodeStatus.PASSED && !errorWritten.get()) {
+										writeErrorOrFailure(writer, node, errorWritten);
+									}
+									// close the <testcase> block
+									writer.write("</testcase>");
+									writer.newLine();
+								} catch (IOException e1) {
+									throw new RuntimeException(e1);
 								}
-								// close the <testcase> block
-								writer.write("</testcase>");
-								writer.newLine();
-							} catch (IOException e1) {
-								throw new RuntimeException(e1);
 							}
 						}
 					}

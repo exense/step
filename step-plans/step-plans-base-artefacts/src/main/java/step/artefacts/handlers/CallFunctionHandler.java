@@ -32,8 +32,12 @@ import step.common.managedoperations.OperationManager;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandler;
+import step.core.artefacts.handlers.ArtefactHashGenerator;
+import step.core.artefacts.handlers.SequentialArtefactScheduler;
+import step.core.artefacts.reports.ParentSource;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
+import step.core.artefacts.reports.resolvedplan.ResolvedChildren;
 import step.core.docker.DockerRegistryConfiguration;
 import step.core.docker.DockerRegistryConfigurationAccessor;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
@@ -73,10 +77,7 @@ import step.plugins.functions.types.CompositeFunction;
 import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 import static step.artefacts.handlers.functions.TokenForcastingExecutionPlugin.getTokenForecastingContext;
 
@@ -140,14 +141,20 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	}
 
 	@Override
-	public AbstractArtefact resolveArtefactCall(AbstractArtefact artefact, DynamicJsonObjectResolver dynamicJsonObjectResolver, Map<String, Object> bindings, ObjectPredicate objectPredicate, PlanAccessor planAccessor, FunctionAccessor functionAccessor) {
-		FunctionLocator functionLocator = new FunctionLocator(functionAccessor, new SelectorHelper(dynamicJsonObjectResolver));
-		Function function = functionLocator.getFunction((CallFunction) artefact, objectPredicate, bindings);
-		if(function instanceof CompositeFunction) {
-			return ((CompositeFunction) function).getPlan().getRoot();
-		} else {
-			return null;
+	protected List<ResolvedChildren> resolveChildrenArtefactBySource_(CallFunction artefactNode, String currentPath) {
+		String newPath = ArtefactHashGenerator.getPath(currentPath, artefactNode.getId().toString());
+		List<ResolvedChildren> results = new ArrayList<>();
+		try {
+			Function function = getFunction(artefactNode);
+			if(function instanceof CompositeFunction) {
+					AbstractArtefact root = ((CompositeFunction) function).getPlan().getRoot();
+					results.add(new ResolvedChildren(ParentSource.SUB_PLAN, List.of(root), newPath));
+			}
+		} catch (NoSuchElementException e) {
+			logger.warn("Unable to resolve keyword", e);
 		}
+		results.add(new ResolvedChildren(ParentSource.MAIN, artefactNode.getChildren(), newPath));
+		return results;
 	}
 
 	@Override

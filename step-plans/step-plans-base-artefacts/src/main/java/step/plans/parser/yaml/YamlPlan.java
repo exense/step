@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.plans.parser.yaml;
 
-import step.plans.parser.yaml.model.NamedYamlArtefact;
+import step.core.yaml.model.NamedYamlArtefact;
 
 public class YamlPlan {
 

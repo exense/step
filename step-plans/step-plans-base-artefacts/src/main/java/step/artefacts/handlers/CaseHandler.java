@@ -20,6 +20,7 @@ package step.artefacts.handlers;
 
 import step.artefacts.Case;
 import step.core.artefacts.handlers.ArtefactHandler;
+import step.core.artefacts.handlers.SequentialArtefactScheduler;
 import step.core.artefacts.reports.ReportNode;
 
 public class CaseHandler extends ArtefactHandler<Case, ReportNode> {

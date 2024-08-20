@@ -16,13 +16,11 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plans.parser.yaml;
+package step.core.yaml;
 
-import step.core.yaml.YamlModelUtils;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
-import step.plans.parser.yaml.model.AbstractYamlArtefact;
-import step.core.yaml.YamlModel;
+import step.core.yaml.model.AbstractYamlArtefact;
 
 import java.util.ArrayList;
 import java.util.HashMap;
