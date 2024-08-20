@@ -55,18 +55,15 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<!-- internal dependencies -->
-		<dependencies.version>2024.7.12-669121da4fe7006fcd2fe5c4</dependencies.version>
-<!--		<exense-commons.version>2024.7.12-669123e04fe7006fcd32085a</exense-commons.version>-->
-		<step-grid.version>2024.8.8-66b4e6af62cc6a1a098c8ac1</step-grid.version>
-		<step-framework.version>2024.8.8-66b4d05562cc6a1a095a3415</step-framework.version>
+		<dependencies.version>2024.8.8-66b4bbe662cc6a1a0934c750</dependencies.version>
+		<step-grid.version>2024.8.20-66c4a4ec63cd146079857f18</step-grid.version>
+		<step-framework.version>2024.8.20-66c4a65363cd14607985893c</step-framework.version>
 
 		<!-- external, non-transitive, dependencies -->
 		<dep.groovy.version>3.0.10</dep.groovy.version>
 		<dep.apache-jmeter.version>5.4.3</dep.apache-jmeter.version>
 		<dep.apache-poi.version>5.2.3</dep.apache-poi.version>
 		<dep.aether.version>1.1.0</dep.aether.version>
-
-		<excluded.jmeter.group>step.junit.categories.LocalJMeter</excluded.jmeter.group>
 
 		<!-- maven build dependencies -->
 		<dep.mvn.assembly.version>2.6</dep.mvn.assembly.version>
@@ -85,6 +82,8 @@
 		<dep.mvn.shade.version>3.1.0</dep.mvn.shade.version>
 		<dep.mvn.source.version>3.0.1</dep.mvn.source.version>
 		<dep.mvn.surefire.version>2.22.1</dep.mvn.surefire.version>
+
+		<excluded.jmeter.group>step.junit.categories.LocalJMeter</excluded.jmeter.group>
 	</properties>
 
 	<repositories>
