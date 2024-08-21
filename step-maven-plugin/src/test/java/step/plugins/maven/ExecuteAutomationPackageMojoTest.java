@@ -52,6 +52,7 @@ public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 		Assert.assertEquals((Integer) 3, mojo.executionResultTimeoutS);
 		Assert.assertEquals(true, mojo.waitForExecution);
 		Assert.assertEquals(ensureExecutionSuccess, mojo.ensureExecutionSuccess);
+		Assert.assertEquals(true, mojo.printAggregatedReport);
 		Assert.assertEquals(createTestCustomParams(), mojo.parameters);
 		Assert.assertEquals(TEST_INCLUDE_PLANS, mojo.includePlans);
 		Assert.assertNull(TEST_INCLUDE_PLANS, mojo.excludePlans);
@@ -72,6 +73,7 @@ public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 		mojo.setExecutionParameters(params);
 		mojo.setWaitForExecution(true);
 		mojo.setEnsureExecutionSuccess(ensureExecutionSuccess);
+		mojo.setPrintAggregatedReport(true);
 
 		mojo.setIncludePlans(TEST_INCLUDE_PLANS);
 
@@ -111,6 +113,7 @@ public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 		private Integer executionResultTimeoutS;
 		private Boolean waitForExecution;
 		private Boolean ensureExecutionSuccess;
+		private Boolean printAggregatedReport;
 		private String includePlans;
 		private String excludePlans;
 
@@ -119,7 +122,10 @@ public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 		}
 
 		@Override
-		protected AbstractExecuteAutomationPackageTool createTool(String url, String projectName, String userId, String authToken, Map<String, String> parameters, Integer executionResultTimeoutS, Boolean waitForExecution, Boolean ensureExecutionSuccess, String includePlans, String excludePlans) {
+		protected AbstractExecuteAutomationPackageTool createTool(String url, String projectName, String userId,
+											  String authToken, Map<String, String> parameters, Integer executionResultTimeoutS,
+											  Boolean waitForExecution, Boolean ensureExecutionSuccess, Boolean printAggregatedReport,
+											  String includePlans, String excludePlans) {
 			this.url = url;
 			this.projectName = projectName;
 			this.userId = userId;
@@ -128,6 +134,7 @@ public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 			this.executionResultTimeoutS = executionResultTimeoutS;
 			this.waitForExecution = waitForExecution;
 			this.ensureExecutionSuccess = ensureExecutionSuccess;
+			this.printAggregatedReport = printAggregatedReport;
 			this.includePlans = includePlans;
 			this.excludePlans = excludePlans;
 			return mockedTool;

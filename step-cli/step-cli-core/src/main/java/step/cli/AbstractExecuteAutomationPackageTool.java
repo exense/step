@@ -26,6 +26,7 @@ import step.client.AbstractRemoteClient;
 import step.client.credentials.ControllerCredentials;
 import step.client.executions.RemoteExecutionManager;
 import step.core.artefacts.reports.ReportNodeStatus;
+import step.core.artefacts.reports.aggregated.AggregatedReportView;
 import step.core.execution.model.AutomationPackageExecutionParameters;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionMode;
@@ -57,6 +58,7 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
     private Integer executionResultTimeoutS;
     private Boolean waitForExecution;
     private Boolean ensureExecutionSuccess;
+    private Boolean printAggregatedReport;
 
     private String includePlans;
     private String excludePlans;
@@ -65,8 +67,8 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
                                                 String userId, String authToken,
                                                 Map<String, String> executionParameters,
                                                 Integer executionResultTimeoutS, Boolean waitForExecution,
-                                                Boolean ensureExecutionSuccess, String includePlans,
-                                                String excludePlans) {
+                                                Boolean ensureExecutionSuccess, Boolean printAggregatedReport,
+                                                String includePlans, String excludePlans) {
         super(url);
         this.stepProjectName = stepProjectName;
         this.userId = userId;
@@ -75,6 +77,7 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
         this.executionResultTimeoutS = executionResultTimeoutS;
         this.waitForExecution = waitForExecution;
         this.ensureExecutionSuccess = ensureExecutionSuccess;
+        this.printAggregatedReport = printAggregatedReport;
         this.includePlans = includePlans;
         this.excludePlans = excludePlans;
     }
@@ -149,12 +152,19 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
                         errorMessage += ": " + String.join(";", errors);
                     }
                     logError(errorMessage, null);
-                } else if (!isStatusSuccess(endedExecution)) {
-                    executionFailureCount++;
-                    String errorSummary = remoteExecutionManager.getFuture(id).getErrorSummary();
-                    logError("Execution " + executionToString(id, endedExecution) + " failed. Result status was " + endedExecution.getResult() + ". Error summary: " + errorSummary, null);
                 } else {
-                    logInfo("Execution " + executionToString(id, endedExecution) + " succeeded. Result status was " + endedExecution.getResult(), null);
+                    //for now print aggregated report
+                    if (getPrintAggregatedReport()) {
+                        AggregatedReportView aggregatedReportView = remoteExecutionManager.getAggregatedReportView(endedExecution.getId().toString());
+                        logInfo("Aggregated report:\n" + aggregatedReportView.toString(), null);
+                    }
+                    if (!isStatusSuccess(endedExecution)) {
+                        executionFailureCount++;
+                        String errorSummary = remoteExecutionManager.getFuture(id).getErrorSummary();
+                        logError("Execution " + executionToString(id, endedExecution) + " failed. Result status was " + endedExecution.getResult() + ". Error summary: " + errorSummary, null);
+                    } else {
+                        logInfo("Execution " + executionToString(id, endedExecution) + " succeeded. Result status was " + endedExecution.getResult(), null);
+                    }
                 }
             }
             if (executionFailureCount > 0 && getEnsureExecutionSuccess()) {
@@ -285,6 +295,14 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
 
     public void setEnsureExecutionSuccess(Boolean ensureExecutionSuccess) {
         this.ensureExecutionSuccess = ensureExecutionSuccess;
+    }
+
+    public Boolean getPrintAggregatedReport() {
+        return printAggregatedReport;
+    }
+
+    public void setPrintAggregatedReport(Boolean printAggregatedReport) {
+        this.printAggregatedReport = printAggregatedReport;
     }
 
     public String getIncludePlans() {

@@ -19,13 +19,14 @@
 package step.artefacts;
 
 
+import step.artefacts.automation.YamlThreadGroup;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.artefacts.ChildrenBlock;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.YamlModel;
 
-@YamlModel(name = "threadGroup")
+@YamlModel(model = YamlThreadGroup.class, name = "threadGroup")
 @Artefact(validAsRoot = true)
 public class ThreadGroup extends AbstractArtefact {
 	

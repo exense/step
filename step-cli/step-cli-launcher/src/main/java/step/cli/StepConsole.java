@@ -256,6 +256,10 @@ public class StepConsole implements Callable<Integer> {
                     description = "Whether to wait for execution completeness")
             protected boolean async;
 
+            @Option(names = {"--printAggregatedReport"}, defaultValue = "true", showDefaultValue = CommandLine.Help.Visibility.ALWAYS,
+                    description = "Whether to print the aggregated report tree")
+            protected boolean printAggregatedReport;
+
             @Option(names = {"--includePlans"}, description = "The comma separated list of plans to be executed")
             protected String includePlans;
 
@@ -346,7 +350,7 @@ public class StepConsole implements Callable<Integer> {
                 new AbstractExecuteAutomationPackageTool(
                         stepUrl, projectName, stepUserId, authToken,
                         executionParameters, executionTimeoutS,
-                        !async, true,
+                        !async, true, false,
                         includePlans, excludePlans
                 ) {
                     @Override

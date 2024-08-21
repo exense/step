@@ -55,6 +55,8 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
     private Boolean waitForExecution;
     @Parameter(property = "step-execute-auto-packages.ensure-exec-success", defaultValue = "true")
     private Boolean ensureExecutionSuccess;
+    @Parameter(property = "step-execute-auto-packages.print-aggregated-report", defaultValue = "true")
+    private Boolean printAggregatedReport;
 
     @Parameter(property = "step-execute-auto-packages.include-plans")
     private String includePlans;
@@ -64,7 +66,9 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
     @Override
     public void execute() throws MojoExecutionException {
         try {
-            createTool(getUrl(), getStepProjectName(), getUserId(), getAuthToken(), getExecutionParameters(), getExecutionResultTimeoutS(), getWaitForExecution(), getEnsureExecutionSuccess(), getIncludePlans(), getExcludePlans()).execute();
+            createTool(getUrl(), getStepProjectName(), getUserId(), getAuthToken(), getExecutionParameters(),
+                    getExecutionResultTimeoutS(), getWaitForExecution(), getEnsureExecutionSuccess(), getPrintAggregatedReport(),
+                    getIncludePlans(), getExcludePlans()).execute();
         } catch (StepCliExecutionException e) {
             throw new MojoExecutionException("Execution exception", e);
         } catch (Exception e) {
@@ -72,8 +76,12 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
         }
     }
 
-    protected AbstractExecuteAutomationPackageTool createTool(final String url, final String projectName, final String userId, final String authToken, final Map<String, String> parameters, final Integer executionResultTimeoutS, final Boolean waitForExecution, final Boolean ensureExecutionSuccess, final String includePlans, final String excludePlans) {
-        return new AbstractExecuteAutomationPackageTool(url, projectName, userId, authToken, parameters, executionResultTimeoutS, waitForExecution, ensureExecutionSuccess, includePlans, excludePlans) {
+    protected AbstractExecuteAutomationPackageTool createTool(final String url, final String projectName, final String userId,
+                                                              final String authToken, final Map<String, String> parameters,
+                                                              final Integer executionResultTimeoutS, final Boolean waitForExecution,
+                                                              final Boolean ensureExecutionSuccess, final Boolean printAggregatedReport,
+                                                              final String includePlans, final String excludePlans) {
+        return new AbstractExecuteAutomationPackageTool(url, projectName, userId, authToken, parameters, executionResultTimeoutS, waitForExecution, ensureExecutionSuccess, printAggregatedReport, includePlans, excludePlans) {
             @Override
             protected File getAutomationPackageFile() throws StepCliExecutionException {
                 Artifact applicableArtifact = getProjectArtifact(getArtifactClassifier(), getGroupId(), getArtifactId(), getArtifactVersion());
@@ -173,6 +181,14 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
 
     public void setEnsureExecutionSuccess(Boolean ensureExecutionSuccess) {
         this.ensureExecutionSuccess = ensureExecutionSuccess;
+    }
+
+    public Boolean getPrintAggregatedReport() {
+        return printAggregatedReport;
+    }
+
+    public void setPrintAggregatedReport(Boolean printAggregatedReport) {
+        this.printAggregatedReport = printAggregatedReport;
     }
 
     public String getIncludePlans() {

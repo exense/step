@@ -3,17 +3,15 @@ package step.core.artefacts;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.entities.EntityManager;
 import step.core.entities.EntityReference;
-import step.core.yaml.schema.YamlJsonSchemaHelper;
-import step.jsonschema.JsonSchema;
+import step.core.yaml.YamlModel;
+import step.core.yaml.model.YamlChildrenBlock;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static step.core.yaml.model.AbstractYamlArtefact.ARTEFACT_ARRAY_DEF;
-
+@YamlModel(model = YamlChildrenBlock.class)
 public class ChildrenBlock {
 
-    @JsonSchema(ref = YamlJsonSchemaHelper.DEFS_PREFIX + ARTEFACT_ARRAY_DEF)
     protected List<AbstractArtefact> steps = new ArrayList<>();
 
     protected DynamicValue<Boolean> continueOnError = new DynamicValue<Boolean>(false);

@@ -1,12 +1,12 @@
 package step.core.artefacts.reports.aggregated;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.reports.ParentSource;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class AggregatedReportView {
 
@@ -16,7 +16,10 @@ public class AggregatedReportView {
     public final List<AggregatedReportView> children;
     public final ParentSource parentSource;
 
-    public AggregatedReportView(AbstractArtefact artefact, String artefactHash, Map<String, Long> countByStatus, List<AggregatedReportView> children, ParentSource parentSource) {
+    @JsonCreator
+    public AggregatedReportView(@JsonProperty("artefact") AbstractArtefact artefact, @JsonProperty("artefactHash") String artefactHash,
+                                @JsonProperty("countByStatus") Map<String, Long> countByStatus, @JsonProperty("children") List<AggregatedReportView> children,
+                                @JsonProperty("parentSource") ParentSource parentSource) {
         this.artefact = artefact;
         this.artefactHash = artefactHash;
         this.countByStatus = countByStatus;

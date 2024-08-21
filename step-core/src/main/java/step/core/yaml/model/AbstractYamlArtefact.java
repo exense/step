@@ -67,8 +67,10 @@ public abstract class AbstractYamlArtefact<T extends AbstractArtefact> extends A
     @YamlFieldCustomCopy
     protected List<NamedYamlArtefact> children = new ArrayList<>();
 
-    protected ChildrenBlock before;
-    protected ChildrenBlock after;
+    @YamlFieldCustomCopy
+    protected YamlChildrenBlock before;
+    @YamlFieldCustomCopy
+    protected YamlChildrenBlock after;
 
     public AbstractYamlArtefact() {
     }
@@ -99,6 +101,14 @@ public abstract class AbstractYamlArtefact<T extends AbstractArtefact> extends A
                 res.getChildren().add(child.getYamlArtefact().toArtefact());
             }
         }
+        YamlChildrenBlock beforeYaml = this.getBefore();
+        if (beforeYaml != null) {
+            res.setBefore(beforeYaml.toArtefact());
+        }
+        YamlChildrenBlock afterYaml = this.getAfter();
+        if (afterYaml != null) {
+            res.setAfter(afterYaml.toArtefact());
+        }
     }
 
     protected String getArtefactName() {
@@ -124,6 +134,16 @@ public abstract class AbstractYamlArtefact<T extends AbstractArtefact> extends A
 
         for (AbstractArtefact child : artefact.getChildren()) {
             this.getChildren().add(new NamedYamlArtefact(toYamlArtefact(child, yamlObjectMapper)));
+        }
+
+        ChildrenBlock beforeBlock = artefact.getBefore();
+        if (beforeBlock != null && !beforeBlock.getSteps().isEmpty()) {
+            this.setBefore(YamlChildrenBlock.toYamlChildrenBlock(beforeBlock, yamlObjectMapper));
+        }
+
+        ChildrenBlock afterBlock = artefact.getAfter();
+        if (afterBlock != null && !afterBlock.getSteps().isEmpty()) {
+            this.setAfter(YamlChildrenBlock.toYamlChildrenBlock(afterBlock, yamlObjectMapper));
         }
     }
 
@@ -222,19 +242,19 @@ public abstract class AbstractYamlArtefact<T extends AbstractArtefact> extends A
         this.children = children;
     }
 
-    public ChildrenBlock getBefore() {
+    public YamlChildrenBlock getBefore() {
         return before;
     }
 
-    public void setBefore(ChildrenBlock before) {
+    public void setBefore(YamlChildrenBlock before) {
         this.before = before;
     }
 
-    public ChildrenBlock getAfter() {
+    public YamlChildrenBlock getAfter() {
         return after;
     }
 
-    public void setAfter(ChildrenBlock after) {
+    public void setAfter(YamlChildrenBlock after) {
         this.after = after;
     }
 
