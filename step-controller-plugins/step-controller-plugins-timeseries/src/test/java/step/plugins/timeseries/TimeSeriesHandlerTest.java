@@ -36,16 +36,16 @@ public class TimeSeriesHandlerTest {
     private static Collection<Bucket> bucketsCollection;
     private static Collection<Measurement> measurementsCollection;
 
-    @BeforeClass
-    public static void init() {
-        measurementsCollection = new InMemoryCollection<>();
-        executionAccessor = new InMemoryExecutionAccessor();
-        bucketsCollection = new InMemoryCollection<>();
-        TimeSeries timeSeries = new TimeSeries(bucketsCollection, (int) BUCKET_RESOLUTION);
-        TimeSeriesAggregationPipeline aggregationPipeline = timeSeries.getAggregationPipeline();
-        AsyncTaskManager asyncTaskManager = new AsyncTaskManager();
-        handler = new TimeSeriesHandler(BUCKET_RESOLUTION, TS_ATTRIBUTES, measurementsCollection, executionAccessor, timeSeries, aggregationPipeline, asyncTaskManager, SAMPLING_LIMIT);
-    }
+//    @BeforeClass
+//    public static void init() {
+//        measurementsCollection = new InMemoryCollection<>();
+//        executionAccessor = new InMemoryExecutionAccessor();
+//        bucketsCollection = new InMemoryCollection<>();
+//        TimeSeries timeSeries = new TimeSeries(bucketsCollection, (int) BUCKET_RESOLUTION);
+//        TimeSeriesAggregationPipeline aggregationPipeline = timeSeries.getAggregationPipeline();
+//        AsyncTaskManager asyncTaskManager = new AsyncTaskManager();
+//        handler = new TimeSeriesHandler(BUCKET_RESOLUTION, TS_ATTRIBUTES, measurementsCollection, executionAccessor, timeSeries, aggregationPipeline, asyncTaskManager, SAMPLING_LIMIT);
+//    }
 
     @Test
     public void verifyEmptyOQLTest() {

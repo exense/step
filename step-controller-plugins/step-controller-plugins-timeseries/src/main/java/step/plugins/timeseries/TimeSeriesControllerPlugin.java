@@ -25,13 +25,10 @@ import step.migration.MigrationManager;
 import step.migration.MigrationManagerPlugin;
 import step.plugins.measurements.GaugeCollectorRegistry;
 import step.plugins.measurements.MeasurementPlugin;
-import step.plugins.timeseries.collections.DailyTimeSeriesCollection;
-import step.plugins.timeseries.collections.HourlyTimeSeriesCollection;
-import step.plugins.timeseries.collections.WeeklyTimeSeriesCollection;
+import step.plugins.timeseries.collections.*;
 import step.plugins.timeseries.dashboards.DashboardsGenerator;
 import step.plugins.timeseries.dashboards.model.*;
 import step.plugins.timeseries.dashboards.DashboardAccessor;
-import step.plugins.timeseries.collections.PerMinuteTimeSeriesCollection;
 import step.plugins.timeseries.migration.MigrateAggregateTask;
 import step.plugins.timeseries.migration.MigrateDashboardsTask;
 
@@ -48,13 +45,21 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 	public static final String TIME_SERIES_SAMPLING_LIMIT = "plugins.timeseries.sampling.limit";
 	public static final String TIME_SERIES_MAX_NUMBER_OF_SERIES = "plugins.timeseries.response.series.limit";
 	public static final String TIME_SERIES_MAIN_COLLECTION = "timeseries";
-	public static final String TIME_SERIES_BY_MINUTE_COLLECTION = "timeseries_minute";
+	public static final String TIME_SERIES_PER_MINUTE_COLLECTION = "timeseries_minute";
 	public static final String TIME_SERIES_HOURLY_COLLECTION = "timeseries_hour";
 	public static final String TIME_SERIES_DAILY_COLLECTION = "timeseries_day";
 	public static final String TIME_SERIES_WEEKLY_COLLECTION = "timeseries_week";
+	public static final String TIME_SERIES_MONTHLY_COLLECTION = "timeseries_month";
 	public static final String TIME_SERIES_ATTRIBUTES_PROPERTY = "plugins.timeseries.attributes";
 	public static final String TIME_SERIES_ATTRIBUTES_DEFAULT = EXECUTION_ID + "," + TASK_ID + "," + PLAN_ID + ",metricType,origin,name,rnStatus,project,type";
-	
+
+	public static final String TIME_SERIES_MINUTE_COLLECTION_ENABLED = "plugins.timeseries.collections.minute.enabled";
+	public static final String TIME_SERIES_HOUR_COLLECTION_ENABLED = "plugins.timeseries.collections.hour.enabled";
+	public static final String TIME_SERIES_DAY_COLLECTION_ENABLED = "plugins.timeseries.collections.day.enabled";
+	public static final String TIME_SERIES_WEEK_COLLECTION_ENABLED = "plugins.timeseries.collections.week.enabled";
+	public static final String TIME_SERIES_MONTH_COLLECTION_ENABLED = "plugins.timeseries.collections.month.enabled";
+
+
 	public static final String PARAM_KEY_EXECUTION_DASHBOARD_ID = "plugins.timeseries.execution.dashboard.id";
 	public static final String PARAM_KEY_ANALYTICS_DASHBOARD_ID = "plugins.timeseries.analytics.dashboard.id";
 	public static final String EXECUTION_DASHBOARD_PREPOPULATED_NAME = "Execution Dashboard";
@@ -83,17 +88,38 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 		
 		TimeSeriesCollection mainCollection = new TimeSeriesCollection(collectionFactory.getCollection(TIME_SERIES_MAIN_COLLECTION, Bucket.class), resolutionPeriod);
 		mainIngestionPipeline = new TimeSeriesIngestionPipeline(collectionFactory.getCollection(TIME_SERIES_MAIN_COLLECTION, Bucket.class), resolutionPeriod, flushPeriod);
+
+		TimeSeriesCollectionsSettings collectionsSettings = getCollectionsSettings(configuration);
+		HashMap<TimeSeriesCollection, Boolean> collectionsEnabled = new HashMap<>();
+
+		collectionsEnabled.put(mainCollection, true);
+		collectionsEnabled.put(new PerMinuteTimeSeriesCollection(collectionFactory), collectionsSettings.isPerMinuteEnabled());
+		collectionsEnabled.put(new HourlyTimeSeriesCollection(collectionFactory), collectionsSettings.isHourlyEnabled());
+		collectionsEnabled.put(new DailyTimeSeriesCollection(collectionFactory), collectionsSettings.isDailyEnabled());
+		collectionsEnabled.put(new WeeklyTimeSeriesCollection(collectionFactory), collectionsSettings.isWeeklyEnabled());
+//		collectionsEnabled.put(new MonthlyTimeSeriesCollection(collectionFactory), collectionsSettings.isMonthlyEnabled());
+
+		List<TimeSeriesCollection> enabledCollections = new ArrayList<>();
+
+		collectionsEnabled.forEach((collection, enabled) -> {
+			if (enabled) {
+				enabledCollections.add(collection);
+			} else {
+				// disabled resolutions will be completely dropped from mongo
+				collection.getCollection().drop();
+			}
+		});
+
+
 		// timeseries will have a list of registered collection.
 		timeSeries = new TimeSeriesBuilder()
-				.registerCollection(mainCollection)
-				.registerCollection(new PerMinuteTimeSeriesCollection(collectionFactory))
-				.registerCollection(new HourlyTimeSeriesCollection(collectionFactory))
-				.registerCollection(new DailyTimeSeriesCollection(collectionFactory))
-				.registerCollection(new WeeklyTimeSeriesCollection(collectionFactory))
+				.registerCollections(enabledCollections)
 				.build();
+		timeSeries.createMissingData();
+
+
 		
 		aggregationPipeline = timeSeries.getAggregationPipeline();
-//		TimeSeriesAggregationPipeline aggregationPipeline = timeSeries.getAggregationPipeline();
 		MetricTypeAccessor metricTypeAccessor = new MetricTypeAccessor(context.getCollectionFactory().getCollection(EntityManager.metricTypes, MetricType.class));
 		TimeSeriesBucketingHandler handler = new TimeSeriesBucketingHandler(timeSeries, attributes);
 
@@ -119,6 +145,15 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 
 		WebApplicationConfigurationManager configurationManager = context.require(WebApplicationConfigurationManager.class);
 		configurationManager.registerHook(s -> Map.of(RESOLUTION_PERIOD_PROPERTY, resolutionPeriod.toString()));
+	}
+
+	private TimeSeriesCollectionsSettings getCollectionsSettings(Configuration configuration) {
+		return new TimeSeriesCollectionsSettings()
+				.setPerMinute(configuration.getPropertyAsBoolean(TIME_SERIES_MINUTE_COLLECTION_ENABLED))
+				.setHourly(configuration.getPropertyAsBoolean(TIME_SERIES_HOUR_COLLECTION_ENABLED))
+				.setDaily(configuration.getPropertyAsBoolean(TIME_SERIES_DAY_COLLECTION_ENABLED))
+				.setWeekly(configuration.getPropertyAsBoolean(TIME_SERIES_WEEK_COLLECTION_ENABLED))
+				.setMonthly(configuration.getPropertyAsBoolean(TIME_SERIES_MONTH_COLLECTION_ENABLED));
 	}
 	
 	private void validateMainResolutionParam(long resolution) {

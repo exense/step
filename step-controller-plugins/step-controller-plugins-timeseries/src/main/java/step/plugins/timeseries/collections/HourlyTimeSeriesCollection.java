@@ -8,6 +8,6 @@ import step.plugins.timeseries.TimeSeriesControllerPlugin;
 public class HourlyTimeSeriesCollection extends TimeSeriesCollection {
     
     public HourlyTimeSeriesCollection(CollectionFactory collectionFactory) {
-        super(collectionFactory.getCollection(TimeSeriesControllerPlugin.TIME_SERIES_DAILY_COLLECTION, Bucket.class), 1000 * 60 * 60);
+        super(collectionFactory.getCollection(TimeSeriesControllerPlugin.TIME_SERIES_HOURLY_COLLECTION, Bucket.class), 1000 * 60 * 60);
     }
 }

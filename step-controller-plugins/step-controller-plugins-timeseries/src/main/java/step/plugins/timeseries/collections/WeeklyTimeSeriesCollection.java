@@ -8,7 +8,7 @@ import step.plugins.timeseries.TimeSeriesControllerPlugin;
 public class WeeklyTimeSeriesCollection extends TimeSeriesCollection {
     
     public WeeklyTimeSeriesCollection(CollectionFactory collectionFactory) {
-        super(collectionFactory.getCollection(TimeSeriesControllerPlugin.TIME_SERIES_DAILY_COLLECTION, Bucket.class), 1000 * 60 * 60 * 24 * 7);
+        super(collectionFactory.getCollection(TimeSeriesControllerPlugin.TIME_SERIES_WEEKLY_COLLECTION, Bucket.class), 1000 * 60 * 60 * 24 * 7);
     }
     
 }

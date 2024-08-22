@@ -1,4 +1,14 @@
 package step.plugins.timeseries.collections;
 
-public class MonthlyTimeSeriesCollection {
+import step.core.collections.CollectionFactory;
+import step.core.timeseries.TimeSeriesCollection;
+import step.core.timeseries.bucket.Bucket;
+import step.plugins.timeseries.TimeSeriesControllerPlugin;
+
+public class MonthlyTimeSeriesCollection extends TimeSeriesCollection {
+
+    public MonthlyTimeSeriesCollection(CollectionFactory collectionFactory) {
+        // here we can pass custom ingestion pipeline depending on the collection
+        super(collectionFactory.getCollection(TimeSeriesControllerPlugin.TIME_SERIES_MONTHLY_COLLECTION, Bucket.class), 1000L * 60 * 60 * 24 * 30);
+    }
 }
