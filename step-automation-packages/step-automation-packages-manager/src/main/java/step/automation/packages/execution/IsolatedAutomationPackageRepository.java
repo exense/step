@@ -135,7 +135,7 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
             try (FileInputStream fis = new FileInputStream(apFile)) {
                 inMemoryPackageManager.createAutomationPackage(fis, apFile.getName(), enricher, predicate);
             } catch (IOException e) {
-                throw new AutomationPackageManagerException("Cannot read the AP file " + apFile.getName());
+                throw new AutomationPackageManagerException("Cannot read the AP file: " + apFile.getName());
             }
 
             return new PackageExecutionContext(contextId, inMemoryPackageManager, false);
@@ -184,15 +184,15 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
                 if (executionTimeString != null) {
                     OffsetDateTime executionTime = OffsetDateTime.parse(executionTimeString, DateTimeFormatter.ISO_DATE_TIME);
                     if (executionTime.isBefore(minExecutionTime)) {
-                        log.info("Cleanup the outdated resource for automation package {} ...", apResourceInfo);
+                        log.info("Cleanup the outdated resource for automation package: {} ...", apResourceInfo);
                         resourceManager.deleteResource(foundResource.getId().toString());
                         removed++;
                     }
                 } else {
-                    log.warn("The last execution time is unknown for automation package {}", apResourceInfo);
+                    log.warn("The last execution time is unknown for automation package: {}", apResourceInfo);
                 }
             } catch (Exception e) {
-                log.error("Unable to cleanup outdated resource for automation package {}", apResourceInfo);
+                log.error("Unable to cleanup outdated resource for automation package: {}", apResourceInfo);
             }
         }
         log.info("Cleanup outdated automation packages finished. {} of {} packages have been removed", removed, foundResources.size());

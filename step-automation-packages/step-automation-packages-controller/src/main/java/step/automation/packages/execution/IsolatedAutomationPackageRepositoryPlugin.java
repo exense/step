@@ -87,7 +87,7 @@ public class IsolatedAutomationPackageRepositoryPlugin extends AbstractControlle
 
             @Override
             protected Supplier<? extends Job> getJobSupplier() {
-                return (Supplier<Job>) () -> new CleanupApResourcesJob(repository);
+                return (Supplier<Job>) () -> new CleanupApResourcesJob(repository, controllerSettingAccessor);
             }
 
             @Override
@@ -116,14 +116,18 @@ public class IsolatedAutomationPackageRepositoryPlugin extends AbstractControlle
     private static final class CleanupApResourcesJob implements Job {
 
         private final IsolatedAutomationPackageRepository repository;
+        private final ControllerSettingAccessor controllerSettingAccessor;
 
-        public CleanupApResourcesJob(IsolatedAutomationPackageRepository repository) {
+        public CleanupApResourcesJob(IsolatedAutomationPackageRepository repository, ControllerSettingAccessor controllerSettingAccessor) {
             this.repository = repository;
+            this.controllerSettingAccessor = controllerSettingAccessor;
         }
 
         @Override
         public void execute(JobExecutionContext context) {
-            repository.cleanUpOutdatedResources();
+            if (controllerSettingAccessor.getSettingAsBoolean(ISOLATED_AP_HOUSEKEEPING_ENABLED)) {
+                repository.cleanUpOutdatedResources();
+            }
         }
     }
 
