@@ -222,6 +222,7 @@
 				<artifactId>maven-surefire-plugin</artifactId>
 				<configuration>
 					<systemPropertyVariables>
+						<!-- this file must be available in the classpath, it is currently located in the step-common resources -->
 						<logback.configurationFile>logback-for-test.xml</logback.configurationFile>
 					</systemPropertyVariables>
 				</configuration>

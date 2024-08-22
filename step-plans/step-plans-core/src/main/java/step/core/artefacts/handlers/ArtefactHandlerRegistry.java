@@ -86,7 +86,7 @@ public class ArtefactHandlerRegistry {
 				try {
 					artefactHandler = artefactHandlerClass.newInstance();
 				} catch (InstantiationException | IllegalAccessException e) {
-					throw new RuntimeException("Unable to instanciate artefact handler for the artefact class " + artefactClass, e);
+					throw new RuntimeException("Unable to instantiate artefact handler for the artefact class " + artefactClass, e);
 				}
 
 				return artefactHandler;
