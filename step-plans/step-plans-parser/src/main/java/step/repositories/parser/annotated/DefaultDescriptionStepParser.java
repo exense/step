@@ -18,10 +18,7 @@
  ******************************************************************************/
 package step.repositories.parser.annotated;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import jakarta.json.JsonObject;
 
@@ -29,8 +26,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import step.artefacts.*;
+import step.artefacts.Comparator;
 import step.artefacts.ThreadGroup;
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.artefacts.AbstractArtefact;
+import step.core.artefacts.ChildrenBlock;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.execution.ExecutionContextBindings;
 import step.datapool.DataPoolConfiguration;
@@ -182,16 +182,36 @@ public class DefaultDescriptionStepParser extends AbstractDescriptionStepParser 
 	}
 	
 
-	@Step("BeforeThread(.*)$")
+	@Step(value = "BeforeThread(.*)$", priority = 2)
 	public static void beforeThread(ParsingContext parsingContext, String selectionCriteriaExpr) {
-		BeforeThreadDeprecated result = new BeforeThreadDeprecated();
-		parsingContext.addArtefactToCurrentParentAndPush(result);
+		AbstractArtefact abstractArtefact = parsingContext.peekCurrentArtefact();
+		if (abstractArtefact instanceof ThreadGroup) {
+			ThreadGroup threadGroup = (ThreadGroup) abstractArtefact;
+			ChildrenBlock childrenBlock = threadGroup.getBeforeThread();
+			if (childrenBlock == null) {
+				childrenBlock = new ChildrenBlock();
+				threadGroup.setBeforeThread(childrenBlock);
+			}
+			parsingContext.addArtefactToCurrentParentSourceAndPush(threadGroup, childrenBlock.getSteps());
+		} else {
+			throw new RuntimeException("BeforeThread is only supported in Thread Groups");
+		}
 	}
 	
-	@Step("AfterThread(.*)$")
+	@Step(value = "AfterThread(.*)$", priority = 2)
 	public static void afterThread(ParsingContext parsingContext, String selectionCriteriaExpr) {
-		AfterThreadDeprecated result = new AfterThreadDeprecated();
-		parsingContext.addArtefactToCurrentParentAndPush(result);
+		AbstractArtefact abstractArtefact = parsingContext.peekCurrentArtefact();
+		if (abstractArtefact instanceof ThreadGroup) {
+			ThreadGroup threadGroup = (ThreadGroup) abstractArtefact;
+			ChildrenBlock childrenBlock = threadGroup.getAfterThread();
+			if (childrenBlock == null) {
+				childrenBlock = new ChildrenBlock();
+				threadGroup.setAfterThread(childrenBlock);
+			}
+			parsingContext.addArtefactToCurrentParentSourceAndPush(threadGroup, childrenBlock.getSteps());
+		} else {
+			throw new RuntimeException("BeforeThread is only supported in Thread Groups");
+		}
 	}
 	
 	@Step("RetryIfFails(.*)$")
@@ -242,16 +262,26 @@ public class DefaultDescriptionStepParser extends AbstractDescriptionStepParser 
 		parsingContext.addArtefactToCurrentParentAndPush(result);
 	}
 	
-	@Step("BeforeSequence(.*)$")
-	public static void beforeSequence(ParsingContext parsingContext, String selectionCriteriaExpr) {
-		BeforeSequence result = new BeforeSequence();
-		parsingContext.addArtefactToCurrentParentAndPush(result);
+	@Step("Before(.*)$")
+	public static void before(ParsingContext parsingContext, String selectionCriteriaExpr) {
+		AbstractArtefact abstractArtefact = parsingContext.peekCurrentArtefact();
+		ChildrenBlock childrenBlock = abstractArtefact.getBefore();
+		if (childrenBlock == null) {
+			childrenBlock = new ChildrenBlock();
+			abstractArtefact.setBefore(childrenBlock);
+		}
+		parsingContext.addArtefactToCurrentParentSourceAndPush(abstractArtefact, childrenBlock.getSteps());
 	}
 	
-	@Step("AfterSequence(.*)$")
-	public static void afterSequence(ParsingContext parsingContext, String selectionCriteriaExpr) {
-		AfterSequence result = new AfterSequence();
-		parsingContext.addArtefactToCurrentParentAndPush(result);
+	@Step("After(.*)$")
+	public static void after(ParsingContext parsingContext, String selectionCriteriaExpr) {
+		AbstractArtefact abstractArtefact = parsingContext.peekCurrentArtefact();
+		ChildrenBlock childrenBlock = abstractArtefact.getAfter();
+		if (childrenBlock == null) {
+			childrenBlock = new ChildrenBlock();
+			abstractArtefact.setAfter(childrenBlock);
+		}
+		parsingContext.addArtefactToCurrentParentSourceAndPush(abstractArtefact, childrenBlock.getSteps());
 	}
 	
 	@Step("Synchronized(.*)$")
@@ -271,7 +301,7 @@ public class DefaultDescriptionStepParser extends AbstractDescriptionStepParser 
 	public static void forEachRowOfFileAttached(ParsingContext parsingContext, String type) {
 		DynamicValue<String> fileExpression = getExpressionForAttachedFile();
 		ForEachBlock result = getForEachArtefact(type, fileExpression);
-		parsingContext.addArtefactToCurrentParentAndPush(result);	
+		parsingContext.addArtefactToCurrentParentAndPush(result);
 	}
 	
 	@Step("For each row in (.+?) (.+?)$")
@@ -325,7 +355,7 @@ public class DefaultDescriptionStepParser extends AbstractDescriptionStepParser 
 			artefact.setMaxFailedLoops(new DynamicValue<Integer>(object.getJsonObject("MaxFailedLoop").getString("expression"),""));
 		}
 		
-		parsingContext.addArtefactToCurrentParentAndPush(artefact);	
+		parsingContext.addArtefactToCurrentParentAndPush(artefact);
 	}
 
 	protected static ForEachBlock getForEachArtefact(String type, DynamicValue<String> fileExpression) {
@@ -515,7 +545,16 @@ public class DefaultDescriptionStepParser extends AbstractDescriptionStepParser 
 		ArrayList filters = new ArrayList();
 		filters.add(filter);
 		performanceAssert.setFilters(filters);
-		parsingContext.addArtefactToCurrentParent(performanceAssert);
+		//Performance Assert must be defined in an after block
+		AbstractArtefact abstractArtefact = parsingContext.peekCurrentArtefact();
+		List<AbstractArtefact> steps = parsingContext.peekCurrentSteps();
+		if (steps.equals(abstractArtefact.getAfter())) {
+			parsingContext.addArtefactToCurrentParent(performanceAssert);
+		} else {
+			after(parsingContext, null);
+			parsingContext.addArtefactToCurrentParent(performanceAssert);
+			end(parsingContext);
+		}
 	}
 
 	private static String getNonNullExpression(JsonObject object, String key) {

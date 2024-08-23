@@ -22,6 +22,8 @@ public class PerformanceAssertPlugin extends AbstractExecutionEnginePlugin {
 
 	@Override
 	public void beforeReportNodeExecution(ExecutionContext context, ReportNode node) {
+		//PerformanceAssert must either be defined in an after block. If any performance assert is defined we
+		//create and add the performance assert session for the corresponding report node.
 		ChildrenBlock after = node.getResolvedArtefact().getAfter();
 		if (after != null && after.getSteps().stream().anyMatch(s -> s instanceof PerformanceAssert)) {
 			PerformanceAssertSession performanceAssertSession = new PerformanceAssertSession();

@@ -270,7 +270,6 @@ public class ThreadGroupHandlerTest extends AbstractArtefactHandlerTest {
 						childrenBlock(echo("'After...'"))))
 					.startBlock(sequence()).withBefore(echo("'Before...'+literationId"))
 						.withAfter(echo("'After...'"))
-						// literationId should be available in BeforeSequence
 						.add(echo("'Iteration'"))
 						.add(check("false"))
 					.endBlock()

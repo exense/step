@@ -329,7 +329,7 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 					failWithException(sessionReportNode, e);
 					sessionReportNodeStatusComposer.addStatusAndRecompose(sessionReportNode);
 				} finally {
-					// Execute the AfterSequence artefacts even when aborting
+					// Execute the After Thread steps artefacts even when aborting
 					boolean byPassInterrupt = context.isInterrupted();
 					if (byPassInterrupt) {
 						context.byPassInterruptInCurrentThread(true);

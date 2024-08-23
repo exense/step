@@ -51,7 +51,6 @@ public class BaseArtefactPlugin extends AbstractExecutionEnginePlugin {
 		artefactHandlerRegistry.put(DataSetArtefact.class, DataSetHandler.class);
 		artefactHandlerRegistry.put(Synchronized.class, SynchronizedHandler.class);
 		artefactHandlerRegistry.put(Sequence.class, SequenceHandler.class);
-		artefactHandlerRegistry.put(AfterSequence.class, SequenceHandler.class);
 		artefactHandlerRegistry.put(Return.class, ReturnHandler.class);
 		artefactHandlerRegistry.put(Echo.class, EchoHandler.class);
 		artefactHandlerRegistry.put(IfBlock.class, IfBlockHandler.class);
@@ -60,8 +59,6 @@ public class BaseArtefactPlugin extends AbstractExecutionEnginePlugin {
 		artefactHandlerRegistry.put(Sleep.class, SleepHandler.class);
 		artefactHandlerRegistry.put(Script.class, ScriptHandler.class);
 		artefactHandlerRegistry.put(ThreadGroup.class, ThreadGroupHandler.class);
-		artefactHandlerRegistry.put(BeforeThreadDeprecated.class, BeforeThreadHandler.class);
-		artefactHandlerRegistry.put(AfterThreadDeprecated.class, SequenceHandler.class);
 		artefactHandlerRegistry.put(step.artefacts.handlers.ThreadGroupHandler.Thread.class, ThreadHandler.class);
 		artefactHandlerRegistry.put(Switch.class, SwitchHandler.class);
 		artefactHandlerRegistry.put(Case.class, CaseHandler.class);
