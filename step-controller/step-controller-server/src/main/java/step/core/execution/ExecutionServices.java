@@ -28,6 +28,8 @@ import org.bson.types.ObjectId;
 import step.controller.services.async.AsyncTaskStatus;
 import step.core.access.User;
 import step.core.artefacts.reports.ReportNode;
+import step.core.artefacts.reports.aggregated.AggregatedReportView;
+import step.core.artefacts.reports.aggregated.AggregatedReportViewBuilder;
 import step.core.collections.SearchOrder;
 import step.core.deployment.AbstractStepAsyncServices;
 import step.core.deployment.ControllerServiceException;
@@ -200,12 +202,12 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 		List<ReportNode> result = new ArrayList<>();
 		Iterator<ReportNode> iterator;
 		if(reportNodeClass!=null) {
-			try (Stream<ReportNode> reportNodesByExecutionID = getContext().getReportAccessor().getReportNodesByExecutionIDAndClass(executionID, reportNodeClass)) {
-				result = reportNodesByExecutionID.limit(limit).collect(Collectors.toList());
+			try (Stream<ReportNode> reportNodesByExecutionID = getContext().getReportAccessor().getReportNodesByExecutionIDAndClass(executionID, reportNodeClass, limit)) {
+				result = reportNodesByExecutionID.collect(Collectors.toList());
 			}
 		} else {
-			try (Stream<ReportNode> reportNodesByExecutionID = getContext().getReportAccessor().getReportNodesByExecutionID(executionID)) {
-				result = reportNodesByExecutionID.limit(limit).collect(Collectors.toList());
+			try (Stream<ReportNode> reportNodesByExecutionID = getContext().getReportAccessor().getReportNodesByExecutionID(executionID, limit)) {
+				result = reportNodesByExecutionID.collect(Collectors.toList());
 			}
 		}
 		return result;
@@ -221,6 +223,40 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 		limit = limit != null ? limit : 1000;
 		Stream<ReportNode> stream = getContext().getReportAccessor().getReportNodesWithContributingErrors(executionId, skip, limit);
 		return stream.collect(Collectors.toList());
+	}
+
+	@Operation(description = "Returns the list of report nodes by execution id and artefact hash")
+	@GET
+	@Path("/{id}/reportnodes-by-hash/{hash}")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right = "execution-read")
+	public List<ReportNode> getReportNodesByArtefactHash(@PathParam("id") String executionId, @PathParam("hash") String hash, @QueryParam("skip") Integer skip, @QueryParam("limit") Integer limit) {
+		skip = skip != null ? skip : 0;
+		limit = limit != null ? limit : 1000;
+		try (Stream<ReportNode> stream = getContext().getReportAccessor().getReportNodesByArtefactHash(executionId, hash, skip, limit)) {
+			return stream.collect(Collectors.toList());
+		}
+	}
+
+	@Operation(description = "Returns the full aggregated report view for the provided execution.")
+	@GET
+	@Path("/{id}/report/aggregated")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right = "execution-read")
+	public AggregatedReportView getFullAggregatedReportView(@PathParam("id") String executionId) {
+		return getAggregatedReportView(executionId, new AggregatedReportViewBuilder.AggregatedReportViewRequest(null));
+	}
+
+	@Operation(description = "Returns an aggregated report view for the provided execution and aggregation parameters.")
+	@POST
+	@Path("/{id}/report/aggregated")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right = "execution-read")
+	public AggregatedReportView getAggregatedReportView(@PathParam("id") String executionId, AggregatedReportViewBuilder.AggregatedReportViewRequest request) {
+		ExecutionEngineContext executionEngineContext = getScheduler().getExecutor().getExecutionEngine().getExecutionEngineContext();
+		AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(executionEngineContext, executionId);
+		return aggregatedReportViewBuilder.buildAggregatedReportView(request);
 	}
 
 	@Operation(description = "Updates the provided execution.")

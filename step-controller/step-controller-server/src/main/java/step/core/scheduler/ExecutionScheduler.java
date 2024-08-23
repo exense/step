@@ -49,6 +49,10 @@ public class ExecutionScheduler {
 		this.executor = executor;
 	}
 
+	public Executor getExecutor() {
+		return executor;
+	}
+
 	public void shutdown() {
 		executor.shutdown();
 	}
