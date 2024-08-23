@@ -50,6 +50,10 @@ public class ExecutionScheduler implements ExecutionLauncher {
 		this.executor = executor;
 	}
 
+	public Executor getExecutor() {
+		return executor;
+	}
+
 	public void shutdown() {
 		executor.shutdown();
 	}
