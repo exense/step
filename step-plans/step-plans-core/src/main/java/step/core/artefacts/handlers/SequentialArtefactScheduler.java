@@ -66,7 +66,7 @@ public class SequentialArtefactScheduler {
 	
 	public void execute_(ReportNode reportNode, List<AbstractArtefact> sourceChildren, Boolean continueSequenceOnError, ParentSource parentSource) {
 		AtomicReportNodeStatusComposer reportNodeStatusComposer;
-		List<AbstractArtefact> children = ArtefactHandler.excludePropertyChildren(ArtefactHandler.getChildrenCopy(sourceChildren, context));
+		List<AbstractArtefact> children = ArtefactHandler.getChildrenCopy(sourceChildren, context);
 		if (children.isEmpty()) {
 			// Set the status to PASSED if the artefact contains no children
 			reportNodeStatusComposer = new AtomicReportNodeStatusComposer(ReportNodeStatus.PASSED);

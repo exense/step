@@ -128,14 +128,8 @@ public class PlanBuilder {
 	}
 
 	private PlanBuilder applyToLastNode(Consumer<AbstractArtefact> c) {
-		AbstractArtefact parent = stack.peek();
-		int nbChildren = parent.getChildren().size();
-		if (nbChildren > 0 ){
-			AbstractArtefact latestChild = parent.getChildren().get(nbChildren-1);
-			c.accept(latestChild);
-		} else {
-			c.accept(parent);
-		}
+		AbstractArtefact lastNode = stack.peek();
+		c.accept(lastNode);
 		return this;
 	}
 }

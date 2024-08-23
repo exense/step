@@ -40,7 +40,7 @@ public class AggregatedReportView {
 
     private static void recursiveToString(AggregatedReportView node, int level, StringBuilder stringBuilder) {
         String name = node.artefact.getClass().getSimpleName();
-        String indentation = new String(new char[level]).replace("\0", " ");
+        String indentation = " ".repeat(level);
         stringBuilder.append(indentation);
         stringBuilder.append(name).append(": ").append(node.countTotal()).append("x\n");
         //Process children considering parent source

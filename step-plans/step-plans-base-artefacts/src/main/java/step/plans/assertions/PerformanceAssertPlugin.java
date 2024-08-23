@@ -4,6 +4,8 @@ import java.util.List;
 
 import jakarta.json.JsonObject;
 
+import step.artefacts.PerformanceAssert;
+import step.core.artefacts.ChildrenBlock;
 import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ExecutionContext;
 import step.core.plugins.Plugin;
@@ -17,6 +19,15 @@ import step.functions.io.Output;
 public class PerformanceAssertPlugin extends AbstractExecutionEnginePlugin {
 
 	public static final String $PERFORMANCE_ASSERT_SESSION = "$performanceAssertSession";
+
+	@Override
+	public void beforeReportNodeExecution(ExecutionContext context, ReportNode node) {
+		ChildrenBlock after = node.getResolvedArtefact().getAfter();
+		if (after != null && after.getSteps().stream().anyMatch(s -> s instanceof PerformanceAssert)) {
+			PerformanceAssertSession performanceAssertSession = new PerformanceAssertSession();
+			context.getVariablesManager().putVariable(node, PerformanceAssertPlugin.$PERFORMANCE_ASSERT_SESSION, performanceAssertSession);
+		}
+	}
 
 	@Override
 	public void afterFunctionExecution(ExecutionContext context, ReportNode node, Function function, Output<JsonObject> output) {

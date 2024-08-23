@@ -4,7 +4,6 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.junit.Before;
@@ -100,10 +99,10 @@ public class PerformanceAssertHandlerTest extends AbstractKeyword {
 		Plan plan = PlanBuilder.create()
 				.startBlock(BaseArtefacts.sequence())
 					.startBlock(FunctionArtefacts.keyword("TestKeywordWithMeasurements"))
-						.add(assert1).add(assert2).add(assert3).add(assert4).add(assert5)
+						.withAfter(assert1, assert2, assert3, assert4, assert5)
 					.endBlock()
 					.startBlock(FunctionArtefacts.keyword("TestKeywordWithMeasurements"))
-						.add(assert1).add(assert2).add(assert3).add(assert4).add(assert5)
+						.withAfter(assert1, assert2, assert3, assert4, assert5)
 					.endBlock()
 				.endBlock().build();
 
@@ -123,7 +122,7 @@ public class PerformanceAssertHandlerTest extends AbstractKeyword {
 				.startBlock(BaseArtefacts.sequence()).add(set)
 				.startBlock(BaseArtefacts.sequence())
 				.startBlock(FunctionArtefacts.keyword("TestKeywordWithMeasurements"))
-				.add(assert1)
+				.withAfter(assert1)
 				.endBlock()
 				.endBlock()
 				.endBlock().build();
@@ -138,10 +137,10 @@ public class PerformanceAssertHandlerTest extends AbstractKeyword {
 		Plan plan = PlanBuilder.create()
 				.startBlock(BaseArtefacts.sequence())
 					.startBlock(FunctionArtefacts.keyword("TestKeywordWithMeasurements"))
-						.add(assert1)
+						.withAfter(assert1)
 					.endBlock()
 					.startBlock(FunctionArtefacts.keyword("TestKeywordWithMeasurements"))
-						.add(assert1)
+						.withAfter(assert1)
 					.endBlock()
 				.endBlock().build();
 		
@@ -159,11 +158,11 @@ public class PerformanceAssertHandlerTest extends AbstractKeyword {
 				.startBlock(BaseArtefacts.sequence())
 					.startBlock(BaseArtefacts.threadGroup(2, 1))
 						.startBlock(FunctionArtefacts.keyword("TestKeywordWithMeasurements"))
-							.add(assertWithinKeyword1)
+							.withAfter(assertWithinKeyword1)
 						.endBlock()
-						.add(assertWithinThreadGroup1)
+						.withAfter(assertWithinThreadGroup1)
 					.endBlock()
-					.add(assertAfterThreadGroup1)
+					.withAfter(assertAfterThreadGroup1)
 				.endBlock()
 				.build();
 
@@ -181,25 +180,28 @@ public class PerformanceAssertHandlerTest extends AbstractKeyword {
 				.startBlock(BaseArtefacts.sequence())
 					.startBlock(BaseArtefacts.threadGroup(1, 1))
 						.startBlock(FunctionArtefacts.keyword("TestKeywordWithMeasurements"))
-							.add(assertWithinKeyword1)
+							.withAfter(assertWithinKeyword1)
 						.endBlock()
-						.add(assertWithinThreadGroup1)
+						.withAfter(assertWithinThreadGroup1)
 					.endBlock()
-					.add(assertAfterThreadGroup1)
+					.withAfter(assertAfterThreadGroup1)
 				.endBlock()
 				.build();
 
 		PlanRunnerResult result = engine.execute(plan);
 		assertEquals(ReportNodeStatus.PASSED, result.getResult());
-		PlanRunnerResultAssert.assertEquals("Sequence:PASSED:\r\n"
-				+ " ThreadGroup:PASSED:\r\n"
-				+ "  Thread 1:PASSED:\r\n"
-				+ "   Session:PASSED:\r\n"
-				+ "    Iteration 1:PASSED:\r\n"
-				+ "     TestKeywordWithMeasurements:PASSED:\r\n"
-				+ "      PerformanceAssert:PASSED:\r\n"
-				+ "  PerformanceAssert:PASSED:\r\n"
-				+ " PerformanceAssert:PASSED:\r\n", result);
+		PlanRunnerResultAssert.assertEquals("Sequence:PASSED:\n" +
+				" ThreadGroup:PASSED:\n" +
+				"  Thread 1:PASSED:\n" +
+				"   Session:PASSED:\n" +
+				"    Iteration 1:PASSED:\n" +
+				"     TestKeywordWithMeasurements:PASSED:\n" +
+				"      [AFTER]\n" +
+				"       PerformanceAssert:PASSED:\n" +
+				"  [AFTER]\n" +
+				"   PerformanceAssert:PASSED:\n" +
+				" [AFTER]\n" +
+				"  PerformanceAssert:PASSED:\n", result);
 	}
 	
 	/**
@@ -216,25 +218,28 @@ public class PerformanceAssertHandlerTest extends AbstractKeyword {
 				.startBlock(BaseArtefacts.sequence())
 					.startBlock(BaseArtefacts.threadGroup(1, 1))
 						.startBlock(FunctionArtefacts.keyword("TestKeywordWithMeasurements"))
-							.add(assertWithinKeyword1)
+							.withAfter(assertWithinKeyword1)
 						.endBlock()
-						.add(assertWithinThreadGroup1)
+						.withAfter(assertWithinThreadGroup1)
 					.endBlock()
-					.add(assertAfterThreadGroup1)
+					.withAfter(assertAfterThreadGroup1)
 				.endBlock()
 				.build();
 
 		PlanRunnerResult result = engine.execute(plan);
 		assertEquals(ReportNodeStatus.FAILED, result.getResult());
-		PlanRunnerResultAssert.assertEquals("Sequence:FAILED:\r\n"
-				+ " ThreadGroup:FAILED:\r\n"
-				+ "  Thread 1:FAILED:\r\n"
-				+ "   Session:FAILED:\r\n"
-				+ "    Iteration 1:FAILED:\r\n"
-				+ "     TestKeywordWithMeasurements:FAILED:\r\n"
-				+ "      PerformanceAssert:FAILED:Count of myMeasure1 expected to be equal to 2 but was 1\r\n"
-				+ "  PerformanceAssert:FAILED:Count of myMeasure1 expected to be equal to 2 but was 1\r\n"
-				+ " PerformanceAssert:FAILED:Count of myMeasure1 expected to be equal to 2 but was 1\r\n"
+		PlanRunnerResultAssert.assertEquals("Sequence:FAILED:\n" +
+				" ThreadGroup:FAILED:\n" +
+				"  Thread 1:FAILED:\n" +
+				"   Session:FAILED:\n" +
+				"    Iteration 1:FAILED:\n" +
+				"     TestKeywordWithMeasurements:FAILED:\n" +
+				"      [AFTER]\n" +
+				"       PerformanceAssert:FAILED:Count of myMeasure1 expected to be equal to 2 but was 1\n" +
+				"  [AFTER]\n" +
+				"   PerformanceAssert:FAILED:Count of myMeasure1 expected to be equal to 2 but was 1\n" +
+				" [AFTER]\n" +
+				"  PerformanceAssert:FAILED:Count of myMeasure1 expected to be equal to 2 but was 1\n"
 				+ "", result);
 	}
 	
@@ -245,9 +250,9 @@ public class PerformanceAssertHandlerTest extends AbstractKeyword {
 
 		Plan plan = PlanBuilder.create()
 				.startBlock(BaseArtefacts.sequence())
-					.startBlock(FunctionArtefacts.keyword("TestKeywordWithMeasurements")).add(assertWithinKeyword1).endBlock()
-					.startBlock(FunctionArtefacts.keyword("TestKeywordWithMeasurements")).add(assertWithinKeyword1).endBlock()
-					.add(assertOverall1)
+					.startBlock(FunctionArtefacts.keyword("TestKeywordWithMeasurements")).withAfter(assertWithinKeyword1).endBlock()
+					.startBlock(FunctionArtefacts.keyword("TestKeywordWithMeasurements")).withAfter(assertWithinKeyword1).endBlock()
+					.withAfter(assertOverall1)
 				.endBlock()
 				.build();
 
@@ -261,10 +266,10 @@ public class PerformanceAssertHandlerTest extends AbstractKeyword {
 		Plan plan = PlanBuilder.create()
 				.startBlock(BaseArtefacts.sequence())
 					.startBlock(FunctionArtefacts.keyword("TestKeywordWithMeasurements"))
-						.add(assert1)
+						.withAfter(assert1)
 					.endBlock()
 					.startBlock(FunctionArtefacts.keyword("TestKeywordWithMeasurements"))
-						.add(assert1)
+						.withAfter(assert1)
 					.endBlock()
 				.endBlock().build();
 		
@@ -277,20 +282,21 @@ public class PerformanceAssertHandlerTest extends AbstractKeyword {
 	public void testNegative1() throws IOException {
 		PerformanceAssert assert1 = new PerformanceAssert(filterMyMeasure1, Aggregator.MAX, Comparator.LOWER_THAN, 100l);
 		PlanRunnerResult result = execute(assert1);
-		PlanRunnerResultAssert.assertEquals("Sequence:FAILED:\r\n"
-				+ " TestKeywordWithMeasurements:PASSED:\r\n"
-				+ " PerformanceAssert:FAILED:Max of myMeasure1 expected to be lower than 100 but was 1000\r\n"
-				+ "", result);
+		PlanRunnerResultAssert.assertEquals("Sequence:FAILED:\n" +
+				" TestKeywordWithMeasurements:PASSED:\n" +
+				" [AFTER]\n" +
+				"  PerformanceAssert:FAILED:Max of myMeasure1 expected to be lower than 100 but was 1000\n"
+				, result);
 	}
 	
 	@Test
 	public void testNegative2() throws IOException {
 		PerformanceAssert assert1 = new PerformanceAssert(filterMyMeasure1, Aggregator.MIN, Comparator.LOWER_THAN, 1000l);
 		PlanRunnerResult result = execute(assert1);
-		PlanRunnerResultAssert.assertEquals("Sequence:FAILED:\r\n"
-				+ " TestKeywordWithMeasurements:PASSED:\r\n"
-				+ " PerformanceAssert:FAILED:Min of myMeasure1 expected to be lower than 1000 but was 1000\r\n"
-				+ "", result);
+		PlanRunnerResultAssert.assertEquals("Sequence:FAILED:\n" +
+				" TestKeywordWithMeasurements:PASSED:\n" +
+				" [AFTER]\n" +
+				"  PerformanceAssert:FAILED:Min of myMeasure1 expected to be lower than 1000 but was 1000\n", result);
 	}
 	
 
@@ -298,20 +304,20 @@ public class PerformanceAssertHandlerTest extends AbstractKeyword {
 	public void testNegative3() throws IOException {
 		PerformanceAssert assert1 = new PerformanceAssert(filterMyMeasure1, Aggregator.AVG, Comparator.HIGHER_THAN, 500l);
 		PlanRunnerResult result = execute(assert1);
-		PlanRunnerResultAssert.assertEquals("Sequence:PASSED:\r\n"
-				+ " TestKeywordWithMeasurements:PASSED:\r\n"
-				+ " PerformanceAssert:PASSED:\r\n"
-				+ "", result);
+		PlanRunnerResultAssert.assertEquals("Sequence:PASSED:\n" +
+				" TestKeywordWithMeasurements:PASSED:\n" +
+				" [AFTER]\n" +
+				"  PerformanceAssert:PASSED:\n", result);
 	}
 	
 	@Test
 	public void testNegative4() throws IOException {
 		PerformanceAssert assert1 = new PerformanceAssert(filterMyMeasure1, Aggregator.AVG, Comparator.LOWER_THAN, 500l);
 		PlanRunnerResult result = execute(assert1);
-		PlanRunnerResultAssert.assertEquals("Sequence:FAILED:\r\n"
-				+ " TestKeywordWithMeasurements:PASSED:\r\n"
-				+ " PerformanceAssert:FAILED:Average of myMeasure1 expected to be lower than 500 but was 1000\r\n"
-				+ "", result);
+		PlanRunnerResultAssert.assertEquals("Sequence:FAILED:\n" +
+				" TestKeywordWithMeasurements:PASSED:\n" +
+				" [AFTER]\n" +
+				"  PerformanceAssert:FAILED:Average of myMeasure1 expected to be lower than 500 but was 1000\n", result);
 	}
 
 	protected PlanRunnerResult execute(PerformanceAssert... asserts) {
@@ -322,8 +328,7 @@ public class PerformanceAssertHandlerTest extends AbstractKeyword {
 	
 	protected Plan plan(PerformanceAssert... asserts) {
 		PlanBuilder planBuilder = PlanBuilder.create().startBlock(BaseArtefacts.sequence())
-				.add(FunctionArtefacts.keyword("TestKeywordWithMeasurements"));
-		Arrays.asList(asserts).forEach(planBuilder::add);
+				.add(FunctionArtefacts.keyword("TestKeywordWithMeasurements")).withAfter(asserts);
 		return planBuilder.endBlock().build();
 	}
 

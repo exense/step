@@ -22,15 +22,10 @@ import step.plans.assertions.PerformanceAssertSession;
 
 public class PerformanceAssertHandler extends ArtefactHandler<PerformanceAssert, PerformanceAssertReportNode> {
 
-	@Override
-	public void initProperties(ReportNode parentReportNode, PerformanceAssert artefact) {
-		PerformanceAssertSession performanceAssertSession = new PerformanceAssertSession();
-		context.getVariablesManager().putVariable(parentReportNode, PerformanceAssertPlugin.$PERFORMANCE_ASSERT_SESSION, performanceAssertSession);
-	}
 
 	@Override
 	protected void createReportSkeleton_(PerformanceAssertReportNode parentNode, PerformanceAssert testArtefact) {
-		
+
 	}
 
 	@Override
@@ -58,12 +53,14 @@ public class PerformanceAssertHandler extends ArtefactHandler<PerformanceAssert,
 			} else {
 				errors.add("No measurement is matching the defined filters.");
 			}
-		}
-		if(errors.size()>0) {
-			reportNode.setError(new Error(ErrorType.BUSINESS, errors.stream().collect(Collectors.joining("; "))));
-			reportNode.setStatus(ReportNodeStatus.FAILED);
+			if(errors.size() > 0) {
+				reportNode.setError(new Error(ErrorType.BUSINESS, errors.stream().collect(Collectors.joining("; "))));
+				reportNode.setStatus(ReportNodeStatus.FAILED);
+			} else {
+				reportNode.setStatus(ReportNodeStatus.PASSED);
+			}
 		} else {
-			reportNode.setStatus(ReportNodeStatus.PASSED);
+			reportNode.setStatus(ReportNodeStatus.TECHNICAL_ERROR);
 		}
 	}
 

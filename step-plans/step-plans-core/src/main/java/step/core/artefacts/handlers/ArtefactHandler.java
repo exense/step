@@ -171,12 +171,12 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		}
 
 		try {
-			context.getExecutionCallbacks().beforeReportNodeExecution(context, reportNode);
-			
 			dynamicBeanResolver.evaluate(artefact, getBindings());
 			reportNode.setName(getReportNodeNameDynamically(artefact));
 			reportNode.setArtefactInstance(artefact);
 			reportNode.setResolvedArtefact(artefact);
+
+			context.getExecutionCallbacks().beforeReportNodeExecution(context, reportNode);
 
 			if (filterArtefact(artefact)) {
 				reportNode.setStatus(ReportNodeStatus.SKIPPED);
@@ -185,11 +185,6 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 				if(persistBefore || Boolean.TRUE.equals(forcePersistBefore)) {
 					saveReportNode(reportNode);
 				}
-
-				List<AbstractArtefact> allChildren = getAllChildren(artefact, context);
-				List<AbstractArtefact> propertyChildren = filterPropertyChildren(allChildren);
-				// Initialize property children (Phase 1)
-				propertyChildren.forEach(p->artefactHandlerManager.initPropertyArtefact(p, reportNode));
 
 				AtomicReportNodeStatusComposer reportNodeStatusComposer = new AtomicReportNodeStatusComposer(reportNode);
 				try {
@@ -223,13 +218,6 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 					}
 				}
 
-				// Execute property children. Property artefact remain attached to their parent
-				// and are executed after their parents. (Phase 2). This allow for instance some
-				// validation after the execution of the parent
-				propertyChildren.forEach(p->{
-					ReportNode propertyReportNode = artefactHandlerManager.execute(p, reportNode, ParentSource.MAIN);
-					reportNodeStatusComposer.addStatusAndRecompose(propertyReportNode);
-				});
 				reportNodeStatusComposer.applyComposedStatusToParentNode(reportNode);
 			}
 		} catch (Throwable e) {
@@ -291,18 +279,6 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	private boolean filterArtefact(ARTEFACT artefact) {
 		ArtefactFilter filter = context.getExecutionParameters().getArtefactFilter();
 		return (filter!=null&&!filter.isSelected(artefact)) || artefact.getSkipNode().get();
-	}
-
-	/**
-	 * Before calling {@link ArtefactHandler#execute_(ReportNode, AbstractArtefact)}
-	 * for an artefact node N this method is called for each child of N which
-	 * returns true on {@link AbstractArtefact#isPropertyArtefact()}. This allow
-	 * initialization of variables or properties before execution
-	 * 
-	 * @param parentReportNode the parent {@link ReportNode}
-	 * @param artefact         the {@link AbstractArtefact}
-	 */
-	public void initProperties(ReportNode parentReportNode, ARTEFACT artefact) {
 	}
 
 	/**
@@ -531,7 +507,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	}
 	
 	public static List<AbstractArtefact> getChildren(AbstractArtefact artefact, ExecutionContext context) { 
-		return excludePropertyChildren(getAllChildren(artefact, context));
+		return getAllChildren(artefact, context);
 	}
 
 	public static List<AbstractArtefact> getChildrenCopy(List<AbstractArtefact> sourceChildren, ExecutionContext context) {
@@ -555,14 +531,6 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 			}
 		}
 		return result;
-	}
-
-	public static List<AbstractArtefact> filterPropertyChildren(List<AbstractArtefact> children) {
-		return children != null ? children.stream().filter(c -> c.isPropertyArtefact()).collect(Collectors.toList()) : null;
-	}
-	
-	public static List<AbstractArtefact> excludePropertyChildren(List<AbstractArtefact> children) {
-		return children != null ? children.stream().filter(c -> !c.isPropertyArtefact()).collect(Collectors.toList()) : null;
 	}
 	
 	protected <T extends AbstractArtefact> T createWorkArtefact(Class<T> artefactClass, AbstractArtefact parentArtefact, String name) {
