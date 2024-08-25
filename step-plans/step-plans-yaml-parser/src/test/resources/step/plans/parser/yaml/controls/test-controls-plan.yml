@@ -19,8 +19,6 @@ root:
         continueParentNodeExecutionOnError: false
         instrumentNode: false
         skipNode: false
-        input: "{}"
-        selectionAttributes: "{}"
         planId: "66155931b1484e71a63e9faf"
     - callKeyword:
         continueParentNodeExecutionOnError: false
@@ -69,8 +67,8 @@ root:
         continueParentNodeExecutionOnError: false
         instrumentNode: false
         skipNode: false
-        input: "{}"
-        selectionAttributes: "{\"name\":{\"value\":\"SubPlan\",\"dynamic\":false}}"
+        selectionAttributes:
+          - name: "SubPlan"
     - check:
         continueParentNodeExecutionOnError: false
         instrumentNode: false

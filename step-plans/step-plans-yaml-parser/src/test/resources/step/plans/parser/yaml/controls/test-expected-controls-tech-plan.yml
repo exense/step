@@ -288,7 +288,7 @@ root:
         value: false
       selectionAttributes:
         dynamic: false
-        value: "{\"name\":{\"value\":\"SubPlan\",\"dynamic\":false}}"
+        value: "{\"name\":{\"dynamic\":false,\"value\":\"SubPlan\"}}"
       input:
         dynamic: false
         value: "{}"
