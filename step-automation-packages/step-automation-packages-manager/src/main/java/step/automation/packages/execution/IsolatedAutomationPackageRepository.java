@@ -18,7 +18,6 @@
  ******************************************************************************/
 package step.automation.packages.execution;
 
-import ch.exense.commons.app.Configuration;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,7 +56,9 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
     public static final Logger log = LoggerFactory.getLogger(IsolatedAutomationPackageRepository.class);
     public static final String CONTEXT_ID_CUSTOM_FIELD = "contextId";
     public static final String AP_NAME_CUSTOM_FIELD = "apName";
-    public static final String LAST_EXECUTION_CUSTOM_FIELD = "lastExecution";
+    public static final String LAST_EXECUTION_TIME_CUSTOM_FIELD = "lastExecutionTime";
+    public static final String PLAN_NAME = "planName";
+    public static final String AP_NAME = "apName";
 
     // context id -> automation package manager (cache)
     private final ConcurrentHashMap<String, PackageExecutionContext> sharedPackageExecutionContexts = new ConcurrentHashMap<>();
@@ -84,7 +85,7 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
     @Override
     public ArtefactInfo getArtefactInfo(Map<String, String> repositoryParameters) {
         // we expect, that there is only one automation package stored per context
-        String apName = repositoryParameters.get(RepositoryObjectReference.AP_NAME);
+        String apName = repositoryParameters.get(AP_NAME);
         String contextId = repositoryParameters.get(REPOSITORY_PARAM_CONTEXTID);
 
         Resource resource = getResource(contextId, apName);
@@ -104,7 +105,7 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
     }
 
     private PackageExecutionContext getOrRestorePackageExecutionContext(Map<String, String> repositoryParameters, ObjectEnricher enricher, ObjectPredicate predicate) {
-        String apName = repositoryParameters.get(RepositoryObjectReference.AP_NAME);
+        String apName = repositoryParameters.get(AP_NAME);
         String contextId = repositoryParameters.get(REPOSITORY_PARAM_CONTEXTID);
 
         // Execution context can be created in-advance and shared between several plans
@@ -119,11 +120,11 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
             if (fileHandle != null) {
                 apFile = fileHandle.getResourceFile();
             }
-            updateLastExecution(resource);
-
             if (apFile == null) {
                 throw new AutomationPackageManagerException("Automation package file is not found for automation package '" + apName + "' and execution context " + contextId);
             }
+
+            updateLastExecution(resource);
 
             // prepare the isolated in-memory automation package manager with the only one automation package
             AutomationPackageManager inMemoryPackageManager = manager.createIsolated(
@@ -145,7 +146,7 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
 
     protected void updateLastExecution(Resource resource) {
         try {
-            resource.addCustomField(LAST_EXECUTION_CUSTOM_FIELD, OffsetDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME));
+            resource.addCustomField(LAST_EXECUTION_TIME_CUSTOM_FIELD, OffsetDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME));
             resourceManager.saveResource(resource);
         } catch (IOException exception) {
             throw new AutomationPackageManagerException("Cannot update the execution time for automation package " + resource.getCustomField(AP_NAME_CUSTOM_FIELD));
@@ -180,10 +181,10 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
         for (Resource foundResource : foundResources) {
             String apResourceInfo = getApResourceInfo(foundResource);
             try {
-                String executionTimeString = foundResource.getCustomField(LAST_EXECUTION_CUSTOM_FIELD, String.class);
-                if (executionTimeString != null) {
-                    OffsetDateTime executionTime = OffsetDateTime.parse(executionTimeString, DateTimeFormatter.ISO_DATE_TIME);
-                    if (executionTime.isBefore(minExecutionTime)) {
+                String lastExecutionTimeStr = foundResource.getCustomField(LAST_EXECUTION_TIME_CUSTOM_FIELD, String.class);
+                if (lastExecutionTimeStr != null) {
+                    OffsetDateTime lastExecutionTime = OffsetDateTime.parse(lastExecutionTimeStr, DateTimeFormatter.ISO_DATE_TIME);
+                    if (lastExecutionTime.isBefore(minExecutionTime)) {
                         log.info("Cleanup the outdated resource for automation package: {} ...", apResourceInfo);
                         resourceManager.deleteResource(foundResource.getId().toString());
                         removed++;
@@ -212,7 +213,7 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
 
             // PLAN_NAME but not PLAN_ID is used, because plan id is not persisted for isolated execution
             // (it is impossible to re-run the execution by plan id)
-            String planName = repositoryParameters.get(RepositoryObjectReference.PLAN_NAME);
+            String planName = repositoryParameters.get(PLAN_NAME);
             ImportResult result = new ImportResult();
 
             AutomationPackageManager apManager = ctx.getInMemoryManager();
@@ -299,7 +300,7 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
 
             Resource resource = resourceContainer.getResource();
             resource.addCustomField(CONTEXT_ID_CUSTOM_FIELD, contextId);
-            resource.addCustomField(LAST_EXECUTION_CUSTOM_FIELD, OffsetDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME));
+            resource.addCustomField(LAST_EXECUTION_TIME_CUSTOM_FIELD, OffsetDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME));
             resourceManager.saveResource(resource);
 
             resource = resourceManager.saveResourceContent(resource.getId().toString(), apStream, fileName);

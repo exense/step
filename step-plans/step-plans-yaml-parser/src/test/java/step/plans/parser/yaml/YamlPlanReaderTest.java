@@ -45,7 +45,7 @@ public class YamlPlanReaderTest {
 	private final YamlPlanReader yamlReader;
 
 	// DEV flag to store test results in local files
-	private boolean writeResultsToLocalFiles = false;
+	private boolean writeResultsToLocalFiles = true;
 
 	private final ObjectMapper technicalPlanMapper;
 

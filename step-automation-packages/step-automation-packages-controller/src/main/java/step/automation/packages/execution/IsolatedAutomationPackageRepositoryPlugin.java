@@ -46,14 +46,15 @@ public class IsolatedAutomationPackageRepositoryPlugin extends AbstractControlle
     public static final String ISOLATED_AP_HOUSEKEEPING_TTL = "isolated_ap_housekeeping_ttl";
 
     @Override
-    public void afterInitializeData(GlobalContext context) throws Exception {
-        super.afterInitializeData(context);
+    public void initializeData(GlobalContext context) throws Exception {
+        super.initializeData(context);
 
+        // settings
         ControllerSettingAccessor controllerSettingAccessor = context.require(ControllerSettingAccessor.class);
-
         createIsolatedApControllerSettingsIfNecessary(context);
 
-        IsolatedAutomationPackageRepository repository = new IsolatedAutomationPackageRepository(
+        // repository
+        IsolatedAutomationPackageRepository isolatedApRepository = new IsolatedAutomationPackageRepository(
                 context.require(AutomationPackageManager.class),
                 context.getResourceManager(),
                 context.require(FunctionTypeRegistry.class),
@@ -63,19 +64,22 @@ public class IsolatedAutomationPackageRepositoryPlugin extends AbstractControlle
                     return setting == null ? null : setting.getValue();
                 }
         );
+        context.getRepositoryObjectManager().registerRepository(AutomationPackageExecutor.ISOLATED_AUTOMATION_PACKAGE, isolatedApRepository);
+        context.put(IsolatedAutomationPackageRepository.class, isolatedApRepository);
 
-        context.getRepositoryObjectManager().registerRepository(AutomationPackageExecutor.ISOLATED_AUTOMATION_PACKAGE, repository);
-        context.put(IsolatedAutomationPackageRepository.class, repository);
-
+        // isolated ap executor
         AutomationPackageExecutor packageExecutor = new AutomationPackageExecutor(
                 context.getScheduler(),
                 context.require(ExecutionAccessor.class),
-                repository
+                isolatedApRepository
         );
         context.put(AutomationPackageExecutor.class, packageExecutor);
 
-        // cron is defined here but not within 'initializeData' step, because we need the default value to be defined before we create the HousekeepingJobsManager
-        createSettingIfNotExisting(context, ISOLATED_AP_HOUSEKEEPING_JOB_CRON, "0 8 * * * ?");
+    }
+
+    @Override
+    public void afterInitializeData(GlobalContext context) throws Exception {
+        super.afterInitializeData(context);
 
         // register cleanup job
         HousekeepingJobsManager housekeepingJobsManager = context.require(HousekeepingJobsManager.class);
@@ -87,7 +91,7 @@ public class IsolatedAutomationPackageRepositoryPlugin extends AbstractControlle
 
             @Override
             protected Supplier<? extends Job> getJobSupplier() {
-                return (Supplier<Job>) () -> new CleanupApResourcesJob(repository, controllerSettingAccessor);
+                return (Supplier<Job>) () -> new CleanupApResourcesJob(context.require(IsolatedAutomationPackageRepository.class), context.require(ControllerSettingAccessor.class));
             }
 
             @Override
@@ -111,6 +115,7 @@ public class IsolatedAutomationPackageRepositoryPlugin extends AbstractControlle
     protected void createIsolatedApControllerSettingsIfNecessary(GlobalContext context) {
         createSettingIfNotExisting(context, ISOLATED_AP_HOUSEKEEPING_ENABLED, "true");
         createSettingIfNotExisting(context, ISOLATED_AP_HOUSEKEEPING_TTL, "P1D");
+        createSettingIfNotExisting(context, ISOLATED_AP_HOUSEKEEPING_JOB_CRON, "0 8 * * * ?");
     }
 
     private static final class CleanupApResourcesJob implements Job {

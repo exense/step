@@ -101,9 +101,9 @@ public class AutomationPackageExecutor {
                         HashMap<String, String> repositoryParameters = new HashMap<>();
 
                         // save apName + contextId + planName to support re-execution
-                        repositoryParameters.put(RepositoryObjectReference.AP_NAME, apName);
+                        repositoryParameters.put(IsolatedAutomationPackageRepository.AP_NAME, apName);
                         repositoryParameters.put(IsolatedAutomationPackageRepository.REPOSITORY_PARAM_CONTEXTID, contextId.toString());
-                        repositoryParameters.put(RepositoryObjectReference.PLAN_NAME, plan.getAttribute(AbstractOrganizableObject.NAME));
+                        repositoryParameters.put(IsolatedAutomationPackageRepository.PLAN_NAME, plan.getAttribute(AbstractOrganizableObject.NAME));
 
                         params.setRepositoryObject(new RepositoryObjectReference(ISOLATED_AUTOMATION_PACKAGE, repositoryParameters));
                         params.setDescription(CommonExecutionParameters.defaultDescription(plan));
@@ -124,8 +124,9 @@ public class AutomationPackageExecutor {
                 waitForAllLaunchedExecutions(executions, fileName, executionContext);
             }
         } catch (IOException e) {
-            log.error("Unable to read stored automation package file " + fileName);
-            throw new RuntimeException(e);
+            String msg = "Unable to read stored automation package file " + fileName;
+            log.error(msg);
+            throw new RuntimeException(msg, e);
         }
         return executions;
     }
