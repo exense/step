@@ -34,7 +34,6 @@ import java.util.Set;
 public class ResourceArtifactRepository extends AbstractArtifactRepository {
 
 	protected static final String PARAM_RESOURCE_ID = ArtifactRepositoryConstants.RESOURCE_PARAM_RESOURCE_ID;
-	protected static final String PARAM_LIB_RESOURCE_ID = ArtifactRepositoryConstants.RESOURCE_PARAM_LIB_RESOURCE_ID;
 
 	private final ResourceManager resourceManager;
 
@@ -43,17 +42,7 @@ public class ResourceArtifactRepository extends AbstractArtifactRepository {
 		this.resourceManager = resourceManager;
 	}
 
-	@Override
-	protected File getLibraries(Map<String, String> repositoryParameters) {
-	    String resourceId = repositoryParameters.get(PARAM_LIB_RESOURCE_ID);
-		if(resourceId != null){
-			return getResourceFile(resourceId);
-		} else {
-			return null;
-		}
-	}
-
-	@Override
+    @Override
 	protected File getArtifact(Map<String, String> repositoryParameters) {
 		String resourceId = AbstractArtifactRepository.getMandatoryRepositoryParameter(repositoryParameters, PARAM_RESOURCE_ID);
 		return getResourceFile(resourceId);

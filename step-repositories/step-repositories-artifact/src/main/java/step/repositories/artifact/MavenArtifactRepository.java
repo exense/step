@@ -79,36 +79,6 @@ public class MavenArtifactRepository extends AbstractArtifactRepository {
     }
 
     @Override
-    protected File getLibraries(Map<String, String> repositoryParameters) {
-        ControllerSetting settingsXml = getMavenSettings(repositoryParameters);
-        try {
-            MavenArtifactClient mavenArtifactClient = new MavenArtifactClient(settingsXml.getValue(), localRepository);
-            String artifactId = repositoryParameters.get(PARAM_LIB_ARTIFACT_ID);
-            String version = repositoryParameters.get(PARAM_LIB_VERSION);
-            String groupId = repositoryParameters.get(PARAM_LIB_GROUP_ID);
-            String classifier = repositoryParameters.get(PARAM_LIB_CLASSIFIER);
-
-            if (classifier!=null && artifactId==null) {
-                artifactId = repositoryParameters.get(PARAM_ARTIFACT_ID);
-            }
-
-            if (artifactId!=null) {
-                if (groupId==null) {
-                    groupId = AbstractArtifactRepository.getMandatoryRepositoryParameter(repositoryParameters,PARAM_GROUP_ID);
-                }
-                if (version==null) {
-                    version = AbstractArtifactRepository.getMandatoryRepositoryParameter(repositoryParameters,PARAM_VERSION);
-                }
-                return mavenArtifactClient.getArtifact(new DefaultArtifact(groupId, artifactId, classifier, "jar", version));
-            } else {
-                return null;
-            }
-        } catch (SettingsBuildingException | ArtifactResolutionException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @Override
     protected File getArtifact(Map<String, String> repositoryParameters) {
         ControllerSetting settingsXml = getMavenSettings(repositoryParameters);
         try {

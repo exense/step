@@ -4,6 +4,10 @@ import ch.exense.commons.app.Configuration;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import step.automation.packages.AutomationPackageHookRegistry;
+import step.automation.packages.AutomationPackageReader;
+import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
+import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.controller.InMemoryControllerSettingAccessor;
 import step.core.execution.ExecutionContext;
@@ -12,12 +16,14 @@ import step.core.plans.InMemoryPlanAccessor;
 import step.core.plans.Plan;
 import step.core.repositories.ArtefactInfo;
 import step.core.repositories.ImportResult;
+import step.core.repositories.TestRunStatus;
 import step.core.repositories.TestSetStatusOverview;
 import step.resources.LocalResourceManagerImpl;
 
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.junit.Assert.*;
 
@@ -57,7 +63,8 @@ public class MavenArtifactRepositoryTest {
         controllerSettingAccessor.createSettingIfNotExisting("maven_settings_default", MAVEN_SETTINGS_NEXUS);
 
         Configuration configuration = new Configuration();
-        artifactRepository = new MavenArtifactRepository(planAccessor, resourceManager, controllerSettingAccessor, configuration, null);
+        AutomationPackageReader apReader = new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, new AutomationPackageHookRegistry(), new AutomationPackageSerializationRegistry());
+        artifactRepository = new MavenArtifactRepository(planAccessor, resourceManager, controllerSettingAccessor, configuration, apReader);
         executionContext = ExecutionEngine.builder().build().newExecutionContext();
     }
 
@@ -70,8 +77,12 @@ public class MavenArtifactRepositoryTest {
 
         // getTestSetStatusOverview
         TestSetStatusOverview testSetStatusOverview = artifactRepository.getTestSetStatusOverview(REPOSITORY_PARAMETERS, null);
-        assertEquals(Set.of("plans/composite-simple-plan.yml", "plans/plan2.plan", "My custom keyword name", "explicitPlanWithExecutionParameter", "planWithAssert", "testAutomation.plan", "plans/plan3.plan", "Local Keyword", "plans/assertsTest.plan", "Inline Plan"),
-                testSetStatusOverview.getRuns().stream().map(r -> r.getTestplanName()).collect(Collectors.toSet()));
+        List<String> expected = Stream.of(
+                "plans/composite-simple-plan.yml", "plans/plan2.plan", "My custom keyword name",
+                "explicitPlanWithExecutionParameter", "planWithAssert", "testAutomation.plan", "plans/plan3.plan",
+                "Local Keyword", "plans/assertsTest.plan", "Inline Plan", "JMeter Plan", "Test Plan").sorted(String::compareTo).collect(Collectors.toList());
+        assertEquals(expected,
+                testSetStatusOverview.getRuns().stream().map(TestRunStatus::getTestplanName).sorted(String::compareTo).collect(Collectors.toList()));
 
         // importArtefact
         ImportResult tests = artifactRepository.importArtefact(executionContext, REPOSITORY_PARAMETERS);

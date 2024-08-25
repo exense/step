@@ -39,6 +39,13 @@
             <artifactId>step-automation-packages-controller</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <!-- TODO: the default logback config doesn't work for some reason  -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>2.0.16</version>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>ch.exense.step</groupId>
             <artifactId>step-automation-packages-junit</artifactId>

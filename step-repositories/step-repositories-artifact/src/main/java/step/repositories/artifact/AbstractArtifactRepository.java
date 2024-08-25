@@ -22,25 +22,28 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.artefacts.TestCase;
 import step.artefacts.TestSet;
-import step.automation.packages.AutomationPackageReader;
+import step.automation.packages.*;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.deployment.ControllerServiceException;
 import step.core.execution.ExecutionContext;
+import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
+import step.core.plans.PlanFilter;
 import step.core.plans.builder.PlanBuilder;
+import step.core.plans.filters.PlanByExcludedNamesFilter;
+import step.core.plans.filters.PlanByIncludedNamesFilter;
+import step.core.plans.filters.PlanMultiFilter;
 import step.core.repositories.*;
+import step.functions.Function;
 import step.repositories.ArtifactRepositoryConstants;
 import step.resources.ResourceManager;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static step.planbuilder.BaseArtefacts.callPlan;
@@ -51,13 +54,13 @@ public abstract class AbstractArtifactRepository extends AbstractRepository {
 
 	protected final PlanAccessor planAccessor;
 	protected final ResourceManager resourceManager;
-	protected final StepJarParser stepJarParser;
+	protected final AutomationPackageReader automationPackageReader;
 
 	public AbstractArtifactRepository(Set<String> canonicalRepositoryParameters, PlanAccessor planAccessor, ResourceManager resourceManager, AutomationPackageReader automationPackageReader) {
 		super(canonicalRepositoryParameters);
 		this.planAccessor = planAccessor;
 		this.resourceManager = resourceManager;
-		this.stepJarParser = new StepJarParser(resourceManager, automationPackageReader);
+		this.automationPackageReader = automationPackageReader;
 	}
 
 	protected static String getMandatoryRepositoryParameter(Map<String, String> repositoryParameters, String paramKey) {
@@ -80,8 +83,7 @@ public abstract class AbstractArtifactRepository extends AbstractRepository {
 
 	@Override
 	public TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) {
-		ParsedArtifact parsedArtifact = getAndParseArtifact(repositoryParameters);
-
+		ParsedArtifact parsedArtifact = getAndParseArtifact(repositoryParameters, null);
 		TestSetStatusOverview overview = new TestSetStatusOverview();
 		List<TestRunStatus> runs = parsedArtifact.parsingResult.getPlans().stream()
 				.map(plan -> new TestRunStatus(getPlanName(plan), getPlanName(plan), ReportNodeStatus.NORUN)).collect(Collectors.toList());
@@ -89,20 +91,27 @@ public abstract class AbstractArtifactRepository extends AbstractRepository {
 		return overview;
 	}
 
-	protected ParsedArtifact getAndParseArtifact(Map<String, String> repositoryParameters) {
-		File artifact = getArtifact(repositoryParameters);
-		File libraries = getLibraries(repositoryParameters);
-
-		String[] includedClasses = repositoryParameters.getOrDefault(ArtifactRepositoryConstants.PARAM_INCLUDE_CLASSES, ",").split(",");
-		String[] includedAnnotations = repositoryParameters.getOrDefault(ArtifactRepositoryConstants.PARAM_INCLUDE_ANNOTATIONS, ",").split(",");
-		String[] excludedClasses = repositoryParameters.getOrDefault(ArtifactRepositoryConstants.PARAM_EXCLUDE_CLASSES, ",").split(",");
-		String[] excludedAnnotations = repositoryParameters.getOrDefault(ArtifactRepositoryConstants.PARAM_EXCLUDE_ANNOTATIONS, ",").split(",");
-
-		StepJarParser.PlansParsingResult parsingResult = parsePlans(artifact,libraries,includedClasses,includedAnnotations,excludedClasses,excludedAnnotations);
-		return new ParsedArtifact(artifact, parsingResult);
+	protected ParsedArtifact getAndParseArtifact(Map<String, String> repositoryParameters, ObjectEnricher objectEnricher) {
+		try {
+			File artifact = getArtifact(repositoryParameters);
+			PlanMultiFilter multiFilter = new PlanMultiFilter();
+			if (repositoryParameters.get(ArtifactRepositoryConstants.PARAM_INCLUDE_PLANS) != null) {
+				multiFilter.add(new PlanByIncludedNamesFilter(parseList(repositoryParameters.get(ArtifactRepositoryConstants.PARAM_INCLUDE_PLANS))));
+			}
+			if (repositoryParameters.get(ArtifactRepositoryConstants.PARAM_EXCLUDE_PLANS) != null) {
+				multiFilter.add(new PlanByExcludedNamesFilter(parseList(repositoryParameters.get(ArtifactRepositoryConstants.PARAM_EXCLUDE_PLANS))));
+			}
+			PlansParsingResult parsingResult = parsePlans(artifact, multiFilter, objectEnricher);
+			return new ParsedArtifact(artifact, parsingResult);
+		} catch (AutomationPackageReadingException ex){
+			// wrap into runtime exception
+			throw new AutomationPackageManagerException("Unable to read automation package with the following repository params: " + repositoryParameters, ex);
+		}
 	}
 
-	protected abstract File getLibraries(Map<String, String> repositoryParameters);
+	private List<String> parseList(String string) {
+		return (string == null || string.isEmpty()) ? new ArrayList<>() : Arrays.stream(string.split(",")).collect(Collectors.toList());
+	}
 
 	protected abstract File getArtifact(Map<String, String> repositoryParameters);
 
@@ -111,8 +120,8 @@ public abstract class AbstractArtifactRepository extends AbstractRepository {
 		ImportResult result = new ImportResult();
 		List<String> errors = new ArrayList<>();
 		try {
-			ParsedArtifact parsedArtifact = getAndParseArtifact(repositoryParameters);
-			Plan plan = buildTestSetPlan(context, repositoryParameters, parsedArtifact);
+			ParsedArtifact parsedArtifact = getAndParseArtifact(repositoryParameters, context.getObjectEnricher());
+			Plan plan = buildAndStoreTestSetPlan(context, repositoryParameters, parsedArtifact);
 			planAccessor.save(plan);
 			result.setPlanId(plan.getId().toString());
 		} catch (Exception e) {
@@ -124,7 +133,7 @@ public abstract class AbstractArtifactRepository extends AbstractRepository {
 		return result;
 	}
 
-	private Plan buildTestSetPlan(ExecutionContext context, Map<String, String> repositoryParameters, ParsedArtifact parsedArtifact) {
+	private Plan buildAndStoreTestSetPlan(ExecutionContext context, Map<String, String> repositoryParameters, ParsedArtifact parsedArtifact) {
 		PlanBuilder planBuilder = PlanBuilder.create();
 		int numberOfThreads = Integer.parseInt(repositoryParameters.getOrDefault(ArtifactRepositoryConstants.PARAM_THREAD_NUMBER, "0"));
 		TestSet testSet = new TestSet(numberOfThreads);
@@ -138,6 +147,10 @@ public abstract class AbstractArtifactRepository extends AbstractRepository {
 
 			plan.setVisible(false);
 
+			// TODO: can we link the non-java keywords (like jmeter keywords) in this way?
+			if (plan.getFunctions() == null) {
+				plan.setFunctions(new ArrayList<>());
+			}
 			plan.getFunctions().addAll(parsedArtifact.parsingResult.getFunctions());
 			enrichPlan(context, plan);
 
@@ -162,8 +175,16 @@ public abstract class AbstractArtifactRepository extends AbstractRepository {
 
 	}
 
-	protected StepJarParser.PlansParsingResult parsePlans(File artifact, File libraries, String[] includedClasses, String[] includedAnnotations, String[] excludedClasses, String[] excludedAnnotations) {
-		return stepJarParser.getPlansForJar(artifact, libraries, includedClasses, includedAnnotations, excludedClasses, excludedAnnotations);
+	protected PlansParsingResult parsePlans(File artifact, PlanFilter planFilter, ObjectEnricher enricher) throws AutomationPackageReadingException {
+		AutomationPackageArchive automationPackageArchive = new AutomationPackageArchive(artifact);
+		AutomationPackageContent content = automationPackageReader.readAutomationPackage(automationPackageArchive, false);
+
+		// convert keywords from descriptor to functions
+		AutomationPackageContext apContext = new AutomationPackageContext(resourceManager, automationPackageArchive, content, enricher, new HashMap<>());
+        List<Function> functions = content.getKeywords().stream().map(keyword -> keyword.prepareKeyword(apContext)).collect(Collectors.toList());
+
+		// filter plans if required
+		return new PlansParsingResult(content.getPlans().stream().filter(p -> planFilter == null || planFilter.isSelected(p)).collect(Collectors.toList()), functions);
 	}
 
 	protected void wrapPlanInTestCase(Plan plan, String testCaseName){
@@ -177,14 +198,33 @@ public abstract class AbstractArtifactRepository extends AbstractRepository {
 		}
 	}
 
-	private static class ParsedArtifact {
+	protected static class ParsedArtifact {
 		private final File artifact;
-		private final StepJarParser.PlansParsingResult parsingResult;
+		private final PlansParsingResult parsingResult;
 
-		public ParsedArtifact(File artifact, StepJarParser.PlansParsingResult parsingResult) {
+		public ParsedArtifact(File artifact, PlansParsingResult parsingResult) {
 
 			this.artifact = artifact;
 			this.parsingResult = parsingResult;
+		}
+	}
+
+	protected static class PlansParsingResult {
+
+		private final List<Plan> plans;
+		private final List<Function> functions;
+
+		public PlansParsingResult(List<Plan> plans, List<Function> functions) {
+			this.plans = plans;
+			this.functions = functions;
+		}
+
+		public List<Plan> getPlans() {
+			return plans;
+		}
+
+		public List<Function> getFunctions() {
+			return functions;
 		}
 	}
 }

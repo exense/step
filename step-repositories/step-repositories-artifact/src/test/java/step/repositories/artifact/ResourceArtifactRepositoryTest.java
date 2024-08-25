@@ -9,6 +9,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.artefacts.CallPlan;
 import step.artefacts.TestSet;
+import step.automation.packages.AutomationPackageHookRegistry;
+import step.automation.packages.AutomationPackageReader;
+import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
+import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.core.artefacts.AbstractArtefact;
 import step.core.execution.ExecutionContext;
 import step.core.objectenricher.ObjectEnricher;
@@ -40,7 +44,8 @@ public class ResourceArtifactRepositoryTest {
     public void setup() throws IOException {
         this.resourceManager = new ResourceManagerImpl(FileHelper.createTempFolder(), new InMemoryResourceAccessor(), new InMemoryResourceRevisionAccessor());
         this.planAccessor = new InMemoryPlanAccessor();
-        this.repo = new ResourceArtifactRepository(planAccessor, resourceManager, null);
+        AutomationPackageReader apReader = new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, new AutomationPackageHookRegistry(), new AutomationPackageSerializationRegistry());
+        this.repo = new ResourceArtifactRepository(planAccessor, resourceManager, apReader);
     }
 
     @Test
