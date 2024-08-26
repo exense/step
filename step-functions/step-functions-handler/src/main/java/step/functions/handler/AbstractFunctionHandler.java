@@ -50,10 +50,9 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 	private Map<String, String> properties;
 	
 	public static final String FORKED_BRANCH = "forkedBranch";
-	
-	public static final String STEP_NODE_KEY = "currentStep";
 	public static final String PARENTREPORTID_KEY = "$parentreportid";
 	public static final String EXECUTION_CONTEXT_KEY = "$executionContext";
+	public static final String ARTEFACT_PATH = "$artefactPath";
 
 	protected FunctionHandlerFactory getFunctionHandlerFactory() {
 		return functionHandlerFactory;

@@ -18,11 +18,7 @@
  ******************************************************************************/
 package step.core.artefacts.reports;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Stream;
 
 import org.bson.types.ObjectId;
@@ -32,6 +28,8 @@ import step.core.collections.Collection;
 import step.core.collections.Filter;
 import step.core.collections.Filters;
 import step.core.collections.SearchOrder;
+import step.core.collections.filters.And;
+import step.core.collections.filters.Equals;
 
 
 public class ReportNodeAccessorImpl extends AbstractAccessor<ReportNode> implements ReportTreeAccessor, ReportNodeAccessor {
@@ -48,6 +46,7 @@ public class ReportNodeAccessorImpl extends AbstractAccessor<ReportNode> impleme
 		createOrUpdateCompoundIndex("executionID", "executionTime");
 		createOrUpdateCompoundIndex("executionID", "_class");
 		createOrUpdateCompoundIndex("executionID", "parentID");
+		createOrUpdateCompoundIndex("executionID", "artefactHash");
 	}
 
 	@Override
@@ -80,22 +79,57 @@ public class ReportNodeAccessorImpl extends AbstractAccessor<ReportNode> impleme
     
 	@Override
 	public Stream<ReportNode> getReportNodesByExecutionID(String executionID) {
-		assert executionID != null;
+		Objects.requireNonNull(executionID);
 		return collectionDriver.findLazy(Filters.equals("executionID", executionID), new SearchOrder("executionTime", 1), null, null, 0);
 	}
-	
+
+	@Override
+	public Stream<ReportNode> getReportNodesByExecutionID(String executionID, Integer limit) {
+		Objects.requireNonNull(executionID);
+		return collectionDriver.findLazy(Filters.equals("executionID", executionID), new SearchOrder("executionTime", 1), null, limit, 0);
+	}
+
+	@Override
+	public Stream<ReportNode> getReportNodesByArtefactHash(String executionId, String artefactPathHash, Integer skip, Integer limit) {
+		And filter = filterByExecutionIdAndArtefactHash(executionId, artefactPathHash);
+		return collectionDriver.findLazy(filter, null, skip, limit, 0);
+	}
+
+	private static And filterByExecutionIdAndArtefactHash(String executionId, String artefactPathHash) {
+		return Filters.and(List.of(Filters.equals("executionID", executionId), artefactPathHashFilter(artefactPathHash)));
+	}
+
+	private static Equals artefactPathHashFilter(String artefactPathHash) {
+		return Filters.equals("artefactHash", artefactPathHash);
+	}
+
+	@Override
+	public long countReportNodesByArtefactHash(String executionId, String artefactPathHash) {
+		And filter = filterByExecutionIdAndArtefactHash(executionId, artefactPathHash);
+		return collectionDriver.count(filter, 1000);
+	}
+
 	@Override
 	public Stream<ReportNode> getReportNodesByExecutionIDAndClass(String executionID, String class_) {
-		assert executionID != null;
+		Objects.requireNonNull(executionID);
 		return collectionDriver.findLazy(
 				Filters.and(List.of(Filters.equals("executionID", executionID),
 						Filters.equals("_class", class_))),
 				new SearchOrder("executionTime", 1), null, null, 0);
 	}
+
+	@Override
+	public Stream<ReportNode> getReportNodesByExecutionIDAndClass(String executionID, String class_, Integer limit) {
+		Objects.requireNonNull(executionID);
+		return collectionDriver.findLazy(
+				Filters.and(List.of(Filters.equals("executionID", executionID),
+						Filters.equals("_class", class_))),
+				new SearchOrder("executionTime", 1), null, limit, 0);
+	}
 	
 	@Override
 	public Stream<ReportNode> getReportNodesByExecutionIDAndCustomAttribute(String executionID, Map<String, String> customAttributes) {
-		assert executionID != null;
+		Objects.requireNonNull(executionID);
 		
 		List<Filter> filters = new ArrayList<>();
 		filters.add(Filters.equals("executionID", executionID));
@@ -108,7 +142,8 @@ public class ReportNodeAccessorImpl extends AbstractAccessor<ReportNode> impleme
 	
 	@Override
 	public ReportNode getReportNodeByParentIDAndArtefactID(ObjectId parentID, ObjectId artefactID) {
-		assert parentID != null; assert artefactID!=null;
+		Objects.requireNonNull(parentID);
+		Objects.requireNonNull(artefactID);
 		return collectionDriver.find(
 				Filters.and(List.of(Filters.equals("parentID", parentID), Filters.equals("artefactID", artefactID))),
 				null, null, null, 0).findFirst().orElse(null);
@@ -116,7 +151,7 @@ public class ReportNodeAccessorImpl extends AbstractAccessor<ReportNode> impleme
     
 	@Override
 	public ReportNode getRootReportNode(String executionID) {
-		assert executionID!=null;
+		Objects.requireNonNull(executionID);
 		return collectionDriver.find(
 				Filters.and(List.of(Filters.equals("executionID", executionID), Filters.equals("parentID", (String) null))),
 				null, null, null, 0).findFirst().orElse(null);
@@ -134,13 +169,13 @@ public class ReportNodeAccessorImpl extends AbstractAccessor<ReportNode> impleme
 
 	@Override
 	public void removeNodesByExecutionID(String executionID) {
-		assert executionID != null;
+		Objects.requireNonNull(executionID);
 		collectionDriver.remove(Filters.equals("executionID", executionID));
 	}
 
 	@Override
 	public Stream<ReportNode> getReportNodesWithContributingErrors(String executionId, Integer skip, Integer limit) {
-		assert executionId != null;
+		Objects.requireNonNull(executionId);
 		return collectionDriver.find(
 				Filters.and(List.of(Filters.equals("executionID", executionId), Filters.equals("contributingError", true))),
 				null, skip, limit, 0);
