@@ -30,6 +30,8 @@ import step.plans.parser.yaml.model.YamlPlanVersions;
 import java.io.IOException;
 import java.io.InputStream;
 
+import static step.plans.parser.yaml.YamlPlanVersions.ACTUAL_JSON_SCHEMA_PATH;
+
 public class YamlPlanJsonSchemaGeneratorTest {
 
 	private static final Logger log = LoggerFactory.getLogger(YamlPlanJsonSchemaGeneratorTest.class);
@@ -40,8 +42,9 @@ public class YamlPlanJsonSchemaGeneratorTest {
 	public void generateJsonSchema() throws IOException, JsonSchemaPreparationException {
 		log.info("Generating actual json schema for simplified plan format");
 
+
 		// read published json schema
-		InputStream jsonSchemaFile = this.getClass().getClassLoader().getResourceAsStream("step/plans/parser/yaml/step-yaml-plan-schema-os-1.0.json");
+		InputStream jsonSchemaFile = this.getClass().getClassLoader().getResourceAsStream(ACTUAL_JSON_SCHEMA_PATH);
 
 		JsonNode publishedSchema = jsonObjectMapper.readTree(jsonSchemaFile);
 		YamlPlanJsonSchemaGenerator schemaGenerator = new YamlPlanJsonSchemaGenerator("step", YamlPlanVersions.ACTUAL_VERSION, null);

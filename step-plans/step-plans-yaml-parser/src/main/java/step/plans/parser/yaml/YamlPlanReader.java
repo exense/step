@@ -63,11 +63,8 @@ public class YamlPlanReader {
 
 	private static final Logger log = LoggerFactory.getLogger(YamlPlanReader.class);
 
-	public static final String YAML_PLANS_COLLECTION_NAME = "yamlPlans";
-
 	private final ObjectMapper yamlMapper;
 
-	private final Supplier<ObjectId> idGenerator;
 	private final Version currentVersion;
 	private String jsonSchema;
 	private final MigrationManager migrationManager;
@@ -76,12 +73,11 @@ public class YamlPlanReader {
 	/**
 	 * To be used in TESTS only
 	 *
-	 * @param idGenerator            the id generator to generate static ids in tests
 	 * @param currentVersion         the fixed yaml format version. If null, the actual version will be used
 	 * @param validateWithJsonSchema if true, the json schema will be used to validate yaml plans
 	 * @param jsonSchemaPath         the fixed path to json schema. If null, the actual json schema will be used
 	 */
-	public YamlPlanReader(Supplier<ObjectId> idGenerator, Version currentVersion, boolean validateWithJsonSchema, String jsonSchemaPath) {
+	public YamlPlanReader(Version currentVersion, boolean validateWithJsonSchema, String jsonSchemaPath) {
 		if (currentVersion != null) {
 			this.currentVersion = currentVersion;
 		} else {
@@ -95,7 +91,7 @@ public class YamlPlanReader {
 				this.jsonSchema = readJsonSchema(jsonSchemaPath);
 			} else {
 				// resolve the json schema to use
-				List<String> jsonSchemasFromExtensions = CachedAnnotationScanner.getClassesWithAnnotation(YamlPlanMigration.LOCATION, YamlPlanReaderExtension.class, Thread.currentThread().getContextClassLoader())
+				List<String> jsonSchemasFromExtensions = CachedAnnotationScanner.getClassesWithAnnotation(YamlPlanReaderExtension.LOCATION, YamlPlanReaderExtension.class, Thread.currentThread().getContextClassLoader())
 						.stream()
 						.map(newInstanceAs(YamlPlanReaderExtender.class))
 						.map(YamlPlanReaderExtender::getJsonSchemaPath)
@@ -118,7 +114,6 @@ public class YamlPlanReader {
 			}
 		}
 
-		this.idGenerator = idGenerator;
 		this.migrationManager = initMigrationManager();
 		this.plainTextPlanParser = new PlanParser();
 
@@ -129,14 +124,14 @@ public class YamlPlanReader {
 	 * Creates the new Yaml plan serializer for the specified current version and json schema
 	 */
 	public YamlPlanReader(Version currentVersion, String jsonSchemaPath) {
-		this(null, currentVersion, true, jsonSchemaPath);
+		this(currentVersion, true, jsonSchemaPath);
 	}
 
 	/**
 	 * Creates the new Yaml plan reader with actual version and json schema
 	 */
 	public YamlPlanReader(){
-		this(null, null, true, null);
+		this(null, true, null);
 	}
 
 	/**
@@ -260,7 +255,7 @@ public class YamlPlanReader {
 	public Plan yamlPlanToPlan(YamlPlan yamlPlan) {
 		Plan plan = new Plan(yamlPlan.getRoot().getYamlArtefact().toArtefact());
 		plan.addAttribute(AbstractOrganizableObject.NAME, yamlPlan.getName());
-		applyDefaultValues(plan);
+		//applyDefaultValues(plan);
 		return plan;
 	}
 
@@ -270,33 +265,6 @@ public class YamlPlanReader {
 		yamlPlan.setVersion(currentVersion.toString());
 		yamlPlan.setRoot(new NamedYamlArtefact(AbstractYamlArtefact.toYamlArtefact(plan.getRoot(), yamlMapper)));
 		return yamlPlan;
-	}
-
-	private void applyDefaultValues(Plan plan) {
-		if (this.idGenerator != null) {
-			plan.setId(this.idGenerator.get());
-		}
-
-		AbstractArtefact root = plan.getRoot();
-		if (root != null) {
-			applyDefaultValuesForArtifact(root);
-		}
-	}
-
-	private void applyDefaultValuesForArtifact(AbstractArtefact artifact) {
-		if (this.idGenerator != null) {
-			artifact.setId(this.idGenerator.get());
-		}
-		applyDefaultValuesForChildren(artifact);
-	}
-
-	private void applyDefaultValuesForChildren(AbstractArtefact root) {
-		List<AbstractArtefact> children = root.getChildren();
-		if (children != null) {
-			for (AbstractArtefact child : children) {
-				applyDefaultValuesForArtifact(child);
-			}
-		}
 	}
 
 }

@@ -1,0 +1,40 @@
+---
+version: "1.1.0"
+name: "BeforeAfterPlan"
+root:
+  threadGroup:
+    nodeName: "BeforeAfter"
+    before:
+      steps:
+        - echo:
+            text: "Before the whole threadgroup"
+      continueOnError: false
+    after:
+      steps:
+        - echo:
+            text: "After the whole threadgroup"
+    beforeThread:
+      steps:
+        - set:
+            key: "var"
+            value: "value"
+        - echo:
+            text:
+              expression: "var"
+      continueOnError: false
+    afterThread:
+      steps:
+        - echo:
+            text:
+              expression: "var"
+    children:
+      - sequence:
+          children:
+            - echo:
+                text:
+                  expression: "var"
+    users: 1
+    iterations: 1
+    item: "gcounter"
+    localItem: "literationId"
+    userItem: "userId"

@@ -28,26 +28,6 @@ root:
         skipNode: false
         remote: true
         keyword: "GroovyKeyword"
-    - afterSequence:
-        continueParentNodeExecutionOnError: false
-        instrumentNode: false
-        skipNode: false
-        continueOnError: false
-    - afterThread:
-        continueParentNodeExecutionOnError: false
-        instrumentNode: false
-        skipNode: false
-        continueOnError: false
-    - beforeSequence:
-        continueParentNodeExecutionOnError: false
-        instrumentNode: false
-        skipNode: false
-        continueOnError: false
-    - beforeThread:
-        continueParentNodeExecutionOnError: false
-        instrumentNode: false
-        skipNode: false
-        continueOnError: false
     - callKeyword:
         nodeName: "CallKeyword"
         continueParentNodeExecutionOnError: false

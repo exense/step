@@ -62,7 +62,7 @@ public class AutomationPackageDescriptorReader {
         this.serializationRegistry = serializationRegistry;
         // TODO: we need to find a way to resolve the actual json schema (controller config) depending on running server instance (EE or OS)
         // TODO: also we have to resolve the json version for plans according to the automation package version!
-        this.planReader = new YamlPlanReader(null, YamlPlanVersions.ACTUAL_VERSION, false, null);
+        this.planReader = new YamlPlanReader(YamlPlanVersions.ACTUAL_VERSION, false, null);
         this.yamlObjectMapper = createYamlObjectMapper();
 
         if (jsonSchemaPath != null) {

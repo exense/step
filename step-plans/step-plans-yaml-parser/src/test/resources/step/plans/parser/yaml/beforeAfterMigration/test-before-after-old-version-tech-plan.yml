@@ -1,0 +1,392 @@
+{
+  "_class": "step.core.plans.Plan",
+  "attributes": {
+    "name": "BeforeAfterOldVersion"
+  },
+  "root": {
+    "_class": "ThreadGroup",
+    "attributes": {
+      "name": "BeforeAfter"
+    },
+    "dynamicName": {
+      "dynamic": false,
+      "value": "",
+      "expression": ""
+    },
+    "useDynamicName": false,
+    "children": [
+      {
+        "_class": "Sequence",
+        "attributes": {
+          "name": "Sequence"
+        },
+        "dynamicName": {
+          "dynamic": false,
+          "value": "",
+          "expression": ""
+        },
+        "useDynamicName": false,
+        "children": [
+          {
+            "_class": "Echo",
+            "attributes": {
+              "name": "Echo"
+            },
+            "dynamicName": {
+              "dynamic": false,
+              "value": "",
+              "expression": ""
+            },
+            "useDynamicName": false,
+            "children": [],
+            "skipNode": {
+              "dynamic": false,
+              "value": false
+            },
+            "instrumentNode": {
+              "dynamic": false,
+              "value": false
+            },
+            "continueParentNodeExecutionOnError": {
+              "dynamic": false,
+              "value": false
+            },
+            "text": {
+              "dynamic": true,
+              "expression": "var",
+              "expressionType": ""
+            },
+            "id": "644fbe4e38a61e07cc3a4df8"
+          }
+        ],
+        "skipNode": {
+          "dynamic": false,
+          "value": false
+        },
+        "instrumentNode": {
+          "dynamic": false,
+          "value": false
+        },
+        "continueParentNodeExecutionOnError": {
+          "dynamic": false,
+          "value": false
+        },
+        "before": {
+          "steps": [
+            {
+              "_class": "Echo",
+              "attributes": {
+                "name": "Echo"
+              },
+              "dynamicName": {
+                "dynamic": false,
+                "value": "",
+                "expression": ""
+              },
+              "useDynamicName": false,
+              "children": [],
+              "skipNode": {
+                "dynamic": false,
+                "value": false
+              },
+              "instrumentNode": {
+                "dynamic": false,
+                "value": false
+              },
+              "continueParentNodeExecutionOnError": {
+                "dynamic": false,
+                "value": false
+              },
+              "text": {
+                "dynamic": true,
+                "expression": "var",
+                "expressionType": ""
+              },
+              "id": "644fbe4e38a61e07cc3a4df8"
+            }
+          ],
+          "continueOnError": {
+            "dynamic": false,
+            "value": false
+          }
+        },
+        "after": {
+          "steps": [
+            {
+              "_class": "Echo",
+              "attributes": {
+                "name": "Echo"
+              },
+              "dynamicName": {
+                "dynamic": false,
+                "value": "",
+                "expression": ""
+              },
+              "useDynamicName": false,
+              "children": [],
+              "skipNode": {
+                "dynamic": false,
+                "value": false
+              },
+              "instrumentNode": {
+                "dynamic": false,
+                "value": false
+              },
+              "continueParentNodeExecutionOnError": {
+                "dynamic": false,
+                "value": false
+              },
+              "text": {
+                "dynamic": true,
+                "expression": "var2",
+                "expressionType": ""
+              },
+              "id": "644fbe4e38a61e07cc3a4df8"
+            }
+          ],
+          "continueOnError": {
+            "dynamic": false,
+            "value": false
+          }
+        },
+        "continueOnError": {
+          "dynamic": false,
+          "value": false
+        },
+        "pacing": {
+          "dynamic": false
+        },
+        "id": "644fbe4e38a61e07cc3a4df8"
+      }
+    ],
+    "skipNode": {
+      "dynamic": false,
+      "value": false
+    },
+    "instrumentNode": {
+      "dynamic": false,
+      "value": false
+    },
+    "continueParentNodeExecutionOnError": {
+      "dynamic": false,
+      "value": false
+    },
+    "users": {
+      "dynamic": false,
+      "value": 1
+    },
+    "iterations": {
+      "dynamic": false,
+      "value": 1
+    },
+    "rampup": {
+      "dynamic": false
+    },
+    "pack": {
+      "dynamic": false
+    },
+    "pacing": {
+      "dynamic": false
+    },
+    "startOffset": {
+      "dynamic": false,
+      "value": 0
+    },
+    "maxDuration": {
+      "dynamic": false,
+      "value": 0
+    },
+    "item": {
+      "dynamic": false,
+      "value": "gcounter"
+    },
+    "localItem": {
+      "dynamic": false,
+      "value": "literationId"
+    },
+    "userItem": {
+      "dynamic": false,
+      "value": "userId"
+    },
+    "beforeThread": {
+      "steps": [
+        {
+          "_class": "Set",
+          "attributes": {
+            "name": "Set"
+          },
+          "dynamicName": {
+            "dynamic": false,
+            "value": "",
+            "expression": ""
+          },
+          "useDynamicName": false,
+          "children": [],
+          "skipNode": {
+            "dynamic": false,
+            "value": false
+          },
+          "instrumentNode": {
+            "dynamic": false,
+            "value": false
+          },
+          "continueParentNodeExecutionOnError": {
+            "dynamic": false,
+            "value": false
+          },
+          "key": {
+            "dynamic": false,
+            "value": "var"
+          },
+          "value": {
+            "dynamic": false,
+            "value": "value"
+          },
+          "id": "644fbe4e38a61e07cc3a4df8"
+        },
+        {
+          "_class": "Echo",
+          "attributes": {
+            "name": "Echo"
+          },
+          "dynamicName": {
+            "dynamic": false,
+            "value": "",
+            "expression": ""
+          },
+          "useDynamicName": false,
+          "children": [],
+          "skipNode": {
+            "dynamic": false,
+            "value": false
+          },
+          "instrumentNode": {
+            "dynamic": false,
+            "value": false
+          },
+          "continueParentNodeExecutionOnError": {
+            "dynamic": false,
+            "value": false
+          },
+          "text": {
+            "dynamic": true,
+            "expression": "var",
+            "expressionType": ""
+          },
+          "id": "644fbe4e38a61e07cc3a4df8"
+        },
+        {
+          "_class": "Set",
+          "attributes": {
+            "name": "Set"
+          },
+          "dynamicName": {
+            "dynamic": false,
+            "value": "",
+            "expression": ""
+          },
+          "useDynamicName": false,
+          "children": [],
+          "skipNode": {
+            "dynamic": false,
+            "value": false
+          },
+          "instrumentNode": {
+            "dynamic": false,
+            "value": false
+          },
+          "continueParentNodeExecutionOnError": {
+            "dynamic": false,
+            "value": false
+          },
+          "key": {
+            "dynamic": false,
+            "value": "var2"
+          },
+          "value": {
+            "dynamic": false,
+            "value": "value2"
+          },
+          "id": "644fbe4e38a61e07cc3a4df8"
+        },
+        {
+          "_class": "Echo",
+          "attributes": {
+            "name": "Echo"
+          },
+          "dynamicName": {
+            "dynamic": false,
+            "value": "",
+            "expression": ""
+          },
+          "useDynamicName": false,
+          "children": [],
+          "skipNode": {
+            "dynamic": false,
+            "value": false
+          },
+          "instrumentNode": {
+            "dynamic": false,
+            "value": false
+          },
+          "continueParentNodeExecutionOnError": {
+            "dynamic": false,
+            "value": false
+          },
+          "text": {
+            "dynamic": true,
+            "expression": "var2",
+            "expressionType": ""
+          },
+          "id": "644fbe4e38a61e07cc3a4df8"
+        }
+      ],
+      "continueOnError": {
+        "dynamic": false,
+        "value": false
+      }
+    },
+    "afterThread": {
+      "steps": [
+        {
+          "_class": "Echo",
+          "attributes": {
+            "name": "Echo"
+          },
+          "dynamicName": {
+            "dynamic": false,
+            "value": "",
+            "expression": ""
+          },
+          "useDynamicName": false,
+          "children": [],
+          "skipNode": {
+            "dynamic": false,
+            "value": false
+          },
+          "instrumentNode": {
+            "dynamic": false,
+            "value": false
+          },
+          "continueParentNodeExecutionOnError": {
+            "dynamic": false,
+            "value": false
+          },
+          "text": {
+            "dynamic": true,
+            "expression": "var",
+            "expressionType": ""
+          },
+          "id": "644fbe4e38a61e07cc3a4df8"
+        }
+      ],
+      "continueOnError": {
+        "dynamic": false,
+        "value": false
+      }
+    },
+    "id": "644fbe4e38a61e07cc3a4df8"
+  },
+  "visible": true,
+  "id": "644fbe4e38a61e07cc3a4df8"
+}
