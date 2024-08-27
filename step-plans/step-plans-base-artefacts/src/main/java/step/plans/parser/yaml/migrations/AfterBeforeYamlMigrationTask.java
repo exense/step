@@ -17,20 +17,26 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * This migration task will migrate all plans to be compatible with the new artefact properties (before and after for
+ * all artefacts, beforeThread and afterThread for thread group). Previously specifc artefact (i.e. BeforeSequence) were
+ * used directly as children "property" and need to be moved over to the new class property.
+ * The implementation is similar to the JSON migration taks for the "DB" syntax in MigrateBeforeAfterArtefactInPlans
+ */
 @YamlPlanMigration
 public class AfterBeforeYamlMigrationTask extends AbstractYamlPlanMigrationTask {
 
     private static final Logger logger = LoggerFactory.getLogger(AfterBeforeYamlMigrationTask.class);
 
-    private static final String ARTEFACT_CHILDREN = "children";
-    private static final String ARTEFACT_BEFORE_PROPERTY = "before";
-    private static final String ARTEFACT_AFTER_PROPERTY = "after";
+    public static final String ARTEFACT_CHILDREN = "children";
+    public static final String ARTEFACT_BEFORE_PROPERTY = "before";
+    public static final String ARTEFACT_AFTER_PROPERTY = "after";
     private static final String ARTEFACT_BEFORE_SEQUENCE = "beforeSequence";
     private static final String ARTEFACT_AFTER_SEQUENCE = "afterSequence";
     private static final String ARTEFACT_BEFORE_THREAD = "beforeThread";
     private static final String ARTEFACT_AFTER_THREAD = "afterThread";
-    private static final String ARTEFACT_AFTER_THREAD_PROPERTY = "afterThread";
-    private static final String ARTEFACT_BEFORE_THREAD_PROPERTY = "beforeThread";
+    public static final String ARTEFACT_AFTER_THREAD_PROPERTY = "afterThread";
+    public static final String ARTEFACT_BEFORE_THREAD_PROPERTY = "beforeThread";
     public static final String STEPS = "steps";
 
     public AfterBeforeYamlMigrationTask(CollectionFactory collectionFactory, MigrationContext migrationContext) {
@@ -63,16 +69,20 @@ public class AfterBeforeYamlMigrationTask extends AbstractYamlPlanMigrationTask 
         }
     }
 
-    /* yaml structure example as ref
-      testCase:
-        nodeName: "MainPlan"
-        ...
-        children:
-         - beforeSequence:
-             children:
-               - ...
+    /**
+     * Yaml and JSON document are deserialized with different structure. YAML syntax for artefact always start with
+     * artefact name followed by the object which is different from Json (DataBase) structure
+     *          YAML structure example as ref
+     *           testCase:
+     *             nodeName: "MainPlan"
+     *             ...
+     *             children:
+     *              - beforeSequence:
+     *                  children:
+     *                    - ...
+     *
+     * @param artifact: the deserilaization of the YAML artefact as DocumentObject to be modified
      */
-
     private void migrateBeforeAfterSequnce(DocumentObject artifact) {
         //should only return one entry based on our Yaml syntax but keep it generic
         Set<String> artefactNames = artifact.keySet();

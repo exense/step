@@ -2585,7 +2585,7 @@
   },
   "properties" : {
     "schemaVersion" : {
-      "const" : "1.0.0"
+      "const" : "1.1.0"
     },
     "version" : {
       "type" : "string"

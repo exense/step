@@ -30,7 +30,8 @@ import step.plans.parser.yaml.model.YamlPlanVersions;
 import java.io.IOException;
 import java.io.InputStream;
 
-import static step.plans.parser.yaml.YamlPlanVersions.ACTUAL_JSON_SCHEMA_PATH;
+import static step.plans.parser.yaml.model.YamlPlanVersions.ACTUAL_JSON_SCHEMA_PATH;
+
 
 public class YamlPlanJsonSchemaGeneratorTest {
 

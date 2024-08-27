@@ -32,6 +32,7 @@ import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.plans.Plan;
 import step.plans.parser.yaml.schema.YamlPlanValidationException;
 import step.repositories.parser.StepsParser;
+import step.plans.parser.yaml.model.YamlPlanVersions;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
