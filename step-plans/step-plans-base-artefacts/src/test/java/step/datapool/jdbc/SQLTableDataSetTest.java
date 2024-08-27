@@ -68,7 +68,7 @@ public class SQLTableDataSetTest extends AbstractArtefactTest {
 			conf.setDriverClass(new DynamicValue<>("com.mysql.cj.jdbc.Driver"));
 			conf.setUser(new DynamicValue<>(USER));
 			conf.setPassword(new DynamicValue<>(PASS));
-			conf.setForWrite(new DynamicValue<>(false));
+			conf.setForWrite(new DynamicValue<>(true));
 			conf.setWritePKey(new DynamicValue<>("id"));
 			ds = DataPoolFactory.getDataPool("sql", conf, newExecutionContext());
 			ds.init();

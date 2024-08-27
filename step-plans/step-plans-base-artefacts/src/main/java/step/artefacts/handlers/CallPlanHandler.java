@@ -19,9 +19,7 @@
 package step.artefacts.handlers;
 
 import jakarta.json.JsonObject;
-import step.artefacts.CallFunction;
 import step.artefacts.CallPlan;
-import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.handlers.ArtefactHashGenerator;
 import step.core.artefacts.reports.ParentSource;
@@ -36,7 +34,6 @@ import step.core.plans.Plan;
 
 import java.io.StringReader;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.NoSuchElementException;
 
