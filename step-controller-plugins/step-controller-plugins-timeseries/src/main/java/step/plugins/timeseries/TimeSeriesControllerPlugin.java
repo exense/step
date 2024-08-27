@@ -1,6 +1,8 @@
 package step.plugins.timeseries;
 
 import ch.exense.commons.app.Configuration;
+import step.controller.services.async.AsyncTaskManager;
+import step.controller.services.async.AsyncTaskManagerPlugin;
 import step.core.GlobalContext;
 import step.core.collections.Collection;
 import step.core.collections.CollectionFactory;
@@ -37,7 +39,7 @@ import java.util.*;
 import static step.plugins.timeseries.MetricsConstants.*;
 import static step.plugins.timeseries.TimeSeriesExecutionPlugin.*;
 
-@Plugin(dependencies = {MigrationManagerPlugin.class})
+@Plugin(dependencies = {MigrationManagerPlugin.class, AsyncTaskManagerPlugin.class})
 public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 
 	public static final String PLUGINS_TIMESERIES_FLUSH_PERIOD = "plugins.timeseries.flush.period";
@@ -74,6 +76,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 	@Override
 	public void serverStart(GlobalContext context) {
 		MigrationManager migrationManager = context.require(MigrationManager.class);
+		AsyncTaskManager asyncTaskManager = context.require(AsyncTaskManager.class);
 		migrationManager.register(MigrateDashboardsTask.class);
 		migrationManager.register(MigrateAggregateTask.class);
 		
@@ -89,36 +92,15 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 		TimeSeriesCollection mainCollection = new TimeSeriesCollection(collectionFactory.getCollection(TIME_SERIES_MAIN_COLLECTION, Bucket.class), resolutionPeriod);
 		mainIngestionPipeline = new TimeSeriesIngestionPipeline(collectionFactory.getCollection(TIME_SERIES_MAIN_COLLECTION, Bucket.class), resolutionPeriod, flushPeriod);
 
-		TimeSeriesCollectionsSettings collectionsSettings = getCollectionsSettings(configuration);
-		HashMap<TimeSeriesCollection, Boolean> collectionsEnabled = new HashMap<>();
-
-		collectionsEnabled.put(mainCollection, true);
-		collectionsEnabled.put(new PerMinuteTimeSeriesCollection(collectionFactory), collectionsSettings.isPerMinuteEnabled());
-		collectionsEnabled.put(new HourlyTimeSeriesCollection(collectionFactory), collectionsSettings.isHourlyEnabled());
-		collectionsEnabled.put(new DailyTimeSeriesCollection(collectionFactory), collectionsSettings.isDailyEnabled());
-		collectionsEnabled.put(new WeeklyTimeSeriesCollection(collectionFactory), collectionsSettings.isWeeklyEnabled());
-//		collectionsEnabled.put(new MonthlyTimeSeriesCollection(collectionFactory), collectionsSettings.isMonthlyEnabled());
-
-		List<TimeSeriesCollection> enabledCollections = new ArrayList<>();
-
-		collectionsEnabled.forEach((collection, enabled) -> {
-			if (enabled) {
-				enabledCollections.add(collection);
-			} else {
-				// disabled resolutions will be completely dropped from mongo
-				collection.getCollection().drop();
-			}
-		});
+		List<TimeSeriesCollection> enabledCollections = prepareTimeSeriesCollections(configuration, mainCollection, collectionFactory);
 
 
 		// timeseries will have a list of registered collection.
 		timeSeries = new TimeSeriesBuilder()
 				.registerCollections(enabledCollections)
 				.build();
-		timeSeries.createMissingData();
 
 
-		
 		aggregationPipeline = timeSeries.getAggregationPipeline();
 		MetricTypeAccessor metricTypeAccessor = new MetricTypeAccessor(context.getCollectionFactory().getCollection(EntityManager.metricTypes, MetricType.class));
 		TimeSeriesBucketingHandler handler = new TimeSeriesBucketingHandler(timeSeries, attributes);
@@ -146,6 +128,31 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 		WebApplicationConfigurationManager configurationManager = context.require(WebApplicationConfigurationManager.class);
 		configurationManager.registerHook(s -> Map.of(RESOLUTION_PERIOD_PROPERTY, resolutionPeriod.toString()));
 	}
+
+	private List<TimeSeriesCollection> prepareTimeSeriesCollections(Configuration configuration, TimeSeriesCollection mainCollection, CollectionFactory collectionFactory) {
+		TimeSeriesCollectionsSettings collectionsSettings = getCollectionsSettings(configuration);
+		HashMap<TimeSeriesCollection, Boolean> collectionsEnabled = new HashMap<>();
+
+		collectionsEnabled.put(mainCollection, true);
+		collectionsEnabled.put(new PerMinuteTimeSeriesCollection(collectionFactory), collectionsSettings.isPerMinuteEnabled());
+		collectionsEnabled.put(new HourlyTimeSeriesCollection(collectionFactory), collectionsSettings.isHourlyEnabled());
+		collectionsEnabled.put(new DailyTimeSeriesCollection(collectionFactory), collectionsSettings.isDailyEnabled());
+		collectionsEnabled.put(new WeeklyTimeSeriesCollection(collectionFactory), collectionsSettings.isWeeklyEnabled());
+//		collectionsEnabled.put(new MonthlyTimeSeriesCollection(collectionFactory), collectionsSettings.isMonthlyEnabled());
+
+		List<TimeSeriesCollection> enabledCollections = new ArrayList<>();
+
+		collectionsEnabled.forEach((collection, enabled) -> {
+			if (enabled) {
+				enabledCollections.add(collection);
+			} else {
+				// disabled resolutions will be completely dropped from mongo
+				collection.getCollection().drop();
+			}
+		});
+		return enabledCollections;
+	}
+
 
 	private TimeSeriesCollectionsSettings getCollectionsSettings(Configuration configuration) {
 		return new TimeSeriesCollectionsSettings()
@@ -198,7 +205,17 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 		WebApplicationConfigurationManager configurationManager = context.require(WebApplicationConfigurationManager.class);
         configurationManager.registerHook(s -> Map.of(PARAM_KEY_EXECUTION_DASHBOARD_ID, newExecutionDashboard.getId().toString()));
 		configurationManager.registerHook(s -> Map.of(PARAM_KEY_ANALYTICS_DASHBOARD_ID, newAnalyticsDashboard.getId().toString()));
-		
+
+		initTimeSeriesCollectionsData(asyncTaskManager);
+	}
+
+	private void initTimeSeriesCollectionsData(AsyncTaskManager asyncTaskManager) {
+		asyncTaskManager.scheduleAsyncTask((empty) -> {
+			System.out.println("started to create missing data");
+			timeSeries.createMissingData();
+			System.out.println("compelted to create missing data");
+			return null;
+		});
 	}
 	
 	
