@@ -76,7 +76,6 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 	@Override
 	public void serverStart(GlobalContext context) {
 		MigrationManager migrationManager = context.require(MigrationManager.class);
-		AsyncTaskManager asyncTaskManager = context.require(AsyncTaskManager.class);
 		migrationManager.register(MigrateDashboardsTask.class);
 		migrationManager.register(MigrateAggregateTask.class);
 		
@@ -205,7 +204,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 		WebApplicationConfigurationManager configurationManager = context.require(WebApplicationConfigurationManager.class);
         configurationManager.registerHook(s -> Map.of(PARAM_KEY_EXECUTION_DASHBOARD_ID, newExecutionDashboard.getId().toString()));
 		configurationManager.registerHook(s -> Map.of(PARAM_KEY_ANALYTICS_DASHBOARD_ID, newAnalyticsDashboard.getId().toString()));
-
+		AsyncTaskManager asyncTaskManager = context.require(AsyncTaskManager.class);
 		initTimeSeriesCollectionsData(asyncTaskManager);
 	}
 
