@@ -153,7 +153,15 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
 	 * @return true if this artefact is a property artefact
 	 */
 	@JsonIgnore
-	public boolean isPropertyArefact() {
+	public boolean isPropertyArtefact() {
+		return false;
+	}
+
+	/**
+	 * @return true if this Artefact is calling Artefacts from other plans
+	 */
+	@JsonIgnore
+	public boolean isCallingArtefactsFromOtherPlans() {
 		return false;
 	}
 
@@ -201,15 +209,6 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
 
 	public void setUseDynamicName(boolean useDynamicName) {
 		this.useDynamicName = useDynamicName;
-	}
-
-	public void setNameDynamically() {
-		if (isUseDynamicName()) {
-			String value = getDynamicName().get();
-			if (value != null && !value.equals("")) {
-				addAttribute(AbstractOrganizableObject.NAME, value);
-			}
-		}
 	}
 
 	public void deepCleanupAllCustomAttributes() {

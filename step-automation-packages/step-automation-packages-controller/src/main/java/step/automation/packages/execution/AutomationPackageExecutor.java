@@ -75,7 +75,7 @@ public class AutomationPackageExecutor {
     }
 
     public List<String> runInIsolation(InputStream automationPackage, String fileName, AutomationPackageExecutionParameters parameters,
-                                       ObjectEnricher objectEnricher, String userName, ObjectPredicate objectPredicate) {
+                                       ObjectEnricher objectEnricher, ObjectPredicate objectPredicate) {
         ObjectId contextId = new ObjectId();
 
         // prepare the isolated in-memory automation package manager with the only one automation package
@@ -102,10 +102,6 @@ public class AutomationPackageExecutor {
 
                     params.setRepositoryObject(new RepositoryObjectReference(IsolatedAutomationPackageRepositoryPlugin.ISOLATED_AUTOMATION_PACKAGE, repositoryParameters));
                     params.setDescription(CommonExecutionParameters.defaultDescription(plan));
-
-                    if (userName != null) {
-                        params.setUserID(userName);
-                    }
 
                     // for instance, set the project for multitenant application
                     if (objectEnricher != null) {

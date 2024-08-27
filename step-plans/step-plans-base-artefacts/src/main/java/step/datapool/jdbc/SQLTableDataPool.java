@@ -40,6 +40,9 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 
 	protected static Logger logger = LoggerFactory.getLogger(SQLTableDataPool.class);
 
+	protected static final Pattern TABLENAME_PATTERN = Pattern.compile("(^|\\s)select.+?from (\\S+)(\\s|$)", Pattern.CASE_INSENSITIVE);
+
+
 	private Connection conn1;
 	private Statement smt;
 	private ResultSet rs = null;
@@ -58,30 +61,55 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 	public SQLTableDataPool(SQLTableDataPoolConfiguration configuration){
 		super(configuration);
 
-		this.jdbc_url = configuration.getConnectionString().get();
-		this.db_user =  configuration.getUser().get();
-		this.db_pwd = configuration.getPassword().get();
 		this.driver_class =  configuration.getDriverClass().get();
-		this.writePKey = configuration.getWritePKey().get();
-
-		this.query = configuration.getQuery().get();
-		this.table = parseQueryForTable(this.query);
-
 		try {
 			Class.forName(driver_class);
 		} catch (ClassNotFoundException e) {
 			logger.error("Could not load jdbc driver for class:" + driver_class, e);
 			throw new RuntimeException("Could not load jdbc driver for class:" + driver_class +", Underlying exception message:" + e.getMessage());
 		}
+
+		this.jdbc_url = configuration.getConnectionString().get();
+		this.db_user =  configuration.getUser().get();
+		this.db_pwd = configuration.getPassword().get();
+		this.writePKey = configuration.getWritePKey().get();
+
+		this.query = configuration.getQuery().get();
+
+		// If we want to be able to write to the DB, we need a bit more preparation
+		if (configuration.getForWrite().get()) {
+			if (this.writePKey != null) {
+				String table = findTableNameInQuery(this.query);
+				if (table != null) {
+					this.table = table;
+				} else {
+					logger.warn("Could not determine table name from SQL query, DataSet will not be updatable:" + query);
+				}
+			} else {
+				logger.warn("DataSet is configured for writing, but does not specify a primary key. DataSet will not be updatable.");
+			}
+		}
 	}
 
-	private static String parseQueryForTable(String query) {
-		Pattern p = Pattern.compile("(^|\\s)select.+?from (.+?)(\\s|$)", Pattern.CASE_INSENSITIVE);
-		Matcher m = p.matcher(query);
-		if((!m.find()) || (m.groupCount() <3))
-			throw new RuntimeException("Could not parse query :" + query);
-		else
+	private static String findTableNameInQuery(String query) {
+		/* SQL queries can be arbitrarily complex, and this pattern will simply find the next "word" following
+		 a "SELECT... FROM ". This is not guaranteed to always be (semantically) correct, as it can be misled in multiple ways,
+		 e.g. it would also interpret "table1,table2" as a single table name, or it could interpret only a part
+		 of the query (e.g. FROM table1 JOIN table2 ON...). But it's impossible to really tell without
+		 having a full-blown SQL parser. One could also think about validating the found name by looking it up in the
+		 DB Metadata, but (a) this can only be done after a connection is established, and (b) there are still many
+		 possible variants (with/without schema, with/without quotes,....) which all differ slightly between DBMSs,
+		 and correctly supporting all the special cases would be a major task by itself.
+		 All of this is only relevant if the user marks the DataSet as "for update" anyway, so we assume that they
+		 are using "compatible" queries in that case.
+		*/
+		Matcher m = TABLENAME_PATTERN.matcher(query);
+		if((!m.find()) || (m.groupCount() <3)) {
+			return null;
+		}
+		else {
 			return m.group(2);
+		}
 	}
 
 	public void connect(){
@@ -95,7 +123,6 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 			logger.error("Could not connect to the following datapool db :" + jdbc_url + " with user \'" + db_user + "\'", e);
 			throw new RuntimeException("Could not connect to the following datapool db :" + jdbc_url + " with user \'" + db_user + "\', Underlying exception message:" + e.getMessage());
 		}
-
 	}
 
 	@Override
@@ -186,6 +213,11 @@ public class SQLTableDataPool extends DataSet<SQLTableDataPoolConfiguration> {
 		public String put(String key, String value){
 			String sql = null;
 			Statement update = null;
+			if (table == null) {
+				String msg = "Unable to update DataSet because table name could not be determined";
+				logger.error(msg);
+				throw new RuntimeException(msg);
+			}
 			if(pkValue!=null) {
 				if(pkValue instanceof String)
 					sql = "UPDATE "+table+" SET "+ key +" = \'"+ value + "\' WHERE "+ writePKey + " = '" + pkValue + "'";
