@@ -44,14 +44,20 @@ public class IsolatedAutomationPackageRepositoryPlugin extends AbstractControlle
     public static final String ISOLATED_AP_HOUSEKEEPING_ENABLED = "isolated_ap_housekeeping_enabled";
     public static final String ISOLATED_AP_HOUSEKEEPING_JOB_CRON = "isolated_ap_housekeeping_job_cron";
     public static final String ISOLATED_AP_HOUSEKEEPING_TTL = "isolated_ap_housekeeping_ttl";
+    private ControllerSettingAccessor controllerSettingAccessor;
 
     @Override
     public void initializeData(GlobalContext context) throws Exception {
         super.initializeData(context);
 
         // settings
-        ControllerSettingAccessor controllerSettingAccessor = context.require(ControllerSettingAccessor.class);
+         controllerSettingAccessor = context.require(ControllerSettingAccessor.class);
         createIsolatedApControllerSettingsIfNecessary(context);
+    }
+
+    @Override
+    public void afterInitializeData(GlobalContext context) throws Exception {
+        super.afterInitializeData(context);
 
         // repository
         IsolatedAutomationPackageRepository isolatedApRepository = new IsolatedAutomationPackageRepository(
@@ -74,12 +80,6 @@ public class IsolatedAutomationPackageRepositoryPlugin extends AbstractControlle
                 isolatedApRepository
         );
         context.put(AutomationPackageExecutor.class, packageExecutor);
-
-    }
-
-    @Override
-    public void afterInitializeData(GlobalContext context) throws Exception {
-        super.afterInitializeData(context);
 
         // register cleanup job
         HousekeepingJobsManager housekeepingJobsManager = context.require(HousekeepingJobsManager.class);
