@@ -37,7 +37,7 @@ public class DefaultTokenAutoscalingDriver implements TokenAutoscalingDriver {
     }
 
     @Override
-    public void executeTokenProvisioningRequest(String provisioningRequestId) {
+    public TokenProvisioningStatus executeTokenProvisioningRequest(String provisioningRequestId) {
         TokenProvisioningRequest tokenProvisioningRequest = provisioningRequest.get(provisioningRequestId);
         TokenProvisioningStatus tokenProvisioningStatus = provisioningStatus.get(provisioningRequestId);
 
@@ -56,6 +56,7 @@ public class DefaultTokenAutoscalingDriver implements TokenAutoscalingDriver {
             tokenProvisioningStatus.completed = true;
         }
 
+        return tokenProvisioningStatus;
     }
 
     private static void sleep() {

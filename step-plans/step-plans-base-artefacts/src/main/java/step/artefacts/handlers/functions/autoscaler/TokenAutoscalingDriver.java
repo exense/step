@@ -20,9 +20,11 @@ public interface TokenAutoscalingDriver {
     /**
      * Performs the provisioning request identified by the provided id and
      * previously initialized by initializeTokenProvisioningRequest
+     *
      * @param provisioningRequestId the unique id of the request
+     * @return the last status of the provisioning request
      */
-    void executeTokenProvisioningRequest(String provisioningRequestId);
+    TokenProvisioningStatus executeTokenProvisioningRequest(String provisioningRequestId);
 
     /**
      * Returns the status of the provisioning request identified by the provided id

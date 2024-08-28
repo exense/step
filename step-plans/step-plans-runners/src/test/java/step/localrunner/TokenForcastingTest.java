@@ -304,8 +304,8 @@ public class TokenForcastingTest {
 		}
 
 		@Override
-		public void executeTokenProvisioningRequest(String provisioningRequestId) {
-
+		public TokenProvisioningStatus executeTokenProvisioningRequest(String provisioningRequestId) {
+			return new TokenProvisioningStatus();
 		}
 
 		@Override
