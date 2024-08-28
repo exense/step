@@ -113,6 +113,9 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
         if (current == null) {
             // Here we resolve the original AP file used for previous isolated execution and re-use it to create the execution context
             Resource resource = getResource(contextId, apName);
+            if (resource == null) {
+                throw new AutomationPackageManagerException("The requested Automation Package file has been removed by the housekeeping (package name '" + apName + "' and execution context " + contextId + ")");
+            }
 
             File apFile = null;
 
@@ -208,13 +211,18 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
         PackageExecutionContext ctx = null;
 
         try {
-            ctx = getOrRestorePackageExecutionContext(repositoryParameters, context.getObjectEnricher(), context.getObjectPredicate());
+            ImportResult result = new ImportResult();
+            try {
+                ctx = getOrRestorePackageExecutionContext(repositoryParameters, context.getObjectEnricher(), context.getObjectPredicate());
+            } catch (AutomationPackageManagerException e) {
+                result.setErrors(List.of(e.getMessage()));
+                return result;
+            }
             AutomationPackage automationPackage = ctx.getAutomationPackage();
 
             // PLAN_NAME but not PLAN_ID is used, because plan id is not persisted for isolated execution
             // (it is impossible to re-run the execution by plan id)
             String planName = repositoryParameters.get(PLAN_NAME);
-            ImportResult result = new ImportResult();
 
             AutomationPackageManager apManager = ctx.getInMemoryManager();
             Plan plan = apManager.getPackagePlans(automationPackage.getId())
