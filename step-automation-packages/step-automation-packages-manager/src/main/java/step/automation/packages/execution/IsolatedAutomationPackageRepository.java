@@ -173,7 +173,8 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
         log.info("Cleanup outdated automation packages...");
         String ttlString = ttlValueSupplier.get();
 
-        Duration ttlDuration = Duration.parse(ttlString);
+        long ttlDurationMs = Long.parseLong(ttlString);
+        Duration ttlDuration = Duration.ofMillis(ttlDurationMs);
         OffsetDateTime minExecutionTime = OffsetDateTime.now().minus(ttlDuration);
 
         List<Resource> foundResources = resourceManager.findManyByCriteria(

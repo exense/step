@@ -34,6 +34,7 @@ import step.core.scheduler.housekeeping.HousekeepingJobsManager;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.type.FunctionTypeRegistry;
 
+import java.time.Duration;
 import java.util.function.Supplier;
 
 @Plugin(dependencies = {AutomationPackagePlugin.class, SchedulerPlugin.class})
@@ -114,7 +115,7 @@ public class IsolatedAutomationPackageRepositoryPlugin extends AbstractControlle
 
     protected void createIsolatedApControllerSettingsIfNecessary(GlobalContext context) {
         createSettingIfNotExisting(context, ISOLATED_AP_HOUSEKEEPING_ENABLED, "true");
-        createSettingIfNotExisting(context, ISOLATED_AP_HOUSEKEEPING_TTL, "P1D");
+        createSettingIfNotExisting(context, ISOLATED_AP_HOUSEKEEPING_TTL, Long.toString(Duration.ofDays(1).toMillis()));
         createSettingIfNotExisting(context, ISOLATED_AP_HOUSEKEEPING_JOB_CRON, "0 8 * * * ?");
     }
 
