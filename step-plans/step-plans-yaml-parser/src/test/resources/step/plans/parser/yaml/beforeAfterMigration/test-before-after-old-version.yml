@@ -92,6 +92,9 @@ root:
                 text:
                   expression: "var2"
           continueOnError: false
+      - performanceAssert:
+          measurementName: simpleTestKeyword
+          expectedValue: 10000
     users: 1
     iterations: 1
     startOffset: 0

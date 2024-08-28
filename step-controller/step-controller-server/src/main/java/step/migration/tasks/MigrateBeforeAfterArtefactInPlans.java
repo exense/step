@@ -22,6 +22,7 @@ import step.core.Version;
 import step.core.collections.*;
 import step.migration.MigrationContext;
 import step.migration.MigrationTask;
+import step.plans.parser.yaml.migrations.AfterBeforeYamlMigrationTask;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +43,7 @@ public class MigrateBeforeAfterArtefactInPlans extends MigrationTask {
 	public static final String ARTEFACT_AFTER_SEQUENCE = "AfterSequence";
 	public static final String ARTEFACT_BEFORE_THREAD = "BeforeThread";
 	public static final String ARTEFACT_AFTER_THREAD = "AfterThread";
+	public static final String ARTEFACT_PERFORMANCE_ASSERT = "PerformanceAssert";
 	private final Collection<Document> planCollection;
 
 	public MigrateBeforeAfterArtefactInPlans(CollectionFactory collectionFactory, MigrationContext migrationContext) {
@@ -91,6 +93,7 @@ public class MigrateBeforeAfterArtefactInPlans extends MigrationTask {
 			moveToParentSource(artifact, children, ARTEFACT_AFTER_SEQUENCE, ARTEFACT_AFTER_PROPERTY);
 			moveToParentSource(artifact, children, ARTEFACT_BEFORE_THREAD, ARTEFACT_BEFORE_THREAD_PROPERTY);
 			moveToParentSource(artifact, children, ARTEFACT_AFTER_THREAD, ARTEFACT_AFTER_THREAD_PROPERTY);
+			moveToParentSource(artifact, children, ARTEFACT_PERFORMANCE_ASSERT, ARTEFACT_AFTER_PROPERTY, false);
 			//getArray return a copy, we must explicitly set it back
 			artifact.put(ARTEFACT_CHILDREN, children);
 			//Process children recursively
@@ -101,25 +104,26 @@ public class MigrateBeforeAfterArtefactInPlans extends MigrationTask {
 	}
 
 	private void moveToParentSource(DocumentObject sourceArtifactProperties, List<DocumentObject> sourceChildren, String fromArtefactKey, String toPropertyKey) {
+		moveToParentSource(sourceArtifactProperties, sourceChildren, fromArtefactKey, toPropertyKey, true);
+	}
+
+	private void moveToParentSource(DocumentObject sourceArtifactProperties, List<DocumentObject> sourceChildren, String fromArtefactKey, String toPropertyKey, boolean moveChildrenOnly) {
 		List<DocumentObject> fromArray = sourceChildren.stream().filter(child -> fromArtefactKey.equals(child.getString("_class"))).collect(Collectors.toList());
 		for (DocumentObject artifact: fromArray) {
-			List<DocumentObject> innerChildren = artifact.getArray(ARTEFACT_CHILDREN);
-			if (innerChildren != null && !innerChildren.isEmpty()) {
-				DocumentObject toProperty = sourceArtifactProperties.getObject(toPropertyKey);
-				if (toProperty == null) {
-					toProperty = new DocumentObject();
-					toProperty.put("continueOnError", artifact.getObject("continueOnError"));
-					sourceArtifactProperties.put(toPropertyKey, toProperty);
+			if (moveChildrenOnly) {
+				//This case is used for legacy beforeSequence... artefacts, we move their children to the corresponding source property (i.e. new before property)
+				List<DocumentObject> innerChildren = artifact.getArray(ARTEFACT_CHILDREN);
+				if (innerChildren != null && !innerChildren.isEmpty()) {
+					List<DocumentObject> toSteps = getOrInitPropertySteps(sourceArtifactProperties, artifact.getObject("continueOnError"), toPropertyKey);
+					toSteps.addAll(innerChildren);
+					//Also process children of legacy before,after Sequence,thread recursively
+					moveToParentSource(artifact, innerChildren, fromArtefactKey, toPropertyKey);
 				}
-				List<DocumentObject> toSteps = toProperty.getArray("steps");
-				if (toSteps == null) {
-					toSteps = new ArrayList<>();
-					toProperty.put("steps", toSteps);
-				}
-				toSteps.addAll(innerChildren);
-				toProperty.put(STEPS, toSteps);
-				//Also process children of legacy before,after Sequence,thread recursively
-				moveToParentSource(artifact, innerChildren, fromArtefactKey, toPropertyKey);
+			} else {
+				//This case is used for instance for PerformanceAssert artefact moved from children to the after children block property
+				//Add this children artefact directly to the source property 'toPropertyKey', if the target property is not yet defined use false as default for continueOnError
+				List<DocumentObject> toSteps = getOrInitPropertySteps(sourceArtifactProperties, false, toPropertyKey);
+				toSteps.add(artifact);
 			}
 		}
 		sourceChildren.removeAll(fromArray);

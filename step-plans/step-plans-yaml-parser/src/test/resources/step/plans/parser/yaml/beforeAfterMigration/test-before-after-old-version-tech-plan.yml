@@ -385,6 +385,60 @@
         "value": false
       }
     },
+    "after": {
+      "continueOnError": {
+        "dynamic": false,
+        "value": false
+      },
+      "steps": [
+        {
+          "_class": "PerformanceAssert",
+          "aggregator": "AVG",
+          "attributes": {
+            "name": "PerformanceAssert"
+          },
+          "children": [
+          ],
+          "comparator": "LOWER_THAN",
+          "continueParentNodeExecutionOnError": {
+            "dynamic": false,
+            "value": false
+          },
+          "dynamicName": {
+            "dynamic": false,
+            "expression": "",
+            "value": ""
+          },
+          "expectedValue": {
+            "dynamic": false,
+            "value": 10000
+          },
+          "filters": [
+            {
+              "field": {
+                "dynamic": false,
+                "value": "name"
+              },
+              "filter": {
+                "dynamic": false,
+                "value": "simpleTestKeyword"
+              },
+              "filterType": "EQUALS"
+            }
+          ],
+          "id": "644fbe4e38a61e07cc3a4df8",
+          "instrumentNode": {
+            "dynamic": false,
+            "value": false
+          },
+          "skipNode": {
+            "dynamic": false,
+            "value": false
+          },
+          "useDynamicName": false
+        }
+      ]
+    },
     "id": "644fbe4e38a61e07cc3a4df8"
   },
   "visible": true,

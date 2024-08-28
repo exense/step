@@ -29,7 +29,6 @@ public class TestCaseHandler extends AbstractSessionArtefactHandler<TestCase, Re
 	
 	@Override
 	public void createReportSkeleton_(ReportNode node, TestCase testArtefact) {
-		addTestCaseNameToCustomAttributes(testArtefact);
 		createReportNodeSkeletonInSession(testArtefact, node, (sessionArtefact, sessionReportNode)->{
 			SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
 			scheduler.createReportSkeleton_(sessionReportNode, sessionArtefact);
@@ -53,6 +52,7 @@ public class TestCaseHandler extends AbstractSessionArtefactHandler<TestCase, Re
 
 	@Override
 	public ReportNode createReportNode_(ReportNode parentNode, TestCase testArtefact) {
+		addTestCaseNameToCustomAttributes(testArtefact);
 		return new TestCaseReportNode();
 	}
 

@@ -13,6 +13,9 @@ root:
       steps:
         - echo:
             text: "After the whole threadgroup"
+        - performanceAssert:
+            measurementName: simpleTestKeyword
+            expectedValue: 10000
     beforeThread:
       steps:
         - set:

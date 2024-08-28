@@ -435,6 +435,69 @@
         "expression" : null,
         "expressionType" : null
       }
+    },
+    "after" : {
+      "steps" : [ {
+        "_class" : "PerformanceAssert",
+        "customFields" : null,
+        "attributes" : {
+          "name" : "PerformanceAssert"
+        },
+        "dynamicName" : {
+          "dynamic" : false,
+          "value" : "",
+          "expression" : "",
+          "expressionType" : null
+        },
+        "useDynamicName" : false,
+        "description" : null,
+        "children" : [ ],
+        "customAttributes" : null,
+        "attachments" : null,
+        "skipNode" : {
+          "dynamic" : false,
+          "value" : false,
+          "expression" : null,
+          "expressionType" : null
+        },
+        "instrumentNode" : {
+          "dynamic" : false,
+          "value" : false,
+          "expression" : null,
+          "expressionType" : null
+        },
+        "continueParentNodeExecutionOnError" : {
+          "dynamic" : false,
+          "value" : false,
+          "expression" : null,
+          "expressionType" : null
+        },
+        "filters" : [ {
+          "field" : {
+            "dynamic" : false,
+            "value" : "name",
+            "expression" : "",
+            "expressionType" : ""
+          },
+          "filter" : {
+            "dynamic" : false,
+            "value" : "Echo",
+            "expression" : "",
+            "expressionType" : ""
+          },
+          "filterType" : "EQUALS"
+        } ],
+        "aggregator" : "AVG",
+        "comparator" : "LOWER_THAN",
+        "expectedValue" : {
+          "dynamic" : false,
+          "value" : 3000,
+          "expression" : null,
+          "expressionType" : null
+        },
+        "id" : "66ced9b0c66055117d1b7ed8"
+      } ],
+      "continueOnError" : false
     }
   },
   "attributes" : {

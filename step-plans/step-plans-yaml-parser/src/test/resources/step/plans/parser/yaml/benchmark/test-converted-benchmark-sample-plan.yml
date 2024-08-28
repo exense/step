@@ -1,5 +1,5 @@
 ---
-version: "1.0.0"
+version: "1.1.0"
 name: "Performance assert example"
 root:
   testCase:
@@ -26,11 +26,14 @@ root:
           item: "gcounter"
           localItem: "literationId"
           userItem: "userId"
-      - performanceAssert:
-          skipNode: false
-          instrumentNode: false
-          continueParentNodeExecutionOnError: false
-          measurementName: "Buy MacBook in OpenCart"
-          aggregator: "AVG"
-          comparator: "LOWER_THAN"
-          expectedValue: 10000
+    after:
+      continueOnError: false
+      steps:
+        - performanceAssert:
+            skipNode: false
+            instrumentNode: false
+            continueParentNodeExecutionOnError: false
+            measurementName: "Buy MacBook in OpenCart"
+            aggregator: "AVG"
+            comparator: "LOWER_THAN"
+            expectedValue: 10000

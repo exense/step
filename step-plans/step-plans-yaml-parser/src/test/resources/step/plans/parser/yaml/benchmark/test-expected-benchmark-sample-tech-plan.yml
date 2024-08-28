@@ -93,38 +93,43 @@ root:
         dynamic: false
         value: "userId"
       id: "644fbe4e38a61e07cc3a4df8"
-    - _class: "PerformanceAssert"
-      attributes:
-        name: "PerformanceAssert"
-      dynamicName:
-        dynamic: false
-        value: ""
-        expression: ""
-      useDynamicName: false
-      children: []
-      skipNode:
-        dynamic: false
-        value: false
-      instrumentNode:
-        dynamic: false
-        value: false
-      continueParentNodeExecutionOnError:
-        dynamic: false
-        value: false
-      filters:
-        - field:
-            dynamic: false
-            value: "name"
-          filter:
-            dynamic: false
-            value: "Buy MacBook in OpenCart"
-          filterType: "EQUALS"
-      aggregator: "AVG"
-      comparator: "LOWER_THAN"
-      expectedValue:
-        dynamic: false
-        value: 10000
-      id: "644fbe4e38a61e07cc3a4df8"
+  after:
+    "continueOnError":
+      "dynamic": false
+      "value": false
+    steps:
+      - _class: "PerformanceAssert"
+        attributes:
+          name: "PerformanceAssert"
+        dynamicName:
+          dynamic: false
+          value: ""
+          expression: ""
+        useDynamicName: false
+        children: [ ]
+        skipNode:
+          dynamic: false
+          value: false
+        instrumentNode:
+          dynamic: false
+          value: false
+        continueParentNodeExecutionOnError:
+          dynamic: false
+          value: false
+        filters:
+          - field:
+              dynamic: false
+              value: "name"
+            filter:
+              dynamic: false
+              value: "Buy MacBook in OpenCart"
+            filterType: "EQUALS"
+        aggregator: "AVG"
+        comparator: "LOWER_THAN"
+        expectedValue:
+          dynamic: false
+          value: 10000
+        id: "644fbe4e38a61e07cc3a4df8"
   skipNode:
     dynamic: false
     value: false
