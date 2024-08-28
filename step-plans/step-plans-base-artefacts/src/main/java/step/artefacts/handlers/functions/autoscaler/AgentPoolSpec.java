@@ -9,6 +9,7 @@ import java.util.Set;
 public class AgentPoolSpec {
 
     public String name;
+    public String displayName;
     public Map<String, String> attributes;
     public int numberOfTokens;
     public Set<AgentPoolProvisioningParameter> supportedProvisioningParameters;
@@ -21,7 +22,12 @@ public class AgentPoolSpec {
     }
 
     public AgentPoolSpec(String name, Map<String, String> attributes, int numberOfTokens, Set<AgentPoolProvisioningParameter> supportedProvisioningParameters) {
+        this(name, name, attributes, numberOfTokens, supportedProvisioningParameters);
+    }
+
+    public AgentPoolSpec(String name, String displayName, Map<String, String> attributes, int numberOfTokens, Set<AgentPoolProvisioningParameter> supportedProvisioningParameters) {
         this.name = name;
+        this.displayName = displayName;
         this.attributes = attributes;
         this.numberOfTokens = numberOfTokens;
         this.supportedProvisioningParameters = supportedProvisioningParameters;

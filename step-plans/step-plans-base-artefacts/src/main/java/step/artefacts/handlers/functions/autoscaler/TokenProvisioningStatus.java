@@ -1,9 +1,12 @@
 package step.artefacts.handlers.functions.autoscaler;
 
+import java.util.Map;
+
 public class TokenProvisioningStatus {
 
     public String statusDescription;
-    public int tokenCountStarted;
-    public int tokenCountTarget;
     public boolean completed = false;
+
+    public TokenProvisioningError error;
+    public Map<String, AgentProvisioningLog> provisioningLogs;
 }

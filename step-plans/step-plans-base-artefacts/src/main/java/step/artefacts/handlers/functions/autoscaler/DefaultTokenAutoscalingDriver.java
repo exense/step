@@ -12,7 +12,8 @@ import static step.artefacts.handlers.functions.autoscaler.AgentPoolProvisioning
 public class DefaultTokenAutoscalingDriver implements TokenAutoscalingDriver {
 
     private final ExecutorService executorService = Executors.newCachedThreadPool();
-    private final Map<String, TokenProvisioningStatus> provisioningRequest = new ConcurrentHashMap<>();
+    private final Map<String, TokenProvisioningRequest> provisioningRequest = new ConcurrentHashMap<>();
+    private final Map<String, TokenProvisioningStatus> provisioningStatus = new ConcurrentHashMap<>();
 
     public DefaultTokenAutoscalingDriver(Configuration configuration) {
 
@@ -30,33 +31,31 @@ public class DefaultTokenAutoscalingDriver implements TokenAutoscalingDriver {
         String provisioningId = UUID.randomUUID().toString();
         TokenProvisioningStatus status = new TokenProvisioningStatus();
         status.statusDescription = "Provisioning tokens... (MOCK)";
-        provisioningRequest.put(provisioningId, status);
+        provisioningRequest.put(provisioningId, request);
+        provisioningStatus.put(provisioningId, status);
         return provisioningId;
     }
 
     @Override
     public void executeTokenProvisioningRequest(String provisioningRequestId) {
-        TokenProvisioningStatus tokenProvisioningStatus = provisioningRequest.get(provisioningRequestId);
+        TokenProvisioningRequest tokenProvisioningRequest = provisioningRequest.get(provisioningRequestId);
+        TokenProvisioningStatus tokenProvisioningStatus = provisioningStatus.get(provisioningRequestId);
 
-        if (tokenProvisioningStatus.tokenCountTarget > 1000) {
-            throw new RuntimeException("Unable to provision more than 1000 tokens");
-        } else {
-            Future<?> future = executorService.submit(() -> {
-                for (int i = 0; i <= tokenProvisioningStatus.tokenCountTarget; i++) {
-                    sleep();
-                    tokenProvisioningStatus.tokenCountStarted = i;
-                }
-            });
-            try {
-                future.get();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            } catch (ExecutionException e) {
-                throw new RuntimeException(e);
-            } finally {
-                tokenProvisioningStatus.completed = true;
+        Future<?> future = executorService.submit(() -> {
+            for (int i = 0; i <= tokenProvisioningRequest.agentPoolRequirementSpecs.size(); i++) {
+                sleep();
             }
+        });
+        try {
+            future.get();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
+        } finally {
+            tokenProvisioningStatus.completed = true;
         }
+
     }
 
     private static void sleep() {
@@ -75,6 +74,6 @@ public class DefaultTokenAutoscalingDriver implements TokenAutoscalingDriver {
 
     @Override
     public TokenProvisioningStatus getTokenProvisioningStatus(String provisioningRequestId) {
-        return provisioningRequest.get(provisioningRequestId);
+        return provisioningStatus.get(provisioningRequestId);
     }
 }
