@@ -18,6 +18,9 @@
  ******************************************************************************/
 package step.core.scheduler;
 
+import org.quartz.SchedulerException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.core.GlobalContext;
 import step.core.collections.Collection;
 import step.core.controller.ControllerSettingAccessor;
@@ -26,17 +29,18 @@ import step.core.deployment.ObjectHookControllerPlugin;
 import step.core.entities.EntityManager;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
+import step.core.scheduler.housekeeping.HousekeepingJobsManager;
 import step.framework.server.tables.Table;
 import step.framework.server.tables.TableRegistry;
-import step.plugins.screentemplating.*;
-
-import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
+import step.plugins.screentemplating.ScreenTemplatePlugin;
 
 @Plugin(dependencies= {ScreenTemplatePlugin.class, ControllerSettingPlugin.class, ObjectHookControllerPlugin.class})
 public class SchedulerPlugin extends AbstractControllerPlugin {
 
+	private static final Logger logger = LoggerFactory.getLogger(SchedulerPlugin.class);
+
 	private ControllerSettingAccessor controllerSettingAccessor;
+	private HousekeepingJobsManager housekeepingJobsManager;
 
 	@Override
 	public void serverStart(GlobalContext context) throws Exception {
@@ -45,6 +49,9 @@ public class SchedulerPlugin extends AbstractControllerPlugin {
 				ExecutiontTaskParameters.class);
 		context.get(TableRegistry.class).register(EntityManager.tasks, new Table<>(collectionDriver, "task-read", true));
 
+		this.housekeepingJobsManager = new HousekeepingJobsManager(context.getConfiguration(), controllerSettingAccessor);
+		context.put(HousekeepingJobsManager.class, housekeepingJobsManager);
+		housekeepingJobsManager.start();
 	}
 
 	@Override
@@ -65,7 +72,14 @@ public class SchedulerPlugin extends AbstractControllerPlugin {
 
 	@Override
 	public void serverStop(GlobalContext context) {
-
+		super.serverStop(context);
+		try {
+			if (housekeepingJobsManager != null) {
+				housekeepingJobsManager.shutdown();
+			}
+		} catch (SchedulerException e) {
+			logger.error("Unable to stop the housekeeping jobs scheduler",e);
+		}
 	}
 
 	protected void createSchedulerSettingsIfNecessary(GlobalContext context) {
