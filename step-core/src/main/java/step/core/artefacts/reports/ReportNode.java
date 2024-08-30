@@ -39,6 +39,7 @@ public class ReportNode extends AbstractIdentifiableObject {
 	protected String name;
 	protected String executionID;
 	protected ObjectId artefactID;
+	protected String artefactHash;
 	protected long executionTime;
 	protected Integer duration;
 	protected List<AttachmentMeta> attachments = new ArrayList<>();
@@ -90,7 +91,15 @@ public class ReportNode extends AbstractIdentifiableObject {
 	public void setArtefactID(ObjectId artefactID) {
 		this.artefactID = artefactID;
 	}
-	
+
+	public String getArtefactHash() {
+		return artefactHash;
+	}
+
+	public void setArtefactHash(String artefactHash) {
+		this.artefactHash = artefactHash;
+	}
+
 	public long getExecutionTime() {
 		return executionTime;
 	}

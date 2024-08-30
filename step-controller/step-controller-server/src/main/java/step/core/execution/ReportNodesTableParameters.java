@@ -4,7 +4,7 @@ import step.framework.server.tables.service.TableParameters;
 
 import java.util.List;
 
-public class LeafReportNodesTableParameters extends TableParameters {
+public class ReportNodesTableParameters extends TableParameters {
 	private String eid;
 	private List<String> testcases;
 
