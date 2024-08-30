@@ -25,8 +25,10 @@ import jakarta.inject.Singleton;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import org.bson.types.ObjectId;
+import step.automation.packages.execution.AutomationPackageExecutor;
 import step.controller.services.async.AsyncTaskStatus;
 import step.core.access.User;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.aggregated.AggregatedReportView;
 import step.core.artefacts.reports.aggregated.AggregatedReportViewBuilder;
@@ -36,6 +38,7 @@ import step.core.deployment.ControllerServiceException;
 import step.core.deployment.FindByCriteraParam;
 import step.core.entities.EntityManager;
 import step.core.execution.model.*;
+import step.core.repositories.RepositoryObjectManager;
 import step.core.repositories.RepositoryObjectReference;
 import step.framework.server.Session;
 import step.framework.server.security.Secured;
@@ -43,10 +46,7 @@ import step.framework.server.tables.service.TableService;
 import step.framework.server.tables.service.bulk.TableBulkOperationReport;
 import step.framework.server.tables.service.bulk.TableBulkOperationRequest;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -57,9 +57,8 @@ import java.util.stream.Stream;
 public class ExecutionServices extends AbstractStepAsyncServices {
 
 	protected ExecutionAccessor executionAccessor;
-
 	private TableService tableService;
-	
+
 	@PostConstruct
 	public void init() throws Exception {
 		super.init();
@@ -72,7 +71,7 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.TEXT_PLAIN)
 	@Path("/start")
-	@Secured(right="plan-execute")
+	@Secured(right = "plan-execute")
 	public String execute(ExecutionParameters executionParams) {
 		checkRightsOnBehalfOf("plan-execute", executionParams.getUserID());
 		applyUserIdFromSessionIfNotSpecified(executionParams);
