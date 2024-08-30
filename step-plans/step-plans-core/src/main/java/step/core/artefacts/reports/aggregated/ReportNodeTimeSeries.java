@@ -7,8 +7,6 @@ import step.core.collections.filters.And;
 import step.core.timeseries.TimeSeries;
 import step.core.timeseries.TimeSeriesBuilder;
 import step.core.timeseries.TimeSeriesCollection;
-import step.core.timeseries.aggregation.TimeSeriesAggregationPipeline;
-import step.core.timeseries.aggregation.TimeSeriesAggregationQuery;
 import step.core.timeseries.aggregation.TimeSeriesAggregationQueryBuilder;
 import step.core.timeseries.bucket.Bucket;
 import step.core.timeseries.bucket.BucketAttributes;
@@ -26,9 +24,8 @@ public class ReportNodeTimeSeries implements Closeable {
     public static final String ARTEFACT_HASH = "artefactHash";
     public static final String EXECUTION_ID = "executionId";
     public static final String STATUS = "status";
-    private  TimeSeriesIngestionPipeline timeSeriesIngestionPipeline;
-    private  TimeSeriesAggregationPipeline aggregationPipeline;
     private final TimeSeries timeSeries;
+    private final TimeSeriesIngestionPipeline ingestionPipeline;
 
     public ReportNodeTimeSeries(CollectionFactory collectionFactory) {
         Collection<Bucket> collection = collectionFactory.getCollection("reportNodeTimeSeries", Bucket.class);
@@ -37,12 +34,17 @@ public class ReportNodeTimeSeries implements Closeable {
         timeSeries = new TimeSeriesBuilder()
                 .registerCollection(tsCollection)
                 .build();
+        ingestionPipeline = timeSeries.getIngestionPipeline();
         timeSeries.createIndexes(Set.of(new IndexField(EXECUTION_ID, Order.ASC, String.class)));
+    }
+
+    public TimeSeries getTimeSeries() {
+        return timeSeries;
     }
 
     public void ingestReportNode(ReportNode reportNode) {
         ReportNodeStatus status = reportNode.getStatus();
-        timeSeriesIngestionPipeline.ingestPoint(new BucketAttributes(Map.of(EXECUTION_ID, reportNode.getExecutionID(), ARTEFACT_HASH, reportNode.getArtefactHash(), STATUS, status.toString())), System.currentTimeMillis(), 1);
+        ingestionPipeline.ingestPoint(new BucketAttributes(Map.of(EXECUTION_ID, reportNode.getExecutionID(), ARTEFACT_HASH, reportNode.getArtefactHash(), STATUS, status.toString())), System.currentTimeMillis(), 1);
     }
 
     public static class Range {
@@ -67,6 +69,6 @@ public class ReportNodeTimeSeries implements Closeable {
 
     @Override
     public void close() throws IOException {
-        timeSeriesIngestionPipeline.close();
+        timeSeries.getIngestionPipeline().close();
     }
 }
