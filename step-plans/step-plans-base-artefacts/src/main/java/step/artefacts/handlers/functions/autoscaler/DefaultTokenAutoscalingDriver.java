@@ -1,6 +1,6 @@
 package step.artefacts.handlers.functions.autoscaler;
 
-import ch.exense.commons.app.Configuration;
+import step.core.AbstractContext;
 
 import java.util.Map;
 import java.util.Set;
@@ -15,7 +15,7 @@ public class DefaultTokenAutoscalingDriver implements TokenAutoscalingDriver {
     private final Map<String, TokenProvisioningRequest> provisioningRequest = new ConcurrentHashMap<>();
     private final Map<String, TokenProvisioningStatus> provisioningStatus = new ConcurrentHashMap<>();
 
-    public DefaultTokenAutoscalingDriver(Configuration configuration) {
+    public DefaultTokenAutoscalingDriver(AbstractContext context) {
 
     }
 
