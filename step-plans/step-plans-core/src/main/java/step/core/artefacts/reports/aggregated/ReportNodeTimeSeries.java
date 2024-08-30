@@ -2,16 +2,17 @@ package step.core.artefacts.reports.aggregated;
 
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
-import step.core.collections.CollectionFactory;
-import step.core.collections.Filters;
-import step.core.collections.IndexField;
-import step.core.collections.Order;
+import step.core.collections.*;
 import step.core.collections.filters.And;
 import step.core.timeseries.TimeSeries;
-import step.core.timeseries.TimeSeriesIngestionPipeline;
+import step.core.timeseries.TimeSeriesBuilder;
+import step.core.timeseries.TimeSeriesCollection;
 import step.core.timeseries.aggregation.TimeSeriesAggregationPipeline;
+import step.core.timeseries.aggregation.TimeSeriesAggregationQuery;
 import step.core.timeseries.aggregation.TimeSeriesAggregationQueryBuilder;
+import step.core.timeseries.bucket.Bucket;
 import step.core.timeseries.bucket.BucketAttributes;
+import step.core.timeseries.ingestion.TimeSeriesIngestionPipeline;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -25,15 +26,18 @@ public class ReportNodeTimeSeries implements Closeable {
     public static final String ARTEFACT_HASH = "artefactHash";
     public static final String EXECUTION_ID = "executionId";
     public static final String STATUS = "status";
-    private final TimeSeriesIngestionPipeline timeSeriesIngestionPipeline;
-    private final TimeSeriesAggregationPipeline aggregationPipeline;
+    private  TimeSeriesIngestionPipeline timeSeriesIngestionPipeline;
+    private  TimeSeriesAggregationPipeline aggregationPipeline;
+    private final TimeSeries timeSeries;
 
     public ReportNodeTimeSeries(CollectionFactory collectionFactory) {
-        TimeSeries reportNodeTimeSeries = new TimeSeries(collectionFactory, "reportNodeTimeSeries", 60000);
-        timeSeriesIngestionPipeline = reportNodeTimeSeries.newIngestionPipeline(10);
-
-        aggregationPipeline = reportNodeTimeSeries.getAggregationPipeline();
-        reportNodeTimeSeries.createIndexes(Set.of(new IndexField(EXECUTION_ID, Order.ASC, String.class)));
+        Collection<Bucket> collection = collectionFactory.getCollection("reportNodeTimeSeries", Bucket.class);
+        int resolution = 60_000;
+        TimeSeriesCollection tsCollection = new TimeSeriesCollection(collection, resolution, 0, 10);
+        timeSeries = new TimeSeriesBuilder()
+                .registerCollection(tsCollection)
+                .build();
+        timeSeries.createIndexes(Set.of(new IndexField(EXECUTION_ID, Order.ASC, String.class)));
     }
 
     public void ingestReportNode(ReportNode reportNode) {
@@ -48,11 +52,15 @@ public class ReportNodeTimeSeries implements Closeable {
 
     public Map<String, Long> queryByExecutionIdAndArtefactHash(String executionId, String artefactHash, Range range) {
         And filter = Filters.and(List.of(Filters.equals("attributes." + EXECUTION_ID, executionId), Filters.equals("attributes." + ARTEFACT_HASH, artefactHash)));
-        TimeSeriesAggregationQueryBuilder builder = aggregationPipeline.newQueryBuilder().withFilter(filter).withGroupDimensions(Set.of(STATUS)).split(1);
+        TimeSeriesAggregationQueryBuilder builder = new TimeSeriesAggregationQueryBuilder()
+                .withFilter(filter)
+                .withGroupDimensions(Set.of(STATUS))
+                .split(1);
+
         if (range != null) {
             builder.range(range.from, range.to);
         }
-        Map<String, Long> countByStatus = builder.build().run()
+        Map<String, Long> countByStatus = timeSeries.getAggregationPipeline().collect(builder.build())
                 .getSeries().entrySet().stream().collect(Collectors.toMap(k -> (String) k.getKey().get(STATUS), v -> v.getValue().values().stream().findFirst().get().getCount()));
         return countByStatus;
     }

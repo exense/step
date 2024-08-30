@@ -281,7 +281,7 @@ public class TimeSeriesHandler {
     }
 
     private TimeSeriesAggregationQuery mapToQuery(FetchBucketsRequest request, TimeSeriesAggregationPipeline pipeline) {
-        TimeSeriesAggregationQueryBuilder timeSeriesAggregationQuery = new TimeSeriesAggregationQueryBuilder(null)
+        TimeSeriesAggregationQueryBuilder timeSeriesAggregationQuery = new TimeSeriesAggregationQueryBuilder()
                 .range(request.getStart(), request.getEnd())
                 .withFilter(Filters.and(
                         Arrays.asList(
