@@ -89,6 +89,7 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
         ImportResult result = new ImportResult();
         result.setPlanId(planId);
 
+        // validation - the plan should be represented in AP
         Plan plan = automationPackageManager.getPackagePlans(automationPackage.getId())
                 .stream()
                 .filter(p -> p.getId().toString().equals(planId)).findFirst().orElse(null);
@@ -97,16 +98,23 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
             result.setErrors(List.of("Automation package " + automationPackage.getAttribute(AbstractOrganizableObject.NAME) + " has no plan with id=" + planId));
             return result;
         }
-        enrichPlan(context, plan);
 
+        // the plan accessor in context should be layered with 'inMemory' accessor on the top to temporarily store
+        // all plans from AP (in code below)
         PlanAccessor planAccessor = context.getPlanAccessor();
         if (!isLayeredAccessor(planAccessor)) {
             result.setErrors(List.of(planAccessor.getClass() + " is not layered"));
             return result;
         }
 
-        planAccessor.save(plan);
+        // save ALL plans from AP to the execution context to support the 'callPlan' artefact
+        // (if some plan from the AP is call from 'callPlan', it should be saved in execution context)
+        for (Plan packagePlan : automationPackageManager.getPackagePlans(automationPackage.getId())) {
+            enrichPlan(context, packagePlan);
+            planAccessor.save(packagePlan);
+        }
 
+        // populate function accessor for execution context with all functions loaded from AP
         FunctionAccessor functionAccessor = context.get(FunctionAccessor.class);
         List<Function> functionsForSave = new ArrayList<>();
         if (plan.getFunctions() != null) {
