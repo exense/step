@@ -34,6 +34,7 @@ public interface ResourceManager {
 	String RESOURCE_TYPE_STAGING_CONTEXT_FILES = "stagingContextFiles";
 	String RESOURCE_TYPE_ATTACHMENT = "attachment";
 	String RESOURCE_TYPE_TEMP = "temp";
+	String RESOURCE_TYPE_ISOLATED_AP = "isolatedAp";
 
 	/**
 	 * @param resourceType the type of the resource
