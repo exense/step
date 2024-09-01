@@ -8,5 +8,5 @@ public class TokenProvisioningStatus {
     public boolean completed = false;
 
     public TokenProvisioningError error;
-    public Map<String, AgentProvisioningLog> provisioningLogs;
+    public AgentProvisioningLogs provisioningLogs;
 }
