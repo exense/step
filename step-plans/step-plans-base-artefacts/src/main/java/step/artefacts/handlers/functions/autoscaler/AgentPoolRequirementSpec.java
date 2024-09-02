@@ -35,4 +35,13 @@ public class AgentPoolRequirementSpec {
     public int hashCode() {
         return Objects.hash(numberOfAgents, agentPoolTemplateName, provisioningParameters);
     }
+
+    @Override
+    public String toString() {
+        return "AgentPoolRequirementSpec{" +
+                "numberOfAgents=" + numberOfAgents +
+                ", agentPoolTemplateName='" + agentPoolTemplateName + '\'' +
+                ", provisioningParameters=" + provisioningParameters +
+                '}';
+    }
 }
