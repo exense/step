@@ -1,21 +1,5 @@
-<!--
-  Copyright (C) 2020, exense GmbH
-
-  This file is part of STEP
-
-  STEP is free software: you can redistribute it and/or modify
-  it under the terms of the GNU Affero General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  STEP is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU Affero General Public License for more details.
-
-  You should have received a copy of the GNU Affero General Public License
-  along with STEP.  If not, see <http://www.gnu.org/licenses/>.
--->
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright (c) exense GmbH -->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -26,47 +10,46 @@
 	<version>0.0.0-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
-	<name>Step</name>
-	<description>
-		step is the first open-source automation platform for unified agile testing.
-	</description>
-	<url>http://step.exense.ch/</url>
+	<!-- required metadata for maven central -->
+	<name>${project.groupId}:${project.artifactId}</name>
+	<description>Step: the first open-source automation platform for unified agile testing</description>
+	<url>https://github.com/exense/step</url>
+
 	<licenses>
 		<license>
-			<name>The GNU Affero General Public License 3.0</name>
-			<url>http://www.gnu.org/licenses/</url>
+			<name>The GNU Affero General Public License, Version 3</name>
+			<url>https://www.gnu.org/licenses/#AGPL</url>
 		</license>
 	</licenses>
+
 	<developers>
 		<developer>
-			<name>exense Team</name>
-			<email>contact@exense.ch</email>
-			<organization>exense GmbH</organization>
-			<organizationUrl>http://www.exense.ch</organizationUrl>
-			<url>http://step.exense.ch</url>
+			<name>Exense GmbH</name>
+			<organization>Exense GmbH</organization>
+			<organizationUrl>https://exense.ch</organizationUrl>
+			<email>support@exense.ch</email>
 		</developer>
 	</developers>
+
 	<scm>
 		<connection>scm:git:https://github.com/exense/step.git</connection>
-		<developerConnection>scm:git:[push=]https://github.com/exense/step.git[fetch=]https://github.com/exense/step.git</developerConnection>
-		<url>https://github.com/exense/step.git</url>
+		<developerConnection>scm:git:https://github.com/exense/step.git</developerConnection>
+		<url>https://github.com/exense/step</url>
 	</scm>
+	<!-- metadata end -->
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<!-- internal dependencies -->
-		<dependencies.version>2024.7.12-669121da4fe7006fcd2fe5c4</dependencies.version>
-<!--		<exense-commons.version>2024.7.12-669123e04fe7006fcd32085a</exense-commons.version>-->
-		<step-grid.version>2024.8.8-66b4e6af62cc6a1a098c8ac1</step-grid.version>
-		<step-framework.version>2024.8.8-66b4d05562cc6a1a095a3415</step-framework.version>
+		<dependencies.version>2024.8.27</dependencies.version>
+		<step-grid.version>2024.8.29-66d0436ce9f5583e61bcdd19</step-grid.version>
+		<step-framework.version>2024.8.29-66d04294e9f5583e61bb6980</step-framework.version>
 
 		<!-- external, non-transitive, dependencies -->
 		<dep.groovy.version>3.0.10</dep.groovy.version>
 		<dep.apache-jmeter.version>5.4.3</dep.apache-jmeter.version>
 		<dep.apache-poi.version>5.2.3</dep.apache-poi.version>
 		<dep.aether.version>1.1.0</dep.aether.version>
-
-		<excluded.jmeter.group>step.junit.categories.LocalJMeter</excluded.jmeter.group>
 
 		<!-- maven build dependencies -->
 		<dep.mvn.assembly.version>2.6</dep.mvn.assembly.version>
@@ -85,6 +68,8 @@
 		<dep.mvn.shade.version>3.1.0</dep.mvn.shade.version>
 		<dep.mvn.source.version>3.0.1</dep.mvn.source.version>
 		<dep.mvn.surefire.version>2.22.1</dep.mvn.surefire.version>
+
+		<excluded.jmeter.group>step.junit.categories.LocalJMeter</excluded.jmeter.group>
 	</properties>
 
 	<repositories>
