@@ -36,14 +36,13 @@ public class TokenForecastingContext {
     }
 
     protected Key requireToken(Map<String, Interest> criteria, int count) throws NoMatchingTokenPoolException {
-        AgentPoolSpec bestMatchingPool = getBestMatchingPool(criteria).orElseThrow(NoMatchingTokenPoolException::new);
-        String poolName = bestMatchingPool.name;
+        Set<AgentPoolSpec> bestMatchingPools = getBestMatchingPools(criteria);
 
         // Delegate the creation of the provisioning parameters map to the registered parameter types
         HashMap<String, String> provisioningParameters = new HashMap<>();
         supportedParameters.forEach(p -> p.tokenSelectionCriteriaToAgentPoolProvisioningParameters.accept(criteria, provisioningParameters));
 
-        Key key = new Key(poolName, provisioningParameters);
+        Key key = new Key(bestMatchingPools, provisioningParameters);
         requireToken(key, count);
         return key;
     }
@@ -53,11 +52,11 @@ public class TokenForecastingContext {
     }
 
     protected static class Key {
-        String poolTemplateName;
+        Set<AgentPoolSpec> matchingPools;
         Map<String, String> provisioningParameters;
 
-        public Key(String poolTemplateName, Map<String, String> provisioningParameters) {
-            this.poolTemplateName = poolTemplateName;
+        public Key(Set<AgentPoolSpec> matchingPools, Map<String, String> provisioningParameters) {
+            this.matchingPools = matchingPools;
             this.provisioningParameters = provisioningParameters;
         }
 
@@ -66,12 +65,12 @@ public class TokenForecastingContext {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             Key key = (Key) o;
-            return Objects.equals(poolTemplateName, key.poolTemplateName) && Objects.equals(provisioningParameters, key.provisioningParameters);
+            return Objects.equals(matchingPools, key.matchingPools) && Objects.equals(provisioningParameters, key.provisioningParameters);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(poolTemplateName, provisioningParameters);
+            return Objects.hash(matchingPools, provisioningParameters);
         }
     }
 
@@ -79,37 +78,72 @@ public class TokenForecastingContext {
         poolResourceReservations.computeIfAbsent(key, k -> new PoolReservationTracker()).release(count);
     }
 
-    private Optional<AgentPoolSpec> getBestMatchingPool(Map<String, Interest> criteria) {
+    private static final class AgentPoolSpecAndScore {
+        final AgentPoolSpec agentPoolSpec;
+        final int score;
+
+        private AgentPoolSpecAndScore(AgentPoolSpec agentPoolSpec, int score) {
+            this.agentPoolSpec = agentPoolSpec;
+            this.score = score;
+        }
+    }
+    
+    private Set<AgentPoolSpec> getBestMatchingPools(Map<String, Interest> criteria) throws NoMatchingTokenPoolException {
         PreProvisioningTokenAffinityEvaluator affinityEvaluator = new PreProvisioningTokenAffinityEvaluator();
-        // Find the agent pool that best matches the criteria among the available agent pools
-        // Technically we search the pool that has with the highest affinity score as follows:
+        // Find all the agent pools that match the criteria among the available agent pools
         // - for each available pool we calculate the affinity score with the criteria using the configured affinityEvaluator
-        // - we sort the resulting stream by descending score
-        // - from this list we take the first element
-        return availableAgentPools.stream()
-                .map(entry -> new Object[]{affinityEvaluator.getAffinityScore(new TokenPretender(Map.of(), criteria), new TokenPretender(entry.attributes, Map.of())), entry})
-                .filter(o -> ((int) o[0]) >= 0).sorted(Comparator.comparingInt(o -> (int) o[0])).map(o -> (AgentPoolSpec) o[1])
-                .findFirst();
+        // - we filter out the agent pools that have a score lower than 1
+        // - we order the result by decreasing score
+        List<AgentPoolSpecAndScore> matchingAgentPools = availableAgentPools.stream()
+                .map(entry -> new AgentPoolSpecAndScore(entry, affinityEvaluator.getAffinityScore(new TokenPretender(Map.of(), criteria), new TokenPretender(entry.attributes, Map.of()))))
+                .filter(o -> o.score > 0).sorted(Comparator.comparingInt(o -> o.score)).collect(Collectors.toList());
+
+        int size = matchingAgentPools.size();
+        if(size == 0) {
+            // No matching agent pool could be found
+            throw new NoMatchingTokenPoolException();
+        } else if (size == 1) {
+            // Exactly one agent pool could be found, return it directly
+            return Set.of(matchingAgentPools.get(0).agentPoolSpec);
+        } else {
+            // More than one agent pool could be found. We return the pools with the highest score
+            int bestScore = matchingAgentPools.get(0).score;
+            return matchingAgentPools.stream().filter(o -> o.score == bestScore).map(o -> o.agentPoolSpec).collect(Collectors.toSet());
+        }
     }
 
     /**
      * @return the forecasted number of tokens required per pool
      */
-    protected Map<Key, Integer> getTokenForecastPerPool() {
+    protected Map<Key, Integer> getTokenForecastPerKey() {
         return poolResourceReservations.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().maxReservationCount));
     }
 
     public List<AgentPoolRequirementSpec> getAgentPoolRequirementSpec() {
-        return getTokenForecastPerPool().entrySet().stream().map(s -> {
-            AgentPoolSpec agentPoolSpec = availableAgentPools.stream().filter(p -> p.name.equals(s.getKey().poolTemplateName)).findFirst().orElseThrow();
-            int requiredReplicas = calculateRequiredReplicas(s.getValue(), agentPoolSpec.numberOfTokens);
-            return new AgentPoolRequirementSpec(s.getKey().poolTemplateName, s.getKey().provisioningParameters, requiredReplicas);
-        }).collect(Collectors.toList());
-    }
+        ArrayList<AgentPoolRequirementSpec> result = new ArrayList<>();
+        getTokenForecastPerKey().forEach((key, requiredNumberOfTokens) -> {
+            // Sort the matching pools by descending number of tokens
+            List<AgentPoolSpec> matchingPools = key.matchingPools.stream()
+                    .sorted(Comparator.comparingInt(o -> -o.numberOfTokens)).collect(Collectors.toList());
 
-    private int calculateRequiredReplicas(int requiredTokens, int tokenGroupCapacity) {
-        int desiredReplicas = requiredTokens / tokenGroupCapacity;
-        return requiredTokens % tokenGroupCapacity > 0 ? desiredReplicas + 1 : desiredReplicas;
+            // If we have more than one matching pool, we calculate the combination than minimizes the total number of agents
+            int remainingTokenCount = requiredNumberOfTokens;
+            for (AgentPoolSpec pool : matchingPools.subList(0, matchingPools.size() - 1)) {
+                int nAgents = (remainingTokenCount - (remainingTokenCount % pool.numberOfTokens)) / pool.numberOfTokens;
+                if(nAgents > 0) {
+                    result.add(new AgentPoolRequirementSpec(pool.name, key.provisioningParameters, nAgents));
+                    remainingTokenCount = remainingTokenCount - nAgents * pool.numberOfTokens;
+                }
+            }
+            // For the last pool (the one with the lowest number of tokens), we take the rounded up number of agents
+            // to guaranty the total number of tokens
+            AgentPoolSpec lastAgentPool = matchingPools.get(matchingPools.size() - 1);
+            int nAgents = (int) Math.ceil((1.0 * remainingTokenCount) / lastAgentPool.numberOfTokens);
+            if(nAgents > 0) {
+                result.add(new AgentPoolRequirementSpec(lastAgentPool.name, key.provisioningParameters, nAgents));
+            }
+        });
+        return result;
     }
 
     public Set<Map<String, Interest>> getCriteriaWithoutMatch() {
@@ -151,11 +185,11 @@ public class TokenForecastingContext {
                 return tokenWrapper;
             }
 
-            private TokenWrapper newTokenWrapper(boolean isLocal, Key pool) {
+            private TokenWrapper newTokenWrapper(boolean isLocal, Key key) {
                 TokenWrapper tokenWrapper = new TokenWrapper();
                 Token token = new Token();
                 token.setAgentid(isLocal ? "local" : "remote");
-                token.setAttributes(pool != null ? availableAgentPools.stream().filter(p -> p.name.equals(pool.poolTemplateName)).findFirst().orElseThrow().attributes : Map.of());
+                token.setAttributes(key != null ? key.matchingPools.stream().findFirst().orElseThrow().attributes : Map.of());
                 token.setId(UUID.randomUUID().toString());
                 tokenWrapper.setToken(token);
                 return tokenWrapper;

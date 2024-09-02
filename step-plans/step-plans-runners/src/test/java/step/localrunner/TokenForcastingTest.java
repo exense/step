@@ -244,6 +244,62 @@ public class TokenForcastingTest {
 				Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
 	}
 
+	@Test
+	public void testWithMultipleMatchingPools() throws Exception {
+		ThreadGroup threadGroup = new ThreadGroup();
+		threadGroup.setUsers(new DynamicValue<>(10));
+
+		CallFunction testKeyword = FunctionArtefacts.keyword("test");
+		testKeyword.setToken(new DynamicValue<>("{\"type\":{\"value\":\"pool\",\"dynamic\":false}}"));
+
+		Plan plan = PlanBuilder.create()
+				.startBlock(threadGroup)
+				.add(testKeyword)
+				.endBlock().build();
+		MyFunction function = new MyFunction(jsonObjectInput -> new Output<>());
+		function.addAttribute(AbstractOrganizableObject.NAME, "test");
+		plan.setFunctions(List.of(function));
+
+		// Multiple matching token pools. In this case we expect 3 x pool3 (with 3 tokens) and 1 x pool1 (with 1 token) for the 10 required tokens
+		Set<AgentPoolSpec> availableAgentPools = Set.of(
+				new AgentPoolSpec("pool1", Map.of("$agenttype", "default", "type", "pool"), 1),
+				new AgentPoolSpec("pool2", Map.of("$agenttype", "default", "type", "pool"), 2),
+				new AgentPoolSpec("pool3", Map.of("$agenttype", "default", "type", "pool"), 3));
+		TokenForecastingContext tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableAgentPools);
+
+		assertEquals(Set.of(new AgentPoolRequirementSpec("pool3", 3), new AgentPoolRequirementSpec("pool1", 1)),
+				Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
+
+		// Multiple matching token pools. In this case we expect 2 x pool2 (with 4 tokens) and 1 x pool1 (with 2 token) for the 10 required tokens
+		availableAgentPools = Set.of(
+				new AgentPoolSpec("pool1", Map.of("$agenttype", "default", "type", "pool"), 2),
+				new AgentPoolSpec("pool2", Map.of("$agenttype", "default", "type", "pool"), 4));
+		tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableAgentPools);
+
+		assertEquals(Set.of(new AgentPoolRequirementSpec("pool2", 2), new AgentPoolRequirementSpec("pool1", 1)),
+				Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
+
+		// Multiple matching token pools. In this case we expect 4 x pool1 (with 3 tokens) for the 10 required tokens. The pool2 with 20 cannot be used
+		availableAgentPools = Set.of(
+				new AgentPoolSpec("pool1", Map.of("$agenttype", "default", "type", "pool"), 3),
+				new AgentPoolSpec("pool2", Map.of("$agenttype", "default", "type", "pool"), 20));
+		tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableAgentPools);
+
+		assertEquals(Set.of(new AgentPoolRequirementSpec("pool1", 4)),
+				Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
+
+
+		// Multiple matching token pools. In this case we expect 5 x pool1 (with 2 tokens) for the 10 required tokens. The pool1 with 1 token isn't required for this combination
+		availableAgentPools = Set.of(
+				new AgentPoolSpec("pool1", Map.of("$agenttype", "default", "type", "pool"), 2),
+				new AgentPoolSpec("pool2", Map.of("$agenttype", "default", "type", "pool"), 1));
+		tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableAgentPools);
+
+		assertEquals(Set.of(new AgentPoolRequirementSpec("pool1", 5)),
+				Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
+
+	}
+
 	private static TokenForecastingContext executePlanWithSpecifiedTokenPools(Plan plan, Set<AgentPoolSpec> availableAgentPools) {
 		ForcastingTestPlugin forcastingTestPlugin = new ForcastingTestPlugin(availableAgentPools);
 		try(ExecutionEngine executionEngine = ExecutionEngine.builder().withPlugin(new FunctionPlugin()).withPlugin(new AbstractExecutionEnginePlugin() {

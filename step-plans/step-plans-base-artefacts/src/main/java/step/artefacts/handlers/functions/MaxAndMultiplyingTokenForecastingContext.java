@@ -43,7 +43,7 @@ public class MaxAndMultiplyingTokenForecastingContext extends TokenForecastingCo
 
     public void end() {
         keys.forEach(key -> {
-            Integer sum = iterations.stream().map(i -> i.getTokenForecastPerPool().get(key)).filter(Objects::nonNull).sorted(Comparator.reverseOrder()).limit(numberOfThreads).reduce(0, Integer::sum);
+            Integer sum = iterations.stream().map(i -> i.getTokenForecastPerKey().get(key)).filter(Objects::nonNull).sorted(Comparator.reverseOrder()).limit(numberOfThreads).reduce(0, Integer::sum);
             if(sum > 0) {
                 parentContext.requireToken(key, sum);
                 parentContext.releaseRequiredToken(key, sum);
