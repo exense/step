@@ -47,7 +47,6 @@
 		<dependency>
 			<groupId>ch.exense.step</groupId>
 			<artifactId>step-api-json-schema</artifactId>
-			<version>${step-api.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
@@ -57,7 +56,6 @@
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-lang3</artifactId>
-			<version>${commons-lang.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>commons-codec</groupId>
@@ -67,10 +65,10 @@
 
 
 		<!-- Required in compile scope as some classes of main code are using junit -->
+		<!-- FIXME: IS THIS A GOOD IDEA ???? -->
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
-			<version>${junit.version}</version>
 		</dependency>
 	</dependencies>
 
