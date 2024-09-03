@@ -32,7 +32,7 @@ import org.junit.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import step.functions.io.Input;
 import step.grid.Token;
 import step.grid.agent.AgentTokenServices;

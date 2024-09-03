@@ -26,7 +26,7 @@ import javax.json.JsonObject;
 
 import org.junit.Test;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import step.functions.handler.FunctionHandlerFactory;
 import step.functions.io.Input;
 import step.functions.io.Output;
