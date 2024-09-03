@@ -212,52 +212,52 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
         PackageExecutionContext ctx = null;
 
         try {
-        ImportResult result = new ImportResult();
-        try {
-            ctx = getOrRestorePackageExecutionContext(repositoryParameters, context.getObjectEnricher(), context.getObjectPredicate());
-        } catch (AutomationPackageManagerException e) {
-            result.setErrors(List.of(e.getMessage()));
-            return result;
-        }
-        AutomationPackage automationPackage = ctx.getAutomationPackage();
+            ImportResult result = new ImportResult();
+            try {
+                ctx = getOrRestorePackageExecutionContext(repositoryParameters, context.getObjectEnricher(), context.getObjectPredicate());
+            } catch (AutomationPackageManagerException e) {
+                result.setErrors(List.of(e.getMessage()));
+                return result;
+            }
+            AutomationPackage automationPackage = ctx.getAutomationPackage();
 
-        // PLAN_NAME but not PLAN_ID is used, because plan id is not persisted for isolated execution
-        // (it is impossible to re-run the execution by plan id)
-        String planName = repositoryParameters.get(PLAN_NAME);
+            // PLAN_NAME but not PLAN_ID is used, because plan id is not persisted for isolated execution
+            // (it is impossible to re-run the execution by plan id)
+            String planName = repositoryParameters.get(PLAN_NAME);
 
-        // validation - the plan should be represented in AP
-        AutomationPackageManager apManager = ctx.getInMemoryManager();
-        Plan plan = apManager.getPackagePlans(automationPackage.getId())
-                .stream()
-                .filter(p -> p.getAttribute(AbstractOrganizableObject.NAME).equals(planName)).findFirst().orElse(null);
-        if (plan == null) {
-            // failed result
-            result.setErrors(List.of("Automation package " + automationPackage.getAttribute(AbstractOrganizableObject.NAME) + " has no plan with id=" + planId));
-            return result;
-        }
+            // validation - the plan should be represented in AP
+            AutomationPackageManager apManager = ctx.getInMemoryManager();
+            Plan plan = apManager.getPackagePlans(automationPackage.getId())
+                    .stream()
+                    .filter(p -> p.getAttribute(AbstractOrganizableObject.NAME).equals(planName)).findFirst().orElse(null);
+            if (plan == null) {
+                // failed result
+                result.setErrors(List.of("Automation package " + automationPackage.getAttribute(AbstractOrganizableObject.NAME) + " has no plan with name=" + planName));
+                return result;
+            }
 
-        // the plan accessor in context should be layered with 'inMemory' accessor on the top to temporarily store
-        // all plans from AP (in code below)
-        PlanAccessor planAccessor = context.getPlanAccessor();
-        if (!isLayeredAccessor(planAccessor)) {
-            result.setErrors(List.of(planAccessor.getClass() + " is not layered"));
-            return result;
-        }
+            // the plan accessor in context should be layered with 'inMemory' accessor on the top to temporarily store
+            // all plans from AP (in code below)
+            PlanAccessor planAccessor = context.getPlanAccessor();
+            if (!isLayeredAccessor(planAccessor)) {
+                result.setErrors(List.of(planAccessor.getClass() + " is not layered"));
+                return result;
+            }
 
             // save ALL plans from AP to the execution context to support the 'callPlan' artefact
-        // (if some plan from the AP is call from 'callPlan', it should be saved in execution context)
-        for (Plan packagePlan : apManager.getPackagePlans(automationPackage.getId())) {
-            enrichPlan(context, packagePlan);
-            planAccessor.save(packagePlan);
-        }
+            // (if some plan from the AP is call from 'callPlan', it should be saved in execution context)
+            for (Plan packagePlan : apManager.getPackagePlans(automationPackage.getId())) {
+                enrichPlan(context, packagePlan);
+                planAccessor.save(packagePlan);
+            }
 
             // populate function accessor for execution context with all functions loaded from AP
-        FunctionAccessor functionAccessor = context.get(FunctionAccessor.class);
-        List<Function> functionsForSave = new ArrayList<>();
-        if (plan.getFunctions() != null) {
-            plan.getFunctions().iterator().forEachRemaining(functionsForSave::add);
-        }
-        functionsForSave.addAll(apManager.getPackageFunctions(automationPackage.getId()));
+            FunctionAccessor functionAccessor = context.get(FunctionAccessor.class);
+            List<Function> functionsForSave = new ArrayList<>();
+            if (plan.getFunctions() != null) {
+                plan.getFunctions().iterator().forEachRemaining(functionsForSave::add);
+            }
+            functionsForSave.addAll(apManager.getPackageFunctions(automationPackage.getId()));
             functionAccessor.save(functionsForSave);
 
             ResourceManager contextResourceManager = context.getResourceManager();
