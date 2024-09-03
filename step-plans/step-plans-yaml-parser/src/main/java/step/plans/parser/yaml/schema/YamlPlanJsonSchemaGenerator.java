@@ -178,20 +178,18 @@ public class YamlPlanJsonSchemaGenerator {
 
 	private void createPlanAutoscalingSettingsDef(JsonObjectBuilder defsBuilder) throws JsonSchemaPreparationException {
 		String agentPoolRequirementSpec = "agentPoolRequirementSpec";
-		defsBuilder.add(agentPoolRequirementSpec + SchemaDefSuffix, schemaHelper.createNamedObjectImplDef(
-				agentPoolRequirementSpec,
-				AgentPoolRequirementSpec.class,
+		defsBuilder.add(agentPoolRequirementSpec + SchemaDefSuffix, schemaHelper.createJsonSchemaForClass(
 				jsonSchemaCreator,
+				AgentPoolRequirementSpec.class,
 				true
 		));
 		JsonObjectBuilder builder = jsonProvider.createObjectBuilder();
 		builder.add("type", "array");
 		builder.add("items", YamlJsonSchemaHelper.addRef(jsonProvider.createObjectBuilder(), agentPoolRequirementSpec + SchemaDefSuffix));
 		defsBuilder.add(AGENT_POOL_ARRAY_DEF, builder);
-		defsBuilder.add(PlanAutoscalingSettings.AUTOSCALING_SETTINGS + SchemaDefSuffix, schemaHelper.createNamedObjectImplDef(
-				PlanAutoscalingSettings.AUTOSCALING_SETTINGS,
-				PlanAutoscalingSettings.class,
+		defsBuilder.add(PlanAutoscalingSettings.AUTOSCALING_SETTINGS + SchemaDefSuffix, schemaHelper.createJsonSchemaForClass(
 				jsonSchemaCreator,
+				PlanAutoscalingSettings.class,
 				true
 		));
 	}

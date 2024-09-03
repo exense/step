@@ -2,6 +2,19 @@
   "$schema" : "http://json-schema.org/draft-07/schema#",
   "title" : "Plan",
   "$defs" : {
+    "resourceReference" : {
+      "oneOf" : [ {
+        "type" : "string"
+      }, {
+        "type" : "object",
+        "additionalProperties" : false,
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          }
+        }
+      } ]
+    },
     "SmartDynamicValueBooleanDef" : {
       "oneOf" : [ {
         "type" : "boolean"
@@ -55,19 +68,6 @@
         },
         "additionalProperties" : false
       }
-    },
-    "resourceReference" : {
-      "oneOf" : [ {
-        "type" : "string"
-      }, {
-        "type" : "object",
-        "additionalProperties" : false,
-        "properties" : {
-          "id" : {
-            "type" : "string"
-          }
-        }
-      } ]
     },
     "AfterSequenceDef" : {
       "type" : "object",
@@ -1817,23 +1817,17 @@
     "agentPoolRequirementSpecDef" : {
       "type" : "object",
       "properties" : {
-        "agentPoolRequirementSpec" : {
+        "provisioningParameters" : {
           "type" : "object",
-          "properties" : {
-            "provisioningParameters" : {
-              "type" : "object",
-              "properties" : { }
-            },
-            "agentPoolTemplateName" : {
-              "type" : "string"
-            },
-            "numberOfAgents" : {
-              "type" : "number"
-            }
-          }
+          "properties" : { }
+        },
+        "agentPoolTemplateName" : {
+          "type" : "string"
+        },
+        "numberOfAgents" : {
+          "type" : "number"
         }
-      },
-      "additionalProperties" : false
+      }
     },
     "agentPoolRequirementSpecArrayDef" : {
       "type" : "array",
@@ -1844,22 +1838,16 @@
     "autoscalingSettingsDef" : {
       "type" : "object",
       "properties" : {
-        "autoscalingSettings" : {
-          "type" : "object",
-          "properties" : {
-            "requiredAgentPools" : {
-              "$ref" : "#/$defs/agentPoolRequirementSpecArrayDef"
-            },
-            "enableAutomaticTokenNumberCalculation" : {
-              "type" : "boolean"
-            },
-            "enableAutoscaling" : {
-              "type" : "boolean"
-            }
-          }
+        "requiredAgentPools" : {
+          "$ref" : "#/$defs/agentPoolRequirementSpecArrayDef"
+        },
+        "enableAutomaticTokenNumberCalculation" : {
+          "type" : "boolean"
+        },
+        "enableAutoscaling" : {
+          "type" : "boolean"
         }
-      },
-      "additionalProperties" : false
+      }
     },
     "PlanDef" : {
       "properties" : {
