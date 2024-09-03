@@ -27,7 +27,7 @@ import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 
 public class PlanRunnerResultAssert {
 

@@ -21,16 +21,14 @@
 	<artifactId>step-agent</artifactId>
 	<parent>
 		<groupId>ch.exense.step</groupId>
-		<artifactId>step-parent</artifactId>
+		<artifactId>step</artifactId>
 		<version>0.0.0-SNAPSHOT</version>
-		<relativePath>../step-parent</relativePath>
 	</parent>
 
 	<dependencies>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
 			<artifactId>step-grid-api</artifactId>
-			<version>${step-grid.version}</version>
 		</dependency>
 	</dependencies>
 
@@ -51,7 +49,6 @@
 								<artifactItem>
 									<groupId>ch.exense.step</groupId>
 									<artifactId>step-grid-agent</artifactId>
-									<version>${step-grid.version}</version>
 									<type>jar</type>
 									<classifier>jar-with-dependencies</classifier>
 									<overWrite>true</overWrite>
