@@ -29,6 +29,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Assert;
 import org.junit.Test;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.artefacts.ForBlock;
 import step.artefacts.reports.ForBlockReportNode;
 import step.core.artefacts.CheckArtefact;
@@ -41,7 +43,9 @@ import step.datapool.sequence.IntSequenceDataPool;
 import step.planbuilder.BaseArtefacts;
 
 public class ForHandlerTest {
-	
+
+	private static final Logger logger = LoggerFactory.getLogger(ForHandlerTest.class);
+
 	@Test
 	public void testSuccess() {
 		ForBlock f = new ForBlock();
@@ -178,6 +182,8 @@ public class ForHandlerTest {
 		runner.run(plan).visitReportNodes(node->{
 			Assert.assertEquals(ReportNodeStatus.PASSED, node.getStatus());
 		}).printTree();
+
+		logger.info("threadIdMap content: " + threadIdMap);
 		
 		Assert.assertTrue(threadIdMap.get(0).get()>0);
 		Assert.assertTrue(threadIdMap.get(1).get()>0);

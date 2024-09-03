@@ -18,16 +18,16 @@
  ******************************************************************************/
 package step.core.artefacts.handlers;
 
+import jakarta.annotation.PostConstruct;
+import step.core.artefacts.AbstractArtefact;
+import step.core.artefacts.Artefact;
+import step.core.artefacts.reports.ReportNode;
+
 import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
-
-import jakarta.annotation.PostConstruct;
-
-import step.core.artefacts.AbstractArtefact;
-import step.core.artefacts.Artefact;
 
 public class ArtefactHandlerRegistry {
 
@@ -73,5 +73,28 @@ public class ArtefactHandlerRegistry {
 	public Set<String> getRootArtefactNames() {
 		return artefactClassesByName.keySet().stream().filter(k -> getArtefactType(k).getAnnotation(Artefact.class).validAsRoot())
 				.collect(Collectors.toSet());
+	}
+
+	public ArtefactHandler<AbstractArtefact, ReportNode> getArtefactHandler(Class<AbstractArtefact> artefactClass) {
+		// Be careful not to cache the ArtefactHandlerRegistry as this is a mutable variable of the context...
+		Artefact artefact = artefactClass.getAnnotation(Artefact.class);
+		if(artefact!=null) {
+			Class<ArtefactHandler<AbstractArtefact, ReportNode>> artefactHandlerClass;
+			artefactHandlerClass = (Class<ArtefactHandler<AbstractArtefact, ReportNode>>) get(artefactClass);
+			if(artefactHandlerClass!=null) {
+				ArtefactHandler<AbstractArtefact, ReportNode> artefactHandler;
+				try {
+					artefactHandler = artefactHandlerClass.newInstance();
+				} catch (InstantiationException | IllegalAccessException e) {
+					throw new RuntimeException("Unable to instantiate artefact handler for the artefact class " + artefactClass, e);
+				}
+
+				return artefactHandler;
+			} else {
+				throw new RuntimeException("No artefact handler found for the artefact class " + artefactClass);
+			}
+		} else {
+			throw new RuntimeException("The class " + artefactClass + " is not annotated as artefact!");
+		}
 	}
 }
