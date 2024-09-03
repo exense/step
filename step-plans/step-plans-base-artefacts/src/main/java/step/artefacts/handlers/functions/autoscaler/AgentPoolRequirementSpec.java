@@ -1,5 +1,7 @@
 package step.artefacts.handlers.functions.autoscaler;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.util.Map;
 import java.util.Objects;
 
@@ -9,6 +11,7 @@ import java.util.Objects;
 public class AgentPoolRequirementSpec {
     public int numberOfAgents;
     public String agentPoolTemplateName;
+    @Schema(description = "Map of provisioning parameters. Currently only the dockerImage parameter is supported.")
     public Map<String, String> provisioningParameters;
 
     public AgentPoolRequirementSpec() {

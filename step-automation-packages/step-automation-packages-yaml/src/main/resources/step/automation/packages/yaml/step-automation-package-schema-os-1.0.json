@@ -1989,10 +1989,60 @@
         "$ref" : "#/$defs/ArtefactDef"
       }
     },
+    "agentPoolRequirementSpecDef" : {
+      "type" : "object",
+      "properties" : {
+        "agentPoolRequirementSpec" : {
+          "type" : "object",
+          "properties" : {
+            "provisioningParameters" : {
+              "type" : "object",
+              "properties" : { }
+            },
+            "agentPoolTemplateName" : {
+              "type" : "string"
+            },
+            "numberOfAgents" : {
+              "type" : "number"
+            }
+          }
+        }
+      },
+      "additionalProperties" : false
+    },
+    "agentPoolRequirementSpecArrayDef" : {
+      "type" : "array",
+      "items" : {
+        "$ref" : "#/$defs/agentPoolRequirementSpecDef"
+      }
+    },
+    "autoscalingSettingsDef" : {
+      "type" : "object",
+      "properties" : {
+        "autoscalingSettings" : {
+          "type" : "object",
+          "properties" : {
+            "requiredAgentPools" : {
+              "$ref" : "#/$defs/agentPoolRequirementSpecArrayDef"
+            },
+            "enableAutomaticTokenNumberCalculation" : {
+              "type" : "boolean"
+            },
+            "enableAutoscaling" : {
+              "type" : "boolean"
+            }
+          }
+        }
+      },
+      "additionalProperties" : false
+    },
     "PlanDef" : {
       "properties" : {
         "name" : {
           "type" : "string"
+        },
+        "autoscaling" : {
+          "$ref" : "#/$defs/autoscalingSettingsDef"
         },
         "root" : {
           "$ref" : "#/$defs/RootArtefactDef"

@@ -18,7 +18,12 @@
  ******************************************************************************/
 package step.plans.parser.yaml;
 
+import step.artefacts.handlers.functions.autoscaler.PlanAutoscalingSettings;
+import step.core.yaml.schema.YamlJsonSchemaHelper;
+import step.jsonschema.JsonSchema;
 import step.plans.parser.yaml.model.NamedYamlArtefact;
+
+import static step.artefacts.handlers.functions.autoscaler.PlanAutoscalingSettings.AUTOSCALING_SETTINGS;
 
 public class YamlPlan {
 
@@ -29,6 +34,10 @@ public class YamlPlan {
 	private String name;
 
 	private NamedYamlArtefact root;
+
+	//Not used for the Json schema or for (de)serialization, this is all hardcoded in YamlPlanJsonSchemaGenerator and YamlPlanReader
+	@JsonSchema(ref = YamlJsonSchemaHelper.DEFS_PREFIX + AUTOSCALING_SETTINGS + "Def")
+	PlanAutoscalingSettings autoscaling;
 
 	public String getName() {
 		return name;
@@ -52,5 +61,13 @@ public class YamlPlan {
 
 	public void setVersion(String version) {
 		this.version = version;
+	}
+
+	public PlanAutoscalingSettings getAutoscaling() {
+		return autoscaling;
+	}
+
+	public void setAutoscaling(PlanAutoscalingSettings autoscaling) {
+		this.autoscaling = autoscaling;
 	}
 }
