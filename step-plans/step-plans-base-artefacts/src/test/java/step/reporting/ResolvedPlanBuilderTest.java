@@ -90,7 +90,7 @@ public class ResolvedPlanBuilderTest {
         System.out.println("----------------------");
 
         // Sleep a few ms to ensure that the report node timeseries is flushed
-        Thread.sleep(100);
+        Thread.sleep(2000);
 
         AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(engine.getExecutionEngineContext(), result.getExecutionId());
         AggregatedReportView node = aggregatedReportViewBuilder.buildAggregatedReportView();
