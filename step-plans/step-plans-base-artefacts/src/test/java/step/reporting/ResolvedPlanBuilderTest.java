@@ -3,6 +3,8 @@ package step.reporting;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.handlers.functions.TokenForcastingExecutionPlugin;
 import step.core.artefacts.reports.aggregated.AggregatedReportView;
@@ -22,6 +24,8 @@ import static org.junit.Assert.assertEquals;
 import static step.planbuilder.BaseArtefacts.*;
 
 public class ResolvedPlanBuilderTest {
+
+    protected static final Logger logger = LoggerFactory.getLogger(ResolvedPlanBuilderTest.class);
 
     private ExecutionEngine engine;
 
@@ -49,15 +53,13 @@ public class ResolvedPlanBuilderTest {
         PlanRunnerResult result = engine.execute(plan);
         result.printTree();
 
-        // Sleep a few ms to ensure that the report node timeseries is flushed
-        //Thread.sleep(500);
-
         AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(engine.getExecutionEngineContext(), result.getExecutionId());
         AggregatedReportView node = aggregatedReportViewBuilder.buildAggregatedReportView();
-        System.out.println("----------------------");
-        System.out.println("Aggregated report tree");
-        System.out.println("----------------------");
-        System.out.println(node.toString());
+
+        logger.info("----------------------");
+        logger.info("Aggregated report tree");
+        logger.info("----------------------");
+        logger.info(node.toString());
         assertEquals(10, node.children.get(0).countTotal());
         assertEquals(10, node.children.get(1).countTotal());
         assertEquals(50, node.children.get(1).children.get(0).countTotal());
@@ -96,16 +98,13 @@ public class ResolvedPlanBuilderTest {
 
         PlanRunnerResult result = engine.execute(plan);
         result.printTree();
-        System.out.println("----------------------");
-        System.out.println("Aggregated report tree");
-        System.out.println("----------------------");
-
-        // Sleep a few ms to ensure that the report node timeseries is flushed
-        //Thread.sleep(500);
+        logger.info("----------------------");
+        logger.info("Aggregated report tree");
+        logger.info("----------------------");
 
         AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(engine.getExecutionEngineContext(), result.getExecutionId());
         AggregatedReportView node = aggregatedReportViewBuilder.buildAggregatedReportView();
-        System.out.println(node.toString());
+        logger.info(node.toString());
         assertEquals("ForBlock: 1x\n" +
                         " CallPlan: 10x\n" +
                         "  Sequence: 10x\n" +
