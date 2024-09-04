@@ -103,15 +103,6 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
             );
             context.put(AutomationPackageManager.class, packageManager);
 
-            AutomationPackageExecutor packageExecutor = new AutomationPackageExecutor(
-                    context.getScheduler(),
-                    context.require(ExecutionAccessor.class),
-                    context.require(FunctionTypeRegistry.class),
-                    context.require(FunctionAccessor.class),
-                    context.require(IsolatedAutomationPackageRepository.class),
-                    packageManager
-            );
-            context.put(AutomationPackageExecutor.class, packageExecutor);
         }
     }
 

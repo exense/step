@@ -30,6 +30,7 @@ import step.artefacts.reports.CallFunctionReportNode;
 import step.attachments.AttachmentMeta;
 import step.common.managedoperations.OperationManager;
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
@@ -44,7 +45,9 @@ import step.core.execution.OperationMode;
 import step.core.json.JsonProviderCache;
 import step.core.miscellaneous.ReportNodeAttachmentManager;
 import step.core.miscellaneous.ReportNodeAttachmentManager.AttachmentQuotaException;
+import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.Plan;
+import step.core.plans.PlanAccessor;
 import step.core.plugins.ExecutionCallbacks;
 import step.core.reports.Error;
 import step.core.reports.ErrorType;
@@ -138,7 +141,21 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	}
 
 	@Override
+	public AbstractArtefact resolveArtefactCall(AbstractArtefact artefact, DynamicJsonObjectResolver dynamicJsonObjectResolver, Map<String, Object> bindings, ObjectPredicate objectPredicate, PlanAccessor planAccessor, FunctionAccessor functionAccessor) {
+		FunctionLocator functionLocator = new FunctionLocator(functionAccessor, new SelectorHelper(dynamicJsonObjectResolver));
+		Function function = functionLocator.getFunction((CallFunction) artefact, objectPredicate, bindings);
+		if(function instanceof CompositeFunction) {
+			return ((CompositeFunction) function).getPlan().getRoot();
+		} else {
+			return null;
+		}
+	}
+
+	@Override
 	protected void execute_(CallFunctionReportNode node, CallFunction testArtefact) throws Exception {
+		// Append the artefactId of the current artefact to the path
+		pushArtefactPath(node, testArtefact);
+
 		String argumentStr = testArtefact.getArgument().get();
 		node.setInput(argumentStr);
 		
@@ -177,6 +194,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				if(gridToken.isLocal()) {
 					TokenReservationSession session = (TokenReservationSession) gridToken.getAttachedObject(TokenWrapper.TOKEN_RESERVATION_SESSION);
 					session.put(AbstractFunctionHandler.EXECUTION_CONTEXT_KEY, new ExecutionContextWrapper(context));
+					session.put(AbstractFunctionHandler.ARTEFACT_PATH, currentArtefactPath());
 				}
 				
 				node.setAgentUrl(token.getAgent().getAgentUrl());

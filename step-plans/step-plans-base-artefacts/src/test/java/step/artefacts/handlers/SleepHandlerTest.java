@@ -25,7 +25,7 @@ import java.io.StringWriter;
 
 import org.junit.Test;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;

@@ -49,8 +49,7 @@
 		<dependency>
 			<groupId>ch.exense.step</groupId>
 			<artifactId>step-api-keyword</artifactId>
-			<version>${step-api.version}</version>
-		</dependency>			
+		</dependency>
 		<dependency>
 			<groupId>ch.exense.step</groupId>
 			<artifactId>step-functions-plugins-java-keyword-handler</artifactId>
@@ -66,12 +65,10 @@
 		<dependency>
 			<groupId>org.apache.poi</groupId>
 			<artifactId>poi</artifactId>
-			<version>5.2.3</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.poi</groupId>
 			<artifactId>poi-ooxml</artifactId>
-			<version>5.2.3</version>
 			<exclusions>
 				<exclusion>
 					<artifactId>xml-apis</artifactId>
@@ -79,43 +76,33 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
+
 		<dependency>
 			<groupId>com.google.apis</groupId>
 			<artifactId>google-api-services-sheets</artifactId>
-			<version>v4-rev20190109-1.27.0</version>
 		</dependency>
 		<dependency>
 			<groupId>com.google.apis</groupId>
 			<artifactId>google-api-services-drive</artifactId>
-			<version>v3-rev20181213-1.27.0</version>
 		</dependency>
 		<dependency>
 		    <groupId>com.jayway.jsonpath</groupId>
 		    <artifactId>json-path</artifactId>
-		    <version>2.7.0</version>
 		</dependency>
 		<dependency>
     		<groupId>org.everit.json</groupId>
     		<artifactId>org.everit.json.schema</artifactId>
-    		<version>1.5.1</version>
-		</dependency>
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>log4j-over-slf4j</artifactId>
-			<version>${slf4j.version}</version>
 		</dependency>
 
 		<!-- Test dependencies -->
 		<dependency>
 			<groupId>com.mysql</groupId>
 			<artifactId>mysql-connector-j</artifactId>
-			<version>8.0.33</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.mockito</groupId>
 			<artifactId>mockito-core</artifactId>
-			<version>${mockito.version}</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
