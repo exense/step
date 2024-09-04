@@ -115,7 +115,7 @@ public class AutomationPackageServices extends AbstractStepServices {
         try {
             return automationPackageExecutor.runInIsolation(
                     automationPackageInputStream,
-                    fileDetail.getFileName(),
+                    fileDetail == null ? null : fileDetail.getFileName(),
                     executionParameters,
                     getObjectEnricher(),
                     getObjectPredicate()

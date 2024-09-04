@@ -66,6 +66,7 @@ public class IsolatedAutomationPackageRepositoryPlugin extends AbstractControlle
                 context.getResourceManager(),
                 context.require(FunctionTypeRegistry.class),
                 context.require(FunctionAccessor.class),
+                context.getRepositoryObjectManager(),
                 () -> {
                     ControllerSetting setting = controllerSettingAccessor.getSettingByKey(ISOLATED_AP_HOUSEKEEPING_TTL);
                     return setting == null ? null : setting.getValue();

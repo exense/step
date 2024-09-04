@@ -43,7 +43,7 @@ public class ResourceArtifactRepository extends AbstractArtifactRepository {
 	}
 
     @Override
-	protected File getArtifact(Map<String, String> repositoryParameters) {
+	public File getArtifact(Map<String, String> repositoryParameters) {
 		String resourceId = AbstractArtifactRepository.getMandatoryRepositoryParameter(repositoryParameters, PARAM_RESOURCE_ID);
 		return getResourceFile(resourceId);
 	}

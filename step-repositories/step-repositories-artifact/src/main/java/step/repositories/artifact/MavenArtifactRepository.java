@@ -40,11 +40,6 @@ public class MavenArtifactRepository extends AbstractArtifactRepository {
     protected static final String PARAM_GROUP_ID = ArtifactRepositoryConstants.ARTIFACT_PARAM_GROUP_ID;
     protected static final String PARAM_CLASSIFIER = ArtifactRepositoryConstants.ARTIFACT_PARAM_CLASSIFIER;
 
-    protected static final String PARAM_LIB_ARTIFACT_ID = ArtifactRepositoryConstants.ARTIFACT_PARAM_LIB_ARTIFACT_ID;
-    protected static final String PARAM_LIB_VERSION = ArtifactRepositoryConstants.ARTIFACT_PARAM_LIB_VERSION;
-    protected static final String PARAM_LIB_GROUP_ID = ArtifactRepositoryConstants.ARTIFACT_PARAM_LIB_GROUP_ID;
-    protected static final String PARAM_LIB_CLASSIFIER = ArtifactRepositoryConstants.ARTIFACT_PARAM_LIB_CLASSIFIER;
-
     protected static final String PARAM_MAVEN_SETTINGS = ArtifactRepositoryConstants.ARTIFACT_PARAM_MAVEN_SETTINGS;
 
     public static final String MAVEN_SETTINGS_PREFIX = "maven_settings_";
@@ -79,7 +74,7 @@ public class MavenArtifactRepository extends AbstractArtifactRepository {
     }
 
     @Override
-    protected File getArtifact(Map<String, String> repositoryParameters) {
+    public File getArtifact(Map<String, String> repositoryParameters) {
         ControllerSetting settingsXml = getMavenSettings(repositoryParameters);
         try {
             MavenArtifactClient mavenArtifactClient = new MavenArtifactClient(settingsXml.getValue(), localRepository);

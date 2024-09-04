@@ -28,6 +28,7 @@ import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.Accessor;
 import step.core.accessors.LayeredAccessor;
 import step.core.execution.ExecutionContext;
+import step.core.execution.model.AutomationPackageExecutionParameters;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.Plan;
@@ -58,6 +59,7 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
     public static final String AP_NAME_CUSTOM_FIELD = "apName";
     public static final String LAST_EXECUTION_TIME_CUSTOM_FIELD = "lastExecutionTime";
     public static final String PLAN_NAME = "planName";
+    public static final String ORIGINAL_REPOSITORY_ID = "originalRepoId";
     public static final String AP_NAME = "apName";
 
     // context id -> automation package manager (cache)
@@ -67,18 +69,21 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
     private final ResourceManager resourceManager;
     private final FunctionTypeRegistry functionTypeRegistry;
     private final FunctionAccessor functionAccessor;
+    private final RepositoryObjectManager repositoryObjectManager;
     private final Supplier<String> ttlValueSupplier;
 
     protected IsolatedAutomationPackageRepository(AutomationPackageManager manager,
                                                   ResourceManager resourceManager,
                                                   FunctionTypeRegistry functionTypeRegistry,
                                                   FunctionAccessor functionAccessor,
+                                                  RepositoryObjectManager repositoryObjectManager,
                                                   Supplier<String> ttlValueSupplier) {
         super(Set.of(REPOSITORY_PARAM_CONTEXTID));
         this.manager = manager;
         this.resourceManager = resourceManager;
         this.functionTypeRegistry = functionTypeRegistry;
         this.functionAccessor = functionAccessor;
+        this.repositoryObjectManager = repositoryObjectManager;
         this.ttlValueSupplier = ttlValueSupplier;
     }
 
@@ -112,22 +117,7 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
         PackageExecutionContext current = sharedPackageExecutionContexts.get(contextId);
         if (current == null) {
             // Here we resolve the original AP file used for previous isolated execution and re-use it to create the execution context
-            Resource resource = getResource(contextId, apName);
-            if (resource == null) {
-                throw new AutomationPackageManagerException("The requested Automation Package file has been removed by the housekeeping (package name '" + apName + "' and execution context " + contextId + ")");
-            }
-
-            File apFile = null;
-
-            ResourceRevisionFileHandle fileHandle = resourceManager.getResourceFile(resource.getId().toString());
-            if (fileHandle != null) {
-                apFile = fileHandle.getResourceFile();
-            }
-            if (apFile == null) {
-                throw new AutomationPackageManagerException("Automation package file is not found for automation package '" + apName + "' and execution context " + contextId);
-            }
-
-            updateLastExecution(resource);
+            AutomationPackageFile apFile = restoreApFile(contextId, apName, repositoryParameters);
 
             // prepare the isolated in-memory automation package manager with the only one automation package
             AutomationPackageManager inMemoryPackageManager = manager.createIsolated(
@@ -136,15 +126,47 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
             );
 
             // create single automation package in isolated manager
-            try (FileInputStream fis = new FileInputStream(apFile)) {
-                inMemoryPackageManager.createAutomationPackage(fis, apFile.getName(), enricher, predicate);
+            try (FileInputStream fis = new FileInputStream(apFile.getFile())) {
+                inMemoryPackageManager.createAutomationPackage(fis, apFile.getFile().getName(), enricher, predicate);
             } catch (IOException e) {
-                throw new AutomationPackageManagerException("Cannot read the AP file: " + apFile.getName());
+                throw new AutomationPackageManagerException("Cannot read the AP file: " + apFile.getFile().getName());
             }
 
             return new PackageExecutionContext(contextId, inMemoryPackageManager, false);
         }
         return current;
+    }
+
+    private AutomationPackageFile restoreApFile(String contextId, String apName, Map<String, String> repositoryParameters) {
+        // the file can be stored eiter in some artifact repository (i.e. in Nexus) or in temporary storage for AP files
+        String originalRepoId = repositoryParameters.get(ORIGINAL_REPOSITORY_ID);
+        if (originalRepoId != null) {
+            Repository artifactRepository = repositoryObjectManager.getRepository(originalRepoId);
+            File artifact = artifactRepository.getArtifact(repositoryParameters);
+            if (artifact == null) {
+                throw new AutomationPackageManagerException("Unable to resolve the requested Automation Package file in artifact repository " + originalRepoId + " with parameters " + repositoryParameters);
+            }
+            return new AutomationPackageFile(artifact, null);
+        } else {
+            Resource resource = getResource(contextId, apName);
+
+            if (resource == null) {
+                throw new AutomationPackageManagerException("The requested Automation Package file has been removed by the housekeeping (package name '" + apName + "' and execution context " + contextId + ")");
+            }
+
+            File file = null;
+
+            ResourceRevisionFileHandle fileHandle = resourceManager.getResourceFile(resource.getId().toString());
+            if (fileHandle != null) {
+                file = fileHandle.getResourceFile();
+            }
+            if (file == null) {
+                throw new AutomationPackageManagerException("Automation package file is not found for automation package '" + apName + "' and execution context " + contextId);
+            }
+
+            updateLastExecution(resource);
+            return new AutomationPackageFile(file, resource);
+        }
     }
 
     protected void updateLastExecution(Resource resource) {
@@ -320,7 +342,27 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
         }
     }
 
-    public File getApFile(Resource resource) {
+    public AutomationPackageFile getApFileForExecution(InputStream apInputStream, String inputStreamFileName, AutomationPackageExecutionParameters parameters, ObjectId contextId) {
+        AutomationPackageFile apFile;
+        if (apInputStream != null) {
+            // for files from input stream we save persists the resource to support re-execution
+            Resource apResource = saveApResource(contextId.toString(), apInputStream, inputStreamFileName);
+            File file = getApFileByResource(apResource);
+            apFile = new AutomationPackageFile(file, apResource);
+        } else {
+            // for files provided by artifact repository we don't store the file as resource, but just load the file from this repository
+            RepositoryObjectReference repositoryObject = parameters.getOriginalRepositoryObject();
+            if (repositoryObject == null) {
+                throw new AutomationPackageManagerException("Unable to resolve AP file. Repository object is undefined");
+            }
+            Repository artifactRepository = repositoryObjectManager.getRepository(repositoryObject.getRepositoryID());
+            File artifact = artifactRepository.getArtifact(parameters.getOriginalRepositoryObject().getRepositoryParameters());
+            return new AutomationPackageFile(artifact, null);
+        }
+        return apFile;
+    }
+
+    private File getApFileByResource(Resource resource) {
         return resourceManager.getResourceFile(resource.getId().toString()).getResourceFile();
     }
 
@@ -372,6 +414,24 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
             } finally {
                 sharedPackageExecutionContexts.remove(contextId);
             }
+        }
+    }
+
+    public static class AutomationPackageFile {
+        private final File file;
+        private final Resource resource;
+
+        public AutomationPackageFile(File file, Resource localResource) {
+            this.file = file;
+            this.resource = localResource;
+        }
+
+        public File getFile() {
+            return file;
+        }
+
+        public Resource getResource() {
+            return resource;
         }
     }
 }

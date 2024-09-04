@@ -113,7 +113,7 @@ public abstract class AbstractArtifactRepository extends AbstractRepository {
 		return (string == null || string.isEmpty()) ? new ArrayList<>() : Arrays.stream(string.split(",")).collect(Collectors.toList());
 	}
 
-	protected abstract File getArtifact(Map<String, String> repositoryParameters);
+	public abstract File getArtifact(Map<String, String> repositoryParameters);
 
 	@Override
 	public ImportResult importArtefact(ExecutionContext context, Map<String, String> repositoryParameters) {
