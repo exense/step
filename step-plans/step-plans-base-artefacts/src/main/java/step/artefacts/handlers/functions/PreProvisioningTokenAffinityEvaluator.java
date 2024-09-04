@@ -10,8 +10,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import static step.artefacts.handlers.functions.autoscaler.AgentPoolProvisioningParameters.TOKEN_ATTRIBUTE_DOCKER_IMAGE;
-
 /**
  * This {@link step.grid.tokenpool.AffinityEvaluator} is used to match agent token pools before their provisioning.
  * The reason for this is that some attributes are only available after provisioning. An example is the attribute
