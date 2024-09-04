@@ -50,6 +50,23 @@ plans:
                     expression: "output.output1.equals('value')"
                 - check:
                     expression: "output.output2.equals('some thing dynamic')"
+  - name: Plan with Call Plan
+    root:
+      testCase:
+        nodeName: Plan with Call Plan
+        children:
+          - callPlan:
+              selectionAttributes:
+                - name: "Plan2"
+              input:
+                - inputtest: "some other value"
+  - name: Plan2
+    root:
+      testCase:
+        nodeName: "Plan2"
+        children:
+          - echo:
+              expression: "input.getString(\"inputtest\")"
 keywords:
   - JMeter:
       name: "JMeterAutomation"

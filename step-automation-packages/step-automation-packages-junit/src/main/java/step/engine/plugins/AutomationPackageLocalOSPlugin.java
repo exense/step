@@ -57,6 +57,7 @@ public class AutomationPackageLocalOSPlugin extends AbstractExecutionEnginePlugi
                     automationPackageManagerClass -> AutomationPackageManager.createLocalAutomationPackageManager(
                             context.require(FunctionTypeRegistry.class),
                             functionAccessor,
+                            context.getPlanAccessor(),
                             resourceManager,
                             reader,
                             hookRegistry

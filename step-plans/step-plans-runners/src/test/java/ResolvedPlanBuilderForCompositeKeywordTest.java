@@ -83,7 +83,7 @@ public class ResolvedPlanBuilderForCompositeKeywordTest {
         PlanRunnerResult result = engine.execute(plan);
 
         // Sleep a few ms to ensure that the report node timeseries is flushed
-        Thread.sleep(100);
+        Thread.sleep(500);
 
         AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(engine.getExecutionEngineContext(), result.getExecutionId());
         AggregatedReportView node = aggregatedReportViewBuilder.buildAggregatedReportView();
