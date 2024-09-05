@@ -1,5 +1,7 @@
 package step.core.artefacts.reports.aggregated;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import step.core.artefacts.AbstractArtefact;
 
 import java.util.List;
@@ -12,7 +14,9 @@ public class AggregatedReportView {
     public final Map<String, Long> countByStatus;
     public final List<AggregatedReportView> children;
 
-    public AggregatedReportView(AbstractArtefact artefact, String artefactHash, Map<String, Long> countByStatus, List<AggregatedReportView> children) {
+    @JsonCreator
+    public AggregatedReportView(@JsonProperty("artefact") AbstractArtefact artefact, @JsonProperty("artefactHash") String artefactHash,
+                                @JsonProperty("countByStatus") Map<String, Long> countByStatus, @JsonProperty("children") List<AggregatedReportView> children) {
         this.artefact = artefact;
         this.artefactHash = artefactHash;
         this.countByStatus = countByStatus;
@@ -20,7 +24,7 @@ public class AggregatedReportView {
     }
 
     public long countTotal() {
-        return countByStatus.values().stream().reduce(Long::sum).get();
+        return countByStatus.values().stream().reduce(Long::sum).orElse(0L);
     }
 
     @Override
@@ -30,10 +34,10 @@ public class AggregatedReportView {
         return stringBuilder.toString();
     }
 
-    private void recursiveToString(AggregatedReportView node, int level, StringBuilder stringBuilder) {
+    private static void recursiveToString(AggregatedReportView node, int level, StringBuilder stringBuilder) {
         String name = node.artefact.getClass().getSimpleName();
         String indentation = new String(new char[level]).replace("\0", " ");
-        stringBuilder.append(indentation).append(name).append(": ").append(countTotal()).append("x\n");
+        stringBuilder.append(indentation).append(name).append(": ").append(node.countTotal()).append("x\n");
         node.children.forEach(c -> recursiveToString(c, level + 1, stringBuilder));
     }
 }

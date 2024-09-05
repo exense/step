@@ -80,9 +80,8 @@ public class CallPlanHandler extends ArtefactHandler<CallPlan, ReportNode> {
 	}
 
 	@Override
-	public AbstractArtefact resolveArtefactCall(AbstractArtefact artefact, DynamicJsonObjectResolver dynamicJsonObjectResolver, Map<String, Object> bindings, ObjectPredicate objectPredicate, PlanAccessor planAccessor, FunctionAccessor functionAccessor) {
-		PlanLocator planLocator = new PlanLocator(planAccessor, new SelectorHelper(dynamicJsonObjectResolver));
-		Plan plan = planLocator.selectPlan((CallPlan) artefact, objectPredicate, bindings);
+	public AbstractArtefact resolveArtefactCall(CallPlan artefact) {
+		Plan plan = selectPlan(artefact);
 		return plan != null ? plan.getRoot() : null;
 	}
 
