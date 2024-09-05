@@ -1,0 +1,56 @@
+{
+  "_class": "step.core.plans.Plan",
+  "agents": {
+    "_class": "step.core.plans.agents.configuration.PlanAgentPoolsConfiguration",
+    "configuredAgentPools": [
+      {
+        "number": 1,
+        "templateName": "myPool"
+      },
+      {
+        "image": "test-image",
+        "number": 2,
+        "templateName": "myPool2"
+      }
+    ]
+  },
+  "attributes": {
+    "name": "test plan"
+  },
+  "id": "644fbe4e38a61e07cc3a4df8",
+  "root": {
+    "_class": "Sequence",
+    "attributes": {
+      "name": "Sequence"
+    },
+    "children": [
+    ],
+    "continueOnError": {
+      "dynamic": false,
+      "value": false
+    },
+    "continueParentNodeExecutionOnError": {
+      "dynamic": false,
+      "value": false
+    },
+    "dynamicName": {
+      "dynamic": false,
+      "expression": "",
+      "value": ""
+    },
+    "id": "644fbe4e38a61e07cc3a4df8",
+    "instrumentNode": {
+      "dynamic": false,
+      "value": false
+    },
+    "pacing": {
+      "dynamic": false
+    },
+    "skipNode": {
+      "dynamic": false,
+      "value": false
+    },
+    "useDynamicName": false
+  },
+  "visible": true
+}

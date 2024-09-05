@@ -35,6 +35,7 @@ import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
 import step.core.execution.ExecutionEngineContext;
 import step.core.plans.Plan;
+import step.core.plans.agents.configuration.AgentPoolRequirementSpec;
 import step.core.plans.builder.PlanBuilder;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.engine.plugins.FunctionPlugin;

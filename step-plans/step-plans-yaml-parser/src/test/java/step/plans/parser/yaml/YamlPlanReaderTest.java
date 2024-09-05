@@ -312,6 +312,19 @@ public class YamlPlanReaderTest {
 		}
 	}
 
+	@Test
+	public void checkPlanYamlConfiguration() {
+		convertFromYamlToPlan(
+				"src/test/resources/step/plans/parser/yaml/agents/test-agents-configuration-yaml.yml",
+				"src/test/resources/step/plans/parser/yaml/agents/test-expected-agents-configuration-tech-plan.yml"
+		);
+
+		convertPlanToYaml(
+				"src/test/resources/step/plans/parser/yaml/controls/test-expected-controls-tech-plan.yml",
+				"src/test/resources/step/plans/parser/yaml/controls/test-controls-plan.yml"
+		);
+	}
+
 	private void convertPlanToYaml(String technicalPlanFilePath, String expectedYamlPlan) {
 		// read plan
 		File techYamlFile = new File(technicalPlanFilePath);

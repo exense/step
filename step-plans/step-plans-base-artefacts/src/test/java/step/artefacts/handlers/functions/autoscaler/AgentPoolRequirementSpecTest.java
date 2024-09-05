@@ -3,6 +3,7 @@ package step.artefacts.handlers.functions.autoscaler;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
+import step.core.plans.agents.configuration.AgentPoolRequirementSpec;
 
 import java.util.Map;
 import java.util.Set;

@@ -27,12 +27,14 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.artefacts.handlers.functions.autoscaler.PlanAutoscalingSettings;
 import step.core.Version;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.artefacts.AbstractArtefact;
 import step.core.plans.Plan;
+import step.core.plans.agents.configuration.PlanAgentsConfiguration;
+import step.core.plans.agents.configuration.PlanAgentsConfigurationYaml;
+import step.core.plans.agents.configuration.PlanAgentsPoolsAutoConfiguration;
 import step.core.scanner.AnnotationScanner;
 import step.core.scanner.CachedAnnotationScanner;
 import step.core.yaml.deserializers.StepYamlDeserializersScanner;
@@ -45,8 +47,6 @@ import step.plans.parser.yaml.migrations.AbstractYamlPlanMigrationTask;
 import step.plans.parser.yaml.migrations.YamlPlanMigration;
 import step.plans.parser.yaml.model.AbstractYamlArtefact;
 import step.plans.parser.yaml.model.NamedYamlArtefact;
-import step.plans.parser.yaml.YamlPlan;
-import step.plans.parser.yaml.YamlPlanVersions;
 import step.plans.parser.yaml.schema.YamlPlanValidationException;
 import step.repositories.parser.StepsParser;
 
@@ -261,8 +261,10 @@ public class YamlPlanReader {
 	public Plan yamlPlanToPlan(YamlPlan yamlPlan) {
 		Plan plan = new Plan(yamlPlan.getRoot().getYamlArtefact().toArtefact());
 		plan.addAttribute(AbstractOrganizableObject.NAME, yamlPlan.getName());
-		if (yamlPlan.getAutoscaling() != null) {
-			plan.addCustomField(PlanAutoscalingSettings.AUTOSCALING_SETTINGS, yamlPlan.getAutoscaling());
+		PlanAgentsConfigurationYaml agents = yamlPlan.getAgents();
+		//If agents is not define in YAML, use default value of plan
+		if (agents != null) {
+			plan.setAgents(agents.asNativeConfiguration());
 		}
 		applyDefaultValues(plan);
 		return plan;
@@ -273,7 +275,12 @@ public class YamlPlanReader {
 		yamlPlan.setName(plan.getAttribute(AbstractOrganizableObject.NAME));
 		yamlPlan.setVersion(currentVersion.toString());
 		yamlPlan.setRoot(new NamedYamlArtefact(AbstractYamlArtefact.toYamlArtefact(plan.getRoot(), yamlMapper)));
-		yamlPlan.setAutoscaling((PlanAutoscalingSettings) plan.getCustomField(PlanAutoscalingSettings.AUTOSCALING_SETTINGS));
+		PlanAgentsConfiguration agents = plan.getAgents();
+		//don't set the value of agents if the default values is used to keep the Yaml short
+		if (!(agents instanceof PlanAgentsPoolsAutoConfiguration) ||
+				!((PlanAgentsPoolsAutoConfiguration) agents).mode.equals(PlanAgentsPoolsAutoConfiguration.PlanAgentsPoolAutoMode.auto_detect)) {
+			yamlPlan.setAgents(plan.getAgents().asYamlConfiguration());
+		}
 		return yamlPlan;
 	}
 

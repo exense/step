@@ -1,0 +1,11 @@
+version: 1.0.0
+name: "test plan"
+agents:
+  - templateName: "myPool"
+    number: 1
+  - templateName: "myPool2"
+    number: 2
+    image: "test-image"
+root:
+  sequence:
+    children: []

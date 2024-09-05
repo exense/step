@@ -1,6 +1,6 @@
 package step.artefacts.handlers.functions;
 
-import step.artefacts.handlers.functions.autoscaler.AgentPoolRequirementSpec;
+import step.core.plans.agents.configuration.AgentPoolRequirementSpec;
 import step.artefacts.handlers.functions.autoscaler.AgentPoolSpec;
 import step.functions.Function;
 import step.functions.execution.FunctionExecutionService;

@@ -26,11 +26,11 @@ import jakarta.json.JsonObjectBuilder;
 import jakarta.json.spi.JsonProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.artefacts.handlers.functions.autoscaler.AgentPoolRequirementSpec;
-import step.artefacts.handlers.functions.autoscaler.PlanAutoscalingSettings;
+import step.core.plans.agents.configuration.AgentPoolConfiguration;
 import step.core.Version;
 import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.artefacts.AbstractArtefact;
+import step.core.plans.agents.configuration.PlanAgentsPoolsAutoConfiguration;
 import step.core.scanner.CachedAnnotationScanner;
 import step.core.yaml.schema.*;
 import step.handlers.javahandler.jsonschema.FieldMetadataExtractor;
@@ -46,7 +46,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static step.artefacts.handlers.functions.autoscaler.PlanAutoscalingSettings.AGENT_POOL_ARRAY_DEF;
+import static step.core.plans.agents.configuration.PlanAgentPoolsConfiguration.AGENT_POOL_CONFIGURATION_ARRAY_DEF;
+import static step.core.plans.agents.configuration.PlanAgentPoolsConfiguration.AGENT_CONFIGURATION_YAML_NAME;
 import static step.core.scanner.Classes.newInstanceAs;
 
 public class YamlPlanJsonSchemaGenerator {
@@ -126,7 +127,7 @@ public class YamlPlanJsonSchemaGenerator {
 			objectBuilder.add("version", jsonProvider.createObjectBuilder().add("const", actualVersion.toString()));
 		}
 		if (!isCompositePlan) {
-			objectBuilder.add("autoscaling", YamlJsonSchemaHelper.addRef(jsonProvider.createObjectBuilder(),PlanAutoscalingSettings.AUTOSCALING_SETTINGS + SchemaDefSuffix));
+			objectBuilder.add(AGENT_CONFIGURATION_YAML_NAME, YamlJsonSchemaHelper.addRef(jsonProvider.createObjectBuilder(), AGENT_CONFIGURATION_YAML_NAME + SchemaDefSuffix));
 		}
 		objectBuilder.add("root", YamlJsonSchemaHelper.addRef(jsonProvider.createObjectBuilder(), ROOT_ARTEFACT_DEF));
 		return objectBuilder;
@@ -156,7 +157,7 @@ public class YamlPlanJsonSchemaGenerator {
 			defsBuilder.add(ARTEFACT_DEF, createArtefactDef(artefactImplDefs.controlArtefactDefs));
 			defsBuilder.add(ROOT_ARTEFACT_DEF, createArtefactDef(artefactImplDefs.rootArtefactDefs));
 			defsBuilder.add(AbstractYamlArtefact.ARTEFACT_ARRAY_DEF, createArtefactArrayDef());
-			createPlanAutoscalingSettingsDef(defsBuilder);
+			createPlanPoolConfigurationsDef(defsBuilder);
 
 			defsBuilder.add(YamlJsonSchemaHelper.PLAN_DEF, createPlanDef(versionedPlans, false));
 			defsBuilder.add(YamlJsonSchemaHelper.COMPOSITE_PLAN_DEF, createPlanDef(versionedPlans, true));
@@ -176,22 +177,38 @@ public class YamlPlanJsonSchemaGenerator {
 		return builder;
 	}
 
-	private void createPlanAutoscalingSettingsDef(JsonObjectBuilder defsBuilder) throws JsonSchemaPreparationException {
-		String agentPoolRequirementSpec = "agentPoolRequirementSpec";
-		defsBuilder.add(agentPoolRequirementSpec + SchemaDefSuffix, schemaHelper.createJsonSchemaForClass(
+	private void createPlanPoolConfigurationsDef(JsonObjectBuilder defsBuilder) throws JsonSchemaPreparationException {
+		//Create definition for agentPoolConfiguration
+		String agentPoolConfigurationYamlName = "agentPoolConfiguration";
+		defsBuilder.add(agentPoolConfigurationYamlName + SchemaDefSuffix, schemaHelper.createJsonSchemaForClass(
 				jsonSchemaCreator,
-				AgentPoolRequirementSpec.class,
+				AgentPoolConfiguration.class,
 				true
 		));
+
+		//Create definition for array of agentPoolConfigurationYamlName
 		JsonObjectBuilder builder = jsonProvider.createObjectBuilder();
 		builder.add("type", "array");
-		builder.add("items", YamlJsonSchemaHelper.addRef(jsonProvider.createObjectBuilder(), agentPoolRequirementSpec + SchemaDefSuffix));
-		defsBuilder.add(AGENT_POOL_ARRAY_DEF, builder);
-		defsBuilder.add(PlanAutoscalingSettings.AUTOSCALING_SETTINGS + SchemaDefSuffix, schemaHelper.createJsonSchemaForClass(
-				jsonSchemaCreator,
-				PlanAutoscalingSettings.class,
-				true
-		));
+		builder.add("items", YamlJsonSchemaHelper.addRef(jsonProvider.createObjectBuilder(), agentPoolConfigurationYamlName + SchemaDefSuffix));
+		defsBuilder.add(AGENT_POOL_CONFIGURATION_ARRAY_DEF, builder);
+
+		//Create definition for agents configuration in plan (One of)
+		JsonArrayBuilder arrayBuilder = jsonSchemaCreator.getJsonProvider().createArrayBuilder();
+		//add list of agent spec configurations
+		arrayBuilder.add(YamlJsonSchemaHelper.addRef(jsonProvider.createObjectBuilder(), AGENT_POOL_CONFIGURATION_ARRAY_DEF));
+		//Add enum
+		JsonObjectBuilder enumBuilder = jsonSchemaCreator.getJsonProvider().createObjectBuilder();
+		JsonArrayBuilder enumArray = jsonSchemaCreator.getJsonProvider().createArrayBuilder();
+		for (Object enumValue : PlanAgentsPoolsAutoConfiguration.PlanAgentsPoolAutoMode.values()) {
+			enumArray.add(enumValue.toString());
+		}
+		enumBuilder.add("enum", enumArray);
+		arrayBuilder.add(enumBuilder);
+
+		//Create agentsDef with oneOf
+		JsonObjectBuilder agentsDefBuilder = jsonProvider.createObjectBuilder();
+		agentsDefBuilder.add("oneOf", arrayBuilder);
+		defsBuilder.add(AGENT_CONFIGURATION_YAML_NAME + SchemaDefSuffix, agentsDefBuilder);
 	}
 
 	private ArtefactDefinitions createArtefactImplDefs() throws JsonSchemaPreparationException {

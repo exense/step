@@ -2,6 +2,9 @@
 _class: "step.core.plans.Plan"
 attributes:
   name: "Build"
+agents:
+  _class: "step.core.plans.agents.configuration.PlanAgentsPoolsAutoConfiguration"
+  mode: "auto_detect"
 root:
   _class: "TestCase"
   attributes:

@@ -1989,48 +1989,40 @@
         "$ref" : "#/$defs/ArtefactDef"
       }
     },
-    "agentPoolRequirementSpecDef" : {
+    "agentPoolConfigurationDef" : {
       "type" : "object",
       "properties" : {
-        "provisioningParameters" : {
-          "type" : "object",
-          "properties" : { }
-        },
-        "agentPoolTemplateName" : {
+        "image" : {
           "type" : "string"
         },
-        "numberOfAgents" : {
+        "templateName" : {
+          "type" : "string"
+        },
+        "number" : {
           "type" : "number"
         }
       }
     },
-    "agentPoolRequirementSpecArrayDef" : {
+    "agentPoolConfigurationArrayDef" : {
       "type" : "array",
       "items" : {
-        "$ref" : "#/$defs/agentPoolRequirementSpecDef"
+        "$ref" : "#/$defs/agentPoolConfigurationDef"
       }
     },
-    "autoscalingSettingsDef" : {
-      "type" : "object",
-      "properties" : {
-        "requiredAgentPools" : {
-          "$ref" : "#/$defs/agentPoolRequirementSpecArrayDef"
-        },
-        "enableAutomaticTokenNumberCalculation" : {
-          "type" : "boolean"
-        },
-        "enableAutoscaling" : {
-          "type" : "boolean"
-        }
-      }
+    "agentsDef" : {
+      "oneOf" : [ {
+        "$ref" : "#/$defs/agentPoolConfigurationArrayDef"
+      }, {
+        "enum" : [ "auto_detect" ]
+      } ]
     },
     "PlanDef" : {
       "properties" : {
         "name" : {
           "type" : "string"
         },
-        "autoscaling" : {
-          "$ref" : "#/$defs/autoscalingSettingsDef"
+        "agents" : {
+          "$ref" : "#/$defs/agentsDef"
         },
         "root" : {
           "$ref" : "#/$defs/RootArtefactDef"
