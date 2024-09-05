@@ -27,7 +27,7 @@ import org.junit.Test;
 import com.google.common.io.Files;
 
 import ch.exense.commons.io.FileHelper;
-import junit.framework.Assert;
+import org.junit.Assert;
 import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.Export;
 import step.artefacts.Sequence;

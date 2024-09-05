@@ -24,13 +24,14 @@ import org.slf4j.LoggerFactory;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.controller.ControllerSettingAccessor;
 import step.core.execution.ExecutionContext;
+import step.core.execution.model.ExecutionLauncher;
 import step.core.execution.model.ExecutionParameters;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class ExecutionScheduler {
+public class ExecutionScheduler implements ExecutionLauncher {
 	
 	private final Logger logger = LoggerFactory.getLogger(ExecutionScheduler.class);
 	
@@ -47,6 +48,10 @@ public class ExecutionScheduler {
 		this.controllerSettingAccessor = controllerSettingAccessor;
 		this.executionTaskAccessor = executionTaskAccessor;
 		this.executor = executor;
+	}
+
+	public Executor getExecutor() {
+		return executor;
 	}
 
 	public void shutdown() {
@@ -142,7 +147,8 @@ public class ExecutionScheduler {
 	private boolean isSchedulerEnabled() {
 		return controllerSettingAccessor.getSettingAsBoolean(SETTING_SCHEDULER_ENABLED);
 	}
-	
+
+	@Override
 	public String execute(ExecutionParameters executionParameters) {
 		return executor.execute(executionParameters);
 	}

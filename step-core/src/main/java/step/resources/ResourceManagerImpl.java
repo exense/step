@@ -58,6 +58,7 @@ public class ResourceManagerImpl implements ResourceManager {
 		resourceTypes.put(RESOURCE_TYPE_DATASOURCE, new CustomResourceType(false));
 		resourceTypes.put(RESOURCE_TYPE_SECRET, new CustomResourceType(false));
 		resourceTypes.put(RESOURCE_TYPE_PDF_TEST_SCENARIO_FILE, new CustomResourceType(false));
+		resourceTypes.put(RESOURCE_TYPE_ISOLATED_AP, new CustomResourceType(false));
 	}
 
 	public void registerResourceType(String name, ResourceType resourceType) {

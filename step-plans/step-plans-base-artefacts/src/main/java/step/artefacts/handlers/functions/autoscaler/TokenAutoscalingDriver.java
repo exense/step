@@ -24,7 +24,7 @@ public interface TokenAutoscalingDriver {
      * @param provisioningRequestId the unique id of the request
      * @return the last status of the provisioning request
      */
-    TokenProvisioningStatus executeTokenProvisioningRequest(String provisioningRequestId);
+    TokenProvisioningStatus executeTokenProvisioningRequest(String provisioningRequestId) throws Exception;
 
     /**
      * Returns the status of the provisioning request identified by the provided id
@@ -37,5 +37,5 @@ public interface TokenAutoscalingDriver {
      * Performs the deprovisioning of the token provisioned previously for the provided request id
      * @param provisioningRequestId the unique id of the provisioning request
      */
-    void deprovisionTokens(String provisioningRequestId);
+    void deprovisionTokens(String provisioningRequestId) throws Exception;
 }

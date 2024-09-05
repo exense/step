@@ -26,6 +26,8 @@ import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandlerManager;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
+import step.core.artefacts.reports.resolvedplan.ResolvedPlanBuilder;
+import step.core.artefacts.reports.resolvedplan.ResolvedPlanNode;
 import step.core.execution.model.*;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
@@ -86,6 +88,8 @@ public class ExecutionEngineRunner {
 					logger.info(messageWithId("Starting execution."));
 					updateStatus(ExecutionStatus.ESTIMATING);
 
+					buildAndPersistResolvedPlan(plan);
+
 					executionContext.associateThread();
 
 					ReportNode rootReportNode = executionContext.getReport();
@@ -113,9 +117,9 @@ public class ExecutionEngineRunner {
 				} catch (PlanImportException e) {
 					saveFailureReportWithResult(ReportNodeStatus.IMPORT_ERROR);
 				} catch (ProvisioningException e) {
-					addLifecyleError("Error while provisioning execution resources: " + e.getMessage(), e);
+					addLifecyleError(e.getMessage(), e);
 				} catch (DeprovisioningException e) {
-					addLifecyleError("Error while deprovisioning execution resources: " + e.getMessage(), e);
+					addLifecyleError(e.getMessage(), e);
 				}
 			}
 		} catch (Throwable e) {
@@ -131,6 +135,13 @@ public class ExecutionEngineRunner {
 			}
 		}
 		return result;
+	}
+
+	private void buildAndPersistResolvedPlan(Plan plan) {
+		ResolvedPlanBuilder resolvedPlanBuilder = new ResolvedPlanBuilder(executionContext);
+		Map<String, Object> bindings = ExecutionContextBindings.get(executionContext);
+		ResolvedPlanNode resolvedPlanRoot = resolvedPlanBuilder.buildResolvedPlan(plan, bindings);
+		updateExecution(e -> e.setResolvedPlanRootNodeId(resolvedPlanRoot.getId().toString()));
 	}
 
 	public static void abort(ExecutionContext executionContext) {
@@ -253,22 +264,12 @@ public class ExecutionEngineRunner {
 
 	private void provisionRequiredResources() throws ProvisioningException {
 		updateStatus(ExecutionStatus.PROVISIONING);
-		try {
-			executionCallbacks.provisionRequiredResources(executionContext);
-		} catch(Exception e) {
-			logger.error("Error while provisioning resources",e);
-			throw new ProvisioningException(e.getMessage());
-		}
+		executionCallbacks.provisionRequiredResources(executionContext);
 	}
 
 	private void deprovisionRequiredResources() throws DeprovisioningException {
 		updateStatus(ExecutionStatus.DEPROVISIONING);
-		try {
-			executionCallbacks.deprovisionRequiredResources(executionContext);
-		} catch (Exception e) {
-			logger.error("Error while de-provisioning resources",e);
-			throw new DeprovisioningException(e.getMessage());
-		}
+		executionCallbacks.deprovisionRequiredResources(executionContext);
 	}
 	
 	private void exportExecution(ExecutionContext context) {	
@@ -322,18 +323,7 @@ public class ExecutionEngineRunner {
 		executionManager.updateExecution(consumer);
 	}
 
-	private static class ProvisioningException extends Exception {
-		public ProvisioningException(String message) {
-			super(message);
-		}
-	}
-
 	private class PlanImportException extends Exception {
 	}
 
-	private class DeprovisioningException extends Exception {
-		public DeprovisioningException(String message) {
-			super(message);
-		}
-	}
 }
