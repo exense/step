@@ -2,23 +2,16 @@ package step.core.plans.agents.configuration;
 
 import java.util.Objects;
 
-/**
- * Defines the requirements in terms of Agents for a Plan
- */
-public class AgentPoolConfiguration {
-    public static String TEMPLATE_PROPERTY_NAME = "pool";
-    public static String NUMBER_AGENT_PROPERTY_NAME = "replicas";
-    public static String IMAGE_PROPERTY_NAME = "image";
+public class AgentPoolProvisioningConfiguration {
 
     public int replicas;
     public String pool;
     public String image;
 
-    public AgentPoolConfiguration() {
+    public AgentPoolProvisioningConfiguration() {
     }
 
-
-    public AgentPoolConfiguration(String pool, String image, int replicas) {
+    public AgentPoolProvisioningConfiguration(String pool, String image, int replicas) {
         this.replicas = replicas;
         this.pool = pool;
         this.image = image;
@@ -28,7 +21,7 @@ public class AgentPoolConfiguration {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        AgentPoolConfiguration that = (AgentPoolConfiguration) o;
+        AgentPoolProvisioningConfiguration that = (AgentPoolProvisioningConfiguration) o;
         return replicas == that.replicas && Objects.equals(pool, that.pool) && Objects.equals(image, that.image);
     }
 

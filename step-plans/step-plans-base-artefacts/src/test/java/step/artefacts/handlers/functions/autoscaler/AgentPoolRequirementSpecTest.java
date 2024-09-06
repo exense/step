@@ -3,13 +3,15 @@ package step.artefacts.handlers.functions.autoscaler;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
-import step.core.plans.agents.configuration.AgentPoolRequirementSpec;
+import step.core.agents.provisioning.AgentPoolProvisioningParameter;
+import step.core.agents.provisioning.AgentPoolRequirementSpec;
+import step.core.agents.provisioning.AgentPoolSpec;
 
 import java.util.Map;
 import java.util.Set;
 
 import static org.junit.Assert.*;
-import static step.artefacts.handlers.functions.autoscaler.AgentPoolProvisioningParameters.DOCKER_IMAGE;
+import static step.core.agents.provisioning.AgentPoolProvisioningParameters.DOCKER_IMAGE;
 
 public class AgentPoolRequirementSpecTest {
 

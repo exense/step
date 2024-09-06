@@ -32,9 +32,8 @@ import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.artefacts.AbstractArtefact;
 import step.core.plans.Plan;
-import step.core.plans.agents.configuration.PlanAgentsConfiguration;
-import step.core.plans.agents.configuration.PlanAgentsConfigurationYaml;
-import step.core.plans.agents.configuration.PlanAgentsPoolsAutoConfiguration;
+import step.core.plans.agents.configuration.AgentProvisioningConfiguration;
+import step.core.plans.agents.configuration.AutomaticAgentProvisioningConfiguration;
 import step.core.scanner.AnnotationScanner;
 import step.core.scanner.CachedAnnotationScanner;
 import step.core.yaml.deserializers.StepYamlDeserializersScanner;
@@ -261,10 +260,10 @@ public class YamlPlanReader {
 	public Plan yamlPlanToPlan(YamlPlan yamlPlan) {
 		Plan plan = new Plan(yamlPlan.getRoot().getYamlArtefact().toArtefact());
 		plan.addAttribute(AbstractOrganizableObject.NAME, yamlPlan.getName());
-		PlanAgentsConfigurationYaml agents = yamlPlan.getAgents();
+		AgentProvisioningConfiguration agents = yamlPlan.getAgents();
 		//If agents is not define in YAML, use default value of plan
 		if (agents != null) {
-			plan.setAgents(agents.asNativeConfiguration());
+			plan.setAgents(agents);
 		}
 		applyDefaultValues(plan);
 		return plan;
@@ -275,11 +274,11 @@ public class YamlPlanReader {
 		yamlPlan.setName(plan.getAttribute(AbstractOrganizableObject.NAME));
 		yamlPlan.setVersion(currentVersion.toString());
 		yamlPlan.setRoot(new NamedYamlArtefact(AbstractYamlArtefact.toYamlArtefact(plan.getRoot(), yamlMapper)));
-		PlanAgentsConfiguration agents = plan.getAgents();
+		AgentProvisioningConfiguration agents = plan.getAgents();
 		//don't set the value of agents if the default values is used to keep the Yaml short
-		if (!(agents instanceof PlanAgentsPoolsAutoConfiguration) ||
-				!((PlanAgentsPoolsAutoConfiguration) agents).mode.equals(PlanAgentsPoolsAutoConfiguration.PlanAgentsPoolAutoMode.auto_detect)) {
-			yamlPlan.setAgents(plan.getAgents().asYamlConfiguration());
+		if (!(agents instanceof AutomaticAgentProvisioningConfiguration) ||
+				!((AutomaticAgentProvisioningConfiguration) agents).mode.equals(AutomaticAgentProvisioningConfiguration.PlanAgentsPoolAutoMode.auto_detect)) {
+			yamlPlan.setAgents(plan.getAgents());
 		}
 		return yamlPlan;
 	}

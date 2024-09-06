@@ -2,7 +2,7 @@ package step.artefacts.handlers.functions;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.artefacts.handlers.functions.autoscaler.AgentPoolSpec;
+import step.core.agents.provisioning.AgentPoolSpec;
 import step.artefacts.handlers.functions.autoscaler.TokenAutoscalingDriver;
 import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ExecutionContext;

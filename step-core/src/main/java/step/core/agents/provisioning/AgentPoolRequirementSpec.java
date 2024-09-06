@@ -1,4 +1,4 @@
-package step.core.plans.agents.configuration;
+package step.core.agents.provisioning;
 
 import java.util.Map;
 import java.util.Objects;

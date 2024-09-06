@@ -1,4 +1,4 @@
-package step.artefacts.handlers.functions.autoscaler;
+package step.core.agents.provisioning;
 
 import step.grid.tokenpool.Interest;
 
@@ -6,13 +6,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import static step.core.plans.agents.configuration.PlanAgentPoolsConfiguration.PROVISIONING_PARAMETER_DOCKER_IMAGE;
-
 public class AgentPoolProvisioningParameters {
 
     public static final String TOKEN_ATTRIBUTE_DOCKER_IMAGE = "$dockerImage";
     public static final String TOKEN_ATTRIBUTE_DOCKER_SUPPORT = "$supportsCustomDockerImage";
 
+    public static final String PROVISIONING_PARAMETER_DOCKER_IMAGE = "dockerImage";
     public static final AgentPoolProvisioningParameter DOCKER_IMAGE = new AgentPoolProvisioningParameter(PROVISIONING_PARAMETER_DOCKER_IMAGE, "Docker image", (criteria, provisioningParameters) -> {
         if(criteria.containsKey(TOKEN_ATTRIBUTE_DOCKER_IMAGE)) {
             provisioningParameters.put(PROVISIONING_PARAMETER_DOCKER_IMAGE, criteria.get(TOKEN_ATTRIBUTE_DOCKER_IMAGE).getSelectionPattern().pattern());

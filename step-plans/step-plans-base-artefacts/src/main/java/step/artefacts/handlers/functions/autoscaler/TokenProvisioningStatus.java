@@ -1,6 +1,6 @@
 package step.artefacts.handlers.functions.autoscaler;
 
-import java.util.Map;
+import step.core.agents.provisioning.AgentProvisioningLogs;
 
 public class TokenProvisioningStatus {
 

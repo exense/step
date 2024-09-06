@@ -1,6 +1,6 @@
 package step.artefacts.handlers.functions.autoscaler;
 
-import step.core.plans.agents.configuration.AgentPoolRequirementSpec;
+import step.core.agents.provisioning.AgentPoolRequirementSpec;
 
 import java.util.List;
 

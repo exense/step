@@ -28,9 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static step.core.plans.agents.configuration.AgentPoolConfiguration.NUMBER_AGENT_PROPERTY_NAME;
-import static step.core.plans.agents.configuration.AgentPoolConfiguration.TEMPLATE_PROPERTY_NAME;
-
 /**
  * This function ensures that all the plans with auto scaling configuration in custom fields are migrated to the new model
  * This will only be needed for the migration from 3.25.x to 3.26.x or higher
@@ -87,8 +84,8 @@ public class MigratePlanAgentsConfiguration extends MigrationTask {
 										Map<String, Integer> requiredNumberOfTokens = (Map<String, Integer>) wrappedRequiredNumberOfTokens.get(1);
 										requiredNumberOfTokens.forEach((pool, replicas) -> {
 											DocumentObject poolConfiguration = new DocumentObject();
-											poolConfiguration.put(TEMPLATE_PROPERTY_NAME, pool);
-											poolConfiguration.put(NUMBER_AGENT_PROPERTY_NAME, replicas);
+											poolConfiguration.put("pool", pool);
+											poolConfiguration.put("replicas", replicas);
 											configuredAgentPools.add(poolConfiguration);
 										});
 									}

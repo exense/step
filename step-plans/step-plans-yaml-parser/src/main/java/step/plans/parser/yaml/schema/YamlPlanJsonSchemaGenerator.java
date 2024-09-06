@@ -26,11 +26,11 @@ import jakarta.json.JsonObjectBuilder;
 import jakarta.json.spi.JsonProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.core.plans.agents.configuration.AgentPoolConfiguration;
+import step.core.plans.agents.configuration.AgentPoolProvisioningConfiguration;
 import step.core.Version;
 import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.artefacts.AbstractArtefact;
-import step.core.plans.agents.configuration.PlanAgentsPoolsAutoConfiguration;
+import step.core.plans.agents.configuration.AutomaticAgentProvisioningConfiguration;
 import step.core.scanner.CachedAnnotationScanner;
 import step.core.yaml.schema.*;
 import step.handlers.javahandler.jsonschema.FieldMetadataExtractor;
@@ -46,8 +46,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static step.core.plans.agents.configuration.PlanAgentPoolsConfiguration.AGENT_POOL_CONFIGURATION_ARRAY_DEF;
-import static step.core.plans.agents.configuration.PlanAgentPoolsConfiguration.AGENT_CONFIGURATION_YAML_NAME;
+import static step.core.plans.agents.configuration.ManualAgentProvisioningConfiguration.AGENT_POOL_CONFIGURATION_ARRAY_DEF;
+import static step.core.plans.agents.configuration.ManualAgentProvisioningConfiguration.AGENT_CONFIGURATION_YAML_NAME;
 import static step.core.scanner.Classes.newInstanceAs;
 
 public class YamlPlanJsonSchemaGenerator {
@@ -182,7 +182,7 @@ public class YamlPlanJsonSchemaGenerator {
 		String agentPoolConfigurationYamlName = "agentPoolConfiguration";
 		defsBuilder.add(agentPoolConfigurationYamlName + SchemaDefSuffix, schemaHelper.createJsonSchemaForClass(
 				jsonSchemaCreator,
-				AgentPoolConfiguration.class,
+				AgentPoolProvisioningConfiguration.class,
 				true
 		));
 
@@ -199,7 +199,7 @@ public class YamlPlanJsonSchemaGenerator {
 		//Add enum
 		JsonObjectBuilder enumBuilder = jsonSchemaCreator.getJsonProvider().createObjectBuilder();
 		JsonArrayBuilder enumArray = jsonSchemaCreator.getJsonProvider().createArrayBuilder();
-		for (Object enumValue : PlanAgentsPoolsAutoConfiguration.PlanAgentsPoolAutoMode.values()) {
+		for (Object enumValue : AutomaticAgentProvisioningConfiguration.PlanAgentsPoolAutoMode.values()) {
 			enumArray.add(enumValue.toString());
 		}
 		enumBuilder.add("enum", enumArray);

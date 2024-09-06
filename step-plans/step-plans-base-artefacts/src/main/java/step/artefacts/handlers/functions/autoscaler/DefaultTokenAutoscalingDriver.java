@@ -1,7 +1,7 @@
 package step.artefacts.handlers.functions.autoscaler;
 
 import ch.exense.commons.app.Configuration;
-import step.core.AbstractContext;
+import step.core.agents.provisioning.AgentPoolSpec;
 import step.grid.Grid;
 
 import java.util.Map;
@@ -9,7 +9,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.*;
 
-import static step.artefacts.handlers.functions.autoscaler.AgentPoolProvisioningParameters.TOKEN_ATTRIBUTE_DOCKER_SUPPORT;
+import static step.core.agents.provisioning.AgentPoolProvisioningParameters.TOKEN_ATTRIBUTE_DOCKER_SUPPORT;
 
 public class DefaultTokenAutoscalingDriver implements TokenAutoscalingDriver {
 
