@@ -1,0 +1,51 @@
+---
+_class: "step.core.plans.Plan"
+attributes:
+  name: "Plan1"
+root:
+  _class: "TestCase"
+  attributes:
+    name: "Plan1"
+  dynamicName:
+    dynamic: false
+    value: ""
+    expression: ""
+  useDynamicName: false
+  children:
+    - _class: "CallPlan"
+      attributes:
+        name: "CallPlan"
+      dynamicName:
+        dynamic: false
+        value: ""
+        expression: ""
+      useDynamicName: false
+      children: []
+      skipNode:
+        dynamic: false
+        value: false
+      instrumentNode:
+        dynamic: false
+        value: false
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+      selectionAttributes:
+        dynamic: false
+        value: "{\"name\":{\"dynamic\":false,\"value\":\"Plan2\"}}"
+      input:
+        dynamic: false
+        value: "{\"inputtest\":{\"dynamic\":false,\"value\":\"some other value\"}}"
+      id: "644fbe4e38a61e07cc3a4df8"
+  skipNode:
+    dynamic: false
+    value: false
+  instrumentNode:
+    dynamic: false
+    value: false
+  continueParentNodeExecutionOnError:
+    dynamic: false
+    value: false
+  id: "644fbe4e38a61e07cc3a4df8"
+visible: true
+id: "644fbe4e38a61e07cc3a4df8"

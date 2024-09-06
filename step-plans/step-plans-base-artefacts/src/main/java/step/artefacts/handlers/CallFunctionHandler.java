@@ -141,9 +141,8 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	}
 
 	@Override
-	public AbstractArtefact resolveArtefactCall(AbstractArtefact artefact, DynamicJsonObjectResolver dynamicJsonObjectResolver, Map<String, Object> bindings, ObjectPredicate objectPredicate, PlanAccessor planAccessor, FunctionAccessor functionAccessor) {
-		FunctionLocator functionLocator = new FunctionLocator(functionAccessor, new SelectorHelper(dynamicJsonObjectResolver));
-		Function function = functionLocator.getFunction((CallFunction) artefact, objectPredicate, bindings);
+	public AbstractArtefact resolveArtefactCall(CallFunction artefact) {
+		Function function = getFunction(artefact);
 		if(function instanceof CompositeFunction) {
 			return ((CompositeFunction) function).getPlan().getRoot();
 		} else {
