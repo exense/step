@@ -81,9 +81,6 @@ startWithAgentUrl = function(agentUrl) {
       if (err) {
         console.log(err)
       }
-      if(res) {
-        console.log(body)
-      }
     })
   }, registrationPeriod)
   
