@@ -47,6 +47,10 @@ public class ReportNodeTimeSeries implements Closeable {
         ingestionPipeline.ingestPoint(new BucketAttributes(Map.of(EXECUTION_ID, reportNode.getExecutionID(), ARTEFACT_HASH, reportNode.getArtefactHash(), STATUS, status.toString())), System.currentTimeMillis(), 1);
     }
 
+    public void flush() {
+        timeSeriesIngestionPipeline.flush();
+    }
+
     public static class Range {
         long from;
         long to;

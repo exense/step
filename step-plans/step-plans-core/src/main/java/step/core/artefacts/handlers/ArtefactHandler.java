@@ -29,7 +29,6 @@ import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.artefacts.reports.aggregated.ReportNodeTimeSeries;
 import step.core.dynamicbeans.DynamicBeanResolver;
-import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionContextBindings;
 import step.core.execution.ReportNodeCache;
@@ -37,10 +36,7 @@ import step.core.execution.ReportNodeEventListener;
 import step.core.functions.FunctionGroupHandle;
 import step.core.miscellaneous.ReportNodeAttachmentManager;
 import step.core.miscellaneous.ValidationException;
-import step.core.objectenricher.ObjectPredicate;
-import step.core.plans.PlanAccessor;
 import step.core.variables.VariablesManager;
-import step.functions.accessor.FunctionAccessor;
 import step.resources.ResourceManager;
 
 import java.io.File;
@@ -60,8 +56,6 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	public static final String TEC_EXECUTION_REPORTNODES_PERSISTAFTER = "tec.execution.reportnodes.persistafter";
 	public static final String TEC_EXECUTION_REPORTNODES_PERSISTBEFORE = "tec.execution.reportnodes.persistbefore";
 	public static final String TEC_EXECUTION_REPORTNODES_PERSISTONLYNONPASSED = "tec.execution.reportnodes.persistonlynonpassed";
-	private static final ArtefactHashGenerator artefactHashGenerator = new ArtefactHashGenerator();
-
 
 	protected ExecutionContext context;
 	private ArtefactHandlerManager artefactHandlerManager;
@@ -212,7 +206,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		return reportNode;
 	}
 
-	public AbstractArtefact resolveArtefactCall(AbstractArtefact artefact, DynamicJsonObjectResolver dynamicJsonObjectResolver, Map<String, Object> bindings, ObjectPredicate objectPredicate, PlanAccessor planAccessor, FunctionAccessor functionAccessor) {
+	public AbstractArtefact resolveArtefactCall(ARTEFACT artefact) {
 		return null;
 	}
 
@@ -290,9 +284,8 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	}
 
 	private String getArtefactHash(ARTEFACT artefact) {
-		String artefactPath = currentArtefactPath();
-		String path = concatenateArtefactPath(artefact, artefactPath);
-		return artefactHashGenerator.generateArtefactHash(path);
+		String currentArtefactPath = currentArtefactPath();
+		return ArtefactPathHelper.generateArtefactHash(currentArtefactPath, artefact);
 	}
 
 	protected String currentArtefactPath() {
@@ -437,13 +430,9 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	}
 
 	protected void pushArtefactPath(ReportNode node, ARTEFACT artefact) {
-		String artefactPath = currentArtefactPath();
-		String newArtefactPath = concatenateArtefactPath(artefact, artefactPath);
+		String currentArtefactPath = currentArtefactPath();
+		String newArtefactPath = ArtefactPathHelper.getPathOfArtefact(currentArtefactPath, artefact);
 		context.getVariablesManager().putVariable(node, ARTEFACT_PATH, newArtefactPath);
-	}
-
-	private String concatenateArtefactPath(ARTEFACT artefact, String artefactPath) {
-		return ArtefactHashGenerator.getPath(artefactPath, artefact.getId().toString());
 	}
 
 	/**

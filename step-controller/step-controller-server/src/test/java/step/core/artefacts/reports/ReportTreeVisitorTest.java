@@ -24,7 +24,7 @@ import static step.core.plans.builder.PlanBuilderTest.artefact;
 
 import org.junit.Test;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
 import step.core.plans.runner.DefaultPlanRunner;

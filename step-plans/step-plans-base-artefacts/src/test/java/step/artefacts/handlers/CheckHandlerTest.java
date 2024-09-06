@@ -31,7 +31,7 @@ import step.core.dynamicbeans.DynamicValue;
 
 import java.io.StringReader;
 
-import static junit.framework.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
 
 public class CheckHandlerTest extends AbstractArtefactHandlerTest{
 

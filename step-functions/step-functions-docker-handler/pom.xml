@@ -45,12 +45,10 @@
         <dependency>
             <groupId>ch.exense.step</groupId>
             <artifactId>step-grid-server</artifactId>
-            <version>${step-grid.version}</version>
         </dependency>
         <dependency>
             <groupId>ch.exense.step</groupId>
             <artifactId>step-grid-client</artifactId>
-            <version>${step-grid.version}</version>
         </dependency>
         <dependency>
             <groupId>com.github.docker-java</groupId>

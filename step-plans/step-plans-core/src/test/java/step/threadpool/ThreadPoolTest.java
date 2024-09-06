@@ -34,7 +34,7 @@ import java.util.function.Consumer;
 
 import org.junit.Test;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;

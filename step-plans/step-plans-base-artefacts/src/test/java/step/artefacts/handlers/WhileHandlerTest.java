@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.artefacts.handlers;
 
-import static junit.framework.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
 import static step.planbuilder.BaseArtefacts.sequence;
 import static step.planbuilder.BaseArtefacts.set;
 
@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Test;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import step.artefacts.Echo;
 import step.artefacts.Set;
 import step.artefacts.Sleep;
