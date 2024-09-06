@@ -32,10 +32,18 @@ let agentContext = { tokens: [], tokenSessions: [], tokenProperties: [], propert
 _.each(agentConf.tokenGroups, function (tokenGroup) {
   const tokenConf = tokenGroup.tokenConf
   let attributes = tokenConf.attributes
+  // Transform the selectionPatterns map <String, String> to <String, Interest>
+  let selectionPatterns = tokenConf.selectionPatterns;
+  const tokenSelectionPatterns = {};
+  if(selectionPatterns) {
+    Object.keys(selectionPatterns).forEach((key) => {
+      tokenSelectionPatterns[key] = { must: true, selectionPattern: selectionPatterns[key] };
+    });
+  }
   let additionalProperties = tokenConf.properties
   attributes['$agenttype'] = agentType
   for (let i = 0; i < tokenGroup.capacity; i++) {
-    const token = { id: uuid(), agentid: agent.id, attributes: attributes, selectionPatterns: {} }
+    const token = { id: uuid(), agentid: agent.id, attributes: attributes, selectionPatterns: tokenSelectionPatterns }
     agentContext.tokens.push(token)
     agentContext.tokenSessions[token.id] = {}
     agentContext.tokenProperties[token.id] = additionalProperties
@@ -72,6 +80,9 @@ startWithAgentUrl = function(agentUrl) {
     }, function (err, res, body) {
       if (err) {
         console.log(err)
+      }
+      if(res) {
+        console.log(body)
       }
     })
   }, registrationPeriod)
