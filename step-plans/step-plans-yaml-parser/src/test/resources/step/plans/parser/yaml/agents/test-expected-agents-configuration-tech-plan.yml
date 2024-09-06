@@ -1,16 +1,15 @@
 {
   "_class": "step.core.plans.Plan",
   "agents": {
-    "_class": "step.core.plans.agents.configuration.PlanAgentPoolsConfiguration",
     "configuredAgentPools": [
       {
-        "number": 1,
-        "templateName": "myPool"
+        "replicas": 1,
+        "pool": "myPool"
       },
       {
         "image": "test-image",
-        "number": 2,
-        "templateName": "myPool2"
+        "replicas": 2,
+        "pool": "myPool2"
       }
     ]
   },

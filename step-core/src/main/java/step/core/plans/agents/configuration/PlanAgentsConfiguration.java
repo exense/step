@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = PlanAgentsPoolsAutoConfiguration.class),
         @JsonSubTypes.Type(value = PlanAgentPoolsConfiguration.class)
 })
-@JsonTypeInfo(use= JsonTypeInfo.Id.CLASS, property="_class")
+@JsonTypeInfo(use= JsonTypeInfo.Id.DEDUCTION)
 public interface PlanAgentsConfiguration extends PlanAgentsConfigurationInterface {
 
     PlanAgentsConfigurationYaml asYamlConfiguration();

@@ -2,19 +2,6 @@
   "$schema" : "http://json-schema.org/draft-07/schema#",
   "title" : "Plan",
   "$defs" : {
-    "resourceReference" : {
-      "oneOf" : [ {
-        "type" : "string"
-      }, {
-        "type" : "object",
-        "additionalProperties" : false,
-        "properties" : {
-          "id" : {
-            "type" : "string"
-          }
-        }
-      } ]
-    },
     "SmartDynamicValueBooleanDef" : {
       "oneOf" : [ {
         "type" : "boolean"
@@ -68,6 +55,19 @@
         },
         "additionalProperties" : false
       }
+    },
+    "resourceReference" : {
+      "oneOf" : [ {
+        "type" : "string"
+      }, {
+        "type" : "object",
+        "additionalProperties" : false,
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          }
+        }
+      } ]
     },
     "AfterSequenceDef" : {
       "type" : "object",
@@ -1820,10 +1820,10 @@
         "image" : {
           "type" : "string"
         },
-        "templateName" : {
+        "pool" : {
           "type" : "string"
         },
-        "number" : {
+        "replicas" : {
           "type" : "number"
         }
       }

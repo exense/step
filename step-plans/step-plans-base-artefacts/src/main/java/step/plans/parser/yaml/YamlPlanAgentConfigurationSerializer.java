@@ -30,11 +30,11 @@ public class YamlPlanAgentConfigurationSerializer extends StepYamlSerializer<Pla
             jsonGenerator.writeStartArray();
             for (AgentPoolConfiguration p : planAgentPoolsConfiguration.configuredAgentPools) {
                 jsonGenerator.writeStartObject();
-                jsonGenerator.writeStringField(TEMPLATE_PROPERTY_NAME, p.templateName);
+                jsonGenerator.writeStringField(TEMPLATE_PROPERTY_NAME, p.pool);
                 if (p.image != null) {
                     jsonGenerator.writeStringField(IMAGE_PROPERTY_NAME, p.image);
                 }
-                jsonGenerator.writeNumberField(NUMBER_AGENT_PROPERTY_NAME, p.number);
+                jsonGenerator.writeNumberField(NUMBER_AGENT_PROPERTY_NAME, p.replicas);
                 jsonGenerator.writeEndObject();
             }
             jsonGenerator.writeEndArray();

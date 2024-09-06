@@ -8,7 +8,6 @@ attributes:
   name: Build
   project: 64732d07eee7d35370046108
 agents:
-  _class: "step.core.plans.agents.configuration.PlanAgentsPoolsAutoConfiguration"
   mode: "auto_detect"
 root:
   _class: TestCase

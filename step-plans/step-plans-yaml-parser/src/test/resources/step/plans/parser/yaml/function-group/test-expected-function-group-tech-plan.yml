@@ -3,7 +3,6 @@ _class: "step.core.plans.Plan"
 attributes:
   name: "test plan"
 agents:
-  _class: "step.core.plans.agents.configuration.PlanAgentsPoolsAutoConfiguration"
   mode: "auto_detect"
 root:
   _class: "Sequence"

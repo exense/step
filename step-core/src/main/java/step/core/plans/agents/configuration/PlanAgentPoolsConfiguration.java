@@ -22,7 +22,7 @@ public class PlanAgentPoolsConfiguration implements PlanAgentsConfiguration, Pla
     @Override
     public List<AgentPoolRequirementSpec> getAgentPoolRequirementSpecs() {
         if (configuredAgentPools != null) {
-            return configuredAgentPools.stream().map(p -> new AgentPoolRequirementSpec(p.templateName, Map.of(PROVISIONING_PARAMETER_DOCKER_IMAGE, p.image), p.number)).collect(Collectors.toList());
+            return configuredAgentPools.stream().map(p -> new AgentPoolRequirementSpec(p.pool, Map.of(PROVISIONING_PARAMETER_DOCKER_IMAGE, p.image), p.replicas)).collect(Collectors.toList());
         }
         return List.of();
     }
