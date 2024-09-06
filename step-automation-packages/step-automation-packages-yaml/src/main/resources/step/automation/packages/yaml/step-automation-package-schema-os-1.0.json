@@ -524,14 +524,14 @@
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
             "nodeName" : {
-              "type" : "string",
-              "default" : "CallPlan"
+              "default" : "CallPlan",
+              "type" : "string"
             },
             "input" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+              "$ref" : "#/$defs/DynamicKeywordInputsDef"
             },
             "selectionAttributes" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
+              "$ref" : "#/$defs/DynamicKeywordInputsDef"
             },
             "planId" : {
               "type" : "string"

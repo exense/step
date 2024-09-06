@@ -65,8 +65,6 @@ root:
                 instrumentNode: false
                 continueParentNodeExecutionOnError: false
                 planId: "6386268253799329484c57ef"
-                selectionAttributes: "{}"
-                input: "{}"
           condition:
             expression: "OS==\"LINUX\""
       - sequence:
@@ -205,16 +203,12 @@ root:
                             instrumentNode: false
                             continueParentNodeExecutionOnError: false
                             planId: "618aa49f34603040f758fd12"
-                            selectionAttributes: "{}"
-                            input: "{}"
                         - callPlan:
                             nodeName: "Checkout git"
                             skipNode: false
                             instrumentNode: false
                             continueParentNodeExecutionOnError: false
                             planId: "63fc7ffd32ed452ab30e0116"
-                            selectionAttributes: "{}"
-                            input: "{}"
                         - set:
                             nodeName: "Init JSON"
                             skipNode: false
@@ -228,24 +222,18 @@ root:
                             instrumentNode: false
                             continueParentNodeExecutionOnError: false
                             planId: "618aa49f34603040f758fd0b"
-                            selectionAttributes: "{}"
-                            input: "{}"
                         - callPlan:
                             nodeName: "Run action"
                             skipNode: false
                             instrumentNode: false
                             continueParentNodeExecutionOnError: false
                             planId: "618aa49f34603040f758fd15"
-                            selectionAttributes: "{}"
-                            input: "{}"
                         - callPlan:
                             nodeName: "Create release"
                             skipNode: false
                             instrumentNode: false
                             continueParentNodeExecutionOnError: false
                             planId: "64145b48d91d580809da608f"
-                            selectionAttributes: "{}"
-                            input: "{}"
                         - retryIfFails:
                             skipNode: false
                             instrumentNode: false
@@ -257,8 +245,6 @@ root:
                                   instrumentNode: false
                                   continueParentNodeExecutionOnError: false
                                   planId: "63ff232032ed452ab35619aa"
-                                  selectionAttributes: "{}"
-                                  input: "{}"
                             maxRetries: 3
                             gracePeriod: 1000
                             timeout: 0
@@ -283,8 +269,6 @@ root:
                                   instrumentNode: false
                                   continueParentNodeExecutionOnError: false
                                   planId: "64145bc4d91d580809daa2f1"
-                                  selectionAttributes: "{}"
-                                  input: "{}"
                               - if:
                                   nodeName: "If ENVIRONMENT==\"PRODUCTION\" && STATUS==\"PASSED\""
                                   skipNode: false
@@ -338,8 +322,6 @@ root:
                                               instrumentNode: false
                                               continueParentNodeExecutionOnError: false
                                               planId: "6229efeaf270a8319dfbee2e"
-                                              selectionAttributes: "{}"
-                                              input: "{}"
                                         maxRetries: 3
                                         gracePeriod: 1000
                                         timeout: 0
@@ -383,8 +365,6 @@ root:
                                         instrumentNode: false
                                         continueParentNodeExecutionOnError: false
                                         planId: "63ff47ed32ed452ab35c23d0"
-                                        selectionAttributes: "{}"
-                                        input: "{}"
                                   condition:
                                     expression: "STATUS.equals(\"PASSED\") &&  SHOULD_PROPAGATE"
                             continueOnError: false
@@ -407,8 +387,6 @@ root:
                                         instrumentNode: false
                                         continueParentNodeExecutionOnError: false
                                         planId: "6482daa9cdd45e7199acdcac"
-                                        selectionAttributes: "{}"
-                                        input: "{}"
                                   condition:
                                     expression: "!STATUS.equals(\"PASSED\") || !SHOULD_PROPAGATE"
                             continueOnError: false
