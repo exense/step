@@ -12,6 +12,8 @@ import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 import java.io.IOException;
 import java.io.InputStream;
 
+import static step.automation.packages.yaml.YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH;
+
 public class YamlAutomationPackageSchemaGeneratorTest {
     private static final Logger log = LoggerFactory.getLogger(YamlAutomationPackageSchemaGeneratorTest.class);
 
@@ -22,7 +24,7 @@ public class YamlAutomationPackageSchemaGeneratorTest {
         log.info("Generating actual json schema for simplified plan format");
 
         // read published json schema
-        InputStream jsonSchemaFile = this.getClass().getClassLoader().getResourceAsStream("step/automation/packages/yaml/step-automation-package-schema-os-1.0.json");
+        InputStream jsonSchemaFile = this.getClass().getClassLoader().getResourceAsStream(ACTUAL_JSON_SCHEMA_PATH);
 
         JsonNode publishedSchema = jsonObjectMapper.readTree(jsonSchemaFile);
         YamlAutomationPackageSchemaGenerator schemaGenerator = new YamlAutomationPackageSchemaGenerator("step", YamlAutomationPackageVersions.ACTUAL_VERSION);

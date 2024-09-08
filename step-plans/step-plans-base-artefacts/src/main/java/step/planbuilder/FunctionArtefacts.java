@@ -166,6 +166,15 @@ public class FunctionArtefacts {
 		return keyword(keywordName, remote, "{}");
 	}
 
+	public static CallFunction keywordWithDynamicSelection(Map<String, String> attributes) {
+		JsonObjectBuilder attributeJson = Json.createObjectBuilder();
+		attributes.forEach((key, value) -> {
+			JsonObject dynamicExpression = Json.createObjectBuilder().add("expression", value).add("dynamic", true).build();
+			attributeJson.add(key, dynamicExpression);
+		});
+		return new CallFunctionBuilder(attributeJson.build().toString()).withInput("{}").build();
+	}
+
 	public static CallFunctionBuilder keyword(Map<String, String> attributes) {
 		JsonObjectBuilder attributeJson = Json.createObjectBuilder();
 		attributes.forEach((key, value) -> {
