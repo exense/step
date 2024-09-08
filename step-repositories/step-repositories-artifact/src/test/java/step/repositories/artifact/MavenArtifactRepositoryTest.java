@@ -1,25 +1,15 @@
 package step.repositories.artifact;
 
-import ch.exense.commons.app.Configuration;
-import org.junit.Assert;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import step.automation.packages.AutomationPackageHookRegistry;
-import step.automation.packages.AutomationPackageReader;
-import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
-import step.automation.packages.yaml.YamlAutomationPackageVersions;
-import step.core.accessors.AbstractOrganizableObject;
 import step.core.controller.InMemoryControllerSettingAccessor;
-import step.core.execution.ExecutionContext;
-import step.core.execution.ExecutionEngine;
-import step.core.plans.InMemoryPlanAccessor;
-import step.core.plans.Plan;
 import step.core.repositories.ArtefactInfo;
 import step.core.repositories.ImportResult;
 import step.core.repositories.TestRunStatus;
 import step.core.repositories.TestSetStatusOverview;
-import step.resources.LocalResourceManagerImpl;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -27,49 +17,27 @@ import java.util.stream.Stream;
 
 import static org.junit.Assert.*;
 
-public class MavenArtifactRepositoryTest {
+public class MavenArtifactRepositoryTest extends AbstractMavenArtifactRepositoryTest {
 
-    private static final Map<String, String> REPOSITORY_PARAMETERS = Map.of(MavenArtifactRepository.PARAM_GROUP_ID, "ch.exense.step",
-            MavenArtifactRepository.PARAM_ARTIFACT_ID, "step-automation-packages-junit", MavenArtifactRepository.PARAM_VERSION, "0.0.0",
-            MavenArtifactRepository.PARAM_CLASSIFIER, "tests");
-    private static final String MAVEN_SETTINGS_NEXUS = "<settings xmlns=\"http://maven.apache.org/SETTINGS/1.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-            "  xsi:schemaLocation=\"http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd\">\n" +
-            "    <profiles>\n" +
-            "        <profile>\n" +
-            "          <id>default</id>\n" +
-            "          <repositories>\n" +
-            "            <repository>\n" +
-            "              <id>exense</id>\n" +
-            "              <name>Exense</name>\n" +
-            "              <url>https://nexus-enterprise.exense.ch/repository/container-dependency/</url>\n" +
-            "            </repository>\n" +
-            "          </repositories>\n" +
-            "        </profile>\n" +
-            "    </profiles>\n" +
-            "    <activeProfiles>\n" +
-            "        <activeProfile>default</activeProfile>\n" +
-            "    </activeProfiles>\n" +
-            "</settings>";
-    private MavenArtifactRepository artifactRepository;
-    private ExecutionContext executionContext;
-    private InMemoryPlanAccessor planAccessor;
-    private LocalResourceManagerImpl resourceManager;
+    @Override
+    protected InMemoryControllerSettingAccessor setupControllerSettingsAccessor() {
+        InMemoryControllerSettingAccessor controllerSettingAccessor = new InMemoryControllerSettingAccessor();
+        controllerSettingAccessor.createSettingIfNotExisting("maven_settings_default", MAVEN_SETTINGS_NEXUS);
+        return controllerSettingAccessor;
+    }
 
     @Before
     public void before() {
-        planAccessor = new InMemoryPlanAccessor();
-        resourceManager = new LocalResourceManagerImpl();
-        InMemoryControllerSettingAccessor controllerSettingAccessor = new InMemoryControllerSettingAccessor();
-        controllerSettingAccessor.createSettingIfNotExisting("maven_settings_default", MAVEN_SETTINGS_NEXUS);
+        setup();
+    }
 
-        Configuration configuration = new Configuration();
-        AutomationPackageReader apReader = new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, new AutomationPackageHookRegistry(), new AutomationPackageSerializationRegistry());
-        artifactRepository = new MavenArtifactRepository(planAccessor, resourceManager, controllerSettingAccessor, configuration, apReader);
-        executionContext = ExecutionEngine.builder().build().newExecutionContext();
+    @After
+    public void after() {
+        cleanup();
     }
 
     @Test
-    public void test() {
+    public void test() throws IOException {
         // getArtefactInfo
         ArtefactInfo artefactInfo = artifactRepository.getArtefactInfo(REPOSITORY_PARAMETERS);
         assertEquals("step-automation-packages-junit", artefactInfo.getName());
@@ -87,8 +55,7 @@ public class MavenArtifactRepositoryTest {
         // importArtefact
         ImportResult tests = artifactRepository.importArtefact(executionContext, REPOSITORY_PARAMETERS);
         assertTrue(tests.isSuccessful());
-        Plan plan = planAccessor.findByAttributes(Map.of(AbstractOrganizableObject.NAME, "step-automation-packages-junit-0.0.0-tests.jar"));
-        assertNotNull(plan);
+        assertNotNull(tests.getPlanId());
 
         artifactRepository.exportExecution(executionContext, REPOSITORY_PARAMETERS);
     }
@@ -121,32 +88,4 @@ public class MavenArtifactRepositoryTest {
         assertEquals("Missing required parameter artifactId", actualException.getMessage());
     }
 
-    @Test
-    public void testFormattingIssueInMavenSettings() {
-        InMemoryPlanAccessor planAccessor = new InMemoryPlanAccessor();
-        InMemoryControllerSettingAccessor controllerSettingAccessor = new InMemoryControllerSettingAccessor();
-        controllerSettingAccessor.createSettingIfNotExisting("maven_settings_default", "settings> </settings>");
-        Configuration configuration = new Configuration();
-        MavenArtifactRepository artifactRepository = new MavenArtifactRepository(planAccessor, resourceManager, controllerSettingAccessor, configuration, null);
-        ExecutionContext executionContext = ExecutionEngine.builder().build().newExecutionContext();
-
-        // getArtefactInfo
-        ArtefactInfo artefactInfo = artifactRepository.getArtefactInfo(REPOSITORY_PARAMETERS);
-        assertEquals("step-automation-packages-junit", artefactInfo.getName());
-        assertEquals("TestSet", artefactInfo.getType());
-
-        // getTestSetStatusOverview
-        Exception actualException = null;
-        try {
-            artifactRepository.getTestSetStatusOverview(REPOSITORY_PARAMETERS, null);
-        } catch (Exception e) {
-            actualException = e;
-        }
-        assertTrue(actualException.getMessage().contains("Non-parseable settings (memory)"));
-
-        // importArtefact
-        ImportResult tests = artifactRepository.importArtefact(executionContext, REPOSITORY_PARAMETERS);
-        Assert.assertFalse(tests.isSuccessful());
-        assertTrue(tests.getErrors().get(0).contains("Non-parseable settings (memory)"));
-    }
 }

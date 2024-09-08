@@ -22,12 +22,12 @@ import ch.exense.commons.app.Configuration;
 import org.apache.maven.settings.building.SettingsBuildingException;
 import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
-import step.automation.packages.AutomationPackageReader;
+import step.automation.packages.AutomationPackageManager;
 import step.core.controller.ControllerSetting;
 import step.core.controller.ControllerSettingAccessor;
-import step.core.plans.PlanAccessor;
+import step.functions.accessor.FunctionAccessor;
+import step.functions.type.FunctionTypeRegistry;
 import step.repositories.ArtifactRepositoryConstants;
-import step.resources.ResourceManager;
 
 import java.io.File;
 import java.util.Map;
@@ -55,8 +55,8 @@ public class MavenArtifactRepository extends AbstractArtifactRepository {
     private final ControllerSettingAccessor controllerSettingAccessor;
     private final File localRepository;
 
-    public MavenArtifactRepository(PlanAccessor planAccessor, ResourceManager resourceManager, ControllerSettingAccessor controllerSettingAccessor, Configuration configuration, AutomationPackageReader automationPackageReader) {
-        super(Set.of(PARAM_GROUP_ID, PARAM_ARTIFACT_ID, PARAM_VERSION), planAccessor, resourceManager, automationPackageReader);
+    public MavenArtifactRepository(AutomationPackageManager manager, FunctionTypeRegistry functionTypeRegistry, FunctionAccessor functionAccessor,  Configuration configuration, ControllerSettingAccessor controllerSettingAccessor) {
+        super(Set.of(PARAM_GROUP_ID, PARAM_ARTIFACT_ID, PARAM_VERSION), manager, functionTypeRegistry, functionAccessor);
         localRepository = configuration.getPropertyAsFile(CONFIGURATION_MAVEN_FOLDER, new File(DEFAULT_MAVEN_FOLDER));
         this.controllerSettingAccessor = controllerSettingAccessor;
     }

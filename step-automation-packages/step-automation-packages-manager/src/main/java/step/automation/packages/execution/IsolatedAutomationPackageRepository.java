@@ -25,16 +25,12 @@ import step.automation.packages.AutomationPackage;
 import step.automation.packages.AutomationPackageManager;
 import step.automation.packages.AutomationPackageManagerException;
 import step.core.accessors.AbstractOrganizableObject;
-import step.core.accessors.Accessor;
-import step.core.accessors.LayeredAccessor;
 import step.core.execution.ExecutionContext;
 import step.core.execution.model.AutomationPackageExecutionParameters;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.Plan;
-import step.core.plans.PlanAccessor;
 import step.core.repositories.*;
-import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.type.FunctionTypeRegistry;
 import step.resources.*;
@@ -43,14 +39,12 @@ import java.io.*;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
-public class IsolatedAutomationPackageRepository extends AbstractRepository {
+public class IsolatedAutomationPackageRepository extends RepositoryWithAutomationPackageSupport {
 
     public static final String REPOSITORY_PARAM_CONTEXTID = "contextid";
 
@@ -62,13 +56,7 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
     public static final String ORIGINAL_REPOSITORY_ID = "originalRepoId";
     public static final String AP_NAME = "apName";
 
-    // context id -> automation package manager (cache)
-    private final ConcurrentHashMap<String, PackageExecutionContext> sharedPackageExecutionContexts = new ConcurrentHashMap<>();
-
-    private final AutomationPackageManager manager;
     private final ResourceManager resourceManager;
-    private final FunctionTypeRegistry functionTypeRegistry;
-    private final FunctionAccessor functionAccessor;
     private final RepositoryObjectManager repositoryObjectManager;
     private final Supplier<String> ttlValueSupplier;
 
@@ -78,11 +66,8 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
                                                   FunctionAccessor functionAccessor,
                                                   RepositoryObjectManager repositoryObjectManager,
                                                   Supplier<String> ttlValueSupplier) {
-        super(Set.of(REPOSITORY_PARAM_CONTEXTID));
-        this.manager = manager;
+        super(Set.of(REPOSITORY_PARAM_CONTEXTID), manager, functionTypeRegistry, functionAccessor);
         this.resourceManager = resourceManager;
-        this.functionTypeRegistry = functionTypeRegistry;
-        this.functionAccessor = functionAccessor;
         this.repositoryObjectManager = repositoryObjectManager;
         this.ttlValueSupplier = ttlValueSupplier;
     }
@@ -118,21 +103,7 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
         if (current == null) {
             // Here we resolve the original AP file used for previous isolated execution and re-use it to create the execution context
             AutomationPackageFile apFile = restoreApFile(contextId, apName, repositoryParameters);
-
-            // prepare the isolated in-memory automation package manager with the only one automation package
-            AutomationPackageManager inMemoryPackageManager = manager.createIsolated(
-                    new ObjectId(contextId), functionTypeRegistry,
-                    functionAccessor
-            );
-
-            // create single automation package in isolated manager
-            try (FileInputStream fis = new FileInputStream(apFile.getFile())) {
-                inMemoryPackageManager.createAutomationPackage(fis, apFile.getFile().getName(), enricher, predicate);
-            } catch (IOException e) {
-                throw new AutomationPackageManagerException("Cannot read the AP file: " + apFile.getFile().getName());
-            }
-
-            return new PackageExecutionContext(contextId, inMemoryPackageManager, false);
+            return createPackageExecutionContext(enricher, predicate, contextId, apFile);
         }
         return current;
     }
@@ -256,51 +227,12 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
                 result.setErrors(List.of("Automation package " + automationPackage.getAttribute(AbstractOrganizableObject.NAME) + " has no plan with name=" + planName));
                 return result;
             }
-            result.setPlanId(plan.getId().toString());
-            enrichPlan(context, plan);
 
-            PlanAccessor planAccessor = context.getPlanAccessor();
-            if (!isLayeredAccessor(planAccessor)) {
-                result.setErrors(List.of(planAccessor.getClass() + " is not layered"));
-                return result;
-            }
-
-            planAccessor.save(plan);
-
-            FunctionAccessor functionAccessor = context.get(FunctionAccessor.class);
-            List<Function> functionsForSave = new ArrayList<>();
-            if (plan.getFunctions() != null) {
-                plan.getFunctions().iterator().forEachRemaining(functionsForSave::add);
-            }
-            functionsForSave.addAll(apManager.getPackageFunctions(automationPackage.getId()));
-            functionAccessor.save(functionsForSave);
-
-            ResourceManager contextResourceManager = context.getResourceManager();
-            if (!(contextResourceManager instanceof LayeredResourceManager)) {
-                result.setErrors(List.of(contextResourceManager.getClass() + " is not layered"));
-                return result;
-            }
-
-            // import all resources from automation package to execution context by adding the layer to contextResourceManager
-            // resource manager used in isolated package manager is non-permanent
-            ((LayeredResourceManager) contextResourceManager).pushManager(apManager.getResourceManager(), false);
-
-            // call some hooks on import
-            apManager.runExtensionsBeforeIsolatedExecution(automationPackage, context, apManager.getExtensions(), result);
-
-            result.setSuccessful(true);
-
-            return result;
+            return importPlanForIsolatedExecution(context, result, plan, apManager, automationPackage);
         } finally {
             // if the context is created externally (shared for several plans), it should be managed (closed) in the calling code
-            if (ctx != null && !ctx.isExternallyCreatedContext()) {
-                ctx.close();
-            }
+            closePackageExecutionContext(ctx);
         }
-    }
-
-    private static boolean isLayeredAccessor(Accessor<?> accessor) {
-        return accessor instanceof LayeredAccessor;
     }
 
     @Override
@@ -376,62 +308,4 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
         }
     }
 
-    public class PackageExecutionContext implements Closeable {
-        private final String contextId;
-        private final AutomationPackageManager inMemoryManager;
-        private final boolean externallyCreatedContext;
-
-        public PackageExecutionContext(String contextId, AutomationPackageManager inMemoryManager, boolean externallyCreatedContext) {
-            this.contextId = contextId;
-            this.inMemoryManager = inMemoryManager;
-            this.externallyCreatedContext = externallyCreatedContext;
-        }
-
-        public AutomationPackageManager getInMemoryManager() {
-            return inMemoryManager;
-        }
-
-        public AutomationPackage getAutomationPackage() {
-            return getInMemoryManager().getAllAutomationPackages(null).findFirst().orElse(null);
-        }
-
-        public boolean isExternallyCreatedContext() {
-            return externallyCreatedContext;
-        }
-
-        @Override
-        public void close() throws IOException {
-
-            // only after isolated execution is finished we can clean up temporary created resources
-            try {
-                // remove the context from isolated automation package repository
-                log.info("Cleanup isolated execution context");
-
-                PackageExecutionContext automationPackageManager = sharedPackageExecutionContexts.get(contextId);
-                if (automationPackageManager != null) {
-                    automationPackageManager.getInMemoryManager().cleanup();
-                }
-            } finally {
-                sharedPackageExecutionContexts.remove(contextId);
-            }
-        }
-    }
-
-    public static class AutomationPackageFile {
-        private final File file;
-        private final Resource resource;
-
-        public AutomationPackageFile(File file, Resource localResource) {
-            this.file = file;
-            this.resource = localResource;
-        }
-
-        public File getFile() {
-            return file;
-        }
-
-        public Resource getResource() {
-            return resource;
-        }
-    }
 }

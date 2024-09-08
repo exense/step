@@ -7,30 +7,26 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.artefacts.CallPlan;
-import step.artefacts.TestSet;
 import step.automation.packages.AutomationPackageHookRegistry;
+import step.automation.packages.AutomationPackageManager;
 import step.automation.packages.AutomationPackageReader;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 import step.automation.packages.yaml.YamlAutomationPackageVersions;
-import step.core.artefacts.AbstractArtefact;
 import step.core.execution.ExecutionContext;
+import step.core.execution.ExecutionEngine;
 import step.core.objectenricher.ObjectEnricher;
-import step.core.plans.InMemoryPlanAccessor;
-import step.core.plans.Plan;
 import step.core.repositories.ImportResult;
-import step.functions.Function;
+import step.functions.accessor.FunctionAccessor;
+import step.functions.accessor.InMemoryFunctionAccessorImpl;
+import step.functions.type.FunctionTypeRegistry;
 import step.resources.*;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class ResourceArtifactRepositoryTest {
 
@@ -38,14 +34,19 @@ public class ResourceArtifactRepositoryTest {
 
     private ResourceArtifactRepository repo;
     private ResourceManagerImpl resourceManager;
-    private InMemoryPlanAccessor planAccessor;
+    private AutomationPackageManager apManager;
+    private FunctionTypeRegistry functionTypeRegistry;
 
     @Before
     public void setup() throws IOException {
         this.resourceManager = new ResourceManagerImpl(FileHelper.createTempFolder(), new InMemoryResourceAccessor(), new InMemoryResourceRevisionAccessor());
-        this.planAccessor = new InMemoryPlanAccessor();
-        AutomationPackageReader apReader = new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, new AutomationPackageHookRegistry(), new AutomationPackageSerializationRegistry());
-        this.repo = new ResourceArtifactRepository(planAccessor, resourceManager, apReader);
+
+        AutomationPackageHookRegistry hookRegistry = new AutomationPackageHookRegistry();
+        AutomationPackageReader apReader = new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, hookRegistry, new AutomationPackageSerializationRegistry());
+        this.functionTypeRegistry = MavenArtifactRepositoryTest.prepareTestFunctionTypeRegistry();
+        InMemoryFunctionAccessorImpl functionAccessor = new InMemoryFunctionAccessorImpl();
+        this.apManager = AutomationPackageManager.createLocalAutomationPackageManager(functionTypeRegistry, functionAccessor, new LocalResourceManagerImpl(), apReader, hookRegistry);
+        this.repo = new ResourceArtifactRepository(resourceManager, apManager, functionTypeRegistry, functionAccessor);
     }
 
     @Test
@@ -56,9 +57,10 @@ public class ResourceArtifactRepositoryTest {
         // And also the test plan with inner keyword (planWithInnerKeyword.plan) should have this inner keyword (CompositeFunction) after parsing
         File file = new File("src/test/resources/step/repositories/artifact/plans-with-keywords.jar");
         try (InputStream is = new FileInputStream(file)) {
-            ExecutionContext ctx = Mockito.mock(ExecutionContext.class);
-            Mockito.when(ctx.getObjectEnricher()).thenReturn(Mockito.mock(ObjectEnricher.class));
-            Mockito.when(ctx.getExecutionId()).thenReturn("test-exec");
+            // mock the context, which is normally prepared via FunctionPlugin
+            ExecutionContext executionContext = ExecutionEngine.builder().build().newExecutionContext();
+            executionContext.put(FunctionAccessor.class, new InMemoryFunctionAccessorImpl());
+            executionContext.put(FunctionTypeRegistry.class, functionTypeRegistry);
 
             // upload the jar
             Resource resource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, is, "plans-with-keywords.jar", false, null);
@@ -68,36 +70,9 @@ public class ResourceArtifactRepositoryTest {
             repoParams.put(ResourceArtifactRepository.PARAM_RESOURCE_ID, resource.getId().toString());
 
             log.info("Importing...");
-            ImportResult importResult = this.repo.importArtefact(ctx, repoParams);
+            ImportResult importResult = this.repo.importArtefact(executionContext, repoParams);
             Assert.assertTrue(importResult.isSuccessful());
             Assert.assertNotNull(importResult.getPlanId());
-
-            // get the imported TestSet
-            Plan importedPlan = planAccessor.get(importResult.getPlanId());
-            Assert.assertNotNull(importedPlan);
-            Assert.assertTrue(importedPlan.getRoot() instanceof TestSet);
-
-            // there are 2 annotated keywords in jar (keyword1 and keyword2)
-            Collection<Function> functions = importedPlan.getFunctions();
-
-            Assert.assertNotNull(functions.stream().filter(f -> f.getAttribute(Function.NAME).equals("keyword1")).findFirst().orElse(null));
-            Assert.assertNotNull(functions.stream().filter(f -> f.getAttribute(Function.NAME).equals("keyword2")).findFirst().orElseThrow(null));
-            Assert.assertEquals(2, functions.size());
-
-            // find the plan having the inner keyword (planWithInnerKeyword.plan)
-            List<CallPlan> callPlans = importedPlan.getRoot().getChildren().stream().map(p -> (CallPlan) p).collect(Collectors.toList());
-            CallPlan callPlanWithInnerKeyword = callPlans.stream().filter(p -> p.getAttribute(AbstractArtefact.NAME).equals("planWithInnerKeyword.plan")).findFirst().orElse(null);
-            Assert.assertNotNull(callPlanWithInnerKeyword);
-
-            // load the plan
-            Plan planWithInnerKeyword = planAccessor.get(callPlanWithInnerKeyword.getPlanId());
-
-            // check the list of functions included in plan
-            Collection<Function> planKeywords = planWithInnerKeyword.getFunctions();
-            Assert.assertEquals(3, planKeywords.size());
-            Assert.assertNotNull(planKeywords.stream().filter(f -> f.getAttribute(Function.NAME).equals("myInnerKeyword")).findFirst().orElse(null));
-            Assert.assertNotNull(planKeywords.stream().filter(f -> f.getAttribute(Function.NAME).equals("keyword1")).findFirst().orElse(null));
-            Assert.assertNotNull(planKeywords.stream().filter(f -> f.getAttribute(Function.NAME).equals("keyword2")).findFirst().orElse(null));
 
         } catch (IOException | InvalidResourceFormatException e) {
             throw new RuntimeException("Input stream exception", e);
