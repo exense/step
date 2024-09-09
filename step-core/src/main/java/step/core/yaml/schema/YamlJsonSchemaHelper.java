@@ -174,7 +174,8 @@ public class YamlJsonSchemaHelper {
 				.add(jsonProvider.createObjectBuilder().add("type", "string"))
 				.add(jsonProvider.createObjectBuilder().add("type", "object"))
 				.add(jsonProvider.createObjectBuilder().add("type", "array"))
-				.add(addRef(jsonProvider.createObjectBuilder(), YamlJsonSchemaHelper.DYNAMIC_EXPRESSION_DEF));
+				.add(addRef(jsonProvider.createObjectBuilder(), YamlJsonSchemaHelper.DYNAMIC_EXPRESSION_DEF))
+				.add(jsonProvider.createObjectBuilder().add("type", "null"));
 
 		JsonObjectBuilder properties = jsonProvider.createObjectBuilder()
 				.add(".*", jsonProvider.createObjectBuilder().add("anyOf", anyOfArray));
