@@ -1,10 +1,10 @@
-package step.artefacts.handlers.functions.autoscaler;
+package step.core.agents.provisioning.driver;
 
 import step.core.agents.provisioning.AgentPoolRequirementSpec;
 
 import java.util.List;
 
-public class TokenProvisioningRequest {
+public class AgentProvisioningRequest {
 
     public String executionId;
     public List<AgentPoolRequirementSpec> agentPoolRequirementSpecs;

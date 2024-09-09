@@ -23,19 +23,18 @@ public class ManualAgentProvisioningConfiguration implements AgentProvisioningCo
     public List<AgentPoolRequirementSpec> getAgentPoolRequirementSpecs() {
         if (configuredAgentPools != null) {
             return configuredAgentPools.stream().map(p -> new AgentPoolRequirementSpec(p.pool, Map.of(AgentPoolProvisioningParameters.PROVISIONING_PARAMETER_DOCKER_IMAGE, p.image), p.replicas)).collect(Collectors.toList());
+        } else {
+            return List.of();
         }
-        return List.of();
     }
 
     @Override
     public boolean enableAutomaticTokenNumberCalculation() {
-        return configuredAgentPools == null;
+        return false;
     }
 
     @Override
     public boolean enableAutoScaling() {
-        //if requiredAgentPools is null, we're in full auto; if pools are defined in manual scaling
-        // Otherwise (empty list of pool) we disable auto scaling
-        return configuredAgentPools == null || !configuredAgentPools.isEmpty();
+        return configuredAgentPools != null && !configuredAgentPools.isEmpty();
     }
 }

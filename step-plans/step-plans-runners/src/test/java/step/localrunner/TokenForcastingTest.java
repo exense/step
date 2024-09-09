@@ -25,11 +25,14 @@ import step.artefacts.FunctionGroup;
 import step.artefacts.ThreadGroup;
 import step.artefacts.handlers.functions.TokenForcastingExecutionPlugin;
 import step.artefacts.handlers.functions.TokenForecastingContext;
-import step.artefacts.handlers.functions.autoscaler.*;
 import step.artefacts.handlers.functions.test.MyFunction;
 import step.artefacts.handlers.functions.test.MyFunctionType;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.agents.provisioning.AgentPoolSpec;
+import step.core.agents.provisioning.driver.AgentProvisioningDriverConfiguration;
+import step.core.agents.provisioning.driver.AgentProvisioningDriver;
+import step.core.agents.provisioning.driver.AgentProvisioningRequest;
+import step.core.agents.provisioning.driver.AgentProvisioningStatus;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionContext;
@@ -331,9 +334,9 @@ public class TokenForcastingTest {
 		@Override
 		public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext executionEngineContext) {
 			super.initializeExecutionEngineContext(parentContext, executionEngineContext);
-			TokenAutoscalingConfiguration tokenAutoscalingConfiguration = new TokenAutoscalingConfiguration();
-			tokenAutoscalingConfiguration.availableAgentPools = availableTokenPools;
-			executionEngineContext.put(TokenAutoscalingDriver.class, new ForcastingTestDriver(tokenAutoscalingConfiguration));
+			AgentProvisioningDriverConfiguration agentProvisioningDriverConfiguration = new AgentProvisioningDriverConfiguration();
+			agentProvisioningDriverConfiguration.availableAgentPools = availableTokenPools;
+			executionEngineContext.put(AgentProvisioningDriver.class, new ForcastingTestDriver(agentProvisioningDriverConfiguration));
 		}
 
 		@Override
@@ -343,31 +346,31 @@ public class TokenForcastingTest {
 		}
 	}
 
-	public static class ForcastingTestDriver implements TokenAutoscalingDriver {
+	public static class ForcastingTestDriver implements AgentProvisioningDriver {
 
-		TokenAutoscalingConfiguration tokenAutoscalingConfiguration;
+		AgentProvisioningDriverConfiguration agentProvisioningDriverConfiguration;
 
-		public ForcastingTestDriver(TokenAutoscalingConfiguration tokenAutoscalingConfiguration) {
-			this.tokenAutoscalingConfiguration = tokenAutoscalingConfiguration;
+		public ForcastingTestDriver(AgentProvisioningDriverConfiguration agentProvisioningDriverConfiguration) {
+			this.agentProvisioningDriverConfiguration = agentProvisioningDriverConfiguration;
 		}
 
 		@Override
-		public TokenAutoscalingConfiguration getConfiguration() {
-			return tokenAutoscalingConfiguration;
+		public AgentProvisioningDriverConfiguration getConfiguration() {
+			return agentProvisioningDriverConfiguration;
 		}
 
 		@Override
-		public String initializeTokenProvisioningRequest(TokenProvisioningRequest request) {
+		public String initializeTokenProvisioningRequest(AgentProvisioningRequest request) {
 			return null;
 		}
 
 		@Override
-		public TokenProvisioningStatus executeTokenProvisioningRequest(String provisioningRequestId) {
-			return new TokenProvisioningStatus();
+		public AgentProvisioningStatus executeTokenProvisioningRequest(String provisioningRequestId) {
+			return new AgentProvisioningStatus();
 		}
 
 		@Override
-		public TokenProvisioningStatus getTokenProvisioningStatus(String provisioningRequestId) {
+		public AgentProvisioningStatus getTokenProvisioningStatus(String provisioningRequestId) {
 			return null;
 		}
 
