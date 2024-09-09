@@ -1,6 +1,6 @@
 package step.artefacts.handlers.functions;
 
-import step.artefacts.handlers.functions.autoscaler.AgentPoolProvisioningParameters;
+import step.core.agents.provisioning.AgentPoolProvisioningParameters;
 import step.grid.TokenPretender;
 import step.grid.tokenpool.Identity;
 import step.grid.tokenpool.Interest;

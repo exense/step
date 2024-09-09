@@ -3,6 +3,8 @@ package step.reporting;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.handlers.functions.TokenForcastingExecutionPlugin;
 import step.core.artefacts.reports.aggregated.AggregatedReportView;
@@ -19,8 +21,11 @@ import java.io.IOException;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static step.planbuilder.BaseArtefacts.*;
 
 public class ResolvedPlanBuilderTest {
+
+    protected static final Logger logger = LoggerFactory.getLogger(ResolvedPlanBuilderTest.class);
 
     private ExecutionEngine engine;
 
@@ -39,24 +44,32 @@ public class ResolvedPlanBuilderTest {
     public void get() throws IOException, InterruptedException {
         Plan plan = PlanBuilder.create()
                 .startBlock(BaseArtefacts.for_(1, 10))
-                .add(BaseArtefacts.echo("'test'"))
+                .add(echo("'test'"))
                 .startBlock(BaseArtefacts.for_(1, 5))
-                .add(BaseArtefacts.echo("'Echo 2'"))
-                .add(BaseArtefacts.echo("'Echo 3'"))
+                .add(echo("'Echo 2'"))
+                .add(echo("'Echo 3'"))
                 .endBlock()
                 .endBlock().build();
         PlanRunnerResult result = engine.execute(plan);
         result.printTree();
 
-        // Sleep a few ms to ensure that the report node timeseries is flushed
-        Thread.sleep(100);
-
         AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(engine.getExecutionEngineContext(), result.getExecutionId());
         AggregatedReportView node = aggregatedReportViewBuilder.buildAggregatedReportView();
+
+        logger.info("----------------------");
+        logger.info("Aggregated report tree");
+        logger.info("----------------------");
+        logger.info(node.toString());
         assertEquals(10, node.children.get(0).countTotal());
         assertEquals(10, node.children.get(1).countTotal());
         assertEquals(50, node.children.get(1).children.get(0).countTotal());
         assertEquals(50, node.children.get(1).children.get(1).countTotal());
+        assertEquals("ForBlock: 1x\n" +
+                " Echo: 10x\n" +
+                " ForBlock: 10x\n" +
+                "  Echo: 50x\n" +
+                "  Echo: 50x\n",
+                node.toString());
     }
 
     //@Test
@@ -64,13 +77,13 @@ public class ResolvedPlanBuilderTest {
     public void planWithCallPlan() throws IOException, InterruptedException {
         Plan subSubPlan = PlanBuilder.create()
                 .startBlock(BaseArtefacts.sequence())
-                .add(BaseArtefacts.echo("'Echo 4'"))
+                .add(echo("'Echo 4'"))
                 .endBlock().build();
 
         Plan subPlan = PlanBuilder.create()
                 .startBlock(BaseArtefacts.sequence())
-                .add(BaseArtefacts.echo("'Echo 2'"))
-                .add(BaseArtefacts.echo("'Echo 3'"))
+                .add(echo("'Echo 2'"))
+                .add(echo("'Echo 3'"))
                 .startBlock(BaseArtefacts.for_(1, 2))
                 .add(BaseArtefacts.callPlan(subSubPlan.getId().toString()))
                 .endBlock()
@@ -86,15 +99,33 @@ public class ResolvedPlanBuilderTest {
 
         PlanRunnerResult result = engine.execute(plan);
         result.printTree();
-        System.out.println("----------------------");
-        System.out.println("Aggregated report tree");
-        System.out.println("----------------------");
-
-        // Sleep a few ms to ensure that the report node timeseries is flushed
-        Thread.sleep(2000);
+        logger.info("----------------------");
+        logger.info("Aggregated report tree");
+        logger.info("----------------------");
 
         AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(engine.getExecutionEngineContext(), result.getExecutionId());
         AggregatedReportView node = aggregatedReportViewBuilder.buildAggregatedReportView();
-        System.out.println(node.toString());
+        logger.info(node.toString());
+        assertEquals("ForBlock: 1x\n" +
+                        " CallPlan: 10x\n" +
+                        "  Sequence: 10x\n" +
+                        "   Echo: 10x\n" +
+                        "   Echo: 10x\n" +
+                        "   ForBlock: 10x\n" +
+                        "    CallPlan: 20x\n" +
+                        "     Sequence: 20x\n" +
+                        "      Echo: 20x\n" +
+                        " CallPlan: 10x\n" +
+                        "  Sequence: 10x\n" +
+                        "   Echo: 10x\n" +
+                        "   Echo: 10x\n" +
+                        "   ForBlock: 10x\n" +
+                        "    CallPlan: 20x\n" +
+                        "     Sequence: 20x\n" +
+                        "      Echo: 20x\n",
+                node.toString());
+
     }
+
+
 }

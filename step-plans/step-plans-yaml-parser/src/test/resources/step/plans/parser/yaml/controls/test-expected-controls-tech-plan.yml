@@ -2,6 +2,8 @@
 _class: "step.core.plans.Plan"
 attributes:
   name: "MainPlan"
+agents:
+  mode: "auto_detect"
 root:
   _class: "TestCase"
   attributes:
@@ -288,7 +290,7 @@ root:
         value: false
       selectionAttributes:
         dynamic: false
-        value: "{\"name\":{\"value\":\"SubPlan\",\"dynamic\":false}}"
+        value: "{\"name\":{\"dynamic\":false,\"value\":\"SubPlan\"}}"
       input:
         dynamic: false
         value: "{}"

@@ -44,9 +44,7 @@ import step.core.execution.OperationMode;
 import step.core.json.JsonProviderCache;
 import step.core.miscellaneous.ReportNodeAttachmentManager;
 import step.core.miscellaneous.ReportNodeAttachmentManager.AttachmentQuotaException;
-import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.Plan;
-import step.core.plans.PlanAccessor;
 import step.core.plugins.ExecutionCallbacks;
 import step.core.reports.Error;
 import step.core.reports.ErrorType;
@@ -74,7 +72,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static step.artefacts.handlers.functions.TokenForcastingExecutionPlugin.getTokenForecastingContext;
-import static step.artefacts.handlers.functions.autoscaler.AgentPoolConstants.TOKEN_ATTRIBUTE_PARTITION;
+import static step.core.agents.provisioning.AgentPoolConstants.TOKEN_ATTRIBUTE_PARTITION;
 
 public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunctionReportNode> {
 
@@ -136,9 +134,8 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	}
 
 	@Override
-	public AbstractArtefact resolveArtefactCall(AbstractArtefact artefact, DynamicJsonObjectResolver dynamicJsonObjectResolver, Map<String, Object> bindings, ObjectPredicate objectPredicate, PlanAccessor planAccessor, FunctionAccessor functionAccessor) {
-		FunctionLocator functionLocator = new FunctionLocator(functionAccessor, new SelectorHelper(dynamicJsonObjectResolver));
-		Function function = functionLocator.getFunction((CallFunction) artefact, objectPredicate, bindings);
+	public AbstractArtefact resolveArtefactCall(CallFunction artefact) {
+		Function function = getFunction(artefact);
 		if(function instanceof CompositeFunction) {
 			return ((CompositeFunction) function).getPlan().getRoot();
 		} else {

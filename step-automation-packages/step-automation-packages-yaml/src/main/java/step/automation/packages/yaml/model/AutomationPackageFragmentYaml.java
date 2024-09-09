@@ -19,7 +19,7 @@
 package step.automation.packages.yaml.model;
 
 import step.automation.packages.model.YamlAutomationPackageKeyword;
-import step.plans.parser.yaml.model.YamlPlan;
+import step.plans.parser.yaml.YamlPlan;
 
 import java.util.List;
 import java.util.Map;

@@ -36,7 +36,7 @@
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
         </dependency>
-
+        
         <!-- To use test keywords in tests-->
         <dependency>
             <groupId>ch.exense.step</groupId>

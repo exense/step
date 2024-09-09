@@ -146,6 +146,18 @@ public class YamlPlanReaderTest {
 	}
 
 	@Test
+	public void callPlan() throws YamlPlanValidationException {
+		convertFromYamlToPlan(
+				"src/test/resources/step/plans/parser/yaml/call-plan/test-call-plan.yml",
+				"src/test/resources/step/plans/parser/yaml/call-plan/test-expected-call-tech-plan.yml"
+		);
+
+		convertPlanToYaml("src/test/resources/step/plans/parser/yaml/call-plan/test-expected-call-tech-plan.yml",
+				"src/test/resources/step/plans/parser/yaml/call-plan/test-converted-from-tech-call-plan.yml"
+		);
+	}
+
+	@Test
 	public void testReturn() throws YamlPlanValidationException {
 		convertFromYamlToPlan(
 				"src/test/resources/step/plans/parser/yaml/return/test-return-plan.yml",
@@ -310,6 +322,19 @@ public class YamlPlanReaderTest {
 		} catch (IOException ex){
 			throw new RuntimeException(ex);
 		}
+	}
+
+	@Test
+	public void checkPlanYamlConfiguration() {
+		convertFromYamlToPlan(
+				"src/test/resources/step/plans/parser/yaml/agents/test-agents-configuration-yaml.yml",
+				"src/test/resources/step/plans/parser/yaml/agents/test-expected-agents-configuration-tech-plan.yml"
+		);
+
+		convertPlanToYaml(
+				"src/test/resources/step/plans/parser/yaml/controls/test-expected-controls-tech-plan.yml",
+				"src/test/resources/step/plans/parser/yaml/controls/test-controls-plan.yml"
+		);
 	}
 
 	private void convertPlanToYaml(String technicalPlanFilePath, String expectedYamlPlan) {

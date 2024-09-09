@@ -18,6 +18,11 @@
  ******************************************************************************/
 package step.plans.parser.yaml;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import step.core.plans.agents.configuration.AgentProvisioningConfigurationDeserializer;
+import step.core.plans.agents.configuration.AgentProvisioningConfigurationSerializer;
+import step.core.plans.agents.configuration.AgentProvisioningConfiguration;
 import step.plans.parser.yaml.model.NamedYamlArtefact;
 
 public class YamlPlan {
@@ -29,6 +34,10 @@ public class YamlPlan {
 	private String name;
 
 	private NamedYamlArtefact root;
+
+	@JsonSerialize(using = AgentProvisioningConfigurationSerializer.class)
+	@JsonDeserialize(using = AgentProvisioningConfigurationDeserializer.class)
+	private AgentProvisioningConfiguration agents;
 
 	public String getName() {
 		return name;
@@ -52,5 +61,13 @@ public class YamlPlan {
 
 	public void setVersion(String version) {
 		this.version = version;
+	}
+
+	public AgentProvisioningConfiguration getAgents() {
+		return agents;
+	}
+
+	public void setAgents(AgentProvisioningConfiguration agents) {
+		this.agents = agents;
 	}
 }
