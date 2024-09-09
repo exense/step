@@ -18,17 +18,14 @@
  ******************************************************************************/
 package step.artefacts;
 
-import java.util.function.BiConsumer;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import step.artefacts.automation.YamlFunctionGroup;
-
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.artefacts.reports.ReportNode;
-import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.YamlModel;
+
+import java.util.function.BiConsumer;
 
 import static step.artefacts.FunctionGroup.FUNCTION_GROUP_ARTEFACT_NAME;
 
@@ -40,12 +37,6 @@ public class FunctionGroup extends TokenSelector {
 
 	@JsonIgnore
 	private BiConsumer<AbstractArtefact, ReportNode> consumer;
-
-	private DynamicValue<String> dockerImage = new DynamicValue<>();
-
-	private DynamicValue<String> containerUser = new DynamicValue<>();
-
-	private DynamicValue<String> containerCommand = new DynamicValue<>();
 
 	/**
 	 * @return an optional {@link BiConsumer} representing an operation to be performed
@@ -59,27 +50,4 @@ public class FunctionGroup extends TokenSelector {
 		this.consumer = consumer;
 	}
 
-	public DynamicValue<String> getDockerImage() {
-		return dockerImage;
-	}
-
-	public void setDockerImage(DynamicValue<String> dockerImage) {
-		this.dockerImage = dockerImage;
-	}
-
-	public DynamicValue<String> getContainerUser() {
-		return containerUser;
-	}
-
-	public void setContainerUser(DynamicValue<String> containerUser) {
-		this.containerUser = containerUser;
-	}
-
-	public DynamicValue<String> getContainerCommand() {
-		return containerCommand;
-	}
-
-	public void setContainerCommand(DynamicValue<String> containerCommand) {
-		this.containerCommand = containerCommand;
-	}
 }

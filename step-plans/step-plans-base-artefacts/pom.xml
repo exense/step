@@ -63,6 +63,10 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
+			<groupId>ch.exense.step</groupId>
+			<artifactId>step-grid-server</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>org.apache.poi</groupId>
 			<artifactId>poi</artifactId>
 		</dependency>
