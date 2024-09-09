@@ -35,6 +35,14 @@ root:
                   - intInput: 777
                   - noValueInput: null
                 keyword: "callExisting3"
+            - callKeyword:
+                continueParentNodeExecutionOnError: false
+                instrumentNode: true
+                skipNode: false
+                remote: true
+                keyword: "callExisting3"
+                nodeName:
+                  expression: "'Instrument_' + 'callExisting3'"
           description: "my description"
           condition:
             expression: "controllerSettings.getSettingByKey('housekeeping_enabled').getValue()=='true'"

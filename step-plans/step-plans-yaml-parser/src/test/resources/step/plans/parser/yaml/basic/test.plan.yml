@@ -26,3 +26,9 @@ root:
                       expression: "'abc'"
                   - intInput: 777
                   - noValueInput:
+            - callKeyword:
+                keyword: "callExisting3"
+                nodeName:
+                  expression: "'Instrument_' + 'callExisting3'"
+                instrumentNode: true
+                inputs: []
