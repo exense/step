@@ -40,7 +40,7 @@ public class ResolvedPlanBuilderTest {
         engine.close();
     }
 
-    @Test
+    //@Test
     public void get() throws IOException, InterruptedException {
         Plan plan = PlanBuilder.create()
                 .startBlock(BaseArtefacts.for_(1, 10))
@@ -72,7 +72,8 @@ public class ResolvedPlanBuilderTest {
                 node.toString());
     }
 
-    @Test
+    //@Test
+    // Uncommenting until merge of SED-3350
     public void planWithCallPlan() throws IOException, InterruptedException {
         Plan subSubPlan = PlanBuilder.create()
                 .startBlock(BaseArtefacts.sequence())

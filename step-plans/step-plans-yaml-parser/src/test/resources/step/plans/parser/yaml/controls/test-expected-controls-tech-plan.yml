@@ -716,12 +716,6 @@ root:
       token:
         dynamic: false
         value: "{}"
-      dockerImage:
-        dynamic: false
-      containerUser:
-        dynamic: false
-      containerCommand:
-        dynamic: false
       id: "644fbe4e38a61e07cc3a4df8"
     - _class: "Set"
       attributes:

@@ -1332,12 +1332,6 @@ root:
             dynamic: false
             value: "{\"OS\":{\"dynamic\":true,\"expression\":\"OS\"},\"type\":{\"dynamic\"\
           :false,\"value\":\"build\"}}"
-          dockerImage:
-            dynamic: false
-          containerUser:
-            dynamic: false
-          containerCommand:
-            dynamic: false
           id: "644fbe4e38a61e07cc3a4df8"
       skipNode:
         dynamic: false
