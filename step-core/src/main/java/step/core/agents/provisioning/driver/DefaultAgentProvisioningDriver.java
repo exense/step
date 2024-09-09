@@ -1,7 +1,7 @@
-package step.artefacts.handlers.functions.autoscaler;
+package step.core.agents.provisioning.driver;
 
 import ch.exense.commons.app.Configuration;
-import step.core.AbstractContext;
+import step.core.agents.provisioning.AgentPoolSpec;
 import step.grid.Grid;
 
 import java.util.Map;
@@ -9,29 +9,29 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.*;
 
-import static step.artefacts.handlers.functions.autoscaler.AgentPoolProvisioningParameters.TOKEN_ATTRIBUTE_DOCKER_SUPPORT;
+import static step.core.agents.provisioning.AgentPoolProvisioningParameters.TOKEN_ATTRIBUTE_DOCKER_SUPPORT;
 
-public class DefaultTokenAutoscalingDriver implements TokenAutoscalingDriver {
+public class DefaultAgentProvisioningDriver implements AgentProvisioningDriver {
 
     private final ExecutorService executorService = Executors.newCachedThreadPool();
-    private final Map<String, TokenProvisioningRequest> provisioningRequest = new ConcurrentHashMap<>();
-    private final Map<String, TokenProvisioningStatus> provisioningStatus = new ConcurrentHashMap<>();
+    private final Map<String, AgentProvisioningRequest> provisioningRequest = new ConcurrentHashMap<>();
+    private final Map<String, AgentProvisioningStatus> provisioningStatus = new ConcurrentHashMap<>();
 
-    public DefaultTokenAutoscalingDriver(Configuration configuration, Grid grid) {
+    public DefaultAgentProvisioningDriver(Configuration configuration, Grid grid) {
 
     }
 
     @Override
-    public TokenAutoscalingConfiguration getConfiguration() {
-        TokenAutoscalingConfiguration autoscalerConfiguration = new TokenAutoscalingConfiguration();
+    public AgentProvisioningDriverConfiguration getConfiguration() {
+        AgentProvisioningDriverConfiguration autoscalerConfiguration = new AgentProvisioningDriverConfiguration();
         autoscalerConfiguration.availableAgentPools = Set.of(new AgentPoolSpec("DefaultPool", Map.of("$agenttype", "default", TOKEN_ATTRIBUTE_DOCKER_SUPPORT, "true"), 1));
         return autoscalerConfiguration;
     }
 
     @Override
-    public String initializeTokenProvisioningRequest(TokenProvisioningRequest request) {
+    public String initializeTokenProvisioningRequest(AgentProvisioningRequest request) {
         String provisioningId = UUID.randomUUID().toString();
-        TokenProvisioningStatus status = new TokenProvisioningStatus();
+        AgentProvisioningStatus status = new AgentProvisioningStatus();
         status.statusDescription = "Provisioning tokens... (MOCK)";
         provisioningRequest.put(provisioningId, request);
         provisioningStatus.put(provisioningId, status);
@@ -39,12 +39,12 @@ public class DefaultTokenAutoscalingDriver implements TokenAutoscalingDriver {
     }
 
     @Override
-    public TokenProvisioningStatus executeTokenProvisioningRequest(String provisioningRequestId) {
-        TokenProvisioningRequest tokenProvisioningRequest = provisioningRequest.get(provisioningRequestId);
-        TokenProvisioningStatus tokenProvisioningStatus = provisioningStatus.get(provisioningRequestId);
+    public AgentProvisioningStatus executeTokenProvisioningRequest(String provisioningRequestId) {
+        AgentProvisioningRequest agentProvisioningRequest = provisioningRequest.get(provisioningRequestId);
+        AgentProvisioningStatus agentProvisioningStatus = provisioningStatus.get(provisioningRequestId);
 
         Future<?> future = executorService.submit(() -> {
-            for (int i = 0; i <= tokenProvisioningRequest.agentPoolRequirementSpecs.size(); i++) {
+            for (int i = 0; i <= agentProvisioningRequest.agentPoolRequirementSpecs.size(); i++) {
                 sleep();
             }
         });
@@ -55,10 +55,10 @@ public class DefaultTokenAutoscalingDriver implements TokenAutoscalingDriver {
         } catch (ExecutionException e) {
             throw new RuntimeException(e);
         } finally {
-            tokenProvisioningStatus.completed = true;
+            agentProvisioningStatus.completed = true;
         }
 
-        return tokenProvisioningStatus;
+        return agentProvisioningStatus;
     }
 
     private static void sleep() {
@@ -76,7 +76,7 @@ public class DefaultTokenAutoscalingDriver implements TokenAutoscalingDriver {
     }
 
     @Override
-    public TokenProvisioningStatus getTokenProvisioningStatus(String provisioningRequestId) {
+    public AgentProvisioningStatus getTokenProvisioningStatus(String provisioningRequestId) {
         return provisioningStatus.get(provisioningRequestId);
     }
 }

@@ -37,7 +37,7 @@ import step.automation.packages.yaml.model.AutomationPackageFragmentYamlImpl;
 import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.yaml.deserializers.StepYamlDeserializersScanner;
 import step.plans.parser.yaml.YamlPlanReader;
-import step.plans.parser.yaml.model.YamlPlanVersions;
+import step.plans.parser.yaml.YamlPlanVersions;
 import step.plans.parser.yaml.schema.YamlPlanValidationException;
 
 import java.io.IOException;

@@ -34,7 +34,7 @@ import step.core.collections.Document;
 import step.core.collections.Filters;
 import step.core.collections.inmemory.InMemoryCollectionFactory;
 import step.migration.MigrationManager;
-import step.plans.parser.yaml.model.YamlPlan;
+import step.plans.parser.yaml.YamlPlan;
 import step.plans.parser.yaml.schema.YamlPlanValidationException;
 
 import java.io.IOException;
