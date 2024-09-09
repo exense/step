@@ -1,7 +1,7 @@
 package step.artefacts.handlers.functions;
 
-import step.artefacts.handlers.functions.autoscaler.AgentPoolRequirementSpec;
-import step.artefacts.handlers.functions.autoscaler.AgentPoolSpec;
+import step.core.agents.provisioning.AgentPoolRequirementSpec;
+import step.core.agents.provisioning.AgentPoolSpec;
 import step.functions.Function;
 import step.functions.execution.FunctionExecutionService;
 import step.functions.execution.TokenLifecycleInterceptor;
@@ -17,7 +17,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import static step.artefacts.handlers.functions.autoscaler.AgentPoolProvisioningParameters.supportedParameters;
+import static step.core.agents.provisioning.AgentPoolProvisioningParameters.supportedParameters;
 
 public class TokenForecastingContext {
     protected final Map<Key, PoolReservationTracker> poolResourceReservations = new HashMap<>();

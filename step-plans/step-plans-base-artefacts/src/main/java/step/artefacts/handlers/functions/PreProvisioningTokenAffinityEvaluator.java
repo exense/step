@@ -1,6 +1,6 @@
 package step.artefacts.handlers.functions;
 
-import step.artefacts.handlers.functions.autoscaler.AgentPoolProvisioningParameters;
+import step.core.agents.provisioning.AgentPoolProvisioningParameters;
 import step.grid.TokenPretender;
 import step.grid.tokenpool.Identity;
 import step.grid.tokenpool.Interest;
@@ -9,8 +9,6 @@ import step.grid.tokenpool.SimpleAffinityEvaluator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
-
-import static step.artefacts.handlers.functions.autoscaler.AgentPoolProvisioningParameters.TOKEN_ATTRIBUTE_DOCKER_IMAGE;
 
 /**
  * This {@link step.grid.tokenpool.AffinityEvaluator} is used to match agent token pools before their provisioning.

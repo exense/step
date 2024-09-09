@@ -2,8 +2,8 @@ package step.artefacts.handlers.functions;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.artefacts.handlers.functions.autoscaler.AgentPoolSpec;
-import step.artefacts.handlers.functions.autoscaler.TokenAutoscalingDriver;
+import step.core.agents.provisioning.AgentPoolSpec;
+import step.core.agents.provisioning.driver.AgentProvisioningDriver;
 import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;
@@ -31,9 +31,9 @@ public class TokenForcastingExecutionPlugin extends AbstractExecutionEnginePlugi
     @Override
     public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
         if (pools == null) {
-            TokenAutoscalingDriver tokenAutoscalingDriver = executionEngineContext.get(TokenAutoscalingDriver.class);
-            pools = (tokenAutoscalingDriver != null) ?
-                    tokenAutoscalingDriver.getConfiguration().availableAgentPools :
+            AgentProvisioningDriver agentProvisioningDriver = executionEngineContext.get(AgentProvisioningDriver.class);
+            pools = (agentProvisioningDriver != null) ?
+                    agentProvisioningDriver.getConfiguration().availableAgentPools :
                     Set.of();
         }
     }
