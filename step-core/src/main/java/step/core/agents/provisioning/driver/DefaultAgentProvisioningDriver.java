@@ -23,9 +23,9 @@ public class DefaultAgentProvisioningDriver implements AgentProvisioningDriver {
 
     @Override
     public AgentProvisioningDriverConfiguration getConfiguration() {
-        AgentProvisioningDriverConfiguration autoscalerConfiguration = new AgentProvisioningDriverConfiguration();
-        autoscalerConfiguration.availableAgentPools = Set.of(new AgentPoolSpec("DefaultPool", Map.of("$agenttype", "default", TOKEN_ATTRIBUTE_DOCKER_SUPPORT, "true"), 1));
-        return autoscalerConfiguration;
+        AgentProvisioningDriverConfiguration configuration = new AgentProvisioningDriverConfiguration();
+        configuration.availableAgentPools = Set.of(new AgentPoolSpec("DefaultPool", Map.of("$agenttype", "default", TOKEN_ATTRIBUTE_DOCKER_SUPPORT, "true"), 1));
+        return configuration;
     }
 
     @Override

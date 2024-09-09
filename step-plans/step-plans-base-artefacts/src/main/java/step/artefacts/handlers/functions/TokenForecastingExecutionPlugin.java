@@ -13,26 +13,26 @@ import step.engine.plugins.AbstractExecutionEnginePlugin;
 import java.util.Set;
 
 /**
- * This plugin is responsible for the autoscaling of agent tokens.
+ * This plugin is responsible for the token forecasting.
  * It delegates the estimation of the required number of tokens (token forecasting)
  * and provisioning of the tokens to the configured driver
  */
 @Plugin
-public class TokenForcastingExecutionPlugin extends AbstractExecutionEnginePlugin {
+public class TokenForecastingExecutionPlugin extends AbstractExecutionEnginePlugin {
 
-    private static final Logger logger = LoggerFactory.getLogger(TokenForcastingExecutionPlugin.class);
+    private static final Logger logger = LoggerFactory.getLogger(TokenForecastingExecutionPlugin.class);
     public static final String CONTEXT_OBJECT_KEY = "$tokenForecastingContext";
 
-    private Set<AgentPoolSpec> pools;
+    private Set<AgentPoolSpec> availableAgentPools;
 
-    public TokenForcastingExecutionPlugin() {
+    public TokenForecastingExecutionPlugin() {
     }
 
     @Override
     public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
-        if (pools == null) {
+        if (availableAgentPools == null) {
             AgentProvisioningDriver agentProvisioningDriver = executionEngineContext.get(AgentProvisioningDriver.class);
-            pools = (agentProvisioningDriver != null) ?
+            availableAgentPools = (agentProvisioningDriver != null) ?
                     agentProvisioningDriver.getConfiguration().availableAgentPools :
                     Set.of();
         }
@@ -42,8 +42,8 @@ public class TokenForcastingExecutionPlugin extends AbstractExecutionEnginePlugi
     public void executionStart(ExecutionContext context) {
         super.executionStart(context);
 
-        // Token forecasting is always calculated, even if the autoscaling is disabled
-        TokenForecastingContext tokenForecastingContext = new TokenForecastingContext(pools);
+        // Token forecasting is always calculated, even if the agent provisioning is disabled
+        TokenForecastingContext tokenForecastingContext = new TokenForecastingContext(availableAgentPools);
         pushTokenForecastingContext(context, tokenForecastingContext, context.getReport());
     }
 

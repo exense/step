@@ -23,7 +23,7 @@ import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.CallFunction;
 import step.artefacts.FunctionGroup;
 import step.artefacts.ThreadGroup;
-import step.artefacts.handlers.functions.TokenForcastingExecutionPlugin;
+import step.artefacts.handlers.functions.TokenForecastingExecutionPlugin;
 import step.artefacts.handlers.functions.TokenForecastingContext;
 import step.artefacts.handlers.functions.test.MyFunction;
 import step.artefacts.handlers.functions.test.MyFunctionType;
@@ -56,7 +56,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
-import static step.artefacts.handlers.functions.TokenForcastingExecutionPlugin.getTokenForecastingContext;
+import static step.artefacts.handlers.functions.TokenForecastingExecutionPlugin.getTokenForecastingContext;
 
 public class TokenForcastingTest {
 
@@ -315,7 +315,7 @@ public class TokenForcastingTest {
 				functionTypeRegistry.registerFunctionType(new CompositeFunctionType(null));
 				functionTypeRegistry.registerFunctionType(new MyFunctionType());
 				}
-		}).withPlugin(new ThreadPoolPlugin()).withPlugin(new BaseArtefactPlugin()).withPlugin(new TokenForcastingExecutionPlugin())
+		}).withPlugin(new ThreadPoolPlugin()).withPlugin(new BaseArtefactPlugin()).withPlugin(new TokenForecastingExecutionPlugin())
 				.withPlugin(forcastingTestPlugin).build()) {
 			executionEngine.execute(plan);
 		}

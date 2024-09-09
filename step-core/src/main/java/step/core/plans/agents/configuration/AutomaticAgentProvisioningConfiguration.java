@@ -19,7 +19,7 @@ public class AutomaticAgentProvisioningConfiguration implements AgentProvisionin
     }
 
     @Override
-    public boolean enableAutoScaling() {
+    public boolean enableAgentProvisioning() {
         return true;
     }
 

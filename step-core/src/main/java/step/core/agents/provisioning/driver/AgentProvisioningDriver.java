@@ -3,7 +3,7 @@ package step.core.agents.provisioning.driver;
 public interface AgentProvisioningDriver {
 
     /**
-     * @return the configuration of the token autoscaling
+     * @return the agent provisioning configuration
      */
     AgentProvisioningDriverConfiguration getConfiguration();
 

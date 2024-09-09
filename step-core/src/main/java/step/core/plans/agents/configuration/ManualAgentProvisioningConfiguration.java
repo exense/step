@@ -34,7 +34,7 @@ public class ManualAgentProvisioningConfiguration implements AgentProvisioningCo
     }
 
     @Override
-    public boolean enableAutoScaling() {
+    public boolean enableAgentProvisioning() {
         return configuredAgentPools != null && !configuredAgentPools.isEmpty();
     }
 }

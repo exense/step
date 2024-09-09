@@ -14,7 +14,7 @@ public interface AgentProvisioningConfiguration {
 
     boolean enableAutomaticTokenNumberCalculation();
 
-    boolean enableAutoScaling();
+    boolean enableAgentProvisioning();
 
     @JsonIgnore
     List<AgentPoolRequirementSpec> getAgentPoolRequirementSpecs();
