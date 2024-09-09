@@ -33,8 +33,8 @@ public class MigrateAgentProvisioningConfigurationTest {
 			Collection<Document> plans = collectionFactory.getCollection("plans", step.core.collections.Document.class);
 			Collection<Plan> actualPlans = collectionFactory.getCollection("plans", Plan.class);
 			plans.save(oldPlan);
-			MigratePlanAgentsConfiguration migratePlanAgentsConfiguration = new MigratePlanAgentsConfiguration(collectionFactory, null);
-			migratePlanAgentsConfiguration.runUpgradeScript();
+			MigrateAgentProvisioningConfiguration migrateAgentProvisioningConfiguration = new MigrateAgentProvisioningConfiguration(collectionFactory, null);
+			migrateAgentProvisioningConfiguration.runUpgradeScript();
 			Plan newPlan = actualPlans.find(Filters.empty(), null, null, null, 0).findFirst().orElseThrow(() -> new RuntimeException("No plans found in collection"));
 			AgentProvisioningConfiguration agents = newPlan.getAgents();
 			assertTrue(agents instanceof ManualAgentProvisioningConfiguration);
@@ -53,8 +53,8 @@ public class MigrateAgentProvisioningConfigurationTest {
 			Collection<Document> plans = collectionFactory.getCollection("plans", step.core.collections.Document.class);
 			Collection<Plan> actualPlans = collectionFactory.getCollection("plans", Plan.class);
 			plans.save(oldPlan);
-			MigratePlanAgentsConfiguration migratePlanAgentsConfiguration = new MigratePlanAgentsConfiguration(collectionFactory, null);
-			migratePlanAgentsConfiguration.runUpgradeScript();
+			MigrateAgentProvisioningConfiguration migrateAgentProvisioningConfiguration = new MigrateAgentProvisioningConfiguration(collectionFactory, null);
+			migrateAgentProvisioningConfiguration.runUpgradeScript();
 			Plan newPlan = actualPlans.find(Filters.empty(), null, null, null, 0).findFirst().orElseThrow(() -> new RuntimeException("No plans found in collection"));
 			AgentProvisioningConfiguration agents = newPlan.getAgents();
 			assertTrue(agents instanceof AutomaticAgentProvisioningConfiguration);
@@ -71,8 +71,8 @@ public class MigrateAgentProvisioningConfigurationTest {
 			Collection<Document> plans = collectionFactory.getCollection("plans", step.core.collections.Document.class);
 			Collection<Plan> actualPlans = collectionFactory.getCollection("plans", Plan.class);
 			plans.save(oldPlan);
-			MigratePlanAgentsConfiguration migratePlanAgentsConfiguration = new MigratePlanAgentsConfiguration(collectionFactory, null);
-			migratePlanAgentsConfiguration.runUpgradeScript();
+			MigrateAgentProvisioningConfiguration migrateAgentProvisioningConfiguration = new MigrateAgentProvisioningConfiguration(collectionFactory, null);
+			migrateAgentProvisioningConfiguration.runUpgradeScript();
 			Plan newPlan = actualPlans.find(Filters.empty(), null, null, null, 0).findFirst().orElseThrow(() -> new RuntimeException("No plans found in collection"));
 			AgentProvisioningConfiguration agents = newPlan.getAgents();
 			assertTrue(agents instanceof ManualAgentProvisioningConfiguration);
