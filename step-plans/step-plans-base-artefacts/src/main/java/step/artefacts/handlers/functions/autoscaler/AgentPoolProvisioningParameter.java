@@ -1,4 +1,4 @@
-package step.core.agents.provisioning;
+package step.artefacts.handlers.functions.autoscaler;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import step.grid.tokenpool.Interest;

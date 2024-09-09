@@ -28,8 +28,6 @@ import step.core.artefacts.AbstractArtefact;
 import step.core.entities.EntityManager;
 import step.core.entities.EntityReference;
 import step.core.objectenricher.EnricheableObject;
-import step.core.plans.agents.configuration.AgentProvisioningConfiguration;
-import step.core.plans.agents.configuration.AutomaticAgentProvisioningConfiguration;
 import step.functions.Function;
 
 @JsonTypeInfo(use=Id.CLASS,property= Plan.JSON_CLASS_FIELD)
@@ -42,9 +40,6 @@ public class Plan extends AbstractOrganizableObject implements EnricheableObject
 	protected Collection<Function> functions;
 	
 	protected Collection<Plan> subPlans;
-
-	@JsonTypeInfo(use= Id.DEDUCTION)
-	protected AgentProvisioningConfiguration agents = new AutomaticAgentProvisioningConfiguration(AutomaticAgentProvisioningConfiguration.PlanAgentsPoolAutoMode.auto_detect);
 	
 	protected boolean visible = true;
 	
@@ -88,13 +83,5 @@ public class Plan extends AbstractOrganizableObject implements EnricheableObject
 
 	public void setVisible(boolean visible) {
 		this.visible = visible;
-	}
-
-	public AgentProvisioningConfiguration getAgents() {
-		return agents;
-	}
-
-	public void setAgents(AgentProvisioningConfiguration agents) {
-		this.agents = agents;
 	}
 }

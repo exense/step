@@ -7,8 +7,6 @@ attributes:
   type: ''
   name: Build
   project: 64732d07eee7d35370046108
-agents:
-  mode: "auto_detect"
 root:
   _class: TestCase
   attributes:

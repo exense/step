@@ -1,4 +1,4 @@
-package step.core.agents.provisioning;
+package step.artefacts.handlers.functions.autoscaler;
 
 public class AgentPoolConstants {
     /**

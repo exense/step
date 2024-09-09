@@ -52,10 +52,6 @@
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>ch.exense.step</groupId>
-			<artifactId>step-grid-api</artifactId>
-		</dependency>
-		<dependency>
 			<groupId>org.codehaus.groovy</groupId>
 			<artifactId>groovy-all</artifactId>
 			<type>pom</type>

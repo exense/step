@@ -16,25 +16,39 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.yaml.model;
+package step.plans.parser.yaml.model;
 
-import step.automation.packages.model.YamlAutomationPackageKeyword;
-import step.plans.parser.yaml.model.YamlPlan;
+public class YamlPlan {
 
-import java.util.List;
-import java.util.Map;
+	// this name should be kept untouched to support the migrations for old versions
+	public static final String VERSION_FIELD_NAME = "version";
 
-public interface AutomationPackageFragmentYaml {
+	private String version;
+	private String name;
 
-    List<YamlAutomationPackageKeyword> getKeywords();
+	private NamedYamlArtefact root;
 
-    List<YamlPlan> getPlans();
+	public String getName() {
+		return name;
+	}
 
-    List<String> getFragments();
+	public void setName(String name) {
+		this.name = name;
+	}
 
-    Map<String, List<?>> getAdditionalFields();
+	public NamedYamlArtefact getRoot() {
+		return root;
+	}
 
-    default <T> List<T> getAdditionalField(String k) {
-        return (List<T>) getAdditionalFields().get(k);
-    }
+	public void setRoot(NamedYamlArtefact root) {
+		this.root = root;
+	}
+
+	public String getVersion() {
+		return version;
+	}
+
+	public void setVersion(String version) {
+		this.version = version;
+	}
 }

@@ -49,6 +49,25 @@ public class MigrationManagerTasksPlugin extends AbstractControllerPlugin {
 		migrationManager.register(FixPostgreSQLIndexes.class);
 		migrationManager.register(MigrateSleepArtefactInPlans.class);
 		migrationManager.register(ScreenTemplateMigrationTask25.class);
-		migrationManager.register(MigrateAgentProvisioningConfiguration.class);
+	}
+
+	@Override
+	public void migrateData(GlobalContext context) throws Exception {
+
+	}
+
+	@Override
+	public void initializeData(GlobalContext context) throws Exception {
+
+	}
+
+	@Override
+	public void afterInitializeData(GlobalContext context) throws Exception {
+
+	}
+
+	@Override
+	public void serverStop(GlobalContext context) {
+
 	}
 }

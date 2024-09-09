@@ -1,10 +1,10 @@
-package step.core.agents.provisioning;
+package step.artefacts.handlers.functions.autoscaler;
 
 import java.util.Map;
 import java.util.Objects;
 
 /**
- * Defines the agent pool provisioning requirements
+ * Defines the requirements in terms of Agents for a Plan
  */
 public class AgentPoolRequirementSpec {
     public int numberOfAgents;

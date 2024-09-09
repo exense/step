@@ -2,8 +2,6 @@
 _class: "step.core.plans.Plan"
 attributes:
   name: "test plan"
-agents:
-  mode: "auto_detect"
 root:
   _class: "Sequence"
   attributes:
