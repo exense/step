@@ -265,6 +265,18 @@ public class StepConsole implements Callable<Integer> {
             @Option(names = {LOCAL}, defaultValue = "false", description = "To execute the Automation Package locally ", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
             protected boolean local;
 
+            @Option(names = {"--groupId"})
+            protected String groupId;
+
+            @Option(names = {"--artifactId"})
+            protected String artifactId;
+
+            @Option(names = {"--artifactVersion"})
+            protected String artifactVersion;
+
+            @Option(names = {"--artifactClassifier"})
+            protected String artifactClassifier;
+
             @Option(descriptionKey = EP_DESCRIPTION_KEY, names = {"-ep", "--executionParameters"}, description = "Set execution parameters for local and remote executions ", split = "\\|", splitSynopsisLabel = "|")
             protected Map<String, String> executionParameters;
 
@@ -330,7 +342,10 @@ public class StepConsole implements Callable<Integer> {
             protected void handleApRemoteExecuteCommand() {
                 checkStepUrlRequired();
                 checkEeOptionsConsistency(spec);
-                executeRemotely(stepUrl, getStepProjectName(), stepUser, getAuthToken(), executionParameters, executionTimeoutS, async, includePlans, excludePlans);
+                executeRemotely(stepUrl, getStepProjectName(), stepUser, getAuthToken(), executionParameters,
+                        executionTimeoutS, async, includePlans, excludePlans, groupId, artifactId,
+                        artifactVersion, artifactClassifier
+                );
             }
 
             // for tests
@@ -342,16 +357,20 @@ public class StepConsole implements Callable<Integer> {
                                            final Integer executionTimeoutS,
                                            final boolean async,
                                            final String includePlans,
-                                           final String excludePlans) {
+                                           final String excludePlans,
+                                           final String groupId,
+                                           final String artifactId,
+                                           final String artifactVersion,
+                                           final String artifactClassifier) {
                 new AbstractExecuteAutomationPackageTool(
                         stepUrl, projectName, stepUserId, authToken,
                         executionParameters, executionTimeoutS,
                         !async, true,
-                        includePlans, excludePlans
+                        includePlans, excludePlans, groupId, artifactId, artifactVersion, artifactClassifier
                 ) {
                     @Override
                     protected File getAutomationPackageFile() throws StepCliExecutionException {
-                        return prepareApFile(apFile);
+                        return (ApExecuteCommand.this.groupId != null || ApExecuteCommand.this.artifactId != null) ?  null : prepareApFile(apFile);
                     }
                 }.execute();
             }

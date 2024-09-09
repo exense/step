@@ -41,7 +41,9 @@ public class ArtifactRepositoryPlugin extends AbstractControllerPlugin {
     public static final String RESOURCE_REPO_ID = ArtifactRepositoryConstants.RESOURCE_REPO_ID;
 
     @Override
-    public void serverStart(GlobalContext context) throws Exception {
+    public void afterInitializeData(GlobalContext context) throws Exception {
+        super.afterInitializeData(context);
+
         ControllerSettingAccessor controllerSettingAccessor = context.require(ControllerSettingAccessor.class);
         Configuration configuration = context.getConfiguration();
         MavenArtifactRepository mavenRepository = new MavenArtifactRepository(
@@ -56,6 +58,5 @@ public class ArtifactRepositoryPlugin extends AbstractControllerPlugin {
                 context.require(FunctionAccessor.class));
         context.getRepositoryObjectManager().registerRepository(MAVEN_REPO_ID, mavenRepository);
         context.getRepositoryObjectManager().registerRepository(RESOURCE_REPO_ID, resourceRepository);
-        super.serverStart(context);
     }
 }

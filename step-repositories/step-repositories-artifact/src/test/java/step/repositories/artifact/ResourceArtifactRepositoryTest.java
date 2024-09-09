@@ -4,7 +4,6 @@ import ch.exense.commons.io.FileHelper;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.automation.packages.AutomationPackageHookRegistry;
@@ -14,7 +13,7 @@ import step.automation.packages.deserialization.AutomationPackageSerializationRe
 import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
-import step.core.objectenricher.ObjectEnricher;
+import step.core.plans.InMemoryPlanAccessor;
 import step.core.repositories.ImportResult;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.accessor.InMemoryFunctionAccessorImpl;
@@ -45,7 +44,7 @@ public class ResourceArtifactRepositoryTest {
         AutomationPackageReader apReader = new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, hookRegistry, new AutomationPackageSerializationRegistry());
         this.functionTypeRegistry = MavenArtifactRepositoryTest.prepareTestFunctionTypeRegistry();
         InMemoryFunctionAccessorImpl functionAccessor = new InMemoryFunctionAccessorImpl();
-        this.apManager = AutomationPackageManager.createLocalAutomationPackageManager(functionTypeRegistry, functionAccessor, new LocalResourceManagerImpl(), apReader, hookRegistry);
+        this.apManager = AutomationPackageManager.createLocalAutomationPackageManager(functionTypeRegistry, functionAccessor, new InMemoryPlanAccessor(), new LocalResourceManagerImpl(), apReader, hookRegistry);
         this.repo = new ResourceArtifactRepository(resourceManager, apManager, functionTypeRegistry, functionAccessor);
     }
 

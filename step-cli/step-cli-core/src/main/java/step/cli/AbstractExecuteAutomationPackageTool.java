@@ -33,15 +33,14 @@ import step.core.plans.PlanFilter;
 import step.core.plans.filters.PlanByExcludedNamesFilter;
 import step.core.plans.filters.PlanByIncludedNamesFilter;
 import step.core.plans.runner.PlanRunnerResult;
+import step.core.repositories.RepositoryObjectReference;
+import step.repositories.ArtifactRepositoryConstants;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
@@ -60,13 +59,18 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
 
     private String includePlans;
     private String excludePlans;
+    private final String groupId;
+    private final String artifactId;
+    private final String artifactVersion;
+    private final String artifactClassifier;
 
     public AbstractExecuteAutomationPackageTool(String url, String stepProjectName,
                                                 String userId, String authToken,
                                                 Map<String, String> executionParameters,
                                                 Integer executionResultTimeoutS, Boolean waitForExecution,
                                                 Boolean ensureExecutionSuccess, String includePlans,
-                                                String excludePlans) {
+                                                String excludePlans, String groupId, String artifactId,
+                                                String artifactVersion, String artifactClassifier) {
         super(url);
         this.stepProjectName = stepProjectName;
         this.userId = userId;
@@ -77,6 +81,10 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
         this.ensureExecutionSuccess = ensureExecutionSuccess;
         this.includePlans = includePlans;
         this.excludePlans = excludePlans;
+        this.groupId = groupId;
+        this.artifactId = artifactId;
+        this.artifactVersion = artifactVersion;
+        this.artifactClassifier = artifactClassifier;
     }
 
     public static String getExecutionTreeAsString(PlanRunnerResult res) {
@@ -228,6 +236,15 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
             executionParameters.setPlanFilter(planFilter);
         }
 
+        if (groupId != null && artifactId != null) {
+            Map<String, String> repositoryParameters = new HashMap<>();
+            repositoryParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_ARTIFACT_ID, artifactId);
+            repositoryParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_GROUP_ID, groupId);
+            repositoryParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_VERSION, artifactVersion);
+            repositoryParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_CLASSIFIER, artifactClassifier);
+            executionParameters.setOriginalRepositoryObject(new RepositoryObjectReference(ArtifactRepositoryConstants.MAVEN_REPO_ID, repositoryParameters));
+        }
+
         return executionParameters;
     }
 
@@ -303,4 +320,19 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
         this.excludePlans = excludePlans;
     }
 
+    public String getGroupId() {
+        return groupId;
+    }
+
+    public String getArtifactId() {
+        return artifactId;
+    }
+
+    public String getArtifactVersion() {
+        return artifactVersion;
+    }
+
+    public String getArtifactClassifier() {
+        return artifactClassifier;
+    }
 }

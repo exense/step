@@ -179,7 +179,7 @@ public class AbstractExecuteAutomationPackageToolTest {
                                                     String excludePlans,
                                                     RemoteExecutionManager remoteExecutionManagerMock,
                                                     RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock) {
-            super(url, stepProjectName, userId, authToken, executionParameters, executionResultTimeoutS, waitForExecution, ensureExecutionSuccess, includePlans, excludePlans);
+            super(url, stepProjectName, userId, authToken, executionParameters, executionResultTimeoutS, waitForExecution, ensureExecutionSuccess, includePlans, excludePlans, groupId, artifactId, artifactVersion, artifactClassifier);
             this.remoteExecutionManagerMock = remoteExecutionManagerMock;
             this.remoteAutomationPackageClientMock = remoteAutomationPackageClientMock;
         }

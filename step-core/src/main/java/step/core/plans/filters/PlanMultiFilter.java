@@ -42,6 +42,6 @@ public class PlanMultiFilter extends PlanFilter {
 
     @Override
     public boolean isSelected(Plan plan) {
-        return planFilters == null || planFilters.stream().allMatch(pf -> isSelected(plan));
+        return planFilters == null || planFilters.stream().allMatch(pf -> pf.isSelected(plan));
     }
 }
