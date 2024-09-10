@@ -35,6 +35,7 @@ import step.plugins.timeseries.migration.MigrateAggregateTask;
 import step.plugins.timeseries.migration.MigrateDashboardsTask;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import static step.plugins.timeseries.MetricsConstants.*;
 import static step.plugins.timeseries.TimeSeriesExecutionPlugin.*;
@@ -51,7 +52,6 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 	public static final String TIME_SERIES_HOURLY_COLLECTION = "timeseries_hour";
 	public static final String TIME_SERIES_DAILY_COLLECTION = "timeseries_day";
 	public static final String TIME_SERIES_WEEKLY_COLLECTION = "timeseries_week";
-	public static final String TIME_SERIES_MONTHLY_COLLECTION = "timeseries_month";
 	public static final String TIME_SERIES_ATTRIBUTES_PROPERTY = "plugins.timeseries.attributes";
 	public static final String TIME_SERIES_ATTRIBUTES_DEFAULT = EXECUTION_ID + "," + TASK_ID + "," + PLAN_ID + ",metricType,origin,name,rnStatus,project,type";
 
@@ -59,7 +59,6 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 	public static final String TIME_SERIES_HOUR_COLLECTION_ENABLED = "plugins.timeseries.collections.hour.enabled";
 	public static final String TIME_SERIES_DAY_COLLECTION_ENABLED = "plugins.timeseries.collections.day.enabled";
 	public static final String TIME_SERIES_WEEK_COLLECTION_ENABLED = "plugins.timeseries.collections.week.enabled";
-	public static final String TIME_SERIES_MONTH_COLLECTION_ENABLED = "plugins.timeseries.collections.month.enabled";
 
 
 	public static final String PARAM_KEY_EXECUTION_DASHBOARD_ID = "plugins.timeseries.execution.dashboard.id";
@@ -69,7 +68,6 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 	public static final String GENERATION_NAME = "generationName";
 
 	private TimeSeriesIngestionPipeline mainIngestionPipeline;
-	private TimeSeriesAggregationPipeline aggregationPipeline;
 	private DashboardAccessor dashboardAccessor;
 	private TimeSeries timeSeries;
 	
@@ -86,12 +84,12 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 		List<String> attributes = Arrays.asList(configuration.getProperty(TIME_SERIES_ATTRIBUTES_PROPERTY, TIME_SERIES_ATTRIBUTES_DEFAULT).split(","));
 		CollectionFactory collectionFactory = context.getCollectionFactory();
 
-		validateMainResolutionParam(resolutionPeriod);
-		
+		TimeSeriesCollectionsSettings collectionsSettings = getCollectionsSettings(configuration);
+
 		TimeSeriesCollection mainCollection = new TimeSeriesCollection(collectionFactory.getCollection(TIME_SERIES_MAIN_COLLECTION, Bucket.class), resolutionPeriod);
 		mainIngestionPipeline = new TimeSeriesIngestionPipeline(collectionFactory.getCollection(TIME_SERIES_MAIN_COLLECTION, Bucket.class), resolutionPeriod, flushPeriod);
 
-		List<TimeSeriesCollection> enabledCollections = prepareTimeSeriesCollections(configuration, mainCollection, collectionFactory);
+		List<TimeSeriesCollection> enabledCollections = prepareTimeSeriesCollections(collectionsSettings, mainCollection, collectionFactory);
 
 
 		// timeseries will have a list of registered collection.
@@ -100,7 +98,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 				.build();
 
 
-		aggregationPipeline = timeSeries.getAggregationPipeline();
+		TimeSeriesAggregationPipeline aggregationPipeline = timeSeries.getAggregationPipeline();
 		MetricTypeAccessor metricTypeAccessor = new MetricTypeAccessor(context.getCollectionFactory().getCollection(EntityManager.metricTypes, MetricType.class));
 		TimeSeriesBucketingHandler handler = new TimeSeriesBucketingHandler(timeSeries, attributes);
 
@@ -128,8 +126,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 		configurationManager.registerHook(s -> Map.of(RESOLUTION_PERIOD_PROPERTY, resolutionPeriod.toString()));
 	}
 
-	private List<TimeSeriesCollection> prepareTimeSeriesCollections(Configuration configuration, TimeSeriesCollection mainCollection, CollectionFactory collectionFactory) {
-		TimeSeriesCollectionsSettings collectionsSettings = getCollectionsSettings(configuration);
+	private List<TimeSeriesCollection> prepareTimeSeriesCollections(TimeSeriesCollectionsSettings collectionsSettings, TimeSeriesCollection mainCollection, CollectionFactory collectionFactory) {
 		HashMap<TimeSeriesCollection, Boolean> collectionsEnabled = new HashMap<>();
 
 		collectionsEnabled.put(mainCollection, true);
@@ -137,7 +134,6 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 		collectionsEnabled.put(new HourlyTimeSeriesCollection(collectionFactory), collectionsSettings.isHourlyEnabled());
 		collectionsEnabled.put(new DailyTimeSeriesCollection(collectionFactory), collectionsSettings.isDailyEnabled());
 		collectionsEnabled.put(new WeeklyTimeSeriesCollection(collectionFactory), collectionsSettings.isWeeklyEnabled());
-//		collectionsEnabled.put(new MonthlyTimeSeriesCollection(collectionFactory), collectionsSettings.isMonthlyEnabled());
 
 		List<TimeSeriesCollection> enabledCollections = new ArrayList<>();
 
@@ -158,12 +154,11 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 				.setPerMinute(configuration.getPropertyAsBoolean(TIME_SERIES_MINUTE_COLLECTION_ENABLED))
 				.setHourly(configuration.getPropertyAsBoolean(TIME_SERIES_HOUR_COLLECTION_ENABLED))
 				.setDaily(configuration.getPropertyAsBoolean(TIME_SERIES_DAY_COLLECTION_ENABLED))
-				.setWeekly(configuration.getPropertyAsBoolean(TIME_SERIES_WEEK_COLLECTION_ENABLED))
-				.setMonthly(configuration.getPropertyAsBoolean(TIME_SERIES_MONTH_COLLECTION_ENABLED));
+				.setWeekly(configuration.getPropertyAsBoolean(TIME_SERIES_WEEK_COLLECTION_ENABLED));
 	}
 	
 	private void validateMainResolutionParam(long resolution) {
-		double msInMinute = 60.0 * 1000;
+		double msInMinute = TimeUnit.MINUTES.toMillis(1);
         if (msInMinute % resolution != 0) {
             throw new IllegalArgumentException("Invalid interval: " + resolution + " seconds. The interval must be a divisor of one minute (60 seconds).");
         }
@@ -210,9 +205,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 
 	private void initTimeSeriesCollectionsData(AsyncTaskManager asyncTaskManager) {
 		asyncTaskManager.scheduleAsyncTask((empty) -> {
-			System.out.println("started to create missing data");
-			timeSeries.createMissingData();
-			System.out.println("compelted to create missing data");
+			timeSeries.ingestDataForAllResolutions();
 			return null;
 		});
 	}

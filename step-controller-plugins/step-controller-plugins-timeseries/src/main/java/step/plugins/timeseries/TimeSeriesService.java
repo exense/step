@@ -43,7 +43,6 @@ public class TimeSeriesService extends AbstractStepServices {
         super.init();
         GlobalContext context = getContext();
         List<String> timeSeriesAttributes = context.get(TimeSeriesBucketingHandler.class).getHandledAttributes();
-        TimeSeriesAggregationPipeline aggregationPipeline = context.require(TimeSeriesAggregationPipeline.class);
         AsyncTaskManager asyncTaskManager = context.require(AsyncTaskManager.class);
         Collection<Measurement> measurementCollection = context.getCollectionFactory().getCollection(EntityManager.measurements, Measurement.class);
         metricTypeAccessor = context.require(MetricTypeAccessor.class);
@@ -52,7 +51,7 @@ public class TimeSeriesService extends AbstractStepServices {
         int resolution = configuration.getPropertyAsInteger(RESOLUTION_PERIOD_PROPERTY, 1000);
         int fieldsSamplingLimit = configuration.getPropertyAsInteger(TIME_SERIES_SAMPLING_LIMIT, 1000);
         maxNumberOfSeries = configuration.getPropertyAsInteger(TIME_SERIES_MAX_NUMBER_OF_SERIES, 1000);
-        this.handler = new TimeSeriesHandler(resolution, timeSeriesAttributes, measurementCollection, executionAccessor, timeSeries, aggregationPipeline, asyncTaskManager, fieldsSamplingLimit);
+        this.handler = new TimeSeriesHandler(resolution, timeSeriesAttributes, measurementCollection, executionAccessor, timeSeries, asyncTaskManager, fieldsSamplingLimit);
     }
 
     @Secured(right = "execution-read")

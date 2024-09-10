@@ -48,8 +48,10 @@ public class TimeSeriesBucketingHandler implements MeasurementHandler {
 
         BucketAttributes bucketAttributes = measurementToBucketAttributes(measurement);
         bucketAttributes.put(METRIC_TYPE_KEY, METRIC_TYPE_RESPONSE_TIME);
-        TimeSeriesIngestionPipeline ingestionPipeline = this.timeSeries.getIngestionPipeline();
-        ingestionPipeline.ingestPoint(bucketAttributes, begin, value);
+        try (TimeSeriesIngestionPipeline ingestionPipeline = this.timeSeries.getIngestionPipeline()) {
+            ingestionPipeline.ingestPoint(bucketAttributes, begin, value);
+        }
+
     }
 
     private BucketAttributes measurementToBucketAttributes(Measurement measurement) {

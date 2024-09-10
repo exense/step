@@ -5,7 +5,6 @@ public class TimeSeriesCollectionsSettings {
     private boolean hourly;
     private boolean daily;
     private boolean weekly;
-    private boolean monthly;
 
     public boolean isDailyEnabled() {
         return daily;
@@ -21,10 +20,6 @@ public class TimeSeriesCollectionsSettings {
 
     public boolean isWeeklyEnabled() {
         return weekly;
-    }
-
-    public boolean isMonthlyEnabled() {
-        return monthly;
     }
 
     public TimeSeriesCollectionsSettings setPerMinute(boolean perMinute) {
@@ -47,8 +42,4 @@ public class TimeSeriesCollectionsSettings {
         return this;
     }
 
-    public TimeSeriesCollectionsSettings setMonthly(boolean monthly) {
-        this.monthly = monthly;
-        return this;
-    }
 }
