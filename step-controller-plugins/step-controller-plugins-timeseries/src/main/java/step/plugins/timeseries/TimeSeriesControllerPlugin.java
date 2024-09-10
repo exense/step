@@ -275,6 +275,8 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 	
 	@Override
 	public void serverStop(GlobalContext context) {
-		mainIngestionPipeline.close();
+		if (timeSeries != null) {
+			timeSeries.close();
+		}
 	}
 }
