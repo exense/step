@@ -30,6 +30,7 @@ import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.Plan;
 import step.core.plans.PlanFilter;
+import step.core.repositories.RepositoryObjectManager;
 import step.core.repositories.RepositoryObjectReference;
 
 import java.io.FileInputStream;
@@ -55,14 +56,14 @@ public class AutomationPackageExecutor {
 
     private final ExecutionLauncher scheduler;
     private final ExecutionAccessor executionAccessor;
-    private final IsolatedAutomationPackageRepository isolatedAutomationPackageRepository;
+    private final RepositoryObjectManager repositoryObjectManager;
 
     public AutomationPackageExecutor(ExecutionLauncher scheduler,
                                      ExecutionAccessor executionAccessor,
-                                     IsolatedAutomationPackageRepository isolatedAutomationPackageRepository) {
+                                     RepositoryObjectManager repositoryObjectManager) {
         this.scheduler = scheduler;
         this.executionAccessor = executionAccessor;
-        this.isolatedAutomationPackageRepository = isolatedAutomationPackageRepository;
+        this.repositoryObjectManager = repositoryObjectManager;
     }
 
     public List<String> runInIsolation(InputStream apInputStream, String inputStreamFileName, AutomationPackageExecutionParameters parameters,
@@ -71,68 +72,63 @@ public class AutomationPackageExecutor {
         ObjectId contextId = new ObjectId();
         List<String> executions = new ArrayList<>();
 
+        String repoId = parameters.getOriginalRepositoryObject() != null ? parameters.getOriginalRepositoryObject().getRepositoryID() : ISOLATED_AUTOMATION_PACKAGE;
+        RepositoryWithAutomationPackageSupport repository = (RepositoryWithAutomationPackageSupport) repositoryObjectManager.getRepository(repoId);
+
         // here we need to read the input stream twice:
         // 1) to store the original file into the isolatedAutomationPackageRepository and support re-execution
         // 2) to read the automation package and fill ap manager with plans, keywords etc.
 
         // so at first we store the input stream as resource
-        IsolatedAutomationPackageRepository.AutomationPackageFile apFile = isolatedAutomationPackageRepository.getApFileForExecution(apInputStream, inputStreamFileName, parameters, contextId);
+        IsolatedAutomationPackageRepository.AutomationPackageFile apFile = repository.getApFileForExecution(apInputStream, inputStreamFileName, parameters, contextId);
 
         // and then we read the ap from just stored file
-        try (FileInputStream fis = new FileInputStream(apFile.getFile())) {
-            // create single execution context for the whole AP to execute all plans on the same ap manager (for performance reason)
-            IsolatedAutomationPackageRepository.PackageExecutionContext executionContext =
-                    isolatedAutomationPackageRepository.createPackageExecutionContext(contextId.toString(), fis, apFile.getFile().getName(), objectEnricher, objectPredicate);
-            try {
-                AutomationPackage automationPackage = executionContext.getAutomationPackage();
-                String apName = automationPackage.getAttribute(AbstractOrganizableObject.NAME);
+        // create single execution context for the whole AP to execute all plans on the same ap manager (for performance reason)
+        IsolatedAutomationPackageRepository.PackageExecutionContext executionContext = repository.createPackageExecutionContext(objectEnricher, objectPredicate, contextId.toString(), apFile, true);
+        try {
+            AutomationPackage automationPackage = executionContext.getAutomationPackage();
+            String apName = automationPackage.getAttribute(AbstractOrganizableObject.NAME);
 
-                // we have resolved the name of ap, and we need to save this name as custom field in resource to look up this resource during re-execution
-                if (apFile.getResource() != null) {
-                    isolatedAutomationPackageRepository.setApNameForResource(apFile.getResource(), apName);
-                }
+            // we have resolved the name of ap, and we need to save this name as custom field in resource to look up this resource during re-execution
+            if (apFile.getResource() != null) {
+                repository.setApNameForResource(apFile.getResource(), apName);
+            }
 
-                for (Plan plan : executionContext.getInMemoryManager().getPackagePlans(automationPackage.getId())) {
-                    PlanFilter planFilter = parameters.getPlanFilter();
+            for (Plan plan : executionContext.getInMemoryManager().getPackagePlans(automationPackage.getId())) {
+                PlanFilter planFilter = parameters.getPlanFilter();
 
-                    if ((planFilter == null || planFilter.isSelected(plan)) && plan.getRoot().getClass().getAnnotation(Artefact.class).validForStandaloneExecution()) {
-                        ExecutionParameters params = parameters.toExecutionParameters();
+                if ((planFilter == null || planFilter.isSelected(plan)) && plan.getRoot().getClass().getAnnotation(Artefact.class).validForStandaloneExecution()) {
+                    ExecutionParameters params = parameters.toExecutionParameters();
 
-                        HashMap<String, String> repositoryParameters = new HashMap<>();
+                    HashMap<String, String> repositoryParameters = new HashMap<>();
 
-                        // save apName + contextId + planName to support re-execution
-                        repositoryParameters.put(IsolatedAutomationPackageRepository.AP_NAME, apName);
-                        repositoryParameters.put(IsolatedAutomationPackageRepository.REPOSITORY_PARAM_CONTEXTID, contextId.toString());
-                        repositoryParameters.put(IsolatedAutomationPackageRepository.PLAN_NAME, plan.getAttribute(AbstractOrganizableObject.NAME));
+                    // save apName + contextId + planName to support re-execution
+                    repositoryParameters.put(IsolatedAutomationPackageRepository.AP_NAME, apName);
+                    repositoryParameters.put(IsolatedAutomationPackageRepository.REPOSITORY_PARAM_CONTEXTID, contextId.toString());
+                    repositoryParameters.put(IsolatedAutomationPackageRepository.PLAN_NAME, plan.getAttribute(AbstractOrganizableObject.NAME));
 
-                        // store the reference to original repository object
-                        if (parameters.getOriginalRepositoryObject() != null) {
-                            repositoryParameters.put(IsolatedAutomationPackageRepository.ORIGINAL_REPOSITORY_ID, parameters.getOriginalRepositoryObject().getRepositoryID());
-                            repositoryParameters.putAll(parameters.getOriginalRepositoryObject().getRepositoryParameters());
-                        }
+                    // store the reference to original repository object
+                    if (parameters.getOriginalRepositoryObject() != null) {
+                        repositoryParameters.putAll(parameters.getOriginalRepositoryObject().getRepositoryParameters());
+                    }
 
-                        params.setRepositoryObject(new RepositoryObjectReference(ISOLATED_AUTOMATION_PACKAGE, repositoryParameters));
-                        params.setDescription(CommonExecutionParameters.defaultDescription(plan));
+                    params.setRepositoryObject(new RepositoryObjectReference(repoId, repositoryParameters));
+                    params.setDescription(CommonExecutionParameters.defaultDescription(plan));
 
-                        // for instance, set the project for multitenant application
-                        if (objectEnricher != null) {
-                            objectEnricher.accept(params);
-                        }
+                    // for instance, set the project for multitenant application
+                    if (objectEnricher != null) {
+                        objectEnricher.accept(params);
+                    }
 
-                        String newExecutionId = this.scheduler.execute(params);
-                        if (newExecutionId != null) {
-                            executions.add(newExecutionId);
-                        }
+                    String newExecutionId = this.scheduler.execute(params);
+                    if (newExecutionId != null) {
+                        executions.add(newExecutionId);
                     }
                 }
-            } finally {
-                // after all plans are executed we can clean up the context (remove temporary files prepared for isolated execution)
-                waitForAllLaunchedExecutions(executions, apFile.getFile().getName(), executionContext);
             }
-        } catch (IOException e) {
-            String msg = "Unable to read stored automation package file " + apFile.getFile().getName();
-            log.error(msg);
-            throw new RuntimeException(msg, e);
+        } finally {
+            // after all plans are executed we can clean up the context (remove temporary files prepared for isolated execution)
+            waitForAllLaunchedExecutions(executions, apFile.getFile().getName(), executionContext);
         }
         return executions;
     }
@@ -145,7 +141,7 @@ public class AutomationPackageExecutor {
         }
     }
 
-    protected void waitForAllLaunchedExecutions(List<String> executions, String fileName, IsolatedAutomationPackageRepository.PackageExecutionContext executionContext) {
+    protected void waitForAllLaunchedExecutions(List<String> executions, String fileName, RepositoryWithAutomationPackageSupport.PackageExecutionContext executionContext) {
         // wait for all executions to be finished
         delayedCleanupExecutor.execute(() -> {
             waitForAllExecutionEnded(executions);
