@@ -236,6 +236,9 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
                 return result;
             }
 
+            //The plan id must be set in the importResults for the execution engine
+            result.setPlanId(plan.getId().toString());
+
             // the plan accessor in context should be layered with 'inMemory' accessor on the top to temporarily store
             // all plans from AP (in code below)
             PlanAccessor planAccessor = context.getPlanAccessor();

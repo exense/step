@@ -25,3 +25,4 @@ root:
                   - stringInput:
                       expression: "'abc'"
                   - intInput: 777
+                  - noValueInput:
