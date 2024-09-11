@@ -32,3 +32,6 @@ root:
                   expression: "'Instrument_' + 'callExisting3'"
                 instrumentNode: true
                 inputs: []
+            - callKeyword:
+                keyword: "callExisting3"
+                nodeName: "Call keyword callExisting3"
