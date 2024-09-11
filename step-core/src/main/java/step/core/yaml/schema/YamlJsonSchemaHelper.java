@@ -25,10 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.ReflectionUtils;
 import step.core.yaml.YamlFields;
-import step.handlers.javahandler.jsonschema.JsonInputConverter;
-import step.handlers.javahandler.jsonschema.JsonSchemaCreator;
-import step.handlers.javahandler.jsonschema.JsonSchemaFieldProcessor;
-import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
+import step.handlers.javahandler.jsonschema.*;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
@@ -206,7 +203,7 @@ public class YamlJsonSchemaHelper {
 	/**
 	 * Uses a reference to one of dynamic value definitions (depending on generic type of field)
 	 */
-	public void applyDynamicValueDefForField(Field field, JsonObjectBuilder propertiesBuilder){
+	public void applyDynamicValueDefForField(Field field, FieldMetadata fieldMetadata, JsonObjectBuilder propertiesBuilder){
 		// for dynamic value we need to reference the definition prepared above
 		// the definition depends on generic type used in dynamic value (string, integer, boolean, etc)
 		Type genericType = field.getGenericType();
@@ -220,6 +217,10 @@ public class YamlJsonSchemaHelper {
 				dynamicValueType = "object";
 			} else {
 				dynamicValueType = JsonInputConverter.resolveJsonPropertyType((Class<?>) dynamicValueClass);
+			}
+			String defaultValue = fieldMetadata.getDefaultValue();
+			if (defaultValue != null) {
+				propertiesBuilder.add("default", defaultValue);
 			}
 			switch (dynamicValueType){
 				case "string":
@@ -238,7 +239,6 @@ public class YamlJsonSchemaHelper {
 				default:
 					throw new IllegalArgumentException("Unsupported dynamic value type: " + dynamicValueType);
 			}
-
 		} else {
 			throw new IllegalArgumentException("Unsupported dynamic value generic field " + genericType);
 		}

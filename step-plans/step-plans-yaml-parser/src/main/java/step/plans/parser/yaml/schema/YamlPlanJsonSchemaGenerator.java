@@ -266,12 +266,12 @@ public class YamlPlanJsonSchemaGenerator {
 		// properties declared in AbstractArtefact are taken from AbstractYamlArtefact
 		schemaHelper.extractPropertiesFromClass(jsonSchemaCreator, AbstractYamlArtefact.class, classPropertiesBuilder, requiredProperties, null);
 		schemaHelper.extractPropertiesFromClass(jsonSchemaCreator, simpleYamlArtefact, classPropertiesBuilder, requiredProperties, AbstractArtefact.class);
-
+		
 		// define the default node name explicitly
 		// TODO: find some solution to apply default 'nodeName'
 		classPropertiesBuilder.add(YamlPlanFields.NAME_YAML_FIELD,
 				jsonProvider.createObjectBuilder()
-						.add("type", "string")
+						.add("$ref", "#/$defs/SmartDynamicValueStringDef")
 						.add("default", new AbstractYamlArtefact.DefaultYamlArtefactNameProvider().getDefaultValue(simpleYamlArtefact, null))
 		);
 
