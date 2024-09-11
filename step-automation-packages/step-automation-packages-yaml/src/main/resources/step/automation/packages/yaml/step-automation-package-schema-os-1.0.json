@@ -268,7 +268,7 @@
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
             "nodeName" : {
-              "type" : "string",
+              "$ref" : "#/$defs/SmartDynamicValueStringDef",
               "default" : "AfterSequence"
             },
             "pacing" : {
@@ -304,7 +304,7 @@
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
             "nodeName" : {
-              "type" : "string",
+              "$ref" : "#/$defs/SmartDynamicValueStringDef",
               "default" : "AfterThread"
             },
             "pacing" : {
@@ -340,7 +340,7 @@
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
             "nodeName" : {
-              "type" : "string",
+              "$ref" : "#/$defs/SmartDynamicValueStringDef",
               "default" : "Assert"
             },
             "customErrorMessage" : {
@@ -385,7 +385,7 @@
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
             "nodeName" : {
-              "type" : "string",
+              "$ref" : "#/$defs/SmartDynamicValueStringDef",
               "default" : "BeforeSequence"
             },
             "pacing" : {
@@ -421,7 +421,7 @@
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
             "nodeName" : {
-              "type" : "string",
+              "$ref" : "#/$defs/SmartDynamicValueStringDef",
               "default" : "BeforeThread"
             },
             "pacing" : {
@@ -458,7 +458,7 @@
             },
             "nodeName" : {
               "default" : "CallKeyword",
-              "type" : "string"
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
             },
             "remote" : {
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
@@ -528,8 +528,8 @@
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
             "nodeName" : {
-              "default" : "CallPlan",
-              "type" : "string"
+              "$ref" : "#/$defs/SmartDynamicValueStringDef",
+              "default" : "CallPlan"
             },
             "input" : {
               "$ref" : "#/$defs/DynamicKeywordInputsDef"
@@ -567,7 +567,7 @@
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
             "nodeName" : {
-              "type" : "string",
+              "$ref" : "#/$defs/SmartDynamicValueStringDef",
               "default" : "Case"
             },
             "value" : {
@@ -601,7 +601,7 @@
             },
             "nodeName" : {
               "default" : "Check",
-              "type" : "string"
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
             },
             "expression" : {
               "type" : "string"
@@ -634,7 +634,7 @@
             },
             "nodeName" : {
               "default" : "DataSet",
-              "type" : "string"
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
             },
             "userItem" : {
               "$ref" : "#/$defs/SmartDynamicValueStringDef"
@@ -874,7 +874,7 @@
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
             "nodeName" : {
-              "type" : "string",
+              "$ref" : "#/$defs/SmartDynamicValueStringDef",
               "default" : "Echo"
             },
             "text" : {
@@ -907,7 +907,7 @@
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
             "nodeName" : {
-              "type" : "string",
+              "$ref" : "#/$defs/SmartDynamicValueStringDef",
               "default" : "Export"
             },
             "filter" : {
@@ -949,7 +949,7 @@
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
             "nodeName" : {
-              "type" : "string",
+              "$ref" : "#/$defs/SmartDynamicValueStringDef",
               "default" : "Failure"
             },
             "stackTrace" : {
@@ -986,7 +986,7 @@
             },
             "nodeName" : {
               "default" : "For",
-              "type" : "string"
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
             },
             "userItem" : {
               "$ref" : "#/$defs/SmartDynamicValueStringDef"
@@ -1040,7 +1040,7 @@
             },
             "nodeName" : {
               "default" : "ForEach",
-              "type" : "string"
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
             },
             "userItem" : {
               "$ref" : "#/$defs/SmartDynamicValueStringDef"
@@ -1250,7 +1250,7 @@
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
             "nodeName" : {
-              "type" : "string",
+              "$ref" : "#/$defs/SmartDynamicValueStringDef",
               "default" : "If"
             },
             "condition" : {
@@ -1284,9 +1284,10 @@
             },
             "nodeName" : {
               "default" : "PerformanceAssert",
-              "type" : "string"
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
             },
             "expectedValue" : {
+              "default" : "3000",
               "$ref" : "#/$defs/SmartDynamicValueNumDef"
             },
             "comparator" : {
@@ -1325,7 +1326,7 @@
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
             "nodeName" : {
-              "type" : "string",
+              "$ref" : "#/$defs/SmartDynamicValueStringDef",
               "default" : "Placeholder"
             }
           }
@@ -1355,7 +1356,7 @@
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
             "nodeName" : {
-              "type" : "string",
+              "$ref" : "#/$defs/SmartDynamicValueStringDef",
               "default" : "RetryIfFails"
             },
             "reportLastTryOnly" : {
@@ -1400,8 +1401,8 @@
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
             "nodeName" : {
-              "default" : "Return",
-              "type" : "string"
+              "$ref" : "#/$defs/SmartDynamicValueStringDef",
+              "default" : "Return"
             },
             "output" : {
               "$ref" : "#/$defs/DynamicKeywordInputsDef"
@@ -1433,7 +1434,7 @@
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
             "nodeName" : {
-              "type" : "string",
+              "$ref" : "#/$defs/SmartDynamicValueStringDef",
               "default" : "Script"
             },
             "script" : {
@@ -1467,7 +1468,7 @@
             },
             "nodeName" : {
               "default" : "Sequence",
-              "type" : "string"
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
             },
             "pacing" : {
               "$ref" : "#/$defs/SmartDynamicValueNumDef"
@@ -1503,7 +1504,7 @@
             },
             "nodeName" : {
               "default" : "Session",
-              "type" : "string"
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
             },
             "remote" : {
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
@@ -1547,7 +1548,7 @@
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
             "nodeName" : {
-              "type" : "string",
+              "$ref" : "#/$defs/SmartDynamicValueStringDef",
               "default" : "Set"
             },
             "value" : {
@@ -1583,7 +1584,7 @@
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
             "nodeName" : {
-              "type" : "string",
+              "$ref" : "#/$defs/SmartDynamicValueStringDef",
               "default" : "Sleep"
             },
             "releaseTokens" : {
@@ -1622,7 +1623,7 @@
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
             "nodeName" : {
-              "type" : "string",
+              "$ref" : "#/$defs/SmartDynamicValueStringDef",
               "default" : "StreamingArtefact"
             }
           }
@@ -1652,7 +1653,7 @@
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
             "nodeName" : {
-              "type" : "string",
+              "$ref" : "#/$defs/SmartDynamicValueStringDef",
               "default" : "Switch"
             },
             "expression" : {
@@ -1685,7 +1686,7 @@
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
             "nodeName" : {
-              "type" : "string",
+              "$ref" : "#/$defs/SmartDynamicValueStringDef",
               "default" : "Synchronized"
             },
             "pacing" : {
@@ -1727,7 +1728,7 @@
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
             "nodeName" : {
-              "type" : "string",
+              "$ref" : "#/$defs/SmartDynamicValueStringDef",
               "default" : "TestCase"
             }
           }
@@ -1757,7 +1758,7 @@
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
             "nodeName" : {
-              "type" : "string",
+              "$ref" : "#/$defs/SmartDynamicValueStringDef",
               "default" : "TestScenario"
             }
           }
@@ -1787,7 +1788,7 @@
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
             "nodeName" : {
-              "type" : "string",
+              "$ref" : "#/$defs/SmartDynamicValueStringDef",
               "default" : "TestSet"
             },
             "threads" : {
@@ -1820,7 +1821,7 @@
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
             "nodeName" : {
-              "type" : "string",
+              "$ref" : "#/$defs/SmartDynamicValueStringDef",
               "default" : "ThreadGroup"
             },
             "userItem" : {
@@ -1880,7 +1881,7 @@
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
             "nodeName" : {
-              "type" : "string",
+              "$ref" : "#/$defs/SmartDynamicValueStringDef",
               "default" : "While"
             },
             "maxIterations" : {
