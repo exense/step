@@ -22,7 +22,7 @@ public class ManualAgentProvisioningConfiguration implements AgentProvisioningCo
 
     public List<AgentPoolRequirementSpec> getAgentPoolRequirementSpecs() {
         if (configuredAgentPools != null) {
-            return configuredAgentPools.stream().map(p -> new AgentPoolRequirementSpec(p.pool, Map.of(AgentPoolProvisioningParameters.PROVISIONING_PARAMETER_DOCKER_IMAGE, p.image), p.replicas)).collect(Collectors.toList());
+            return configuredAgentPools.stream().map(p -> new AgentPoolRequirementSpec(p.pool, p.image != null ? Map.of(AgentPoolProvisioningParameters.PROVISIONING_PARAMETER_DOCKER_IMAGE, p.image) : Map.of(), p.replicas)).collect(Collectors.toList());
         } else {
             return List.of();
         }
