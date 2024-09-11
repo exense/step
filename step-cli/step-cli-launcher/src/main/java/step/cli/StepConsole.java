@@ -370,7 +370,7 @@ public class StepConsole implements Callable<Integer> {
                 ) {
                     @Override
                     protected File getAutomationPackageFile() throws StepCliExecutionException {
-                        return (ApExecuteCommand.this.groupId != null || ApExecuteCommand.this.artifactId != null) ?  null : prepareApFile(apFile);
+                        return prepareApFile(apFile);
                     }
                 }.execute();
             }

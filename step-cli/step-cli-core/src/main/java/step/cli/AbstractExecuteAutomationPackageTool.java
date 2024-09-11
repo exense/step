@@ -107,7 +107,13 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
     protected void executePackageOnStep() throws StepCliExecutionException {
         try (RemoteAutomationPackageClientImpl automationPackageClient = createRemoteAutomationPackageClient();
              RemoteExecutionManager remoteExecutionManager = createRemoteExecutionManager()) {
-            File automationPackageFile = getAutomationPackageFile();
+            File automationPackageFile = null;
+
+            // if group id and artifact id are specified, this means, that don't want to send the artifact (binary) to the controller,
+            if (getArtifactId() == null || getArtifactId().isEmpty() || getGroupId() == null || getGroupId().isEmpty()) {
+                automationPackageFile = getAutomationPackageFile();
+            }
+
             AutomationPackageExecutionParameters executionParameters = prepareExecutionParameters();
 
             List<String> executionIds;
