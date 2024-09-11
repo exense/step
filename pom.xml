@@ -160,7 +160,7 @@
 			<dependency>
 				<groupId>com.thoughtworks.xstream</groupId>
 				<artifactId>xstream</artifactId>
-				<version>1.4.19</version>
+				<version>1.4.20</version>
 			</dependency>
 
 			<dependency>
@@ -188,7 +188,7 @@
 			<dependency>
 				<groupId>org.json</groupId>
 				<artifactId>json</artifactId>
-				<version>20220320</version>
+				<version>20240303</version>
 			</dependency>
 
 			<dependency>
@@ -662,15 +662,29 @@
 			<activation>
 				<activeByDefault>false</activeByDefault>
 			</activation>
-			<!-- Profile use for checking security issues in external dependencies -->
+			<!-- Profile use for checking security issues in external dependencies. -->
+			<!-- This may take a LOOONG time (possibly multiple minutes), even when using an API key -->
+			<!-- To quickly check the results, run this (in the project directory):
+                 find . -name dependency-check-report.csv | xargs wc -l
+             -->
+			<!-- Anything that returns more than 1 line (the CSV header line) is potentially vulnerable. -->
 			<build>
 				<plugins>
 					<plugin>
 						<groupId>org.owasp</groupId>
 						<artifactId>dependency-check-maven</artifactId>
 						<version>${dep.mvn.dependency-check.version}</version>
+						<configuration>
+							<formats>HTML,CSV</formats>
+							<skipDependencyManagement>false</skipDependencyManagement>
+							<!--                            <nvdApiKey>KEY_HERE</nvdApiKey>-->
+							<failOnError>false</failOnError>
+						</configuration>
 						<executions>
 							<execution>
+								<phase>
+									verify
+								</phase>
 								<goals>
 									<goal>check</goal>
 								</goals>
