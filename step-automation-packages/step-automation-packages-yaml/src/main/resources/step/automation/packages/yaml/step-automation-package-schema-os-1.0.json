@@ -51,6 +51,8 @@
               "type" : "array"
             }, {
               "$ref" : "#/$defs/DynamicExpressionDef"
+            }, {
+              "type" : "null"
             } ]
           }
         },
@@ -484,6 +486,8 @@
                         "type" : "array"
                       }, {
                         "$ref" : "#/$defs/DynamicExpressionDef"
+                      }, {
+                        "type" : "null"
                       } ]
                     }
                   },

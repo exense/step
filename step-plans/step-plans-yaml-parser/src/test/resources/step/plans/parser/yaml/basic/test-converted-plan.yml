@@ -33,6 +33,7 @@ root:
                   - stringInput:
                       expression: "'abc'"
                   - intInput: 777
+                  - noValueInput: null
                 keyword: "callExisting3"
           description: "my description"
           condition:
