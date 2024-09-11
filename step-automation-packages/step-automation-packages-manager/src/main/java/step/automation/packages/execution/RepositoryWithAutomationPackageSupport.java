@@ -89,8 +89,8 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
     public ImportResult importArtefact(ExecutionContext context, Map<String, String> repositoryParameters) throws IOException {
         PackageExecutionContext ctx = null;
 
+        ImportResult result = new ImportResult();
         try {
-            ImportResult result = new ImportResult();
             try {
                 ctx = getOrRestorePackageExecutionContext(repositoryParameters, context.getObjectEnricher(), context.getObjectPredicate());
             } catch (AutomationPackageManagerException e) {
@@ -121,6 +121,13 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
             }
 
             return importPlanForIsolatedExecution(context, result, plan, apManager, automationPackage);
+        } catch (Exception e) {
+            log.error("Error while importing / parsing artifact for execution " + context.getExecutionId(), e);
+            List<String> errors = new ArrayList<>();
+            errors.add("Error while importing / parsing artifact: " + e.getMessage());
+            result.setSuccessful(false);
+            result.setErrors(errors);
+            return result;
         } finally {
             // if the context is created externally (shared for several plans), it should be managed (closed) in the calling code
             closePackageExecutionContext(ctx);
