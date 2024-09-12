@@ -39,7 +39,7 @@ public class DynamicValueFieldProcessor implements JsonSchemaFieldProcessor {
 
         if (DynamicValue.class.isAssignableFrom(field.getType())) {
             JsonObjectBuilder nestedPropertyParamsBuilder = schemaCreator.getJsonProvider().createObjectBuilder();
-            dynamicValueHelper.applyDynamicValueDefForField(field, nestedPropertyParamsBuilder);
+            dynamicValueHelper.applyDynamicValueDefForField(field, fieldMetadata, nestedPropertyParamsBuilder);
             jsonObjectBuilder.add(fieldMetadata.getFieldName(), nestedPropertyParamsBuilder);
             return true;
         }
