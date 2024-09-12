@@ -48,8 +48,8 @@ public class YamlCallFunction extends YamlTokenSelector<CallFunction> {
             res.setFunction(this.keyword.toDynamicValue());
         }
 
-        // for keywords we use the keyword name as default artefact name
-        if (getNodeName() == null || getNodeName().isEmpty()) {
+        // for keywords, if nodeName is not defined or using dynamic name, we use the keyword name as default artefact name
+        if (getNodeName() == null || getNodeName().isDynamic()) {
             String name;
             if (keyword != null && keyword.getKeywordName() != null && !keyword.getKeywordName().isEmpty()) {
                 name = keyword.getKeywordName();
