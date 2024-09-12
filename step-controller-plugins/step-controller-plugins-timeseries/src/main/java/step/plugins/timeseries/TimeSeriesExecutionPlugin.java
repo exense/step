@@ -12,6 +12,7 @@ import step.core.plugins.Plugin;
 import step.core.timeseries.TimeSeries;
 import step.core.timeseries.bucket.BucketAttributes;
 import step.core.timeseries.ingestion.TimeSeriesIngestionPipeline;
+import step.core.timeseries.ingestion.TimeSeriesIngestionPipelineSettings;
 import step.core.views.ViewManager;
 import step.core.views.ViewPlugin;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
@@ -53,7 +54,7 @@ public class TimeSeriesExecutionPlugin extends AbstractExecutionEnginePlugin {
 		super.initializeExecutionContext(executionEngineContext, executionContext);
 		TimeSeriesIngestionPipeline mainIngestionPipeline = timeSeries.getIngestionPipeline();
 		TreeMap<String, String> additionalAttributes = executionContext.getObjectEnricher().getAdditionalAttributes();
-		TimeSeriesIngestionPipeline ingestionPipeline = new TimeSeriesIngestionPipeline(null, 0) {
+		TimeSeriesIngestionPipeline ingestionPipeline = new TimeSeriesIngestionPipeline(null, new TimeSeriesIngestionPipelineSettings()) {
 			@Override
 			public void ingestPoint(Map<String, Object> attributes, long timestamp, long value) {
 				attributes.putAll(additionalAttributes);

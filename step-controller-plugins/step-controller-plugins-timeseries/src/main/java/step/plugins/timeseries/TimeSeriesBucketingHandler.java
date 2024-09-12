@@ -14,6 +14,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * This class acts as a wrapper over a TimeSeries ingestion. It has special methods which alter the data before ingestion.
+ */
 public class TimeSeriesBucketingHandler implements MeasurementHandler {
 
     private static final String THREAD_GROUP_MEASUREMENT_TYPE = "threadgroup";
@@ -51,7 +54,6 @@ public class TimeSeriesBucketingHandler implements MeasurementHandler {
         try (TimeSeriesIngestionPipeline ingestionPipeline = this.timeSeries.getIngestionPipeline()) {
             ingestionPipeline.ingestPoint(bucketAttributes, begin, value);
         }
-
     }
 
     private BucketAttributes measurementToBucketAttributes(Measurement measurement) {
@@ -98,5 +100,9 @@ public class TimeSeriesBucketingHandler implements MeasurementHandler {
 
     public List<String> getHandledAttributes() {
         return attributes;
+    }
+
+    public void flush() {
+        this.timeSeries.getIngestionPipeline().flush();
     }
 }

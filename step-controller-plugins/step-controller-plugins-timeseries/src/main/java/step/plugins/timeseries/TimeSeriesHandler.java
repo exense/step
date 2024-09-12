@@ -261,7 +261,6 @@ public class TimeSeriesHandler {
             if (firstMeasurement != null && lastMeasurement != null) {
                 return asyncTaskManager.scheduleAsyncTask(t -> {
                     // the flushing period can be a big value, because we will force flush every time.
-                    // we create a new pipeline for every migration. TODO not possible anymore, and not possible to set custom resolution (ingestionPipeline(3000))
                     TimeSeriesBucketingHandler timeSeriesBucketingHandler = new TimeSeriesBucketingHandler(timeSeries, timeSeriesAttributes);
                     LongAdder count = new LongAdder();
                     SearchOrder searchOrder = new SearchOrder("begin", 1);
@@ -272,6 +271,7 @@ public class TimeSeriesHandler {
                             timeSeriesBucketingHandler.ingestExistingMeasurement(measurement);
                         });
                     }
+                    timeSeriesBucketingHandler.flush();
                     return new TimeSeriesRebuildResponse(count.longValue());
                 });
             } else {
