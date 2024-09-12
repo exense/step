@@ -225,6 +225,7 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
             // (it is impossible to re-run the execution by plan id)
             String planName = repositoryParameters.get(PLAN_NAME);
 
+            // validation - the plan should be represented in AP
             AutomationPackageManager apManager = ctx.getInMemoryManager();
             Plan plan = apManager.getPackagePlans(automationPackage.getId())
                     .stream()
@@ -234,17 +235,26 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
                 result.setErrors(List.of("Automation package " + automationPackage.getAttribute(AbstractOrganizableObject.NAME) + " has no plan with name=" + planName));
                 return result;
             }
-            result.setPlanId(plan.getId().toString());
-            enrichPlan(context, plan);
 
+            //The plan id must be set in the importResults for the execution engine
+            result.setPlanId(plan.getId().toString());
+
+            // the plan accessor in context should be layered with 'inMemory' accessor on the top to temporarily store
+            // all plans from AP (in code below)
             PlanAccessor planAccessor = context.getPlanAccessor();
             if (!isLayeredAccessor(planAccessor)) {
                 result.setErrors(List.of(planAccessor.getClass() + " is not layered"));
                 return result;
             }
 
-            planAccessor.save(plan);
+            // save ALL plans from AP to the execution context to support the 'callPlan' artefact
+            // (if some plan from the AP is call from 'callPlan', it should be saved in execution context)
+            for (Plan packagePlan : apManager.getPackagePlans(automationPackage.getId())) {
+                enrichPlan(context, packagePlan);
+                planAccessor.save(packagePlan);
+            }
 
+            // populate function accessor for execution context with all functions loaded from AP
             FunctionAccessor functionAccessor = context.get(FunctionAccessor.class);
             List<Function> functionsForSave = new ArrayList<>();
             if (plan.getFunctions() != null) {

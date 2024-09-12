@@ -126,6 +126,7 @@ public class AutomationPackageManager {
      */
     public static AutomationPackageManager createLocalAutomationPackageManager(FunctionTypeRegistry functionTypeRegistry,
                                                                                FunctionAccessor mainFunctionAccessor,
+                                                                               PlanAccessor planAccessor,
                                                                                ResourceManager resourceManager,
                                                                                AutomationPackageReader reader,
                                                                                AutomationPackageHookRegistry hookRegistry) {
@@ -137,7 +138,7 @@ public class AutomationPackageManager {
                 AutomationPackageOperationMode.LOCAL, new InMemoryAutomationPackageAccessorImpl(),
                 new FunctionManagerImpl(mainFunctionAccessor, functionTypeRegistry),
                 mainFunctionAccessor,
-                new InMemoryPlanAccessor(),
+                planAccessor,
                 resourceManager,
                 extensions,
                 hookRegistry, reader,
