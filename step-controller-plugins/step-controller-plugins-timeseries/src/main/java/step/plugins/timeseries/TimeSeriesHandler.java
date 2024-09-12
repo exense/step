@@ -87,11 +87,11 @@ public class TimeSeriesHandler {
     private TimeSeriesAPIResponse getTimeSeriesFromRawMeasurements(FetchBucketsRequest request, Collection<String> fields) {
         int resolutionMs = getResolution(request);
         step.core.collections.Collection<Bucket> inmemoryBuckets = new InMemoryCollection<>();
-        TimeSeriesCollection tsCollection = new TimeSeriesCollection(inmemoryBuckets, resolutionMs, 0, 30000);
-        TimeSeries timeSeries = new TimeSeriesBuilder()
-                .registerCollections(Arrays.asList(tsCollection))
-                .build();
-//
+        TimeSeriesCollection tsCollection = new TimeSeriesCollection(inmemoryBuckets, resolutionMs, 30000);
+        try (TimeSeries timeSeries = new TimeSeriesBuilder()
+                .registerCollection(tsCollection)
+                .build()) {
+
             List<String> standardAttributes = new ArrayList<>(timeSeriesAttributes);
             standardAttributes.addAll(fields.stream().map(attributesPrefixRemoval).collect(Collectors.toList()));
             standardAttributes.addAll(request.getGroupDimensions());
@@ -116,6 +116,7 @@ public class TimeSeriesHandler {
                     timeSeriesBucketingHandler.ingestExistingMeasurement(measurement);
                 });
             }
+        }
 
         TimeSeriesAggregationPipeline aggregationPipeline = timeSeries.getAggregationPipeline();
         TimeSeriesAggregationQuery query = mapToQuery(request, aggregationPipeline);
@@ -341,6 +342,7 @@ public class TimeSeriesHandler {
                 .withMatrixKeys(matrixKeys)
                 .withMatrix(matrix)
                 .withTruncated(series.size() > request.getMaxNumberOfSeries())
+                .withHigherResolutionUsed(response.isHigherResolutionUsed())
                 .build();
     }
 

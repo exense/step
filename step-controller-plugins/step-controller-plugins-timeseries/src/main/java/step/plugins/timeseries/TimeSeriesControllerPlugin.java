@@ -86,8 +86,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 
 		TimeSeriesCollectionsSettings collectionsSettings = getCollectionsSettings(configuration);
 
-		TimeSeriesCollection mainCollection = new TimeSeriesCollection(collectionFactory.getCollection(TIME_SERIES_MAIN_COLLECTION, Bucket.class), resolutionPeriod);
-		mainIngestionPipeline = new TimeSeriesIngestionPipeline(collectionFactory.getCollection(TIME_SERIES_MAIN_COLLECTION, Bucket.class), resolutionPeriod, flushPeriod);
+		TimeSeriesCollection mainCollection = new TimeSeriesCollection(collectionFactory.getCollection(TIME_SERIES_MAIN_COLLECTION, Bucket.class), resolutionPeriod, flushPeriod);
 
 		List<TimeSeriesCollection> enabledCollections = prepareTimeSeriesCollections(collectionsSettings, mainCollection, collectionFactory);
 
@@ -96,7 +95,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 		timeSeries = new TimeSeriesBuilder()
 				.registerCollections(enabledCollections)
 				.build();
-
+		mainIngestionPipeline = timeSeries.getIngestionPipeline();
 
 		TimeSeriesAggregationPipeline aggregationPipeline = timeSeries.getAggregationPipeline();
 		MetricTypeAccessor metricTypeAccessor = new MetricTypeAccessor(context.getCollectionFactory().getCollection(EntityManager.metricTypes, MetricType.class));

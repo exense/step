@@ -41,8 +41,8 @@ public class ReportNodeTimeSeries implements Closeable {
 
     public ReportNodeTimeSeries(CollectionFactory collectionFactory, Configuration configuration) {
         Collection<Bucket> collection = collectionFactory.getCollection(TIME_SERIES_MAIN_COLLECTION, Bucket.class);
-        int resolution = 60_000;
-        TimeSeriesCollection mainCollection = new TimeSeriesCollection(collection, resolution, 0, 10);
+        int resolution = 30_000;
+        TimeSeriesCollection mainCollection = new TimeSeriesCollection(collection, resolution, 10);
         timeSeries = new TimeSeriesBuilder()
                 .registerCollections(getTimeSeriesCollections(configuration, mainCollection, collectionFactory))
                 .build();
