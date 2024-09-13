@@ -87,7 +87,7 @@ public class TimeSeriesHandler {
     private TimeSeriesAPIResponse getTimeSeriesFromRawMeasurements(FetchBucketsRequest request, Collection<String> fields) {
         int resolutionMs = getResolution(request);
         step.core.collections.Collection<Bucket> inmemoryBuckets = new InMemoryCollection<>();
-        TimeSeriesCollection tsCollection = new TimeSeriesCollection(inmemoryBuckets, resolutionMs, 30000);
+        TimeSeriesCollection tsCollection = new TimeSeriesCollection(inmemoryBuckets, resolutionMs);
         try (TimeSeries timeSeries = new TimeSeriesBuilder()
                 .registerCollection(tsCollection)
                 .build()) {
