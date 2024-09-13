@@ -17,16 +17,17 @@
  * along with Step.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package step.core.agents.provisioning.driver;
+package step.core.agents.provisioning;
 
-import step.core.agents.provisioning.AgentProvisioningReport;
+import java.util.ArrayList;
+import java.util.List;
 
-public class AgentProvisioningStatus {
+public class AgentProvisioningReport {
 
-    public String statusDescription;
-    public boolean completed = false;
+    public final List<AgentPoolProvisioningReport> pools = new ArrayList<>();
 
-    public AgentProvisioningError error;
-    public AgentProvisioningReport provisioningReport;
+    public boolean addAgentPoolReport(AgentPoolProvisioningReport agentPoolProvisioningReport) {
+        return pools.add(agentPoolProvisioningReport);
+    }
 
 }
