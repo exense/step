@@ -140,7 +140,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 			if (enabled) {
 				enabledCollections.add(collection);
 			} else {
-				// disabled resolutions will be completely dropped from mongo
+				// disabled resolutions will be completely dropped from db
 				collection.getCollection().drop();
 			}
 		});

@@ -108,6 +108,6 @@ public class ReportNodeTimeSeries implements Closeable {
 
     @Override
     public void close() throws IOException {
-        timeSeries.getIngestionPipeline().close();
+        timeSeries.getCollections().forEach(c -> c.getIngestionPipeline().close());
     }
 }
