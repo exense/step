@@ -110,7 +110,7 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
             File automationPackageFile = null;
 
             // if group id and artifact id are specified, this means, that don't want to send the artifact (binary) to the controller,
-            if (getArtifactId() == null || getArtifactId().isEmpty() || getGroupId() == null || getGroupId().isEmpty()) {
+            if (useLocalArtifact()) {
                 automationPackageFile = getAutomationPackageFile();
             }
 
@@ -143,6 +143,10 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
         } catch (Exception ex) {
             throw logAndThrow("Unexpected error while executing automation package", ex);
         }
+    }
+
+    protected boolean useLocalArtifact() {
+        return getArtifactId() == null || getArtifactId().isEmpty() || getGroupId() == null || getGroupId().isEmpty();
     }
 
     protected void waitForExecutionFinish(RemoteExecutionManager remoteExecutionManager, List<String> executionIds) throws StepCliExecutionException {
