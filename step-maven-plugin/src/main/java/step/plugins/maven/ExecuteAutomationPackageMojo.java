@@ -23,6 +23,7 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import step.cli.AbstractExecuteAutomationPackageTool;
+import step.cli.MavenArtifactIdentifier;
 import step.cli.StepCliExecutionException;
 
 import java.io.File;
@@ -73,7 +74,12 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
     }
 
     protected AbstractExecuteAutomationPackageTool createTool(final String url, final String projectName, final String userId, final String authToken, final Map<String, String> parameters, final Integer executionResultTimeoutS, final Boolean waitForExecution, final Boolean ensureExecutionSuccess, final String includePlans, final String excludePlans) {
-        return new AbstractExecuteAutomationPackageTool(url, projectName, userId, authToken, parameters, executionResultTimeoutS, waitForExecution, ensureExecutionSuccess, includePlans, excludePlans, artifactGroupId, artifactId, artifactVersion, artifactClassifier) {
+        MavenArtifactIdentifier remoteMavenArtifact = null;
+        if (!isLocalMavenArtifact()) {
+            remoteMavenArtifact = new MavenArtifactIdentifier(getArtifactGroupId(), getArtifactId(), getArtifactVersion(), getArtifactClassifier());
+        }
+
+        return new AbstractExecuteAutomationPackageTool(url, projectName, userId, authToken, parameters, executionResultTimeoutS, waitForExecution, ensureExecutionSuccess, includePlans, excludePlans, remoteMavenArtifact) {
             @Override
             protected File getAutomationPackageFile() throws StepCliExecutionException {
                 // if groupId and artifactId are not defined, we execute the maven artifact from current project
@@ -83,13 +89,17 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
                     if (applicableArtifact != null) {
                         return applicableArtifact.getFile();
                     } else {
-                        throw logAndThrow("Unable to resolve automation package file " + artifactToString(getGroupId(), getArtifactId(), getArtifactClassifier(), getArtifactVersion()));
+                        throw logAndThrow("Unable to resolve automation package file " + artifactToString(getArtifactGroupId(), getArtifactId(), getArtifactClassifier(), getArtifactVersion()));
                     }
                 } else {
                     return null;
                 }
             }
         };
+    }
+
+    protected boolean isLocalMavenArtifact() {
+        return getArtifactId() == null || getArtifactId().isEmpty() || getArtifactGroupId() == null || getArtifactGroupId().isEmpty();
     }
 
     public String getStepProjectName() {

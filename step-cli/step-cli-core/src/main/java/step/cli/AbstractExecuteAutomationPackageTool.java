@@ -59,18 +59,14 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
 
     private String includePlans;
     private String excludePlans;
-    private final String groupId;
-    private final String artifactId;
-    private final String artifactVersion;
-    private final String artifactClassifier;
+    private final MavenArtifactIdentifier mavenArtifactIdentifier;
 
     public AbstractExecuteAutomationPackageTool(String url, String stepProjectName,
                                                 String userId, String authToken,
                                                 Map<String, String> executionParameters,
                                                 Integer executionResultTimeoutS, Boolean waitForExecution,
                                                 Boolean ensureExecutionSuccess, String includePlans,
-                                                String excludePlans, String groupId, String artifactId,
-                                                String artifactVersion, String artifactClassifier) {
+                                                String excludePlans, MavenArtifactIdentifier mavenArtifactIdentifier) {
         super(url);
         this.stepProjectName = stepProjectName;
         this.userId = userId;
@@ -81,10 +77,7 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
         this.ensureExecutionSuccess = ensureExecutionSuccess;
         this.includePlans = includePlans;
         this.excludePlans = excludePlans;
-        this.groupId = groupId;
-        this.artifactId = artifactId;
-        this.artifactVersion = artifactVersion;
-        this.artifactClassifier = artifactClassifier;
+        this.mavenArtifactIdentifier = mavenArtifactIdentifier;
     }
 
     public static String getExecutionTreeAsString(PlanRunnerResult res) {
@@ -146,7 +139,7 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
     }
 
     protected boolean useLocalArtifact() {
-        return getArtifactId() == null || getArtifactId().isEmpty() || getGroupId() == null || getGroupId().isEmpty();
+        return mavenArtifactIdentifier == null;
     }
 
     protected void waitForExecutionFinish(RemoteExecutionManager remoteExecutionManager, List<String> executionIds) throws StepCliExecutionException {
@@ -246,12 +239,12 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
             executionParameters.setPlanFilter(planFilter);
         }
 
-        if (groupId != null && artifactId != null) {
+        if (mavenArtifactIdentifier != null) {
             Map<String, String> repositoryParameters = new HashMap<>();
-            repositoryParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_ARTIFACT_ID, artifactId);
-            repositoryParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_GROUP_ID, groupId);
-            repositoryParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_VERSION, artifactVersion);
-            repositoryParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_CLASSIFIER, artifactClassifier);
+            repositoryParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_ARTIFACT_ID, mavenArtifactIdentifier.getArtifactId());
+            repositoryParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_GROUP_ID, mavenArtifactIdentifier.getGroupId());
+            repositoryParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_VERSION, mavenArtifactIdentifier.getVersion());
+            repositoryParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_CLASSIFIER, mavenArtifactIdentifier.getClassifier());
             executionParameters.setOriginalRepositoryObject(new RepositoryObjectReference(ArtifactRepositoryConstants.MAVEN_REPO_ID, repositoryParameters));
         }
 
@@ -330,19 +323,7 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
         this.excludePlans = excludePlans;
     }
 
-    public String getGroupId() {
-        return groupId;
-    }
-
-    public String getArtifactId() {
-        return artifactId;
-    }
-
-    public String getArtifactVersion() {
-        return artifactVersion;
-    }
-
-    public String getArtifactClassifier() {
-        return artifactClassifier;
+    public MavenArtifactIdentifier getMavenArtifactIdentifier() {
+        return mavenArtifactIdentifier;
     }
 }

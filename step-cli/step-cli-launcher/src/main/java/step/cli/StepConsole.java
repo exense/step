@@ -150,7 +150,7 @@ public class StepConsole implements Callable<Integer> {
         public static abstract class AbstractApCommand extends AbstractStepCommand {
 
             @Option(names = {"-p", "--package"}, paramLabel = "<AutomationPackage>", description = "The automation-package.yaml file or the folder containing it")
-            protected File apFile;
+            protected String apFile;
 
             /**
              * If the param points to the folder, prepares the zipped AP file with .stz extension.
@@ -158,30 +158,42 @@ public class StepConsole implements Callable<Integer> {
              *
              * @param param the source of AP
              */
-            protected File prepareApFile(File param) {
+            protected File prepareApFile(String param) {
                 try {
+                    File file = null;
                     if (param == null) {
                         // use the current folder by default
-                        param = new File(new File("").getAbsolutePath());
+                        file = new File(new File("").getAbsolutePath());
+                    } else {
+                        file = new File(param);
                     }
-                    log.info("The automation package source is {}", param.getAbsolutePath());
+                    log.info("The automation package source is {}", file.getAbsolutePath());
 
-                    if (param.isDirectory()) {
+                    if (file.isDirectory()) {
                         // check if the folder is AP (contains the yaml descriptor)
-                        checkApFolder(param);
+                        checkApFolder(file);
 
                         File tempDirectory = Files.createTempDirectory("stepcli").toFile();
                         tempDirectory.deleteOnExit();
-                        File tempFile = new File(tempDirectory, param.getName() + ".stz");
+                        File tempFile = new File(tempDirectory, file.getName() + ".stz");
                         tempFile.deleteOnExit();
                         log.info("Preparing AP archive: {}", tempFile.getAbsolutePath());
-                        ZipUtil.pack(param, tempFile);
+                        ZipUtil.pack(file, tempFile);
                         return tempFile;
                     } else {
-                        return param;
+                        return file;
                     }
                 } catch (IOException ex) {
                     throw new StepCliExecutionException("Unable to prepare automation package file", ex);
+                }
+            }
+
+            protected MavenArtifactIdentifier getMavenArtifact(String apFile) {
+                if (apFile != null && apFile.startsWith("mvn:")) {
+                    String[] split = apFile.split(":");
+                    return new MavenArtifactIdentifier(split[1], split[2], split[3], split.length >= 5 ? split[4] : null);
+                } else {
+                    return null;
                 }
             }
 
@@ -265,18 +277,6 @@ public class StepConsole implements Callable<Integer> {
             @Option(names = {LOCAL}, defaultValue = "false", description = "To execute the Automation Package locally ", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
             protected boolean local;
 
-            @Option(names = {"--groupId"})
-            protected String groupId;
-
-            @Option(names = {"--artifactId"})
-            protected String artifactId;
-
-            @Option(names = {"--artifactVersion"})
-            protected String artifactVersion;
-
-            @Option(names = {"--artifactClassifier"})
-            protected String artifactClassifier;
-
             @Option(descriptionKey = EP_DESCRIPTION_KEY, names = {"-ep", "--executionParameters"}, description = "Set execution parameters for local and remote executions ", split = "\\|", splitSynopsisLabel = "|")
             protected Map<String, String> executionParameters;
 
@@ -343,8 +343,7 @@ public class StepConsole implements Callable<Integer> {
                 checkStepUrlRequired();
                 checkEeOptionsConsistency(spec);
                 executeRemotely(stepUrl, getStepProjectName(), stepUser, getAuthToken(), executionParameters,
-                        executionTimeoutS, async, includePlans, excludePlans, groupId, artifactId,
-                        artifactVersion, artifactClassifier
+                        executionTimeoutS, async, includePlans, excludePlans, getMavenArtifact(apFile)
                 );
             }
 
@@ -358,15 +357,12 @@ public class StepConsole implements Callable<Integer> {
                                            final boolean async,
                                            final String includePlans,
                                            final String excludePlans,
-                                           final String groupId,
-                                           final String artifactId,
-                                           final String artifactVersion,
-                                           final String artifactClassifier) {
+                                           final MavenArtifactIdentifier mavenArtifactIdentifier) {
                 new AbstractExecuteAutomationPackageTool(
                         stepUrl, projectName, stepUserId, authToken,
                         executionParameters, executionTimeoutS,
                         !async, true,
-                        includePlans, excludePlans, groupId, artifactId, artifactVersion, artifactClassifier
+                        includePlans, excludePlans, mavenArtifactIdentifier
                 ) {
                     @Override
                     protected File getAutomationPackageFile() throws StepCliExecutionException {
