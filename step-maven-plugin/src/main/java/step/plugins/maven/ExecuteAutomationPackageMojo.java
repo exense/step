@@ -23,6 +23,7 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import step.cli.AbstractExecuteAutomationPackageTool;
+import step.cli.MavenArtifactIdentifier;
 import step.cli.StepCliExecutionException;
 
 import java.io.File;
@@ -38,11 +39,11 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
     @Parameter(property = "step.auth-token", required = false)
     private String authToken;
 
-    @Parameter(property = "step-execute-auto-packages.group-id", required = true, defaultValue = "${project.groupId}")
-    private String groupId;
-    @Parameter(property = "step-execute-auto-packages.artifact-id", required = true, defaultValue = "${project.artifactId}")
+    @Parameter(property = "step-execute-auto-packages.artifact-group-id")
+    private String artifactGroupId;
+    @Parameter(property = "step-execute-auto-packages.artifact-id")
     private String artifactId;
-    @Parameter(property = "step-execute-auto-packages.artifact-version", required = true, defaultValue = "${project.version}")
+    @Parameter(property = "step-execute-auto-packages.artifact-version")
     private String artifactVersion;
     @Parameter(property = "step-execute-auto-packages.artifact-classifier", required = false)
     private String artifactClassifier;
@@ -73,18 +74,32 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
     }
 
     protected AbstractExecuteAutomationPackageTool createTool(final String url, final String projectName, final String userId, final String authToken, final Map<String, String> parameters, final Integer executionResultTimeoutS, final Boolean waitForExecution, final Boolean ensureExecutionSuccess, final String includePlans, final String excludePlans) {
-        return new AbstractExecuteAutomationPackageTool(url, projectName, userId, authToken, parameters, executionResultTimeoutS, waitForExecution, ensureExecutionSuccess, includePlans, excludePlans) {
+        MavenArtifactIdentifier remoteMavenArtifact = null;
+        if (!isLocalMavenArtifact()) {
+            remoteMavenArtifact = new MavenArtifactIdentifier(getArtifactGroupId(), getArtifactId(), getArtifactVersion(), getArtifactClassifier());
+        }
+
+        return new AbstractExecuteAutomationPackageTool(url, projectName, userId, authToken, parameters, executionResultTimeoutS, waitForExecution, ensureExecutionSuccess, includePlans, excludePlans, remoteMavenArtifact) {
             @Override
             protected File getAutomationPackageFile() throws StepCliExecutionException {
-                Artifact applicableArtifact = getProjectArtifact(getArtifactClassifier(), getGroupId(), getArtifactId(), getArtifactVersion());
+                // if groupId and artifactId are not defined, we execute the maven artifact from current project
+                if (useLocalArtifact()) {
+                    Artifact applicableArtifact = getProjectArtifact(getArtifactClassifier());
 
-                if (applicableArtifact != null) {
-                    return applicableArtifact.getFile();
+                    if (applicableArtifact != null) {
+                        return applicableArtifact.getFile();
+                    } else {
+                        throw logAndThrow("Unable to resolve automation package file " + artifactToString(project.getGroupId(), project.getArtifactId(), getArtifactClassifier(), project.getVersion()));
+                    }
                 } else {
-                    throw logAndThrow("Unable to resolve automation package file " + artifactToString(getGroupId(), getArtifactId(), getArtifactClassifier(), getArtifactVersion()));
+                    return null;
                 }
             }
         };
+    }
+
+    protected boolean isLocalMavenArtifact() {
+        return getArtifactId() == null || getArtifactId().isEmpty() || getArtifactGroupId() == null || getArtifactGroupId().isEmpty();
     }
 
     public String getStepProjectName() {
@@ -111,12 +126,12 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
         this.authToken = authToken;
     }
 
-    public String getGroupId() {
-        return groupId;
+    public String getArtifactGroupId() {
+        return artifactGroupId;
     }
 
-    public void setGroupId(String groupId) {
-        this.groupId = groupId;
+    public void setArtifactGroupId(String artifactGroupId) {
+        this.artifactGroupId = artifactGroupId;
     }
 
     public String getArtifactId() {

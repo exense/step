@@ -45,7 +45,7 @@ import java.util.stream.Collectors;
 public abstract class AbstractStepPluginMojo extends AbstractMojo {
 
 	@Parameter(defaultValue = "${project}", readonly = true, required = true)
-	private MavenProject project;
+	protected MavenProject project;
 
 	@Parameter(property = "step.url", required = true)
 	private String url;
@@ -129,7 +129,7 @@ public abstract class AbstractStepPluginMojo extends AbstractMojo {
 		}
 	}
 
-	protected Artifact getProjectArtifact(String artifactClassifier, String groupId, String artifactId, String artifactVersion) {
+	protected Artifact getProjectArtifact(String artifactClassifier) {
 		Set<Artifact> allProjectArtifacts = new HashSet<>(getProject().getArtifacts());
 		allProjectArtifacts.add(getProject().getArtifact());
 		allProjectArtifacts.addAll(getProject().getAttachedArtifacts());
@@ -139,7 +139,7 @@ public abstract class AbstractStepPluginMojo extends AbstractMojo {
 		getLog().info("All detected project artifacts: " + artifactStrings);
 
 		for (Artifact a : allProjectArtifacts) {
-			if (Objects.equals(a.getGroupId(), groupId) && Objects.equals(a.getArtifactId(), artifactId) && Objects.equals(a.getVersion(), artifactVersion)) {
+			if (Objects.equals(a.getGroupId(), project.getGroupId()) && Objects.equals(a.getArtifactId(), project.getArtifactId()) && Objects.equals(a.getVersion(), project.getVersion())) {
 				if (artifactClassifier != null && !artifactClassifier.isEmpty()) {
 					if (Objects.equals(a.getClassifier(), artifactClassifier)) {
 						applicableArtifact = a;

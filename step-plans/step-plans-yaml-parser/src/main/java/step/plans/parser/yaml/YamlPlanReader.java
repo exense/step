@@ -139,6 +139,13 @@ public class YamlPlanReader {
 		this(null, null, true, null);
 	}
 
+	public static void setPlanName(Plan plan, String name) {
+		Map<String, String> attributes = new HashMap<>();
+		attributes.put(AbstractArtefact.NAME, name);
+		plan.setAttributes(attributes);
+		plan.getRoot().getAttributes().put(AbstractArtefact.NAME, name);
+	}
+
 	/**
 	 * Read the plan from Yaml
 	 *
@@ -259,7 +266,7 @@ public class YamlPlanReader {
 
 	public Plan yamlPlanToPlan(YamlPlan yamlPlan) {
 		Plan plan = new Plan(yamlPlan.getRoot().getYamlArtefact().toArtefact());
-		plan.addAttribute(AbstractOrganizableObject.NAME, yamlPlan.getName());
+		setPlanName(plan, yamlPlan.getName());
 		applyDefaultValues(plan);
 		return plan;
 	}

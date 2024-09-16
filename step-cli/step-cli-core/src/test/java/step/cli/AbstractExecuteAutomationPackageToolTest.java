@@ -155,7 +155,8 @@ public class AbstractExecuteAutomationPackageToolTest {
                                                             RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock) throws URISyntaxException {
         return new ExecuteAutomationPackageToolTestable(
                 "http://localhost:8080", TENANT_1.getName(), "testUser", "abc", createTestCustomParams(),
-                3, true, ensureExecutionSuccess, TEST_INCLUDE_PLANS, null, executionManagerMock, remoteAutomationPackageClientMock
+                3, true, ensureExecutionSuccess, TEST_INCLUDE_PLANS, null, executionManagerMock, remoteAutomationPackageClientMock,
+                null
         );
     }
 
@@ -178,8 +179,9 @@ public class AbstractExecuteAutomationPackageToolTest {
                                                     Boolean ensureExecutionSuccess, String includePlans,
                                                     String excludePlans,
                                                     RemoteExecutionManager remoteExecutionManagerMock,
-                                                    RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock) {
-            super(url, stepProjectName, userId, authToken, executionParameters, executionResultTimeoutS, waitForExecution, ensureExecutionSuccess, includePlans, excludePlans);
+                                                    RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock,
+                                                    MavenArtifactIdentifier mavenArtifactIdentifier) {
+            super(url, stepProjectName, userId, authToken, executionParameters, executionResultTimeoutS, waitForExecution, ensureExecutionSuccess, includePlans, excludePlans, mavenArtifactIdentifier);
             this.remoteExecutionManagerMock = remoteExecutionManagerMock;
             this.remoteAutomationPackageClientMock = remoteAutomationPackageClientMock;
         }

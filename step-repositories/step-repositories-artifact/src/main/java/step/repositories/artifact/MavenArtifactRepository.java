@@ -22,12 +22,12 @@ import ch.exense.commons.app.Configuration;
 import org.apache.maven.settings.building.SettingsBuildingException;
 import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
-import step.automation.packages.AutomationPackageReader;
+import step.automation.packages.AutomationPackageManager;
 import step.core.controller.ControllerSetting;
 import step.core.controller.ControllerSettingAccessor;
-import step.core.plans.PlanAccessor;
+import step.functions.accessor.FunctionAccessor;
+import step.functions.type.FunctionTypeRegistry;
 import step.repositories.ArtifactRepositoryConstants;
-import step.resources.ResourceManager;
 
 import java.io.File;
 import java.util.Map;
@@ -39,11 +39,6 @@ public class MavenArtifactRepository extends AbstractArtifactRepository {
     protected static final String PARAM_VERSION = ArtifactRepositoryConstants.ARTIFACT_PARAM_VERSION;
     protected static final String PARAM_GROUP_ID = ArtifactRepositoryConstants.ARTIFACT_PARAM_GROUP_ID;
     protected static final String PARAM_CLASSIFIER = ArtifactRepositoryConstants.ARTIFACT_PARAM_CLASSIFIER;
-
-    protected static final String PARAM_LIB_ARTIFACT_ID = ArtifactRepositoryConstants.ARTIFACT_PARAM_LIB_ARTIFACT_ID;
-    protected static final String PARAM_LIB_VERSION = ArtifactRepositoryConstants.ARTIFACT_PARAM_LIB_VERSION;
-    protected static final String PARAM_LIB_GROUP_ID = ArtifactRepositoryConstants.ARTIFACT_PARAM_LIB_GROUP_ID;
-    protected static final String PARAM_LIB_CLASSIFIER = ArtifactRepositoryConstants.ARTIFACT_PARAM_LIB_CLASSIFIER;
 
     protected static final String PARAM_MAVEN_SETTINGS = ArtifactRepositoryConstants.ARTIFACT_PARAM_MAVEN_SETTINGS;
 
@@ -60,8 +55,8 @@ public class MavenArtifactRepository extends AbstractArtifactRepository {
     private final ControllerSettingAccessor controllerSettingAccessor;
     private final File localRepository;
 
-    public MavenArtifactRepository(PlanAccessor planAccessor, ResourceManager resourceManager, ControllerSettingAccessor controllerSettingAccessor, Configuration configuration, AutomationPackageReader automationPackageReader) {
-        super(Set.of(PARAM_GROUP_ID, PARAM_ARTIFACT_ID, PARAM_VERSION), planAccessor, resourceManager, automationPackageReader);
+    public MavenArtifactRepository(AutomationPackageManager manager, FunctionTypeRegistry functionTypeRegistry, FunctionAccessor functionAccessor,  Configuration configuration, ControllerSettingAccessor controllerSettingAccessor) {
+        super(Set.of(PARAM_GROUP_ID, PARAM_ARTIFACT_ID, PARAM_VERSION), manager, functionTypeRegistry, functionAccessor);
         localRepository = configuration.getPropertyAsFile(CONFIGURATION_MAVEN_FOLDER, new File(DEFAULT_MAVEN_FOLDER));
         this.controllerSettingAccessor = controllerSettingAccessor;
     }
@@ -79,37 +74,7 @@ public class MavenArtifactRepository extends AbstractArtifactRepository {
     }
 
     @Override
-    protected File getLibraries(Map<String, String> repositoryParameters) {
-        ControllerSetting settingsXml = getMavenSettings(repositoryParameters);
-        try {
-            MavenArtifactClient mavenArtifactClient = new MavenArtifactClient(settingsXml.getValue(), localRepository);
-            String artifactId = repositoryParameters.get(PARAM_LIB_ARTIFACT_ID);
-            String version = repositoryParameters.get(PARAM_LIB_VERSION);
-            String groupId = repositoryParameters.get(PARAM_LIB_GROUP_ID);
-            String classifier = repositoryParameters.get(PARAM_LIB_CLASSIFIER);
-
-            if (classifier!=null && artifactId==null) {
-                artifactId = repositoryParameters.get(PARAM_ARTIFACT_ID);
-            }
-
-            if (artifactId!=null) {
-                if (groupId==null) {
-                    groupId = AbstractArtifactRepository.getMandatoryRepositoryParameter(repositoryParameters,PARAM_GROUP_ID);
-                }
-                if (version==null) {
-                    version = AbstractArtifactRepository.getMandatoryRepositoryParameter(repositoryParameters,PARAM_VERSION);
-                }
-                return mavenArtifactClient.getArtifact(new DefaultArtifact(groupId, artifactId, classifier, "jar", version));
-            } else {
-                return null;
-            }
-        } catch (SettingsBuildingException | ArtifactResolutionException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @Override
-    protected File getArtifact(Map<String, String> repositoryParameters) {
+    public File getArtifact(Map<String, String> repositoryParameters) {
         ControllerSetting settingsXml = getMavenSettings(repositoryParameters);
         try {
             MavenArtifactClient mavenArtifactClient = new MavenArtifactClient(settingsXml.getValue(), localRepository);

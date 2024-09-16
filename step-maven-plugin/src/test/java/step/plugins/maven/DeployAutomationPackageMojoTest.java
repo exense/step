@@ -27,7 +27,7 @@ import step.cli.AbstractDeployAutomationPackageTool;
 
 import java.net.URISyntaxException;
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.Set;
 
 public class DeployAutomationPackageMojoTest extends AbstractMojoTest {
 
@@ -49,10 +49,7 @@ public class DeployAutomationPackageMojoTest extends AbstractMojoTest {
     private void configureMojo(DeployAutomationPackageMojoTestable mojo) throws URISyntaxException {
         mojo.setUrl("http://localhost:8080");
         mojo.setBuildFinalName("Test build name");
-        mojo.setProjectVersion("1.0.0");
-        mojo.setArtifactId(ARTIFACT_ID);
-        mojo.setArtifactVersion(VERSION_ID);
-        mojo.setGroupId(GROUP_ID);
+        mojo.setProjectVersion(VERSION_ID);
         mojo.setArtifactClassifier("jar-with-dependencies");
         mojo.setStepProjectName(TENANT_1.getName());
         mojo.setAsync(false);
@@ -61,12 +58,13 @@ public class DeployAutomationPackageMojoTest extends AbstractMojoTest {
         Artifact mainArtifact = createArtifactMock();
 
         Mockito.when(mockedProject.getArtifact()).thenReturn(mainArtifact);
-        Mockito.when(mockedProject.getArtifacts()).thenReturn(new HashSet<>());
         Mockito.when(mockedProject.getArtifactId()).thenReturn(ARTIFACT_ID);
         Mockito.when(mockedProject.getGroupId()).thenReturn(GROUP_ID);
+        Mockito.when(mockedProject.getVersion()).thenReturn(VERSION_ID);
 
         Artifact jarWithDependenciesArtifact = createArtifactWithDependenciesMock();
-        Mockito.when(mockedProject.getAttachedArtifacts()).thenReturn(Arrays.asList(jarWithDependenciesArtifact));
+        Mockito.when(mockedProject.getArtifacts()).thenReturn(Set.of(mainArtifact, jarWithDependenciesArtifact));
+        Mockito.when(mockedProject.getAttachedArtifacts()).thenReturn(Arrays.asList(mainArtifact, jarWithDependenciesArtifact));
         mojo.setProject(mockedProject);
     }
 
