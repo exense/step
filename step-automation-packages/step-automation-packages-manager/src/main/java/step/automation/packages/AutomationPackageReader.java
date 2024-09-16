@@ -39,6 +39,7 @@ import step.junit.runner.StepClassParser;
 import step.junit.runner.StepClassParserResult;
 import step.junit.runners.annotations.Plans;
 import step.plans.nl.parser.PlanParser;
+import step.plans.parser.yaml.YamlPlanReader;
 import step.plugins.functions.types.CompositeFunctionUtils;
 import step.plugins.java.GeneralScriptFunction;
 
@@ -403,7 +404,7 @@ public class AutomationPackageReader {
                             throw new FileNotFoundException(file);
                         }
                         if (parserResult.getPlan() != null) {
-                            StepClassParser.setPlanName(parserResult.getPlan(), file);
+                            YamlPlanReader.setPlanName(parserResult.getPlan(), file);
                         }
                     }
                 } catch (Exception e) {

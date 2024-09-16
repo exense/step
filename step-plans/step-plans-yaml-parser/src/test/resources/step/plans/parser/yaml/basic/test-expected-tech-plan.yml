@@ -7,7 +7,7 @@ agents:
 root:
   _class: "Sequence"
   attributes:
-    name: "Sequence"
+    name: "test plan"
   dynamicName:
     dynamic: false
     value: ""
@@ -90,6 +90,74 @@ root:
             dynamic: false
             value: "{\"stringInput\":{\"dynamic\":true,\"expression\":\"'abc'\"},\"intInput\"\
           :{\"dynamic\":false,\"value\":777},\"noValueInput\":{\"dynamic\":false}}"
+          resultMap:
+            dynamic: false
+          id: "644fbe4e38a61e07cc3a4df8"
+        - _class: "CallKeyword"
+          attributes:
+            name: "callExisting3"
+          dynamicName:
+            dynamic: true
+            expressionType: ""
+            expression: "'Instrument_' + 'callExisting3'"
+          useDynamicName: true
+          children: [ ]
+          skipNode:
+            dynamic: false
+            value: false
+          instrumentNode:
+            dynamic: false
+            value: true
+          continueParentNodeExecutionOnError:
+            dynamic: false
+            value: false
+          remote:
+            dynamic: false
+            value: true
+          token:
+            dynamic: false
+            value: "{}"
+          function:
+            dynamic: false
+            value: "{\"name\":{\"dynamic\":false,\"value\":\"callExisting3\",\"expression\"\
+          :null,\"expressionType\":null}}"
+          argument:
+            dynamic: false
+            value: "{}"
+          resultMap:
+            dynamic: false
+          id: "644fbe4e38a61e07cc3a4df8"
+        - _class: "CallKeyword"
+          attributes:
+            name: "Call keyword callExisting3"
+          dynamicName:
+            dynamic: false
+            value: ""
+            expression: ""
+          useDynamicName: false
+          children: [ ]
+          skipNode:
+            dynamic: false
+            value: false
+          instrumentNode:
+            dynamic: false
+            value: false
+          continueParentNodeExecutionOnError:
+            dynamic: false
+            value: false
+          remote:
+            dynamic: false
+            value: true
+          token:
+            dynamic: false
+            value: "{}"
+          function:
+            dynamic: false
+            value: "{\"name\":{\"dynamic\":false,\"value\":\"callExisting3\",\"expression\"\
+          :null,\"expressionType\":null}}"
+          argument:
+            dynamic: false
+            value: "{}"
           resultMap:
             dynamic: false
           id: "644fbe4e38a61e07cc3a4df8"

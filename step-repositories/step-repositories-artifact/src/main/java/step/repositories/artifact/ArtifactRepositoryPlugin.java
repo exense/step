@@ -21,14 +21,15 @@ package step.repositories.artifact;
 import ch.exense.commons.app.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.automation.packages.AutomationPackageManager;
 import step.automation.packages.AutomationPackagePlugin;
-import step.automation.packages.AutomationPackageReader;
 import step.core.GlobalContext;
 import step.core.controller.ControllerSettingAccessor;
 import step.core.controller.ControllerSettingPlugin;
-import step.core.plans.PlanAccessor;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
+import step.functions.accessor.FunctionAccessor;
+import step.functions.type.FunctionTypeRegistry;
 import step.repositories.ArtifactRepositoryConstants;
 
 @Plugin(dependencies = {ControllerSettingPlugin.class, AutomationPackagePlugin.class})
@@ -40,15 +41,22 @@ public class ArtifactRepositoryPlugin extends AbstractControllerPlugin {
     public static final String RESOURCE_REPO_ID = ArtifactRepositoryConstants.RESOURCE_REPO_ID;
 
     @Override
-    public void serverStart(GlobalContext context) throws Exception {
-        PlanAccessor planAccessor = context.getPlanAccessor();
+    public void afterInitializeData(GlobalContext context) throws Exception {
+        super.afterInitializeData(context);
+
         ControllerSettingAccessor controllerSettingAccessor = context.require(ControllerSettingAccessor.class);
         Configuration configuration = context.getConfiguration();
-        AutomationPackageReader automationPackageReader = context.require(AutomationPackageReader.class);
-        MavenArtifactRepository mavenRepository = new MavenArtifactRepository(planAccessor, context.getResourceManager(), controllerSettingAccessor, configuration, automationPackageReader);
-        ResourceArtifactRepository resourceRepository = new ResourceArtifactRepository(planAccessor, context.getResourceManager(), automationPackageReader);
+        MavenArtifactRepository mavenRepository = new MavenArtifactRepository(
+                context.require(AutomationPackageManager.class),
+                context.require(FunctionTypeRegistry.class),
+                context.require(FunctionAccessor.class),
+                configuration, controllerSettingAccessor);
+        ResourceArtifactRepository resourceRepository = new ResourceArtifactRepository(
+                context.getResourceManager(),
+                context.require(AutomationPackageManager.class),
+                context.require(FunctionTypeRegistry.class),
+                context.require(FunctionAccessor.class));
         context.getRepositoryObjectManager().registerRepository(MAVEN_REPO_ID, mavenRepository);
         context.getRepositoryObjectManager().registerRepository(RESOURCE_REPO_ID, resourceRepository);
-        super.serverStart(context);
     }
 }

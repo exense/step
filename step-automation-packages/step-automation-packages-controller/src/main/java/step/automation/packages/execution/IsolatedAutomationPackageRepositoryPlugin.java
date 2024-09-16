@@ -78,7 +78,7 @@ public class IsolatedAutomationPackageRepositoryPlugin extends AbstractControlle
         AutomationPackageExecutor packageExecutor = new AutomationPackageExecutor(
                 context.getScheduler(),
                 context.require(ExecutionAccessor.class),
-                isolatedApRepository
+                context.getRepositoryObjectManager()
         );
         context.put(AutomationPackageExecutor.class, packageExecutor);
 

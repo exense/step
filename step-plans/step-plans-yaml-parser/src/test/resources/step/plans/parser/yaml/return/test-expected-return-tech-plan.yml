@@ -7,7 +7,7 @@ agents:
 root:
   _class: "Sequence"
   attributes:
-    name: "Sequence"
+    name: "Plan with return"
   dynamicName:
     dynamic: false
     value: ""
