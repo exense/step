@@ -127,6 +127,12 @@ public class YamlPlanJsonSchemaGenerator {
 			objectBuilder.add("version", jsonProvider.createObjectBuilder().add("const", actualVersion.toString()));
 		}
 		if (!isCompositePlan) {
+			//categories
+			JsonObjectBuilder categoriesBuilder = jsonProvider.createObjectBuilder();
+			categoriesBuilder.add("type", "array");
+			categoriesBuilder.add("items", jsonProvider.createObjectBuilder().add("type","string"));
+			objectBuilder.add("categories", categoriesBuilder);
+			//agents
 			objectBuilder.add(AGENT_CONFIGURATION_YAML_NAME, YamlJsonSchemaHelper.addRef(jsonProvider.createObjectBuilder(), AGENT_CONFIGURATION_YAML_NAME + SchemaDefSuffix));
 		}
 		objectBuilder.add("root", YamlJsonSchemaHelper.addRef(jsonProvider.createObjectBuilder(), ROOT_ARTEFACT_DEF));

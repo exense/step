@@ -19,6 +19,7 @@
 package step.core.plans;
 
 import java.util.Collection;
+import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
@@ -47,6 +48,8 @@ public class Plan extends AbstractOrganizableObject implements EnricheableObject
 	protected AgentProvisioningConfiguration agents = new AutomaticAgentProvisioningConfiguration(AutomaticAgentProvisioningConfiguration.PlanAgentsPoolAutoMode.auto_detect);
 	
 	protected boolean visible = true;
+
+	private List<String> categories;
 	
 	public Plan(AbstractArtefact root) {
 		super();
@@ -96,5 +99,13 @@ public class Plan extends AbstractOrganizableObject implements EnricheableObject
 
 	public void setAgents(AgentProvisioningConfiguration agents) {
 		this.agents = agents;
+	}
+
+	public List<String> getCategories() {
+		return categories;
+	}
+
+	public void setCategories(List<String> categories) {
+		this.categories = categories;
 	}
 }

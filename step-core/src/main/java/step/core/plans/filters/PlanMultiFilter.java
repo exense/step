@@ -18,21 +18,22 @@
  ******************************************************************************/
 package step.core.plans.filters;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.commons.collections.CollectionUtils;
 import step.core.plans.Plan;
 import step.core.plans.PlanFilter;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class PlanMultiFilter extends PlanFilter {
 
     private final List<PlanFilter> planFilters;
 
-    public PlanMultiFilter() {
-        planFilters = new ArrayList<>();
-    }
-
-    public PlanMultiFilter(List<PlanFilter> planFilters) {
+    @JsonCreator
+    public PlanMultiFilter(@JsonProperty("planFilters") List<PlanFilter> planFilters) {
         this.planFilters = planFilters;
     }
 
@@ -43,5 +44,18 @@ public class PlanMultiFilter extends PlanFilter {
     @Override
     public boolean isSelected(Plan plan) {
         return planFilters == null || planFilters.stream().allMatch(pf -> pf.isSelected(plan));
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        PlanMultiFilter that = (PlanMultiFilter) o;
+        return CollectionUtils.isEqualCollection(planFilters, that.planFilters);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(planFilters);
     }
 }

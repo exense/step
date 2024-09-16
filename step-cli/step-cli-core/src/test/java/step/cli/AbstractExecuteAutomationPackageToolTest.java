@@ -15,7 +15,11 @@ import step.core.execution.model.AutomationPackageExecutionParameters;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionStatus;
+import step.core.plans.PlanFilter;
+import step.core.plans.filters.PlanByExcludedCategoriesFilter;
+import step.core.plans.filters.PlanByIncludedCategoriesFilter;
 import step.core.plans.filters.PlanByIncludedNamesFilter;
+import step.core.plans.filters.PlanMultiFilter;
 import step.core.repositories.ImportResult;
 
 import java.io.File;
@@ -29,6 +33,8 @@ public class AbstractExecuteAutomationPackageToolTest {
     protected static final Tenant TENANT_1 = createTenant1();
 
     public static final String TEST_INCLUDE_PLANS = "plan1,plan2";
+    public static final String TEST_INCLUDE_CATEGORIES = "PerformanceTest,JMterTest";
+    public static final String TEST_EXCLUDE_CATEGORIES = "CypressTest,OidcTest";
 
     @Test
     public void testExecuteOk() throws Exception {
@@ -113,8 +119,12 @@ public class AbstractExecuteAutomationPackageToolTest {
         AutomationPackageExecutionParameters captured = executionParamsCaptor.getValue();
         Assert.assertEquals("testUser", captured.getUserID());
         Assert.assertEquals(ExecutionMode.RUN, captured.getMode());
-        Assert.assertEquals(List.of("plan1", "plan2"), ((PlanByIncludedNamesFilter) captured.getPlanFilter()).getIncludedNames());
-
+        PlanMultiFilter planFilter = (PlanMultiFilter) captured.getPlanFilter();
+        //Assert.assertEquals(List.of("plan1", "plan2"), ((PlanByIncludedNamesFilter) planFilter).getIncludedNames());
+        PlanMultiFilter expectedFilter = new PlanMultiFilter(List.of(new PlanByIncludedNamesFilter(Arrays.asList(TEST_INCLUDE_PLANS.split(","))),
+                new PlanByIncludedCategoriesFilter(Arrays.asList(TEST_INCLUDE_CATEGORIES.split(","))),
+                new PlanByExcludedCategoriesFilter(Arrays.asList(TEST_EXCLUDE_CATEGORIES.split(",")))));
+        Assert.assertEquals(expectedFilter, planFilter);
         Assert.assertEquals(createTestCustomParams(), captured.getCustomParameters());
     }
 
@@ -155,7 +165,8 @@ public class AbstractExecuteAutomationPackageToolTest {
                                                             RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock) throws URISyntaxException {
         return new ExecuteAutomationPackageToolTestable(
                 "http://localhost:8080", TENANT_1.getName(), "testUser", "abc", createTestCustomParams(),
-                3, true, ensureExecutionSuccess, TEST_INCLUDE_PLANS, null, executionManagerMock, remoteAutomationPackageClientMock,
+                3, true, ensureExecutionSuccess, TEST_INCLUDE_PLANS, null,
+                TEST_INCLUDE_CATEGORIES, TEST_EXCLUDE_CATEGORIES, executionManagerMock, remoteAutomationPackageClientMock,
                 null
         );
     }
@@ -178,10 +189,12 @@ public class AbstractExecuteAutomationPackageToolTest {
                                                     Integer executionResultTimeoutS, Boolean waitForExecution,
                                                     Boolean ensureExecutionSuccess, String includePlans,
                                                     String excludePlans,
+                                                    String includeCategories, String excludeCategories,
                                                     RemoteExecutionManager remoteExecutionManagerMock,
                                                     RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock,
                                                     MavenArtifactIdentifier mavenArtifactIdentifier) {
-            super(url, stepProjectName, userId, authToken, executionParameters, executionResultTimeoutS, waitForExecution, ensureExecutionSuccess, includePlans, excludePlans, mavenArtifactIdentifier);
+            super(url, stepProjectName, userId, authToken, executionParameters, executionResultTimeoutS, waitForExecution,
+                    ensureExecutionSuccess, includePlans, excludePlans, includeCategories, excludeCategories, mavenArtifactIdentifier);
             this.remoteExecutionManagerMock = remoteExecutionManagerMock;
             this.remoteAutomationPackageClientMock = remoteAutomationPackageClientMock;
         }

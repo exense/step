@@ -27,7 +27,7 @@ import java.lang.annotation.RetentionPolicy;
  * @author exense team
  */
 @Retention(RetentionPolicy.RUNTIME)
-public @interface AutomationPackagePlans {
+public @interface ExcludePlanNames {
 
 	String[] value();
 

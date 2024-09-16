@@ -25,6 +25,8 @@ import step.core.plans.agents.configuration.AgentProvisioningConfigurationSerial
 import step.core.plans.agents.configuration.AgentProvisioningConfiguration;
 import step.plans.parser.yaml.model.NamedYamlArtefact;
 
+import java.util.List;
+
 public class YamlPlan {
 
 	// this name should be kept untouched to support the migrations for old versions
@@ -38,6 +40,8 @@ public class YamlPlan {
 	@JsonSerialize(using = AgentProvisioningConfigurationSerializer.class)
 	@JsonDeserialize(using = AgentProvisioningConfigurationDeserializer.class)
 	private AgentProvisioningConfiguration agents;
+
+	private List<String> categories;
 
 	public String getName() {
 		return name;
@@ -69,5 +73,13 @@ public class YamlPlan {
 
 	public void setAgents(AgentProvisioningConfiguration agents) {
 		this.agents = agents;
+	}
+
+	public List<String> getCategories() {
+		return categories;
+	}
+
+	public void setCategories(List<String> categories) {
+		this.categories = categories;
 	}
 }

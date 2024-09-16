@@ -2026,6 +2026,12 @@
         "name" : {
           "type" : "string"
         },
+        "categories": {
+          "type" : "array",
+          "items" : {
+            "type" : "string"
+          }
+        },
         "agents" : {
           "$ref" : "#/$defs/agentsDef"
         },
