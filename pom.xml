@@ -584,7 +584,8 @@
 				<artifactId>maven-surefire-plugin</artifactId>
 				<configuration>
 					<systemPropertyVariables>
-						<logback.configurationFile>${basedir}/../parent/logback-maven.xml</logback.configurationFile>
+						<!-- this file must be available in the classpath, it is currently located in the step-common resources -->
+						<logback.configurationFile>logback-for-test.xml</logback.configurationFile>
 					</systemPropertyVariables>
 				</configuration>
 			</plugin>
@@ -635,6 +636,10 @@
 						<artifactId>maven-surefire-plugin</artifactId>
 						<configuration>
 							<excludedGroups>ch.exense.commons.test.categories.PerformanceTest,${excluded.jmeter.group}</excludedGroups>
+							<systemPropertyVariables>
+								<!-- this file must be available in the classpath, it is currently located in the step-common resources -->
+								<logback.configurationFile>logback-for-test.xml</logback.configurationFile>
+							</systemPropertyVariables>
 						</configuration>
 					</plugin>
 				</plugins>
@@ -652,6 +657,10 @@
 						<artifactId>maven-surefire-plugin</artifactId>
 						<configuration>
 							<excludedGroups>${excluded.jmeter.group}</excludedGroups>
+							<systemPropertyVariables>
+								<!-- this file must be available in the classpath, it is currently located in the step-common resources -->
+								<logback.configurationFile>logback-for-test.xml</logback.configurationFile>
+							</systemPropertyVariables>
 						</configuration>
 					</plugin>
 				</plugins>
@@ -706,6 +715,10 @@
 						<artifactId>maven-surefire-plugin</artifactId>
 						<configuration>
 							<excludedGroups>ch.exense.commons.test.categories.PerformanceTest,${excluded.jmeter.group}</excludedGroups>
+							<systemPropertyVariables>
+								<!-- this file must be available in the classpath, it is currently located in the step-common resources -->
+								<logback.configurationFile>logback-for-test.xml</logback.configurationFile>
+							</systemPropertyVariables>
 						</configuration>
 					</plugin>
 					<!-- Signature -->
