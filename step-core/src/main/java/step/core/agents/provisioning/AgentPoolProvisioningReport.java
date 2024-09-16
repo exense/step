@@ -30,6 +30,7 @@ public class AgentPoolProvisioningReport {
     public AgentProvisioningError error;
     public List<String> stsEvents;
     public boolean success;
+    public boolean completed;
 
     public AgentPoolProvisioningReport() {
     }
