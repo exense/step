@@ -251,7 +251,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 
 	private void initTimeSeriesCollectionsData(AsyncTaskManager asyncTaskManager) {
 		asyncTaskManager.scheduleAsyncTask((empty) -> {
-			timeSeries.ingestDataForAllResolutions();
+			timeSeries.ingestDataForEmptyCollections();
 			return null;
 		});
 	}

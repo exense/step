@@ -20,15 +20,18 @@ public class TimeSeriesAPIResponse {
     @NotNull
     private final boolean truncated;
     @NotNull
+    private final long collectionResolution;
+    @NotNull
     private final boolean higherResolutionUsed;
 
-    public TimeSeriesAPIResponse(long start, long interval, long end, List<List<BucketResponse>> matrix, List<BucketAttributes> matrixKeys, boolean truncated, boolean higherResolutionUsed) {
+    public TimeSeriesAPIResponse(long start, long interval, long end, List<List<BucketResponse>> matrix, List<BucketAttributes> matrixKeys, boolean truncated, long collectionResolution, boolean higherResolutionUsed) {
         this.start = start;
         this.interval = interval;
         this.end = end;
         this.matrix = matrix;
         this.matrixKeys = matrixKeys;
         this.truncated = truncated;
+        this.collectionResolution = collectionResolution;
         this.higherResolutionUsed = higherResolutionUsed;
     }
 
@@ -58,5 +61,9 @@ public class TimeSeriesAPIResponse {
 
     public boolean isHigherResolutionUsed() {
         return higherResolutionUsed;
+    }
+
+    public long getCollectionResolution() {
+        return collectionResolution;
     }
 }

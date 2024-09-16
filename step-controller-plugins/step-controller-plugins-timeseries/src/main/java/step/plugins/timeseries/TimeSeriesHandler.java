@@ -342,6 +342,7 @@ public class TimeSeriesHandler {
                 .withMatrixKeys(matrixKeys)
                 .withMatrix(matrix)
                 .withTruncated(series.size() > request.getMaxNumberOfSeries())
+                .withCollectionResolution(response.getCollectionResolution())
                 .withHigherResolutionUsed(response.isHigherResolutionUsed())
                 .build();
     }
