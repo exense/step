@@ -107,7 +107,7 @@ public class AutomationPackageExecutor {
                     repositoryParameters.put(IsolatedAutomationPackageRepository.REPOSITORY_PARAM_CONTEXTID, contextId.toString());
                     repositoryParameters.put(IsolatedAutomationPackageRepository.PLAN_NAME, plan.getAttribute(AbstractOrganizableObject.NAME));
 
-                    // store the reference to original repository object
+                    // store the reference from original repository object
                     if (parameters.getOriginalRepositoryObject() != null) {
                         repositoryParameters.putAll(parameters.getOriginalRepositoryObject().getRepositoryParameters());
                     }
