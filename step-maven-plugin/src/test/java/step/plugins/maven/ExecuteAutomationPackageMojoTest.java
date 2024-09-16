@@ -27,10 +27,7 @@ import step.automation.packages.client.AutomationPackageClientException;
 import step.cli.AbstractExecuteAutomationPackageTool;
 
 import java.net.URISyntaxException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 
 public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 
@@ -61,7 +58,7 @@ public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 		mojo.setArtifactId(ARTIFACT_ID);
 		mojo.setArtifactClassifier("jar-with-dependencies");
 		mojo.setArtifactVersion(VERSION_ID);
-		mojo.setGroupId(GROUP_ID);
+		mojo.setArtifactGroupId(GROUP_ID);
 		mojo.setUrl("http://localhost:8080");
 		mojo.setAuthToken("abc");
 		mojo.setBuildFinalName("Test build name");
@@ -76,16 +73,18 @@ public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 		mojo.setIncludePlans(TEST_INCLUDE_PLANS);
 
 		MavenProject mockedProject = Mockito.mock(MavenProject.class);
+		Mockito.when(mockedProject.getArtifactId()).thenReturn(ARTIFACT_ID);
+		Mockito.when(mockedProject.getGroupId()).thenReturn(GROUP_ID);
+		Mockito.when(mockedProject.getVersion()).thenReturn(VERSION_ID);
 
 		Artifact mainArtifact = createArtifactMock();
 
 		Mockito.when(mockedProject.getArtifact()).thenReturn(mainArtifact);
 
-		Mockito.when(mockedProject.getArtifacts()).thenReturn(new HashSet<>());
-
 		Artifact jarWithDependenciesArtifact = createArtifactWithDependenciesMock();
 
-		Mockito.when(mockedProject.getAttachedArtifacts()).thenReturn(Arrays.asList(jarWithDependenciesArtifact));
+		Mockito.when(mockedProject.getArtifacts()).thenReturn(Set.of(mainArtifact, jarWithDependenciesArtifact));
+		Mockito.when(mockedProject.getAttachedArtifacts()).thenReturn(Arrays.asList(mainArtifact, jarWithDependenciesArtifact));
 
 		mojo.setProject(mockedProject);
 

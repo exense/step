@@ -5,7 +5,7 @@ attributes:
 root:
   _class: "Sequence"
   attributes:
-    name: "Sequence"
+    name: "test check artefact"
   dynamicName:
     dynamic: false
     value: ""

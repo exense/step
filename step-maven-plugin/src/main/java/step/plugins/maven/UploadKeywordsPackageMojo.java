@@ -50,15 +50,6 @@ import java.util.stream.StreamSupport;
 @Mojo(name = "upload-keywords-package")
 public class UploadKeywordsPackageMojo extends AbstractStepPluginMojo {
 
-	@Parameter(defaultValue = "${project.groupId}", readonly = true, required = true)
-	private String groupId;
-
-	@Parameter(defaultValue = "${project.artifactId}", readonly = true, required = true)
-	private String artifactId;
-
-	@Parameter(defaultValue = "${project.version}", readonly = true, required = true)
-	private String artifactVersion;
-
 	@Parameter(property = "step-upload-keywords.artifact-classifier", required = false)
 	private String artifactClassifier;
 
@@ -283,7 +274,7 @@ public class UploadKeywordsPackageMojo extends AbstractStepPluginMojo {
 	}
 
 	private File getFileToUpload() throws MojoExecutionException {
-		Artifact artifact = getProjectArtifact(getArtifactClassifier(), getGroupId(), getArtifactId(), getArtifactVersion());
+		Artifact artifact = getProjectArtifact(getArtifactClassifier());
 
 		if (artifact == null || artifact.getFile() == null) {
 			throw new MojoExecutionException("Unable to resolve artifact to upload.");
@@ -314,30 +305,6 @@ public class UploadKeywordsPackageMojo extends AbstractStepPluginMojo {
 
 	public void setArtifactClassifier(String artifactClassifier) {
 		this.artifactClassifier = artifactClassifier;
-	}
-
-	public String getGroupId() {
-		return groupId;
-	}
-
-	public void setGroupId(String groupId) {
-		this.groupId = groupId;
-	}
-
-	public String getArtifactId() {
-		return artifactId;
-	}
-
-	public void setArtifactId(String artifactId) {
-		this.artifactId = artifactId;
-	}
-
-	public String getArtifactVersion() {
-		return artifactVersion;
-	}
-
-	public void setArtifactVersion(String artifactVersion) {
-		this.artifactVersion = artifactVersion;
 	}
 
 	public Map<String, String> getLibStepResourceSearchCriteria() {

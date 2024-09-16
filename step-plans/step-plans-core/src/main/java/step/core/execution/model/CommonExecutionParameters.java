@@ -106,4 +106,5 @@ public abstract class CommonExecutionParameters extends AbstractOrganizableObjec
     public void setMode(ExecutionMode mode) {
         this.mode = mode;
     }
+
 }
