@@ -54,7 +54,7 @@ public abstract class AbstractYamlArtefact<T extends AbstractArtefact> extends A
 
     @JsonSchema(defaultProvider = DefaultYamlArtefactNameProvider.class)
     @YamlFieldCustomCopy
-    protected String nodeName;
+    protected DynamicValue<String> nodeName;
 
     protected DynamicValue<Boolean> skipNode = new DynamicValue<>(false);
     protected DynamicValue<Boolean> instrumentNode = new DynamicValue<>(false);
@@ -87,7 +87,7 @@ public abstract class AbstractYamlArtefact<T extends AbstractArtefact> extends A
     }
 
     protected void fillArtefactFields(T res) {
-        res.addAttribute(AbstractOrganizableObject.NAME, getArtefactName());
+        setArtefactName(res);
         copyFieldsToObject(res, true);
         if (this.getChildren() != null) {
             for (NamedYamlArtefact child : this.getChildren()) {
@@ -96,13 +96,20 @@ public abstract class AbstractYamlArtefact<T extends AbstractArtefact> extends A
         }
     }
 
-    protected String getArtefactName() {
-        if (getNodeName() != null) {
-            // explicit name from yaml
-            return getNodeName();
+    protected void setArtefactName(T res) {
+        String defaultArtefactName = AbstractArtefact.getArtefactName(getArtefactClass());
+        if (nodeName != null) {
+            if (nodeName.isDynamic()) {
+                res.addAttribute(AbstractOrganizableObject.NAME, defaultArtefactName);
+                res.setUseDynamicName(true);
+                res.setDynamicName(nodeName);
+            } else {
+                res.addAttribute(AbstractOrganizableObject.NAME, nodeName.getValue());
+                res.setUseDynamicName(false);
+            }
         } else {
-            // default value
-            return AbstractArtefact.getArtefactName(getArtefactClass());
+            res.addAttribute(AbstractOrganizableObject.NAME, defaultArtefactName);
+            res.setUseDynamicName(false);
         }
     }
 
@@ -110,10 +117,15 @@ public abstract class AbstractYamlArtefact<T extends AbstractArtefact> extends A
         // the node name is not obligatory in yaml - we skip this if the name is equal to the default one
         String nameAttribute = artefact.getAttribute(AbstractOrganizableObject.NAME);
 
-        // If the name attribute is defined and doesn't equal to the default value,
-        // we use it as nodeName in yaml. Otherwise, we skip this field in yaml.
-        if (nameAttribute != null && !Objects.equals(nameAttribute, getDefaultNodeNameForYaml(artefact))) {
-            this.setNodeName(nameAttribute);
+        //If artefact name is set dynamically we use this dynamic value in Yaml
+        if (artefact.isUseDynamicName() && artefact.getDynamicName() != null) {
+            this.setNodeName(artefact.getDynamicName());
+        } else {
+            // If the name attribute is defined and doesn't equal to the default value,
+            // we use it as nodeName in yaml. Otherwise, we skip this field in yaml.
+            if (nameAttribute != null && !Objects.equals(nameAttribute, getDefaultNodeNameForYaml(artefact))) {
+                this.setNodeName(new DynamicValue<>(nameAttribute));
+            }
         }
         copyFieldsFromObject(artefact, true);
 
@@ -169,11 +181,11 @@ public abstract class AbstractYamlArtefact<T extends AbstractArtefact> extends A
         }
     }
 
-    public String getNodeName() {
+    public DynamicValue<String> getNodeName() {
         return nodeName;
     }
 
-    public void setNodeName(String nodeName) {
+    public void setNodeName(DynamicValue<String> nodeName) {
         this.nodeName = nodeName;
     }
 
