@@ -116,13 +116,13 @@ public class TimeSeriesHandler {
                     timeSeriesBucketingHandler.ingestExistingMeasurement(measurement);
                 });
             }
+            timeSeriesBucketingHandler.flush();
+            TimeSeriesAggregationPipeline aggregationPipeline = timeSeries.getAggregationPipeline();
+            TimeSeriesAggregationQuery query = mapToQuery(request, aggregationPipeline);
+            TimeSeriesAggregationResponse response = aggregationPipeline.collect(query);
+
+            return mapToApiResponse(request, response);
         }
-
-        TimeSeriesAggregationPipeline aggregationPipeline = timeSeries.getAggregationPipeline();
-        TimeSeriesAggregationQuery query = mapToQuery(request, aggregationPipeline);
-        TimeSeriesAggregationResponse response = aggregationPipeline.collect(query);
-
-        return mapToApiResponse(request, response);
     }
 
     public List<Measurement> getRawMeasurements(String oqlFilter, int skip, int limit) {

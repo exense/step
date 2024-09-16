@@ -108,13 +108,13 @@ public class ReportNodeTimeSeries implements Closeable {
 
     public static ReportNodeTimeSeriesCollectionsSettings getCollectionsSettings(Configuration configuration) {
         return new ReportNodeTimeSeriesCollectionsSettings()
-                .setPerMinuteEnabled(configuration.getPropertyAsBoolean(TIME_SERIES_MINUTE_COLLECTION_ENABLED, false))
+                .setPerMinuteEnabled(configuration.getPropertyAsBoolean(TIME_SERIES_MINUTE_COLLECTION_ENABLED, true))
                 .setPerMinuteFlushInterval(configuration.getPropertyAsLong(TIME_SERIES_MINUTE_COLLECTION_FLUSH_PERIOD, TimeUnit.MINUTES.toMillis(1)))
-                .setHourlyEnabled(configuration.getPropertyAsBoolean(TIME_SERIES_HOUR_COLLECTION_ENABLED, false))
+                .setHourlyEnabled(configuration.getPropertyAsBoolean(TIME_SERIES_HOUR_COLLECTION_ENABLED, true))
                 .setHourlyFlushInterval(configuration.getPropertyAsLong(TIME_SERIES_HOUR_COLLECTION_FLUSH_PERIOD, TimeUnit.MINUTES.toMillis(5)))
-                .setDailyEnabled(configuration.getPropertyAsBoolean(TIME_SERIES_DAY_COLLECTION_ENABLED, false))
+                .setDailyEnabled(configuration.getPropertyAsBoolean(TIME_SERIES_DAY_COLLECTION_ENABLED, true))
                 .setDailyFlushInterval(configuration.getPropertyAsLong(TIME_SERIES_DAY_COLLECTION_FLUSH_PERIOD, TimeUnit.HOURS.toMillis(1)))
-                .setWeeklyEnabled(configuration.getPropertyAsBoolean(TIME_SERIES_WEEK_COLLECTION_ENABLED, false))
+                .setWeeklyEnabled(configuration.getPropertyAsBoolean(TIME_SERIES_WEEK_COLLECTION_ENABLED, true))
                 .setWeeklyFlushInterval(configuration.getPropertyAsLong(TIME_SERIES_WEEK_COLLECTION_FLUSH_PERIOD, TimeUnit.HOURS.toMillis(2)));
     }
 

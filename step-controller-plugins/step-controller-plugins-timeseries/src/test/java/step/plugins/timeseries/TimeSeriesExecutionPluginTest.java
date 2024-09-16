@@ -162,7 +162,7 @@ public class TimeSeriesExecutionPluginTest extends AbstractKeyword {
 				.withFilter(TimeSeriesFilterBuilder.buildFilter(Map.of("type", "custom")))
 				.withGroupDimensions(Set.of("name", "customAttr"))
 				.build();
-		TimeSeriesAggregationResponse customBuckets = timeSeriesAggregationPipeline.collect(keywordsQuery);
+		TimeSeriesAggregationResponse customBuckets = timeSeriesAggregationPipeline.collect(customBucketsQuery);
 		new TimeSeriesAggregationQueryBuilder()
                 .range(t1, t2)
                 .withFilter(TimeSeriesFilterBuilder.buildFilter(Map.of("type", "custom")))
