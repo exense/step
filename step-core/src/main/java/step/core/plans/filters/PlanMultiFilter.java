@@ -24,7 +24,6 @@ import org.apache.commons.collections.CollectionUtils;
 import step.core.plans.Plan;
 import step.core.plans.PlanFilter;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 

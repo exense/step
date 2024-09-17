@@ -1,5 +1,7 @@
 plans:
   - name: Test Plan
+    categories:
+      - Yaml Plan
     root:
       testCase:
         children:
@@ -14,6 +16,9 @@ plans:
               inputs:
                 - myInput: "myValue"
   - name: Test Plan with Composite
+    categories:
+      - Yaml Plan
+      - Composite
     root:
       testCase:
         children:
