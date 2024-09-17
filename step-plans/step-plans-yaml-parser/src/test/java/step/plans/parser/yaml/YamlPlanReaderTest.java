@@ -45,7 +45,7 @@ public class YamlPlanReaderTest {
 	private final YamlPlanReader yamlReader;
 
 	// DEV flag to store test results in local files
-	private boolean writeResultsToLocalFiles = true;
+	private boolean writeResultsToLocalFiles = false;
 
 	private final ObjectMapper technicalPlanMapper;
 
@@ -142,6 +142,18 @@ public class YamlPlanReaderTest {
 
 		convertPlanToYaml("src/test/resources/step/plans/parser/yaml/data-set/test-expected-data-set-tech-plan.yml",
 				"src/test/resources/step/plans/parser/yaml/data-set/test-data-set-converted-plan.yml"
+		);
+	}
+
+	@Test
+	public void callPlan() throws YamlPlanValidationException {
+		convertFromYamlToPlan(
+				"src/test/resources/step/plans/parser/yaml/call-plan/test-call-plan.yml",
+				"src/test/resources/step/plans/parser/yaml/call-plan/test-expected-call-tech-plan.yml"
+		);
+
+		convertPlanToYaml("src/test/resources/step/plans/parser/yaml/call-plan/test-expected-call-tech-plan.yml",
+				"src/test/resources/step/plans/parser/yaml/call-plan/test-converted-from-tech-call-plan.yml"
 		);
 	}
 

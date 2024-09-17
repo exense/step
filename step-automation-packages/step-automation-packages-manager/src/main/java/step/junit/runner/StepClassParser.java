@@ -20,11 +20,9 @@ package step.junit.runner;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.core.artefacts.AbstractArtefact;
 import step.core.plans.Plan;
 import step.core.scanner.AnnotationScanner;
 import step.handlers.javahandler.Keyword;
-import step.junit.runners.annotations.Plans;
 import step.plans.nl.RootArtefactType;
 import step.plans.nl.parser.PlanParser;
 import step.plans.parser.yaml.YamlPlanReader;
@@ -47,29 +45,6 @@ public class StepClassParser {
 		super();
 		this.appendClassnameToPlanName = appendClassnameToPlanName;
 		this.simpleYamlPlanReader = null;
-	}
-
-	public List<StepClassParserResult> createPlansForClass(Class<?> klass) throws Exception {
-		final List<StepClassParserResult> result = new ArrayList<>();
-		// Plans from annotation @Plans
-		result.addAll(getPlansFromPlansAnnotation(klass));
-		// Plans from methods annotated with @Plan
-		result.addAll(getPlanFromAnnotatedMethods(klass));
-		return result;
-	}
-
-	public List<StepClassParserResult> getPlansFromPlansAnnotation(Class<?> klass) throws Exception {
-		final List<StepClassParserResult> result = new ArrayList<>();
-		Plans plans;
-
-		logger.debug("searching for annotation for class "+klass.getName());
-		if ((plans = klass.getAnnotation(Plans.class)) != null) {
-			logger.debug("found annotation :"+ plans.value() + " for class "+klass.getName());
-			for (String name : plans.value()) {
-				result.add(createPlan(klass, name));
-			}
-		}
-		return result;
 	}
 
 	public List<StepClassParserResult> getPlanFromAnnotatedMethods(AnnotationScanner annotationScanner, Class<?> klass, Set<Method> excludedMethods) {
@@ -102,23 +77,12 @@ public class StepClassParser {
 							}
 						}
 						plan = planParser.parse(planStr, RootArtefactType.TestCase);
-						setPlanName(plan, planName);
+						YamlPlanReader.setPlanName(plan, planName);
 					} catch (Exception e) {
 						exception = e;
 					}
 					return new StepClassParserResult(planName, plan, exception);
 				}).collect(Collectors.toList());
-	}
-
-	public List<StepClassParserResult> getPlanFromAnnotatedMethods(Class<?> klass) {
-		try (AnnotationScanner annotationScanner = AnnotationScanner.forAllClassesFromClassLoader(klass.getClassLoader())) {
-			return getPlanFromAnnotatedMethods(annotationScanner,klass, new HashSet<>());
-		}
-	}
-
-	public StepClassParserResult createPlan(Class<?> klass, String fileName) throws Exception {
-		InputStream stream = klass.getResourceAsStream(fileName);
-		return createPlan(klass, fileName, stream);
 	}
 
 	public StepClassParserResult createPlan(Class<?> klass, String fileName, InputStream stream) {
@@ -134,7 +98,7 @@ public class StepClassParser {
 			if (parserMode == ParserMode.PLAIN_TEXT_PARSER) {
 				plan = planParser.parse(stream, RootArtefactType.TestCase);
 				logger.debug("plan is:" + plan + " for class " + klass.getName());
-				setPlanName(plan, fileName);
+				YamlPlanReader.setPlanName(plan, fileName);
 			} else if (parserMode == ParserMode.YAML_PARSER) {
 				try {
 					plan = initAndGetYamlPlanReader().readYamlPlan(stream);
@@ -150,13 +114,6 @@ public class StepClassParser {
 		}
 
 		return new StepClassParserResult(fileName, plan, exception);
-	}
-
-	public static void setPlanName(Plan plan, String name) {
-		Map<String, String> attributes = new HashMap<>();
-		attributes.put(AbstractArtefact.NAME, name);
-		plan.setAttributes(attributes);
-		plan.getRoot().getAttributes().put(AbstractArtefact.NAME, name);
 	}
 
 	private ParserMode chooseParserModeByFileName(String fileName) {

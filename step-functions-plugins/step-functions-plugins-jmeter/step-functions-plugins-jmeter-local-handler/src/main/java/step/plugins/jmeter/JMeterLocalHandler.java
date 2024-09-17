@@ -37,7 +37,10 @@ import step.grid.io.AttachmentHelper;
 
 import javax.json.JsonObject;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.Objects;
+import java.util.Properties;
 
 public class JMeterLocalHandler extends JsonBasedFunctionHandler {
 
@@ -105,17 +108,18 @@ public class JMeterLocalHandler extends JsonBasedFunctionHandler {
 		}
 
 		boolean debug = Boolean.parseBoolean(message.getProperties().getOrDefault(DEBUG, "false"));
-		if (appender != null && (debug || !success)) {
+		//Appender should always be closed, if errors occurs or debug mode is ON, JMeters logs are attached to the output
+		if (appender != null) {
 			appender.dispose();
-			byte[] logData = appender.getData();
-			if (logData != null && logData.length > 0) {
-				out.addAttachment(AttachmentHelper.generateAttachmentFromByteArray(logData, "log.txt"));
+			if (debug || !success) {
+				byte[] logData = appender.getData();
+				if (logData != null && logData.length > 0) {
+					out.addAttachment(AttachmentHelper.generateAttachmentFromByteArray(logData, "log.txt"));
+				}
 			}
 		}
 
-
 		return out.build();
-
 	}
 
 	private void initializeContextIfRequired(Input<JsonObject> message, ApplicationContext context) throws FileManagerException {
@@ -136,6 +140,37 @@ public class JMeterLocalHandler extends JsonBasedFunctionHandler {
 			JMeterUtils.loadJMeterProperties(jmeterHome+"/bin/jmeter.properties");
 			JMeterUtils.initLogging();
 			JMeterUtils.initLocale();
+
+			// Add local JMeter properties, if the file is found
+			String userProp = JMeterUtils.getPropDefault("user.properties",""); //$NON-NLS-1$
+			Properties jmeterProps = JMeterUtils.getJMeterProperties();
+			if (!userProp.isEmpty()){ //$NON-NLS-1$
+				File file = JMeterUtils.findFile(userProp);
+				if (file.canRead()){
+					try (FileInputStream fis = new FileInputStream(file)){
+						log.info("Loading user properties from: {}", file);
+						Properties tmp = new Properties();
+						tmp.load(fis);
+						jmeterProps.putAll(tmp);
+					} catch (IOException e) {
+						log.warn("Error loading user property file: {}", userProp, e);
+					}
+				}
+			}
+
+			// Add local system properties, if the file is found
+			String sysProp = JMeterUtils.getPropDefault("system.properties",""); //$NON-NLS-1$
+			if (!sysProp.isEmpty()){
+				File file = JMeterUtils.findFile(sysProp);
+				if (file.canRead()) {
+					try (FileInputStream fis = new FileInputStream(file)){
+						log.info("Loading system properties from: {}", file);
+						System.getProperties().load(fis);
+					} catch (IOException e) {
+						log.warn("Error loading system property file: {}", sysProp, e);
+					}
+				}
+			}
 
 			context.put("initialized", true);
 			context.put(ROOT_LOGGER_JMETER, rootLogger);

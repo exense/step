@@ -102,22 +102,20 @@ public class UploadKeywordsPackageMojoTest extends AbstractMojoTest {
 		mojo.setUrl("http://localhost:8080");
 		mojo.setBuildFinalName("Test build name");
 		mojo.setProjectVersion("1.0.0");
-		mojo.setArtifactId(ARTIFACT_ID);
-		mojo.setArtifactVersion(VERSION_ID);
-		mojo.setGroupId(GROUP_ID);
 
 		MavenProject mockedProject = Mockito.mock(MavenProject.class);
 
 		Artifact mainArtifact = createArtifactMock();
 
 		Mockito.when(mockedProject.getArtifact()).thenReturn(mainArtifact);
-		Mockito.when(mockedProject.getArtifacts()).thenReturn(new HashSet<>());
 		Mockito.when(mockedProject.getArtifactId()).thenReturn(ARTIFACT_ID);
 		Mockito.when(mockedProject.getGroupId()).thenReturn(GROUP_ID);
+		Mockito.when(mockedProject.getVersion()).thenReturn(VERSION_ID);
 
 		Artifact jarWithDependenciesArtifact = createArtifactWithDependenciesMock();
 
-		Mockito.when(mockedProject.getAttachedArtifacts()).thenReturn(Arrays.asList(jarWithDependenciesArtifact));
+		Mockito.when(mockedProject.getArtifacts()).thenReturn(Set.of(mainArtifact, jarWithDependenciesArtifact));
+		Mockito.when(mockedProject.getAttachedArtifacts()).thenReturn(Arrays.asList(mainArtifact, jarWithDependenciesArtifact));
 
 		mojo.setProject(mockedProject);
 

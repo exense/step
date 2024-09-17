@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.artefacts.handlers;
 
-import static junit.framework.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
 import static step.planbuilder.BaseArtefacts.afterSequence;
 import static step.planbuilder.BaseArtefacts.beforeSequence;
 import static step.planbuilder.BaseArtefacts.check;
@@ -31,7 +31,7 @@ import java.util.concurrent.TimeoutException;
 
 import org.junit.Test;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import step.artefacts.Check;
 import step.artefacts.Echo;
 import step.artefacts.Sequence;

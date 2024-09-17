@@ -170,4 +170,7 @@ public class AutomationPackageDescriptorReader {
         return this.planReader;
     }
 
+    public String getJsonSchema() {
+        return jsonSchema;
+    }
 }

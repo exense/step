@@ -71,7 +71,7 @@ public class YamlDynamicInputSerializer extends StepYamlSerializer<YamlDynamicIn
                         // yaml input wrapped in dynamic value
                         JsonNode dynamicInputValue = dynamicInput.get(DYN_VALUE_VALUE_FIELD);
                         //For arrays and objects the items or properties values (1st level)  can be dynamic too
-                        if (dynamicInputValue.isObject()) {
+                        if (dynamicInputValue != null && dynamicInputValue.isObject()) {
                             gen.writeFieldName(inputName);
                             gen.writeStartObject();
                             //browse object properties and convert dynamic values if present
@@ -91,7 +91,7 @@ public class YamlDynamicInputSerializer extends StepYamlSerializer<YamlDynamicIn
                                 }
                             }
                             gen.writeEndObject();
-                        } else if (dynamicInputValue.isArray()) {
+                        } else if (dynamicInputValue != null && dynamicInputValue.isArray()) {
                             gen.writeFieldName(inputName);
                             gen.writeStartArray();
                             ArrayNode arrayNode = (ArrayNode) dynamicInputValue;

@@ -91,29 +91,7 @@ public class AutomationPackageManagerOSTest {
         this.parameterAccessor = new AbstractAccessor<>(new InMemoryCollection<>());
         ParameterManager parameterManager = new ParameterManager(this.parameterAccessor, null, "groovy", new DynamicBeanResolver(new DynamicValueResolver(new ExpressionHandler())));
 
-        FunctionTypeRegistry functionTypeRegistry = Mockito.mock(FunctionTypeRegistry.class);
-
-        Configuration configuration = new Configuration();
-        AbstractFunctionType<?> jMeterFunctionType = new JMeterFunctionType(configuration);
-        AbstractFunctionType<?> generalScriptFunctionType = new GeneralScriptFunctionType(configuration);
-        AbstractFunctionType<?> compositeFunctionType = new CompositeFunctionType(new ObjectHookRegistry());
-        AbstractFunctionType<?> nodeFunctionType = new NodeFunctionType();
-
-        Mockito.when(functionTypeRegistry.getFunctionTypeByFunction(Mockito.any())).thenAnswer(invocationOnMock -> {
-            Object function = invocationOnMock.getArgument(0);
-            if (function instanceof JMeterFunction) {
-                return jMeterFunctionType;
-            } else if (function instanceof GeneralScriptFunction) {
-                return generalScriptFunctionType;
-            } else if (function instanceof CompositeFunction){
-                return compositeFunctionType;
-            } else if (function instanceof NodeFunction){
-                return nodeFunctionType;
-            }
-            else {
-                return null;
-            }
-        });
+        FunctionTypeRegistry functionTypeRegistry = prepareTestFunctionTypeRegistry();
 
         this.functionManager = new FunctionManagerImpl(functionAccessor, functionTypeRegistry);
         this.planAccessor = new PlanAccessorImpl(new InMemoryCollection<>());
@@ -138,6 +116,33 @@ public class AutomationPackageManagerOSTest {
                 new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, automationPackageHookRegistry, serializationRegistry),
                 automationPackageLocks
                 );
+    }
+
+    private static FunctionTypeRegistry prepareTestFunctionTypeRegistry() {
+        FunctionTypeRegistry functionTypeRegistry = Mockito.mock(FunctionTypeRegistry.class);
+
+        Configuration configuration = new Configuration();
+        AbstractFunctionType<?> jMeterFunctionType = new JMeterFunctionType(configuration);
+        AbstractFunctionType<?> generalScriptFunctionType = new GeneralScriptFunctionType(configuration);
+        AbstractFunctionType<?> compositeFunctionType = new CompositeFunctionType(new ObjectHookRegistry());
+        AbstractFunctionType<?> nodeFunctionType = new NodeFunctionType();
+
+        Mockito.when(functionTypeRegistry.getFunctionTypeByFunction(Mockito.any())).thenAnswer(invocationOnMock -> {
+            Object function = invocationOnMock.getArgument(0);
+            if (function instanceof JMeterFunction) {
+                return jMeterFunctionType;
+            } else if (function instanceof GeneralScriptFunction) {
+                return generalScriptFunctionType;
+            } else if (function instanceof CompositeFunction){
+                return compositeFunctionType;
+            } else if (function instanceof NodeFunction){
+                return nodeFunctionType;
+            }
+            else {
+                return null;
+            }
+        });
+        return functionTypeRegistry;
     }
 
     @After

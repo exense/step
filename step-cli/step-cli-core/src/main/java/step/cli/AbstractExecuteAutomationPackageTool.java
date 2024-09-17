@@ -33,15 +33,14 @@ import step.core.plans.PlanFilter;
 import step.core.plans.filters.PlanByExcludedNamesFilter;
 import step.core.plans.filters.PlanByIncludedNamesFilter;
 import step.core.plans.runner.PlanRunnerResult;
+import step.core.repositories.RepositoryObjectReference;
+import step.repositories.ArtifactRepositoryConstants;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
@@ -60,13 +59,14 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
 
     private String includePlans;
     private String excludePlans;
+    private final MavenArtifactIdentifier mavenArtifactIdentifier;
 
     public AbstractExecuteAutomationPackageTool(String url, String stepProjectName,
                                                 String userId, String authToken,
                                                 Map<String, String> executionParameters,
                                                 Integer executionResultTimeoutS, Boolean waitForExecution,
                                                 Boolean ensureExecutionSuccess, String includePlans,
-                                                String excludePlans) {
+                                                String excludePlans, MavenArtifactIdentifier mavenArtifactIdentifier) {
         super(url);
         this.stepProjectName = stepProjectName;
         this.userId = userId;
@@ -77,6 +77,7 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
         this.ensureExecutionSuccess = ensureExecutionSuccess;
         this.includePlans = includePlans;
         this.excludePlans = excludePlans;
+        this.mavenArtifactIdentifier = mavenArtifactIdentifier;
     }
 
     public static String getExecutionTreeAsString(PlanRunnerResult res) {
@@ -99,7 +100,13 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
     protected void executePackageOnStep() throws StepCliExecutionException {
         try (RemoteAutomationPackageClientImpl automationPackageClient = createRemoteAutomationPackageClient();
              RemoteExecutionManager remoteExecutionManager = createRemoteExecutionManager()) {
-            File automationPackageFile = getAutomationPackageFile();
+            File automationPackageFile = null;
+
+            // if group id and artifact id are specified, this means, that don't want to send the artifact (binary) to the controller,
+            if (useLocalArtifact()) {
+                automationPackageFile = getAutomationPackageFile();
+            }
+
             AutomationPackageExecutionParameters executionParameters = prepareExecutionParameters();
 
             List<String> executionIds;
@@ -129,6 +136,10 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
         } catch (Exception ex) {
             throw logAndThrow("Unexpected error while executing automation package", ex);
         }
+    }
+
+    protected boolean useLocalArtifact() {
+        return mavenArtifactIdentifier == null;
     }
 
     protected void waitForExecutionFinish(RemoteExecutionManager remoteExecutionManager, List<String> executionIds) throws StepCliExecutionException {
@@ -228,6 +239,15 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
             executionParameters.setPlanFilter(planFilter);
         }
 
+        if (mavenArtifactIdentifier != null) {
+            Map<String, String> repositoryParameters = new HashMap<>();
+            repositoryParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_ARTIFACT_ID, mavenArtifactIdentifier.getArtifactId());
+            repositoryParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_GROUP_ID, mavenArtifactIdentifier.getGroupId());
+            repositoryParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_VERSION, mavenArtifactIdentifier.getVersion());
+            repositoryParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_CLASSIFIER, mavenArtifactIdentifier.getClassifier());
+            executionParameters.setOriginalRepositoryObject(new RepositoryObjectReference(ArtifactRepositoryConstants.MAVEN_REPO_ID, repositoryParameters));
+        }
+
         return executionParameters;
     }
 
@@ -303,4 +323,7 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
         this.excludePlans = excludePlans;
     }
 
+    public MavenArtifactIdentifier getMavenArtifactIdentifier() {
+        return mavenArtifactIdentifier;
+    }
 }
