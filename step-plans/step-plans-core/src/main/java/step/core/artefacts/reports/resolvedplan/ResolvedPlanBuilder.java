@@ -43,10 +43,10 @@ public class ResolvedPlanBuilder {
         if (artefactNode.isCallingArtefactsFromOtherPlans()) {
             ArtefactHandler<AbstractArtefact, ReportNode> artefactHandler = artefactHandlerManager.getArtefactHandler(artefactNode);
             try {
+                // This kind of artefact push a new path when executed for the underlying plans and his own children, so the currentArtefactPath get updated
+                currentArtefactPath = ArtefactPathHelper.getPathOfArtefact(currentArtefactPath, artefactNode);
                 AbstractArtefact referencedChildArtefact = artefactHandler.resolveArtefactCall(artefactNode);
                 if(referencedChildArtefact != null) {
-                    // This kind of artefact push a new path when executed for the underlying plans and his own children, so the currentArtefactPath get updated
-                    currentArtefactPath = ArtefactPathHelper.getPathOfArtefact(currentArtefactPath, artefactNode);
                     // Recursively call the referencedArtefact
                     buildTreeRecursively(resolvedPlanNode.getId().toString(), referencedChildArtefact, currentArtefactPath);
                 }
