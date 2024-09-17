@@ -22,12 +22,11 @@ package step.core.execution;
 import step.core.collections.Filter;
 import step.core.collections.Filters;
 import step.core.collections.filters.And;
-import step.framework.server.tables.service.TableParameters;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class LeafReportNodesFilter {
+public class LeafReportNodesFilter extends ReportNodesFilter{
 	
 	protected List<String[]> optionalReportNodesFilter;
 	
@@ -36,15 +35,9 @@ public class LeafReportNodesFilter {
 		this.optionalReportNodesFilter = optionalReportNodesFilter;
 	}
 
-	public Filter buildAdditionalQuery(LeafReportNodesTableParameters parameters) {
-		List<Filter> fragments = new ArrayList<>();
-		if(parameters != null) {
-			String eid = parameters.getEid();
-			if(eid != null) {
-				fragments.add(Filters.equals("executionID", eid));
-			}
-		}
-		
+	@Override
+	public List<Filter> buildAdditionalQuery(ReportNodesTableParameters parameters) {
+		List<Filter> fragments = super.buildAdditionalQuery(parameters);
 		List<Filter> nodeFilters = new ArrayList<>();
 		nodeFilters.add(Filters.equals("_class","step.artefacts.reports.CallFunctionReportNode"));
 		//Filter on error.root=true excluding assert report (since they are reported as part of the call Keywords)
@@ -56,14 +49,8 @@ public class LeafReportNodesFilter {
 			}
 		}
 		fragments.add(Filters.or(nodeFilters));
-		if(parameters != null) {
-			List<String> testcases = parameters.getTestcases();
-			if(testcases != null) {
-				fragments.add(Filters.in("customAttributes.TestCase", testcases));
-			}
-		}
 		
-		return Filters.and(fragments);
+		return fragments;
 	}
 
 

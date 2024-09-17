@@ -98,15 +98,11 @@ public class YamlPlanJsonSchemaGenerator {
 			topLevelBuilder.add("$id", this.schemaId);
 		}
 		topLevelBuilder.add("title", "Plan");
-		topLevelBuilder.add("type", "object");
 
 		// prepare definitions to be reused in subschemas (referenced via $ref property)
-		topLevelBuilder.add("$defs", createDefs());
+		topLevelBuilder.add("$defs", createDefs(true));
 
-		// add properties for top-level "plan" object
-		topLevelBuilder.add("properties", createYamlPlanProperties(true));
-		topLevelBuilder.add("required", jsonProvider.createArrayBuilder().add("name").add("root"));
-		topLevelBuilder.add( "additionalProperties", false);
+		YamlJsonSchemaHelper.addRef(topLevelBuilder, YamlJsonSchemaHelper.PLAN_DEF);
 
 		// convert jakarta objects to jackson JsonNode
 		try {
@@ -132,7 +128,7 @@ public class YamlPlanJsonSchemaGenerator {
 	/**
 	 * Prepares definitions to be reused in json subschemas
 	 */
-	public JsonObjectBuilder createDefs() throws JsonSchemaPreparationException {
+	public JsonObjectBuilder createDefs(boolean versionedPlans) throws JsonSchemaPreparationException {
 		JsonObjectBuilder defsBuilder = jsonProvider.createObjectBuilder();
 
         // add definitions from extensions
@@ -150,10 +146,12 @@ public class YamlPlanJsonSchemaGenerator {
 				defsBuilder.add(artefactImplDef.getKey(), artefactImplDef.getValue());
 			}
 
-			// add definition for "anyOf" artefact definitions prepared above
 			defsBuilder.add(ARTEFACT_DEF, createArtefactDef(artefactImplDefs.controlArtefactDefs));
 			defsBuilder.add(ROOT_ARTEFACT_DEF, createArtefactDef(artefactImplDefs.rootArtefactDefs));
 			defsBuilder.add(AbstractYamlArtefact.ARTEFACT_ARRAY_DEF, createArtefactArrayDef());
+
+			defsBuilder.add(YamlJsonSchemaHelper.PLAN_DEF, createPlanDef(versionedPlans, false));
+			defsBuilder.add(YamlJsonSchemaHelper.COMPOSITE_PLAN_DEF, createPlanDef(versionedPlans, true));
 		});
 
 		for (JsonSchemaExtension definitionCreator : definitionCreators) {
@@ -266,12 +264,12 @@ public class YamlPlanJsonSchemaGenerator {
 		// properties declared in AbstractArtefact are taken from AbstractYamlArtefact
 		schemaHelper.extractPropertiesFromClass(jsonSchemaCreator, AbstractYamlArtefact.class, classPropertiesBuilder, requiredProperties, null);
 		schemaHelper.extractPropertiesFromClass(jsonSchemaCreator, simpleYamlArtefact, classPropertiesBuilder, requiredProperties, AbstractArtefact.class);
-
+		
 		// define the default node name explicitly
 		// TODO: find some solution to apply default 'nodeName'
 		classPropertiesBuilder.add(YamlPlanFields.NAME_YAML_FIELD,
 				jsonProvider.createObjectBuilder()
-						.add("type", "string")
+						.add("$ref", "#/$defs/SmartDynamicValueStringDef")
 						.add("default", new AbstractYamlArtefact.DefaultYamlArtefactNameProvider().getDefaultValue(simpleYamlArtefact, null))
 		);
 
@@ -282,6 +280,21 @@ public class YamlPlanJsonSchemaGenerator {
 		res.add("properties", schemaBuilder);
 		res.add("additionalProperties", false);
 		return res;
+	}
+
+	private JsonObjectBuilder createPlanDef(boolean versionedPlans, boolean isCompositePlan) {
+		JsonObjectBuilder yamlPlanDef = jsonProvider.createObjectBuilder();
+		// add properties for top-level "plan" object
+		yamlPlanDef.add("properties", createYamlPlanProperties(versionedPlans));
+		JsonArrayBuilder arrayBuilder = jsonProvider.createArrayBuilder();
+		if (!isCompositePlan) {
+			// for composite plan the name is not required
+			arrayBuilder.add("name");
+		}
+		arrayBuilder.add("root");
+		yamlPlanDef.add("required", arrayBuilder);
+		yamlPlanDef.add("additionalProperties", false);
+		return yamlPlanDef;
 	}
 
 	private JsonObjectBuilder createArtefactDef(Collection<String> artefactImplReferences) {

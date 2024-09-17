@@ -24,9 +24,8 @@
 
 	<parent>
 		<groupId>ch.exense.step</groupId>
-		<artifactId>step-parent</artifactId>
+		<artifactId>step</artifactId>
 		<version>0.0.0-SNAPSHOT</version>
-		<relativePath>../step-parent</relativePath>
 	</parent>
 	
 	<modules>
@@ -36,6 +35,7 @@
 		<module>step-functions-client-api</module>
 		<module>step-functions-package</module>
 		<module>step-functions-package-client</module>
+		<module>step-functions-package-controller</module>
 	</modules>
 
 	<dependencies>

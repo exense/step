@@ -1,0 +1,16 @@
+<configuration scan="true" scanPeriod="60 seconds">
+    <!-- this logback configuration file with custom name will only be used if explicitly set with logback.configurationFile system property -->
+    <!-- it is meant to be used with the maven-surefire-plugin -->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="org.lightcouch" level="error" />
+
+    <root level="info">
+        <!--<appender-ref ref="FILE" />-->
+        <appender-ref ref="STDOUT" />
+    </root>
+</configuration>

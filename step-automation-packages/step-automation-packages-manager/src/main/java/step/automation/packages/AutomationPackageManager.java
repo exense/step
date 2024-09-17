@@ -123,6 +123,7 @@ public class AutomationPackageManager {
      */
     public static AutomationPackageManager createLocalAutomationPackageManager(FunctionTypeRegistry functionTypeRegistry,
                                                                                FunctionAccessor mainFunctionAccessor,
+                                                                               PlanAccessor planAccessor,
                                                                                ResourceManager resourceManager,
                                                                                AutomationPackageReader reader,
                                                                                AutomationPackageHookRegistry hookRegistry) {
@@ -134,7 +135,7 @@ public class AutomationPackageManager {
                 new InMemoryAutomationPackageAccessorImpl(),
                 new FunctionManagerImpl(mainFunctionAccessor, functionTypeRegistry),
                 mainFunctionAccessor,
-                new InMemoryPlanAccessor(),
+                planAccessor,
                 resourceManager,
                 extensions,
                 hookRegistry, reader,
@@ -275,7 +276,7 @@ public class AutomationPackageManager {
         deletePlans(automationPackage);
         // schedules will be deleted in deleteAdditionalData via hooks
         deleteResources(automationPackage);
-        deleteAdditionalData(automationPackage, new AutomationPackageContext(resourceManager, null, null, extensions));
+        deleteAdditionalData(automationPackage, new AutomationPackageContext(resourceManager, null,  null,null, extensions));
     }
 
     /**
@@ -388,7 +389,7 @@ public class AutomationPackageManager {
                 if (oldPackage == null || !async || immediateWriteLock) {
                     //If not async or if it's a new package, we synchronously wait on a write lock and update
                     log.info("Updating the automation package " + newPackage.getId().toString() + " synchronously, any running executions on this package will delay the update.");
-                    ObjectId result = updateAutomationPackage(oldPackage, newPackage, staging, enricherForIncludedEntities, immediateWriteLock, automationPackageArchive);
+                    ObjectId result = updateAutomationPackage(oldPackage, newPackage, packageContent, staging, enricherForIncludedEntities, immediateWriteLock, automationPackageArchive);
                     return new AutomationPackageUpdateResult(oldPackage == null ? AutomationPackageUpdateStatus.CREATED : AutomationPackageUpdateStatus.UPDATED, result);
                 } else {
                     // async update
@@ -398,7 +399,7 @@ public class AutomationPackageManager {
                     AutomationPackage finalNewPackage = newPackage;
                     delayedUpdateExecutor.submit(() -> {
                         try {
-                            updateAutomationPackage(oldPackage, finalNewPackage, staging, enricherForIncludedEntities, false, automationPackageArchive);
+                            updateAutomationPackage(oldPackage, finalNewPackage, packageContent, staging, enricherForIncludedEntities, false, automationPackageArchive);
                         } catch (Exception e) {
                             handleExceptionOnPackageUpdate(finalNewPackage);
                             log.error("Exception on delayed AP update", e);
@@ -418,7 +419,7 @@ public class AutomationPackageManager {
     }
 
     private ObjectId updateAutomationPackage(AutomationPackage oldPackage, AutomationPackage newPackage,
-                                             AutomationPackageStaging staging, ObjectEnricher enricherForIncludedEntities,
+                                             AutomationPackageContent packageContent, AutomationPackageStaging staging, ObjectEnricher enricherForIncludedEntities,
                                              boolean alreadyLocked, AutomationPackageArchive automationPackageArchive) {
         try {
             //If not already locked (i.e. was not able to acquire an immediate write lock)
@@ -432,7 +433,7 @@ public class AutomationPackageManager {
                 deleteAutomationPackageEntities(oldPackage);
             }
             // persist all staged entities
-            persistStagedEntities(staging, enricherForIncludedEntities, automationPackageArchive);
+            persistStagedEntities(staging, enricherForIncludedEntities, automationPackageArchive, packageContent);
             ObjectId result = automationPackageAccessor.save(newPackage).getId();
             logAfterSave(staging, oldPackage, newPackage);
             return result;
@@ -503,7 +504,7 @@ public class AutomationPackageManager {
         for (HookEntry hookEntry : hookEntries) {
             boolean hooked =  automationPackageHookRegistry.onPrepareStaging(
                     hookEntry.fieldName,
-                    new AutomationPackageContext(staging.getResourceManager(), automationPackageArchive, enricherForIncludedEntities, extensions),
+                    new AutomationPackageContext(staging.getResourceManager(), automationPackageArchive, packageContent, enricherForIncludedEntities, extensions),
                     packageContent,
                     hookEntry.values,
                     oldPackage, staging);
@@ -516,7 +517,8 @@ public class AutomationPackageManager {
 
     protected void persistStagedEntities(AutomationPackageStaging staging,
                                          ObjectEnricher objectEnricher,
-                                         AutomationPackageArchive automationPackageArchive) {
+                                         AutomationPackageArchive automationPackageArchive,
+                                         AutomationPackageContent packageContent) {
         List<Resource> stagingResources = staging.getResourceManager().findManyByCriteria(null);
         try {
             for (Resource resource: stagingResources) {
@@ -545,7 +547,7 @@ public class AutomationPackageManager {
         for (HookEntry hookEntry : hookEntries) {
             boolean hooked = automationPackageHookRegistry.onCreate(
                     hookEntry.fieldName, hookEntry.values,
-                    new AutomationPackageContext(resourceManager, automationPackageArchive, objectEnricher, extensions)
+                    new AutomationPackageContext(resourceManager, automationPackageArchive, packageContent, objectEnricher, extensions)
             );
             if (!hooked) {
                 log.warn("Additional field in automation package has been ignored and skipped: " + hookEntry.fieldName);
@@ -566,14 +568,14 @@ public class AutomationPackageManager {
                                              AutomationPackage oldPackage, ObjectEnricher enricher, ResourceManager stagingResourceManager) {
         List<Plan> plans = packageContent.getPlans();
         AutomationPackagePlansAttributesApplier specialAttributesApplier = new AutomationPackagePlansAttributesApplier(stagingResourceManager);
-        specialAttributesApplier.applySpecialAttributesToPlans(plans, automationPackageArchive, enricher, extensions);
+        specialAttributesApplier.applySpecialAttributesToPlans(plans, automationPackageArchive, packageContent, enricher, extensions);
 
         fillEntities(plans, oldPackage != null ? getPackagePlans(oldPackage.getId()) : new ArrayList<>(), enricher);
         return plans;
     }
 
     protected List<Function> prepareFunctionsStaging(AutomationPackageArchive automationPackageArchive, AutomationPackageContent packageContent, ObjectEnricher enricher, AutomationPackage oldPackage, ResourceManager stagingResourceManager) {
-        AutomationPackageContext apContext = new AutomationPackageContext(stagingResourceManager, automationPackageArchive, enricher, extensions);
+        AutomationPackageContext apContext = new AutomationPackageContext(stagingResourceManager, automationPackageArchive, packageContent, enricher, extensions);
         List<Function> completeFunctions = packageContent.getKeywords().stream().map(keyword -> keyword.prepareKeyword(apContext)).collect(Collectors.toList());
 
         // get old functions with same name and reuse their ids

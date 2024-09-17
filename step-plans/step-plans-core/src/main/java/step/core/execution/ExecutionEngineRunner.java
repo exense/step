@@ -26,6 +26,9 @@ import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandlerManager;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
+import step.core.artefacts.reports.aggregated.ReportNodeTimeSeries;
+import step.core.artefacts.reports.resolvedplan.ResolvedPlanBuilder;
+import step.core.artefacts.reports.resolvedplan.ResolvedPlanNode;
 import step.core.execution.model.*;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
@@ -86,6 +89,10 @@ public class ExecutionEngineRunner {
 					logger.info(messageWithId("Starting execution."));
 					updateStatus(ExecutionStatus.ESTIMATING);
 
+					//resolve and save any embedded functions and sub plans before resolving the plan
+					resolveInnerPlanAndFunctionArtefacts(plan);
+					buildAndPersistResolvedPlan(plan);
+
 					executionContext.associateThread();
 
 					ReportNode rootReportNode = executionContext.getReport();
@@ -131,6 +138,12 @@ public class ExecutionEngineRunner {
 			}
 		}
 		return result;
+	}
+
+	private void buildAndPersistResolvedPlan(Plan plan) {
+		ResolvedPlanBuilder resolvedPlanBuilder = new ResolvedPlanBuilder(executionContext);
+		ResolvedPlanNode resolvedPlanRoot = resolvedPlanBuilder.buildResolvedPlan(plan);
+		updateExecution(e -> e.setResolvedPlanRootNodeId(resolvedPlanRoot.getId().toString()));
 	}
 
 	public static void abort(ExecutionContext executionContext) {
@@ -191,7 +204,7 @@ public class ExecutionEngineRunner {
 		return message + " Execution ID: " + executionContext.getExecutionId();
 	}
 
-	private ReportNode execute(Plan plan, ReportNode rootReportNode) throws ProvisioningException, DeprovisioningException {
+	private void resolveInnerPlanAndFunctionArtefacts(Plan plan) {
 		// Save plan embedded functions to context accessor
 		Collection<Function> planInnerFunctions = plan.getFunctions();
 		if(planInnerFunctions!=null && planInnerFunctions.size()>0) {
@@ -207,7 +220,9 @@ public class ExecutionEngineRunner {
 		if(subPlans!=null && subPlans.size()>0) {
 			planAccessor.save(subPlans);
 		}
-		
+	}
+
+	private ReportNode execute(Plan plan, ReportNode rootReportNode) throws ProvisioningException, DeprovisioningException {
 		ArtefactHandlerManager artefactHandlerManager = executionContext.getArtefactHandlerManager();
 		AbstractArtefact root = plan.getRoot();
 		artefactHandlerManager.createReportSkeleton(root, rootReportNode);
@@ -218,6 +233,12 @@ public class ExecutionEngineRunner {
 			updateStatus(ExecutionStatus.RUNNING);
 			return artefactHandlerManager.execute(root, rootReportNode);
 		} finally {
+			try {
+				//Flush report node TS
+				executionContext.require(ReportNodeTimeSeries.class).flush();
+			} catch (Exception e) {
+				logger.error("Unable to flush report nodes time series upon execution end.", e);
+			}
 			// Deprovision the resources provisioned for the execution
 			deprovisionRequiredResources();
 		}

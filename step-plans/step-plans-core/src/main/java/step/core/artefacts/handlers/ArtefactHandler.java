@@ -27,6 +27,7 @@ import step.core.artefacts.WorkArtefactFactory;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.artefacts.reports.ReportNodeStatus;
+import step.core.artefacts.reports.aggregated.ReportNodeTimeSeries;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionContextBindings;
@@ -45,6 +46,7 @@ import java.util.stream.Collectors;
 
 public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_NODE extends ReportNode> {
 
+	public static final String ARTEFACT_PATH = "artefactPath";
 	protected static Logger logger = LoggerFactory.getLogger(ArtefactHandler.class);
 
 	public static final String FILE_VARIABLE_PREFIX = "file:";
@@ -65,7 +67,8 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	private VariablesManager variablesManager;
 	private ReportNodeCache reportNodeCache;
 	private DynamicBeanResolver dynamicBeanResolver;
-		
+	private ReportNodeTimeSeries reportNodeTimeSeries;
+
 	public ArtefactHandler() {
 		super();		
 	}
@@ -74,6 +77,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		this.context = context;
 		artefactHandlerManager = context.getArtefactHandlerManager();
 		reportNodeAccessor = context.getReportNodeAccessor();
+		reportNodeTimeSeries = context.require(ReportNodeTimeSeries.class);
 		reportNodeCache = context.getReportNodeCache();
 		variablesManager = context.getVariablesManager();
 		reportNodeAttachmentManager = new ReportNodeAttachmentManager(context);
@@ -191,12 +195,19 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 				saveReportNode(reportNode);
 			}
 		}
+
+		// TODO implement node pruning for timeseries
+		reportNodeTimeSeries.ingestReportNode(reportNode);
 		
 		context.getExecutionCallbacks().afterReportNodeExecution(context, reportNode);
 		
 		afterDelegation(reportNode, parentReportNode, artefact);
 		
 		return reportNode;
+	}
+
+	public AbstractArtefact resolveArtefactCall(ARTEFACT artefact) {
+		return null;
 	}
 
 	private boolean filterArtefact(ARTEFACT artefact) {
@@ -207,7 +218,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	/**
 	 * Before calling {@link ArtefactHandler#execute_(ReportNode, AbstractArtefact)}
 	 * for an artefact node N this method is called for each child of N which
-	 * returns true on {@link AbstractArtefact#isPropertyArefact()}. This allow
+	 * returns true on {@link AbstractArtefact#isPropertyArtefact()}. This allow
 	 * initialization of variables or properties before execution
 	 * 
 	 * @param parentReportNode the parent {@link ReportNode}
@@ -246,6 +257,9 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 			reportNode = createReportNode(parentReportNode, artefact);			
 		}
 
+		String artefactHash = getArtefactHash(artefact);
+		reportNode.setArtefactHash(artefactHash);
+
 		context.setCurrentReportNode(reportNode);
 		reportNodeCache.put(reportNode);
 		
@@ -267,6 +281,15 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		}
 		
 		return reportNode;
+	}
+
+	private String getArtefactHash(ARTEFACT artefact) {
+		String currentArtefactPath = currentArtefactPath();
+		return ArtefactPathHelper.generateArtefactHash(currentArtefactPath, artefact);
+	}
+
+	protected String currentArtefactPath() {
+		return (String) variablesManager.getVariable(ARTEFACT_PATH);
 	}
 
 	protected void delegateCreateReportSkeleton(AbstractArtefact artefact, ReportNode parentNode) {
@@ -405,7 +428,13 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		String name = artefact.getAttribute(AbstractArtefact.NAME);
 		return name != null ? name : "Unnamed";
 	}
-	
+
+	protected void pushArtefactPath(ReportNode node, ARTEFACT artefact) {
+		String currentArtefactPath = currentArtefactPath();
+		String newArtefactPath = ArtefactPathHelper.getPathOfArtefact(currentArtefactPath, artefact);
+		context.getVariablesManager().putVariable(node, ARTEFACT_PATH, newArtefactPath);
+	}
+
 	/**
 	 * Creates the {@link ReportNode} corresponding to the provided artefact
 	 * @param parentReportNode the parent {@link ReportNode}
@@ -435,11 +464,11 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	}
 
 	public static List<AbstractArtefact> filterPropertyChildren(List<AbstractArtefact> children) {
-		return children != null ? children.stream().filter(c -> c.isPropertyArefact()).collect(Collectors.toList()) : null;
+		return children != null ? children.stream().filter(c -> c.isPropertyArtefact()).collect(Collectors.toList()) : null;
 	}
 	
 	public static List<AbstractArtefact> excludePropertyChildren(List<AbstractArtefact> children) {
-		return children != null ? children.stream().filter(c -> !c.isPropertyArefact()).collect(Collectors.toList()) : null;
+		return children != null ? children.stream().filter(c -> !c.isPropertyArtefact()).collect(Collectors.toList()) : null;
 	}
 	
 	protected <T extends AbstractArtefact> T createWorkArtefact(Class<T> artefactClass, AbstractArtefact parentArtefact, String name) {

@@ -18,21 +18,131 @@
  ******************************************************************************/
 package step.automation.packages.execution;
 
+import org.quartz.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import step.automation.packages.AutomationPackageManager;
+import step.automation.packages.AutomationPackagePlugin;
 import step.core.GlobalContext;
+import step.core.controller.ControllerSetting;
+import step.core.controller.ControllerSettingAccessor;
+import step.core.execution.model.ExecutionAccessor;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
+import step.core.scheduler.SchedulerPlugin;
+import step.core.scheduler.housekeeping.HousekeepingJobsManager;
+import step.functions.accessor.FunctionAccessor;
+import step.functions.type.FunctionTypeRegistry;
 
-@Plugin
+import java.time.Duration;
+import java.util.function.Supplier;
+
+@Plugin(dependencies = {AutomationPackagePlugin.class, SchedulerPlugin.class})
 public class IsolatedAutomationPackageRepositoryPlugin extends AbstractControllerPlugin {
 
-    public static final String ISOLATED_AUTOMATION_PACKAGE = "isolatedAutomationPackage";
+    private static final Logger log = LoggerFactory.getLogger(IsolatedAutomationPackageRepositoryPlugin.class);
+
+    public static final String ISOLATED_AP_HOUSEKEEPING_ENABLED = "isolated_ap_housekeeping_enabled";
+    public static final String ISOLATED_AP_HOUSEKEEPING_JOB_CRON = "isolated_ap_housekeeping_job_cron";
+    public static final String ISOLATED_AP_HOUSEKEEPING_TTL = "isolated_ap_housekeeping_ttl";
+    private ControllerSettingAccessor controllerSettingAccessor;
 
     @Override
-    public void serverStart(GlobalContext context) throws Exception {
-        super.serverStart(context);
-        IsolatedAutomationPackageRepository repository = new IsolatedAutomationPackageRepository();
+    public void initializeData(GlobalContext context) throws Exception {
+        super.initializeData(context);
 
-        context.getRepositoryObjectManager().registerRepository(ISOLATED_AUTOMATION_PACKAGE, repository);
-        context.put(IsolatedAutomationPackageRepository.class, repository);
+        // settings
+         controllerSettingAccessor = context.require(ControllerSettingAccessor.class);
+        createIsolatedApControllerSettingsIfNecessary(context);
+    }
+
+    @Override
+    public void afterInitializeData(GlobalContext context) throws Exception {
+        super.afterInitializeData(context);
+
+        // repository
+        IsolatedAutomationPackageRepository isolatedApRepository = new IsolatedAutomationPackageRepository(
+                context.require(AutomationPackageManager.class),
+                context.getResourceManager(),
+                context.require(FunctionTypeRegistry.class),
+                context.require(FunctionAccessor.class),
+                () -> {
+                    ControllerSetting setting = controllerSettingAccessor.getSettingByKey(ISOLATED_AP_HOUSEKEEPING_TTL);
+                    return setting == null ? null : setting.getValue();
+                }
+        );
+        context.getRepositoryObjectManager().registerRepository(AutomationPackageExecutor.ISOLATED_AUTOMATION_PACKAGE, isolatedApRepository);
+        context.put(IsolatedAutomationPackageRepository.class, isolatedApRepository);
+
+        // isolated ap executor
+        AutomationPackageExecutor packageExecutor = new AutomationPackageExecutor(
+                context.getScheduler(),
+                context.require(ExecutionAccessor.class),
+                context.getRepositoryObjectManager()
+        );
+        context.put(AutomationPackageExecutor.class, packageExecutor);
+
+        // register cleanup job
+        HousekeepingJobsManager housekeepingJobsManager = context.require(HousekeepingJobsManager.class);
+        housekeepingJobsManager.registerManagedJob(new HousekeepingJobsManager.ManagedHousekeepingJob() {
+            @Override
+            protected Class<? extends Job> getJobClass() {
+                return CleanupApResourcesJob.class;
+            }
+
+            @Override
+            protected Supplier<? extends Job> getJobSupplier() {
+                return (Supplier<Job>) () -> new CleanupApResourcesJob(context.require(IsolatedAutomationPackageRepository.class), context.require(ControllerSettingAccessor.class));
+            }
+
+            @Override
+            protected String getName() {
+                return ISOLATED_AP_HOUSEKEEPING_JOB_CRON;
+            }
+
+            @Override
+            protected TriggerKey getTriggerKey() {
+                return new TriggerKey("IsolatedApHousekeepingDataTrigger", "Housekeeping");
+            }
+
+            @Override
+            protected JobKey getJobKey() {
+                return new JobKey("IsolatedApHousekeepingData", "Housekeeping");
+            }
+        });
+
+    }
+
+    protected void createIsolatedApControllerSettingsIfNecessary(GlobalContext context) {
+        createSettingIfNotExisting(context, ISOLATED_AP_HOUSEKEEPING_ENABLED, "true");
+        createSettingIfNotExisting(context, ISOLATED_AP_HOUSEKEEPING_TTL, Long.toString(Duration.ofDays(1).toMillis()));
+        createSettingIfNotExisting(context, ISOLATED_AP_HOUSEKEEPING_JOB_CRON, "0 8 * * * ?");
+    }
+
+    private static final class CleanupApResourcesJob implements Job {
+
+        private final IsolatedAutomationPackageRepository repository;
+        private final ControllerSettingAccessor controllerSettingAccessor;
+
+        public CleanupApResourcesJob(IsolatedAutomationPackageRepository repository, ControllerSettingAccessor controllerSettingAccessor) {
+            this.repository = repository;
+            this.controllerSettingAccessor = controllerSettingAccessor;
+        }
+
+        @Override
+        public void execute(JobExecutionContext context) {
+            if (controllerSettingAccessor.getSettingAsBoolean(ISOLATED_AP_HOUSEKEEPING_ENABLED)) {
+                repository.cleanUpOutdatedResources();
+            }
+        }
+    }
+
+    protected void createSettingIfNotExisting(GlobalContext context, String key, String defaultValue) {
+        ControllerSettingAccessor controllerSettingAccessor = context.require(ControllerSettingAccessor.class);
+        ControllerSetting housekeepingEnabled = controllerSettingAccessor.getSettingByKey(key);
+        if (housekeepingEnabled == null) {
+            log.info("Set default controller value: {}={}", key, defaultValue);
+            controllerSettingAccessor.save(new ControllerSetting(key, defaultValue));
+        }
     }
 }

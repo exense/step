@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Test;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.ThreadGroup;
 import step.core.artefacts.AbstractArtefact;

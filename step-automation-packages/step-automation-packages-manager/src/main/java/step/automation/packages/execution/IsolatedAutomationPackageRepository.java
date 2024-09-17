@@ -18,50 +18,64 @@
  ******************************************************************************/
 package step.automation.packages.execution;
 
+import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.automation.packages.AutomationPackage;
 import step.automation.packages.AutomationPackageManager;
-import step.core.accessors.AbstractOrganizableObject;
-import step.core.accessors.Accessor;
-import step.core.accessors.LayeredAccessor;
+import step.automation.packages.AutomationPackageManagerException;
 import step.core.execution.ExecutionContext;
+import step.core.execution.model.AutomationPackageExecutionParameters;
 import step.core.objectenricher.ObjectPredicate;
-import step.core.plans.Plan;
-import step.core.plans.PlanAccessor;
-import step.core.repositories.*;
-import step.functions.Function;
+import step.core.repositories.ArtefactInfo;
+import step.core.repositories.TestSetStatusOverview;
 import step.functions.accessor.FunctionAccessor;
-import step.resources.LayeredResourceManager;
-import step.resources.ResourceManager;
+import step.functions.type.FunctionTypeRegistry;
+import step.resources.*;
 
-import java.util.ArrayList;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.time.Duration;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 
-public class IsolatedAutomationPackageRepository extends AbstractRepository {
-
-    public static final String REPOSITORY_PARAM_CONTEXTID = "contextid";
+public class IsolatedAutomationPackageRepository extends RepositoryWithAutomationPackageSupport {
 
     public static final Logger log = LoggerFactory.getLogger(IsolatedAutomationPackageRepository.class);
+    public static final String CONTEXT_ID_CUSTOM_FIELD = "contextId";
+    public static final String LAST_EXECUTION_TIME_CUSTOM_FIELD = "lastExecutionTime";
 
-    private final ConcurrentHashMap<String, AutomationPackageManager> inMemoryPackageManagers = new ConcurrentHashMap<>();
+    private final ResourceManager resourceManager;
+    private final Supplier<String> ttlValueSupplier;
 
-    protected IsolatedAutomationPackageRepository() {
-        super(Set.of(REPOSITORY_PARAM_CONTEXTID));
+    protected IsolatedAutomationPackageRepository(AutomationPackageManager manager,
+                                                  ResourceManager resourceManager,
+                                                  FunctionTypeRegistry functionTypeRegistry,
+                                                  FunctionAccessor functionAccessor,
+                                                  Supplier<String> ttlValueSupplier) {
+        super(Set.of(REPOSITORY_PARAM_CONTEXTID), manager, functionTypeRegistry, functionAccessor);
+        this.resourceManager = resourceManager;
+        this.ttlValueSupplier = ttlValueSupplier;
     }
 
     @Override
-    public ArtefactInfo getArtefactInfo(Map<String, String> repositoryParameters) throws Exception {
-        AutomationPackage automationPackage = getAutomationPackageForContext(repositoryParameters);
-        if (automationPackage == null) {
+    public ArtefactInfo getArtefactInfo(Map<String, String> repositoryParameters) {
+        // we expect, that there is only one automation package stored per context
+        String apName = repositoryParameters.get(AP_NAME);
+        String contextId = repositoryParameters.get(REPOSITORY_PARAM_CONTEXTID);
+
+        Resource resource = getResource(contextId, apName);
+        if (resource == null) {
             return null;
         }
+
         ArtefactInfo info = new ArtefactInfo();
         info.setType("automationPackage");
-        info.setName(automationPackage.getAttribute(AbstractOrganizableObject.NAME));
+        info.setName(resource.getCustomField(AP_NAME_CUSTOM_FIELD, String.class));
         return info;
     }
 
@@ -70,71 +84,95 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
         return new TestSetStatusOverview();
     }
 
-    private AutomationPackage getAutomationPackageForContext(Map<String, String> repositoryParameters) {
-        // we expect, that there is only one automation package stored per context
-        AutomationPackageManager automationPackageManager = getContext(repositoryParameters);
-        return automationPackageManager.getAllAutomationPackages(null).findFirst().orElse(null);
-    }
-
-    private AutomationPackageManager getContext(Map<String, String> repositoryParameters) {
-        return inMemoryPackageManagers.get(repositoryParameters.get(REPOSITORY_PARAM_CONTEXTID));
-    }
-
     @Override
-    public ImportResult importArtefact(ExecutionContext context, Map<String, String> repositoryParameters) {
-        AutomationPackageManager automationPackageManager = getContext(repositoryParameters);
-        AutomationPackage automationPackage = getAutomationPackageForContext(repositoryParameters);
-
-        String planId = repositoryParameters.get(RepositoryObjectReference.PLAN_ID);
-        ImportResult result = new ImportResult();
-        result.setPlanId(planId);
-
-        Plan plan = automationPackageManager.getPackagePlans(automationPackage.getId())
-                .stream()
-                .filter(p -> p.getId().toString().equals(planId)).findFirst().orElse(null);
-        if (plan == null) {
-            // failed result
-            result.setErrors(List.of("Automation package " + automationPackage.getAttribute(AbstractOrganizableObject.NAME) + " has no plan with id=" + planId));
-            return result;
-        }
-        enrichPlan(context, plan);
-
-        PlanAccessor planAccessor = context.getPlanAccessor();
-        if (!isLayeredAccessor(planAccessor)) {
-            result.setErrors(List.of(planAccessor.getClass() + " is not layered"));
-            return result;
-        }
-
-        planAccessor.save(plan);
-
-        FunctionAccessor functionAccessor = context.get(FunctionAccessor.class);
-        List<Function> functionsForSave = new ArrayList<>();
-        if (plan.getFunctions() != null) {
-            plan.getFunctions().iterator().forEachRemaining(functionsForSave::add);
-        }
-        functionsForSave.addAll(automationPackageManager.getPackageFunctions(automationPackage.getId()));
-        functionAccessor.save(functionsForSave);
-
-        ResourceManager contextResourceManager = context.getResourceManager();
-        if (!(contextResourceManager instanceof LayeredResourceManager)) {
-            result.setErrors(List.of(contextResourceManager.getClass() + " is not layered"));
-            return result;
-        }
-
-        // import all resources from automation package to execution context by adding the layer to contextResourceManager
-        // resource manager used in isolated package manager is non-permanent
-        ((LayeredResourceManager) contextResourceManager).pushManager(automationPackageManager.getResourceManager(), false);
-
-        // call some hooks on import
-        automationPackageManager.runExtensionsBeforeIsolatedExecution(automationPackage, context, automationPackageManager.getExtensions(), result);
-
-        result.setSuccessful(true);
-
-        return result;
+    public AutomationPackageFile getApFileForExecution(InputStream apInputStream, String inputStreamFileName, AutomationPackageExecutionParameters parameters, ObjectId contextId) {
+        // for files from input stream we save persists the resource to support re-execution
+        Resource apResource = saveApResource(contextId.toString(), apInputStream, inputStreamFileName);
+        File file = getApFileByResource(apResource);
+        return new AutomationPackageFile(file, apResource);
     }
 
-    private static boolean isLayeredAccessor(Accessor<?> accessor) {
-        return accessor instanceof LayeredAccessor;
+    public AutomationPackageFile restoreApFile(String contextId, Map<String, String> repositoryParameters) {
+        String apName = repositoryParameters.get(AP_NAME);
+
+        Resource resource = contextId == null ? null : getResource(contextId, apName);
+
+        if (resource == null) {
+            throw new AutomationPackageManagerException("The requested Automation Package file has been removed by the housekeeping (package name '" + apName + "' and execution context " + contextId + ")");
+        }
+
+        File file = null;
+
+        ResourceRevisionFileHandle fileHandle = resourceManager.getResourceFile(resource.getId().toString());
+        if (fileHandle != null) {
+            file = fileHandle.getResourceFile();
+        }
+        if (file == null) {
+            throw new AutomationPackageManagerException("Automation package file is not found for automation package '" + apName + "' and execution context " + contextId);
+        }
+
+        updateLastExecution(resource);
+        return new AutomationPackageFile(file, resource);
+    }
+
+    protected void updateLastExecution(Resource resource) {
+        try {
+            resource.addCustomField(LAST_EXECUTION_TIME_CUSTOM_FIELD, OffsetDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME));
+            resourceManager.saveResource(resource);
+        } catch (IOException exception) {
+            throw new AutomationPackageManagerException("Cannot update the execution time for automation package " + resource.getCustomField(AP_NAME_CUSTOM_FIELD));
+        }
+    }
+
+    protected Resource getResource(String contextId, String apName) {
+        List<Resource> foundResources = resourceManager.findManyByCriteria(
+                Map.of("resourceType", ResourceManager.RESOURCE_TYPE_ISOLATED_AP,
+                        "customFields." + CONTEXT_ID_CUSTOM_FIELD, contextId,
+                        "customFields." + AP_NAME_CUSTOM_FIELD, apName)
+        );
+        Resource resource = null;
+        if (!foundResources.isEmpty()) {
+            resource = foundResources.get(0);
+        }
+        return resource;
+    }
+
+    public void cleanUpOutdatedResources() {
+        log.info("Cleanup outdated automation packages...");
+        String ttlString = ttlValueSupplier.get();
+
+        long ttlDurationMs = Long.parseLong(ttlString);
+        Duration ttlDuration = Duration.ofMillis(ttlDurationMs);
+        OffsetDateTime minExecutionTime = OffsetDateTime.now().minus(ttlDuration);
+
+        List<Resource> foundResources = resourceManager.findManyByCriteria(
+                Map.of("resourceType", ResourceManager.RESOURCE_TYPE_ISOLATED_AP)
+        );
+
+        int removed = 0;
+        for (Resource foundResource : foundResources) {
+            String apResourceInfo = getApResourceInfo(foundResource);
+            try {
+                String lastExecutionTimeStr = foundResource.getCustomField(LAST_EXECUTION_TIME_CUSTOM_FIELD, String.class);
+                if (lastExecutionTimeStr != null) {
+                    OffsetDateTime lastExecutionTime = OffsetDateTime.parse(lastExecutionTimeStr, DateTimeFormatter.ISO_DATE_TIME);
+                    if (lastExecutionTime.isBefore(minExecutionTime)) {
+                        log.info("Cleanup the outdated resource for automation package: {} ...", apResourceInfo);
+                        resourceManager.deleteResource(foundResource.getId().toString());
+                        removed++;
+                    }
+                } else {
+                    log.warn("The last execution time is unknown for automation package: {}", apResourceInfo);
+                }
+            } catch (Exception e) {
+                log.error("Unable to cleanup outdated resource for automation package: {}", apResourceInfo);
+            }
+        }
+        log.info("Cleanup outdated automation packages finished. {} of {} packages have been removed", removed, foundResources.size());
+    }
+
+    private String getApResourceInfo(Resource resource){
+        return resource.getCustomField(AP_NAME_CUSTOM_FIELD) + " (ctx=" + resource.getCustomField(CONTEXT_ID_CUSTOM_FIELD) + ")";
     }
 
     @Override
@@ -142,22 +180,38 @@ public class IsolatedAutomationPackageRepository extends AbstractRepository {
 
     }
 
-    public void cleanupContext(String contextId) {
-        // only after isolated execution is finished we can clean up temporary created resources
+    public Resource saveApResource(String contextId, InputStream apStream, String fileName) {
+        // store file in temporary storage to support rerun
         try {
-            AutomationPackageManager automationPackageManager = this.inMemoryPackageManagers.get(contextId);
-            if (automationPackageManager != null) {
-                automationPackageManager.cleanup();
-            }
-        } finally {
-            this.inMemoryPackageManagers.remove(contextId);
+            // find by resource type and contextId (or apName and override)
+            ResourceRevisionContainer resourceContainer = resourceManager.createResourceContainer(ResourceManagerImpl.RESOURCE_TYPE_ISOLATED_AP, fileName);
+
+            Resource resource = resourceContainer.getResource();
+            resource.addCustomField(CONTEXT_ID_CUSTOM_FIELD, contextId);
+            resource.addCustomField(LAST_EXECUTION_TIME_CUSTOM_FIELD, OffsetDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME));
+            resourceManager.saveResource(resource);
+
+            resource = resourceManager.saveResourceContent(resource.getId().toString(), apStream, fileName);
+
+            return resource;
+        } catch (IOException | InvalidResourceFormatException ex) {
+            throw new AutomationPackageManagerException("Cannot save automation package as resource: " + fileName, ex);
         }
     }
 
-    public void putContext(String contextId, AutomationPackageManager automationPackageManager) {
-        if (this.inMemoryPackageManagers.get(contextId) != null) {
-            throw new IllegalArgumentException("Context " + contextId + " already exists");
-        }
-        this.inMemoryPackageManagers.put(contextId, automationPackageManager);
+    private File getApFileByResource(Resource resource) {
+        return resourceManager.getResourceFile(resource.getId().toString()).getResourceFile();
     }
+
+    public void setApNameForResource(Resource resource, String apName){
+        // store file in temporary storage to support rerun
+        try {
+            resource.addCustomField(AP_NAME_CUSTOM_FIELD, apName);
+            resourceManager.saveResource(resource);
+        } catch (IOException ex) {
+            throw new AutomationPackageManagerException("Cannot update the automation package name in resource: " + resource.getId(), ex);
+        }
+    }
+
+
 }

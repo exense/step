@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import step.core.execution.ExecutionContext;
 import step.core.execution.model.ReportExport;
 import step.core.execution.model.ReportExportStatus;
+import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectPredicate;
 
 import java.util.Map;
@@ -51,7 +52,7 @@ public class RepositoryObjectManager {
 		return repository.importArtefact(context, artefact.getRepositoryParameters());
 	}
 
-	private Repository getRepository(String respositoryId) {
+	public Repository getRepository(String respositoryId) {
 		Repository repository = repositories.get(respositoryId);
 		if(repository==null) {
 			throw new RuntimeException("Unknown repository '"+respositoryId+"'");

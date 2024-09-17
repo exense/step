@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.artefacts;
 
+import step.artefacts.automation.YamlCallPlan;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
@@ -25,7 +26,7 @@ import step.core.entities.EntityManager;
 import step.core.entities.EntityReference;
 import step.core.yaml.YamlModel;
 
-@YamlModel(name = "callPlan")
+@YamlModel(model = YamlCallPlan.class, name = "callPlan")
 @Artefact()
 public class CallPlan extends AbstractArtefact {
 	
@@ -66,5 +67,10 @@ public class CallPlan extends AbstractArtefact {
 
 	public void setInput(DynamicValue<String> input) {
 		this.input = input;
+	}
+
+	@Override
+	public boolean isCallingArtefactsFromOtherPlans() {
+		return true;
 	}
 }

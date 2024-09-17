@@ -22,7 +22,7 @@ import java.net.URLClassLoader;
 import java.util.HashMap;
 import java.util.Map;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import step.functions.io.Input;
 import step.functions.io.Output;
 

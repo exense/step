@@ -18,20 +18,14 @@
  ******************************************************************************/
 package step.functions.handler;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import step.core.reports.Measure;
 import step.core.reports.MeasurementsBuilder;
 import step.functions.io.Input;
 import step.functions.io.Output;
 import step.grid.agent.AgentTokenServices;
-
 import step.grid.agent.handler.AbstractMessageHandler;
 import step.grid.agent.handler.context.OutputMessageBuilder;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
@@ -41,12 +35,17 @@ import step.grid.filemanager.FileVersionId;
 import step.grid.io.InputMessage;
 import step.grid.io.OutputMessage;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 public class FunctionMessageHandler extends AbstractMessageHandler {
 
 	public static final String FUNCTION_HANDLER_PACKAGE_KEY = "$functionhandlerjar";
 	
 	public static final String FUNCTION_HANDLER_KEY = "$functionhandler";
-	
+	public static final String FUNCTION_TYPE_KEY = "$functionType";
+
 	// Cached object mapper for message payload serialization
 	private ObjectMapper mapper;
 	
@@ -79,12 +78,18 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 			RemoteApplicationContextFactory functionHandlerContext = new RemoteApplicationContextFactory(token.getServices().getFileManagerClient(), getFileVersionId(FUNCTION_HANDLER_PACKAGE_KEY, inputMessage.getProperties()));
 			applicationContextBuilder.pushContext(functionHandlerContext);
 		}
-		
-		return applicationContextBuilder.runInContext(()->{
+
+		return applicationContextBuilder.runInContext(() -> {
 			// Merge the token and agent properties
 			Map<String, String> mergedAgentProperties = getMergedAgentProperties(token);
 			// Instantiate the function handler 
 			String handlerClass = inputMessage.getProperties().get(FUNCTION_HANDLER_KEY);
+
+			if (handlerClass == null || handlerClass.isEmpty()) {
+				String msg = "There is no supported handler for function type \"" + inputMessage.getProperties().get(FUNCTION_TYPE_KEY) + "\"";
+				throw new UnsupportedOperationException(msg);
+			}
+
 			@SuppressWarnings("rawtypes")
 			AbstractFunctionHandler functionHandler = functionHandlerFactory.create(applicationContextBuilder.getCurrentContext().getClassLoader(), 
 					handlerClass, token.getSession(), token.getTokenReservationSession(), mergedAgentProperties);

@@ -20,29 +20,14 @@ package step.plugins.maven;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
-import step.automation.packages.client.AutomationPackageClientException;
-import step.automation.packages.client.RemoteAutomationPackageClientImpl;
-import step.client.AbstractRemoteClient;
-import step.client.credentials.ControllerCredentials;
-import step.client.executions.RemoteExecutionManager;
-import step.core.artefacts.reports.ReportNodeStatus;
-import step.core.execution.model.AutomationPackageExecutionParameters;
-import step.core.execution.model.Execution;
-import step.core.execution.model.ExecutionMode;
-import step.core.plans.PlanFilter;
-import step.core.plans.filters.PlanByExcludedNamesFilter;
-import step.core.plans.filters.PlanByIncludedNamesFilter;
+import step.cli.AbstractExecuteAutomationPackageTool;
+import step.cli.MavenArtifactIdentifier;
+import step.cli.StepCliExecutionException;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.TimeoutException;
-import java.util.stream.Collectors;
 
 @Mojo(name = "execute-automation-package")
 public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
@@ -54,11 +39,11 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
     @Parameter(property = "step.auth-token", required = false)
     private String authToken;
 
-    @Parameter(property = "step-execute-auto-packages.group-id", required = true, defaultValue = "${project.groupId}")
-    private String groupId;
-    @Parameter(property = "step-execute-auto-packages.artifact-id", required = true, defaultValue = "${project.artifactId}")
+    @Parameter(property = "step-execute-auto-packages.artifact-group-id")
+    private String artifactGroupId;
+    @Parameter(property = "step-execute-auto-packages.artifact-id")
     private String artifactId;
-    @Parameter(property = "step-execute-auto-packages.artifact-version", required = true, defaultValue = "${project.version}")
+    @Parameter(property = "step-execute-auto-packages.artifact-version")
     private String artifactVersion;
     @Parameter(property = "step-execute-auto-packages.artifact-classifier", required = false)
     private String artifactClassifier;
@@ -79,151 +64,42 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
 
     @Override
     public void execute() throws MojoExecutionException {
-        executePackageOnStep();
-    }
-
-    protected void executePackageOnStep() throws MojoExecutionException {
-        try (RemoteAutomationPackageClientImpl automationPackageClient = createRemoteAutomationPackageClient();
-             RemoteExecutionManager remoteExecutionManager = createRemoteExecutionManager()) {
-            File automationPackageFile = getAutomationPackageFile();
-            AutomationPackageExecutionParameters executionParameters = prepareExecutionParameters();
-
-            List<String> executionIds;
-            try {
-                executionIds = automationPackageClient.executeAutomationPackage(automationPackageFile, executionParameters);
-            } catch (AutomationPackageClientException e) {
-                throw logAndThrow("Error while executing automation package: " + e.getMessage());
-            }
-            if(executionIds != null) {
-                getLog().info("Execution(s) started in Step:");
-                for (String executionId : executionIds) {
-                    Execution executionInfo = remoteExecutionManager.get(executionId);
-                    getLog().info("- " + executionToString(executionId, executionInfo));
-                }
-
-                if (getWaitForExecution()) {
-                    getLog().info("Waiting for execution(s) to complete...");
-                    waitForExecutionFinish(remoteExecutionManager, executionIds);
-                } else {
-                    getLog().info("waitForExecution set to 'false'. Not waiting for executions to complete.");
-                }
-            } else {
-                throw logAndThrow("Unexpected response from Step. No execution Id returned. Please check the controller logs.");
-            }
-        } catch (MojoExecutionException e) {
-            throw e;
-        } catch (Exception ex) {
-            throw logAndThrow("Unexpected error while executing automation package", ex);
-        }
-    }
-
-    protected void waitForExecutionFinish(RemoteExecutionManager remoteExecutionManager, List<String> executionIds) throws MojoExecutionException {
-        // run the execution and wait until it is finished
         try {
-            List<Execution> endedExecutions = remoteExecutionManager.waitForTermination(executionIds, getExecutionResultTimeoutS() * 1000);
-            int executionFailureCount = 0;
-            for (String id : executionIds) {
-                Execution endedExecution = endedExecutions.stream().filter(e -> e.getId().toString().equals(id)).findFirst().orElse(null);
-                Log log = getLog();
-                if (endedExecution == null) {
-                    executionFailureCount++;
-                    log.error("Unknown result status for execution " + executionToString(id, null));
-                } else if (!endedExecution.getImportResult().isSuccessful()) {
-                    executionFailureCount++;
-                    String errorMessage = "Error(s) while importing plan for execution " + executionToString(id, endedExecution);
-                    List<String> errors = endedExecution.getImportResult().getErrors();
-                    if (errors != null) {
-                        errorMessage += ": " + String.join(";", errors);
+            createTool(getUrl(), getStepProjectName(), getUserId(), getAuthToken(), getExecutionParameters(), getExecutionResultTimeoutS(), getWaitForExecution(), getEnsureExecutionSuccess(), getIncludePlans(), getExcludePlans()).execute();
+        } catch (StepCliExecutionException e) {
+            throw new MojoExecutionException("Execution exception", e);
+        } catch (Exception e) {
+            throw logAndThrow("Unexpected error while uploading automation package to Step", e);
+        }
+    }
+
+    protected AbstractExecuteAutomationPackageTool createTool(final String url, final String projectName, final String userId, final String authToken, final Map<String, String> parameters, final Integer executionResultTimeoutS, final Boolean waitForExecution, final Boolean ensureExecutionSuccess, final String includePlans, final String excludePlans) {
+        MavenArtifactIdentifier remoteMavenArtifact = null;
+        if (!isLocalMavenArtifact()) {
+            remoteMavenArtifact = new MavenArtifactIdentifier(getArtifactGroupId(), getArtifactId(), getArtifactVersion(), getArtifactClassifier());
+        }
+
+        return new AbstractExecuteAutomationPackageTool(url, projectName, userId, authToken, parameters, executionResultTimeoutS, waitForExecution, ensureExecutionSuccess, includePlans, excludePlans, remoteMavenArtifact) {
+            @Override
+            protected File getAutomationPackageFile() throws StepCliExecutionException {
+                // if groupId and artifactId are not defined, we execute the maven artifact from current project
+                if (useLocalArtifact()) {
+                    Artifact applicableArtifact = getProjectArtifact(getArtifactClassifier());
+
+                    if (applicableArtifact != null) {
+                        return applicableArtifact.getFile();
+                    } else {
+                        throw logAndThrow("Unable to resolve automation package file " + artifactToString(project.getGroupId(), project.getArtifactId(), getArtifactClassifier(), project.getVersion()));
                     }
-                    log.error(errorMessage);
-                } else if (!isStatusSuccess(endedExecution)) {
-                    executionFailureCount++;
-                    String errorSummary = remoteExecutionManager.getFuture(id).getErrorSummary();
-                    log.error("Execution " + executionToString(id, endedExecution) + " failed. Result status was " + endedExecution.getResult() + ". Error summary: " + errorSummary);
                 } else {
-                    log.info("Execution " + executionToString(id, endedExecution) + " succeeded. Result status was " + endedExecution.getResult());
+                    return null;
                 }
             }
-            if (executionFailureCount > 0 && getEnsureExecutionSuccess()) {
-                int executionsCount = executionIds.size();
-                throw logAndThrow(executionFailureCount + "/" + executionsCount + " execution(s) failed. See " + getUrl() + "#/executions/list");
-            }
-        } catch (TimeoutException | InterruptedException ex) {
-            throw logAndThrow("Timeout after " + getExecutionResultTimeoutS() + " seconds while waiting for executions to complete", ex);
-        } catch (MojoExecutionException e) {
-            // Rethrow MojoExecutionException
-            throw e;
-        } catch (Exception e) {
-            throw logAndThrow("Unexpected error while executing automation package", e);
-        }
+        };
     }
 
-    private boolean isStatusSuccess(Execution ex){
-        Set<ReportNodeStatus> okStatus = Set.of(ReportNodeStatus.PASSED, ReportNodeStatus.SKIPPED, ReportNodeStatus.NORUN);
-        return okStatus.contains(ex.getResult());
-    }
-
-    private String executionToString(String id, Execution ex) {
-        if (ex != null) {
-            return String.format("'%s' (%s)", ex.getDescription(), getUrl() + "#/executions/" + ex.getId().toString());
-        } else {
-            return id;
-        }
-    }
-
-    protected File getAutomationPackageFile() throws MojoExecutionException {
-        Artifact applicableArtifact = getProjectArtifact(getArtifactClassifier(), getGroupId(), getArtifactId(), getArtifactVersion());
-
-        if (applicableArtifact != null) {
-            return applicableArtifact.getFile();
-        } else {
-            throw logAndThrow("Unable to resolve automation package file " + artifactToString(getGroupId(), getArtifactId(), getArtifactClassifier(), getArtifactVersion()));
-        }
-    }
-
-    @Override
-    protected ControllerCredentials getControllerCredentials() {
-        String authToken = getAuthToken();
-        return new ControllerCredentials(getUrl(), authToken == null || authToken.isEmpty() ? null : authToken);
-    }
-
-    protected RemoteAutomationPackageClientImpl createRemoteAutomationPackageClient() {
-        RemoteAutomationPackageClientImpl client = new RemoteAutomationPackageClientImpl(getControllerCredentials());
-        addProjectHeaderToRemoteClient(client);
-        return client;
-    }
-
-    protected RemoteExecutionManager createRemoteExecutionManager() {
-        RemoteExecutionManager remoteExecutionManager = new RemoteExecutionManager(getControllerCredentials());
-        addProjectHeaderToRemoteClient(remoteExecutionManager);
-        return remoteExecutionManager;
-    }
-
-    private void addProjectHeaderToRemoteClient(AbstractRemoteClient remoteClient) {
-        addProjectHeaderToRemoteClient(getStepProjectName(), remoteClient);
-    }
-
-    protected AutomationPackageExecutionParameters prepareExecutionParameters() throws MojoExecutionException {
-        AutomationPackageExecutionParameters executionParameters = new AutomationPackageExecutionParameters();
-        executionParameters.setMode(ExecutionMode.RUN);
-        executionParameters.setCustomParameters(getExecutionParameters());
-        executionParameters.setUserID(getUserId());
-
-        PlanFilter planFilter = null;
-        if (getIncludePlans() != null && !getIncludePlans().isEmpty()) {
-            planFilter = new PlanByIncludedNamesFilter(Arrays.stream(getIncludePlans().split(",")).collect(Collectors.toList()));
-        }
-        if (getExcludePlans() != null && !getExcludePlans().isEmpty()) {
-            if (planFilter != null) {
-                throw new MojoExecutionException("Plan filter configuration is ambiguous. Please use one of the following parameters: includePlans, excludePlans");
-            }
-            planFilter = new PlanByExcludedNamesFilter(Arrays.stream(getExcludePlans().split(",")).collect(Collectors.toList()));
-        }
-        if (planFilter != null) {
-            executionParameters.setPlanFilter(planFilter);
-        }
-
-        return executionParameters;
+    protected boolean isLocalMavenArtifact() {
+        return getArtifactId() == null || getArtifactId().isEmpty() || getArtifactGroupId() == null || getArtifactGroupId().isEmpty();
     }
 
     public String getStepProjectName() {
@@ -250,12 +126,12 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
         this.authToken = authToken;
     }
 
-    public String getGroupId() {
-        return groupId;
+    public String getArtifactGroupId() {
+        return artifactGroupId;
     }
 
-    public void setGroupId(String groupId) {
-        this.groupId = groupId;
+    public void setArtifactGroupId(String artifactGroupId) {
+        this.artifactGroupId = artifactGroupId;
     }
 
     public String getArtifactId() {
