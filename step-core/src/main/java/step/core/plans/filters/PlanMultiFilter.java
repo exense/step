@@ -37,6 +37,10 @@ public class PlanMultiFilter extends PlanFilter {
         this.planFilters = planFilters;
     }
 
+    public List<PlanFilter> getPlanFilters() {
+        return planFilters;
+    }
+
     public void add(PlanFilter filter){
         planFilters.add(filter);
     }

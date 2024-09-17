@@ -36,6 +36,10 @@ public class PlanByIncludedCategoriesFilter extends PlanFilter {
         this.includeCategories = includeCategories;
     }
 
+    public List<String> getIncludeCategories() {
+        return includeCategories;
+    }
+
     /**
      * Determine whether the plan should be included. This filter select plans which belongs to one of the included categories
      * @param plan to be evaluated

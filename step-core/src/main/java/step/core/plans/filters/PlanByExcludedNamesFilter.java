@@ -37,6 +37,10 @@ public class PlanByExcludedNamesFilter extends PlanFilter {
         this.excludedNames = excludedNames;
     }
 
+    public List<String> getExcludedNames() {
+        return excludedNames;
+    }
+
     @Override
     public boolean isSelected(Plan plan) {
         return !excludedNames.contains(plan.getAttribute(AbstractOrganizableObject.NAME));
