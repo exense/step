@@ -10,6 +10,7 @@ import step.core.execution.type.ExecutionTypePlugin;
 import step.core.plugins.IgnoreDuringAutoDiscovery;
 import step.core.plugins.Plugin;
 import step.core.timeseries.TimeSeries;
+import step.core.timeseries.aggregation.TimeSeriesAggregationPipeline;
 import step.core.timeseries.bucket.BucketAttributes;
 import step.core.timeseries.ingestion.TimeSeriesIngestionPipeline;
 import step.core.timeseries.ingestion.TimeSeriesIngestionPipelineSettings;
@@ -77,6 +78,7 @@ public class TimeSeriesExecutionPlugin extends AbstractExecutionEnginePlugin {
 			}
 		};
 
+		executionContext.put(TimeSeriesAggregationPipeline.class, timeSeries.getAggregationPipeline());
 		executionContext.put(TimeSeriesIngestionPipeline.class, ingestionPipeline);
 
 		Execution execution = executionContext.getExecutionAccessor().get(executionContext.getExecutionId());
