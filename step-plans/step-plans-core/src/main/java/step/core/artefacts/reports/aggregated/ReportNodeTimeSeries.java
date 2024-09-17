@@ -59,8 +59,7 @@ public class ReportNodeTimeSeries implements Closeable {
                         new TimeSeriesCollectionSettings()
                                 .setResolution(30_000)
                                 .setIngestionFlushingPeriodMs(10)
-                                .setMergeBucketsOnIngestionFlush(true))
-                , true);
+                ), true);
         collectionsEnabled.put(
                 new TimeSeriesCollection(collectionFactory.getCollection(TIME_SERIES_PER_MINUTE_COLLECTION, Bucket.class),
                         new TimeSeriesCollectionSettings()
@@ -106,7 +105,7 @@ public class ReportNodeTimeSeries implements Closeable {
         return timeSeries;
     }
 
-    public static ReportNodeTimeSeriesCollectionsSettings getCollectionsSettings(Configuration configuration) {
+    private static ReportNodeTimeSeriesCollectionsSettings getCollectionsSettings(Configuration configuration) {
         return new ReportNodeTimeSeriesCollectionsSettings()
                 .setPerMinuteEnabled(configuration.getPropertyAsBoolean(TIME_SERIES_MINUTE_COLLECTION_ENABLED, true))
                 .setPerMinuteFlushInterval(configuration.getPropertyAsLong(TIME_SERIES_MINUTE_COLLECTION_FLUSH_PERIOD, TimeUnit.MINUTES.toMillis(1)))
@@ -149,6 +148,6 @@ public class ReportNodeTimeSeries implements Closeable {
 
     @Override
     public void close() throws IOException {
-        timeSeries.getCollections().forEach(c -> c.getIngestionPipeline().close());
+        timeSeries.close();
     }
 }
