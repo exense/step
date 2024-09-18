@@ -237,11 +237,18 @@ public class AutomationPackageReader {
 
         if (!fragment.getFragments().isEmpty()) {
             for (String importedFragmentReference : fragment.getFragments()) {
-                try (InputStream fragmentYamlStream = archive.getResourceAsStream(importedFragmentReference)) {
-                    fragment = getOrCreateDescriptorReader().readAutomationPackageFragment(fragmentYamlStream, importedFragmentReference, archive.getOriginalFileName());
-                    fillAutomationPackageWithImportedFragments(targetPackage, fragment, archive);
-                } catch (IOException e) {
-                    throw new AutomationPackageReadingException("Unable to read fragment in automation package: " + importedFragmentReference, e);
+                try {
+                    List<URL> resources = archive.getResourcesByPattern(importedFragmentReference);
+                    for (URL resource : resources) {
+                        try (InputStream fragmentYamlStream = resource.openStream()) {
+                            fragment = getOrCreateDescriptorReader().readAutomationPackageFragment(fragmentYamlStream, importedFragmentReference, archive.getOriginalFileName());
+                            fillAutomationPackageWithImportedFragments(targetPackage, fragment, archive);
+                        } catch (IOException e) {
+                            throw new AutomationPackageReadingException("Unable to read fragment in automation package: " + importedFragmentReference, e);
+                        }
+                    }
+                } catch (IOException ex) {
+                    throw new AutomationPackageReadingException("Unable to read fragment in automation package: " + importedFragmentReference, ex);
                 }
             }
         }

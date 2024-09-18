@@ -1,18 +1,4 @@
 plans:
-  - name: Test Plan
-    root:
-      testCase:
-        children:
-          - echo:
-              text: "Just echo"
-          - echo:
-              text:
-                expression: "mySimpleKey"
-          - callKeyword:
-              nodeName: CallMyKeyword2
-              keyword: "MyKeyword2"
-              inputs:
-                - myInput: "myValue"
   - name: Test Plan with Composite
     root:
       testCase:
