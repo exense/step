@@ -41,4 +41,11 @@ public class StepAutomationPackagePlanAnnotation extends AbstractKeyword {
     public void localKeywordD(){
 
     }
+
+    @Plan
+    @PlanCategories({"My Category E"})
+    @Keyword(name = "Local Keyword Category E")
+    public void localKeywordE(){
+
+    }
 }
