@@ -79,7 +79,7 @@ public class StepClassParser {
 							}
 						}
 						plan = planParser.parse(planStr, RootArtefactType.TestCase);
-                        YamlPlanReader.setPlanName(plan, planName);
+						YamlPlanReader.setPlanName(plan, planName);
 						PlanCategories planCategories = m.getAnnotation(PlanCategories.class);
 						if (planCategories != null && planCategories.value() != null) {
 							plan.setCategories(Arrays.asList(planCategories.value()));

@@ -22,12 +22,12 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 /***
- * Specify automation package plans to run
+ * Specify automation package plans to be excluded from the executions
  * 
  * @author exense team
  */
 @Retention(RetentionPolicy.RUNTIME)
-public @interface IncludePlanNames {
+public @interface ExcludePlans {
 
 	String[] value();
 

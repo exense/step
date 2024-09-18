@@ -23,14 +23,13 @@ import org.junit.runners.model.InitializationError;
 import step.automation.packages.AutomationPackageFromClassLoaderProvider;
 import step.automation.packages.AutomationPackageManager;
 import step.automation.packages.junit.ExcludePlanCategories;
-import step.automation.packages.junit.ExcludePlanNames;
+import step.automation.packages.junit.ExcludePlans;
 import step.automation.packages.junit.IncludePlanCategories;
-import step.automation.packages.junit.IncludePlanNames;
+import step.automation.packages.junit.IncludePlans;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.Artefact;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
-import step.core.plans.Plan;
 import step.core.plans.PlanFilter;
 import step.core.plans.filters.*;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
@@ -61,13 +60,13 @@ public class Step extends AbstractStepRunner {
 			).getId();
 
 			List<PlanFilter> planFilterList = new ArrayList<>();
-			IncludePlanNames includePlanNames = klass.getAnnotation(IncludePlanNames.class);
-			if(includePlanNames != null && includePlanNames.value() != null) {
-				planFilterList.add(new PlanByIncludedNamesFilter(Arrays.asList(includePlanNames.value())));
+			IncludePlans includePlans = klass.getAnnotation(IncludePlans.class);
+			if(includePlans != null && includePlans.value() != null) {
+				planFilterList.add(new PlanByIncludedNamesFilter(Arrays.asList(includePlans.value())));
 			}
-			ExcludePlanNames excludePlanNames = klass.getAnnotation(ExcludePlanNames.class);
-			if(excludePlanNames != null && excludePlanNames.value() != null) {
-				planFilterList.add(new PlanByExcludedNamesFilter(Arrays.asList(excludePlanNames.value())));
+			ExcludePlans excludePlans = klass.getAnnotation(ExcludePlans.class);
+			if(excludePlans != null && excludePlans.value() != null) {
+				planFilterList.add(new PlanByExcludedNamesFilter(Arrays.asList(excludePlans.value())));
 			}
 			IncludePlanCategories includePlanCategories = klass.getAnnotation(IncludePlanCategories.class);
 			if(includePlanCategories != null && includePlanCategories.value() != null) {

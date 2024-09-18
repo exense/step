@@ -120,7 +120,6 @@ public class AbstractExecuteAutomationPackageToolTest {
         Assert.assertEquals("testUser", captured.getUserID());
         Assert.assertEquals(ExecutionMode.RUN, captured.getMode());
         PlanMultiFilter planFilter = (PlanMultiFilter) captured.getPlanFilter();
-        //Assert.assertEquals(List.of("plan1", "plan2"), ((PlanByIncludedNamesFilter) planFilter).getIncludedNames());
         PlanMultiFilter expectedFilter = new PlanMultiFilter(List.of(new PlanByIncludedNamesFilter(Arrays.asList(TEST_INCLUDE_PLANS.split(","))),
                 new PlanByIncludedCategoriesFilter(Arrays.asList(TEST_INCLUDE_CATEGORIES.split(","))),
                 new PlanByExcludedCategoriesFilter(Arrays.asList(TEST_EXCLUDE_CATEGORIES.split(",")))));

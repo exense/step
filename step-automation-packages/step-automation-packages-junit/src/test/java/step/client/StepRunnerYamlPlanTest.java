@@ -19,14 +19,14 @@
 package step.client;
 
 import org.junit.runner.RunWith;
-import step.automation.packages.junit.IncludePlanNames;
+import step.automation.packages.junit.IncludePlans;
 import step.handlers.javahandler.AbstractKeyword;
 import step.junit.runner.Step;
 import step.junit.runners.annotations.Plans;
 
 @RunWith(Step.class)
 @Plans({"plans/composite-simple-plan.yml"})
-@IncludePlanNames(value = {"plans/composite-simple-plan.yml"})
+@IncludePlans(value = {"plans/composite-simple-plan.yml"})
 public class StepRunnerYamlPlanTest extends AbstractKeyword {
 
 

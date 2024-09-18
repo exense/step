@@ -13,7 +13,7 @@ import step.junit.runners.annotations.Plans;
 @Category(LocalJMeter.class)
 @RunWith(Step.class)
 @Plans({"testAutomation.plan"})
-@IncludePlanNames({"testAutomation.plan"})
+@IncludePlans({"testAutomation.plan"})
 public class StepAutomationPackagesPlanAnnotation {
 
 }

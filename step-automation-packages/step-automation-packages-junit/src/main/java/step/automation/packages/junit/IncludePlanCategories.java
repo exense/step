@@ -22,7 +22,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 /***
- * Specify automation package plans to run
+ * Specify the categories of the automation package plans to be executed
  * 
  * @author exense team
  */

@@ -7,7 +7,7 @@ import step.junit.runner.Step;
 
 @Ignore
 @RunWith(Step.class)
-@IncludePlanNames(value = {"explicitPlanWithSystemProperty", "explicitPlanWithEnvironmentVariable"})
+@IncludePlans(value = {"explicitPlanWithSystemProperty", "explicitPlanWithEnvironmentVariable"})
 public class StepAutomationPackageWithExecutionParameters extends AbstractKeyword {
 
     // This test has to be executed with -DSTEP_PARAM_EXEC2=Sysprop1 as system property

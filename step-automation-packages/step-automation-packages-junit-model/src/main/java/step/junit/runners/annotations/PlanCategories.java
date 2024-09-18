@@ -22,7 +22,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 /***
- * Specify the plain text plans to run with this keywords class
+ * Assign categories to the plans created from @Plan or @Plans annotations
  * 
  * @author exense team
  */
