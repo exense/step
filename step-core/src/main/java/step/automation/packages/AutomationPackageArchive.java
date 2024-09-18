@@ -91,8 +91,7 @@ public class AutomationPackageArchive implements Closeable {
     }
 
     public URL getResource(String resourcePath) throws IOException {
-        Resource[] resources = pathMatchingResourceResolver.getResources(resourcePath);
-        URL resource = resources[0].getURL();
+        URL resource = classLoader.getResource(resourcePath);
         if (log.isDebugEnabled()) {
             log.debug("Obtain resource from automation package: {}", resource);
         }
