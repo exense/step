@@ -17,16 +17,25 @@
  * along with Step.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package step.core.agents.provisioning.driver;
+package step.core.agents.provisioning;
 
-import step.core.agents.provisioning.AgentProvisioningReport;
+import step.core.agents.provisioning.driver.AgentProvisioningError;
 
-public class AgentProvisioningStatus {
+import java.util.List;
 
-    public String statusDescription;
-    public boolean completed = false;
+public class AgentPoolProvisioningReport {
 
+    public AgentPoolRequirementSpec spec;
+    public AgentProvisioningLogs logs;
     public AgentProvisioningError error;
-    public AgentProvisioningReport provisioningReport;
+    public List<String> stsEvents;
+    public boolean success;
+    public boolean completed;
 
+    public AgentPoolProvisioningReport() {
+    }
+
+    public AgentPoolProvisioningReport(AgentPoolRequirementSpec spec) {
+        this.spec = spec;
+    }
 }
