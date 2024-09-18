@@ -115,7 +115,7 @@ public class AutomationPackageServices extends AbstractStepServices {
         try {
             return automationPackageExecutor.runInIsolation(
                     automationPackageInputStream,
-                    fileDetail.getFileName(),
+                    fileDetail == null ? null : fileDetail.getFileName(),
                     executionParameters,
                     getObjectEnricher(),
                     getObjectPredicate()
@@ -167,6 +167,13 @@ public class AutomationPackageServices extends AbstractStepServices {
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage());
         }
+    }
+
+    @GET
+    @Path("/schema")
+    @Produces(MediaType.APPLICATION_JSON)
+    public String getAutomationPackageDescriptorSchema() {
+        return automationPackageManager.getDescriptorJsonSchema();
     }
 
 }

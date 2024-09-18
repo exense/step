@@ -75,7 +75,7 @@ public class StepConsoleTest {
         Assert.assertEquals("abc", usedParams.authToken);
         Assert.assertEquals("testProject", usedParams.projectName);
         Assert.assertTrue(usedParams.async);
-        Assert.assertEquals("step-automation-packages-sample1.jar", usedParams.apFile.getName());
+        Assert.assertEquals("step-automation-packages-sample1.jar", new File(usedParams.apFile).getName());
 
         // for OS (required params only)
         deployExecHistory.clear();
@@ -85,7 +85,7 @@ public class StepConsoleTest {
         usedParams = deployExecHistory.get(0);
         Assert.assertEquals("http://localhost:8080", usedParams.stepUrl);
         Assert.assertFalse(usedParams.async);
-        Assert.assertEquals("step-automation-packages-sample1.jar", usedParams.apFile.getName());
+        Assert.assertEquals("step-automation-packages-sample1.jar", new File(usedParams.apFile).getName());
 
         // incorrect parameters (project name / token)
         deployExecHistory.clear();
@@ -102,7 +102,7 @@ public class StepConsoleTest {
         Assert.assertEquals(1, deployExecHistory.size());
         usedParams = deployExecHistory.get(0);
         Assert.assertEquals("http://localhost:8081", usedParams.stepUrl);
-        Assert.assertEquals("step-automation-packages-sample1.jar", usedParams.apFile.getName());
+        Assert.assertEquals("step-automation-packages-sample1.jar", new File(usedParams.apFile).getName());
 
         // several properties files (containing url and project/token)
         deployExecHistory.clear();
@@ -111,7 +111,7 @@ public class StepConsoleTest {
         Assert.assertEquals(1, deployExecHistory.size());
         usedParams = deployExecHistory.get(0);
         Assert.assertEquals("http://localhost:8081", usedParams.stepUrl);
-        Assert.assertEquals("step-automation-packages-sample1.jar", usedParams.apFile.getName());
+        Assert.assertEquals("step-automation-packages-sample1.jar", new File(usedParams.apFile).getName());
         Assert.assertEquals("abc", usedParams.authToken);
         Assert.assertEquals("testProject", usedParams.projectName);
     }
@@ -140,7 +140,8 @@ public class StepConsoleTest {
         Assert.assertEquals("timeout doesn't match", (Integer) 1000, usedParams.executionTimeoutS);
         Assert.assertTrue(usedParams.async);
         Assert.assertEquals(Map.of("key1", "value1", "key2", "value2", "key3", "value3"), usedParams.executionParameters);
-        Assert.assertEquals("step-automation-packages-sample1.jar", usedParams.apFile.getName());
+        Assert.assertEquals("step-automation-packages-sample1.jar", new File(usedParams.apFile).getName());
+        Assert.assertNull(usedParams.mavenArtifactIdentifier);
 
         // minimum parameters
         remoteExecuteHistory.clear();
@@ -150,7 +151,17 @@ public class StepConsoleTest {
         usedParams = remoteExecuteHistory.get(0);
         Assert.assertEquals("http://localhost:8080", usedParams.stepUrl);
         Assert.assertFalse(usedParams.async);
-        Assert.assertEquals("step-automation-packages-sample1.jar", usedParams.apFile.getName());
+        Assert.assertEquals("step-automation-packages-sample1.jar", new File(usedParams.apFile).getName());
+        Assert.assertNull(usedParams.mavenArtifactIdentifier);
+
+        // use maven artifact instead of local file
+        remoteExecuteHistory.clear();
+        res = runMain(histories, "ap", "execute", "-p=mvn:ch.exense.step:step-automation-packages-junit:0.0.0:tests", "-u=http://localhost:8080");
+        Assert.assertEquals(0, res);
+        Assert.assertEquals(1, remoteExecuteHistory.size());
+        usedParams = remoteExecuteHistory.get(0);
+        Assert.assertEquals("http://localhost:8080", usedParams.stepUrl);
+        Assert.assertEquals(new MavenArtifactIdentifier("ch.exense.step", "step-automation-packages-junit", "0.0.0", "tests"), usedParams.mavenArtifactIdentifier);
     }
 
     @Test
@@ -230,7 +241,7 @@ public class StepConsoleTest {
             private String projectName;
             private String authToken;
             private boolean async;
-            private File apFile;
+            private String apFile;
         }
 
         @Override
@@ -255,14 +266,14 @@ public class StepConsoleTest {
         public static class RemoteExecutionParams {
             private String stepUrl;
             private String projectName;
-            private String stepUserId;
             private String authToken;
             private Map<String, String> executionParameters;
             private Integer executionTimeoutS;
             private boolean async;
             private String includePlans;
             private String excludePlans;
-            private File apFile;
+            private String apFile;
+            private MavenArtifactIdentifier mavenArtifactIdentifier;
         }
 
         public static class LocalExecutionParams {
@@ -279,19 +290,20 @@ public class StepConsoleTest {
 
         @Override
         protected void executeRemotely(String stepUrl, String projectName, String stepUserId, String authToken, Map<String, String> executionParameters,
-                                       Integer executionTimeoutS, boolean async, String includePlans, String excludePlans) {
+                                       Integer executionTimeoutS, boolean async, String includePlans, String excludePlans, MavenArtifactIdentifier mavenArtifactIdentifier) {
             if (remoteParams != null) {
                 RemoteExecutionParams p = new RemoteExecutionParams();
                 p.stepUrl = stepUrl;
                 p.projectName = projectName;
                 p.authToken = authToken;
                 p.async = async;
-                p.stepUserId = stepUserId;
+                p.mavenArtifactIdentifier = mavenArtifactIdentifier;
                 p.executionParameters = executionParameters;
                 p.executionTimeoutS = executionTimeoutS;
                 p.includePlans = includePlans;
                 p.excludePlans = excludePlans;
                 p.apFile = this.apFile;
+
                 remoteParams.add(p);
             }
         }

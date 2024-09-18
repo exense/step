@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.core.repositories;
 
+import java.io.File;
 import java.util.Map;
 import java.util.Set;
 
@@ -27,6 +28,10 @@ import step.core.objectenricher.ObjectPredicate;
 public interface Repository {
 
 	ArtefactInfo getArtefactInfo(Map<String, String> repositoryParameters) throws Exception;
+
+	default File getArtifact(Map<String, String> repositoryParameters) {
+		throw new UnsupportedOperationException("This repository doesn't support getArtifact method");
+	}
 
 	TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) throws Exception;
 

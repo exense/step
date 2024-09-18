@@ -52,7 +52,7 @@ public class RepositoryObjectManager {
 		return repository.importArtefact(context, artefact.getRepositoryParameters());
 	}
 
-	private Repository getRepository(String respositoryId) {
+	public Repository getRepository(String respositoryId) {
 		Repository repository = repositories.get(respositoryId);
 		if(repository==null) {
 			throw new RuntimeException("Unknown repository '"+respositoryId+"'");
