@@ -63,6 +63,7 @@ import step.migration.MigrationManager;
 import step.migration.tasks.MigrateArtefactsToPlans;
 import step.migration.tasks.MigrateAssertNegation;
 import step.migration.tasks.MigrateFunctionCallsById;
+import step.migration.tasks.MigrateParametersToDynamicValues;
 import step.parameter.Parameter;
 import step.parameter.ParameterManager;
 import step.planbuilder.FunctionArtefacts;
@@ -152,6 +153,7 @@ public class ExportManagerTest {
 		migrationManager.register(MigrateArtefactsToPlans.class);
 		migrationManager.register(MigrateAssertNegation.class);
 		migrationManager.register(MigrateFunctionCallsById.class);
+		migrationManager.register(MigrateParametersToDynamicValues.class);
 	}
 	
 	@Test
@@ -272,7 +274,7 @@ public class ExportManagerTest {
 		Parameter savedParamProtected = parameterAccessor.save(paramProtected);
 		Parameter paramProtectedEncrypted = new Parameter(null,"key_pwd","Value","desc");
 		paramProtectedEncrypted.setProtectedValue(true);
-		paramProtectedEncrypted.setEncryptedValue(encryptionManager.encrypt(paramProtectedEncrypted.getValue()));
+		paramProtectedEncrypted.setEncryptedValue(encryptionManager.encrypt(paramProtectedEncrypted.getValue().get()));
 		paramProtectedEncrypted.setValue(null);
 		Parameter savedParamProtectedEncrypted = parameterAccessor.save(paramProtectedEncrypted);
 		
@@ -329,7 +331,7 @@ public class ExportManagerTest {
 			assertEquals(savedParam.getId(), actualParam.getId());
 			assertEquals(savedParamProtected.getId(), actualParamProtected.getId());
 			assertEquals(true, actualParamProtected.getProtectedValue());
-			assertEquals(ParameterManager.RESET_VALUE, actualParamProtected.getValue());
+			assertEquals(ParameterManager.RESET_VALUE, actualParamProtected.getValue().get());
 			assertNull(actualParamProtected.getEncryptedValue());
 			assertEquals(savedParamProtectedEncrypted.getId(), actualParamProtectedEncrypted.getId());
 			assertEquals(true, actualParamProtectedEncrypted.getProtectedValue());
@@ -344,7 +346,7 @@ public class ExportManagerTest {
 	public void testImportNewEncryptionManager() throws Exception {
 		Parameter paramProtectedEncrypted = new Parameter(null,"key_pwd","Value","desc");
 		paramProtectedEncrypted.setProtectedValue(true);
-		paramProtectedEncrypted.setEncryptedValue(encryptionManager.encrypt(paramProtectedEncrypted.getValue()));
+		paramProtectedEncrypted.setEncryptedValue(encryptionManager.encrypt(paramProtectedEncrypted.getValue().get()));
 		paramProtectedEncrypted.setValue(null);
 		Parameter savedParamProtectedEncrypted = parameterAccessor.save(paramProtectedEncrypted);
 
@@ -390,7 +392,7 @@ public class ExportManagerTest {
 			Parameter actualParamProtectedEncrypted = parameterAccessor.get(savedParamProtectedEncrypted.getId());
 			assertEquals(savedParamProtectedEncrypted.getId(), actualParamProtectedEncrypted.getId());
 			assertEquals(true, actualParamProtectedEncrypted.getProtectedValue());
-			assertEquals(ParameterManager.RESET_VALUE, actualParamProtectedEncrypted.getValue());
+			assertEquals(ParameterManager.RESET_VALUE, actualParamProtectedEncrypted.getValue().get());
 			assertEquals(null, actualParamProtectedEncrypted.getEncryptedValue());
 		} finally {
 			testExportFile.delete();
@@ -401,7 +403,7 @@ public class ExportManagerTest {
 	public void testImportNoEncryptionManager() throws Exception {
 		Parameter paramProtectedEncrypted = new Parameter(null,"key_pwd","Value","desc");
 		paramProtectedEncrypted.setProtectedValue(true);
-		paramProtectedEncrypted.setEncryptedValue(encryptionManager.encrypt(paramProtectedEncrypted.getValue()));
+		paramProtectedEncrypted.setEncryptedValue(encryptionManager.encrypt(paramProtectedEncrypted.getValue().get()));
 		paramProtectedEncrypted.setValue(null);
 		Parameter savedParamProtectedEncrypted = parameterAccessor.save(paramProtectedEncrypted);
 
@@ -429,7 +431,7 @@ public class ExportManagerTest {
 			Parameter actualParamProtectedEncrypted = parameterAccessor.get(savedParamProtectedEncrypted.getId());
 			assertEquals(savedParamProtectedEncrypted.getId(), actualParamProtectedEncrypted.getId());
 			assertEquals(true, actualParamProtectedEncrypted.getProtectedValue());
-			assertEquals(ParameterManager.RESET_VALUE, actualParamProtectedEncrypted.getValue());
+			assertEquals(ParameterManager.RESET_VALUE, actualParamProtectedEncrypted.getValue().get());
 			assertNull(actualParamProtectedEncrypted.getEncryptedValue());
 		} finally {
 			testExportFile.delete();
@@ -464,7 +466,7 @@ public class ExportManagerTest {
 			Parameter actualParamProtectedEncrypted = parameterAccessor.get(savedParamProtected.getId());
 			assertEquals(savedParamProtected.getId(), actualParamProtectedEncrypted.getId());
 			assertEquals(true, actualParamProtectedEncrypted.getProtectedValue());
-			assertEquals(ParameterManager.RESET_VALUE, actualParamProtectedEncrypted.getValue());
+			assertEquals(ParameterManager.RESET_VALUE, actualParamProtectedEncrypted.getValue().get());
 			assertNull(actualParamProtectedEncrypted.getEncryptedValue());
 		} finally {
 			testExportFile.delete();
@@ -499,7 +501,7 @@ public class ExportManagerTest {
 		Parameter parameter01 = parameterAccessor.get(parameter01Id);
 		assertNotNull(parameter01);
 		assertEquals("Param01", parameter01.getKey());
-		assertEquals("Value01", parameter01.getValue());
+		assertEquals("Value01", parameter01.getValue().get());
 	}
 	
 	@Test
@@ -514,9 +516,9 @@ public class ExportManagerTest {
 		Parameter parameterProtected = parameterAccessor.get("6059b2d0e7ca79765f81451a");
 		assertNotNull(parameterClear);
 		assertNotNull(parameterProtected);
-		assertEquals("value_clear",parameterClear.getValue());
+		assertEquals("value_clear",parameterClear.getValue().get());
 		assertEquals(false,parameterClear.getProtectedValue());
-		assertEquals(ParameterManager.RESET_VALUE,parameterProtected.getValue());
+		assertEquals(ParameterManager.RESET_VALUE,parameterProtected.getValue().get());
 		assertEquals(true,parameterProtected.getProtectedValue());
 		//assertEquals(originPlanId, actualPlan.getId().toString());
 	}
