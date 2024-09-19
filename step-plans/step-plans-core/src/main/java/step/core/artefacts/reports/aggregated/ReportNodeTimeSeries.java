@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 
 public class ReportNodeTimeSeries implements Closeable {
 
+    public static final String TIME_SERIES_MAIN_COLLECTION_FLUSH_PERIOD = "plugins.timeseries.collections.main.flush.period";
     public static final String TIME_SERIES_MINUTE_COLLECTION_ENABLED = "plugins.timeseries.collections.minute.enabled";
     public static final String TIME_SERIES_MINUTE_COLLECTION_FLUSH_PERIOD = "plugins.timeseries.collections.minute.flush.period";
     public static final String TIME_SERIES_HOUR_COLLECTION_ENABLED = "plugins.timeseries.collections.hour.enabled";
@@ -58,7 +59,7 @@ public class ReportNodeTimeSeries implements Closeable {
                 new TimeSeriesCollection(collectionFactory.getCollection(TIME_SERIES_MAIN_COLLECTION, Bucket.class),
                         new TimeSeriesCollectionSettings()
                                 .setResolution(30_000)
-                                .setIngestionFlushingPeriodMs(10)
+                                .setIngestionFlushingPeriodMs(collectionsSettings.getMainFlushInterval())
                 ), true);
         collectionsEnabled.put(
                 new TimeSeriesCollection(collectionFactory.getCollection(TIME_SERIES_PER_MINUTE_COLLECTION, Bucket.class),
@@ -107,6 +108,7 @@ public class ReportNodeTimeSeries implements Closeable {
 
     private static ReportNodeTimeSeriesCollectionsSettings getCollectionsSettings(Configuration configuration) {
         return new ReportNodeTimeSeriesCollectionsSettings()
+                .setMainFlushInterval(configuration.getPropertyAsLong(TIME_SERIES_MAIN_COLLECTION_FLUSH_PERIOD, TimeUnit.SECONDS.toMillis(1)))
                 .setPerMinuteEnabled(configuration.getPropertyAsBoolean(TIME_SERIES_MINUTE_COLLECTION_ENABLED, true))
                 .setPerMinuteFlushInterval(configuration.getPropertyAsLong(TIME_SERIES_MINUTE_COLLECTION_FLUSH_PERIOD, TimeUnit.MINUTES.toMillis(1)))
                 .setHourlyEnabled(configuration.getPropertyAsBoolean(TIME_SERIES_HOUR_COLLECTION_ENABLED, true))

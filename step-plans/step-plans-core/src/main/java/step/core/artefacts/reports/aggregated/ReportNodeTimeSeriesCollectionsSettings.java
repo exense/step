@@ -2,6 +2,7 @@ package step.core.artefacts.reports.aggregated;
 
 public class ReportNodeTimeSeriesCollectionsSettings {
 
+    private long mainFlushInterval;
     private boolean perMinuteEnabled;
     private long perMinuteFlushInterval;
     private boolean hourlyEnabled;
@@ -45,6 +46,15 @@ public class ReportNodeTimeSeriesCollectionsSettings {
 
     public ReportNodeTimeSeriesCollectionsSettings setWeeklyEnabled(boolean weeklyEnabled) {
         this.weeklyEnabled = weeklyEnabled;
+        return this;
+    }
+
+    public long getMainFlushInterval() {
+        return mainFlushInterval;
+    }
+
+    public ReportNodeTimeSeriesCollectionsSettings setMainFlushInterval(long mainFlushInterval) {
+        this.mainFlushInterval = mainFlushInterval;
         return this;
     }
 
