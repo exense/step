@@ -65,29 +65,25 @@ public class ReportNodeTimeSeries implements Closeable {
                 new TimeSeriesCollection(collectionFactory.getCollection(TIME_SERIES_PER_MINUTE_COLLECTION, Bucket.class),
                         new TimeSeriesCollectionSettings()
                                 .setResolution(TimeUnit.MINUTES.toMillis(1))
-                                .setIngestionFlushingPeriodMs(collectionsSettings.getPerMinuteFlushInterval())
-                                .setMergeBucketsOnIngestionFlush(true))
+                                .setIngestionFlushingPeriodMs(collectionsSettings.getPerMinuteFlushInterval()))
                 , collectionsSettings.isPerMinuteEnabled());
         collectionsEnabled.put(
                 new TimeSeriesCollection(collectionFactory.getCollection(TIME_SERIES_HOURLY_COLLECTION, Bucket.class),
                         new TimeSeriesCollectionSettings()
                                 .setResolution(TimeUnit.HOURS.toMillis(1))
-                                .setIngestionFlushingPeriodMs(collectionsSettings.getHourlyFlushInterval())
-                                .setMergeBucketsOnIngestionFlush(true))
+                                .setIngestionFlushingPeriodMs(collectionsSettings.getHourlyFlushInterval()))
                 , collectionsSettings.isPerMinuteEnabled());
         collectionsEnabled.put(
                 new TimeSeriesCollection(collectionFactory.getCollection(TIME_SERIES_DAILY_COLLECTION, Bucket.class),
                         new TimeSeriesCollectionSettings()
                                 .setResolution(TimeUnit.DAYS.toMillis(1))
-                                .setIngestionFlushingPeriodMs(collectionsSettings.getDailyFlushInterval())
-                                .setMergeBucketsOnIngestionFlush(true))
+                                .setIngestionFlushingPeriodMs(collectionsSettings.getDailyFlushInterval()))
                 , collectionsSettings.isPerMinuteEnabled());
         collectionsEnabled.put(
                 new TimeSeriesCollection(collectionFactory.getCollection(TIME_SERIES_WEEKLY_COLLECTION, Bucket.class),
                         new TimeSeriesCollectionSettings()
                                 .setResolution(TimeUnit.DAYS.toMillis(7))
-                                .setIngestionFlushingPeriodMs(collectionsSettings.getWeeklyFlushInterval())
-                                .setMergeBucketsOnIngestionFlush(true))
+                                .setIngestionFlushingPeriodMs(collectionsSettings.getWeeklyFlushInterval()))
                 , collectionsSettings.isPerMinuteEnabled());
         List<TimeSeriesCollection> enabledCollections = new ArrayList<>();
 

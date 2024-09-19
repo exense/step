@@ -138,7 +138,6 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 						new TimeSeriesCollectionSettings()
 								.setResolution(TimeUnit.MINUTES.toMillis(1))
 								.setIngestionFlushingPeriodMs(collectionsSettings.getPerMinuteFlushInterval())
-								.setMergeBucketsOnIngestionFlush(true)
 				),
 				collectionsSettings.isPerMinuteEnabled()
 		);
@@ -148,7 +147,6 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 						new TimeSeriesCollectionSettings()
 								.setResolution(TimeUnit.HOURS.toMillis(1))
 								.setIngestionFlushingPeriodMs(collectionsSettings.getHourlyFlushInterval())
-								.setMergeBucketsOnIngestionFlush(true)
 				),
 				collectionsSettings.isHourlyEnabled()
 		);
@@ -158,7 +156,6 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 						new TimeSeriesCollectionSettings()
 								.setResolution(TimeUnit.DAYS.toMillis(1))
 								.setIngestionFlushingPeriodMs(collectionsSettings.getDailyFlushInterval())
-								.setMergeBucketsOnIngestionFlush(true)
 				),
 				collectionsSettings.isDailyEnabled()
 		);
@@ -168,7 +165,6 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 						new TimeSeriesCollectionSettings()
 								.setResolution(TimeUnit.DAYS.toMillis(7))
 								.setIngestionFlushingPeriodMs(collectionsSettings.getWeeklyFlushInterval())
-								.setMergeBucketsOnIngestionFlush(true)
 				),
 				collectionsSettings.isWeeklyEnabled()
 		);
