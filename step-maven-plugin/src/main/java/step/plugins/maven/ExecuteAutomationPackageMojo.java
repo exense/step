@@ -62,10 +62,18 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
     @Parameter(property = "step-execute-auto-packages.exclude-plans")
     private String excludePlans;
 
+    @Parameter(property = "step-execute-auto-packages.include-categories")
+    private String includeCategories;
+    @Parameter(property = "step-execute-auto-packages.exclude-categories")
+    private String excludeCategories;
+
     @Override
     public void execute() throws MojoExecutionException {
         try {
-            createTool(getUrl(), getStepProjectName(), getUserId(), getAuthToken(), getExecutionParameters(), getExecutionResultTimeoutS(), getWaitForExecution(), getEnsureExecutionSuccess(), getIncludePlans(), getExcludePlans()).execute();
+            createTool(getUrl(), getStepProjectName(), getUserId(), getAuthToken(), getExecutionParameters(), getExecutionResultTimeoutS(),
+                    getWaitForExecution(), getEnsureExecutionSuccess(), getIncludePlans(), getExcludePlans(),
+                    getIncludeCategories(), getExcludeCategories()
+            ).execute();
         } catch (StepCliExecutionException e) {
             throw new MojoExecutionException("Execution exception", e);
         } catch (Exception e) {
@@ -73,13 +81,13 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
         }
     }
 
-    protected AbstractExecuteAutomationPackageTool createTool(final String url, final String projectName, final String userId, final String authToken, final Map<String, String> parameters, final Integer executionResultTimeoutS, final Boolean waitForExecution, final Boolean ensureExecutionSuccess, final String includePlans, final String excludePlans) {
+    protected AbstractExecuteAutomationPackageTool createTool(final String url, final String projectName, final String userId, final String authToken, final Map<String, String> parameters, final Integer executionResultTimeoutS, final Boolean waitForExecution, final Boolean ensureExecutionSuccess, final String includePlans, final String excludePlans, final String includeCategories, final String excludeCategories) {
         MavenArtifactIdentifier remoteMavenArtifact = null;
         if (!isLocalMavenArtifact()) {
             remoteMavenArtifact = new MavenArtifactIdentifier(getArtifactGroupId(), getArtifactId(), getArtifactVersion(), getArtifactClassifier());
         }
 
-        return new AbstractExecuteAutomationPackageTool(url, projectName, userId, authToken, parameters, executionResultTimeoutS, waitForExecution, ensureExecutionSuccess, includePlans, excludePlans, remoteMavenArtifact) {
+        return new AbstractExecuteAutomationPackageTool(url, projectName, userId, authToken, parameters, executionResultTimeoutS, waitForExecution, ensureExecutionSuccess, includePlans, excludePlans, includeCategories, excludeCategories, remoteMavenArtifact) {
             @Override
             protected File getAutomationPackageFile() throws StepCliExecutionException {
                 // if groupId and artifactId are not defined, we execute the maven artifact from current project
@@ -206,4 +214,19 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
         this.excludePlans = excludePlans;
     }
 
+    public String getIncludeCategories() {
+        return includeCategories;
+    }
+
+    public void setIncludeCategories(String includeCategories) {
+        this.includeCategories = includeCategories;
+    }
+
+    public String getExcludeCategories() {
+        return excludeCategories;
+    }
+
+    public void setExcludeCategories(String excludeCategories) {
+        this.excludeCategories = excludeCategories;
+    }
 }

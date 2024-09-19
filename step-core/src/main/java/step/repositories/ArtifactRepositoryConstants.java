@@ -41,4 +41,6 @@ public class ArtifactRepositoryConstants {
     public static final String PARAM_THREAD_NUMBER = "threads";
     public static final String PARAM_INCLUDE_PLANS = "includePlans";
     public static final String PARAM_EXCLUDE_PLANS = "excludePlans";
+    public static final String PARAM_INCLUDE_CATEGORIES = "includeCategories";
+    public static final String PARAM_EXCLUDE_CATEGORIES = "excludeCategories";
 }

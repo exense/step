@@ -267,6 +267,7 @@ public class YamlPlanReader {
 	public Plan yamlPlanToPlan(YamlPlan yamlPlan) {
 		Plan plan = new Plan(yamlPlan.getRoot().getYamlArtefact().toArtefact());
         setPlanName(plan, yamlPlan.getName());
+        plan.setCategories(yamlPlan.getCategories());
 		AgentProvisioningConfiguration agents = yamlPlan.getAgents();
 		//If agents is not define in YAML, use default value of plan
 		if (agents != null) {
@@ -280,6 +281,7 @@ public class YamlPlanReader {
 		YamlPlan yamlPlan = new YamlPlan();
 		yamlPlan.setName(plan.getAttribute(AbstractOrganizableObject.NAME));
 		yamlPlan.setVersion(currentVersion.toString());
+		yamlPlan.setCategories(plan.getCategories());
 		yamlPlan.setRoot(new NamedYamlArtefact(AbstractYamlArtefact.toYamlArtefact(plan.getRoot(), yamlMapper)));
 		AgentProvisioningConfiguration agents = plan.getAgents();
 		//don't set the value of agents if the default values is used to keep the Yaml short

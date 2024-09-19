@@ -21,41 +21,45 @@ package step.core.plans.filters;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.collections.CollectionUtils;
-import step.core.accessors.AbstractOrganizableObject;
 import step.core.plans.Plan;
 import step.core.plans.PlanFilter;
 
 import java.util.List;
 import java.util.Objects;
 
-public class PlanByIncludedNamesFilter extends PlanFilter {
+public class PlanByExcludedCategoriesFilter extends PlanFilter {
 
-    private final List<String> includedNames;
+    private final List<String> excludeCategories;
 
     @JsonCreator
-    public PlanByIncludedNamesFilter(@JsonProperty("includedNames") List<String> includedNames) {
-        this.includedNames = includedNames;
+    public PlanByExcludedCategoriesFilter(@JsonProperty("excludedCategories") List<String> excludeCategories) {
+        this.excludeCategories = excludeCategories;
     }
 
+    public List<String> getExcludeCategories() {
+        return excludeCategories;
+    }
+
+    /**
+     * Determine whether the plan should be included. This filter excludes plans which belongs to one of the excluded categories
+     * @param plan to be evaluated
+     * @return whether this plan belong to one of the included categories
+     */
     @Override
     public boolean isSelected(Plan plan) {
-        return includedNames.contains(plan.getAttribute(AbstractOrganizableObject.NAME));
-    }
-
-    public List<String> getIncludedNames() {
-        return includedNames;
+        return plan.getCategories() == null || excludeCategories.stream().noneMatch(plan.getCategories()::contains);
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof PlanByIncludedNamesFilter)) return false;
-        PlanByIncludedNamesFilter that = (PlanByIncludedNamesFilter) o;
-        return CollectionUtils.isEqualCollection(includedNames, that.includedNames);
+        if (!(o instanceof PlanByExcludedCategoriesFilter)) return false;
+        PlanByExcludedCategoriesFilter that = (PlanByExcludedCategoriesFilter) o;
+        return CollectionUtils.isEqualCollection(excludeCategories, that.excludeCategories);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(includedNames);
+        return Objects.hashCode(excludeCategories);
     }
 }

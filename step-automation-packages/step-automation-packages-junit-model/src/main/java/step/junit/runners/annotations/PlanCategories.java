@@ -16,18 +16,18 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.junit;
+package step.junit.runners.annotations;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 /***
- * Specify automation package plans to run
+ * Assign categories to the plans created from @Plan or @Plans annotations
  * 
  * @author exense team
  */
 @Retention(RetentionPolicy.RUNTIME)
-public @interface AutomationPackagePlans {
+public @interface PlanCategories {
 
 	String[] value();
 
