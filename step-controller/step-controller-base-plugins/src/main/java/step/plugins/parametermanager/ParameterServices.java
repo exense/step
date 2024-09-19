@@ -28,12 +28,14 @@ import step.controller.services.entities.AbstractEntityServices;
 import step.core.GlobalContext;
 import step.core.accessors.Accessor;
 import step.core.deployment.ControllerServiceException;
+import step.core.dynamicbeans.DynamicValue;
 import step.core.encryption.EncryptionManagerException;
 import step.framework.server.access.AuthorizationManager;
 import step.framework.server.security.Secured;
 import step.framework.server.security.SecuredContext;
 import step.parameter.Parameter;
 import step.parameter.ParameterManager;
+import step.parameter.ParameterManagerException;
 import step.parameter.ParameterScope;
 
 import java.util.Date;
@@ -42,6 +44,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+
+import static step.parameter.ParameterManager.PROTECTED_VALUE;
 
 @Path("/parameters")
 @Tag(name = "Parameters")
@@ -97,37 +101,11 @@ public class ParameterServices extends AbstractEntityServices<Parameter> {
 
 	private Parameter save(Parameter newParameter, Parameter sourceParameter) {
 		assertRights(newParameter);
-
-		if(sourceParameter != null) {
-			// the parameter has been updated but the value hasn't been changed
-			String newParameterValue = newParameter.getValue();
-			if(newParameterValue != null && newParameterValue.equals(PROTECTED_VALUE)) {
-				newParameter.setValue(sourceParameter.getValue());
-			}
-
-			if(isProtected(sourceParameter)) {
-				// protected value should not be changed
-				newParameter.setProtectedValue(true);
-			}
-		}
-
 		try {
-			newParameter = parameterManager.encryptParameterValueIfEncryptionManagerAvailable(newParameter);
-		} catch (EncryptionManagerException e) {
-			throw new ControllerServiceException("Error while encrypting parameter value", e);
+			return maskProtectedValue(parameterManager.save(newParameter, sourceParameter, getSession().getUser().getUsername()));
+		} catch (ParameterManagerException e) {
+			throw new ControllerServiceException(e.getMessage());
 		}
-
-		ParameterScope scope = newParameter.getScope();
-		if(scope != null && scope.equals(ParameterScope.GLOBAL)) {
-			newParameter.setScopeEntity(null);
-		}
-
-		String lastModificationUser = getSession().getUser().getUsername();
-		Date lastModificationDate = new Date();
-		newParameter.setLastModificationDate(lastModificationDate);
-		newParameter.setLastModificationUser(lastModificationUser);
-
-		return maskProtectedValue(parameterAccessor.save(newParameter));
 	}
 
 	protected void assertRights(Parameter newParameter) {
@@ -165,8 +143,6 @@ public class ParameterServices extends AbstractEntityServices<Parameter> {
 		parameterAccessor.remove(new ObjectId(id));
 	}
 
-	public static final String PROTECTED_VALUE = "******";
-
 	@Override
 	public Parameter get(String id) {
 		Parameter parameter = parameterAccessor.get(new ObjectId(id));
@@ -176,7 +152,7 @@ public class ParameterServices extends AbstractEntityServices<Parameter> {
 	public static Parameter maskProtectedValue(Parameter parameter) {
 		if(parameter != null && isProtected(parameter) &&
 				!ParameterManager.RESET_VALUE.equals(parameter.getValue())) {
-			parameter.setValue(PROTECTED_VALUE);
+			parameter.setValue(new DynamicValue<>(PROTECTED_VALUE));
 		}
 		return parameter;
 	}

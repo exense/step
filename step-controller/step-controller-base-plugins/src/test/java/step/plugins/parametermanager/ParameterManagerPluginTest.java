@@ -30,13 +30,18 @@ import org.junit.Test;
 
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.InMemoryAccessor;
+import step.core.dynamicbeans.DynamicBeanResolver;
+import step.core.dynamicbeans.DynamicValue;
+import step.core.dynamicbeans.DynamicValueResolver;
 import step.core.encryption.EncryptionManager;
 import step.core.encryption.EncryptionManagerException;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
 import step.core.plugins.IgnoreDuringAutoDiscovery;
+import step.core.plugins.exceptions.PluginCriticalException;
 import step.core.variables.VariablesManager;
 import step.engine.plugins.ExecutionEnginePlugin;
+import step.expressions.ExpressionHandler;
 import step.functions.Function;
 import step.parameter.Parameter;
 import step.parameter.ParameterManager;
@@ -279,6 +284,92 @@ public class ParameterManagerPluginTest {
 				actualException.getMessage());
 	}
 
+	@Test
+	public void testDynamicValues() {
+		// test backward compatibility where the scope is null
+		declareParameter("MyOldGlobalParameter", "MyOldGlobalParameterrValue1", null, null);
+
+		declareDynamicParameter("MyGlobalParameter", "\"${MyOldGlobalParameter}_MyGlobalParameterrValue1\"", ParameterScope.GLOBAL, null);
+
+		declareDynamicParameter("MyAppParameter1", "\"${MyGlobalParameter}_MyAppParameterValue2\"", ParameterScope.APPLICATION, "MyApp");
+
+		declareDynamicParameter("MyFunctionParameter", "\"MyFunctionParameterValue1\"", ParameterScope.FUNCTION, "MyFunction1");
+		declareDynamicParameter("MyFunctionParameterComposed", "\"${MyFunctionParameter}_MyFunctionParameterValue2\"", ParameterScope.FUNCTION, "MyFunction1");
+		declareParameter("MyFunctionParameter2", "MyFunctionParameterValue2", ParameterScope.FUNCTION, "MyFunction2");
+
+		declareDynamicParameter("MyApp.MyFunctionParameter3", "\"MyApp.MyFunctionParameter3Value1\"", ParameterScope.FUNCTION, "MyApp.MyFunction3");
+		declareDynamicParameter("MyFunctionParameter3", "\"MyFunctionParameter3Value1\"", ParameterScope.FUNCTION, "MyFunction3");
+
+
+		ParameterManagerPlugin parameterManagerPlugin = new LocalParameterManagerPlugin(parameterAccessor, new Configuration());
+		ExecutionContext executionContext = newExecutionContext(parameterManagerPlugin);
+		parameterManagerPlugin.executionStart(executionContext);
+		Assert.assertNull(executionContext.getVariablesManager().getVariable("MyFunctionParameter"));
+		String myGlobalParameter = (String) executionContext.getVariablesManager().getVariable("MyGlobalParameter");
+		Assert.assertNotNull(myGlobalParameter);
+		Assert.assertEquals("MyOldGlobalParameterrValue1_MyGlobalParameterrValue1", myGlobalParameter);
+		Assert.assertNotNull(executionContext.getVariablesManager().getVariable("MyOldGlobalParameter"));
+
+		executionContext = newExecutionContext(parameterManagerPlugin);
+		parameterManagerPlugin.executionStart(executionContext);
+		parameterManagerPlugin.beforeFunctionExecution(executionContext, executionContext.getCurrentReportNode(), newFunction(null, "MyFunction1"));
+
+		String myFunctionParameter = (String) executionContext.getVariablesManager().getVariable("MyFunctionParameter");
+		Assert.assertNotNull(myFunctionParameter);
+		Assert.assertEquals("MyFunctionParameterValue1", myFunctionParameter);
+		String myFunctionParameterComposed = (String) executionContext.getVariablesManager().getVariable("MyFunctionParameterComposed");
+		Assert.assertNotNull(myFunctionParameterComposed);
+		Assert.assertEquals("MyFunctionParameterValue1_MyFunctionParameterValue2", myFunctionParameterComposed);
+		Assert.assertNull(executionContext.getVariablesManager().getVariable("MyFunctionParameter2"));
+		Assert.assertNull(executionContext.getVariablesManager().getVariable("MyAppParameter1"));
+
+		executionContext = newExecutionContext(parameterManagerPlugin);
+		parameterManagerPlugin.executionStart(executionContext);
+		parameterManagerPlugin.beforeFunctionExecution(executionContext, executionContext.getCurrentReportNode(), newFunction("MyApp", "MyFunction2"));
+		Object myFunctionParameter2 = executionContext.getVariablesManager().getVariable("MyFunctionParameter2");
+		Assert.assertNotNull(myFunctionParameter2);
+		Assert.assertEquals("MyFunctionParameterValue2", myFunctionParameter2);
+		Object myAppParameter1 = executionContext.getVariablesManager().getVariable("MyAppParameter1");
+		Assert.assertNotNull(myAppParameter1);
+		Assert.assertEquals("MyOldGlobalParameterrValue1_MyGlobalParameterrValue1_MyAppParameterValue2", myAppParameter1);
+
+		executionContext = newExecutionContext(parameterManagerPlugin);
+		parameterManagerPlugin.executionStart(executionContext);
+		parameterManagerPlugin.beforeFunctionExecution(executionContext, executionContext.getCurrentReportNode(), newFunction("MyApp", "MyFunction3"));
+		Object myAppMyFunctionParameter3 = executionContext.getVariablesManager().getVariable("MyApp.MyFunctionParameter3");
+		Assert.assertNotNull(myAppMyFunctionParameter3);
+		Assert.assertEquals("MyApp.MyFunctionParameter3Value1", myAppMyFunctionParameter3);
+		Object myFunctionParameter3 = executionContext.getVariablesManager().getVariable("MyFunctionParameter3");
+		Assert.assertNotNull(myFunctionParameter3);
+		Assert.assertEquals("MyFunctionParameter3Value1", myFunctionParameter3);
+		Assert.assertNull(executionContext.getVariablesManager().getVariable("MyFunctionParameter1"));
+		Assert.assertNull(executionContext.getVariablesManager().getVariable("MyFunctionParameter2"));
+	}
+
+	@Test
+	public void testDynamicValuesErrors() {
+		// test backward compatibility where the scope is null
+		declareParameter("MyOldGlobalParameter", "MyOldGlobalParameterrValue1", null, null);
+
+		declareDynamicParameter("MyGlobalParameter", "\"${MyOldGlobalParameter}_MyGlobalParameterrValue1\"", ParameterScope.GLOBAL, null);
+
+		declareDynamicParameter("MyAppParameter1", "\"${MyGlobalParameter}_MyAppParameterValue2\"", ParameterScope.APPLICATION, "MyApp");
+
+		declareDynamicParameter("MyFunctionParameter", "\"MyFunctionParameterValue1\"", ParameterScope.FUNCTION, "MyFunction1");
+		declareDynamicParameter("MyFunctionParameter2", "\"${MyFunctionParameterValue1}_MyFunctionParameterValue2\"", ParameterScope.FUNCTION, "MyFunction1");
+
+		declareDynamicParameter("MyApp.MyFunctionParameter3", "\"MyApp.MyFunctionParameter3Value1\"", ParameterScope.FUNCTION, "MyApp.MyFunction3");
+		declareDynamicParameter("MyFunctionParameter3", "\"MyFunctionParameter3Value1\"", ParameterScope.FUNCTION, "MyFunction3");
+
+
+		ParameterManagerPlugin parameterManagerPlugin = new LocalParameterManagerPlugin(parameterAccessor, new Configuration());
+		final ExecutionContext executionContext = newExecutionContext(parameterManagerPlugin);
+
+		Assert.assertThrows("Error while resolving parameters, following parameters could not be resolved: [MyFunctionParameter2]", PluginCriticalException.class, () -> parameterManagerPlugin.executionStart(executionContext));
+
+	}
+
+
 	private void assertVariable(VariablesManager variablesManager, String variableName) {
 		String variable;
 		variable = variablesManager.getVariableAsString(variableName);
@@ -298,7 +389,7 @@ public class ParameterManagerPluginTest {
 	private Parameter newParameter(String key, String value, ParameterScope scope, String scopeEntity) {
 		Parameter functionParameter = new Parameter();
 		functionParameter.setKey(key);
-		functionParameter.setValue(value);
+		functionParameter.setValue(new DynamicValue<>(value));
 		functionParameter.setScope(scope);
 		functionParameter.setScopeEntity(scopeEntity);
 		return functionParameter;
@@ -322,6 +413,12 @@ public class ParameterManagerPluginTest {
 		parameterAccessor.save(parameter);
 	}
 
+	protected void declareDynamicParameter(String key, String value, ParameterScope scope, String scopeEntity) {
+		Parameter functionParameter = newParameter(key, value, scope, scopeEntity);
+		functionParameter.setValue(new DynamicValue<>(value, ""));
+		parameterAccessor.save(functionParameter);
+	}
+
 	protected Function newFunction(String app, String name) {
 		Function function = new Function();
 		Map<String, String> attributes = new HashMap<String, String>();
@@ -335,13 +432,12 @@ public class ParameterManagerPluginTest {
 	
 	@IgnoreDuringAutoDiscovery
 	public static class LocalParameterManagerPlugin extends ParameterManagerPlugin {
-
 		public LocalParameterManagerPlugin(InMemoryAccessor<Parameter> parameterAccessor, Configuration configuration) {
 			this(parameterAccessor, null, configuration);
 		}
 
 		public LocalParameterManagerPlugin(InMemoryAccessor<Parameter> parameterAccessor, EncryptionManager encryptionManager, Configuration configuration) {
-			super(new ParameterManager(parameterAccessor, encryptionManager, configuration));
+			super(new ParameterManager(parameterAccessor, encryptionManager, configuration, new DynamicBeanResolver(new DynamicValueResolver(new ExpressionHandler()))));
 		}
 		
 		
