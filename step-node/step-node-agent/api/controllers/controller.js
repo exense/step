@@ -15,6 +15,10 @@ module.exports = function Controller (agentContext, fileManager) {
 
   exports.filemanager = fileManager
 
+  exports.isRunning = function (req, res) {
+    res.status(200).json('Agent is running')
+  }
+
   exports.reserveToken = function (req, res) {
     exports.reserveToken_(req.params.tokenId)
     res.json({})

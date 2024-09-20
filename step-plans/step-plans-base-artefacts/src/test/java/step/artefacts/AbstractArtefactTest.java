@@ -20,7 +20,7 @@ package step.artefacts;
 
 import org.junit.After;
 import org.junit.Before;
-import step.artefacts.handlers.functions.TokenForcastingExecutionPlugin;
+import step.artefacts.handlers.functions.TokenForecastingExecutionPlugin;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
 import step.core.execution.OperationMode;
@@ -38,7 +38,7 @@ public class AbstractArtefactTest {
 	@Before
 	public void beforeTest() {
 		executionEngine = ExecutionEngine.builder().withPlugin(new ThreadPoolPlugin())
-				.withPlugin(new BaseArtefactPlugin()).withPlugin(new TokenForcastingExecutionPlugin())
+				.withPlugin(new BaseArtefactPlugin()).withPlugin(new TokenForecastingExecutionPlugin())
 				.withPlugin(new FunctionPlugin()).withOperationMode(OperationMode.CONTROLLER).build();
 	}
 

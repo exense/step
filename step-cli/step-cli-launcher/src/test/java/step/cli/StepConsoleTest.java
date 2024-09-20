@@ -125,6 +125,7 @@ public class StepConsoleTest {
         // all parameters
         int res = runMain(histories, "ap", "execute", "-p=src/test/resources/samples/step-automation-packages-sample1.jar",
                 "-u=http://localhost:8080", "--projectName=testProject", "--token=abc", "--async", "--includePlans=p1,p2",
+                "--includeCategories=CatA,CatB", "--excludeCategories=CatC,CatD",
                 "--executionTimeoutS=1000",
                 "--excludePlans=p3,p4", "-ep=key1=value1|key2=value2", "-ep=key3=value3"
         );
@@ -134,6 +135,8 @@ public class StepConsoleTest {
         TestApExecuteCommand.RemoteExecutionParams usedParams = remoteExecuteHistory.get(0);
         Assert.assertEquals("p1,p2", usedParams.includePlans);
         Assert.assertEquals("p3,p4", usedParams.excludePlans);
+        Assert.assertEquals("CatA,CatB", usedParams.includeCategories);
+        Assert.assertEquals("CatC,CatD", usedParams.excludeCategories);
         Assert.assertEquals("http://localhost:8080", usedParams.stepUrl);
         Assert.assertEquals("abc", usedParams.authToken);
         Assert.assertEquals("testProject", usedParams.projectName);
@@ -171,13 +174,15 @@ public class StepConsoleTest {
         Histories histories = new Histories(null, null, localExecuteHistory);
 
         // all parameters
-        int res = runMain(histories, "ap", "execute", "-p=src/test/resources/samples/step-automation-packages-sample1.jar", "--local", "--includePlans=p1,p2", "--excludePlans=p3,p4", "-ep=key1=value1|key2=value2", "-ep=key3=value3");
+        int res = runMain(histories, "ap", "execute", "-p=src/test/resources/samples/step-automation-packages-sample1.jar", "--local", "--includePlans=p1,p2", "--excludePlans=p3,p4", "--includeCategories=CatA,CatB", "--excludeCategories=CatC,CatD","-ep=key1=value1|key2=value2", "-ep=key3=value3");
 
         Assert.assertEquals(0, res);
         Assert.assertEquals(1, localExecuteHistory.size());
         TestApExecuteCommand.LocalExecutionParams usedParams = localExecuteHistory.get(0);
         Assert.assertEquals("p1,p2", usedParams.includePlans);
         Assert.assertEquals("p3,p4", usedParams.excludePlans);
+        Assert.assertEquals("CatA,CatB", usedParams.includeCategories);
+        Assert.assertEquals("CatC,CatD", usedParams.excludeCategories);
         Assert.assertEquals(Map.of("key1", "value1", "key2", "value2", "key3", "value3"), usedParams.executionParameters);
         Assert.assertEquals("step-automation-packages-sample1.jar", usedParams.apFile.getName());
 
@@ -272,6 +277,8 @@ public class StepConsoleTest {
             private boolean async;
             private String includePlans;
             private String excludePlans;
+            private String includeCategories;
+            private String excludeCategories;
             private String apFile;
             private MavenArtifactIdentifier mavenArtifactIdentifier;
         }
@@ -280,6 +287,8 @@ public class StepConsoleTest {
             private File apFile;
             private String includePlans;
             private String excludePlans;
+            private String includeCategories;
+            private String excludeCategories;
             private Map<String, String> executionParameters;
         }
 
@@ -290,7 +299,8 @@ public class StepConsoleTest {
 
         @Override
         protected void executeRemotely(String stepUrl, String projectName, String stepUserId, String authToken, Map<String, String> executionParameters,
-                                       Integer executionTimeoutS, boolean async, String includePlans, String excludePlans, MavenArtifactIdentifier mavenArtifactIdentifier) {
+                                       Integer executionTimeoutS, boolean async,  String includePlans, String excludePlans,
+                                       String includeCategories, String excludeCategories, MavenArtifactIdentifier mavenArtifactIdentifier) {
             if (remoteParams != null) {
                 RemoteExecutionParams p = new RemoteExecutionParams();
                 p.stepUrl = stepUrl;
@@ -302,6 +312,8 @@ public class StepConsoleTest {
                 p.executionTimeoutS = executionTimeoutS;
                 p.includePlans = includePlans;
                 p.excludePlans = excludePlans;
+                p.includeCategories = includeCategories;
+                p.excludeCategories = excludeCategories;
                 p.apFile = this.apFile;
 
                 remoteParams.add(p);
@@ -309,12 +321,15 @@ public class StepConsoleTest {
         }
 
         @Override
-        protected void executeLocally(File file, String includePlans, String excludePlans, Map<String, String> executionParameters) {
+        protected void executeLocally(File file, String includePlans, String excludePlans,
+                                      String includeCategories, String excludeCategories, Map<String, String> executionParameters) {
             if (localParams != null) {
                 LocalExecutionParams p = new LocalExecutionParams();
                 p.apFile = file;
                 p.excludePlans = excludePlans;
                 p.includePlans = includePlans;
+                p.includeCategories = includeCategories;
+                p.excludeCategories = excludeCategories;
                 p.executionParameters = executionParameters;
                 localParams.add(p);
             }

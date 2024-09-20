@@ -1,6 +1,7 @@
 package step.automation.packages;
 
 import jakarta.json.spi.JsonProvider;
+import org.apache.commons.collections.CollectionUtils;
 import org.junit.Test;
 import org.mockito.Mockito;
 import step.artefacts.CallFunction;
@@ -30,6 +31,7 @@ import step.plugins.node.automation.YamlNodeFunction;
 import java.io.File;
 import java.io.StringReader;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
@@ -113,6 +115,14 @@ public class AutomationPackageReaderTest {
         assertEquals(TestCase.class, testPlan.getRoot().getClass());
         assertEquals(TestCase.class, AutomationPackageTestUtils.findPlanByName(plans, PLAN_FROM_PLANS_ANNOTATION).getRoot().getClass());
         assertEquals(TestCase.class, AutomationPackageTestUtils.findPlanByName(plans, INLINE_PLAN).getRoot().getClass());
+
+        //Assert all categories
+        Map<String, List<String>> expectedCategoriesByPlan = Map.of("Test Plan", List.of("Yaml Plan"), "Test Plan with Composite", List.of("Yaml Plan", "Composite"),
+                "plan.plan", List.of("PlainTextPlan","AnnotatedPlan"), "Inline Plan", List.of("InlinePlan", "AnnotatedPlan"));
+        for (Plan plan : plans) {
+            String planName = plan.getAttribute(AbstractOrganizableObject.NAME);
+            assertTrue(CollectionUtils.isEqualCollection(expectedCategoriesByPlan.get(planName), plan.getCategories()));
+        }
 
         // check how keyword inputs from test plan are parsed
         CallFunction callKeyword = (CallFunction) testPlan.getRoot().getChildren()

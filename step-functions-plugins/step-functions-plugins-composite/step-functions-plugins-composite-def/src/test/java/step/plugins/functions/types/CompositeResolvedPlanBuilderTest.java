@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.CallFunction;
 import step.artefacts.Return;
-import step.artefacts.handlers.functions.TokenForcastingExecutionPlugin;
+import step.artefacts.handlers.functions.TokenForecastingExecutionPlugin;
 import step.core.AbstractStepContext;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.reports.aggregated.AggregatedReportView;
@@ -56,7 +56,7 @@ public class CompositeResolvedPlanBuilderTest {
                         functionTypeRegistry.registerFunctionType(new CompositeFunctionType(null));
                         functionTypeRegistry.registerFunctionType(new CustomFunctionType());
                     }
-                }).withPlugin(new TokenForcastingExecutionPlugin()).build();
+                }).withPlugin(new TokenForecastingExecutionPlugin()).build();
     }
 
     @After

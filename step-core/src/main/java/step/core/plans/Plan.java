@@ -19,6 +19,7 @@
 package step.core.plans;
 
 import java.util.Collection;
+import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
@@ -28,6 +29,8 @@ import step.core.artefacts.AbstractArtefact;
 import step.core.entities.EntityManager;
 import step.core.entities.EntityReference;
 import step.core.objectenricher.EnricheableObject;
+import step.core.plans.agents.configuration.AgentProvisioningConfiguration;
+import step.core.plans.agents.configuration.AutomaticAgentProvisioningConfiguration;
 import step.functions.Function;
 
 @JsonTypeInfo(use=Id.CLASS,property= Plan.JSON_CLASS_FIELD)
@@ -40,8 +43,13 @@ public class Plan extends AbstractOrganizableObject implements EnricheableObject
 	protected Collection<Function> functions;
 	
 	protected Collection<Plan> subPlans;
+
+	@JsonTypeInfo(use= Id.DEDUCTION)
+	protected AgentProvisioningConfiguration agents = new AutomaticAgentProvisioningConfiguration(AutomaticAgentProvisioningConfiguration.PlanAgentsPoolAutoMode.auto_detect);
 	
 	protected boolean visible = true;
+
+	private List<String> categories;
 	
 	public Plan(AbstractArtefact root) {
 		super();
@@ -83,5 +91,21 @@ public class Plan extends AbstractOrganizableObject implements EnricheableObject
 
 	public void setVisible(boolean visible) {
 		this.visible = visible;
+	}
+
+	public AgentProvisioningConfiguration getAgents() {
+		return agents;
+	}
+
+	public void setAgents(AgentProvisioningConfiguration agents) {
+		this.agents = agents;
+	}
+
+	public List<String> getCategories() {
+		return categories;
+	}
+
+	public void setCategories(List<String> categories) {
+		this.categories = categories;
 	}
 }

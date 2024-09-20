@@ -36,10 +36,9 @@ import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
+import step.core.plans.PlanFilter;
 import step.core.plans.builder.PlanBuilder;
-import step.core.plans.filters.PlanByExcludedNamesFilter;
-import step.core.plans.filters.PlanByIncludedNamesFilter;
-import step.core.plans.filters.PlanMultiFilter;
+import step.core.plans.filters.*;
 import step.core.repositories.AbstractRepository;
 import step.core.repositories.ImportResult;
 import step.core.repositories.RepositoryObjectReference;
@@ -164,18 +163,24 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
     }
 
     protected PlanMultiFilter getPlanFilter(Map<String, String> repositoryParameters) {
-        PlanMultiFilter multiFilter = new PlanMultiFilter();
+        List<PlanFilter> multiFilter = new ArrayList<>();
         if (repositoryParameters.get(ArtifactRepositoryConstants.PARAM_INCLUDE_PLANS) != null) {
             multiFilter.add(new PlanByIncludedNamesFilter(parseList(repositoryParameters.get(ArtifactRepositoryConstants.PARAM_INCLUDE_PLANS))));
         }
         if (repositoryParameters.get(ArtifactRepositoryConstants.PARAM_EXCLUDE_PLANS) != null) {
             multiFilter.add(new PlanByExcludedNamesFilter(parseList(repositoryParameters.get(ArtifactRepositoryConstants.PARAM_EXCLUDE_PLANS))));
         }
-        return multiFilter;
+        if (repositoryParameters.get(ArtifactRepositoryConstants.PARAM_INCLUDE_CATEGORIES) != null) {
+            multiFilter.add(new PlanByIncludedCategoriesFilter(parseList(repositoryParameters.get(ArtifactRepositoryConstants.PARAM_INCLUDE_CATEGORIES))));
+        }
+        if (repositoryParameters.get(ArtifactRepositoryConstants.PARAM_EXCLUDE_CATEGORIES) != null) {
+            multiFilter.add(new PlanByExcludedCategoriesFilter(parseList(repositoryParameters.get(ArtifactRepositoryConstants.PARAM_EXCLUDE_CATEGORIES))));
+        }
+        return new PlanMultiFilter(multiFilter);
     }
 
     private List<String> parseList(String string) {
-        return (string == null || string.isEmpty()) ? new ArrayList<>() : Arrays.stream(string.split(",")).collect(Collectors.toList());
+        return (string == null || string.isBlank()) ? new ArrayList<>() : Arrays.stream(string.split(",")).collect(Collectors.toList());
     }
 
     protected Stream<Plan> getFilteredPackagePlans(AutomationPackage ap, Map<String, String> repositoryParameters, AutomationPackageManager inMemoryManager) {

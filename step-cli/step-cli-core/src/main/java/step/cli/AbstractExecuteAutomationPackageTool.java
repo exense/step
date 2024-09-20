@@ -30,8 +30,7 @@ import step.core.execution.model.AutomationPackageExecutionParameters;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionMode;
 import step.core.plans.PlanFilter;
-import step.core.plans.filters.PlanByExcludedNamesFilter;
-import step.core.plans.filters.PlanByIncludedNamesFilter;
+import step.core.plans.filters.*;
 import step.core.plans.runner.PlanRunnerResult;
 import step.core.repositories.RepositoryObjectReference;
 import step.repositories.ArtifactRepositoryConstants;
@@ -48,25 +47,28 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
 
     private static final Logger logger = LoggerFactory.getLogger(AbstractExecuteAutomationPackageTool.class);
 
-    private String stepProjectName;
-    private String userId;
-    private String authToken;
+    private final String stepProjectName;
+    private final String userId;
+    private final String authToken;
 
-    private Map<String, String> executionParameters;
-    private Integer executionResultTimeoutS;
-    private Boolean waitForExecution;
-    private Boolean ensureExecutionSuccess;
+    private final Map<String, String> executionParameters;
+    private final Integer executionResultTimeoutS;
+    private final Boolean waitForExecution;
+    private final Boolean ensureExecutionSuccess;
 
-    private String includePlans;
-    private String excludePlans;
+    private final String includePlans;
+    private final String excludePlans;
     private final MavenArtifactIdentifier mavenArtifactIdentifier;
+    private final String includeCategories;
+    private final String excludeCategories;
 
     public AbstractExecuteAutomationPackageTool(String url, String stepProjectName,
                                                 String userId, String authToken,
                                                 Map<String, String> executionParameters,
                                                 Integer executionResultTimeoutS, Boolean waitForExecution,
                                                 Boolean ensureExecutionSuccess, String includePlans,
-                                                String excludePlans, MavenArtifactIdentifier mavenArtifactIdentifier) {
+                                                String excludePlans, String includeCategories, String excludeCategories,
+                                                MavenArtifactIdentifier mavenArtifactIdentifier) {
         super(url);
         this.stepProjectName = stepProjectName;
         this.userId = userId;
@@ -77,6 +79,8 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
         this.ensureExecutionSuccess = ensureExecutionSuccess;
         this.includePlans = includePlans;
         this.excludePlans = excludePlans;
+        this.includeCategories = includeCategories;
+        this.excludeCategories = excludeCategories;
         this.mavenArtifactIdentifier = mavenArtifactIdentifier;
     }
 
@@ -225,19 +229,7 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
         executionParameters.setCustomParameters(getExecutionParameters());
         executionParameters.setUserID(getUserId());
 
-        PlanFilter planFilter = null;
-        if (getIncludePlans() != null && !getIncludePlans().isEmpty()) {
-            planFilter = new PlanByIncludedNamesFilter(Arrays.stream(getIncludePlans().split(",")).collect(Collectors.toList()));
-        }
-        if (getExcludePlans() != null && !getExcludePlans().isEmpty()) {
-            if (planFilter != null) {
-                throw new StepCliExecutionException("Plan filter configuration is ambiguous. Please use one of the following parameters: includePlans, excludePlans");
-            }
-            planFilter = new PlanByExcludedNamesFilter(Arrays.stream(getExcludePlans().split(",")).collect(Collectors.toList()));
-        }
-        if (planFilter != null) {
-            executionParameters.setPlanFilter(planFilter);
-        }
+        executionParameters.setPlanFilter(getPlanFilters(includePlans, excludePlans, includeCategories, excludeCategories));
 
         if (mavenArtifactIdentifier != null) {
             Map<String, String> repositoryParameters = new HashMap<>();
@@ -251,76 +243,71 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
         return executionParameters;
     }
 
-    public String getStepProjectName() {
-        return stepProjectName;
+     public static PlanFilter getPlanFilters(String includePlans, String excludePlans, String includeCategories, String excludeCategories) {
+        List<PlanFilter> multiFilter = new ArrayList<>();
+        if (includePlans != null) {
+            multiFilter.add(new PlanByIncludedNamesFilter(parseList(includePlans)));
+        }
+        if (excludePlans != null) {
+            multiFilter.add(new PlanByExcludedNamesFilter(parseList(excludePlans)));
+        }
+        if (includeCategories != null) {
+            multiFilter.add(new PlanByIncludedCategoriesFilter(parseList(includeCategories)));
+        }
+        if (excludeCategories != null) {
+            multiFilter.add(new PlanByExcludedCategoriesFilter(parseList(excludeCategories)));
+        }
+        return new PlanMultiFilter(multiFilter);
     }
 
-    public void setStepProjectName(String stepProjectName) {
-        this.stepProjectName = stepProjectName;
+    private static List<String> parseList(String string) {
+        return (string != null && !string.isBlank()) ? Arrays.stream(string.split(",")).collect(Collectors.toList()) : new ArrayList<>();
+    }
+
+    public String getStepProjectName() {
+        return stepProjectName;
     }
 
     public String getUserId() {
         return userId;
     }
 
-    public void setUserId(String userId) {
-        this.userId = userId;
-    }
-
     public String getAuthToken() {
         return authToken;
-    }
-
-    public void setAuthToken(String authToken) {
-        this.authToken = authToken;
     }
 
     public Map<String, String> getExecutionParameters() {
         return executionParameters;
     }
 
-    public void setExecutionParameters(Map<String, String> executionParameters) {
-        this.executionParameters = executionParameters;
-    }
-
     public Integer getExecutionResultTimeoutS() {
         return executionResultTimeoutS;
-    }
-
-    public void setExecutionResultTimeoutS(Integer executionResultTimeoutS) {
-        this.executionResultTimeoutS = executionResultTimeoutS;
     }
 
     public Boolean getWaitForExecution() {
         return waitForExecution;
     }
 
-    public void setWaitForExecution(Boolean waitForExecution) {
-        this.waitForExecution = waitForExecution;
-    }
 
     public Boolean getEnsureExecutionSuccess() {
         return ensureExecutionSuccess;
     }
 
-    public void setEnsureExecutionSuccess(Boolean ensureExecutionSuccess) {
-        this.ensureExecutionSuccess = ensureExecutionSuccess;
-    }
 
     public String getIncludePlans() {
         return includePlans;
-    }
-
-    public void setIncludePlans(String includePlans) {
-        this.includePlans = includePlans;
     }
 
     public String getExcludePlans() {
         return excludePlans;
     }
 
-    public void setExcludePlans(String excludePlans) {
-        this.excludePlans = excludePlans;
+    public String getIncludeCategories() {
+        return includeCategories;
+    }
+
+    public String getExcludeCategories() {
+        return excludeCategories;
     }
 
     public MavenArtifactIdentifier getMavenArtifactIdentifier() {

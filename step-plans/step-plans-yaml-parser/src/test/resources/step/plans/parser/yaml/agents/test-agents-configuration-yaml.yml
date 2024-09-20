@@ -1,0 +1,11 @@
+version: 1.0.0
+name: "test plan"
+agents:
+  - pool: "myPool"
+    replicas: 1
+  - pool: "myPool2"
+    replicas: 2
+    image: "test-image"
+root:
+  sequence:
+    children: []

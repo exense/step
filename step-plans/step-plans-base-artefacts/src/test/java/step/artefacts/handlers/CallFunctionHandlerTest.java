@@ -19,13 +19,11 @@
 package step.artefacts.handlers;
 
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.CallFunction;
-import step.artefacts.Check;
-import step.artefacts.handlers.functions.TokenForcastingExecutionPlugin;
+import step.artefacts.handlers.functions.TokenForecastingExecutionPlugin;
 import step.artefacts.handlers.functions.test.MyFunction;
 import step.artefacts.reports.CallFunctionReportNode;
 import step.attachments.AttachmentMeta;
@@ -53,7 +51,6 @@ import step.threadpool.ThreadPoolPlugin;
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
-import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -71,7 +68,7 @@ public class CallFunctionHandlerTest extends AbstractFunctionHandlerTest {
 	@Before
 	public void before() {
 		executionEngine = ExecutionEngine.builder().withPlugin(new FunctionPlugin()).withPlugin(newMyFunctionTypePlugin())
-				.withPlugin(new ThreadPoolPlugin()).withPlugin(new BaseArtefactPlugin()).withPlugin(new TokenForcastingExecutionPlugin()).build();
+				.withPlugin(new ThreadPoolPlugin()).withPlugin(new BaseArtefactPlugin()).withPlugin(new TokenForecastingExecutionPlugin()).build();
 	}
 
 	@After

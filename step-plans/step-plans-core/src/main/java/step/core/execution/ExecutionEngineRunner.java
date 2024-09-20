@@ -120,9 +120,9 @@ public class ExecutionEngineRunner {
 				} catch (PlanImportException e) {
 					saveFailureReportWithResult(ReportNodeStatus.IMPORT_ERROR);
 				} catch (ProvisioningException e) {
-					addLifecyleError("Error while provisioning execution resources: " + e.getMessage(), e);
+					addLifecyleError(e.getMessage(), e);
 				} catch (DeprovisioningException e) {
-					addLifecyleError("Error while deprovisioning execution resources: " + e.getMessage(), e);
+					addLifecyleError(e.getMessage(), e);
 				}
 			}
 		} catch (Throwable e) {
@@ -274,22 +274,12 @@ public class ExecutionEngineRunner {
 
 	private void provisionRequiredResources() throws ProvisioningException {
 		updateStatus(ExecutionStatus.PROVISIONING);
-		try {
-			executionCallbacks.provisionRequiredResources(executionContext);
-		} catch(Exception e) {
-			logger.error("Error while provisioning resources",e);
-			throw new ProvisioningException(e.getMessage());
-		}
+		executionCallbacks.provisionRequiredResources(executionContext);
 	}
 
 	private void deprovisionRequiredResources() throws DeprovisioningException {
 		updateStatus(ExecutionStatus.DEPROVISIONING);
-		try {
-			executionCallbacks.deprovisionRequiredResources(executionContext);
-		} catch (Exception e) {
-			logger.error("Error while de-provisioning resources",e);
-			throw new DeprovisioningException(e.getMessage());
-		}
+		executionCallbacks.deprovisionRequiredResources(executionContext);
 	}
 	
 	private void exportExecution(ExecutionContext context) {	
@@ -343,18 +333,7 @@ public class ExecutionEngineRunner {
 		executionManager.updateExecution(consumer);
 	}
 
-	private static class ProvisioningException extends Exception {
-		public ProvisioningException(String message) {
-			super(message);
-		}
-	}
-
 	private class PlanImportException extends Exception {
 	}
 
-	private class DeprovisioningException extends Exception {
-		public DeprovisioningException(String message) {
-			super(message);
-		}
-	}
 }
