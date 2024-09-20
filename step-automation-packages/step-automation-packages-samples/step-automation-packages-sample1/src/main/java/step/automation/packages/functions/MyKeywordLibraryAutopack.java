@@ -22,9 +22,11 @@ import step.handlers.javahandler.AbstractKeyword;
 import step.handlers.javahandler.Input;
 import step.handlers.javahandler.Keyword;
 import step.junit.runners.annotations.Plan;
+import step.junit.runners.annotations.PlanCategories;
 import step.junit.runners.annotations.Plans;
 
 @Plans({"plan.plan"})
+@PlanCategories({"PlainTextPlan", "AnnotatedPlan"})
 public class MyKeywordLibraryAutopack extends AbstractKeyword {
 
 	@Keyword
@@ -39,6 +41,7 @@ public class MyKeywordLibraryAutopack extends AbstractKeyword {
 	}
 
 	@Plan("Echo PARAM_EXEC")
+	@PlanCategories({"InlinePlan","AnnotatedPlan"})
 	@Keyword(name = "Inline Plan")
 	public void inlinePlan() {}
 

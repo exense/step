@@ -31,6 +31,9 @@ import java.util.*;
 
 public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 
+	public static final String TEST_INCLUDE_CATEGORIES = "PerformanceTest,JMterTest";
+	public static final String TEST_EXCLUDE_CATEGORIES = "CypressTest,OidcTest";
+
 	@Test
 	public void testExecute() throws Exception {
 		ExecuteAutomationPackageMojoTestable mojo = new ExecuteAutomationPackageMojoTestable();
@@ -52,6 +55,8 @@ public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 		Assert.assertEquals(createTestCustomParams(), mojo.parameters);
 		Assert.assertEquals(TEST_INCLUDE_PLANS, mojo.includePlans);
 		Assert.assertNull(TEST_INCLUDE_PLANS, mojo.excludePlans);
+		Assert.assertEquals(TEST_INCLUDE_CATEGORIES, mojo.includeCategories);
+		Assert.assertEquals(TEST_EXCLUDE_CATEGORIES, mojo.excludeCategories);
 	}
 
 	private void configureMojo(ExecuteAutomationPackageMojoTestable mojo, boolean ensureExecutionSuccess) throws URISyntaxException {
@@ -71,6 +76,8 @@ public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 		mojo.setEnsureExecutionSuccess(ensureExecutionSuccess);
 
 		mojo.setIncludePlans(TEST_INCLUDE_PLANS);
+		mojo.setIncludeCategories(TEST_INCLUDE_CATEGORIES);
+		mojo.setExcludeCategories(TEST_EXCLUDE_CATEGORIES);
 
 		MavenProject mockedProject = Mockito.mock(MavenProject.class);
 		Mockito.when(mockedProject.getArtifactId()).thenReturn(ARTIFACT_ID);
@@ -112,13 +119,17 @@ public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 		private Boolean ensureExecutionSuccess;
 		private String includePlans;
 		private String excludePlans;
+		private String includeCategories;
+		private String excludeCategories;
 
 		public ExecuteAutomationPackageMojoTestable() {
 			super();
 		}
 
 		@Override
-		protected AbstractExecuteAutomationPackageTool createTool(String url, String projectName, String userId, String authToken, Map<String, String> parameters, Integer executionResultTimeoutS, Boolean waitForExecution, Boolean ensureExecutionSuccess, String includePlans, String excludePlans) {
+		protected AbstractExecuteAutomationPackageTool createTool(String url, String projectName, String userId, String authToken, Map<String, String> parameters,
+										Integer executionResultTimeoutS, Boolean waitForExecution, Boolean ensureExecutionSuccess, String includePlans, String excludePlans,
+										String includeCategories, String excludeCategories) {
 			this.url = url;
 			this.projectName = projectName;
 			this.userId = userId;
@@ -129,6 +140,8 @@ public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 			this.ensureExecutionSuccess = ensureExecutionSuccess;
 			this.includePlans = includePlans;
 			this.excludePlans = excludePlans;
+			this.includeCategories = includeCategories;
+			this.excludeCategories = excludeCategories;
 			return mockedTool;
 		}
 	}

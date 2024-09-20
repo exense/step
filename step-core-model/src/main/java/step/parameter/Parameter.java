@@ -21,6 +21,7 @@ package step.parameter;
 import step.commons.activation.ActivableObject;
 import step.commons.activation.Expression;
 import step.core.accessors.AbstractTrackedObject;
+import step.core.dynamicbeans.DynamicValue;
 import step.core.objectenricher.EnricheableObject;
 
 public class Parameter extends AbstractTrackedObject implements ActivableObject, EnricheableObject {
@@ -29,7 +30,7 @@ public class Parameter extends AbstractTrackedObject implements ActivableObject,
 	
 	protected String key;
 	
-	protected String value;
+	protected DynamicValue<String> value;
 	
 	protected String description;
 	
@@ -56,7 +57,7 @@ public class Parameter extends AbstractTrackedObject implements ActivableObject,
 	public Parameter(Expression activationExpression, String key, String value, String description) {
 		super();
 		this.key = key;
-		this.value = value;
+		this.value = new DynamicValue<>(value);
 		this.description = description;
 		this.activationExpression = activationExpression;
 	}
@@ -69,11 +70,11 @@ public class Parameter extends AbstractTrackedObject implements ActivableObject,
 		this.key = key;
 	}
 
-	public String getValue() {
+	public DynamicValue<String> getValue() {
 		return value;
 	}
 
-	public void setValue(String value) {
+	public void setValue(DynamicValue<String> value) {
 		this.value = value;
 	}
 

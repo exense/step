@@ -22,7 +22,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
-import step.plans.parser.yaml.model.YamlPlanVersions;
+import step.plans.parser.yaml.YamlPlanVersions;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
