@@ -18,21 +18,22 @@
  ******************************************************************************/
 package step.core.plans.filters;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.commons.collections.CollectionUtils;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.plans.Plan;
 import step.core.plans.PlanFilter;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class PlanByIncludedNamesFilter extends PlanFilter {
 
-    private List<String> includedNames = new ArrayList<>();
+    private final List<String> includedNames;
 
-    public PlanByIncludedNamesFilter() {
-    }
-
-    public PlanByIncludedNamesFilter(List<String> includedNames) {
+    @JsonCreator
+    public PlanByIncludedNamesFilter(@JsonProperty("includedNames") List<String> includedNames) {
         this.includedNames = includedNames;
     }
 
@@ -45,7 +46,16 @@ public class PlanByIncludedNamesFilter extends PlanFilter {
         return includedNames;
     }
 
-    public void setIncludedNames(List<String> includedNames) {
-        this.includedNames = includedNames;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof PlanByIncludedNamesFilter)) return false;
+        PlanByIncludedNamesFilter that = (PlanByIncludedNamesFilter) o;
+        return CollectionUtils.isEqualCollection(includedNames, that.includedNames);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(includedNames);
     }
 }

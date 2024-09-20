@@ -25,7 +25,7 @@ import step.automation.packages.deserialization.AutomationPackageSerializationRe
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
 import step.core.scheduler.automation.AutomationPackageSchedule;
 import step.core.scheduler.automation.AutomationPackageScheduleRegistration;
-import step.plans.parser.yaml.model.YamlPlan;
+import step.plans.parser.yaml.YamlPlan;
 import step.plugins.jmeter.automation.YamlJMeterFunction;
 
 import java.io.File;

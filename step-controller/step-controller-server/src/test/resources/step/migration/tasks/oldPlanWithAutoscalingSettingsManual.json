@@ -1,0 +1,67 @@
+{
+  "_class": "step.core.plans.Plan",
+  "customFields": {
+    "versionId": "66daeced99f23116c59c4749",
+    "autoscalingSettings": [
+      "step.artefacts.handlers.functions.autoscaler.PlanAutoscalingSettings",
+      {
+        "enableAutoscaling": true,
+        "enableAutomaticTokenNumberCalculation": false,
+        "requiredNumberOfTokens": [
+          "java.util.LinkedHashMap",
+          {
+            "build-high-cpu-enterprise-agent": 1,
+            "git-enterprise-agent": 2,
+            "build-enterprise-agent": 1,
+            "test-enterprise-agent": 1
+          }
+        ]
+      }
+    ]
+  },
+  "attributes": {
+    "name": "AutoSclaingManual",
+    "project": "668fe6474fe7006fcd8edb1e"
+  },
+  "root": {
+    "_class": "TestCase",
+    "customFields": null,
+    "attributes": {
+      "name": "AutoSclaingOf"
+    },
+    "dynamicName": {
+      "dynamic": false,
+      "value": "",
+      "expression": "",
+      "expressionType": null
+    },
+    "useDynamicName": false,
+    "description": null,
+    "children": [],
+    "customAttributes": null,
+    "attachments": null,
+    "skipNode": {
+      "dynamic": false,
+      "value": false,
+      "expression": null,
+      "expressionType": null
+    },
+    "instrumentNode": {
+      "dynamic": false,
+      "value": false,
+      "expression": null,
+      "expressionType": null
+    },
+    "continueParentNodeExecutionOnError": {
+      "dynamic": false,
+      "value": false,
+      "expression": null,
+      "expressionType": null
+    },
+    "id": "66daeced99f23116c59c4748"
+  },
+  "functions": null,
+  "subPlans": null,
+  "visible": true,
+  "id": "66daeced99f23116c59c4747"
+}
