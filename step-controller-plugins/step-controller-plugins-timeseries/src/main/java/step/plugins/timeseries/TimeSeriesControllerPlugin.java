@@ -13,12 +13,8 @@ import step.core.entities.Entity;
 import step.core.entities.EntityManager;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
-import step.core.timeseries.TimeSeries;
-import step.core.timeseries.TimeSeriesBuilder;
-import step.core.timeseries.TimeSeriesCollection;
-import step.core.timeseries.TimeSeriesCollectionSettings;
+import step.core.timeseries.*;
 import step.core.timeseries.aggregation.TimeSeriesAggregationPipeline;
-import step.core.timeseries.bucket.Bucket;
 import step.core.timeseries.ingestion.TimeSeriesIngestionPipeline;
 import step.core.timeseries.metric.*;
 import step.engine.plugins.ExecutionEnginePlugin;
@@ -28,14 +24,16 @@ import step.migration.MigrationManager;
 import step.migration.MigrationManagerPlugin;
 import step.plugins.measurements.GaugeCollectorRegistry;
 import step.plugins.measurements.MeasurementPlugin;
-import step.plugins.timeseries.dashboards.DashboardsGenerator;
-import step.plugins.timeseries.dashboards.model.*;
 import step.plugins.timeseries.dashboards.DashboardAccessor;
+import step.plugins.timeseries.dashboards.DashboardsGenerator;
+import step.plugins.timeseries.dashboards.model.DashboardView;
 import step.plugins.timeseries.migration.MigrateAggregateTask;
 import step.plugins.timeseries.migration.MigrateDashboardsTask;
 
-import java.util.*;
-import java.util.concurrent.TimeUnit;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
 
 import static step.plugins.timeseries.MetricsConstants.*;
 import static step.plugins.timeseries.TimeSeriesExecutionPlugin.*;
@@ -43,29 +41,14 @@ import static step.plugins.timeseries.TimeSeriesExecutionPlugin.*;
 @Plugin(dependencies = {MigrationManagerPlugin.class, AsyncTaskManagerPlugin.class})
 public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 
-	public static final String PLUGINS_TIMESERIES_FLUSH_PERIOD = "plugins.timeseries.flush.period";
-	public static final String RESOLUTION_PERIOD_PROPERTY = "plugins.timeseries.resolution.period";
-	public static final String TIME_SERIES_SAMPLING_LIMIT = "plugins.timeseries.sampling.limit";
-	public static final String TIME_SERIES_MAX_NUMBER_OF_SERIES = "plugins.timeseries.response.series.limit";
 	public static final String TIME_SERIES_MAIN_COLLECTION = "timeseries";
-	public static final String TIME_SERIES_PER_MINUTE_COLLECTION = "timeseries_minute";
-	public static final String TIME_SERIES_HOURLY_COLLECTION = "timeseries_hour";
-	public static final String TIME_SERIES_DAILY_COLLECTION = "timeseries_day";
-	public static final String TIME_SERIES_WEEKLY_COLLECTION = "timeseries_week";
-	public static final String TIME_SERIES_ATTRIBUTES_PROPERTY = "plugins.timeseries.attributes";
+	public static final String TIME_SERIES_ATTRIBUTES_PROPERTY = "timeseries.attributes";
 	public static final String TIME_SERIES_ATTRIBUTES_DEFAULT = EXECUTION_ID + "," + TASK_ID + "," + PLAN_ID + ",metricType,origin,name,rnStatus,project,type";
 
-	public static final String TIME_SERIES_MINUTE_COLLECTION_ENABLED = "plugins.timeseries.collections.minute.enabled";
-	public static final String TIME_SERIES_MINUTE_COLLECTION_FLUSH_PERIOD = "plugins.timeseries.collections.minute.flush.period";
-	public static final String TIME_SERIES_HOUR_COLLECTION_ENABLED = "plugins.timeseries.collections.hour.enabled";
-	public static final String TIME_SERIES_HOUR_COLLECTION_FLUSH_PERIOD = "plugins.timeseries.collections.hour.flush.period";
-	public static final String TIME_SERIES_DAY_COLLECTION_ENABLED = "plugins.timeseries.collections.day.enabled";
-	public static final String TIME_SERIES_DAY_COLLECTION_FLUSH_PERIOD = "plugins.timeseries.collections.day.flush.period";
-	public static final String TIME_SERIES_WEEK_COLLECTION_ENABLED = "plugins.timeseries.collections.week.enabled";
-	public static final String TIME_SERIES_WEEK_COLLECTION_FLUSH_PERIOD = "plugins.timeseries.collections.week.flush.period";
-
+	// Following properties are used by the UI. In the future we could remove the prefix 'plugins.' to align with other properties
 	public static final String PARAM_KEY_EXECUTION_DASHBOARD_ID = "plugins.timeseries.execution.dashboard.id";
 	public static final String PARAM_KEY_ANALYTICS_DASHBOARD_ID = "plugins.timeseries.analytics.dashboard.id";
+
 	public static final String EXECUTION_DASHBOARD_PREPOPULATED_NAME = "Execution Dashboard";
 	public static final String ANALYTICS_DASHBOARD_PREPOPULATED_NAME = "Analytics Dashboard";
 	public static final String GENERATION_NAME = "generationName";
@@ -84,14 +67,13 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 		List<String> attributes = Arrays.asList(configuration.getProperty(TIME_SERIES_ATTRIBUTES_PROPERTY, TIME_SERIES_ATTRIBUTES_DEFAULT).split(","));
 		CollectionFactory collectionFactory = context.getCollectionFactory();
 
-		TimeSeriesCollectionsSettings collectionsSettings = getCollectionsSettings(configuration);
+		TimeSeriesCollectionsSettings timeSeriesCollectionsSettings = TimeSeriesCollectionsSettings.readSettings(configuration, TIME_SERIES_MAIN_COLLECTION);
 
-		List<TimeSeriesCollection> enabledCollections = prepareTimeSeriesCollections(collectionsSettings, collectionFactory);
+		TimeSeriesCollectionsBuilder timeSeriesCollectionsBuilder = new TimeSeriesCollectionsBuilder(collectionFactory);
+		List<TimeSeriesCollection> enabledCollections = timeSeriesCollectionsBuilder.getTimeSeriesCollections(TIME_SERIES_MAIN_COLLECTION, timeSeriesCollectionsSettings);
 
 		// timeseries will have a list of registered collection.
-		timeSeries = new TimeSeriesBuilder()
-				.registerCollections(enabledCollections)
-				.build();
+		timeSeries = new TimeSeriesBuilder().registerCollections(enabledCollections).build();
 		mainIngestionPipeline = timeSeries.getIngestionPipeline();
 
 		TimeSeriesAggregationPipeline aggregationPipeline = timeSeries.getAggregationPipeline();
@@ -119,91 +101,8 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 		GaugeCollectorRegistry.getInstance().registerHandler(handler);
 
 		WebApplicationConfigurationManager configurationManager = context.require(WebApplicationConfigurationManager.class);
-		configurationManager.registerHook(s -> Map.of(RESOLUTION_PERIOD_PROPERTY, String.valueOf(timeSeries.getDefaultCollection().getResolution())));
-	}
-
-	private List<TimeSeriesCollection> prepareTimeSeriesCollections(TimeSeriesCollectionsSettings collectionsSettings, CollectionFactory collectionFactory) {
-		HashMap<TimeSeriesCollection, Boolean> collectionsEnabled = new HashMap<>();
-
-		collectionsEnabled.put(
-				new TimeSeriesCollection(collectionFactory.getCollection(TIME_SERIES_MAIN_COLLECTION, Bucket.class),
-						new TimeSeriesCollectionSettings()
-								.setResolution(collectionsSettings.getMainCollectionResolution())
-								.setIngestionFlushingPeriodMs(collectionsSettings.getMainCollectionFlushPeriod())
-				), true
-		);
-		collectionsEnabled.put(
-				new TimeSeriesCollection(
-						collectionFactory.getCollection(TimeSeriesControllerPlugin.TIME_SERIES_PER_MINUTE_COLLECTION, Bucket.class),
-						new TimeSeriesCollectionSettings()
-								.setResolution(TimeUnit.MINUTES.toMillis(1))
-								.setIngestionFlushingPeriodMs(collectionsSettings.getPerMinuteFlushInterval())
-				),
-				collectionsSettings.isPerMinuteEnabled()
-		);
-		collectionsEnabled.put(
-				new TimeSeriesCollection(
-						collectionFactory.getCollection(TimeSeriesControllerPlugin.TIME_SERIES_HOURLY_COLLECTION, Bucket.class),
-						new TimeSeriesCollectionSettings()
-								.setResolution(TimeUnit.HOURS.toMillis(1))
-								.setIngestionFlushingPeriodMs(collectionsSettings.getHourlyFlushInterval())
-				),
-				collectionsSettings.isHourlyEnabled()
-		);
-		collectionsEnabled.put(
-				new TimeSeriesCollection(
-						collectionFactory.getCollection(TimeSeriesControllerPlugin.TIME_SERIES_DAILY_COLLECTION, Bucket.class),
-						new TimeSeriesCollectionSettings()
-								.setResolution(TimeUnit.DAYS.toMillis(1))
-								.setIngestionFlushingPeriodMs(collectionsSettings.getDailyFlushInterval())
-				),
-				collectionsSettings.isDailyEnabled()
-		);
-		collectionsEnabled.put(
-				new TimeSeriesCollection(
-						collectionFactory.getCollection(TimeSeriesControllerPlugin.TIME_SERIES_WEEKLY_COLLECTION, Bucket.class),
-						new TimeSeriesCollectionSettings()
-								.setResolution(TimeUnit.DAYS.toMillis(7))
-								.setIngestionFlushingPeriodMs(collectionsSettings.getWeeklyFlushInterval())
-				),
-				collectionsSettings.isWeeklyEnabled()
-		);
-
-		List<TimeSeriesCollection> enabledCollections = new ArrayList<>();
-
-		collectionsEnabled.forEach((collection, enabled) -> {
-			if (enabled) {
-				enabledCollections.add(collection);
-			} else {
-				// disabled resolutions will be completely dropped from db
-				collection.getCollection().drop();
-			}
-		});
-		return enabledCollections;
-	}
-
-
-	public static TimeSeriesCollectionsSettings getCollectionsSettings(Configuration configuration) {
-		long mainResolution = configuration.getPropertyAsLong(RESOLUTION_PERIOD_PROPERTY, 1000L);
-		validateMainResolutionParam(mainResolution);
-		return new TimeSeriesCollectionsSettings()
-				.setMainCollectionResolution(mainResolution)
-				.setMainCollectionFlushPeriod(configuration.getPropertyAsLong(PLUGINS_TIMESERIES_FLUSH_PERIOD, 1000L))
-				.setPerMinuteEnabled(configuration.getPropertyAsBoolean(TIME_SERIES_MINUTE_COLLECTION_ENABLED, true))
-				.setPerMinuteFlushInterval(configuration.getPropertyAsLong(TIME_SERIES_MINUTE_COLLECTION_FLUSH_PERIOD, TimeUnit.MINUTES.toMillis(1)))
-				.setHourlyEnabled(configuration.getPropertyAsBoolean(TIME_SERIES_HOUR_COLLECTION_ENABLED, true))
-				.setHourlyFlushInterval(configuration.getPropertyAsLong(TIME_SERIES_HOUR_COLLECTION_FLUSH_PERIOD, TimeUnit.MINUTES.toMillis(5)))
-				.setDailyEnabled(configuration.getPropertyAsBoolean(TIME_SERIES_DAY_COLLECTION_ENABLED, true))
-				.setDailyFlushInterval(configuration.getPropertyAsLong(TIME_SERIES_DAY_COLLECTION_FLUSH_PERIOD, TimeUnit.HOURS.toMillis(1)))
-				.setWeeklyEnabled(configuration.getPropertyAsBoolean(TIME_SERIES_WEEK_COLLECTION_ENABLED, true))
-				.setWeeklyFlushInterval(configuration.getPropertyAsLong(TIME_SERIES_WEEK_COLLECTION_FLUSH_PERIOD, TimeUnit.HOURS.toMillis(2)));
-	}
-	
-	private static void validateMainResolutionParam(long resolution) {
-		double msInMinute = TimeUnit.MINUTES.toMillis(1);
-        if (msInMinute % resolution != 0) {
-            throw new IllegalArgumentException("Invalid interval: " + resolution + " seconds. The interval must be a divisor of one minute (60 seconds).");
-        }
+		// Following property is used by the UI. We could align its name with the configuration property in the future
+		configurationManager.registerHook(s -> Map.of("plugins.timeseries.resolution.period", String.valueOf(timeSeries.getDefaultCollection().getResolution())));
 	}
 
 	@Override

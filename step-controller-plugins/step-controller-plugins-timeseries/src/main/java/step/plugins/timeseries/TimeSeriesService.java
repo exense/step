@@ -38,6 +38,9 @@ public class TimeSeriesService extends AbstractStepServices {
     private MetricTypeAccessor metricTypeAccessor;
     private int maxNumberOfSeries;
 
+    public static final String TIME_SERIES_SAMPLING_LIMIT = "timeseries.sampling.limit";
+    public static final String TIME_SERIES_MAX_NUMBER_OF_SERIES = "timeseries.response.series.limit";
+
     @PostConstruct
     public void init() throws Exception {
         super.init();
@@ -48,7 +51,7 @@ public class TimeSeriesService extends AbstractStepServices {
         metricTypeAccessor = context.require(MetricTypeAccessor.class);
         TimeSeries timeSeries = context.require(TimeSeries.class);
         ExecutionAccessor executionAccessor = context.getExecutionAccessor();
-        int resolution = configuration.getPropertyAsInteger(RESOLUTION_PERIOD_PROPERTY, 1000);
+        int resolution = (int) timeSeries.getIngestionPipeline().getResolution();
         int fieldsSamplingLimit = configuration.getPropertyAsInteger(TIME_SERIES_SAMPLING_LIMIT, 1000);
         maxNumberOfSeries = configuration.getPropertyAsInteger(TIME_SERIES_MAX_NUMBER_OF_SERIES, 1000);
         this.handler = new TimeSeriesHandler(resolution, timeSeriesAttributes, measurementCollection, executionAccessor, timeSeries, asyncTaskManager, fieldsSamplingLimit);

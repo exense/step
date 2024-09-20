@@ -3,40 +3,26 @@ package step.core.artefacts.reports.aggregated;
 import ch.exense.commons.app.Configuration;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
-import step.core.collections.*;
+import step.core.collections.CollectionFactory;
+import step.core.collections.Filters;
+import step.core.collections.IndexField;
+import step.core.collections.Order;
 import step.core.collections.filters.And;
-import step.core.timeseries.TimeSeries;
-import step.core.timeseries.TimeSeriesBuilder;
-import step.core.timeseries.TimeSeriesCollection;
-import step.core.timeseries.TimeSeriesCollectionSettings;
+import step.core.timeseries.*;
 import step.core.timeseries.aggregation.TimeSeriesAggregationQueryBuilder;
-import step.core.timeseries.bucket.Bucket;
 import step.core.timeseries.bucket.BucketAttributes;
 import step.core.timeseries.ingestion.TimeSeriesIngestionPipeline;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class ReportNodeTimeSeries implements Closeable {
 
-    public static final String TIME_SERIES_MAIN_COLLECTION_FLUSH_PERIOD = "plugins.timeseries.collections.main.flush.period";
-    public static final String TIME_SERIES_MINUTE_COLLECTION_ENABLED = "plugins.timeseries.collections.minute.enabled";
-    public static final String TIME_SERIES_MINUTE_COLLECTION_FLUSH_PERIOD = "plugins.timeseries.collections.minute.flush.period";
-    public static final String TIME_SERIES_HOUR_COLLECTION_ENABLED = "plugins.timeseries.collections.hour.enabled";
-    public static final String TIME_SERIES_HOUR_COLLECTION_FLUSH_PERIOD = "plugins.timeseries.collections.hour.flush.period";
-    public static final String TIME_SERIES_DAY_COLLECTION_ENABLED = "plugins.timeseries.collections.day.enabled";
-    public static final String TIME_SERIES_DAY_COLLECTION_FLUSH_PERIOD = "plugins.timeseries.collections.day.flush.period";
-    public static final String TIME_SERIES_WEEK_COLLECTION_ENABLED = "plugins.timeseries.collections.week.enabled";
-    public static final String TIME_SERIES_WEEK_COLLECTION_FLUSH_PERIOD = "plugins.timeseries.collections.week.flush.period";
     public static final String TIME_SERIES_MAIN_COLLECTION = "reportNodeTimeSeries";
-    public static final String TIME_SERIES_PER_MINUTE_COLLECTION = "reportNodeTimeSeries_minute";
-    public static final String TIME_SERIES_HOURLY_COLLECTION = "reportNodeTimeSeries_hour";
-    public static final String TIME_SERIES_DAILY_COLLECTION = "reportNodeTimeSeries_day";
-    public static final String TIME_SERIES_WEEKLY_COLLECTION = "reportNodeTimeSeries_week";
-
     public static final String ARTEFACT_HASH = "artefactHash";
     public static final String EXECUTION_ID = "executionId";
     public static final String STATUS = "status";
@@ -44,75 +30,20 @@ public class ReportNodeTimeSeries implements Closeable {
     private final TimeSeriesIngestionPipeline ingestionPipeline;
 
     public ReportNodeTimeSeries(CollectionFactory collectionFactory, Configuration configuration) {
-        ReportNodeTimeSeriesCollectionsSettings collectionsSettings = getCollectionsSettings(configuration);
-        timeSeries = new TimeSeriesBuilder()
-                .registerCollections(getTimeSeriesCollections(collectionsSettings, collectionFactory))
-                .build();
+        TimeSeriesCollectionsSettings timeSeriesCollectionsSettings = TimeSeriesCollectionsSettings.readSettings(configuration, TIME_SERIES_MAIN_COLLECTION);
+        List<TimeSeriesCollection> timeSeriesCollections = getTimeSeriesCollections(timeSeriesCollectionsSettings, collectionFactory);
+        timeSeries = new TimeSeriesBuilder().registerCollections(timeSeriesCollections).build();
         ingestionPipeline = timeSeries.getIngestionPipeline();
         timeSeries.createIndexes(Set.of(new IndexField(EXECUTION_ID, Order.ASC, String.class)));
     }
 
-    private List<TimeSeriesCollection> getTimeSeriesCollections(ReportNodeTimeSeriesCollectionsSettings collectionsSettings, CollectionFactory collectionFactory) {
-        HashMap<TimeSeriesCollection, Boolean> collectionsEnabled = new HashMap<>();
-
-        collectionsEnabled.put(
-                new TimeSeriesCollection(collectionFactory.getCollection(TIME_SERIES_MAIN_COLLECTION, Bucket.class),
-                        new TimeSeriesCollectionSettings()
-                                .setResolution(30_000)
-                                .setIngestionFlushingPeriodMs(collectionsSettings.getMainFlushInterval())
-                ), true);
-        collectionsEnabled.put(
-                new TimeSeriesCollection(collectionFactory.getCollection(TIME_SERIES_PER_MINUTE_COLLECTION, Bucket.class),
-                        new TimeSeriesCollectionSettings()
-                                .setResolution(TimeUnit.MINUTES.toMillis(1))
-                                .setIngestionFlushingPeriodMs(collectionsSettings.getPerMinuteFlushInterval()))
-                , collectionsSettings.isPerMinuteEnabled());
-        collectionsEnabled.put(
-                new TimeSeriesCollection(collectionFactory.getCollection(TIME_SERIES_HOURLY_COLLECTION, Bucket.class),
-                        new TimeSeriesCollectionSettings()
-                                .setResolution(TimeUnit.HOURS.toMillis(1))
-                                .setIngestionFlushingPeriodMs(collectionsSettings.getHourlyFlushInterval()))
-                , collectionsSettings.isPerMinuteEnabled());
-        collectionsEnabled.put(
-                new TimeSeriesCollection(collectionFactory.getCollection(TIME_SERIES_DAILY_COLLECTION, Bucket.class),
-                        new TimeSeriesCollectionSettings()
-                                .setResolution(TimeUnit.DAYS.toMillis(1))
-                                .setIngestionFlushingPeriodMs(collectionsSettings.getDailyFlushInterval()))
-                , collectionsSettings.isPerMinuteEnabled());
-        collectionsEnabled.put(
-                new TimeSeriesCollection(collectionFactory.getCollection(TIME_SERIES_WEEKLY_COLLECTION, Bucket.class),
-                        new TimeSeriesCollectionSettings()
-                                .setResolution(TimeUnit.DAYS.toMillis(7))
-                                .setIngestionFlushingPeriodMs(collectionsSettings.getWeeklyFlushInterval()))
-                , collectionsSettings.isPerMinuteEnabled());
-        List<TimeSeriesCollection> enabledCollections = new ArrayList<>();
-
-        collectionsEnabled.forEach((collection, enabled) -> {
-            if (enabled) {
-                enabledCollections.add(collection);
-            } else {
-                // disabled resolutions will be completely dropped from db
-                collection.getCollection().drop();
-            }
-        });
-        return enabledCollections;
+    private List<TimeSeriesCollection> getTimeSeriesCollections(TimeSeriesCollectionsSettings collectionsSettings, CollectionFactory collectionFactory) {
+        TimeSeriesCollectionsBuilder timeSeriesCollectionsBuilder = new TimeSeriesCollectionsBuilder(collectionFactory);
+        return timeSeriesCollectionsBuilder.getTimeSeriesCollections(TIME_SERIES_MAIN_COLLECTION, collectionsSettings);
     }
 
     public TimeSeries getTimeSeries() {
         return timeSeries;
-    }
-
-    private static ReportNodeTimeSeriesCollectionsSettings getCollectionsSettings(Configuration configuration) {
-        return new ReportNodeTimeSeriesCollectionsSettings()
-                .setMainFlushInterval(configuration.getPropertyAsLong(TIME_SERIES_MAIN_COLLECTION_FLUSH_PERIOD, TimeUnit.SECONDS.toMillis(1)))
-                .setPerMinuteEnabled(configuration.getPropertyAsBoolean(TIME_SERIES_MINUTE_COLLECTION_ENABLED, true))
-                .setPerMinuteFlushInterval(configuration.getPropertyAsLong(TIME_SERIES_MINUTE_COLLECTION_FLUSH_PERIOD, TimeUnit.MINUTES.toMillis(1)))
-                .setHourlyEnabled(configuration.getPropertyAsBoolean(TIME_SERIES_HOUR_COLLECTION_ENABLED, true))
-                .setHourlyFlushInterval(configuration.getPropertyAsLong(TIME_SERIES_HOUR_COLLECTION_FLUSH_PERIOD, TimeUnit.MINUTES.toMillis(5)))
-                .setDailyEnabled(configuration.getPropertyAsBoolean(TIME_SERIES_DAY_COLLECTION_ENABLED, true))
-                .setDailyFlushInterval(configuration.getPropertyAsLong(TIME_SERIES_DAY_COLLECTION_FLUSH_PERIOD, TimeUnit.HOURS.toMillis(1)))
-                .setWeeklyEnabled(configuration.getPropertyAsBoolean(TIME_SERIES_WEEK_COLLECTION_ENABLED, true))
-                .setWeeklyFlushInterval(configuration.getPropertyAsLong(TIME_SERIES_WEEK_COLLECTION_FLUSH_PERIOD, TimeUnit.HOURS.toMillis(2)));
     }
 
     public void ingestReportNode(ReportNode reportNode) {
