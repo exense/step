@@ -10,6 +10,7 @@ import step.core.collections.Order;
 import step.core.collections.filters.And;
 import step.core.timeseries.*;
 import step.core.timeseries.aggregation.TimeSeriesAggregationQueryBuilder;
+import step.core.timeseries.aggregation.TimeSeriesOptimizationType;
 import step.core.timeseries.bucket.BucketAttributes;
 import step.core.timeseries.ingestion.TimeSeriesIngestionPipeline;
 
@@ -62,15 +63,16 @@ public class ReportNodeTimeSeries implements Closeable {
 
     public Map<String, Long> queryByExecutionIdAndArtefactHash(String executionId, String artefactHash, Range range) {
         And filter = Filters.and(List.of(Filters.equals("attributes." + EXECUTION_ID, executionId), Filters.equals("attributes." + ARTEFACT_HASH, artefactHash)));
-        TimeSeriesAggregationQueryBuilder builder = new TimeSeriesAggregationQueryBuilder()
+        TimeSeriesAggregationQueryBuilder queryBuilder = new TimeSeriesAggregationQueryBuilder()
+                .withOptimizationType(TimeSeriesOptimizationType.MOST_ACCURATE)
                 .withFilter(filter)
                 .withGroupDimensions(Set.of(STATUS))
                 .split(1);
 
         if (range != null) {
-            builder.range(range.from, range.to);
+            queryBuilder.range(range.from, range.to);
         }
-        Map<String, Long> countByStatus = timeSeries.getAggregationPipeline().collect(builder.build())
+        Map<String, Long> countByStatus = timeSeries.getAggregationPipeline().collect(queryBuilder.build())
                 .getSeries().entrySet().stream().collect(Collectors.toMap(k -> (String) k.getKey().get(STATUS), v -> v.getValue().values().stream().findFirst().get().getCount()));
         return countByStatus;
     }
