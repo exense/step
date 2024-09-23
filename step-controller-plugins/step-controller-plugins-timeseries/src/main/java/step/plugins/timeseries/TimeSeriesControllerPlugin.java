@@ -1,6 +1,8 @@
 package step.plugins.timeseries;
 
 import ch.exense.commons.app.Configuration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.controller.services.async.AsyncTaskManager;
 import step.controller.services.async.AsyncTaskManagerPlugin;
 import step.core.GlobalContext;
@@ -41,6 +43,7 @@ import static step.plugins.timeseries.TimeSeriesExecutionPlugin.*;
 @Plugin(dependencies = {MigrationManagerPlugin.class, AsyncTaskManagerPlugin.class})
 public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 
+	private static final Logger logger = LoggerFactory.getLogger(TimeSeriesControllerPlugin.class);
 	public static final String TIME_SERIES_MAIN_COLLECTION = "timeseries";
 	public static final String TIME_SERIES_ATTRIBUTES_PROPERTY = "timeseries.attributes";
 	public static final String TIME_SERIES_ATTRIBUTES_DEFAULT = EXECUTION_ID + "," + TASK_ID + "," + PLAN_ID + ",metricType,origin,name,rnStatus,project,type";
@@ -146,7 +149,9 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 
 	private void initTimeSeriesCollectionsData(AsyncTaskManager asyncTaskManager) {
 		asyncTaskManager.scheduleAsyncTask((empty) -> {
+			logger.info("TimeSeries ingestion for empty resolutions has started");
 			timeSeries.ingestDataForEmptyCollections();
+			logger.info("TimeSeries ingestion for empty resolutions has finished");
 			return null;
 		});
 	}
