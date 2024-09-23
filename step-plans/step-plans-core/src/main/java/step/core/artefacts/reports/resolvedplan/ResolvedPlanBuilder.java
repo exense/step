@@ -11,8 +11,6 @@ import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.execution.ExecutionContext;
 import step.core.plans.Plan;
 
-import java.util.NoSuchElementException;
-
 public class ResolvedPlanBuilder {
 
     private static final Logger logger = LoggerFactory.getLogger(ResolvedPlanBuilder.class);
@@ -28,10 +26,10 @@ public class ResolvedPlanBuilder {
     }
 
     public ResolvedPlanNode buildResolvedPlan(Plan plan) {
-        return buildTreeRecursively(null, plan.getRoot(), null);
+        return buildTreeRecursively(null, plan.getRoot(), null, plan);
     }
 
-    private ResolvedPlanNode buildTreeRecursively(String parentId, AbstractArtefact artefactNode, String currentArtefactPath) {
+    private ResolvedPlanNode buildTreeRecursively(String parentId, AbstractArtefact artefactNode, String currentArtefactPath, Plan plan) {
         String artefactHash = ArtefactPathHelper.generateArtefactHash(currentArtefactPath, artefactNode);
 
         // Create a clone of the artefact instance and remove the children
@@ -46,20 +44,24 @@ public class ResolvedPlanBuilder {
             ArtefactHandler<AbstractArtefact, ReportNode> artefactHandler = artefactHandlerManager.getArtefactHandler(artefactNode);
             try {
                 // This kind of artefact push a new path when executed for the underlying plans and his own children, so the currentArtefactPath get updated
-                // TODO refactor since this is still error prone
                 currentArtefactPath = ArtefactPathHelper.getPathOfArtefact(currentArtefactPath, artefactNode);
                 AbstractArtefact referencedChildArtefact = artefactHandler.resolveArtefactCall(artefactNode);
                 if(referencedChildArtefact != null) {
                     // Recursively call the referencedArtefact
-                    buildTreeRecursively(resolvedPlanNode.getId().toString(), referencedChildArtefact, currentArtefactPath);
+                    buildTreeRecursively(resolvedPlanNode.getId().toString(), referencedChildArtefact, currentArtefactPath, plan);
                 }
-            } catch (NoSuchElementException e) {
-                logger.warn("Unable to resolved called plan or composite keywords while resolving plan.", e);
+            } catch (Exception e) {
+                String message = "Unable to resolve called plan or composite keyword in plan " + plan.getId();
+                if (logger.isDebugEnabled()) {
+                    logger.debug(message, e);
+                } else {
+                    logger.warn(message);
+                }
             }
         }
         // Recursively call children artefacts
         for (AbstractArtefact child : artefactNode.getChildren()) {
-            buildTreeRecursively(resolvedPlanNode.getId().toString(), child, currentArtefactPath);
+            buildTreeRecursively(resolvedPlanNode.getId().toString(), child, currentArtefactPath, plan);
         }
 
         return resolvedPlanNode;
