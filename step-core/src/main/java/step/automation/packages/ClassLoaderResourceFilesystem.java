@@ -74,8 +74,10 @@ public class ClassLoaderResourceFilesystem {
 
         private final boolean deleteOnClose;
         public final File directory;
+        private final File containerDirectory;
 
-        public ExtractedDirectory(File directory, boolean deleteOnClose) {
+        public ExtractedDirectory(File containerDirectory, File directory, boolean deleteOnClose) {
+            this.containerDirectory = containerDirectory;
             this.deleteOnClose = deleteOnClose;
             this.directory = directory;
         }
@@ -83,7 +85,7 @@ public class ClassLoaderResourceFilesystem {
         @Override
         public void close() {
             if (deleteOnClose) {
-                FileHelper.deleteFolder(directory);
+                FileHelper.deleteFolder(containerDirectory);
             }
         }
     }
@@ -99,23 +101,24 @@ public class ClassLoaderResourceFilesystem {
 
         if (protocol.equals(FILE)) {
             File folderToZip = new File(resourceUrl.getPath());
-            return new ExtractedDirectory(folderToZip, false);
+            return new ExtractedDirectory(null, folderToZip, false);
         } else if (protocol.equals(JAR)) {
             JarResourcePath jarResourcePath = new JarResourcePath(resourceUrl);
             File tempFolder = FileHelper.createTempFolder();
+            Path extractedDirectory = tempFolder.toPath().resolve(jarResourcePath.pathInJar);
             try (FileSystem fileSystem = FileSystems.newFileSystem(resourceUrl.toURI(), Collections.emptyMap())) {
                 Path resourcePath = fileSystem.getPath("/" + jarResourcePath.pathInJar);
                 try (Stream<Path> walk = Files.walk(resourcePath)) {
                     walk.forEach(path -> {
                         try {
-                            Files.copy(path, tempFolder.toPath().resolve(jarResourcePath.pathInJar).resolve(resourcePath.relativize(path).toString()));
+                            Files.copy(path, extractedDirectory.resolve(resourcePath.relativize(path).toString()));
                         } catch (IOException e) {
                             throw new RuntimeException(e);
                         }
                     });
                 }
             }
-            return new ExtractedDirectory(tempFolder, true);
+            return new ExtractedDirectory(tempFolder, extractedDirectory.toFile(), true);
         } else {
             throw unsupportedProtocol(protocol);
         }

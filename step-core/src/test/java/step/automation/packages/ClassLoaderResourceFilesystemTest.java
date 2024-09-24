@@ -47,6 +47,7 @@ public class ClassLoaderResourceFilesystemTest {
         try (ClassLoaderResourceFilesystem.ExtractedDirectory extractedDirectory = ClassLoaderResourceFilesystem.extractDirectory(folder)) {
             directory = extractedDirectory.directory;
             assertTrue(directory.isDirectory());
+            assertEquals("folder", directory.getName());
         }
         // Assert that the temporary directory has been deleted
         assertFalse(directory.exists());

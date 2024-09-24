@@ -66,30 +66,43 @@ public class AutomationPackageResourceUploader {
                 InputStream resourceStream;
                 // Check if the resource is a directory
                 boolean isDirectory = ClassLoaderResourceFilesystem.isDirectory(resourceUrl);
+                File tempFolder = null;
                 if (isDirectory) {
-                    logger.debug(resourceUrl + " is a directory. Zipping it...");
+                    logger.debug("The referenced resource {} is a directory. It will be extracted to a temporary directory and zipped...", resourcePath);
                     // If the resource is a directory, extract it and create a zip out of it
-                    File zipOfDirectory;
+                    File directoryArchive;
+                    // Extract the resource directory
                     try (ClassLoaderResourceFilesystem.ExtractedDirectory extractedDirectory = ClassLoaderResourceFilesystem.extractDirectory(resourceUrl)) {
-                        File directory = extractedDirectory.directory;
-                        String name = directory.getName();
-                        // TODO the zipOfDirectory will remain on the disk until the JVM is stopped. We should properly delete it as soon as we don't need it anymore
-                        zipOfDirectory = FileHelper.createTempFolder().toPath().resolve(name + ".zip").toFile();
-                        FileHelper.zip(directory, zipOfDirectory);
+                        File extractedDirectoryFile = extractedDirectory.directory;
+                        String extractedDirectoryName = extractedDirectoryFile.getName();
+                        // Create a temp folder as container for the archive
+                        tempFolder = FileHelper.createTempFolder();
+                        // Create an archive of the extracted directory
+                        directoryArchive = tempFolder.toPath().resolve(extractedDirectoryName + ".zip").toFile();
+                        FileHelper.zip(extractedDirectoryFile.getParentFile(), directoryArchive);
                     }
-                    resourceStream = new FileInputStream(zipOfDirectory);
-                    fileName = zipOfDirectory.getName();
+                    resourceStream = new FileInputStream(directoryArchive);
+                    fileName = directoryArchive.getName();
                 } else {
                     resourceStream = context.getAutomationPackageArchive().getResourceAsStream(resourcePath);
                     fileName = resourceFile.getName();
                 }
 
-                return resourceManager.createResource(
-                        resourceType,
-                        resourceStream,
-                        fileName,
-                        false, context.getEnricher()
-                );
+                try {
+                    return resourceManager.createResource(
+                            resourceType,
+                            false,
+                            resourceStream,
+                            fileName,
+                            false, context.getEnricher()
+                    );
+                } finally {
+                    resourceStream.close();
+                    if (tempFolder != null) {
+                        // Delete the temporary folder
+                        FileHelper.deleteFolder(tempFolder);
+                    }
+                }
             } catch (Exception e) {
                 throw new RuntimeException("Unable to upload automation package resource " + resourcePath, e);
             }
