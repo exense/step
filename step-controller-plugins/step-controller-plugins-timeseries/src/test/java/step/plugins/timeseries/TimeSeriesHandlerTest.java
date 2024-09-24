@@ -11,6 +11,8 @@ import step.core.collections.inmemory.InMemoryCollection;
 import step.core.execution.model.Execution;
 import step.core.execution.model.InMemoryExecutionAccessor;
 import step.core.timeseries.TimeSeries;
+import step.core.timeseries.TimeSeriesBuilder;
+import step.core.timeseries.TimeSeriesCollection;
 import step.core.timeseries.aggregation.TimeSeriesAggregationPipeline;
 import step.core.timeseries.bucket.Bucket;
 import step.core.timeseries.bucket.BucketAttributes;
@@ -41,10 +43,12 @@ public class TimeSeriesHandlerTest {
         measurementsCollection = new InMemoryCollection<>();
         executionAccessor = new InMemoryExecutionAccessor();
         bucketsCollection = new InMemoryCollection<>();
-        TimeSeries timeSeries = new TimeSeries(bucketsCollection, (int) BUCKET_RESOLUTION);
-        TimeSeriesAggregationPipeline aggregationPipeline = timeSeries.getAggregationPipeline();
+        TimeSeriesCollection tsCollection = new TimeSeriesCollection(bucketsCollection, BUCKET_RESOLUTION);
+        TimeSeries timeSeries = new TimeSeriesBuilder()
+                .registerCollection(tsCollection)
+                .build();
         AsyncTaskManager asyncTaskManager = new AsyncTaskManager();
-        handler = new TimeSeriesHandler(BUCKET_RESOLUTION, TS_ATTRIBUTES, measurementsCollection, executionAccessor, timeSeries, aggregationPipeline, asyncTaskManager, SAMPLING_LIMIT);
+        handler = new TimeSeriesHandler(BUCKET_RESOLUTION, TS_ATTRIBUTES, measurementsCollection, executionAccessor, timeSeries, asyncTaskManager, SAMPLING_LIMIT);
     }
 
     @Test

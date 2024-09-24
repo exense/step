@@ -9,9 +9,11 @@ import step.core.execution.type.ExecutionTypeManager;
 import step.core.execution.type.ExecutionTypePlugin;
 import step.core.plugins.IgnoreDuringAutoDiscovery;
 import step.core.plugins.Plugin;
-import step.core.timeseries.TimeSeriesIngestionPipeline;
+import step.core.timeseries.TimeSeries;
 import step.core.timeseries.aggregation.TimeSeriesAggregationPipeline;
 import step.core.timeseries.bucket.BucketAttributes;
+import step.core.timeseries.ingestion.TimeSeriesIngestionPipeline;
+import step.core.timeseries.ingestion.TimeSeriesIngestionPipelineSettings;
 import step.core.views.ViewManager;
 import step.core.views.ViewPlugin;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
@@ -42,48 +44,41 @@ public class TimeSeriesExecutionPlugin extends AbstractExecutionEnginePlugin {
 	public static final String TASK_ID = "taskId";
 	public static final String PLAN_ID = "planId";
 
-	private final TimeSeriesIngestionPipeline parentIngestionPipeline;
-	private final TimeSeriesAggregationPipeline aggregationPipeline;
+	private final TimeSeries timeSeries;
 
-	public TimeSeriesExecutionPlugin(TimeSeriesIngestionPipeline parentIngestionPipeline, TimeSeriesAggregationPipeline aggregationPipeline) {
-		this.parentIngestionPipeline = parentIngestionPipeline;
-		this.aggregationPipeline = aggregationPipeline;
+	public TimeSeriesExecutionPlugin(TimeSeries timeSeries) {
+		this.timeSeries = timeSeries;
 	}
 
 	@Override
 	public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
 		super.initializeExecutionContext(executionEngineContext, executionContext);
+		TimeSeriesIngestionPipeline mainIngestionPipeline = timeSeries.getIngestionPipeline();
 		TreeMap<String, String> additionalAttributes = executionContext.getObjectEnricher().getAdditionalAttributes();
-		TimeSeriesIngestionPipeline ingestionPipeline = new TimeSeriesIngestionPipeline(null, 0) {
+		TimeSeriesIngestionPipeline ingestionPipeline = new TimeSeriesIngestionPipeline(null, new TimeSeriesIngestionPipelineSettings()) {
 			@Override
 			public void ingestPoint(Map<String, Object> attributes, long timestamp, long value) {
 				attributes.putAll(additionalAttributes);
-				parentIngestionPipeline.ingestPoint(attributes, timestamp, value);
-			}
-
-			@Override
-			public void ingestPoint(BucketAttributes attributes, long timestamp, long value) {
-				attributes.putAll(additionalAttributes);
-				parentIngestionPipeline.ingestPoint(attributes, timestamp, value);
+				mainIngestionPipeline.ingestPoint(attributes, timestamp, value);
 			}
 
 			@Override
 			public void flush() {
-				parentIngestionPipeline.flush();
+				mainIngestionPipeline.flush();
 			}
 
 			@Override
 			public long getFlushCount() {
-				return parentIngestionPipeline.getFlushCount();
+				return mainIngestionPipeline.getFlushCount();
 			}
 
 			@Override
 			public void close() {
-				parentIngestionPipeline.close();
+				mainIngestionPipeline.close();
 			}
 		};
 
-		executionContext.put(TimeSeriesAggregationPipeline.class, aggregationPipeline);
+		executionContext.put(TimeSeriesAggregationPipeline.class, timeSeries.getAggregationPipeline());
 		executionContext.put(TimeSeriesIngestionPipeline.class, ingestionPipeline);
 
 		Execution execution = executionContext.getExecutionAccessor().get(executionContext.getExecutionId());
