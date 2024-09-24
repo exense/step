@@ -109,7 +109,7 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
                 if (filteredPlans.size() > 1) {
                     result.setErrors(List.of("Automation package " +
                             automationPackage.getAttribute(AbstractOrganizableObject.NAME) +
-                            " has redundant plans for execution: " +
+                            " has ambiguous plan for execution: " +
                             filteredPlans.stream().map(p -> p.getAttribute(AbstractOrganizableObject.NAME)).collect(Collectors.toList()))
                     );
                     return result;
