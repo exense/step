@@ -28,6 +28,9 @@ public class AutomationPackageExecutionParameters extends CommonExecutionParamet
 
     private PlanFilter planFilter;
 
+    private Boolean wrapIntoTestSet = false;
+    private Integer numberOfThreads = 0;
+
     /**
      * The reference to original artifact in case of isolated execution of automation package (while the real repository is 'isolatedAutomationPackage')
      */
@@ -56,6 +59,22 @@ public class AutomationPackageExecutionParameters extends CommonExecutionParamet
 
     public void setPlanFilter(PlanFilter planFilter) {
         this.planFilter = planFilter;
+    }
+
+    public Boolean getWrapIntoTestSet() {
+        return wrapIntoTestSet;
+    }
+
+    public void setWrapIntoTestSet(Boolean wrapIntoTestSet) {
+        this.wrapIntoTestSet = wrapIntoTestSet;
+    }
+
+    public Integer getNumberOfThreads() {
+        return numberOfThreads;
+    }
+
+    public void setNumberOfThreads(Integer numberOfThreads) {
+        this.numberOfThreads = numberOfThreads;
     }
 
     public RepositoryObjectReference getOriginalRepositoryObject() {

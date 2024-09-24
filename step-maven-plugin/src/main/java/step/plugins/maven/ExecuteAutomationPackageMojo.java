@@ -87,7 +87,8 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
             remoteMavenArtifact = new MavenArtifactIdentifier(getArtifactGroupId(), getArtifactId(), getArtifactVersion(), getArtifactClassifier());
         }
 
-        return new AbstractExecuteAutomationPackageTool(url, projectName, userId, authToken, parameters, executionResultTimeoutS, waitForExecution, ensureExecutionSuccess, includePlans, excludePlans, includeCategories, excludeCategories, remoteMavenArtifact) {
+        // TODO: pass parameters
+        return new AbstractExecuteAutomationPackageTool(url, projectName, userId, authToken, parameters, executionResultTimeoutS, waitForExecution, ensureExecutionSuccess, includePlans, excludePlans, includeCategories, excludeCategories, false, 0, remoteMavenArtifact) {
             @Override
             protected File getAutomationPackageFile() throws StepCliExecutionException {
                 // if groupId and artifactId are not defined, we execute the maven artifact from current project

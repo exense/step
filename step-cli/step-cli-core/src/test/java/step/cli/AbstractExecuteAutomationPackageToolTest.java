@@ -165,7 +165,7 @@ public class AbstractExecuteAutomationPackageToolTest {
         return new ExecuteAutomationPackageToolTestable(
                 "http://localhost:8080", TENANT_1.getName(), "testUser", "abc", createTestCustomParams(),
                 3, true, ensureExecutionSuccess, TEST_INCLUDE_PLANS, null,
-                TEST_INCLUDE_CATEGORIES, TEST_EXCLUDE_CATEGORIES, executionManagerMock, remoteAutomationPackageClientMock,
+                TEST_INCLUDE_CATEGORIES, TEST_EXCLUDE_CATEGORIES, false, 0, executionManagerMock, remoteAutomationPackageClientMock,
                 null
         );
     }
@@ -189,11 +189,12 @@ public class AbstractExecuteAutomationPackageToolTest {
                                                     Boolean ensureExecutionSuccess, String includePlans,
                                                     String excludePlans,
                                                     String includeCategories, String excludeCategories,
+                                                    Boolean wrapIntoTestSet, Integer numberOfThreads,
                                                     RemoteExecutionManager remoteExecutionManagerMock,
                                                     RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock,
                                                     MavenArtifactIdentifier mavenArtifactIdentifier) {
             super(url, stepProjectName, userId, authToken, executionParameters, executionResultTimeoutS, waitForExecution,
-                    ensureExecutionSuccess, includePlans, excludePlans, includeCategories, excludeCategories, mavenArtifactIdentifier);
+                    ensureExecutionSuccess, includePlans, excludePlans, includeCategories, excludeCategories, wrapIntoTestSet, numberOfThreads, mavenArtifactIdentifier);
             this.remoteExecutionManagerMock = remoteExecutionManagerMock;
             this.remoteAutomationPackageClientMock = remoteAutomationPackageClientMock;
         }

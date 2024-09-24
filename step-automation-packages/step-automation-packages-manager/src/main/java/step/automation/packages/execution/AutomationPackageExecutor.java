@@ -32,8 +32,8 @@ import step.core.plans.Plan;
 import step.core.plans.PlanFilter;
 import step.core.repositories.RepositoryObjectManager;
 import step.core.repositories.RepositoryObjectReference;
+import step.repositories.ArtifactRepositoryConstants;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -94,36 +94,41 @@ public class AutomationPackageExecutor {
                 repository.setApNameForResource(apFile.getResource(), apName);
             }
 
+            List<Plan> applicablePlans = new ArrayList<>();
+            PlanFilter planFilter = parameters.getPlanFilter();
+            boolean somePlansFiltered = false;
             for (Plan plan : executionContext.getInMemoryManager().getPackagePlans(automationPackage.getId())) {
-                PlanFilter planFilter = parameters.getPlanFilter();
-
                 if ((planFilter == null || planFilter.isSelected(plan)) && plan.getRoot().getClass().getAnnotation(Artefact.class).validForStandaloneExecution()) {
-                    ExecutionParameters params = parameters.toExecutionParameters();
+                    applicablePlans.add(plan);
+                } else {
+                    somePlansFiltered = true;
+                }
+            }
 
-                    HashMap<String, String> repositoryParameters = new HashMap<>();
-
-                    // save apName + contextId + planName to support re-execution
-                    repositoryParameters.put(IsolatedAutomationPackageRepository.AP_NAME, apName);
-                    repositoryParameters.put(IsolatedAutomationPackageRepository.REPOSITORY_PARAM_CONTEXTID, contextId.toString());
-                    repositoryParameters.put(IsolatedAutomationPackageRepository.PLAN_NAME, plan.getAttribute(AbstractOrganizableObject.NAME));
-
-                    // store the reference from original repository object
-                    if (parameters.getOriginalRepositoryObject() != null) {
-                        repositoryParameters.putAll(parameters.getOriginalRepositoryObject().getRepositoryParameters());
-                    }
-
-                    params.setRepositoryObject(new RepositoryObjectReference(repoId, repositoryParameters));
-                    params.setDescription(CommonExecutionParameters.defaultDescription(plan));
-
-                    // for instance, set the project for multitenant application
-                    if (objectEnricher != null) {
-                        objectEnricher.accept(params);
-                    }
-
+            if (parameters.getWrapIntoTestSet() == null || !parameters.getWrapIntoTestSet()) {
+                // run each plans in separate execution (apply the plan name filter to use the single file in execution)
+                for (Plan plan : applicablePlans) {
+                    ExecutionParameters params = prepareExecutionParams(
+                            parameters, objectEnricher, apName,
+                            contextId, repoId,
+                            CommonExecutionParameters.defaultDescription(plan), plan.getAttribute(AbstractOrganizableObject.NAME)
+                    );
                     String newExecutionId = this.scheduler.execute(params);
                     if (newExecutionId != null) {
                         executions.add(newExecutionId);
                     }
+                }
+            } else {
+                // wrap all plans in test set
+                ExecutionParameters params = prepareExecutionParams(
+                        parameters, objectEnricher, apName,
+                        contextId, repoId,
+                        null,
+                        somePlansFiltered ? applicablePlans.stream().map(p -> p.getAttribute(AbstractOrganizableObject.NAME)).collect(Collectors.joining(",")) : null
+                );
+                String newExecutionId = this.scheduler.execute(params);
+                if (newExecutionId != null) {
+                    executions.add(newExecutionId);
                 }
             }
         } finally {
@@ -131,6 +136,38 @@ public class AutomationPackageExecutor {
             waitForAllLaunchedExecutions(executions, apFile.getFile().getName(), executionContext);
         }
         return executions;
+    }
+
+    private ExecutionParameters prepareExecutionParams(AutomationPackageExecutionParameters parameters, ObjectEnricher objectEnricher,
+                                                       String apName, ObjectId contextId, String repoId, String defaultDescription, String includePlans) {
+        ExecutionParameters params = parameters.toExecutionParameters();
+
+        HashMap<String, String> repositoryParameters = new HashMap<>();
+
+        // save apName + contextId + planName to support re-execution
+        repositoryParameters.put(IsolatedAutomationPackageRepository.AP_NAME, apName);
+        repositoryParameters.put(IsolatedAutomationPackageRepository.REPOSITORY_PARAM_CONTEXTID, contextId.toString());
+        if (includePlans != null) {
+            repositoryParameters.put(ArtifactRepositoryConstants.PARAM_INCLUDE_PLANS, includePlans);
+        }
+        repositoryParameters.put(ArtifactRepositoryConstants.PARAM_WRAP_PLANS_INTO_TEST_SET, parameters.getWrapIntoTestSet() == null ? null : parameters.getWrapIntoTestSet().toString());
+        repositoryParameters.put(ArtifactRepositoryConstants.PARAM_THREAD_NUMBER, parameters.getNumberOfThreads() == null ? null : parameters.getNumberOfThreads().toString());
+
+        // store the reference from original repository object
+        if (parameters.getOriginalRepositoryObject() != null) {
+            repositoryParameters.putAll(parameters.getOriginalRepositoryObject().getRepositoryParameters());
+        }
+
+        params.setRepositoryObject(new RepositoryObjectReference(repoId, repositoryParameters));
+        if (defaultDescription != null) {
+            params.setDescription(defaultDescription);
+        }
+
+        // for instance, set the project for multitenant application
+        if (objectEnricher != null) {
+            objectEnricher.accept(params);
+        }
+        return params;
     }
 
     public void shutdown() throws InterruptedException {

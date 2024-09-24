@@ -29,18 +29,15 @@ public class ArtifactRepositoryConstants {
     public static final String ARTIFACT_PARAM_GROUP_ID = "groupId";
     public static final String ARTIFACT_PARAM_CLASSIFIER = "classifier";
 
-    public static final String ARTIFACT_PARAM_LIB_ARTIFACT_ID = "libArtifactId";
-    public static final String ARTIFACT_PARAM_LIB_VERSION = "libVersion";
-    public static final String ARTIFACT_PARAM_LIB_GROUP_ID = "libGroupId";
-    public static final String ARTIFACT_PARAM_LIB_CLASSIFIER = "libClassifier";
-
     public static final String ARTIFACT_PARAM_MAVEN_SETTINGS = "mavenSettings";
 
-    // Parameters in Resource Artifact Repository
-    public static final String RESOURCE_PARAM_RESOURCE_ID = "resourceId";
+    public static final String PARAM_WRAP_PLANS_INTO_TEST_SET = "wrapPlans";
     public static final String PARAM_THREAD_NUMBER = "threads";
     public static final String PARAM_INCLUDE_PLANS = "includePlans";
     public static final String PARAM_EXCLUDE_PLANS = "excludePlans";
     public static final String PARAM_INCLUDE_CATEGORIES = "includeCategories";
     public static final String PARAM_EXCLUDE_CATEGORIES = "excludeCategories";
+
+    // Parameters in Resource Artifact Repository
+    public static final String RESOURCE_PARAM_RESOURCE_ID = "resourceId";
 }

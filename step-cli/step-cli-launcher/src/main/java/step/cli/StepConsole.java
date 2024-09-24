@@ -283,6 +283,12 @@ public class StepConsole implements Callable<Integer> {
             @Option(names = {LOCAL}, defaultValue = "false", description = "To execute the Automation Package locally ", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
             protected boolean local;
 
+            @Option(names = {"--wrapIntoTestSet"}, defaultValue = "false", description = "To wrap all executed plans into the single test set", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
+            protected boolean wrapIntoTestSet;        
+            
+            @Option(names = {"--numberOfThreads"}, description = "Max number of threads to be used for execution in case of wrapped test set")
+            protected Integer numberOfThreads;
+
             @Option(descriptionKey = EP_DESCRIPTION_KEY, names = {"-ep", "--executionParameters"}, description = "Set execution parameters for local and remote executions ", split = "\\|", splitSynopsisLabel = "|")
             protected Map<String, String> executionParameters;
 
@@ -350,7 +356,7 @@ public class StepConsole implements Callable<Integer> {
                 checkStepUrlRequired();
                 checkEeOptionsConsistency(spec);
                 executeRemotely(stepUrl, getStepProjectName(), stepUser, getAuthToken(), executionParameters,
-                        executionTimeoutS, async, includePlans, excludePlans, includeCategories, excludeCategories, getMavenArtifact(apFile)
+                        executionTimeoutS, async, includePlans, excludePlans, includeCategories, excludeCategories, wrapIntoTestSet, numberOfThreads, getMavenArtifact(apFile)
                 );
             }
 
@@ -366,12 +372,16 @@ public class StepConsole implements Callable<Integer> {
                                            final String excludePlans,
                                            final String includeCategories,
                                            final String excludeCategories,
+                                           final boolean wrapIntoTestSet,
+                                           final Integer numberOfThreads,
                                            final MavenArtifactIdentifier mavenArtifactIdentifier) {
                 new AbstractExecuteAutomationPackageTool(
                         stepUrl, projectName, stepUserId, authToken,
                         executionParameters, executionTimeoutS,
                         !async, true,
-                        includePlans, excludePlans, includeCategories, excludeCategories, mavenArtifactIdentifier
+                        includePlans, excludePlans, includeCategories, excludeCategories,
+                        wrapIntoTestSet, numberOfThreads,
+                        mavenArtifactIdentifier
                 ) {
                     @Override
                     protected File getAutomationPackageFile() throws StepCliExecutionException {
