@@ -67,12 +67,17 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
     @Parameter(property = "step-execute-auto-packages.exclude-categories")
     private String excludeCategories;
 
+    @Parameter(property = "step-execute-auto-packages.wrap-into-test-set")
+    private Boolean wrapIntoTestSet;
+    @Parameter(property = "step-execute-auto-packages.number-of-threads")
+    private Integer numberOfThreads;
+
     @Override
     public void execute() throws MojoExecutionException {
         try {
             createTool(getUrl(), getStepProjectName(), getUserId(), getAuthToken(), getExecutionParameters(), getExecutionResultTimeoutS(),
                     getWaitForExecution(), getEnsureExecutionSuccess(), getIncludePlans(), getExcludePlans(),
-                    getIncludeCategories(), getExcludeCategories()
+                    getIncludeCategories(), getExcludeCategories(), getWrapIntoTestSet(), getNumberOfThreads()
             ).execute();
         } catch (StepCliExecutionException e) {
             throw new MojoExecutionException("Execution exception", e);
@@ -81,13 +86,18 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
         }
     }
 
-    protected AbstractExecuteAutomationPackageTool createTool(final String url, final String projectName, final String userId, final String authToken, final Map<String, String> parameters, final Integer executionResultTimeoutS, final Boolean waitForExecution, final Boolean ensureExecutionSuccess, final String includePlans, final String excludePlans, final String includeCategories, final String excludeCategories) {
+    protected AbstractExecuteAutomationPackageTool createTool(final String url, final String projectName, final String userId,
+                                                              final String authToken, final Map<String, String> parameters,
+                                                              final Integer executionResultTimeoutS, final Boolean waitForExecution,
+                                                              final Boolean ensureExecutionSuccess, final String includePlans,
+                                                              final String excludePlans, final String includeCategories,
+                                                              final String excludeCategories, final Boolean wrapIntoTestSet,
+                                                              final Integer numberOfThreads) {
         MavenArtifactIdentifier remoteMavenArtifact = null;
         if (!isLocalMavenArtifact()) {
             remoteMavenArtifact = new MavenArtifactIdentifier(getArtifactGroupId(), getArtifactId(), getArtifactVersion(), getArtifactClassifier());
         }
 
-        // TODO: pass parameters
         return new AbstractExecuteAutomationPackageTool(url, projectName, userId, authToken, parameters, executionResultTimeoutS, waitForExecution, ensureExecutionSuccess, includePlans, excludePlans, includeCategories, excludeCategories, false, 0, remoteMavenArtifact) {
             @Override
             protected File getAutomationPackageFile() throws StepCliExecutionException {
@@ -229,5 +239,21 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
 
     public void setExcludeCategories(String excludeCategories) {
         this.excludeCategories = excludeCategories;
+    }
+
+    public Boolean getWrapIntoTestSet() {
+        return wrapIntoTestSet;
+    }
+
+    public void setWrapIntoTestSet(Boolean wrapIntoTestSet) {
+        this.wrapIntoTestSet = wrapIntoTestSet;
+    }
+
+    public Integer getNumberOfThreads() {
+        return numberOfThreads;
+    }
+
+    public void setNumberOfThreads(Integer numberOfThreads) {
+        this.numberOfThreads = numberOfThreads;
     }
 }

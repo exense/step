@@ -129,7 +129,7 @@ public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 		@Override
 		protected AbstractExecuteAutomationPackageTool createTool(String url, String projectName, String userId, String authToken, Map<String, String> parameters,
 										Integer executionResultTimeoutS, Boolean waitForExecution, Boolean ensureExecutionSuccess, String includePlans, String excludePlans,
-										String includeCategories, String excludeCategories) {
+										String includeCategories, String excludeCategories, final Boolean wrapIntoTestSet, final Integer numberOfThreads) {
 			this.url = url;
 			this.projectName = projectName;
 			this.userId = userId;
