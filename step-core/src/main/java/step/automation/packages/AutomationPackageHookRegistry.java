@@ -3,21 +3,23 @@ package step.automation.packages;
 import step.core.AbstractStepContext;
 import step.core.repositories.ImportResult;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class AutomationPackageHookRegistry {
 
-    private final Map<String, AutomationPackageHook<?>> registry = new ConcurrentHashMap<>();
+    // Attention: This is a LinkedHashMap because order is important, hooks must be processed in the correct order
+    private final LinkedHashMap<String, AutomationPackageHook<?>> registry = new LinkedHashMap<>();
 
     public AutomationPackageHookRegistry() {
     }
 
     public AutomationPackageHook<?> getHook(String fieldName) {
         return registry.get(fieldName);
+    }
+
+    public List<String> getOrderedHookFieldNames() {
+        return new ArrayList<>(registry.keySet());
     }
 
     /**
