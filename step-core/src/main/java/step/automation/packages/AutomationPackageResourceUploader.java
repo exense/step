@@ -18,14 +18,21 @@
  ******************************************************************************/
 package step.automation.packages;
 
+import ch.exense.commons.io.FileHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.attachments.FileResolver;
 import step.resources.Resource;
 import step.resources.ResourceManager;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.net.URL;
 
 public class AutomationPackageResourceUploader {
+
+    private static final Logger logger = LoggerFactory.getLogger(AutomationPackageResourceUploader.class);
 
     public String applyResourceReference(String resourceReference,
                                          String resourceType,
@@ -54,10 +61,33 @@ public class AutomationPackageResourceUploader {
                     throw new RuntimeException("Resource not found in automation package: " + resourcePath);
                 }
                 File resourceFile = new File(resourceUrl.getFile());
+
+                String fileName;
+                InputStream resourceStream;
+                // Check if the resource is a directory
+                boolean isDirectory = ClassLoaderResourceFilesystem.isDirectory(resourceUrl);
+                if (isDirectory) {
+                    logger.debug(resourceUrl + " is a directory. Zipping it...");
+                    // If the resource is a directory, extract it and create a zip out of it
+                    File zipOfDirectory;
+                    try (ClassLoaderResourceFilesystem.ExtractedDirectory extractedDirectory = ClassLoaderResourceFilesystem.extractDirectory(resourceUrl)) {
+                        File directory = extractedDirectory.directory;
+                        String name = directory.getName();
+                        // TODO the zipOfDirectory will remain on the disk until the JVM is stopped. We should properly delete it as soon as we don't need it anymore
+                        zipOfDirectory = FileHelper.createTempFolder().toPath().resolve(name + ".zip").toFile();
+                        FileHelper.zip(directory, zipOfDirectory);
+                    }
+                    resourceStream = new FileInputStream(zipOfDirectory);
+                    fileName = zipOfDirectory.getName();
+                } else {
+                    resourceStream = context.getAutomationPackageArchive().getResourceAsStream(resourcePath);
+                    fileName = resourceFile.getName();
+                }
+
                 return resourceManager.createResource(
                         resourceType,
-                        context.getAutomationPackageArchive().getResourceAsStream(resourcePath),
-                        resourceFile.getName(),
+                        resourceStream,
+                        fileName,
                         false, context.getEnricher()
                 );
             } catch (Exception e) {
