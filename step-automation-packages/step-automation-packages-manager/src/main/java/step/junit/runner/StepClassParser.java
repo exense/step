@@ -20,9 +20,12 @@ package step.junit.runner;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.core.artefacts.AbstractArtefact;
 import step.core.plans.Plan;
 import step.core.scanner.AnnotationScanner;
 import step.handlers.javahandler.Keyword;
+import step.junit.runners.annotations.PlanCategories;
+import step.junit.runners.annotations.Plans;
 import step.plans.nl.RootArtefactType;
 import step.plans.nl.parser.PlanParser;
 import step.plans.parser.yaml.YamlPlanReader;
@@ -47,10 +50,9 @@ public class StepClassParser {
 		this.simpleYamlPlanReader = null;
 	}
 
-	public List<StepClassParserResult> getPlanFromAnnotatedMethods(AnnotationScanner annotationScanner, Class<?> klass, Set<Method> excludedMethods) {
+
+	public List<StepClassParserResult> getPlanFromAnnotatedMethods(AnnotationScanner annotationScanner) {
 		return annotationScanner.getMethodsWithAnnotation(step.junit.runners.annotations.Plan.class).stream()
-				.filter(m -> m.getDeclaringClass() == klass)
-				.filter(m -> !excludedMethods.contains(m))
 				.map(m -> {
 					Keyword keyword = m.getAnnotation(Keyword.class);
 					String planName;
@@ -78,12 +80,17 @@ public class StepClassParser {
 						}
 						plan = planParser.parse(planStr, RootArtefactType.TestCase);
 						YamlPlanReader.setPlanName(plan, planName);
+						PlanCategories planCategories = m.getAnnotation(PlanCategories.class);
+						if (planCategories != null && planCategories.value() != null) {
+							plan.setCategories(Arrays.asList(planCategories.value()));
+						}
 					} catch (Exception e) {
 						exception = e;
 					}
 					return new StepClassParserResult(planName, plan, exception);
 				}).collect(Collectors.toList());
 	}
+
 
 	public StepClassParserResult createPlan(Class<?> klass, String fileName, InputStream stream) {
 		Plan plan = null;
@@ -108,6 +115,10 @@ public class StepClassParser {
 				}
 			} else {
 				throw new UnsupportedOperationException("Unable to resolve plan parser " + parserMode);
+			}
+			PlanCategories planCategories = klass.getAnnotation(PlanCategories.class);
+			if (planCategories != null && planCategories.value() != null) {
+				plan.setCategories(Arrays.asList(planCategories.value()));
 			}
 		} catch (Exception e) {
 			exception = e;

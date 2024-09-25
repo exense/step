@@ -13,6 +13,8 @@ public final class TimeSeriesAPIResponseBuilder {
     private List<List<BucketResponse>> matrix;
     private List<BucketAttributes> matrixKeys;
     private boolean truncated;
+    private long collectionResolution;
+    private boolean higherResolutionUsed;
 
     public TimeSeriesAPIResponseBuilder withStart(long start) {
         this.start = start;
@@ -44,13 +46,22 @@ public final class TimeSeriesAPIResponseBuilder {
         return this;
     }
 
+    public TimeSeriesAPIResponseBuilder withHigherResolutionUsed(boolean higherResolutionUsed) {
+        this.higherResolutionUsed = higherResolutionUsed;
+        return this;
+    }
+
+    public TimeSeriesAPIResponseBuilder withCollectionResolution(long collectionResolution) {
+        this.collectionResolution = collectionResolution;
+        return this;
+    }
+
     public TimeSeriesAPIResponse build() {
         Objects.requireNonNull(start);
         Objects.requireNonNull(interval);
         Objects.requireNonNull(end);
         Objects.requireNonNull(matrix);
         Objects.requireNonNull(matrixKeys);
-        Objects.requireNonNull(truncated);
-        return new TimeSeriesAPIResponse(start, interval, end, matrix, matrixKeys, truncated);
+        return new TimeSeriesAPIResponse(start, interval, end, matrix, matrixKeys, truncated, collectionResolution, higherResolutionUsed);
     }
 }

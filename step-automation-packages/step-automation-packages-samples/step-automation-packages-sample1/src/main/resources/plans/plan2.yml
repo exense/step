@@ -1,5 +1,8 @@
 plans:
   - name: Test Plan with Composite
+    categories:
+      - Yaml Plan
+      - Composite
     root:
       testCase:
         children:

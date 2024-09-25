@@ -18,22 +18,27 @@
  ******************************************************************************/
 package step.core.plans.filters;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.commons.collections.CollectionUtils;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.plans.Plan;
 import step.core.plans.PlanFilter;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class PlanByExcludedNamesFilter extends PlanFilter {
 
-    private List<String> excludedNames = new ArrayList<>();
+    private final List<String> excludedNames;
 
-    public PlanByExcludedNamesFilter() {
+    @JsonCreator
+    public PlanByExcludedNamesFilter(@JsonProperty("excludedNames") List<String> excludedNames) {
+        this.excludedNames = excludedNames;
     }
 
-    public PlanByExcludedNamesFilter(List<String> excludedNames) {
-        this.excludedNames = excludedNames;
+    public List<String> getExcludedNames() {
+        return excludedNames;
     }
 
     @Override
@@ -41,11 +46,16 @@ public class PlanByExcludedNamesFilter extends PlanFilter {
         return !excludedNames.contains(plan.getAttribute(AbstractOrganizableObject.NAME));
     }
 
-    public List<String> getExcludedNames() {
-        return excludedNames;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof PlanByExcludedNamesFilter)) return false;
+        PlanByExcludedNamesFilter that = (PlanByExcludedNamesFilter) o;
+        return CollectionUtils.isEqualCollection(excludedNames, that.excludedNames);
     }
 
-    public void setExcludedNames(List<String> excludedNames) {
-        this.excludedNames = excludedNames;
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(excludedNames);
     }
 }

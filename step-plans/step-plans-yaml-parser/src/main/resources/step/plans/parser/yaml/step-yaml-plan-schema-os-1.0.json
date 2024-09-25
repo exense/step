@@ -1819,6 +1819,33 @@
         "$ref" : "#/$defs/ArtefactDef"
       }
     },
+    "agentPoolConfigurationDef" : {
+      "type" : "object",
+      "properties" : {
+        "image" : {
+          "type" : "string"
+        },
+        "pool" : {
+          "type" : "string"
+        },
+        "replicas" : {
+          "type" : "number"
+        }
+      }
+    },
+    "agentPoolConfigurationArrayDef" : {
+      "type" : "array",
+      "items" : {
+        "$ref" : "#/$defs/agentPoolConfigurationDef"
+      }
+    },
+    "agentsDef" : {
+      "oneOf" : [ {
+        "$ref" : "#/$defs/agentPoolConfigurationArrayDef"
+      }, {
+        "enum" : [ "auto_detect" ]
+      } ]
+    },
     "PlanDef" : {
       "properties" : {
         "name" : {
@@ -1826,6 +1853,15 @@
         },
         "version" : {
           "const" : "1.0.0"
+        },
+        "categories": {
+          "type" : "array",
+          "items" : {
+            "type" : "string"
+          }
+        },
+        "agents" : {
+          "$ref" : "#/$defs/agentsDef"
         },
         "root" : {
           "$ref" : "#/$defs/RootArtefactDef"

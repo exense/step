@@ -35,7 +35,7 @@ import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.Synchronized;
 import step.artefacts.TestScenario;
 import step.artefacts.ThreadGroup;
-import step.artefacts.handlers.functions.TokenForcastingExecutionPlugin;
+import step.artefacts.handlers.functions.TokenForecastingExecutionPlugin;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.artefacts.handlers.ArtefactHandler;
@@ -58,7 +58,7 @@ public class SynchronizedHandlerTest {
 				ExecutionContext executionContext) {
 			executionContext.getArtefactHandlerRegistry().put(TestArtefact.class, TestArtefactHandler.class);
 		}
-	}).withPlugin(new TokenForcastingExecutionPlugin()).build();
+	}).withPlugin(new TokenForecastingExecutionPlugin()).build();
 	
 	@Test
 	public void testUnnamedLocalLock() throws IOException {		

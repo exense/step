@@ -47,7 +47,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -149,7 +148,7 @@ public class AutomationPackageReader {
             }
             res.getKeywords().addAll(scannedKeywords);
 
-            List<Plan> annotatedPlans = extractAnnotatedPlans(archive, annotationScanner, null, null, null, null, stepClassParser);
+            List<Plan> annotatedPlans = extractAnnotatedPlans(archive, annotationScanner, stepClassParser);
             if (!annotatedPlans.isEmpty()) {
                 log.info("{} annotated plans found in automation package {}", annotatedPlans.size(), StringUtils.defaultString(archive.getOriginalFileName()));
             }
@@ -273,68 +272,8 @@ public class AutomationPackageReader {
         }
     }
 
-    public static List<Plan> extractAnnotatedPlans(AutomationPackageArchive archive, AnnotationScanner annotationScanner, String[] includedClasses, String[] includedAnnotations, String[] excludedClasses, String[] excludedAnnotations, StepClassParser stepClassParser) {
-        List<Plan> result = new ArrayList<>();
-        Set<String> includedA = new HashSet<>(includedAnnotations == null ? new ArrayList<>() : List.of(includedAnnotations));
-        Set<String> excludedA = new HashSet<>(excludedAnnotations == null ? new ArrayList<>() : List.of(excludedAnnotations));
-
-        // Find classes containing plans:
-        Set<Class<?>> excludedByAnnotation = new HashSet<>();
-        Set<Class<?>> classesWithPlans = new HashSet<>();
-
-        // Classes with @Plans annotation
-        Set<Class<?>> classesWithPlansAnnotation = annotationScanner.getClassesWithAnnotation(Plans.class);
-        for (Class<?> aClass : classesWithPlansAnnotation) {
-            log.debug("Checking if " + aClass.getName() + " should be filtered...");
-            String targetName = "@Plans class " + aClass.getName();
-            FilterResult filtered = isAnnotationFiltered(targetName, includedA, excludedA, aClass.getAnnotations());
-            if (filtered == FilterResult.NOT_FILTERED) {
-                classesWithPlans.add(aClass);
-            } else {
-                if (filtered == FilterResult.FILTERED_BY_EXCLUDED) {
-                    // we have to ignore the class while scanning for '@Plan' once it is explicitly excluded
-                    excludedByAnnotation.add(aClass);
-                }
-                log.debug(aClass.getName() + " has been filtered out");
-            }
-        }
-
-        Set<Method> excludedMethods = new HashSet<>();
-
-        // Classes with @Plan annotation in methods
-        // and filter them
-        for (Method m : annotationScanner.getMethodsWithAnnotation(step.junit.runners.annotations.Plan.class)) {
-            if (!excludedByAnnotation.contains(m.getDeclaringClass())) {
-                log.debug("Checking if " + m.getName() + " should be filtered...");
-                String targetName = "@Plan method " + m.getName();
-                FilterResult filtered = isAnnotationFiltered(targetName, includedA, excludedA, m.getAnnotations());
-                if (filtered == FilterResult.NOT_FILTERED) {
-                    classesWithPlans.add(m.getDeclaringClass());
-                } else {
-                    excludedMethods.add(m);
-                    log.debug(m.getName() + " has been filtered out");
-                }
-            }
-        }
-
-        // Filter the classes:
-        Set<String> included = new HashSet<>(includedClasses == null ? new ArrayList<>() : List.of(includedClasses));
-        Set<String> excluded = new HashSet<>(excludedClasses == null ? new ArrayList<>() : List.of(excludedClasses));
-        HashSet<Class<?>> tmp = new HashSet<>();
-        for (Class<?> klass : classesWithPlans) {
-            log.debug("Checking if "+klass.getName()+" should be filtered...");
-            if (!excluded.contains(klass.getName()) && (included.isEmpty() || included.contains(klass.getName()))) {
-                tmp.add(klass);
-                log.debug("Not filtering class "+klass.getName());
-            } else {
-                log.debug("Filtering out class "+klass.getName());
-            }
-        }
-        classesWithPlans = tmp;
-
-        // Create plans for discovered classes
-        classesWithPlans.forEach(c -> result.addAll(getPlansForClass(annotationScanner, c, archive, stepClassParser, excludedMethods)));
-
+    public static List<Plan> extractAnnotatedPlans(AutomationPackageArchive archive, AnnotationScanner annotationScanner, StepClassParser stepClassParser) {
+        List<Plan> result = getPlans(annotationScanner, archive, stepClassParser);
         // replace null with empty collections to avoid NPEs
         result.forEach(plan -> {
             if(plan.getFunctions() == null){
@@ -345,79 +284,63 @@ public class AutomationPackageReader {
         return result;
     }
 
-    private static FilterResult isAnnotationFiltered(String target, Set<String> includedA, Set<String> excludedA, Annotation[] annotations) {
-        FilterResult filtered = includedA.isEmpty() ? FilterResult.NOT_FILTERED : FilterResult.FILTERED_BY_INCLUDED;
-        for (Annotation a : annotations) {
-            // if the annotation object is proxy, the toString() is not applicable (the format in this case is like “@step.examples.plugins.StepEETests()”)
-            // so we need to check the name of annotation type to get the class name
-            if (excludedA.contains(a.toString()) || excludedA.contains(a.annotationType().getName())) {
-                log.debug("Filtering out " + target + " due to excluded annotation " + a);
-                filtered = FilterResult.FILTERED_BY_EXCLUDED;
-                break;
-            } else if (includedA.contains(a.toString()) || includedA.contains(a.annotationType().getName())) {
-                log.debug("Including " + target + " due to included annotation " + a);
-                filtered = FilterResult.NOT_FILTERED;
-            }
-        }
-        return filtered;
-    }
-
-    protected static List<Plan> getPlansForClass(AnnotationScanner annotationScanner, Class<?> klass, AutomationPackageArchive archive, StepClassParser stepClassParser, Set<Method> excludedMethods) {
+    protected static List<Plan> getPlans(AnnotationScanner annotationScanner, AutomationPackageArchive archive, StepClassParser stepClassParser) {
 
         List<Plan> result = new ArrayList<>();
         List<StepClassParserResult> plans;
         try {
-            plans = stepClassParser.getPlanFromAnnotatedMethods(annotationScanner, klass, excludedMethods);
-            plans.addAll(getPlanFromPlansAnnotation(klass, archive, stepClassParser));
+            plans = stepClassParser.getPlanFromAnnotatedMethods(annotationScanner);
+            plans.addAll(getPlanFromPlansAnnotation(annotationScanner, archive, stepClassParser));
         } catch (Exception e) {
             throw new RuntimeException(
-                    "Unhandled exception when searching for plans for class '" + klass.getCanonicalName() + "'", e);
+                    "Unhandled exception when searching for plans", e);
         }
         plans.forEach(p -> {
             Exception e = p.getInitializingException();
             if (e != null) {
-                throw new RuntimeException("Exception when trying to create the plans for class '" + klass.getCanonicalName() + "'", e);
+                throw new RuntimeException("Exception when trying to create the plans", e);
             }
             Plan plan = p.getPlan();
             if (plan != null) {
                 result.add(plan);
             } else {
-                throw new RuntimeException("No exception but also no plans for class '" + klass.getCanonicalName() + "'", e);
+                throw new RuntimeException("No exception but also no plans", e);
             }
         });
         return result;
     }
 
-    private static List<StepClassParserResult> getPlanFromPlansAnnotation(Class<?> klass, AutomationPackageArchive archive, StepClassParser stepClassParser) {
+    private static List<StepClassParserResult> getPlanFromPlansAnnotation(AnnotationScanner annotationScanner, AutomationPackageArchive archive, StepClassParser stepClassParser) {
         final List<StepClassParserResult> result = new ArrayList<>();
-
-        Plans plans = klass.getAnnotation(Plans.class);
-        if (plans != null) {
-            for (String file : plans.value()) {
-                StepClassParserResult parserResult = null;
-                try {
-                    ClassLoader classLoader = null;
-                    File originalFile = archive.getOriginalFile();
-                    if (originalFile != null) {
-                        classLoader = new URLClassLoader(new URL[]{originalFile.toURI().toURL()});
-                    } else {
-                        classLoader = archive.getClassLoader();
-                    }
-                    try (InputStream stream = classLoader.getResourceAsStream(file)) {
-                        if (stream != null) {
-                            // create plan from plain-text or from yaml
-                            parserResult = stepClassParser.createPlan(klass, file, stream);
+        for (Class<?> klass : annotationScanner.getClassesWithAnnotation(Plans.class)) {
+            Plans plans = klass.getAnnotation(Plans.class);
+            if (plans != null) {
+                for (String file : plans.value()) {
+                    StepClassParserResult parserResult = null;
+                    try {
+                        ClassLoader classLoader = null;
+                        File originalFile = archive.getOriginalFile();
+                        if (originalFile != null) {
+                            classLoader = new URLClassLoader(new URL[]{originalFile.toURI().toURL()});
                         } else {
-                            throw new FileNotFoundException(file);
+                            classLoader = archive.getClassLoader();
                         }
-                        if (parserResult.getPlan() != null) {
-                            YamlPlanReader.setPlanName(parserResult.getPlan(), file);
+                        try (InputStream stream = classLoader.getResourceAsStream(file)) {
+                            if (stream != null) {
+                                // create plan from plain-text or from yaml
+                                parserResult = stepClassParser.createPlan(klass, file, stream);
+                            } else {
+                                throw new FileNotFoundException(file);
+                            }
+                            if (parserResult.getPlan() != null) {
+                                YamlPlanReader.setPlanName(parserResult.getPlan(), file);
+                            }
                         }
+                    } catch (Exception e) {
+                        parserResult = new StepClassParserResult(file, null, e);
                     }
-                } catch (Exception e) {
-                    parserResult = new StepClassParserResult(file, null, e);
+                    result.add(parserResult);
                 }
-                result.add(parserResult);
             }
         }
         return result;

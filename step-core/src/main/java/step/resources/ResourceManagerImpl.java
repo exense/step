@@ -87,8 +87,12 @@ public class ResourceManagerImpl implements ResourceManager {
 	public Resource copyResource(Resource resource, ResourceManager sourceResourceManager) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException {
 		File resourceFile = sourceResourceManager.getResourceFile(resource.getId().toHexString()).getResourceFile();
 		ResourceRevisionContainer resourceContainer = createResourceContainer(resource);
-		try (FileInputStream is = new FileInputStream(resourceFile)) {
-			FileHelper.copy(is, resourceContainer.getOutputStream(), 2048);
+		if(resource.isDirectory()) {
+			FileHelper.zip(resourceFile.getParentFile(), resourceContainer.getOutputStream());
+		} else {
+			try (FileInputStream is = new FileInputStream(resourceFile)) {
+				FileHelper.copy(is, resourceContainer.getOutputStream(), 2048);
+			}
 		}
 		resourceContainer.save(false, null);
 		return resourceContainer.getResource();

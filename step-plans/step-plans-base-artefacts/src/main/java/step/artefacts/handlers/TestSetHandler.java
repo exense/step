@@ -35,8 +35,8 @@ import java.util.List;
 import java.util.OptionalInt;
 import java.util.function.Consumer;
 
-import static step.artefacts.handlers.functions.TokenForcastingExecutionPlugin.getTokenForecastingContext;
-import static step.artefacts.handlers.functions.TokenForcastingExecutionPlugin.pushNewTokenNumberCalculationContext;
+import static step.artefacts.handlers.functions.TokenForecastingExecutionPlugin.getTokenForecastingContext;
+import static step.artefacts.handlers.functions.TokenForecastingExecutionPlugin.pushNewTokenNumberCalculationContext;
 
 public class TestSetHandler extends ArtefactHandler<TestSet, ReportNode> {
 	

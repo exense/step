@@ -1,6 +1,7 @@
 package step.automation.packages;
 
 import jakarta.json.spi.JsonProvider;
+import org.apache.commons.collections.CollectionUtils;
 import org.junit.Test;
 import org.mockito.Mockito;
 import step.artefacts.CallFunction;
@@ -30,6 +31,7 @@ import step.plugins.node.automation.YamlNodeFunction;
 import java.io.File;
 import java.io.StringReader;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
@@ -114,6 +116,14 @@ public class AutomationPackageReaderTest {
         assertEquals(TestCase.class, AutomationPackageTestUtils.findPlanByName(plans, PLAN_FROM_PLANS_ANNOTATION).getRoot().getClass());
         assertEquals(TestCase.class, AutomationPackageTestUtils.findPlanByName(plans, INLINE_PLAN).getRoot().getClass());
 
+        //Assert all categories
+        Map<String, List<String>> expectedCategoriesByPlan = Map.of("Test Plan", List.of("Yaml Plan"), "Test Plan with Composite", List.of("Yaml Plan", "Composite"),
+                "plan.plan", List.of("PlainTextPlan","AnnotatedPlan"), "Inline Plan", List.of("InlinePlan", "AnnotatedPlan"));
+        for (Plan plan : plans) {
+            String planName = plan.getAttribute(AbstractOrganizableObject.NAME);
+            assertTrue(CollectionUtils.isEqualCollection(expectedCategoriesByPlan.get(planName), plan.getCategories()));
+        }
+
         // check how keyword inputs from test plan are parsed
         CallFunction callKeyword = (CallFunction) testPlan.getRoot().getChildren()
                 .stream()
@@ -127,10 +137,10 @@ public class AutomationPackageReaderTest {
         // 1 parameter
         List<AutomationPackageParameter> parameters = (List<AutomationPackageParameter>) automationPackageContent.getAdditionalData().get(AutomationPackageParameterJsonSchema.FIELD_NAME_IN_AP);
         assertNotNull(parameters);
-        assertEquals(2, parameters.size());
+        assertEquals(3, parameters.size());
         AutomationPackageParameter parameter = parameters.get(0);
         assertEquals("myKey", parameter.getKey());
-        assertEquals("myValue", parameter.getValue());
+        assertEquals("myValue", parameter.getValue().get());
         assertEquals("some description", parameter.getDescription());
         assertEquals("abc", parameter.getActivationScript());
         assertEquals((Integer) 10, parameter.getPriority());
@@ -139,7 +149,14 @@ public class AutomationPackageReaderTest {
         assertEquals("entity", parameter.getScopeEntity());
         parameter = parameters.get(1);
         assertEquals("mySimpleKey", parameter.getKey());
-        assertEquals("mySimpleValue", parameter.getValue());
+        assertFalse(parameter.getValue().isDynamic());
+        assertEquals("mySimpleValue", parameter.getValue().get());
+        assertEquals(ParameterScope.GLOBAL, parameter.getScope()); // global is default value
+        assertEquals(false, parameter.getProtectedValue());
+        parameter = parameters.get(2);
+        assertEquals("myDynamicParam", parameter.getKey());
+        assertTrue(parameter.getValue().isDynamic());
+        assertEquals("mySimpleKey", parameter.getValue().getExpression());
         assertEquals(ParameterScope.GLOBAL, parameter.getScope()); // global is default value
         assertEquals(false, parameter.getProtectedValue());
     }

@@ -30,6 +30,8 @@ import step.core.artefacts.Artefact;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
 import step.core.plans.Plan;
+import step.core.plans.PlanFilter;
+import step.core.plans.filters.PlanMultiFilter;
 import step.core.plans.runner.PlanRunnerResult;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.junit.runner.StepClassParserResult;
@@ -41,11 +43,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static step.cli.AbstractExecuteAutomationPackageTool.getPlanFilters;
+
 public class ApLocalExecuteCommandHandler {
 
     private static final Logger log = LoggerFactory.getLogger(ApLocalExecuteCommandHandler.class);
 
-    public void execute(File apFile, String plansIncluded, String plansExcluded, Map<String, String> executionParameters) throws StepCliExecutionException {
+    public void execute(File apFile, String includePlans, String excludePlans, String includeCategories,
+                        String excludeCategories, Map<String, String> executionParameters) throws StepCliExecutionException {
         try (ExecutionEngine executionEngine = ExecutionEngine.builder().withPlugin(new AbstractExecutionEnginePlugin() {
             @Override
             public void afterExecutionEnd(ExecutionContext context) {
@@ -61,12 +66,10 @@ public class ApLocalExecuteCommandHandler {
                         true, null, null, false
                 ).getId();
 
-                List<String> plansIncludedList = parseList(plansIncluded);
-                List<String> plansExcludedList = parseList(plansExcluded);
+                PlanFilter planFilters = getPlanFilters(includePlans, excludePlans, includeCategories, excludeCategories);
                 List<StepClassParserResult> listPlans = automationPackageManager.getPackagePlans(automationPackageId)
                         .stream()
-                        .filter(p -> plansExcludedList == null || plansIncludedList.isEmpty() || plansIncludedList.contains(getPlanName(p)))
-                        .filter(p -> plansExcludedList == null || plansExcludedList.isEmpty() || !plansExcludedList.contains(getPlanName(p)))
+                        .filter(planFilters::isSelected)
                         .filter(p -> p.getRoot().getClass().getAnnotation(Artefact.class).validForStandaloneExecution())
                         .map(p -> new StepClassParserResult(getPlanName(p), p, null))
                         .collect(Collectors.toList());

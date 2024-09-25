@@ -476,6 +476,11 @@ public class FunctionExecutionServiceImplTest {
 			}
 
 			@Override
+			public void pingAgent(AgentRef agentRef) throws AgentCommunicationException {
+
+			}
+
+			@Override
 			public void unregisterFile(FileVersionId fileVersionId) {
 				
 			}

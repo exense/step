@@ -9,7 +9,7 @@ public class FetchBucketsRequest {
     private Map<String, Object> params;
     private Set<String> groupDimensions = new HashSet<>();
     private Integer numberOfBuckets;
-    private long intervalSize; // in ms
+    private long intervalSize; // custom interval size, optional
     private List<Double> percentiles = Collections.emptyList();
     private Set<String> collectAttributeKeys;
     private int collectAttributesValuesLimit;

@@ -274,6 +274,12 @@ public class StepConsole implements Callable<Integer> {
             @Option(names = {"--excludePlans"}, description = "The comma separated list of plans to be excluded from execution")
             protected String excludePlans;
 
+            @Option(names = {"--includeCategories"}, description = "The comma separated list of categories to be executed")
+            protected String includeCategories;
+
+            @Option(names = {"--excludeCategories"}, description = "The comma separated list of categories to be excluded from execution")
+            protected String excludeCategories;
+
             @Option(names = {LOCAL}, defaultValue = "false", description = "To execute the Automation Package locally ", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
             protected boolean local;
 
@@ -328,11 +334,12 @@ public class StepConsole implements Callable<Integer> {
                 if (file == null) {
                     throw new StepCliExecutionException("AP file is not defined");
                 }
-                executeLocally(file, includePlans, excludePlans, executionParameters);
+                executeLocally(file, includePlans, excludePlans, includeCategories, excludeCategories, executionParameters);
             }
 
-            protected void executeLocally(File file, String includePlans, String excludePlans, Map<String, String> executionParameters) {
-                new ApLocalExecuteCommandHandler().execute(file, includePlans, excludePlans, executionParameters);
+            protected void executeLocally(File file, String includePlans, String excludePlans, String includeCategories,
+                                          String excludeCategories, Map<String, String> executionParameters) {
+                new ApLocalExecuteCommandHandler().execute(file, includePlans, excludePlans, includeCategories, excludeCategories, executionParameters);
             }
 
             public void checkStepUrlRequired() {
@@ -343,7 +350,7 @@ public class StepConsole implements Callable<Integer> {
                 checkStepUrlRequired();
                 checkEeOptionsConsistency(spec);
                 executeRemotely(stepUrl, getStepProjectName(), stepUser, getAuthToken(), executionParameters,
-                        executionTimeoutS, async, includePlans, excludePlans, getMavenArtifact(apFile)
+                        executionTimeoutS, async, includePlans, excludePlans, includeCategories, excludeCategories, getMavenArtifact(apFile)
                 );
             }
 
@@ -357,12 +364,14 @@ public class StepConsole implements Callable<Integer> {
                                            final boolean async,
                                            final String includePlans,
                                            final String excludePlans,
+                                           final String includeCategories,
+                                           final String excludeCategories,
                                            final MavenArtifactIdentifier mavenArtifactIdentifier) {
                 new AbstractExecuteAutomationPackageTool(
                         stepUrl, projectName, stepUserId, authToken,
                         executionParameters, executionTimeoutS,
                         !async, true,
-                        includePlans, excludePlans, mavenArtifactIdentifier
+                        includePlans, excludePlans, includeCategories, excludeCategories, mavenArtifactIdentifier
                 ) {
                     @Override
                     protected File getAutomationPackageFile() throws StepCliExecutionException {
