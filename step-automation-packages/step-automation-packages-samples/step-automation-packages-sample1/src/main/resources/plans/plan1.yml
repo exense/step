@@ -1,5 +1,7 @@
 plans:
   - name: Test Plan
+    categories:
+      - Yaml Plan
     root:
       testCase:
         children:
