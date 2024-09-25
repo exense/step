@@ -99,8 +99,8 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
             AutomationPackageManager apManager = ctx.getInMemoryManager();
             Plan plan;
 
-            // by default, we wrap plans into test set
-            if (!Boolean.parseBoolean(repositoryParameters.getOrDefault(ArtifactRepositoryConstants.PARAM_WRAP_PLANS_INTO_TEST_SET, "true"))) {
+            if (!isWrapPlansIntoTestSet(repositoryParameters)) {
+                // if we don't wrap into test set, we should have one and only filtered plan
                 List<Plan> filteredPlans = getFilteredPackagePlans(automationPackage, repositoryParameters, ctx.getInMemoryManager()).collect(Collectors.toList());
                 if (filteredPlans.isEmpty()) {
                     result.setErrors(List.of("Automation package " + automationPackage.getAttribute(AbstractOrganizableObject.NAME) + " has no applicable plan to execute"));
@@ -138,6 +138,11 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
             // if the context is created externally (shared for several plans), it should be managed (closed) in the calling code
             closePackageExecutionContext(ctx);
         }
+    }
+
+    protected boolean isWrapPlansIntoTestSet(Map<String, String> repositoryParameters) {
+        // by default, we wrap plans into test set
+        return true;
     }
 
     private Plan wrapAllPlansFromApToTestSet(PackageExecutionContext ctx, Map<String, String> repositoryParameters) {
