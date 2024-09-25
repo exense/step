@@ -20,8 +20,6 @@ package step.automation.packages;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 import java.io.Closeable;
 import java.io.File;
@@ -30,7 +28,7 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.ArrayList;
+
 import java.util.List;
 
 import static step.automation.packages.AutomationPackageArchiveType.JAVA;
@@ -44,12 +42,12 @@ public class AutomationPackageArchive implements Closeable {
     private final File originalFile;
     private boolean internalClassLoader = false;
     private final AutomationPackageArchiveType type;
-    private final PathMatchingResourcePatternResolver pathMatchingResourceResolver;
+    private final ResourcePathMatchingResolver pathMatchingResourceResolver;
 
     public AutomationPackageArchive(ClassLoader classLoader) {
         this.classLoader = classLoader;
         this.originalFile = null;
-        this.pathMatchingResourceResolver = new PathMatchingResourcePatternResolver(classLoader);
+        this.pathMatchingResourceResolver = new ResourcePathMatchingResolver(classLoader);
         this.type = JAVA;
     }
 
@@ -59,7 +57,7 @@ public class AutomationPackageArchive implements Closeable {
         this.type = JAVA; //Only supported type for now
         try {
             this.classLoader = new URLClassLoader(new URL[]{automationPackageFile.toURI().toURL()}, null);
-            this.pathMatchingResourceResolver = new PathMatchingResourcePatternResolver(classLoader);
+            this.pathMatchingResourceResolver = new ResourcePathMatchingResolver(classLoader);
         } catch (MalformedURLException ex) {
             throw new AutomationPackageReadingException("Unable to read automation package", ex);
         }
@@ -99,16 +97,7 @@ public class AutomationPackageArchive implements Closeable {
     }
 
     public List<URL> getResourcesByPattern(String resourcePathPattern) throws IOException {
-        List<URL> res = new ArrayList<>();
-        Resource[] resources = pathMatchingResourceResolver.getResources(resourcePathPattern);
-
-        for (Resource resource : resources) {
-            if (log.isDebugEnabled()) {
-                log.debug("Obtain resource from automation package: {}", resource);
-            }
-            res.add(resource.getURL());
-        }
-        return res;
+        return pathMatchingResourceResolver.getResourcesByPattern(resourcePathPattern);
     }
 
     public ClassLoader getClassLoader() {
