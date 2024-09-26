@@ -1,5 +1,6 @@
 package step.automation.packages;
 
+import ch.exense.commons.io.FileHelper;
 import jakarta.json.spi.JsonProvider;
 import org.apache.commons.collections.CollectionUtils;
 import org.junit.Test;
@@ -13,7 +14,6 @@ import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.plans.Plan;
 import step.core.scheduler.ExecutionScheduler;
-import step.core.scheduler.ExecutionTaskAccessor;
 import step.core.scheduler.automation.AutomationPackageSchedule;
 import step.core.scheduler.automation.AutomationPackageScheduleRegistration;
 import step.parameter.ParameterManager;
@@ -29,6 +29,7 @@ import step.plugins.jmeter.automation.YamlJMeterFunction;
 import step.plugins.node.automation.YamlNodeFunction;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.StringReader;
 import java.util.List;
 import java.util.Map;
@@ -159,6 +160,40 @@ public class AutomationPackageReaderTest {
         assertEquals("mySimpleKey", parameter.getValue().getExpression());
         assertEquals(ParameterScope.GLOBAL, parameter.getScope()); // global is default value
         assertEquals(false, parameter.getProtectedValue());
+    }
+
+    // TODO these tests should be moved to the module step-automation-packages-manager
+    @Test
+    public void testFragmentsWithPackageAP() throws AutomationPackageReadingException {
+        File automationPackage = FileHelper.getClassLoaderResourceAsFile(this.getClass().getClassLoader(), "step/automation/packages/step-automation-packages.zip");
+
+        AutomationPackageContent automationPackageContent = reader.readAutomationPackageFromJarFile(automationPackage);
+        assertNotNull(automationPackageContent);
+
+        List<Plan> plans = automationPackageContent.getPlans();
+        assertEquals(4, plans.size());
+
+        plans.stream().filter(p -> p.getAttribute(AbstractOrganizableObject.NAME).equals("Test Plan 1")).findFirst().get();
+        plans.stream().filter(p -> p.getAttribute(AbstractOrganizableObject.NAME).equals("Test Plan 2")).findFirst().get();
+        plans.stream().filter(p -> p.getAttribute(AbstractOrganizableObject.NAME).equals("Test Plan 3")).findFirst().get();
+        plans.stream().filter(p -> p.getAttribute(AbstractOrganizableObject.NAME).equals("Test Plan 4")).findFirst().get();
+    }
+
+    @Test
+    public void testFragmentsWithExplodedAP() throws AutomationPackageReadingException, IOException {
+        File tempFolder = FileHelper.createTempFolder();
+        FileHelper.unzip(this.getClass().getClassLoader().getResourceAsStream("step/automation/packages/step-automation-packages.zip"), tempFolder);
+
+        AutomationPackageContent automationPackageContent = reader.readAutomationPackageFromJarFile(tempFolder);
+        assertNotNull(automationPackageContent);
+
+        List<Plan> plans = automationPackageContent.getPlans();
+        assertEquals(4, plans.size());
+
+        plans.stream().filter(p -> p.getAttribute(AbstractOrganizableObject.NAME).equals("Test Plan 1")).findFirst().get();
+        plans.stream().filter(p -> p.getAttribute(AbstractOrganizableObject.NAME).equals("Test Plan 2")).findFirst().get();
+        plans.stream().filter(p -> p.getAttribute(AbstractOrganizableObject.NAME).equals("Test Plan 3")).findFirst().get();
+        plans.stream().filter(p -> p.getAttribute(AbstractOrganizableObject.NAME).equals("Test Plan 4")).findFirst().get();
     }
 
 }
