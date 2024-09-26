@@ -128,10 +128,12 @@ public class ExecutionEngineRunner {
 		} catch (Throwable e) {
 			addLifecyleError("An error occurred while running test. " +  e.getMessage(), e);
 		} finally {
-			updateStatus(ExecutionStatus.ENDED);
 			try {
 				executionCallbacks.afterExecutionEnd(executionContext);
+			} catch (Exception e) {
+				addLifecyleError(e.getMessage(), e);
 			} finally {
+				updateStatus(ExecutionStatus.ENDED);
 				//Make sure that even if plugin critical exception occurs the mandatory hooks and postExecutions are performed
 				executionCallbacks.executionFinally(executionContext);
 				postExecution(executionContext);
