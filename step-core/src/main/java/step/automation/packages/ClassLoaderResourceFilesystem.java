@@ -25,13 +25,17 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -124,7 +128,35 @@ public class ClassLoaderResourceFilesystem {
         }
     }
 
-    private static class JarResourcePath {
+    public static List<URL> listDirectory(URL resourceUrl) throws IOException, URISyntaxException {
+        if(ClassLoaderResourceFilesystem.isDirectory(resourceUrl)) {
+            String protocol = resourceUrl.getProtocol();
+            if (protocol.equals(FILE)) {
+                File directory = new File(resourceUrl.getPath());
+                return Arrays.stream(directory.listFiles()).map(f -> toURL(f.toURI())).collect(Collectors.toList());
+            } else if (protocol.equals(JAR)) {
+                ClassLoaderResourceFilesystem.JarResourcePath jarResourcePath = new ClassLoaderResourceFilesystem.JarResourcePath(resourceUrl);
+                try (FileSystem fileSystem = FileSystems.newFileSystem(resourceUrl.toURI(), Collections.emptyMap())) {
+                    Path resourcePath = fileSystem.getPath("/" + jarResourcePath.pathInJar);
+                    return Files.list(resourcePath).map(path -> toURL(path.toUri())).collect(Collectors.toList());
+                }
+            } else {
+                throw unsupportedProtocol(protocol);
+            }
+        } else {
+            throw new RuntimeException("The provided resource " + resourceUrl + " is not a directory");
+        }
+    }
+
+    private static URL toURL(URI uri) {
+        try {
+            return uri.toURL();
+        } catch (MalformedURLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static class JarResourcePath {
 
         public final String pathInJar;
         public final String jarFile;
