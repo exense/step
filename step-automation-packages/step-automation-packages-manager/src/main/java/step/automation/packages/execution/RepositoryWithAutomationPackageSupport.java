@@ -65,7 +65,6 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
     public static final String AP_NAME = "apName";
     public static final String REPOSITORY_PARAM_CONTEXTID = "contextid";
     public static final String AP_NAME_CUSTOM_FIELD = "apName";
-    public static final String PLAN_NAME = "planName";
 
     // context id -> automation package manager (cache)
     protected final ConcurrentHashMap<String, PackageExecutionContext> sharedPackageExecutionContexts = new ConcurrentHashMap<>();
@@ -97,25 +96,33 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
                 return result;
             }
             AutomationPackage automationPackage = ctx.getAutomationPackage();
-
-            // PLAN_NAME but not PLAN_ID is used, because plan id is not persisted for isolated execution
-            // (it is impossible to re-run the execution by plan id)
-            String planName = repositoryParameters.get(PLAN_NAME);
-
             AutomationPackageManager apManager = ctx.getInMemoryManager();
             Plan plan;
 
-            if (planName != null) {
-                plan = apManager.getPackagePlans(automationPackage.getId())
-                        .stream()
-                        .filter(p -> p.getAttribute(AbstractOrganizableObject.NAME).equals(planName)).findFirst().orElse(null);
+            if (!isWrapPlansIntoTestSet(repositoryParameters)) {
+                // if we don't wrap into test set, we should have one and only filtered plan
+                List<Plan> filteredPlans = getFilteredPackagePlans(automationPackage, repositoryParameters, ctx.getInMemoryManager()).collect(Collectors.toList());
+                if (filteredPlans.isEmpty()) {
+                    result.setErrors(List.of("Automation package " + automationPackage.getAttribute(AbstractOrganizableObject.NAME) + " has no applicable plan to execute"));
+                    return result;
+                }
+                if (filteredPlans.size() > 1) {
+                    result.setErrors(List.of("Automation package " +
+                            automationPackage.getAttribute(AbstractOrganizableObject.NAME) +
+                            " has ambiguous plan for execution: " +
+                            filteredPlans.stream().map(p -> p.getAttribute(AbstractOrganizableObject.NAME)).collect(Collectors.toList()))
+                    );
+                    return result;
+                }
+
+                plan = filteredPlans.get(0);
             } else {
                 plan = wrapAllPlansFromApToTestSet(ctx, repositoryParameters);
             }
 
             if (plan == null) {
                 // failed result
-                result.setErrors(List.of("Automation package " + automationPackage.getAttribute(AbstractOrganizableObject.NAME) + " has no plan with name=" + planName));
+                result.setErrors(List.of("Automation package " + automationPackage.getAttribute(AbstractOrganizableObject.NAME) + " has no plan for execution"));
                 return result;
             }
 
@@ -131,6 +138,11 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
             // if the context is created externally (shared for several plans), it should be managed (closed) in the calling code
             closePackageExecutionContext(ctx);
         }
+    }
+
+    protected boolean isWrapPlansIntoTestSet(Map<String, String> repositoryParameters) {
+        // by default, we wrap plans into test set
+        return true;
     }
 
     private Plan wrapAllPlansFromApToTestSet(PackageExecutionContext ctx, Map<String, String> repositoryParameters) {

@@ -58,6 +58,8 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
 
     private final String includePlans;
     private final String excludePlans;
+    private final Boolean wrapIntoTestSet;
+    private final Integer numberOfThreads;
     private final MavenArtifactIdentifier mavenArtifactIdentifier;
     private final String includeCategories;
     private final String excludeCategories;
@@ -68,6 +70,7 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
                                                 Integer executionResultTimeoutS, Boolean waitForExecution,
                                                 Boolean ensureExecutionSuccess, String includePlans,
                                                 String excludePlans, String includeCategories, String excludeCategories,
+                                                Boolean wrapIntoTestSet, Integer numberOfThreads,
                                                 MavenArtifactIdentifier mavenArtifactIdentifier) {
         super(url);
         this.stepProjectName = stepProjectName;
@@ -81,6 +84,8 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
         this.excludePlans = excludePlans;
         this.includeCategories = includeCategories;
         this.excludeCategories = excludeCategories;
+        this.wrapIntoTestSet = wrapIntoTestSet;
+        this.numberOfThreads = numberOfThreads;
         this.mavenArtifactIdentifier = mavenArtifactIdentifier;
     }
 
@@ -230,6 +235,8 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
         executionParameters.setUserID(getUserId());
 
         executionParameters.setPlanFilter(getPlanFilters(includePlans, excludePlans, includeCategories, excludeCategories));
+        executionParameters.setWrapIntoTestSet(wrapIntoTestSet);
+        executionParameters.setNumberOfThreads(numberOfThreads);
 
         if (mavenArtifactIdentifier != null) {
             Map<String, String> repositoryParameters = new HashMap<>();

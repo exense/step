@@ -299,8 +299,10 @@ public class StepConsoleTest {
 
         @Override
         protected void executeRemotely(String stepUrl, String projectName, String stepUserId, String authToken, Map<String, String> executionParameters,
-                                       Integer executionTimeoutS, boolean async,  String includePlans, String excludePlans,
-                                       String includeCategories, String excludeCategories, MavenArtifactIdentifier mavenArtifactIdentifier) {
+                                       Integer executionTimeoutS, boolean async, String includePlans, String excludePlans,
+                                       String includeCategories, String excludeCategories, final boolean wrapIntoTestSet,
+                                       final Integer numberOfThreads,
+                                       MavenArtifactIdentifier mavenArtifactIdentifier) {
             if (remoteParams != null) {
                 RemoteExecutionParams p = new RemoteExecutionParams();
                 p.stepUrl = stepUrl;

@@ -30,6 +30,7 @@ import step.core.repositories.ArtefactInfo;
 import step.core.repositories.TestSetStatusOverview;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.type.FunctionTypeRegistry;
+import step.repositories.ArtifactRepositoryConstants;
 import step.resources.*;
 
 import java.io.File;
@@ -113,6 +114,11 @@ public class IsolatedAutomationPackageRepository extends RepositoryWithAutomatio
 
         updateLastExecution(resource);
         return new AutomationPackageFile(file, resource);
+    }
+
+    @Override
+    protected boolean isWrapPlansIntoTestSet(Map<String, String> repositoryParameters) {
+        return Boolean.parseBoolean(repositoryParameters.getOrDefault(ArtifactRepositoryConstants.PARAM_WRAP_PLANS_INTO_TEST_SET, "true"));
     }
 
     protected void updateLastExecution(Resource resource) {
