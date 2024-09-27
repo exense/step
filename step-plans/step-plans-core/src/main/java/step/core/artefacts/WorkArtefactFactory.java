@@ -48,6 +48,7 @@ public class WorkArtefactFactory {
 			attributes.put("name", name);
 			artefact.setAttributes(attributes);
 			setPersistNodeValue(artefact, persistNode);
+			artefact.setWorkArtefact(true);
 			return artefact;
 		} catch (InstantiationException | IllegalAccessException e) {
 			logger.error("Error while creating new instance of "+artefactClass, e);

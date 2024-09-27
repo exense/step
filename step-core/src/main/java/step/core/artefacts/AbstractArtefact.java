@@ -59,6 +59,7 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
 	private DynamicValue<Boolean> skipNode = new DynamicValue<>(false);
 	private DynamicValue<Boolean> instrumentNode = new DynamicValue<>(false);
 	private DynamicValue<Boolean> continueParentNodeExecutionOnError = new DynamicValue<>(false);
+	private boolean isWorkArtefact = false;
 	
 	public AbstractArtefact() {
 		super();
@@ -239,6 +240,14 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
 
 	public void setContinueParentNodeExecutionOnError(DynamicValue<Boolean> continueOnError) {
 		this.continueParentNodeExecutionOnError = continueOnError;
+	}
+
+	public boolean isWorkArtefact() {
+		return isWorkArtefact;
+	}
+
+	public void setWorkArtefact(boolean workArtefact) {
+		isWorkArtefact = workArtefact;
 	}
 
 	@Override

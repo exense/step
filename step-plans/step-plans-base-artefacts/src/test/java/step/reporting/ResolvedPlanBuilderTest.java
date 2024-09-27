@@ -15,6 +15,7 @@ import step.core.plans.builder.PlanBuilder;
 import step.core.plans.runner.PlanRunnerResult;
 import step.engine.plugins.FunctionPlugin;
 import step.planbuilder.BaseArtefacts;
+import step.planbuilder.FunctionArtefacts;
 import step.threadpool.ThreadPoolPlugin;
 
 import java.io.IOException;
@@ -40,7 +41,32 @@ public class ResolvedPlanBuilderTest {
         engine.close();
     }
 
-    //@Test
+    @Test
+    public void simpleTest() throws IOException {
+        Plan plan = PlanBuilder.create()
+                .startBlock(BaseArtefacts.threadGroup(1, 1))
+                .startBlock(FunctionArtefacts.session())
+                .add(echo("'Echo'"))
+                .endBlock()
+                .endBlock().build();
+        PlanRunnerResult result = engine.execute(plan);
+        result.printTree();
+
+        AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(engine.getExecutionEngineContext(), result.getExecutionId());
+        AggregatedReportView node = aggregatedReportViewBuilder.buildAggregatedReportView();
+
+        logger.info("----------------------");
+        logger.info("Aggregated report tree");
+        logger.info("----------------------");
+        logger.info(node.toString());
+
+        assertEquals("ThreadGroup: 1x\n" +
+                        " FunctionGroup: 1x\n" +
+                        "  Echo: 1x\n",
+                node.toString());
+    }
+
+    @Test
     public void get() throws IOException, InterruptedException {
         Plan plan = PlanBuilder.create()
                 .startBlock(BaseArtefacts.for_(1, 10))
@@ -72,8 +98,7 @@ public class ResolvedPlanBuilderTest {
                 node.toString());
     }
 
-    //@Test
-    // Uncommenting until merge of SED-3350
+    @Test
     public void planWithCallPlan() throws IOException, InterruptedException {
         Plan subSubPlan = PlanBuilder.create()
                 .startBlock(BaseArtefacts.sequence())
