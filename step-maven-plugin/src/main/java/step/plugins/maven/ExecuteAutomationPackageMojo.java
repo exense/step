@@ -108,7 +108,12 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
                     Artifact applicableArtifact = getProjectArtifact(getArtifactClassifier());
 
                     if (applicableArtifact != null) {
-                        return applicableArtifact.getFile();
+                        File artifactFile = applicableArtifact.getFile();
+                        if(artifactFile == null || !artifactFile.exists()) {
+                            throw logAndThrow("The resolved artifact '" + artifactToString(applicableArtifact) + "' contains no file.");
+                        } else {
+                            return artifactFile;
+                        }
                     } else {
                         throw logAndThrow("Unable to resolve automation package file " + artifactToString(project.getGroupId(), project.getArtifactId(), getArtifactClassifier(), project.getVersion()));
                     }
