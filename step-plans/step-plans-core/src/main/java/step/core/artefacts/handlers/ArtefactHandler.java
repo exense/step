@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.core.artefacts.handlers;
 
+import ch.exense.commons.app.Configuration;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,6 +69,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	private ReportNodeCache reportNodeCache;
 	private DynamicBeanResolver dynamicBeanResolver;
 	private ReportNodeTimeSeries reportNodeTimeSeries;
+	private boolean reportNodeTimeSeriesEnabled;
 
 	public ArtefactHandler() {
 		super();		
@@ -84,6 +86,8 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		reportNodeAttributesManager = new ReportNodeAttributesManager(context);
 		dynamicBeanResolver = context.getDynamicBeanResolver();
 		resourceManager = context.getResourceManager();
+		Configuration configuration = context.getConfiguration();
+		reportNodeTimeSeriesEnabled = configuration.getPropertyAsBoolean("execution.engine.reportnodes.timeseries.enabled", true);
 	}
 	
 	private enum Phase {
@@ -196,9 +200,14 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 			}
 		}
 
-		// TODO implement node pruning for timeseries
-		reportNodeTimeSeries.ingestReportNode(reportNode);
-		
+		if (reportNodeTimeSeriesEnabled) {
+			AbstractArtefact artefactInstance = reportNode.getArtefactInstance();
+			if (artefactInstance != null && !artefactInstance.isWorkArtefact()) {
+				// TODO implement node pruning for time series
+				reportNodeTimeSeries.ingestReportNode(reportNode);
+			}
+		}
+
 		context.getExecutionCallbacks().afterReportNodeExecution(context, reportNode);
 		
 		afterDelegation(reportNode, parentReportNode, artefact);
