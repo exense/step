@@ -24,6 +24,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
+import static step.plugins.timeseries.MetricsConstants.EXECUTION_RESULT;
+import static step.plugins.timeseries.MetricsConstants.EXECUTION_BOOLEAN_RESULT;
+
 @IgnoreDuringAutoDiscovery
 @Plugin(dependencies= {ViewPlugin.class, ExecutionTypePlugin.class})
 public class TimeSeriesExecutionPlugin extends AbstractExecutionEnginePlugin {
@@ -31,6 +34,7 @@ public class TimeSeriesExecutionPlugin extends AbstractExecutionEnginePlugin {
 	// TODO find a better place to define this constant
 	public static final String METRIC_TYPE = "metricType";
 
+	public static final String EXECUTIONS_DURATION = "executions/duration";
 	public static final String EXECUTIONS_COUNT = "executions/count";
 	public static final String FAILURE_PERCENTAGE = "executions/failure-percentage";
 	public static final String FAILURE_COUNT = "executions/failure-count";
@@ -102,6 +106,8 @@ public class TimeSeriesExecutionPlugin extends AbstractExecutionEnginePlugin {
 			ingestionPipeline.ingestPoint(withExecutionAttributes(execution, Map.of(METRIC_TYPE, EXECUTIONS_COUNT)), execution.getStartTime(), 1);
 			ingestionPipeline.ingestPoint(withExecutionAttributes(execution, Map.of(METRIC_TYPE, FAILURE_PERCENTAGE)), execution.getStartTime(), executionPassed ? 0 : 100);
 			ingestionPipeline.ingestPoint(withExecutionAttributes(execution, Map.of(METRIC_TYPE, FAILURE_COUNT)), execution.getStartTime(), executionPassed ? 0 : 1);
+			// Execution.endTime is not set at this stage. Use the current time instead. It's not really nice but we have no other option for now
+			ingestionPipeline.ingestPoint(withExecutionAttributes(execution, Map.of(METRIC_TYPE, EXECUTIONS_DURATION, EXECUTION_RESULT.getName(), execution.getResult(), EXECUTION_BOOLEAN_RESULT.getName(), executionPassed ? "PASSED":"FAILED" )), execution.getStartTime(), System.currentTimeMillis() - execution.getStartTime());
 
 			ErrorDistribution errorDistribution = (ErrorDistribution) viewManager.queryView(ErrorDistributionView.ERROR_DISTRIBUTION_VIEW, context.getExecutionId());
 

@@ -41,6 +41,12 @@ public class MetricsConstants {
 				.setName("errorCode")
 				.setType(MetricAttributeType.TEXT)
 				.setDisplayName("Error Code");
-    
-    
+		public static final MetricAttribute EXECUTION_BOOLEAN_RESULT = new MetricAttribute()
+				.setName("booleanResult")
+				.setType(MetricAttributeType.TEXT)
+				.setDisplayName("Simplified result (FAILED or PASSED)");
+		public static final MetricAttribute EXECUTION_RESULT = new MetricAttribute()
+				.setName("result")
+				.setType(MetricAttributeType.TEXT)
+				.setDisplayName("Result");
 }
