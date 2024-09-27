@@ -78,7 +78,12 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 		executionContext.put(CTX_GENERATE_EXECUTION_METRICS, generateExecutionMetrics);
 		if (generateExecutionMetrics) {
 			//Cache execution metadata in execution context
-			executionContext.put(CTX_EXECUTION_DESCRIPTION, execution.getDescription());
+			String description = execution.getDescription();
+			if(description != null) {
+				// Executions triggered via REST can have no description at that stage. As a quickfix we check this here to avoid NPE
+				// TODO we should set this after the description is updated in ExecutionEngineRunner
+				executionContext.put(CTX_EXECUTION_DESCRIPTION, description);
+			}
 			ExecutiontTaskParameters executiontTaskParameters = execution.getExecutiontTaskParameters();
 			if (executiontTaskParameters != null) {
 				executionContext.put(CTX_SCHEDULER_TASK_ID, executiontTaskParameters.getId().toHexString());
