@@ -170,6 +170,13 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 						.setRenderingSettings(new MetricRenderingSettings()
 						),
 				new MetricType()
+						.setName(EXECUTIONS_DURATION)
+						.setDisplayName("Execution duration")
+						.setAttributes(Arrays.asList(TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE, EXECUTION_BOOLEAN_RESULT, EXECUTION_RESULT))
+						.setDefaultAggregation(new MetricAggregation(MetricAggregationType.AVG))
+						.setUnit("ms")
+						.setRenderingSettings(new MetricRenderingSettings()),
+				new MetricType()
 						// AVG calculation is enough here. the value is either 0 or 100 for each exec.
 						.setName(FAILURE_PERCENTAGE)
 						.setDisplayName("Execution failure percentage")
