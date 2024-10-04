@@ -58,6 +58,8 @@ public class ExecutionEngineRunner {
 	private final RepositoryObjectManager repositoryObjectManager;
 	private final PlanAccessor planAccessor;
 	private final FunctionAccessor functionAccessor;
+	// Temporary switch to disable the aggregated report. Remove as soon as SED-3464 is fixed
+	private final boolean aggregatedReportEnabled;
 
 	protected ExecutionEngineRunner(ExecutionContext executionContext) {
 		super();
@@ -67,6 +69,7 @@ public class ExecutionEngineRunner {
 		this.repositoryObjectManager = executionContext.getRepositoryObjectManager();
 		this.planAccessor = executionContext.getPlanAccessor();
 		this.functionAccessor =  executionContext.get(FunctionAccessor.class);
+		aggregatedReportEnabled = executionContext.getConfiguration().getPropertyAsBoolean("execution.engine.report.aggregated.enabled", true);
 	}
 	
 	protected PlanRunnerResult execute() {
@@ -143,9 +146,11 @@ public class ExecutionEngineRunner {
 	}
 
 	private void buildAndPersistResolvedPlan(Plan plan) {
-		ResolvedPlanBuilder resolvedPlanBuilder = new ResolvedPlanBuilder(executionContext);
-		ResolvedPlanNode resolvedPlanRoot = resolvedPlanBuilder.buildResolvedPlan(plan);
-		updateExecution(e -> e.setResolvedPlanRootNodeId(resolvedPlanRoot.getId().toString()));
+		if(aggregatedReportEnabled) {
+			ResolvedPlanBuilder resolvedPlanBuilder = new ResolvedPlanBuilder(executionContext);
+			ResolvedPlanNode resolvedPlanRoot = resolvedPlanBuilder.buildResolvedPlan(plan);
+			updateExecution(e -> e.setResolvedPlanRootNodeId(resolvedPlanRoot.getId().toString()));
+		}
 	}
 
 	public static void abort(ExecutionContext executionContext) {
