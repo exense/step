@@ -43,12 +43,20 @@ public class ResolvedPlanBuilder {
         if (artefactNode.isCallingArtefactsFromOtherPlans()) {
             ArtefactHandler<AbstractArtefact, ReportNode> artefactHandler = artefactHandlerManager.getArtefactHandler(artefactNode);
             try {
-                // This kind of artefact push a new path when executed for the underlying plans and his own children, so the currentArtefactPath get updated
-                currentArtefactPath = ArtefactPathHelper.getPathOfArtefact(currentArtefactPath, artefactNode);
-                AbstractArtefact referencedChildArtefact = artefactHandler.resolveArtefactCall(artefactNode);
-                if(referencedChildArtefact != null) {
-                    // Recursively call the referencedArtefact
-                    buildTreeRecursively(resolvedPlanNode.getId().toString(), referencedChildArtefact, currentArtefactPath, plan);
+                String artefactId = ArtefactPathHelper.getArtefactId(artefactNode);
+                if(currentArtefactPath != null && currentArtefactPath.contains(artefactId)) {
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("Detected recursive call to artefact '{}' in plan '{}'. Skipping initial creation of resolved plan for sub nodes.", artefactId, plan.getId().toString());
+                    }
+                    // TODO we should resume the creation of resolved plan at execution
+                } else {
+                    // This kind of artefact push a new path when executed for the underlying plans and his own children, so the currentArtefactPath get updated
+                    currentArtefactPath = ArtefactPathHelper.getPathOfArtefact(currentArtefactPath, artefactId);
+                    AbstractArtefact referencedChildArtefact = artefactHandler.resolveArtefactCall(artefactNode);
+                    if(referencedChildArtefact != null) {
+                        // Recursively call the referencedArtefact
+                        buildTreeRecursively(resolvedPlanNode.getId().toString(), referencedChildArtefact, currentArtefactPath, plan);
+                    }
                 }
             } catch (Exception e) {
                 String message = "Unable to resolve called plan or composite keyword in plan " + plan.getId();
