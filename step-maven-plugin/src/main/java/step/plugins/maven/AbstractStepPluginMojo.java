@@ -134,7 +134,7 @@ public abstract class AbstractStepPluginMojo extends AbstractMojo {
 			new ControllerVersionValidator(createControllerServicesClient()).validateVersions(getStepVersion());
 		} catch (ControllerVersionValidator.ValidationException e) {
 			if (getForce() == null || !getForce()) {
-				throw logAndThrow("The maven plugin version mismatch detected. To execute the command please upgrade you CLI application or use the \"force\" parameter to ignore this validation", e);
+				throw logAndThrow("The maven plugin version mismatch detected. To execute the command please update you CLI application or use the \"force\" parameter to ignore this validation", e);
 			}
 		}
 	}

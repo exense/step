@@ -231,7 +231,7 @@ public class StepConsole implements Callable<Integer> {
                     new ControllerVersionValidator(createControllerServicesClient()).validateVersions(getVersion());
                 } catch (ControllerVersionValidator.ValidationException e) {
                     if (!force) {
-                        log.error("To execute the command please upgrade you CLI application or use the " + FORCE + " option to ignore this validation");
+                        log.error("To execute the command please update you CLI application or use the " + FORCE + " option to ignore this validation");
                         throw new StepCliExecutionException("CLI version mismatch detected", e);
                     }
                 }
