@@ -16,8 +16,16 @@ public class ArtefactPathHelper {
     }
 
     public static String getPathOfArtefact(String currentPath, AbstractArtefact artefact) {
-        String artefactId = artefact.getId().toHexString();
+        String artefactId = getArtefactId(artefact);
+        return getPathOfArtefact(currentPath, artefactId);
+    }
+
+    public static String getPathOfArtefact(String currentPath, String artefactId) {
         return currentPath != null ? currentPath + artefactId : artefactId;
+    }
+
+    public static String getArtefactId(AbstractArtefact artefact) {
+        return artefact.getId().toHexString();
     }
 
 }
