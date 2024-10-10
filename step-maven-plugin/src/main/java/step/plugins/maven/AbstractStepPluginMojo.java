@@ -134,7 +134,7 @@ public abstract class AbstractStepPluginMojo extends AbstractMojo {
 		try {
 			new ControllerVersionValidator(createControllerServicesClient()).validateVersions(getStepVersion());
 		} catch (ControllerVersionValidator.ValidationException e) {
-			String msg = "The server version " + e.getResult().getServerVersion() + " is incompatible with the current maven plugin version " + e.getResult().getClientVersion() + ". Please ensure both the CLI and server are running compatible versions.";
+			String msg = "Version mismatch. The server version " + e.getResult().getServerVersion() + " is incompatible with the current maven plugin version " + e.getResult().getClientVersion() + ". Please ensure both the CLI and server are running compatible versions.";
 			if (e.getResult().getStatus() == ControllerVersionValidator.Status.MINOR_MISMATCH) {
 				getLog().warn(msg);
 			} else {

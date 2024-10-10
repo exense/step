@@ -230,7 +230,7 @@ public class StepConsole implements Callable<Integer> {
                 try {
                     new ControllerVersionValidator(createControllerServicesClient()).validateVersions(getVersion());
                 } catch (ControllerVersionValidator.ValidationException e) {
-                    String msg = "The server version " + e.getResult().getServerVersion() + " is incompatible with the current CLI version " + e.getResult().getClientVersion() + ". Please ensure both the CLI and server are running compatible versions.";
+                    String msg = "Version mismatch. The server version " + e.getResult().getServerVersion() + " is incompatible with the current CLI version " + e.getResult().getClientVersion() + ". Please ensure both the CLI and server are running compatible versions.";
                     if (e.getResult().getStatus() == ControllerVersionValidator.Status.MINOR_MISMATCH) {
                         log.warn(msg);
                     } else {
