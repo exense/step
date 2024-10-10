@@ -52,6 +52,7 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
     @Override
     public void execute() throws MojoExecutionException {
         try {
+            checkStepControllerVersion();
             createTool(getUrl(), getStepProjectName(), getAuthToken(), getAsync()).execute();
         } catch (StepCliExecutionException e) {
             throw new MojoExecutionException("Execution exception", e);

@@ -24,6 +24,7 @@ import jakarta.ws.rs.core.MediaType;
 
 import step.client.AbstractRemoteClient;
 import step.client.credentials.ControllerCredentials;
+import step.core.Version;
 
 public class ControllerServicesClient extends AbstractRemoteClient {
 
@@ -33,6 +34,11 @@ public class ControllerServicesClient extends AbstractRemoteClient {
 
 	public ControllerServicesClient(ControllerCredentials credentials) {
 		super(credentials);
+	}
+
+	public Version getControllerVersion() {
+		Builder r = requestBuilder("/rest/controller/version");
+		return executeRequest(()->r.get(Version.class));
 	}
 
 	public void shutdownController() {
