@@ -172,7 +172,7 @@ public class StepConsoleTest {
     }
 
     @Test
-    public void testExecuteOutdatedVersion(){
+    public void testOutdatedVersion(){
         List<TestApExecuteCommand.RemoteExecutionParams> remoteExecuteHistory = new ArrayList<>();
         List<TestApExecuteCommand.LocalExecutionParams> localExecuteHistory = new ArrayList<>();
         List<TestApDeployCommand.ExecutionParams> deployExecuteHistory = new ArrayList<>();

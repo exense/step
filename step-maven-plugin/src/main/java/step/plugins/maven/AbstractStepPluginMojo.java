@@ -32,6 +32,7 @@ import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
 import org.eclipse.aether.resolution.ArtifactResult;
 import step.cli.ControllerVersionValidator;
+import step.cli.StepCliExecutionException;
 import step.client.AbstractRemoteClient;
 import step.client.controller.ControllerServicesClient;
 import step.client.credentials.ControllerCredentials;
@@ -133,8 +134,16 @@ public abstract class AbstractStepPluginMojo extends AbstractMojo {
 		try {
 			new ControllerVersionValidator(createControllerServicesClient()).validateVersions(getStepVersion());
 		} catch (ControllerVersionValidator.ValidationException e) {
-			if (getForce() == null || !getForce()) {
-				throw logAndThrow("The maven plugin version mismatch detected. To execute the command please update you CLI application or use the \"force\" parameter to ignore this validation", e);
+			String msg = "The server version " + e.getResult().getServerVersion() + " is incompatible with the current maven plugin version " + e.getResult().getClientVersion() + ". Please ensure both the CLI and server are running compatible versions.";
+			if (e.getResult().getStatus() == ControllerVersionValidator.Status.MINOR_MISMATCH) {
+				getLog().warn(msg);
+			} else {
+				if (!force) {
+					msg += " You can use the \"force\" parameter to ignore this validation.";
+					throw new StepCliExecutionException(msg, e);
+				} else {
+					getLog().warn(msg);
+				}
 			}
 		}
 	}

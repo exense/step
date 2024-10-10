@@ -25,8 +25,6 @@ import step.core.Version;
 
 public class ControllerVersionValidator {
 
-    private static final Logger log = LoggerFactory.getLogger(ControllerVersionValidator.class);
-
     private final ControllerServicesClient controllerServicesClient;
 
     public ControllerVersionValidator(ControllerServicesClient controllerServicesClient) {
@@ -35,11 +33,11 @@ public class ControllerVersionValidator {
 
     public Result compareVersions(Version clientVersion, Version controllerVersion) {
         if (clientVersion.getMajor() != controllerVersion.getMajor()) {
-            return new Result(Status.MAJOR_MISMATCH, "The major version of your client (" + clientVersion + ") doesn't match to the Step server version (" + controllerVersion + ")");
+            return new Result(controllerVersion, clientVersion, Status.MAJOR_MISMATCH);
         } else if (clientVersion.getMinor() != controllerVersion.getMinor()) {
-            return new Result(Status.MINOR_MISMATCH, "The minor version of your client (" + clientVersion + ") doesn't match to the Step server version (" + controllerVersion + ")");
+            return new Result(controllerVersion, clientVersion, Status.MINOR_MISMATCH);
         } else {
-            return new Result(Status.EQUAL, null);
+            return new Result(controllerVersion, clientVersion, Status.EQUAL);
         }
     }
 
@@ -47,28 +45,16 @@ public class ControllerVersionValidator {
      * Validates the current version of Step client (for example, CLI or Maven plugin)
      * @param clientVersion the client version
      * @return the result of validation if the mismatch is not critical
-     * @throws ValidationException in case of critical mismatch between client version and server version
+     * @throws ValidationException in case of mismatch between client version and server version
      */
     public Result validateVersions(Version clientVersion) throws ValidationException {
         Version controllerVersion = controllerServicesClient.getControllerVersion();
-
         Result r = compareVersions(clientVersion, controllerVersion);
         switch (r.getStatus()) {
             case EQUAL:
-                if (r.getMessageText() != null) {
-                    log.info(r.getMessageText());
-                }
-                return r;
-            case MINOR_MISMATCH:
-                if (r.getMessageText() != null) {
-                    log.warn(r.getMessageText());
-                }
                 return r;
             default:
-                if (r.getMessageText() != null) {
-                    log.error(r.getMessageText());
-                }
-                throw new ValidationException(r.getMessageText(), r.getStatus());
+                throw new ValidationException(r);
         }
     }
 
@@ -79,33 +65,42 @@ public class ControllerVersionValidator {
     }
 
     public static class Result {
-        private final Status status;
-        private final String messageText;
 
-        public Result(Status status, String messageText) {
+        private Status status;
+        private Version serverVersion;
+        private Version clientVersion;
+
+        public Result(Version serverVersion, Version clientVersion, Status status) {
             this.status = status;
-            this.messageText = messageText;
+            this.serverVersion = serverVersion;
+            this.clientVersion = clientVersion;
         }
 
         public Status getStatus() {
             return status;
         }
 
-        public String getMessageText() {
-            return messageText;
+        public Version getServerVersion() {
+            return serverVersion;
         }
+
+        public Version getClientVersion() {
+            return clientVersion;
+        }
+
     }
 
     public static class ValidationException extends java.lang.Exception {
-        private Status status;
 
-        public ValidationException(String message, Status status) {
-            super(message);
-            this.status = status;
+        private final Result result;
+
+        public ValidationException(Result result) {
+            super();
+            this.result = result;
         }
 
-        public Status getStatus() {
-            return status;
+        public Result getResult() {
+            return result;
         }
     }
 }
