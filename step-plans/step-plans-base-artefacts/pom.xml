@@ -66,6 +66,17 @@
 			<groupId>ch.exense.step</groupId>
 			<artifactId>step-grid-server</artifactId>
 		</dependency>
+
+		<!-- ATTENTION: Apache POI declares a dependency to an old version of commons-io (2.11)
+		that even POI itself is not entirely functional with. Because this is the "outermost"
+		place where that dependency is defined, it would actually fix an OLD (incomplete, and
+		vulnerable) version as the preferred one. We therefore manually define the correct
+		preferred dependency here (the version to use is automatically correctly determined)
+		-->
+		<dependency>
+			<groupId>commons-io</groupId>
+			<artifactId>commons-io</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>org.apache.poi</groupId>
 			<artifactId>poi</artifactId>
