@@ -140,7 +140,7 @@ public abstract class AbstractStepPluginMojo extends AbstractMojo {
 			} else {
 				if (!force) {
 					msg += " You can use the \"force\" parameter to ignore this validation.";
-					throw new StepCliExecutionException(msg, e);
+					throw new MojoExecutionException(msg, e);
 				} else {
 					getLog().warn(msg);
 				}
