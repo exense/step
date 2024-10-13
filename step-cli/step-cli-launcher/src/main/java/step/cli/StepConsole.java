@@ -230,15 +230,16 @@ public class StepConsole implements Callable<Integer> {
                 try {
                     new ControllerVersionValidator(createControllerServicesClient()).validateVersions(getVersion());
                 } catch (ControllerVersionValidator.ValidationException e) {
-                    String msg = "Version mismatch. The server version " + e.getResult().getServerVersion() + " is incompatible with the current CLI version " + e.getResult().getClientVersion() + ". Please ensure both the CLI and server are running compatible versions.";
                     if (e.getResult().getStatus() == ControllerVersionValidator.Status.MINOR_MISMATCH) {
-                        log.warn(msg);
+                        String warn = "The CLI version (" + e.getResult().getClientVersion() + ") does not exactly match the server version (" +  e.getResult().getServerVersion() + "), but they are considered compatible. It's recommended to use matching versions.";
+                        log.warn(warn);
                     } else {
+                        String err = "Version mismatch. The server version (" + e.getResult().getServerVersion() + ") is incompatible with the current CLI version (" + e.getResult().getClientVersion() + "). Please ensure both the CLI and server are running compatible versions.";
                         if (!force) {
-                            msg += " You can use the " + FORCE + " option to ignore this validation.";
-                            throw new StepCliExecutionException(msg, e);
+                            err += " You can use the " + FORCE + " option to ignore this validation.";
+                            throw new StepCliExecutionException(err, e);
                         } else {
-                            log.warn(msg);
+                            log.warn(err);
                         }
                     }
                 }
