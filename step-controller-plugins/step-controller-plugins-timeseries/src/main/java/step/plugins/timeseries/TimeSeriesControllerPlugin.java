@@ -36,6 +36,7 @@ import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static step.plugins.timeseries.MetricsConstants.*;
 import static step.plugins.timeseries.TimeSeriesExecutionPlugin.*;
@@ -74,7 +75,6 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 
 		TimeSeriesCollectionsBuilder timeSeriesCollectionsBuilder = new TimeSeriesCollectionsBuilder(collectionFactory);
 		List<TimeSeriesCollection> enabledCollections = timeSeriesCollectionsBuilder.getTimeSeriesCollections(TIME_SERIES_MAIN_COLLECTION, timeSeriesCollectionsSettings);
-
 		// timeseries will have a list of registered collection.
 		timeSeries = new TimeSeriesBuilder().registerCollections(enabledCollections).build();
 		mainIngestionPipeline = timeSeries.getIngestionPipeline();
