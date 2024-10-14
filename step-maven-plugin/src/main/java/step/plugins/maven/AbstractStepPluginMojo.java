@@ -31,9 +31,14 @@ import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
 import org.eclipse.aether.resolution.ArtifactResult;
+import step.cli.ControllerVersionValidator;
+import step.cli.StepCliExecutionException;
 import step.client.AbstractRemoteClient;
+import step.client.controller.ControllerServicesClient;
 import step.client.credentials.ControllerCredentials;
 import step.client.resources.RemoteResourceManager;
+import step.core.Constants;
+import step.core.Version;
 import step.core.accessors.AbstractIdentifiableObject;
 
 import java.util.HashSet;
@@ -58,6 +63,9 @@ public abstract class AbstractStepPluginMojo extends AbstractMojo {
 
 	@Parameter(defaultValue = "${session}", readonly = true, required = true)
 	protected MavenSession session;
+
+	@Parameter(defaultValue = "false")
+	protected Boolean force;
 
 	@Component
 	protected RepositorySystem repositorySystem;
@@ -96,6 +104,14 @@ public abstract class AbstractStepPluginMojo extends AbstractMojo {
 		this.project = project;
 	}
 
+	public Boolean getForce() {
+		return force;
+	}
+
+	public void setForce(Boolean force) {
+		this.force = force;
+	}
+
 	protected MojoExecutionException logAndThrow(String errorText, Throwable e) {
 		getLog().error(errorText, e);
 		return new MojoExecutionException(errorText, e);
@@ -108,6 +124,33 @@ public abstract class AbstractStepPluginMojo extends AbstractMojo {
 
 	protected ControllerCredentials getControllerCredentials() {
 		return new ControllerCredentials(getUrl(), null);
+	}
+
+	protected ControllerServicesClient createControllerServicesClient(){
+		return new ControllerServicesClient(getControllerCredentials());
+	}
+
+	protected void checkStepControllerVersion() throws MojoExecutionException {
+		try {
+			new ControllerVersionValidator(createControllerServicesClient()).validateVersions(getStepVersion());
+		} catch (ControllerVersionValidator.ValidationException e) {
+			if (e.getResult().getStatus() == ControllerVersionValidator.Status.MINOR_MISMATCH) {
+				String warn = "The maven plugin version (" + e.getResult().getClientVersion() + ") does not exactly match the server version (" +  e.getResult().getServerVersion() + "), but they are considered compatible. It's recommended to use matching versions.";
+				getLog().warn(warn);
+			} else {
+				String err = "Version mismatch. The server version (" + e.getResult().getServerVersion() + ") is incompatible with the current maven plugin version (" + e.getResult().getClientVersion() + "). Please ensure both the CLI and server are running compatible versions.";
+				if (!force) {
+					err += " You can use the \"force\" parameter to ignore this validation.";
+					throw new MojoExecutionException(err, e);
+				} else {
+					getLog().warn(err);
+				}
+			}
+		}
+	}
+
+	protected Version getStepVersion() {
+		return Constants.STEP_API_VERSION;
 	}
 
 	protected org.eclipse.aether.artifact.Artifact getRemoteArtifact(String groupId, String artifactId, String artifactVersion, String classifier, String extension) throws MojoExecutionException {
