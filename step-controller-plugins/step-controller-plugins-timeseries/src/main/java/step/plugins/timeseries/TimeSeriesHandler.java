@@ -344,6 +344,7 @@ public class TimeSeriesHandler {
                 .withTruncated(series.size() > request.getMaxNumberOfSeries())
                 .withCollectionResolution(response.getCollectionResolution())
                 .withHigherResolutionUsed(response.isHigherResolutionUsed())
+                .withTtlCovered(response.isTtlCovered())
                 .build();
     }
 
