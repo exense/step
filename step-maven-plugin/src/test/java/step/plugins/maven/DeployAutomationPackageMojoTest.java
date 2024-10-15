@@ -19,6 +19,7 @@
 package step.plugins.maven;
 
 import org.apache.maven.artifact.Artifact;
+import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
 import org.junit.Assert;
 import org.junit.Test;
@@ -87,6 +88,11 @@ public class DeployAutomationPackageMojoTest extends AbstractMojoTest {
             this.toolProjectName = projectName;
             this.toolAuthToken = authToken;
             return mockedTool;
+        }
+
+        @Override
+        protected void checkStepControllerVersion() throws MojoExecutionException {
+            //mock the check
         }
     }
 }
