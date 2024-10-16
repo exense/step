@@ -43,6 +43,11 @@ public class TestSet extends AbstractArtefact {
 		return true;
 	}
 
+	@Override
+	public boolean isTestSet() {
+		return true;
+	}
+
 	public DynamicValue<Integer> getThreads() {
 		return threads;
 	}

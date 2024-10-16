@@ -32,6 +32,7 @@ import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.aggregated.AggregatedReportView;
 import step.core.artefacts.reports.aggregated.AggregatedReportViewBuilder;
+import step.core.artefacts.reports.junitxml.JUnitXmlReportBuilder;
 import step.core.collections.SearchOrder;
 import step.core.deployment.AbstractStepAsyncServices;
 import step.core.deployment.ControllerServiceException;
@@ -256,6 +257,19 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 		ExecutionEngineContext executionEngineContext = getScheduler().getExecutor().getExecutionEngine().getExecutionEngineContext();
 		AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(executionEngineContext, executionId);
 		return aggregatedReportViewBuilder.buildAggregatedReportView(request);
+	}
+
+	// TODO: secured + multifile?
+	@Operation(description = "Returns an aggregated report view for the provided execution and aggregation parameters.")
+	@GET
+	@Path("/{id}/report/custom")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.TEXT_PLAIN)
+	public String getCustomReportView(@PathParam("id") String executionId) {
+		// TODO: choose format
+		ExecutionEngineContext executionEngineContext = getScheduler().getExecutor().getExecutionEngine().getExecutionEngineContext();
+		JUnitXmlReportBuilder reportBuilder = new JUnitXmlReportBuilder(executionEngineContext, executionId);
+		return reportBuilder.buildJUnitXmlReport();
 	}
 
 	@Operation(description = "Updates the provided execution.")
