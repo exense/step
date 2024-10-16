@@ -18,8 +18,6 @@
  ******************************************************************************/
 package step.cli;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import step.client.controller.ControllerServicesClient;
 import step.core.Version;
 
@@ -31,10 +29,11 @@ public class ControllerVersionValidator {
         this.controllerServicesClient = controllerServicesClient;
     }
 
-    public Result compareVersions(Version clientVersion, Version controllerVersion) {
-        if (clientVersion.getMajor() != controllerVersion.getMajor()) {
+    public static Result compareVersions(Version clientVersion, Version controllerVersion) {
+        // For Step we're using the minor version as major. We're therefore reporting a minor mismatch as major here
+        if ((clientVersion.getMajor() != controllerVersion.getMajor()) || (clientVersion.getMinor() != controllerVersion.getMinor())) {
             return new Result(controllerVersion, clientVersion, Status.MAJOR_MISMATCH);
-        } else if (clientVersion.getMinor() != controllerVersion.getMinor()) {
+        } else if (clientVersion.getRevision() != controllerVersion.getRevision()) {
             return new Result(controllerVersion, clientVersion, Status.MINOR_MISMATCH);
         } else {
             return new Result(controllerVersion, clientVersion, Status.EQUAL);
