@@ -195,8 +195,13 @@ public class StepConsoleTest {
         Assert.assertEquals(1, remoteExecuteHistory.size());
         remoteExecuteHistory.clear();
 
-        // 1.3. minor version mismatch without --force option (execution should be allowed)
+        // 1.3. minor version mismatch without --force option, validation should fail
         res = runMainWithVersion(histories, outdatedMinorVersion, "ap", "execute", "-p=src/test/resources/samples/step-automation-packages-sample1.jar", "-u=http://localhost:8080");
+        Assert.assertEquals(0, remoteExecuteHistory.size());
+        remoteExecuteHistory.clear();
+
+        // 1.4. minor version mismatch with --force option, validation should fail
+        res = runMainWithVersion(histories, outdatedMinorVersion, "ap", "execute", "-p=src/test/resources/samples/step-automation-packages-sample1.jar", "-u=http://localhost:8080", "--force");
         Assert.assertEquals(1, remoteExecuteHistory.size());
         remoteExecuteHistory.clear();
 
@@ -217,8 +222,13 @@ public class StepConsoleTest {
         Assert.assertEquals(1, deployExecuteHistory.size());
         deployExecuteHistory.clear();
 
-        // 1.3. minor version mismatch without --force option (execution should be allowed)
+        // 1.3. minor version mismatch without --force option (execution should fail)
         res = runMainWithVersion(histories, outdatedMinorVersion, "ap", "deploy", "-p=src/test/resources/samples/step-automation-packages-sample1.jar", "-u=http://localhost:8080");
+        Assert.assertEquals(0, deployExecuteHistory.size());
+        deployExecuteHistory.clear();
+
+        // 1.4. minor version mismatch with --force option (execution should be allowed)
+        res = runMainWithVersion(histories, outdatedMinorVersion, "ap", "deploy", "-p=src/test/resources/samples/step-automation-packages-sample1.jar", "-u=http://localhost:8080", "--force");
         Assert.assertEquals(1, deployExecuteHistory.size());
         deployExecuteHistory.clear();
     }
