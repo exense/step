@@ -31,6 +31,10 @@ import org.bson.types.ObjectId;
 import step.commons.activation.Activator;
 import step.core.objectenricher.ObjectPredicate;
 
+import javax.script.SimpleBindings;
+
+import static step.commons.activation.Activator.evaluateActivationExpression;
+
 public class ScreenTemplateManager {
 
 	protected final List<ScreenTemplateChangeListener> listeners = new ArrayList<>();
@@ -95,4 +99,51 @@ public class ScreenTemplateManager {
 		listeners.forEach(l->l.onChange());
 	}
 
+	public List<ScreenInput> getScreenInputsForScreen(String screenId, Map<String, Object> contextBindings, ObjectPredicate objectPredicate) {
+		Stream<ScreenInput> stream = screenInputAccessor.getScreenInputsByScreenId(screenId).stream();
+		if(objectPredicate != null) {
+			stream = stream.filter(objectPredicate);
+		}
+		List<ScreenInput> screenInputs = stream.collect(Collectors.toList());
+		Map<String, String> defaultValuesAsBindings = screenInputs.stream().map(ScreenInput::getInput).filter(i -> i.getDefaultValue() != null)
+				.filter(i -> !contextBindings.containsKey(i.getId())).collect(Collectors.toMap(Input::getId, Input::getDefaultValue));
+		contextBindings.putAll(defaultValuesAsBindings);
+
+		List<ScreenInput> result = new ArrayList<>();
+		List<ScreenInput> activatedScreeninputs =  findAllMatches(contextBindings, screenInputs, defaultScriptEngine);
+		for(ScreenInput screenInput:activatedScreeninputs) {
+			ScreenInput screenInputClone = new ScreenInput();
+			screenInputClone.setScreenId(screenInput.getScreenId());
+			screenInputClone.setImmutable(screenInput.getImmutable());
+			screenInputClone.setPosition(screenInput.getPosition());
+			screenInputClone.setAttributes(screenInput.getAttributes());
+			screenInputClone.setCustomFields(screenInput.getCustomFields());
+			Input input = screenInput.getInput();
+			List<Option> options = input.getOptions();
+			List<Option> activeOptions = null;
+			if(options!=null) {
+				activeOptions = Activator.findAllMatches(contextBindings, options, defaultScriptEngine);
+			}
+			Input clone = new Input(input.getType(), input.getId(), input.getLabel(), input.getDescription(), activeOptions);
+			clone.setCustomUIComponents(input.getCustomUIComponents());
+			clone.setSearchMapperService(input.getSearchMapperService());
+			clone.setDefaultValue(input.getDefaultValue());
+			screenInputClone.setInput(clone);
+			result.add(screenInputClone);
+		}
+
+		return result;
+	}
+
+	private List<ScreenInput> findAllMatches(Map<String, Object> bindings, List<ScreenInput> screenInputs, String defaultScriptEngine) {
+		List<ScreenInput> result = new ArrayList<>();
+		for(ScreenInput screenInput:screenInputs) {
+			Boolean expressionResult = evaluateActivationExpression(bindings!=null?new SimpleBindings(bindings):null, screenInput.getInput().getActivationExpression(), defaultScriptEngine);
+
+			if(expressionResult) {
+				result.add(screenInput);
+			}
+		}
+		return result;
+	}
 }
