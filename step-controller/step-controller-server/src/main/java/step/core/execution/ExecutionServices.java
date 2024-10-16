@@ -259,17 +259,24 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 		return aggregatedReportViewBuilder.buildAggregatedReportView(request);
 	}
 
-	// TODO: secured + multifile?
 	@Operation(description = "Returns an aggregated report view for the provided execution and aggregation parameters.")
 	@GET
-	@Path("/{id}/report/custom")
+	@Path("/{id}/report/custom/{customReportType}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.TEXT_PLAIN)
-	public String getCustomReportView(@PathParam("id") String executionId) {
-		// TODO: choose format
+	@Secured(right = "execution-read")
+	public String getCustomReportView(@PathParam("id") String executionId, @PathParam("customReportType") String customReportType) {
 		ExecutionEngineContext executionEngineContext = getScheduler().getExecutor().getExecutionEngine().getExecutionEngineContext();
-		JUnitXmlReportBuilder reportBuilder = new JUnitXmlReportBuilder(executionEngineContext, executionId);
-		return reportBuilder.buildJUnitXmlReport();
+		CustomReportType reportType = CustomReportType.parse(customReportType);
+		if (reportType == null) {
+			throw new ControllerServiceException(400, "Invalid report type: " + customReportType);
+		}
+		switch (reportType) {
+			case JUNIT:
+				return new JUnitXmlReportBuilder(executionEngineContext, executionId).buildJUnitXmlReport();
+			default:
+				throw new ControllerServiceException(400, "Invalid report type: " + customReportType);
+		}
 	}
 
 	@Operation(description = "Updates the provided execution.")

@@ -16,27 +16,17 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.core.artefacts.reports.junitxml.model;
+package step.core.execution;
 
-import jakarta.xml.bind.annotation.XmlElement;
-import jakarta.xml.bind.annotation.XmlRootElement;
+public enum CustomReportType {
+    JUNIT;
 
-import java.util.List;
-
-@XmlRootElement(name = "testSuites")
-public class TestSuites {
-
-    private List<TestSuite> testSuite;
-
-    public TestSuites() {
-    }
-
-    public List<TestSuite> getTestSuite() {
-        return testSuite;
-    }
-
-    @XmlElement(name = "testSuite")
-    public void setTestSuite(List<TestSuite> testSuite) {
-        this.testSuite = testSuite;
+    public static CustomReportType parse(String customReportType) {
+        for (CustomReportType value : CustomReportType.values()) {
+            if (value.name().equalsIgnoreCase(customReportType)) {
+                return value;
+            }
+        }
+        return null;
     }
 }

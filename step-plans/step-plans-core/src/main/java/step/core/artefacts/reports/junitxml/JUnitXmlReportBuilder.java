@@ -18,89 +18,38 @@
  ******************************************************************************/
 package step.core.artefacts.reports.junitxml;
 
-import jakarta.xml.bind.JAXBContext;
-import jakarta.xml.bind.JAXBException;
-import jakarta.xml.bind.Marshaller;
-import step.core.accessors.AbstractOrganizableObject;
-import step.core.artefacts.reports.ReportNode;
-import step.core.artefacts.reports.ReportNodeStatus;
-import step.core.artefacts.reports.junitxml.model.TestSuite;
-import step.core.artefacts.reports.junitxml.model.TestSuites;
-import step.core.execution.ExecutionContext;
+import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.execution.ExecutionEngineContext;
-import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
-import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
+import step.reporting.JUnit4ReportWriter;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.Set;
+import java.io.OutputStreamWriter;
 
 public class JUnitXmlReportBuilder {
 
     private final String executionId;
     private final ExecutionAccessor executionAccessor;
     private final PlanAccessor planAccessor;
+    private final ReportNodeAccessor reportNodeAccessor;
 
     public JUnitXmlReportBuilder(ExecutionEngineContext executionEngineContext, String executionId) {
         this.executionId = executionId;
         this.executionAccessor = executionEngineContext.getExecutionAccessor();
+        this.reportNodeAccessor = executionEngineContext.getReportNodeAccessor();
         this.planAccessor = executionEngineContext.getPlanAccessor();
     }
 
     public String buildJUnitXmlReport() {
-        Execution execution = executionAccessor.get(executionId);
-        Plan plan = planAccessor.get(execution.getPlanId());
-
-        if (plan.getRoot().isTestSet()) {
-            // TODO: fill test suites
-            TestSuites suites = new TestSuites();
-            throw new UnsupportedOperationException("Unsupported root");
-        } else {
-            TestSuite suite = prepareTestSuite(plan, execution);
-            try {
-                return buildXmlForSuite(suite);
-            } catch (JAXBException ex) {
-                throw new RuntimeException("Marshalling exception", ex);
-            }
-        }
-    }
-
-    protected TestSuite prepareTestSuite(Plan plan, Execution execution){
-        TestSuite testSuite = new TestSuite();
-        testSuite.setTests(testSuite.getTests() + 1);
-
-        if (Set.of(ReportNodeStatus.PASSED).contains(execution.getResult())) {
-            // nothing
-        } else if (Set.of(ReportNodeStatus.VETOED, ReportNodeStatus.INTERRUPTED, ReportNodeStatus.NORUN, ReportNodeStatus.SKIPPED, ReportNodeStatus.RUNNING).contains(execution.getResult())) {
-            testSuite.setSkipped(testSuite.getSkipped() + 1);
-        } else if (Set.of(ReportNodeStatus.FAILED).contains(execution.getResult())) {
-            testSuite.setFailures(testSuite.getErrors() + 1);
-        } else {
-            testSuite.setErrors(testSuite.getErrors() + 1);
-        }
-        if (plan != null) {
-            testSuite.setName(plan.getAttribute(AbstractOrganizableObject.NAME));
-        } else {
-            testSuite.setName("UNKNOWN");
-        }
-        long executionMs = execution.getEndTime() - execution.getStartTime();
-        double executionS = new Long(executionMs).doubleValue() / 1000;
-        testSuite.setTime(String.valueOf(executionS));
-        return testSuite;
-    }
-
-    protected static String buildXmlForSuite(TestSuite testSuite) throws JAXBException {
-        JAXBContext context = JAXBContext.newInstance(TestSuite.class);
-        Marshaller mar = context.createMarshaller();
-        mar.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
-        try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
-            mar.marshal(testSuite, os);
-            return os.toString();
+        try(ByteArrayOutputStream baos = new ByteArrayOutputStream(); OutputStreamWriter writer = new OutputStreamWriter(baos)){
+            new JUnit4ReportWriter(true).writeReport(reportNodeAccessor, executionId, writer);
+            return new String(baos.toByteArray());
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("IO Exception", e);
         }
     }
+
 
 }
