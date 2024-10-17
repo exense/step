@@ -29,6 +29,11 @@ public class PlanAccessorImpl extends AbstractAccessor<Plan> implements PlanAcce
 
 	public PlanAccessorImpl(Collection<Plan> collectionDriver) {
 		super(collectionDriver);
+		createIndexIfNeeded();
+	}
+
+	private void createIndexIfNeeded() {
+		createOrUpdateIndex("visible");
 	}
 
 	@Override
