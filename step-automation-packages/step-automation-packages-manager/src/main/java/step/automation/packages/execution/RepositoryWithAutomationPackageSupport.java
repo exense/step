@@ -66,6 +66,9 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
     public static final String REPOSITORY_PARAM_CONTEXTID = "contextid";
     public static final String AP_NAME_CUSTOM_FIELD = "apName";
 
+    public static final String CONFIGURATION_MAVEN_FOLDER = "repository.artifact.maven.folder";
+    public static final String DEFAULT_MAVEN_FOLDER = "maven";
+
     // context id -> automation package manager (cache)
     protected final ConcurrentHashMap<String, PackageExecutionContext> sharedPackageExecutionContexts = new ConcurrentHashMap<>();
     protected final AutomationPackageManager manager;
@@ -312,7 +315,7 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
     }
 
     protected void closePackageExecutionContext(PackageExecutionContext ctx) throws IOException {
-        if (ctx != null && !ctx.isExternallyCreatedContext()) {
+        if (ctx != null && !ctx.isShared()) {
             ctx.close();
         }
     }
@@ -338,12 +341,12 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
     public class PackageExecutionContext implements Closeable {
         private final String contextId;
         private final AutomationPackageManager inMemoryManager;
-        private final boolean externallyCreatedContext;
+        private final boolean shared;
 
-        public PackageExecutionContext(String contextId, AutomationPackageManager inMemoryManager, boolean externallyCreatedContext) {
+        public PackageExecutionContext(String contextId, AutomationPackageManager inMemoryManager, boolean shared) {
             this.contextId = contextId;
             this.inMemoryManager = inMemoryManager;
-            this.externallyCreatedContext = externallyCreatedContext;
+            this.shared = shared;
         }
 
         public AutomationPackageManager getInMemoryManager() {
@@ -354,24 +357,24 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
             return getInMemoryManager().getAllAutomationPackages(null).findFirst().orElse(null);
         }
 
-        public boolean isExternallyCreatedContext() {
-            return externallyCreatedContext;
+        public boolean isShared() {
+            return shared;
         }
 
         @Override
         public void close() throws IOException {
-
-            // only after isolated execution is finished we can clean up temporary created resources
-            try {
-                // remove the context from isolated automation package repository
-                log.info("Cleanup isolated execution context");
-
-                IsolatedAutomationPackageRepository.PackageExecutionContext automationPackageManager = sharedPackageExecutionContexts.get(contextId);
+            // cleanup the associated automation package manager and remove this context from the shared map in case of shared context
+            log.info("Cleanup isolated execution context");
+            //In case the Package execution context is shared (i.e. when triggering isolated executions from CLI), we close the shared context
+            //and remove it from the shared map
+            if (shared) {
+                IsolatedAutomationPackageRepository.PackageExecutionContext automationPackageManager = sharedPackageExecutionContexts.remove(contextId);
                 if (automationPackageManager != null) {
                     automationPackageManager.getInMemoryManager().cleanup();
                 }
-            } finally {
-                sharedPackageExecutionContexts.remove(contextId);
+            //Otherwise directly clean the automation package stored in this context
+            } else {
+                inMemoryManager.cleanup();
             }
         }
     }
