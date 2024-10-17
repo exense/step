@@ -44,8 +44,7 @@ public class MavenArtifactRepository extends AbstractArtifactRepository {
 
     public static final String MAVEN_SETTINGS_PREFIX = "maven_settings_";
     protected static final String MAVEN_SETTINGS_DEFAULT = "default";
-    protected static final String CONFIGURATION_MAVEN_FOLDER = "repository.artifact.maven.folder";
-    protected static final String DEFAULT_MAVEN_FOLDER = "maven";
+
     protected static final String MAVEN_EMPTY_SETTINGS =
             "<settings xmlns=\"http://maven.apache.org/SETTINGS/1.0.0\"\n" +
                     "          xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
