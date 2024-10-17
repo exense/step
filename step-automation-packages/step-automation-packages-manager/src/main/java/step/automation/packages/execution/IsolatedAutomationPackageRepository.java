@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.automation.packages.execution;
 
+import ch.exense.commons.io.FileHelper;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,12 +37,15 @@ import step.resources.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Supplier;
 
 public class IsolatedAutomationPackageRepository extends RepositoryWithAutomationPackageSupport {
@@ -177,6 +181,55 @@ public class IsolatedAutomationPackageRepository extends RepositoryWithAutomatio
         log.info("Cleanup outdated automation packages finished. {} of {} packages have been removed", removed, foundResources.size());
     }
 
+    public void cleanUpMavenCache() {
+        log.info("Cleanup outdated artifacts in maven cache...");
+        String ttlString = ttlValueSupplier.get();
+
+        long ttlDurationMs = Long.parseLong(ttlString);
+        Long minExecutionTime = System.currentTimeMillis() - ttlDurationMs;
+
+        int removed = 0;
+        int artifactsCandidate = 0;
+        try {
+            Path mavenCachePath = Path.of("maven");
+            List<Path> mavenJarFiles = findOldJarFiles(mavenCachePath, minExecutionTime);
+            artifactsCandidate = mavenJarFiles.size();
+            for(Path jarPath: mavenJarFiles) {
+                File parentFile = jarPath.toFile().getParentFile();
+                if (parentFile != null) {
+                    boolean deleted = FileHelper.safeDeleteFolder(parentFile);;
+                    if (deleted) {
+                        removed++;
+                    }
+                }
+            }
+        } catch (IOException e) {
+            log.error("Unable to cleanup local maven cache.", e);
+        }
+
+        log.info("Cleanup outdated artifacts in maven cache.. {} of {} artifacts candidates for cleanup have been removed", removed, artifactsCandidate);
+    }
+
+    public static List<Path> findOldJarFiles(Path startDir, Long cutoffTime) throws IOException {
+        List<Path> oldJarFiles = new ArrayList<>();
+
+        Files.walkFileTree(startDir, new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                // Check if the file is a JAR file
+                if (file.toFile().isFile() && file.toString().endsWith(".jar")) {
+                    // Check if the last accessed time is before the cutoff date
+                    if (attrs.lastAccessTime().toMillis() < cutoffTime) {
+                        oldJarFiles.add(file);
+                    }
+                }
+                return FileVisitResult.CONTINUE;
+            }
+        });
+
+        return oldJarFiles;
+    }
+
     private String getApResourceInfo(Resource resource){
         return resource.getCustomField(AP_NAME_CUSTOM_FIELD) + " (ctx=" + resource.getCustomField(CONTEXT_ID_CUSTOM_FIELD) + ")";
     }
@@ -218,6 +271,7 @@ public class IsolatedAutomationPackageRepository extends RepositoryWithAutomatio
             throw new AutomationPackageManagerException("Cannot update the automation package name in resource: " + resource.getId(), ex);
         }
     }
+
 
 
 }

@@ -133,6 +133,7 @@ public class IsolatedAutomationPackageRepositoryPlugin extends AbstractControlle
         public void execute(JobExecutionContext context) {
             if (controllerSettingAccessor.getSettingAsBoolean(ISOLATED_AP_HOUSEKEEPING_ENABLED)) {
                 repository.cleanUpOutdatedResources();
+                repository.cleanUpMavenCache();
             }
         }
     }
