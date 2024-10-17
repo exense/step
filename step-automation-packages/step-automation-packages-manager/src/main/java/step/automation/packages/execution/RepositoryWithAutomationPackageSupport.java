@@ -66,6 +66,9 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
     public static final String REPOSITORY_PARAM_CONTEXTID = "contextid";
     public static final String AP_NAME_CUSTOM_FIELD = "apName";
 
+    public static final String CONFIGURATION_MAVEN_FOLDER = "repository.artifact.maven.folder";
+    public static final String DEFAULT_MAVEN_FOLDER = "maven";
+
     // context id -> automation package manager (cache)
     protected final ConcurrentHashMap<String, PackageExecutionContext> sharedPackageExecutionContexts = new ConcurrentHashMap<>();
     protected final AutomationPackageManager manager;
@@ -360,7 +363,7 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
 
         @Override
         public void close() throws IOException {
-            // remove the context from isolated automation package repository
+            // cleanup the associated automation package manager and remove this context from the shared map in case of shared context
             log.info("Cleanup isolated execution context");
             //In case the Package execution context is shared (i.e. when triggering isolated executions from CLI), we close the shared context
             //and remove it from the shared map

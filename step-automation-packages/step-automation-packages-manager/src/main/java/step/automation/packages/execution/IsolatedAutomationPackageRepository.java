@@ -56,15 +56,17 @@ public class IsolatedAutomationPackageRepository extends RepositoryWithAutomatio
 
     private final ResourceManager resourceManager;
     private final Supplier<String> ttlValueSupplier;
+    private final Path mavenCachePath;
 
     protected IsolatedAutomationPackageRepository(AutomationPackageManager manager,
                                                   ResourceManager resourceManager,
                                                   FunctionTypeRegistry functionTypeRegistry,
                                                   FunctionAccessor functionAccessor,
-                                                  Supplier<String> ttlValueSupplier) {
+                                                  Supplier<String> ttlValueSupplier, Path mavenCachePath) {
         super(Set.of(REPOSITORY_PARAM_CONTEXTID), manager, functionTypeRegistry, functionAccessor);
         this.resourceManager = resourceManager;
         this.ttlValueSupplier = ttlValueSupplier;
+        this.mavenCachePath = mavenCachePath;
     }
 
     @Override
@@ -188,10 +190,10 @@ public class IsolatedAutomationPackageRepository extends RepositoryWithAutomatio
         long ttlDurationMs = Long.parseLong(ttlString);
         Long minExecutionTime = System.currentTimeMillis() - ttlDurationMs;
 
+
         int removed = 0;
         int artifactsCandidate = 0;
         try {
-            Path mavenCachePath = Path.of("maven");
             List<Path> mavenJarFiles = findOldJarFiles(mavenCachePath, minExecutionTime);
             artifactsCandidate = mavenJarFiles.size();
             for(Path jarPath: mavenJarFiles) {
@@ -200,6 +202,8 @@ public class IsolatedAutomationPackageRepository extends RepositoryWithAutomatio
                     boolean deleted = FileHelper.safeDeleteFolder(parentFile);;
                     if (deleted) {
                         removed++;
+                    } else {
+                        log.warn("Unable to cleanup maven cache entry {}, the file might be used", parentFile.getAbsolutePath());
                     }
                 }
             }
