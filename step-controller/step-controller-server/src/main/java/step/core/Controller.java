@@ -136,6 +136,7 @@ public class Controller {
 		context.setExecutionAccessor(executionAccessor);		
 
 		PlanAccessorImpl plans = new PlanAccessorImpl(collectionFactory.getCollection("plans", Plan.class));
+		plans.createDefaultIndexIfNeeded();
 		context.setPlanAccessor(plans);
 
 		context.setReportNodeAccessor(
