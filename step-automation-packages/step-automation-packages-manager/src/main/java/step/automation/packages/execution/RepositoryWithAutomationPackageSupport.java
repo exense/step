@@ -145,6 +145,19 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         }
     }
 
+    @Override
+    public void postExecution(ExecutionContext context, RepositoryObjectReference repositoryObjectReference) throws Exception {
+        super.postExecution(context, repositoryObjectReference);
+        RepositoryWithAutomationPackageSupport.PackageExecutionContext packageExecutionContext = context.get(RepositoryWithAutomationPackageSupport.PackageExecutionContext.class);
+        if (packageExecutionContext != null) {
+            try {
+                packageExecutionContext.close();
+            } catch (IOException e) {
+                log.error("Unable to clean up the automation package context for execution {}", context.getExecutionId(), e);
+            }
+        }
+    }
+
     protected boolean isWrapPlansIntoTestSet(Map<String, String> repositoryParameters) {
         // by default, we wrap plans into test set
         return true;
