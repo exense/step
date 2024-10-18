@@ -94,6 +94,11 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         try {
             try {
                 ctx = getOrRestorePackageExecutionContext(repositoryParameters, context.getObjectEnricher(), context.getObjectPredicate());
+                //If context is shared across multiple executions, it was created externally and will be closed by the creator,
+                // otherwise it should be closed once the executions ends from the execution context
+                if (!ctx.shared) {
+                    context.put(PackageExecutionContext.class, ctx);
+                }
             } catch (AutomationPackageManagerException e) {
                 result.setErrors(List.of(e.getMessage()));
                 return result;
@@ -137,9 +142,6 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
             result.setSuccessful(false);
             result.setErrors(errors);
             return result;
-        } finally {
-            // if the context is created externally (shared for several plans), it should be managed (closed) in the calling code
-            closePackageExecutionContext(ctx);
         }
     }
 
@@ -312,12 +314,6 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         result.setSuccessful(true);
 
         return result;
-    }
-
-    protected void closePackageExecutionContext(PackageExecutionContext ctx) throws IOException {
-        if (ctx != null && !ctx.isShared()) {
-            ctx.close();
-        }
     }
 
     public static class AutomationPackageFile {

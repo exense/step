@@ -2,6 +2,7 @@ package step.automation.packages;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.automation.packages.execution.RepositoryWithAutomationPackageSupport;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.execution.ExecutionContext;
 import step.core.plans.Plan;
@@ -9,6 +10,8 @@ import step.core.plugins.IgnoreDuringAutoDiscovery;
 import step.core.plugins.Plugin;
 import step.core.plugins.exceptions.PluginCriticalException;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
+
+import java.io.IOException;
 
 import static step.automation.packages.AutomationPackageLocks.BYPASS_AUTOMATION_PACKAGE_LOCK_FOR_ID;
 import static step.automation.packages.AutomationPackagePlugin.AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS;
@@ -98,6 +101,14 @@ public class AutomationPackageExecutionPlugin extends AbstractExecutionEnginePlu
             } catch (java.lang.IllegalMonitorStateException e) {
                 //occurs whenever the lock was not acquired in execution start due to timeout
                 debugLog(context, "No read lock to be released for automation package.");
+            }
+        }
+        RepositoryWithAutomationPackageSupport.PackageExecutionContext packageExecutionContext = context.get(RepositoryWithAutomationPackageSupport.PackageExecutionContext.class);
+        if (packageExecutionContext != null) {
+            try {
+                packageExecutionContext.close();
+            } catch (IOException e) {
+                logger.error("Unable to clean up the automation package context for execution {}", context.getExecutionId(), e);
             }
         }
     }
