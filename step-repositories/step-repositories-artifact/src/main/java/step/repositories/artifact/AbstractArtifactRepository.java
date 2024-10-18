@@ -79,7 +79,9 @@ public abstract class AbstractArtifactRepository extends RepositoryWithAutomatio
 			overview.setRuns(runs);
 			return overview;
 		} finally {
-			closePackageExecutionContext(ctx);
+			if (ctx != null) {
+				ctx.close();
+			}
 		}
 	}
 
