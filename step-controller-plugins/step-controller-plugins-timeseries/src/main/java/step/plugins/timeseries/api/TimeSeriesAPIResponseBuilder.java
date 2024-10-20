@@ -15,6 +15,7 @@ public final class TimeSeriesAPIResponseBuilder {
     private boolean truncated;
     private long collectionResolution;
     private boolean higherResolutionUsed;
+    private boolean ttlCovered = true;
 
     public TimeSeriesAPIResponseBuilder withStart(long start) {
         this.start = start;
@@ -56,12 +57,17 @@ public final class TimeSeriesAPIResponseBuilder {
         return this;
     }
 
+    public TimeSeriesAPIResponseBuilder withTtlCovered(boolean ttlCovered) {
+        this.ttlCovered = ttlCovered;
+        return this;
+    }
+
     public TimeSeriesAPIResponse build() {
         Objects.requireNonNull(start);
         Objects.requireNonNull(interval);
         Objects.requireNonNull(end);
         Objects.requireNonNull(matrix);
         Objects.requireNonNull(matrixKeys);
-        return new TimeSeriesAPIResponse(start, interval, end, matrix, matrixKeys, truncated, collectionResolution, higherResolutionUsed);
+        return new TimeSeriesAPIResponse(start, interval, end, matrix, matrixKeys, truncated, collectionResolution, higherResolutionUsed, ttlCovered);
     }
 }
