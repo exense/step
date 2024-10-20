@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import step.artefacts.TestSet;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.artefacts.reports.ReportNodeVisitorEventHandler;
@@ -37,13 +38,7 @@ import step.core.artefacts.reports.ReportTreeVisitor.ReportNodeEvent;
  */
 public class JUnit4ReportWriter implements ReportWriter {
 
-	private boolean singleTestCase = false;
-
 	public JUnit4ReportWriter() {
-	}
-
-	public JUnit4ReportWriter(boolean singleTestCase) {
-		this.singleTestCase = singleTestCase;
 	}
 
 	@Override
@@ -54,7 +49,10 @@ public class JUnit4ReportWriter implements ReportWriter {
 		}
 	}
 
-	public void writeReport(ReportTreeAccessor reportTreeAccessor, String executionId, Writer writer) throws IOException {
+	/**
+	 * @return the file name of report
+	 */
+	public String writeReport(ReportTreeAccessor reportTreeAccessor, String executionId, Writer writer) throws IOException {
 		ReportTreeVisitor visitor = new ReportTreeVisitor(reportTreeAccessor);
 		// Using AtomicInteger and StringBuilder because of the "final limitation" in lambdas...
 		AtomicInteger numberOfTests = new AtomicInteger(0);
@@ -70,14 +68,14 @@ public class JUnit4ReportWriter implements ReportWriter {
 				name.append(e.getNode().getName());
 				duration.set(e.getNode().getDuration());
 
-				// for not test set we only take the root element into accout
-				if (singleTestCase && !e.getNode().getResolvedArtefact().isTestSet()) {
+				// for not test set we only take the root element into account
+				if (!(e.getNode().getResolvedArtefact() instanceof TestSet)) {
 					calculateNode(e, numberOfTests, numberOfFailures, numberOfErrors, numberOfSkipped);
 				}
 
 			}
 			if (e.getStack().size() == 1) {
-				if (!singleTestCase || e.getNode().getResolvedArtefact().isTestSet()) {
+				if (e.getNode().getResolvedArtefact() instanceof TestSet) {
 					calculateNode(e, numberOfTests, numberOfFailures, numberOfErrors, numberOfSkipped);
 				}
 			}
@@ -96,8 +94,8 @@ public class JUnit4ReportWriter implements ReportWriter {
 				try {
 					// for test sets we take test cases from the first level
 					// for other root nodes we take the top level only
-					if(singleTestCase && event.getStack().isEmpty()){
-						if(!event.getNode().getResolvedArtefact().isTestSet()){
+					if(event.getStack().isEmpty()){
+						if(!(event.getNode().getResolvedArtefact() instanceof TestSet)){
 							writeTestCaseBegin(node);
 						}
 					}
@@ -130,8 +128,8 @@ public class JUnit4ReportWriter implements ReportWriter {
 
 			@Override
 			public void endReportNode(ReportNodeEvent event) {
-				if (singleTestCase && event.getStack().isEmpty()) {
-					if (!event.getNode().getResolvedArtefact().isTestSet()) {
+				if (event.getStack().isEmpty()) {
+					if (!(event.getNode().getResolvedArtefact() instanceof TestSet)) {
 						try {
 							writeTestCaseEnd();
 						} catch (IOException e1) {
@@ -162,7 +160,7 @@ public class JUnit4ReportWriter implements ReportWriter {
 					return true;
 				}
 
-                return singleTestCase && !nodeEvent.getStack().isEmpty() && !nodeEvent.getStack().firstElement().getResolvedArtefact().isTestSet();
+                return !nodeEvent.getStack().isEmpty() && !(nodeEvent.getStack().firstElement().getResolvedArtefact() instanceof TestSet);
             }
 		});
 
@@ -170,6 +168,7 @@ public class JUnit4ReportWriter implements ReportWriter {
 		writer.write('\n');
 
 		writer.flush();
+		return (name.toString().isEmpty() ? "unknown" : name.toString()) + ".xml";
 	}
 
 	private static void calculateNode(ReportNodeEvent e, AtomicInteger numberOfTests, AtomicInteger numberOfFailures, AtomicInteger numberOfErrors, AtomicInteger numberOfSkipped) {

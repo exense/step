@@ -116,6 +116,14 @@ public class RemoteExecutionManager extends AbstractRemoteClient {
 	}
 
 	/**
+	 * @return the content of the report
+	 */
+	public String getCustomReport(String executionId, String reportType){
+		Builder b = requestBuilder("/rest/executions/" + executionId + "/report/" + reportType);
+		return executeRequest(() -> b.get(String.class));
+	}
+
+	/**
 	 * Stop an execution
 	 *
 	 * @param executionId the ID of the execution to be stopped
@@ -142,7 +150,6 @@ public class RemoteExecutionManager extends AbstractRemoteClient {
 	@SuppressWarnings("unchecked")
 	public Map<ReportNodeStatus, Integer> getStatusReport(String executionId, String reportNodeClass) {
 		throw new RuntimeException("Not supported anymore since 3.17");
-
 	}
 
 	/**

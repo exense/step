@@ -251,11 +251,6 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
 		isWorkArtefact = workArtefact;
 	}
 
-	@JsonIgnore
-	public boolean isTestSet(){
-		return false;
-	}
-
 	@Override
 	public int hashCode() {
 		final int prime = 31;

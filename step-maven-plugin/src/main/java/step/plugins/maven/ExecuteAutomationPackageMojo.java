@@ -75,10 +75,27 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
     @Override
     public void execute() throws MojoExecutionException {
         try {
-            createTool(getUrl(), getStepProjectName(), getUserId(), getAuthToken(), getExecutionParameters(), getExecutionResultTimeoutS(),
-                    getWaitForExecution(), getEnsureExecutionSuccess(), getIncludePlans(), getExcludePlans(),
-                    getIncludeCategories(), getExcludeCategories(), getWrapIntoTestSet(), getNumberOfThreads()
-            ).execute();
+            MavenArtifactIdentifier remoteMavenArtifact = null;
+            if (!isLocalMavenArtifact()) {
+                remoteMavenArtifact = new MavenArtifactIdentifier(getArtifactGroupId(), getArtifactId(), getArtifactVersion(), getArtifactClassifier());
+            }
+            AbstractExecuteAutomationPackageTool.Params params = new AbstractExecuteAutomationPackageTool.Params()
+                    .setStepProjectName(getStepProjectName())
+                    .setUserId(getUserId())
+                    .setAuthToken(getAuthToken())
+                    .setExecutionParameters(getExecutionParameters())
+                    .setExecutionResultTimeoutS(getExecutionResultTimeoutS())
+                    .setWaitForExecution(getWaitForExecution())
+                    .setEnsureExecutionSuccess(getEnsureExecutionSuccess())
+                    .setIncludePlans(getIncludePlans())
+                    .setExcludePlans(getExcludePlans())
+                    .setIncludeCategories(getIncludeCategories())
+                    .setExcludeCategories(getExcludeCategories())
+                    .setWrapIntoTestSet(getWrapIntoTestSet())
+                    .setNumberOfThreads(getNumberOfThreads())
+                    .setMavenArtifactIdentifier(remoteMavenArtifact);
+
+            createTool(getUrl(), params).execute();
         } catch (StepCliExecutionException e) {
             throw new MojoExecutionException("Execution exception", e);
         } catch (Exception e) {
@@ -86,21 +103,8 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
         }
     }
 
-    protected AbstractExecuteAutomationPackageTool createTool(final String url, final String projectName, final String userId,
-                                                              final String authToken, final Map<String, String> parameters,
-                                                              final Integer executionResultTimeoutS, final Boolean waitForExecution,
-                                                              final Boolean ensureExecutionSuccess, final String includePlans,
-                                                              final String excludePlans, final String includeCategories,
-                                                              final String excludeCategories, final Boolean wrapIntoTestSet,
-                                                              final Integer numberOfThreads) {
-        MavenArtifactIdentifier remoteMavenArtifact = null;
-        if (!isLocalMavenArtifact()) {
-            remoteMavenArtifact = new MavenArtifactIdentifier(getArtifactGroupId(), getArtifactId(), getArtifactVersion(), getArtifactClassifier());
-        }
-
-        return new AbstractExecuteAutomationPackageTool(url, projectName, userId, authToken, parameters, executionResultTimeoutS,
-                waitForExecution, ensureExecutionSuccess, includePlans, excludePlans, includeCategories,
-                excludeCategories, wrapIntoTestSet, numberOfThreads, remoteMavenArtifact) {
+    protected AbstractExecuteAutomationPackageTool createTool(final String url, AbstractExecuteAutomationPackageTool.Params params) {
+        return new AbstractExecuteAutomationPackageTool(url, params) {
             @Override
             protected File getAutomationPackageFile() throws StepCliExecutionException {
                 // if groupId and artifactId are not defined, we execute the maven artifact from current project

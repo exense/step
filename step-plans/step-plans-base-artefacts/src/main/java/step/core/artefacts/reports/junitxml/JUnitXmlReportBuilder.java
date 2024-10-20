@@ -20,8 +20,6 @@ package step.core.artefacts.reports.junitxml;
 
 import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.execution.ExecutionEngineContext;
-import step.core.execution.model.ExecutionAccessor;
-import step.core.plans.PlanAccessor;
 import step.reporting.JUnit4ReportWriter;
 
 import java.io.ByteArrayOutputStream;
@@ -31,25 +29,38 @@ import java.io.OutputStreamWriter;
 public class JUnitXmlReportBuilder {
 
     private final String executionId;
-    private final ExecutionAccessor executionAccessor;
-    private final PlanAccessor planAccessor;
     private final ReportNodeAccessor reportNodeAccessor;
 
     public JUnitXmlReportBuilder(ExecutionEngineContext executionEngineContext, String executionId) {
         this.executionId = executionId;
-        this.executionAccessor = executionEngineContext.getExecutionAccessor();
         this.reportNodeAccessor = executionEngineContext.getReportNodeAccessor();
-        this.planAccessor = executionEngineContext.getPlanAccessor();
     }
 
-    public String buildJUnitXmlReport() {
+    public Report buildJUnitXmlReport() {
         try(ByteArrayOutputStream baos = new ByteArrayOutputStream(); OutputStreamWriter writer = new OutputStreamWriter(baos)){
-            new JUnit4ReportWriter(true).writeReport(reportNodeAccessor, executionId, writer);
-            return new String(baos.toByteArray());
+            String reportName = new JUnit4ReportWriter().writeReport(reportNodeAccessor, executionId, writer);
+            return new Report(reportName, baos.toString());
         } catch (IOException e) {
             throw new RuntimeException("IO Exception", e);
         }
     }
 
+    public static class Report {
+        private String fileName;
+        private String content;
+
+        public Report(String fileName, String content) {
+            this.fileName = fileName;
+            this.content = content;
+        }
+
+        public String getFileName() {
+            return fileName;
+        }
+
+        public String getContent() {
+            return content;
+        }
+    }
 
 }
