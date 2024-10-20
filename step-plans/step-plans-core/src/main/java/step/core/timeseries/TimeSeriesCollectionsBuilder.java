@@ -44,17 +44,17 @@ public class TimeSeriesCollectionsBuilder {
         List<TimeSeriesCollection> enabledCollections = new ArrayList<>();
         addIfEnabled(enabledCollections, mainCollectionName, Duration.ofSeconds(1), collectionsSettings.getMainFlushInterval(), null, true);
         addIfEnabled(enabledCollections, mainCollectionName + TIME_SERIES_SUFFIX_PER_MINUTE, Duration.ofMinutes(1), collectionsSettings.getPerMinuteFlushInterval(), null, collectionsSettings.isPerMinuteEnabled());
-        addIfEnabled(enabledCollections, mainCollectionName + TIME_SERIES_SUFFIX_HOURLY, Duration.ofHours(1), collectionsSettings.getHourlyFlushInterval(), Set.of("metricType", "taskId", "name"), collectionsSettings.isHourlyEnabled());
-        addIfEnabled(enabledCollections, mainCollectionName + TIME_SERIES_SUFFIX_DAILY, Duration.ofDays(1), collectionsSettings.getDailyFlushInterval(), Set.of("metricType", "taskId", "name"), collectionsSettings.isDailyEnabled());
-        addIfEnabled(enabledCollections, mainCollectionName + TIME_SERIES_SUFFIX_WEEKLY, Duration.ofDays(7), collectionsSettings.getWeeklyFlushInterval(), Set.of("metricType"), collectionsSettings.isWeeklyEnabled());
+        addIfEnabled(enabledCollections, mainCollectionName + TIME_SERIES_SUFFIX_HOURLY, Duration.ofHours(1), collectionsSettings.getHourlyFlushInterval(), Set.of("eId"), collectionsSettings.isHourlyEnabled());
+        addIfEnabled(enabledCollections, mainCollectionName + TIME_SERIES_SUFFIX_DAILY, Duration.ofDays(1), collectionsSettings.getDailyFlushInterval(), Set.of("eId"), collectionsSettings.isDailyEnabled());
+        addIfEnabled(enabledCollections, mainCollectionName + TIME_SERIES_SUFFIX_WEEKLY, Duration.ofDays(7), collectionsSettings.getWeeklyFlushInterval(), Set.of("eId"), collectionsSettings.isWeeklyEnabled());
         return enabledCollections;
     }
 
-    private void addIfEnabled(List<TimeSeriesCollection> enabledCollections, String collectionName, Duration resolution, long flushInterval, Set<String> handledAttributes, boolean enabled) {
+    private void addIfEnabled(List<TimeSeriesCollection> enabledCollections, String collectionName, Duration resolution, long flushInterval, Set<String> ignoredAttributes, boolean enabled) {
         TimeSeriesCollectionSettings settings = new TimeSeriesCollectionSettings()
                 .setResolution(resolution.toMillis())
                 .setIngestionFlushingPeriodMs(flushInterval)
-                .setHandledAttributes(handledAttributes);
+                .setIgnoredAttributes(ignoredAttributes);
         TimeSeriesCollection collection = new TimeSeriesCollection(collectionFactory.getCollection(collectionName, Bucket.class), settings);
         if (enabled) {
             enabledCollections.add(collection);
