@@ -46,8 +46,8 @@ public class JUnitXmlReportBuilder {
     }
 
     public static class Report {
-        private String fileName;
-        private String content;
+        private final String fileName;
+        private final String content;
 
         public Report(String fileName, String content) {
             this.fileName = fileName;

@@ -289,6 +289,12 @@ public class StepConsole implements Callable<Integer> {
             @Option(names = {"--numberOfThreads"}, description = "Max number of threads to be used for execution in case of wrapped test set")
             protected Integer numberOfThreads;
 
+            @Option(names = {"--reportType"}, description = "The type of execution report to be generated and stored locally")
+            protected String reportType;
+
+            @Option(names = {"--reportDir"}, description = "The local folder to store generated execution reports")
+            protected File reportDir;
+
             @Option(descriptionKey = EP_DESCRIPTION_KEY, names = {"-ep", "--executionParameters"}, description = "Set execution parameters for local and remote executions ", split = "\\|", splitSynopsisLabel = "|")
             protected Map<String, String> executionParameters;
 
@@ -340,6 +346,11 @@ public class StepConsole implements Callable<Integer> {
                 if (file == null) {
                     throw new StepCliExecutionException("AP file is not defined");
                 }
+
+                if (reportType != null) {
+                    throw new StepCliExecutionException("The report generation is not supported for local execution");
+                }
+
                 executeLocally(file, includePlans, excludePlans, includeCategories, excludeCategories, executionParameters);
             }
 
@@ -371,8 +382,8 @@ public class StepConsole implements Callable<Integer> {
                                 .setExcludeCategories(excludeCategories)
                                 .setWrapIntoTestSet(wrapIntoTestSet)
                                 .setNumberOfThreads(numberOfThreads)
-                                .setCustomReportType("junit")
-                                .setReportOutputDir("C:\\temp\\LogicFlow\\runcli")
+                                .setCustomReportType(reportType)
+                                .setReportOutputDir(reportDir)
                 );
             }
 

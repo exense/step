@@ -76,7 +76,7 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
             if (params.getReportOutputDir() == null) {
                 outputFolder = new File("");
             } else {
-                outputFolder = new File(params.getReportOutputDir());
+                outputFolder = params.getReportOutputDir();
             }
             if (!outputFolder.isDirectory()) {
                 throw new StepCliExecutionException("Report cannot be generated. Invalid folder: " + params.getReportOutputDir());
@@ -294,7 +294,7 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
         private String excludeCategories;
 
         private String customReportType;
-        private String reportOutputDir;
+        private File reportOutputDir;
 
         public String getStepProjectName() {
             return stepProjectName;
@@ -356,7 +356,7 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
             return customReportType;
         }
 
-        public String getReportOutputDir() {
+        public File getReportOutputDir() {
             return reportOutputDir;
         }
 
@@ -435,7 +435,7 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
             return this;
         }
 
-        public Params setReportOutputDir(String reportOutputDir) {
+        public Params setReportOutputDir(File reportOutputDir) {
             this.reportOutputDir = reportOutputDir;
             return this;
         }
