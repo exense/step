@@ -112,7 +112,10 @@ public class ScreenTemplateManager {
 		List<ScreenInput> result = new ArrayList<>();
 		List<ScreenInput> activatedScreeninputs =  findAllMatches(contextBindings, screenInputs, defaultScriptEngine);
 		for(ScreenInput screenInput:activatedScreeninputs) {
+			//We keep the same logic as legacy methods to create a clone, to avoid any unexpected update in DB
+			//The client still needs to be able to map by ID with the source screen inputs in DB
 			ScreenInput screenInputClone = new ScreenInput();
+			screenInputClone.setId(screenInput.getId());
 			screenInputClone.setScreenId(screenInput.getScreenId());
 			screenInputClone.setImmutable(screenInput.getImmutable());
 			screenInputClone.setPosition(screenInput.getPosition());
