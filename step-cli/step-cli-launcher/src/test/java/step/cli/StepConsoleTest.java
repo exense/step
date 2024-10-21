@@ -141,7 +141,7 @@ public class StepConsoleTest {
         Assert.assertEquals("abc", usedParams.params.getAuthToken());
         Assert.assertEquals("testProject", usedParams.params.getStepProjectName());
         Assert.assertEquals("timeout doesn't match", (Integer) 1000, usedParams.params.getExecutionResultTimeoutS());
-        Assert.assertTrue(usedParams.params.getWaitForExecution());
+        Assert.assertFalse(usedParams.params.getWaitForExecution());
         Assert.assertEquals(Map.of("key1", "value1", "key2", "value2", "key3", "value3"), usedParams.params.getExecutionParameters());
         Assert.assertEquals("step-automation-packages-sample1.jar", new File(usedParams.apFile).getName());
         Assert.assertNull(usedParams.params.getMavenArtifactIdentifier());

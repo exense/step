@@ -20,6 +20,7 @@ package step.reporting;
 
 import java.io.*;
 import java.text.DecimalFormat;
+import java.util.Stack;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -69,13 +70,15 @@ public class JUnit4ReportWriter implements ReportWriter {
 				duration.set(e.getNode().getDuration());
 
 				// for not test set we only take the root element into account
-				if (!(e.getNode().getResolvedArtefact() instanceof TestSet)) {
+				if (!isTestSet(e.getNode())) {
 					calculateNode(e, numberOfTests, numberOfFailures, numberOfErrors, numberOfSkipped);
 				}
 
 			}
+
+			// for test set we count test cases on level 1
 			if (e.getStack().size() == 1) {
-				if (e.getNode().getResolvedArtefact() instanceof TestSet) {
+				if (isTestSet(e.getStack().firstElement())) {
 					calculateNode(e, numberOfTests, numberOfFailures, numberOfErrors, numberOfSkipped);
 				}
 			}
@@ -95,7 +98,7 @@ public class JUnit4ReportWriter implements ReportWriter {
 					// for test sets we take test cases from the first level
 					// for other root nodes we take the top level only
 					if(event.getStack().isEmpty()){
-						if(!(event.getNode().getResolvedArtefact() instanceof TestSet)){
+						if(!isTestSet(event.getNode())){
 							writeTestCaseBegin(node);
 						}
 					}
@@ -129,7 +132,7 @@ public class JUnit4ReportWriter implements ReportWriter {
 			@Override
 			public void endReportNode(ReportNodeEvent event) {
 				if (event.getStack().isEmpty()) {
-					if (!(event.getNode().getResolvedArtefact() instanceof TestSet)) {
+					if (!isTestSet(event.getNode())) {
 						try {
 							writeTestCaseEnd();
 						} catch (IOException e1) {
@@ -160,7 +163,8 @@ public class JUnit4ReportWriter implements ReportWriter {
 					return true;
 				}
 
-                return !nodeEvent.getStack().isEmpty() && !(nodeEvent.getStack().firstElement().getResolvedArtefact() instanceof TestSet);
+				Stack<ReportNode> stack = nodeEvent.getStack();
+				return !stack.isEmpty() && !(isTestSet(stack.firstElement()));
             }
 		});
 
@@ -169,6 +173,10 @@ public class JUnit4ReportWriter implements ReportWriter {
 
 		writer.flush();
 		return (name.toString().isEmpty() ? "unknown" : name.toString()) + ".xml";
+	}
+
+	private static boolean isTestSet(ReportNode node) {
+		return node.getResolvedArtefact() instanceof TestSet;
 	}
 
 	private static void calculateNode(ReportNodeEvent e, AtomicInteger numberOfTests, AtomicInteger numberOfFailures, AtomicInteger numberOfErrors, AtomicInteger numberOfSkipped) {
