@@ -92,7 +92,7 @@ public class UploadKeywordsPackageMojo extends AbstractStepPluginMojo {
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
 		getLog().info("Uploading keywords package to Step ("+getUrl()+") ...");
-
+		validateEEConfiguration(getStepProjectName(), getAuthToken());
 		try (RemoteFunctionPackageClientImpl remoteFunctionPackageClient = createRemoteFunctionPackageClient()) {
 			File packagedTarget = getFileToUpload();
 

@@ -230,4 +230,14 @@ public abstract class AbstractStepPluginMojo extends AbstractMojo {
 		}
 	}
 
+	protected static void validateEEConfiguration(String paramProjectName, String paramAuthToken) throws MojoExecutionException {
+		if (paramProjectName != null && !paramProjectName.isBlank()) {
+			if (paramAuthToken == null || paramAuthToken.isBlank()) {
+				throw new MojoExecutionException("Both 'authToken' and 'stepProjectName' must be configured for EE edition or omitted for OS edition.");
+			}
+		} else if (paramAuthToken != null && !paramAuthToken.isBlank()) {
+			throw new MojoExecutionException("Both 'authToken' and 'stepProjectName' must be configured for EE edition or omitted for OS edition.");
+		}
+	}
+
 }
