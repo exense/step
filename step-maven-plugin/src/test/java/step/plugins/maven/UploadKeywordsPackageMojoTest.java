@@ -125,6 +125,7 @@ public class UploadKeywordsPackageMojoTest extends AbstractMojoTest {
 
 		mojo.setCustomPackageAttributes(customAttributes);
 		mojo.setStepProjectName(TENANT_1.getName());
+		mojo.setAuthToken("dummyToken");
 	}
 
 	private RemoteFunctionPackageClientImpl createRemoteFunctionManagerMock() throws IOException {
