@@ -18,20 +18,17 @@
  ******************************************************************************/
 package step.reporting;
 
+import step.artefacts.TestSet;
+import step.artefacts.reports.CustomReportType;
+import step.core.artefacts.reports.*;
+import step.core.artefacts.reports.ReportTreeVisitor.ReportNodeEvent;
+
 import java.io.*;
 import java.text.DecimalFormat;
 import java.util.Stack;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-
-import step.artefacts.TestSet;
-import step.core.artefacts.reports.ReportNode;
-import step.core.artefacts.reports.ReportNodeStatus;
-import step.core.artefacts.reports.ReportNodeVisitorEventHandler;
-import step.core.artefacts.reports.ReportTreeAccessor;
-import step.core.artefacts.reports.ReportTreeVisitor;
-import step.core.artefacts.reports.ReportTreeVisitor.ReportNodeEvent;
 
 /**
  * A {@link ReportWriter} that generates JUnit 4 XML reports based on the JUnit schema https://github.com/windyroad/JUnit-Schema/blob/master/JUnit.xsd
@@ -172,7 +169,14 @@ public class JUnit4ReportWriter implements ReportWriter {
 		writer.write('\n');
 
 		writer.flush();
-		return (name.toString().isEmpty() ? "unknown" : name.toString()) + ".xml";
+
+		return prepareReportFileName(name.toString(), executionId);
+	}
+
+	private String prepareReportFileName(String name, String executionId) {
+		// TODO: add plan name or root node name, but sanitize all characters not supported for the file name
+		String fileName = CustomReportType.JUNIT.name().toLowerCase() + "-" + executionId;
+		return fileName + ".xml";
 	}
 
 	private static boolean isTestSet(ReportNode node) {
@@ -186,7 +190,7 @@ public class JUnit4ReportWriter implements ReportWriter {
 			numberOfFailures.incrementAndGet();
 		} else if(node.getStatus() == ReportNodeStatus.TECHNICAL_ERROR) {
 			numberOfErrors.incrementAndGet();
-		} else if(node.getStatus() == ReportNodeStatus.SKIPPED) {
+		} else if(node.getStatus() == ReportNodeStatus.SKIPPED || node.getStatus() == ReportNodeStatus.NORUN) {
 			numberOfSkipped.incrementAndGet();
 		}
 	}

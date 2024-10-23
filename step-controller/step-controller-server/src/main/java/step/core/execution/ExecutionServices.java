@@ -24,7 +24,9 @@ import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import org.bson.types.ObjectId;
+import step.artefacts.reports.CustomReportType;
 import step.controller.services.async.AsyncTaskStatus;
 import step.core.access.User;
 import step.core.artefacts.reports.ReportNode;
@@ -44,6 +46,7 @@ import step.framework.server.tables.service.TableService;
 import step.framework.server.tables.service.bulk.TableBulkOperationReport;
 import step.framework.server.tables.service.bulk.TableBulkOperationRequest;
 
+import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -263,8 +266,9 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 	@GET
 	@Path("/{id}/report/{customReportType}")
 	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.TEXT_PLAIN)
 	@Secured(right = "execution-read")
-	public String getCustomReport(@PathParam("id") String executionId, @PathParam("customReportType") String customReportType) {
+	public Response getCustomReport(@PathParam("id") String executionId, @PathParam("customReportType") String customReportType) {
 		ExecutionEngineContext executionEngineContext = getScheduler().getExecutor().getExecutionEngine().getExecutionEngineContext();
 		CustomReportType reportType = CustomReportType.parse(customReportType);
 		if (reportType == null) {
@@ -272,12 +276,10 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 		}
 		switch (reportType) {
 			case JUNIT:
-				// TODO: the report name (file name) generated on in report builder is now ignored (file name is prepared in the client)
 				JUnitXmlReportBuilder.Report report = new JUnitXmlReportBuilder(executionEngineContext, executionId).buildJUnitXmlReport();
-//				Response.ResponseBuilder response = Response.ok(new ByteArrayInputStream(report.getContent().getBytes()));
-//				response.type(ContentType.MULTIPART_FORM_DATA.getMimeType());
-//				response.header("Content-Disposition", "attachment; filename=\"" + report.getFileName() + "\"");
-				return report.getContent();
+				Response.ResponseBuilder response = Response.ok(new ByteArrayInputStream(report.getContent().getBytes()));
+				response.header("Content-Disposition", "attachment; filename=\"" + report.getFileName() + "\"");
+				return response.build();
 			default:
 				throw new ControllerServiceException(400, "Invalid report type: " + customReportType);
 		}

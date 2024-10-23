@@ -22,6 +22,7 @@ import ch.exense.commons.io.Poller;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.client.Invocation.Builder;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import step.client.AbstractRemoteClient;
 import step.client.credentials.ControllerCredentials;
 import step.core.artefacts.reports.ReportNode;
@@ -32,6 +33,8 @@ import step.core.execution.model.ExecutionParameters;
 import step.core.execution.model.ExecutionStatus;
 import step.core.repositories.RepositoryObjectReference;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
 
@@ -118,9 +121,49 @@ public class RemoteExecutionManager extends AbstractRemoteClient {
 	/**
 	 * @return the content of the report
 	 */
-	public String getCustomReport(String executionId, String reportType){
+	public Report getCustomReport(String executionId, String reportType){
 		Builder b = requestBuilder("/rest/executions/" + executionId + "/report/" + reportType);
-		return executeRequest(() -> b.get(String.class));
+		return executeRequest(() -> {
+			Response response = b.get();
+			try(InputStream contentIs = response.readEntity(InputStream.class)) {
+				return new Report(getFileNameFromContentDisposition(response, executionId), contentIs.readAllBytes());
+			} catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+	}
+
+	private String getFileNameFromContentDisposition(Response response, String executionId) {
+		String res = null;
+		String header = response.getHeaderString("content-disposition");
+		if (header != null) {
+			String[] split = header.split("filename=");
+			if (split.length > 1) {
+				String[] split2 = split[1].split(";");
+				if (split2.length > 0) {
+					res = split2[0];
+				}
+			}
+		}
+		return res == null ? executionId + ".xml" : res;
+	}
+
+	public static class Report {
+		private String fileName;
+		private byte[] content;
+
+		public Report(String fileName, byte[] content) {
+			this.fileName = fileName;
+			this.content = content;
+		}
+
+		public String getFileName() {
+			return fileName;
+		}
+
+		public byte[] getContent() {
+			return content;
+		}
 	}
 
 	/**

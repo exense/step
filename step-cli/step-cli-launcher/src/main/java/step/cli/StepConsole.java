@@ -290,9 +290,9 @@ public class StepConsole implements Callable<Integer> {
             protected Integer numberOfThreads;
 
             @Option(names = {"--reportType"}, description = "The type of execution report to be generated and stored locally")
-            protected String reportType;
+            protected List<String> reportType;
 
-            @Option(names = {"--reportDir"}, description = "The local folder to store generated execution reports")
+            @Option(names = {"--reportDir"}, description = "The local folder to store generated execution reports", defaultValue = "reports")
             protected File reportDir;
 
             @Option(descriptionKey = EP_DESCRIPTION_KEY, names = {"-ep", "--executionParameters"}, description = "Set execution parameters for local and remote executions ", split = "\\|", splitSynopsisLabel = "|")
@@ -347,7 +347,7 @@ public class StepConsole implements Callable<Integer> {
                     throw new StepCliExecutionException("AP file is not defined");
                 }
 
-                if (reportType != null) {
+                if (reportType != null && !reportType.isEmpty()) {
                     throw new StepCliExecutionException("The report generation is not supported for local execution");
                 }
 
@@ -382,7 +382,7 @@ public class StepConsole implements Callable<Integer> {
                                 .setExcludeCategories(excludeCategories)
                                 .setWrapIntoTestSet(wrapIntoTestSet)
                                 .setNumberOfThreads(numberOfThreads)
-                                .setCustomReportType(reportType)
+                                .setReportTypes(reportType)
                                 .setReportOutputDir(reportDir)
                                 .setMavenArtifactIdentifier(getMavenArtifact(apFile))
                 );

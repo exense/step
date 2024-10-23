@@ -69,7 +69,7 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
 
     protected void executePackageOnStep() throws StepCliExecutionException {
         File outputFolder = null;
-        if (params.getCustomReportType() != null) {
+        if (params.getReportTypes() != null) {
             if (!params.getWaitForExecution()) {
                 throw new StepCliExecutionException("The execution report can only been prepared in synchronous mode");
             }
@@ -78,8 +78,15 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
             } else {
                 outputFolder = params.getReportOutputDir();
             }
-            if (!outputFolder.isDirectory()) {
-                throw new StepCliExecutionException("Report cannot be generated. Invalid folder: " + params.getReportOutputDir());
+            if (outputFolder.exists()) {
+                if (!outputFolder.isDirectory()) {
+                    throw new StepCliExecutionException("Report cannot be generated. Invalid folder: " + params.getReportOutputDir());
+                }
+            } else {
+                boolean dirCreated = outputFolder.mkdir();
+                if (!dirCreated) {
+                    throw new StepCliExecutionException("Report cannot be generated. Folder hasn't been created: " + params.getReportOutputDir());
+                }
             }
         }
 
@@ -118,16 +125,20 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
                         executionError = ex;
                     }
 
-                    if (params.getCustomReportType() != null) {
+                    if (params.getReportTypes() != null) {
                         for (String executionId : executionIds) {
                             try {
-                                File outputFile = new File(outputFolder, executionId + ".xml");
+                                for (String reportType : params.getReportTypes()) {
 
-                                logInfo("Saving execution report (" + params.getCustomReportType() + ") into " + outputFile.getAbsolutePath(), null);
-                                String customReport = remoteExecutionManager.getCustomReport(executionId, params.getCustomReportType());
-                                try (FileOutputStream fos = new FileOutputStream(outputFile)) {
-                                    fos.write(customReport.getBytes());
+                                    RemoteExecutionManager.Report customReport = remoteExecutionManager.getCustomReport(executionId, reportType);
+                                    File outputFile = new File(outputFolder, customReport.getFileName());
+
+                                    logInfo("Saving execution report (" + params.getReportTypes() + ") into " + outputFile.getAbsolutePath(), null);
+                                    try (FileOutputStream fos = new FileOutputStream(outputFile)) {
+                                        fos.write(customReport.getContent());
+                                    }
                                 }
+
                             } catch (Exception ex) {
                                 logError("The execution report cannot be saved", ex);
                             }
@@ -293,7 +304,7 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
         private String includeCategories;
         private String excludeCategories;
 
-        private String customReportType;
+        private List<String> reportTypes;
         private File reportOutputDir;
 
         public String getStepProjectName() {
@@ -352,8 +363,8 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
             return numberOfThreads;
         }
 
-        public String getCustomReportType() {
-            return customReportType;
+        public List<String> getReportTypes() {
+            return reportTypes;
         }
 
         public File getReportOutputDir() {
@@ -430,8 +441,8 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
             return this;
         }
 
-        public Params setCustomReportType(String customReportType) {
-            this.customReportType = customReportType;
+        public Params setReportTypes(List<String> reportTypes) {
+            this.reportTypes = reportTypes;
             return this;
         }
 
