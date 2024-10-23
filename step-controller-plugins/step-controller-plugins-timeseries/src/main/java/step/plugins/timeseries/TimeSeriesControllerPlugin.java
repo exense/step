@@ -74,7 +74,6 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 
 		TimeSeriesCollectionsBuilder timeSeriesCollectionsBuilder = new TimeSeriesCollectionsBuilder(collectionFactory);
 		List<TimeSeriesCollection> enabledCollections = timeSeriesCollectionsBuilder.getTimeSeriesCollections(TIME_SERIES_MAIN_COLLECTION, timeSeriesCollectionsSettings);
-
 		// timeseries will have a list of registered collection.
 		timeSeries = new TimeSeriesBuilder().registerCollections(enabledCollections).build();
 		mainIngestionPipeline = timeSeries.getIngestionPipeline();

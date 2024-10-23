@@ -28,11 +28,11 @@ public class TimeSeriesBucketingHandler implements MeasurementHandler {
 
     private final TimeSeries timeSeries;
 
-    private final List<String> attributes;
+    private final List<String> handledAttributes;
 
-    public TimeSeriesBucketingHandler(TimeSeries timeSeries, List<String> attributes) {
+    public TimeSeriesBucketingHandler(TimeSeries timeSeries, List<String> handledAttributes) {
         this.timeSeries = timeSeries;
-        this.attributes = attributes;
+        this.handledAttributes = handledAttributes;
     }
 
     @Override
@@ -57,7 +57,7 @@ public class TimeSeriesBucketingHandler implements MeasurementHandler {
 
     private BucketAttributes measurementToBucketAttributes(Measurement measurement) {
         Map<String, Object> bucketAttributesMap = new HashMap<>();
-        attributes.forEach(a -> {
+        handledAttributes.forEach(a -> {
             if (measurement.containsKey(a)) {
                 bucketAttributesMap.put(a,measurement.get(a));
             }
@@ -98,7 +98,7 @@ public class TimeSeriesBucketingHandler implements MeasurementHandler {
     }
 
     public List<String> getHandledAttributes() {
-        return attributes;
+        return handledAttributes;
     }
 
     public void flush() {
