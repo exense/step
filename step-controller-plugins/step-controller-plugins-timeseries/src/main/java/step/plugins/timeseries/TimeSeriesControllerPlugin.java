@@ -36,7 +36,6 @@ import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import static step.plugins.timeseries.MetricsConstants.*;
 import static step.plugins.timeseries.TimeSeriesExecutionPlugin.*;
