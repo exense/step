@@ -75,6 +75,9 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
     @Override
     public void execute() throws MojoExecutionException {
         try {
+            validateEEConfiguration(getStepProjectName(), getAuthToken());
+            checkStepControllerVersion();
+
             MavenArtifactIdentifier remoteMavenArtifact = null;
             if (!isLocalMavenArtifact()) {
                 remoteMavenArtifact = new MavenArtifactIdentifier(getArtifactGroupId(), getArtifactId(), getArtifactVersion(), getArtifactClassifier());

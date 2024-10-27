@@ -107,11 +107,13 @@ public class LocalRepository extends AbstractRepository {
 			throws Exception {
 		ImportResult importResult = new ImportResult();
 		String planId = getPlanId(context.getExecutionParameters().getRepositoryObject().getRepositoryParameters());
-		importResult.setPlanId(planId);
-		importResult.setSuccessful(true);
-		PlanAccessor contextPlanAccessor = context.getPlanAccessor();
-		if(contextPlanAccessor.get(planId) == null) {
-			contextPlanAccessor.save(planAccessor.get(planId));
+		Plan plan = context.getPlanAccessor().get(planId);
+		if(plan == null) {
+			importResult.setErrors(List.of("The plan with id '" + planId + "' does not exist. It may have been deleted."));
+			importResult.setSuccessful(false);
+		} else {
+			importResult.setPlanId(planId);
+			importResult.setSuccessful(true);
 		}
 		return importResult;
 	}

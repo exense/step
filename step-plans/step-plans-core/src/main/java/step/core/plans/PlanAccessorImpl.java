@@ -31,6 +31,10 @@ public class PlanAccessorImpl extends AbstractAccessor<Plan> implements PlanAcce
 		super(collectionDriver);
 	}
 
+	public void createDefaultIndexIfNeeded() {
+		createOrUpdateIndex("visible");
+	}
+
 	@Override
 	public void createIndexIfNeeded(IndexField indexField) {
 		createOrUpdateIndex(indexField);

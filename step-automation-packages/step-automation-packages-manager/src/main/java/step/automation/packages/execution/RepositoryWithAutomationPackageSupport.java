@@ -66,6 +66,9 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
     public static final String REPOSITORY_PARAM_CONTEXTID = "contextid";
     public static final String AP_NAME_CUSTOM_FIELD = "apName";
 
+    public static final String CONFIGURATION_MAVEN_FOLDER = "repository.artifact.maven.folder";
+    public static final String DEFAULT_MAVEN_FOLDER = "maven";
+
     // context id -> automation package manager (cache)
     protected final ConcurrentHashMap<String, PackageExecutionContext> sharedPackageExecutionContexts = new ConcurrentHashMap<>();
     protected final AutomationPackageManager manager;
@@ -91,6 +94,11 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         try {
             try {
                 ctx = getOrRestorePackageExecutionContext(repositoryParameters, context.getObjectEnricher(), context.getObjectPredicate());
+                //If context is shared across multiple executions, it was created externally and will be closed by the creator,
+                // otherwise it should be closed once the executions ends from the execution context
+                if (!ctx.shared) {
+                    context.put(PackageExecutionContext.class, ctx);
+                }
             } catch (AutomationPackageManagerException e) {
                 result.setErrors(List.of(e.getMessage()));
                 return result;
@@ -134,9 +142,19 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
             result.setSuccessful(false);
             result.setErrors(errors);
             return result;
-        } finally {
-            // if the context is created externally (shared for several plans), it should be managed (closed) in the calling code
-            closePackageExecutionContext(ctx);
+        }
+    }
+
+    @Override
+    public void postExecution(ExecutionContext context, RepositoryObjectReference repositoryObjectReference) throws Exception {
+        super.postExecution(context, repositoryObjectReference);
+        RepositoryWithAutomationPackageSupport.PackageExecutionContext packageExecutionContext = context.get(RepositoryWithAutomationPackageSupport.PackageExecutionContext.class);
+        if (packageExecutionContext != null) {
+            try {
+                packageExecutionContext.close();
+            } catch (IOException e) {
+                log.error("Unable to clean up the automation package context for execution {}", context.getExecutionId(), e);
+            }
         }
     }
 
@@ -311,12 +329,6 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         return result;
     }
 
-    protected void closePackageExecutionContext(PackageExecutionContext ctx) throws IOException {
-        if (ctx != null && !ctx.isExternallyCreatedContext()) {
-            ctx.close();
-        }
-    }
-
     public static class AutomationPackageFile {
         private final File file;
         private final Resource resource;
@@ -338,12 +350,12 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
     public class PackageExecutionContext implements Closeable {
         private final String contextId;
         private final AutomationPackageManager inMemoryManager;
-        private final boolean externallyCreatedContext;
+        private final boolean shared;
 
-        public PackageExecutionContext(String contextId, AutomationPackageManager inMemoryManager, boolean externallyCreatedContext) {
+        public PackageExecutionContext(String contextId, AutomationPackageManager inMemoryManager, boolean shared) {
             this.contextId = contextId;
             this.inMemoryManager = inMemoryManager;
-            this.externallyCreatedContext = externallyCreatedContext;
+            this.shared = shared;
         }
 
         public AutomationPackageManager getInMemoryManager() {
@@ -354,24 +366,24 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
             return getInMemoryManager().getAllAutomationPackages(null).findFirst().orElse(null);
         }
 
-        public boolean isExternallyCreatedContext() {
-            return externallyCreatedContext;
+        public boolean isShared() {
+            return shared;
         }
 
         @Override
         public void close() throws IOException {
-
-            // only after isolated execution is finished we can clean up temporary created resources
-            try {
-                // remove the context from isolated automation package repository
-                log.info("Cleanup isolated execution context");
-
-                IsolatedAutomationPackageRepository.PackageExecutionContext automationPackageManager = sharedPackageExecutionContexts.get(contextId);
+            // cleanup the associated automation package manager and remove this context from the shared map in case of shared context
+            log.info("Cleanup isolated execution context");
+            //In case the Package execution context is shared (i.e. when triggering isolated executions from CLI), we close the shared context
+            //and remove it from the shared map
+            if (shared) {
+                IsolatedAutomationPackageRepository.PackageExecutionContext automationPackageManager = sharedPackageExecutionContexts.remove(contextId);
                 if (automationPackageManager != null) {
                     automationPackageManager.getInMemoryManager().cleanup();
                 }
-            } finally {
-                sharedPackageExecutionContexts.remove(contextId);
+            //Otherwise directly clean the automation package stored in this context
+            } else {
+                inMemoryManager.cleanup();
             }
         }
     }

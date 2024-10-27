@@ -39,6 +39,8 @@ import javax.json.JsonObject;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 
@@ -178,13 +180,20 @@ public class JMeterLocalHandler extends JsonBasedFunctionHandler {
 	}
 
 	private Arguments createArguments(Input<?> input) {
-		Arguments arguments = new Arguments();
+		Map<String, String> argumentMap = new HashMap<>();
+		Map<String, String> properties = input.getProperties();
+		if (properties != null) {
+			properties.forEach((k, v) -> argumentMap.put(k, v));
+		}
+		// Inputs have precedence over properties
 		JsonObject inputJson = (JsonObject) input.getPayload();
 		if (inputJson != null) {
 			for (String key : inputJson.keySet()) {
-				arguments.addArgument(key, inputJson.getString(key));
+				argumentMap.put(key, inputJson.getString(key));
 			}
 		}
+		Arguments arguments = new Arguments();
+		argumentMap.forEach((k, v) -> arguments.addArgument(k, v));
 		return arguments;
 	}
 

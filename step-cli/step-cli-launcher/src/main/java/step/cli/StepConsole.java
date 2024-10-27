@@ -26,6 +26,10 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import step.automation.packages.AutomationPackageFromFolderProvider;
 import step.automation.packages.AutomationPackageReadingException;
+import step.client.controller.ControllerServicesClient;
+import step.client.credentials.ControllerCredentials;
+import step.core.Constants;
+import step.core.Version;
 
 import java.io.File;
 import java.io.IOException;
@@ -40,7 +44,7 @@ import java.util.function.Supplier;
 
 @Command(name = "step",
         mixinStandardHelpOptions = true,
-        version = "step 1.0",
+        version = Constants.STEP_API_VERSION_STRING,
         description = "The command-line interface (CLI) to interact with Step",
         usageHelpAutoWidth = true
 )
@@ -67,6 +71,7 @@ public class StepConsole implements Callable<Integer> {
         public static final String VERBOSE = "--verbose";
         public static final String CONFIG = "-c";
         public static final String LOCAL = "--local";
+        public static final String FORCE = "--force";
 
         @CommandLine.Spec
         protected CommandLine.Model.CommandSpec spec;
@@ -88,6 +93,9 @@ public class StepConsole implements Callable<Integer> {
 
         @Option(names = {VERBOSE}, defaultValue = "false")
         protected boolean verbose;
+
+        @Option(names = {FORCE}, defaultValue = "false", description = "To force execution in case of uncritical errors")
+        protected boolean force;
 
         protected String getStepProjectName() {
             return stepProjectName;
@@ -139,7 +147,7 @@ public class StepConsole implements Callable<Integer> {
 
     @Command(name = ApCommand.AP_COMMAND,
             mixinStandardHelpOptions = true,
-            version = "step.ap 1.0",
+            version = Constants.STEP_API_VERSION_STRING,
             description = "The CLI interface to manage automation packages in Step",
             usageHelpAutoWidth = true
     )
@@ -209,11 +217,42 @@ public class StepConsole implements Callable<Integer> {
                 }
             }
 
+            protected ControllerServicesClient createControllerServicesClient(){
+                return new ControllerServicesClient(getControllerCredentials());
+            }
+
+            protected ControllerCredentials getControllerCredentials() {
+                String authToken = getAuthToken();
+                return new ControllerCredentials(stepUrl, authToken == null || authToken.isEmpty() ? null : authToken);
+            }
+
+            protected void checkStepControllerVersion() {
+                try {
+                    new ControllerVersionValidator(createControllerServicesClient()).validateVersions(getVersion());
+                } catch (ControllerVersionValidator.ValidationException e) {
+                    if (e.getResult().getStatus() == ControllerVersionValidator.Status.MINOR_MISMATCH) {
+                        String warn = "The CLI version (" + e.getResult().getClientVersion() + ") does not exactly match the server version (" +  e.getResult().getServerVersion() + "), but they are considered compatible. It's recommended to use matching versions.";
+                        log.warn(warn);
+                    } else {
+                        String err = "Version mismatch. The server version (" + e.getResult().getServerVersion() + ") is incompatible with the current CLI version (" + e.getResult().getClientVersion() + "). Please ensure both the CLI and server are running compatible versions.";
+                        if (!force) {
+                            err += " You can use the " + FORCE + " option to ignore this validation.";
+                            throw new StepCliExecutionException(err, e);
+                        } else {
+                            log.warn(err);
+                        }
+                    }
+                }
+            }
+
+            protected Version getVersion() {
+                return Constants.STEP_API_VERSION;
+            }
         }
 
         @Command(name = "deploy",
                 mixinStandardHelpOptions = true,
-                version = "step.ap.deploy 1.0",
+                version = Constants.STEP_API_VERSION_STRING,
                 description = "The CLI interface to deploy automation packages in Step",
                 usageHelpAutoWidth = true,
                 subcommands = {CommandLine.HelpCommand.class})
@@ -237,6 +276,7 @@ public class StepConsole implements Callable<Integer> {
             protected void handleApDeployCommand() {
                 checkStepUrlRequired();
                 checkEeOptionsConsistency(spec);
+                checkStepControllerVersion();
                 executeTool(stepUrl, getStepProjectName(), getAuthToken(), async);
             }
 
@@ -367,7 +407,7 @@ public class StepConsole implements Callable<Integer> {
                 checkStepUrlRequired();
                 checkEeOptionsConsistency(spec);
 
-                executeRemotely(stepUrl,
+checkStepControllerVersion();                executeRemotely(stepUrl,
                         new AbstractExecuteAutomationPackageTool.Params()
                                 .setStepProjectName(getStepProjectName())
                                 .setUserId(stepUser)

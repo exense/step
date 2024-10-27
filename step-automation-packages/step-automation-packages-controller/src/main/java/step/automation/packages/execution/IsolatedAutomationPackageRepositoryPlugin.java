@@ -34,8 +34,12 @@ import step.core.scheduler.housekeeping.HousekeepingJobsManager;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.type.FunctionTypeRegistry;
 
+import java.io.File;
 import java.time.Duration;
 import java.util.function.Supplier;
+
+import static step.automation.packages.execution.RepositoryWithAutomationPackageSupport.CONFIGURATION_MAVEN_FOLDER;
+import static step.automation.packages.execution.RepositoryWithAutomationPackageSupport.DEFAULT_MAVEN_FOLDER;
 
 @Plugin(dependencies = {AutomationPackagePlugin.class, SchedulerPlugin.class})
 public class IsolatedAutomationPackageRepositoryPlugin extends AbstractControllerPlugin {
@@ -60,6 +64,8 @@ public class IsolatedAutomationPackageRepositoryPlugin extends AbstractControlle
     public void afterInitializeData(GlobalContext context) throws Exception {
         super.afterInitializeData(context);
 
+        File localRepository = context.getConfiguration().getPropertyAsFile(CONFIGURATION_MAVEN_FOLDER, new File(DEFAULT_MAVEN_FOLDER));
+
         // repository
         IsolatedAutomationPackageRepository isolatedApRepository = new IsolatedAutomationPackageRepository(
                 context.require(AutomationPackageManager.class),
@@ -69,7 +75,8 @@ public class IsolatedAutomationPackageRepositoryPlugin extends AbstractControlle
                 () -> {
                     ControllerSetting setting = controllerSettingAccessor.getSettingByKey(ISOLATED_AP_HOUSEKEEPING_TTL);
                     return setting == null ? null : setting.getValue();
-                }
+                },
+                localRepository.toPath()
         );
         context.getRepositoryObjectManager().registerRepository(AutomationPackageExecutor.ISOLATED_AUTOMATION_PACKAGE, isolatedApRepository);
         context.put(IsolatedAutomationPackageRepository.class, isolatedApRepository);
@@ -133,6 +140,7 @@ public class IsolatedAutomationPackageRepositoryPlugin extends AbstractControlle
         public void execute(JobExecutionContext context) {
             if (controllerSettingAccessor.getSettingAsBoolean(ISOLATED_AP_HOUSEKEEPING_ENABLED)) {
                 repository.cleanUpOutdatedResources();
+                repository.cleanUpMavenCache();
             }
         }
     }
