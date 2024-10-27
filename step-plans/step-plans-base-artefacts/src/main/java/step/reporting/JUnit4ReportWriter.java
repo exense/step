@@ -25,6 +25,8 @@ import step.core.artefacts.reports.ReportTreeVisitor.ReportNodeEvent;
 
 import java.io.*;
 import java.text.DecimalFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Stack;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -174,8 +176,9 @@ public class JUnit4ReportWriter implements ReportWriter {
 	}
 
 	private String prepareReportFileName(String name, String executionId) {
-		// TODO: add plan name or root node name, but sanitize all characters not supported for the file name
-		String fileName = CustomReportType.JUNIT.name().toLowerCase() + "-" + executionId;
+		// use timestamp instead of plan name, because plan name can contain forbidden characters for file name
+		String formattedTimestamp = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss-SSSSSS").format(LocalDateTime.now()) ;
+		String fileName = formattedTimestamp + "-" + CustomReportType.JUNIT.name().toLowerCase();
 		return fileName + ".xml";
 	}
 

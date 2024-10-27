@@ -23,6 +23,7 @@ import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.client.Invocation.Builder;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import step.artefacts.reports.CustomReportType;
 import step.client.AbstractRemoteClient;
 import step.client.credentials.ControllerCredentials;
 import step.core.artefacts.reports.ReportNode;
@@ -35,6 +36,8 @@ import step.core.repositories.RepositoryObjectReference;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
 
@@ -142,10 +145,14 @@ public class RemoteExecutionManager extends AbstractRemoteClient {
 				String[] split2 = split[1].split(";");
 				if (split2.length > 0) {
 					res = split2[0];
+					if (res != null) {
+						res = res.replace("\"", "");
+					}
 				}
 			}
 		}
-		return res == null ? executionId + ".xml" : res;
+		String formattedTimestamp = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss-SSSSSS").format(LocalDateTime.now()) ;
+		return res == null ? formattedTimestamp + "-" + CustomReportType.JUNIT.name().toLowerCase() + ".xml" : res;
 	}
 
 	public static class Report {
