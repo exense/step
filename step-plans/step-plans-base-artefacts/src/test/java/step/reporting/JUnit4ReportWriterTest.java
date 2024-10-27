@@ -18,18 +18,16 @@
  ******************************************************************************/
 package step.reporting;
 
-import java.io.File;
-import java.io.IOException;
-
+import org.junit.Assert;
 import org.junit.Test;
-
-import step.artefacts.BaseArtefactPlugin;
-import step.artefacts.ForBlock;
-import step.artefacts.Sequence;
-import step.artefacts.TestCase;
-import step.artefacts.TestSet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xml.sax.SAXException;
+import org.xmlunit.assertj.XmlAssert;
+import step.artefacts.*;
 import step.artefacts.handlers.functions.TokenForecastingExecutionPlugin;
 import step.core.artefacts.CheckArtefact;
+import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionEngine;
 import step.core.plans.Plan;
@@ -40,7 +38,21 @@ import step.core.reports.ErrorType;
 import step.datapool.sequence.IntSequenceDataPool;
 import step.threadpool.ThreadPoolPlugin;
 
+import javax.xml.XMLConstants;
+import javax.xml.transform.Source;
+import javax.xml.transform.stream.StreamSource;
+import javax.xml.validation.Schema;
+import javax.xml.validation.SchemaFactory;
+import javax.xml.validation.Validator;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.util.concurrent.atomic.AtomicLong;
+
 public class JUnit4ReportWriterTest {
+
+	private static final Logger log = LoggerFactory.getLogger(JUnit4ReportWriterTest.class);
 
 	@Test
 	public void testTestset() throws IOException {
@@ -82,12 +94,29 @@ public class JUnit4ReportWriterTest {
 		report.deleteOnExit();
 
 		try (ExecutionEngine engine = ExecutionEngine.builder().withPlugin(new ThreadPoolPlugin()).withPlugin(new BaseArtefactPlugin()).withPlugin(new TokenForecastingExecutionPlugin()).build()) {
-			engine.execute(plan).writeReport(new JUnit4ReportWriter(), report);
+			engine.execute(plan).writeReport(new JUnit4ReportWriterTestable(), report);
 		}
 
-		PlanRunnerResultAssert.assertEquals(this.getClass(), "TEST-JUnit4ReportWriterTest-testTestset-expected.xml", report, "time=\".+?\"");
+		log.info("Generated report:");
+		String generatedReport = new String(Files.readAllBytes(report.toPath()));
+		log.info("\n" + generatedReport);
+		validateWithXsd(report);
+
+		XmlAssert.assertThat(generatedReport)
+				.and(PlanRunnerResultAssert.readResource(this.getClass(), "TEST-JUnit4ReportWriterTest-testTestset-expected.xml"))
+				.areSimilar();
 	}
-	
+
+	private void validateWithXsd(File report) throws IOException {
+		try {
+			Validator xsdValidator = initValidator();
+			xsdValidator.validate(new StreamSource(report));
+		} catch (SAXException ex) {
+			log.error("Xml report is invalid", ex);
+			Assert.fail("XSD validation exception");
+		}
+	}
+
 	@Test
 	public void testSimpleSequence() throws IOException {
 		Plan plan = PlanBuilder.create()
@@ -112,10 +141,18 @@ public class JUnit4ReportWriterTest {
 		report.deleteOnExit();
 
 		try (ExecutionEngine engine = ExecutionEngine.builder().withPlugin(new BaseArtefactPlugin()).withPlugin(new TokenForecastingExecutionPlugin()).build()) {
-			engine.execute(plan).writeReport(new JUnit4ReportWriter(), report);
+			engine.execute(plan).writeReport(new JUnit4ReportWriterTestable(), report);
 		}
 
-		PlanRunnerResultAssert.assertEquals(this.getClass(), "TEST-JUnit4ReportWriterTest-testSimpleSequence-expected.xml", report, "time=\".+?\"");
+		log.info("Generated report:");
+		String generatedReport = new String(Files.readAllBytes(report.toPath()));
+		log.info("\n" + generatedReport);
+		validateWithXsd(report);
+
+		XmlAssert.assertThat(generatedReport)
+				.and(PlanRunnerResultAssert.readResource(this.getClass(), "TEST-JUnit4ReportWriterTest-testSimpleSequence-expected.xml"))
+				.areSimilar();
+
 	}
 	
 	protected Sequence sequence() {
@@ -153,5 +190,38 @@ public class JUnit4ReportWriterTest {
 			c.getCurrentReportNode().setError(new Error(status==ReportNodeStatus.TECHNICAL_ERROR?ErrorType.TECHNICAL:ErrorType.BUSINESS, error));
 		});
 	}
+
+	private Validator initValidator() throws SAXException, IOException {
+		String xsdPath = "src/test/resources/junitReport/JUnit.xsd";
+		SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+		try(FileInputStream fis = new FileInputStream(xsdPath)) {
+			Source schemaFile = new StreamSource(fis);
+			Schema schema = factory.newSchema(schemaFile);
+			return schema.newValidator();
+		}
+    }
+
+	private static class JUnit4ReportWriterTestable extends JUnit4ReportWriter {
+		@Override
+		protected long getExecutionTime(AtomicLong executionTime) {
+			return 1730042979873L;
+		}
+
+		@Override
+		protected String getHostName() {
+			return "localhost";
+		}
+
+		@Override
+		protected long getTestSuiteDuration(AtomicLong duration) {
+			return 69;
+		}
+
+		@Override
+		protected Integer getTestCaseDuration(ReportNode node) {
+			return 31;
+		}
+	}
+
 	
 }

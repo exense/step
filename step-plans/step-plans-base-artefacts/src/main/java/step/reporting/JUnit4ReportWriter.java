@@ -24,9 +24,15 @@ import step.core.artefacts.reports.*;
 import step.core.artefacts.reports.ReportTreeVisitor.ReportNodeEvent;
 
 import java.io.*;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 import java.util.Stack;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -60,6 +66,7 @@ public class JUnit4ReportWriter implements ReportWriter {
 		AtomicInteger numberOfErrors = new AtomicInteger(0);
 		AtomicInteger numberOfSkipped = new AtomicInteger(0);
 		AtomicLong duration = new AtomicLong();
+		AtomicLong executionTime = new AtomicLong();
 		StringBuilder name = new StringBuilder();
 
 		// First visit the report tree to get the root node informations and the different counts
@@ -67,6 +74,7 @@ public class JUnit4ReportWriter implements ReportWriter {
 			if(e.getStack().isEmpty()) {
 				name.append(e.getNode().getName());
 				duration.set(e.getNode().getDuration());
+				executionTime.set(e.getNode().getExecutionTime());
 
 				// for not test set we only take the root element into account
 				if (!isTestSet(e.getNode())) {
@@ -83,8 +91,16 @@ public class JUnit4ReportWriter implements ReportWriter {
 			}
 		});
 
-
-		writer.write("<testsuite name=\""+name.toString()+"\" time=\""+formatTime(duration.get())+"\" tests=\""+numberOfTests.get()+"\" skipped=\""+numberOfSkipped.get()+"\" failures=\""+numberOfFailures.get()+"\" errors=\""+numberOfErrors.get()+"\">");
+		writer.write("<testsuite name=\""+name.toString()+"\" " +
+				"time=\""+ formatDuration(getTestSuiteDuration(duration))+"\" " +
+				"timestamp=\""+ formatTimestamp(getExecutionTime(executionTime))+"\" " +
+				"hostname=\""+ getHostName() +"\" " +
+				"tests=\""+numberOfTests.get()+"\" " +
+				"skipped=\""+numberOfSkipped.get()+"\" " +
+				"failures=\""+numberOfFailures.get()+"\" " +
+				"errors=\""+numberOfErrors.get()+"\">");
+		writer.write('\n');
+		writer.write("<properties></properties>");
 		writer.write('\n');
 
 		AtomicBoolean errorWritten = new AtomicBoolean(false);
@@ -109,7 +125,7 @@ public class JUnit4ReportWriter implements ReportWriter {
 						}
 					} else if (event.getStack().size()>1) {
 						// report all the errors of the sub nodes (level > 1)
-						if(node.getError() != null) {
+						if(node.getError() != null && !errorWritten.get()) {
 							writeErrorOrFailure(writer, node, errorWritten);
 						}
 					}
@@ -119,7 +135,10 @@ public class JUnit4ReportWriter implements ReportWriter {
 			}
 
 			private void writeTestCaseBegin(ReportNode node) throws IOException {
-				writer.write("<testcase classname=\""+ node.getClass().getName()+"\" name=\""+ node.getName()+"\" time=\""+formatTime(node.getDuration())+"\">");
+				writer.write("<testcase classname=\""+ node.getClass().getName()+"\" " +
+						"name=\""+ node.getName()+"\" " +
+						"time=\""+ formatDuration(getTestCaseDuration(node))+"\">");
+				writer.write('\n');
 				errorWritten.set(false);
 			}
 
@@ -167,12 +186,32 @@ public class JUnit4ReportWriter implements ReportWriter {
             }
 		});
 
+		writer.write("<system-out></system-out>");
+		writer.write('\n');
+		writer.write("<system-err></system-err>");
+		writer.write('\n');
 		writer.write("</testsuite>");
 		writer.write('\n');
 
 		writer.flush();
 
 		return prepareReportFileName(name.toString(), executionId);
+	}
+
+	protected Integer getTestCaseDuration(ReportNode node) {
+		return node.getDuration();
+	}
+
+	protected long getTestSuiteDuration(AtomicLong duration) {
+		return duration.get();
+	}
+
+	protected long getExecutionTime(AtomicLong executionTime) {
+		return executionTime.get();
+	}
+
+	protected String getHostName() throws UnknownHostException {
+		return InetAddress.getLocalHost().getHostName();
 	}
 
 	private String prepareReportFileName(String name, String executionId) {
@@ -206,7 +245,7 @@ public class JUnit4ReportWriter implements ReportWriter {
 
 		if(node.getStatus()!=ReportNodeStatus.PASSED) {
 			if(node.getStatus() == ReportNodeStatus.FAILED) {
-				writer.write("<failure type=\"\">"+errorMessage+"</failure>");
+				writer.write("<failure type=\"\" message=\"" + errorMessage + "\"/>");
 				writer.write('\n');
 				errorWritten.set(true);
 			} else if(node.getStatus() == ReportNodeStatus.TECHNICAL_ERROR) {
@@ -225,9 +264,14 @@ public class JUnit4ReportWriter implements ReportWriter {
 		}
 	}
 
-	protected String formatTime(long duration) {
-		DecimalFormat df = new DecimalFormat("0.00"); 
+	protected String formatDuration(long duration) {
+		// set the english local explicitly to set fixed decimal separators (dots) and make the report not locale-specific
+		DecimalFormat df = new DecimalFormat("0.00", new DecimalFormatSymbols(Locale.ENGLISH));
 		return df.format(duration/1000.0);
+	}
+
+	protected String formatTimestamp(long timeMillis) {
+		return DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss").format(LocalDateTime.ofInstant(Instant.ofEpochMilli(timeMillis), ZoneId.systemDefault()));
 	}
 
 }
