@@ -19,6 +19,7 @@
 package step.plugins.maven;
 
 import org.apache.maven.artifact.Artifact;
+import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
 import org.junit.Assert;
 import org.junit.Test;
@@ -143,6 +144,11 @@ public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 			this.includeCategories = includeCategories;
 			this.excludeCategories = excludeCategories;
 			return mockedTool;
+		}
+
+		@Override
+		protected void checkStepControllerVersion() throws MojoExecutionException {
+			//Mock check
 		}
 	}
 }
