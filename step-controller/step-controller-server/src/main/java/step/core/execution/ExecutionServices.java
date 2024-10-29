@@ -276,9 +276,32 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 		}
 		switch (reportType) {
 			case JUNIT:
-				JUnitXmlReportBuilder.Report report = new JUnitXmlReportBuilder(executionEngineContext, executionId).buildJUnitXmlReport();
+				JUnitXmlReportBuilder.Report report = new JUnitXmlReportBuilder(executionEngineContext, List.of(executionId)).buildJUnitXmlReport();
 				Response.ResponseBuilder response = Response.ok(new ByteArrayInputStream(report.getContent().getBytes()));
-				response.header("Content-Disposition", "attachment; filename=\"" + report.getFileName() + "\"");
+				response.header("Content-Disposition", "attachment; filename=\"" + report.getMetadata().getFileName() + "\"");
+				return response.build();
+			default:
+				throw new ControllerServiceException(400, "Invalid report type: " + customReportType);
+		}
+	}
+
+	@Operation(description = "Returns the custom report for several executions")
+	@GET
+	@Path("/{id}/report/multi/{customReportType}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.TEXT_PLAIN)
+	@Secured(right = "execution-read")
+	public Response getCustomMultiReport(@PathParam("customReportType") String customReportType, @QueryParam("id") List<String> executionIds) {
+		ExecutionEngineContext executionEngineContext = getScheduler().getExecutor().getExecutionEngine().getExecutionEngineContext();
+		CustomReportType reportType = CustomReportType.parse(customReportType);
+		if (reportType == null) {
+			throw new ControllerServiceException(400, "Invalid report type: " + customReportType);
+		}
+		switch (reportType) {
+			case JUNIT:
+				JUnitXmlReportBuilder.Report report = new JUnitXmlReportBuilder(executionEngineContext, executionIds).buildJUnitXmlReport();
+				Response.ResponseBuilder response = Response.ok(new ByteArrayInputStream(report.getContent().getBytes()));
+				response.header("Content-Disposition", "attachment; filename=\"" + report.getMetadata().getFileName() + "\"");
 				return response.build();
 			default:
 				throw new ControllerServiceException(400, "Invalid report type: " + customReportType);

@@ -25,37 +25,44 @@ import step.reporting.JUnit4ReportWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.util.List;
 
 public class JUnitXmlReportBuilder {
 
-    private final String executionId;
+    private final List<String> executionIds;
     private final ReportNodeAccessor reportNodeAccessor;
 
-    public JUnitXmlReportBuilder(ExecutionEngineContext executionEngineContext, String executionId) {
-        this.executionId = executionId;
+    public JUnitXmlReportBuilder(ExecutionEngineContext executionEngineContext, List<String> executionIds) {
+        this.executionIds = executionIds;
         this.reportNodeAccessor = executionEngineContext.getReportNodeAccessor();
     }
 
     public Report buildJUnitXmlReport() {
-        try(ByteArrayOutputStream baos = new ByteArrayOutputStream(); OutputStreamWriter writer = new OutputStreamWriter(baos)){
-            String reportName = new JUnit4ReportWriter().writeReport(reportNodeAccessor, executionId, writer);
-            return new Report(reportName, baos.toString());
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream(); OutputStreamWriter writer = new OutputStreamWriter(baos)) {
+            JUnit4ReportWriter.ReportMetadata reportMetadata;
+            JUnit4ReportWriter reportWriter = new JUnit4ReportWriter();
+            if (executionIds.size() > 1) {
+                reportMetadata = reportWriter.writeMultiReport(reportNodeAccessor, executionIds, writer);
+            } else {
+                reportMetadata = reportWriter.writeReport(reportNodeAccessor, executionIds.get(0), writer);
+            }
+            return new Report(reportMetadata, baos.toString());
         } catch (IOException e) {
             throw new RuntimeException("IO Exception", e);
         }
     }
 
     public static class Report {
-        private final String fileName;
+        private final JUnit4ReportWriter.ReportMetadata metadata;
         private final String content;
 
-        public Report(String fileName, String content) {
-            this.fileName = fileName;
+        public Report(JUnit4ReportWriter.ReportMetadata fileName, String content) {
+            this.metadata = fileName;
             this.content = content;
         }
 
-        public String getFileName() {
-            return fileName;
+        public JUnit4ReportWriter.ReportMetadata getMetadata() {
+            return metadata;
         }
 
         public String getContent() {

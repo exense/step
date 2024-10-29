@@ -90,10 +90,14 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
                 remoteMavenArtifact = new MavenArtifactIdentifier(getArtifactGroupId(), getArtifactId(), getArtifactVersion(), getArtifactClassifier());
             }
 
-            String resolvedReportDir = getReportDir();
-            if (resolvedReportDir == null) {
-                String targetDir = project.getBuild().getDirectory();
-                resolvedReportDir = targetDir + File.separator + "step-reports";
+            File reportOutputDir = null;
+            if (getReportType() != null && !getReportType().isEmpty()) {
+                String resolvedReportDir = getReportDir();
+                if (resolvedReportDir == null) {
+                    String targetDir = project.getBuild().getDirectory();
+                    resolvedReportDir = targetDir + File.separator + "step-reports";
+                }
+                reportOutputDir = new File(resolvedReportDir);
             }
 
             AbstractExecuteAutomationPackageTool.Params params = new AbstractExecuteAutomationPackageTool.Params()
@@ -112,7 +116,7 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
                     .setNumberOfThreads(getNumberOfThreads())
                     .setMavenArtifactIdentifier(remoteMavenArtifact)
                     .setReportTypes(getReportType())
-                    .setReportOutputDir(new File(resolvedReportDir));
+                    .setReportOutputDir(reportOutputDir);
 
             createTool(getUrl(), params).execute();
         } catch (StepCliExecutionException e) {

@@ -32,6 +32,7 @@ import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionEngine;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
+import step.core.plans.runner.PlanRunnerResult;
 import step.core.plans.runner.PlanRunnerResultAssert;
 import step.core.reports.Error;
 import step.core.reports.ErrorType;
@@ -44,11 +45,10 @@ import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.time.ZoneId;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class JUnit4ReportWriterTest {
@@ -108,16 +108,6 @@ public class JUnit4ReportWriterTest {
 				.areSimilar();
 	}
 
-	private void validateWithXsd(File report) throws IOException {
-		try {
-			Validator xsdValidator = initValidator();
-			xsdValidator.validate(new StreamSource(report));
-		} catch (SAXException ex) {
-			log.error("Xml report is invalid", ex);
-			Assert.fail("XSD validation exception");
-		}
-	}
-
 	@Test
 	public void testSimpleSequence() throws IOException {
 		Plan plan = PlanBuilder.create()
@@ -154,6 +144,53 @@ public class JUnit4ReportWriterTest {
 				.and(PlanRunnerResultAssert.readResource(this.getClass(), "TEST-JUnit4ReportWriterTest-testSimpleSequence-expected.xml"))
 				.areSimilar();
 
+	}
+
+	@Test
+	public void testSeveralTestSuites() throws IOException {
+		Plan plan = PlanBuilder.create()
+				.startBlock(sequence())
+				.add(checkArtefact(ReportNodeStatus.PASSED))
+				.startBlock(sequence())
+				.add(checkArtefact(ReportNodeStatus.PASSED))
+				.add(checkArtefact(ReportNodeStatus.PASSED))
+				.endBlock()
+				.add(checkArtefact(ReportNodeStatus.FAILED))
+				.add(checkArtefact(ReportNodeStatus.FAILED, "my message"))
+				.add(checkArtefact(ReportNodeStatus.TECHNICAL_ERROR))
+				.startBlock(testCase("TC - TECH_ERROR with message"))
+				.add(checkArtefact(ReportNodeStatus.TECHNICAL_ERROR, "My error message"))
+				.endBlock()
+				.add(checkArtefact(ReportNodeStatus.SKIPPED))
+				.add(checkArtefact(ReportNodeStatus.NORUN))
+				.add(checkArtefact(ReportNodeStatus.INTERRUPTED))
+				.endBlock().build();
+
+		File report = new File("TEST-JUnit4ReportWriterTest-testMultiTestsuites.xml");
+		report.deleteOnExit();
+
+		// execute plan twice
+		try (FileOutputStream fos = new FileOutputStream(report); OutputStreamWriter writer = new OutputStreamWriter(fos)) {
+
+			try (ExecutionEngine engine = ExecutionEngine.builder().withPlugin(new BaseArtefactPlugin()).withPlugin(new TokenForecastingExecutionPlugin()).build()) {
+				PlanRunnerResult result1 = engine.execute(plan);
+				PlanRunnerResult result2 = engine.execute(plan);
+				new JUnit4ReportWriterTestable().writeMultiReport(
+						engine.getExecutionEngineContext().getReportNodeAccessor(),
+						List.of(result1.getExecutionId(), result2.getExecutionId()),
+						writer
+				);
+			}
+
+			log.info("Generated report:");
+			String generatedReport = new String(Files.readAllBytes(report.toPath()));
+			log.info("\n" + generatedReport);
+			validateWithXsd(report);
+
+			XmlAssert.assertThat(generatedReport)
+					.and(PlanRunnerResultAssert.readResource(this.getClass(), "TEST-JUnit4ReportWriterTest-testSeveralTestsuites-expected.xml"))
+					.areSimilar();
+		}
 	}
 	
 	protected Sequence sequence() {
@@ -201,6 +238,16 @@ public class JUnit4ReportWriterTest {
 			return schema.newValidator();
 		}
     }
+
+	private void validateWithXsd(File report) throws IOException {
+		try {
+			Validator xsdValidator = initValidator();
+			xsdValidator.validate(new StreamSource(report));
+		} catch (SAXException ex) {
+			log.error("Xml report is invalid", ex);
+			Assert.fail("XSD validation exception");
+		}
+	}
 
 	private static class JUnit4ReportWriterTestable extends JUnit4ReportWriter {
 		@Override

@@ -32,6 +32,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Locale;
 import java.util.Stack;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -55,10 +56,29 @@ public class JUnit4ReportWriter implements ReportWriter {
 		}
 	}
 
+	public ReportMetadata writeMultiReport(ReportTreeAccessor reportTreeAccessor, List<String> executionIds, Writer writer) throws IOException {
+		writer.write("<testsuites>");
+		writer.write("\n");
+		int id = 0;
+		for (String executionId : executionIds) {
+			writeSingleTestSuiteXml(reportTreeAccessor, executionId, writer, true, id);
+			id++;
+		}
+		writer.write("</testsuites>");
+		writer.flush();
+		return new ReportMetadata(prepareReportFileName());
+	}
+
 	/**
 	 * @return the file name of report
 	 */
-	public String writeReport(ReportTreeAccessor reportTreeAccessor, String executionId, Writer writer) throws IOException {
+	public ReportMetadata writeReport(ReportTreeAccessor reportTreeAccessor, String executionId, Writer writer) throws IOException {
+		writeSingleTestSuiteXml(reportTreeAccessor, executionId, writer, false, null);
+		writer.flush();
+		return new ReportMetadata(prepareReportFileName());
+	}
+
+	private void writeSingleTestSuiteXml(ReportTreeAccessor reportTreeAccessor, String executionId, Writer writer, boolean writePackage, Integer id) throws IOException {
 		ReportTreeVisitor visitor = new ReportTreeVisitor(reportTreeAccessor);
 		// Using AtomicInteger and StringBuilder because of the "final limitation" in lambdas...
 		AtomicInteger numberOfTests = new AtomicInteger(0);
@@ -91,14 +111,16 @@ public class JUnit4ReportWriter implements ReportWriter {
 			}
 		});
 
-		writer.write("<testsuite name=\""+name.toString()+"\" " +
-				"time=\""+ formatDuration(getTestSuiteDuration(duration))+"\" " +
-				"timestamp=\""+ formatTimestamp(getExecutionTime(executionTime))+"\" " +
-				"hostname=\""+ getHostName() +"\" " +
-				"tests=\""+numberOfTests.get()+"\" " +
-				"skipped=\""+numberOfSkipped.get()+"\" " +
-				"failures=\""+numberOfFailures.get()+"\" " +
-				"errors=\""+numberOfErrors.get()+"\">");
+		writer.write("<testsuite name=\"" + name.toString() + "\" " +
+				(id == null ? "" : "id=\"" + id + "\" ") +
+				(writePackage ? "package=\"" + name + "\" " : "") +
+				"time=\"" + formatDuration(getTestSuiteDuration(duration)) + "\" " +
+				"timestamp=\"" + formatTimestamp(getExecutionTime(executionTime)) + "\" " +
+				"hostname=\"" + getHostName() + "\" " +
+				"tests=\"" + numberOfTests.get() + "\" " +
+				"skipped=\"" + numberOfSkipped.get() + "\" " +
+				"failures=\"" + numberOfFailures.get() + "\" " +
+				"errors=\"" + numberOfErrors.get() + "\">");
 		writer.write('\n');
 		writer.write("<properties></properties>");
 		writer.write('\n');
@@ -192,10 +214,6 @@ public class JUnit4ReportWriter implements ReportWriter {
 		writer.write('\n');
 		writer.write("</testsuite>");
 		writer.write('\n');
-
-		writer.flush();
-
-		return prepareReportFileName(name.toString(), executionId);
 	}
 
 	protected Integer getTestCaseDuration(ReportNode node) {
@@ -214,7 +232,7 @@ public class JUnit4ReportWriter implements ReportWriter {
 		return InetAddress.getLocalHost().getHostName();
 	}
 
-	private String prepareReportFileName(String name, String executionId) {
+	private String prepareReportFileName() {
 		// use timestamp instead of plan name, because plan name can contain forbidden characters for file name
 		String formattedTimestamp = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss-SSSSSS").format(LocalDateTime.now()) ;
 		String fileName = formattedTimestamp + "-" + CustomReportType.JUNIT.name().toLowerCase();
@@ -276,6 +294,18 @@ public class JUnit4ReportWriter implements ReportWriter {
 
 	protected ZoneId getZoneId() {
 		return ZoneId.systemDefault();
+	}
+
+	public static class ReportMetadata {
+		private String fileName;
+
+		public ReportMetadata(String fileName) {
+			this.fileName = fileName;
+		}
+
+		public String getFileName() {
+			return fileName;
+		}
 	}
 
 }
