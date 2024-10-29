@@ -1,4 +1,4 @@
-<testsuite name="Sequence" time="0.07" timestamp="2024-10-27T18:29:39" hostname="localhost" tests="1" skipped="0" failures="0" errors="1">
+<testsuite name="Sequence" time="0.07" timestamp="2024-10-27T15:29:39" hostname="localhost" tests="1" skipped="0" failures="0" errors="1">
 <properties></properties>
 <testcase classname="step.core.artefacts.reports.ReportNode" name="Sequence" time="0.03">
 <error type="">My error message</error>

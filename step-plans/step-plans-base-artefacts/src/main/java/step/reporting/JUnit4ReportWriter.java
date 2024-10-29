@@ -271,7 +271,11 @@ public class JUnit4ReportWriter implements ReportWriter {
 	}
 
 	protected String formatTimestamp(long timeMillis) {
-		return DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss").format(LocalDateTime.ofInstant(Instant.ofEpochMilli(timeMillis), ZoneId.systemDefault()));
+		return DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss").format(LocalDateTime.ofInstant(Instant.ofEpochMilli(timeMillis), getZoneId()));
+	}
+
+	protected ZoneId getZoneId() {
+		return ZoneId.systemDefault();
 	}
 
 }

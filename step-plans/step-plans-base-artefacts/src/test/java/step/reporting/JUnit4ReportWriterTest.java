@@ -48,6 +48,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.time.ZoneId;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class JUnit4ReportWriterTest {
@@ -205,6 +206,11 @@ public class JUnit4ReportWriterTest {
 		@Override
 		protected long getExecutionTime(AtomicLong executionTime) {
 			return 1730042979873L;
+		}
+
+		@Override
+		protected ZoneId getZoneId() {
+			return ZoneId.of("UTC");
 		}
 
 		@Override

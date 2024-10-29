@@ -1,4 +1,4 @@
-<testsuite name="TS01" time="0.07" timestamp="2024-10-27T18:29:39" hostname="localhost" tests="8" skipped="2" failures="2" errors="2">
+<testsuite name="TS01" time="0.07" timestamp="2024-10-27T15:29:39" hostname="localhost" tests="8" skipped="2" failures="2" errors="2">
 <properties></properties>
 <testcase classname="step.artefacts.reports.TestCaseReportNode" name="TC01 - PASSED" time="0.03">
 </testcase>
