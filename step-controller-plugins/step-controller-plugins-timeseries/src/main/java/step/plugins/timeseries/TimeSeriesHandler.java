@@ -330,23 +330,6 @@ public class TimeSeriesHandler {
                 }
                 bucketResponses.add(bucketResponse);
             }
-//            axis.forEach(index -> {
-//                Bucket b = currentSeries.get(index);
-//                BucketResponse bucketResponse = null;
-//                if (b != null) {
-//                    bucketResponse = new BucketResponseBuilder()
-//                            .withBegin(b.getBegin())
-//                            .withCount(b.getCount())
-//                            .withMin(b.getMin())
-//                            .withMax(b.getMax())
-//                            .withSum(b.getSum())
-//                            .withThroughputPerHour(3600 * 1000 * b.getCount() / (b.getEnd() - b.getBegin()))
-//                            .withPclValues(request.getPercentiles().stream().collect(Collectors.toMap(p -> p, b::getPercentile, (existing, replacement) -> existing)))
-//                            .withAttributes(b.getAttributes())
-//                            .build();
-//                }
-//                bucketResponses.add(bucketResponse);
-//            });
             matrix.add(bucketResponses);
             matrixKeys.add(key);
         });
