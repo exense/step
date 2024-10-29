@@ -89,6 +89,10 @@ public class ParameterServices extends AbstractEntityServices<Parameter> {
 
 	@Override
 	public Parameter save(Parameter newParameter) {
+		if (newParameter.getKey() == null || newParameter.getKey().isBlank()) {
+			throw new ControllerServiceException("The parameter's key is mandatory.");
+		}
+
 		Parameter oldParameter;
 		if(newParameter.getId()!=null) {
 			oldParameter = parameterAccessor.get(newParameter.getId());
