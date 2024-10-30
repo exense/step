@@ -31,6 +31,7 @@ import step.plugins.timeseries.dashboards.DashboardsGenerator;
 import step.plugins.timeseries.dashboards.model.DashboardView;
 import step.plugins.timeseries.migration.MigrateAggregateTask;
 import step.plugins.timeseries.migration.MigrateDashboardsTask;
+import step.plugins.timeseries.migration.MigrateResolutionsWithIgnoredFieldsTask;
 
 import java.util.Arrays;
 import java.util.LinkedHashSet;
@@ -65,6 +66,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 		MigrationManager migrationManager = context.require(MigrationManager.class);
 		migrationManager.register(MigrateDashboardsTask.class);
 		migrationManager.register(MigrateAggregateTask.class);
+		migrationManager.register(MigrateResolutionsWithIgnoredFieldsTask.class);
 		
 		Configuration configuration = context.getConfiguration();
 		List<String> attributes = Arrays.asList(configuration.getProperty(TIME_SERIES_ATTRIBUTES_PROPERTY, TIME_SERIES_ATTRIBUTES_DEFAULT).split(","));
