@@ -13,6 +13,7 @@ import step.controller.services.async.AsyncTaskStatus;
 import step.core.GlobalContext;
 import step.core.collections.Collection;
 import step.core.deployment.AbstractStepServices;
+import step.core.deployment.ControllerServiceException;
 import step.core.entities.EntityManager;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.timeseries.*;
@@ -64,7 +65,11 @@ public class TimeSeriesService extends AbstractStepServices {
     @Produces(MediaType.APPLICATION_JSON)
     public TimeSeriesAPIResponse getTimeSeries(@NotNull FetchBucketsRequest request) {
         enrichRequest(request);
-        return handler.getTimeSeries(request);
+        try {
+            return handler.getTimeSeries(request);
+        } catch (Exception e) {
+            throw new ControllerServiceException(e.getMessage());
+        }
     }
     
     @Secured(right = "execution-read")
@@ -75,7 +80,11 @@ public class TimeSeriesService extends AbstractStepServices {
     // TODO this method should be renamed as it doesn't return measurements but a timeseries
     public TimeSeriesAPIResponse getMeasurements(@NotNull FetchBucketsRequest request) {
         enrichRequest(request);
-        return handler.getOrBuildTimeSeries(request);
+        try {
+            return handler.getOrBuildTimeSeries(request);
+        } catch (Exception e) {
+            throw new ControllerServiceException(e.getMessage());
+        }
     }
 
     private void enrichRequest(FetchBucketsRequest request) {

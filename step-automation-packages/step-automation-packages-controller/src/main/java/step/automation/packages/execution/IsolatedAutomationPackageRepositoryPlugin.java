@@ -34,14 +34,19 @@ import step.core.scheduler.housekeeping.HousekeepingJobsManager;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.type.FunctionTypeRegistry;
 
+import java.io.File;
 import java.time.Duration;
 import java.util.function.Supplier;
+
+import static step.automation.packages.execution.RepositoryWithAutomationPackageSupport.CONFIGURATION_MAVEN_FOLDER;
+import static step.automation.packages.execution.RepositoryWithAutomationPackageSupport.DEFAULT_MAVEN_FOLDER;
 
 @Plugin(dependencies = {AutomationPackagePlugin.class, SchedulerPlugin.class})
 public class IsolatedAutomationPackageRepositoryPlugin extends AbstractControllerPlugin {
 
     private static final Logger log = LoggerFactory.getLogger(IsolatedAutomationPackageRepositoryPlugin.class);
-
+    public static final String CONFIG_KEY_ISOLATED_AP_EXECUTION_TIMEOUT = "plugins.automation-package.isolated.execution.timeout";
+    private static final Integer DEFAULT_ISOLATED_AP_EXECUTION_TIMEOUT = 0;
     public static final String ISOLATED_AP_HOUSEKEEPING_ENABLED = "isolated_ap_housekeeping_enabled";
     public static final String ISOLATED_AP_HOUSEKEEPING_JOB_CRON = "isolated_ap_housekeeping_job_cron";
     public static final String ISOLATED_AP_HOUSEKEEPING_TTL = "isolated_ap_housekeeping_ttl";
@@ -60,6 +65,8 @@ public class IsolatedAutomationPackageRepositoryPlugin extends AbstractControlle
     public void afterInitializeData(GlobalContext context) throws Exception {
         super.afterInitializeData(context);
 
+        File localRepository = context.getConfiguration().getPropertyAsFile(CONFIGURATION_MAVEN_FOLDER, new File(DEFAULT_MAVEN_FOLDER));
+
         // repository
         IsolatedAutomationPackageRepository isolatedApRepository = new IsolatedAutomationPackageRepository(
                 context.require(AutomationPackageManager.class),
@@ -69,16 +76,19 @@ public class IsolatedAutomationPackageRepositoryPlugin extends AbstractControlle
                 () -> {
                     ControllerSetting setting = controllerSettingAccessor.getSettingByKey(ISOLATED_AP_HOUSEKEEPING_TTL);
                     return setting == null ? null : setting.getValue();
-                }
+                },
+                localRepository.toPath()
         );
         context.getRepositoryObjectManager().registerRepository(AutomationPackageExecutor.ISOLATED_AUTOMATION_PACKAGE, isolatedApRepository);
         context.put(IsolatedAutomationPackageRepository.class, isolatedApRepository);
 
+        Integer isolatedExecutionTimeout = context.getConfiguration().getPropertyAsInteger(CONFIG_KEY_ISOLATED_AP_EXECUTION_TIMEOUT, DEFAULT_ISOLATED_AP_EXECUTION_TIMEOUT);
         // isolated ap executor
         AutomationPackageExecutor packageExecutor = new AutomationPackageExecutor(
                 context.getScheduler(),
                 context.require(ExecutionAccessor.class),
-                context.getRepositoryObjectManager()
+                context.getRepositoryObjectManager(),
+                isolatedExecutionTimeout
         );
         context.put(AutomationPackageExecutor.class, packageExecutor);
 
@@ -133,6 +143,7 @@ public class IsolatedAutomationPackageRepositoryPlugin extends AbstractControlle
         public void execute(JobExecutionContext context) {
             if (controllerSettingAccessor.getSettingAsBoolean(ISOLATED_AP_HOUSEKEEPING_ENABLED)) {
                 repository.cleanUpOutdatedResources();
+                repository.cleanUpMavenCache();
             }
         }
     }

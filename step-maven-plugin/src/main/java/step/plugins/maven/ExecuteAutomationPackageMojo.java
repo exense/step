@@ -75,6 +75,8 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
     @Override
     public void execute() throws MojoExecutionException {
         try {
+            validateEEConfiguration(getStepProjectName(), getAuthToken());
+            checkStepControllerVersion();
             createTool(getUrl(), getStepProjectName(), getUserId(), getAuthToken(), getExecutionParameters(), getExecutionResultTimeoutS(),
                     getWaitForExecution(), getEnsureExecutionSuccess(), getIncludePlans(), getExcludePlans(),
                     getIncludeCategories(), getExcludeCategories(), getWrapIntoTestSet(), getNumberOfThreads()

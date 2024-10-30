@@ -2,8 +2,12 @@ package step.cli;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.client.controller.ControllerServicesClient;
+import step.core.Constants;
+import step.core.Version;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -168,6 +172,68 @@ public class StepConsoleTest {
     }
 
     @Test
+    public void testOutdatedVersion(){
+        List<TestApExecuteCommand.RemoteExecutionParams> remoteExecuteHistory = new ArrayList<>();
+        List<TestApExecuteCommand.LocalExecutionParams> localExecuteHistory = new ArrayList<>();
+        List<TestApDeployCommand.ExecutionParams> deployExecuteHistory = new ArrayList<>();
+
+        Histories histories = new Histories(deployExecuteHistory, remoteExecuteHistory, localExecuteHistory);
+
+        Version actualVersion = Constants.STEP_API_VERSION;
+        Version outdatedMajorVersion = new Version(actualVersion.getMajor() - 1, actualVersion.getMinor(), 0);
+        Version outdatedMinorVersion = new Version(actualVersion.getMajor(), actualVersion.getMinor() == 0 ? 1 : actualVersion.getMinor() - 1, 0);
+
+        // 1. REMOTE EXECUTION
+
+        // 1.1 validation failed
+        int res = runMainWithVersion(histories, outdatedMajorVersion, "ap", "execute", "-p=src/test/resources/samples/step-automation-packages-sample1.jar", "-u=http://localhost:8080");
+        Assert.assertEquals(0, remoteExecuteHistory.size());
+        remoteExecuteHistory.clear();
+
+        // 1.2. validation with --force option (execution should be allowed)
+        res = runMainWithVersion(histories, outdatedMajorVersion, "ap", "execute", "-p=src/test/resources/samples/step-automation-packages-sample1.jar", "-u=http://localhost:8080", "--force");
+        Assert.assertEquals(1, remoteExecuteHistory.size());
+        remoteExecuteHistory.clear();
+
+        // 1.3. minor version mismatch without --force option, validation should fail
+        res = runMainWithVersion(histories, outdatedMinorVersion, "ap", "execute", "-p=src/test/resources/samples/step-automation-packages-sample1.jar", "-u=http://localhost:8080");
+        Assert.assertEquals(0, remoteExecuteHistory.size());
+        remoteExecuteHistory.clear();
+
+        // 1.4. minor version mismatch with --force option, validation should fail
+        res = runMainWithVersion(histories, outdatedMinorVersion, "ap", "execute", "-p=src/test/resources/samples/step-automation-packages-sample1.jar", "-u=http://localhost:8080", "--force");
+        Assert.assertEquals(1, remoteExecuteHistory.size());
+        remoteExecuteHistory.clear();
+
+        // 2. LOCAL EXECUTION
+
+        // 2.1 version is not validated for local execution
+        res = runMainWithVersion(histories, outdatedMajorVersion, "ap", "execute", "--local", "-p=src/test/resources/samples/step-automation-packages-sample1.jar", "-u=http://localhost:8080");
+        Assert.assertEquals(1, localExecuteHistory.size());
+        localExecuteHistory.clear();
+
+        // 3. DEPLOY
+        res = runMainWithVersion(histories, outdatedMajorVersion, "ap", "deploy", "-p=src/test/resources/samples/step-automation-packages-sample1.jar", "-u=http://localhost:8080");
+        Assert.assertEquals(0, deployExecuteHistory.size());
+        deployExecuteHistory.clear();
+
+        // 1.2. validation with --force option (execution should be allowed)
+        res = runMainWithVersion(histories, outdatedMajorVersion, "ap", "deploy", "-p=src/test/resources/samples/step-automation-packages-sample1.jar", "-u=http://localhost:8080", "--force");
+        Assert.assertEquals(1, deployExecuteHistory.size());
+        deployExecuteHistory.clear();
+
+        // 1.3. minor version mismatch without --force option (execution should fail)
+        res = runMainWithVersion(histories, outdatedMinorVersion, "ap", "deploy", "-p=src/test/resources/samples/step-automation-packages-sample1.jar", "-u=http://localhost:8080");
+        Assert.assertEquals(0, deployExecuteHistory.size());
+        deployExecuteHistory.clear();
+
+        // 1.4. minor version mismatch with --force option (execution should be allowed)
+        res = runMainWithVersion(histories, outdatedMinorVersion, "ap", "deploy", "-p=src/test/resources/samples/step-automation-packages-sample1.jar", "-u=http://localhost:8080", "--force");
+        Assert.assertEquals(1, deployExecuteHistory.size());
+        deployExecuteHistory.clear();
+    }
+
+    @Test
     public void testLocalExecute(){
         List<TestApExecuteCommand.LocalExecutionParams> localExecuteHistory = new ArrayList<>();
 
@@ -219,6 +285,18 @@ public class StepConsoleTest {
         return res;
     }
 
+    private int runMainWithVersion(Histories histories, Version version, String... args) {
+        log.info("--- Run CLI - BEGIN ---");
+        int res = StepConsole.executeMain(
+                () -> new TestApDeployCommand(histories.deployHistory, version),
+                () -> new TestApExecuteCommand(histories.remoteExecuteHistory, histories.localExecuteHistory, version),
+                false,
+                args
+        );
+        log.info("--- Run CLI - END ---" + "\n");
+        return res;
+    }
+
     private static class Histories {
         private List<TestApDeployCommand.ExecutionParams> deployHistory;
         private List<TestApExecuteCommand.RemoteExecutionParams> remoteExecuteHistory;
@@ -236,9 +314,16 @@ public class StepConsoleTest {
     public static class TestApDeployCommand extends StepConsole.ApCommand.ApDeployCommand {
 
         public final List<ExecutionParams> testRegistry;
+        private final Version mockedVersion;
 
         public TestApDeployCommand(List<ExecutionParams> testRegistry) {
             this.testRegistry = testRegistry;
+            this.mockedVersion = null;
+        }
+
+        public TestApDeployCommand(List<ExecutionParams> testRegistry, Version mockedVersion) {
+            this.testRegistry = testRegistry;
+            this.mockedVersion = mockedVersion;
         }
 
         public static class ExecutionParams {
@@ -261,12 +346,25 @@ public class StepConsoleTest {
                 testRegistry.add(p);
             }
         }
+
+        @Override
+        protected Version getVersion() {
+            return mockedVersion == null ? super.getVersion() : mockedVersion;
+        }
+
+        @Override
+        protected ControllerServicesClient createControllerServicesClient() {
+            ControllerServicesClient mockedClient = Mockito.mock(ControllerServicesClient.class);
+            Mockito.when(mockedClient.getControllerVersion()).thenReturn(Constants.STEP_API_VERSION);
+            return mockedClient;
+        }
     }
 
     public static class TestApExecuteCommand extends StepConsole.ApCommand.ApExecuteCommand {
 
         public final List<RemoteExecutionParams> remoteParams;
         public final List<LocalExecutionParams> localParams;
+        private final Version mockedVersion;
 
         public static class RemoteExecutionParams {
             private String stepUrl;
@@ -295,6 +393,13 @@ public class StepConsoleTest {
         public TestApExecuteCommand(List<RemoteExecutionParams> remoteParams, List<LocalExecutionParams> localParams) {
             this.remoteParams = remoteParams;
             this.localParams = localParams;
+            this.mockedVersion = null;
+        }
+
+        public TestApExecuteCommand(List<RemoteExecutionParams> remoteParams, List<LocalExecutionParams> localParams, Version mockedVersion) {
+            this.remoteParams = remoteParams;
+            this.localParams = localParams;
+            this.mockedVersion = mockedVersion;
         }
 
         @Override
@@ -335,6 +440,18 @@ public class StepConsoleTest {
                 p.executionParameters = executionParameters;
                 localParams.add(p);
             }
+        }
+
+        @Override
+        protected Version getVersion() {
+            return mockedVersion == null ? super.getVersion() : mockedVersion;
+        }
+
+        @Override
+        protected ControllerServicesClient createControllerServicesClient() {
+            ControllerServicesClient mockedClient = Mockito.mock(ControllerServicesClient.class);
+            Mockito.when(mockedClient.getControllerVersion()).thenReturn(Constants.STEP_API_VERSION);
+            return mockedClient;
         }
     }
 

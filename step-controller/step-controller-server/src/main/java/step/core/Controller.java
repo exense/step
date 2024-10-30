@@ -75,7 +75,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class Controller {
 
-	public static final Version VERSION = new Version(3,26,0);
+	public static final Version VERSION = Constants.STEP_API_VERSION;
 
 	public static String USER_ACTIVITY_MAP_KEY = "userActivityMap";
 	public static final String USER = "user";
@@ -136,6 +136,7 @@ public class Controller {
 		context.setExecutionAccessor(executionAccessor);		
 
 		PlanAccessorImpl plans = new PlanAccessorImpl(collectionFactory.getCollection("plans", Plan.class));
+		plans.createDefaultIndexIfNeeded();
 		context.setPlanAccessor(plans);
 
 		context.setReportNodeAccessor(
