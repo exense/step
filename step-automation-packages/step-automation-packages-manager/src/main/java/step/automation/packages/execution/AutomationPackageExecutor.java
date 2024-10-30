@@ -49,7 +49,6 @@ public class AutomationPackageExecutor {
     public static final String ISOLATED_AUTOMATION_PACKAGE = "isolatedAutomationPackage";
     private static final Logger log = LoggerFactory.getLogger(AutomationPackageExecutor.class);
 
-    private static final int AUTOMATION_PACKAGE_EXECUTION_TIMEOUT = 60 * 60 * 1000;
     private static final int CLEANUP_POLLING_INTERVAL = 5000;
 
     private final ExecutorService delayedCleanupExecutor = Executors.newFixedThreadPool(5);
@@ -57,13 +56,15 @@ public class AutomationPackageExecutor {
     private final ExecutionLauncher scheduler;
     private final ExecutionAccessor executionAccessor;
     private final RepositoryObjectManager repositoryObjectManager;
+    private final Integer isolatedExecutionTimeout;
 
     public AutomationPackageExecutor(ExecutionLauncher scheduler,
                                      ExecutionAccessor executionAccessor,
-                                     RepositoryObjectManager repositoryObjectManager) {
+                                     RepositoryObjectManager repositoryObjectManager, int isolatedExecutionTimeout) {
         this.scheduler = scheduler;
         this.executionAccessor = executionAccessor;
         this.repositoryObjectManager = repositoryObjectManager;
+        this.isolatedExecutionTimeout = isolatedExecutionTimeout;
     }
 
     public List<String> runInIsolation(InputStream apInputStream, String inputStreamFileName, AutomationPackageExecutionParameters parameters,
@@ -222,7 +223,7 @@ public class AutomationPackageExecutor {
                 }
 
                 return !activeExecutionFound;
-            }, AUTOMATION_PACKAGE_EXECUTION_TIMEOUT, CLEANUP_POLLING_INTERVAL);
+            }, isolatedExecutionTimeout, CLEANUP_POLLING_INTERVAL);
         } catch (InterruptedException e) {
             log.warn("Isolated execution interrupted");
             return false;
