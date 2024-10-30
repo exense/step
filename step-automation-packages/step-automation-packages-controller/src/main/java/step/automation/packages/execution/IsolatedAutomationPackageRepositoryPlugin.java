@@ -45,7 +45,8 @@ import static step.automation.packages.execution.RepositoryWithAutomationPackage
 public class IsolatedAutomationPackageRepositoryPlugin extends AbstractControllerPlugin {
 
     private static final Logger log = LoggerFactory.getLogger(IsolatedAutomationPackageRepositoryPlugin.class);
-
+    public static final String CONFIG_KEY_ISOLATED_AP_EXECUTION_TIMEOUT = "plugins.automation-package.isolated.execution.timeout";
+    private static final Integer DEFAULT_ISOLATED_AP_EXECUTION_TIMEOUT = 0;
     public static final String ISOLATED_AP_HOUSEKEEPING_ENABLED = "isolated_ap_housekeeping_enabled";
     public static final String ISOLATED_AP_HOUSEKEEPING_JOB_CRON = "isolated_ap_housekeeping_job_cron";
     public static final String ISOLATED_AP_HOUSEKEEPING_TTL = "isolated_ap_housekeeping_ttl";
@@ -81,11 +82,13 @@ public class IsolatedAutomationPackageRepositoryPlugin extends AbstractControlle
         context.getRepositoryObjectManager().registerRepository(AutomationPackageExecutor.ISOLATED_AUTOMATION_PACKAGE, isolatedApRepository);
         context.put(IsolatedAutomationPackageRepository.class, isolatedApRepository);
 
+        Integer isolatedExecutionTimeout = context.getConfiguration().getPropertyAsInteger(CONFIG_KEY_ISOLATED_AP_EXECUTION_TIMEOUT, DEFAULT_ISOLATED_AP_EXECUTION_TIMEOUT);
         // isolated ap executor
         AutomationPackageExecutor packageExecutor = new AutomationPackageExecutor(
                 context.getScheduler(),
                 context.require(ExecutionAccessor.class),
-                context.getRepositoryObjectManager()
+                context.getRepositoryObjectManager(),
+                isolatedExecutionTimeout
         );
         context.put(AutomationPackageExecutor.class, packageExecutor);
 
