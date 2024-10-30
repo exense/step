@@ -60,7 +60,7 @@ public class AutomationPackageExecutor {
 
     public AutomationPackageExecutor(ExecutionLauncher scheduler,
                                      ExecutionAccessor executionAccessor,
-                                     RepositoryObjectManager repositoryObjectManager, Integer isolatedExecutionTimeout) {
+                                     RepositoryObjectManager repositoryObjectManager, int isolatedExecutionTimeout) {
         this.scheduler = scheduler;
         this.executionAccessor = executionAccessor;
         this.repositoryObjectManager = repositoryObjectManager;
