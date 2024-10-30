@@ -216,20 +216,21 @@ public class IsolatedAutomationPackageRepository extends RepositoryWithAutomatio
 
     public static List<Path> findOldJarFiles(Path startDir, Long cutoffTime) throws IOException {
         List<Path> oldJarFiles = new ArrayList<>();
-
-        Files.walkFileTree(startDir, new SimpleFileVisitor<Path>() {
-            @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                // Check if the file is a JAR file
-                if (file.toFile().isFile() && file.toString().endsWith(".jar")) {
-                    // Check if the last accessed time is before the cutoff date
-                    if (attrs.lastAccessTime().toMillis() < cutoffTime) {
-                        oldJarFiles.add(file);
+        if (startDir.toFile().exists()) {
+            Files.walkFileTree(startDir, new SimpleFileVisitor<Path>() {
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    // Check if the file is a JAR file
+                    if (file.toFile().isFile() && file.toString().endsWith(".jar")) {
+                        // Check if the last accessed time is before the cutoff date
+                        if (attrs.lastAccessTime().toMillis() < cutoffTime) {
+                            oldJarFiles.add(file);
+                        }
                     }
+                    return FileVisitResult.CONTINUE;
                 }
-                return FileVisitResult.CONTINUE;
-            }
-        });
+            });
+        }
 
         return oldJarFiles;
     }
