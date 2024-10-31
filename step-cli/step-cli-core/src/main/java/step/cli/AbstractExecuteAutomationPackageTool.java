@@ -125,23 +125,26 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
                         executionError = ex;
                     }
 
-                    if (params.getReportTypes() != null) {
-                        for (String executionId : executionIds) {
-                            try {
-                                for (String reportType : params.getReportTypes()) {
-
-                                    RemoteExecutionManager.Report customReport = remoteExecutionManager.getCustomReport(executionId, reportType);
-                                    File outputFile = new File(outputFolder, customReport.getFileName());
-
-                                    logInfo("Saving execution report (" + params.getReportTypes() + ") into " + outputFile.getAbsolutePath(), null);
-                                    try (FileOutputStream fos = new FileOutputStream(outputFile)) {
-                                        fos.write(customReport.getContent());
-                                    }
+                    if (params.getReportTypes() != null && !executionIds.isEmpty()) {
+                        try {
+                            for (String reportType : params.getReportTypes()) {
+                                RemoteExecutionManager.Report customReport;
+                                File outputFile;
+                                if (executionIds.size() > 1) {
+                                    customReport = remoteExecutionManager.getCustomMultiReport(executionIds, reportType);
+                                    outputFile = new File(outputFolder, customReport.getFileName());
+                                } else {
+                                    customReport = remoteExecutionManager.getCustomReport(executionIds.get(0), reportType);
+                                    outputFile = new File(outputFolder, customReport.getFileName());
                                 }
-
-                            } catch (Exception ex) {
-                                logError("The execution report cannot be saved", ex);
+                                logInfo("Saving execution report (" + params.getReportTypes() + ") into " + outputFile.getAbsolutePath(), null);
+                                try (FileOutputStream fos = new FileOutputStream(outputFile)) {
+                                    fos.write(customReport.getContent());
+                                }
                             }
+
+                        } catch (Exception ex) {
+                            logError("The execution report cannot be saved", ex);
                         }
                     }
 

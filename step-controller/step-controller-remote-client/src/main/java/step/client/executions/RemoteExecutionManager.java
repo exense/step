@@ -129,14 +129,27 @@ public class RemoteExecutionManager extends AbstractRemoteClient {
 		return executeRequest(() -> {
 			Response response = b.get();
 			try(InputStream contentIs = response.readEntity(InputStream.class)) {
-				return new Report(getFileNameFromContentDisposition(response, executionId), contentIs.readAllBytes());
+				return new Report(getFileNameFromContentDisposition(response), contentIs.readAllBytes());
 			} catch (IOException e) {
                 throw new RuntimeException(e);
             }
         });
 	}
 
-	private String getFileNameFromContentDisposition(Response response, String executionId) {
+	public Report getCustomMultiReport(List<String> executionIds, String reportType) {
+		Map<String, String> queryParams = Map.of("ids", String.join(";", executionIds));
+		Builder b = requestBuilder("/rest/executions/report/multi/" + reportType, queryParams);
+		return executeRequest(() -> {
+			Response response = b.get();
+			try (InputStream contentIs = response.readEntity(InputStream.class)) {
+				return new Report(getFileNameFromContentDisposition(response), contentIs.readAllBytes());
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		});
+	}
+
+	private String getFileNameFromContentDisposition(Response response) {
 		String res = null;
 		String header = response.getHeaderString("content-disposition");
 		if (header != null) {

@@ -47,10 +47,7 @@ import step.framework.server.tables.service.bulk.TableBulkOperationReport;
 import step.framework.server.tables.service.bulk.TableBulkOperationRequest;
 
 import java.io.ByteArrayInputStream;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -287,19 +284,23 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 
 	@Operation(description = "Returns the custom report for several executions")
 	@GET
-	@Path("/{id}/report/multi/{customReportType}")
+	@Path("/report/multi/{customReportType}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.TEXT_PLAIN)
 	@Secured(right = "execution-read")
-	public Response getCustomMultiReport(@PathParam("customReportType") String customReportType, @QueryParam("id") List<String> executionIds) {
+	public Response getCustomMultiReport(@PathParam("customReportType") String customReportType, @QueryParam("ids") String executionIds) {
 		ExecutionEngineContext executionEngineContext = getScheduler().getExecutor().getExecutionEngine().getExecutionEngineContext();
 		CustomReportType reportType = CustomReportType.parse(customReportType);
 		if (reportType == null) {
 			throw new ControllerServiceException(400, "Invalid report type: " + customReportType);
 		}
+		List<String> idsList = new ArrayList<>();
+		if (executionIds != null) {
+			idsList = Arrays.asList(executionIds.split(";"));
+		}
 		switch (reportType) {
 			case JUNIT:
-				JUnitXmlReportBuilder.Report report = new JUnitXmlReportBuilder(executionEngineContext, executionIds).buildJUnitXmlReport();
+				JUnitXmlReportBuilder.Report report = new JUnitXmlReportBuilder(executionEngineContext, idsList).buildJUnitXmlReport();
 				Response.ResponseBuilder response = Response.ok(new ByteArrayInputStream(report.getContent().getBytes()));
 				response.header("Content-Disposition", "attachment; filename=\"" + report.getMetadata().getFileName() + "\"");
 				return response.build();
