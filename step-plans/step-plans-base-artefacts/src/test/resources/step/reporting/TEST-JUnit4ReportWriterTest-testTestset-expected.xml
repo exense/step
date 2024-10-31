@@ -1,20 +1,26 @@
 <testsuite name="TS01" time="0.07" timestamp="2024-10-27T15:29:39" hostname="localhost" tests="8" skipped="2" failures="2" errors="2">
 <properties></properties>
-<testcase classname="step.artefacts.reports.TestCaseReportNode" name="TC01 - PASSED" time="0.03">
+<testcase classname="TS01" name="TC01 - PASSED" time="0.03">
 </testcase>
-<testcase classname="step.artefacts.reports.TestCaseReportNode" name="TC02 - PASSED in Sequence" time="0.03">
+<testcase classname="TS01" name="TC02 - PASSED in Sequence" time="0.03">
 </testcase>
-<testcase classname="step.artefacts.reports.TestCaseReportNode" name="TC03 - FAILED without error message" time="0.03">
+<testcase classname="TS01" name="TC03 - FAILED without error message" time="0.03">
 <failure type="" message=""/>
 </testcase>
-<testcase classname="step.artefacts.reports.TestCaseReportNode" name="TC04 - FAILED with error message" time="0.03">
+<testcase classname="TS01" name="TC04 - FAILED with error message" time="0.03">
 <failure type="" message="my message"/>
 </testcase>
-<testcase classname="step.artefacts.reports.TestCaseReportNode" name="TC05 - TECH_ERROR" time="0.03">
+<testcase classname="TS01" name="TC05 - TECH_ERROR" time="0.03">
 <error type=""></error>
 </testcase>
-<testcase classname="step.artefacts.reports.TestCaseReportNode" name="TC06 - TECH_ERROR with message" time="0.03">
-<error type="">My error message</error>
+<testcase classname="TS01" name="TC06 - TECH_ERROR with message" time="0.03">
+<error type="">Error while resolving groovy properties in expression: 'var'. Groovy error: &gt;&gt;&gt; No such property: var for class: Script1 &lt;&lt;&lt;</error>
+</testcase>
+<testcase classname="TS01" name="TC07 - SKIPPED" time="0.03">
+<skipped message=""/>
+</testcase>
+<testcase classname="TS01" name="TC08 - NORUN" time="0.03">
+<skipped message=""/>
 </testcase>
 <system-out></system-out>
 <system-err></system-err>

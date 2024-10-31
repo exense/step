@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.reporting;
 
+import org.apache.commons.lang3.StringEscapeUtils;
 import step.artefacts.TestSet;
 import step.artefacts.reports.CustomReportType;
 import step.core.artefacts.reports.*;
@@ -87,12 +88,12 @@ public class JUnit4ReportWriter implements ReportWriter {
 		AtomicInteger numberOfSkipped = new AtomicInteger(0);
 		AtomicLong duration = new AtomicLong();
 		AtomicLong executionTime = new AtomicLong();
-		StringBuilder name = new StringBuilder();
+		StringBuilder testSuiteName = new StringBuilder();
 
 		// First visit the report tree to get the root node informations and the different counts
 		visitor.visit(executionId, e->{
 			if(e.getStack().isEmpty()) {
-				name.append(e.getNode().getName());
+				testSuiteName.append(e.getNode().getName());
 				duration.set(e.getNode().getDuration());
 				executionTime.set(e.getNode().getExecutionTime());
 
@@ -111,9 +112,9 @@ public class JUnit4ReportWriter implements ReportWriter {
 			}
 		});
 
-		writer.write("<testsuite name=\"" + name.toString() + "\" " +
+		writer.write("<testsuite name=\"" + testSuiteName.toString() + "\" " +
 				(id == null ? "" : "id=\"" + id + "\" ") +
-				(writePackage ? "package=\"" + name + "\" " : "") +
+				(writePackage ? "package=\"" + testSuiteName + "\" " : "") +
 				"time=\"" + formatDuration(getTestSuiteDuration(duration)) + "\" " +
 				"timestamp=\"" + formatTimestamp(getExecutionTime(executionTime)) + "\" " +
 				"hostname=\"" + getHostName() + "\" " +
@@ -136,14 +137,14 @@ public class JUnit4ReportWriter implements ReportWriter {
 					// for other root nodes we take the top level only
 					if(event.getStack().isEmpty()){
 						if(!isTestSet(event.getNode())){
-							writeTestCaseBegin(node);
+							writeTestCaseBegin(node, testSuiteName);
 						}
 					}
 
 					// as a convention report the children of the first level as testcases
 					if(event.getStack().size()==1) {
 						if(!skipReportNode(event)) {
-							writeTestCaseBegin(node);
+							writeTestCaseBegin(node, testSuiteName);
 						}
 					} else if (event.getStack().size()>1) {
 						// report all the errors of the sub nodes (level > 1)
@@ -156,10 +157,10 @@ public class JUnit4ReportWriter implements ReportWriter {
 				}
 			}
 
-			private void writeTestCaseBegin(ReportNode node) throws IOException {
-				writer.write("<testcase classname=\""+ node.getClass().getName()+"\" " +
-						"name=\""+ node.getName()+"\" " +
-						"time=\""+ formatDuration(getTestCaseDuration(node))+"\">");
+			private void writeTestCaseBegin(ReportNode node, StringBuilder testSuiteName) throws IOException {
+				writer.write("<testcase classname=\"" + testSuiteName + "\" " +
+						"name=\"" + node.getName() + "\" " +
+						"time=\"" + formatDuration(getTestCaseDuration(node)) + "\">");
 				writer.write('\n');
 				errorWritten.set(false);
 			}
@@ -199,10 +200,6 @@ public class JUnit4ReportWriter implements ReportWriter {
 			}
 
 			protected boolean skipReportNode(ReportNodeEvent nodeEvent) {
-				if (nodeEvent.getNode().getStatus() == ReportNodeStatus.SKIPPED || nodeEvent.getNode().getStatus() == ReportNodeStatus.NORUN) {
-					return true;
-				}
-
 				Stack<ReportNode> stack = nodeEvent.getStack();
 				return !stack.isEmpty() && !(isTestSet(stack.firstElement()));
             }
@@ -246,13 +243,25 @@ public class JUnit4ReportWriter implements ReportWriter {
 	private static void calculateNode(ReportNodeEvent e, AtomicInteger numberOfTests, AtomicInteger numberOfFailures, AtomicInteger numberOfErrors, AtomicInteger numberOfSkipped) {
 		numberOfTests.incrementAndGet();
 		ReportNode node = e.getNode();
-		if(node.getStatus() == ReportNodeStatus.FAILED) {
+		if(isFailure(node)) {
 			numberOfFailures.incrementAndGet();
-		} else if(node.getStatus() == ReportNodeStatus.TECHNICAL_ERROR) {
+		} else if(isError(node)) {
 			numberOfErrors.incrementAndGet();
-		} else if(node.getStatus() == ReportNodeStatus.SKIPPED || node.getStatus() == ReportNodeStatus.NORUN) {
+		} else if(isSkipped(node)) {
 			numberOfSkipped.incrementAndGet();
 		}
+	}
+
+	private static boolean isError(ReportNode node) {
+		return node.getStatus() == ReportNodeStatus.TECHNICAL_ERROR;
+	}
+
+	private static boolean isFailure(ReportNode node) {
+		return node.getStatus() == ReportNodeStatus.FAILED;
+	}
+
+	private static boolean isSkipped(ReportNode node) {
+		return node.getStatus() == ReportNodeStatus.SKIPPED || node.getStatus() == ReportNodeStatus.NORUN;
 	}
 
 	protected void writeErrorOrFailure(Writer writer, ReportNode node, AtomicBoolean errorWritten) throws IOException {
@@ -260,14 +269,20 @@ public class JUnit4ReportWriter implements ReportWriter {
 		if(node.getError()!=null && node.getError().getMsg()!=null) {
 			errorMessage = node.getError().getMsg();
 		}
+		// escape special characters in error message
+		errorMessage = StringEscapeUtils.escapeXml10(errorMessage);
 
 		if(node.getStatus()!=ReportNodeStatus.PASSED) {
-			if(node.getStatus() == ReportNodeStatus.FAILED) {
+			if(isFailure(node)) {
 				writer.write("<failure type=\"\" message=\"" + errorMessage + "\"/>");
 				writer.write('\n');
 				errorWritten.set(true);
-			} else if(node.getStatus() == ReportNodeStatus.TECHNICAL_ERROR) {
+			} else if(isError(node)) {
 				writer.write("<error type=\"\">"+errorMessage+"</error>");
+				writer.write('\n');
+				errorWritten.set(true);
+			} else if (isSkipped(node)) {
+				writer.write("<skipped message=\"" + errorMessage + "\"/>");
 				writer.write('\n');
 				errorWritten.set(true);
 			} else {

@@ -81,7 +81,7 @@ public class JUnit4ReportWriterTest {
 						.add(checkArtefact(ReportNodeStatus.TECHNICAL_ERROR))
 					.endBlock()
 					.startBlock(testCase("TC06 - TECH_ERROR with message"))
-						.add(checkArtefact(ReportNodeStatus.TECHNICAL_ERROR, "My error message"))
+						.add(checkArtefact(ReportNodeStatus.TECHNICAL_ERROR, "Error while resolving groovy properties in expression: 'var'. Groovy error: >>> No such property: var for class: Script1 <<<"))
 					.endBlock()
 					.startBlock(testCase("TC07 - SKIPPED"))
 						.add(checkArtefact(ReportNodeStatus.SKIPPED))

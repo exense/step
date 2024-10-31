@@ -68,7 +68,7 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
     @Parameter(property = "step-execute-auto-packages.exclude-categories")
     private String excludeCategories;
 
-    @Parameter(property = "step-execute-auto-packages.wrap-into-test-set")
+    @Parameter(property = "step-execute-auto-packages.wrap-into-test-set", defaultValue = "false")
     private Boolean wrapIntoTestSet;
     @Parameter(property = "step-execute-auto-packages.number-of-threads")
     private Integer numberOfThreads;
