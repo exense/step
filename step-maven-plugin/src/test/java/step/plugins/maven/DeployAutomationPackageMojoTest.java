@@ -44,7 +44,7 @@ public class DeployAutomationPackageMojoTest extends AbstractMojoTest {
         Assert.assertEquals("http://localhost:8080", mojo.toolUrl);
         Assert.assertEquals(false, mojo.toolAsync);
         Assert.assertEquals(TENANT_1.getName(), mojo.toolProjectName);
-        Assert.assertNull(mojo.toolAuthToken);
+        Assert.assertEquals("dummyToken", mojo.toolAuthToken);
     }
 
     private void configureMojo(DeployAutomationPackageMojoTestable mojo) throws URISyntaxException {
@@ -53,6 +53,7 @@ public class DeployAutomationPackageMojoTest extends AbstractMojoTest {
         mojo.setProjectVersion(VERSION_ID);
         mojo.setArtifactClassifier("jar-with-dependencies");
         mojo.setStepProjectName(TENANT_1.getName());
+        mojo.setAuthToken("dummyToken");
         mojo.setAsync(false);
 
         MavenProject mockedProject = Mockito.mock(MavenProject.class);

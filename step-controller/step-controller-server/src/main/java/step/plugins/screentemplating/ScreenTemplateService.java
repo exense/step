@@ -104,6 +104,31 @@ public class ScreenTemplateService extends AbstractStepServices {
 		}
 		return screenTemplateManager.getInputsForScreen(screenId, contextBindings, objectPredicate);
 	}
+
+	@GET
+	@Secured
+	@Path("/{id}/screen-inputs")
+	@Produces(MediaType.APPLICATION_JSON)
+	public List<ScreenInput> getScreenInputsForScreenGet(@PathParam("id") String screenId, @Context UriInfo uriInfo) {
+		Map<String, Object> contextBindings = getContextBindings(uriInfo);
+		ObjectPredicate objectPredicate = objectPredicateFactory.getObjectPredicate(getSession());
+		return screenTemplateManager.getScreenInputsForScreen(screenId, contextBindings, objectPredicate);
+	}
+
+	@SuppressWarnings("unchecked")
+	@POST
+	@Secured
+	@Path("/{id}/screen-inputs")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public List<ScreenInput> getScreenInputsForScreenPost(@PathParam("id") String screenId, Object params) {
+		ObjectPredicate objectPredicate = objectPredicateFactory.getObjectPredicate(getSession());
+		Map<String, Object> contextBindings = getContextBindings(null);
+		if(params instanceof Map) {
+			contextBindings.putAll((Map<String, Object>) params);
+		}
+		return screenTemplateManager.getScreenInputsForScreen(screenId, contextBindings, objectPredicate);
+	}
 	
 	@GET
 	@Secured
