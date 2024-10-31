@@ -327,6 +327,13 @@
 				<version>2.5.0</version>
 			</dependency>
 
+			<!-- TODO: move this into exense-dependencies -->
+			<dependency>
+				<groupId>org.apache.commons</groupId>
+				<artifactId>commons-compress</artifactId>
+				<version>1.27.1</version>
+			</dependency>
+
 			<dependency>
 				<groupId>net.minidev</groupId>
 				<artifactId>accessors-smart</artifactId>
