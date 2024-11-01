@@ -369,6 +369,20 @@
 				<artifactId>maven-settings-builder</artifactId>
 				<version>3.8.6</version>
 			</dependency>
+
+			<!-- quick-fixes, these should be upstreamed to exense-dependencies -->
+			<dependency>
+				<groupId>org.apache.commons</groupId>
+				<artifactId>commons-compress</artifactId>
+				<version>1.27.1</version>
+			</dependency>
+
+			<dependency>
+				<groupId>com.google.oauth-client</groupId>
+				<artifactId>google-oauth-client</artifactId>
+				<version>1.36.0</version>
+			</dependency>
+
 		</dependencies>
 	</dependencyManagement>
 
