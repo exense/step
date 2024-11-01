@@ -305,16 +305,15 @@ public class TimeSeriesHandler {
     private TimeSeriesAPIResponse mapToApiResponse(FetchBucketsRequest request, TimeSeriesAggregationResponse response) {
         Map<BucketAttributes, Map<Long, Bucket>> series = response.getSeries();
         long intervalSize = response.getResolution();
-        List<Long> axis = response.getAxis();
-        Long start = axis.get(0);
-        Long end = axis.get(axis.size() - 1) + intervalSize;
+        long start = response.getStart();
+        long end = response.getEnd();
 
         List<BucketAttributes> matrixKeys = new ArrayList<>();
         List<List<BucketResponse>> matrix = new ArrayList<>();
         series.keySet().stream().limit(request.getMaxNumberOfSeries()).forEach(key -> {
             Map<Long, Bucket> currentSeries = series.get(key);
             List<BucketResponse> bucketResponses = new ArrayList<>();
-            axis.forEach(index -> {
+            for (long index = start; index < end; index += response.getResolution()) {
                 Bucket b = currentSeries.get(index);
                 BucketResponse bucketResponse = null;
                 if (b != null) {
@@ -330,7 +329,7 @@ public class TimeSeriesHandler {
                             .build();
                 }
                 bucketResponses.add(bucketResponse);
-            });
+            }
             matrix.add(bucketResponses);
             matrixKeys.add(key);
         });
@@ -344,6 +343,7 @@ public class TimeSeriesHandler {
                 .withTruncated(series.size() > request.getMaxNumberOfSeries())
                 .withCollectionResolution(response.getCollectionResolution())
                 .withHigherResolutionUsed(response.isHigherResolutionUsed())
+                .withTtlCovered(response.isTtlCovered())
                 .build();
     }
 

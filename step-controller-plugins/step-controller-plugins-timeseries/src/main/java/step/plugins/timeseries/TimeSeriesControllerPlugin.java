@@ -31,6 +31,7 @@ import step.plugins.timeseries.dashboards.DashboardsGenerator;
 import step.plugins.timeseries.dashboards.model.DashboardView;
 import step.plugins.timeseries.migration.MigrateAggregateTask;
 import step.plugins.timeseries.migration.MigrateDashboardsTask;
+import step.plugins.timeseries.migration.MigrateResolutionsWithIgnoredFieldsTask;
 
 import java.util.Arrays;
 import java.util.LinkedHashSet;
@@ -51,6 +52,8 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 	// Following properties are used by the UI. In the future we could remove the prefix 'plugins.' to align with other properties
 	public static final String PARAM_KEY_EXECUTION_DASHBOARD_ID = "plugins.timeseries.execution.dashboard.id";
 	public static final String PARAM_KEY_ANALYTICS_DASHBOARD_ID = "plugins.timeseries.analytics.dashboard.id";
+	public static final String PARAM_KEY_RESPONSE_IDEAL_INTERVALS = "timeseries.response.intervals.ideal";
+	public static final String PARAM_KEY_RESPONSE_MAX_INTERVALS = "timeseries.response.intervals.max";
 
 	public static final String EXECUTION_DASHBOARD_PREPOPULATED_NAME = "Execution Dashboard";
 	public static final String ANALYTICS_DASHBOARD_PREPOPULATED_NAME = "Analytics Dashboard";
@@ -65,6 +68,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 		MigrationManager migrationManager = context.require(MigrationManager.class);
 		migrationManager.register(MigrateDashboardsTask.class);
 		migrationManager.register(MigrateAggregateTask.class);
+		migrationManager.register(MigrateResolutionsWithIgnoredFieldsTask.class);
 		
 		Configuration configuration = context.getConfiguration();
 		List<String> attributes = Arrays.asList(configuration.getProperty(TIME_SERIES_ATTRIBUTES_PROPERTY, TIME_SERIES_ATTRIBUTES_DEFAULT).split(","));
@@ -74,9 +78,13 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 
 		TimeSeriesCollectionsBuilder timeSeriesCollectionsBuilder = new TimeSeriesCollectionsBuilder(collectionFactory);
 		List<TimeSeriesCollection> enabledCollections = timeSeriesCollectionsBuilder.getTimeSeriesCollections(TIME_SERIES_MAIN_COLLECTION, timeSeriesCollectionsSettings);
-
 		// timeseries will have a list of registered collection.
-		timeSeries = new TimeSeriesBuilder().registerCollections(enabledCollections).build();
+		timeSeries = new TimeSeriesBuilder()
+				.setSettings(new TimeSeriesSettings()
+						.setIdealResponseIntervals(configuration.getPropertyAsInteger(PARAM_KEY_RESPONSE_IDEAL_INTERVALS, TimeSeriesSettings.DEFAULT_IDEAL_RESPONSE_INTERVALS))
+						.setResponseMaxIntervals(configuration.getPropertyAsInteger(PARAM_KEY_RESPONSE_MAX_INTERVALS, TimeSeriesSettings.DEFAULT_RESPONSE_MAX_INTERVALS))
+				)
+				.registerCollections(enabledCollections).build();
 		mainIngestionPipeline = timeSeries.getIngestionPipeline();
 
 		TimeSeriesAggregationPipeline aggregationPipeline = timeSeries.getAggregationPipeline();
