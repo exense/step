@@ -24,6 +24,9 @@ import step.core.GlobalContext;
 import step.core.accessors.AbstractAccessor;
 import step.core.accessors.Accessor;
 import step.core.collections.Collection;
+import step.core.collections.Filters;
+import step.core.collections.filters.Equals;
+import step.core.collections.filters.False;
 import step.core.deployment.ObjectHookControllerPlugin;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.encryption.EncryptionManager;
@@ -41,7 +44,12 @@ import step.parameter.ParameterManager;
 import step.plugins.encryption.EncryptionManagerDependencyPlugin;
 import step.plugins.screentemplating.*;
 
+import java.util.Set;
 import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
+
+import static step.parameter.Parameter.PARAMETER_PROTECTED_VALUE_FIELD;
+import static step.parameter.Parameter.PARAMETER_VALUE_FIELD;
 
 @Plugin(dependencies= {ObjectHookControllerPlugin.class, ScreenTemplatePlugin.class, EncryptionManagerDependencyPlugin.class})
 public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
@@ -63,7 +71,11 @@ public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
 		context.put("ParameterAccessor", parameterAccessor);
 
 		context.get(TableRegistry.class).register(ENTITY_PARAMETERS, new Table<>(collection, "param-read", true)
-				.withResultItemEnricher(p -> ParameterServices.maskProtectedValue(p)));
+				.withResultItemEnricher(ParameterServices::maskProtectedValue)
+				.withImplicitTableFiltersFactory(lf -> {
+					Set<String> allFilterAttributes = lf.stream().map(Filters::collectFilterAttributes).flatMap(Set::stream).collect(Collectors.toSet());
+					return allFilterAttributes.contains(PARAMETER_VALUE_FIELD + ".value") ? new Equals(PARAMETER_PROTECTED_VALUE_FIELD, false) : Filters.empty();
+				}));
 		
 		ParameterManager parameterManager = new ParameterManager(parameterAccessor, encryptionManager, context.getConfiguration(), context.getDynamicBeanResolver());
 		context.put(ParameterManager.class, parameterManager);
