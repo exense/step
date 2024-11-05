@@ -26,7 +26,6 @@ import step.core.accessors.Accessor;
 import step.core.collections.Collection;
 import step.core.collections.Filters;
 import step.core.collections.filters.Equals;
-import step.core.collections.filters.False;
 import step.core.deployment.ObjectHookControllerPlugin;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.encryption.EncryptionManager;
@@ -72,7 +71,7 @@ public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
 
 		context.get(TableRegistry.class).register(ENTITY_PARAMETERS, new Table<>(collection, "param-read", true)
 				.withResultItemEnricher(ParameterServices::maskProtectedValue)
-				.withImplicitTableFiltersFactory(lf -> {
+				.withDerivedTableFiltersFactory(lf -> {
 					Set<String> allFilterAttributes = lf.stream().map(Filters::collectFilterAttributes).flatMap(Set::stream).collect(Collectors.toSet());
 					return allFilterAttributes.contains(PARAMETER_VALUE_FIELD + ".value") ? new Equals(PARAMETER_PROTECTED_VALUE_FIELD, false) : Filters.empty();
 				}));
