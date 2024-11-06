@@ -43,7 +43,7 @@
 		<!-- internal dependencies -->
 		<dependencies.version>2024.9.26</dependencies.version>
 		<step-grid.version>2.1.0</step-grid.version>
-		<step-framework.version>2024.10.30-67225ec0c3776d6823e8300d</step-framework.version>
+		<step-framework.version>2.2.0</step-framework.version>
 
 		<!-- external, non-transitive, dependencies -->
 		<dep.groovy.version>3.0.10</dep.groovy.version>
@@ -369,6 +369,20 @@
 				<artifactId>maven-settings-builder</artifactId>
 				<version>3.8.6</version>
 			</dependency>
+
+			<!-- quick-fixes, these should be upstreamed to exense-dependencies -->
+			<dependency>
+				<groupId>org.apache.commons</groupId>
+				<artifactId>commons-compress</artifactId>
+				<version>1.27.1</version>
+			</dependency>
+
+			<dependency>
+				<groupId>com.google.oauth-client</groupId>
+				<artifactId>google-oauth-client</artifactId>
+				<version>1.36.0</version>
+			</dependency>
+
 		</dependencies>
 	</dependencyManagement>
 
