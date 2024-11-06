@@ -1,0 +1,14 @@
+<configuration scan="true" scanPeriod="60 seconds">
+	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+		</encoder>
+	</appender>
+
+	<!-- loggers with deviating settings for specific packages -->
+<!--	<logger name="step.parameter.ParameterManager" level="debug" />-->
+
+	<root level="info">
+		<appender-ref ref="STDOUT" />
+	</root>
+</configuration>
