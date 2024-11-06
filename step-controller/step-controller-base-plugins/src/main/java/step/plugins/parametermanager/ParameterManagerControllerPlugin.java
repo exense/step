@@ -70,7 +70,7 @@ public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
 		context.put("ParameterAccessor", parameterAccessor);
 
 		context.get(TableRegistry.class).register(ENTITY_PARAMETERS, new Table<>(collection, "param-read", true)
-				.withResultItemEnricher(ParameterServices::maskProtectedValue)
+				.withResultItemTransformer((p,s) -> ParameterServices.maskProtectedValue(p))
 				.withDerivedTableFiltersFactory(lf -> {
 					Set<String> allFilterAttributes = lf.stream().map(Filters::collectFilterAttributes).flatMap(Set::stream).collect(Collectors.toSet());
 					return allFilterAttributes.contains(PARAMETER_VALUE_FIELD + ".value") ? new Equals(PARAMETER_PROTECTED_VALUE_FIELD, false) : Filters.empty();
