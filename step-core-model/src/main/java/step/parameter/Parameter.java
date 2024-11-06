@@ -27,6 +27,9 @@ import step.core.objectenricher.EnricheableObject;
 public class Parameter extends AbstractTrackedObject implements ActivableObject, EnricheableObject {
 	
 	public static final String ENTITY_NAME = "parameters";
+	public static final String PARAMETER_VALUE_FIELD = "value";
+	public static final String PARAMETER_PROTECTED_VALUE_FIELD = "protectedValue";
+
 	
 	protected String key;
 	
