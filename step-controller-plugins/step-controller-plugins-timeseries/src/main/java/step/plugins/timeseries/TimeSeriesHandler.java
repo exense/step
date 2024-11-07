@@ -1,5 +1,6 @@
 package step.plugins.timeseries;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import step.controller.services.async.AsyncTaskManager;
 import step.controller.services.async.AsyncTaskStatus;
@@ -34,6 +35,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static step.plugins.measurements.MeasurementPlugin.ATTRIBUTE_EXECUTION_ID;
 import static step.plugins.timeseries.TimeSeriesExecutionPlugin.TIMESERIES_FLAG;
 
 public class TimeSeriesHandler {
@@ -253,7 +255,7 @@ public class TimeSeriesHandler {
             execution.addCustomField(TIMESERIES_FLAG, true);
             executionAccessor.save(execution);
             // we need to check if measurements exists
-            Equals measurementFilter = Filters.equals(MeasurementPlugin.ATTRIBUTE_EXECUTION_ID, executionId);
+            Equals measurementFilter = Filters.equals(ATTRIBUTE_EXECUTION_ID, executionId);
             Measurement firstMeasurement = measurementCollection.find(measurementFilter,
                     new SearchOrder(MeasurementPlugin.BEGIN, 1), 0, 1, 0).findFirst().orElse(null);
             Measurement lastMeasurement = measurementCollection.find(measurementFilter,
@@ -271,7 +273,12 @@ public class TimeSeriesHandler {
                             timeSeriesBucketingHandler.ingestExistingMeasurement(measurement);
                         });
                     }
-                    timeSeriesBucketingHandler.flush();
+                    timeSeries.getCollections().forEach(c -> {
+                        // flush only the collections that handle execution id
+                        if (CollectionUtils.isEmpty(c.getIgnoredAttributes()) || !c.getIgnoredAttributes().contains(ATTRIBUTE_EXECUTION_ID)) {
+                            c.getIngestionPipeline().flush();
+                        }
+                    });
                     return new TimeSeriesRebuildResponse(count.longValue());
                 });
             } else {
