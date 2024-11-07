@@ -57,8 +57,8 @@ public class ReportNodeTimeSeries implements Closeable {
     }
 
     public static class Range {
-        long from;
-        long to;
+        public long from;
+        public long to;
     }
 
     public Map<String, Long> queryByExecutionIdAndArtefactHash(String executionId, String artefactHash, Range range) {

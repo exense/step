@@ -35,8 +35,14 @@ public class AggregatedReportViewBuilder {
         Objects.requireNonNull(request);
         Execution execution = executionAccessor.get(executionId);
         String aggregatedReportRoot = execution.getResolvedPlanRootNodeId();
-        ResolvedPlanNode resolvedPlanNode = resolvedPlanNodeAccessor.get(aggregatedReportRoot);
-        return recursivelyBuildAggregatedReportTree(resolvedPlanNode, request);
+        //Make sure the resolved Plan is available
+        if (aggregatedReportRoot != null) {
+            ResolvedPlanNode resolvedPlanNode = resolvedPlanNodeAccessor.get(aggregatedReportRoot);
+            return recursivelyBuildAggregatedReportTree(resolvedPlanNode, request);
+        } else {
+            return null;
+        }
+
     }
 
     public static class AggregatedReportViewRequest {
