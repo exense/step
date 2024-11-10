@@ -171,7 +171,7 @@ public class RemoteExecutionManager extends AbstractRemoteClient {
 			}
 		}
 		String formattedTimestamp = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss-SSSSSS").format(LocalDateTime.now()) ;
-		return res == null ? formattedTimestamp + "-" + CustomReportType.JUNITXML.name().toLowerCase() + ".xml" : res;
+		return res == null ? formattedTimestamp + "-" + CustomReportType.JUNITXML.getNameInFile().toLowerCase() + ".xml" : res;
 	}
 
 	public static class Report {

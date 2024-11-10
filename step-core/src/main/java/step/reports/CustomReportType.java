@@ -19,8 +19,14 @@
 package step.reports;
 
 public enum CustomReportType {
-    JUNITXML, // report
-    JUNITZIP; // zipped report with attachments
+    JUNITXML("junit"), // report
+    JUNITZIP("junit"); // zipped report with attachments
+
+    private final String nameInFile;
+
+    CustomReportType(String nameInFile) {
+        this.nameInFile = nameInFile;
+    }
 
     public static CustomReportType parse(String customReportType) {
         for (CustomReportType value : CustomReportType.values()) {
@@ -29,5 +35,9 @@ public enum CustomReportType {
             }
         }
         return null;
+    }
+
+    public String getNameInFile() {
+        return nameInFile;
     }
 }

@@ -18,7 +18,6 @@
  ******************************************************************************/
 package step.reporting;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,13 +37,11 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Stack;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * A {@link ReportWriter} that generates JUnit 4 XML reports based on the JUnit schema https://github.com/windyroad/JUnit-Schema/blob/master/JUnit.xsd
@@ -76,16 +73,16 @@ public class JUnit4ReportWriter implements ReportWriter {
 		writer.write("\n");
 		int id = 0;
 
-		// TODO: individual attachments per test suite? in https://github.com/testmoapp/junitxml?tab=readme-ov-file#attachments attachments are listed in <system-out> within the <testcase>, but schema doesn't allow it
-		List<AttachmentMeta> allAttachments = new ArrayList<>();
+		// TODO: individual attachments per test case? in https://github.com/testmoapp/junitxml?tab=readme-ov-file#attachments attachments are listed in <system-out> within the <testcase>, but schema doesn't allow it
+		ReportAttachmentsInfo aggregatedAttachmentInfo = new ReportAttachmentsInfo();
 		for (String executionId : executionIds) {
 			ReportGenerationResult generationResult = writeSingleTestSuiteXml(reportTreeAccessor, executionId, writer, true, id);
-			allAttachments.addAll(generationResult.getAttachmentMetas());
+			aggregatedAttachmentInfo.getAttachmentsPerTestCase().putAll(generationResult.getAttachmentsInfo().getAttachmentsPerTestCase());
 			id++;
 		}
 		writer.write("</testsuites>");
 		writer.flush();
-		return new ReportMetadata(prepareReportFileName(), allAttachments);
+		return new ReportMetadata(prepareReportFileName(), aggregatedAttachmentInfo);
 	}
 
 	/**
@@ -94,7 +91,7 @@ public class JUnit4ReportWriter implements ReportWriter {
 	public ReportMetadata writeReport(ReportTreeAccessor reportTreeAccessor, String executionId, Writer writer) throws IOException {
 		ReportGenerationResult generationResult = writeSingleTestSuiteXml(reportTreeAccessor, executionId, writer, false, null);
 		writer.flush();
-		return new ReportMetadata(prepareReportFileName(), generationResult.getAttachmentMetas());
+		return new ReportMetadata(prepareReportFileName(), generationResult.getAttachmentsInfo());
 	}
 
 	private ReportGenerationResult writeSingleTestSuiteXml(ReportTreeAccessor reportTreeAccessor, String executionId, Writer writer, boolean writePackage, Integer id) throws IOException {
@@ -107,7 +104,6 @@ public class JUnit4ReportWriter implements ReportWriter {
 		AtomicLong duration = new AtomicLong();
 		AtomicLong executionTime = new AtomicLong();
 		StringBuilder testSuiteName = new StringBuilder();
-		List<AttachmentMeta> attachments = new ArrayList<>();
 
 		// First visit the report tree to get the root node informations and the different counts
 		visitor.visit(executionId, e->{
@@ -146,29 +142,28 @@ public class JUnit4ReportWriter implements ReportWriter {
 		writer.write('\n');
 
 		AtomicBoolean errorWritten = new AtomicBoolean(false);
+
+		ReportAttachmentsInfo attachmentsInfo = new ReportAttachmentsInfo();
+		AtomicReference<String> testCaseId = new AtomicReference<>();
+
 		// visit the tree again and write the <testcase> blocks
 		visitor.visit(executionId, new ReportNodeVisitorEventHandler() {
 			@Override
 			public void startReportNode(ReportNodeEvent event) {
 				ReportNode node = event.getNode();
 				try {
-					// collect all nested attachments
-					if (node.getAttachments() != null) {
-						attachments.addAll(node.getAttachments());
-					}
-
 					// for test sets we take test cases from the first level
 					// for other root nodes we take the top level only
 					if(event.getStack().isEmpty()){
 						if(!isTestSet(event.getNode())){
-							writeTestCaseBegin(node, testSuiteName, attachments);
+							writeTestCaseBegin(node, testSuiteName, testCaseId);
 						}
 					}
 
 					// as a convention report the children of the first level as testcases
 					if(event.getStack().size()==1) {
 						if(!skipReportNode(event)) {
-							writeTestCaseBegin(node, testSuiteName, attachments);
+							writeTestCaseBegin(node, testSuiteName,  testCaseId);
 						}
 					} else if (event.getStack().size()>1) {
 						// report all the errors of the sub nodes (level > 1)
@@ -176,20 +171,42 @@ public class JUnit4ReportWriter implements ReportWriter {
 							writeErrorOrFailure(writer, node, errorWritten);
 						}
 					}
+
+					// add attachment info
+					if(node.getAttachments() != null && !node.getAttachments().isEmpty()) {
+						attachmentsInfo.add(testCaseId.get(), node.getAttachments());
+					}
+
 				} catch (IOException e1) {
 					throw new RuntimeException(e1);
 				}
 			}
 
-			private void writeTestCaseBegin(ReportNode node, StringBuilder testSuiteName, List<AttachmentMeta> attachmentCollector) throws IOException {
+			private void writeTestCaseBegin(ReportNode node, StringBuilder testSuiteName,
+											AtomicReference<String> testCaseId) throws IOException {
 				writer.write("<testcase classname=\"" + testSuiteName + "\" " +
 						"name=\"" + node.getName() + "\" " +
 						"time=\"" + formatDuration(getTestCaseDuration(node)) + "\">");
 				writer.write('\n');
+
+				testCaseId.set(node.getId().toString());
+
 				errorWritten.set(false);
 			}
 
-			private void writeTestCaseEnd() throws IOException {
+			private void writeTestCaseEnd(AtomicReference<String> testCaseId, ReportAttachmentsInfo attachmentsInfo) throws IOException {
+				if (attachmentsConfig != null) {
+					List<AttachmentMeta> attachmentsPerTestCase = attachmentsInfo.getAttachmentsPerTestCase().get(testCaseId.get());
+					if (attachmentsPerTestCase != null && !attachmentsPerTestCase.isEmpty()) {
+						writer.write("<system-out>");
+						for (AttachmentMeta attachmentMeta : attachmentsPerTestCase) {
+							writeAttachmentTag(testCaseId.get(), attachmentMeta, writer);
+						}
+						writer.write("</system-out>");
+						writer.write('\n');
+					}
+				}
+
 				writer.write("</testcase>");
 				writer.write('\n');
 			}
@@ -199,7 +216,7 @@ public class JUnit4ReportWriter implements ReportWriter {
 				if (event.getStack().isEmpty()) {
 					if (!isTestSet(event.getNode())) {
 						try {
-							writeTestCaseEnd();
+							writeTestCaseEnd(testCaseId, attachmentsInfo);
 						} catch (IOException e1) {
 							throw new RuntimeException(e1);
 						}
@@ -215,7 +232,7 @@ public class JUnit4ReportWriter implements ReportWriter {
 								writeErrorOrFailure(writer, node, errorWritten);
 							}
 							// close the <testcase> block
-							writeTestCaseEnd();
+							writeTestCaseEnd(testCaseId, attachmentsInfo);
 						} catch (IOException e1) {
 							throw new RuntimeException(e1);
 						}
@@ -230,11 +247,6 @@ public class JUnit4ReportWriter implements ReportWriter {
 		});
 
 		writer.write("<system-out>");
-		if (attachmentsConfig != null) {
-			for (AttachmentMeta attachment : attachments) {
-				writeAttachmentTag(attachment, writer);
-			}
-		}
 		writer.write("</system-out>");
 		writer.write('\n');
 		writer.write("<system-err></system-err>");
@@ -242,24 +254,24 @@ public class JUnit4ReportWriter implements ReportWriter {
 		writer.write("</testsuite>");
 		writer.write('\n');
 
-		return new ReportGenerationResult(attachments);
+		return new ReportGenerationResult(attachmentsInfo);
 	}
 
-	private void writeAttachmentTag(AttachmentMeta attachment, Writer writer) throws IOException {
+	private void writeAttachmentTag(String testCaseId, AttachmentMeta attachment, Writer writer) {
 		if (attachmentsConfig != null && attachmentsConfig.getAttachmentResourceManager() != null) {
 			// [[ATTACHMENT|screenshots/dashboard.png]]
 			ResourceRevisionFileHandle content = attachmentsConfig.getAttachmentResourceManager().getResourceFile(attachment.getId().toString());
-			File targetFolder = new File("");
-			if (attachmentsConfig.getAttachmentSubfolder() != null) {
-				targetFolder = new File(attachmentsConfig.getAttachmentSubfolder());
+
+			String subfolders = attachmentsConfig.getAttachmentSubfolder() == null ? "" : attachmentsConfig.getAttachmentSubfolder();
+			if(!subfolders.isEmpty()){
+				subfolders += File.separator;
 			}
+			subfolders = subfolders + testCaseId + File.separator;
+
 			// TODO: maybe add timestamp to guarantee unique name
 			String attachmentFileName = content.getResourceFile().getName();
-
 			try {
-				File targetFile = new File(targetFolder, attachmentFileName);
-				FileUtils.copyFile(content.getResourceFile(), targetFile);
-				writer.write(String.format("[[ATTACHMENT|%s%s]]", attachmentsConfig.getAttachmentSubfolder() == null ? "" : attachmentsConfig.getAttachmentSubfolder() + File.separator, attachmentFileName));
+				writer.write(String.format("[[ATTACHMENT|%s%s]]", subfolders, attachmentFileName));
 			} catch (Exception ex) {
 				log.error("Unable to add the attachment to junit report", ex);
 			}
@@ -285,7 +297,7 @@ public class JUnit4ReportWriter implements ReportWriter {
 	private String prepareReportFileName() {
 		// use timestamp instead of plan name, because plan name can contain forbidden characters for file name
 		String formattedTimestamp = getCurrentTimestamp();
-		String fileName = formattedTimestamp + "-" + CustomReportType.JUNITXML.name().toLowerCase();
+		String fileName = formattedTimestamp + "-" + CustomReportType.JUNITXML.getNameInFile().toLowerCase();
 		return fileName + ".xml";
 	}
 
@@ -369,14 +381,14 @@ public class JUnit4ReportWriter implements ReportWriter {
 	}
 
 	private static class ReportGenerationResult {
-		private List<AttachmentMeta> attachmentMetas;
+		private ReportAttachmentsInfo attachmentsInfo;
 
-		public ReportGenerationResult(List<AttachmentMeta> attachmentMetas) {
-			this.attachmentMetas = attachmentMetas;
+		public ReportGenerationResult(ReportAttachmentsInfo attachmentsInfo) {
+			this.attachmentsInfo = attachmentsInfo;
 		}
 
-		public List<AttachmentMeta> getAttachmentMetas() {
-			return attachmentMetas;
+		public ReportAttachmentsInfo getAttachmentsInfo() {
+			return attachmentsInfo;
 		}
 	}
 

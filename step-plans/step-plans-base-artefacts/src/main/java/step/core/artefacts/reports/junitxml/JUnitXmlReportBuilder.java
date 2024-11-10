@@ -35,6 +35,7 @@ import step.resources.ResourceRevisionContent;
 
 import java.io.*;
 import java.util.List;
+import java.util.Map;
 
 public class JUnitXmlReportBuilder {
 
@@ -77,19 +78,30 @@ public class JUnitXmlReportBuilder {
                 File xmlReportFile = new File(reportDir, junitXmlReport.getFileName());
                 Files.write(mainReportOutput.toByteArray(), xmlReportFile);
 
-                if (junitXmlReport.getAttachmentMetas() != null && !junitXmlReport.getAttachmentMetas().isEmpty()) {
+                if (junitXmlReport.getAttachmentsInfo() != null && !junitXmlReport.getAttachmentsInfo().getAttachmentsPerTestCase().isEmpty()) {
                     File attachmentsDir = new File(reportDir, attachmentsSubfolder);
-                    boolean mkdir = attachmentsDir.mkdir();
-                    if (!mkdir) {
-                        throw new IOException("Unable to create subdirectory for attachments: " + attachmentsDir.getAbsolutePath());
+                    if (!attachmentsDir.exists()) {
+                        boolean mkdir = attachmentsDir.mkdir();
+                        if (!mkdir) {
+                            throw new IOException("Unable to create subdirectory for attachments: " + attachmentsDir.getAbsolutePath());
+                        }
                     }
 
-                    for (AttachmentMeta attachmentMeta : junitXmlReport.getAttachmentMetas()) {
-                        ObjectId attachmentId = attachmentMeta.getId();
-                        ResourceRevisionContent attachmentResource = attachmentsResourceManager.getResourceContent(attachmentId.toString());
-                        File attachmentOutFile = new File(attachmentsDir, attachmentResource.getResourceName());
-                        try (FileOutputStream attachmentOutStream = new FileOutputStream(attachmentOutFile)) {
-                            FileHelper.copy(attachmentResource.getResourceStream(), attachmentOutStream);
+                    for (Map.Entry<String, List<AttachmentMeta>> attachmentMetas : junitXmlReport.getAttachmentsInfo().getAttachmentsPerTestCase().entrySet()) {
+                        String testCaseId = attachmentMetas.getKey();
+                        File testCaseSubdir = new File(attachmentsDir, testCaseId);
+                        boolean mkdir = testCaseSubdir.mkdir();
+                        if (!mkdir) {
+                            throw new IOException("Unable to create subdirectory for attachments: " + attachmentsDir.getAbsolutePath());
+                        }
+
+                        for (AttachmentMeta attachment : attachmentMetas.getValue()) {
+                            ObjectId attachmentId = attachment.getId();
+                            ResourceRevisionContent attachmentResource = attachmentsResourceManager.getResourceContent(attachmentId.toString());
+                            File attachmentOutFile = new File(testCaseSubdir, attachmentResource.getResourceName());
+                            try (FileOutputStream attachmentOutStream = new FileOutputStream(attachmentOutFile)) {
+                                FileHelper.copy(attachmentResource.getResourceStream(), attachmentOutStream);
+                            }
                         }
                     }
                 }

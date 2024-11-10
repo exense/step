@@ -18,21 +18,22 @@
  ******************************************************************************/
 package step.reporting;
 
-public class ReportMetadata {
+import step.attachments.AttachmentMeta;
 
-    private String fileName;
-    private ReportAttachmentsInfo attachmentsInfo;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-    public ReportMetadata(String fileName, ReportAttachmentsInfo attachmentsInfo) {
-        this.fileName = fileName;
-        this.attachmentsInfo = attachmentsInfo;
+public class ReportAttachmentsInfo {
+    private Map<String, List<AttachmentMeta>> attachmentsPerTestCase = new HashMap<>();
+
+    public Map<String, List<AttachmentMeta>> getAttachmentsPerTestCase() {
+        return attachmentsPerTestCase;
     }
 
-    public String getFileName() {
-        return fileName;
-    }
-
-    public ReportAttachmentsInfo getAttachmentsInfo() {
-        return attachmentsInfo;
+    public void add(String testCaseId, List<AttachmentMeta> attachmentMetas) {
+        attachmentsPerTestCase.computeIfAbsent(testCaseId, k -> new ArrayList<>());
+        attachmentsPerTestCase.get(testCaseId).addAll(attachmentMetas);
     }
 }
