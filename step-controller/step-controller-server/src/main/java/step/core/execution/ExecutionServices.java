@@ -26,7 +26,7 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.bson.types.ObjectId;
-import step.artefacts.reports.CustomReportType;
+import step.reports.CustomReportType;
 import step.controller.services.async.AsyncTaskStatus;
 import step.core.access.User;
 import step.core.artefacts.reports.ReportNode;
@@ -261,6 +261,7 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 		return aggregatedReportViewBuilder.buildAggregatedReportView(request);
 	}
 
+	// TODO: maybe attachmentsSubfolder is redundant and we can just use the 'attachments' constant for the folder name
 	@Operation(description = "Returns the custom report for the execution")
 	@GET
 	@Path("/{id}/report/{customReportType}")
@@ -289,20 +290,7 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 		}
 	}
 
-	private Response createJUnitXmlReport(ExecutionEngineContext executionEngineContext, List<String> executionIds) throws IOException {
-		JUnitReport junitReport = new JUnitXmlReportBuilder(executionEngineContext).buildJUnitXmlReport(executionIds);
-		Response.ResponseBuilder response = Response.ok(new ByteArrayInputStream(junitReport.getContent()));
-		response.header("Content-Disposition", "attachment; filename=\"" + junitReport.getFileName() + "\"");
-		return response.build();
-	}
-
-	private Response createJUnitZipReport(ExecutionEngineContext executionEngineContext, List<String> executionIds, Boolean includeAttachments, String attachmentsSubfolder) throws IOException {
-		JUnitReport junitReport = new JUnitXmlReportBuilder(executionEngineContext).buildJunitZipReport(executionIds, includeAttachments, attachmentsSubfolder);
-		Response.ResponseBuilder response = Response.ok(new ByteArrayInputStream(junitReport.getContent()));
-		response.header("Content-Disposition", "attachment; filename=\"" + junitReport.getFileName() + "\"");
-		return response.build();
-	}
-
+	// TODO: maybe attachmentsSubfolder is redundant and we can just use the 'attachments' constant for the folder name
 	@Operation(description = "Returns the custom report for several executions")
 	@GET
 	@Path("/report/multi/{customReportType}")
@@ -328,10 +316,27 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 					throw new ControllerServiceException(400, "Attachments are not supported in " + CustomReportType.JUNITXML + " report");
 				}
 				return createJUnitXmlReport(executionEngineContext, idsList);
+			case JUNITZIP:
+				return createJUnitZipReport(executionEngineContext, idsList, includeAttachments, attachmentsSubfolder);
 			default:
 				throw new ControllerServiceException(400, "Invalid report type: " + customReportType);
 		}
 	}
+
+	private Response createJUnitXmlReport(ExecutionEngineContext executionEngineContext, List<String> executionIds) throws IOException {
+		JUnitReport junitReport = new JUnitXmlReportBuilder(executionEngineContext).buildJUnitXmlReport(executionIds);
+		Response.ResponseBuilder response = Response.ok(new ByteArrayInputStream(junitReport.getContent()));
+		response.header("Content-Disposition", "attachment; filename=\"" + junitReport.getFileName() + "\"");
+		return response.build();
+	}
+
+	private Response createJUnitZipReport(ExecutionEngineContext executionEngineContext, List<String> executionIds, Boolean includeAttachments, String attachmentsSubfolder) throws IOException {
+		JUnitReport junitReport = new JUnitXmlReportBuilder(executionEngineContext).buildJunitZipReport(executionIds, includeAttachments, attachmentsSubfolder);
+		Response.ResponseBuilder response = Response.ok(new ByteArrayInputStream(junitReport.getContent()));
+		response.header("Content-Disposition", "attachment; filename=\"" + junitReport.getFileName() + "\"");
+		return response.build();
+	}
+
 
 	@Operation(description = "Updates the provided execution.")
 	@POST

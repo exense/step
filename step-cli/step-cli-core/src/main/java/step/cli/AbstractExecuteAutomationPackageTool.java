@@ -18,6 +18,8 @@
  ******************************************************************************/
 package step.cli;
 
+import ch.exense.commons.io.FileHelper;
+import com.google.common.io.Files;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.automation.packages.client.AutomationPackageClientException;
@@ -33,6 +35,7 @@ import step.core.plans.PlanFilter;
 import step.core.plans.filters.*;
 import step.core.plans.runner.PlanRunnerResult;
 import step.core.repositories.RepositoryObjectReference;
+import step.reports.CustomReportType;
 import step.repositories.ArtifactRepositoryConstants;
 
 import java.io.*;
@@ -128,18 +131,34 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
                     if (params.getReportTypes() != null && !executionIds.isEmpty()) {
                         try {
                             for (String reportType : params.getReportTypes()) {
+                                // only for zipped reports we want to include attachments
+                                Boolean includeAttachments = CustomReportType.parse(reportType) == CustomReportType.JUNITZIP;
+
                                 RemoteExecutionManager.Report customReport;
                                 File outputFile;
                                 if (executionIds.size() > 1) {
-                                    customReport = remoteExecutionManager.getCustomMultiReport(executionIds, reportType);
+                                    customReport = remoteExecutionManager.getCustomMultiReport(executionIds, reportType, includeAttachments);
                                     outputFile = new File(outputFolder, customReport.getFileName());
                                 } else {
-                                    customReport = remoteExecutionManager.getCustomReport(executionIds.get(0), reportType);
+                                    customReport = remoteExecutionManager.getCustomReport(executionIds.get(0), reportType, includeAttachments);
                                     outputFile = new File(outputFolder, customReport.getFileName());
                                 }
                                 logInfo("Saving execution report (" + params.getReportTypes() + ") into " + outputFile.getAbsolutePath(), null);
+
                                 try (FileOutputStream fos = new FileOutputStream(outputFile)) {
                                     fos.write(customReport.getContent());
+                                }
+                                if (CustomReportType.parse(reportType) == CustomReportType.JUNITZIP) {
+                                    File folderToUnzip = new File(outputFolder, Files.getNameWithoutExtension(outputFile.getName()));
+                                    if (!folderToUnzip.exists()) {
+                                        folderToUnzip.mkdir();
+                                    }
+                                    logInfo("Unzip the report into " + folderToUnzip, null);
+                                    FileHelper.unzip(outputFile, folderToUnzip);
+                                    boolean deleted = outputFile.delete();
+                                    if (!deleted) {
+                                        logInfo("File cannot be deleted: " + outputFile.getAbsolutePath(), null);
+                                    }
                                 }
                             }
 

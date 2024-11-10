@@ -23,7 +23,7 @@ import org.apache.commons.lang3.StringEscapeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.artefacts.TestSet;
-import step.artefacts.reports.CustomReportType;
+import step.reports.CustomReportType;
 import step.attachments.AttachmentMeta;
 import step.core.artefacts.reports.*;
 import step.core.artefacts.reports.ReportTreeVisitor.ReportNodeEvent;
@@ -76,7 +76,7 @@ public class JUnit4ReportWriter implements ReportWriter {
 		writer.write("\n");
 		int id = 0;
 
-		// TODO: individual attachments per test suite?
+		// TODO: individual attachments per test suite? in https://github.com/testmoapp/junitxml?tab=readme-ov-file#attachments attachments are listed in <system-out> within the <testcase>, but schema doesn't allow it
 		List<AttachmentMeta> allAttachments = new ArrayList<>();
 		for (String executionId : executionIds) {
 			ReportGenerationResult generationResult = writeSingleTestSuiteXml(reportTreeAccessor, executionId, writer, true, id);

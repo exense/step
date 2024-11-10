@@ -23,7 +23,7 @@ import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.client.Invocation.Builder;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import step.artefacts.reports.CustomReportType;
+import step.reports.CustomReportType;
 import step.client.AbstractRemoteClient;
 import step.client.credentials.ControllerCredentials;
 import step.core.artefacts.reports.ReportNode;
@@ -124,8 +124,11 @@ public class RemoteExecutionManager extends AbstractRemoteClient {
 	/**
 	 * @return the content of the report
 	 */
-	public Report getCustomReport(String executionId, String reportType){
-		Builder b = requestBuilder("/rest/executions/" + executionId + "/report/" + reportType);
+	public Report getCustomReport(String executionId, String reportType, Boolean includeAttachments){
+		Map<String, String> queryParams = Map.of(
+				"includeAttachments", includeAttachments == null ? Boolean.FALSE.toString() : includeAttachments.toString()
+		);
+		Builder b = requestBuilder("/rest/executions/" + executionId + "/report/" + reportType, queryParams);
 		return executeRequest(() -> {
 			Response response = b.get();
 			try(InputStream contentIs = response.readEntity(InputStream.class)) {
@@ -136,8 +139,11 @@ public class RemoteExecutionManager extends AbstractRemoteClient {
         });
 	}
 
-	public Report getCustomMultiReport(List<String> executionIds, String reportType) {
-		Map<String, String> queryParams = Map.of("ids", String.join(";", executionIds));
+	public Report getCustomMultiReport(List<String> executionIds, String reportType, Boolean includeAttachments) {
+		Map<String, String> queryParams = Map.of(
+				"ids", String.join(";", executionIds),
+				"includeAttachments", includeAttachments == null ? Boolean.FALSE.toString() : includeAttachments.toString()
+		);
 		Builder b = requestBuilder("/rest/executions/report/multi/" + reportType, queryParams);
 		return executeRequest(() -> {
 			Response response = b.get();
