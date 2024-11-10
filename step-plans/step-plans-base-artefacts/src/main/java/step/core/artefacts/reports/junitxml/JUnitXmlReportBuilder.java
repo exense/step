@@ -18,56 +18,104 @@
  ******************************************************************************/
 package step.core.artefacts.reports.junitxml;
 
+import ch.exense.commons.io.FileHelper;
+import com.google.common.io.Files;
+import org.bson.types.ObjectId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import step.attachments.AttachmentMeta;
 import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.execution.ExecutionEngineContext;
+import step.reporting.AttachmentsConfig;
 import step.reporting.JUnit4ReportWriter;
+import step.reporting.JUnitReport;
+import step.reporting.ReportMetadata;
+import step.resources.ResourceManager;
+import step.resources.ResourceRevisionContent;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.util.List;
 
 public class JUnitXmlReportBuilder {
 
-    private final List<String> executionIds;
+    private static final Logger log = LoggerFactory.getLogger(JUnitXmlReportBuilder.class);
+
+    public static final String DEFAULT_ATTACHMETS_SUBFOLDER = "attachments";
+
     private final ReportNodeAccessor reportNodeAccessor;
+    private final ResourceManager attachmentsResourceManager;
 
-    public JUnitXmlReportBuilder(ExecutionEngineContext executionEngineContext, List<String> executionIds) {
-        this.executionIds = executionIds;
+    public JUnitXmlReportBuilder(ExecutionEngineContext executionEngineContext) {
         this.reportNodeAccessor = executionEngineContext.getReportNodeAccessor();
+        this.attachmentsResourceManager = executionEngineContext.getResourceManager();
     }
 
-    public Report buildJUnitXmlReport() {
+    public JUnitReport buildJUnitXmlReport(List<String> executionIds) throws IOException {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream(); OutputStreamWriter writer = new OutputStreamWriter(baos)) {
-            JUnit4ReportWriter.ReportMetadata reportMetadata;
-            JUnit4ReportWriter reportWriter = new JUnit4ReportWriter();
-            if (executionIds.size() > 1) {
-                reportMetadata = reportWriter.writeMultiReport(reportNodeAccessor, executionIds, writer);
-            } else {
-                reportMetadata = reportWriter.writeReport(reportNodeAccessor, executionIds.get(0), writer);
-            }
-            return new Report(reportMetadata, baos.toString());
-        } catch (IOException e) {
-            throw new RuntimeException("IO Exception", e);
+            ReportMetadata reportMetadata = buildJUnitXmlReport(new JUnit4ReportWriter(), executionIds, writer);
+            return new JUnitReport(reportMetadata.getFileName(), baos.toByteArray());
         }
     }
 
-    public static class Report {
-        private final JUnit4ReportWriter.ReportMetadata metadata;
-        private final String content;
-
-        public Report(JUnit4ReportWriter.ReportMetadata fileName, String content) {
-            this.metadata = fileName;
-            this.content = content;
+    public JUnitReport buildJunitZipReport(List<String> executionIds, Boolean includeAttachments, String attachmentsSubfolder) throws IOException {
+        AttachmentsConfig attachmentsConfig = null;
+        attachmentsSubfolder = attachmentsSubfolder == null || attachmentsSubfolder.isEmpty() ? DEFAULT_ATTACHMETS_SUBFOLDER : attachmentsSubfolder;
+        if (includeAttachments != null && includeAttachments) {
+            attachmentsConfig = new AttachmentsConfig.Builder()
+                    .setAttachmentSubfolder(attachmentsSubfolder)
+                    .setAttachmentResourceManager(attachmentsResourceManager)
+                    .createAttachmentsConfig();
         }
 
-        public JUnit4ReportWriter.ReportMetadata getMetadata() {
-            return metadata;
+        try (ByteArrayOutputStream mainReportOutput = new ByteArrayOutputStream(); OutputStreamWriter writer = new OutputStreamWriter(mainReportOutput)) {
+            ReportMetadata junitXmlReport = buildJUnitXmlReport(new JUnit4ReportWriter(attachmentsConfig), executionIds, writer);
+
+            // here we prepare the temporary directory with xml report and attachments znd zip the whole directory
+            File reportDir = FileHelper.createTempFolder();
+            String reportNameWithoutExtension = Files.getNameWithoutExtension(junitXmlReport.getFileName());
+            try {
+                File xmlReportFile = new File(reportDir, junitXmlReport.getFileName());
+                Files.write(mainReportOutput.toByteArray(), xmlReportFile);
+
+                if (junitXmlReport.getAttachmentMetas() != null && !junitXmlReport.getAttachmentMetas().isEmpty()) {
+                    File attachmentsDir = new File(reportDir, attachmentsSubfolder);
+                    boolean mkdir = attachmentsDir.mkdir();
+                    if (!mkdir) {
+                        throw new IOException("Unable to create subdirectory for attachments: " + attachmentsDir.getAbsolutePath());
+                    }
+
+                    for (AttachmentMeta attachmentMeta : junitXmlReport.getAttachmentMetas()) {
+                        ObjectId attachmentId = attachmentMeta.getId();
+                        ResourceRevisionContent attachmentResource = attachmentsResourceManager.getResourceContent(attachmentId.toString());
+                        File attachmentOutFile = new File(attachmentsDir, attachmentResource.getResourceName());
+                        try (FileOutputStream attachmentOutStream = new FileOutputStream(attachmentOutFile)) {
+                            FileHelper.copy(attachmentResource.getResourceStream(), attachmentOutStream);
+                        }
+                    }
+                }
+
+                try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+                    FileHelper.zip(reportDir, baos);
+                    return new JUnitReport(reportNameWithoutExtension + ".zip", baos.toByteArray());
+                }
+            } finally {
+                boolean deleted = FileHelper.deleteFolder(reportDir);
+                if (!deleted) {
+                    log.warn("Temp dir cannot be deleted: " + reportDir.getAbsolutePath());
+                }
+            }
         }
 
-        public String getContent() {
-            return content;
+    }
+
+    public ReportMetadata buildJUnitXmlReport(JUnit4ReportWriter reportWriter, List<String> executionIds, OutputStreamWriter writer) throws IOException {
+        ReportMetadata reportMetadata;
+        if (executionIds.size() > 1) {
+            reportMetadata = reportWriter.writeMultiReport(reportNodeAccessor, executionIds, writer);
+        } else {
+            reportMetadata = reportWriter.writeReport(reportNodeAccessor, executionIds.get(0), writer);
         }
+        return reportMetadata;
     }
 
 }

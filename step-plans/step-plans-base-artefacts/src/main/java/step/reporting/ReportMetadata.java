@@ -16,18 +16,27 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.artefacts.reports;
+package step.reporting;
 
-public enum CustomReportType {
-    JUNITXML, // report
-    JUNITZIP; // zipped report with attachments
+import step.attachments.AttachmentMeta;
 
-    public static CustomReportType parse(String customReportType) {
-        for (CustomReportType value : CustomReportType.values()) {
-            if (value.name().equalsIgnoreCase(customReportType)) {
-                return value;
-            }
-        }
-        return null;
+import java.util.List;
+
+public class ReportMetadata {
+
+    private String fileName;
+    private List<AttachmentMeta> attachmentMetas;
+
+    public ReportMetadata(String fileName, List<AttachmentMeta> attachmentMetas) {
+        this.fileName = fileName;
+        this.attachmentMetas = attachmentMetas;
+    }
+
+    public String getFileName() {
+        return fileName;
+    }
+
+    public List<AttachmentMeta> getAttachmentMetas() {
+        return attachmentMetas;
     }
 }

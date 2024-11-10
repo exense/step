@@ -18,11 +18,16 @@
  ******************************************************************************/
 package step.reporting;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.artefacts.TestSet;
 import step.artefacts.reports.CustomReportType;
+import step.attachments.AttachmentMeta;
 import step.core.artefacts.reports.*;
 import step.core.artefacts.reports.ReportTreeVisitor.ReportNodeEvent;
+import step.resources.ResourceRevisionFileHandle;
 
 import java.io.*;
 import java.net.InetAddress;
@@ -33,6 +38,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Stack;
@@ -46,12 +52,20 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class JUnit4ReportWriter implements ReportWriter {
 
+	private static final Logger log = LoggerFactory.getLogger(JUnit4ReportWriter.class);
+
+	private final AttachmentsConfig attachmentsConfig;
+
+	public JUnit4ReportWriter(AttachmentsConfig attachmentsConfig) {
+		this.attachmentsConfig = attachmentsConfig;
+	}
+
 	public JUnit4ReportWriter() {
+		this.attachmentsConfig = null;
 	}
 
 	@Override
 	public void writeReport(ReportTreeAccessor reportTreeAccessor, String executionId, File outputFile) throws IOException {
-
 		try(BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile))) {
 			writeReport(reportTreeAccessor, executionId, writer);
 		}
@@ -61,25 +75,29 @@ public class JUnit4ReportWriter implements ReportWriter {
 		writer.write("<testsuites>");
 		writer.write("\n");
 		int id = 0;
+
+		// TODO: individual attachments per test suite?
+		List<AttachmentMeta> allAttachments = new ArrayList<>();
 		for (String executionId : executionIds) {
-			writeSingleTestSuiteXml(reportTreeAccessor, executionId, writer, true, id);
+			ReportGenerationResult generationResult = writeSingleTestSuiteXml(reportTreeAccessor, executionId, writer, true, id);
+			allAttachments.addAll(generationResult.getAttachmentMetas());
 			id++;
 		}
 		writer.write("</testsuites>");
 		writer.flush();
-		return new ReportMetadata(prepareReportFileName());
+		return new ReportMetadata(prepareReportFileName(), allAttachments);
 	}
 
 	/**
 	 * @return the file name of report
 	 */
 	public ReportMetadata writeReport(ReportTreeAccessor reportTreeAccessor, String executionId, Writer writer) throws IOException {
-		writeSingleTestSuiteXml(reportTreeAccessor, executionId, writer, false, null);
+		ReportGenerationResult generationResult = writeSingleTestSuiteXml(reportTreeAccessor, executionId, writer, false, null);
 		writer.flush();
-		return new ReportMetadata(prepareReportFileName());
+		return new ReportMetadata(prepareReportFileName(), generationResult.getAttachmentMetas());
 	}
 
-	private void writeSingleTestSuiteXml(ReportTreeAccessor reportTreeAccessor, String executionId, Writer writer, boolean writePackage, Integer id) throws IOException {
+	private ReportGenerationResult writeSingleTestSuiteXml(ReportTreeAccessor reportTreeAccessor, String executionId, Writer writer, boolean writePackage, Integer id) throws IOException {
 		ReportTreeVisitor visitor = new ReportTreeVisitor(reportTreeAccessor);
 		// Using AtomicInteger and StringBuilder because of the "final limitation" in lambdas...
 		AtomicInteger numberOfTests = new AtomicInteger(0);
@@ -89,6 +107,7 @@ public class JUnit4ReportWriter implements ReportWriter {
 		AtomicLong duration = new AtomicLong();
 		AtomicLong executionTime = new AtomicLong();
 		StringBuilder testSuiteName = new StringBuilder();
+		List<AttachmentMeta> attachments = new ArrayList<>();
 
 		// First visit the report tree to get the root node informations and the different counts
 		visitor.visit(executionId, e->{
@@ -133,18 +152,23 @@ public class JUnit4ReportWriter implements ReportWriter {
 			public void startReportNode(ReportNodeEvent event) {
 				ReportNode node = event.getNode();
 				try {
+					// collect all nested attachments
+					if (node.getAttachments() != null) {
+						attachments.addAll(node.getAttachments());
+					}
+
 					// for test sets we take test cases from the first level
 					// for other root nodes we take the top level only
 					if(event.getStack().isEmpty()){
 						if(!isTestSet(event.getNode())){
-							writeTestCaseBegin(node, testSuiteName);
+							writeTestCaseBegin(node, testSuiteName, attachments);
 						}
 					}
 
 					// as a convention report the children of the first level as testcases
 					if(event.getStack().size()==1) {
 						if(!skipReportNode(event)) {
-							writeTestCaseBegin(node, testSuiteName);
+							writeTestCaseBegin(node, testSuiteName, attachments);
 						}
 					} else if (event.getStack().size()>1) {
 						// report all the errors of the sub nodes (level > 1)
@@ -157,7 +181,7 @@ public class JUnit4ReportWriter implements ReportWriter {
 				}
 			}
 
-			private void writeTestCaseBegin(ReportNode node, StringBuilder testSuiteName) throws IOException {
+			private void writeTestCaseBegin(ReportNode node, StringBuilder testSuiteName, List<AttachmentMeta> attachmentCollector) throws IOException {
 				writer.write("<testcase classname=\"" + testSuiteName + "\" " +
 						"name=\"" + node.getName() + "\" " +
 						"time=\"" + formatDuration(getTestCaseDuration(node)) + "\">");
@@ -205,12 +229,41 @@ public class JUnit4ReportWriter implements ReportWriter {
             }
 		});
 
-		writer.write("<system-out></system-out>");
+		writer.write("<system-out>");
+		if (attachmentsConfig != null) {
+			for (AttachmentMeta attachment : attachments) {
+				writeAttachmentTag(attachment, writer);
+			}
+		}
+		writer.write("</system-out>");
 		writer.write('\n');
 		writer.write("<system-err></system-err>");
 		writer.write('\n');
 		writer.write("</testsuite>");
 		writer.write('\n');
+
+		return new ReportGenerationResult(attachments);
+	}
+
+	private void writeAttachmentTag(AttachmentMeta attachment, Writer writer) throws IOException {
+		if (attachmentsConfig != null && attachmentsConfig.getAttachmentResourceManager() != null) {
+			// [[ATTACHMENT|screenshots/dashboard.png]]
+			ResourceRevisionFileHandle content = attachmentsConfig.getAttachmentResourceManager().getResourceFile(attachment.getId().toString());
+			File targetFolder = new File("");
+			if (attachmentsConfig.getAttachmentSubfolder() != null) {
+				targetFolder = new File(attachmentsConfig.getAttachmentSubfolder());
+			}
+			// TODO: maybe add timestamp to guarantee unique name
+			String attachmentFileName = content.getResourceFile().getName();
+
+			try {
+				File targetFile = new File(targetFolder, attachmentFileName);
+				FileUtils.copyFile(content.getResourceFile(), targetFile);
+				writer.write(String.format("[[ATTACHMENT|%s%s]]", attachmentsConfig.getAttachmentSubfolder() == null ? "" : attachmentsConfig.getAttachmentSubfolder() + File.separator, attachmentFileName));
+			} catch (Exception ex) {
+				log.error("Unable to add the attachment to junit report", ex);
+			}
+		}
 	}
 
 	protected Integer getTestCaseDuration(ReportNode node) {
@@ -231,9 +284,13 @@ public class JUnit4ReportWriter implements ReportWriter {
 
 	private String prepareReportFileName() {
 		// use timestamp instead of plan name, because plan name can contain forbidden characters for file name
-		String formattedTimestamp = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss-SSSSSS").format(LocalDateTime.now()) ;
-		String fileName = formattedTimestamp + "-" + CustomReportType.JUNIT.name().toLowerCase();
+		String formattedTimestamp = getCurrentTimestamp();
+		String fileName = formattedTimestamp + "-" + CustomReportType.JUNITXML.name().toLowerCase();
 		return fileName + ".xml";
+	}
+
+	public static String getCurrentTimestamp() {
+		return DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss-SSSSSS").format(LocalDateTime.now());
 	}
 
 	private static boolean isTestSet(ReportNode node) {
@@ -311,15 +368,15 @@ public class JUnit4ReportWriter implements ReportWriter {
 		return ZoneId.systemDefault();
 	}
 
-	public static class ReportMetadata {
-		private String fileName;
+	private static class ReportGenerationResult {
+		private List<AttachmentMeta> attachmentMetas;
 
-		public ReportMetadata(String fileName) {
-			this.fileName = fileName;
+		public ReportGenerationResult(List<AttachmentMeta> attachmentMetas) {
+			this.attachmentMetas = attachmentMetas;
 		}
 
-		public String getFileName() {
-			return fileName;
+		public List<AttachmentMeta> getAttachmentMetas() {
+			return attachmentMetas;
 		}
 	}
 

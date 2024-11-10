@@ -45,8 +45,10 @@ import step.framework.server.security.Secured;
 import step.framework.server.tables.service.TableService;
 import step.framework.server.tables.service.bulk.TableBulkOperationReport;
 import step.framework.server.tables.service.bulk.TableBulkOperationRequest;
+import step.reporting.JUnitReport;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -265,21 +267,40 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.TEXT_PLAIN)
 	@Secured(right = "execution-read")
-	public Response getCustomReport(@PathParam("id") String executionId, @PathParam("customReportType") String customReportType) {
+	public Response getCustomReport(@PathParam("id") String executionId,
+									@PathParam("customReportType") String customReportType,
+									@QueryParam("includeAttachments") Boolean includeAttachments,
+									@QueryParam("attachmentsSubfolder") String attachmentsSubfolder) throws IOException {
 		ExecutionEngineContext executionEngineContext = getScheduler().getExecutor().getExecutionEngine().getExecutionEngineContext();
 		CustomReportType reportType = CustomReportType.parse(customReportType);
 		if (reportType == null) {
 			throw new ControllerServiceException(400, "Invalid report type: " + customReportType);
 		}
 		switch (reportType) {
-			case JUNIT:
-				JUnitXmlReportBuilder.Report report = new JUnitXmlReportBuilder(executionEngineContext, List.of(executionId)).buildJUnitXmlReport();
-				Response.ResponseBuilder response = Response.ok(new ByteArrayInputStream(report.getContent().getBytes()));
-				response.header("Content-Disposition", "attachment; filename=\"" + report.getMetadata().getFileName() + "\"");
-				return response.build();
+			case JUNITXML:
+				if (includeAttachments != null && includeAttachments) {
+					throw new ControllerServiceException(400, "Attachments are not supported in " + CustomReportType.JUNITXML + " report");
+				}
+				return createJUnitXmlReport(executionEngineContext, List.of(executionId));
+			case JUNITZIP:
+				return createJUnitZipReport(executionEngineContext, List.of(executionId), includeAttachments, attachmentsSubfolder);
 			default:
 				throw new ControllerServiceException(400, "Invalid report type: " + customReportType);
 		}
+	}
+
+	private Response createJUnitXmlReport(ExecutionEngineContext executionEngineContext, List<String> executionIds) throws IOException {
+		JUnitReport junitReport = new JUnitXmlReportBuilder(executionEngineContext).buildJUnitXmlReport(executionIds);
+		Response.ResponseBuilder response = Response.ok(new ByteArrayInputStream(junitReport.getContent()));
+		response.header("Content-Disposition", "attachment; filename=\"" + junitReport.getFileName() + "\"");
+		return response.build();
+	}
+
+	private Response createJUnitZipReport(ExecutionEngineContext executionEngineContext, List<String> executionIds, Boolean includeAttachments, String attachmentsSubfolder) throws IOException {
+		JUnitReport junitReport = new JUnitXmlReportBuilder(executionEngineContext).buildJunitZipReport(executionIds, includeAttachments, attachmentsSubfolder);
+		Response.ResponseBuilder response = Response.ok(new ByteArrayInputStream(junitReport.getContent()));
+		response.header("Content-Disposition", "attachment; filename=\"" + junitReport.getFileName() + "\"");
+		return response.build();
 	}
 
 	@Operation(description = "Returns the custom report for several executions")
@@ -288,7 +309,10 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.TEXT_PLAIN)
 	@Secured(right = "execution-read")
-	public Response getCustomMultiReport(@PathParam("customReportType") String customReportType, @QueryParam("ids") String executionIds) {
+	public Response getCustomMultiReport(@PathParam("customReportType") String customReportType,
+										 @QueryParam("ids") String executionIds,
+										 @QueryParam("includeAttachments") Boolean includeAttachments,
+										 @QueryParam("attachmentsSubfolder") String attachmentsSubfolder) throws IOException {
 		ExecutionEngineContext executionEngineContext = getScheduler().getExecutor().getExecutionEngine().getExecutionEngineContext();
 		CustomReportType reportType = CustomReportType.parse(customReportType);
 		if (reportType == null) {
@@ -299,11 +323,11 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 			idsList = Arrays.asList(executionIds.split(";"));
 		}
 		switch (reportType) {
-			case JUNIT:
-				JUnitXmlReportBuilder.Report report = new JUnitXmlReportBuilder(executionEngineContext, idsList).buildJUnitXmlReport();
-				Response.ResponseBuilder response = Response.ok(new ByteArrayInputStream(report.getContent().getBytes()));
-				response.header("Content-Disposition", "attachment; filename=\"" + report.getMetadata().getFileName() + "\"");
-				return response.build();
+			case JUNITXML:
+				if (includeAttachments != null && includeAttachments) {
+					throw new ControllerServiceException(400, "Attachments are not supported in " + CustomReportType.JUNITXML + " report");
+				}
+				return createJUnitXmlReport(executionEngineContext, idsList);
 			default:
 				throw new ControllerServiceException(400, "Invalid report type: " + customReportType);
 		}
