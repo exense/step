@@ -18,16 +18,25 @@
  ******************************************************************************/
 package step.reporting;
 
+import ch.exense.commons.app.Configuration;
 import step.resources.ResourceManager;
 
-public class AttachmentsConfig {
+public class Junit4ReportConfig {
 
+    private boolean addAttachments;
+    private final boolean addLinksToStepFrontend;
     private String attachmentSubfolder;
     private ResourceManager attachmentResourceManager;
+    private Configuration serverConfiguration;
 
-    private AttachmentsConfig(String attachmentSubfolder, ResourceManager attachmentResourceManager) {
+    private Junit4ReportConfig(String attachmentSubfolder, ResourceManager attachmentResourceManager,
+                               boolean addAttachments, boolean addLinksToStepFrontend,
+                               Configuration serverConfiguration) {
         this.attachmentSubfolder = attachmentSubfolder;
         this.attachmentResourceManager = attachmentResourceManager;
+        this.addAttachments = addAttachments;
+        this.addLinksToStepFrontend = addLinksToStepFrontend;
+        this.serverConfiguration = serverConfiguration;
     }
 
     public String getAttachmentSubfolder() {
@@ -38,9 +47,24 @@ public class AttachmentsConfig {
         return attachmentResourceManager;
     }
 
+    public boolean isAddAttachments() {
+        return addAttachments;
+    }
+
+    public boolean isAddLinksToStepFrontend() {
+        return addLinksToStepFrontend;
+    }
+
+    public Configuration getServerConfiguration() {
+        return serverConfiguration;
+    }
+
     public static class Builder {
+        private boolean addAttachments = false;
+        private boolean addLinksToStepFrontend = true;
         private String attachmentSubfolder;
         private ResourceManager attachmentResourceManager;
+        private Configuration serverConfiguration;
 
         public Builder setAttachmentSubfolder(String attachmentSubfolder) {
             this.attachmentSubfolder = attachmentSubfolder;
@@ -52,8 +76,24 @@ public class AttachmentsConfig {
             return this;
         }
 
-        public AttachmentsConfig createAttachmentsConfig() {
-            return new AttachmentsConfig(attachmentSubfolder, attachmentResourceManager);
+        public Builder setAddAttachments(boolean addAttachments) {
+            this.addAttachments = addAttachments;
+            return this;
         }
+
+        public Builder setAddLinksToStepFrontend(boolean addLinksToStepFrontend) {
+            this.addLinksToStepFrontend = addLinksToStepFrontend;
+            return this;
+        }
+
+        public Builder setServerConfiguration(Configuration serverConfiguration) {
+            this.serverConfiguration = serverConfiguration;
+            return this;
+        }
+
+        public Junit4ReportConfig createConfig() {
+            return new Junit4ReportConfig(attachmentSubfolder, attachmentResourceManager, addAttachments, addLinksToStepFrontend, serverConfiguration);
+        }
+
     }
 }

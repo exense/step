@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.core.artefacts.reports.junitxml;
 
+import ch.exense.commons.app.Configuration;
 import ch.exense.commons.io.FileHelper;
 import com.google.common.io.Files;
 import org.bson.types.ObjectId;
@@ -26,7 +27,7 @@ import org.slf4j.LoggerFactory;
 import step.attachments.AttachmentMeta;
 import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.execution.ExecutionEngineContext;
-import step.reporting.AttachmentsConfig;
+import step.reporting.Junit4ReportConfig;
 import step.reporting.JUnit4ReportWriter;
 import step.reporting.JUnitReport;
 import step.reporting.ReportMetadata;
@@ -45,31 +46,37 @@ public class JUnitXmlReportBuilder {
 
     private final ReportNodeAccessor reportNodeAccessor;
     private final ResourceManager attachmentsResourceManager;
+    private final Configuration configuration;
 
     public JUnitXmlReportBuilder(ExecutionEngineContext executionEngineContext) {
         this.reportNodeAccessor = executionEngineContext.getReportNodeAccessor();
         this.attachmentsResourceManager = executionEngineContext.getResourceManager();
+        this.configuration = executionEngineContext.getConfiguration();
     }
 
     public JUnitReport buildJUnitXmlReport(List<String> executionIds) throws IOException {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream(); OutputStreamWriter writer = new OutputStreamWriter(baos)) {
-            ReportMetadata reportMetadata = buildJUnitXmlReport(new JUnit4ReportWriter(), executionIds, writer);
+            Junit4ReportConfig config = new Junit4ReportConfig.Builder()
+                    .setServerConfiguration(configuration)
+                    .setAddLinksToStepFrontend(true)
+                    .createConfig();
+            ReportMetadata reportMetadata = buildJUnitXmlReport(new JUnit4ReportWriter(config), executionIds, writer);
             return new JUnitReport(reportMetadata.getFileName(), baos.toByteArray());
         }
     }
 
     public JUnitReport buildJunitZipReport(List<String> executionIds, Boolean includeAttachments, String attachmentsSubfolder) throws IOException {
-        AttachmentsConfig attachmentsConfig = null;
         attachmentsSubfolder = attachmentsSubfolder == null || attachmentsSubfolder.isEmpty() ? DEFAULT_ATTACHMETS_SUBFOLDER : attachmentsSubfolder;
-        if (includeAttachments != null && includeAttachments) {
-            attachmentsConfig = new AttachmentsConfig.Builder()
-                    .setAttachmentSubfolder(attachmentsSubfolder)
-                    .setAttachmentResourceManager(attachmentsResourceManager)
-                    .createAttachmentsConfig();
-        }
+        Junit4ReportConfig junit4ReportConfig = new Junit4ReportConfig.Builder()
+                .setAddAttachments(includeAttachments != null ? includeAttachments : false)
+                .setAttachmentSubfolder(attachmentsSubfolder)
+                .setAttachmentResourceManager(attachmentsResourceManager)
+                .setAddLinksToStepFrontend(true)
+                .setServerConfiguration(configuration)
+                .createConfig();
 
         try (ByteArrayOutputStream mainReportOutput = new ByteArrayOutputStream(); OutputStreamWriter writer = new OutputStreamWriter(mainReportOutput)) {
-            ReportMetadata junitXmlReport = buildJUnitXmlReport(new JUnit4ReportWriter(attachmentsConfig), executionIds, writer);
+            ReportMetadata junitXmlReport = buildJUnitXmlReport(new JUnit4ReportWriter(junit4ReportConfig), executionIds, writer);
 
             // here we prepare the temporary directory with xml report and attachments znd zip the whole directory
             File reportDir = FileHelper.createTempFolder();
@@ -120,7 +127,7 @@ public class JUnitXmlReportBuilder {
 
     }
 
-    public ReportMetadata buildJUnitXmlReport(JUnit4ReportWriter reportWriter, List<String> executionIds, OutputStreamWriter writer) throws IOException {
+    private ReportMetadata buildJUnitXmlReport(JUnit4ReportWriter reportWriter, List<String> executionIds, OutputStreamWriter writer) throws IOException {
         ReportMetadata reportMetadata;
         if (executionIds.size() > 1) {
             reportMetadata = reportWriter.writeMultiReport(reportNodeAccessor, executionIds, writer);

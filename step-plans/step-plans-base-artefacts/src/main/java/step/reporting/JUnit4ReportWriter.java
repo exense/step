@@ -49,16 +49,18 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class JUnit4ReportWriter implements ReportWriter {
 
+	private static final String FRONTEND_PATH_TO_EXECUTION_DETAILS = "#/executions/%s/steps";
+
 	private static final Logger log = LoggerFactory.getLogger(JUnit4ReportWriter.class);
 
-	private final AttachmentsConfig attachmentsConfig;
+	private final Junit4ReportConfig junit4ReportConfig;
 
-	public JUnit4ReportWriter(AttachmentsConfig attachmentsConfig) {
-		this.attachmentsConfig = attachmentsConfig;
+	public JUnit4ReportWriter(Junit4ReportConfig junit4ReportConfig) {
+		this.junit4ReportConfig = junit4ReportConfig;
 	}
 
 	public JUnit4ReportWriter() {
-		this.attachmentsConfig = null;
+		this.junit4ReportConfig = new Junit4ReportConfig.Builder().createConfig();
 	}
 
 	@Override
@@ -138,7 +140,16 @@ public class JUnit4ReportWriter implements ReportWriter {
 				"failures=\"" + numberOfFailures.get() + "\" " +
 				"errors=\"" + numberOfErrors.get() + "\">");
 		writer.write('\n');
-		writer.write("<properties></properties>");
+		writer.write("<properties>");
+		if (junit4ReportConfig.isAddLinksToStepFrontend()) {
+			String linkToStep = generateLinkToStep(executionId);
+			if (linkToStep != null) {
+				writer.write('\n');
+				writer.write("<property name=\"url:step\" value=\"" + linkToStep + "\"/>");
+				writer.write('\n');
+			}
+		}
+		writer.write("</properties>");
 		writer.write('\n');
 
 		AtomicBoolean errorWritten = new AtomicBoolean(false);
@@ -195,7 +206,7 @@ public class JUnit4ReportWriter implements ReportWriter {
 			}
 
 			private void writeTestCaseEnd(AtomicReference<String> testCaseId, ReportAttachmentsInfo attachmentsInfo) throws IOException {
-				if (attachmentsConfig != null) {
+				if (junit4ReportConfig.isAddAttachments()) {
 					List<AttachmentMeta> attachmentsPerTestCase = attachmentsInfo.getAttachmentsPerTestCase().get(testCaseId.get());
 					if (attachmentsPerTestCase != null && !attachmentsPerTestCase.isEmpty()) {
 						writer.write("<system-out>");
@@ -247,6 +258,12 @@ public class JUnit4ReportWriter implements ReportWriter {
 		});
 
 		writer.write("<system-out>");
+		if(junit4ReportConfig.isAddLinksToStepFrontend()){
+			String linkToStep = generateLinkToStep(executionId);
+			if(linkToStep != null) {
+				writer.write("More details: " + linkToStep);
+			}
+		}
 		writer.write("</system-out>");
 		writer.write('\n');
 		writer.write("<system-err></system-err>");
@@ -257,12 +274,27 @@ public class JUnit4ReportWriter implements ReportWriter {
 		return new ReportGenerationResult(attachmentsInfo);
 	}
 
-	private void writeAttachmentTag(String testCaseId, AttachmentMeta attachment, Writer writer) {
-		if (attachmentsConfig != null && attachmentsConfig.getAttachmentResourceManager() != null) {
-			// [[ATTACHMENT|screenshots/dashboard.png]]
-			ResourceRevisionFileHandle content = attachmentsConfig.getAttachmentResourceManager().getResourceFile(attachment.getId().toString());
+	private String generateLinkToStep(String executionId) {
+		if (junit4ReportConfig.getServerConfiguration() != null) {
+			String controllerUrl = junit4ReportConfig.getServerConfiguration().getProperty("controller.url");
+			if (controllerUrl == null) {
+				return null;
+			}
+			if (!controllerUrl.endsWith("/")) {
+				controllerUrl = controllerUrl + "/";
+			}
+			return String.format(controllerUrl + FRONTEND_PATH_TO_EXECUTION_DETAILS, executionId);
+		} else {
+			return null;
+		}
+	}
 
-			String subfolders = attachmentsConfig.getAttachmentSubfolder() == null ? "" : attachmentsConfig.getAttachmentSubfolder();
+	private void writeAttachmentTag(String testCaseId, AttachmentMeta attachment, Writer writer) {
+		if (junit4ReportConfig.isAddAttachments() && junit4ReportConfig.getAttachmentResourceManager() != null) {
+			// [[ATTACHMENT|screenshots/dashboard.png]]
+			ResourceRevisionFileHandle content = junit4ReportConfig.getAttachmentResourceManager().getResourceFile(attachment.getId().toString());
+
+			String subfolders = junit4ReportConfig.getAttachmentSubfolder() == null ? "" : junit4ReportConfig.getAttachmentSubfolder();
 			if(!subfolders.isEmpty()){
 				subfolders += File.separator;
 			}
