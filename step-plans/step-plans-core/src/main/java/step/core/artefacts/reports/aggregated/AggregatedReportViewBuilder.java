@@ -11,6 +11,7 @@ import step.core.execution.model.ExecutionAccessor;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class AggregatedReportViewBuilder {
@@ -35,8 +36,11 @@ public class AggregatedReportViewBuilder {
         Objects.requireNonNull(request);
         Execution execution = executionAccessor.get(executionId);
         String aggregatedReportRoot = execution.getResolvedPlanRootNodeId();
-        ResolvedPlanNode resolvedPlanNode = resolvedPlanNodeAccessor.get(aggregatedReportRoot);
-        return recursivelyBuildAggregatedReportTree(resolvedPlanNode, request);
+        //Make sure the resolved Plan is available
+        return Optional.ofNullable(execution.getResolvedPlanRootNodeId())
+                .map(resolvedPlanNodeAccessor::get)
+                .map(node -> recursivelyBuildAggregatedReportTree(node, request))
+                .orElse(null);
     }
 
     public static class AggregatedReportViewRequest {
