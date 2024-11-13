@@ -261,7 +261,6 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 		return aggregatedReportViewBuilder.buildAggregatedReportView(request);
 	}
 
-	// TODO: maybe attachmentsSubfolder is redundant and we can just use the 'attachments' constant for the folder name
 	@Operation(description = "Returns the custom report for the execution")
 	@GET
 	@Path("/{id}/report/{customReportType}")
@@ -271,11 +270,11 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 	public Response getCustomReport(@PathParam("id") String executionId,
 									@PathParam("customReportType") String customReportType,
 									@QueryParam("includeAttachments") Boolean includeAttachments,
-									@QueryParam("attachmentsSubfolder") String attachmentsSubfolder) throws IOException {
+									@QueryParam("attachmentsRootFolder") String attachmentsRootFolder) throws IOException {
 		ExecutionEngineContext executionEngineContext = getScheduler().getExecutor().getExecutionEngine().getExecutionEngineContext();
 		CustomReportType reportType = CustomReportType.parse(customReportType);
 		if (reportType == null) {
-			throw new ControllerServiceException(400, "Invalid report type: " + customReportType);
+			throw getControllerServiceException(customReportType);
 		}
 		switch (reportType) {
 			case JUNITXML:
@@ -284,13 +283,12 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 				}
 				return createJUnitXmlReport(executionEngineContext, List.of(executionId));
 			case JUNITZIP:
-				return createJUnitZipReport(executionEngineContext, List.of(executionId), includeAttachments, attachmentsSubfolder);
+				return createJUnitZipReport(executionEngineContext, List.of(executionId), includeAttachments, attachmentsRootFolder);
 			default:
-				throw new ControllerServiceException(400, "Invalid report type: " + customReportType);
+				throw getControllerServiceException(customReportType);
 		}
 	}
 
-	// TODO: maybe attachmentsSubfolder is redundant and we can just use the 'attachments' constant for the folder name
 	@Operation(description = "Returns the custom report for several executions")
 	@GET
 	@Path("/report/multi/{customReportType}")
@@ -300,11 +298,11 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 	public Response getCustomMultiReport(@PathParam("customReportType") String customReportType,
 										 @QueryParam("ids") String executionIds,
 										 @QueryParam("includeAttachments") Boolean includeAttachments,
-										 @QueryParam("attachmentsSubfolder") String attachmentsSubfolder) throws IOException {
+										 @QueryParam("attachmentsRootFolder") String attachmentsRootFolder) throws IOException {
 		ExecutionEngineContext executionEngineContext = getScheduler().getExecutor().getExecutionEngine().getExecutionEngineContext();
 		CustomReportType reportType = CustomReportType.parse(customReportType);
 		if (reportType == null) {
-			throw new ControllerServiceException(400, "Invalid report type: " + customReportType);
+			throw getControllerServiceException(customReportType);
 		}
 		List<String> idsList = new ArrayList<>();
 		if (executionIds != null) {
@@ -317,10 +315,14 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 				}
 				return createJUnitXmlReport(executionEngineContext, idsList);
 			case JUNITZIP:
-				return createJUnitZipReport(executionEngineContext, idsList, includeAttachments, attachmentsSubfolder);
+				return createJUnitZipReport(executionEngineContext, idsList, includeAttachments, attachmentsRootFolder);
 			default:
-				throw new ControllerServiceException(400, "Invalid report type: " + customReportType);
+				throw getControllerServiceException(customReportType);
 		}
+	}
+
+	private static ControllerServiceException getControllerServiceException(String customReportType) {
+		return new ControllerServiceException(400, "Invalid report type: " + customReportType + ". Supported report types: " + Arrays.toString(CustomReportType.values()));
 	}
 
 	private Response createJUnitXmlReport(ExecutionEngineContext executionEngineContext, List<String> executionIds) throws IOException {
@@ -330,8 +332,8 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 		return response.build();
 	}
 
-	private Response createJUnitZipReport(ExecutionEngineContext executionEngineContext, List<String> executionIds, Boolean includeAttachments, String attachmentsSubfolder) throws IOException {
-		JUnitReport junitReport = new JUnitXmlReportBuilder(executionEngineContext).buildJunitZipReport(executionIds, includeAttachments, attachmentsSubfolder);
+	private Response createJUnitZipReport(ExecutionEngineContext executionEngineContext, List<String> executionIds, Boolean includeAttachments, String attachmentsRootFolder) throws IOException {
+		JUnitReport junitReport = new JUnitXmlReportBuilder(executionEngineContext).buildJunitZipReport(executionIds, includeAttachments, attachmentsRootFolder);
 		Response.ResponseBuilder response = Response.ok(new ByteArrayInputStream(junitReport.getContent()));
 		response.header("Content-Disposition", "attachment; filename=\"" + junitReport.getFileName() + "\"");
 		return response.build();

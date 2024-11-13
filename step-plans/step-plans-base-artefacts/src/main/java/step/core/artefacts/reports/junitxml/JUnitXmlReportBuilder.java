@@ -65,18 +65,20 @@ public class JUnitXmlReportBuilder {
         }
     }
 
-    public JUnitReport buildJunitZipReport(List<String> executionIds, Boolean includeAttachments, String attachmentsSubfolder) throws IOException {
-        attachmentsSubfolder = attachmentsSubfolder == null || attachmentsSubfolder.isEmpty() ? DEFAULT_ATTACHMETS_SUBFOLDER : attachmentsSubfolder;
+    public JUnitReport buildJunitZipReport(List<String> executionIds, Boolean includeAttachments, String attachmentsRootFolder) throws IOException {
+        String attachmentsSubfolder = DEFAULT_ATTACHMETS_SUBFOLDER;
         Junit4ReportConfig junit4ReportConfig = new Junit4ReportConfig.Builder()
                 .setAddAttachments(includeAttachments != null ? includeAttachments : false)
                 .setAttachmentSubfolder(attachmentsSubfolder)
+                .setAttachmentRootFolder(attachmentsRootFolder)
                 .setAttachmentResourceManager(attachmentsResourceManager)
                 .setAddLinksToStepFrontend(true)
                 .setServerConfiguration(configuration)
                 .createConfig();
 
+        JUnit4ReportWriter reportWriter = new JUnit4ReportWriter(junit4ReportConfig);
         try (ByteArrayOutputStream mainReportOutput = new ByteArrayOutputStream(); OutputStreamWriter writer = new OutputStreamWriter(mainReportOutput)) {
-            ReportMetadata junitXmlReport = buildJUnitXmlReport(new JUnit4ReportWriter(junit4ReportConfig), executionIds, writer);
+            ReportMetadata junitXmlReport = buildJUnitXmlReport(reportWriter, executionIds, writer);
 
             // here we prepare the temporary directory with xml report and attachments znd zip the whole directory
             File reportDir = FileHelper.createTempFolder();

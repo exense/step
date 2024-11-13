@@ -25,22 +25,29 @@ public class Junit4ReportConfig {
 
     private boolean addAttachments;
     private final boolean addLinksToStepFrontend;
-    private String attachmentSubfolder;
+    private String attachmentsSubfolder;
+    private String attachmentsRootFolder;
     private ResourceManager attachmentResourceManager;
     private Configuration serverConfiguration;
 
-    private Junit4ReportConfig(String attachmentSubfolder, ResourceManager attachmentResourceManager,
+    private Junit4ReportConfig(String attachmentsSubfolder, String attachmentsRootFolder,
+                               ResourceManager attachmentResourceManager,
                                boolean addAttachments, boolean addLinksToStepFrontend,
                                Configuration serverConfiguration) {
-        this.attachmentSubfolder = attachmentSubfolder;
+        this.attachmentsSubfolder = attachmentsSubfolder;
+        this.attachmentsRootFolder = attachmentsRootFolder;
         this.attachmentResourceManager = attachmentResourceManager;
         this.addAttachments = addAttachments;
         this.addLinksToStepFrontend = addLinksToStepFrontend;
         this.serverConfiguration = serverConfiguration;
     }
 
-    public String getAttachmentSubfolder() {
-        return attachmentSubfolder;
+    public String getAttachmentsSubfolder() {
+        return attachmentsSubfolder;
+    }
+
+    public String getAttachmentsRootFolder() {
+        return attachmentsRootFolder;
     }
 
     public ResourceManager getAttachmentResourceManager() {
@@ -63,11 +70,17 @@ public class Junit4ReportConfig {
         private boolean addAttachments = false;
         private boolean addLinksToStepFrontend = true;
         private String attachmentSubfolder;
+        private String attachmentRootFolder;
         private ResourceManager attachmentResourceManager;
         private Configuration serverConfiguration;
 
         public Builder setAttachmentSubfolder(String attachmentSubfolder) {
             this.attachmentSubfolder = attachmentSubfolder;
+            return this;
+        }
+
+        public Builder setAttachmentRootFolder(String attachmentRootFolder) {
+            this.attachmentRootFolder = attachmentRootFolder;
             return this;
         }
 
@@ -92,7 +105,10 @@ public class Junit4ReportConfig {
         }
 
         public Junit4ReportConfig createConfig() {
-            return new Junit4ReportConfig(attachmentSubfolder, attachmentResourceManager, addAttachments, addLinksToStepFrontend, serverConfiguration);
+            return new Junit4ReportConfig(
+                    attachmentSubfolder, attachmentRootFolder, attachmentResourceManager,
+                    addAttachments, addLinksToStepFrontend, serverConfiguration
+            );
         }
 
     }

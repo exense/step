@@ -74,7 +74,7 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
     private Integer numberOfThreads;
 
     @Parameter(property = "step-execute-auto-packages.report-type")
-    private List<String> reportType;
+    private List<AbstractExecuteAutomationPackageTool.ReportType> reportType;
 
     @Parameter(property = "step-execute-auto-packages.report-dir")
     private String reportDir;
@@ -291,11 +291,11 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
         this.numberOfThreads = numberOfThreads;
     }
 
-    public List<String> getReportType() {
+    public List<AbstractExecuteAutomationPackageTool.ReportType> getReportType() {
         return reportType;
     }
 
-    public void setReportType(List<String> reportType) {
+    public void setReportType(List<AbstractExecuteAutomationPackageTool.ReportType> reportType) {
         this.reportType = reportType;
     }
 

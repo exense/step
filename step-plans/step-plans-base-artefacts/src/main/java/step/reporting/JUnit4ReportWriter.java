@@ -75,7 +75,6 @@ public class JUnit4ReportWriter implements ReportWriter {
 		writer.write("\n");
 		int id = 0;
 
-		// TODO: individual attachments per test case? in https://github.com/testmoapp/junitxml?tab=readme-ov-file#attachments attachments are listed in <system-out> within the <testcase>, but schema doesn't allow it
 		ReportAttachmentsInfo aggregatedAttachmentInfo = new ReportAttachmentsInfo();
 		for (String executionId : executionIds) {
 			ReportGenerationResult generationResult = writeSingleTestSuiteXml(reportTreeAccessor, executionId, writer, true, id);
@@ -206,16 +205,32 @@ public class JUnit4ReportWriter implements ReportWriter {
 			}
 
 			private void writeTestCaseEnd(AtomicReference<String> testCaseId, ReportAttachmentsInfo attachmentsInfo) throws IOException {
-				if (junit4ReportConfig.isAddAttachments()) {
-					List<AttachmentMeta> attachmentsPerTestCase = attachmentsInfo.getAttachmentsPerTestCase().get(testCaseId.get());
-					if (attachmentsPerTestCase != null && !attachmentsPerTestCase.isEmpty()) {
-						writer.write("<system-out>");
+				boolean writeSystemOut = false;
+				List<AttachmentMeta> attachmentsPerTestCase = attachmentsInfo.getAttachmentsPerTestCase().get(testCaseId.get());
+				if (junit4ReportConfig.isAddAttachments() && attachmentsPerTestCase != null && !attachmentsPerTestCase.isEmpty()) {
+					writeSystemOut = true;
+				}
+				if (junit4ReportConfig.isAddLinksToStepFrontend() && generateLinkToStep(executionId) != null) {
+					writeSystemOut = true;
+				}
+
+				if (writeSystemOut) {
+					writer.write("<system-out>");
+					writer.write('\n');
+					if (junit4ReportConfig.isAddAttachments() && attachmentsPerTestCase != null && !attachmentsPerTestCase.isEmpty()) {
 						for (AttachmentMeta attachmentMeta : attachmentsPerTestCase) {
 							writeAttachmentTag(testCaseId.get(), attachmentMeta, writer);
 						}
-						writer.write("</system-out>");
-						writer.write('\n');
 					}
+					if (junit4ReportConfig.isAddLinksToStepFrontend()) {
+						String linkToStep = generateLinkToStep(executionId);
+						if (linkToStep != null) {
+							writer.write("More details: " + linkToStep);
+							writer.write('\n');
+						}
+					}
+					writer.write("</system-out>");
+					writer.write('\n');
 				}
 
 				writer.write("</testcase>");
@@ -258,12 +273,6 @@ public class JUnit4ReportWriter implements ReportWriter {
 		});
 
 		writer.write("<system-out>");
-		if(junit4ReportConfig.isAddLinksToStepFrontend()){
-			String linkToStep = generateLinkToStep(executionId);
-			if(linkToStep != null) {
-				writer.write("More details: " + linkToStep);
-			}
-		}
 		writer.write("</system-out>");
 		writer.write('\n');
 		writer.write("<system-err></system-err>");
@@ -294,16 +303,24 @@ public class JUnit4ReportWriter implements ReportWriter {
 			// [[ATTACHMENT|screenshots/dashboard.png]]
 			ResourceRevisionFileHandle content = junit4ReportConfig.getAttachmentResourceManager().getResourceFile(attachment.getId().toString());
 
-			String subfolders = junit4ReportConfig.getAttachmentSubfolder() == null ? "" : junit4ReportConfig.getAttachmentSubfolder();
+			String rootFolder = junit4ReportConfig.getAttachmentsRootFolder();
+			if (rootFolder == null) {
+				rootFolder = "";
+			}
+			if (!rootFolder.endsWith(File.separator)) {
+				rootFolder += File.separator;
+			}
+
+			String subfolders = junit4ReportConfig.getAttachmentsSubfolder() == null ? "" : junit4ReportConfig.getAttachmentsSubfolder();
 			if(!subfolders.isEmpty()){
 				subfolders += File.separator;
 			}
-			subfolders = subfolders + testCaseId + File.separator;
 
 			// TODO: maybe add timestamp to guarantee unique name
 			String attachmentFileName = content.getResourceFile().getName();
 			try {
-				writer.write(String.format("[[ATTACHMENT|%s%s]]", subfolders, attachmentFileName));
+				writer.write(String.format("[[ATTACHMENT|%s%s]]",  rootFolder + subfolders + testCaseId + File.separator, attachmentFileName));
+				writer.write('\n');
 			} catch (Exception ex) {
 				log.error("Unable to add the attachment to junit report", ex);
 			}

@@ -124,11 +124,12 @@ public class RemoteExecutionManager extends AbstractRemoteClient {
 	/**
 	 * @return the content of the report
 	 */
-	public Report getCustomReport(String executionId, String reportType, Boolean includeAttachments){
+	public Report getCustomReport(String executionId, CustomReportType reportType, Boolean includeAttachments, String attachmentsRootFolder){
 		Map<String, String> queryParams = Map.of(
-				"includeAttachments", includeAttachments == null ? Boolean.FALSE.toString() : includeAttachments.toString()
+				"includeAttachments", includeAttachments == null ? Boolean.FALSE.toString() : includeAttachments.toString(),
+				"attachmentsRootFolder", attachmentsRootFolder
 		);
-		Builder b = requestBuilder("/rest/executions/" + executionId + "/report/" + reportType, queryParams);
+		Builder b = requestBuilder("/rest/executions/" + executionId + "/report/" + reportType.name().toLowerCase(), queryParams);
 		return executeRequest(() -> {
 			Response response = b.get();
 			try(InputStream contentIs = response.readEntity(InputStream.class)) {
@@ -139,12 +140,13 @@ public class RemoteExecutionManager extends AbstractRemoteClient {
         });
 	}
 
-	public Report getCustomMultiReport(List<String> executionIds, String reportType, Boolean includeAttachments) {
+	public Report getCustomMultiReport(List<String> executionIds, CustomReportType reportType, Boolean includeAttachments, String attachmentsRootFolder) {
 		Map<String, String> queryParams = Map.of(
 				"ids", String.join(";", executionIds),
-				"includeAttachments", includeAttachments == null ? Boolean.FALSE.toString() : includeAttachments.toString()
+				"includeAttachments", includeAttachments == null ? Boolean.FALSE.toString() : includeAttachments.toString(),
+				"attachmentsRootFolder", attachmentsRootFolder
 		);
-		Builder b = requestBuilder("/rest/executions/report/multi/" + reportType, queryParams);
+		Builder b = requestBuilder("/rest/executions/report/multi/" + reportType.name().toLowerCase(), queryParams);
 		return executeRequest(() -> {
 			Response response = b.get();
 			try (InputStream contentIs = response.readEntity(InputStream.class)) {
