@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.reporting;
 
+import com.google.common.io.Files;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,27 +76,29 @@ public class JUnit4ReportWriter implements ReportWriter {
 		writer.write("\n");
 		int id = 0;
 
+		String reportFileName = prepareReportFileName();
 		ReportAttachmentsInfo aggregatedAttachmentInfo = new ReportAttachmentsInfo();
 		for (String executionId : executionIds) {
-			ReportGenerationResult generationResult = writeSingleTestSuiteXml(reportTreeAccessor, executionId, writer, true, id);
+			ReportGenerationResult generationResult = writeSingleTestSuiteXml(reportTreeAccessor, executionId, writer, true, id, reportFileName);
 			aggregatedAttachmentInfo.getAttachmentsPerTestCase().putAll(generationResult.getAttachmentsInfo().getAttachmentsPerTestCase());
 			id++;
 		}
 		writer.write("</testsuites>");
 		writer.flush();
-		return new ReportMetadata(prepareReportFileName(), aggregatedAttachmentInfo);
+		return new ReportMetadata(reportFileName, aggregatedAttachmentInfo);
 	}
 
 	/**
 	 * @return the file name of report
 	 */
 	public ReportMetadata writeReport(ReportTreeAccessor reportTreeAccessor, String executionId, Writer writer) throws IOException {
-		ReportGenerationResult generationResult = writeSingleTestSuiteXml(reportTreeAccessor, executionId, writer, false, null);
+		String reportFileName = prepareReportFileName();
+		ReportGenerationResult generationResult = writeSingleTestSuiteXml(reportTreeAccessor, executionId, writer, false, null, reportFileName);
 		writer.flush();
-		return new ReportMetadata(prepareReportFileName(), generationResult.getAttachmentsInfo());
+		return new ReportMetadata(reportFileName, generationResult.getAttachmentsInfo());
 	}
 
-	private ReportGenerationResult writeSingleTestSuiteXml(ReportTreeAccessor reportTreeAccessor, String executionId, Writer writer, boolean writePackage, Integer id) throws IOException {
+	private ReportGenerationResult writeSingleTestSuiteXml(ReportTreeAccessor reportTreeAccessor, String executionId, Writer writer, boolean writePackage, Integer id, String reportFileName) throws IOException {
 		ReportTreeVisitor visitor = new ReportTreeVisitor(reportTreeAccessor);
 		// Using AtomicInteger and StringBuilder because of the "final limitation" in lambdas...
 		AtomicInteger numberOfTests = new AtomicInteger(0);
@@ -219,7 +222,7 @@ public class JUnit4ReportWriter implements ReportWriter {
 					writer.write('\n');
 					if (junit4ReportConfig.isAddAttachments() && attachmentsPerTestCase != null && !attachmentsPerTestCase.isEmpty()) {
 						for (AttachmentMeta attachmentMeta : attachmentsPerTestCase) {
-							writeAttachmentTag(testCaseId.get(), attachmentMeta, writer);
+							writeAttachmentTag(testCaseId.get(), attachmentMeta, writer, reportFileName);
 						}
 					}
 					if (junit4ReportConfig.isAddLinksToStepFrontend()) {
@@ -298,7 +301,7 @@ public class JUnit4ReportWriter implements ReportWriter {
 		}
 	}
 
-	private void writeAttachmentTag(String testCaseId, AttachmentMeta attachment, Writer writer) {
+	private void writeAttachmentTag(String testCaseId, AttachmentMeta attachment, Writer writer, String reportFileName) {
 		if (junit4ReportConfig.isAddAttachments() && junit4ReportConfig.getAttachmentResourceManager() != null) {
 			// [[ATTACHMENT|screenshots/dashboard.png]]
 			ResourceRevisionFileHandle content = junit4ReportConfig.getAttachmentResourceManager().getResourceFile(attachment.getId().toString());
@@ -311,7 +314,9 @@ public class JUnit4ReportWriter implements ReportWriter {
 				rootFolder += File.separator;
 			}
 
-			String subfolders = junit4ReportConfig.getAttachmentsSubfolder() == null ? "" : junit4ReportConfig.getAttachmentsSubfolder();
+			// TODO: this logic (use reportFileName without extension as folder name) is duplicated in step.core.artefacts.reports.junitxml.JUnitXmlReportBuilder
+			String subfolders = Files.getNameWithoutExtension(reportFileName) + File.separator;
+			subfolders += junit4ReportConfig.getAttachmentsSubfolder() == null ? "" : junit4ReportConfig.getAttachmentsSubfolder();
 			if(!subfolders.isEmpty()){
 				subfolders += File.separator;
 			}
