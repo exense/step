@@ -11,7 +11,6 @@ import org.quartz.spi.TriggerFiredBundle;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.controller.ControllerSettingAccessor;
 import step.core.controller.InMemoryControllerSettingAccessor;
-import step.core.deployment.ControllerServiceException;
 import step.core.execution.model.ExecutionParameters;
 import step.core.plugins.PluginManager.Builder.CircularDependencyException;
 
@@ -74,7 +73,7 @@ public class ExecutionSchedulerCronTest {
 		executiontTaskParameters.addAttribute(AbstractOrganizableObject.NAME, "task1");
 		executiontTaskParameters.setExecutionsParameters(new ExecutionParameters());
 		executiontTaskParameters.setCronExpression("0 0/1 * * * ?");
-		assertTrue(executionScheduler.addExecutionTask(executiontTaskParameters));
+		assertTrue(executionScheduler.addOrUpdateExecutionTask(executiontTaskParameters));
 
 		//Test with 1 exclusion
 		final ExecutiontTaskParameters executiontTaskParameters3 = new ExecutiontTaskParameters();
@@ -85,7 +84,7 @@ public class ExecutionSchedulerCronTest {
 		cronExclusion.setCronExpression("* * * ? * FRI");//Exclude Fridays
 		cronExclusion.setDescription("test");
 		executiontTaskParameters3.setCronExclusions(List.of(cronExclusion));
-		assertTrue(executionScheduler.addExecutionTask(executiontTaskParameters3));
+		assertTrue(executionScheduler.addOrUpdateExecutionTask(executiontTaskParameters3));
 
 		//Test with 2 exclusion
 		final ExecutiontTaskParameters executiontTaskParameters4 = new ExecutiontTaskParameters();
@@ -99,12 +98,12 @@ public class ExecutionSchedulerCronTest {
 		cronExclusion2.setCronExpression("* * 10-12 ? * *");//Exclude 10h to 12h
 		cronExclusion2.setDescription("test2");
 		executiontTaskParameters4.setCronExclusions(List.of(cronExclusion1, cronExclusion2));
-		assertTrue(executionScheduler.addExecutionTask(executiontTaskParameters4));
+		assertTrue(executionScheduler.addOrUpdateExecutionTask(executiontTaskParameters4));
 
 		//update task
 		CronExclusion cronExclusion3 = executiontTaskParameters4.getCronExclusions().get(0);
 		cronExclusion3.setCronExpression("* * * ? * SAT");
-		assertTrue(executionScheduler.addExecutionTask(executiontTaskParameters4));
+		assertTrue(executionScheduler.addOrUpdateExecutionTask(executiontTaskParameters4));
 
 		//Delete task
 		executionScheduler.removeExecutionTask(executiontTaskParameters4.getId().toHexString());
@@ -122,7 +121,7 @@ public class ExecutionSchedulerCronTest {
 		executiontTaskParameters.setExecutionsParameters(new ExecutionParameters());
 		executiontTaskParameters.setCronExpression("0 0/1 * * * FRIDAY");
 		assertThrows("CronExpression '0 0/1 * * * FRIDAY' is invalid. Details: Support for specifying both a day-of-week AND a day-of-month parameter is not implemented.",
-				RuntimeException.class, () -> executionScheduler.addExecutionTask(executiontTaskParameters));
+				RuntimeException.class, () -> executionScheduler.addOrUpdateExecutionTask(executiontTaskParameters));
 
 		//Test with same CRON for scheduling and excluding
 		/*Note This normally raise a specific error, but kind of take a lot of time, removed for now*/
@@ -137,7 +136,7 @@ public class ExecutionSchedulerCronTest {
 		cronExclusion.setDescription("test");
 		executiontTaskParameters3.setCronExclusions(List.of(cronExclusion));
 		assertThrows("CronExpression '0 0/1 * * * FRIDAY' is invalid. Details: Support for specifying both a day-of-week AND a day-of-month parameter is not implemented.",
-				RuntimeException.class, () -> executionScheduler.addExecutionTask(executiontTaskParameters3));
+				RuntimeException.class, () -> executionScheduler.addOrUpdateExecutionTask(executiontTaskParameters3));
 
 		executionScheduler.shutdown();
 		//Test with 2 exclusion
@@ -152,7 +151,7 @@ public class ExecutionSchedulerCronTest {
 		cronExclusion2.setCronExpression("* * * ? * FRI");//Exclude 10h to 12h
 		cronExclusion2.setDescription("test2");
 		executiontTaskParameters4.setCronExclusions(List.of(cronExclusion1, cronExclusion2));
-		assertThrows("The Scheduler has been shutdown.", RuntimeException.class, () -> executionScheduler.addExecutionTask(executiontTaskParameters4));
+		assertThrows("The Scheduler has been shutdown.", RuntimeException.class, () -> executionScheduler.addOrUpdateExecutionTask(executiontTaskParameters4));
 	}
 
 }

@@ -4,7 +4,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import org.junit.Before;
@@ -35,6 +34,8 @@ public class ExecutionSchedulerTest {
 		private boolean isExecuteWithExecutionParametersMethodCalled;
 		private boolean isExecuteWithExecutionTaskParametersMethodCalled;
 		private boolean isGetCurrentSessionMethodCalled;
+
+		List<String> activeTasks = new ArrayList<>();
 
 		public MockedExecutor() {
 			super();
@@ -89,20 +90,29 @@ public class ExecutionSchedulerTest {
 		
 		@Override
 		public void deleteSchedule(ExecutiontTaskParameters task) {
+			activeTasks.remove(task.getId().toString());
 			this.isDeleteScheduleMethodCalled = true;
 		}
 
 		@Override
 		public boolean schedule(ExecutiontTaskParameters task) {
 			this.isScheduleMethodCalled = true;
+			activeTasks.add(task.getId().toString());
 			return this.isScheduleMethodCalled;
-		}	
+		}
+
+		@Override
+		public void deleteScheduleIfRequired(ExecutiontTaskParameters task) {
+			if (activeTasks.contains(task.getId().toString())) {
+				deleteSchedule(task);
+			}
+		}
 	}
 	
 	@Before
 	public void before() throws InstantiationException, IllegalAccessException, CircularDependencyException, ClassNotFoundException {
 		controllerSettingAccessor = new InMemoryControllerSettingAccessor();
-		executionTaskAccessor = new InMemoryExecutionTaskAccessor();
+		executionTaskAccessor = new InMemoryExecutionTaskAccessor(false);
 		executor = new MockedExecutor();		
 		controllerSettingAccessor.updateOrCreateSetting(ExecutionScheduler.SETTING_SCHEDULER_ENABLED, "true");
 	}
@@ -118,7 +128,7 @@ public class ExecutionSchedulerTest {
 		executiontTaskParameters.setExecutionsParameters(new ExecutionParameters());
 		String executionTaskId = executiontTaskParameters.getId().toString();
 		
-		assertTrue(executionScheduler.addExecutionTask(executiontTaskParameters));
+		assertTrue(executionScheduler.addOrUpdateExecutionTask(executiontTaskParameters));
 		
 		/*boolean containsExecutionTaskParameters = false;
 		Iterator<ExecutiontTaskParameters> it = executionScheduler.getActiveExecutionTasks();
@@ -153,7 +163,7 @@ public class ExecutionSchedulerTest {
 		ExecutiontTaskParameters executiontTaskParameters2 = new ExecutiontTaskParameters();
 		executiontTaskParameters2.setExecutionsParameters(new ExecutionParameters());
 		String executionTaskId2 = executiontTaskParameters2.getId().toString();
-		assertTrue(executionScheduler.addExecutionTask(executiontTaskParameters2));
+		assertTrue(executionScheduler.addOrUpdateExecutionTask(executiontTaskParameters2));
 		
 		executionScheduler.enableExecutionTask(executionTaskId2);
 		assertFalse(getExecutor().isScheduleMethodCalled);
@@ -166,6 +176,35 @@ public class ExecutionSchedulerTest {
 		
 		executionScheduler.shutdown();
 		assertTrue(getExecutor().isShutDownMethodCalled);
+	}
+
+
+	@Test
+	public void testScheduleUpdate() {
+		ExecutionScheduler executionScheduler = new ExecutionScheduler(controllerSettingAccessor, executionTaskAccessor, executor);
+
+		executionScheduler.start();
+		assertTrue(getExecutor().isStartMethodCalled);
+
+		ExecutiontTaskParameters executiontTaskParameters = new ExecutiontTaskParameters();
+		executiontTaskParameters.setExecutionsParameters(new ExecutionParameters());
+		String executionTaskId = executiontTaskParameters.getId().toString();
+
+		assertTrue(executionScheduler.addOrUpdateExecutionTask(executiontTaskParameters));
+		ExecutiontTaskParameters executiontTaskParametersDB = executionTaskAccessor.get(executionTaskId);
+		assertTrue(executiontTaskParametersDB.isActive());
+		assertTrue(getExecutor().isScheduleMethodCalled);
+		getExecutor().isScheduleMethodCalled=false;
+
+		executiontTaskParametersDB.setActive(false);
+		executionScheduler.addOrUpdateExecutionTask(executiontTaskParametersDB);
+		executiontTaskParametersDB = executionTaskAccessor.get(executionTaskId);
+		assertFalse(executiontTaskParametersDB.isActive());
+		assertTrue(getExecutor().isDeleteScheduleMethodCalled);
+
+		getExecutor().isDeleteScheduleMethodCalled = false;
+		executionScheduler.addOrUpdateExecutionTask(executiontTaskParametersDB);
+		assertFalse(getExecutor().isDeleteScheduleMethodCalled);
 	}
 
 }

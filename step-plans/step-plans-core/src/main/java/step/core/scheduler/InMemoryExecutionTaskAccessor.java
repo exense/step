@@ -26,4 +26,8 @@ public class InMemoryExecutionTaskAccessor extends ExecutionTaskAccessorImpl imp
 		super(new InMemoryCollection<ExecutiontTaskParameters>());
 	}
 
+	public InMemoryExecutionTaskAccessor(boolean byPassCloning) {
+		super(new InMemoryCollection<ExecutiontTaskParameters>(byPassCloning));
+	}
+
 }
