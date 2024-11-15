@@ -117,6 +117,18 @@ public class Executor {
 			throw new RuntimeException(e);
 		}
 	}
+
+	public void deleteScheduleIfRequired(ExecutiontTaskParameters task) {
+		JobKey key = new JobKey(task.getId().toString());
+		try {
+			if (scheduler.checkExists(key)) {
+				deleteSchedule(task);
+			}
+		} catch (SchedulerException e) {
+			logger.error("An error occurred while checking if task exists in scheduler: " + task);
+			throw new RuntimeException(e);
+		}
+	}
 	
 	public void deleteSchedule(ExecutiontTaskParameters task) {
 		JobKey key = new JobKey(task.getId().toString());
