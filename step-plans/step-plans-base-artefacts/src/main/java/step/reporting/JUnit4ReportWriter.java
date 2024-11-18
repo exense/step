@@ -186,7 +186,7 @@ public class JUnit4ReportWriter implements ReportWriter {
 					}
 
 					// add attachment info
-					if(node.getContributingError() && node.getAttachments() != null) {
+					if (node.getContributingError() != null && node.getAttachments() != null) {
 						for (AttachmentMeta attachment : node.getAttachments()) {
 							attachmentsInfo.add(testCaseId.get(), attachment);
 						}
