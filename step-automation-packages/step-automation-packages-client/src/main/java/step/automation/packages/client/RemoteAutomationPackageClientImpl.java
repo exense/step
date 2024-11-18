@@ -98,11 +98,13 @@ public class RemoteAutomationPackageClientImpl extends AbstractRemoteClient impl
     }
 
     private MultiPart prepareFileDataMultiPart(File automationPackageFile) {
-        FileDataBodyPart fileDataBodyPart = new FileDataBodyPart("file", automationPackageFile, MediaType.APPLICATION_OCTET_STREAM_TYPE);
 
         MultiPart multiPart = new MultiPart();
         multiPart.setMediaType(MediaType.MULTIPART_FORM_DATA_TYPE);
-        multiPart.bodyPart(fileDataBodyPart);
+        if (automationPackageFile != null) {
+            FileDataBodyPart fileDataBodyPart = new FileDataBodyPart("file", automationPackageFile, MediaType.APPLICATION_OCTET_STREAM_TYPE);
+            multiPart.bodyPart(fileDataBodyPart);
+        }
         return multiPart;
     }
 

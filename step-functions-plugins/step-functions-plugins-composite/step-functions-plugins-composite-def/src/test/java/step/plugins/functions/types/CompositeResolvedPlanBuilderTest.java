@@ -4,10 +4,12 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.CallFunction;
 import step.artefacts.Return;
-import step.artefacts.handlers.functions.TokenForcastingExecutionPlugin;
+import step.artefacts.handlers.functions.TokenForecastingExecutionPlugin;
 import step.core.AbstractStepContext;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.reports.aggregated.AggregatedReportView;
@@ -41,6 +43,7 @@ import static org.junit.Assert.assertEquals;
 
 public class CompositeResolvedPlanBuilderTest {
 
+    protected static final Logger logger = LoggerFactory.getLogger(CompositeResolvedPlanBuilderTest.class);
     private ExecutionEngine engine;
 
     @Before
@@ -54,7 +57,7 @@ public class CompositeResolvedPlanBuilderTest {
                         functionTypeRegistry.registerFunctionType(new CompositeFunctionType(null));
                         functionTypeRegistry.registerFunctionType(new CustomFunctionType());
                     }
-                }).withPlugin(new TokenForcastingExecutionPlugin()).build();
+                }).withPlugin(new TokenForecastingExecutionPlugin()).build();
     }
 
     @After
@@ -89,17 +92,14 @@ public class CompositeResolvedPlanBuilderTest {
 
         PlanRunnerResult result = engine.execute(plan);
         result.printTree();
-        System.out.println("----------------------");
-        System.out.println("Aggregated report tree");
-        System.out.println("----------------------");
-
-        // Sleep a few ms to ensure that the report node timeseries is flushed
-        Thread.sleep(100);
+        logger.info("----------------------");
+        logger.info("Aggregated report tree");
+        logger.info("----------------------");
 
         AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(engine.getExecutionEngineContext(), result.getExecutionId());
         AggregatedReportView node = aggregatedReportViewBuilder.buildAggregatedReportView();
-        System.out.println(node.toString());
-        Assert.assertEquals("Sequence: 1x\n" +
+        logger.info(node.toString());
+        assertEquals("Sequence: 1x\n" +
                 " CallFunction: 1x\n" +
                 "  Sequence: 1x\n" +
                 "   Return: 1x\n" +
@@ -121,20 +121,50 @@ public class CompositeResolvedPlanBuilderTest {
 
         PlanRunnerResult result = engine.execute(plan);
         result.printTree();
-        System.out.println("----------------------");
-        System.out.println("Aggregated report tree");
-        System.out.println("----------------------");
-
-        // Sleep a few ms to ensure that the report node timeseries is flushed
-        Thread.sleep(100);
+        logger.info("----------------------");
+        logger.info("Aggregated report tree");
+        logger.info("----------------------");
 
         AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(engine.getExecutionEngineContext(), result.getExecutionId());
         AggregatedReportView node = aggregatedReportViewBuilder.buildAggregatedReportView();
-        System.out.println(node.toString());
+        logger.info(node.toString());
         Assert.assertEquals("CallFunction: 1x\n" +
                 " [BEFORE]\n" +
                 "  Echo: 1x\n" +
                 " Check: 1x\n",
+                node.toString());
+    }
+
+    @Test
+    public void planWithCallFunctionByDynamicName() throws IOException, InterruptedException {
+        CustomFunction myFunction = new CustomFunction();
+        myFunction.addAttribute(AbstractOrganizableObject.NAME, "My function call");
+
+        Plan plan = PlanBuilder.create()
+                .startBlock(BaseArtefacts.sequence())
+                .add(BaseArtefacts.set("keywordName","'My function call'"))
+                .add(FunctionArtefacts.keywordWithDynamicSelection(Map.of("name","keywordName")))
+                .add(BaseArtefacts.check("true"))
+                .endBlock().build();
+
+
+        plan.setFunctions(List.of(myFunction));
+
+        PlanRunnerResult result = engine.execute(plan);
+        result.printTree();
+        logger.info("----------------------");
+        logger.info("Aggregated report tree");
+        logger.info("----------------------");
+
+        //TODO currently the test pass since the execution pass, but the generation of the aggregated plan before
+        //execution actually throw an exception (the call function by dynamic name doesn't work)
+        AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(engine.getExecutionEngineContext(), result.getExecutionId());
+        AggregatedReportView node = aggregatedReportViewBuilder.buildAggregatedReportView();
+        logger.info(node.toString());
+        assertEquals("Sequence: 1x\n" +
+                        " Set: 1x\n" +
+                        " CallFunction: 1x\n" +
+                        " Check: 1x\n",
                 node.toString());
     }
 

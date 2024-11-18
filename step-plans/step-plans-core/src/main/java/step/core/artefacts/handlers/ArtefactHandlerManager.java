@@ -55,8 +55,7 @@ public class ArtefactHandlerManager {
 	@SuppressWarnings("unchecked")
 	public ArtefactHandler<AbstractArtefact, ReportNode> getArtefactHandler(AbstractArtefact artefact) {
 		Class<AbstractArtefact> artefactClass = (Class<AbstractArtefact>) artefact.getClass();
-		ArtefactHandler<AbstractArtefact, ReportNode> artefactHandler = getArtefactHandler(artefactClass, context);
-		return artefactHandler;
+        return getArtefactHandler(artefactClass, context);
 	}
 	
 	@SuppressWarnings("unchecked")

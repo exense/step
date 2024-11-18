@@ -31,7 +31,7 @@ import jakarta.json.JsonObject;
 
 import org.junit.Test;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import step.artefacts.AbstractArtefactTest;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.variables.SimpleStringMap;

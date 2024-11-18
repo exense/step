@@ -70,7 +70,7 @@ public class DashboardsGenerator {
         dashboard.addCustomField(GENERATION_NAME, TimeSeriesControllerPlugin.EXECUTION_DASHBOARD_PREPOPULATED_NAME);
         dashboard
                 .setGrouping(List.of("name"))
-                .setDescription("Readonly default dashboard used for analytics display")
+                .setDescription("Preconfigured dashboard for execution performance analysis")
                 .setTimeRange(new TimeRangeSelection().setType(TimeRangeSelectionType.RELATIVE).setRelativeSelection(new TimeRangeRelativeSelection().setTimeInMs(60000L)))
                 .setFilters(Arrays.asList(
                         emptyFilterFromAttribute(STATUS_ATTRIBUTE, TimeSeriesFilterItemType.OPTIONS, true),
@@ -108,7 +108,7 @@ public class DashboardsGenerator {
         dashboard.addCustomField(GENERATION_NAME, TimeSeriesControllerPlugin.ANALYTICS_DASHBOARD_PREPOPULATED_NAME);
         dashboard
                 .setGrouping(List.of("name"))
-                .setDescription("Readonly default dashboard used for executions display")
+                .setDescription("Preconfigured dashboard for scheduled executions analysis")
                 .setTimeRange(new TimeRangeSelection().setType(TimeRangeSelectionType.RELATIVE).setRelativeSelection(new TimeRangeRelativeSelection().setTimeInMs(60000L * 60)))
                 .setFilters(Arrays.asList(
                         emptyFilterFromAttribute(STATUS_ATTRIBUTE, TimeSeriesFilterItemType.OPTIONS, true),

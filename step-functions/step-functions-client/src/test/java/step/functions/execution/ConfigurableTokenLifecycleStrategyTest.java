@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.Test;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import step.grid.TokenWrapper;
 import step.grid.client.TokenLifecycleStrategy;
 import step.grid.client.TokenLifecycleStrategyCallback;

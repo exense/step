@@ -46,7 +46,7 @@ public class YamlPlanReaderTest {
 	private final YamlPlanReader yamlReader;
 
 	// DEV flag to store test results in local files
-	private boolean writeResultsToLocalFiles = true;
+	private boolean writeResultsToLocalFiles = false;
 
 	private final ObjectMapper technicalPlanMapper;
 
@@ -142,6 +142,18 @@ public class YamlPlanReaderTest {
 
 		convertPlanToYaml("src/test/resources/step/plans/parser/yaml/data-set/test-expected-data-set-tech-plan.yml",
 				"src/test/resources/step/plans/parser/yaml/data-set/test-data-set-converted-plan.yml"
+		);
+	}
+
+	@Test
+	public void callPlan() throws YamlPlanValidationException {
+		convertFromYamlToPlan(
+				"src/test/resources/step/plans/parser/yaml/call-plan/test-call-plan.yml",
+				"src/test/resources/step/plans/parser/yaml/call-plan/test-expected-call-tech-plan.yml"
+		);
+
+		convertPlanToYaml("src/test/resources/step/plans/parser/yaml/call-plan/test-expected-call-tech-plan.yml",
+				"src/test/resources/step/plans/parser/yaml/call-plan/test-converted-from-tech-call-plan.yml"
 		);
 	}
 
@@ -259,7 +271,7 @@ public class YamlPlanReaderTest {
 		);
 	}
 
-	//@Test
+	@Test
 	public void checkConversionForBuildPlan() throws YamlPlanValidationException {
 		// read plan
 		File technicalPlanFile = new File("src/test/resources/step/plans/parser/yaml/build/test-build-tech-plan.yml");
@@ -318,7 +330,8 @@ public class YamlPlanReaderTest {
 		File expectedYamlFile = new File("src/test/resources/step/plans/parser/yaml/plaintext/plaintext-expected-plan.yml");
 
 		try (FileInputStream is = new FileInputStream(plainTextPlan);
-			 FileInputStream expectedIS = new FileInputStream(expectedYamlFile); ByteArrayOutputStream os = new ByteArrayOutputStream()) {
+			 FileInputStream expectedIS = new FileInputStream(expectedYamlFile);
+             ByteArrayOutputStream os = new ByteArrayOutputStream()) {
 			yamlReader.convertFromPlainTextToYaml("converted plaintext plan", is, os);
 
 			if (writeResultsToLocalFiles) {
@@ -337,6 +350,19 @@ public class YamlPlanReaderTest {
 		}
 	}
 
+	@Test
+	public void checkPlanYamlConfiguration() {
+		convertFromYamlToPlan(
+				"src/test/resources/step/plans/parser/yaml/agents/test-agents-configuration-yaml.yml",
+				"src/test/resources/step/plans/parser/yaml/agents/test-expected-agents-configuration-tech-plan.yml"
+		);
+
+		convertPlanToYaml(
+				"src/test/resources/step/plans/parser/yaml/controls/test-expected-controls-tech-plan.yml",
+				"src/test/resources/step/plans/parser/yaml/controls/test-controls-plan.yml"
+		);
+	}
+
 	private String replaceDynamicValuesInActualTechOutput(String input) {
 		return input.replaceAll("id: \"[^\"]*\"", "id: \"" + STATIC_ID + "\"");
 
@@ -351,7 +377,8 @@ public class YamlPlanReaderTest {
 		File techYamlFile = new File(technicalPlanFilePath);
 
 		try (FileInputStream is = new FileInputStream(techYamlFile);
-			 FileInputStream expectedIS = new FileInputStream(expectedYamlPlan); ByteArrayOutputStream os = new ByteArrayOutputStream()) {
+			 FileInputStream expectedIS = new FileInputStream(expectedYamlPlan);
+             ByteArrayOutputStream os = new ByteArrayOutputStream()) {
 			Plan plan = technicalPlanMapper.readValue(is, Plan.class);
 
 			// convert plan to the yaml format

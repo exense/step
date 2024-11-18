@@ -26,9 +26,11 @@ import jakarta.json.JsonObjectBuilder;
 import jakarta.json.spi.JsonProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.core.plans.agents.configuration.AgentPoolProvisioningConfiguration;
 import step.core.Version;
 import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.artefacts.AbstractArtefact;
+import step.core.plans.agents.configuration.AutomaticAgentProvisioningConfiguration;
 import step.core.scanner.CachedAnnotationScanner;
 import step.core.yaml.schema.*;
 import step.handlers.javahandler.jsonschema.FieldMetadataExtractor;
@@ -44,6 +46,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static step.core.plans.agents.configuration.ManualAgentProvisioningConfiguration.AGENT_POOL_CONFIGURATION_ARRAY_DEF;
+import static step.core.plans.agents.configuration.ManualAgentProvisioningConfiguration.AGENT_CONFIGURATION_YAML_NAME;
 import static step.core.scanner.Classes.newInstanceAs;
 
 public class YamlPlanJsonSchemaGenerator {
@@ -52,6 +56,7 @@ public class YamlPlanJsonSchemaGenerator {
 
 	public static final String ARTEFACT_DEF = "ArtefactDef";
 	private static final String ROOT_ARTEFACT_DEF = "RootArtefactDef";
+	public static final String SchemaDefSuffix = "Def";
 
 	protected final String targetPackage;
 
@@ -112,7 +117,7 @@ public class YamlPlanJsonSchemaGenerator {
 		}
 	}
 
-	public JsonObjectBuilder createYamlPlanProperties(boolean versioned) {
+	public JsonObjectBuilder createYamlPlanProperties(boolean versioned, boolean isCompositePlan) {
 		// plan only has "name", "version", and the root artifact
 		JsonObjectBuilder objectBuilder = jsonProvider.createObjectBuilder();
 		objectBuilder.add("name", jsonProvider.createObjectBuilder().add("type", "string"));
@@ -120,6 +125,15 @@ public class YamlPlanJsonSchemaGenerator {
 		if (versioned) {
 			// in 'version' we should either explicitly specify the current json schema version or skip this field
 			objectBuilder.add("version", jsonProvider.createObjectBuilder().add("const", actualVersion.toString()));
+		}
+		if (!isCompositePlan) {
+			//categories
+			JsonObjectBuilder categoriesBuilder = jsonProvider.createObjectBuilder();
+			categoriesBuilder.add("type", "array");
+			categoriesBuilder.add("items", jsonProvider.createObjectBuilder().add("type","string"));
+			objectBuilder.add("categories", categoriesBuilder);
+			//agents
+			objectBuilder.add(AGENT_CONFIGURATION_YAML_NAME, YamlJsonSchemaHelper.addRef(jsonProvider.createObjectBuilder(), AGENT_CONFIGURATION_YAML_NAME + SchemaDefSuffix));
 		}
 		objectBuilder.add("root", YamlJsonSchemaHelper.addRef(jsonProvider.createObjectBuilder(), ROOT_ARTEFACT_DEF));
 		return objectBuilder;
@@ -149,6 +163,7 @@ public class YamlPlanJsonSchemaGenerator {
 			defsBuilder.add(ARTEFACT_DEF, createArtefactDef(artefactImplDefs.controlArtefactDefs));
 			defsBuilder.add(ROOT_ARTEFACT_DEF, createArtefactDef(artefactImplDefs.rootArtefactDefs));
 			defsBuilder.add(AbstractYamlArtefact.ARTEFACT_ARRAY_DEF, createArtefactArrayDef());
+			createPlanPoolConfigurationsDef(defsBuilder);
 
 			defsBuilder.add(YamlJsonSchemaHelper.PLAN_DEF, createPlanDef(versionedPlans, false));
 			defsBuilder.add(YamlJsonSchemaHelper.COMPOSITE_PLAN_DEF, createPlanDef(versionedPlans, true));
@@ -166,6 +181,40 @@ public class YamlPlanJsonSchemaGenerator {
 		builder.add("type", "array");
 		builder.add("items", YamlJsonSchemaHelper.addRef(jsonProvider.createObjectBuilder(), ARTEFACT_DEF));
 		return builder;
+	}
+
+	private void createPlanPoolConfigurationsDef(JsonObjectBuilder defsBuilder) throws JsonSchemaPreparationException {
+		//Create definition for agentPoolConfiguration
+		String agentPoolConfigurationYamlName = "agentPoolConfiguration";
+		defsBuilder.add(agentPoolConfigurationYamlName + SchemaDefSuffix, schemaHelper.createJsonSchemaForClass(
+				jsonSchemaCreator,
+				AgentPoolProvisioningConfiguration.class,
+				true
+		));
+
+		//Create definition for array of agentPoolConfigurationYamlName
+		JsonObjectBuilder builder = jsonProvider.createObjectBuilder();
+		builder.add("type", "array");
+		builder.add("items", YamlJsonSchemaHelper.addRef(jsonProvider.createObjectBuilder(), agentPoolConfigurationYamlName + SchemaDefSuffix));
+		defsBuilder.add(AGENT_POOL_CONFIGURATION_ARRAY_DEF, builder);
+
+		//Create definition for agents configuration in plan (One of)
+		JsonArrayBuilder arrayBuilder = jsonSchemaCreator.getJsonProvider().createArrayBuilder();
+		//add list of agent spec configurations
+		arrayBuilder.add(YamlJsonSchemaHelper.addRef(jsonProvider.createObjectBuilder(), AGENT_POOL_CONFIGURATION_ARRAY_DEF));
+		//Add enum
+		JsonObjectBuilder enumBuilder = jsonSchemaCreator.getJsonProvider().createObjectBuilder();
+		JsonArrayBuilder enumArray = jsonSchemaCreator.getJsonProvider().createArrayBuilder();
+		for (Object enumValue : AutomaticAgentProvisioningConfiguration.PlanAgentsPoolAutoMode.values()) {
+			enumArray.add(enumValue.toString());
+		}
+		enumBuilder.add("enum", enumArray);
+		arrayBuilder.add(enumBuilder);
+
+		//Create agentsDef with oneOf
+		JsonObjectBuilder agentsDefBuilder = jsonProvider.createObjectBuilder();
+		agentsDefBuilder.add("oneOf", arrayBuilder);
+		defsBuilder.add(AGENT_CONFIGURATION_YAML_NAME + SchemaDefSuffix, agentsDefBuilder);
 	}
 
 	private ArtefactDefinitions createArtefactImplDefs() throws JsonSchemaPreparationException {
@@ -195,7 +244,7 @@ public class YamlPlanJsonSchemaGenerator {
 
 			if (artefactClass != null) {
 				String name = AbstractArtefact.getArtefactName(artefactClass);
-				String defName = name + "Def";
+				String defName = name + SchemaDefSuffix;
 
 				JsonObjectBuilder def = schemaHelper.createNamedObjectImplDef(
 						YamlArtefactsLookuper.getYamlArtefactName(artefactClass),
@@ -223,7 +272,7 @@ public class YamlPlanJsonSchemaGenerator {
 
 			if (artefactClass != null) {
 				String name = AbstractArtefact.getArtefactName(artefactClass);
-				String defName = name + "Def";
+				String defName = name + SchemaDefSuffix;
 
 				JsonObjectBuilder def = createJsonSchemaForSimpleArtefact(simpleYamlModel);
 
@@ -264,12 +313,12 @@ public class YamlPlanJsonSchemaGenerator {
 		// properties declared in AbstractArtefact are taken from AbstractYamlArtefact
 		schemaHelper.extractPropertiesFromClass(jsonSchemaCreator, AbstractYamlArtefact.class, classPropertiesBuilder, requiredProperties, null);
 		schemaHelper.extractPropertiesFromClass(jsonSchemaCreator, simpleYamlArtefact, classPropertiesBuilder, requiredProperties, AbstractArtefact.class);
-
+		
 		// define the default node name explicitly
 		// TODO: find some solution to apply default 'nodeName'
 		classPropertiesBuilder.add(YamlPlanFields.NAME_YAML_FIELD,
 				jsonProvider.createObjectBuilder()
-						.add("type", "string")
+						.add("$ref", "#/$defs/SmartDynamicValueStringDef")
 						.add("default", new AbstractYamlArtefact.DefaultYamlArtefactNameProvider().getDefaultValue(simpleYamlArtefact, null))
 		);
 
@@ -285,7 +334,7 @@ public class YamlPlanJsonSchemaGenerator {
 	private JsonObjectBuilder createPlanDef(boolean versionedPlans, boolean isCompositePlan) {
 		JsonObjectBuilder yamlPlanDef = jsonProvider.createObjectBuilder();
 		// add properties for top-level "plan" object
-		yamlPlanDef.add("properties", createYamlPlanProperties(versionedPlans));
+		yamlPlanDef.add("properties", createYamlPlanProperties(versionedPlans, isCompositePlan));
 		JsonArrayBuilder arrayBuilder = jsonProvider.createArrayBuilder();
 		if (!isCompositePlan) {
 			// for composite plan the name is not required

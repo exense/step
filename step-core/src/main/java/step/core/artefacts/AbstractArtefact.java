@@ -59,10 +59,11 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
 	private DynamicValue<Boolean> skipNode = new DynamicValue<>(false);
 	private DynamicValue<Boolean> instrumentNode = new DynamicValue<>(false);
 	private DynamicValue<Boolean> continueParentNodeExecutionOnError = new DynamicValue<>(false);
+	private boolean isWorkArtefact = false;
 
 	private ChildrenBlock before;
 	private ChildrenBlock after;
-	
+
 	public AbstractArtefact() {
 		super();
 		Map<String, String> defaultAttributes = new HashMap<>();
@@ -224,6 +225,15 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
 
 	public void setContinueParentNodeExecutionOnError(DynamicValue<Boolean> continueOnError) {
 		this.continueParentNodeExecutionOnError = continueOnError;
+	}
+
+	@JsonIgnore
+	public boolean isWorkArtefact() {
+		return isWorkArtefact;
+	}
+
+	public void setWorkArtefact(boolean workArtefact) {
+		isWorkArtefact = workArtefact;
 	}
 
 	@EntityReference(type= EntityManager.recursive)

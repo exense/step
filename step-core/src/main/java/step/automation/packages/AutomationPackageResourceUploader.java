@@ -18,14 +18,21 @@
  ******************************************************************************/
 package step.automation.packages;
 
+import ch.exense.commons.io.FileHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.attachments.FileResolver;
 import step.resources.Resource;
 import step.resources.ResourceManager;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.net.URL;
 
 public class AutomationPackageResourceUploader {
+
+    private static final Logger logger = LoggerFactory.getLogger(AutomationPackageResourceUploader.class);
 
     public String applyResourceReference(String resourceReference,
                                          String resourceType,
@@ -54,12 +61,48 @@ public class AutomationPackageResourceUploader {
                     throw new RuntimeException("Resource not found in automation package: " + resourcePath);
                 }
                 File resourceFile = new File(resourceUrl.getFile());
-                return resourceManager.createResource(
-                        resourceType,
-                        context.getAutomationPackageArchive().getResourceAsStream(resourcePath),
-                        resourceFile.getName(),
-                        false, context.getEnricher()
-                );
+
+                String fileName;
+                InputStream resourceStream;
+                // Check if the resource is a directory
+                boolean isDirectory = ClassLoaderResourceFilesystem.isDirectory(resourceUrl);
+                File tempFolder = null;
+                if (isDirectory) {
+                    logger.debug("The referenced resource {} is a directory. It will be extracted to a temporary directory and zipped...", resourcePath);
+                    // If the resource is a directory, extract it and create a zip out of it
+                    File directoryArchive;
+                    // Extract the resource directory
+                    try (ClassLoaderResourceFilesystem.ExtractedDirectory extractedDirectory = ClassLoaderResourceFilesystem.extractDirectory(resourceUrl)) {
+                        File extractedDirectoryFile = extractedDirectory.directory;
+                        String extractedDirectoryName = extractedDirectoryFile.getName();
+                        // Create a temp folder as container for the archive
+                        tempFolder = FileHelper.createTempFolder();
+                        // Create an archive of the extracted directory
+                        directoryArchive = tempFolder.toPath().resolve(extractedDirectoryName + ".zip").toFile();
+                        FileHelper.zip(extractedDirectoryFile.getParentFile(), directoryArchive);
+                    }
+                    resourceStream = new FileInputStream(directoryArchive);
+                    fileName = directoryArchive.getName();
+                } else {
+                    resourceStream = context.getAutomationPackageArchive().getResourceAsStream(resourcePath);
+                    fileName = resourceFile.getName();
+                }
+
+                try {
+                    return resourceManager.createResource(
+                            resourceType,
+                            false,
+                            resourceStream,
+                            fileName,
+                            false, context.getEnricher()
+                    );
+                } finally {
+                    resourceStream.close();
+                    if (tempFolder != null) {
+                        // Delete the temporary folder
+                        FileHelper.deleteFolder(tempFolder);
+                    }
+                }
             } catch (Exception e) {
                 throw new RuntimeException("Unable to upload automation package resource " + resourcePath, e);
             }

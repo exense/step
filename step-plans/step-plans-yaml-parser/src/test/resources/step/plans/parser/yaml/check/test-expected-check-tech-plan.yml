@@ -2,10 +2,12 @@
 _class: "step.core.plans.Plan"
 attributes:
   name: "test check artefact"
+agents:
+  mode: "auto_detect"
 root:
   _class: "Sequence"
   attributes:
-    name: "Sequence"
+    name: "test check artefact"
   dynamicName:
     dynamic: false
     value: ""

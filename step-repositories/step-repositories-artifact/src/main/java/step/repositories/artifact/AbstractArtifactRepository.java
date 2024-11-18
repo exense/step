@@ -18,46 +18,35 @@
  ******************************************************************************/
 package step.repositories.artifact;
 
+import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.artefacts.TestCase;
 import step.artefacts.TestSet;
-import step.automation.packages.AutomationPackageReader;
-import step.core.accessors.AbstractOrganizableObject;
-import step.core.artefacts.AbstractArtefact;
+import step.automation.packages.AutomationPackageManager;
+import step.automation.packages.execution.RepositoryWithAutomationPackageSupport;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.deployment.ControllerServiceException;
 import step.core.execution.ExecutionContext;
 import step.core.objectenricher.ObjectPredicate;
-import step.core.plans.Plan;
-import step.core.plans.PlanAccessor;
-import step.core.plans.builder.PlanBuilder;
-import step.core.repositories.*;
-import step.repositories.ArtifactRepositoryConstants;
-import step.resources.ResourceManager;
+import step.core.repositories.ArtefactInfo;
+import step.core.repositories.TestRunStatus;
+import step.core.repositories.TestSetStatusOverview;
+import step.functions.accessor.FunctionAccessor;
+import step.functions.type.FunctionTypeRegistry;
 
 import java.io.File;
-import java.util.ArrayList;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static step.planbuilder.BaseArtefacts.callPlan;
-
-public abstract class AbstractArtifactRepository extends AbstractRepository {
+public abstract class AbstractArtifactRepository extends RepositoryWithAutomationPackageSupport {
 
 	protected static final Logger logger = LoggerFactory.getLogger(MavenArtifactRepository.class);
 
-	protected final PlanAccessor planAccessor;
-	protected final ResourceManager resourceManager;
-	protected final StepJarParser stepJarParser;
-
-	public AbstractArtifactRepository(Set<String> canonicalRepositoryParameters, PlanAccessor planAccessor, ResourceManager resourceManager, AutomationPackageReader automationPackageReader) {
-		super(canonicalRepositoryParameters);
-		this.planAccessor = planAccessor;
-		this.resourceManager = resourceManager;
-		this.stepJarParser = new StepJarParser(resourceManager, automationPackageReader);
+	public AbstractArtifactRepository(Set<String> canonicalRepositoryParameters, AutomationPackageManager manager, FunctionTypeRegistry functionTypeRegistry, FunctionAccessor functionAccessor) {
+		super(canonicalRepositoryParameters, manager, functionTypeRegistry, functionAccessor);
 	}
 
 	protected static String getMandatoryRepositoryParameter(Map<String, String> repositoryParameters, String paramKey) {
@@ -79,112 +68,28 @@ public abstract class AbstractArtifactRepository extends AbstractRepository {
 	protected abstract String resolveArtifactName(Map<String, String> repositoryParameters);
 
 	@Override
-	public TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) {
-		ParsedArtifact parsedArtifact = getAndParseArtifact(repositoryParameters);
-
-		TestSetStatusOverview overview = new TestSetStatusOverview();
-		List<TestRunStatus> runs = parsedArtifact.parsingResult.getPlans().stream()
-				.map(plan -> new TestRunStatus(getPlanName(plan), getPlanName(plan), ReportNodeStatus.NORUN)).collect(Collectors.toList());
-		overview.setRuns(runs);
-		return overview;
-	}
-
-	protected ParsedArtifact getAndParseArtifact(Map<String, String> repositoryParameters) {
-		File artifact = getArtifact(repositoryParameters);
-		File libraries = getLibraries(repositoryParameters);
-
-		String[] includedClasses = repositoryParameters.getOrDefault(ArtifactRepositoryConstants.PARAM_INCLUDE_CLASSES, ",").split(",");
-		String[] includedAnnotations = repositoryParameters.getOrDefault(ArtifactRepositoryConstants.PARAM_INCLUDE_ANNOTATIONS, ",").split(",");
-		String[] excludedClasses = repositoryParameters.getOrDefault(ArtifactRepositoryConstants.PARAM_EXCLUDE_CLASSES, ",").split(",");
-		String[] excludedAnnotations = repositoryParameters.getOrDefault(ArtifactRepositoryConstants.PARAM_EXCLUDE_ANNOTATIONS, ",").split(",");
-
-		StepJarParser.PlansParsingResult parsingResult = parsePlans(artifact,libraries,includedClasses,includedAnnotations,excludedClasses,excludedAnnotations);
-		return new ParsedArtifact(artifact, parsingResult);
-	}
-
-	protected abstract File getLibraries(Map<String, String> repositoryParameters);
-
-	protected abstract File getArtifact(Map<String, String> repositoryParameters);
-
-	@Override
-	public ImportResult importArtefact(ExecutionContext context, Map<String, String> repositoryParameters) {
-		ImportResult result = new ImportResult();
-		List<String> errors = new ArrayList<>();
+	public TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) throws IOException {
+		PackageExecutionContext ctx = null;
 		try {
-			ParsedArtifact parsedArtifact = getAndParseArtifact(repositoryParameters);
-			Plan plan = buildTestSetPlan(context, repositoryParameters, parsedArtifact);
-			planAccessor.save(plan);
-			result.setPlanId(plan.getId().toString());
-		} catch (Exception e) {
-			logger.error("Error while importing / parsing artifact for execution " + context.getExecutionId(), e);
-			errors.add("Error while importing / parsing artifact: " + e.getMessage());
+			File artifact = getArtifact(repositoryParameters);
+			ctx = super.createPackageExecutionContext(null, objectPredicate, new ObjectId().toString(), new AutomationPackageFile(artifact, null), false);
+			TestSetStatusOverview overview = new TestSetStatusOverview();
+			List<TestRunStatus> runs = getFilteredPackagePlans(ctx.getAutomationPackage(), repositoryParameters, ctx.getInMemoryManager())
+					.map(plan -> new TestRunStatus(getPlanName(plan), getPlanName(plan), ReportNodeStatus.NORUN)).collect(Collectors.toList());
+			overview.setRuns(runs);
+			return overview;
+		} finally {
+			if (ctx != null) {
+				ctx.close();
+			}
 		}
-		result.setSuccessful(errors.isEmpty());
-		result.setErrors(errors);
-		return result;
 	}
 
-	private Plan buildTestSetPlan(ExecutionContext context, Map<String, String> repositoryParameters, ParsedArtifact parsedArtifact) {
-		PlanBuilder planBuilder = PlanBuilder.create();
-		int numberOfThreads = Integer.parseInt(repositoryParameters.getOrDefault(ArtifactRepositoryConstants.PARAM_THREAD_NUMBER, "0"));
-		TestSet testSet = new TestSet(numberOfThreads);
-		testSet.addAttribute(AbstractArtefact.NAME, parsedArtifact.artifact.getName());
-
-		planBuilder.startBlock(testSet);
-		parsedArtifact.parsingResult.getPlans().forEach(plan -> {
-			String name = getPlanName(plan);
-
-			wrapPlanInTestCase(plan, name);
-
-			plan.setVisible(false);
-
-			plan.getFunctions().addAll(parsedArtifact.parsingResult.getFunctions());
-			enrichPlan(context, plan);
-
-			planAccessor.save(plan);
-			planBuilder.add(callPlan(plan.getId().toString(), name));
-		});
-		planBuilder.endBlock();
-
-		Plan plan = planBuilder.build();
-		plan.setVisible(false);
-		plan.setFunctions(parsedArtifact.parsingResult.getFunctions());
-		enrichPlan(context, plan);
-		return plan;
-	}
-
-	private String getPlanName(Plan plan) {
-		return plan.getAttributes().get(AbstractOrganizableObject.NAME);
-	}
+	public abstract File getArtifact(Map<String, String> repositoryParameters);
 
 	@Override
 	public void exportExecution(ExecutionContext context, Map<String, String> repositoryParameters) {
 
 	}
 
-	protected StepJarParser.PlansParsingResult parsePlans(File artifact, File libraries, String[] includedClasses, String[] includedAnnotations, String[] excludedClasses, String[] excludedAnnotations) {
-		return stepJarParser.getPlansForJar(artifact, libraries, includedClasses, includedAnnotations, excludedClasses, excludedAnnotations);
-	}
-
-	protected void wrapPlanInTestCase(Plan plan, String testCaseName){
-		AbstractArtefact root = plan.getRoot();
-		if (!(root instanceof TestCase)) {
-			// tricky solution - wrap all plans into TestCase to display all plans, launched while running automation package, in UI
-			TestCase newRoot = new TestCase();
-			newRoot.addAttribute(AbstractArtefact.NAME, testCaseName);
-			newRoot.addChild(root);
-			plan.setRoot(newRoot);
-		}
-	}
-
-	private static class ParsedArtifact {
-		private final File artifact;
-		private final StepJarParser.PlansParsingResult parsingResult;
-
-		public ParsedArtifact(File artifact, StepJarParser.PlansParsingResult parsingResult) {
-
-			this.artifact = artifact;
-			this.parsingResult = parsingResult;
-		}
-	}
 }

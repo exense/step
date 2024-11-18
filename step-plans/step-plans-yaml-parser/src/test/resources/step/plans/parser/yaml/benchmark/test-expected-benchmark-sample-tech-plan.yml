@@ -2,10 +2,12 @@
 _class: "step.core.plans.Plan"
 attributes:
   name: "Performance assert example"
+agents:
+  mode: "auto_detect"
 root:
   _class: "TestCase"
   attributes:
-    name: "TestCase"
+    name:  "Performance assert example"
   dynamicName:
     dynamic: false
     value: ""

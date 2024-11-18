@@ -2,10 +2,12 @@
 _class: "step.core.plans.Plan"
 attributes:
   name: "Plan with return"
+agents:
+  mode: "auto_detect"
 root:
   _class: "Sequence"
   attributes:
-    name: "Sequence"
+    name: "Plan with return"
   dynamicName:
     dynamic: false
     value: ""

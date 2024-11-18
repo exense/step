@@ -61,7 +61,7 @@ public abstract class AbstractExecutionEngineContext extends AbstractStepContext
 
 		InMemoryCollectionFactory collectionFactory = new InMemoryCollectionFactory(null);
 		put(ResolvedPlanNodeAccessor.class, new ResolvedPlanNodeAccessor(collectionFactory));
-		put(ReportNodeTimeSeries.class, new ReportNodeTimeSeries(collectionFactory));
+		put(ReportNodeTimeSeries.class, new ReportNodeTimeSeries(collectionFactory, getConfiguration()));
 	}
 	
 	protected void useAllAttributesFromParentContext(AbstractExecutionEngineContext parentContext) {
@@ -79,7 +79,7 @@ public abstract class AbstractExecutionEngineContext extends AbstractStepContext
 
         InMemoryCollectionFactory collectionFactory = new InMemoryCollectionFactory(null);
         inheritFromParentOrComputeIfAbsent(parentContext, ResolvedPlanNodeAccessor.class, x -> new ResolvedPlanNodeAccessor(collectionFactory));
-        inheritFromParentOrComputeIfAbsent(parentContext, ReportNodeTimeSeries.class, x -> new ReportNodeTimeSeries(collectionFactory));
+        inheritFromParentOrComputeIfAbsent(parentContext, ReportNodeTimeSeries.class, x -> new ReportNodeTimeSeries(collectionFactory, parentContext.getConfiguration()));
 	}
 
 	public Configuration getConfiguration() {

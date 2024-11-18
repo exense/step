@@ -1,49 +1,34 @@
 package step.core.artefacts.reports.resolvedplan;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.handlers.ArtefactHandlerManager;
-import step.core.artefacts.handlers.ArtefactHandlerRegistry;
-import step.core.artefacts.handlers.ArtefactHashGenerator;
+import step.core.artefacts.handlers.ArtefactPathHelper;
 import step.core.artefacts.reports.ParentSource;
 import step.core.artefacts.reports.ReportNode;
 import step.core.dynamicbeans.DynamicBeanResolver;
-import step.core.dynamicbeans.DynamicJsonObjectResolver;
-import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.execution.ExecutionContext;
-import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.Plan;
-import step.core.plans.PlanAccessor;
-import step.functions.accessor.FunctionAccessor;
 
 import java.util.List;
 import java.util.Map;
 
 public class ResolvedPlanBuilder {
 
-    private final PlanAccessor planAccessor;
+    private static final Logger logger = LoggerFactory.getLogger(ResolvedPlanBuilder.class);
+
     private final ResolvedPlanNodeAccessor resolvedPlanNodeAccessor;
-    private final FunctionAccessor functionAccessor;
-    private final ArtefactHashGenerator artefactHashGenerator;
-    private final DynamicJsonObjectResolver dynamicJsonObjectResolver;
-    private final ArtefactHandlerRegistry artefactHandlerRegistry;
-    private final ObjectPredicate objectPredicate;
     private final DynamicBeanResolver dynamicBeanResolver;
     private final ArtefactHandlerManager artefactHandlerManager;
-    private final ExecutionContext executionContext;
+    private final ArtefactHashGenerator artefactHashGenerator;
 
     public ResolvedPlanBuilder(ExecutionContext executionContext) {
-        this.executionContext = executionContext;
-        artefactHandlerManager = executionContext.getArtefactHandlerManager();
-        planAccessor = executionContext.getPlanAccessor();
         resolvedPlanNodeAccessor = executionContext.require(ResolvedPlanNodeAccessor.class);
-        // functionAccessor can be null
-        functionAccessor = executionContext.get(FunctionAccessor.class);
-        artefactHandlerRegistry = executionContext.getArtefactHandlerRegistry();
+        artefactHandlerManager = executionContext.getArtefactHandlerManager();
         dynamicBeanResolver = executionContext.getDynamicBeanResolver();
-        dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(executionContext.getExpressionHandler()));
         artefactHashGenerator = new ArtefactHashGenerator();
-        objectPredicate = executionContext.getObjectPredicate();
     }
 
     public ResolvedPlanNode buildResolvedPlan(Plan plan, Map<String, Object> bindings) {

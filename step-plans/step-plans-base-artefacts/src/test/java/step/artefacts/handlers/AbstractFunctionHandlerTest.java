@@ -5,7 +5,7 @@ import jakarta.json.JsonObject;
 import org.junit.Before;
 import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.handlers.functions.FunctionGroupSession;
-import step.artefacts.handlers.functions.TokenForcastingExecutionPlugin;
+import step.artefacts.handlers.functions.TokenForecastingExecutionPlugin;
 import step.artefacts.handlers.functions.test.MyFunctionType;
 import step.artefacts.reports.CallFunctionReportNode;
 import step.core.artefacts.reports.ReportNode;
@@ -102,7 +102,7 @@ public class AbstractFunctionHandlerTest {
     }
 
     protected ExecutionEngine newEngineWithCustomTokenReleaseFunction(Consumer<String> tokenReleaseFunction) {
-        return ExecutionEngine.builder().withOperationMode(OperationMode.CONTROLLER).withPlugin(new BaseArtefactPlugin()).withPlugin(new FunctionPlugin()).withPlugin(newMyFunctionTypePlugin()).withPlugin(new TokenForcastingExecutionPlugin()).withPlugin(new AbstractExecutionEnginePlugin() {
+        return ExecutionEngine.builder().withOperationMode(OperationMode.CONTROLLER).withPlugin(new BaseArtefactPlugin()).withPlugin(new FunctionPlugin()).withPlugin(newMyFunctionTypePlugin()).withPlugin(new TokenForecastingExecutionPlugin()).withPlugin(new AbstractExecutionEnginePlugin() {
             @Override
             public void initializeExecutionContext(ExecutionEngineContext executionEngineContext,
                                                    ExecutionContext executionContext) {

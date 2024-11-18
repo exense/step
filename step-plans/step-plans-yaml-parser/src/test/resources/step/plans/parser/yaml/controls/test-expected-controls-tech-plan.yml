@@ -2,6 +2,8 @@
 _class: "step.core.plans.Plan"
 attributes:
   name: "MainPlan"
+agents:
+  mode: "auto_detect"
 root:
   _class: "TestCase"
   attributes:
@@ -192,7 +194,7 @@ root:
         value: false
       selectionAttributes:
         dynamic: false
-        value: "{\"name\":{\"value\":\"SubPlan\",\"dynamic\":false}}"
+        value: "{\"name\":{\"dynamic\":false,\"value\":\"SubPlan\"}}"
       input:
         dynamic: false
         value: "{}"
@@ -586,12 +588,6 @@ root:
       token:
         dynamic: false
         value: "{}"
-      dockerImage:
-        dynamic: false
-      containerUser:
-        dynamic: false
-      containerCommand:
-        dynamic: false
       id: "644fbe4e38a61e07cc3a4df8"
     - _class: "Set"
       attributes:

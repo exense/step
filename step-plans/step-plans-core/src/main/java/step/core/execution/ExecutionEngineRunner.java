@@ -59,6 +59,8 @@ public class ExecutionEngineRunner {
 	private final RepositoryObjectManager repositoryObjectManager;
 	private final PlanAccessor planAccessor;
 	private final FunctionAccessor functionAccessor;
+	// Temporary switch to disable the aggregated report. Remove as soon as SED-3464 is fixed
+	private final boolean aggregatedReportEnabled;
 
 	protected ExecutionEngineRunner(ExecutionContext executionContext) {
 		super();
@@ -68,6 +70,7 @@ public class ExecutionEngineRunner {
 		this.repositoryObjectManager = executionContext.getRepositoryObjectManager();
 		this.planAccessor = executionContext.getPlanAccessor();
 		this.functionAccessor =  executionContext.get(FunctionAccessor.class);
+		aggregatedReportEnabled = executionContext.getConfiguration().getPropertyAsBoolean("execution.engine.report.aggregated.enabled", true);
 	}
 	
 	protected PlanRunnerResult execute() {
@@ -90,7 +93,8 @@ public class ExecutionEngineRunner {
 					logger.info(messageWithId("Starting execution."));
 					updateStatus(ExecutionStatus.ESTIMATING);
 
-					resolveInnerPlanArtefacts(plan);
+					//resolve and save any embedded functions and sub plans before resolving the plan
+					resolveInnerPlanAndFunctionArtefacts(plan);
 					buildAndPersistResolvedPlan(plan);
 
 					executionContext.associateThread();
@@ -120,18 +124,20 @@ public class ExecutionEngineRunner {
 				} catch (PlanImportException e) {
 					saveFailureReportWithResult(ReportNodeStatus.IMPORT_ERROR);
 				} catch (ProvisioningException e) {
-					addLifecyleError("Error while provisioning execution resources: " + e.getMessage(), e);
+					addLifecyleError(e.getMessage(), e);
 				} catch (DeprovisioningException e) {
-					addLifecyleError("Error while deprovisioning execution resources: " + e.getMessage(), e);
+					addLifecyleError(e.getMessage(), e);
 				}
 			}
 		} catch (Throwable e) {
 			addLifecyleError("An error occurred while running test. " +  e.getMessage(), e);
 		} finally {
-			updateStatus(ExecutionStatus.ENDED);
 			try {
 				executionCallbacks.afterExecutionEnd(executionContext);
+			} catch (Exception e) {
+				addLifecyleError(e.getMessage(), e);
 			} finally {
+				updateStatus(ExecutionStatus.ENDED);
 				//Make sure that even if plugin critical exception occurs the mandatory hooks and postExecutions are performed
 				executionCallbacks.executionFinally(executionContext);
 				postExecution(executionContext);
@@ -141,10 +147,11 @@ public class ExecutionEngineRunner {
 	}
 
 	private void buildAndPersistResolvedPlan(Plan plan) {
-		ResolvedPlanBuilder resolvedPlanBuilder = new ResolvedPlanBuilder(executionContext);
-		Map<String, Object> bindings = ExecutionContextBindings.get(executionContext);
-		ResolvedPlanNode resolvedPlanRoot = resolvedPlanBuilder.buildResolvedPlan(plan, bindings);
-		updateExecution(e -> e.setResolvedPlanRootNodeId(resolvedPlanRoot.getId().toString()));
+		if(aggregatedReportEnabled) {
+			ResolvedPlanBuilder resolvedPlanBuilder = new ResolvedPlanBuilder(executionContext);
+			ResolvedPlanNode resolvedPlanRoot = resolvedPlanBuilder.buildResolvedPlan(plan);
+			updateExecution(e -> e.setResolvedPlanRootNodeId(resolvedPlanRoot.getId().toString()));
+		}
 	}
 
 	public static void abort(ExecutionContext executionContext) {
@@ -205,7 +212,7 @@ public class ExecutionEngineRunner {
 		return message + " Execution ID: " + executionContext.getExecutionId();
 	}
 
-	private void resolveInnerPlanArtefacts(Plan plan) {
+	private void resolveInnerPlanAndFunctionArtefacts(Plan plan) {
 		// Save plan embedded functions to context accessor
 		Collection<Function> planInnerFunctions = plan.getFunctions();
 		if(planInnerFunctions!=null && planInnerFunctions.size()>0) {
@@ -224,7 +231,6 @@ public class ExecutionEngineRunner {
 	}
 
 	private ReportNode execute(Plan plan, ReportNode rootReportNode) throws ProvisioningException, DeprovisioningException {
-		
 		ArtefactHandlerManager artefactHandlerManager = executionContext.getArtefactHandlerManager();
 		AbstractArtefact root = plan.getRoot();
 		artefactHandlerManager.createReportSkeleton(root, rootReportNode, ParentSource.MAIN);
@@ -276,22 +282,12 @@ public class ExecutionEngineRunner {
 
 	private void provisionRequiredResources() throws ProvisioningException {
 		updateStatus(ExecutionStatus.PROVISIONING);
-		try {
-			executionCallbacks.provisionRequiredResources(executionContext);
-		} catch(Exception e) {
-			logger.error("Error while provisioning resources",e);
-			throw new ProvisioningException(e.getMessage());
-		}
+		executionCallbacks.provisionRequiredResources(executionContext);
 	}
 
 	private void deprovisionRequiredResources() throws DeprovisioningException {
 		updateStatus(ExecutionStatus.DEPROVISIONING);
-		try {
-			executionCallbacks.deprovisionRequiredResources(executionContext);
-		} catch (Exception e) {
-			logger.error("Error while de-provisioning resources",e);
-			throw new DeprovisioningException(e.getMessage());
-		}
+		executionCallbacks.deprovisionRequiredResources(executionContext);
 	}
 	
 	private void exportExecution(ExecutionContext context) {	
@@ -345,18 +341,7 @@ public class ExecutionEngineRunner {
 		executionManager.updateExecution(consumer);
 	}
 
-	private static class ProvisioningException extends Exception {
-		public ProvisioningException(String message) {
-			super(message);
-		}
-	}
-
 	private class PlanImportException extends Exception {
 	}
 
-	private class DeprovisioningException extends Exception {
-		public DeprovisioningException(String message) {
-			super(message);
-		}
-	}
 }

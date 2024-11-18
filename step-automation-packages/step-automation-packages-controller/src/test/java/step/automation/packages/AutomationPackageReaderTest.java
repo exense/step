@@ -1,6 +1,8 @@
 package step.automation.packages;
 
+import ch.exense.commons.io.FileHelper;
 import jakarta.json.spi.JsonProvider;
+import org.apache.commons.collections.CollectionUtils;
 import org.junit.Test;
 import org.mockito.Mockito;
 import step.artefacts.CallFunction;
@@ -12,7 +14,6 @@ import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.plans.Plan;
 import step.core.scheduler.ExecutionScheduler;
-import step.core.scheduler.ExecutionTaskAccessor;
 import step.core.scheduler.automation.AutomationPackageSchedule;
 import step.core.scheduler.automation.AutomationPackageScheduleRegistration;
 import step.parameter.ParameterManager;
@@ -28,8 +29,10 @@ import step.plugins.jmeter.automation.YamlJMeterFunction;
 import step.plugins.node.automation.YamlNodeFunction;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.StringReader;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
@@ -114,6 +117,14 @@ public class AutomationPackageReaderTest {
         assertEquals(TestCase.class, AutomationPackageTestUtils.findPlanByName(plans, PLAN_FROM_PLANS_ANNOTATION).getRoot().getClass());
         assertEquals(TestCase.class, AutomationPackageTestUtils.findPlanByName(plans, INLINE_PLAN).getRoot().getClass());
 
+        //Assert all categories
+        Map<String, List<String>> expectedCategoriesByPlan = Map.of("Test Plan", List.of("Yaml Plan"), "Test Plan with Composite", List.of("Yaml Plan", "Composite"),
+                "plan.plan", List.of("PlainTextPlan","AnnotatedPlan"), "Inline Plan", List.of("InlinePlan", "AnnotatedPlan"));
+        for (Plan plan : plans) {
+            String planName = plan.getAttribute(AbstractOrganizableObject.NAME);
+            assertTrue(CollectionUtils.isEqualCollection(expectedCategoriesByPlan.get(planName), plan.getCategories()));
+        }
+
         // check how keyword inputs from test plan are parsed
         CallFunction callKeyword = (CallFunction) testPlan.getRoot().getChildren()
                 .stream()
@@ -127,10 +138,10 @@ public class AutomationPackageReaderTest {
         // 1 parameter
         List<AutomationPackageParameter> parameters = (List<AutomationPackageParameter>) automationPackageContent.getAdditionalData().get(AutomationPackageParameterJsonSchema.FIELD_NAME_IN_AP);
         assertNotNull(parameters);
-        assertEquals(2, parameters.size());
+        assertEquals(3, parameters.size());
         AutomationPackageParameter parameter = parameters.get(0);
         assertEquals("myKey", parameter.getKey());
-        assertEquals("myValue", parameter.getValue());
+        assertEquals("myValue", parameter.getValue().get());
         assertEquals("some description", parameter.getDescription());
         assertEquals("abc", parameter.getActivationScript());
         assertEquals((Integer) 10, parameter.getPriority());
@@ -139,9 +150,50 @@ public class AutomationPackageReaderTest {
         assertEquals("entity", parameter.getScopeEntity());
         parameter = parameters.get(1);
         assertEquals("mySimpleKey", parameter.getKey());
-        assertEquals("mySimpleValue", parameter.getValue());
+        assertFalse(parameter.getValue().isDynamic());
+        assertEquals("mySimpleValue", parameter.getValue().get());
         assertEquals(ParameterScope.GLOBAL, parameter.getScope()); // global is default value
         assertEquals(false, parameter.getProtectedValue());
+        parameter = parameters.get(2);
+        assertEquals("myDynamicParam", parameter.getKey());
+        assertTrue(parameter.getValue().isDynamic());
+        assertEquals("mySimpleKey", parameter.getValue().getExpression());
+        assertEquals(ParameterScope.GLOBAL, parameter.getScope()); // global is default value
+        assertEquals(false, parameter.getProtectedValue());
+    }
+
+    // TODO these tests should be moved to the module step-automation-packages-manager
+    @Test
+    public void testFragmentsWithPackageAP() throws AutomationPackageReadingException {
+        File automationPackage = FileHelper.getClassLoaderResourceAsFile(this.getClass().getClassLoader(), "step/automation/packages/step-automation-packages.zip");
+
+        AutomationPackageContent automationPackageContent = reader.readAutomationPackageFromJarFile(automationPackage);
+        assertNotNull(automationPackageContent);
+
+        List<Plan> plans = automationPackageContent.getPlans();
+        assertEquals(4, plans.size());
+
+        plans.stream().filter(p -> p.getAttribute(AbstractOrganizableObject.NAME).equals("Test Plan 1")).findFirst().get();
+        plans.stream().filter(p -> p.getAttribute(AbstractOrganizableObject.NAME).equals("Test Plan 2")).findFirst().get();
+        plans.stream().filter(p -> p.getAttribute(AbstractOrganizableObject.NAME).equals("Test Plan 3")).findFirst().get();
+        plans.stream().filter(p -> p.getAttribute(AbstractOrganizableObject.NAME).equals("Test Plan 4")).findFirst().get();
+    }
+
+    @Test
+    public void testFragmentsWithExplodedAP() throws AutomationPackageReadingException, IOException {
+        File tempFolder = FileHelper.createTempFolder();
+        FileHelper.unzip(this.getClass().getClassLoader().getResourceAsStream("step/automation/packages/step-automation-packages.zip"), tempFolder);
+
+        AutomationPackageContent automationPackageContent = reader.readAutomationPackageFromJarFile(tempFolder);
+        assertNotNull(automationPackageContent);
+
+        List<Plan> plans = automationPackageContent.getPlans();
+        assertEquals(4, plans.size());
+
+        plans.stream().filter(p -> p.getAttribute(AbstractOrganizableObject.NAME).equals("Test Plan 1")).findFirst().get();
+        plans.stream().filter(p -> p.getAttribute(AbstractOrganizableObject.NAME).equals("Test Plan 2")).findFirst().get();
+        plans.stream().filter(p -> p.getAttribute(AbstractOrganizableObject.NAME).equals("Test Plan 3")).findFirst().get();
+        plans.stream().filter(p -> p.getAttribute(AbstractOrganizableObject.NAME).equals("Test Plan 4")).findFirst().get();
     }
 
 }

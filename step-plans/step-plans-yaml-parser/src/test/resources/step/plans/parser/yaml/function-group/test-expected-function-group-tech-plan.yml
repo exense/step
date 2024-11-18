@@ -2,10 +2,12 @@
 _class: "step.core.plans.Plan"
 attributes:
   name: "test plan"
+agents:
+  mode: "auto_detect"
 root:
   _class: "Sequence"
   attributes:
-    name: "Sequence"
+    name: "test plan"
   dynamicName:
     dynamic: false
     value: ""
@@ -37,12 +39,6 @@ root:
         dynamic: false
         value: "{\"criteria1\":{\"dynamic\":false,\"value\":\"criteriaValue1\"},\"criteria2\"\
         :{\"dynamic\":false,\"value\":\"criteriaValue2\"}}"
-      dockerImage:
-        dynamic: false
-      containerUser:
-        dynamic: false
-      containerCommand:
-        dynamic: false
       id: "644fbe4e38a61e07cc3a4df8"
   skipNode:
     dynamic: false

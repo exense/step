@@ -26,6 +26,10 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import step.automation.packages.AutomationPackageFromFolderProvider;
 import step.automation.packages.AutomationPackageReadingException;
+import step.client.controller.ControllerServicesClient;
+import step.client.credentials.ControllerCredentials;
+import step.core.Constants;
+import step.core.Version;
 
 import java.io.File;
 import java.io.IOException;
@@ -40,7 +44,7 @@ import java.util.function.Supplier;
 
 @Command(name = "step",
         mixinStandardHelpOptions = true,
-        version = "step 1.0",
+        version = Constants.STEP_API_VERSION_STRING,
         description = "The command-line interface (CLI) to interact with Step",
         usageHelpAutoWidth = true
 )
@@ -67,6 +71,7 @@ public class StepConsole implements Callable<Integer> {
         public static final String VERBOSE = "--verbose";
         public static final String CONFIG = "-c";
         public static final String LOCAL = "--local";
+        public static final String FORCE = "--force";
 
         @CommandLine.Spec
         protected CommandLine.Model.CommandSpec spec;
@@ -88,6 +93,9 @@ public class StepConsole implements Callable<Integer> {
 
         @Option(names = {VERBOSE}, defaultValue = "false")
         protected boolean verbose;
+
+        @Option(names = {FORCE}, defaultValue = "false", description = "To force execution in case of uncritical errors")
+        protected boolean force;
 
         protected String getStepProjectName() {
             return stepProjectName;
@@ -139,7 +147,7 @@ public class StepConsole implements Callable<Integer> {
 
     @Command(name = ApCommand.AP_COMMAND,
             mixinStandardHelpOptions = true,
-            version = "step.ap 1.0",
+            version = Constants.STEP_API_VERSION_STRING,
             description = "The CLI interface to manage automation packages in Step",
             usageHelpAutoWidth = true
     )
@@ -150,7 +158,7 @@ public class StepConsole implements Callable<Integer> {
         public static abstract class AbstractApCommand extends AbstractStepCommand {
 
             @Option(names = {"-p", "--package"}, paramLabel = "<AutomationPackage>", description = "The automation-package.yaml file or the folder containing it")
-            protected File apFile;
+            protected String apFile;
 
             /**
              * If the param points to the folder, prepares the zipped AP file with .stz extension.
@@ -158,30 +166,42 @@ public class StepConsole implements Callable<Integer> {
              *
              * @param param the source of AP
              */
-            protected File prepareApFile(File param) {
+            protected File prepareApFile(String param) {
                 try {
+                    File file = null;
                     if (param == null) {
                         // use the current folder by default
-                        param = new File(new File("").getAbsolutePath());
+                        file = new File(new File("").getAbsolutePath());
+                    } else {
+                        file = new File(param);
                     }
-                    log.info("The automation package source is {}", param.getAbsolutePath());
+                    log.info("The automation package source is {}", file.getAbsolutePath());
 
-                    if (param.isDirectory()) {
+                    if (file.isDirectory()) {
                         // check if the folder is AP (contains the yaml descriptor)
-                        checkApFolder(param);
+                        checkApFolder(file);
 
                         File tempDirectory = Files.createTempDirectory("stepcli").toFile();
                         tempDirectory.deleteOnExit();
-                        File tempFile = new File(tempDirectory, param.getName() + ".stz");
+                        File tempFile = new File(tempDirectory, file.getName() + ".stz");
                         tempFile.deleteOnExit();
                         log.info("Preparing AP archive: {}", tempFile.getAbsolutePath());
-                        ZipUtil.pack(param, tempFile);
+                        ZipUtil.pack(file, tempFile);
                         return tempFile;
                     } else {
-                        return param;
+                        return file;
                     }
                 } catch (IOException ex) {
                     throw new StepCliExecutionException("Unable to prepare automation package file", ex);
+                }
+            }
+
+            protected MavenArtifactIdentifier getMavenArtifact(String apFile) {
+                if (apFile != null && apFile.startsWith("mvn:")) {
+                    String[] split = apFile.split(":");
+                    return new MavenArtifactIdentifier(split[1], split[2], split[3], split.length >= 5 ? split[4] : null);
+                } else {
+                    return null;
                 }
             }
 
@@ -197,11 +217,42 @@ public class StepConsole implements Callable<Integer> {
                 }
             }
 
+            protected ControllerServicesClient createControllerServicesClient(){
+                return new ControllerServicesClient(getControllerCredentials());
+            }
+
+            protected ControllerCredentials getControllerCredentials() {
+                String authToken = getAuthToken();
+                return new ControllerCredentials(stepUrl, authToken == null || authToken.isEmpty() ? null : authToken);
+            }
+
+            protected void checkStepControllerVersion() {
+                try {
+                    new ControllerVersionValidator(createControllerServicesClient()).validateVersions(getVersion());
+                } catch (ControllerVersionValidator.ValidationException e) {
+                    if (e.getResult().getStatus() == ControllerVersionValidator.Status.MINOR_MISMATCH) {
+                        String warn = "The CLI version (" + e.getResult().getClientVersion() + ") does not exactly match the server version (" +  e.getResult().getServerVersion() + "), but they are considered compatible. It's recommended to use matching versions.";
+                        log.warn(warn);
+                    } else {
+                        String err = "Version mismatch. The server version (" + e.getResult().getServerVersion() + ") is incompatible with the current CLI version (" + e.getResult().getClientVersion() + "). Please ensure both the CLI and server are running compatible versions.";
+                        if (!force) {
+                            err += " You can use the " + FORCE + " option to ignore this validation.";
+                            throw new StepCliExecutionException(err, e);
+                        } else {
+                            log.warn(err);
+                        }
+                    }
+                }
+            }
+
+            protected Version getVersion() {
+                return Constants.STEP_API_VERSION;
+            }
         }
 
         @Command(name = "deploy",
                 mixinStandardHelpOptions = true,
-                version = "step.ap.deploy 1.0",
+                version = Constants.STEP_API_VERSION_STRING,
                 description = "The CLI interface to deploy automation packages in Step",
                 usageHelpAutoWidth = true,
                 subcommands = {CommandLine.HelpCommand.class})
@@ -225,6 +276,7 @@ public class StepConsole implements Callable<Integer> {
             protected void handleApDeployCommand() {
                 checkStepUrlRequired();
                 checkEeOptionsConsistency(spec);
+                checkStepControllerVersion();
                 executeTool(stepUrl, getStepProjectName(), getAuthToken(), async);
             }
 
@@ -266,8 +318,20 @@ public class StepConsole implements Callable<Integer> {
             @Option(names = {"--excludePlans"}, description = "The comma separated list of plans to be excluded from execution")
             protected String excludePlans;
 
+            @Option(names = {"--includeCategories"}, description = "The comma separated list of categories to be executed")
+            protected String includeCategories;
+
+            @Option(names = {"--excludeCategories"}, description = "The comma separated list of categories to be excluded from execution")
+            protected String excludeCategories;
+
             @Option(names = {LOCAL}, defaultValue = "false", description = "To execute the Automation Package locally ", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
             protected boolean local;
+
+            @Option(names = {"--wrapIntoTestSet"}, defaultValue = "false", description = "To wrap all executed plans into the single test set", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
+            protected boolean wrapIntoTestSet;
+
+            @Option(names = {"--numberOfThreads"}, description = "Max number of threads to be used for execution in case of wrapped test set")
+            protected Integer numberOfThreads;
 
             @Option(descriptionKey = EP_DESCRIPTION_KEY, names = {"-ep", "--executionParameters"}, description = "Set execution parameters for local and remote executions ", split = "\\|", splitSynopsisLabel = "|")
             protected Map<String, String> executionParameters;
@@ -320,11 +384,12 @@ public class StepConsole implements Callable<Integer> {
                 if (file == null) {
                     throw new StepCliExecutionException("AP file is not defined");
                 }
-                executeLocally(file, includePlans, excludePlans, executionParameters);
+                executeLocally(file, includePlans, excludePlans, includeCategories, excludeCategories, executionParameters);
             }
 
-            protected void executeLocally(File file, String includePlans, String excludePlans, Map<String, String> executionParameters) {
-                new ApLocalExecuteCommandHandler().execute(file, includePlans, excludePlans, executionParameters);
+            protected void executeLocally(File file, String includePlans, String excludePlans, String includeCategories,
+                                          String excludeCategories, Map<String, String> executionParameters) {
+                new ApLocalExecuteCommandHandler().execute(file, includePlans, excludePlans, includeCategories, excludeCategories, executionParameters);
             }
 
             public void checkStepUrlRequired() {
@@ -334,7 +399,10 @@ public class StepConsole implements Callable<Integer> {
             protected void handleApRemoteExecuteCommand() {
                 checkStepUrlRequired();
                 checkEeOptionsConsistency(spec);
-                executeRemotely(stepUrl, getStepProjectName(), stepUser, getAuthToken(), executionParameters, executionTimeoutS, async, includePlans, excludePlans);
+                checkStepControllerVersion();
+                executeRemotely(stepUrl, getStepProjectName(), stepUser, getAuthToken(), executionParameters,
+                        executionTimeoutS, async, includePlans, excludePlans, includeCategories, excludeCategories, wrapIntoTestSet, numberOfThreads, getMavenArtifact(apFile)
+                );
             }
 
             // for tests
@@ -346,12 +414,19 @@ public class StepConsole implements Callable<Integer> {
                                            final Integer executionTimeoutS,
                                            final boolean async,
                                            final String includePlans,
-                                           final String excludePlans) {
+                                           final String excludePlans,
+                                           final String includeCategories,
+                                           final String excludeCategories,
+                                           final boolean wrapIntoTestSet,
+                                           final Integer numberOfThreads,
+                                           final MavenArtifactIdentifier mavenArtifactIdentifier) {
                 new AbstractExecuteAutomationPackageTool(
                         stepUrl, projectName, stepUserId, authToken,
                         executionParameters, executionTimeoutS,
                         !async, true, false,
-                        includePlans, excludePlans
+                        includePlans, excludePlans, includeCategories, excludeCategories,
+                        wrapIntoTestSet, numberOfThreads,
+                        mavenArtifactIdentifier
                 ) {
                     @Override
                     protected File getAutomationPackageFile() throws StepCliExecutionException {

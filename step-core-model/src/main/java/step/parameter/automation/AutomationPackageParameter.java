@@ -19,6 +19,7 @@
 package step.parameter.automation;
 
 import step.commons.activation.Expression;
+import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.AbstractYamlModel;
 import step.core.yaml.YamlFieldCustomCopy;
 import step.core.yaml.YamlModel;
@@ -29,7 +30,7 @@ import step.parameter.ParameterScope;
 public class AutomationPackageParameter extends AbstractYamlModel {
 
     protected String key;
-    protected String value;
+    protected DynamicValue<String> value;
     protected String description;
 
     @YamlFieldCustomCopy
@@ -53,7 +54,7 @@ public class AutomationPackageParameter extends AbstractYamlModel {
         return key;
     }
 
-    public String getValue() {
+    public DynamicValue<String> getValue() {
         return value;
     }
 

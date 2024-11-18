@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.localrunner;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import step.handlers.javahandler.AbstractKeyword;
 import step.handlers.javahandler.Keyword;
 

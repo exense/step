@@ -88,7 +88,7 @@ public class SchedulerServices extends AbstractEntityServices<ExecutiontTaskPara
         checkRightsOnBehalfOf("plan-execute", schedule.getExecutionsParameters().getUserID());
 
 		try {
-            scheduler.addExecutionTask(schedule);
+            scheduler.addOrUpdateExecutionTask(schedule);
         } catch (Exception e) {
             throw new ControllerServiceException(e.getMessage());
         }

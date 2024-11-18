@@ -1,3 +1,22 @@
+/*
+ * Copyright (C) 2024, exense GmbH
+ *
+ * This file is part of Step
+ *
+ * Step is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Step is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with Step.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package step.artefacts.handlers.functions;
 
 import step.grid.tokenpool.Interest;
@@ -15,6 +34,7 @@ public class MaxAndMultiplyingTokenForecastingContext extends TokenForecastingCo
     private final int numberOfThreads;
 
     private final List<TokenForecastingContext> iterations = new ArrayList<>();
+    private final Set<Key> keys = new HashSet<>();
     private TokenForecastingContext currentIteration;
 
     public MaxAndMultiplyingTokenForecastingContext(TokenForecastingContext parentContext, int numberOfThreads) {
@@ -29,21 +49,23 @@ public class MaxAndMultiplyingTokenForecastingContext extends TokenForecastingCo
     }
 
     @Override
-    public String requireToken(Map<String, Interest> criteria, int count) throws NoMatchingTokenPoolException {
-        return currentIteration.requireToken(criteria, count);
+    public Key requireToken(Map<String, Interest> criteria, int count) throws NoMatchingTokenPoolException {
+        Key key = currentIteration.requireToken(criteria, count);
+        keys.add(key);
+        return key;
     }
 
     @Override
-    public void releaseRequiredToken(String pool, int count) {
-        currentIteration.releaseRequiredToken(pool, count);
+    public void releaseRequiredToken(Key key, int count) {
+        currentIteration.releaseRequiredToken(key, count);
     }
 
     public void end() {
-        pools.keySet().forEach(poolName -> {
-            Integer sum = iterations.stream().map(i -> i.getTokenForecastPerPool().get(poolName)).filter(Objects::nonNull).sorted(Comparator.reverseOrder()).limit(numberOfThreads).reduce(0, Integer::sum);
+        keys.forEach(key -> {
+            Integer sum = iterations.stream().map(i -> i.getTokenForecastPerKey().get(key)).filter(Objects::nonNull).sorted(Comparator.reverseOrder()).limit(numberOfThreads).reduce(0, Integer::sum);
             if(sum > 0) {
-                parentContext.requireToken(poolName, sum);
-                parentContext.releaseRequiredToken(poolName, sum);
+                parentContext.requireToken(key, sum);
+                parentContext.releaseRequiredToken(key, sum);
             }
         });
     }

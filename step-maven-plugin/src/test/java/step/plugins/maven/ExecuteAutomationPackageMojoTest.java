@@ -19,6 +19,7 @@
 package step.plugins.maven;
 
 import org.apache.maven.artifact.Artifact;
+import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
 import org.junit.Assert;
 import org.junit.Test;
@@ -27,12 +28,12 @@ import step.automation.packages.client.AutomationPackageClientException;
 import step.cli.AbstractExecuteAutomationPackageTool;
 
 import java.net.URISyntaxException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 
 public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
+
+	public static final String TEST_INCLUDE_CATEGORIES = "PerformanceTest,JMterTest";
+	public static final String TEST_EXCLUDE_CATEGORIES = "CypressTest,OidcTest";
 
 	@Test
 	public void testExecute() throws Exception {
@@ -56,13 +57,15 @@ public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 		Assert.assertEquals(createTestCustomParams(), mojo.parameters);
 		Assert.assertEquals(TEST_INCLUDE_PLANS, mojo.includePlans);
 		Assert.assertNull(TEST_INCLUDE_PLANS, mojo.excludePlans);
+		Assert.assertEquals(TEST_INCLUDE_CATEGORIES, mojo.includeCategories);
+		Assert.assertEquals(TEST_EXCLUDE_CATEGORIES, mojo.excludeCategories);
 	}
 
 	private void configureMojo(ExecuteAutomationPackageMojoTestable mojo, boolean ensureExecutionSuccess) throws URISyntaxException {
 		mojo.setArtifactId(ARTIFACT_ID);
 		mojo.setArtifactClassifier("jar-with-dependencies");
 		mojo.setArtifactVersion(VERSION_ID);
-		mojo.setGroupId(GROUP_ID);
+		mojo.setArtifactGroupId(GROUP_ID);
 		mojo.setUrl("http://localhost:8080");
 		mojo.setAuthToken("abc");
 		mojo.setBuildFinalName("Test build name");
@@ -76,18 +79,22 @@ public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 		mojo.setPrintAggregatedReport(true);
 
 		mojo.setIncludePlans(TEST_INCLUDE_PLANS);
+		mojo.setIncludeCategories(TEST_INCLUDE_CATEGORIES);
+		mojo.setExcludeCategories(TEST_EXCLUDE_CATEGORIES);
 
 		MavenProject mockedProject = Mockito.mock(MavenProject.class);
+		Mockito.when(mockedProject.getArtifactId()).thenReturn(ARTIFACT_ID);
+		Mockito.when(mockedProject.getGroupId()).thenReturn(GROUP_ID);
+		Mockito.when(mockedProject.getVersion()).thenReturn(VERSION_ID);
 
 		Artifact mainArtifact = createArtifactMock();
 
 		Mockito.when(mockedProject.getArtifact()).thenReturn(mainArtifact);
 
-		Mockito.when(mockedProject.getArtifacts()).thenReturn(new HashSet<>());
-
 		Artifact jarWithDependenciesArtifact = createArtifactWithDependenciesMock();
 
-		Mockito.when(mockedProject.getAttachedArtifacts()).thenReturn(Arrays.asList(jarWithDependenciesArtifact));
+		Mockito.when(mockedProject.getArtifacts()).thenReturn(Set.of(mainArtifact, jarWithDependenciesArtifact));
+		Mockito.when(mockedProject.getAttachedArtifacts()).thenReturn(Arrays.asList(mainArtifact, jarWithDependenciesArtifact));
 
 		mojo.setProject(mockedProject);
 
@@ -116,16 +123,17 @@ public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 		private Boolean printAggregatedReport;
 		private String includePlans;
 		private String excludePlans;
+		private String includeCategories;
+		private String excludeCategories;
 
 		public ExecuteAutomationPackageMojoTestable() {
 			super();
 		}
 
 		@Override
-		protected AbstractExecuteAutomationPackageTool createTool(String url, String projectName, String userId,
-											  String authToken, Map<String, String> parameters, Integer executionResultTimeoutS,
-											  Boolean waitForExecution, Boolean ensureExecutionSuccess, Boolean printAggregatedReport,
-											  String includePlans, String excludePlans) {
+		protected AbstractExecuteAutomationPackageTool createTool(String url, String projectName, String userId, String authToken, Map<String, String> parameters,
+										Integer executionResultTimeoutS, Boolean waitForExecution, Boolean ensureExecutionSuccess, Boolean printAggregatedReport, String includePlans, String excludePlans,
+										String includeCategories, String excludeCategories, final Boolean wrapIntoTestSet, final Integer numberOfThreads) {
 			this.url = url;
 			this.projectName = projectName;
 			this.userId = userId;
@@ -137,7 +145,14 @@ public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 			this.printAggregatedReport = printAggregatedReport;
 			this.includePlans = includePlans;
 			this.excludePlans = excludePlans;
+			this.includeCategories = includeCategories;
+			this.excludeCategories = excludeCategories;
 			return mockedTool;
+		}
+
+		@Override
+		protected void checkStepControllerVersion() throws MojoExecutionException {
+			//Mock check
 		}
 	}
 }

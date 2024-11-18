@@ -25,7 +25,8 @@ import jakarta.json.JsonValue.ValueType;
 import jakarta.json.stream.JsonParsingException;
 import step.artefacts.CallFunction;
 import step.artefacts.handlers.FunctionGroupHandler.FunctionGroupContext;
-import step.artefacts.handlers.functions.*;
+import step.artefacts.handlers.functions.FunctionGroupSession;
+import step.artefacts.handlers.functions.TokenSelectionCriteriaMapBuilder;
 import step.artefacts.reports.CallFunctionReportNode;
 import step.attachments.AttachmentMeta;
 import step.common.managedoperations.OperationManager;
@@ -49,9 +50,7 @@ import step.core.execution.OperationMode;
 import step.core.json.JsonProviderCache;
 import step.core.miscellaneous.ReportNodeAttachmentManager;
 import step.core.miscellaneous.ReportNodeAttachmentManager.AttachmentQuotaException;
-import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.Plan;
-import step.core.plans.PlanAccessor;
 import step.core.plugins.ExecutionCallbacks;
 import step.core.reports.Error;
 import step.core.reports.ErrorType;
@@ -61,7 +60,6 @@ import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.execution.FunctionExecutionService;
 import step.functions.execution.FunctionExecutionServiceException;
-import step.functions.execution.FunctionExecutionServiceImpl;
 import step.functions.handler.AbstractFunctionHandler;
 import step.functions.io.FunctionInput;
 import step.functions.io.Output;
@@ -79,7 +77,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 
-import static step.artefacts.handlers.functions.TokenForcastingExecutionPlugin.getTokenForecastingContext;
+import static step.artefacts.handlers.functions.TokenForecastingExecutionPlugin.getTokenForecastingContext;
+import static step.core.agents.provisioning.AgentPoolConstants.TOKEN_ATTRIBUTE_PARTITION;
 
 public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunctionReportNode> {
 
@@ -209,30 +208,6 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				OperationManager.getInstance().enter(OPERATION_KEYWORD_CALL, new Object[]{function.getAttributes(), token.getToken(), token.getAgent()},
 						node.getId().toString());
 
-				// Add the docker image if present within the session
-				if(functionGroupContext != null) {
-					functionGroupContext.dockerImage.ifPresent(image -> {
-						DockerRegistryConfigurationAccessor dockerRegistryConfigurationAccessor = context.require(DockerRegistryConfigurationAccessor.class);
-						DockerRegistryConfiguration dockerRegistryConfiguration = dockerRegistryConfigurationAccessor
-								.stream()
-								.filter(registryConfiguration -> {
-											try {
-												return image.contains(new URL(registryConfiguration.getUrl()).getAuthority());
-											} catch (MalformedURLException e) {
-												throw new RuntimeException(e);
-											}
-										})
-								.findFirst().orElseThrow(()	-> new NoSuchElementException(String.format("No docker registry matching image path %s found, it must first be created", image)));
-						Map<String, String> inputProperties = input.getProperties();
-						inputProperties.put(FunctionExecutionServiceImpl.INPUT_PROPERTY_DOCKER_IMAGE, image);
-						inputProperties.put(FunctionExecutionServiceImpl.INPUT_PROPERTY_CONTAINER_USER, functionGroupContext.containerUser.orElseThrow(() -> new NoSuchElementException("No container user has been specified, this is mandatory")));
-						inputProperties.put(FunctionExecutionServiceImpl.INPUT_PROPERTY_CONTAINER_CMD, functionGroupContext.containerCommand.orElse(""));
-						inputProperties.put(FunctionExecutionServiceImpl.INPUT_PROPERTY_DOCKER_REGISTRY_URL, dockerRegistryConfiguration.getUrl());
-						inputProperties.put(FunctionExecutionServiceImpl.INPUT_PROPERTY_DOCKER_REGISTRY_USERNAME, dockerRegistryConfiguration.getUsername());
-						inputProperties.put(FunctionExecutionServiceImpl.INPUT_PROPERTY_DOCKER_REGISTRY_PASSWORD, dockerRegistryConfiguration.getPassword());
-						input.setProperties(inputProperties);
-					});
-				}
 				try {
 					output = functionExecutionService.callFunction(token.getID(), function, input, JsonObject.class, context);
 				} finally {
@@ -324,7 +299,8 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	 * These attributes will be used to match the right token if the agent token defines criteria for the selector (token pretender)
 	 */
 	private Map<String, String> getOwnAttributesForTokenSelection() {
-		return Map.of("executionId", context.getExecutionId());
+		String executionId = context.getExecutionId();
+		return Map.of(TOKEN_ATTRIBUTE_PARTITION, executionId);
 	}
 
 	private void validateInput(FunctionInput<JsonObject> input, Function function) {

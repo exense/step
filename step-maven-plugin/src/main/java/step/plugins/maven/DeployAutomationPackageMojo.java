@@ -31,15 +31,6 @@ import java.io.File;
 @Mojo(name = "deploy-automation-package")
 public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
 
-    @Parameter(defaultValue = "${project.groupId}", readonly = true, required = true)
-    private String groupId;
-
-    @Parameter(defaultValue = "${project.artifactId}", readonly = true, required = true)
-    private String artifactId;
-
-    @Parameter(defaultValue = "${project.version}", readonly = true, required = true)
-    private String artifactVersion;
-
     @Parameter(property = "step-deploy-automation-package.artifact-classifier")
     private String artifactClassifier;
 
@@ -61,6 +52,8 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
     @Override
     public void execute() throws MojoExecutionException {
         try {
+            validateEEConfiguration(getStepProjectName(), getAuthToken());
+            checkStepControllerVersion();
             createTool(getUrl(), getStepProjectName(), getAuthToken(), getAsync()).execute();
         } catch (StepCliExecutionException e) {
             throw new MojoExecutionException("Execution exception", e);
@@ -74,7 +67,7 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
     }
 
     protected File getFileToUpload() throws MojoExecutionException {
-        Artifact artifact = getProjectArtifact(getArtifactClassifier(), getGroupId(), getArtifactId(), getArtifactVersion());
+        Artifact artifact = getProjectArtifact(getArtifactClassifier());
 
         if (artifact == null || artifact.getFile() == null) {
             throw new MojoExecutionException("Unable to resolve artifact to upload.");
@@ -89,30 +82,6 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
 
     public void setArtifactClassifier(String artifactClassifier) {
         this.artifactClassifier = artifactClassifier;
-    }
-
-    public String getGroupId() {
-        return groupId;
-    }
-
-    public void setGroupId(String groupId) {
-        this.groupId = groupId;
-    }
-
-    public String getArtifactId() {
-        return artifactId;
-    }
-
-    public void setArtifactId(String artifactId) {
-        this.artifactId = artifactId;
-    }
-
-    public String getArtifactVersion() {
-        return artifactVersion;
-    }
-
-    public void setArtifactVersion(String artifactVersion) {
-        this.artifactVersion = artifactVersion;
     }
 
     public String getStepProjectName() {

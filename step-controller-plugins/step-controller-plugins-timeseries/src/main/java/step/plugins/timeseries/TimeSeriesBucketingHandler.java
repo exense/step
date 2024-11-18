@@ -4,8 +4,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;
-import step.core.timeseries.TimeSeriesIngestionPipeline;
+import step.core.timeseries.TimeSeries;
 import step.core.timeseries.bucket.BucketAttributes;
+import step.core.timeseries.ingestion.TimeSeriesIngestionPipeline;
 import step.plugins.measurements.Measurement;
 import step.plugins.measurements.MeasurementHandler;
 
@@ -13,6 +14,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * This class acts as a wrapper over a TimeSeries ingestion. It has special methods which alter the data before ingestion.
+ */
 public class TimeSeriesBucketingHandler implements MeasurementHandler {
 
     private static final String THREAD_GROUP_MEASUREMENT_TYPE = "threadgroup";
@@ -22,13 +26,13 @@ public class TimeSeriesBucketingHandler implements MeasurementHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(TimeSeriesBucketingHandler.class);
 
-    private final TimeSeriesIngestionPipeline ingestionPipeline;
+    private final TimeSeries timeSeries;
 
-    private final List<String> attributes;
+    private final List<String> handledAttributes;
 
-    public TimeSeriesBucketingHandler(TimeSeriesIngestionPipeline ingestionPipeline, List<String> attributes) {
-        this.ingestionPipeline = ingestionPipeline;
-        this.attributes = attributes;
+    public TimeSeriesBucketingHandler(TimeSeries timeSeries, List<String> handledAttributes) {
+        this.timeSeries = timeSeries;
+        this.handledAttributes = handledAttributes;
     }
 
     @Override
@@ -47,12 +51,13 @@ public class TimeSeriesBucketingHandler implements MeasurementHandler {
 
         BucketAttributes bucketAttributes = measurementToBucketAttributes(measurement);
         bucketAttributes.put(METRIC_TYPE_KEY, METRIC_TYPE_RESPONSE_TIME);
-        this.ingestionPipeline.ingestPoint(bucketAttributes, begin, value);
+        TimeSeriesIngestionPipeline ingestionPipeline = this.timeSeries.getIngestionPipeline();
+        ingestionPipeline.ingestPoint(bucketAttributes, begin, value);
     }
 
     private BucketAttributes measurementToBucketAttributes(Measurement measurement) {
         Map<String, Object> bucketAttributesMap = new HashMap<>();
-        attributes.forEach(a -> {
+        handledAttributes.forEach(a -> {
             if (measurement.containsKey(a)) {
                 bucketAttributesMap.put(a,measurement.get(a));
             }
@@ -66,7 +71,8 @@ public class TimeSeriesBucketingHandler implements MeasurementHandler {
             if (measurement != null) {
                 BucketAttributes bucketAttributes = measurementToBucketAttributes(measurement);
                 bucketAttributes.put(METRIC_TYPE_KEY, measurement.getType());
-                this.ingestionPipeline.ingestPoint(bucketAttributes, measurement.getBegin(), measurement.getValue());
+                TimeSeriesIngestionPipeline ingestionPipeline = this.timeSeries.getIngestionPipeline();
+                ingestionPipeline.ingestPoint(bucketAttributes, measurement.getBegin(), measurement.getValue());
             }
         });
     }
@@ -92,6 +98,10 @@ public class TimeSeriesBucketingHandler implements MeasurementHandler {
     }
 
     public List<String> getHandledAttributes() {
-        return attributes;
+        return handledAttributes;
+    }
+
+    public void flush() {
+        this.timeSeries.getIngestionPipeline().flush();
     }
 }

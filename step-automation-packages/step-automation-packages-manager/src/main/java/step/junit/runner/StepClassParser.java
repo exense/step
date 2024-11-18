@@ -24,6 +24,7 @@ import step.core.artefacts.AbstractArtefact;
 import step.core.plans.Plan;
 import step.core.scanner.AnnotationScanner;
 import step.handlers.javahandler.Keyword;
+import step.junit.runners.annotations.PlanCategories;
 import step.junit.runners.annotations.Plans;
 import step.plans.nl.RootArtefactType;
 import step.plans.nl.parser.PlanParser;
@@ -49,33 +50,9 @@ public class StepClassParser {
 		this.simpleYamlPlanReader = null;
 	}
 
-	public List<StepClassParserResult> createPlansForClass(Class<?> klass) throws Exception {
-		final List<StepClassParserResult> result = new ArrayList<>();
-		// Plans from annotation @Plans
-		result.addAll(getPlansFromPlansAnnotation(klass));
-		// Plans from methods annotated with @Plan
-		result.addAll(getPlanFromAnnotatedMethods(klass));
-		return result;
-	}
 
-	public List<StepClassParserResult> getPlansFromPlansAnnotation(Class<?> klass) throws Exception {
-		final List<StepClassParserResult> result = new ArrayList<>();
-		Plans plans;
-
-		logger.debug("searching for annotation for class "+klass.getName());
-		if ((plans = klass.getAnnotation(Plans.class)) != null) {
-			logger.debug("found annotation :"+ plans.value() + " for class "+klass.getName());
-			for (String name : plans.value()) {
-				result.add(createPlan(klass, name));
-			}
-		}
-		return result;
-	}
-
-	public List<StepClassParserResult> getPlanFromAnnotatedMethods(AnnotationScanner annotationScanner, Class<?> klass, Set<Method> excludedMethods) {
+	public List<StepClassParserResult> getPlanFromAnnotatedMethods(AnnotationScanner annotationScanner) {
 		return annotationScanner.getMethodsWithAnnotation(step.junit.runners.annotations.Plan.class).stream()
-				.filter(m -> m.getDeclaringClass() == klass)
-				.filter(m -> !excludedMethods.contains(m))
 				.map(m -> {
 					Keyword keyword = m.getAnnotation(Keyword.class);
 					String planName;
@@ -102,7 +79,11 @@ public class StepClassParser {
 							}
 						}
 						plan = planParser.parse(planStr, RootArtefactType.TestCase);
-						setPlanName(plan, planName);
+						YamlPlanReader.setPlanName(plan, planName);
+						PlanCategories planCategories = m.getAnnotation(PlanCategories.class);
+						if (planCategories != null && planCategories.value() != null) {
+							plan.setCategories(Arrays.asList(planCategories.value()));
+						}
 					} catch (Exception e) {
 						exception = e;
 					}
@@ -110,16 +91,6 @@ public class StepClassParser {
 				}).collect(Collectors.toList());
 	}
 
-	public List<StepClassParserResult> getPlanFromAnnotatedMethods(Class<?> klass) {
-		try (AnnotationScanner annotationScanner = AnnotationScanner.forAllClassesFromClassLoader(klass.getClassLoader())) {
-			return getPlanFromAnnotatedMethods(annotationScanner,klass, new HashSet<>());
-		}
-	}
-
-	public StepClassParserResult createPlan(Class<?> klass, String fileName) throws Exception {
-		InputStream stream = klass.getResourceAsStream(fileName);
-		return createPlan(klass, fileName, stream);
-	}
 
 	public StepClassParserResult createPlan(Class<?> klass, String fileName, InputStream stream) {
 		Plan plan = null;
@@ -134,7 +105,7 @@ public class StepClassParser {
 			if (parserMode == ParserMode.PLAIN_TEXT_PARSER) {
 				plan = planParser.parse(stream, RootArtefactType.TestCase);
 				logger.debug("plan is:" + plan + " for class " + klass.getName());
-				setPlanName(plan, fileName);
+				YamlPlanReader.setPlanName(plan, fileName);
 			} else if (parserMode == ParserMode.YAML_PARSER) {
 				try {
 					plan = initAndGetYamlPlanReader().readYamlPlan(stream);
@@ -145,18 +116,15 @@ public class StepClassParser {
 			} else {
 				throw new UnsupportedOperationException("Unable to resolve plan parser " + parserMode);
 			}
+			PlanCategories planCategories = klass.getAnnotation(PlanCategories.class);
+			if (planCategories != null && planCategories.value() != null) {
+				plan.setCategories(Arrays.asList(planCategories.value()));
+			}
 		} catch (Exception e) {
 			exception = e;
 		}
 
 		return new StepClassParserResult(fileName, plan, exception);
-	}
-
-	public static void setPlanName(Plan plan, String name) {
-		Map<String, String> attributes = new HashMap<>();
-		attributes.put(AbstractArtefact.NAME, name);
-		plan.setAttributes(attributes);
-		plan.getRoot().getAttributes().put(AbstractArtefact.NAME, name);
 	}
 
 	private ParserMode chooseParserModeByFileName(String fileName) {

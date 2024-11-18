@@ -23,6 +23,7 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import step.cli.AbstractExecuteAutomationPackageTool;
+import step.cli.MavenArtifactIdentifier;
 import step.cli.StepCliExecutionException;
 
 import java.io.File;
@@ -38,11 +39,11 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
     @Parameter(property = "step.auth-token", required = false)
     private String authToken;
 
-    @Parameter(property = "step-execute-auto-packages.group-id", required = true, defaultValue = "${project.groupId}")
-    private String groupId;
-    @Parameter(property = "step-execute-auto-packages.artifact-id", required = true, defaultValue = "${project.artifactId}")
+    @Parameter(property = "step-execute-auto-packages.artifact-group-id")
+    private String artifactGroupId;
+    @Parameter(property = "step-execute-auto-packages.artifact-id")
     private String artifactId;
-    @Parameter(property = "step-execute-auto-packages.artifact-version", required = true, defaultValue = "${project.version}")
+    @Parameter(property = "step-execute-auto-packages.artifact-version")
     private String artifactVersion;
     @Parameter(property = "step-execute-auto-packages.artifact-classifier", required = false)
     private String artifactClassifier;
@@ -63,12 +64,25 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
     @Parameter(property = "step-execute-auto-packages.exclude-plans")
     private String excludePlans;
 
+    @Parameter(property = "step-execute-auto-packages.include-categories")
+    private String includeCategories;
+    @Parameter(property = "step-execute-auto-packages.exclude-categories")
+    private String excludeCategories;
+
+    @Parameter(property = "step-execute-auto-packages.wrap-into-test-set")
+    private Boolean wrapIntoTestSet;
+    @Parameter(property = "step-execute-auto-packages.number-of-threads")
+    private Integer numberOfThreads;
+
     @Override
     public void execute() throws MojoExecutionException {
         try {
-            createTool(getUrl(), getStepProjectName(), getUserId(), getAuthToken(), getExecutionParameters(),
-                    getExecutionResultTimeoutS(), getWaitForExecution(), getEnsureExecutionSuccess(), getPrintAggregatedReport(),
-                    getIncludePlans(), getExcludePlans()).execute();
+            validateEEConfiguration(getStepProjectName(), getAuthToken());
+            checkStepControllerVersion();
+            createTool(getUrl(), getStepProjectName(), getUserId(), getAuthToken(), getExecutionParameters(), getExecutionResultTimeoutS(),
+                    getWaitForExecution(), getEnsureExecutionSuccess(), getPrintAggregatedReport(), getIncludePlans(), getExcludePlans(),
+                    getIncludeCategories(), getExcludeCategories(), getWrapIntoTestSet(), getNumberOfThreads()
+            ).execute();
         } catch (StepCliExecutionException e) {
             throw new MojoExecutionException("Execution exception", e);
         } catch (Exception e) {
@@ -80,19 +94,43 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
                                                               final String authToken, final Map<String, String> parameters,
                                                               final Integer executionResultTimeoutS, final Boolean waitForExecution,
                                                               final Boolean ensureExecutionSuccess, final Boolean printAggregatedReport,
-                                                              final String includePlans, final String excludePlans) {
-        return new AbstractExecuteAutomationPackageTool(url, projectName, userId, authToken, parameters, executionResultTimeoutS, waitForExecution, ensureExecutionSuccess, printAggregatedReport, includePlans, excludePlans) {
+                                                              final String includePlans,
+                                                              final String excludePlans, final String includeCategories,
+                                                              final String excludeCategories, final Boolean wrapIntoTestSet,
+                                                              final Integer numberOfThreads) {
+        MavenArtifactIdentifier remoteMavenArtifact = null;
+        if (!isLocalMavenArtifact()) {
+            remoteMavenArtifact = new MavenArtifactIdentifier(getArtifactGroupId(), getArtifactId(), getArtifactVersion(), getArtifactClassifier());
+        }
+
+        return new AbstractExecuteAutomationPackageTool(url, projectName, userId, authToken, parameters, executionResultTimeoutS,
+                waitForExecution, ensureExecutionSuccess, printAggregatedReport, includePlans, excludePlans, includeCategories,
+                excludeCategories, wrapIntoTestSet, numberOfThreads, remoteMavenArtifact) {
             @Override
             protected File getAutomationPackageFile() throws StepCliExecutionException {
-                Artifact applicableArtifact = getProjectArtifact(getArtifactClassifier(), getGroupId(), getArtifactId(), getArtifactVersion());
+                // if groupId and artifactId are not defined, we execute the maven artifact from current project
+                if (useLocalArtifact()) {
+                    Artifact applicableArtifact = getProjectArtifact(getArtifactClassifier());
 
-                if (applicableArtifact != null) {
-                    return applicableArtifact.getFile();
+                    if (applicableArtifact != null) {
+                        File artifactFile = applicableArtifact.getFile();
+                        if(artifactFile == null || !artifactFile.exists()) {
+                            throw logAndThrow("The resolved artifact '" + artifactToString(applicableArtifact) + "' contains no file.");
+                        } else {
+                            return artifactFile;
+                        }
+                    } else {
+                        throw logAndThrow("Unable to resolve automation package file " + artifactToString(project.getGroupId(), project.getArtifactId(), getArtifactClassifier(), project.getVersion()));
+                    }
                 } else {
-                    throw logAndThrow("Unable to resolve automation package file " + artifactToString(getGroupId(), getArtifactId(), getArtifactClassifier(), getArtifactVersion()));
+                    return null;
                 }
             }
         };
+    }
+
+    protected boolean isLocalMavenArtifact() {
+        return getArtifactId() == null || getArtifactId().isEmpty() || getArtifactGroupId() == null || getArtifactGroupId().isEmpty();
     }
 
     public String getStepProjectName() {
@@ -119,12 +157,12 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
         this.authToken = authToken;
     }
 
-    public String getGroupId() {
-        return groupId;
+    public String getArtifactGroupId() {
+        return artifactGroupId;
     }
 
-    public void setGroupId(String groupId) {
-        this.groupId = groupId;
+    public void setArtifactGroupId(String artifactGroupId) {
+        this.artifactGroupId = artifactGroupId;
     }
 
     public String getArtifactId() {
@@ -207,4 +245,35 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
         this.excludePlans = excludePlans;
     }
 
+    public String getIncludeCategories() {
+        return includeCategories;
+    }
+
+    public void setIncludeCategories(String includeCategories) {
+        this.includeCategories = includeCategories;
+    }
+
+    public String getExcludeCategories() {
+        return excludeCategories;
+    }
+
+    public void setExcludeCategories(String excludeCategories) {
+        this.excludeCategories = excludeCategories;
+    }
+
+    public Boolean getWrapIntoTestSet() {
+        return wrapIntoTestSet;
+    }
+
+    public void setWrapIntoTestSet(Boolean wrapIntoTestSet) {
+        this.wrapIntoTestSet = wrapIntoTestSet;
+    }
+
+    public Integer getNumberOfThreads() {
+        return numberOfThreads;
+    }
+
+    public void setNumberOfThreads(Integer numberOfThreads) {
+        this.numberOfThreads = numberOfThreads;
+    }
 }

@@ -79,12 +79,14 @@ public class AutomationPackageManager {
 
     private final ExecutorService delayedUpdateExecutor = Executors.newCachedThreadPool();
 
+    public final AutomationPackageOperationMode operationMode;
+
     /**
      * The automation package manager used to store/delete automation packages. To run the automation package in isolated
      * context please use the separate in-memory automation package manager created via
      * {@link AutomationPackageManager#createIsolated(ObjectId, FunctionTypeRegistry, FunctionAccessor)}
      */
-    private AutomationPackageManager(AutomationPackageAccessor automationPackageAccessor,
+    private AutomationPackageManager(AutomationPackageOperationMode operationMode, AutomationPackageAccessor automationPackageAccessor,
                                      FunctionManager functionManager,
                                      FunctionAccessor functionAccessor,
                                      PlanAccessor planAccessor,
@@ -109,6 +111,7 @@ public class AutomationPackageManager {
         this.packageReader = packageReader;
         this.resourceManager = resourceManager;
         this.automationPackageLocks = automationPackageLocks;
+        this.operationMode = Objects.requireNonNull(operationMode);
 
         addDefaultExtensions();
     }
@@ -123,6 +126,7 @@ public class AutomationPackageManager {
      */
     public static AutomationPackageManager createLocalAutomationPackageManager(FunctionTypeRegistry functionTypeRegistry,
                                                                                FunctionAccessor mainFunctionAccessor,
+                                                                               PlanAccessor planAccessor,
                                                                                ResourceManager resourceManager,
                                                                                AutomationPackageReader reader,
                                                                                AutomationPackageHookRegistry hookRegistry) {
@@ -131,10 +135,10 @@ public class AutomationPackageManager {
 
         // for local AP manager we don't need to create layered accessors
         AutomationPackageManager automationPackageManager = new AutomationPackageManager(
-                new InMemoryAutomationPackageAccessorImpl(),
+                AutomationPackageOperationMode.LOCAL, new InMemoryAutomationPackageAccessorImpl(),
                 new FunctionManagerImpl(mainFunctionAccessor, functionTypeRegistry),
                 mainFunctionAccessor,
-                new InMemoryPlanAccessor(),
+                planAccessor,
                 resourceManager,
                 extensions,
                 hookRegistry, reader,
@@ -168,14 +172,15 @@ public class AutomationPackageManager {
         Map<String, Object> extensions = new HashMap<>();
         hookRegistry.onIsolatedAutomationPackageManagerCreate(extensions);
         AutomationPackageManager automationPackageManager = new AutomationPackageManager(
-                new InMemoryAutomationPackageAccessorImpl(),
+                AutomationPackageOperationMode.ISOLATED, new InMemoryAutomationPackageAccessorImpl(),
                 new FunctionManagerImpl(layeredFunctionAccessor, functionTypeRegistry),
                 layeredFunctionAccessor,
                 new InMemoryPlanAccessor(),
                 resourceManager1,
                 extensions,
                 hookRegistry, reader,
-                new AutomationPackageLocks(DEFAULT_READLOCK_TIMEOUT_SECONDS));
+                new AutomationPackageLocks(DEFAULT_READLOCK_TIMEOUT_SECONDS)
+        );
         automationPackageManager.isIsolated = true;
         return automationPackageManager;
     }
@@ -191,7 +196,7 @@ public class AutomationPackageManager {
         Map<String, Object> extensions = new HashMap<>();
         hookRegistry.onMainAutomationPackageManagerCreate(extensions);
         return new AutomationPackageManager(
-                accessor,
+                AutomationPackageOperationMode.MAIN, accessor,
                 functionManager,
                 functionAccessor,
                 planAccessor,
@@ -275,7 +280,7 @@ public class AutomationPackageManager {
         deletePlans(automationPackage);
         // schedules will be deleted in deleteAdditionalData via hooks
         deleteResources(automationPackage);
-        deleteAdditionalData(automationPackage, new AutomationPackageContext(resourceManager, null,  null,null, extensions));
+        deleteAdditionalData(automationPackage, new AutomationPackageContext(operationMode, resourceManager, null,  null,null, extensions));
     }
 
     /**
@@ -499,11 +504,14 @@ public class AutomationPackageManager {
         staging.getFunctions().addAll(prepareFunctionsStaging(automationPackageArchive, packageContent, enricherForIncludedEntities, oldPackage, staging.getResourceManager()));
 
         List<HookEntry> hookEntries = packageContent.getAdditionalData().entrySet().stream().map(e -> new HookEntry(e.getKey(), e.getValue())).collect(Collectors.toList());
+        List<String> orderedEntryNames = automationPackageHookRegistry.getOrderedHookFieldNames();
+        // sort the hook entries according to their "natural" order defined by the registry
+        hookEntries.sort(Comparator.comparingInt(he -> orderedEntryNames.indexOf(he.fieldName)));
 
         for (HookEntry hookEntry : hookEntries) {
             boolean hooked =  automationPackageHookRegistry.onPrepareStaging(
                     hookEntry.fieldName,
-                    new AutomationPackageContext(staging.getResourceManager(), automationPackageArchive, packageContent, enricherForIncludedEntities, extensions),
+                    new AutomationPackageContext(operationMode, staging.getResourceManager(), automationPackageArchive, packageContent, enricherForIncludedEntities, extensions),
                     packageContent,
                     hookEntry.values,
                     oldPackage, staging);
@@ -546,7 +554,7 @@ public class AutomationPackageManager {
         for (HookEntry hookEntry : hookEntries) {
             boolean hooked = automationPackageHookRegistry.onCreate(
                     hookEntry.fieldName, hookEntry.values,
-                    new AutomationPackageContext(resourceManager, automationPackageArchive, packageContent, objectEnricher, extensions)
+                    new AutomationPackageContext(operationMode, resourceManager, automationPackageArchive, packageContent, objectEnricher, extensions)
             );
             if (!hooked) {
                 log.warn("Additional field in automation package has been ignored and skipped: " + hookEntry.fieldName);
@@ -567,14 +575,14 @@ public class AutomationPackageManager {
                                              AutomationPackage oldPackage, ObjectEnricher enricher, ResourceManager stagingResourceManager) {
         List<Plan> plans = packageContent.getPlans();
         AutomationPackagePlansAttributesApplier specialAttributesApplier = new AutomationPackagePlansAttributesApplier(stagingResourceManager);
-        specialAttributesApplier.applySpecialAttributesToPlans(plans, automationPackageArchive, packageContent, enricher, extensions);
+        specialAttributesApplier.applySpecialAttributesToPlans(plans, automationPackageArchive, packageContent, enricher, extensions, operationMode);
 
         fillEntities(plans, oldPackage != null ? getPackagePlans(oldPackage.getId()) : new ArrayList<>(), enricher);
         return plans;
     }
 
     protected List<Function> prepareFunctionsStaging(AutomationPackageArchive automationPackageArchive, AutomationPackageContent packageContent, ObjectEnricher enricher, AutomationPackage oldPackage, ResourceManager stagingResourceManager) {
-        AutomationPackageContext apContext = new AutomationPackageContext(stagingResourceManager, automationPackageArchive, packageContent, enricher, extensions);
+        AutomationPackageContext apContext = new AutomationPackageContext(operationMode, stagingResourceManager, automationPackageArchive, packageContent, enricher, extensions);
         List<Function> completeFunctions = packageContent.getKeywords().stream().map(keyword -> keyword.prepareKeyword(apContext)).collect(Collectors.toList());
 
         // get old functions with same name and reuse their ids
@@ -707,6 +715,10 @@ public class AutomationPackageManager {
         } else {
             log.info("Skip automation package cleanup. Cleanup is only supported for isolated (in-memory) automation package manager");
         }
+    }
+
+    public String getDescriptorJsonSchema() {
+        return packageReader.getDescriptorJsonSchema();
     }
 
     private static class HookEntry {

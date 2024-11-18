@@ -28,6 +28,7 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+
 import java.util.List;
 
 import static step.automation.packages.AutomationPackageArchiveType.JAVA;
@@ -41,10 +42,12 @@ public class AutomationPackageArchive implements Closeable {
     private final File originalFile;
     private boolean internalClassLoader = false;
     private final AutomationPackageArchiveType type;
+    private final ResourcePathMatchingResolver pathMatchingResourceResolver;
 
     public AutomationPackageArchive(ClassLoader classLoader) {
         this.classLoader = classLoader;
         this.originalFile = null;
+        this.pathMatchingResourceResolver = new ResourcePathMatchingResolver(classLoader);
         this.type = JAVA;
     }
 
@@ -54,6 +57,7 @@ public class AutomationPackageArchive implements Closeable {
         this.type = JAVA; //Only supported type for now
         try {
             this.classLoader = new URLClassLoader(new URL[]{automationPackageFile.toURI().toURL()}, null);
+            this.pathMatchingResourceResolver = new ResourcePathMatchingResolver(classLoader);
         } catch (MalformedURLException ex) {
             throw new AutomationPackageReadingException("Unable to read automation package", ex);
         }
@@ -84,12 +88,16 @@ public class AutomationPackageArchive implements Closeable {
         return url.openStream();
     }
 
-    public URL getResource(String resourcePath) {
+    public URL getResource(String resourcePath) throws IOException {
         URL resource = classLoader.getResource(resourcePath);
         if (log.isDebugEnabled()) {
             log.debug("Obtain resource from automation package: {}", resource);
         }
         return resource;
+    }
+
+    public List<URL> getResourcesByPattern(String resourcePathPattern) throws IOException {
+        return pathMatchingResourceResolver.getResourcesByPattern(resourcePathPattern);
     }
 
     public ClassLoader getClassLoader() {

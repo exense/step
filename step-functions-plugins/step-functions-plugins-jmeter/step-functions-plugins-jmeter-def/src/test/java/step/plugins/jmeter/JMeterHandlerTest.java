@@ -33,6 +33,7 @@ import step.functions.io.Output;
 import step.functions.runner.FunctionRunner;
 import step.functions.runner.FunctionRunner.Context;
 import step.grid.bootstrap.ResourceExtractor;
+import step.grid.io.Attachment;
 
 import java.io.File;
 import java.io.IOException;
@@ -52,20 +53,67 @@ public class JMeterHandlerTest {
 
     @Test
     public void test1() {
-        if (jMeterHome == null) {
-            Assert.fail("JMeter home variable is not defined. If you want to skip JMeter tests please active the 'SkipJMeterTests' maven profile");
-        }
+        assertJMeterHome();
         JMeterFunction f = buildTestFunction();
-        Output<JsonObject> output = run(f, "{\"url\":\"www.exense.ch\"}");
+        Output<JsonObject> output = run(f, "{\"url\":\"www.exense.ch\"}", false);
         Assert.assertNull(output.getError());
         Assert.assertNotNull(output.getPayload().get("samples"));
     }
 
-    private Output<JsonObject> run(JMeterFunction f, String inputJson) {
+    @Test
+    public void testDebug() {
+        assertJMeterHome();
+        JMeterFunction f = buildTestFunction();
+        Output<JsonObject> output = run(f, "{\"url\":\"www.exense.ch\"}", true);
+        Assert.assertNull(output.getError());
+        Assert.assertNotNull(output.getPayload().get("samples"));
+        Assert.assertEquals(1, output.getAttachments().size());
+        Attachment attachment = output.getAttachments().get(0);
+        Assert.assertEquals("log.txt", attachment.getName());
+    }
+
+    @Test
+    public void testError() {
+        assertJMeterHome();
+        JMeterFunction f = buildTestFunction();
+        Output<JsonObject> output = run(f, "{\"url\":\"www.exense2.ch\"}", false);
+        Assert.assertEquals("The following samples returned errors (error count in parentheses): HTTP Request (1)", output.getError().getMsg());
+        Assert.assertNotNull(output.getPayload().get("samples"));
+        Assert.assertEquals(1, output.getAttachments().size());
+        Attachment attachment = output.getAttachments().get(0);
+        Assert.assertEquals("log.txt", attachment.getName());
+    }
+
+    @Test
+    public void testProperties() {
+        assertJMeterHome();
+        JMeterFunction f = buildTestFunction();
+        Output<JsonObject> output = run(f, "{}", Map.of("url", "www.exense.ch"));
+        Assert.assertNull(output.getError());
+        Assert.assertNotNull(output.getPayload().get("samples"));
+
+        // Assert precedence of input
+        output = run(f, "{\"url\":\"www.exense.ch\"}", Map.of("url", "wrong url"));
+        Assert.assertNull(output.getError());
+        Assert.assertNotNull(output.getPayload().get("samples"));
+    }
+
+    private void assertJMeterHome() {
+        if (jMeterHome == null) {
+            Assert.fail("JMeter home variable is not defined. If you want to skip JMeter tests please active the 'SkipJMeterTests' maven profile");
+        }
+    }
+
+    private Output<JsonObject> run(JMeterFunction f, String inputJson, boolean debug) {
+        Map<String, String> properties = (debug) ? Map.of("debug", "true") : new HashMap<>();
+        return run(f, inputJson, properties);
+    }
+
+    private Output<JsonObject> run(JMeterFunction f, String inputJson, Map<String, String> properties) {
         Configuration configuration = new Configuration();
         configuration.putProperty(JMeterFunctionType.JMETER_HOME_CONFIG_PROPERTY, jMeterHome);
 
-        try (Context context = FunctionRunner.getContext(configuration, new JMeterFunctionType(configuration), new HashMap<>())) {
+        try (Context context = FunctionRunner.getContext(configuration, new JMeterFunctionType(configuration), properties)) {
             return context.run(f, inputJson);
         } catch (IOException e) {
             throw new RuntimeException(e);

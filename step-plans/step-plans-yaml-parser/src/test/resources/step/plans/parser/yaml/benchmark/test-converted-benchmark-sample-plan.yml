@@ -3,6 +3,7 @@ version: "1.1.0"
 name: "Performance assert example"
 root:
   testCase:
+    nodeName: "Performance assert example"
     skipNode: false
     instrumentNode: false
     continueParentNodeExecutionOnError: false

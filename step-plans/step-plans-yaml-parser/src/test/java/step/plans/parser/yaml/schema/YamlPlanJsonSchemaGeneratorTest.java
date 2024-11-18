@@ -25,7 +25,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
-import step.plans.parser.yaml.model.YamlPlanVersions;
+import step.plans.parser.yaml.YamlPlanVersions;
 
 import java.io.IOException;
 import java.io.InputStream;

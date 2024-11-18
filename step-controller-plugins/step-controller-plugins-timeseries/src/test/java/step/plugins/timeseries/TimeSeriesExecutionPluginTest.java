@@ -2,7 +2,7 @@ package step.plugins.timeseries;
 
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.Filter;
-import junit.framework.Assert;
+import org.junit.Assert;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -23,10 +23,13 @@ import step.core.execution.type.ExecutionTypePlugin;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
 import step.core.plans.runner.PlanRunnerResult;
+import step.core.timeseries.TimeSeries;
 import step.core.timeseries.TimeSeriesFilterBuilder;
-import step.core.timeseries.TimeSeriesIngestionPipeline;
 import step.core.timeseries.aggregation.TimeSeriesAggregationPipeline;
+import step.core.timeseries.aggregation.TimeSeriesAggregationQuery;
+import step.core.timeseries.aggregation.TimeSeriesAggregationQueryBuilder;
 import step.core.timeseries.aggregation.TimeSeriesAggregationResponse;
+import step.core.timeseries.ingestion.TimeSeriesIngestionPipeline;
 import step.core.views.ViewPlugin;
 import step.engine.plugins.FunctionPlugin;
 import step.engine.plugins.LocalFunctionPlugin;
@@ -94,8 +97,8 @@ public class TimeSeriesExecutionPluginTest extends AbstractKeyword {
 		mc.serverStart(globalContext);
 		tsPlugin = new TimeSeriesControllerPlugin();
 		tsPlugin.serverStart(globalContext);
+		TimeSeries timeSeries = globalContext.get(TimeSeries.class);
 		timeSeriesAggregationPipeline = globalContext.get(TimeSeriesAggregationPipeline.class);
-		TimeSeriesIngestionPipeline timeSeriesIngestionPipeline = globalContext.get(TimeSeriesIngestionPipeline.class);
 		engine = ExecutionEngine.builder()
 				.withPlugin(new MeasurementPlugin(GaugeCollectorRegistry.getInstance()))
 				.withPlugin(new FunctionPlugin())
@@ -104,7 +107,7 @@ public class TimeSeriesExecutionPluginTest extends AbstractKeyword {
                 .withPlugin(new BaseArtefactPlugin())
 				.withPlugin(new ExecutionTypePlugin())
 				.withPlugin(new ViewPlugin())
-                .withPlugin(new TimeSeriesExecutionPlugin(timeSeriesIngestionPipeline, timeSeriesAggregationPipeline))
+                .withPlugin(new TimeSeriesExecutionPlugin(timeSeries))
 				.withPlugin(new ViewPlugin())
 				.build();
 
@@ -146,22 +149,25 @@ public class TimeSeriesExecutionPluginTest extends AbstractKeyword {
 
 		//Thread.sleep(20000);
 
-		TimeSeriesAggregationResponse keywordsBuckets = timeSeriesAggregationPipeline
-                .newQueryBuilder()
-                .range(t1, t2)
-                .withFilter(TimeSeriesFilterBuilder.buildFilter(Map.of("type", "keyword")))
-                .withGroupDimensions(Set.of("name"))
-                .build()
-                .run();
+		TimeSeriesAggregationQuery keywordsQuery = new TimeSeriesAggregationQueryBuilder()
+				.range(t1, t2)
+				.withFilter(TimeSeriesFilterBuilder.buildFilter(Map.of("type", "keyword")))
+				.withGroupDimensions(Set.of("name"))
+				.build();
+		TimeSeriesAggregationResponse keywordsBuckets = timeSeriesAggregationPipeline.collect(keywordsQuery);
 		Assert.assertEquals(1,keywordsBuckets.getSeries().size());
 		//assertEquals(50,keywordsBuckets.getSeries().values().stream().findFirst().get().values().stream().findFirst().get().getCount());
-		TimeSeriesAggregationResponse customBuckets = timeSeriesAggregationPipeline
-                .newQueryBuilder()
+		TimeSeriesAggregationQuery customBucketsQuery = new TimeSeriesAggregationQueryBuilder()
+				.range(t1, t2)
+				.withFilter(TimeSeriesFilterBuilder.buildFilter(Map.of("type", "custom")))
+				.withGroupDimensions(Set.of("name", "customAttr"))
+				.build();
+		TimeSeriesAggregationResponse customBuckets = timeSeriesAggregationPipeline.collect(customBucketsQuery);
+		new TimeSeriesAggregationQueryBuilder()
                 .range(t1, t2)
                 .withFilter(TimeSeriesFilterBuilder.buildFilter(Map.of("type", "custom")))
                 .withGroupDimensions(Set.of("name","customAttr"))
-                .build()
-                .run();
+                .build();
 		Assert.assertEquals(2,customBuckets.getSeries().size());
 	}
 

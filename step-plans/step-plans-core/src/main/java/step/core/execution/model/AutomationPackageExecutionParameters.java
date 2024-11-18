@@ -20,12 +20,21 @@ package step.core.execution.model;
 
 import step.core.artefacts.ArtefactFilter;
 import step.core.plans.PlanFilter;
+import step.core.repositories.RepositoryObjectReference;
 
 import java.util.Map;
 
 public class AutomationPackageExecutionParameters extends CommonExecutionParameters {
 
     private PlanFilter planFilter;
+
+    private Boolean wrapIntoTestSet = false;
+    private Integer numberOfThreads = 0;
+
+    /**
+     * The reference to original artifact in case of isolated execution of automation package (while the real repository is 'isolatedAutomationPackage')
+     */
+    private RepositoryObjectReference originalRepositoryObject;
 
     public AutomationPackageExecutionParameters() {
     }
@@ -40,6 +49,7 @@ public class AutomationPackageExecutionParameters extends CommonExecutionParamet
         params.setCustomParameters(getCustomParameters());
         params.setUserID(getUserID());
         params.setArtefactFilter(getArtefactFilter());
+        params.setIsolatedExecution(true);
         return params;
     }
 
@@ -49,5 +59,29 @@ public class AutomationPackageExecutionParameters extends CommonExecutionParamet
 
     public void setPlanFilter(PlanFilter planFilter) {
         this.planFilter = planFilter;
+    }
+
+    public Boolean getWrapIntoTestSet() {
+        return wrapIntoTestSet;
+    }
+
+    public void setWrapIntoTestSet(Boolean wrapIntoTestSet) {
+        this.wrapIntoTestSet = wrapIntoTestSet;
+    }
+
+    public Integer getNumberOfThreads() {
+        return numberOfThreads;
+    }
+
+    public void setNumberOfThreads(Integer numberOfThreads) {
+        this.numberOfThreads = numberOfThreads;
+    }
+
+    public RepositoryObjectReference getOriginalRepositoryObject() {
+        return originalRepositoryObject;
+    }
+
+    public void setOriginalRepositoryObject(RepositoryObjectReference originalRepositoryObject) {
+        this.originalRepositoryObject = originalRepositoryObject;
     }
 }

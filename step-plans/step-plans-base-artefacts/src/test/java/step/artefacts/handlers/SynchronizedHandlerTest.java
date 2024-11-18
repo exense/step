@@ -30,14 +30,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Test;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.Synchronized;
 import step.artefacts.TestScenario;
 import step.artefacts.ThreadGroup;
-import step.artefacts.handlers.functions.TokenForcastingExecutionPlugin;
+import step.artefacts.handlers.functions.TokenForecastingExecutionPlugin;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.artefacts.handlers.ArtefactHandler;
@@ -56,14 +56,14 @@ import step.threadpool.ThreadPoolPlugin;
 public class SynchronizedHandlerTest {
 
 	public static Logger logger = LoggerFactory.getLogger(SynchronizedHandlerTest.class);
-	
+
 	private ExecutionEngine engine = ExecutionEngine.builder().withPlugin(new ThreadPoolPlugin()).withPlugin(new BaseArtefactPlugin()).withPlugin(new AbstractExecutionEnginePlugin() {
 		@Override
 		public void initializeExecutionContext(ExecutionEngineContext executionEngineContext,
 				ExecutionContext executionContext) {
 			executionContext.getArtefactHandlerRegistry().put(TestArtefact.class, TestArtefactHandler.class);
 		}
-	}).withPlugin(new TokenForcastingExecutionPlugin()).build();
+	}).withPlugin(new TokenForecastingExecutionPlugin()).build();
 	
 	@Test
 	public void testUnnamedLocalLock() throws IOException {		

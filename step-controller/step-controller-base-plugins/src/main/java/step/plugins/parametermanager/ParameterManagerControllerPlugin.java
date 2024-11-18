@@ -24,7 +24,10 @@ import step.core.GlobalContext;
 import step.core.accessors.AbstractAccessor;
 import step.core.accessors.Accessor;
 import step.core.collections.Collection;
+import step.core.collections.Filters;
+import step.core.collections.filters.Equals;
 import step.core.deployment.ObjectHookControllerPlugin;
+import step.core.dynamicbeans.DynamicValue;
 import step.core.encryption.EncryptionManager;
 import step.core.encryption.EncryptionManagerException;
 import step.core.entities.Entity;
@@ -40,7 +43,12 @@ import step.parameter.ParameterManager;
 import step.plugins.encryption.EncryptionManagerDependencyPlugin;
 import step.plugins.screentemplating.*;
 
+import java.util.Set;
 import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
+
+import static step.parameter.Parameter.PARAMETER_PROTECTED_VALUE_FIELD;
+import static step.parameter.Parameter.PARAMETER_VALUE_FIELD;
 
 @Plugin(dependencies= {ObjectHookControllerPlugin.class, ScreenTemplatePlugin.class, EncryptionManagerDependencyPlugin.class})
 public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
@@ -62,9 +70,13 @@ public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
 		context.put("ParameterAccessor", parameterAccessor);
 
 		context.get(TableRegistry.class).register(ENTITY_PARAMETERS, new Table<>(collection, "param-read", true)
-				.withResultItemEnricher(p -> ParameterServices.maskProtectedValue(p)));
+				.withResultItemTransformer((p,s) -> ParameterServices.maskProtectedValue(p))
+				.withDerivedTableFiltersFactory(lf -> {
+					Set<String> allFilterAttributes = lf.stream().map(Filters::collectFilterAttributes).flatMap(Set::stream).collect(Collectors.toSet());
+					return allFilterAttributes.contains(PARAMETER_VALUE_FIELD + ".value") ? new Equals(PARAMETER_PROTECTED_VALUE_FIELD, false) : Filters.empty();
+				}));
 		
-		ParameterManager parameterManager = new ParameterManager(parameterAccessor, encryptionManager, context.getConfiguration());
+		ParameterManager parameterManager = new ParameterManager(parameterAccessor, encryptionManager, context.getConfiguration(), context.getDynamicBeanResolver());
 		context.put(ParameterManager.class, parameterManager);
 		this.parameterManager = parameterManager;
 		
@@ -113,7 +125,7 @@ public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
 				//if protected and not encrypted, mask value by changing it to reset value
 				if (param.getProtectedValue() != null && param.getProtectedValue()) {
 					if (param.getValue() != null) {
-						param.setValue(ParameterManager.RESET_VALUE);
+						param.setValue(new DynamicValue<>(ParameterManager.RESET_VALUE));
 						exportContext.addMessage(EXPORT_PROTECT_PARAM_WARN);
 					} else {
 						exportContext.addMessage(EXPORT_ENCRYPT_PARAM_WARN);
@@ -143,17 +155,17 @@ public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
 							try {
 								encryptionManager.decrypt(param.getEncryptedValue());
 							} catch (EncryptionManagerException e) {
-								param.setValue(ParameterManager.RESET_VALUE);
+								param.setValue(new DynamicValue<>(ParameterManager.RESET_VALUE));
 								param.setEncryptedValue(null);
 								importContext.addMessage(IMPORT_DECRYPT_FAIL_WARN);
 							}
 						} else {
-							param.setValue(ParameterManager.RESET_VALUE);
+							param.setValue(new DynamicValue<>(ParameterManager.RESET_VALUE));
 							param.setEncryptedValue(null);
 							importContext.addMessage(IMPORT_DECRYPT_NO_EM_WARN);
 						}
 					} else {
-						param.setValue(ParameterManager.RESET_VALUE);
+						param.setValue(new DynamicValue<>(ParameterManager.RESET_VALUE));
 						importContext.addMessage(IMPORT_RESET_WARN);
 					}
 				}

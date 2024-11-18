@@ -19,14 +19,23 @@ public class TimeSeriesAPIResponse {
     private final List<BucketAttributes> matrixKeys;
     @NotNull
     private final boolean truncated;
+    @NotNull
+    private final long collectionResolution;
+    @NotNull
+    private final boolean higherResolutionUsed;
+    @NotNull
+    private final boolean ttlCovered;
 
-    public TimeSeriesAPIResponse(long start, long interval, long end, List<List<BucketResponse>> matrix, List<BucketAttributes> matrixKeys, boolean truncated) {
+    public TimeSeriesAPIResponse(long start, long interval, long end, List<List<BucketResponse>> matrix, List<BucketAttributes> matrixKeys, boolean truncated, long collectionResolution, boolean higherResolutionUsed, boolean ttlCovered) {
         this.start = start;
         this.interval = interval;
         this.end = end;
         this.matrix = matrix;
         this.matrixKeys = matrixKeys;
         this.truncated = truncated;
+        this.collectionResolution = collectionResolution;
+        this.higherResolutionUsed = higherResolutionUsed;
+        this.ttlCovered = ttlCovered;
     }
 
     public long getStart() {
@@ -51,5 +60,18 @@ public class TimeSeriesAPIResponse {
 
     public boolean isTruncated() {
         return truncated;
+    }
+
+    public boolean isHigherResolutionUsed() {
+        return higherResolutionUsed;
+    }
+
+    public long getCollectionResolution() {
+        return collectionResolution;
+    }
+
+    @NotNull
+    public boolean isTtlCovered() {
+        return ttlCovered;
     }
 }

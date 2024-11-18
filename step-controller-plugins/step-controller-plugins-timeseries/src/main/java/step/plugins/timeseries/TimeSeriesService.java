@@ -13,6 +13,7 @@ import step.controller.services.async.AsyncTaskStatus;
 import step.core.GlobalContext;
 import step.core.collections.Collection;
 import step.core.deployment.AbstractStepServices;
+import step.core.deployment.ControllerServiceException;
 import step.core.entities.EntityManager;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.timeseries.*;
@@ -38,21 +39,23 @@ public class TimeSeriesService extends AbstractStepServices {
     private MetricTypeAccessor metricTypeAccessor;
     private int maxNumberOfSeries;
 
+    public static final String TIME_SERIES_SAMPLING_LIMIT = "timeseries.sampling.limit";
+    public static final String TIME_SERIES_MAX_NUMBER_OF_SERIES = "timeseries.response.series.limit";
+
     @PostConstruct
     public void init() throws Exception {
         super.init();
         GlobalContext context = getContext();
         List<String> timeSeriesAttributes = context.get(TimeSeriesBucketingHandler.class).getHandledAttributes();
-        TimeSeriesAggregationPipeline aggregationPipeline = context.require(TimeSeriesAggregationPipeline.class);
         AsyncTaskManager asyncTaskManager = context.require(AsyncTaskManager.class);
         Collection<Measurement> measurementCollection = context.getCollectionFactory().getCollection(EntityManager.measurements, Measurement.class);
         metricTypeAccessor = context.require(MetricTypeAccessor.class);
         TimeSeries timeSeries = context.require(TimeSeries.class);
         ExecutionAccessor executionAccessor = context.getExecutionAccessor();
-        int resolution = configuration.getPropertyAsInteger(RESOLUTION_PERIOD_PROPERTY, 1000);
+        int resolution = (int) timeSeries.getIngestionPipeline().getResolution();
         int fieldsSamplingLimit = configuration.getPropertyAsInteger(TIME_SERIES_SAMPLING_LIMIT, 1000);
         maxNumberOfSeries = configuration.getPropertyAsInteger(TIME_SERIES_MAX_NUMBER_OF_SERIES, 1000);
-        this.handler = new TimeSeriesHandler(resolution, timeSeriesAttributes, measurementCollection, executionAccessor, timeSeries, aggregationPipeline, asyncTaskManager, fieldsSamplingLimit);
+        this.handler = new TimeSeriesHandler(resolution, timeSeriesAttributes, measurementCollection, executionAccessor, timeSeries, asyncTaskManager, fieldsSamplingLimit);
     }
 
     @Secured(right = "execution-read")
@@ -62,7 +65,11 @@ public class TimeSeriesService extends AbstractStepServices {
     @Produces(MediaType.APPLICATION_JSON)
     public TimeSeriesAPIResponse getTimeSeries(@NotNull FetchBucketsRequest request) {
         enrichRequest(request);
-        return handler.getTimeSeries(request);
+        try {
+            return handler.getTimeSeries(request);
+        } catch (Exception e) {
+            throw new ControllerServiceException(e.getMessage());
+        }
     }
     
     @Secured(right = "execution-read")
@@ -73,7 +80,11 @@ public class TimeSeriesService extends AbstractStepServices {
     // TODO this method should be renamed as it doesn't return measurements but a timeseries
     public TimeSeriesAPIResponse getMeasurements(@NotNull FetchBucketsRequest request) {
         enrichRequest(request);
-        return handler.getOrBuildTimeSeries(request);
+        try {
+            return handler.getOrBuildTimeSeries(request);
+        } catch (Exception e) {
+            throw new ControllerServiceException(e.getMessage());
+        }
     }
 
     private void enrichRequest(FetchBucketsRequest request) {

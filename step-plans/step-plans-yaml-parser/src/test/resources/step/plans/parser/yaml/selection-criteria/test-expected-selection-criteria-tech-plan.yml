@@ -2,10 +2,12 @@
 _class: "step.core.plans.Plan"
 attributes:
   name: "test plan"
+agents:
+  mode: "auto_detect"
 root:
   _class: "Sequence"
   attributes:
-    name: "Sequence"
+    name: "test plan"
   dynamicName:
     dynamic: false
     value: ""
@@ -146,8 +148,10 @@ root:
         dynamic: false
         value: "{\"stringInput\":{\"dynamic\":true,\"expression\":\"'abc'\"},\"intInput\"\
         :{\"dynamic\":false,\"value\":777},\"mapInput\":{\"dynamic\":false,\"value\"\
-        :{\"keyA\":{\"dynamic\":true,\"expression\":\"expressionA\"},\"keyB\":{\"dynamic\":false,\"value\":\"valueB\"}}},\"arrayInput\":{\"dynamic\":false,\"\
-        value\":[{\"dynamic\":true,\"expression\":\"expressionB\"},{\"dynamic\":false,\"value\":3},{\"dynamic\":false,\"value\":5}]}}"
+        :{\"keyA\":{\"dynamic\":true,\"expression\":\"expressionA\"},\"keyB\":{\"\
+        dynamic\":false,\"value\":\"valueB\"}}},\"arrayInput\":{\"dynamic\":false,\"\
+        value\":[{\"dynamic\":true,\"expression\":\"expressionB\"},{\"dynamic\":false,\"\
+        value\":3},{\"dynamic\":false,\"value\":5}]}}"
       resultMap:
         dynamic: false
       id: "644fbe4e38a61e07cc3a4df8"

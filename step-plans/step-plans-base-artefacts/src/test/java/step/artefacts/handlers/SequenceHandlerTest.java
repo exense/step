@@ -18,9 +18,8 @@
  ******************************************************************************/
 package step.artefacts.handlers;
 
-import static junit.framework.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
 import static step.planbuilder.BaseArtefacts.*;
-import static step.planbuilder.BaseArtefacts.set;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -28,7 +27,7 @@ import java.util.concurrent.TimeoutException;
 
 import org.junit.Test;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import step.artefacts.Check;
 import step.artefacts.Echo;
 import step.artefacts.Sequence;
@@ -397,7 +396,7 @@ public class SequenceHandlerTest extends AbstractArtefactHandlerTest {
 		
 		Assert.assertEquals(ReportNodeStatus.PASSED, result.getResult());				
 	}
-
+	
 	@Test
 	public void testBeforeAndAfter() throws Exception {
 		// Create a plan with an empty sequence block
