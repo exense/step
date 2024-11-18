@@ -415,10 +415,6 @@ public class JUnit4ReportWriter implements ReportWriter {
 				writer.write('\n');
 				errorWritten.set(true);
 			}
-			
-			node.getAttachments().forEach(attachment->{
-				
-			});
 		}
 	}
 
