@@ -39,6 +39,7 @@ import step.reports.CustomReportType;
 import step.repositories.ArtifactRepositoryConstants;
 
 import java.io.*;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
@@ -148,12 +149,14 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
                                 RemoteExecutionManager.Report customReport;
                                 File outputFile;
 
+                                Path currentFolder = new File("").toPath().toAbsolutePath();
+                                Path relativePathToOutputDir = currentFolder.relativize(params.getReportOutputDir().toPath().toAbsolutePath());
                                 // report output directory is sent as a root folder for attachments
                                 if (executionIds.size() > 1) {
-                                    customReport = remoteExecutionManager.getCustomMultiReport(executionIds, serverReportType, includeAttachments, params.getReportOutputDir().getPath());
+                                    customReport = remoteExecutionManager.getCustomMultiReport(executionIds, serverReportType, includeAttachments, relativePathToOutputDir.toFile().getPath());
                                     outputFile = new File(outputFolder, customReport.getFileName());
                                 } else {
-                                    customReport = remoteExecutionManager.getCustomReport(executionIds.get(0), serverReportType, includeAttachments, params.getReportOutputDir().getPath());
+                                    customReport = remoteExecutionManager.getCustomReport(executionIds.get(0), serverReportType, includeAttachments, relativePathToOutputDir.toFile().getPath());
                                     outputFile = new File(outputFolder, customReport.getFileName());
                                 }
                                 logInfo("Saving execution report (" + params.getReportTypes() + ") into " + outputFile.getAbsolutePath(), null);

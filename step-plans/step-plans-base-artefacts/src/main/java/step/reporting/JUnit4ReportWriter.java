@@ -186,8 +186,10 @@ public class JUnit4ReportWriter implements ReportWriter {
 					}
 
 					// add attachment info
-					if(node.getAttachments() != null && !node.getAttachments().isEmpty()) {
-						attachmentsInfo.add(testCaseId.get(), node.getAttachments());
+					if(node.getContributingError() && node.getAttachments() != null) {
+						for (AttachmentMeta attachment : node.getAttachments()) {
+							attachmentsInfo.add(testCaseId.get(), attachment);
+						}
 					}
 
 				} catch (IOException e1) {

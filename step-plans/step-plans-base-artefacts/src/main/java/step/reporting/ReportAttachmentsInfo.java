@@ -26,14 +26,20 @@ import java.util.List;
 import java.util.Map;
 
 public class ReportAttachmentsInfo {
+
+    private static final Integer MAX_ATTACHMENTS = 10;
+
     private Map<String, List<AttachmentMeta>> attachmentsPerTestCase = new HashMap<>();
 
     public Map<String, List<AttachmentMeta>> getAttachmentsPerTestCase() {
         return attachmentsPerTestCase;
     }
 
-    public void add(String testCaseId, List<AttachmentMeta> attachmentMetas) {
+    public void add(String testCaseId, AttachmentMeta attachmentMetas) {
         attachmentsPerTestCase.computeIfAbsent(testCaseId, k -> new ArrayList<>());
-        attachmentsPerTestCase.get(testCaseId).addAll(attachmentMetas);
+        List<AttachmentMeta> listPerTestCase = attachmentsPerTestCase.get(testCaseId);
+        if (listPerTestCase.size() < MAX_ATTACHMENTS) {
+            listPerTestCase.add(attachmentMetas);
+        }
     }
 }
