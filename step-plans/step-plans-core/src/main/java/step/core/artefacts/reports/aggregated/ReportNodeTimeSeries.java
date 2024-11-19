@@ -56,10 +56,6 @@ public class ReportNodeTimeSeries implements Closeable {
         ingestionPipeline.flush();
     }
 
-    public void flush() {
-        timeSeriesIngestionPipeline.flush();
-    }
-
     public static class Range {
         long from;
         long to;

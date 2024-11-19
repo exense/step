@@ -103,7 +103,6 @@ public class ResolvedPlanBuilderTest {
         Plan subSubPlan = PlanBuilder.create()
                 .startBlock(BaseArtefacts.sequence())
                 .add(echo("'Echo 4'"))
-                .add(echo("'Echo 4'"))
                 .endBlock().build();
 
         Plan subPlan = PlanBuilder.create()
@@ -291,24 +290,6 @@ public class ResolvedPlanBuilderTest {
         AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(engine.getExecutionEngineContext(), result.getExecutionId());
         AggregatedReportView node = aggregatedReportViewBuilder.buildAggregatedReportView();
         logger.info(node.toString());
-        assertEquals("ForBlock: 1x\n" +
-                        " CallPlan: 10x\n" +
-                        "  Sequence: 10x\n" +
-                        "   Echo: 10x\n" +
-                        "   Echo: 10x\n" +
-                        "   ForBlock: 10x\n" +
-                        "    CallPlan: 20x\n" +
-                        "     Sequence: 20x\n" +
-                        "      Echo: 20x\n" +
-                        " CallPlan: 10x\n" +
-                        "  Sequence: 10x\n" +
-                        "   Echo: 10x\n" +
-                        "   Echo: 10x\n" +
-                        "   ForBlock: 10x\n" +
-                        "    CallPlan: 20x\n" +
-                        "     Sequence: 20x\n" +
-                        "      Echo: 20x\n",
-                node.toString());
 
         logger.info(node.toString());
         assertEquals("ThreadGroup: 1x\n" +

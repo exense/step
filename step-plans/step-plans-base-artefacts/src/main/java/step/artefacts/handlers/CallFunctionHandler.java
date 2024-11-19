@@ -33,14 +33,12 @@ import step.common.managedoperations.OperationManager;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandler;
-import step.core.artefacts.handlers.ArtefactHashGenerator;
+import step.core.artefacts.handlers.ArtefactPathHelper;
 import step.core.artefacts.handlers.SequentialArtefactScheduler;
 import step.core.artefacts.reports.ParentSource;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.artefacts.reports.resolvedplan.ResolvedChildren;
-import step.core.docker.DockerRegistryConfiguration;
-import step.core.docker.DockerRegistryConfigurationAccessor;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.execution.ExecutionContext;
@@ -73,8 +71,6 @@ import step.grid.tokenpool.Interest;
 import step.plugins.functions.types.CompositeFunction;
 
 import java.io.StringReader;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.*;
 
 import static step.artefacts.handlers.functions.TokenForecastingExecutionPlugin.getTokenForecastingContext;
@@ -140,8 +136,8 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	}
 
 	@Override
-	protected List<ResolvedChildren> resolveChildrenArtefactBySource_(CallFunction artefactNode, String currentPath) {
-		String newPath = ArtefactHashGenerator.getPath(currentPath, artefactNode.getId().toString());
+	protected List<ResolvedChildren> resolveChildrenArtefactBySource_(CallFunction artefactNode, String currentArtefactPath) {
+		String newPath = ArtefactPathHelper.getPathOfArtefact(currentArtefactPath, artefactNode);
 		List<ResolvedChildren> results = new ArrayList<>();
 		try {
 			Function function = getFunction(artefactNode);
@@ -150,7 +146,12 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 					results.add(new ResolvedChildren(ParentSource.SUB_PLAN, List.of(root), newPath));
 			}
 		} catch (NoSuchElementException e) {
-			logger.warn("Unable to resolve keyword", e);
+			String message = "Unable to resolve called composite keyword in plan";
+			if (logger.isDebugEnabled()) {
+				logger.debug(message, e);
+			} else {
+				logger.warn(message);
+			}
 		}
 		results.add(new ResolvedChildren(ParentSource.MAIN, artefactNode.getChildren(), newPath));
 		return results;

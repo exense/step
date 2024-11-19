@@ -95,7 +95,6 @@ public class CompositeResolvedPlanBuilderTest {
         logger.info("----------------------");
         logger.info("Aggregated report tree");
         logger.info("----------------------");
-
         AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(engine.getExecutionEngineContext(), result.getExecutionId());
         AggregatedReportView node = aggregatedReportViewBuilder.buildAggregatedReportView();
         logger.info(node.toString());
@@ -124,7 +123,6 @@ public class CompositeResolvedPlanBuilderTest {
         logger.info("----------------------");
         logger.info("Aggregated report tree");
         logger.info("----------------------");
-
         AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(engine.getExecutionEngineContext(), result.getExecutionId());
         AggregatedReportView node = aggregatedReportViewBuilder.buildAggregatedReportView();
         logger.info(node.toString());

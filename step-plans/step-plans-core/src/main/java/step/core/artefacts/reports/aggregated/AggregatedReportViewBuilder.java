@@ -1,6 +1,7 @@
 package step.core.artefacts.reports.aggregated;
 
-import step.core.artefacts.reports.ParentSource;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import step.core.artefacts.reports.resolvedplan.ResolvedPlanNode;
 import step.core.artefacts.reports.resolvedplan.ResolvedPlanNodeAccessor;
 import step.core.execution.ExecutionEngineContext;
@@ -28,7 +29,7 @@ public class AggregatedReportViewBuilder {
     }
 
     public AggregatedReportView buildAggregatedReportView() {
-        return buildAggregatedReportView(new AggregatedReportViewRequest());
+        return buildAggregatedReportView(new AggregatedReportViewRequest(null));
     }
 
     public AggregatedReportView buildAggregatedReportView(AggregatedReportViewRequest request) {
@@ -40,7 +41,12 @@ public class AggregatedReportViewBuilder {
     }
 
     public static class AggregatedReportViewRequest {
-        ReportNodeTimeSeries.Range range;
+        public final ReportNodeTimeSeries.Range range;
+
+        @JsonCreator
+        public AggregatedReportViewRequest(@JsonProperty("range") ReportNodeTimeSeries.Range range) {
+            this.range = range;
+        }
     }
 
     private AggregatedReportView recursivelyBuildAggregatedReportTree(ResolvedPlanNode resolvedPlanNode, AggregatedReportViewRequest request) {

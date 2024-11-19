@@ -349,6 +349,12 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		return (String) variablesManager.getVariable(ARTEFACT_PATH);
 	}
 
+	protected void pushArtefactPath(ReportNode node, ARTEFACT artefact) {
+		String currentArtefactPath = currentArtefactPath();
+		String newArtefactPath = ArtefactPathHelper.getPathOfArtefact(currentArtefactPath, artefact);
+		context.getVariablesManager().putVariable(node, ARTEFACT_PATH, newArtefactPath);
+	}
+
 	protected void delegateCreateReportSkeleton(AbstractArtefact artefact, ReportNode parentNode) {
 		artefactHandlerManager.createReportSkeleton(artefact, parentNode, null, ParentSource.MAIN);
 	}
@@ -484,12 +490,6 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	private String getReportNodeName(ARTEFACT artefact) {
 		String name = artefact.getAttribute(AbstractArtefact.NAME);
 		return name != null ? name : "Unnamed";
-	}
-
-	protected void pushArtefactPath(ReportNode node, ARTEFACT artefact) {
-		String currentArtefactPath = currentArtefactPath();
-		String newArtefactPath = ArtefactPathHelper.getPathOfArtefact(currentArtefactPath, artefact);
-		context.getVariablesManager().putVariable(node, ARTEFACT_PATH, newArtefactPath);
 	}
 
 	/**

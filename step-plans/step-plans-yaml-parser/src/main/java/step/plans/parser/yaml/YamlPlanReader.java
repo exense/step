@@ -46,7 +46,6 @@ import step.plans.parser.yaml.migrations.AbstractYamlPlanMigrationTask;
 import step.plans.parser.yaml.migrations.YamlPlanMigration;
 import step.core.yaml.model.AbstractYamlArtefact;
 import step.core.yaml.model.NamedYamlArtefact;
-import step.plans.parser.yaml.model.YamlPlan;
 import step.plans.parser.yaml.model.YamlPlanVersions;
 import step.plans.parser.yaml.schema.YamlPlanValidationException;
 import step.repositories.parser.StepsParser;
@@ -56,7 +55,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static step.core.scanner.Classes.newInstanceAs;
@@ -270,7 +268,6 @@ public class YamlPlanReader {
 		if (agents != null) {
 			plan.setAgents(agents);
 		}
-		applyDefaultValues(plan);
 		return plan;
 	}
 

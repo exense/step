@@ -13,7 +13,6 @@ import step.core.execution.ExecutionContext;
 import step.core.plans.Plan;
 
 import java.util.List;
-import java.util.Map;
 
 public class ResolvedPlanBuilder {
 
@@ -22,22 +21,19 @@ public class ResolvedPlanBuilder {
     private final ResolvedPlanNodeAccessor resolvedPlanNodeAccessor;
     private final DynamicBeanResolver dynamicBeanResolver;
     private final ArtefactHandlerManager artefactHandlerManager;
-    private final ArtefactHashGenerator artefactHashGenerator;
 
     public ResolvedPlanBuilder(ExecutionContext executionContext) {
         resolvedPlanNodeAccessor = executionContext.require(ResolvedPlanNodeAccessor.class);
         artefactHandlerManager = executionContext.getArtefactHandlerManager();
         dynamicBeanResolver = executionContext.getDynamicBeanResolver();
-        artefactHashGenerator = new ArtefactHashGenerator();
     }
 
-    public ResolvedPlanNode buildResolvedPlan(Plan plan, Map<String, Object> bindings) {
-        return buildTreeRecursively(null, plan.getRoot(), null, objectPredicate, bindings, ParentSource.MAIN);
+    public ResolvedPlanNode buildResolvedPlan(Plan plan) {
+        return buildTreeRecursively(null, plan.getRoot(), null, plan, ParentSource.MAIN);
     }
 
-    private ResolvedPlanNode buildTreeRecursively(String parentId, AbstractArtefact artefactNode, String artefactPath, ObjectPredicate objectPredicate, Map<String, Object> bindings, ParentSource parentSource) {
-        String artefactId = artefactNode.getId().toString();
-        String artefactHash = artefactHashGenerator.generateArtefactHash(artefactPath, artefactId);
+    private ResolvedPlanNode buildTreeRecursively(String parentId, AbstractArtefact artefactNode, final String currentArtefactPath, Plan plan, ParentSource parentSource) {
+        String artefactHash = ArtefactPathHelper.generateArtefactHash(currentArtefactPath, artefactNode);
 
         // Create a clone of the artefact instance and remove the children
         AbstractArtefact artefactClone = dynamicBeanResolver.cloneDynamicValues(artefactNode);
@@ -47,10 +43,13 @@ public class ResolvedPlanBuilder {
 
         // It is the responsibility of the handler to return relevant artefact node by source in the expected execution order
         ArtefactHandler<AbstractArtefact, ReportNode> artefactHandler = artefactHandlerManager.getArtefactHandler(artefactNode);
-        List<ResolvedChildren> resolvedChildrenBySource = artefactHandler.resolveChildrenArtefactBySource(artefactNode, artefactPath);
+        List<ResolvedChildren> resolvedChildrenBySource = artefactHandler.resolveChildrenArtefactBySource(artefactNode, currentArtefactPath);
 
+        // Recursively call children artefacts
         resolvedChildrenBySource.forEach(resolvedChildren -> {
-            resolvedChildren.children.forEach(child -> buildTreeRecursively(resolvedPlanNode.getId().toString(), child, resolvedChildren.artefactPath, objectPredicate, bindings, resolvedChildren.parentSource));
+            //filter node that were already processed to avoid stack overflow for plans calling themselves
+            resolvedChildren.children.stream().filter(c -> (currentArtefactPath == null || !ArtefactPathHelper.getArtefactId(c).contains(currentArtefactPath)))
+                    .forEach(child -> buildTreeRecursively(resolvedPlanNode.getId().toString(), child, resolvedChildren.artefactPath, plan, resolvedChildren.parentSource));
         });
         return resolvedPlanNode;
     }

@@ -21,7 +21,7 @@ package step.artefacts.handlers;
 import jakarta.json.JsonObject;
 import step.artefacts.CallPlan;
 import step.core.artefacts.handlers.ArtefactHandler;
-import step.core.artefacts.handlers.ArtefactHashGenerator;
+import step.core.artefacts.handlers.ArtefactPathHelper;
 import step.core.artefacts.reports.ParentSource;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.resolvedplan.ResolvedChildren;
@@ -81,8 +81,8 @@ public class CallPlanHandler extends ArtefactHandler<CallPlan, ReportNode> {
 	}
 
 	@Override
-	protected List<ResolvedChildren> resolveChildrenArtefactBySource_(CallPlan artefactNode, String currentPath) {
-		String newPath = ArtefactHashGenerator.getPath(currentPath, artefactNode.getId().toString());
+	protected List<ResolvedChildren> resolveChildrenArtefactBySource_(CallPlan artefactNode, String currentArtefactPath) {
+		String newPath = ArtefactPathHelper.getPathOfArtefact(currentArtefactPath, artefactNode);
 		List<ResolvedChildren> results = new ArrayList<>();
 		try {
 			Plan plan = selectPlan(artefactNode);

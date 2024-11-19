@@ -315,10 +315,6 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
         return printAggregatedReport;
     }
 
-    public void setPrintAggregatedReport(Boolean printAggregatedReport) {
-        this.printAggregatedReport = printAggregatedReport;
-    }
-
     public String getIncludePlans() {
         return includePlans;
     }

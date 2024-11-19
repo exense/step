@@ -3,10 +3,13 @@
   "attributes": {
     "name": "BeforeAfterOldVersion"
   },
+  "agents": {
+    "mode": "auto_detect"
+  },
   "root": {
     "_class": "ThreadGroup",
     "attributes": {
-      "name": "BeforeAfter"
+      "name": "BeforeAfterOldVersion"
     },
     "dynamicName": {
       "dynamic": false,

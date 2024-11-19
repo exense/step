@@ -3,10 +3,13 @@
   "attributes": {
     "name": "BeforeAfterPlan"
   },
+  "agents": {
+    "mode": "auto_detect"
+  },
   "root": {
     "_class": "ThreadGroup",
     "attributes": {
-      "name": "BeforeAfter"
+      "name": "BeforeAfterPlan"
     },
     "dynamicName": {
       "dynamic": false,

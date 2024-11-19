@@ -305,7 +305,7 @@ public class YamlPlanReaderTest {
 			writePlanInTechnicalFormat(os, plan);
 			//Currently we use some workaround to overwrite all ids, but this only support artefact children (not the new properties: before, after, beforeThread...)
 			//So we overwrite all ids here
-			String outputWithStaticId = os.toString(StandardCharsets.UTF_8).replaceAll("\"id\": \"[^\"]*\"", "\"id\": \"" + STATIC_ID + "\"");
+			String outputWithStaticId = os.toString(StandardCharsets.UTF_8).replaceAll("(\"?id\"?: )\"[^\"]*\"", "$1\"" + STATIC_ID + "\"");
 //			log.info("Converted yaml -->");
 //			log.info(os.toString(StandardCharsets.UTF_8));
 
