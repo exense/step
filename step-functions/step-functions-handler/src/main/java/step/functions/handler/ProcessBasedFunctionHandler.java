@@ -5,8 +5,7 @@ import ch.exense.commons.processes.ManagedProcess;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.core.reports.Error;
-import step.core.reports.ErrorType;
+
 import step.functions.handler.json.JsonObjectDeserializer;
 import step.functions.io.Input;
 import step.functions.io.Output;
@@ -29,9 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import static step.functions.handler.ProcessBasedFunctionHandler.FileCommunicationType.JSON;
-import static step.functions.handler.ProcessBasedFunctionHandler.FileCommunicationType.PROPERTIES;
-
 public abstract class ProcessBasedFunctionHandler extends JsonBasedFunctionHandler {
 
     private static final String KEYWORD_INPUT_PROPERTIES_FILE = "step_keyword_input.properties";
@@ -40,14 +36,8 @@ public abstract class ProcessBasedFunctionHandler extends JsonBasedFunctionHandl
     private static final String KEYWORD_OUTPUT_JSON_FILE = "step_keyword_output_message.json";
     public static final String DEBUG = "debug";
     public static final String ATTACH_WORK_FOLDER = "attachWorkFolder";
-    public static final String STEP_COMMUNICATION_FILE_TYPE = "step_communication_file_type";
 
     private static final Logger logger = LoggerFactory.getLogger(ProcessBasedFunctionHandler.class);
-
-    public enum FileCommunicationType {
-        PROPERTIES,
-        JSON
-    }
 
     abstract protected List<String> getProcessCommand(Input<JsonObject> input) throws Exception;
     abstract protected String getProcessName();
@@ -57,47 +47,17 @@ public abstract class ProcessBasedFunctionHandler extends JsonBasedFunctionHandl
         Map<String, String> properties = input.getProperties();
         boolean debug = Boolean.parseBoolean(properties.getOrDefault(DEBUG, Boolean.FALSE.toString()));
         boolean attachWorkFolder = Boolean.parseBoolean(properties.getOrDefault(ATTACH_WORK_FOLDER, Boolean.FALSE.toString()));
-        FileCommunicationType fileCommunicationType;
-        try {
-            fileCommunicationType = FileCommunicationType.valueOf(properties.getOrDefault(STEP_COMMUNICATION_FILE_TYPE, "JSON"));
-        } catch (IllegalArgumentException e) {
-            return new OutputBuilder()
-                    .setError(new Error(ErrorType.TECHNICAL, "The communication type '" + properties.get(STEP_COMMUNICATION_FILE_TYPE) + "' does not exists (use either " + PROPERTIES.name() + " or " + JSON.name()))
-                    .build();
-        }
 
         List<String> command = getProcessCommand(input);
         String processName = getProcessName();
         try(ManagedProcess process = new ManagedProcess(processName, command)) {
-            switch (fileCommunicationType) {
-                case JSON:
-                    createProcessInputMessageAsJson(process, input);
-                    break;
-                case PROPERTIES:
-                    createProcessInputAsProperties(process, input);
-                    break;
-                default:
-                    return new OutputBuilder()
-                            .setError(new Error(ErrorType.TECHNICAL, "The communication type '" + fileCommunicationType.name() + "' is not supported."))
-                            .build();
-            }
+            createProcessInputMessageAsJson(process, input);
+            createProcessInputAsProperties(process, input);
 
             process.start();
             int returnCode = process.waitFor((long) (input.getFunctionCallTimeout() * 0.9));
 
-            OutputBuilder outputBuilder;
-            switch (fileCommunicationType) {
-                case JSON:
-                    outputBuilder = processOutputAsJson(process);
-                    break;
-                case PROPERTIES:
-                    outputBuilder = processOutputAsProperties(process);
-                    break;
-                default:
-                    return new OutputBuilder()
-                            .setError(new Error(ErrorType.TECHNICAL, "The communication type '" + fileCommunicationType.name() + "' is not supported."))
-                            .build();
-            }
+            OutputBuilder outputBuilder = processOutput(process);
 
             boolean error = false;
             if (returnCode != 0) {
@@ -137,11 +97,7 @@ public abstract class ProcessBasedFunctionHandler extends JsonBasedFunctionHandl
         JsonObject inputJson = (JsonObject) input.getPayload();
         if (inputJson != null) {
             for (String key : inputJson.keySet()) {
-                try {
-                    argumentMap.put(key, inputJson.getString(key));
-                } catch (Exception e) {
-                    throw new RuntimeException("Invalid key/value found for key '" + key + "', only string values are supported.");
-                }
+                argumentMap.put(key, inputJson.get(key).toString());
             }
         }
         Properties keywordProperties = new Properties();
@@ -170,10 +126,20 @@ public abstract class ProcessBasedFunctionHandler extends JsonBasedFunctionHandl
         }
     }
 
-
-    protected OutputBuilder processOutputAsProperties(ManagedProcess process) {
-        OutputBuilder outputBuilder = new OutputBuilder();
+    protected OutputBuilder processOutput(ManagedProcess process) {
+        File stepKeywordJsonFile = new File(process.getExecutionDirectory(), KEYWORD_OUTPUT_JSON_FILE);
         File stepKeywordPropertiesFile = new File(process.getExecutionDirectory(), KEYWORD_OUTPUT_PROPERTIES_FILE);
+        if (stepKeywordJsonFile.exists() && stepKeywordJsonFile.isFile()) {
+            return processOutputAsJson(process, stepKeywordJsonFile);
+        } else if (stepKeywordPropertiesFile.exists() && stepKeywordPropertiesFile.isFile()) {
+            return processOutputAsProperties(process, stepKeywordPropertiesFile);
+        } else {
+            return new OutputBuilder();
+        }
+    }
+
+    protected OutputBuilder processOutputAsProperties(ManagedProcess process, File stepKeywordPropertiesFile) {
+        OutputBuilder outputBuilder = new OutputBuilder();
         if (stepKeywordPropertiesFile.exists() && stepKeywordPropertiesFile.isFile()) {
             try (FileInputStream fis = new FileInputStream(stepKeywordPropertiesFile)) {
                 Properties outputProperties = new Properties();
@@ -181,19 +147,19 @@ public abstract class ProcessBasedFunctionHandler extends JsonBasedFunctionHandl
                 outputProperties.keySet().stream().map(Object::toString).forEach(k -> outputBuilder.add(k,outputProperties.getProperty(k)));
             } catch (IOException e) {
                 logger.error("Error while reading file " + KEYWORD_OUTPUT_PROPERTIES_FILE, e);
+                outputBuilder.addAttachment(AttachmentHelper.generateAttachmentForException(e));
                 outputBuilder.appendError("Error while reading the Keyword output property file. See agent logs for more details.");
             }
         }
         return outputBuilder;
     }
 
-    protected OutputBuilder processOutputAsJson(ManagedProcess process) {
+    protected OutputBuilder processOutputAsJson(ManagedProcess process, File stepKeywordJsonFile) {
         OutputBuilder outputBuilder = new OutputBuilder();
-        File stepKeywordPropertiesFile = new File(process.getExecutionDirectory(), KEYWORD_OUTPUT_JSON_FILE);
-        if (stepKeywordPropertiesFile.exists() && stepKeywordPropertiesFile.isFile()) {
-            try (FileInputStream fis = new FileInputStream(stepKeywordPropertiesFile)) {
+        if (stepKeywordJsonFile.exists() && stepKeywordJsonFile.isFile()) {
+            try (FileInputStream fis = new FileInputStream(stepKeywordJsonFile)) {
                 TypeReference<Output<JsonObject>> typeRef = new TypeReference<>() {};
-                Output<JsonObject> output = JsonObjectDeserializer.getObjectMapper().readValue(stepKeywordPropertiesFile, typeRef);
+                Output<JsonObject> output = JsonObjectDeserializer.getObjectMapper().readValue(stepKeywordJsonFile, typeRef);
                 //while we deserialize directly as Output we still return an output builder so that the caller can still enrich it with more data
                 if (output.getError() != null) {
                     outputBuilder.setError(output.getError());
@@ -210,7 +176,8 @@ public abstract class ProcessBasedFunctionHandler extends JsonBasedFunctionHandl
                 }
             } catch (Exception e) {
                 logger.error("Error while reading file " + KEYWORD_OUTPUT_JSON_FILE, e);
-                outputBuilder.setError("Error while reading the Keyword output property file. See agent logs for more details.");
+                outputBuilder.addAttachment(AttachmentHelper.generateAttachmentForException(e));
+                outputBuilder.appendError("Error while reading the Keyword output property file. See agent logs for more details.");
             }
         }
         return outputBuilder;
@@ -227,8 +194,8 @@ public abstract class ProcessBasedFunctionHandler extends JsonBasedFunctionHandl
         }
     }
 
-    protected void attachProcessWorkFolder(ManagedProcess sikuli, OutputBuilder outputBuilder) {
-        File executionDirectory = sikuli.getExecutionDirectory();
+    protected void attachProcessWorkFolder(ManagedProcess process, OutputBuilder outputBuilder) {
+        File executionDirectory = process.getExecutionDirectory();
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         if (executionDirectory.exists() && executionDirectory.isDirectory()) {
             try {
@@ -236,6 +203,7 @@ public abstract class ProcessBasedFunctionHandler extends JsonBasedFunctionHandl
                 outputBuilder.addAttachment(AttachmentHelper.generateAttachmentFromByteArray(outputStream.toByteArray(),"workFolder.zip"));
             } catch (IOException e) {
                 logger.error("Error while reading creating an archive of the work folder", e);
+                outputBuilder.addAttachment(AttachmentHelper.generateAttachmentForException(e));
                 outputBuilder.appendError("Error while reading creating an archive of the work folder");
             }
         }
