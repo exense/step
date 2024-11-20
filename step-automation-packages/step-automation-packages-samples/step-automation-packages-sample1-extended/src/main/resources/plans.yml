@@ -24,3 +24,8 @@ plans:
         children:
           - echo:
               text: "Just echo"
+plansPlainText:
+  - name: Plain text plan
+    categories:
+      - PlainTextPlan
+    file: plan2.plan

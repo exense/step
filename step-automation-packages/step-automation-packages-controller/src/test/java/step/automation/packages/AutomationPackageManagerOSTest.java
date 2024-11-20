@@ -69,8 +69,11 @@ import static step.automation.packages.AutomationPackageTestUtils.*;
 
 public class AutomationPackageManagerOSTest {
 
-    // how many keywords are defined in original sample
+    // how many keywords and plans are defined in original sample
     public static final int KEYWORDS_COUNT = 6;
+
+    // 2 annotated plans and 3 plans from yaml descriptor
+    public static final int PLANS_COUNT = 5;
 
     private AutomationPackageManager manager;
     private AutomationPackageAccessorImpl automationPackageAccessor;
@@ -175,13 +178,15 @@ public class AutomationPackageManagerOSTest {
             r.storedPackage = automationPackageAccessor.get(resultId);
             Assert.assertEquals("My package", r.storedPackage.getAttribute(AbstractOrganizableObject.NAME));
 
-            // 4 plans have been updated, 1 plan has been added
+            // 5 plans have been updated, 1 plan has been added
             List<Plan> storedPlans = planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(resultId)).collect(Collectors.toList());
-            Assert.assertEquals(5, storedPlans.size());
+            Assert.assertEquals(PLANS_COUNT + 1, storedPlans.size());
 
             Plan updatedPlan = storedPlans.stream().filter(p -> p.getAttribute(AbstractOrganizableObject.NAME).equals(PLAN_NAME_FROM_DESCRIPTOR)).findFirst().orElse(null);
+            Plan updatedPlan3 = storedPlans.stream().filter(p -> p.getAttribute(AbstractOrganizableObject.NAME).equals(PLAN_NAME_FROM_DESCRIPTOR_3)).findFirst().orElse(null);
             Assert.assertNotNull(updatedPlan);
             Assert.assertEquals(findPlanByName(r.storedPlans, PLAN_NAME_FROM_DESCRIPTOR).getId(), updatedPlan.getId());
+            Assert.assertEquals(findPlanByName(r.storedPlans, PLAN_NAME_FROM_DESCRIPTOR_3).getId(), updatedPlan3.getId());
 
             Assert.assertNotNull(storedPlans.stream().filter(p -> p.getAttribute(AbstractOrganizableObject.NAME).equals(PLAN_NAME_FROM_DESCRIPTOR_2)).findFirst().orElse(null));
 
@@ -316,9 +321,8 @@ public class AutomationPackageManagerOSTest {
             r.storedPackage = automationPackageAccessor.get(result);
             Assert.assertEquals("My package", r.storedPackage.getAttribute(AbstractOrganizableObject.NAME));
 
-            // 2 annotated plans and 2 plans from yaml descriptor
             List<Plan> storedPlans = planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
-            Assert.assertEquals(4, storedPlans.size());
+            Assert.assertEquals(PLANS_COUNT, storedPlans.size());
 
             r.storedPlans = storedPlans;
             Plan planFromDescriptor = findPlanByName(storedPlans, PLAN_NAME_FROM_DESCRIPTOR);
