@@ -54,6 +54,9 @@ public class JUnitXmlReportBuilder {
         this.configuration = executionEngineContext.getConfiguration();
     }
 
+    /**
+     * Builds the JUnit report as single xml file (attachments are not included into)
+     */
     public JUnitReport buildJUnitXmlReport(List<String> executionIds) throws IOException {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream(); OutputStreamWriter writer = new OutputStreamWriter(baos)) {
             Junit4ReportConfig config = new Junit4ReportConfig.Builder()
@@ -65,6 +68,18 @@ public class JUnitXmlReportBuilder {
         }
     }
 
+    /**
+     * Builds the JUnit report as zip archive with the following structure:
+     * {attachmentsRootFolder} - the configured output folder for CLI or maven plugin
+     *  {timestamp}-junit.xml - the report (containing relative links to attached files)
+     *  attachments - the folder with attachments
+     *    {testCaseId} - the subfoler with attachments per testCase (to avoid collisions by file names in case we have the same name for several attachments like exception.log)
+     *      exception.log - some attachments
+     *
+     * @param executionIds the execution ids
+     * @param includeAttachments links to attachments and attachment files itself will be included in the archive if the value is true
+     * @param attachmentsRootFolder if the 'includeAttachments' param is true, defines the name of {attachmentsRootFolder} in zip file
+     */
     public JUnitReport buildJunitZipReport(List<String> executionIds, Boolean includeAttachments, String attachmentsRootFolder) throws IOException {
         String attachmentsSubfolder = DEFAULT_ATTACHMETS_SUBFOLDER;
         Junit4ReportConfig junit4ReportConfig = new Junit4ReportConfig.Builder()

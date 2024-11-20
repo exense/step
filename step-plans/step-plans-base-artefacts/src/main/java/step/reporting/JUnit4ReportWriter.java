@@ -142,17 +142,18 @@ public class JUnit4ReportWriter implements ReportWriter {
 				"failures=\"" + numberOfFailures.get() + "\" " +
 				"errors=\"" + numberOfErrors.get() + "\">");
 		writer.write('\n');
-		writer.write("<properties>");
-		if (junit4ReportConfig.isAddLinksToStepFrontend()) {
-			String linkToStep = generateLinkToStep(executionId);
-			if (linkToStep != null) {
-				writer.write('\n');
-				writer.write("<property name=\"url:step\" value=\"" + linkToStep + "\"/>");
-				writer.write('\n');
-			}
-		}
-		writer.write("</properties>");
-		writer.write('\n');
+//		Some systems support custom properties for testsuite, but Gitlab doesn't use and display them
+//		writer.write("<properties>");
+//		if (junit4ReportConfig.isAddLinksToStepFrontend()) {
+//			String linkToStep = generateLinkToStep(executionId);
+//			if (linkToStep != null) {
+//				writer.write('\n');
+//				writer.write("<property name=\"url:step\" value=\"" + linkToStep + "\"/>");
+//				writer.write('\n');
+//			}
+//		}
+//		writer.write("</properties>");
+//		writer.write('\n');
 
 		AtomicBoolean errorWritten = new AtomicBoolean(false);
 
@@ -316,7 +317,9 @@ public class JUnit4ReportWriter implements ReportWriter {
 				rootFolder += File.separator;
 			}
 
-			// TODO: this logic (use reportFileName without extension as folder name) is duplicated in step.core.artefacts.reports.junitxml.JUnitXmlReportBuilder
+			// all reports prepared as zip are unzipped into the subdirectory with the same name as main xml report (without extension)
+			// so for report folder `target\step-reports\` the link should
+			// target\step-reports\20241118-173029-281662-junit\attachments\673b4f80cf93b812604f084c\exception.log
 			String subfolders = Files.getNameWithoutExtension(reportFileName) + File.separator;
 			subfolders += junit4ReportConfig.getAttachmentsSubfolder() == null ? "" : junit4ReportConfig.getAttachmentsSubfolder();
 			if(!subfolders.isEmpty()){
@@ -407,7 +410,12 @@ public class JUnit4ReportWriter implements ReportWriter {
 				writer.write('\n');
 				errorWritten.set(true);
 			} else if (isSkipped(node)) {
-				writer.write("<skipped message=\"" + errorMessage + "\"/>");
+				String messageAttribute = "";
+				// for 'skipped' tage the message attribute is not obligatory
+				if (errorMessage != null && !errorMessage.isEmpty()) {
+					messageAttribute = "message=\"" + errorMessage + "\"";
+				}
+				writer.write("<skipped" + messageAttribute + "/>");
 				writer.write('\n');
 				errorWritten.set(true);
 			} else {

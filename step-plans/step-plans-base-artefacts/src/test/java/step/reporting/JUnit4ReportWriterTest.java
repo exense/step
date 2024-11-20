@@ -230,7 +230,11 @@ public class JUnit4ReportWriterTest {
 	}
 
 	private Validator initValidator() throws SAXException, IOException {
-		String xsdPath = "src/test/resources/junitReport/JUnit.xsd";
+		// JUnit.xsd - the canonical xsd for junit reports
+		// junit-4.xsd - the schema probably used by GitLab (more flexible rather JUnit.xsd)
+		
+//		String xsdPath = "src/test/resources/junitReport/JUnit.xsd";
+		String xsdPath = "src/test/resources/junitReport/junit-4.xsd";
 		SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
 		try(FileInputStream fis = new FileInputStream(xsdPath)) {
 			Source schemaFile = new StreamSource(fis);
