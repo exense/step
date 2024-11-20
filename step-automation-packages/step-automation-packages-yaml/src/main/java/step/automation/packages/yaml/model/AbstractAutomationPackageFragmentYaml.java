@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.Nulls;
 import step.automation.packages.model.YamlAutomationPackageKeyword;
+import step.core.plans.automation.YamlPlainTextPlan;
 import step.plans.parser.yaml.YamlPlan;
 
 import java.util.ArrayList;
@@ -32,6 +33,7 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
     private List<String> fragments = new ArrayList<>();
     private List<YamlAutomationPackageKeyword> keywords = new ArrayList<>();
     private List<YamlPlan> plans = new ArrayList<>();
+    private List<YamlPlainTextPlan> plansPlainText = new ArrayList<>();
 
     @JsonIgnore
     private Map<String, List<?>> additionalFields;
@@ -73,5 +75,15 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
 
     public void setAdditionalFields(Map<String, List<?>> additionalFields) {
         this.additionalFields = additionalFields;
+    }
+
+    @Override
+    public List<YamlPlainTextPlan> getPlansPlainText() {
+        return plansPlainText;
+    }
+
+    @JsonSetter(nulls = Nulls.AS_EMPTY)
+    public void setPlansPlainText(List<YamlPlainTextPlan> plansPlainText) {
+        this.plansPlainText = plansPlainText;
     }
 }

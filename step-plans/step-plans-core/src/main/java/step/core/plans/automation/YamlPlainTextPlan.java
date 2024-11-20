@@ -16,28 +16,39 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.yaml.model;
-
-import step.automation.packages.model.YamlAutomationPackageKeyword;
-import step.core.plans.automation.YamlPlainTextPlan;
-import step.plans.parser.yaml.YamlPlan;
+package step.core.plans.automation;
 
 import java.util.List;
-import java.util.Map;
 
-public interface AutomationPackageFragmentYaml {
+public class YamlPlainTextPlan {
 
-    List<YamlAutomationPackageKeyword> getKeywords();
+    private String name;
 
-    List<YamlPlan> getPlans();
+    private List<String> categories;
 
-    List<YamlPlainTextPlan> getPlansPlainText();
+    private String file;
 
-    List<String> getFragments();
+    public String getName() {
+        return name;
+    }
 
-    Map<String, List<?>> getAdditionalFields();
+    public void setName(String name) {
+        this.name = name;
+    }
 
-    default <T> List<T> getAdditionalField(String k) {
-        return (List<T>) getAdditionalFields().get(k);
+    public String getFile() {
+        return file;
+    }
+
+    public void setFile(String file) {
+        this.file = file;
+    }
+
+    public List<String> getCategories() {
+        return categories;
+    }
+
+    public void setCategories(List<String> categories) {
+        this.categories = categories;
     }
 }

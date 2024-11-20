@@ -2026,7 +2026,7 @@
         "name" : {
           "type" : "string"
         },
-        "categories": {
+        "categories" : {
           "type" : "array",
           "items" : {
             "type" : "string"
@@ -2114,6 +2114,24 @@
         }
       },
       "additionalProperties" : false
+    },
+    "PlainTextPlanDef" : {
+      "type" : "object",
+      "properties" : {
+        "file" : {
+          "type" : "string"
+        },
+        "categories" : {
+          "type" : "array",
+          "items" : {
+            "type" : "string"
+          }
+        },
+        "name" : {
+          "type" : "string"
+        }
+      },
+      "additionalProperties" : false
     }
   },
   "properties" : {
@@ -2157,6 +2175,12 @@
       "type" : "array",
       "items" : {
         "$ref" : "#/$defs/StepParameterDef"
+      }
+    },
+    "plansPlainText" : {
+      "type" : "array",
+      "items" : {
+        "$ref" : "#/$defs/PlainTextPlanDef"
       }
     }
   },

@@ -16,28 +16,17 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.yaml.model;
+package step.core.scheduler.automation;
 
-import step.automation.packages.model.YamlAutomationPackageKeyword;
+import step.automation.packages.schema.CommonAutomationPackageJsonSchemaExtension;
 import step.core.plans.automation.YamlPlainTextPlan;
-import step.plans.parser.yaml.YamlPlan;
 
-import java.util.List;
-import java.util.Map;
+public class AutomationPackagePlainTextPlanJsonSchema extends CommonAutomationPackageJsonSchemaExtension {
 
-public interface AutomationPackageFragmentYaml {
+    public static final String YAML_PLAIN_TEXT_PLAN_DEF = "PlainTextPlanDef";
+    public static final String FIELD_NAME_IN_AP = "plansPlainText";
 
-    List<YamlAutomationPackageKeyword> getKeywords();
-
-    List<YamlPlan> getPlans();
-
-    List<YamlPlainTextPlan> getPlansPlainText();
-
-    List<String> getFragments();
-
-    Map<String, List<?>> getAdditionalFields();
-
-    default <T> List<T> getAdditionalField(String k) {
-        return (List<T>) getAdditionalFields().get(k);
+    public AutomationPackagePlainTextPlanJsonSchema() {
+        super(YAML_PLAIN_TEXT_PLAN_DEF, FIELD_NAME_IN_AP, YamlPlainTextPlan.class);
     }
 }

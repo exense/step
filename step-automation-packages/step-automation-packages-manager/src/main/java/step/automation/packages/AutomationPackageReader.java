@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.automation.packages;
 
+import ch.exense.commons.app.Configuration;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,10 +39,13 @@ import step.handlers.javahandler.jsonschema.KeywordJsonSchemaCreator;
 import step.junit.runner.StepClassParser;
 import step.junit.runner.StepClassParserResult;
 import step.junit.runners.annotations.Plans;
+import step.plans.nl.RootArtefactType;
 import step.plans.nl.parser.PlanParser;
+import step.core.plans.automation.YamlPlainTextPlan;
 import step.plans.parser.yaml.YamlPlanReader;
 import step.plugins.functions.types.CompositeFunctionUtils;
 import step.plugins.java.GeneralScriptFunction;
+import step.repositories.parser.StepsParser;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -63,17 +67,20 @@ import java.util.stream.Collectors;
 public class AutomationPackageReader {
 
     protected static final Logger log = LoggerFactory.getLogger(AutomationPackageReader.class);
-
+    private final PlanParser planTextPlanParser;
     protected String jsonSchemaPath;
     protected final AutomationPackageHookRegistry hookRegistry;
     private final AutomationPackageSerializationRegistry serializationRegistry;
     protected final StepClassParser stepClassParser;
     protected AutomationPackageDescriptorReader descriptorReader;
 
-    public AutomationPackageReader(String jsonSchemaPath, AutomationPackageHookRegistry hookRegistry, AutomationPackageSerializationRegistry serializationRegistry) {
+    public AutomationPackageReader(String jsonSchemaPath, AutomationPackageHookRegistry hookRegistry,
+                                   AutomationPackageSerializationRegistry serializationRegistry,
+                                   Configuration configuration) {
         this.jsonSchemaPath = jsonSchemaPath;
         this.hookRegistry = hookRegistry;
         this.serializationRegistry = serializationRegistry;
+        this.planTextPlanParser = new PlanParser(configuration);
         this.stepClassParser = new StepClassParser(false);
     }
 
@@ -232,7 +239,7 @@ public class AutomationPackageReader {
     }
 
     public void fillAutomationPackageWithImportedFragments(AutomationPackageContent targetPackage, AutomationPackageFragmentYaml fragment, AutomationPackageArchive archive) throws AutomationPackageReadingException {
-        fillContentSections(targetPackage, fragment);
+        fillContentSections(targetPackage, fragment, archive);
 
         if (!fragment.getFragments().isEmpty()) {
             for (String importedFragmentReference : fragment.getFragments()) {
@@ -253,9 +260,25 @@ public class AutomationPackageReader {
         }
     }
 
-    protected void fillContentSections(AutomationPackageContent targetPackage, AutomationPackageFragmentYaml fragment) {
+    protected void fillContentSections(AutomationPackageContent targetPackage, AutomationPackageFragmentYaml fragment, AutomationPackageArchive archive) throws AutomationPackageReadingException {
         targetPackage.getKeywords().addAll(fragment.getKeywords());
         targetPackage.getPlans().addAll(fragment.getPlans().stream().map(p -> getOrCreateDescriptorReader().getPlanReader().yamlPlanToPlan(p)).collect(Collectors.toList()));
+
+        // parse plain - text plans
+        for (YamlPlainTextPlan plainTextPlan : fragment.getPlansPlainText()) {
+            try {
+                try (InputStream is = archive.getResourceAsStream(plainTextPlan.getFile())) {
+                    // TODO: configurable root artefact type?
+                    Plan parsedPlan = planTextPlanParser.parse(is, RootArtefactType.TestCase);
+                    parsedPlan.addAttribute(AbstractOrganizableObject.NAME, plainTextPlan.getName());
+                    parsedPlan.setCategories(plainTextPlan.getCategories());
+                    targetPackage.getPlans().add(parsedPlan);
+                }
+            } catch (IOException | StepsParser.ParsingException e) {
+                throw new AutomationPackageReadingException("Unable to read plain text plan: " + plainTextPlan.getFile(), e);
+            }
+        }
+
         for (Map.Entry<String, List<?>> additionalField : fragment.getAdditionalFields().entrySet()) {
             boolean hooked = hookRegistry.onAdditionalDataRead(additionalField.getKey(), additionalField.getValue(), targetPackage);
             if (!hooked) {

@@ -18,20 +18,15 @@
  ******************************************************************************/
 package step.automation.packages.scheduler;
 
-import step.automation.packages.AutomationPackage;
-import step.automation.packages.AutomationPackageContext;
-import step.core.scheduler.automation.AutomationPackageScheduleRegistration;
 import step.automation.packages.AutomationPackageHookRegistry;
-import step.core.scheduler.automation.AutomationPackageSchedule;
-import step.core.GlobalContext;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
+import step.core.GlobalContext;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.core.scheduler.ExecutionScheduler;
-import step.core.scheduler.ExecutiontTaskParameters;
 import step.core.scheduler.SchedulerPlugin;
-
-import java.util.List;
+import step.core.scheduler.automation.AutomationPackageSchedule;
+import step.core.scheduler.automation.AutomationPackageScheduleRegistration;
 
 @Plugin(dependencies= {SchedulerPlugin.class})
 public class AutomationPackageSchedulerPlugin extends AbstractControllerPlugin {

@@ -91,7 +91,8 @@ public class AutomationPackageManagerOSTest {
         this.parameterAccessor = new AbstractAccessor<>(new InMemoryCollection<>());
         ParameterManager parameterManager = new ParameterManager(this.parameterAccessor, null, "groovy", new DynamicBeanResolver(new DynamicValueResolver(new ExpressionHandler())));
 
-        FunctionTypeRegistry functionTypeRegistry = prepareTestFunctionTypeRegistry();
+        Configuration configuration = createTestConfiguration();
+        FunctionTypeRegistry functionTypeRegistry = prepareTestFunctionTypeRegistry(configuration);
 
         this.functionManager = new FunctionManagerImpl(functionAccessor, functionTypeRegistry);
         this.planAccessor = new PlanAccessorImpl(new InMemoryCollection<>());
@@ -113,15 +114,14 @@ public class AutomationPackageManagerOSTest {
                 planAccessor,
                 resourceManager,
                 automationPackageHookRegistry,
-                new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, automationPackageHookRegistry, serializationRegistry),
+                new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, automationPackageHookRegistry, serializationRegistry, configuration),
                 automationPackageLocks
                 );
     }
 
-    private static FunctionTypeRegistry prepareTestFunctionTypeRegistry() {
+    private static FunctionTypeRegistry prepareTestFunctionTypeRegistry(Configuration configuration) {
         FunctionTypeRegistry functionTypeRegistry = Mockito.mock(FunctionTypeRegistry.class);
 
-        Configuration configuration = new Configuration();
         AbstractFunctionType<?> jMeterFunctionType = new JMeterFunctionType(configuration);
         AbstractFunctionType<?> generalScriptFunctionType = new GeneralScriptFunctionType(configuration);
         AbstractFunctionType<?> compositeFunctionType = new CompositeFunctionType(new ObjectHookRegistry());
@@ -143,6 +143,10 @@ public class AutomationPackageManagerOSTest {
             }
         });
         return functionTypeRegistry;
+    }
+
+    private static Configuration createTestConfiguration() {
+        return new Configuration();
     }
 
     @After
