@@ -40,6 +40,7 @@ public class ExecutionAccessorImpl extends AbstractAccessor<Execution> implement
 		createOrUpdateIndex("description");
 		createOrUpdateIndex("executionParameters.userID");
 		createOrUpdateIndex("executionTaskID");
+		createOrUpdateIndex("status");
 		collectionDriver.createOrUpdateCompoundIndex(new LinkedHashSet<>(List.of(new IndexField("executionTaskID",Order.ASC, null),
 				new IndexField("endTime",Order.DESC, null))));
 	}
