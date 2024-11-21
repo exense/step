@@ -25,10 +25,8 @@ import jakarta.inject.Singleton;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import org.bson.types.ObjectId;
-import step.automation.packages.execution.AutomationPackageExecutor;
 import step.controller.services.async.AsyncTaskStatus;
 import step.core.access.User;
-import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.aggregated.AggregatedReportView;
 import step.core.artefacts.reports.aggregated.AggregatedReportViewBuilder;
@@ -38,7 +36,6 @@ import step.core.deployment.ControllerServiceException;
 import step.core.deployment.FindByCriteraParam;
 import step.core.entities.EntityManager;
 import step.core.execution.model.*;
-import step.core.repositories.RepositoryObjectManager;
 import step.core.repositories.RepositoryObjectReference;
 import step.framework.server.Session;
 import step.framework.server.security.Secured;
@@ -168,6 +165,21 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 	@Secured(right="execution-read")
 	public Map<String, String> getExecutionsNamesByIds(List<String> ids) {
 		return executionAccessor.findByIds(ids).collect(Collectors.toMap(e -> e.getId().toHexString(), Execution::getDescription));
+	}
+
+	@Operation(description = "Returns the last execution triggered by a specific task.")
+	@POST
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Path("/search/last/by/task-id/{taskId}")
+	@Secured(right="execution-read")
+	public Execution getLastExecutionByTaskId(@PathParam("taskId") String taskId) {
+		List<Execution> executions = executionAccessor.getLastEndedExecutionsBySchedulerTaskID(taskId, 1);
+		if (!executions.isEmpty()) {
+			return executions.get(0);
+		} else {
+			return null;
+		}
 	}
 
 	@Operation(description = "Returns the execution matching the provided repository object reference.")
