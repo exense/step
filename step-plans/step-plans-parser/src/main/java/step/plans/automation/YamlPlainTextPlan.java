@@ -16,13 +16,17 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.core.plans.automation;
+package step.plans.automation;
+
+import step.plans.nl.RootArtefactType;
 
 import java.util.List;
 
 public class YamlPlainTextPlan {
 
     private String name;
+
+    private RootArtefactType rootType;
 
     private List<String> categories;
 
@@ -50,5 +54,13 @@ public class YamlPlainTextPlan {
 
     public void setCategories(List<String> categories) {
         this.categories = categories;
+    }
+
+    public RootArtefactType getRootType() {
+        return rootType;
+    }
+
+    public void setRootType(RootArtefactType rootType) {
+        this.rootType = rootType;
     }
 }

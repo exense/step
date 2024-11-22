@@ -26,6 +26,7 @@ plans:
               text: "Just echo"
 plansPlainText:
   - name: Plain text plan
+    rootType: Sequence
     categories:
       - PlainTextPlan
     file: plan2.plan

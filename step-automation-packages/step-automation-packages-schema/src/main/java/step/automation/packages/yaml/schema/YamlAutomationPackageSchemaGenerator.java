@@ -23,7 +23,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.json.JsonObjectBuilder;
 import jakarta.json.spi.JsonProvider;
-import step.core.scheduler.automation.AutomationPackagePlainTextPlanJsonSchema;
+import step.plans.automation.AutomationPackagePlainTextPlanJsonSchema;
 import step.parameter.automation.AutomationPackageParameterJsonSchema;
 import step.core.Version;
 import step.core.scheduler.automation.AutomationPackageScheduleJsonSchema;

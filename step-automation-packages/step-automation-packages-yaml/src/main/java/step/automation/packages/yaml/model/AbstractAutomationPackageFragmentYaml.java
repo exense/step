@@ -22,7 +22,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.Nulls;
 import step.automation.packages.model.YamlAutomationPackageKeyword;
-import step.core.plans.automation.YamlPlainTextPlan;
+import step.plans.automation.YamlPlainTextPlan;
 import step.plans.parser.yaml.YamlPlan;
 
 import java.util.ArrayList;

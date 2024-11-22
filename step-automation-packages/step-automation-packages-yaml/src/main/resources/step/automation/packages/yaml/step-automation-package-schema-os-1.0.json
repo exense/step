@@ -528,8 +528,8 @@
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
             "nodeName" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef",
-              "default" : "CallPlan"
+              "default" : "CallPlan",
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
             },
             "input" : {
               "$ref" : "#/$defs/DynamicKeywordInputsDef"
@@ -1401,8 +1401,8 @@
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
             "nodeName" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef",
-              "default" : "Return"
+              "default" : "Return",
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
             },
             "output" : {
               "$ref" : "#/$defs/DynamicKeywordInputsDef"
@@ -2126,6 +2126,9 @@
           "items" : {
             "type" : "string"
           }
+        },
+        "rootType" : {
+          "enum" : [ "Sequence", "TestCase", "TestScenario", "TestSet", "ThreadGroup" ]
         },
         "name" : {
           "type" : "string"

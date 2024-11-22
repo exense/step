@@ -17,6 +17,7 @@ plans:
                 - myInput: "myValue"
 plansPlainText:
   - name: Plain text plan
+    rootType: Sequence
     categories:
       - PlainTextPlan
     file: plans/plan2.plan

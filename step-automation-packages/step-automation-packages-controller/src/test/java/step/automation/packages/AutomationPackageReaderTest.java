@@ -7,6 +7,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.junit.Test;
 import org.mockito.Mockito;
 import step.artefacts.CallFunction;
+import step.artefacts.Sequence;
 import step.artefacts.TestCase;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 import step.automation.packages.model.AutomationPackageKeyword;
@@ -119,8 +120,8 @@ public class AutomationPackageReaderTest {
         assertEquals(TestCase.class, AutomationPackageTestUtils.findPlanByName(plans, INLINE_PLAN).getRoot().getClass());
 
         // Check plain text plan
-        Plan plainTextPlan = findPlanByName(plans, PLAN_NAME_FROM_DESCRIPTOR_3);
-        assertEquals(TestCase.class, plainTextPlan.getRoot().getClass());
+        Plan plainTextPlan = findPlanByName(plans, PLAN_NAME_FROM_DESCRIPTOR_PLAIN_TEXT);
+        assertEquals(Sequence.class, plainTextPlan.getRoot().getClass());
 
         //Assert all categories
         Map<String, List<String>> expectedCategoriesByPlan = Map.of(

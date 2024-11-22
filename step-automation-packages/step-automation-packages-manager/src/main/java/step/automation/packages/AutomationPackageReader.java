@@ -41,7 +41,7 @@ import step.junit.runner.StepClassParserResult;
 import step.junit.runners.annotations.Plans;
 import step.plans.nl.RootArtefactType;
 import step.plans.nl.parser.PlanParser;
-import step.core.plans.automation.YamlPlainTextPlan;
+import step.plans.automation.YamlPlainTextPlan;
 import step.plans.parser.yaml.YamlPlanReader;
 import step.plugins.functions.types.CompositeFunctionUtils;
 import step.plugins.java.GeneralScriptFunction;
@@ -268,8 +268,7 @@ public class AutomationPackageReader {
         for (YamlPlainTextPlan plainTextPlan : fragment.getPlansPlainText()) {
             try {
                 try (InputStream is = archive.getResourceAsStream(plainTextPlan.getFile())) {
-                    // TODO: configurable root artefact type?
-                    Plan parsedPlan = planTextPlanParser.parse(is, RootArtefactType.TestCase);
+                    Plan parsedPlan = planTextPlanParser.parse(is, plainTextPlan.getRootType() == null ? RootArtefactType.TestCase : plainTextPlan.getRootType());
                     parsedPlan.addAttribute(AbstractOrganizableObject.NAME, plainTextPlan.getName());
                     parsedPlan.setCategories(plainTextPlan.getCategories());
                     targetPackage.getPlans().add(parsedPlan);

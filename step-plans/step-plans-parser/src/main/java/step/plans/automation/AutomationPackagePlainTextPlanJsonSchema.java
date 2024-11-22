@@ -16,10 +16,9 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.core.scheduler.automation;
+package step.plans.automation;
 
 import step.automation.packages.schema.CommonAutomationPackageJsonSchemaExtension;
-import step.core.plans.automation.YamlPlainTextPlan;
 
 public class AutomationPackagePlainTextPlanJsonSchema extends CommonAutomationPackageJsonSchemaExtension {
 
