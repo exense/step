@@ -18,9 +18,9 @@
  ******************************************************************************/
 package step.cli;
 
+import ch.exense.commons.io.FileHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.zeroturnaround.zip.ZipUtil;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -30,6 +30,7 @@ import step.client.controller.ControllerServicesClient;
 import step.client.credentials.ControllerCredentials;
 import step.core.Constants;
 import step.core.Version;
+import step.gitignore.GitIgnore;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Callable;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 
@@ -51,6 +53,8 @@ import java.util.function.Supplier;
 public class StepConsole implements Callable<Integer> {
 
     public static final String REQUIRED_ERR_MESSAGE = "Illegal parameters. One of the following options is required: '%s'";
+
+    private static final String AP_IGNORE_NAME = ".apignore";
 
     private static final Logger log = LoggerFactory.getLogger(StepConsole.class);
 
@@ -181,12 +185,18 @@ public class StepConsole implements Callable<Integer> {
                         // check if the folder is AP (contains the yaml descriptor)
                         checkApFolder(file);
 
+                        Function<File, Boolean> fileFilter = null;
+                        if (new File(file, AP_IGNORE_NAME).exists()) {
+                            GitIgnore gitIgnore = new GitIgnore(file, AP_IGNORE_NAME);
+                            fileFilter = file1 -> !file1.getName().equals(AP_IGNORE_NAME) && !gitIgnore.isExcluded(file1);
+                        }
+
                         File tempDirectory = Files.createTempDirectory("stepcli").toFile();
                         tempDirectory.deleteOnExit();
                         File tempFile = new File(tempDirectory, file.getName() + ".stz");
                         tempFile.deleteOnExit();
                         log.info("Preparing AP archive: {}", tempFile.getAbsolutePath());
-                        ZipUtil.pack(file, tempFile);
+                        FileHelper.zip(file, tempFile, fileFilter);
                         return tempFile;
                     } else {
                         return file;
