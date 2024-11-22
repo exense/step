@@ -203,7 +203,7 @@ public class JUnit4ReportWriter implements ReportWriter {
 				for (ReportNode someParent : stack) {
 					ObjectId someParentId = someParent.getId();
 					if (reportNodesWithErrors.get().contains(someParentId)) {
-						log.info("{}: skipped", node.getId());
+						log.debug("{}: skipped", node.getId());
 						// don't duplicate the error if any of parent nodes is already reported
 						return;
 					}
@@ -223,7 +223,7 @@ public class JUnit4ReportWriter implements ReportWriter {
 			}
 
 			private void writeTestCaseBegin(ReportNode node, StringBuilder testSuiteName) throws IOException {
-				log.info("NEW TEST CASE BEGIN: {}", node.getId());
+				log.debug("NEW TEST CASE BEGIN: {}", node.getId());
 				writer.write("<testcase classname=\"" + testSuiteName + "\" " +
 						"name=\"" + node.getName() + "\" " +
 						"time=\"" + formatDuration(getTestCaseDuration(node)) + "\">");
@@ -446,12 +446,12 @@ public class JUnit4ReportWriter implements ReportWriter {
 			if(isFailure(node)) {
 				writer.write("<failure type=\"\" message=\"" + errorMessage + "\"/>");
 				writer.write('\n');
-				log.info("Add failure: {}", node.getId());
+				log.debug("Add failure: {}", node.getId());
 				return true;
 			} else if(isError(node)) {
 				writer.write("<error type=\"\">"+errorMessage+"</error>");
 				writer.write('\n');
-				log.info("Add error: {}", node.getId());
+				log.debug("Add error: {}", node.getId());
 				return true;
 			} else if (isSkipped(node)) {
 				// there is only one 'skipped' element per test case allowed (if there are no other failures)
@@ -461,7 +461,7 @@ public class JUnit4ReportWriter implements ReportWriter {
 			} else {
 				writer.write("<error type=\"\">No error message was reported but the status of the report node was "+node.getStatus().toString()+"</error>");
 				writer.write('\n');
-				log.info("Add error: {}", node.getId());
+				log.debug("Add error: {}", node.getId());
 				return true;
 			}
 		}
