@@ -168,7 +168,7 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 	}
 
 	@Operation(description = "Returns the last execution triggered by a specific task.")
-	@POST
+	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/search/last/by/task-id/{taskId}")
