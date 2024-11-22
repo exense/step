@@ -20,6 +20,7 @@ package step.reporting;
 
 import com.google.common.io.Files;
 import org.apache.commons.lang3.StringEscapeUtils;
+import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.artefacts.TestSet;
@@ -39,7 +40,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -142,6 +142,7 @@ public class JUnit4ReportWriter implements ReportWriter {
 				"failures=\"" + numberOfFailures.get() + "\" " +
 				"errors=\"" + numberOfErrors.get() + "\">");
 		writer.write('\n');
+
 //		Some systems support custom properties for testsuite, but Gitlab doesn't use and display them
 //		writer.write("<properties>");
 //		if (junit4ReportConfig.isAddLinksToStepFrontend()) {
@@ -155,8 +156,12 @@ public class JUnit4ReportWriter implements ReportWriter {
 //		writer.write("</properties>");
 //		writer.write('\n');
 
-		AtomicBoolean errorWritten = new AtomicBoolean(false);
+		// write test cases
+		final int maxErrors = 10;
 
+		// references per test case
+		AtomicReference<List<ObjectId>> reportNodesWithErrors = new AtomicReference<>(new ArrayList<>()); // max
+		AtomicReference<String> skippedWithMessage = new AtomicReference<>();
 		ReportAttachmentsInfo attachmentsInfo = new ReportAttachmentsInfo();
 		AtomicReference<String> testCaseId = new AtomicReference<>();
 
@@ -165,31 +170,27 @@ public class JUnit4ReportWriter implements ReportWriter {
 			@Override
 			public void startReportNode(ReportNodeEvent event) {
 				ReportNode node = event.getNode();
+				log.info("{}: {}. Parent: {}", node.getStatus(), node.getId(), node.getParentID());
 				try {
 					// for test sets we take test cases from the first level
 					// for other root nodes we take the top level only
 					if(event.getStack().isEmpty()){
 						if(!isTestSet(event.getNode())){
-							writeTestCaseBegin(node, testSuiteName, testCaseId);
+							writeTestCaseBegin(node, testSuiteName);
 						}
 					}
 
 					// as a convention report the children of the first level as testcases
 					if(event.getStack().size()==1) {
 						if(!skipReportNode(event)) {
-							writeTestCaseBegin(node, testSuiteName,  testCaseId);
+							writeTestCaseBegin(node, testSuiteName);
 						}
-					} else if (event.getStack().size()>1) {
+					} else if (event.getStack().size() > 1 && reportNodesWithErrors.get().size() < maxErrors) {
 						// report all the errors of the sub nodes (level > 1)
-						if(node.getError() != null && !errorWritten.get()) {
-							writeErrorOrFailure(writer, node, errorWritten);
-						}
-					}
-
-					// add attachment info
-					if (node.getContributingError() != null && node.getAttachments() != null) {
-						for (AttachmentMeta attachment : node.getAttachments()) {
-							attachmentsInfo.add(testCaseId.get(), attachment);
+						if (node.getContributingError() != null && node.getContributingError()) {
+							if (node.getError() != null) {
+								writeErrorOrFailureAndCheckAttachment(node, event.getStack());
+							}
 						}
 					}
 
@@ -198,19 +199,56 @@ public class JUnit4ReportWriter implements ReportWriter {
 				}
 			}
 
-			private void writeTestCaseBegin(ReportNode node, StringBuilder testSuiteName,
-											AtomicReference<String> testCaseId) throws IOException {
+			private void writeErrorOrFailureAndCheckAttachment(ReportNode node, Stack<ReportNode> stack) throws IOException {
+				for (ReportNode someParent : stack) {
+					ObjectId someParentId = someParent.getId();
+					if (reportNodesWithErrors.get().contains(someParentId)) {
+						log.info("{}: skipped", node.getId());
+						// don't duplicate the error if any of parent nodes is already reported
+						return;
+					}
+				}
+
+				boolean addedInReport = writeErrorOrFailure(writer, node, skippedWithMessage);
+				if (addedInReport) {
+					reportNodesWithErrors.get().add(node.getId());
+
+					// add attachment info if exists
+					if (node.getAttachments() != null) {
+						for (AttachmentMeta attachment : node.getAttachments()) {
+							attachmentsInfo.add(testCaseId.get(), attachment);
+						}
+					}
+				}
+			}
+
+			private void writeTestCaseBegin(ReportNode node, StringBuilder testSuiteName) throws IOException {
+				log.info("NEW TEST CASE BEGIN: {}", node.getId());
 				writer.write("<testcase classname=\"" + testSuiteName + "\" " +
 						"name=\"" + node.getName() + "\" " +
 						"time=\"" + formatDuration(getTestCaseDuration(node)) + "\">");
 				writer.write('\n');
 
+				// cleanup local variables for test case
 				testCaseId.set(node.getId().toString());
-
-				errorWritten.set(false);
+				skippedWithMessage.set(null);
+				reportNodesWithErrors.get().clear();
 			}
 
-			private void writeTestCaseEnd(AtomicReference<String> testCaseId, ReportAttachmentsInfo attachmentsInfo) throws IOException {
+			private void writeTestCaseEnd(AtomicReference<String> testCaseId, ReportAttachmentsInfo attachmentsInfo,
+										  AtomicReference<List<ObjectId>> nodesWithErrors, AtomicReference<String> skippedWithMessage) throws IOException {
+				// if in test case there are only skipped nodes and no errors or failures are detected at the same time, then we mark the test case as skipped
+				if (nodesWithErrors.get().isEmpty() && skippedWithMessage.get() != null) {
+					// for 'skipped' tag the message attribute is not obligatory
+					String messageAttribute = "";
+					if (!skippedWithMessage.get().isEmpty()) {
+						messageAttribute = "message=\"" + skippedWithMessage.get() + "\"";
+					}
+					writer.write("<skipped" + messageAttribute + "/>");
+					writer.write('\n');
+				}
+
+				// prepare system-out section
 				boolean writeSystemOut = false;
 				List<AttachmentMeta> attachmentsPerTestCase = attachmentsInfo.getAttachmentsPerTestCase().get(testCaseId.get());
 				if (junit4ReportConfig.isAddAttachments() && attachmentsPerTestCase != null && !attachmentsPerTestCase.isEmpty()) {
@@ -223,16 +261,19 @@ public class JUnit4ReportWriter implements ReportWriter {
 				if (writeSystemOut) {
 					writer.write("<system-out>");
 					writer.write('\n');
-					if (junit4ReportConfig.isAddAttachments() && attachmentsPerTestCase != null && !attachmentsPerTestCase.isEmpty()) {
-						for (AttachmentMeta attachmentMeta : attachmentsPerTestCase) {
-							writeAttachmentTag(testCaseId.get(), attachmentMeta, writer, reportFileName);
-						}
-					}
+
 					if (junit4ReportConfig.isAddLinksToStepFrontend()) {
 						String linkToStep = generateLinkToStep(executionId);
 						if (linkToStep != null) {
 							writer.write("More details: " + linkToStep);
 							writer.write('\n');
+							writer.write('\n');
+						}
+					}
+
+					if (junit4ReportConfig.isAddAttachments() && attachmentsPerTestCase != null && !attachmentsPerTestCase.isEmpty()) {
+						for (AttachmentMeta attachmentMeta : attachmentsPerTestCase) {
+							writeAttachmentTag(testCaseId.get(), attachmentMeta, writer, reportFileName);
 						}
 					}
 					writer.write("</system-out>");
@@ -248,7 +289,7 @@ public class JUnit4ReportWriter implements ReportWriter {
 				if (event.getStack().isEmpty()) {
 					if (!isTestSet(event.getNode())) {
 						try {
-							writeTestCaseEnd(testCaseId, attachmentsInfo);
+							writeTestCaseEnd(testCaseId, attachmentsInfo, reportNodesWithErrors, skippedWithMessage);
 						} catch (IOException e1) {
 							throw new RuntimeException(e1);
 						}
@@ -260,11 +301,12 @@ public class JUnit4ReportWriter implements ReportWriter {
 						ReportNode node = event.getNode();
 						try {
 							// if no error has been found in the sub-nodes, report the error for this node
-							if(node.getStatus()!=ReportNodeStatus.PASSED && !errorWritten.get()) {
-								writeErrorOrFailure(writer, node, errorWritten);
+							if (reportNodesWithErrors.get().isEmpty()) {
+								writeErrorOrFailureAndCheckAttachment(node, event.getStack());
 							}
+
 							// close the <testcase> block
-							writeTestCaseEnd(testCaseId, attachmentsInfo);
+							writeTestCaseEnd(testCaseId, attachmentsInfo, reportNodesWithErrors, skippedWithMessage);
 						} catch (IOException e1) {
 							throw new RuntimeException(e1);
 						}
@@ -392,7 +434,7 @@ public class JUnit4ReportWriter implements ReportWriter {
 		return node.getStatus() == ReportNodeStatus.SKIPPED || node.getStatus() == ReportNodeStatus.NORUN;
 	}
 
-	protected void writeErrorOrFailure(Writer writer, ReportNode node, AtomicBoolean errorWritten) throws IOException {
+	protected boolean writeErrorOrFailure(Writer writer, ReportNode node, AtomicReference<String> messageForSkip) throws IOException {
 		String errorMessage = "";
 		if(node.getError()!=null && node.getError().getMsg()!=null) {
 			errorMessage = node.getError().getMsg();
@@ -404,26 +446,26 @@ public class JUnit4ReportWriter implements ReportWriter {
 			if(isFailure(node)) {
 				writer.write("<failure type=\"\" message=\"" + errorMessage + "\"/>");
 				writer.write('\n');
-				errorWritten.set(true);
+				log.info("Add failure: {}", node.getId());
+				return true;
 			} else if(isError(node)) {
 				writer.write("<error type=\"\">"+errorMessage+"</error>");
 				writer.write('\n');
-				errorWritten.set(true);
+				log.info("Add error: {}", node.getId());
+				return true;
 			} else if (isSkipped(node)) {
-				String messageAttribute = "";
-				// for 'skipped' tage the message attribute is not obligatory
-				if (errorMessage != null && !errorMessage.isEmpty()) {
-					messageAttribute = "message=\"" + errorMessage + "\"";
-				}
-				writer.write("<skipped" + messageAttribute + "/>");
-				writer.write('\n');
-				errorWritten.set(true);
+				// there is only one 'skipped' element per test case allowed (if there are no other failures)
+				// so we save the message for 'skipped' and delay the decision until we finish the 'testCase'
+				messageForSkip.set(errorMessage);
+				return false;
 			} else {
 				writer.write("<error type=\"\">No error message was reported but the status of the report node was "+node.getStatus().toString()+"</error>");
 				writer.write('\n');
-				errorWritten.set(true);
+				log.info("Add error: {}", node.getId());
+				return true;
 			}
 		}
+		return false;
 	}
 
 	protected String formatDuration(long duration) {

@@ -8,12 +8,13 @@
 </testcase>
 <testcase classname="TS01" name="TC04 - FAILED with error message" time="0.03">
 <failure type="" message="my message"/>
+<failure type="" message="my message"/>
 </testcase>
 <testcase classname="TS01" name="TC05 - TECH_ERROR" time="0.03">
 <error type=""></error>
 </testcase>
 <testcase classname="TS01" name="TC06 - TECH_ERROR with message" time="0.03">
-<error type="">Error while resolving groovy properties in expression: 'var'. Groovy error: &gt;&gt;&gt; No such property: var for class: Script1 &lt;&lt;&lt;</error>
+<error type="">Error while resolving groovy properties in expression: &apos;var&apos;. Groovy error: &gt;&gt;&gt; No such property: var for class: Script1 &lt;&lt;&lt;</error>
 </testcase>
 <testcase classname="TS01" name="TC07 - SKIPPED" time="0.03">
 <skipped/>

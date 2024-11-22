@@ -27,8 +27,6 @@ import java.util.Map;
 
 public class ReportAttachmentsInfo {
 
-    private static final Integer MAX_ATTACHMENTS = 10;
-
     private Map<String, List<AttachmentMeta>> attachmentsPerTestCase = new HashMap<>();
 
     public Map<String, List<AttachmentMeta>> getAttachmentsPerTestCase() {
@@ -36,10 +34,7 @@ public class ReportAttachmentsInfo {
     }
 
     public void add(String testCaseId, AttachmentMeta attachmentMetas) {
-        attachmentsPerTestCase.computeIfAbsent(testCaseId, k -> new ArrayList<>());
-        List<AttachmentMeta> listPerTestCase = attachmentsPerTestCase.get(testCaseId);
-        if (listPerTestCase.size() < MAX_ATTACHMENTS) {
-            listPerTestCase.add(attachmentMetas);
-        }
+        List<AttachmentMeta> listPerTestCase = attachmentsPerTestCase.computeIfAbsent(testCaseId, k -> new ArrayList<>());
+        listPerTestCase.add(attachmentMetas);
     }
 }

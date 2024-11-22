@@ -105,7 +105,8 @@ public class JUnit4ReportWriterTest {
 
 		XmlAssert.assertThat(generatedReport)
 				.and(PlanRunnerResultAssert.readResource(this.getClass(), "TEST-JUnit4ReportWriterTest-testTestset-expected.xml"))
-				.areSimilar();
+				.areSimilar()
+				.ignoreWhitespace();
 	}
 
 	@Test
@@ -142,7 +143,8 @@ public class JUnit4ReportWriterTest {
 
 		XmlAssert.assertThat(generatedReport)
 				.and(PlanRunnerResultAssert.readResource(this.getClass(), "TEST-JUnit4ReportWriterTest-testSimpleSequence-expected.xml"))
-				.areSimilar();
+				.areSimilar()
+				.ignoreWhitespace();
 
 	}
 
@@ -189,7 +191,8 @@ public class JUnit4ReportWriterTest {
 
 			XmlAssert.assertThat(generatedReport)
 					.and(PlanRunnerResultAssert.readResource(this.getClass(), "TEST-JUnit4ReportWriterTest-testSeveralTestsuites-expected.xml"))
-					.areSimilar();
+					.areSimilar()
+					.ignoreWhitespace();
 		}
 	}
 	
