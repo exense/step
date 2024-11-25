@@ -16,28 +16,51 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.yaml.model;
+package step.plans.automation;
 
-import step.automation.packages.model.YamlAutomationPackageKeyword;
-import step.plans.automation.YamlPlainTextPlan;
-import step.plans.parser.yaml.YamlPlan;
+import step.plans.nl.RootArtefactType;
 
 import java.util.List;
-import java.util.Map;
 
-public interface AutomationPackageFragmentYaml {
+public class YamlPlainTextPlan {
 
-    List<YamlAutomationPackageKeyword> getKeywords();
+    private String name;
 
-    List<YamlPlan> getPlans();
+    private RootArtefactType rootType;
 
-    List<YamlPlainTextPlan> getPlansPlainText();
+    private List<String> categories;
 
-    List<String> getFragments();
+    private String file;
 
-    Map<String, List<?>> getAdditionalFields();
+    public String getName() {
+        return name;
+    }
 
-    default <T> List<T> getAdditionalField(String k) {
-        return (List<T>) getAdditionalFields().get(k);
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getFile() {
+        return file;
+    }
+
+    public void setFile(String file) {
+        this.file = file;
+    }
+
+    public List<String> getCategories() {
+        return categories;
+    }
+
+    public void setCategories(List<String> categories) {
+        this.categories = categories;
+    }
+
+    public RootArtefactType getRootType() {
+        return rootType;
+    }
+
+    public void setRootType(RootArtefactType rootType) {
+        this.rootType = rootType;
     }
 }
