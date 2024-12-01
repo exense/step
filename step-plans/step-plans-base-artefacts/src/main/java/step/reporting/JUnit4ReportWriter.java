@@ -43,6 +43,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 /**
  * A {@link ReportWriter} that generates JUnit 4 XML reports based on the JUnit schema https://github.com/windyroad/JUnit-Schema/blob/master/JUnit.xsd
@@ -161,7 +162,7 @@ public class JUnit4ReportWriter implements ReportWriter {
 
 		// references per test case
 		AtomicReference<List<ObjectId>> reportNodesWithErrors = new AtomicReference<>(new ArrayList<>()); // max
-		AtomicReference<String> skippedWithMessage = new AtomicReference<>();
+		JUnitReportEntryCollector failuresAndErrorsCollector = new JUnitReportEntryCollector();
 		ReportAttachmentsInfo attachmentsInfo = new ReportAttachmentsInfo();
 		AtomicReference<String> testCaseId = new AtomicReference<>();
 
@@ -170,7 +171,7 @@ public class JUnit4ReportWriter implements ReportWriter {
 			@Override
 			public void startReportNode(ReportNodeEvent event) {
 				ReportNode node = event.getNode();
-				log.info("{}: {}. Parent: {}", node.getStatus(), node.getId(), node.getParentID());
+				log.debug("{}: {}. Parent: {}", node.getStatus(), node.getId(), node.getParentID());
 				try {
 					// for test sets we take test cases from the first level
 					// for other root nodes we take the top level only
@@ -209,7 +210,7 @@ public class JUnit4ReportWriter implements ReportWriter {
 					}
 				}
 
-				boolean addedInReport = writeErrorOrFailure(writer, node, skippedWithMessage);
+				boolean addedInReport = writeErrorOrFailure(node, failuresAndErrorsCollector);
 				if (addedInReport) {
 					reportNodesWithErrors.get().add(node.getId());
 
@@ -231,20 +232,14 @@ public class JUnit4ReportWriter implements ReportWriter {
 
 				// cleanup local variables for test case
 				testCaseId.set(node.getId().toString());
-				skippedWithMessage.set(null);
+				failuresAndErrorsCollector.clear();
 				reportNodesWithErrors.get().clear();
 			}
 
 			private void writeTestCaseEnd(AtomicReference<String> testCaseId, ReportAttachmentsInfo attachmentsInfo,
-										  AtomicReference<List<ObjectId>> nodesWithErrors, AtomicReference<String> skippedWithMessage) throws IOException {
-				// if in test case there are only skipped nodes and no errors or failures are detected at the same time, then we mark the test case as skipped
-				if (nodesWithErrors.get().isEmpty() && skippedWithMessage.get() != null) {
-					// for 'skipped' tag the message attribute is not obligatory
-					String messageAttribute = "";
-					if (!skippedWithMessage.get().isEmpty()) {
-						messageAttribute = "message=\"" + skippedWithMessage.get() + "\"";
-					}
-					writer.write("<skipped" + messageAttribute + "/>");
+										  JUnitReportEntryCollector entriesCollector) throws IOException {
+				for (JUnitReportEntry mergedEntry : entriesCollector.getMergedEntries()) {
+					writer.write(mergedEntry.toXml());
 					writer.write('\n');
 				}
 
@@ -289,7 +284,7 @@ public class JUnit4ReportWriter implements ReportWriter {
 				if (event.getStack().isEmpty()) {
 					if (!isTestSet(event.getNode())) {
 						try {
-							writeTestCaseEnd(testCaseId, attachmentsInfo, reportNodesWithErrors, skippedWithMessage);
+							writeTestCaseEnd(testCaseId, attachmentsInfo, failuresAndErrorsCollector);
 						} catch (IOException e1) {
 							throw new RuntimeException(e1);
 						}
@@ -306,7 +301,7 @@ public class JUnit4ReportWriter implements ReportWriter {
 							}
 
 							// close the <testcase> block
-							writeTestCaseEnd(testCaseId, attachmentsInfo, reportNodesWithErrors, skippedWithMessage);
+							writeTestCaseEnd(testCaseId, attachmentsInfo, failuresAndErrorsCollector);
 						} catch (IOException e1) {
 							throw new RuntimeException(e1);
 						}
@@ -434,7 +429,10 @@ public class JUnit4ReportWriter implements ReportWriter {
 		return node.getStatus() == ReportNodeStatus.SKIPPED || node.getStatus() == ReportNodeStatus.NORUN;
 	}
 
-	protected boolean writeErrorOrFailure(Writer writer, ReportNode node, AtomicReference<String> messageForSkip) throws IOException {
+	/**
+	 * @return true if error or failure is detected
+	 */
+	protected boolean writeErrorOrFailure(ReportNode node, JUnitReportEntryCollector entriesCollector) {
 		String errorMessage = "";
 		if(node.getError()!=null && node.getError().getMsg()!=null) {
 			errorMessage = node.getError().getMsg();
@@ -442,25 +440,23 @@ public class JUnit4ReportWriter implements ReportWriter {
 		// escape special characters in error message
 		errorMessage = StringEscapeUtils.escapeXml10(errorMessage);
 
-		if(node.getStatus()!=ReportNodeStatus.PASSED) {
-			if(isFailure(node)) {
-				writer.write("<failure type=\"\" message=\"" + errorMessage + "\"/>");
-				writer.write('\n');
+		if (node.getStatus() != ReportNodeStatus.PASSED) {
+			if (isFailure(node)) {
+				entriesCollector.add(new JUnitReportEntry(JUnitReportEntry.Type.FAILURE, null, errorMessage));
 				log.debug("Add failure: {}", node.getId());
 				return true;
-			} else if(isError(node)) {
-				writer.write("<error type=\"\">"+errorMessage+"</error>");
-				writer.write('\n');
+			} else if (isError(node)) {
+				entriesCollector.add(new JUnitReportEntry(JUnitReportEntry.Type.ERROR, null, errorMessage));
 				log.debug("Add error: {}", node.getId());
 				return true;
 			} else if (isSkipped(node)) {
 				// there is only one 'skipped' element per test case allowed (if there are no other failures)
 				// so we save the message for 'skipped' and delay the decision until we finish the 'testCase'
-				messageForSkip.set(errorMessage);
+				entriesCollector.add(new JUnitReportEntry(JUnitReportEntry.Type.SKIPPED, null, errorMessage));
 				return false;
 			} else {
-				writer.write("<error type=\"\">No error message was reported but the status of the report node was "+node.getStatus().toString()+"</error>");
-				writer.write('\n');
+				errorMessage = "No error message was reported but the status of the report node was " + node.getStatus().toString();
+				entriesCollector.add(new JUnitReportEntry(JUnitReportEntry.Type.ERROR, null, errorMessage));
 				log.debug("Add error: {}", node.getId());
 				return true;
 			}
@@ -491,6 +487,115 @@ public class JUnit4ReportWriter implements ReportWriter {
 
 		public ReportAttachmentsInfo getAttachmentsInfo() {
 			return attachmentsInfo;
+		}
+	}
+
+	protected static class JUnitReportEntryCollector {
+
+		private final List<JUnitReportEntry> entries = new ArrayList<>();
+
+		public void add(JUnitReportEntry entry) {
+			this.entries.add(entry);
+		}
+
+		public void clear() {
+			this.entries.clear();
+		}
+
+		public List<JUnitReportEntry> getMergedEntries() {
+			List<JUnitReportEntry> result = new ArrayList<>();
+
+			boolean errorExists = false;
+			boolean errorOrFailureExists = false;
+
+			if (entries.stream().anyMatch(e -> e.getType() == JUnitReportEntry.Type.ERROR)) {
+				errorExists = true;
+			}
+			if (entries.stream().anyMatch(e -> e.getType() == JUnitReportEntry.Type.ERROR || e.getType() == JUnitReportEntry.Type.FAILURE)) {
+				errorOrFailureExists = true;
+			}
+
+			if (errorExists) {
+				// In JUnit report we only can include 1 error at max. Gitlab also ignores 'failures' elements if any 'error' exists.
+				// So to display all messages in report we aggregate them in single 'error' element
+				String allMessages = entries.stream()
+						.filter(e -> e.getType() == JUnitReportEntry.Type.ERROR || e.getType() == JUnitReportEntry.Type.FAILURE).map(JUnitReportEntry::getMessage)
+						.collect(Collectors.joining("; "));
+				result.add(new JUnitReportEntry(JUnitReportEntry.Type.ERROR, null, allMessages));
+			} else {
+				// If there are no errors, we just add all failures to report
+				entries.stream().filter(e -> e.getType() == JUnitReportEntry.Type.FAILURE).forEach(result::add);
+			}
+
+			// If in test case there are only skipped nodes and no errors or failures are detected at the same time, then we mark the test case as skipped
+			if (!errorOrFailureExists && entries.stream().anyMatch(e -> e.getType() == JUnitReportEntry.Type.SKIPPED)) {
+				String mergedSkippedMessages = entries.stream().filter(p -> p.getType() == JUnitReportEntry.Type.SKIPPED).map(JUnitReportEntry::getMessage).collect(Collectors.joining("; "));
+				result.add(new JUnitReportEntry(JUnitReportEntry.Type.SKIPPED, null, mergedSkippedMessages.isEmpty() ? null : mergedSkippedMessages));
+			}
+
+			return result;
+		}
+	}
+
+	protected static class JUnitReportEntry {
+
+		private final Type type;
+
+		/**
+		 * Not used now
+		 */
+		private final String typeAttribute;
+
+		private final String message;
+
+		public JUnitReportEntry(Type type, String typeAttribute, String message) {
+			this.type = type;
+			this.typeAttribute = typeAttribute;
+			this.message = message;
+		}
+
+		public Type getType() {
+			return type;
+		}
+
+		public String getTypeAttribute() {
+			return typeAttribute;
+		}
+
+		public String getMessage() {
+			return message;
+		}
+
+		public String toXml() {
+			StringBuilder resultBuilder = new StringBuilder("<");
+			switch (type) {
+				case ERROR:
+					resultBuilder.append("error");
+					break;
+				case FAILURE:
+					resultBuilder.append("failure");
+					break;
+				case SKIPPED:
+					resultBuilder.append("skipped");
+					break;
+				default:
+					throw new UnsupportedOperationException("Unknown junit report entry: " + type);
+
+			}
+			if (getTypeAttribute() != null) {
+				resultBuilder.append(String.format(" type=\"%s\"", typeAttribute));
+			}
+			if (getMessage() != null) {
+				resultBuilder.append(String.format(" message=\"%s\"", message));
+			}
+			resultBuilder.append("/>");
+			return resultBuilder.toString();
+		}
+
+		protected enum Type {
+			FAILURE,
+			ERROR,
+			SKIPPED
 		}
 	}
 
