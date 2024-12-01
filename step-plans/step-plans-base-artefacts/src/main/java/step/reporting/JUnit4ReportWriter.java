@@ -529,7 +529,9 @@ public class JUnit4ReportWriter implements ReportWriter {
 
 			// If in test case there are only skipped nodes and no errors or failures are detected at the same time, then we mark the test case as skipped
 			if (!errorOrFailureExists && entries.stream().anyMatch(e -> e.getType() == JUnitReportEntry.Type.SKIPPED)) {
-				String mergedSkippedMessages = entries.stream().filter(p -> p.getType() == JUnitReportEntry.Type.SKIPPED).map(JUnitReportEntry::getMessage).collect(Collectors.joining("; "));
+				String mergedSkippedMessages = entries.stream()
+						.filter(p -> p.getType() == JUnitReportEntry.Type.SKIPPED && p.getMessage() != null && !p.getMessage().isEmpty())
+						.map(JUnitReportEntry::getMessage).collect(Collectors.joining("; "));
 				result.add(new JUnitReportEntry(JUnitReportEntry.Type.SKIPPED, null, mergedSkippedMessages.isEmpty() ? null : mergedSkippedMessages));
 			}
 
@@ -568,7 +570,7 @@ public class JUnit4ReportWriter implements ReportWriter {
 
 		public String toXml() {
 			StringBuilder resultBuilder = new StringBuilder("<");
-			switch (type) {
+			switch (getType()) {
 				case ERROR:
 					resultBuilder.append("error");
 					break;
@@ -579,14 +581,14 @@ public class JUnit4ReportWriter implements ReportWriter {
 					resultBuilder.append("skipped");
 					break;
 				default:
-					throw new UnsupportedOperationException("Unknown junit report entry: " + type);
+					throw new UnsupportedOperationException("Unknown junit report entry: " + getType());
 
 			}
 			if (getTypeAttribute() != null) {
-				resultBuilder.append(String.format(" type=\"%s\"", typeAttribute));
+				resultBuilder.append(String.format(" type=\"%s\"", getTypeAttribute()));
 			}
 			if (getMessage() != null) {
-				resultBuilder.append(String.format(" message=\"%s\"", message));
+				resultBuilder.append(String.format(" message=\"%s\"", getMessage()));
 			}
 			resultBuilder.append("/>");
 			return resultBuilder.toString();
