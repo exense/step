@@ -528,8 +528,8 @@
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
             "nodeName" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef",
-              "default" : "CallPlan"
+              "default" : "CallPlan",
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
             },
             "input" : {
               "$ref" : "#/$defs/DynamicKeywordInputsDef"
@@ -1401,8 +1401,8 @@
               "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
             },
             "nodeName" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef",
-              "default" : "Return"
+              "default" : "Return",
+              "$ref" : "#/$defs/SmartDynamicValueStringDef"
             },
             "output" : {
               "$ref" : "#/$defs/DynamicKeywordInputsDef"
@@ -2026,7 +2026,7 @@
         "name" : {
           "type" : "string"
         },
-        "categories": {
+        "categories" : {
           "type" : "array",
           "items" : {
             "type" : "string"
@@ -2114,6 +2114,27 @@
         }
       },
       "additionalProperties" : false
+    },
+    "PlainTextPlanDef" : {
+      "type" : "object",
+      "properties" : {
+        "file" : {
+          "type" : "string"
+        },
+        "categories" : {
+          "type" : "array",
+          "items" : {
+            "type" : "string"
+          }
+        },
+        "rootType" : {
+          "enum" : [ "Sequence", "TestCase", "TestScenario", "TestSet", "ThreadGroup" ]
+        },
+        "name" : {
+          "type" : "string"
+        }
+      },
+      "additionalProperties" : false
     }
   },
   "properties" : {
@@ -2157,6 +2178,12 @@
       "type" : "array",
       "items" : {
         "$ref" : "#/$defs/StepParameterDef"
+      }
+    },
+    "plansPlainText" : {
+      "type" : "array",
+      "items" : {
+        "$ref" : "#/$defs/PlainTextPlanDef"
       }
     }
   },

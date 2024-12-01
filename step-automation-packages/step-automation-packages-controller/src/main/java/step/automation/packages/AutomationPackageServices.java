@@ -56,7 +56,12 @@ public class AutomationPackageServices extends AbstractStepServices {
     @Produces(MediaType.APPLICATION_JSON)
     @Secured(right = "automation-package-read")
     public AutomationPackage getAutomationPackage(@PathParam("id") String id) {
-        return automationPackageManager.getAutomatonPackageById(new ObjectId(id));
+        try {
+            return automationPackageManager.getAutomatonPackageById(new ObjectId(id));
+        } catch (Exception e) {
+            throw new ControllerServiceException(e.getMessage());
+        }
+
     }
 
     @DELETE
@@ -65,6 +70,8 @@ public class AutomationPackageServices extends AbstractStepServices {
     @Secured(right = "automation-package-delete")
     public void deleteAutomationPackage(@PathParam("id") String id) {
         try {
+            AutomationPackage automationPackage = getAutomationPackage(id);
+            assertEntityIsAcceptableInContext(automationPackage);
             automationPackageManager.removeAutomationPackage(new ObjectId(id), getObjectPredicate());
         } catch (Exception e) {
             throw new ControllerServiceException(e.getMessage());
@@ -134,6 +141,15 @@ public class AutomationPackageServices extends AbstractStepServices {
                                             @QueryParam("async") Boolean async,
                                             @FormDataParam("file") InputStream uploadedInputStream,
                                             @FormDataParam("file") FormDataContentDisposition fileDetail) {
+        AutomationPackage automationPackage = null;
+        try {
+            automationPackage = getAutomationPackage(id);
+        } catch (Exception e) {
+            //getAutomationPackage throws exception if the package doesn't exist, whether this is an errors is managed in below createOrUpdateAutomationPackage
+        }
+        if (automationPackage != null) {
+            assertEntityIsAcceptableInContext(automationPackage);
+        }
         try {
             return automationPackageManager.createOrUpdateAutomationPackage(
                     true, false, new ObjectId(id),

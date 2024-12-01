@@ -50,7 +50,7 @@ public class AutomationPackageLocalOSPlugin extends AbstractExecutionEnginePlugi
 
             AutomationPackageParametersRegistration.registerParametersHooks(hookRegistry, serRegistry, context.require(ParameterManager.class));
 
-            AutomationPackageReader reader = context.computeIfAbsent(AutomationPackageReader.class, automationPackageReaderClass -> new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, hookRegistry, serRegistry));
+            AutomationPackageReader reader = context.computeIfAbsent(AutomationPackageReader.class, automationPackageReaderClass -> new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, hookRegistry, serRegistry, context.getConfiguration()));
 
             context.computeIfAbsent(
                     AutomationPackageManager.class,

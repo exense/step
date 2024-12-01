@@ -1,5 +1,6 @@
 package step.repositories.artifact;
 
+import ch.exense.commons.app.Configuration;
 import ch.exense.commons.io.FileHelper;
 import org.junit.Assert;
 import org.junit.Before;
@@ -41,7 +42,7 @@ public class ResourceArtifactRepositoryTest {
         this.resourceManager = new ResourceManagerImpl(FileHelper.createTempFolder(), new InMemoryResourceAccessor(), new InMemoryResourceRevisionAccessor());
 
         AutomationPackageHookRegistry hookRegistry = new AutomationPackageHookRegistry();
-        AutomationPackageReader apReader = new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, hookRegistry, new AutomationPackageSerializationRegistry());
+        AutomationPackageReader apReader = new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, hookRegistry, new AutomationPackageSerializationRegistry(), new Configuration());
         this.functionTypeRegistry = MavenArtifactRepositoryTest.prepareTestFunctionTypeRegistry();
         InMemoryFunctionAccessorImpl functionAccessor = new InMemoryFunctionAccessorImpl();
         this.apManager = AutomationPackageManager.createLocalAutomationPackageManager(functionTypeRegistry, functionAccessor, new InMemoryPlanAccessor(), new LocalResourceManagerImpl(), apReader, hookRegistry);
