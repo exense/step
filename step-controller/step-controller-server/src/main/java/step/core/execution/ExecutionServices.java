@@ -173,13 +173,12 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/search/last/by/task-id/{taskId}")
 	@Secured(right="execution-read")
-	public Execution getLastExecutionByTaskId(@PathParam("taskId") String taskId) {
-		List<Execution> executions = executionAccessor.getLastEndedExecutionsBySchedulerTaskID(taskId, 1);
-		if (!executions.isEmpty()) {
-			return executions.get(0);
-		} else {
-			return null;
-		}
+	public List<Execution> getLastExecutionsByTaskId(
+			@PathParam("taskId") String taskId,
+			@QueryParam("limit") int limit,
+			@QueryParam("from") Long from,
+			@QueryParam("to") Long to) {
+		return executionAccessor.getLastEndedExecutionsBySchedulerTaskID(taskId, limit, from, to);
 	}
 
 	@Operation(description = "Returns the execution matching the provided repository object reference.")

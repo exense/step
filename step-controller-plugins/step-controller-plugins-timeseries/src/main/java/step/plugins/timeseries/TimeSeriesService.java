@@ -11,6 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 import step.controller.services.async.AsyncTaskManager;
 import step.controller.services.async.AsyncTaskStatus;
 import step.core.GlobalContext;
+import step.core.artefacts.reports.aggregated.ReportNodeTimeSeries;
 import step.core.collections.Collection;
 import step.core.deployment.AbstractStepServices;
 import step.core.deployment.ControllerServiceException;
@@ -55,7 +56,8 @@ public class TimeSeriesService extends AbstractStepServices {
         int resolution = (int) timeSeries.getIngestionPipeline().getResolution();
         int fieldsSamplingLimit = configuration.getPropertyAsInteger(TIME_SERIES_SAMPLING_LIMIT, 1000);
         maxNumberOfSeries = configuration.getPropertyAsInteger(TIME_SERIES_MAX_NUMBER_OF_SERIES, 1000);
-        this.handler = new TimeSeriesHandler(resolution, timeSeriesAttributes, measurementCollection, executionAccessor, timeSeries, asyncTaskManager, fieldsSamplingLimit);
+        ReportNodeTimeSeries reportNodeTimeSeries = context.require(ReportNodeTimeSeries.class);
+        this.handler = new TimeSeriesHandler(resolution, timeSeriesAttributes, measurementCollection, executionAccessor, timeSeries, reportNodeTimeSeries, asyncTaskManager, fieldsSamplingLimit);
     }
 
     @Secured(right = "execution-read")
@@ -67,6 +69,21 @@ public class TimeSeriesService extends AbstractStepServices {
         enrichRequest(request);
         try {
             return handler.getTimeSeries(request);
+        } catch (Exception e) {
+            throw new ControllerServiceException(e.getMessage());
+        }
+    }
+
+    @Secured(right = "execution-read")
+    @POST
+    @Path("/report-nodes")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public TimeSeriesAPIResponse getReportNodesTimeSeries(@NotNull FetchBucketsRequest request) {
+        // TODO permissions? we don't have projectId yet
+        enrichRequest(request);
+        try {
+            return handler.getReportNodeTimeSeries(request);
         } catch (Exception e) {
             throw new ControllerServiceException(e.getMessage());
         }

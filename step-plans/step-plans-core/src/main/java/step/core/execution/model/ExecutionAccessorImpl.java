@@ -152,9 +152,22 @@ public class ExecutionAccessorImpl extends AbstractAccessor<Execution> implement
 
 	@Override
 	public List<Execution> getLastEndedExecutionsBySchedulerTaskID(String schedulerTaskID, int limit) {
+		return getLastEndedExecutionsBySchedulerTaskID(schedulerTaskID, limit, null, null);
+	}
+
+	@Override
+	public List<Execution> getLastEndedExecutionsBySchedulerTaskID(String schedulerTaskID, int limit, Long from, Long to) {
+		SearchOrder order = new SearchOrder("endTime", -1);
+		List<Filter> filters = new ArrayList<>(List.of(Filters.equals("executionTaskID", schedulerTaskID), Filters.equals("status", "ENDED")));
+		if (from != null) {
+			filters.add(Filters.gte("startTime", from));
+		}
+		if (to != null) {
+			filters.add(Filters.lte("endTime", to));
+		}
 		return collectionDriver
-				.find(Filters.and(List.of(Filters.equals("executionTaskID", schedulerTaskID), Filters.equals("status","ENDED"))),
-						new SearchOrder("endTime", -1), 0, limit, 0)
+				.find(Filters.and(filters),
+						order, 0, limit, 0)
 				.collect(Collectors.toList());
 	}
 }

@@ -6,8 +6,10 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import step.controller.services.async.AsyncTaskManager;
+import step.core.artefacts.reports.aggregated.ReportNodeTimeSeries;
 import step.core.collections.Collection;
 import step.core.collections.inmemory.InMemoryCollection;
+import step.core.collections.inmemory.InMemoryCollectionFactory;
 import step.core.execution.model.Execution;
 import step.core.execution.model.InMemoryExecutionAccessor;
 import step.core.timeseries.TimeSeries;
@@ -48,7 +50,7 @@ public class TimeSeriesHandlerTest {
                 .registerCollection(tsCollection)
                 .build();
         AsyncTaskManager asyncTaskManager = new AsyncTaskManager();
-        handler = new TimeSeriesHandler(BUCKET_RESOLUTION, TS_ATTRIBUTES, measurementsCollection, executionAccessor, timeSeries, asyncTaskManager, SAMPLING_LIMIT);
+        handler = new TimeSeriesHandler(BUCKET_RESOLUTION, TS_ATTRIBUTES, measurementsCollection, executionAccessor, timeSeries, null, asyncTaskManager, SAMPLING_LIMIT);
     }
 
     @Test
