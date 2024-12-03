@@ -7,7 +7,9 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.artefacts.BaseArtefactPlugin;
+import step.artefacts.CallPlan;
 import step.artefacts.handlers.functions.TokenForecastingExecutionPlugin;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.reports.aggregated.AggregatedReportView;
 import step.core.artefacts.reports.aggregated.AggregatedReportViewBuilder;
 import step.core.dynamicbeans.DynamicValue;
@@ -104,11 +106,14 @@ public class ResolvedPlanBuilderTest {
     public void planWithSimpleCallPlan() throws IOException, InterruptedException {
         Plan subPlan = PlanBuilder.create()
                 .startBlock(BaseArtefacts.sequence())
+                .add(echo("'in sub plan'"))
                 .endBlock().build();
 
         Plan plan = PlanBuilder.create()
                 .startBlock(BaseArtefacts.for_(1, 1))
-                .add(BaseArtefacts.callPlan(subPlan.getId().toString()))
+                .startBlock(BaseArtefacts.callPlan(subPlan.getId().toString()))
+                .add(set("var", "'value'"))
+                .endBlock()
                 .endBlock().build();
 
         engine.getExecutionEngineContext().getPlanAccessor().save(List.of(subPlan));
@@ -124,7 +129,52 @@ public class ResolvedPlanBuilderTest {
         logger.info(node.toString());
         assertEquals("ForBlock: 1x\n" +
                         " CallPlan: 1x\n" +
-                        "  Sequence: 1x\n",
+                        "  Sequence: 1x\n" +
+                        "   Echo: 1x\n" +
+                        "  Set: 0x\n",
+                node.toString());
+
+    }
+
+    @Test
+    public void planWithDynamicCallPlan() throws IOException, InterruptedException {
+        Plan subPlan = PlanBuilder.create()
+                .startBlock(BaseArtefacts.sequence())
+                .add(echo("'test'"))
+                .endBlock().build();
+        subPlan.addAttribute(AbstractOrganizableObject.NAME, "my-sub-plan-1");
+
+        Plan subPlan2 = PlanBuilder.create()
+                .startBlock(BaseArtefacts.sequence())
+                .add(set("key", "'value'"))
+                .endBlock().build();
+        subPlan2.addAttribute(AbstractOrganizableObject.NAME, "my-sub-plan-2");
+
+        CallPlan callPlan = new CallPlan();
+        callPlan.setSelectionAttributes(new DynamicValue<>("\"{\\\"name\\\":\\\"my-sub-plan-\" + gcounter + \"\\\"}\"", ""));
+        Plan plan = PlanBuilder.create()
+                .startBlock(BaseArtefacts.for_(1, 2))
+                //.add(set("planName","'my-sub-plan-' + gcounter"))
+                .add(callPlan)
+                .endBlock().build();
+
+        engine.getExecutionEngineContext().getPlanAccessor().save(List.of(subPlan, subPlan2));
+
+        PlanRunnerResult result = engine.execute(plan);
+        result.printTree();
+        logger.info("----------------------");
+        logger.info("Aggregated report tree");
+        logger.info("----------------------");
+
+        AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(engine.getExecutionEngineContext(), result.getExecutionId());
+        AggregatedReportView node = aggregatedReportViewBuilder.buildAggregatedReportView();
+        logger.info(node.toString());
+        assertEquals("ForBlock: 1x\n" +
+                        " CallPlan: 2x\n" +
+                        "  Sequence: 1x\n" +
+                        "   Echo: 1x\n" +
+                        "  Sequence: 1x\n" +
+                        "   Set: 1x\n",
                 node.toString());
 
     }

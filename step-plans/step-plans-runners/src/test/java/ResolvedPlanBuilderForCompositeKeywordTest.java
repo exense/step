@@ -1,11 +1,14 @@
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import step.artefacts.BaseArtefactPlugin;
+import step.artefacts.Return;
 import step.artefacts.handlers.functions.TokenForecastingExecutionPlugin;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.reports.aggregated.AggregatedReportView;
 import step.core.artefacts.reports.aggregated.AggregatedReportViewBuilder;
+import step.core.dynamicbeans.DynamicValue;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
 import step.core.execution.ExecutionEngineContext;
@@ -57,9 +60,12 @@ public class ResolvedPlanBuilderForCompositeKeywordTest {
     @Test
     public void planWithCallKeyword() throws IOException, InterruptedException {
 
+        Return aReturn = new Return();
+        aReturn.setOutput(new DynamicValue<>("{\"myOutput\":\"some output values\"}"));
         Plan compositePlan = PlanBuilder.create()
                 .startBlock(BaseArtefacts.sequence())
                     .add(BaseArtefacts.echo("'Echo 4'"))
+                    .add(aReturn)
                 .endBlock().build();
 
         CompositeFunction compositeFunction = new CompositeFunction();
@@ -68,7 +74,9 @@ public class ResolvedPlanBuilderForCompositeKeywordTest {
 
         Plan subPlan = PlanBuilder.create()
                 .startBlock(BaseArtefacts.sequence())
-                    .add(FunctionArtefacts.keyword(MY_COMPOSITE))
+                    .startBlock(FunctionArtefacts.keyword(MY_COMPOSITE))
+                        .add(BaseArtefacts.check("output.myOutput == 'some output values'"))
+                    .endBlock()
                 .endBlock().build();
 
         Plan plan = PlanBuilder.create()
@@ -92,5 +100,15 @@ public class ResolvedPlanBuilderForCompositeKeywordTest {
         System.out.println("Aggregated report tree");
         System.out.println("----------------------");
         System.out.println(node.toString());
+
+        Assert.assertEquals("ForBlock: 1x\n" +
+                " CallPlan: 10x\n" +
+                "  Sequence: 10x\n" +
+                "   CallFunction: 10x\n" +
+                "    Sequence: 10x\n" +
+                "     Echo: 10x\n" +
+                "     Return: 10x\n" +
+                "    Check: 10x\n",
+                node.toString());
     }
 }
