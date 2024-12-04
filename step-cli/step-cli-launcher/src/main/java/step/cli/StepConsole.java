@@ -30,7 +30,7 @@ import step.client.controller.ControllerServicesClient;
 import step.client.credentials.ControllerCredentials;
 import step.core.Constants;
 import step.core.Version;
-import step.gitignore.GitIgnore;
+import step.gitignore.GitIgnoreFileFilter;
 
 import java.io.File;
 import java.io.IOException;
@@ -186,9 +186,10 @@ public class StepConsole implements Callable<Integer> {
                         checkApFolder(file);
 
                         Function<File, Boolean> fileFilter = null;
-                        if (new File(file, AP_IGNORE_NAME).exists()) {
-                            GitIgnore gitIgnore = new GitIgnore(file, AP_IGNORE_NAME);
-                            fileFilter = file1 -> !file1.getName().equals(AP_IGNORE_NAME) && !gitIgnore.isExcluded(file1);
+                        File apIgnoreFile = new File(file, AP_IGNORE_NAME);
+                        if (apIgnoreFile.exists()) {
+                            GitIgnoreFileFilter gitIgnore = new GitIgnoreFileFilter(file.toPath(), apIgnoreFile.toPath());
+                            fileFilter = file1 -> !file1.getName().equals(AP_IGNORE_NAME) && gitIgnore.accept(file1.toPath());
                         }
 
                         File tempDirectory = Files.createTempDirectory("stepcli").toFile();
