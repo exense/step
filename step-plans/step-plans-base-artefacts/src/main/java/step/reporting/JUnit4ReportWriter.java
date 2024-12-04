@@ -144,18 +144,18 @@ public class JUnit4ReportWriter implements ReportWriter {
 				"errors=\"" + numberOfErrors.get() + "\">");
 		writer.write('\n');
 
-//		Some systems support custom properties for testsuite, but Gitlab doesn't use and display them
-//		writer.write("<properties>");
-//		if (junit4ReportConfig.isAddLinksToStepFrontend()) {
-//			String linkToStep = generateLinkToStep(executionId);
-//			if (linkToStep != null) {
-//				writer.write('\n');
-//				writer.write("<property name=\"url:step\" value=\"" + linkToStep + "\"/>");
-//				writer.write('\n');
-//			}
-//		}
-//		writer.write("</properties>");
-//		writer.write('\n');
+        // Some systems support custom properties for testsuite, but Gitlab doesn't use and display them
+		if (junit4ReportConfig.isAddLinksToStepFrontend()) {
+			String linkToStep = generateLinkToStep(executionId);
+			if (linkToStep != null) {
+				writer.write("<properties>");
+				writer.write('\n');
+				writer.write("<property name=\"url:step\" value=\"" + linkToStep + "\"/>");
+				writer.write('\n');
+				writer.write("</properties>");
+				writer.write('\n');
+			}
+		}
 
 		// write test cases
 		final int maxErrors = 10;
