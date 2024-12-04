@@ -80,7 +80,6 @@ public class TimeSeriesService extends AbstractStepServices {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public TimeSeriesAPIResponse getReportNodesTimeSeries(@NotNull FetchBucketsRequest request) {
-        // TODO permissions? we don't have projectId yet
         enrichRequest(request);
         try {
             return handler.getReportNodeTimeSeries(request);
