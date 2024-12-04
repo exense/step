@@ -112,6 +112,9 @@ public class ResolvedPlanBuilder {
                 planNodeId = findClosestParentNodeId(reportNodeCache.get(parentID), reportNodeCache);
             }
         }
+        if (planNodeId == null) {
+            throw new RuntimeException("No resolved plan node ancestor found for report node  " + parentReportNode.getId());
+        }
         return planNodeId;
     }
 }

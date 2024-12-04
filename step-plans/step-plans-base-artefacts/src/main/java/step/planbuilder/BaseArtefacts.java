@@ -52,12 +52,7 @@ public class BaseArtefacts {
 	}
 	
 	public static ForBlock for_(int start, int end) {
-		ForBlock f = new ForBlock();
-		IntSequenceDataPool conf = new IntSequenceDataPool();
-		conf.setStart(new DynamicValue<Integer>(start));;
-		conf.setEnd(new DynamicValue<Integer>(end));;
-		f.setDataSource(conf);
-		return f;
+		return for_(start, end, 1);
 	}
 
 	public static ForBlock for_(int start, int end, int threads) {
