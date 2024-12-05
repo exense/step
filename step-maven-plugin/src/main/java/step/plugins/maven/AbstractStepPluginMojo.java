@@ -32,7 +32,6 @@ import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
 import org.eclipse.aether.resolution.ArtifactResult;
 import step.cli.ControllerVersionValidator;
-import step.cli.StepCliExecutionException;
 import step.client.AbstractRemoteClient;
 import step.client.controller.ControllerServicesClient;
 import step.client.credentials.ControllerCredentials;
