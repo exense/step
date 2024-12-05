@@ -16,22 +16,21 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.gitignore;
+package step.cli.apignore;
 
+import java.io.File;
 import java.io.IOException;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.PathMatcher;
+import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
-public class GitIgnoreFileFilter {
+public class ApIgnoreFileFilter {
 
     private final List<PathMatcher> ignoreMatchers = new ArrayList<>();
     private final Path rootDirectory;
 
-    public GitIgnoreFileFilter(Path rootDirectory, Path gitIgnoreFile) throws IOException {
+    public ApIgnoreFileFilter(Path rootDirectory, Path gitIgnoreFile) throws IOException {
         this.rootDirectory = rootDirectory;
         loadGitIgnoreFile(gitIgnoreFile);
     }
@@ -52,26 +51,31 @@ public class GitIgnoreFileFilter {
     private String convertToGlobPattern(String gitIgnorePattern) {
         String normalizedPattern = gitIgnorePattern.trim();
 
-        if (normalizedPattern.endsWith("/")) {
-            normalizedPattern += "**"; // Match directories recursively
+        if (!normalizedPattern.startsWith("/") && !normalizedPattern.startsWith("**/")) {
+            normalizedPattern = "**/" + normalizedPattern; // Match from any directory level
         }
 
-        if (!normalizedPattern.startsWith("/")) {
-            normalizedPattern = "**/" + normalizedPattern; // Match from any directory level
+        // Handle "/**/" for directories, gitignore treat them a 0 to n directories, while glob pattern as at least one
+        if (normalizedPattern.contains("/**/")) {
+            normalizedPattern = normalizedPattern.replace("/**/", "{,/**}/");
+        }
+
+        // Handle trailing slash for directories
+        if (normalizedPattern.endsWith("/")) {
+            normalizedPattern += "**";
         }
 
         return normalizedPattern;
     }
 
     public boolean accept(Path path) {
-        Path relativePath = rootDirectory.relativize(path);
+        String relativePathStr = File.separator + rootDirectory.relativize(path).normalize().toString();
 
         for (PathMatcher matcher : ignoreMatchers) {
-            if (matcher.matches(relativePath)) {
+            if (matcher.matches(Paths.get(relativePathStr))) {
                 return false; // File is ignored
             }
         }
         return true; // File is accepted
     }
-
 }
