@@ -14,13 +14,24 @@ public class MigrateResolutionsWithIgnoredFieldsTask extends MigrationTask {
 
     @Override
     public void runUpgradeScript() {
+        //We have to use drop, otherwise the estimated count used to check if the collection is empty won't work with PSQL
+        //This the collection are created in the startServer hook and this comes after, we still have to recreate the collection here after dropping
+        //To make sure the table in postgres are recreated.
         collectionFactory.getCollection("timeseries_hour", Document.class).drop();
         collectionFactory.getCollection("timeseries_day", Document.class).drop();
         collectionFactory.getCollection("timeseries_week", Document.class).drop();
+        //recreate tables, index are creted in the initializeData hook
+        collectionFactory.getCollection("timeseries_hour", Document.class);
+        collectionFactory.getCollection("timeseries_day", Document.class);
+        collectionFactory.getCollection("timeseries_week", Document.class);
 
         collectionFactory.getCollection("reportNodeTimeSeries_hour", Document.class).drop();
         collectionFactory.getCollection("reportNodeTimeSeries_day", Document.class).drop();
         collectionFactory.getCollection("reportNodeTimeSeries_week", Document.class).drop();
+        //recreate tables
+        collectionFactory.getCollection("reportNodeTimeSeries_hour", Document.class);
+        collectionFactory.getCollection("reportNodeTimeSeries_day", Document.class);
+        collectionFactory.getCollection("reportNodeTimeSeries_week", Document.class);
     }
 
     @Override
