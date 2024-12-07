@@ -227,7 +227,9 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		attributes.put("taskId", Objects.requireNonNullElse(context.get("$schedulerTaskId"), ""));
 
 		TreeMap<String, String> additionalAttributes = (TreeMap<String, String>) executionContext.get(CTX_ADDITIONAL_ATTRIBUTES);
-		attributes.putAll(additionalAttributes);
+		if (additionalAttributes != null) {
+			attributes.putAll(additionalAttributes);
+		}
 
 		return attributes;
 	}
