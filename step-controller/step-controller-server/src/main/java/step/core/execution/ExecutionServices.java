@@ -24,12 +24,15 @@ import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import org.bson.types.ObjectId;
+import step.reports.CustomReportType;
 import step.controller.services.async.AsyncTaskStatus;
 import step.core.access.User;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.aggregated.AggregatedReportView;
 import step.core.artefacts.reports.aggregated.AggregatedReportViewBuilder;
+import step.core.artefacts.reports.junitxml.JUnitXmlReportBuilder;
 import step.core.collections.SearchOrder;
 import step.core.deployment.AbstractStepAsyncServices;
 import step.core.deployment.ControllerServiceException;
@@ -42,7 +45,10 @@ import step.framework.server.security.Secured;
 import step.framework.server.tables.service.TableService;
 import step.framework.server.tables.service.bulk.TableBulkOperationReport;
 import step.framework.server.tables.service.bulk.TableBulkOperationRequest;
+import step.reporting.JUnitReport;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -268,6 +274,85 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 		AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(executionEngineContext, executionId);
 		return aggregatedReportViewBuilder.buildAggregatedReportView(request);
 	}
+
+	@Operation(description = "Returns the custom report for the execution")
+	@GET
+	@Path("/{id}/report/{customReportType}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.TEXT_PLAIN)
+	@Secured(right = "execution-read")
+	public Response getCustomReport(@PathParam("id") String executionId,
+									@PathParam("customReportType") String customReportType,
+									@QueryParam("includeAttachments") Boolean includeAttachments,
+									@QueryParam("attachmentsRootFolder") String attachmentsRootFolder) throws IOException {
+		ExecutionEngineContext executionEngineContext = getScheduler().getExecutor().getExecutionEngine().getExecutionEngineContext();
+		CustomReportType reportType = CustomReportType.parse(customReportType);
+		if (reportType == null) {
+			throw getControllerServiceException(customReportType);
+		}
+		switch (reportType) {
+			case JUNITXML:
+				if (includeAttachments != null && includeAttachments) {
+					throw new ControllerServiceException(400, "Attachments are not supported in " + CustomReportType.JUNITXML + " report");
+				}
+				return createJUnitXmlReport(executionEngineContext, List.of(executionId));
+			case JUNITZIP:
+				return createJUnitZipReport(executionEngineContext, List.of(executionId), includeAttachments, attachmentsRootFolder);
+			default:
+				throw getControllerServiceException(customReportType);
+		}
+	}
+
+	@Operation(description = "Returns the custom report for several executions")
+	@GET
+	@Path("/report/multi/{customReportType}")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.TEXT_PLAIN)
+	@Secured(right = "execution-read")
+	public Response getCustomMultiReport(@PathParam("customReportType") String customReportType,
+										 @QueryParam("ids") String executionIds,
+										 @QueryParam("includeAttachments") Boolean includeAttachments,
+										 @QueryParam("attachmentsRootFolder") String attachmentsRootFolder) throws IOException {
+		ExecutionEngineContext executionEngineContext = getScheduler().getExecutor().getExecutionEngine().getExecutionEngineContext();
+		CustomReportType reportType = CustomReportType.parse(customReportType);
+		if (reportType == null) {
+			throw getControllerServiceException(customReportType);
+		}
+		List<String> idsList = new ArrayList<>();
+		if (executionIds != null) {
+			idsList = Arrays.asList(executionIds.split(";"));
+		}
+		switch (reportType) {
+			case JUNITXML:
+				if (includeAttachments != null && includeAttachments) {
+					throw new ControllerServiceException(400, "Attachments are not supported in " + CustomReportType.JUNITXML + " report");
+				}
+				return createJUnitXmlReport(executionEngineContext, idsList);
+			case JUNITZIP:
+				return createJUnitZipReport(executionEngineContext, idsList, includeAttachments, attachmentsRootFolder);
+			default:
+				throw getControllerServiceException(customReportType);
+		}
+	}
+
+	private static ControllerServiceException getControllerServiceException(String customReportType) {
+		return new ControllerServiceException(400, "Invalid report type: " + customReportType + ". Supported report types: " + Arrays.toString(CustomReportType.values()));
+	}
+
+	private Response createJUnitXmlReport(ExecutionEngineContext executionEngineContext, List<String> executionIds) throws IOException {
+		JUnitReport junitReport = new JUnitXmlReportBuilder(executionEngineContext).buildJUnitXmlReport(executionIds);
+		Response.ResponseBuilder response = Response.ok(new ByteArrayInputStream(junitReport.getContent()));
+		response.header("Content-Disposition", "attachment; filename=\"" + junitReport.getFileName() + "\"");
+		return response.build();
+	}
+
+	private Response createJUnitZipReport(ExecutionEngineContext executionEngineContext, List<String> executionIds, Boolean includeAttachments, String attachmentsRootFolder) throws IOException {
+		JUnitReport junitReport = new JUnitXmlReportBuilder(executionEngineContext).buildJunitZipReport(executionIds, includeAttachments, attachmentsRootFolder);
+		Response.ResponseBuilder response = Response.ok(new ByteArrayInputStream(junitReport.getContent()));
+		response.header("Content-Disposition", "attachment; filename=\"" + junitReport.getFileName() + "\"");
+		return response.build();
+	}
+
 
 	@Operation(description = "Updates the provided execution.")
 	@POST

@@ -137,6 +137,8 @@ public class GridPlugin extends AbstractControllerPlugin {
 		GridClientConfiguration gridClientConfiguration = new GridClientConfiguration();
 		gridClientConfiguration.setNoMatchExistsTimeout(configuration.getPropertyAsLong("grid.client.token.selection.nomatch.timeout.ms", gridClientConfiguration.getNoMatchExistsTimeout()));
 		gridClientConfiguration.setMatchExistsTimeout(configuration.getPropertyAsLong("grid.client.token.selection.matchexist.timeout.ms", gridClientConfiguration.getMatchExistsTimeout()));
+		gridClientConfiguration.setMaxConnectionRetries(configuration.getPropertyAsInteger("grid.client.token.connection.retries.max", gridClientConfiguration.getMaxConnectionRetries()));
+		gridClientConfiguration.setConnectionRetryGracePeriod(configuration.getPropertyAsLong("grid.client.token.connection.retries.graceperiod", gridClientConfiguration.getConnectionRetryGracePeriod()));
 		gridClientConfiguration.setReadTimeoutOffset(configuration.getPropertyAsInteger("grid.client.token.call.readtimeout.offset.ms", gridClientConfiguration.getReadTimeoutOffset()));
 		gridClientConfiguration.setReserveSessionTimeout(configuration.getPropertyAsInteger("grid.client.token.reserve.timeout.ms", gridClientConfiguration.getReserveSessionTimeout()));
 		gridClientConfiguration.setReleaseSessionTimeout(configuration.getPropertyAsInteger("grid.client.token.release.timeout.ms", gridClientConfiguration.getReleaseSessionTimeout()));

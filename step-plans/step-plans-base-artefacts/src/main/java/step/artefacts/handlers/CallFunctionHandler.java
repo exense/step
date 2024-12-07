@@ -106,6 +106,8 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	@Override
 	protected void createReportSkeleton_(CallFunctionReportNode parentNode, CallFunction testArtefact) {
 		try {
+			// Append the artefactId of the current artefact to the path
+			pushArtefactPath(parentNode, testArtefact);
 			Function function = getFunction(testArtefact);
 			if (function instanceof CompositeFunction) {
 				Plan plan = ((CompositeFunction) function).getPlan();

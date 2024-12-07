@@ -64,14 +64,14 @@ public class CallPlanHandler extends ArtefactHandler<CallPlan, ReportNode> {
 		JsonObject input = JsonProviderCache.createReader(new StringReader(inputJson)).readObject();
 		JsonObject resolvedInput = dynamicJsonObjectResolver.evaluate(input, getBindings());		
 		context.getVariablesManager().putVariable(parentNode, "input", resolvedInput);
+
+		// Append the artefactId of the current artefact to the path
+		pushArtefactPath(parentNode, testArtefact);
 	}
 
 	@Override
 	protected void execute_(ReportNode node, CallPlan testArtefact) {
 		beforeDelegation(node, testArtefact);
-
-		// Append the artefactId of the current artefact to the path
-		pushArtefactPath(node, testArtefact);
 
 		Plan a = selectPlan(testArtefact);
 		
