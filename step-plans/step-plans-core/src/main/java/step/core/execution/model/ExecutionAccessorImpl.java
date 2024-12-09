@@ -165,7 +165,7 @@ public class ExecutionAccessorImpl extends AbstractAccessor<Execution> implement
 			filters.add(Filters.gte("startTime", from));
 		}
 		if (to != null) {
-			filters.add(Filters.lte("endTime", to));
+			filters.add(Filters.lte("startTime", to));
 		}
 		return collectionDriver
 				.find(Filters.and(filters),
