@@ -223,7 +223,9 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 
 	private Map<String, Object> getTimeSeriesAdditionalAttributes(ExecutionContext executionContext) {
 		Map<String, Object> attributes = new HashMap<>();
-		attributes.put("planId", context.getPlan().getId().toString());
+		if (context.getPlan() != null) {
+			attributes.put("planId", context.getPlan().getId().toString());
+		}
 		attributes.put("taskId", Objects.requireNonNullElse(context.get("$schedulerTaskId"), ""));
 
 		TreeMap<String, String> additionalAttributes = (TreeMap<String, String>) executionContext.get(CTX_ADDITIONAL_ATTRIBUTES);
