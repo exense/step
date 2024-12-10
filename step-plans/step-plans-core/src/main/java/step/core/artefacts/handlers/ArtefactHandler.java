@@ -29,6 +29,7 @@ import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.artefacts.reports.aggregated.ReportNodeTimeSeries;
+import step.core.artefacts.reports.resolvedplan.ResolvedPlanBuilder;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionContextBindings;
@@ -70,6 +71,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	private DynamicBeanResolver dynamicBeanResolver;
 	private ReportNodeTimeSeries reportNodeTimeSeries;
 	private boolean reportNodeTimeSeriesEnabled;
+	private ResolvedPlanBuilder resolvedPlanBuilder;
 
 	public ArtefactHandler() {
 		super();		
@@ -86,6 +88,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		reportNodeAttributesManager = new ReportNodeAttributesManager(context);
 		dynamicBeanResolver = context.getDynamicBeanResolver();
 		resourceManager = context.getResourceManager();
+		resolvedPlanBuilder = context.get(ResolvedPlanBuilder.class);
 		Configuration configuration = context.getConfiguration();
 		reportNodeTimeSeriesEnabled = configuration.getPropertyAsBoolean("execution.engine.reportnodes.timeseries.enabled", true);
 	}
@@ -268,6 +271,12 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 
 		String artefactHash = getArtefactHash(artefact);
 		reportNode.setArtefactHash(artefactHash);
+		//All plan nodes can not be resolved before executions (i.e. recursive call plans), thus we check and update
+		//the resolved plan nodes when required
+		// Resolved plans might be disabled
+		if (resolvedPlanBuilder != null) {
+			resolvedPlanBuilder.checkAndAddMissingResolvedPlanNode(artefactHash, artefact, parentReportNode, reportNodeCache);
+		}
 
 		context.setCurrentReportNode(reportNode);
 		reportNodeCache.put(reportNode);

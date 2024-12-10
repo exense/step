@@ -121,6 +121,9 @@ public class AutomationPackageDescriptorReader {
         if (!res.getPlans().isEmpty()) {
             log.info("{} plan(s) found in automation package {}", res.getPlans().size(), StringUtils.defaultString(packageFileName));
         }
+        if (!res.getPlansPlainText().isEmpty()) {
+            log.info("{} plain text plan(s) found in automation package {}", res.getPlans().size(), StringUtils.defaultString(packageFileName));
+        }
         for (Map.Entry<String, List<?>> additionalEntry : res.getAdditionalFields().entrySet()) {
             log.info("{} {} found in automation package {}", additionalEntry.getValue().size(), additionalEntry.getKey(), StringUtils.defaultString(packageFileName));
         }

@@ -340,6 +340,12 @@ public class StepConsole implements Callable<Integer> {
             @Option(names = {"--numberOfThreads"}, description = "Max number of threads to be used for execution in case of wrapped test set")
             protected Integer numberOfThreads;
 
+            @Option(names = {"--reportType"}, description = "The type of execution report to be generated and stored locally. Supported report types: junit")
+            protected List<AbstractExecuteAutomationPackageTool.ReportType> reportType;
+
+            @Option(names = {"--reportDir"}, description = "The local folder to store generated execution reports", defaultValue = "reports")
+            protected File reportDir;
+
             @Option(descriptionKey = EP_DESCRIPTION_KEY, names = {"-ep", "--executionParameters"}, description = "Set execution parameters for local and remote executions ", split = "\\|", splitSynopsisLabel = "|")
             protected Map<String, String> executionParameters;
 
@@ -391,6 +397,11 @@ public class StepConsole implements Callable<Integer> {
                 if (file == null) {
                     throw new StepCliExecutionException("AP file is not defined");
                 }
+
+                if (reportType != null && !reportType.isEmpty()) {
+                    throw new StepCliExecutionException("The report generation is not supported for local execution");
+                }
+
                 executeLocally(file, includePlans, excludePlans, includeCategories, excludeCategories, executionParameters);
             }
 
@@ -406,35 +417,33 @@ public class StepConsole implements Callable<Integer> {
             protected void handleApRemoteExecuteCommand() {
                 checkStepUrlRequired();
                 checkEeOptionsConsistency(spec);
+
                 checkStepControllerVersion();
-                executeRemotely(stepUrl, getStepProjectName(), stepUser, getAuthToken(), executionParameters,
-                        executionTimeoutS, async, includePlans, excludePlans, includeCategories, excludeCategories, wrapIntoTestSet, numberOfThreads, getMavenArtifact(apFile)
+                executeRemotely(stepUrl,
+                        new AbstractExecuteAutomationPackageTool.Params()
+                                .setStepProjectName(getStepProjectName())
+                                .setUserId(stepUser)
+                                .setAuthToken(getAuthToken())
+                                .setExecutionParameters(executionParameters)
+                                .setExecutionResultTimeoutS(executionTimeoutS)
+                                .setWaitForExecution(!async)
+                                .setEnsureExecutionSuccess(true)
+                                .setIncludePlans(includePlans)
+                                .setExcludePlans(excludePlans)
+                                .setIncludeCategories(includeCategories)
+                                .setExcludeCategories(excludeCategories)
+                                .setWrapIntoTestSet(wrapIntoTestSet)
+                                .setNumberOfThreads(numberOfThreads)
+                                .setReportTypes(reportType)
+                                .setReportOutputDir(reportDir)
+                                .setMavenArtifactIdentifier(getMavenArtifact(apFile))
                 );
             }
 
             // for tests
             protected void executeRemotely(final String stepUrl,
-                                           final String projectName,
-                                           final String stepUserId,
-                                           final String authToken,
-                                           final Map<String, String> executionParameters,
-                                           final Integer executionTimeoutS,
-                                           final boolean async,
-                                           final String includePlans,
-                                           final String excludePlans,
-                                           final String includeCategories,
-                                           final String excludeCategories,
-                                           final boolean wrapIntoTestSet,
-                                           final Integer numberOfThreads,
-                                           final MavenArtifactIdentifier mavenArtifactIdentifier) {
-                new AbstractExecuteAutomationPackageTool(
-                        stepUrl, projectName, stepUserId, authToken,
-                        executionParameters, executionTimeoutS,
-                        !async, true,
-                        includePlans, excludePlans, includeCategories, excludeCategories,
-                        wrapIntoTestSet, numberOfThreads,
-                        mavenArtifactIdentifier
-                ) {
+                                           AbstractExecuteAutomationPackageTool.Params params) {
+                new AbstractExecuteAutomationPackageTool(stepUrl, params) {
                     @Override
                     protected File getAutomationPackageFile() throws StepCliExecutionException {
                         return prepareApFile(apFile);

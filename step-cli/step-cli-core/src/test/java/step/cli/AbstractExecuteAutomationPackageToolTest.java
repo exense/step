@@ -163,10 +163,22 @@ public class AbstractExecuteAutomationPackageToolTest {
                                                             RemoteExecutionManager executionManagerMock,
                                                             RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock) throws URISyntaxException {
         return new ExecuteAutomationPackageToolTestable(
-                "http://localhost:8080", TENANT_1.getName(), "testUser", "abc", createTestCustomParams(),
-                3, true, ensureExecutionSuccess, TEST_INCLUDE_PLANS, null,
-                TEST_INCLUDE_CATEGORIES, TEST_EXCLUDE_CATEGORIES, false, 0, executionManagerMock, remoteAutomationPackageClientMock,
-                null
+                "http://localhost:8080",
+                new AbstractExecuteAutomationPackageTool.Params()
+                        .setStepProjectName(TENANT_1.getName())
+                        .setUserId("testUser")
+                        .setAuthToken("abc")
+                        .setExecutionParameters(createTestCustomParams())
+                        .setExecutionResultTimeoutS(2)
+                        .setWaitForExecution(true)
+                        .setEnsureExecutionSuccess(ensureExecutionSuccess)
+                        .setIncludePlans(TEST_INCLUDE_PLANS)
+                        .setExcludePlans(null)
+                        .setIncludeCategories(TEST_INCLUDE_CATEGORIES)
+                        .setExcludeCategories(TEST_EXCLUDE_CATEGORIES)
+                        .setWrapIntoTestSet(false)
+                        .setNumberOfThreads(0),
+                executionManagerMock, remoteAutomationPackageClientMock
         );
     }
 
@@ -182,19 +194,10 @@ public class AbstractExecuteAutomationPackageToolTest {
         private final RemoteExecutionManager remoteExecutionManagerMock;
         private final RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock;
 
-        public ExecuteAutomationPackageToolTestable(String url, String stepProjectName,
-                                                    String userId, String authToken,
-                                                    Map<String, String> executionParameters,
-                                                    Integer executionResultTimeoutS, Boolean waitForExecution,
-                                                    Boolean ensureExecutionSuccess, String includePlans,
-                                                    String excludePlans,
-                                                    String includeCategories, String excludeCategories,
-                                                    Boolean wrapIntoTestSet, Integer numberOfThreads,
+        public ExecuteAutomationPackageToolTestable(String url, Params params,
                                                     RemoteExecutionManager remoteExecutionManagerMock,
-                                                    RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock,
-                                                    MavenArtifactIdentifier mavenArtifactIdentifier) {
-            super(url, stepProjectName, userId, authToken, executionParameters, executionResultTimeoutS, waitForExecution,
-                    ensureExecutionSuccess, includePlans, excludePlans, includeCategories, excludeCategories, wrapIntoTestSet, numberOfThreads, mavenArtifactIdentifier);
+                                                    RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock) {
+            super(url, params);
             this.remoteExecutionManagerMock = remoteExecutionManagerMock;
             this.remoteAutomationPackageClientMock = remoteAutomationPackageClientMock;
         }

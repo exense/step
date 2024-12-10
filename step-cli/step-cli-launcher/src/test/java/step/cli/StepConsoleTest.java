@@ -139,18 +139,18 @@ public class StepConsoleTest {
         Assert.assertEquals(0, res);
         Assert.assertEquals(1, remoteExecuteHistory.size());
         TestApExecuteCommand.RemoteExecutionParams usedParams = remoteExecuteHistory.get(0);
-        Assert.assertEquals("p1,p2", usedParams.includePlans);
-        Assert.assertEquals("p3,p4", usedParams.excludePlans);
-        Assert.assertEquals("CatA,CatB", usedParams.includeCategories);
-        Assert.assertEquals("CatC,CatD", usedParams.excludeCategories);
+        Assert.assertEquals("p1,p2", usedParams.params.getIncludePlans());
+        Assert.assertEquals("p3,p4", usedParams.params.getExcludePlans());
+        Assert.assertEquals("CatA,CatB", usedParams.params.getIncludeCategories());
+        Assert.assertEquals("CatC,CatD", usedParams.params.getExcludeCategories());
         Assert.assertEquals("http://localhost:8080", usedParams.stepUrl);
-        Assert.assertEquals("abc", usedParams.authToken);
-        Assert.assertEquals("testProject", usedParams.projectName);
-        Assert.assertEquals("timeout doesn't match", (Integer) 1000, usedParams.executionTimeoutS);
-        Assert.assertTrue(usedParams.async);
-        Assert.assertEquals(Map.of("key1", "value1", "key2", "value2", "key3", "value3"), usedParams.executionParameters);
+        Assert.assertEquals("abc", usedParams.params.getAuthToken());
+        Assert.assertEquals("testProject", usedParams.params.getStepProjectName());
+        Assert.assertEquals("timeout doesn't match", (Integer) 1000, usedParams.params.getExecutionResultTimeoutS());
+        Assert.assertFalse(usedParams.params.getWaitForExecution());
+        Assert.assertEquals(Map.of("key1", "value1", "key2", "value2", "key3", "value3"), usedParams.params.getExecutionParameters());
         Assert.assertEquals("step-automation-packages-sample1.jar", new File(usedParams.apFile).getName());
-        Assert.assertNull(usedParams.mavenArtifactIdentifier);
+        Assert.assertNull(usedParams.params.getMavenArtifactIdentifier());
 
         // minimum parameters
         remoteExecuteHistory.clear();
@@ -159,9 +159,9 @@ public class StepConsoleTest {
         Assert.assertEquals(1, remoteExecuteHistory.size());
         usedParams = remoteExecuteHistory.get(0);
         Assert.assertEquals("http://localhost:8080", usedParams.stepUrl);
-        Assert.assertFalse(usedParams.async);
+        Assert.assertTrue(usedParams.params.getWaitForExecution());
         Assert.assertEquals("step-automation-packages-sample1.jar", new File(usedParams.apFile).getName());
-        Assert.assertNull(usedParams.mavenArtifactIdentifier);
+        Assert.assertNull(usedParams.params.getMavenArtifactIdentifier());
 
         // use maven artifact instead of local file
         remoteExecuteHistory.clear();
@@ -170,7 +170,7 @@ public class StepConsoleTest {
         Assert.assertEquals(1, remoteExecuteHistory.size());
         usedParams = remoteExecuteHistory.get(0);
         Assert.assertEquals("http://localhost:8080", usedParams.stepUrl);
-        Assert.assertEquals(new MavenArtifactIdentifier("ch.exense.step", "step-automation-packages-junit", "0.0.0", "tests"), usedParams.mavenArtifactIdentifier);
+        Assert.assertEquals(new MavenArtifactIdentifier("ch.exense.step", "step-automation-packages-junit", "0.0.0", "tests"), usedParams.params.getMavenArtifactIdentifier());
     }
 
     @Test
@@ -422,17 +422,8 @@ public class StepConsoleTest {
 
         public static class RemoteExecutionParams {
             private String stepUrl;
-            private String projectName;
-            private String authToken;
-            private Map<String, String> executionParameters;
-            private Integer executionTimeoutS;
-            private boolean async;
-            private String includePlans;
-            private String excludePlans;
-            private String includeCategories;
-            private String excludeCategories;
+            private AbstractExecuteAutomationPackageTool.Params params;
             private String apFile;
-            private MavenArtifactIdentifier mavenArtifactIdentifier;
         }
 
         public static class LocalExecutionParams {
@@ -457,24 +448,11 @@ public class StepConsoleTest {
         }
 
         @Override
-        protected void executeRemotely(String stepUrl, String projectName, String stepUserId, String authToken, Map<String, String> executionParameters,
-                                       Integer executionTimeoutS, boolean async, String includePlans, String excludePlans,
-                                       String includeCategories, String excludeCategories, final boolean wrapIntoTestSet,
-                                       final Integer numberOfThreads,
-                                       MavenArtifactIdentifier mavenArtifactIdentifier) {
+        protected void executeRemotely(String stepUrl, AbstractExecuteAutomationPackageTool.Params params) {
             if (remoteParams != null) {
                 RemoteExecutionParams p = new RemoteExecutionParams();
                 p.stepUrl = stepUrl;
-                p.projectName = projectName;
-                p.authToken = authToken;
-                p.async = async;
-                p.mavenArtifactIdentifier = mavenArtifactIdentifier;
-                p.executionParameters = executionParameters;
-                p.executionTimeoutS = executionTimeoutS;
-                p.includePlans = includePlans;
-                p.excludePlans = excludePlans;
-                p.includeCategories = includeCategories;
-                p.excludeCategories = excludeCategories;
+                p.params = params;
                 p.apFile = this.apFile;
 
                 remoteParams.add(p);

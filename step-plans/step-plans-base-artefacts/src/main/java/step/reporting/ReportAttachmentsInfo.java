@@ -16,28 +16,25 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.yaml.model;
+package step.reporting;
 
-import step.automation.packages.model.YamlAutomationPackageKeyword;
-import step.plans.automation.YamlPlainTextPlan;
-import step.plans.parser.yaml.YamlPlan;
+import step.attachments.AttachmentMeta;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public interface AutomationPackageFragmentYaml {
+public class ReportAttachmentsInfo {
 
-    List<YamlAutomationPackageKeyword> getKeywords();
+    private Map<String, List<AttachmentMeta>> attachmentsPerTestCase = new HashMap<>();
 
-    List<YamlPlan> getPlans();
+    public Map<String, List<AttachmentMeta>> getAttachmentsPerTestCase() {
+        return attachmentsPerTestCase;
+    }
 
-    List<YamlPlainTextPlan> getPlansPlainText();
-
-    List<String> getFragments();
-
-    Map<String, List<?>> getAdditionalFields();
-
-    default <T> List<T> getAdditionalField(String k) {
-        return (List<T>) getAdditionalFields().get(k);
+    public void add(String testCaseId, AttachmentMeta attachmentMetas) {
+        List<AttachmentMeta> listPerTestCase = attachmentsPerTestCase.computeIfAbsent(testCaseId, k -> new ArrayList<>());
+        listPerTestCase.add(attachmentMetas);
     }
 }

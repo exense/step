@@ -1,11 +1,13 @@
 package step.automation.packages;
 
+import ch.exense.commons.app.Configuration;
 import ch.exense.commons.io.FileHelper;
 import jakarta.json.spi.JsonProvider;
 import org.apache.commons.collections.CollectionUtils;
 import org.junit.Test;
 import org.mockito.Mockito;
 import step.artefacts.CallFunction;
+import step.artefacts.Sequence;
 import step.artefacts.TestCase;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 import step.automation.packages.model.AutomationPackageKeyword;
@@ -57,7 +59,7 @@ public class AutomationPackageReaderTest {
         // accessor is not required in this test - we only read the yaml and don't store the result anywhere
         AutomationPackageParametersRegistration.registerParametersHooks(hookRegistry, serializationRegistry, Mockito.mock(ParameterManager.class));
 
-        this.reader = new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, hookRegistry, serializationRegistry);
+        this.reader = new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, hookRegistry, serializationRegistry, new Configuration());
     }
 
     @Test
@@ -109,17 +111,26 @@ public class AutomationPackageReaderTest {
 
         AutomationPackageTestUtils.findJavaKeywordByClassAndName(keywords, GeneralScriptFunction.class, INLINE_PLAN);
 
-        // 2 annotated plans and 2 plans in yaml descriptor
+        // 2 annotated plans and 3 plans in yaml descriptor
         List<Plan> plans = automationPackageContent.getPlans();
-        assertEquals("Detected plans: " + plans.stream().map(p -> p.getAttribute(AbstractOrganizableObject.NAME)).collect(Collectors.toList()), 4, plans.size());
+        assertEquals("Detected plans: " + plans.stream().map(p -> p.getAttribute(AbstractOrganizableObject.NAME)).collect(Collectors.toList()), 5, plans.size());
         Plan testPlan = findPlanByName(plans, PLAN_NAME_FROM_DESCRIPTOR);
         assertEquals(TestCase.class, testPlan.getRoot().getClass());
         assertEquals(TestCase.class, AutomationPackageTestUtils.findPlanByName(plans, PLAN_FROM_PLANS_ANNOTATION).getRoot().getClass());
         assertEquals(TestCase.class, AutomationPackageTestUtils.findPlanByName(plans, INLINE_PLAN).getRoot().getClass());
 
+        // Check plain text plan
+        Plan plainTextPlan = findPlanByName(plans, PLAN_NAME_FROM_DESCRIPTOR_PLAIN_TEXT);
+        assertEquals(Sequence.class, plainTextPlan.getRoot().getClass());
+
         //Assert all categories
-        Map<String, List<String>> expectedCategoriesByPlan = Map.of("Test Plan", List.of("Yaml Plan"), "Test Plan with Composite", List.of("Yaml Plan", "Composite"),
-                "plan.plan", List.of("PlainTextPlan","AnnotatedPlan"), "Inline Plan", List.of("InlinePlan", "AnnotatedPlan"));
+        Map<String, List<String>> expectedCategoriesByPlan = Map.of(
+                "Test Plan", List.of("Yaml Plan"),
+                "Test Plan with Composite", List.of("Yaml Plan", "Composite"),
+                "plan.plan", List.of("PlainTextPlan", "AnnotatedPlan"),
+                "Plain text plan", List.of("PlainTextPlan"),
+                "Inline Plan", List.of("InlinePlan", "AnnotatedPlan")
+        );
         for (Plan plan : plans) {
             String planName = plan.getAttribute(AbstractOrganizableObject.NAME);
             assertTrue(CollectionUtils.isEqualCollection(expectedCategoriesByPlan.get(planName), plan.getCategories()));
@@ -162,7 +173,6 @@ public class AutomationPackageReaderTest {
         assertEquals(false, parameter.getProtectedValue());
     }
 
-    // TODO these tests should be moved to the module step-automation-packages-manager
     @Test
     public void testFragmentsWithPackageAP() throws AutomationPackageReadingException {
         File automationPackage = FileHelper.getClassLoaderResourceAsFile(this.getClass().getClassLoader(), "step/automation/packages/step-automation-packages.zip");

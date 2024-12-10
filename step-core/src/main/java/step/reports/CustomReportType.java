@@ -16,28 +16,28 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.yaml.model;
+package step.reports;
 
-import step.automation.packages.model.YamlAutomationPackageKeyword;
-import step.plans.automation.YamlPlainTextPlan;
-import step.plans.parser.yaml.YamlPlan;
+public enum CustomReportType {
+    JUNITXML("junit"), // report
+    JUNITZIP("junit"); // zipped report with attachments
 
-import java.util.List;
-import java.util.Map;
+    private final String nameInFile;
 
-public interface AutomationPackageFragmentYaml {
+    CustomReportType(String nameInFile) {
+        this.nameInFile = nameInFile;
+    }
 
-    List<YamlAutomationPackageKeyword> getKeywords();
+    public static CustomReportType parse(String customReportType) {
+        for (CustomReportType value : CustomReportType.values()) {
+            if (value.name().equalsIgnoreCase(customReportType)) {
+                return value;
+            }
+        }
+        return null;
+    }
 
-    List<YamlPlan> getPlans();
-
-    List<YamlPlainTextPlan> getPlansPlainText();
-
-    List<String> getFragments();
-
-    Map<String, List<?>> getAdditionalFields();
-
-    default <T> List<T> getAdditionalField(String k) {
-        return (List<T>) getAdditionalFields().get(k);
+    public String getNameInFile() {
+        return nameInFile;
     }
 }

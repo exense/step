@@ -16,28 +16,23 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.yaml.model;
+package step.reporting;
 
-import step.automation.packages.model.YamlAutomationPackageKeyword;
-import step.plans.automation.YamlPlainTextPlan;
-import step.plans.parser.yaml.YamlPlan;
+public class JUnitReport {
 
-import java.util.List;
-import java.util.Map;
+    private final String fileName;
+    private final byte[] content;
 
-public interface AutomationPackageFragmentYaml {
+    public JUnitReport(String fileName, byte[] content) {
+        this.fileName = fileName;
+        this.content = content;
+    }
 
-    List<YamlAutomationPackageKeyword> getKeywords();
+    public String getFileName() {
+        return fileName;
+    }
 
-    List<YamlPlan> getPlans();
-
-    List<YamlPlainTextPlan> getPlansPlainText();
-
-    List<String> getFragments();
-
-    Map<String, List<?>> getAdditionalFields();
-
-    default <T> List<T> getAdditionalField(String k) {
-        return (List<T>) getAdditionalFields().get(k);
+    public byte[] getContent() {
+        return content;
     }
 }

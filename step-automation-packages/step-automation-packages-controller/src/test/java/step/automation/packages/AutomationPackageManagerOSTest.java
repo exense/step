@@ -69,8 +69,11 @@ import static step.automation.packages.AutomationPackageTestUtils.*;
 
 public class AutomationPackageManagerOSTest {
 
-    // how many keywords are defined in original sample
+    // how many keywords and plans are defined in original sample
     public static final int KEYWORDS_COUNT = 6;
+
+    // 2 annotated plans and 3 plans from yaml descriptor
+    public static final int PLANS_COUNT = 5;
 
     private AutomationPackageManager manager;
     private AutomationPackageAccessorImpl automationPackageAccessor;
@@ -91,7 +94,8 @@ public class AutomationPackageManagerOSTest {
         this.parameterAccessor = new AbstractAccessor<>(new InMemoryCollection<>());
         ParameterManager parameterManager = new ParameterManager(this.parameterAccessor, null, "groovy", new DynamicBeanResolver(new DynamicValueResolver(new ExpressionHandler())));
 
-        FunctionTypeRegistry functionTypeRegistry = prepareTestFunctionTypeRegistry();
+        Configuration configuration = createTestConfiguration();
+        FunctionTypeRegistry functionTypeRegistry = prepareTestFunctionTypeRegistry(configuration);
 
         this.functionManager = new FunctionManagerImpl(functionAccessor, functionTypeRegistry);
         this.planAccessor = new PlanAccessorImpl(new InMemoryCollection<>());
@@ -113,15 +117,14 @@ public class AutomationPackageManagerOSTest {
                 planAccessor,
                 resourceManager,
                 automationPackageHookRegistry,
-                new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, automationPackageHookRegistry, serializationRegistry),
+                new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, automationPackageHookRegistry, serializationRegistry, configuration),
                 automationPackageLocks
                 );
     }
 
-    private static FunctionTypeRegistry prepareTestFunctionTypeRegistry() {
+    private static FunctionTypeRegistry prepareTestFunctionTypeRegistry(Configuration configuration) {
         FunctionTypeRegistry functionTypeRegistry = Mockito.mock(FunctionTypeRegistry.class);
 
-        Configuration configuration = new Configuration();
         AbstractFunctionType<?> jMeterFunctionType = new JMeterFunctionType(configuration);
         AbstractFunctionType<?> generalScriptFunctionType = new GeneralScriptFunctionType(configuration);
         AbstractFunctionType<?> compositeFunctionType = new CompositeFunctionType(new ObjectHookRegistry());
@@ -143,6 +146,10 @@ public class AutomationPackageManagerOSTest {
             }
         });
         return functionTypeRegistry;
+    }
+
+    private static Configuration createTestConfiguration() {
+        return new Configuration();
     }
 
     @After
@@ -171,13 +178,16 @@ public class AutomationPackageManagerOSTest {
             r.storedPackage = automationPackageAccessor.get(resultId);
             Assert.assertEquals("My package", r.storedPackage.getAttribute(AbstractOrganizableObject.NAME));
 
-            // 4 plans have been updated, 1 plan has been added
+            // 5 plans have been updated, 1 plan has been added
             List<Plan> storedPlans = planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(resultId)).collect(Collectors.toList());
-            Assert.assertEquals(5, storedPlans.size());
+            Assert.assertEquals(PLANS_COUNT + 1, storedPlans.size());
 
             Plan updatedPlan = storedPlans.stream().filter(p -> p.getAttribute(AbstractOrganizableObject.NAME).equals(PLAN_NAME_FROM_DESCRIPTOR)).findFirst().orElse(null);
+            Plan updatedPlanPlainText = storedPlans.stream().filter(p -> p.getAttribute(AbstractOrganizableObject.NAME).equals(PLAN_NAME_FROM_DESCRIPTOR_PLAIN_TEXT)).findFirst().orElse(null);
             Assert.assertNotNull(updatedPlan);
             Assert.assertEquals(findPlanByName(r.storedPlans, PLAN_NAME_FROM_DESCRIPTOR).getId(), updatedPlan.getId());
+            Assert.assertNotNull(updatedPlanPlainText);
+            Assert.assertEquals(findPlanByName(r.storedPlans, PLAN_NAME_FROM_DESCRIPTOR_PLAIN_TEXT).getId(), updatedPlanPlainText.getId());
 
             Assert.assertNotNull(storedPlans.stream().filter(p -> p.getAttribute(AbstractOrganizableObject.NAME).equals(PLAN_NAME_FROM_DESCRIPTOR_2)).findFirst().orElse(null));
 
@@ -312,9 +322,8 @@ public class AutomationPackageManagerOSTest {
             r.storedPackage = automationPackageAccessor.get(result);
             Assert.assertEquals("My package", r.storedPackage.getAttribute(AbstractOrganizableObject.NAME));
 
-            // 2 annotated plans and 2 plans from yaml descriptor
             List<Plan> storedPlans = planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
-            Assert.assertEquals(4, storedPlans.size());
+            Assert.assertEquals(PLANS_COUNT, storedPlans.size());
 
             r.storedPlans = storedPlans;
             Plan planFromDescriptor = findPlanByName(storedPlans, PLAN_NAME_FROM_DESCRIPTOR);
