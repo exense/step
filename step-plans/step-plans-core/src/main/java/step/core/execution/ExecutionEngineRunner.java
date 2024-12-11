@@ -147,10 +147,11 @@ public class ExecutionEngineRunner {
 	}
 
 	private void buildAndPersistResolvedPlan(Plan plan) {
-		if(aggregatedReportEnabled) {
+		if (aggregatedReportEnabled) {
 			ResolvedPlanBuilder resolvedPlanBuilder = new ResolvedPlanBuilder(executionContext);
 			ResolvedPlanNode resolvedPlanRoot = resolvedPlanBuilder.buildResolvedPlan(plan);
 			updateExecution(e -> e.setResolvedPlanRootNodeId(resolvedPlanRoot.getId().toString()));
+			executionContext.put(ResolvedPlanBuilder.class, resolvedPlanBuilder);
 		}
 	}
 

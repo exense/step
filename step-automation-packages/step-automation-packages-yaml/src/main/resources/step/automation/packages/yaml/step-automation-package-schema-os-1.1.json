@@ -2622,6 +2622,27 @@
         }
       },
       "additionalProperties" : false
+    },
+    "PlainTextPlanDef" : {
+      "type" : "object",
+      "properties" : {
+        "file" : {
+          "type" : "string"
+        },
+        "categories" : {
+          "type" : "array",
+          "items" : {
+            "type" : "string"
+          }
+        },
+        "rootType" : {
+          "enum" : [ "Sequence", "TestCase", "TestScenario", "TestSet", "ThreadGroup" ]
+        },
+        "name" : {
+          "type" : "string"
+        }
+      },
+      "additionalProperties" : false
     }
   },
   "properties" : {
@@ -2665,6 +2686,12 @@
       "type" : "array",
       "items" : {
         "$ref" : "#/$defs/StepParameterDef"
+      }
+    },
+    "plansPlainText" : {
+      "type" : "array",
+      "items" : {
+        "$ref" : "#/$defs/PlainTextPlanDef"
       }
     }
   },

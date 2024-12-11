@@ -22,6 +22,8 @@ import ch.exense.commons.io.Poller;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.client.Invocation.Builder;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import step.reports.CustomReportType;
 import step.client.AbstractRemoteClient;
 import step.client.credentials.ControllerCredentials;
 import step.core.artefacts.reports.ReportNode;
@@ -33,6 +35,10 @@ import step.core.execution.model.ExecutionParameters;
 import step.core.execution.model.ExecutionStatus;
 import step.core.repositories.RepositoryObjectReference;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
 
@@ -117,6 +123,79 @@ public class RemoteExecutionManager extends AbstractRemoteClient {
 	}
 
 	/**
+	 * @return the content of the report
+	 */
+	public Report getCustomReport(String executionId, CustomReportType reportType, Boolean includeAttachments, String attachmentsRootFolder){
+		Map<String, String> queryParams = Map.of(
+				"includeAttachments", includeAttachments == null ? Boolean.FALSE.toString() : includeAttachments.toString(),
+				"attachmentsRootFolder", attachmentsRootFolder
+		);
+		Builder b = requestBuilder("/rest/executions/" + executionId + "/report/" + reportType.name().toLowerCase(), queryParams);
+		return executeRequest(() -> {
+			Response response = b.get();
+			try(InputStream contentIs = response.readEntity(InputStream.class)) {
+				return new Report(getFileNameFromContentDisposition(response), contentIs.readAllBytes());
+			} catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+	}
+
+	public Report getCustomMultiReport(List<String> executionIds, CustomReportType reportType, Boolean includeAttachments, String attachmentsRootFolder) {
+		Map<String, String> queryParams = Map.of(
+				"ids", String.join(";", executionIds),
+				"includeAttachments", includeAttachments == null ? Boolean.FALSE.toString() : includeAttachments.toString(),
+				"attachmentsRootFolder", attachmentsRootFolder
+		);
+		Builder b = requestBuilder("/rest/executions/report/multi/" + reportType.name().toLowerCase(), queryParams);
+		return executeRequest(() -> {
+			Response response = b.get();
+			try (InputStream contentIs = response.readEntity(InputStream.class)) {
+				return new Report(getFileNameFromContentDisposition(response), contentIs.readAllBytes());
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		});
+	}
+
+	private String getFileNameFromContentDisposition(Response response) {
+		String res = null;
+		String header = response.getHeaderString("content-disposition");
+		if (header != null) {
+			String[] split = header.split("filename=");
+			if (split.length > 1) {
+				String[] split2 = split[1].split(";");
+				if (split2.length > 0) {
+					res = split2[0];
+					if (res != null) {
+						res = res.replace("\"", "");
+					}
+				}
+			}
+		}
+		String formattedTimestamp = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss-SSSSSS").format(LocalDateTime.now()) ;
+		return res == null ? formattedTimestamp + "-" + CustomReportType.JUNITXML.getNameInFile().toLowerCase() + ".xml" : res;
+	}
+
+	public static class Report {
+		private String fileName;
+		private byte[] content;
+
+		public Report(String fileName, byte[] content) {
+			this.fileName = fileName;
+			this.content = content;
+		}
+
+		public String getFileName() {
+			return fileName;
+		}
+
+		public byte[] getContent() {
+			return content;
+		}
+	}
+
+	/**
 	 * Stop an execution
 	 *
 	 * @param executionId the ID of the execution to be stopped
@@ -143,7 +222,6 @@ public class RemoteExecutionManager extends AbstractRemoteClient {
 	@SuppressWarnings("unchecked")
 	public Map<ReportNodeStatus, Integer> getStatusReport(String executionId, String reportNodeClass) {
 		throw new RuntimeException("Not supported anymore since 3.17");
-
 	}
 
 	/**

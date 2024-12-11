@@ -28,7 +28,10 @@ import step.automation.packages.client.AutomationPackageClientException;
 import step.cli.AbstractExecuteAutomationPackageTool;
 
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 
@@ -47,18 +50,18 @@ public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 	private static void assertToolCall(ExecuteAutomationPackageMojoTestable mojo, Boolean ensureExecutionSuccess) throws AutomationPackageClientException {
 		Mockito.verify(mojo.mockedTool, Mockito.times(1)).execute();
 		Assert.assertEquals("http://localhost:8080", mojo.url);
-		Assert.assertEquals("abc", mojo.authToken);
-		Assert.assertEquals(TENANT_1.getName(), mojo.projectName);
-		Assert.assertEquals("testUser", mojo.userId);
-		Assert.assertEquals((Integer) 3, mojo.executionResultTimeoutS);
-		Assert.assertEquals(true, mojo.waitForExecution);
-		Assert.assertEquals(ensureExecutionSuccess, mojo.ensureExecutionSuccess);
-		Assert.assertEquals(true, mojo.printAggregatedReport);
-		Assert.assertEquals(createTestCustomParams(), mojo.parameters);
-		Assert.assertEquals(TEST_INCLUDE_PLANS, mojo.includePlans);
-		Assert.assertNull(TEST_INCLUDE_PLANS, mojo.excludePlans);
-		Assert.assertEquals(TEST_INCLUDE_CATEGORIES, mojo.includeCategories);
-		Assert.assertEquals(TEST_EXCLUDE_CATEGORIES, mojo.excludeCategories);
+		Assert.assertEquals("abc", mojo.params.getAuthToken());
+		Assert.assertEquals(TENANT_1.getName(), mojo.params.getStepProjectName());
+		Assert.assertEquals("testUser", mojo.params.getUserId());
+		Assert.assertEquals((Integer) 3, mojo.params.getExecutionResultTimeoutS());
+		Assert.assertEquals(true, mojo.params.getWaitForExecution());
+		Assert.assertEquals(ensureExecutionSuccess, mojo.params.getEnsureExecutionSuccess());
+        Assert.assertEquals(true, mojo.params.getPrintAggregatedReport());
+		Assert.assertEquals(createTestCustomParams(), mojo.params.getExecutionParameters());
+		Assert.assertEquals(TEST_INCLUDE_PLANS, mojo.params.getIncludePlans());
+		Assert.assertNull(TEST_INCLUDE_PLANS, mojo.params.getExcludePlans());
+		Assert.assertEquals(TEST_INCLUDE_CATEGORIES, mojo.params.getIncludeCategories());
+		Assert.assertEquals(TEST_EXCLUDE_CATEGORIES, mojo.params.getExcludeCategories());
 	}
 
 	private void configureMojo(ExecuteAutomationPackageMojoTestable mojo, boolean ensureExecutionSuccess) throws URISyntaxException {
@@ -113,40 +116,16 @@ public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 		private final AbstractExecuteAutomationPackageTool mockedTool = Mockito.mock(AbstractExecuteAutomationPackageTool.class);
 
 		private String url;
-		private String projectName;
-		private String userId;
-		private String authToken;
-		private Map<String, String> parameters;
-		private Integer executionResultTimeoutS;
-		private Boolean waitForExecution;
-		private Boolean ensureExecutionSuccess;
-		private Boolean printAggregatedReport;
-		private String includePlans;
-		private String excludePlans;
-		private String includeCategories;
-		private String excludeCategories;
+		private AbstractExecuteAutomationPackageTool.Params params;
 
 		public ExecuteAutomationPackageMojoTestable() {
 			super();
 		}
 
 		@Override
-		protected AbstractExecuteAutomationPackageTool createTool(String url, String projectName, String userId, String authToken, Map<String, String> parameters,
-										Integer executionResultTimeoutS, Boolean waitForExecution, Boolean ensureExecutionSuccess, Boolean printAggregatedReport, String includePlans, String excludePlans,
-										String includeCategories, String excludeCategories, final Boolean wrapIntoTestSet, final Integer numberOfThreads) {
+		protected AbstractExecuteAutomationPackageTool createTool(String url, AbstractExecuteAutomationPackageTool.Params params) {
 			this.url = url;
-			this.projectName = projectName;
-			this.userId = userId;
-			this.authToken = authToken;
-			this.parameters = parameters;
-			this.executionResultTimeoutS = executionResultTimeoutS;
-			this.waitForExecution = waitForExecution;
-			this.ensureExecutionSuccess = ensureExecutionSuccess;
-			this.printAggregatedReport = printAggregatedReport;
-			this.includePlans = includePlans;
-			this.excludePlans = excludePlans;
-			this.includeCategories = includeCategories;
-			this.excludeCategories = excludeCategories;
+			this.params = params;
 			return mockedTool;
 		}
 

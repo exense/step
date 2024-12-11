@@ -18,29 +18,42 @@
  ******************************************************************************/
 package step.reporting;
 
-import java.io.File;
-import java.io.IOException;
-
+import org.junit.Assert;
 import org.junit.Test;
-
-import step.artefacts.BaseArtefactPlugin;
-import step.artefacts.ForBlock;
-import step.artefacts.Sequence;
-import step.artefacts.TestCase;
-import step.artefacts.TestSet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xml.sax.SAXException;
+import org.xmlunit.assertj.XmlAssert;
+import step.artefacts.*;
 import step.artefacts.handlers.functions.TokenForecastingExecutionPlugin;
 import step.core.artefacts.CheckArtefact;
+import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionEngine;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
+import step.core.plans.runner.PlanRunnerResult;
 import step.core.plans.runner.PlanRunnerResultAssert;
 import step.core.reports.Error;
 import step.core.reports.ErrorType;
 import step.datapool.sequence.IntSequenceDataPool;
 import step.threadpool.ThreadPoolPlugin;
 
+import javax.xml.XMLConstants;
+import javax.xml.transform.Source;
+import javax.xml.transform.stream.StreamSource;
+import javax.xml.validation.Schema;
+import javax.xml.validation.SchemaFactory;
+import javax.xml.validation.Validator;
+import java.io.*;
+import java.nio.file.Files;
+import java.time.ZoneId;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
+
 public class JUnit4ReportWriterTest {
+
+	private static final Logger log = LoggerFactory.getLogger(JUnit4ReportWriterTest.class);
 
 	@Test
 	public void testTestset() throws IOException {
@@ -68,7 +81,7 @@ public class JUnit4ReportWriterTest {
 						.add(checkArtefact(ReportNodeStatus.TECHNICAL_ERROR))
 					.endBlock()
 					.startBlock(testCase("TC06 - TECH_ERROR with message"))
-						.add(checkArtefact(ReportNodeStatus.TECHNICAL_ERROR, "My error message"))
+						.add(checkArtefact(ReportNodeStatus.TECHNICAL_ERROR, "Error while resolving groovy properties in expression: 'var'. Groovy error: >>> No such property: var for class: Script1 <<<"))
 					.endBlock()
 					.startBlock(testCase("TC07 - SKIPPED"))
 						.add(checkArtefact(ReportNodeStatus.SKIPPED))
@@ -82,12 +95,20 @@ public class JUnit4ReportWriterTest {
 		report.deleteOnExit();
 
 		try (ExecutionEngine engine = ExecutionEngine.builder().withPlugin(new ThreadPoolPlugin()).withPlugin(new BaseArtefactPlugin()).withPlugin(new TokenForecastingExecutionPlugin()).build()) {
-			engine.execute(plan).writeReport(new JUnit4ReportWriter(), report);
+			engine.execute(plan).writeReport(new JUnit4ReportWriterTestable(), report);
 		}
 
-		PlanRunnerResultAssert.assertEquals(this.getClass(), "TEST-JUnit4ReportWriterTest-testTestset-expected.xml", report, "time=\".+?\"");
+		log.info("Generated report:");
+		String generatedReport = new String(Files.readAllBytes(report.toPath()));
+		log.info("\n" + generatedReport);
+		validateWithXsd(report);
+
+		XmlAssert.assertThat(generatedReport)
+				.and(PlanRunnerResultAssert.readResource(this.getClass(), "TEST-JUnit4ReportWriterTest-testTestset-expected.xml"))
+				.areSimilar()
+				.ignoreWhitespace();
 	}
-	
+
 	@Test
 	public void testSimpleSequence() throws IOException {
 		Plan plan = PlanBuilder.create()
@@ -112,10 +133,67 @@ public class JUnit4ReportWriterTest {
 		report.deleteOnExit();
 
 		try (ExecutionEngine engine = ExecutionEngine.builder().withPlugin(new BaseArtefactPlugin()).withPlugin(new TokenForecastingExecutionPlugin()).build()) {
-			engine.execute(plan).writeReport(new JUnit4ReportWriter(), report);
+			engine.execute(plan).writeReport(new JUnit4ReportWriterTestable(), report);
 		}
 
-		PlanRunnerResultAssert.assertEquals(this.getClass(), "TEST-JUnit4ReportWriterTest-testSimpleSequence-expected.xml", report, "time=\".+?\"");
+		log.info("Generated report:");
+		String generatedReport = new String(Files.readAllBytes(report.toPath()));
+		log.info("\n" + generatedReport);
+		validateWithXsd(report);
+
+		XmlAssert.assertThat(generatedReport)
+				.and(PlanRunnerResultAssert.readResource(this.getClass(), "TEST-JUnit4ReportWriterTest-testSimpleSequence-expected.xml"))
+				.areSimilar()
+				.ignoreWhitespace();
+
+	}
+
+	@Test
+	public void testSeveralTestSuites() throws IOException {
+		Plan plan = PlanBuilder.create()
+				.startBlock(sequence())
+				.add(checkArtefact(ReportNodeStatus.PASSED))
+				.startBlock(sequence())
+				.add(checkArtefact(ReportNodeStatus.PASSED))
+				.add(checkArtefact(ReportNodeStatus.PASSED))
+				.endBlock()
+				.add(checkArtefact(ReportNodeStatus.FAILED))
+				.add(checkArtefact(ReportNodeStatus.FAILED, "my message"))
+				.add(checkArtefact(ReportNodeStatus.TECHNICAL_ERROR))
+				.startBlock(testCase("TC - TECH_ERROR with message"))
+				.add(checkArtefact(ReportNodeStatus.TECHNICAL_ERROR, "My error message"))
+				.endBlock()
+				.add(checkArtefact(ReportNodeStatus.SKIPPED))
+				.add(checkArtefact(ReportNodeStatus.NORUN))
+				.add(checkArtefact(ReportNodeStatus.INTERRUPTED))
+				.endBlock().build();
+
+		File report = new File("TEST-JUnit4ReportWriterTest-testMultiTestsuites.xml");
+		report.deleteOnExit();
+
+		// execute plan twice
+		try (FileOutputStream fos = new FileOutputStream(report); OutputStreamWriter writer = new OutputStreamWriter(fos)) {
+
+			try (ExecutionEngine engine = ExecutionEngine.builder().withPlugin(new BaseArtefactPlugin()).withPlugin(new TokenForecastingExecutionPlugin()).build()) {
+				PlanRunnerResult result1 = engine.execute(plan);
+				PlanRunnerResult result2 = engine.execute(plan);
+				new JUnit4ReportWriterTestable().writeMultiReport(
+						engine.getExecutionEngineContext().getReportNodeAccessor(),
+						List.of(result1.getExecutionId(), result2.getExecutionId()),
+						writer
+				);
+			}
+
+			log.info("Generated report:");
+			String generatedReport = new String(Files.readAllBytes(report.toPath()));
+			log.info("\n" + generatedReport);
+			validateWithXsd(report);
+
+			XmlAssert.assertThat(generatedReport)
+					.and(PlanRunnerResultAssert.readResource(this.getClass(), "TEST-JUnit4ReportWriterTest-testSeveralTestsuites-expected.xml"))
+					.areSimilar()
+					.ignoreWhitespace();
+		}
 	}
 	
 	protected Sequence sequence() {
@@ -153,5 +231,57 @@ public class JUnit4ReportWriterTest {
 			c.getCurrentReportNode().setError(new Error(status==ReportNodeStatus.TECHNICAL_ERROR?ErrorType.TECHNICAL:ErrorType.BUSINESS, error));
 		});
 	}
+
+	private Validator initValidator() throws SAXException, IOException {
+		// JUnit.xsd - the canonical xsd for junit reports
+		// junit-4.xsd - the schema probably used by GitLab (more flexible rather JUnit.xsd)
+		
+//		String xsdPath = "src/test/resources/junitReport/JUnit.xsd";
+		String xsdPath = "src/test/resources/junitReport/junit-4.xsd";
+		SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+		try(FileInputStream fis = new FileInputStream(xsdPath)) {
+			Source schemaFile = new StreamSource(fis);
+			Schema schema = factory.newSchema(schemaFile);
+			return schema.newValidator();
+		}
+    }
+
+	private void validateWithXsd(File report) throws IOException {
+		try {
+			Validator xsdValidator = initValidator();
+			xsdValidator.validate(new StreamSource(report));
+		} catch (SAXException ex) {
+			log.error("Xml report is invalid", ex);
+			Assert.fail("XSD validation exception");
+		}
+	}
+
+	private static class JUnit4ReportWriterTestable extends JUnit4ReportWriter {
+		@Override
+		protected long getExecutionTime(AtomicLong executionTime) {
+			return 1730042979873L;
+		}
+
+		@Override
+		protected ZoneId getZoneId() {
+			return ZoneId.of("UTC");
+		}
+
+		@Override
+		protected String getHostName() {
+			return "localhost";
+		}
+
+		@Override
+		protected long getTestSuiteDuration(AtomicLong duration) {
+			return 69;
+		}
+
+		@Override
+		protected Integer getTestCaseDuration(ReportNode node) {
+			return 31;
+		}
+	}
+
 	
 }

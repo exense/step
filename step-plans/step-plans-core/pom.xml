@@ -61,7 +61,6 @@
 			<artifactId>commons-codec</artifactId>
 		</dependency>
 
-
 		<!-- Required in compile scope as some classes of main code are using junit -->
 		<!-- FIXME: IS THIS A GOOD IDEA ???? -->
 		<dependency>

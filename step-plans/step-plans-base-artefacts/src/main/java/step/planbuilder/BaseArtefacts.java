@@ -46,11 +46,16 @@ public class BaseArtefacts {
 	}
 	
 	public static ForBlock for_(int start, int end) {
+		return for_(start, end, 1);
+	}
+
+	public static ForBlock for_(int start, int end, int threads) {
 		ForBlock f = new ForBlock();
 		IntSequenceDataPool conf = new IntSequenceDataPool();
 		conf.setStart(new DynamicValue<Integer>(start));;
 		conf.setEnd(new DynamicValue<Integer>(end));;
 		f.setDataSource(conf);
+		f.setThreads(new DynamicValue<>(threads));
 		return f;
 	}
 	
@@ -82,6 +87,13 @@ public class BaseArtefacts {
 	public static CallPlan callPlan(String planId, String name) {
 		CallPlan callPlan = callPlan(planId);
 		callPlan.getAttributes().put(AbstractArtefact.NAME, name);
+		return callPlan;
+	}
+
+	public static CallPlan callPlan(String planId, String name, String inputExpression) {
+		CallPlan callPlan = callPlan(planId);
+		callPlan.getAttributes().put(AbstractArtefact.NAME, name);
+		callPlan.setInput(new DynamicValue<>(inputExpression, ""));
 		return callPlan;
 	}
 	
@@ -151,6 +163,12 @@ public class BaseArtefacts {
 		Check check = new Check();
 		check.setExpression(new DynamicValue<>(expression, ""));
 		return check;
+	}
+
+	public static IfBlock ifBlock(DynamicValue<Boolean> condition) {
+		IfBlock ifBlock = new IfBlock();
+		ifBlock.setCondition(condition);
+		return ifBlock;
 	}
 	
 	public static CheckArtefact runnable(Consumer<ExecutionContext> executionRunnable) {

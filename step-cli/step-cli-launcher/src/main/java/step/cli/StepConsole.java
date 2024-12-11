@@ -18,9 +18,9 @@
  ******************************************************************************/
 package step.cli;
 
+import ch.exense.commons.io.FileHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.zeroturnaround.zip.ZipUtil;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -30,6 +30,7 @@ import step.client.controller.ControllerServicesClient;
 import step.client.credentials.ControllerCredentials;
 import step.core.Constants;
 import step.core.Version;
+import step.cli.apignore.ApIgnoreFileFilter;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Callable;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 
@@ -51,6 +53,8 @@ import java.util.function.Supplier;
 public class StepConsole implements Callable<Integer> {
 
     public static final String REQUIRED_ERR_MESSAGE = "Illegal parameters. One of the following options is required: '%s'";
+
+    private static final String AP_IGNORE_NAME = ".apignore";
 
     private static final Logger log = LoggerFactory.getLogger(StepConsole.class);
 
@@ -181,12 +185,19 @@ public class StepConsole implements Callable<Integer> {
                         // check if the folder is AP (contains the yaml descriptor)
                         checkApFolder(file);
 
+                        Function<File, Boolean> fileFilter = null;
+                        File apIgnoreFile = new File(file, AP_IGNORE_NAME);
+                        if (apIgnoreFile.exists()) {
+                            ApIgnoreFileFilter gitIgnore = new ApIgnoreFileFilter(file.toPath(), apIgnoreFile.toPath());
+                            fileFilter = file1 -> !file1.getName().equals(AP_IGNORE_NAME) && gitIgnore.accept(file1.toPath());
+                        }
+
                         File tempDirectory = Files.createTempDirectory("stepcli").toFile();
                         tempDirectory.deleteOnExit();
                         File tempFile = new File(tempDirectory, file.getName() + ".stz");
                         tempFile.deleteOnExit();
                         log.info("Preparing AP archive: {}", tempFile.getAbsolutePath());
-                        ZipUtil.pack(file, tempFile);
+                        FileHelper.zip(file, tempFile, fileFilter);
                         return tempFile;
                     } else {
                         return file;
@@ -333,6 +344,12 @@ public class StepConsole implements Callable<Integer> {
             @Option(names = {"--numberOfThreads"}, description = "Max number of threads to be used for execution in case of wrapped test set")
             protected Integer numberOfThreads;
 
+            @Option(names = {"--reportType"}, description = "The type of execution report to be generated and stored locally. Supported report types: junit")
+            protected List<AbstractExecuteAutomationPackageTool.ReportType> reportType;
+
+            @Option(names = {"--reportDir"}, description = "The local folder to store generated execution reports", defaultValue = "reports")
+            protected File reportDir;
+
             @Option(descriptionKey = EP_DESCRIPTION_KEY, names = {"-ep", "--executionParameters"}, description = "Set execution parameters for local and remote executions ", split = "\\|", splitSynopsisLabel = "|")
             protected Map<String, String> executionParameters;
 
@@ -384,6 +401,11 @@ public class StepConsole implements Callable<Integer> {
                 if (file == null) {
                     throw new StepCliExecutionException("AP file is not defined");
                 }
+
+                if (reportType != null && !reportType.isEmpty()) {
+                    throw new StepCliExecutionException("The report generation is not supported for local execution");
+                }
+
                 executeLocally(file, includePlans, excludePlans, includeCategories, excludeCategories, executionParameters);
             }
 
@@ -399,35 +421,33 @@ public class StepConsole implements Callable<Integer> {
             protected void handleApRemoteExecuteCommand() {
                 checkStepUrlRequired();
                 checkEeOptionsConsistency(spec);
+
                 checkStepControllerVersion();
-                executeRemotely(stepUrl, getStepProjectName(), stepUser, getAuthToken(), executionParameters,
-                        executionTimeoutS, async, includePlans, excludePlans, includeCategories, excludeCategories, wrapIntoTestSet, numberOfThreads, getMavenArtifact(apFile)
+                executeRemotely(stepUrl,
+                        new AbstractExecuteAutomationPackageTool.Params()
+                                .setStepProjectName(getStepProjectName())
+                                .setUserId(stepUser)
+                                .setAuthToken(getAuthToken())
+                                .setExecutionParameters(executionParameters)
+                                .setExecutionResultTimeoutS(executionTimeoutS)
+                                .setWaitForExecution(!async)
+                                .setEnsureExecutionSuccess(true)
+                                .setIncludePlans(includePlans)
+                                .setExcludePlans(excludePlans)
+                                .setIncludeCategories(includeCategories)
+                                .setExcludeCategories(excludeCategories)
+                                .setWrapIntoTestSet(wrapIntoTestSet)
+                                .setNumberOfThreads(numberOfThreads)
+                                .setReportTypes(reportType)
+                                .setReportOutputDir(reportDir)
+                                .setMavenArtifactIdentifier(getMavenArtifact(apFile))
                 );
             }
 
             // for tests
             protected void executeRemotely(final String stepUrl,
-                                           final String projectName,
-                                           final String stepUserId,
-                                           final String authToken,
-                                           final Map<String, String> executionParameters,
-                                           final Integer executionTimeoutS,
-                                           final boolean async,
-                                           final String includePlans,
-                                           final String excludePlans,
-                                           final String includeCategories,
-                                           final String excludeCategories,
-                                           final boolean wrapIntoTestSet,
-                                           final Integer numberOfThreads,
-                                           final MavenArtifactIdentifier mavenArtifactIdentifier) {
-                new AbstractExecuteAutomationPackageTool(
-                        stepUrl, projectName, stepUserId, authToken,
-                        executionParameters, executionTimeoutS,
-                        !async, true, false,
-                        includePlans, excludePlans, includeCategories, excludeCategories,
-                        wrapIntoTestSet, numberOfThreads,
-                        mavenArtifactIdentifier
-                ) {
+                                           AbstractExecuteAutomationPackageTool.Params params) {
+                new AbstractExecuteAutomationPackageTool(stepUrl, params) {
                     @Override
                     protected File getAutomationPackageFile() throws StepCliExecutionException {
                         return prepareApFile(apFile);
