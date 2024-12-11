@@ -40,6 +40,7 @@ public class AgentRunner {
 		Runtime.getRuntime().addShutdownHook(new Thread(()->{
 			try {
 				agent.close();
+				cl.close();
 			} catch (Exception e) {
 				logger.error("Error while closing agent", e);
 			}

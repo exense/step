@@ -163,4 +163,9 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 		}
 		return mergedAgentProperties;
 	}
+
+	@Override
+	public void close() throws Exception {
+		applicationContextBuilder.close();
+	}
 }

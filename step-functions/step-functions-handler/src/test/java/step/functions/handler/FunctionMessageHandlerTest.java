@@ -27,6 +27,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -60,6 +61,11 @@ public class FunctionMessageHandlerTest {
 	public void before() {
 		tokenServices = getLocalAgentTokenServices();
 		messageHandlerPool = new MessageHandlerPool(tokenServices);
+	}
+
+	@After
+	public void after() throws Exception {
+		messageHandlerPool.close();
 	}
 
 	@Test
