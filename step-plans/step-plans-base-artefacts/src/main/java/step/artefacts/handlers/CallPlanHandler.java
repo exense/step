@@ -85,12 +85,15 @@ public class CallPlanHandler extends ArtefactHandler<CallPlan, ReportNode> {
 		String newPath = ArtefactPathHelper.getPathOfArtefact(currentArtefactPath, artefactNode);
 		List<ResolvedChildren> results = new ArrayList<>();
 		try {
+			dynamicBeanResolver.evaluate(artefactNode, getBindings());
 			Plan plan = selectPlan(artefactNode);
 			if (plan != null) {
 				results.add(new ResolvedChildren(ParentSource.SUB_PLAN, List.of(plan.getRoot()), newPath));
 			}
 		} catch (NoSuchElementException e) {
 			logger.warn("Unable to resolve plan", e);
+		} catch (RuntimeException e) {
+			//groovy selection attributes cannot be evaluated at this stage, ignoring
 		}
 		//For call plans with do not add the call plan children since they are not executed
 		return results;

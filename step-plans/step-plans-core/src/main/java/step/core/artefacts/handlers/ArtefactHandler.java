@@ -24,7 +24,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.ArtefactFilter;
+import step.core.artefacts.ChildrenBlock;
 import step.core.artefacts.WorkArtefactFactory;
+import step.core.artefacts.reports.ParentSource;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.artefacts.reports.ReportNodeStatus;
@@ -70,7 +72,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	private ReportNodeAccessor reportNodeAccessor;
 	private VariablesManager variablesManager;
 	private ReportNodeCache reportNodeCache;
-	private DynamicBeanResolver dynamicBeanResolver;
+	protected DynamicBeanResolver dynamicBeanResolver;
 	private ReportNodeTimeSeries reportNodeTimeSeries;
 	private boolean reportNodeTimeSeriesEnabled;
 	private ResolvedPlanBuilder resolvedPlanBuilder;
@@ -103,8 +105,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	}
 	
 	public void createReportSkeleton(ReportNode parentReportNode, ARTEFACT artefact, Map<String, Object> newVariables, ParentSource parentSource) {
-		REPORT_NODE reportNode = beforeDelegation(Phase.SKELETON_CREATION, parentReportNode, artefact, newVariables);
-		reportNode.setParentSource(parentSource);
+		REPORT_NODE reportNode = beforeDelegation(Phase.SKELETON_CREATION, parentReportNode, artefact, newVariables, parentSource);
 		if(parentReportNode != null && parentReportNode.isOrphan()) {
 			reportNode.setOrphan(true);
 		} else {
@@ -158,8 +159,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 			createReportSkeleton(parentReportNode, artefact, newVariables, parentSource);
 		}
 
-		REPORT_NODE reportNode = beforeDelegation(Phase.EXECUTION, parentReportNode, artefact, newVariables);
-		reportNode.setParentSource(parentSource);
+		REPORT_NODE reportNode = beforeDelegation(Phase.EXECUTION, parentReportNode, artefact, newVariables, parentSource);
 
 		long t1 = System.currentTimeMillis();
 		reportNode.setExecutionTime(t1);
@@ -300,7 +300,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	protected abstract void execute_(REPORT_NODE reportNode, ARTEFACT artefact) throws Exception;
 		
 	@SuppressWarnings("unchecked")
-	private REPORT_NODE beforeDelegation(Phase executionPhase, ReportNode parentReportNode, ARTEFACT artefact, Map<String, Object> newVariables) {
+	private REPORT_NODE beforeDelegation(Phase executionPhase, ReportNode parentReportNode, ARTEFACT artefact, Map<String, Object> newVariables, ParentSource parentSource) {
 		REPORT_NODE reportNode;
 		
 		if(executionPhase == Phase.EXECUTION && artefact.isCreateSkeleton()) {
@@ -313,12 +313,12 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 				// It is therefore depending on the Plan if all the nodes of the path are persisted.
 				// We use to throw an exception in that case but it seems to be a better option to just ignore this
 				// and create the node again instead of throwing an error
-				reportNode = createReportNode(parentReportNode, artefact);
+				reportNode = createReportNode(parentReportNode, artefact, parentSource);
 				//throw new RuntimeException("Unable to find report node during execution phase. "
 				//		+ "The report node should have been created during skeleton creation phase as the artefact has createSkeleton flag enabled. AbstractArtefact="+testArtefact.toString()+ ". ParentNode:"+ parentNode.toString());
 			}
 		} else {
-			reportNode = createReportNode(parentReportNode, artefact);			
+			reportNode = createReportNode(parentReportNode, artefact, parentSource);
 		}
 
 		String artefactHash = getArtefactHash(artefact);
@@ -327,7 +327,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		//the resolved plan nodes when required
 		// Resolved plans might be disabled
 		if (resolvedPlanBuilder != null) {
-			resolvedPlanBuilder.checkAndAddMissingResolvedPlanNode(artefactHash, artefact, parentReportNode, reportNodeCache);
+			resolvedPlanBuilder.checkAndAddMissingResolvedPlanNode(artefactHash, artefact, parentReportNode, reportNodeCache, reportNode.getParentSource());
 		}
 
 		context.setCurrentReportNode(reportNode);
@@ -479,7 +479,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		context.getExecutionCallbacks().onReportNodeRemoval(context, reportNode);
 	}
 
-	private REPORT_NODE createReportNode(ReportNode parentReportNode, ARTEFACT artefact) {
+	private REPORT_NODE createReportNode(ReportNode parentReportNode, ARTEFACT artefact, ParentSource parentSource) {
 		REPORT_NODE node = createReportNode_(parentReportNode, artefact);
 		node.setId(new ObjectId());
 		node.setName(getReportNodeName(artefact));
@@ -487,6 +487,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		node.setArtefactID(artefact.getId());
 		node.setExecutionID(context.getExecutionId().toString());
 		node.setStatus(ReportNodeStatus.NORUN);
+		node.setParentSource(parentSource);
 		return node;
 	}
 

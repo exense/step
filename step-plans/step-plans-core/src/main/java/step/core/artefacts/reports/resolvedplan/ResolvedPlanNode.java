@@ -15,7 +15,7 @@ public class ResolvedPlanNode extends AbstractIdentifiableObject {
 
     @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
     public ResolvedPlanNode(@JsonProperty("artefact") AbstractArtefact artefact, @JsonProperty("artefactHash") String artefactHash,
-                            @JsonProperty("parentId") String parentId, @JsonProperty("reportNodePhase") ParentSource parentSource) {
+                            @JsonProperty("parentId") String parentId, @JsonProperty("parentSource") ParentSource parentSource) {
         this.artefact = artefact;
         this.artefactHash = artefactHash;
         this.parentId = parentId;

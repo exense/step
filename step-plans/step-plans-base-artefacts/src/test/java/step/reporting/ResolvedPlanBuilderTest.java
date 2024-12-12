@@ -112,7 +112,7 @@ public class ResolvedPlanBuilderTest {
         Plan plan = PlanBuilder.create()
                 .startBlock(BaseArtefacts.for_(1, 1))
                 .startBlock(BaseArtefacts.callPlan(subPlan.getId().toString()))
-                .add(set("var", "'value'"))
+                .add(set("var", "'value'")) //child nodes of call plans are not executed and will not appear in the report
                 .endBlock()
                 .endBlock().build();
 
@@ -130,8 +130,7 @@ public class ResolvedPlanBuilderTest {
         assertEquals("ForBlock: 1x\n" +
                         " CallPlan: 1x\n" +
                         "  Sequence: 1x\n" +
-                        "   Echo: 1x\n" +
-                        "  Set: 0x\n",
+                        "   Echo: 1x\n",
                 node.toString());
 
     }

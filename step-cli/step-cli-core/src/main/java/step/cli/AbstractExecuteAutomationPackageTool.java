@@ -227,7 +227,7 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
                     logError(errorMessage, null);
                 } else {
                     //for now print aggregated report
-                    if (getPrintAggregatedReport()) {
+                    if (params.getPrintAggregatedReport()) {
                         AggregatedReportView aggregatedReportView = remoteExecutionManager.getAggregatedReportView(endedExecution.getId().toString());
                         logInfo("Aggregated report:\n" + aggregatedReportView.toString(), null);
                     }

@@ -56,7 +56,7 @@ public class ResolvedPlanBuilder {
         // Recursively call children artefacts
         resolvedChildrenBySource.forEach(resolvedChildren -> {
             //filter node that were already processed to avoid stack overflow for plans calling themselves
-            resolvedChildren.children.stream().filter(c -> (currentArtefactPath == null || !ArtefactPathHelper.getArtefactId(c).contains(currentArtefactPath)))
+            resolvedChildren.children.stream().filter(c -> (currentArtefactPath == null || !currentArtefactPath.contains(resolvedChildren.artefactPath)))
                     .forEach(child -> buildTreeRecursively(resolvedPlanNode.getId().toString(), child, resolvedChildren.artefactPath, plan, resolvedChildren.parentSource));
         });
         return resolvedPlanNode;
@@ -65,18 +65,20 @@ public class ResolvedPlanBuilder {
     /**
      * Check first if it is a plan artefact, or a work artefact which are implicitly created at runtime (iterations, implicit session...)
      * For work artifact, verify whether the artefact hash is known, otherwise create a new resolved plan node and attach it to the closest known parent
-     * @param artefactHash the hash of the current artefact to be checked and added if missing
-     * @param artefact the artefact referenced by the artefact hash
-     * @param parentReportNode  the parent report node (might not correspond to an actual plan node
-     * @param reportNodeCache the report node cache of the execution used to retrieve the closest parent plan's node
-     * @param <ARTEFACT> any class extending AbstractArtefact
+     *
+     * @param <ARTEFACT>       any class extending AbstractArtefact
+     * @param artefactHash     the hash of the current artefact to be checked and added if missing
+     * @param artefact         the artefact referenced by the artefact hash
+     * @param parentReportNode the parent report node (might not correspond to an actual plan node
+     * @param reportNodeCache  the report node cache of the execution used to retrieve the closest parent plan's node
+     * @param parentSource
      */
-    public <ARTEFACT extends AbstractArtefact> void checkAndAddMissingResolvedPlanNode(String artefactHash, ARTEFACT artefact, ReportNode parentReportNode, ReportNodeCache reportNodeCache) {
+    public <ARTEFACT extends AbstractArtefact> void checkAndAddMissingResolvedPlanNode(String artefactHash, ARTEFACT artefact, ReportNode parentReportNode, ReportNodeCache reportNodeCache, ParentSource parentSource) {
         if (!artefact.isWorkArtefact()) {
             resolvedPlanCache.computeIfAbsent(artefactHash, n -> {
                 AbstractArtefact artefactClone = dynamicBeanResolver.cloneDynamicValues(artefact);
                 String parentPlanNodeId = findClosestParentNodeId(parentReportNode, reportNodeCache);
-                ResolvedPlanNode resolvedPlanNode = new ResolvedPlanNode(artefactClone, artefactHash, parentPlanNodeId);
+                ResolvedPlanNode resolvedPlanNode = new ResolvedPlanNode(artefactClone, artefactHash, parentPlanNodeId, parentSource);
                 resolvedPlanNodeAccessor.save(resolvedPlanNode);
                 return resolvedPlanNode.getId().toHexString();
             });

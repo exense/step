@@ -142,6 +142,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		String newPath = ArtefactPathHelper.getPathOfArtefact(currentArtefactPath, artefactNode);
 		List<ResolvedChildren> results = new ArrayList<>();
 		try {
+			dynamicBeanResolver.evaluate(artefactNode, getBindings());
 			Function function = getFunction(artefactNode);
 			if(function instanceof CompositeFunction) {
 					AbstractArtefact root = ((CompositeFunction) function).getPlan().getRoot();
@@ -154,6 +155,8 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 			} else {
 				logger.warn(message);
 			}
+		} catch (RuntimeException e) {
+			//groovy selection attributes cannot be evaluated at this stage, ignoring
 		}
 		results.add(new ResolvedChildren(ParentSource.MAIN, artefactNode.getChildren(), newPath));
 		return results;
