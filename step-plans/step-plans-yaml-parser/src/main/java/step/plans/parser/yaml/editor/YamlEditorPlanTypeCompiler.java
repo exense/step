@@ -18,13 +18,6 @@
  ******************************************************************************/
 package step.plans.parser.yaml.editor;
 
-import com.fasterxml.jackson.core.*;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.*;
-import com.jayway.jsonpath.DocumentContext;
-import com.jayway.jsonpath.JsonPath;
-import com.jayway.jsonpath.spi.json.JacksonJsonNodeJsonProvider;
 import org.everit.json.schema.ValidationException;
 import step.core.artefacts.AbstractArtefact;
 import step.core.plans.Plan;
@@ -35,15 +28,9 @@ import step.plans.parser.yaml.YamlPlanReader;
 import step.plans.parser.yaml.schema.YamlPlanValidationException;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.Reader;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.AbstractMap;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+import java.util.stream.Collectors;
 
 class YamlEditorPlanTypeCompiler implements PlanCompiler<YamlEditorPlan> {
 
@@ -59,20 +46,44 @@ class YamlEditorPlanTypeCompiler implements PlanCompiler<YamlEditorPlan> {
     public YamlEditorPlan compile(YamlEditorPlan plan) throws PlanCompilerException {
         String source = plan.getSource();
         Plan parsedPlan;
+        if (source == null || source.isEmpty()) {
+            return plan;
+        }
 
-        // TODO: source == null or empty?
         try (InputStream is = new ByteArrayInputStream(source.getBytes())) {
             parsedPlan = reader.readYamlPlan(is);
         } catch (YamlPlanValidationException e) {
             PlanCompilerException planCompilerException = new PlanCompilerException();
+
+            // if the reason is validation exception (json schema) we try to resolve the source line
             if (e.getCause() != null && e.getCause() instanceof ValidationException) {
                 ValidationException detailedValidationException = (ValidationException) e.getCause();
-                for (ValidationException causingException : detailedValidationException.getCausingExceptions()) {
+                List<ValidationException> causingExceptions = detailedValidationException.getCausingExceptions();
+                if (causingExceptions != null && !causingExceptions.isEmpty()) {
+                    // sometimes the validator provides the causing exceptions, in this case we can collect several error messages with source lines
+                    List<LineNumberByJsonPointerResolver.JsonPointerSourceLine> allPointerSourceLines =
+                            new LineNumberByJsonPointerResolver().findLineNumbers(
+                                    causingExceptions.stream().map(ValidationException::getPointerToViolation).filter(p -> p != null && p.isEmpty()).collect(Collectors.toList()), source
+                            );
+
+                    for (ValidationException causingException : causingExceptions) {
+                        YamlEditorPlanCompilationError compilationError = new YamlEditorPlanCompilationError();
+                        compilationError.setMessage(causingException.getErrorMessage());
+                        String pointerToViolation = causingException.getPointerToViolation();
+                        if (pointerToViolation != null && !pointerToViolation.isEmpty()) {
+                            LineNumberByJsonPointerResolver.JsonPointerSourceLine foundLine = allPointerSourceLines.stream().filter(ap -> ap.getJsonPointer().equals(pointerToViolation)).findFirst().orElse(null);
+                            if (foundLine != null) {
+                                compilationError.setLine(foundLine.getSourceLine());
+                            }
+                        }
+                        planCompilerException.addError(compilationError);
+                    }
+                } else {
                     YamlEditorPlanCompilationError compilationError = new YamlEditorPlanCompilationError();
-                    compilationError.setMessage(causingException.getErrorMessage());
+                    compilationError.setMessage(detailedValidationException.getMessage());
                     String pointerToViolation = detailedValidationException.getPointerToViolation();
                     if (pointerToViolation != null && !pointerToViolation.isEmpty()) {
-                        compilationError.setLine(findLineNumber(JsonPointer.valueOf(pointerToViolation), source));
+                        compilationError.setLine(new LineNumberByJsonPointerResolver().findLineNumbers(List.of(pointerToViolation), source).get(0).getSourceLine());
                     }
                     planCompilerException.addError(compilationError);
                 }
@@ -106,33 +117,6 @@ class YamlEditorPlanTypeCompiler implements PlanCompiler<YamlEditorPlan> {
         return plan;
     }
 
-    private int findLineNumber(JsonPointer pointer, String source) {
-        // TODO: resolve source line by pointer
-
-        /*
-       CustomParserFactory customParserFactory = new CustomParserFactory();
-        ObjectMapper om = new ObjectMapper(customParserFactory);
-        CustomJsonNodeFactory factory = new CustomJsonNodeFactory(om.getDeserializationConfig().getNodeFactory(), customParserFactory);
-        om.setConfig(om.getDeserializationConfig().with(factory));
-        Configuration config = Configuration.builder()
-                .mappingProvider(new JacksonMappingProvider(om))
-                .jsonProvider(new JacksonJsonNodeJsonProvider(om))
-                .options(Option.ALWAYS_RETURN_LIST)
-                .build();
-
-        File filePath = ...;
-        JsonPath jsonPath = ...;
-        DocumentContext parsedDocument = JsonPath.parse(filePath, config);
-        ArrayNode findings = parsedDocument.read(jsonPath);
-        for (JsonNode finding : findings) {
-            JsonLocation location = factory.getLocationForNode(finding);
-            int lineNum = location.getLineNr();
-            //Do something with lineNum
-        }
-        */
-        return 1;
-    }
-
     static class YamlEditorPlanCompilationError extends PlanCompilationError {
 
         private int line;
@@ -148,166 +132,11 @@ class YamlEditorPlanTypeCompiler implements PlanCompiler<YamlEditorPlan> {
         @Override
         public String toString() {
             return "YamlEditorPlanCompilationError{" +
-                    "message=" + getMessage() +
+                    "message=" + getMessage() + "; " +
                     "line=" + line +
                     '}';
         }
     }
 
-    private class CustomParserFactory extends JsonFactory {
 
-        private static final long serialVersionUID = -7523974986510864179L;
-        private JsonParser parser;
-
-        public JsonParser getParser() {
-            return this.parser;
-        }
-
-        @Override
-        public JsonParser createParser(Reader r) throws IOException, JsonParseException {
-            parser = super.createParser(r);
-            return parser;
-        }
-
-        @Override
-        public JsonParser createParser(String content) throws IOException, JsonParseException {
-            parser = super.createParser(content);
-            return parser;
-        }
-    }
-
-    private class CustomJsonNodeFactory extends JsonNodeFactory {
-
-        private static final long serialVersionUID = 8807395553661461181L;
-
-        private final JsonNodeFactory delegate;
-        private final CustomParserFactory parserFactory;
-
-        /*
-         * "Why isn't this a map?" you might be wondering. Well, when the nodes are created, they're all
-         * empty and a node's hashCode is based on its children. So if you use a map and put the node
-         * in, then the node's hashCode is based on no children, then when you lookup your node, it is
-         * *with* children, so the hashcodes are different. Instead of all of this, you have to iterate
-         * through a listing and find their matches once the objects have been populated, which is only
-         * after the document has been completely parsed
-         */
-        private List<Map.Entry<JsonNode, JsonLocation>> locationMapping;
-
-        public CustomJsonNodeFactory(JsonNodeFactory nodeFactory,
-                                     CustomParserFactory parserFactory) {
-            delegate = nodeFactory;
-            this.parserFactory = parserFactory;
-            locationMapping = new ArrayList<>();
-        }
-
-        /**
-         * Given a node, find its location, or null if it wasn't found
-         *
-         * @param jsonNode the node to search for
-         * @return the location of the node or null if not found
-         */
-        public JsonLocation getLocationForNode(JsonNode jsonNode) {
-            return this.locationMapping.stream().filter(e -> e.getKey().equals(jsonNode))
-                    .map(e -> e.getValue()).findAny().orElse(null);
-        }
-
-        /**
-         * Simple interceptor to mark the node in the lookup list and return it back
-         *
-         * @param <T>  the type of the JsonNode
-         * @param node the node itself
-         * @return the node itself, having marked its location
-         */
-        private <T extends JsonNode> T markNode(T node) {
-            JsonLocation loc = parserFactory.getParser().getCurrentLocation();
-            locationMapping.add(new AbstractMap.SimpleEntry<>(node, loc));
-            return node;
-        }
-
-        @Override
-        public BooleanNode booleanNode(boolean v) {
-            return markNode(delegate.booleanNode(v));
-        }
-
-        @Override
-        public NullNode nullNode() {
-            return markNode(delegate.nullNode());
-        }
-
-        @Override
-        public NumericNode numberNode(byte v) {
-            return markNode(delegate.numberNode(v));
-        }
-
-        @Override
-        public ValueNode numberNode(Byte value) {
-            return markNode(delegate.numberNode(value));
-        }
-
-        @Override
-        public NumericNode numberNode(short v) {
-            return markNode(delegate.numberNode(v));
-        }
-
-        @Override
-        public ValueNode numberNode(Short value) {
-            return markNode(delegate.numberNode(value));
-        }
-
-        @Override
-        public NumericNode numberNode(int v) {
-            return markNode(delegate.numberNode(v));
-        }
-
-        @Override
-        public ValueNode numberNode(Integer value) {
-            return markNode(delegate.numberNode(value));
-        }
-
-        @Override
-        public NumericNode numberNode(long v) {
-            return markNode(delegate.numberNode(v));
-        }
-
-        @Override
-        public ValueNode numberNode(Long value) {
-            return markNode(delegate.numberNode(value));
-        }
-
-        @Override
-        public ValueNode numberNode(BigInteger v) {
-            return markNode(delegate.numberNode(v));
-        }
-
-        @Override
-        public NumericNode numberNode(float v) {
-            return markNode(delegate.numberNode(v));
-        }
-
-        @Override
-        public ValueNode numberNode(Float value) {
-            return markNode(delegate.numberNode(value));
-        }
-
-        @Override
-        public NumericNode numberNode(double v) {
-            return markNode(delegate.numberNode(v));
-        }
-
-        @Override
-        public ValueNode numberNode(Double value) {
-            return markNode(delegate.numberNode(value));
-        }
-
-        @Override
-        public ValueNode numberNode(BigDecimal v) {
-            return markNode(delegate.numberNode(v));
-        }
-
-        @Override
-        public TextNode textNode(String text) {
-            return markNode(delegate.textNode(text));
-        }
-
-    }
 }
