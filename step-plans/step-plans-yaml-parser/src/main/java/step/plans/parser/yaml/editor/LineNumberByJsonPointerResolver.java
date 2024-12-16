@@ -68,14 +68,18 @@ public class LineNumberByJsonPointerResolver {
             // reference to the whole json
             if (jsonPointer.equals("#")) {
                 result.add(new JsonPointerSourceLine(jsonPointer, 1));
+                continue;
             }
 
             ArrayNode findings = parsedDocument.read(JsonPath.compile(jsonPointerToJsonPath(jsonPointer)));
-            for (JsonNode finding : findings) {
-                JsonLocation location = factory.getLocationForNode(finding);
-                result.add(new JsonPointerSourceLine(jsonPointer, location.getLineNr()));
+            if (findings.isEmpty()) {
+                result.add(new JsonPointerSourceLine(jsonPointer, 1));
+            } else {
+                for (JsonNode finding : findings) {
+                    JsonLocation location = factory.getLocationForNode(finding);
+                    result.add(new JsonPointerSourceLine(jsonPointer, location.getLineNr()));
+                }
             }
-            result.add(new JsonPointerSourceLine(jsonPointer, 1));
         }
         return result;
     }
@@ -111,7 +115,7 @@ public class LineNumberByJsonPointerResolver {
         }
     }
 
-    public String jsonPointerToJsonPath(String jsonPointer){
+    public String jsonPointerToJsonPath(String jsonPointer) {
         if (jsonPointer.isEmpty()) {
             return "$";
         }
@@ -136,7 +140,7 @@ public class LineNumberByJsonPointerResolver {
     }
 
     private List<String> parse(String jsonPointer) {
-        if(jsonPointer.startsWith("#")){
+        if (jsonPointer.startsWith("#")) {
             jsonPointer = jsonPointer.substring(1);
         }
         if (jsonPointer.charAt(0) != '/') {
