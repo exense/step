@@ -320,6 +320,18 @@ public class PerformanceAssertHandlerTest extends AbstractKeyword {
 				"  PerformanceAssert:FAILED:Average of myMeasure1 expected to be lower than 500 but was 1000\n", result);
 	}
 
+	@Test
+	public void testWrongAssertPlacement() throws IOException {
+		PerformanceAssert assert1 = new PerformanceAssert(filterMyMeasure1, Aggregator.AVG, Comparator.LOWER_THAN, 500l);
+		Plan testKeywordWithMeasurements = PlanBuilder.create().startBlock(BaseArtefacts.sequence())
+				.add(FunctionArtefacts.keyword("TestKeywordWithMeasurements")).add(assert1).endBlock().build();
+		PlanRunnerResult execute = engine.execute(testKeywordWithMeasurements);
+		assertEquals("Sequence:TECHNICAL_ERROR:\n" +
+						" TestKeywordWithMeasurements:PASSED:\n" +
+						" PerformanceAssert:TECHNICAL_ERROR:PerformanceAssert can only be defined in an 'after' or 'after thread' block\n"
+				, execute.getTreeAsString());
+	}
+
 	protected PlanRunnerResult execute(PerformanceAssert... asserts) {
 		Plan plan = plan(asserts);
 		PlanRunnerResult result = engine.execute(plan);

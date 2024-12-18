@@ -440,6 +440,7 @@ public class StepConsole implements Callable<Integer> {
                                 .setNumberOfThreads(numberOfThreads)
                                 .setReportTypes(reportType)
                                 .setReportOutputDir(reportDir)
+                                .setPrintAggregatedReport(printAggregatedReport)
                                 .setMavenArtifactIdentifier(getMavenArtifact(apFile))
                 );
             }

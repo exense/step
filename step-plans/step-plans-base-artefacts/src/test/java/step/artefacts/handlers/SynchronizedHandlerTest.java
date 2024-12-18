@@ -85,6 +85,14 @@ public class SynchronizedHandlerTest {
 										.endBlock()
 									.build();
 
+		executeAndAssertAllPassed(plan);
+		// Unnamed lock are equivalent to a lock using the artefactID as lock name and is therefore local to a specific artefact
+		// we're therefore expecting a parallelism of 2 in this test case
+		Assert.assertEquals(2, maxParallelism.get());
+		Assert.assertEquals(100, iterations.get());
+	}
+
+	private void executeAndAssertAllPassed(Plan plan) {
 		PlanRunnerResult results = engine.execute(plan);
 		String errorSummary = results.getErrorSummary();
 		if (errorSummary != null && !errorSummary.isBlank()) {
@@ -93,12 +101,8 @@ public class SynchronizedHandlerTest {
 		results.visitReportNodes(node->{
 			Assert.assertEquals(ReportNodeStatus.PASSED, node.getStatus());
 		});
-		// Unnamed lock are equivalent to a lock using the artefactID as lock name and is therefore local to a specific artefact
-		// we're therefore expecting a parallelism of 2 in this test case
-		Assert.assertEquals(2, maxParallelism.get());
-		Assert.assertEquals(100, iterations.get());
 	}
-	
+
 	@Test
 	public void testNamedLocalLock() throws IOException {		
 		AtomicInteger maxParallelism = new AtomicInteger(0);
@@ -124,14 +128,7 @@ public class SynchronizedHandlerTest {
 										.endBlock()
 									.build();
 
-		PlanRunnerResult results = engine.execute(plan);
-		String errorSummary = results.getErrorSummary();
-		if (errorSummary != null && !errorSummary.isBlank()) {
-			logger.error(errorSummary);
-		}
-		results.visitReportNodes(node->{
-			Assert.assertEquals(ReportNodeStatus.PASSED, node.getStatus());
-		});
+		executeAndAssertAllPassed(plan);
 		Assert.assertEquals(2, maxParallelism.get());
 		Assert.assertEquals(150, iterations.get());
 	}
@@ -215,14 +212,7 @@ public class SynchronizedHandlerTest {
 										.endBlock()
 									.build();
 
-		PlanRunnerResult results = engine.execute(plan);
-		String errorSummary = results.getErrorSummary();
-		if (errorSummary != null && !errorSummary.isBlank()) {
-			logger.error(errorSummary);
-		}
-		results.visitReportNodes(node->{
-			Assert.assertEquals(ReportNodeStatus.PASSED, node.getStatus());
-		});
+		executeAndAssertAllPassed(plan);
 		Assert.assertEquals(2, maxParallelism.get());
 		Assert.assertEquals(100, iterations.get());
 	}

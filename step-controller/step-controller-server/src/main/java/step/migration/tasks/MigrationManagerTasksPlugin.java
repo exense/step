@@ -49,7 +49,7 @@ public class MigrationManagerTasksPlugin extends AbstractControllerPlugin {
 		migrationManager.register(FixPostgreSQLIndexes.class);
 		migrationManager.register(MigrateSleepArtefactInPlans.class);
 		migrationManager.register(ScreenTemplateMigrationTask25.class);
-		migrationManager.register(MigrateBeforeAfterArtefactInPlans.class);
+		migrationManager.register(MigrateBeforeAfterAndPropertiesArtefactInPlans.class);
 		migrationManager.register(MigrateAgentProvisioningConfiguration.class);
 		migrationManager.register(MigrateParametersToDynamicValues.class);
 	}

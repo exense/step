@@ -61,6 +61,7 @@ public class PerformanceAssertHandler extends ArtefactHandler<PerformanceAssert,
 			}
 		} else {
 			reportNode.setStatus(ReportNodeStatus.TECHNICAL_ERROR);
+			reportNode.addError("PerformanceAssert can only be defined in an 'after' or 'after thread' block");
 		}
 	}
 

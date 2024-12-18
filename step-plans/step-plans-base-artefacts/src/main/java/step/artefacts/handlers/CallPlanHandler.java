@@ -20,6 +20,7 @@ package step.artefacts.handlers;
 
 import jakarta.json.JsonObject;
 import step.artefacts.CallPlan;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.handlers.ArtefactPathHelper;
 import step.core.artefacts.reports.ParentSource;
@@ -94,6 +95,9 @@ public class CallPlanHandler extends ArtefactHandler<CallPlan, ReportNode> {
 			logger.warn("Unable to resolve plan", e);
 		} catch (RuntimeException e) {
 			//groovy selection attributes cannot be evaluated at this stage, ignoring
+			if (logger.isTraceEnabled()) {
+				logger.trace("Unable to resolve the plan referenced by this callPlan '{}' artefact at this stage.", artefactNode.getAttribute(AbstractOrganizableObject.NAME), e);
+			}
 		}
 		//For call plans with do not add the call plan children since they are not executed
 		return results;

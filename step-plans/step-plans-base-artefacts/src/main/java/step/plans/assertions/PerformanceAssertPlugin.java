@@ -5,6 +5,8 @@ import java.util.List;
 import jakarta.json.JsonObject;
 
 import step.artefacts.PerformanceAssert;
+import step.artefacts.ThreadGroup;
+import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.ChildrenBlock;
 import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ExecutionContext;
@@ -22,10 +24,16 @@ public class PerformanceAssertPlugin extends AbstractExecutionEnginePlugin {
 
 	@Override
 	public void beforeReportNodeExecution(ExecutionContext context, ReportNode node) {
-		//PerformanceAssert must either be defined in an after block. If any performance assert is defined we
+		//PerformanceAssert must be defined either in an after or after thread block. If any performance assert is defined we
 		//create and add the performance assert session for the corresponding report node.
-		ChildrenBlock after = node.getResolvedArtefact().getAfter();
-		if (after != null && after.getSteps().stream().anyMatch(s -> s instanceof PerformanceAssert)) {
+		AbstractArtefact resolvedArtefact = node.getResolvedArtefact();
+		ChildrenBlock after = resolvedArtefact.getAfter();
+		ChildrenBlock afterThread = null;
+		if (resolvedArtefact instanceof ThreadGroup) {
+			afterThread = ((ThreadGroup) resolvedArtefact).getAfterThread();
+		}
+		if ((after != null && after.getSteps().stream().anyMatch(s -> s instanceof PerformanceAssert)) ||
+				(afterThread != null && afterThread.getSteps().stream().anyMatch(s -> s instanceof PerformanceAssert))) {
 			PerformanceAssertSession performanceAssertSession = new PerformanceAssertSession();
 			context.getVariablesManager().putVariable(node, PerformanceAssertPlugin.$PERFORMANCE_ASSERT_SESSION, performanceAssertSession);
 		}

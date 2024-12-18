@@ -355,7 +355,7 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
         private List<ReportType> reportTypes;
         private File reportOutputDir;
 
-        private Boolean printAggregatedReport;
+        private boolean printAggregatedReport = true;
 
         public String getStepProjectName() {
             return stepProjectName;
@@ -421,7 +421,7 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
             return reportOutputDir;
         }
 
-        public Boolean getPrintAggregatedReport() {
+        public boolean getPrintAggregatedReport() {
             return printAggregatedReport;
         }
 
@@ -505,7 +505,7 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
             return this;
         }
 
-        public Params setPrintAggregatedReport(Boolean printAggregatedReport) {
+        public Params setPrintAggregatedReport(boolean printAggregatedReport) {
             this.printAggregatedReport = printAggregatedReport;
             return this;
         }

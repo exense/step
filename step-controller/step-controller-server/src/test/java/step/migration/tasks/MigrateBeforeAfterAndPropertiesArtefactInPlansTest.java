@@ -14,7 +14,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 
-public class MigrateBeforeAfterArtefactInPlansTest {
+public class MigrateBeforeAfterAndPropertiesArtefactInPlansTest {
 
     @Test
     public void testMigrateBeforeAfterArtefactInPlan() throws IOException {
@@ -25,7 +25,7 @@ public class MigrateBeforeAfterArtefactInPlansTest {
             InMemoryCollectionFactory collectionFactory = new InMemoryCollectionFactory(new Properties());
             Collection<step.core.collections.Document> plans = collectionFactory.getCollection("plans", step.core.collections.Document.class);
             plans.save(oldPlan);
-            MigrateBeforeAfterArtefactInPlans migrateBeforeAfterArtefactInPlans = new MigrateBeforeAfterArtefactInPlans(collectionFactory, null);
+            MigrateBeforeAfterAndPropertiesArtefactInPlans migrateBeforeAfterArtefactInPlans = new MigrateBeforeAfterAndPropertiesArtefactInPlans(collectionFactory, null);
             migrateBeforeAfterArtefactInPlans.runUpgradeScript();
             Document newPlan = plans.find(Filters.empty(), null, null, null, 0).findFirst().orElseThrow(() -> new RuntimeException("No plans found in collection"));
             String actual = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(newPlan);

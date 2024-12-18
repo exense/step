@@ -22,9 +22,7 @@ import step.core.Version;
 import step.core.collections.*;
 import step.migration.MigrationContext;
 import step.migration.MigrationTask;
-import step.plans.parser.yaml.migrations.AfterBeforeYamlMigrationTask;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -37,7 +35,7 @@ import static step.plans.parser.yaml.migrations.AfterBeforeYamlMigrationTask.*;
  * used directly as children "property" and need to be moved over to the new class property.
  * The implementation is similar to the YAML migration for the "DB" syntax in AfterBeforeYamlMigrationTask
  */
-public class MigrateBeforeAfterArtefactInPlans extends MigrationTask {
+public class MigrateBeforeAfterAndPropertiesArtefactInPlans extends MigrationTask {
 
 	public static final String ARTEFACT_BEFORE_SEQUENCE = "BeforeSequence";
 	public static final String ARTEFACT_AFTER_SEQUENCE = "AfterSequence";
@@ -46,8 +44,8 @@ public class MigrateBeforeAfterArtefactInPlans extends MigrationTask {
 	public static final String ARTEFACT_PERFORMANCE_ASSERT = "PerformanceAssert";
 	private final Collection<Document> planCollection;
 
-	public MigrateBeforeAfterArtefactInPlans(CollectionFactory collectionFactory, MigrationContext migrationContext) {
-		super(new Version(3,26,0), collectionFactory, migrationContext);
+	public MigrateBeforeAfterAndPropertiesArtefactInPlans(CollectionFactory collectionFactory, MigrationContext migrationContext) {
+		super(new Version(3,27,0), collectionFactory, migrationContext);
 
 		planCollection = collectionFactory.getCollection("plans", Document.class);
 	}
@@ -61,7 +59,7 @@ public class MigrateBeforeAfterArtefactInPlans extends MigrationTask {
 		planCollection.find(Filters.empty(), null, null, null, 0).forEach(p -> {
 			try {
 				DocumentObject root = p.getObject("root");
-				migrateBeforeAfterSequence(root);
+				migrateAllRecursively(root);
 				planCollection.save(p);
 				successCount.incrementAndGet();
 			} catch(Exception e) {
@@ -84,7 +82,7 @@ public class MigrateBeforeAfterArtefactInPlans extends MigrationTask {
 	 * The implementation is very similar to the one for the DB objects, but the payload is too different to share the same code
 	 * @param artifact: the deserilaization of the JSON artefact as DocumentObject to be modified
 	 */
-	private void migrateBeforeAfterSequence(DocumentObject artifact) {
+	private void migrateAllRecursively(DocumentObject artifact) {
 		List<DocumentObject> children = artifact.getArray(ARTEFACT_CHILDREN);
 		if (children != null && !children.isEmpty()) {
 			//Attach the children of the beforeSequence to the parent before property
@@ -98,7 +96,7 @@ public class MigrateBeforeAfterArtefactInPlans extends MigrationTask {
 			artifact.put(ARTEFACT_CHILDREN, children);
 			//Process children recursively
 			for (DocumentObject child : children) {
-				migrateBeforeAfterSequence(child);
+				migrateAllRecursively(child);
 			}
 		}
 	}

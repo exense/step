@@ -23,5 +23,5 @@ import step.core.Version;
 public class YamlPlanVersions {
 
     public static final Version ACTUAL_VERSION = new Version("1.1.0");
-    public static final String ACTUAL_JSON_SCHEMA_PATH = "step/plans/parser/yaml/step-yaml-plan-schema-os-1.1.json";
+    public static final String ACTUAL_JSON_SCHEMA_PATH = "step/plans/parser/yaml/step-yaml-plan-schema-os-" + ACTUAL_VERSION + ".json";
 }

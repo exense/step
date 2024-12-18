@@ -112,24 +112,24 @@ public class PlanBuilder {
 	public PlanBuilder withBefore(AbstractArtefact... before) {
 		ChildrenBlock childrenBlock = new ChildrenBlock();
 		childrenBlock.setSteps(List.of(before));
-		applyToLastNode((a) -> a.setBefore(childrenBlock));
+		applyToParentNode((a) -> a.setBefore(childrenBlock));
 		return this;
 	}
 
 	public PlanBuilder withAfter(AbstractArtefact... after) {
 		ChildrenBlock childrenBlock = new ChildrenBlock();
 		childrenBlock.setSteps(List.of(after));
-		applyToLastNode((a) -> a.setAfter(childrenBlock));
+		applyToParentNode((a) -> a.setAfter(childrenBlock));
 		return this;
 	}
 
 	public PlanBuilder withSkip() {
-		return applyToLastNode(a -> a.setSkipNode(new DynamicValue<>(true)));
+		return applyToParentNode(a -> a.setSkipNode(new DynamicValue<>(true)));
 	}
 
-	private PlanBuilder applyToLastNode(Consumer<AbstractArtefact> c) {
-		AbstractArtefact lastNode = stack.peek();
-		c.accept(lastNode);
+	private PlanBuilder applyToParentNode(Consumer<AbstractArtefact> c) {
+		AbstractArtefact parentNode = stack.peek();
+		c.accept(parentNode);
 		return this;
 	}
 }

@@ -157,6 +157,9 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 			}
 		} catch (RuntimeException e) {
 			//groovy selection attributes cannot be evaluated at this stage, ignoring
+			if (logger.isTraceEnabled()) {
+				logger.trace("Unable to resolve the function referenced by this callFunction '{}' artefact at this stage.", artefactNode.getAttribute(AbstractOrganizableObject.NAME), e);
+			}
 		}
 		results.add(new ResolvedChildren(ParentSource.MAIN, artefactNode.getChildren(), newPath));
 		return results;
