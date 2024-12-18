@@ -319,6 +319,10 @@ public class StepConsole implements Callable<Integer> {
                     description = "Whether to wait for execution completeness")
             protected boolean async;
 
+            @Option(names = {"--printAggregatedReport"}, defaultValue = "true", showDefaultValue = CommandLine.Help.Visibility.ALWAYS,
+                    description = "Whether to print the aggregated report tree")
+            protected boolean printAggregatedReport;
+
             @Option(names = {"--includePlans"}, description = "The comma separated list of plans to be executed")
             protected String includePlans;
 
@@ -335,8 +339,8 @@ public class StepConsole implements Callable<Integer> {
             protected boolean local;
 
             @Option(names = {"--wrapIntoTestSet"}, defaultValue = "false", description = "To wrap all executed plans into the single test set", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
-            protected boolean wrapIntoTestSet;        
-            
+            protected boolean wrapIntoTestSet;
+
             @Option(names = {"--numberOfThreads"}, description = "Max number of threads to be used for execution in case of wrapped test set")
             protected Integer numberOfThreads;
 
@@ -436,6 +440,7 @@ public class StepConsole implements Callable<Integer> {
                                 .setNumberOfThreads(numberOfThreads)
                                 .setReportTypes(reportType)
                                 .setReportOutputDir(reportDir)
+                                .setPrintAggregatedReport(printAggregatedReport)
                                 .setMavenArtifactIdentifier(getMavenArtifact(apFile))
                 );
             }

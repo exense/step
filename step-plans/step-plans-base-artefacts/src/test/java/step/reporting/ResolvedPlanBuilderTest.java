@@ -112,7 +112,7 @@ public class ResolvedPlanBuilderTest {
         Plan plan = PlanBuilder.create()
                 .startBlock(BaseArtefacts.for_(1, 1))
                 .startBlock(BaseArtefacts.callPlan(subPlan.getId().toString()))
-                .add(set("var", "'value'"))
+                .add(set("var", "'value'")) //child nodes of call plans are not executed and will not appear in the report
                 .endBlock()
                 .endBlock().build();
 
@@ -130,8 +130,7 @@ public class ResolvedPlanBuilderTest {
         assertEquals("ForBlock: 1x\n" +
                         " CallPlan: 1x\n" +
                         "  Sequence: 1x\n" +
-                        "   Echo: 1x\n" +
-                        "  Set: 0x\n",
+                        "   Echo: 1x\n",
                 node.toString());
 
     }
@@ -281,5 +280,159 @@ public class ResolvedPlanBuilderTest {
                         "            IfBlock: 1x\n",
                 node.toString());
     }
+
+    @Test
+    public void rootSequenceWithBeforeAfter() throws IOException, InterruptedException {
+        Plan plan = PlanBuilder.create()
+                .startBlock(BaseArtefacts.sequence()).withBefore(set("myVar", "'test'")).withAfter(echo("'in after'"))
+                .add(echo("'myVar value is ' + myVar"))
+                .endBlock().build();
+
+        PlanRunnerResult result = engine.execute(plan);
+        result.printTree();
+        logger.info("----------------------");
+        logger.info("Aggregated report tree");
+        logger.info("----------------------");
+
+        AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(engine.getExecutionEngineContext(), result.getExecutionId());
+        AggregatedReportView node = aggregatedReportViewBuilder.buildAggregatedReportView();
+        logger.info(node.toString());
+        assertEquals("Sequence: 1x\n" +
+                        " [BEFORE]\n" +
+                        "  Set: 1x\n" +
+                        " Echo: 1x\n" +
+                        " [AFTER]\n" +
+                        "  Echo: 1x\n",
+                node.toString());
+    }
+
+    @Test
+    public void subSequenceWithBeforeAfter() throws IOException, InterruptedException {
+        Plan plan = PlanBuilder.create()
+                .startBlock(BaseArtefacts.sequence())
+                .startBlock(BaseArtefacts.sequence()).withBefore(set("myVar", "'test'")).withAfter(echo("'in after'"))
+                .add(echo("'myVar value is ' + myVar"))
+                .endBlock()
+                .endBlock().build();
+
+        PlanRunnerResult result = engine.execute(plan);
+        result.printTree();
+        logger.info("----------------------");
+        logger.info("Aggregated report tree");
+        logger.info("----------------------");
+
+        AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(engine.getExecutionEngineContext(), result.getExecutionId());
+        AggregatedReportView node = aggregatedReportViewBuilder.buildAggregatedReportView();
+        logger.info(node.toString());
+        assertEquals("Sequence: 1x\n" +
+                        " Sequence: 1x\n" +
+                        "  [BEFORE]\n" +
+                        "   Set: 1x\n" +
+                        "  Echo: 1x\n" +
+                        "  [AFTER]\n" +
+                        "   Echo: 1x\n",
+                node.toString());
+    }
+
+    @Test
+    public void planWithCallPlanAndBeforeAfter() throws IOException, InterruptedException {
+        Plan subSubPlan = PlanBuilder.create()
+                .startBlock(BaseArtefacts.sequence())
+                .add(echo("'Echo ' + myVar"))
+                .endBlock().build();
+
+        Plan subPlan = PlanBuilder.create()
+                .startBlock(BaseArtefacts.sequence())
+                .add(echo("'Echo 2'"))
+                .add(echo("'Echo 3'"))
+                .startBlock(BaseArtefacts.for_(1, 2))
+                    .withBefore(echo("'In before'"), set("myVar", "'test'"))
+                    .withAfter(echo("'in after'"))
+                .add(BaseArtefacts.callPlan(subSubPlan.getId().toString()))
+                .endBlock()
+                .endBlock().build();
+
+        Plan plan = PlanBuilder.create()
+                .startBlock(BaseArtefacts.for_(1, 10))
+                .add(BaseArtefacts.callPlan(subPlan.getId().toString()))
+                .add(BaseArtefacts.callPlan(subPlan.getId().toString()))
+                .endBlock().build();
+
+        engine.getExecutionEngineContext().getPlanAccessor().save(List.of(subPlan, subSubPlan));
+
+        PlanRunnerResult result = engine.execute(plan);
+        result.printTree();
+        logger.info("----------------------");
+        logger.info("Aggregated report tree");
+        logger.info("----------------------");
+        logger.info("----------------------");
+        logger.info("Aggregated report tree");
+        logger.info("----------------------");
+
+        AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(engine.getExecutionEngineContext(), result.getExecutionId());
+        AggregatedReportView node = aggregatedReportViewBuilder.buildAggregatedReportView();
+        logger.info(node.toString());
+        assertEquals("ForBlock: 1x\n" +
+                        " CallPlan: 10x\n" +
+                        "  Sequence: 10x\n" +
+                        "   Echo: 10x\n" +
+                        "   Echo: 10x\n" +
+                        "   ForBlock: 10x\n" +
+                        "    [BEFORE]\n" +
+                        "     Echo: 10x\n" +
+                        "     Set: 10x\n" +
+                        "    CallPlan: 20x\n" +
+                        "     Sequence: 20x\n" +
+                        "      Echo: 20x\n" +
+                        "    [AFTER]\n" +
+                        "     Echo: 10x\n" +
+                        " CallPlan: 10x\n" +
+                        "  Sequence: 10x\n" +
+                        "   Echo: 10x\n" +
+                        "   Echo: 10x\n" +
+                        "   ForBlock: 10x\n" +
+                        "    [BEFORE]\n" +
+                        "     Echo: 10x\n" +
+                        "     Set: 10x\n" +
+                        "    CallPlan: 20x\n" +
+                        "     Sequence: 20x\n" +
+                        "      Echo: 20x\n" +
+                        "    [AFTER]\n" +
+                        "     Echo: 10x\n",
+                node.toString());
+
+    }
+
+    @Test
+    public void threadGroup() throws IOException, InterruptedException {
+        Plan plan = PlanBuilder.create()
+                .startBlock(BaseArtefacts.threadGroup(2,5, childrenBlock(echo("userId")), childrenBlock(echo("userId")))).withBefore(set("myVar", "'test'")).withAfter(echo("'in after'"))
+                .add(echo("'myVar value is ' + myVar"))
+                .endBlock().build();
+
+        PlanRunnerResult result = engine.execute(plan);
+        result.printTree();
+        logger.info("----------------------");
+        logger.info("Aggregated report tree");
+        logger.info("----------------------");
+
+        AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(engine.getExecutionEngineContext(), result.getExecutionId());
+        AggregatedReportView node = aggregatedReportViewBuilder.buildAggregatedReportView();
+        logger.info(node.toString());
+
+        logger.info(node.toString());
+        assertEquals("ThreadGroup: 1x\n" +
+                        " [BEFORE]\n" +
+                        "  Set: 1x\n" +
+                        " [BEFORE_THREAD]\n" +
+                        "  Echo: 2x\n" +
+                        " Echo: 10x\n" +
+                        " [AFTER_THREAD]\n" +
+                        "  Echo: 2x\n" +
+                        " [AFTER]\n" +
+                        "  Echo: 1x\n",
+                node.toString());
+    }
+
 
 }

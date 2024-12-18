@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plans.parser.yaml.model;
+package step.core.yaml.model;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -24,13 +24,15 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
+import step.core.artefacts.ChildrenBlock;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.AbstractYamlModel;
+import step.core.yaml.YamlArtefactsLookuper;
 import step.core.yaml.YamlFieldCustomCopy;
 import step.core.yaml.schema.YamlJsonSchemaHelper;
 import step.jsonschema.JsonSchema;
 import step.jsonschema.JsonSchemaDefaultValueProvider;
-import step.plans.parser.yaml.YamlArtefactsLookuper;
+
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -65,6 +67,11 @@ public abstract class AbstractYamlArtefact<T extends AbstractArtefact> extends A
     @YamlFieldCustomCopy
     protected List<NamedYamlArtefact> children = new ArrayList<>();
 
+    @YamlFieldCustomCopy
+    protected YamlChildrenBlock before;
+    @YamlFieldCustomCopy
+    protected YamlChildrenBlock after;
+
     public AbstractYamlArtefact() {
     }
 
@@ -93,6 +100,14 @@ public abstract class AbstractYamlArtefact<T extends AbstractArtefact> extends A
             for (NamedYamlArtefact child : this.getChildren()) {
                 res.getChildren().add(child.getYamlArtefact().toArtefact());
             }
+        }
+        YamlChildrenBlock beforeYaml = this.getBefore();
+        if (beforeYaml != null) {
+            res.setBefore(beforeYaml.toArtefact());
+        }
+        YamlChildrenBlock afterYaml = this.getAfter();
+        if (afterYaml != null) {
+            res.setAfter(afterYaml.toArtefact());
         }
     }
 
@@ -131,6 +146,16 @@ public abstract class AbstractYamlArtefact<T extends AbstractArtefact> extends A
 
         for (AbstractArtefact child : artefact.getChildren()) {
             this.getChildren().add(new NamedYamlArtefact(toYamlArtefact(child, yamlObjectMapper)));
+        }
+
+        ChildrenBlock beforeBlock = artefact.getBefore();
+        if (beforeBlock != null && !beforeBlock.getSteps().isEmpty()) {
+            this.setBefore(YamlChildrenBlock.toYamlChildrenBlock(beforeBlock, yamlObjectMapper));
+        }
+
+        ChildrenBlock afterBlock = artefact.getAfter();
+        if (afterBlock != null && !afterBlock.getSteps().isEmpty()) {
+            this.setAfter(YamlChildrenBlock.toYamlChildrenBlock(afterBlock, yamlObjectMapper));
         }
     }
 
@@ -227,6 +252,22 @@ public abstract class AbstractYamlArtefact<T extends AbstractArtefact> extends A
 
     public void setChildren(List<NamedYamlArtefact> children) {
         this.children = children;
+    }
+
+    public YamlChildrenBlock getBefore() {
+        return before;
+    }
+
+    public void setBefore(YamlChildrenBlock before) {
+        this.before = before;
+    }
+
+    public YamlChildrenBlock getAfter() {
+        return after;
+    }
+
+    public void setAfter(YamlChildrenBlock after) {
+        this.after = after;
     }
 
     public static class DefaultYamlArtefactNameProvider implements JsonSchemaDefaultValueProvider {

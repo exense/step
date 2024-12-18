@@ -57,6 +57,8 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
     private Boolean waitForExecution;
     @Parameter(property = "step-execute-auto-packages.ensure-exec-success", defaultValue = "true")
     private Boolean ensureExecutionSuccess;
+    @Parameter(property = "step-execute-auto-packages.print-aggregated-report", defaultValue = "true")
+    private boolean printAggregatedReport = true;
 
     @Parameter(property = "step-execute-auto-packages.include-plans")
     private String includePlans;
@@ -108,6 +110,7 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
                     .setExecutionResultTimeoutS(getExecutionResultTimeoutS())
                     .setWaitForExecution(getWaitForExecution())
                     .setEnsureExecutionSuccess(getEnsureExecutionSuccess())
+                    .setPrintAggregatedReport(getPrintAggregatedReport())
                     .setIncludePlans(getIncludePlans())
                     .setExcludePlans(getExcludePlans())
                     .setIncludeCategories(getIncludeCategories())
@@ -241,6 +244,14 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
 
     public void setEnsureExecutionSuccess(Boolean ensureExecutionSuccess) {
         this.ensureExecutionSuccess = ensureExecutionSuccess;
+    }
+
+    public boolean getPrintAggregatedReport() {
+        return printAggregatedReport;
+    }
+
+    public void setPrintAggregatedReport(boolean printAggregatedReport) {
+        this.printAggregatedReport = printAggregatedReport;
     }
 
     public String getIncludePlans() {

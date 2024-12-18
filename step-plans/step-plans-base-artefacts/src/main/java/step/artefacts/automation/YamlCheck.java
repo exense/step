@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 import step.artefacts.Check;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.YamlFieldCustomCopy;
-import step.plans.parser.yaml.model.AbstractYamlArtefact;
+import step.core.yaml.model.AbstractYamlArtefact;
 
 public class YamlCheck extends AbstractYamlArtefact<Check> {
 

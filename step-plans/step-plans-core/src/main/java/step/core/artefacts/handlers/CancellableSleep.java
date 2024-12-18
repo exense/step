@@ -1,4 +1,4 @@
-package step.artefacts.handlers;
+package step.core.artefacts.handlers;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

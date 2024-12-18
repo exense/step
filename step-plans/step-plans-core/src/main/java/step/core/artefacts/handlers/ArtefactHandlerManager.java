@@ -21,7 +21,7 @@ package step.core.artefacts.handlers;
 import java.util.Map;
 
 import step.core.artefacts.AbstractArtefact;
-import step.core.artefacts.Artefact;
+import step.core.artefacts.reports.ParentSource;
 import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ExecutionContext;
 
@@ -34,27 +34,22 @@ public class ArtefactHandlerManager {
 		this.context = context;
 	}
 
-	public void createReportSkeleton(AbstractArtefact artefact, ReportNode parentNode) {
-		createReportSkeleton(artefact, parentNode, null);
+	public void createReportSkeleton(AbstractArtefact artefact, ReportNode parentNode, ParentSource parentSource) {
+		createReportSkeleton(artefact, parentNode, null, parentSource);
 	}
 	
-	public void createReportSkeleton(AbstractArtefact artefact, ReportNode parentNode, Map<String, Object> newVariables) {
+	public void createReportSkeleton(AbstractArtefact artefact, ReportNode parentNode, Map<String, Object> newVariables, ParentSource parentSource) {
 		ArtefactHandler<AbstractArtefact, ReportNode> artefactHandler = getArtefactHandler(artefact);
-		artefactHandler.createReportSkeleton(parentNode, artefact, newVariables);
+		artefactHandler.createReportSkeleton(parentNode, artefact, newVariables, parentSource);
 	}
-	
-	public void initPropertyArtefact(AbstractArtefact artefact, ReportNode parentNode) {
+
+	public ReportNode execute(AbstractArtefact artefact, ReportNode parentNode, ParentSource parentSource) {
+		return execute(artefact, parentNode, null, parentSource);
+	}
+
+	public ReportNode execute(AbstractArtefact artefact, ReportNode parentNode, Map<String, Object> newVariables, ParentSource parentSource) {
 		ArtefactHandler<AbstractArtefact, ReportNode> artefactHandler = getArtefactHandler(artefact);
-		artefactHandler.initProperties(parentNode, artefact);
-	}
-	
-	public ReportNode execute(AbstractArtefact artefact, ReportNode parentNode) {
-		return execute(artefact, parentNode, null);
-	}
-	
-	public ReportNode execute(AbstractArtefact artefact, ReportNode parentNode, Map<String, Object> newVariables) {
-		ArtefactHandler<AbstractArtefact, ReportNode> artefactHandler = getArtefactHandler(artefact);
-		return artefactHandler.execute(parentNode, artefact, newVariables);
+		return artefactHandler.execute(parentNode, artefact, newVariables, parentSource);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -69,5 +64,6 @@ public class ArtefactHandlerManager {
 		artefactHandler.init(context);
 		return artefactHandler;
 	}
-	
+
+
 }

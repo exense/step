@@ -56,6 +56,7 @@ public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 		Assert.assertEquals((Integer) 3, mojo.params.getExecutionResultTimeoutS());
 		Assert.assertEquals(true, mojo.params.getWaitForExecution());
 		Assert.assertEquals(ensureExecutionSuccess, mojo.params.getEnsureExecutionSuccess());
+        Assert.assertEquals(true, mojo.params.getPrintAggregatedReport());
 		Assert.assertEquals(createTestCustomParams(), mojo.params.getExecutionParameters());
 		Assert.assertEquals(TEST_INCLUDE_PLANS, mojo.params.getIncludePlans());
 		Assert.assertNull(TEST_INCLUDE_PLANS, mojo.params.getExcludePlans());
@@ -78,6 +79,7 @@ public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 		mojo.setExecutionParameters(params);
 		mojo.setWaitForExecution(true);
 		mojo.setEnsureExecutionSuccess(ensureExecutionSuccess);
+		mojo.setPrintAggregatedReport(true);
 
 		mojo.setIncludePlans(TEST_INCLUDE_PLANS);
 		mojo.setIncludeCategories(TEST_INCLUDE_CATEGORIES);

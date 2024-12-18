@@ -28,6 +28,7 @@ import step.client.AbstractRemoteClient;
 import step.client.credentials.ControllerCredentials;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
+import step.core.artefacts.reports.aggregated.AggregatedReportView;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
@@ -256,6 +257,15 @@ public class RemoteExecutionManager extends AbstractRemoteClient {
 			res.add(executionObj);
 		}
 		return res;
+	}
+
+	/**
+	 * @param executionId the ID of the execution
+	 * @return the {@link Execution}
+	 */
+	public AggregatedReportView getAggregatedReportView(String executionId) {
+		Builder b = requestBuilder("/rest/executions/"+executionId + "/report/aggregated");
+		return executeRequest(()->b.get(AggregatedReportView.class));
 	}
 
 	/**

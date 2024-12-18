@@ -32,6 +32,7 @@ import step.core.Controller;
 import step.core.GlobalContext;
 import step.core.Version;
 import step.core.artefacts.AbstractArtefact;
+import step.core.artefacts.reports.ParentSource;
 import step.core.artefacts.reports.ReportNode;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;

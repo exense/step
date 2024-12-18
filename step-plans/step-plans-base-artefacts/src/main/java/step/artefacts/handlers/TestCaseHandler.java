@@ -22,13 +22,13 @@ import step.artefacts.TestCase;
 import step.artefacts.reports.TestCaseReportNode;
 import step.core.artefacts.handlers.AtomicReportNodeStatusComposer;
 import step.core.artefacts.handlers.ReportNodeAttributesManager;
+import step.core.artefacts.handlers.SequentialArtefactScheduler;
 import step.core.artefacts.reports.ReportNode;
 
 public class TestCaseHandler extends AbstractSessionArtefactHandler<TestCase, ReportNode> {
 	
 	@Override
 	public void createReportSkeleton_(ReportNode node, TestCase testArtefact) {
-		addTestCaseNameToCustomAttributes(testArtefact);
 		createReportNodeSkeletonInSession(testArtefact, node, (sessionArtefact, sessionReportNode)->{
 			SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
 			scheduler.createReportSkeleton_(sessionReportNode, sessionArtefact);
@@ -52,6 +52,7 @@ public class TestCaseHandler extends AbstractSessionArtefactHandler<TestCase, Re
 
 	@Override
 	public ReportNode createReportNode_(ReportNode parentNode, TestCase testArtefact) {
+		addTestCaseNameToCustomAttributes(testArtefact);
 		return new TestCaseReportNode();
 	}
 

@@ -3,6 +3,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import step.artefacts.BaseArtefactPlugin;
+import step.artefacts.CallFunction;
 import step.artefacts.Return;
 import step.artefacts.handlers.functions.TokenForecastingExecutionPlugin;
 import step.core.accessors.AbstractOrganizableObject;
@@ -109,6 +110,64 @@ public class ResolvedPlanBuilderForCompositeKeywordTest {
                 "     Echo: 10x\n" +
                 "     Return: 10x\n" +
                 "    Check: 10x\n",
+                node.toString());
+    }
+
+    @Test
+    public void planWithCallKeywordDynamic() throws IOException, InterruptedException {
+
+        Return aReturn = new Return();
+        aReturn.setOutput(new DynamicValue<>("{\"myOutput\":\"some output values\"}"));
+        Plan compositePlan = PlanBuilder.create()
+                .startBlock(BaseArtefacts.sequence())
+                .add(BaseArtefacts.echo("'Echo 4'"))
+                .add(aReturn)
+                .endBlock().build();
+
+        CompositeFunction compositeFunction = new CompositeFunction();
+        compositeFunction.addAttribute(AbstractOrganizableObject.NAME, MY_COMPOSITE + "1");
+        compositeFunction.setPlan(compositePlan);
+
+        CompositeFunction compositeFunction2 = new CompositeFunction();
+        compositeFunction2.addAttribute(AbstractOrganizableObject.NAME, MY_COMPOSITE  + "2");
+        compositeFunction2.setPlan(compositePlan);
+
+        CallFunction callFunction = new CallFunction();
+        callFunction.setFunction(new DynamicValue<>("\"{\\\"name\\\":\\\"" + MY_COMPOSITE + "\" + gcounter + \"\\\"}\"", ""));
+
+
+        Plan plan = PlanBuilder.create()
+                .startBlock(BaseArtefacts.for_(1, 2))
+                .startBlock(callFunction)
+                .add(BaseArtefacts.check("output.myOutput == 'some output values'"))
+                .endBlock()
+                .endBlock().build();
+
+        ExecutionEngineContext executionEngineContext = engine.getExecutionEngineContext();
+        executionEngineContext.get(FunctionAccessor.class).save(compositeFunction);
+        executionEngineContext.get(FunctionAccessor.class).save(compositeFunction2);
+
+        PlanRunnerResult result = engine.execute(plan);
+
+        // Sleep a few ms to ensure that the report node timeseries is flushed
+        Thread.sleep(500);
+
+        AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(engine.getExecutionEngineContext(), result.getExecutionId());
+        AggregatedReportView node = aggregatedReportViewBuilder.buildAggregatedReportView();
+        result.printTree();
+        System.out.println("----------------------");
+        System.out.println("Aggregated report tree");
+        System.out.println("----------------------");
+        System.out.println(node.toString());
+
+        //TODO ordering is false
+        Assert.assertEquals("ForBlock: 1x\n" +
+                        " CallFunction: 2x\n" +
+                        "  Check: 2x\n" +
+                        "  Sequence: 2x\n" +
+                        "   Echo: 2x\n" +
+                        "   Return: 2x\n",
+
                 node.toString());
     }
 }

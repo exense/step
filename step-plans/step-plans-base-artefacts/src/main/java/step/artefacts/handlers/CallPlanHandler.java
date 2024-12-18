@@ -20,21 +20,23 @@ package step.artefacts.handlers;
 
 import jakarta.json.JsonObject;
 import step.artefacts.CallPlan;
-import step.core.artefacts.AbstractArtefact;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.handlers.ArtefactHandler;
+import step.core.artefacts.handlers.ArtefactPathHelper;
+import step.core.artefacts.reports.ParentSource;
 import step.core.artefacts.reports.ReportNode;
+import step.core.artefacts.reports.resolvedplan.ResolvedChildren;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionContextBindings;
 import step.core.json.JsonProviderCache;
-import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.Plan;
-import step.core.plans.PlanAccessor;
-import step.functions.accessor.FunctionAccessor;
 
 import java.io.StringReader;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.NoSuchElementException;
 
 public class CallPlanHandler extends ArtefactHandler<CallPlan, ReportNode> {
 
@@ -80,9 +82,25 @@ public class CallPlanHandler extends ArtefactHandler<CallPlan, ReportNode> {
 	}
 
 	@Override
-	public AbstractArtefact resolveArtefactCall(CallPlan artefact) {
-		Plan plan = selectPlan(artefact);
-		return plan != null ? plan.getRoot() : null;
+	protected List<ResolvedChildren> resolveChildrenArtefactBySource_(CallPlan artefactNode, String currentArtefactPath) {
+		String newPath = ArtefactPathHelper.getPathOfArtefact(currentArtefactPath, artefactNode);
+		List<ResolvedChildren> results = new ArrayList<>();
+		try {
+			dynamicBeanResolver.evaluate(artefactNode, getBindings());
+			Plan plan = selectPlan(artefactNode);
+			if (plan != null) {
+				results.add(new ResolvedChildren(ParentSource.SUB_PLAN, List.of(plan.getRoot()), newPath));
+			}
+		} catch (NoSuchElementException e) {
+			logger.warn("Unable to resolve plan", e);
+		} catch (RuntimeException e) {
+			//groovy selection attributes cannot be evaluated at this stage, ignoring
+			if (logger.isTraceEnabled()) {
+				logger.trace("Unable to resolve the plan referenced by this callPlan '{}' artefact at this stage.", artefactNode.getAttribute(AbstractOrganizableObject.NAME), e);
+			}
+		}
+		//For call plans with do not add the call plan children since they are not executed
+		return results;
 	}
 
 	protected Plan selectPlan(CallPlan testArtefact) {

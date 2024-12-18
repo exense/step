@@ -1,5 +1,5 @@
 ---
-version: "1.0.0"
+version: "1.1.0"
 name: "MainPlan"
 root:
   testCase:
@@ -26,26 +26,6 @@ root:
         skipNode: false
         remote: true
         keyword: "GroovyKeyword"
-    - afterSequence:
-        continueParentNodeExecutionOnError: false
-        instrumentNode: false
-        skipNode: false
-        continueOnError: false
-    - afterThread:
-        continueParentNodeExecutionOnError: false
-        instrumentNode: false
-        skipNode: false
-        continueOnError: false
-    - beforeSequence:
-        continueParentNodeExecutionOnError: false
-        instrumentNode: false
-        skipNode: false
-        continueOnError: false
-    - beforeThread:
-        continueParentNodeExecutionOnError: false
-        instrumentNode: false
-        skipNode: false
-        continueOnError: false
     - callKeyword:
         nodeName: "CallKeyword"
         continueParentNodeExecutionOnError: false
@@ -132,14 +112,6 @@ root:
         skipNode: false
         condition:
           expression: "true"
-    - performanceAssert:
-        continueParentNodeExecutionOnError: false
-        instrumentNode: false
-        skipNode: false
-        expectedValue: 3000
-        comparator: "LOWER_THAN"
-        aggregator: "AVG"
-        measurementName: "GroovyKeyword"
     - placeholder:
         continueParentNodeExecutionOnError: false
         instrumentNode: false
@@ -236,3 +208,14 @@ root:
           expression: ""
         condition:
           expression: "false"
+    after:
+      continueOnError: false
+      steps:
+        - performanceAssert:
+            continueParentNodeExecutionOnError: false
+            instrumentNode: false
+            skipNode: false
+            expectedValue: 3000
+            comparator: "LOWER_THAN"
+            aggregator: "AVG"
+            measurementName: "GroovyKeyword"

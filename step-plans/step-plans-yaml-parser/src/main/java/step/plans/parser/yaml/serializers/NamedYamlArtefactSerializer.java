@@ -25,9 +25,9 @@ import step.core.yaml.YamlModelUtils;
 import step.core.yaml.serializers.NamedEntityYamlSerializer;
 import step.core.yaml.serializers.StepYamlSerializer;
 import step.core.yaml.serializers.StepYamlSerializerAddOn;
-import step.plans.parser.yaml.model.AbstractYamlArtefact;
-import step.plans.parser.yaml.model.NamedYamlArtefact;
-import step.plans.parser.yaml.model.SimpleYamlArtefact;
+import step.core.yaml.model.AbstractYamlArtefact;
+import step.core.yaml.model.NamedYamlArtefact;
+import step.core.yaml.model.SimpleYamlArtefact;
 
 import java.io.IOException;
 

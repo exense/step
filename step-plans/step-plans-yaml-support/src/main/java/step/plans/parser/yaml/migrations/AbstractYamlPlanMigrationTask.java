@@ -24,15 +24,16 @@ import step.core.collections.CollectionFactory;
 import step.core.collections.Document;
 import step.migration.MigrationContext;
 import step.migration.MigrationTask;
-import step.plans.parser.yaml.YamlPlanReader;
 
 public abstract class AbstractYamlPlanMigrationTask extends MigrationTask {
 
     protected final Collection<Document> yamlPlansCollection;
 
+    public static final String YAML_PLANS_COLLECTION_NAME = "yamlPlans";
+
     public AbstractYamlPlanMigrationTask(Version asOfVersion, CollectionFactory collectionFactory, MigrationContext migrationContext) {
         super(asOfVersion, collectionFactory, migrationContext);
-        yamlPlansCollection = collectionFactory.getCollection(YamlPlanReader.YAML_PLANS_COLLECTION_NAME, Document.class);
+        yamlPlansCollection = collectionFactory.getCollection(YAML_PLANS_COLLECTION_NAME, Document.class);
     }
 
     @Override

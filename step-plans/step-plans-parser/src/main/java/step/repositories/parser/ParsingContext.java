@@ -74,8 +74,9 @@ public class ParsingContext {
 		if(!stack.isEmpty()) {
 			StackEntry entry = stack.peek();
 			AbstractArtefact parent = entry.artefact;
-			if(parent!=null) {
-				parent.addChild(artefact);
+			List<AbstractArtefact> steps = entry.steps;
+			if(parent!=null && steps != null) {
+				steps.add(artefact);
 			}				
 		}
 	}
@@ -84,9 +85,13 @@ public class ParsingContext {
 		addArtefactToCurrentParent(artefact);
 		pushArtefact(artefact);
 	}
+
+	public void addArtefactToCurrentParentSourceAndPush(AbstractArtefact artefact, List<AbstractArtefact> steps) {
+		stack.push(new StackEntry(currentStep, artefact, steps));
+	}
 	
 	public void pushArtefact(AbstractArtefact artefact) {
-		stack.push(new StackEntry(currentStep, artefact));
+		stack.push(new StackEntry(currentStep, artefact, artefact.getChildren()));
 	}
 	
 	protected StackEntry pop() {
@@ -110,6 +115,11 @@ public class ParsingContext {
 		StackEntry entry = stack.peek();
 		return entry.artefact;
 	}
+
+	public List<AbstractArtefact> peekCurrentSteps() {
+		StackEntry entry = stack.peek();
+		return entry.steps;
+	}
 	
 	public void parseStep(AbstractStep step) {
 		stepParser.parseStep(this, step);
@@ -132,7 +142,7 @@ public class ParsingContext {
 	}
 
 	protected List<ParsingError> parsingErrors = new ArrayList<>();
-	
+
 	public static class ParsingError {
 		
 		AbstractStep step;
@@ -171,10 +181,13 @@ public class ParsingContext {
 		
 		AbstractArtefact artefact;
 
-		public StackEntry(AbstractStep step, AbstractArtefact artefact) {
+		List<AbstractArtefact> steps;
+
+		public StackEntry(AbstractStep step, AbstractArtefact artefact, List<AbstractArtefact> steps) {
 			super();
 			this.step = step;
 			this.artefact = artefact;
+			this.steps = steps;
 		}
 	}
 }

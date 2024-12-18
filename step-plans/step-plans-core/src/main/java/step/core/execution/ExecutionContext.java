@@ -149,9 +149,9 @@ public class ExecutionContext extends AbstractExecutionEngineContext  {
 
 	private static final ThreadLocal<Boolean> interruptByPass = new ThreadLocal<>();
 
-	public static void byPassInterruptInCurrentThread(boolean bypass) {
+	public void byPassInterruptInCurrentThread(boolean bypass) {
 		if (bypass) {
-			interruptByPass.set(bypass);
+			interruptByPass.set(true);
 		} else {
 			interruptByPass.remove();
 		}

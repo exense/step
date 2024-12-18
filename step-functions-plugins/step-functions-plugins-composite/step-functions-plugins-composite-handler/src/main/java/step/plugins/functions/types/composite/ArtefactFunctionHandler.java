@@ -22,6 +22,7 @@ import javax.json.JsonObject;
 
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandler;
+import step.core.artefacts.reports.ParentSource;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
@@ -97,7 +98,7 @@ public class ArtefactFunctionHandler extends JsonBasedFunctionHandler {
 			variablesManager.putVariable(parentNode, VariableType.IMMUTABLE, OUTPUT, output);
 			
 			try {
-				ReportNode node = executionContext.getArtefactHandlerManager().execute(artefact, parentNode);
+				ReportNode node = executionContext.getArtefactHandlerManager().execute(artefact, parentNode, ParentSource.MAIN);
 				if(node.getStatus()== ReportNodeStatus.TECHNICAL_ERROR || node.getStatus()== ReportNodeStatus.FAILED) {
 					Error error = new Error();
 					error.setCode(0);

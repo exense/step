@@ -33,8 +33,12 @@ import step.common.managedoperations.OperationManager;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandler;
+import step.core.artefacts.handlers.ArtefactPathHelper;
+import step.core.artefacts.handlers.SequentialArtefactScheduler;
+import step.core.artefacts.reports.ParentSource;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
+import step.core.artefacts.reports.resolvedplan.ResolvedChildren;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.execution.ExecutionContext;
@@ -67,9 +71,7 @@ import step.grid.tokenpool.Interest;
 import step.plugins.functions.types.CompositeFunction;
 
 import java.io.StringReader;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 import static step.artefacts.handlers.functions.TokenForecastingExecutionPlugin.getTokenForecastingContext;
 import static step.core.agents.provisioning.AgentPoolConstants.TOKEN_ATTRIBUTE_PARTITION;
@@ -136,13 +138,31 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	}
 
 	@Override
-	public AbstractArtefact resolveArtefactCall(CallFunction artefact) {
-		Function function = getFunction(artefact);
-		if(function instanceof CompositeFunction) {
-			return ((CompositeFunction) function).getPlan().getRoot();
-		} else {
-			return null;
+	protected List<ResolvedChildren> resolveChildrenArtefactBySource_(CallFunction artefactNode, String currentArtefactPath) {
+		String newPath = ArtefactPathHelper.getPathOfArtefact(currentArtefactPath, artefactNode);
+		List<ResolvedChildren> results = new ArrayList<>();
+		try {
+			dynamicBeanResolver.evaluate(artefactNode, getBindings());
+			Function function = getFunction(artefactNode);
+			if(function instanceof CompositeFunction) {
+					AbstractArtefact root = ((CompositeFunction) function).getPlan().getRoot();
+					results.add(new ResolvedChildren(ParentSource.SUB_PLAN, List.of(root), newPath));
+			}
+		} catch (NoSuchElementException e) {
+			String message = "Unable to resolve called composite keyword in plan";
+			if (logger.isDebugEnabled()) {
+				logger.debug(message, e);
+			} else {
+				logger.warn(message);
+			}
+		} catch (RuntimeException e) {
+			//groovy selection attributes cannot be evaluated at this stage, ignoring
+			if (logger.isTraceEnabled()) {
+				logger.trace("Unable to resolve the function referenced by this callFunction '{}' artefact at this stage.", artefactNode.getAttribute(AbstractOrganizableObject.NAME), e);
+			}
 		}
+		results.add(new ResolvedChildren(ParentSource.MAIN, artefactNode.getChildren(), newPath));
+		return results;
 	}
 
 	@Override

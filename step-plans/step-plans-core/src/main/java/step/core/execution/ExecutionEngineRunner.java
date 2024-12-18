@@ -25,6 +25,7 @@ import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandlerManager;
 import step.core.artefacts.reports.ReportNode;
+import step.core.artefacts.reports.ParentSource;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.artefacts.reports.aggregated.ReportNodeTimeSeries;
 import step.core.artefacts.reports.resolvedplan.ResolvedPlanBuilder;
@@ -233,13 +234,13 @@ public class ExecutionEngineRunner {
 	private ReportNode execute(Plan plan, ReportNode rootReportNode) throws ProvisioningException, DeprovisioningException {
 		ArtefactHandlerManager artefactHandlerManager = executionContext.getArtefactHandlerManager();
 		AbstractArtefact root = plan.getRoot();
-		artefactHandlerManager.createReportSkeleton(root, rootReportNode);
+		artefactHandlerManager.createReportSkeleton(root, rootReportNode, ParentSource.MAIN);
 
 		// Provision the resources required for the execution before starting the execution phase
 		provisionRequiredResources();
 		try {
 			updateStatus(ExecutionStatus.RUNNING);
-			return artefactHandlerManager.execute(root, rootReportNode);
+			return artefactHandlerManager.execute(root, rootReportNode, ParentSource.MAIN);
 		} finally {
 			try {
 				//Flush report node TS
