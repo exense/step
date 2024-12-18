@@ -42,46 +42,85 @@ import java.util.stream.Collectors;
 
 public class LineNumberByJsonPointerResolver {
 
-    private static final Pattern specialChars = Pattern.compile("[\\s~!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?]+");
+    private static final Pattern SPECIAL_CHARS = Pattern.compile("[\\s~!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?]+");
+
+    private final CustomJsonNodeFactory jsonNodeFactory;
+    private final Configuration jsonConfig;
 
     public LineNumberByJsonPointerResolver() {
-    }
-
-    public List<JsonPointerSourceLine> findLineNumbers(List<String> jsonPointers, String source) {
-        List<JsonPointerSourceLine> result = new ArrayList<>();
-
-        // TODO: maybe optimize and avoid creation of new ObjectMapper and factory for each source
         CustomParserFactory customParserFactory = new CustomParserFactory();
         ObjectMapper om = new ObjectMapper(customParserFactory);
 
-        CustomJsonNodeFactory factory = new CustomJsonNodeFactory(om.getDeserializationConfig().getNodeFactory(), customParserFactory);
-        om.setConfig(om.getDeserializationConfig().with(factory));
-        Configuration config = Configuration.builder()
+        jsonNodeFactory = new CustomJsonNodeFactory(om.getDeserializationConfig().getNodeFactory(), customParserFactory);
+        om.setConfig(om.getDeserializationConfig().with(jsonNodeFactory));
+        jsonConfig = Configuration.builder()
                 .mappingProvider(new JacksonMappingProvider(om))
                 .jsonProvider(new JacksonJsonNodeJsonProvider(om))
                 .options(Option.ALWAYS_RETURN_LIST)
                 .build();
+    }
 
-        DocumentContext parsedDocument = JsonPath.parse(source, config);
+    /**
+     * Maps the jsonPointers to their line numbers in original source file
+     *
+     * @param jsonPointers the json pointers to be resolved to their line numbers in source
+     * @param source       the source (yaml)
+     * @return the mapping between json pointer and source line for each element from jsonPointers
+     */
+    public List<JsonPointerSourceLine> findLineNumbers(List<String> jsonPointers, String source) {
+        return findLineNumbersInternal(jsonPointers, source, false).getSourceLines();
+    }
 
-        for (String jsonPointer : jsonPointers) {
-            // reference to the whole json
-            if (jsonPointer.equals("#")) {
-                result.add(new JsonPointerSourceLine(jsonPointer, 1));
-                continue;
-            }
+    /**
+     * Returns the list of parsed json nodes from source (used for test purposes)
+     */
+    protected synchronized LineNumberResolveInternalResult findLineNumbersInternal(List<String> jsonPointers, String source, boolean returnJsonNodeAllocation) {
+        try {
+            jsonNodeFactory.getLocationMapping().clear();
 
-            ArrayNode findings = parsedDocument.read(JsonPath.compile(jsonPointerToJsonPath(jsonPointer)));
-            if (findings.isEmpty()) {
-                result.add(new JsonPointerSourceLine(jsonPointer, 1));
-            } else {
-                for (JsonNode finding : findings) {
-                    JsonLocation location = factory.getLocationForNode(finding);
-                    result.add(new JsonPointerSourceLine(jsonPointer, location.getLineNr()));
+            List<JsonPointerSourceLine> result = new ArrayList<>();
+            DocumentContext parsedDocument = JsonPath.parse(source, jsonConfig);
+
+            for (String jsonPointer : jsonPointers) {
+                // reference to the whole json
+                if (jsonPointer.equals("#")) {
+                    result.add(new JsonPointerSourceLine(jsonPointer, 1));
+                    continue;
+                }
+
+                ArrayNode findings = parsedDocument.read(JsonPath.compile(jsonPointerToJsonPath(jsonPointer)));
+                if (findings.isEmpty()) {
+                    result.add(new JsonPointerSourceLine(jsonPointer, 1));
+                } else {
+                    for (JsonNode finding : findings) {
+                        // use collected location mappings
+                        JsonLocation location = jsonNodeFactory.getLocationForNode(finding);
+                        result.add(new JsonPointerSourceLine(jsonPointer, location.getLineNr()));
+                    }
                 }
             }
+            return new LineNumberResolveInternalResult(result, returnJsonNodeAllocation ? new ArrayList<>(jsonNodeFactory.getLocationMapping()) : null);
+        } finally {
+            jsonNodeFactory.getLocationMapping().clear();
         }
-        return result;
+    }
+
+    protected static class LineNumberResolveInternalResult {
+        private final List<JsonPointerSourceLine> sourceLines;
+        private final List<Map.Entry<JsonNode, JsonLocation>> allocationMapping;
+
+        public LineNumberResolveInternalResult(List<JsonPointerSourceLine> sourceLines, List<Map.Entry<JsonNode, JsonLocation>> allocationMapping) {
+            this.sourceLines = sourceLines;
+            this.allocationMapping = allocationMapping;
+        }
+
+        public List<JsonPointerSourceLine> getSourceLines() {
+            return sourceLines;
+        }
+
+        public List<Map.Entry<JsonNode, JsonLocation>> getAllocationMapping() {
+            return allocationMapping;
+        }
     }
 
     public static class JsonPointerSourceLine {
@@ -128,7 +167,7 @@ public class LineNumberByJsonPointerResolver {
         StringBuilder jsonPath = new StringBuilder("$");
 
         for (String token : tokens) {
-            if (specialChars.matcher(token).matches()) {
+            if (SPECIAL_CHARS.matcher(token).matches()) {
                 jsonPath.append("[").append(token).append("]");
             } else {
                 jsonPath.append(".").append(token);
@@ -186,13 +225,13 @@ public class LineNumberByJsonPointerResolver {
          * through a listing and find their matches once the objects have been populated, which is only
          * after the document has been completely parsed
          */
-        private List<Map.Entry<JsonNode, JsonLocation>> locationMapping;
+        private final List<Map.Entry<JsonNode, JsonLocation>> locationMapping;
 
         public CustomJsonNodeFactory(JsonNodeFactory nodeFactory,
                                      CustomParserFactory parserFactory) {
             delegate = nodeFactory;
             this.parserFactory = parserFactory;
-            locationMapping = new ArrayList<>();
+            locationMapping = Collections.synchronizedList(new ArrayList<>());
         }
 
         /**
@@ -317,6 +356,10 @@ public class LineNumberByJsonPointerResolver {
         @Override
         public ArrayNode arrayNode(int capacity) {
             return markNode(delegate.arrayNode(capacity));
+        }
+
+        protected List<Map.Entry<JsonNode, JsonLocation>> getLocationMapping() {
+            return locationMapping;
         }
     }
 }

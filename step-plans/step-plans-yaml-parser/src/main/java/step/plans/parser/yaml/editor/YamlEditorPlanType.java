@@ -24,6 +24,8 @@ import step.plans.nl.RootArtefactType;
 
 public class YamlEditorPlanType implements PlanType<YamlEditorPlan> {
 
+    private final PlanCompiler<YamlEditorPlan> compiler = new YamlEditorPlanTypeCompiler();
+
     public YamlEditorPlanType() {
     }
 
@@ -34,7 +36,7 @@ public class YamlEditorPlanType implements PlanType<YamlEditorPlan> {
 
     @Override
     public PlanCompiler<YamlEditorPlan> getPlanCompiler() {
-        return new YamlEditorPlanTypeCompiler();
+        return compiler;
     }
 
     @Override
