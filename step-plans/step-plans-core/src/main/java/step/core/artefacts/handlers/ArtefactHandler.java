@@ -62,6 +62,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	public static final String TEC_EXECUTION_REPORTNODES_PERSISTAFTER = "tec.execution.reportnodes.persistafter";
 	public static final String TEC_EXECUTION_REPORTNODES_PERSISTBEFORE = "tec.execution.reportnodes.persistbefore";
 	public static final String TEC_EXECUTION_REPORTNODES_PERSISTONLYNONPASSED = "tec.execution.reportnodes.persistonlynonpassed";
+	public static final String CTX_ADDITIONAL_ATTRIBUTES = "$additionalAttributes";
 
 	protected ExecutionContext context;
 	private ArtefactHandlerManager artefactHandlerManager;
@@ -245,7 +246,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 			AbstractArtefact artefactInstance = reportNode.getArtefactInstance();
 			if (artefactInstance != null && !artefactInstance.isWorkArtefact()) {
 				// TODO implement node pruning for time series
-				reportNodeTimeSeries.ingestReportNode(reportNode);
+				reportNodeTimeSeries.ingestReportNode(reportNode, getTimeSeriesAdditionalAttributes(context));
 			}
 		}
 
@@ -255,6 +256,21 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		
 		return reportNode;
 	}
+
+    private Map<String, Object> getTimeSeriesAdditionalAttributes(ExecutionContext executionContext) {
+        Map<String, Object> attributes = new HashMap<>();
+        if (context.getPlan() != null) {
+            attributes.put("planId", context.getPlan().getId().toString());
+        }
+        attributes.put("taskId", Objects.requireNonNullElse(context.get("$schedulerTaskId"), ""));
+
+        TreeMap<String, String> additionalAttributes = (TreeMap<String, String>) executionContext.get(CTX_ADDITIONAL_ATTRIBUTES);
+        if (additionalAttributes != null) {
+            attributes.putAll(additionalAttributes);
+        }
+
+        return attributes;
+    }
 
 	 /**
 	  * Return the children artefacts grouped by parent source

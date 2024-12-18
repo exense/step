@@ -4,6 +4,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import step.controller.services.async.AsyncTaskManager;
 import step.controller.services.async.AsyncTaskStatus;
+import step.core.artefacts.reports.aggregated.ReportNodeTimeSeries;
 import step.core.collections.Filter;
 import step.core.collections.Filters;
 import step.core.collections.SearchOrder;
@@ -56,6 +57,7 @@ public class TimeSeriesHandler {
     private final List<String> timeSeriesAttributes;
     private final AsyncTaskManager asyncTaskManager;
     private final TimeSeriesAggregationPipeline aggregationPipeline;
+    private final TimeSeriesAggregationPipeline reportNodeAggregationPipeline;
     private final step.core.collections.Collection<Measurement> measurementCollection;
     private final ExecutionAccessor executionAccessor;
     private final TimeSeries timeSeries;
@@ -67,12 +69,14 @@ public class TimeSeriesHandler {
                              step.core.collections.Collection<Measurement> measurementCollection,
                              ExecutionAccessor executionAccessor,
                              TimeSeries timeSeries,
+                             ReportNodeTimeSeries reportNodeTimeSeries,
                              AsyncTaskManager asyncTaskManager,
                              int samplingLimit) {
         this.resolution = resolution;
         this.timeSeriesAttributes = timeSeriesAttributes;
         this.measurementCollection = measurementCollection;
         this.aggregationPipeline = timeSeries.getAggregationPipeline();
+        this.reportNodeAggregationPipeline = reportNodeTimeSeries.getTimeSeries().getAggregationPipeline();
         this.executionAccessor = executionAccessor;
         this.asyncTaskManager = asyncTaskManager;
         this.timeSeries = timeSeries;
@@ -185,6 +189,13 @@ public class TimeSeriesHandler {
         validateFetchRequest(request);
         TimeSeriesAggregationQuery query = mapToQuery(request, this.aggregationPipeline);
         TimeSeriesAggregationResponse response = this.aggregationPipeline.collect(query);
+        return mapToApiResponse(request, response);
+    }
+
+    public TimeSeriesAPIResponse getReportNodeTimeSeries(FetchBucketsRequest request) {
+        validateFetchRequest(request);
+        TimeSeriesAggregationQuery query = mapToQuery(request, this.reportNodeAggregationPipeline);
+        TimeSeriesAggregationResponse response = this.reportNodeAggregationPipeline.collect(query);
         return mapToApiResponse(request, response);
     }
 
