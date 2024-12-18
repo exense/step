@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import step.controller.services.async.AsyncTaskManager;
 import step.controller.services.async.AsyncTaskManagerPlugin;
 import step.core.GlobalContext;
+import step.core.artefacts.reports.aggregated.ReportNodeTimeSeries;
 import step.core.collections.Collection;
 import step.core.collections.CollectionFactory;
 import step.core.collections.IndexField;
