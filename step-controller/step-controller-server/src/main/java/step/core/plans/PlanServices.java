@@ -88,7 +88,7 @@ public class PlanServices extends AbstractEntityServices<Plan> {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="{entity}-write")
 	public Plan newPlan(@QueryParam("type") String type, @QueryParam("template") String template) throws Exception {
-		PlanType<Plan> planType = planTypeRegistry.getPlanType(type);
+		PlanType<Plan> planType = getPlanTypeNotNull(type);
 		Plan plan = planType.newPlan(template);
 		getObjectEnricher().accept(plan);
 		return plan;
@@ -96,9 +96,28 @@ public class PlanServices extends AbstractEntityServices<Plan> {
 
 	@Override
 	protected Plan beforeSave(Plan entity) {
-		PlanType<Plan> planType = (PlanType<Plan>) planTypeRegistry.getPlanType(entity.getClass());
+		if (entity == null) {
+			throw new ControllerServiceException(400, "Plan is undefined");
+		}
+		PlanType<Plan> planType = getPlanTypeNotNull(entity.getClass());
 		planType.onBeforeSave(entity);
 		return super.beforeSave(entity);
+	}
+
+	protected PlanType<Plan> getPlanTypeNotNull(String planTypeName) {
+		PlanType<Plan> planType = planTypeRegistry.getPlanType(planTypeName);
+		if (planType == null) {
+			throw new ControllerServiceException(400, "Plan type is not resolved by name " + planTypeName);
+		}
+		return planType;
+	}
+
+	protected PlanType<Plan> getPlanTypeNotNull(Class<? extends Plan> entityClass) {
+		PlanType<Plan> planType = (PlanType<Plan>) planTypeRegistry.getPlanType(entityClass);
+		if (planType == null) {
+			throw new ControllerServiceException(400, "Plan type is not resolved for entity class " + entityClass);
+		}
+		return planType;
 	}
 
 	@Operation(description = "Compiles the plan with the given id.")
