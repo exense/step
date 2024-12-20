@@ -166,6 +166,22 @@ public class ControllerServices extends AbstractStepServices {
 		return result;
 	}
 
+	@GET
+	@Path("/reportnode/{id}/children/{source}")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="execution-read")
+	public List<ReportNode> getReportNodeChildrenBySource(@PathParam("id") String reportNodeId, @PathParam("source") ParentSource parentSource, @QueryParam("skip") Integer skip, @QueryParam("limit") Integer limit) {
+		skip = skip!=null?skip:0;
+		limit = limit!=null?limit:1000;
+
+		List<ReportNode> result = new ArrayList<>();
+		Iterator<ReportNode> it = getContext().getReportAccessor().getChildrenByParentSource(new ObjectId(reportNodeId), parentSource, skip, limit);
+		while(it.hasNext()) {
+			result.add(it.next());
+		}
+		return result;
+	}
+	
 	@POST
 	@Path("/repository/artefact/info")
 	@Consumes(MediaType.APPLICATION_JSON)
