@@ -41,11 +41,6 @@ public class PerformanceAssert extends AbstractArtefact {
 		this.expectedValue = new DynamicValue<>(expectedValue);
 	}
 
-	@Override
-	public boolean isPropertyArtefact() {
-		return true;
-	}
-
 	@ContainsDynamicValues
 	public List<Filter> getFilters() {
 		return filters;

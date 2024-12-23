@@ -20,7 +20,7 @@ package step.artefacts.automation;
 
 import step.artefacts.Return;
 import step.core.yaml.YamlFieldCustomCopy;
-import step.plans.parser.yaml.model.AbstractYamlArtefact;
+import step.core.yaml.model.AbstractYamlArtefact;
 
 public class YamlReturn extends AbstractYamlArtefact<Return> {
 

@@ -27,6 +27,7 @@ import step.cli.MavenArtifactIdentifier;
 import step.cli.StepCliExecutionException;
 
 import java.io.File;
+import java.util.List;
 import java.util.Map;
 
 @Mojo(name = "execute-automation-package")
@@ -56,6 +57,8 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
     private Boolean waitForExecution;
     @Parameter(property = "step-execute-auto-packages.ensure-exec-success", defaultValue = "true")
     private Boolean ensureExecutionSuccess;
+    @Parameter(property = "step-execute-auto-packages.print-aggregated-report", defaultValue = "true")
+    private boolean printAggregatedReport = true;
 
     @Parameter(property = "step-execute-auto-packages.include-plans")
     private String includePlans;
@@ -67,20 +70,58 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
     @Parameter(property = "step-execute-auto-packages.exclude-categories")
     private String excludeCategories;
 
-    @Parameter(property = "step-execute-auto-packages.wrap-into-test-set")
+    @Parameter(property = "step-execute-auto-packages.wrap-into-test-set", defaultValue = "false")
     private Boolean wrapIntoTestSet;
     @Parameter(property = "step-execute-auto-packages.number-of-threads")
     private Integer numberOfThreads;
+
+    @Parameter(property = "step-execute-auto-packages.report-type")
+    private List<AbstractExecuteAutomationPackageTool.ReportType> reportType;
+
+    @Parameter(property = "step-execute-auto-packages.report-dir")
+    private String reportDir;
 
     @Override
     public void execute() throws MojoExecutionException {
         try {
             validateEEConfiguration(getStepProjectName(), getAuthToken());
             checkStepControllerVersion();
-            createTool(getUrl(), getStepProjectName(), getUserId(), getAuthToken(), getExecutionParameters(), getExecutionResultTimeoutS(),
-                    getWaitForExecution(), getEnsureExecutionSuccess(), getIncludePlans(), getExcludePlans(),
-                    getIncludeCategories(), getExcludeCategories(), getWrapIntoTestSet(), getNumberOfThreads()
-            ).execute();
+
+            MavenArtifactIdentifier remoteMavenArtifact = null;
+            if (!isLocalMavenArtifact()) {
+                remoteMavenArtifact = new MavenArtifactIdentifier(getArtifactGroupId(), getArtifactId(), getArtifactVersion(), getArtifactClassifier());
+            }
+
+            File reportOutputDir = null;
+            if (getReportType() != null && !getReportType().isEmpty()) {
+                String resolvedReportDir = getReportDir();
+                if (resolvedReportDir == null) {
+                    String targetDir = project.getBuild().getDirectory();
+                    resolvedReportDir = targetDir + File.separator + "step-reports";
+                }
+                reportOutputDir = new File(resolvedReportDir);
+            }
+
+            AbstractExecuteAutomationPackageTool.Params params = new AbstractExecuteAutomationPackageTool.Params()
+                    .setStepProjectName(getStepProjectName())
+                    .setUserId(getUserId())
+                    .setAuthToken(getAuthToken())
+                    .setExecutionParameters(getExecutionParameters())
+                    .setExecutionResultTimeoutS(getExecutionResultTimeoutS())
+                    .setWaitForExecution(getWaitForExecution())
+                    .setEnsureExecutionSuccess(getEnsureExecutionSuccess())
+                    .setPrintAggregatedReport(getPrintAggregatedReport())
+                    .setIncludePlans(getIncludePlans())
+                    .setExcludePlans(getExcludePlans())
+                    .setIncludeCategories(getIncludeCategories())
+                    .setExcludeCategories(getExcludeCategories())
+                    .setWrapIntoTestSet(getWrapIntoTestSet())
+                    .setNumberOfThreads(getNumberOfThreads())
+                    .setMavenArtifactIdentifier(remoteMavenArtifact)
+                    .setReportTypes(getReportType())
+                    .setReportOutputDir(reportOutputDir);
+
+            createTool(getUrl(), params).execute();
         } catch (StepCliExecutionException e) {
             throw new MojoExecutionException("Execution exception", e);
         } catch (Exception e) {
@@ -88,21 +129,8 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
         }
     }
 
-    protected AbstractExecuteAutomationPackageTool createTool(final String url, final String projectName, final String userId,
-                                                              final String authToken, final Map<String, String> parameters,
-                                                              final Integer executionResultTimeoutS, final Boolean waitForExecution,
-                                                              final Boolean ensureExecutionSuccess, final String includePlans,
-                                                              final String excludePlans, final String includeCategories,
-                                                              final String excludeCategories, final Boolean wrapIntoTestSet,
-                                                              final Integer numberOfThreads) {
-        MavenArtifactIdentifier remoteMavenArtifact = null;
-        if (!isLocalMavenArtifact()) {
-            remoteMavenArtifact = new MavenArtifactIdentifier(getArtifactGroupId(), getArtifactId(), getArtifactVersion(), getArtifactClassifier());
-        }
-
-        return new AbstractExecuteAutomationPackageTool(url, projectName, userId, authToken, parameters, executionResultTimeoutS,
-                waitForExecution, ensureExecutionSuccess, includePlans, excludePlans, includeCategories,
-                excludeCategories, wrapIntoTestSet, numberOfThreads, remoteMavenArtifact) {
+    protected AbstractExecuteAutomationPackageTool createTool(final String url, AbstractExecuteAutomationPackageTool.Params params) {
+        return new AbstractExecuteAutomationPackageTool(url, params) {
             @Override
             protected File getAutomationPackageFile() throws StepCliExecutionException {
                 // if groupId and artifactId are not defined, we execute the maven artifact from current project
@@ -218,6 +246,14 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
         this.ensureExecutionSuccess = ensureExecutionSuccess;
     }
 
+    public boolean getPrintAggregatedReport() {
+        return printAggregatedReport;
+    }
+
+    public void setPrintAggregatedReport(boolean printAggregatedReport) {
+        this.printAggregatedReport = printAggregatedReport;
+    }
+
     public String getIncludePlans() {
         return includePlans;
     }
@@ -264,5 +300,21 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
 
     public void setNumberOfThreads(Integer numberOfThreads) {
         this.numberOfThreads = numberOfThreads;
+    }
+
+    public List<AbstractExecuteAutomationPackageTool.ReportType> getReportType() {
+        return reportType;
+    }
+
+    public void setReportType(List<AbstractExecuteAutomationPackageTool.ReportType> reportType) {
+        this.reportType = reportType;
+    }
+
+    public String getReportDir() {
+        return reportDir;
+    }
+
+    public void setReportDir(String reportDir) {
+        this.reportDir = reportDir;
     }
 }

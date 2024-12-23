@@ -24,6 +24,7 @@ import step.artefacts.Sequence;
 import step.artefacts.reports.RetryIfFailsReportNode;
 import step.common.managedoperations.OperationManager;
 import step.core.artefacts.handlers.ArtefactHandler;
+import step.core.artefacts.handlers.CancellableSleep;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 

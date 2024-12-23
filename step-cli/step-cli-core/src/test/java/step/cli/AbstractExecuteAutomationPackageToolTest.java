@@ -5,12 +5,15 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
+import step.artefacts.Echo;
 import step.automation.packages.client.AutomationPackageClientException;
 import step.automation.packages.client.RemoteAutomationPackageClientImpl;
 import step.client.executions.RemoteExecutionFuture;
 import step.client.executions.RemoteExecutionManager;
 import step.controller.multitenancy.Tenant;
+import step.core.artefacts.reports.ParentSource;
 import step.core.artefacts.reports.ReportNodeStatus;
+import step.core.artefacts.reports.aggregated.AggregatedReportView;
 import step.core.execution.model.AutomationPackageExecutionParameters;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionMode;
@@ -156,6 +159,7 @@ public class AbstractExecuteAutomationPackageToolTest {
         RemoteExecutionFuture futureMock = Mockito.mock(RemoteExecutionFuture.class);
         Mockito.when(futureMock.getErrorSummary()).thenReturn("Error summary...");
         Mockito.when((remoteExecutionManagerMock.getFuture(Mockito.anyString()))).thenReturn(futureMock);
+        Mockito.when(remoteExecutionManagerMock.getAggregatedReportView(Mockito.anyString())).thenReturn(new AggregatedReportView(new Echo(), "hash", Map.of("PASSED",1L), List.of(), ParentSource.MAIN));
         return remoteExecutionManagerMock;
     }
 
@@ -163,10 +167,23 @@ public class AbstractExecuteAutomationPackageToolTest {
                                                             RemoteExecutionManager executionManagerMock,
                                                             RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock) throws URISyntaxException {
         return new ExecuteAutomationPackageToolTestable(
-                "http://localhost:8080", TENANT_1.getName(), "testUser", "abc", createTestCustomParams(),
-                3, true, ensureExecutionSuccess, TEST_INCLUDE_PLANS, null,
-                TEST_INCLUDE_CATEGORIES, TEST_EXCLUDE_CATEGORIES, false, 0, executionManagerMock, remoteAutomationPackageClientMock,
-                null
+                "http://localhost:8080",
+                new AbstractExecuteAutomationPackageTool.Params()
+                        .setStepProjectName(TENANT_1.getName())
+                        .setUserId("testUser")
+                        .setAuthToken("abc")
+                        .setExecutionParameters(createTestCustomParams())
+                        .setExecutionResultTimeoutS(2)
+                        .setWaitForExecution(true)
+                        .setEnsureExecutionSuccess(ensureExecutionSuccess)
+                        .setPrintAggregatedReport(true)
+                        .setIncludePlans(TEST_INCLUDE_PLANS)
+                        .setExcludePlans(null)
+                        .setIncludeCategories(TEST_INCLUDE_CATEGORIES)
+                        .setExcludeCategories(TEST_EXCLUDE_CATEGORIES)
+                        .setWrapIntoTestSet(false)
+                        .setNumberOfThreads(0),
+                executionManagerMock, remoteAutomationPackageClientMock
         );
     }
 
@@ -182,19 +199,10 @@ public class AbstractExecuteAutomationPackageToolTest {
         private final RemoteExecutionManager remoteExecutionManagerMock;
         private final RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock;
 
-        public ExecuteAutomationPackageToolTestable(String url, String stepProjectName,
-                                                    String userId, String authToken,
-                                                    Map<String, String> executionParameters,
-                                                    Integer executionResultTimeoutS, Boolean waitForExecution,
-                                                    Boolean ensureExecutionSuccess, String includePlans,
-                                                    String excludePlans,
-                                                    String includeCategories, String excludeCategories,
-                                                    Boolean wrapIntoTestSet, Integer numberOfThreads,
+        public ExecuteAutomationPackageToolTestable(String url, Params params,
                                                     RemoteExecutionManager remoteExecutionManagerMock,
-                                                    RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock,
-                                                    MavenArtifactIdentifier mavenArtifactIdentifier) {
-            super(url, stepProjectName, userId, authToken, executionParameters, executionResultTimeoutS, waitForExecution,
-                    ensureExecutionSuccess, includePlans, excludePlans, includeCategories, excludeCategories, wrapIntoTestSet, numberOfThreads, mavenArtifactIdentifier);
+                                                    RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock) {
+            super(url, params);
             this.remoteExecutionManagerMock = remoteExecutionManagerMock;
             this.remoteAutomationPackageClientMock = remoteAutomationPackageClientMock;
         }

@@ -30,6 +30,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -39,10 +41,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import step.attachments.AttachmentMeta;
-import step.core.artefacts.reports.ReportNode;
-import step.core.artefacts.reports.ReportNodeStatus;
-import step.core.artefacts.reports.ReportTreeAccessor;
-import step.core.artefacts.reports.ReportTreeVisitor;
+import step.core.artefacts.reports.*;
 import step.core.artefacts.reports.ReportTreeVisitor.ReportNodeEvent;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionProvider;
@@ -227,19 +226,35 @@ public class PlanRunnerResult {
 	 */
 	public PlanRunnerResult printTree(Writer writer, boolean printNodeDetails, boolean printAttachments) throws IOException {
 		BufferedWriter bWriter = new BufferedWriter(writer);
+		AtomicReference<ParentSource> previousParentSource = new AtomicReference<>(ParentSource.MAIN);
+		AtomicInteger previousStackSize = new AtomicInteger(0);
 		visitReportTree(event->{
 			try {
-				for(int i=0;i<event.getStack().size();i++) {
-						bWriter.write(" ");
-				}
 				ReportNode node = event.getNode();
+				int stackSize = event.getStack().size();
+				//if custom parent source, print the name of the source once, all children are then printed with one more indentation
+				boolean customParentSource = node.getParentSource().printSource;
+				boolean newContext = (!node.getParentSource().equals(previousParentSource.get()) || stackSize != previousStackSize.get());
+				previousParentSource.set(node.getParentSource());
+				previousStackSize.set(stackSize);
+				if (customParentSource && newContext) {
+					indent(stackSize, bWriter);
+					bWriter.write("[");
+					bWriter.write(node.getParentSource().name());
+					bWriter.write("]\n");
+				}
+				//indent row, rows with custom parent source have one more level
+				int indentSize = (customParentSource) ? stackSize + 1 : stackSize;
+				indent(indentSize, bWriter);
 				StringBuilder row = new StringBuilder();
 				row.append(node.getName());
 				String reportAsString = node.getReportAsString();
 				if (printNodeDetails && reportAsString != null) {
-					row.append("(" + reportAsString + ")");
+					row.append("(").append(reportAsString).append(")");
 				}
-				row.append(":" + node.getStatus() + ":");
+				if (node.getStatus() != null) {
+					row.append(":").append(node.getStatus()).append(":");
+				}
 				if (node.getError() != null) {
 					row.append(node.getError().getMsg());
 				}
@@ -274,8 +289,14 @@ public class PlanRunnerResult {
 		});
 		bWriter.flush();
 		return this;
-	}	
-	
+	}
+
+	private static void indent(int indentsize, BufferedWriter bWriter) throws IOException {
+		for(int i = 0; i< indentsize; i++) {
+				bWriter.write(" ");
+		}
+	}
+
 	public String getTreeAsString() throws IOException {
 		StringWriter stringWriter = new StringWriter();
 		printTree(stringWriter);

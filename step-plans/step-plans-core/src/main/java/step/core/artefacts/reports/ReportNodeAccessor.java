@@ -37,6 +37,10 @@ public interface ReportNodeAccessor extends Accessor<ReportNode>, ReportTreeAcce
 
 	Iterator<ReportNode> getChildren(ObjectId parentID, int skip, int limit);
 
+	Iterator<ReportNode> getChildrenByParentSource(ObjectId parentID, ParentSource parentSource);
+
+	Iterator<ReportNode> getChildrenByParentSource(ObjectId parentID, ParentSource parentSource, int skip, int limit);
+
 	/**
 	 * Warning: this method must be used within a try-with-resources statement or similar control structure to ensure that the stream's I/O resources are closed promptly after the stream's operations have completed.
 	 * @param executionID the id of the execution

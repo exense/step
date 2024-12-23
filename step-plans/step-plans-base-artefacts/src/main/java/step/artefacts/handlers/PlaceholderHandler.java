@@ -21,6 +21,7 @@ package step.artefacts.handlers;
 import step.artefacts.Placeholder;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandler;
+import step.core.artefacts.handlers.SequentialArtefactScheduler;
 import step.core.artefacts.reports.ReportNode;
 
 public class PlaceholderHandler extends ArtefactHandler<Placeholder, ReportNode> {

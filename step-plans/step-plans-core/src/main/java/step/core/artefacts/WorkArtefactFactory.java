@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.core.artefacts;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import org.slf4j.Logger;
@@ -41,8 +42,7 @@ public class WorkArtefactFactory {
 		try {
 			T artefact = artefactClass.newInstance();
 			if(copyChildren) {
-				// Property artefacts remain attached to their parent and are thus not subject to transclusion
-				artefact.setChildren(ArtefactHandler.excludePropertyChildren(parentArtefact.getChildren()));
+				artefact.setChildren(new ArrayList<>(parentArtefact.getChildren()));
 			}
 			HashMap<String, String> attributes = new HashMap<>();
 			attributes.put("name", name);

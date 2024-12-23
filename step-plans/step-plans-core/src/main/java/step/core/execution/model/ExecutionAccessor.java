@@ -46,4 +46,6 @@ public interface ExecutionAccessor extends Accessor<Execution>, ExecutionProvide
 
 	List<Execution> getLastEndedExecutionsBySchedulerTaskID(String schedulerTaskID, int limit);
 
+	List<Execution> getLastEndedExecutionsBySchedulerTaskID(String schedulerTaskID, int limit, Long from, Long to);
+
 }

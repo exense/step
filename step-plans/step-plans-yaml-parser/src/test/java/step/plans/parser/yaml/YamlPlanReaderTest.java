@@ -32,6 +32,7 @@ import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.plans.Plan;
 import step.plans.parser.yaml.schema.YamlPlanValidationException;
 import step.repositories.parser.StepsParser;
+import step.plans.parser.yaml.model.YamlPlanVersions;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -51,8 +52,7 @@ public class YamlPlanReaderTest {
 
 	public YamlPlanReaderTest() {
 		this.yamlReader = new YamlPlanReader(
-				() -> STATIC_ID,
-				null,
+				step.plans.parser.yaml.model.YamlPlanVersions.ACTUAL_VERSION,
 				true,
 				null
 		);
@@ -243,6 +243,27 @@ public class YamlPlanReaderTest {
 	}
 
 	@Test
+	public void testBeforeAndAfter() throws YamlPlanValidationException {
+		//Test migration of older plans (BeforeSequence....)
+		convertFromYamlToPlan(
+				"src/test/resources/step/plans/parser/yaml/beforeAfterMigration/test-before-after-old-version.yml",
+				"src/test/resources/step/plans/parser/yaml/beforeAfterMigration/test-before-after-old-version-tech-plan.yml"
+		);
+
+		//Test new version
+
+		convertFromYamlToPlan(
+				"src/test/resources/step/plans/parser/yaml/beforeAfterMigration/test-before-after-plan.yml",
+				"src/test/resources/step/plans/parser/yaml/beforeAfterMigration/test-before-after-tech-plan.yml"
+		);
+
+		convertPlanToYaml(
+				"src/test/resources/step/plans/parser/yaml/controls/test-expected-controls-tech-plan.yml",
+				"src/test/resources/step/plans/parser/yaml/controls/test-controls-plan.yml"
+		);
+	}
+
+	@Test
 	public void checkConversionToYaml() {
 		convertPlanToYaml(
 				"src/test/resources/step/plans/parser/yaml/basic/test-expected-tech-plan.yml",
@@ -282,19 +303,21 @@ public class YamlPlanReaderTest {
 		try (FileInputStream is = new FileInputStream(yamlPlanFile); ByteArrayOutputStream os = new ByteArrayOutputStream()) {
 			Plan plan = yamlReader.readYamlPlan(is);
 			writePlanInTechnicalFormat(os, plan);
-
+			//Currently we use some workaround to overwrite all ids, but this only support artefact children (not the new properties: before, after, beforeThread...)
+			//So we overwrite all ids here
+			String outputWithStaticId = os.toString(StandardCharsets.UTF_8).replaceAll("(\"?id\"?: )\"[^\"]*\"", "$1\"" + STATIC_ID + "\"");
 //			log.info("Converted yaml -->");
 //			log.info(os.toString(StandardCharsets.UTF_8));
 
 			if (writeResultsToLocalFiles) {
 				// write yml to another file (to check it manually)
 				try (FileOutputStream fileOs = new FileOutputStream("src/test/resources/step/plans/parser/yaml/test-expected-build-tech-converted-plan.yml")) {
-					fileOs.write(os.toByteArray());
+					fileOs.write(outputWithStaticId.getBytes(StandardCharsets.UTF_8));
 				}
 			}
 
 			JsonNode expectedTechnicalYaml = technicalPlanMapper.readTree(techYamlFileAfterConversion);
-			JsonNode actual = technicalPlanMapper.readTree(os.toByteArray());
+			JsonNode actual = technicalPlanMapper.readTree(outputWithStaticId.getBytes(StandardCharsets.UTF_8));
 			Assert.assertEquals(expectedTechnicalYaml, actual);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
@@ -306,7 +329,9 @@ public class YamlPlanReaderTest {
 		File plainTextPlan = new File("src/test/resources/step/plans/parser/yaml/plaintext/plaintext.plan");
 		File expectedYamlFile = new File("src/test/resources/step/plans/parser/yaml/plaintext/plaintext-expected-plan.yml");
 
-		try (FileInputStream is = new FileInputStream(plainTextPlan); ByteArrayOutputStream os = new ByteArrayOutputStream()) {
+		try (FileInputStream is = new FileInputStream(plainTextPlan);
+			 FileInputStream expectedIS = new FileInputStream(expectedYamlFile);
+             ByteArrayOutputStream os = new ByteArrayOutputStream()) {
 			yamlReader.convertFromPlainTextToYaml("converted plaintext plan", is, os);
 
 			if (writeResultsToLocalFiles) {
@@ -315,9 +340,10 @@ public class YamlPlanReaderTest {
 					fileOs.write(os.toByteArray());
 				}
 			}
-
-			JsonNode expectedTechnicalYaml = technicalPlanMapper.readTree(expectedYamlFile);
-			JsonNode actual = technicalPlanMapper.readTree(os.toByteArray());
+			String actualString = replaceDynamicValuesInActualTechOutput(os.toString(StandardCharsets.UTF_8));
+			String expectedString = replaceDynamicValuesInExpectedInput(new String(expectedIS.readAllBytes(), StandardCharsets.UTF_8));
+			JsonNode expectedTechnicalYaml = technicalPlanMapper.readTree(expectedString);
+			JsonNode actual = technicalPlanMapper.readTree(actualString);
 			Assert.assertEquals(expectedTechnicalYaml, actual);
 		} catch (IOException ex){
 			throw new RuntimeException(ex);
@@ -337,11 +363,22 @@ public class YamlPlanReaderTest {
 		);
 	}
 
+	private String replaceDynamicValuesInActualTechOutput(String input) {
+		return input.replaceAll("id: \"[^\"]*\"", "id: \"" + STATIC_ID + "\"");
+
+	}
+
+	private String replaceDynamicValuesInExpectedInput(String input) {
+		return input.replaceAll("(\n {0,2}version: )\"[^\"]*\"", "$1\"" + YamlPlanVersions.ACTUAL_VERSION + "\"");
+	}
+
 	private void convertPlanToYaml(String technicalPlanFilePath, String expectedYamlPlan) {
 		// read plan
 		File techYamlFile = new File(technicalPlanFilePath);
 
-		try (FileInputStream is = new FileInputStream(techYamlFile); ByteArrayOutputStream os = new ByteArrayOutputStream()) {
+		try (FileInputStream is = new FileInputStream(techYamlFile);
+			 FileInputStream expectedIS = new FileInputStream(expectedYamlPlan);
+             ByteArrayOutputStream os = new ByteArrayOutputStream()) {
 			Plan plan = technicalPlanMapper.readValue(is, Plan.class);
 
 			// convert plan to the yaml format
@@ -356,7 +393,8 @@ public class YamlPlanReaderTest {
 				}
 			}
 
-			JsonNode expectedYaml = yamlReader.getYamlMapper().readTree(new File(expectedYamlPlan));
+			String expectedString = replaceDynamicValuesInExpectedInput(new String(expectedIS.readAllBytes(), StandardCharsets.UTF_8));
+			JsonNode expectedYaml = yamlReader.getYamlMapper().readTree(expectedString);
 			JsonNode actual = yamlReader.getYamlMapper().readTree(os.toByteArray());
 			Assert.assertEquals(expectedYaml, actual);
 		} catch (IOException e) {
@@ -374,19 +412,20 @@ public class YamlPlanReaderTest {
 
 			// serialize plan
 			writePlanInTechnicalFormat(os, plan);
+			String actualTechString = replaceDynamicValuesInActualTechOutput(os.toString(StandardCharsets.UTF_8));
 //			log.info("Converted technical plan -->");
 //			log.info(os.toString(StandardCharsets.UTF_8));
 
 			// write yml to another file (to check it manually)
 			if (writeResultsToLocalFiles) {
 				try (FileOutputStream fileOs = new FileOutputStream("src/test/resources/step/plans/parser/yaml/test-expected-tech-plan.yml")) {
-					fileOs.write(os.toByteArray());
+					fileOs.write(actualTechString.getBytes(StandardCharsets.UTF_8));
 				}
 			}
 
 			// compare serialized plan with expected data
 			JsonNode expectedTechnicalYaml = yamlReader.getYamlMapper().readTree(new File(expectedTechnicalPlanFile));
-			JsonNode actual = yamlReader.getYamlMapper().readTree(os.toByteArray());
+			JsonNode actual = yamlReader.getYamlMapper().readTree(actualTechString);
 			Assert.assertEquals(expectedTechnicalYaml, actual);
 		} catch (IOException e) {
 			throw new RuntimeException("IO Exception", e);

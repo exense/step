@@ -20,7 +20,7 @@ package step.artefacts.automation;
 
 import step.artefacts.CallPlan;
 import step.core.yaml.YamlFieldCustomCopy;
-import step.plans.parser.yaml.model.AbstractYamlArtefact;
+import step.core.yaml.model.AbstractYamlArtefact;
 
 public class YamlCallPlan extends AbstractYamlArtefact<CallPlan> {
 

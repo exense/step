@@ -19,6 +19,7 @@
 package step.automation.packages.yaml.model;
 
 import step.automation.packages.model.YamlAutomationPackageKeyword;
+import step.plans.automation.YamlPlainTextPlan;
 import step.plans.parser.yaml.YamlPlan;
 
 import java.util.List;
@@ -29,6 +30,8 @@ public interface AutomationPackageFragmentYaml {
     List<YamlAutomationPackageKeyword> getKeywords();
 
     List<YamlPlan> getPlans();
+
+    List<YamlPlainTextPlan> getPlansPlainText();
 
     List<String> getFragments();
 

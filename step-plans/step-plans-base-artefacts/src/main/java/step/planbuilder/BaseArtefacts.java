@@ -19,12 +19,14 @@
 package step.planbuilder;
 
 import java.io.File;
+import java.util.List;
 import java.util.function.Consumer;
 
 import step.artefacts.*;
 import step.artefacts.ThreadGroup;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.CheckArtefact;
+import step.core.artefacts.ChildrenBlock;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.execution.ExecutionContext;
 import step.datapool.excel.ExcelDataPool;
@@ -36,14 +38,6 @@ public class BaseArtefacts {
 		return new Sequence();
 	}
 	
-	public static BeforeSequence beforeSequence() {
-		return new BeforeSequence();
-	}
-	
-	public static AfterSequence afterSequence() {
-		return new AfterSequence();
-	}
-	
 	public static Set set(String key, String valueExpression) {
 		Set set = new Set();
 		set.setKey(new DynamicValue<String>(key));
@@ -52,11 +46,16 @@ public class BaseArtefacts {
 	}
 	
 	public static ForBlock for_(int start, int end) {
+		return for_(start, end, 1);
+	}
+
+	public static ForBlock for_(int start, int end, int threads) {
 		ForBlock f = new ForBlock();
 		IntSequenceDataPool conf = new IntSequenceDataPool();
 		conf.setStart(new DynamicValue<Integer>(start));;
 		conf.setEnd(new DynamicValue<Integer>(end));;
 		f.setDataSource(conf);
+		f.setThreads(new DynamicValue<>(threads));
 		return f;
 	}
 	
@@ -88,6 +87,13 @@ public class BaseArtefacts {
 	public static CallPlan callPlan(String planId, String name) {
 		CallPlan callPlan = callPlan(planId);
 		callPlan.getAttributes().put(AbstractArtefact.NAME, name);
+		return callPlan;
+	}
+
+	public static CallPlan callPlan(String planId, String name, String inputExpression) {
+		CallPlan callPlan = callPlan(planId);
+		callPlan.getAttributes().put(AbstractArtefact.NAME, name);
+		callPlan.setInput(new DynamicValue<>(inputExpression, ""));
 		return callPlan;
 	}
 	
@@ -132,13 +138,15 @@ public class BaseArtefacts {
 		threadGroup.setUsers(new DynamicValue<Integer>(numberOfThreads));
 		return threadGroup;
 	}
-	
-	public static BeforeThread beforeThread() {
-		return new BeforeThread();
-	}
-	
-	public static AfterThread afterThread() {
-		return new AfterThread();
+
+	public static ThreadGroup threadGroup(int numberOfThreads, int numberOfIterationsPerThread,
+							  ChildrenBlock beforeThread, ChildrenBlock afterThread) {
+		ThreadGroup threadGroup = new ThreadGroup();
+		threadGroup.setIterations(new DynamicValue<Integer>(numberOfIterationsPerThread));
+		threadGroup.setUsers(new DynamicValue<Integer>(numberOfThreads));
+		threadGroup.setBeforeThread(beforeThread);
+		threadGroup.setAfterThread(afterThread);
+		return threadGroup;
 	}
 	
 	public static TestScenario testScenario() {
@@ -156,6 +164,12 @@ public class BaseArtefacts {
 		check.setExpression(new DynamicValue<>(expression, ""));
 		return check;
 	}
+
+	public static IfBlock ifBlock(DynamicValue<Boolean> condition) {
+		IfBlock ifBlock = new IfBlock();
+		ifBlock.setCondition(condition);
+		return ifBlock;
+	}
 	
 	public static CheckArtefact runnable(Consumer<ExecutionContext> executionRunnable) {
 		CheckArtefact checkArtefact = new CheckArtefact(executionRunnable);
@@ -168,5 +182,11 @@ public class BaseArtefacts {
 		anAssert.setOperator(Assert.AssertOperator.EQUALS);
 		anAssert.setExpected(new DynamicValue<>(expression));
 		return anAssert;
+	}
+
+	public static ChildrenBlock childrenBlock(AbstractArtefact... children) {
+		ChildrenBlock childrenBlock = new ChildrenBlock();
+		childrenBlock.setSteps(List.of(children));
+		return childrenBlock;
 	}
 }

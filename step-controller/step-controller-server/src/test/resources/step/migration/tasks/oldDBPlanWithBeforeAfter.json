@@ -1,0 +1,710 @@
+{
+  "_class" : "step.core.plans.Plan",
+  "customFields" : {
+    "versionId" : "66cc86aa5b5628560a04dfb5"
+  },
+  "attributes" : {
+    "name" : "ThreadGroup",
+    "project" : "66cbd3dc5b5628560a047b47"
+  },
+  "root" : {
+    "_class" : "ThreadGroup",
+    "customFields" : null,
+    "attributes" : {
+      "name" : "ThreadGroup"
+    },
+    "dynamicName" : {
+      "dynamic" : false,
+      "value" : "",
+      "expression" : "",
+      "expressionType" : null
+    },
+    "useDynamicName" : false,
+    "description" : null,
+    "children" : [ {
+      "_class" : "PerformanceAssert",
+      "customFields" : null,
+      "attributes" : {
+        "name" : "PerformanceAssert"
+      },
+      "dynamicName" : {
+        "dynamic" : false,
+        "value" : "",
+        "expression" : "",
+        "expressionType" : null
+      },
+      "useDynamicName" : false,
+      "description" : null,
+      "children" : [ ],
+      "customAttributes" : null,
+      "attachments" : null,
+      "skipNode" : {
+        "dynamic" : false,
+        "value" : false,
+        "expression" : null,
+        "expressionType" : null
+      },
+      "instrumentNode" : {
+        "dynamic" : false,
+        "value" : false,
+        "expression" : null,
+        "expressionType" : null
+      },
+      "continueParentNodeExecutionOnError" : {
+        "dynamic" : false,
+        "value" : false,
+        "expression" : null,
+        "expressionType" : null
+      },
+      "filters" : [ {
+        "field" : {
+          "dynamic" : false,
+          "value" : "name",
+          "expression" : "",
+          "expressionType" : ""
+        },
+        "filter" : {
+          "dynamic" : false,
+          "value" : "Echo",
+          "expression" : "",
+          "expressionType" : ""
+        },
+        "filterType" : "EQUALS"
+      } ],
+      "aggregator" : "AVG",
+      "comparator" : "LOWER_THAN",
+      "expectedValue" : {
+        "dynamic" : false,
+        "value" : 3000,
+        "expression" : null,
+        "expressionType" : null
+      },
+      "id" : "66ced9b0c66055117d1b7ed8"
+    },{
+      "_class" : "BeforeThread",
+      "customFields" : null,
+      "attributes" : {
+        "name" : "BeforeThread"
+      },
+      "dynamicName" : {
+        "dynamic" : false,
+        "value" : "",
+        "expression" : "",
+        "expressionType" : null
+      },
+      "useDynamicName" : false,
+      "description" : null,
+      "children" : [ {
+        "_class" : "Echo",
+        "customFields" : null,
+        "attributes" : {
+          "name" : "Echo"
+        },
+        "dynamicName" : {
+          "dynamic" : false,
+          "value" : "",
+          "expression" : "",
+          "expressionType" : null
+        },
+        "useDynamicName" : false,
+        "description" : null,
+        "children" : [ ],
+        "customAttributes" : null,
+        "attachments" : null,
+        "skipNode" : {
+          "dynamic" : false,
+          "value" : false,
+          "expression" : null,
+          "expressionType" : null
+        },
+        "instrumentNode" : {
+          "dynamic" : false,
+          "value" : false,
+          "expression" : null,
+          "expressionType" : null
+        },
+        "continueParentNodeExecutionOnError" : {
+          "dynamic" : false,
+          "value" : false,
+          "expression" : null,
+          "expressionType" : null
+        },
+        "text" : {
+          "dynamic" : false,
+          "value" : "before thread 1",
+          "expression" : "",
+          "expressionType" : null
+        },
+        "id" : "66cc866c5b5628560a04dba9"
+      } ],
+      "customAttributes" : null,
+      "attachments" : null,
+      "skipNode" : {
+        "dynamic" : false,
+        "value" : false,
+        "expression" : null,
+        "expressionType" : null
+      },
+      "instrumentNode" : {
+        "dynamic" : false,
+        "value" : false,
+        "expression" : null,
+        "expressionType" : null
+      },
+      "continueParentNodeExecutionOnError" : {
+        "dynamic" : false,
+        "value" : false,
+        "expression" : null,
+        "expressionType" : null
+      },
+      "continueOnError" : {
+        "dynamic" : false,
+        "value" : false,
+        "expression" : null,
+        "expressionType" : null
+      },
+      "pacing" : {
+        "dynamic" : false,
+        "value" : null,
+        "expression" : null,
+        "expressionType" : null
+      },
+      "id" : "66cc86655b5628560a04db7e"
+    }, {
+      "_class" : "Sequence",
+      "customFields" : null,
+      "attributes" : {
+        "name" : "Sequence"
+      },
+      "dynamicName" : {
+        "dynamic" : false,
+        "value" : "",
+        "expression" : "",
+        "expressionType" : null
+      },
+      "useDynamicName" : false,
+      "description" : null,
+      "children" : [ {
+        "_class" : "Echo",
+        "customFields" : null,
+        "attributes" : {
+          "name" : "Echo"
+        },
+        "dynamicName" : {
+          "dynamic" : false,
+          "value" : "",
+          "expression" : "",
+          "expressionType" : null
+        },
+        "useDynamicName" : false,
+        "description" : null,
+        "children" : [ ],
+        "customAttributes" : null,
+        "attachments" : null,
+        "skipNode" : {
+          "dynamic" : false,
+          "value" : false,
+          "expression" : null,
+          "expressionType" : null
+        },
+        "instrumentNode" : {
+          "dynamic" : false,
+          "value" : false,
+          "expression" : null,
+          "expressionType" : null
+        },
+        "continueParentNodeExecutionOnError" : {
+          "dynamic" : false,
+          "value" : false,
+          "expression" : null,
+          "expressionType" : null
+        },
+        "text" : {
+          "dynamic" : false,
+          "value" : "in sequence",
+          "expression" : "",
+          "expressionType" : null
+        },
+        "id" : "66cc86aa5b5628560a04df96"
+      }, {
+        "_class" : "BeforeSequence",
+        "customFields" : null,
+        "attributes" : {
+          "name" : "BeforeSequence"
+        },
+        "dynamicName" : {
+          "dynamic" : false,
+          "value" : "",
+          "expression" : "",
+          "expressionType" : null
+        },
+        "useDynamicName" : false,
+        "description" : null,
+        "children" : [ {
+          "_class" : "Echo",
+          "customFields" : null,
+          "attributes" : {
+            "name" : "Echo"
+          },
+          "dynamicName" : {
+            "dynamic" : false,
+            "value" : "",
+            "expression" : "",
+            "expressionType" : null
+          },
+          "useDynamicName" : false,
+          "description" : null,
+          "children" : [ ],
+          "customAttributes" : null,
+          "attachments" : null,
+          "skipNode" : {
+            "dynamic" : false,
+            "value" : false,
+            "expression" : null,
+            "expressionType" : null
+          },
+          "instrumentNode" : {
+            "dynamic" : false,
+            "value" : false,
+            "expression" : null,
+            "expressionType" : null
+          },
+          "continueParentNodeExecutionOnError" : {
+            "dynamic" : false,
+            "value" : false,
+            "expression" : null,
+            "expressionType" : null
+          },
+          "text" : {
+            "dynamic" : false,
+            "value" : "before sequence",
+            "expression" : "",
+            "expressionType" : null
+          },
+          "id" : "66cc86815b5628560a04dcdd"
+        } ],
+        "customAttributes" : null,
+        "attachments" : null,
+        "skipNode" : {
+          "dynamic" : false,
+          "value" : false,
+          "expression" : null,
+          "expressionType" : null
+        },
+        "instrumentNode" : {
+          "dynamic" : false,
+          "value" : false,
+          "expression" : null,
+          "expressionType" : null
+        },
+        "continueParentNodeExecutionOnError" : {
+          "dynamic" : false,
+          "value" : false,
+          "expression" : null,
+          "expressionType" : null
+        },
+        "continueOnError" : {
+          "dynamic" : false,
+          "value" : false,
+          "expression" : null,
+          "expressionType" : null
+        },
+        "pacing" : {
+          "dynamic" : false,
+          "value" : null,
+          "expression" : null,
+          "expressionType" : null
+        },
+        "id" : "66cc86535b5628560a04db13"
+      }, {
+        "_class" : "AfterSequence",
+        "customFields" : null,
+        "attributes" : {
+          "name" : "AfterSequence"
+        },
+        "dynamicName" : {
+          "dynamic" : false,
+          "value" : "",
+          "expression" : "",
+          "expressionType" : null
+        },
+        "useDynamicName" : false,
+        "description" : null,
+        "children" : [ {
+          "_class" : "Echo",
+          "customFields" : null,
+          "attributes" : {
+            "name" : "Echo"
+          },
+          "dynamicName" : {
+            "dynamic" : false,
+            "value" : "",
+            "expression" : "",
+            "expressionType" : null
+          },
+          "useDynamicName" : false,
+          "description" : null,
+          "children" : [ ],
+          "customAttributes" : null,
+          "attachments" : null,
+          "skipNode" : {
+            "dynamic" : false,
+            "value" : false,
+            "expression" : null,
+            "expressionType" : null
+          },
+          "instrumentNode" : {
+            "dynamic" : false,
+            "value" : false,
+            "expression" : null,
+            "expressionType" : null
+          },
+          "continueParentNodeExecutionOnError" : {
+            "dynamic" : false,
+            "value" : false,
+            "expression" : null,
+            "expressionType" : null
+          },
+          "text" : {
+            "dynamic" : false,
+            "value" : "after sequence",
+            "expression" : "",
+            "expressionType" : null
+          },
+          "id" : "66cc86805b5628560a04dcbf"
+        } ],
+        "customAttributes" : null,
+        "attachments" : null,
+        "skipNode" : {
+          "dynamic" : false,
+          "value" : false,
+          "expression" : null,
+          "expressionType" : null
+        },
+        "instrumentNode" : {
+          "dynamic" : false,
+          "value" : false,
+          "expression" : null,
+          "expressionType" : null
+        },
+        "continueParentNodeExecutionOnError" : {
+          "dynamic" : false,
+          "value" : false,
+          "expression" : null,
+          "expressionType" : null
+        },
+        "continueOnError" : {
+          "dynamic" : false,
+          "value" : false,
+          "expression" : null,
+          "expressionType" : null
+        },
+        "pacing" : {
+          "dynamic" : false,
+          "value" : null,
+          "expression" : null,
+          "expressionType" : null
+        },
+        "id" : "66cc86545b5628560a04db20"
+      } ],
+      "customAttributes" : null,
+      "attachments" : null,
+      "skipNode" : {
+        "dynamic" : false,
+        "value" : false,
+        "expression" : null,
+        "expressionType" : null
+      },
+      "instrumentNode" : {
+        "dynamic" : false,
+        "value" : false,
+        "expression" : null,
+        "expressionType" : null
+      },
+      "continueParentNodeExecutionOnError" : {
+        "dynamic" : false,
+        "value" : false,
+        "expression" : null,
+        "expressionType" : null
+      },
+      "continueOnError" : {
+        "dynamic" : false,
+        "value" : false,
+        "expression" : null,
+        "expressionType" : null
+      },
+      "pacing" : {
+        "dynamic" : false,
+        "value" : null,
+        "expression" : null,
+        "expressionType" : null
+      },
+      "id" : "66cc86525b5628560a04db08"
+    }, {
+      "_class" : "AfterThread",
+      "customFields" : null,
+      "attributes" : {
+        "name" : "AfterThread"
+      },
+      "dynamicName" : {
+        "dynamic" : false,
+        "value" : "",
+        "expression" : "",
+        "expressionType" : null
+      },
+      "useDynamicName" : false,
+      "description" : null,
+      "children" : [ {
+        "_class" : "Echo",
+        "customFields" : null,
+        "attributes" : {
+          "name" : "Echo"
+        },
+        "dynamicName" : {
+          "dynamic" : false,
+          "value" : "",
+          "expression" : "",
+          "expressionType" : null
+        },
+        "useDynamicName" : false,
+        "description" : null,
+        "children" : [ ],
+        "customAttributes" : null,
+        "attachments" : null,
+        "skipNode" : {
+          "dynamic" : false,
+          "value" : false,
+          "expression" : null,
+          "expressionType" : null
+        },
+        "instrumentNode" : {
+          "dynamic" : false,
+          "value" : false,
+          "expression" : null,
+          "expressionType" : null
+        },
+        "continueParentNodeExecutionOnError" : {
+          "dynamic" : false,
+          "value" : false,
+          "expression" : null,
+          "expressionType" : null
+        },
+        "text" : {
+          "dynamic" : false,
+          "value" : "after thread",
+          "expression" : "",
+          "expressionType" : null
+        },
+        "id" : "66cc86795b5628560a04dc37"
+      } ],
+      "customAttributes" : null,
+      "attachments" : null,
+      "skipNode" : {
+        "dynamic" : false,
+        "value" : false,
+        "expression" : null,
+        "expressionType" : null
+      },
+      "instrumentNode" : {
+        "dynamic" : false,
+        "value" : false,
+        "expression" : null,
+        "expressionType" : null
+      },
+      "continueParentNodeExecutionOnError" : {
+        "dynamic" : false,
+        "value" : false,
+        "expression" : null,
+        "expressionType" : null
+      },
+      "continueOnError" : {
+        "dynamic" : false,
+        "value" : false,
+        "expression" : null,
+        "expressionType" : null
+      },
+      "pacing" : {
+        "dynamic" : false,
+        "value" : null,
+        "expression" : null,
+        "expressionType" : null
+      },
+      "id" : "66cc86595b5628560a04db2f"
+    }, {
+      "_class" : "BeforeThread",
+      "customFields" : null,
+      "attributes" : {
+        "name" : "BeforeThread"
+      },
+      "dynamicName" : {
+        "dynamic" : false,
+        "value" : "",
+        "expression" : "",
+        "expressionType" : null
+      },
+      "useDynamicName" : false,
+      "description" : null,
+      "children" : [ {
+        "_class" : "Echo",
+        "customFields" : null,
+        "attributes" : {
+          "name" : "Echo"
+        },
+        "dynamicName" : {
+          "dynamic" : false,
+          "value" : "",
+          "expression" : "",
+          "expressionType" : null
+        },
+        "useDynamicName" : false,
+        "description" : null,
+        "children" : [ ],
+        "customAttributes" : null,
+        "attachments" : null,
+        "skipNode" : {
+          "dynamic" : false,
+          "value" : false,
+          "expression" : null,
+          "expressionType" : null
+        },
+        "instrumentNode" : {
+          "dynamic" : false,
+          "value" : false,
+          "expression" : null,
+          "expressionType" : null
+        },
+        "continueParentNodeExecutionOnError" : {
+          "dynamic" : false,
+          "value" : false,
+          "expression" : null,
+          "expressionType" : null
+        },
+        "text" : {
+          "dynamic" : false,
+          "value" : "before thread 2",
+          "expression" : "",
+          "expressionType" : null
+        },
+        "id" : "66cc86755b5628560a04dc06"
+      } ],
+      "customAttributes" : null,
+      "attachments" : null,
+      "skipNode" : {
+        "dynamic" : false,
+        "value" : false,
+        "expression" : null,
+        "expressionType" : null
+      },
+      "instrumentNode" : {
+        "dynamic" : false,
+        "value" : false,
+        "expression" : null,
+        "expressionType" : null
+      },
+      "continueParentNodeExecutionOnError" : {
+        "dynamic" : false,
+        "value" : false,
+        "expression" : null,
+        "expressionType" : null
+      },
+      "continueOnError" : {
+        "dynamic" : false,
+        "value" : false,
+        "expression" : null,
+        "expressionType" : null
+      },
+      "pacing" : {
+        "dynamic" : false,
+        "value" : null,
+        "expression" : null,
+        "expressionType" : null
+      },
+      "id" : "66cc865a5b5628560a04db40"
+    } ],
+    "customAttributes" : null,
+    "attachments" : null,
+    "skipNode" : {
+      "dynamic" : false,
+      "value" : false,
+      "expression" : null,
+      "expressionType" : null
+    },
+    "instrumentNode" : {
+      "dynamic" : false,
+      "value" : false,
+      "expression" : null,
+      "expressionType" : null
+    },
+    "continueParentNodeExecutionOnError" : {
+      "dynamic" : false,
+      "value" : false,
+      "expression" : null,
+      "expressionType" : null
+    },
+    "users" : {
+      "dynamic" : false,
+      "value" : 1,
+      "expression" : null,
+      "expressionType" : null
+    },
+    "iterations" : {
+      "dynamic" : false,
+      "value" : 1,
+      "expression" : null,
+      "expressionType" : null
+    },
+    "rampup" : {
+      "dynamic" : false,
+      "value" : null,
+      "expression" : null,
+      "expressionType" : null
+    },
+    "pack" : {
+      "dynamic" : false,
+      "value" : null,
+      "expression" : null,
+      "expressionType" : null
+    },
+    "pacing" : {
+      "dynamic" : false,
+      "value" : null,
+      "expression" : null,
+      "expressionType" : null
+    },
+    "startOffset" : {
+      "dynamic" : false,
+      "value" : 0,
+      "expression" : null,
+      "expressionType" : null
+    },
+    "maxDuration" : {
+      "dynamic" : false,
+      "value" : 0,
+      "expression" : null,
+      "expressionType" : null
+    },
+    "item" : {
+      "dynamic" : false,
+      "value" : "gcounter",
+      "expression" : null,
+      "expressionType" : null
+    },
+    "localItem" : {
+      "dynamic" : false,
+      "value" : "literationId",
+      "expression" : null,
+      "expressionType" : null
+    },
+    "userItem" : {
+      "dynamic" : false,
+      "value" : "userId",
+      "expression" : null,
+      "expressionType" : null
+    },
+    "id" : "66cc86475b5628560a04dae5"
+  },
+  "functions" : null,
+  "subPlans" : null,
+  "visible" : true,
+  "id" : "66cc86475b5628560a04dae6"
+}

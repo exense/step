@@ -1,14 +1,7 @@
-<testsuite name="Sequence" time="0.03" tests="9" skipped="1" failures="2" errors="2">
-<testcase classname="step.core.artefacts.reports.ReportNode" name="CheckArtefact" time="0.00"></testcase>
-<testcase classname="step.core.artefacts.reports.ReportNode" name="Sequence" time="0.00"></testcase>
-<testcase classname="step.core.artefacts.reports.ReportNode" name="CheckArtefact" time="0.00"><failure type=""></failure>
+<testsuite name="Sequence" time="0.07" timestamp="2024-10-27T15:29:39" hostname="localhost" tests="1" skipped="0" failures="0" errors="1">
+<testcase classname="Sequence" name="Sequence" time="0.03">
+<error message="My error message"/>
 </testcase>
-<testcase classname="step.core.artefacts.reports.ReportNode" name="CheckArtefact" time="0.00"><failure type="">my message</failure>
-</testcase>
-<testcase classname="step.core.artefacts.reports.ReportNode" name="CheckArtefact" time="0.00"><error type=""></error>
-</testcase>
-<testcase classname="step.artefacts.reports.TestCaseReportNode" name="TC - TECH_ERROR with message" time="0.00"><error type="">My error message</error>
-</testcase>
-<testcase classname="step.core.artefacts.reports.ReportNode" name="CheckArtefact" time="0.00"><error type="">No error message was reported but the status of the report node was INTERRUPTED</error>
-</testcase>
+<system-out></system-out>
+<system-err></system-err>
 </testsuite>

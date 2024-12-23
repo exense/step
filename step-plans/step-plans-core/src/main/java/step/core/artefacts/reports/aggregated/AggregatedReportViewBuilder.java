@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class AggregatedReportViewBuilder {
@@ -53,10 +54,12 @@ public class AggregatedReportViewBuilder {
     }
 
     private AggregatedReportView recursivelyBuildAggregatedReportTree(ResolvedPlanNode resolvedPlanNode, AggregatedReportViewRequest request) {
-        List<AggregatedReportView> children = resolvedPlanNodeAccessor.getByParentId(resolvedPlanNode.getId().toString()).map(n -> recursivelyBuildAggregatedReportTree(n, request)).collect(Collectors.toList());
+        List<AggregatedReportView> children = resolvedPlanNodeAccessor.getByParentId(resolvedPlanNode.getId().toString())
+                .map(n -> recursivelyBuildAggregatedReportTree(n, request))
+                .collect(Collectors.toList());
         String artefactHash = resolvedPlanNode.artefactHash;
         Map<String, Long> countByStatus = reportNodesTimeSeries.queryByExecutionIdAndArtefactHash(executionId, artefactHash, request.range);
-        return new AggregatedReportView(resolvedPlanNode.artefact, artefactHash, countByStatus, children);
+        return new AggregatedReportView(resolvedPlanNode.artefact, artefactHash, countByStatus, children, resolvedPlanNode.parentSource);
     }
 
 }

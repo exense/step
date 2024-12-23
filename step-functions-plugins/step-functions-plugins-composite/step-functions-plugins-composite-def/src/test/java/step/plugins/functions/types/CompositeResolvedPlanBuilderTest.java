@@ -1,6 +1,7 @@
 package step.plugins.functions.types;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -94,7 +95,6 @@ public class CompositeResolvedPlanBuilderTest {
         logger.info("----------------------");
         logger.info("Aggregated report tree");
         logger.info("----------------------");
-
         AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(engine.getExecutionEngineContext(), result.getExecutionId());
         AggregatedReportView node = aggregatedReportViewBuilder.buildAggregatedReportView();
         logger.info(node.toString());
@@ -112,7 +112,7 @@ public class CompositeResolvedPlanBuilderTest {
         myFunction.addAttribute(AbstractOrganizableObject.NAME, "My function call");
 
         Plan plan = PlanBuilder.create()
-                .startBlock(FunctionArtefacts.keyword("My function call")).add(BaseArtefacts.check("true"))
+                .startBlock(FunctionArtefacts.keyword("My function call")).withBefore(BaseArtefacts.echo("'test'")).add(BaseArtefacts.check("true"))
                 .endBlock().build();
 
 
@@ -123,11 +123,12 @@ public class CompositeResolvedPlanBuilderTest {
         logger.info("----------------------");
         logger.info("Aggregated report tree");
         logger.info("----------------------");
-
         AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(engine.getExecutionEngineContext(), result.getExecutionId());
         AggregatedReportView node = aggregatedReportViewBuilder.buildAggregatedReportView();
         logger.info(node.toString());
-        assertEquals("CallFunction: 1x\n" +
+        Assert.assertEquals("CallFunction: 1x\n" +
+                " [BEFORE]\n" +
+                "  Echo: 1x\n" +
                 " Check: 1x\n",
                 node.toString());
     }
@@ -139,9 +140,9 @@ public class CompositeResolvedPlanBuilderTest {
 
         Plan plan = PlanBuilder.create()
                 .startBlock(BaseArtefacts.sequence())
-                    .add(BaseArtefacts.set("keywordName","'My function call'"))
-                    .add(FunctionArtefacts.keywordWithDynamicSelection(Map.of("name","keywordName")))
-                    .add(BaseArtefacts.check("true"))
+                .add(BaseArtefacts.set("keywordName","'My function call'"))
+                .add(FunctionArtefacts.keywordWithDynamicSelection(Map.of("name","keywordName")))
+                .add(BaseArtefacts.check("true"))
                 .endBlock().build();
 
 
