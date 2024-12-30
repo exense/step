@@ -60,13 +60,10 @@ public class JUnitReportCreator implements ReportCreator {
                     }
                     logging.logInfo("Unzip the report into " + folderToUnzip, null);
                     FileHelper.unzip(preparedReport, folderToUnzip);
-                    if (!preparedReport.delete()) {
-                        logging.logInfo("File cannot be deleted: " + preparedReport.getAbsolutePath(), null);
-                    }
                     break;
                 case stdout:
                     // create temp folder with unzipped report to read and print the content of the main .xml file
-                    File tempFolderToUnzip = new File(outputFolder, DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss-SSSSSS").format(LocalDateTime.now()));
+                    File tempFolderToUnzip = new File(outputFolder, DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss-SSSSSS").format(LocalDateTime.now()) + "-temp");
                     tempFolderToUnzip.mkdir();
                     FileHelper.unzip(preparedReport, tempFolderToUnzip);
 
@@ -79,13 +76,15 @@ public class JUnitReportCreator implements ReportCreator {
                     }
 
                     FileHelper.deleteFolder(tempFolderToUnzip);
-                    if (!preparedReport.delete()) {
-                        logging.logInfo("File cannot be deleted: " + preparedReport.getAbsolutePath(), null);
-                    }
                     break;
                 default:
                     logging.logError("Unsupported output mode (" + outputMode + " ) for junit report", null);
             }
+        }
+
+        // delete the downloaded zip-file
+        if (!preparedReport.delete()) {
+            logging.logInfo("File cannot be deleted: " + preparedReport.getAbsolutePath(), null);
         }
     }
 
