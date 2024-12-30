@@ -1,7 +1,10 @@
 package step.cli;
 
+import ch.exense.commons.io.FileHelper;
 import org.bson.types.ObjectId;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
@@ -18,7 +21,6 @@ import step.core.execution.model.AutomationPackageExecutionParameters;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionStatus;
-import step.core.plans.PlanFilter;
 import step.core.plans.filters.PlanByExcludedCategoriesFilter;
 import step.core.plans.filters.PlanByIncludedCategoriesFilter;
 import step.core.plans.filters.PlanByIncludedNamesFilter;
@@ -27,7 +29,11 @@ import step.core.repositories.ImportResult;
 
 import java.io.File;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.nio.file.Files;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
@@ -38,6 +44,18 @@ public class AbstractExecuteAutomationPackageToolTest {
     public static final String TEST_INCLUDE_PLANS = "plan1,plan2";
     public static final String TEST_INCLUDE_CATEGORIES = "PerformanceTest,JMterTest";
     public static final String TEST_EXCLUDE_CATEGORIES = "CypressTest,OidcTest";
+
+    @Before
+    public void before(){
+        FileHelper.deleteFolder(getTestReportFolder());
+        getTestReportFolder().mkdir();
+    }
+
+    @After
+    public void after(){
+        FileHelper.deleteFolder(getTestReportFolder());
+        getTestReportFolder().mkdir();
+    }
 
     @Test
     public void testExecuteOk() throws Exception {
@@ -55,6 +73,11 @@ public class AbstractExecuteAutomationPackageToolTest {
         tool.execute();
 
         assertAutomationPackageClientMockCalls(remoteAutomationPackageClientMock);
+
+        File[] storedReports = getTestReportFolder().listFiles((dir, name) -> name.matches(".*-aggregated.txt"));
+        Assert.assertNotNull(storedReports);
+        Assert.assertEquals(1, storedReports.length);
+        Assert.assertEquals("Echo: 1x\n", new String(Files.readAllBytes(storedReports[0].toPath())));
     }
 
     private static List<String> getExecuteAutomationPackageResult(List<Execution> executions) {
@@ -176,7 +199,9 @@ public class AbstractExecuteAutomationPackageToolTest {
                         .setExecutionResultTimeoutS(2)
                         .setWaitForExecution(true)
                         .setEnsureExecutionSuccess(ensureExecutionSuccess)
-                        .setPrintAggregatedReport(true)
+                        .setReportTypes(List.of(AbstractExecuteAutomationPackageTool.ReportType.aggregated))
+                        .setReportOutputDir(getTestReportFolder())
+                        .setReportOutputModes(List.of(AbstractExecuteAutomationPackageTool.ReportOutputMode.stdout, AbstractExecuteAutomationPackageTool.ReportOutputMode.filesystem))
                         .setIncludePlans(TEST_INCLUDE_PLANS)
                         .setExcludePlans(null)
                         .setIncludeCategories(TEST_INCLUDE_CATEGORIES)
@@ -185,6 +210,10 @@ public class AbstractExecuteAutomationPackageToolTest {
                         .setNumberOfThreads(0),
                 executionManagerMock, remoteAutomationPackageClientMock
         );
+    }
+
+    private static File getTestReportFolder() {
+        return new File("src/test/resources/testReports");
     }
 
     private static Map<String, String> createTestCustomParams() {

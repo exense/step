@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 import step.client.AbstractRemoteClient;
 import step.client.credentials.ControllerCredentials;
 
-public abstract class AbstractCliTool {
+public abstract class AbstractCliTool implements CliToolLogging {
 
     private static final Logger log = LoggerFactory.getLogger(AbstractCliTool.class);
 
@@ -51,7 +51,8 @@ public abstract class AbstractCliTool {
         return new StepCliExecutionException(errorText);
     }
 
-    protected void logError(String errorText, Throwable e) {
+    @Override
+    public void logError(String errorText, Throwable e) {
         if (e != null) {
             log.error(errorText, e);
         } else {
@@ -59,7 +60,8 @@ public abstract class AbstractCliTool {
         }
     }
 
-    protected void logInfo(String infoText, Throwable e) {
+    @Override
+    public void logInfo(String infoText, Throwable e) {
         if (e != null) {
             log.info(infoText, e);
         } else {

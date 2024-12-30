@@ -319,9 +319,9 @@ public class StepConsole implements Callable<Integer> {
                     description = "Whether to wait for execution completeness")
             protected boolean async;
 
-            @Option(names = {"--printAggregatedReport"}, defaultValue = "true", showDefaultValue = CommandLine.Help.Visibility.ALWAYS,
-                    description = "Whether to print the aggregated report tree")
-            protected boolean printAggregatedReport;
+            @Option(names = {"--reportOutputMode"}, defaultValue = "filesystem", showDefaultValue = CommandLine.Help.Visibility.ALWAYS,
+                    description = "Where to store or display prepared reports")
+            protected List<AbstractExecuteAutomationPackageTool.ReportOutputMode> reportOutputMode;
 
             @Option(names = {"--includePlans"}, description = "The comma separated list of plans to be executed")
             protected String includePlans;
@@ -344,7 +344,7 @@ public class StepConsole implements Callable<Integer> {
             @Option(names = {"--numberOfThreads"}, description = "Max number of threads to be used for execution in case of wrapped test set")
             protected Integer numberOfThreads;
 
-            @Option(names = {"--reportType"}, description = "The type of execution report to be generated and stored locally. Supported report types: junit")
+            @Option(names = {"--reportType"}, description = "The type of execution report to be generated and stored locally. Supported report types: junit, aggregated")
             protected List<AbstractExecuteAutomationPackageTool.ReportType> reportType;
 
             @Option(names = {"--reportDir"}, description = "The local folder to store generated execution reports", defaultValue = "reports")
@@ -440,7 +440,7 @@ public class StepConsole implements Callable<Integer> {
                                 .setNumberOfThreads(numberOfThreads)
                                 .setReportTypes(reportType)
                                 .setReportOutputDir(reportDir)
-                                .setPrintAggregatedReport(printAggregatedReport)
+                                .setReportOutputModes(reportOutputMode)
                                 .setMavenArtifactIdentifier(getMavenArtifact(apFile))
                 );
             }

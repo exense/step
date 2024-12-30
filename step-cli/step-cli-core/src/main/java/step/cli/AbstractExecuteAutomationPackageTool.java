@@ -18,17 +18,17 @@
  ******************************************************************************/
 package step.cli;
 
-import ch.exense.commons.io.FileHelper;
-import com.google.common.io.Files;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.automation.packages.client.AutomationPackageClientException;
 import step.automation.packages.client.RemoteAutomationPackageClientImpl;
+import step.cli.reports.AggregatedReportCreator;
+import step.cli.reports.JUnitReportCreator;
+import step.cli.reports.ReportCreator;
 import step.client.AbstractRemoteClient;
 import step.client.credentials.ControllerCredentials;
 import step.client.executions.RemoteExecutionManager;
 import step.core.artefacts.reports.ReportNodeStatus;
-import step.core.artefacts.reports.aggregated.AggregatedReportView;
 import step.core.execution.model.AutomationPackageExecutionParameters;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionMode;
@@ -36,11 +36,12 @@ import step.core.plans.PlanFilter;
 import step.core.plans.filters.*;
 import step.core.plans.runner.PlanRunnerResult;
 import step.core.repositories.RepositoryObjectReference;
-import step.reports.CustomReportType;
 import step.repositories.ArtifactRepositoryConstants;
 
-import java.io.*;
-import java.nio.file.Path;
+import java.io.File;
+import java.io.IOException;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
@@ -80,21 +81,29 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
             if (!params.getWaitForExecution()) {
                 throw new StepCliExecutionException("The execution report can only been prepared in synchronous mode");
             }
-            if (params.getReportOutputDir() == null) {
-                outputFolder = new File("");
-            } else {
-                outputFolder = params.getReportOutputDir();
-            }
-            if (outputFolder.exists()) {
-                if (!outputFolder.isDirectory()) {
-                    throw new StepCliExecutionException("Report cannot be generated. Invalid folder: " + outputFolder.getAbsolutePath());
+
+            if (params.getReportOutputModes() != null && !params.getReportOutputModes().isEmpty()) {
+                // even if the 'filesystem' output mode is not defined, we create some output folder to store (temporarily) the report
+                // because otherwise we will have no location to store the junit report before we print it to console in 'stdout' mode
+                if (params.getReportOutputDir() == null) {
+                    outputFolder = new File(new File("").getAbsolutePath());
+                } else {
+                    outputFolder = params.getReportOutputDir();
+                }
+                if (outputFolder.exists()) {
+                    if (!outputFolder.isDirectory()) {
+                        throw new StepCliExecutionException("Report cannot be generated. Invalid folder: " + outputFolder.getAbsolutePath());
+                    }
+                } else {
+                    boolean dirCreated = outputFolder.mkdir();
+                    if (!dirCreated) {
+                        throw new StepCliExecutionException("Report cannot be generated. Folder hasn't been created: " + outputFolder.getAbsolutePath());
+                    }
                 }
             } else {
-                boolean dirCreated = outputFolder.mkdir();
-                if (!dirCreated) {
-                    throw new StepCliExecutionException("Report cannot be generated. Folder hasn't been created: " + outputFolder.getAbsolutePath());
-                }
+                throw new StepCliExecutionException("Report cannot be prepared. There is no report output mode defined. Supported modes: " + Arrays.toString(ReportOutputMode.values()));
             }
+
         }
 
         try (RemoteAutomationPackageClientImpl automationPackageClient = createRemoteAutomationPackageClient();
@@ -135,50 +144,19 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
                     if (params.getReportTypes() != null && !executionIds.isEmpty()) {
                         try {
                             for (ReportType reportType : params.getReportTypes()) {
-                                CustomReportType serverReportType = null;
-                                switch (reportType){
+                                ReportCreator reportCreator;
+
+                                switch (reportType) {
                                     case junit:
-                                        serverReportType = CustomReportType.JUNITZIP;
+                                        reportCreator = new JUnitReportCreator(remoteExecutionManager, outputFolder);
+                                        break;
+                                    case aggregated:
+                                        reportCreator = new AggregatedReportCreator(remoteExecutionManager, outputFolder);
                                         break;
                                     default:
                                         throw new UnsupportedOperationException("Unsupported report type: " + reportType);
                                 }
-
-                                // only for zipped reports we want to include attachments
-                                Boolean includeAttachments = serverReportType == CustomReportType.JUNITZIP;
-
-                                RemoteExecutionManager.Report customReport;
-                                File outputFile;
-
-                                Path currentFolder = new File("").toPath().toAbsolutePath();
-                                Path relativePathToOutputDir = currentFolder.relativize(params.getReportOutputDir().toPath().toAbsolutePath());
-                                // report output directory is sent as a root folder for attachments
-                                if (executionIds.size() > 1) {
-                                    customReport = remoteExecutionManager.getCustomMultiReport(executionIds, serverReportType, includeAttachments, relativePathToOutputDir.toFile().getPath());
-                                    outputFile = new File(outputFolder, customReport.getFileName());
-                                } else {
-                                    customReport = remoteExecutionManager.getCustomReport(executionIds.get(0), serverReportType, includeAttachments, relativePathToOutputDir.toFile().getPath());
-                                    outputFile = new File(outputFolder, customReport.getFileName());
-                                }
-                                logInfo("Saving execution report (" + params.getReportTypes() + ") into " + outputFile.getAbsolutePath(), null);
-
-                                try (FileOutputStream fos = new FileOutputStream(outputFile)) {
-                                    fos.write(customReport.getContent());
-                                }
-
-                                // automatically unzip file
-                                if (serverReportType == CustomReportType.JUNITZIP) {
-                                    File folderToUnzip = new File(outputFolder, Files.getNameWithoutExtension(outputFile.getName()));
-                                    if (!folderToUnzip.exists()) {
-                                        folderToUnzip.mkdir();
-                                    }
-                                    logInfo("Unzip the report into " + folderToUnzip, null);
-                                    FileHelper.unzip(outputFile, folderToUnzip);
-                                    boolean deleted = outputFile.delete();
-                                    if (!deleted) {
-                                        logInfo("File cannot be deleted: " + outputFile.getAbsolutePath(), null);
-                                    }
-                                }
+                                reportCreator.createReport(executionIds, params.getReportOutputModes(), this);
                             }
 
                         } catch (Exception ex) {
@@ -226,11 +204,6 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
                     }
                     logError(errorMessage, null);
                 } else {
-                    //for now print aggregated report
-                    if (params.getPrintAggregatedReport()) {
-                        AggregatedReportView aggregatedReportView = remoteExecutionManager.getAggregatedReportView(endedExecution.getId().toString());
-                        logInfo("Aggregated report:\n" + aggregatedReportView.toString(), null);
-                    }
                     if (!isStatusSuccess(endedExecution)) {
                         executionFailureCount++;
                         String errorSummary = remoteExecutionManager.getFuture(id).getErrorSummary();
@@ -355,7 +328,7 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
         private List<ReportType> reportTypes;
         private File reportOutputDir;
 
-        private boolean printAggregatedReport = true;
+        private List<ReportOutputMode> reportOutputModes = List.of(ReportOutputMode.filesystem);
 
         public String getStepProjectName() {
             return stepProjectName;
@@ -421,8 +394,8 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
             return reportOutputDir;
         }
 
-        public boolean getPrintAggregatedReport() {
-            return printAggregatedReport;
+        public List<ReportOutputMode> getReportOutputModes() {
+            return reportOutputModes;
         }
 
         public Params setStepProjectName(String stepProjectName) {
@@ -505,13 +478,19 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
             return this;
         }
 
-        public Params setPrintAggregatedReport(boolean printAggregatedReport) {
-            this.printAggregatedReport = printAggregatedReport;
+        public Params setReportOutputModes(List<ReportOutputMode> reportOutputModes) {
+            this.reportOutputModes = reportOutputModes;
             return this;
         }
     }
 
     public enum ReportType {
-        junit
+        junit,
+        aggregated
+    }
+
+    public enum ReportOutputMode {
+        filesystem,
+        stdout
     }
 }

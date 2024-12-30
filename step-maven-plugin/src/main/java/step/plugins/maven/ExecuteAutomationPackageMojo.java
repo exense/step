@@ -57,8 +57,8 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
     private Boolean waitForExecution;
     @Parameter(property = "step-execute-auto-packages.ensure-exec-success", defaultValue = "true")
     private Boolean ensureExecutionSuccess;
-    @Parameter(property = "step-execute-auto-packages.print-aggregated-report", defaultValue = "true")
-    private boolean printAggregatedReport = true;
+    @Parameter(property = "step-execute-auto-packages.report-output-mode", defaultValue = "filesystem")
+    private List<AbstractExecuteAutomationPackageTool.ReportOutputMode> reportOutputModes;
 
     @Parameter(property = "step-execute-auto-packages.include-plans")
     private String includePlans;
@@ -110,7 +110,7 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
                     .setExecutionResultTimeoutS(getExecutionResultTimeoutS())
                     .setWaitForExecution(getWaitForExecution())
                     .setEnsureExecutionSuccess(getEnsureExecutionSuccess())
-                    .setPrintAggregatedReport(getPrintAggregatedReport())
+                    .setReportOutputModes(getReportOutputModes())
                     .setIncludePlans(getIncludePlans())
                     .setExcludePlans(getExcludePlans())
                     .setIncludeCategories(getIncludeCategories())
@@ -246,12 +246,12 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
         this.ensureExecutionSuccess = ensureExecutionSuccess;
     }
 
-    public boolean getPrintAggregatedReport() {
-        return printAggregatedReport;
+    public List<AbstractExecuteAutomationPackageTool.ReportOutputMode> getReportOutputModes() {
+        return reportOutputModes;
     }
 
-    public void setPrintAggregatedReport(boolean printAggregatedReport) {
-        this.printAggregatedReport = printAggregatedReport;
+    public void setReportOutputModes(List<AbstractExecuteAutomationPackageTool.ReportOutputMode> reportOutputModes) {
+        this.reportOutputModes = reportOutputModes;
     }
 
     public String getIncludePlans() {
