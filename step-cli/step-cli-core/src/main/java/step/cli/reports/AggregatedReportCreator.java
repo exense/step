@@ -61,7 +61,7 @@ public class AggregatedReportCreator implements ReportCreator {
                         } catch (IOException e) {
                             throw new StepCliExecutionException("Unable to prepare the aggregated report file", e);
                         }
-                        logging.logInfo("The aggregated report has been saved in " + fileName, null);
+                        logging.logInfo("The aggregated report has been saved in " + reportFile.getAbsolutePath(), null);
                         break;
                     default:
                         logging.logError("Unsupported output mode (" + outputMode + " ) for aggregated report report", null);
