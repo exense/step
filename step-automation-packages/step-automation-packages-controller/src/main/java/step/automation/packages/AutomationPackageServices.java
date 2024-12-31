@@ -27,11 +27,11 @@ import org.bson.types.ObjectId;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
-import step.core.execution.model.AutomationPackageExecutionParameters;
 import step.automation.packages.execution.AutomationPackageExecutor;
 import step.core.access.User;
 import step.core.deployment.AbstractStepServices;
 import step.core.deployment.ControllerServiceException;
+import step.core.execution.model.AutomationPackageExecutionParameters;
 import step.framework.server.security.Secured;
 
 import java.io.InputStream;
@@ -123,6 +123,35 @@ public class AutomationPackageServices extends AbstractStepServices {
             return automationPackageExecutor.runInIsolation(
                     automationPackageInputStream,
                     fileDetail == null ? null : fileDetail.getFileName(),
+                    executionParameters,
+                    getObjectEnricher(),
+                    getObjectPredicate()
+            );
+        } catch (AutomationPackageManagerException e) {
+            throw new ControllerServiceException(e.getMessage());
+        }
+    }
+
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/execute/{id}")
+    @Secured(right = "automation-package-execute")
+    public List<String> executeDeployedAutomationPackage(@PathParam("id") String automationPackageId,
+                                                         AutomationPackageExecutionParameters executionParameters) {
+        // in executionParameters we can define the user 'onBehalfOf'
+        // if this user is not defined, the user from session is taken
+        checkRightsOnBehalfOf("automation-package-execute", executionParameters.getUserID());
+        if (executionParameters.getUserID() == null) {
+            User user = getSession().getUser();
+            if (user != null) {
+                executionParameters.setUserID(user.getUsername());
+            }
+        }
+
+        try {
+            return automationPackageExecutor.runDeployedAutomationPackage(
+                    new ObjectId(automationPackageId),
                     executionParameters,
                     getObjectEnricher(),
                     getObjectPredicate()
