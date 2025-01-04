@@ -32,6 +32,7 @@ import step.core.access.User;
 import step.core.deployment.AbstractStepServices;
 import step.core.deployment.ControllerServiceException;
 import step.core.execution.model.AutomationPackageExecutionParameters;
+import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
 import step.framework.server.security.Secured;
 
 import java.io.InputStream;
@@ -57,7 +58,7 @@ public class AutomationPackageServices extends AbstractStepServices {
     @Secured(right = "automation-package-read")
     public AutomationPackage getAutomationPackage(@PathParam("id") String id) {
         try {
-            return automationPackageManager.getAutomatonPackageById(new ObjectId(id));
+            return automationPackageManager.getAutomatonPackageById(new ObjectId(id), getObjectPredicate());
         } catch (Exception e) {
             throw new ControllerServiceException(e.getMessage());
         }
@@ -100,13 +101,13 @@ public class AutomationPackageServices extends AbstractStepServices {
     public List<String> executeAutomationPackage(@FormDataParam("file") InputStream automationPackageInputStream,
                                                  @FormDataParam("file") FormDataContentDisposition fileDetail,
                                                  @FormDataParam("executionParams") FormDataBodyPart executionParamsBodyPart) {
-        AutomationPackageExecutionParameters executionParameters;
+        IsolatedAutomationPackageExecutionParameters executionParameters;
         if (executionParamsBodyPart != null) {
             // The workaround to parse execution parameters as application/json even if the Content-Type for this part is not explicitly set in request
             executionParamsBodyPart.setMediaType(MediaType.APPLICATION_JSON_TYPE);
-            executionParameters = executionParamsBodyPart.getValueAs(AutomationPackageExecutionParameters.class);
+            executionParameters = executionParamsBodyPart.getValueAs(IsolatedAutomationPackageExecutionParameters.class);
         } else {
-            executionParameters = new AutomationPackageExecutionParameters();
+            executionParameters = new IsolatedAutomationPackageExecutionParameters();
         }
 
         // in executionParameters we can define the user 'onBehalfOf'

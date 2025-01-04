@@ -32,11 +32,15 @@ import step.core.repositories.ImportResult;
 import step.core.repositories.TestSetStatusOverview;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.type.FunctionTypeRegistry;
+import step.repositories.ArtifactRepositoryConstants;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * The repository for artifacts already stored (deployed) in Step DB as automation packages
+ */
 public class LocalAutomationPackageRepository extends RepositoryWithAutomationPackageSupport {
 
     public LocalAutomationPackageRepository(AutomationPackageManager manager, FunctionTypeRegistry functionTypeRegistry, FunctionAccessor functionAccessor) {
@@ -94,6 +98,7 @@ public class LocalAutomationPackageRepository extends RepositoryWithAutomationPa
                                                           AutomationPackageManager apManager,
                                                           AutomationPackage automationPackage,
                                                           boolean fakeWrappedPlan) {
+        // if the plan is wrapped, we have to store it (temporarily) in plan accessor
         if (fakeWrappedPlan) {
             enrichPlan(context, plan);
 
@@ -110,5 +115,9 @@ public class LocalAutomationPackageRepository extends RepositoryWithAutomationPa
         importResult.setSuccessful(true);
         importResult.setPlanId(plan.getId().toString());
         return importResult;
+    }
+
+    protected boolean isWrapPlansIntoTestSet(Map<String, String> repositoryParameters) {
+        return Boolean.parseBoolean(repositoryParameters.getOrDefault(ArtifactRepositoryConstants.PARAM_WRAP_PLANS_INTO_TEST_SET, "true"));
     }
 }

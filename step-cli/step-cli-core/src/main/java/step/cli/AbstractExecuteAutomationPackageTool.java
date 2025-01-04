@@ -29,7 +29,7 @@ import step.client.credentials.ControllerCredentials;
 import step.client.executions.RemoteExecutionManager;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.artefacts.reports.aggregated.AggregatedReportView;
-import step.core.execution.model.AutomationPackageExecutionParameters;
+import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionMode;
 import step.core.plans.PlanFilter;
@@ -106,7 +106,7 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
                 automationPackageFile = getAutomationPackageFile();
             }
 
-            AutomationPackageExecutionParameters executionParameters = prepareExecutionParameters();
+            IsolatedAutomationPackageExecutionParameters executionParameters = prepareExecutionParameters();
 
             List<String> executionIds;
             try {
@@ -291,8 +291,8 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
         addProjectHeaderToRemoteClient(params.getStepProjectName(), remoteClient);
     }
 
-    protected AutomationPackageExecutionParameters prepareExecutionParameters() throws StepCliExecutionException {
-        AutomationPackageExecutionParameters executionParameters = new AutomationPackageExecutionParameters();
+    protected IsolatedAutomationPackageExecutionParameters prepareExecutionParameters() throws StepCliExecutionException {
+        IsolatedAutomationPackageExecutionParameters executionParameters = new IsolatedAutomationPackageExecutionParameters();
         executionParameters.setMode(ExecutionMode.RUN);
         executionParameters.setCustomParameters(params.getExecutionParameters());
         executionParameters.setUserID(params.getUserId());

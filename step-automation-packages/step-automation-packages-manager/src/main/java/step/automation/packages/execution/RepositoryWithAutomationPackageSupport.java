@@ -31,7 +31,7 @@ import step.core.accessors.Accessor;
 import step.core.accessors.LayeredAccessor;
 import step.core.artefacts.AbstractArtefact;
 import step.core.execution.ExecutionContext;
-import step.core.execution.model.AutomationPackageExecutionParameters;
+import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.Plan;
@@ -224,7 +224,7 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         return plan.getAttributes().get(AbstractOrganizableObject.NAME);
     }
 
-    public AutomationPackageFile getApFileForExecution(InputStream apInputStream, String inputStreamFileName, AutomationPackageExecutionParameters parameters, ObjectId contextId) {
+    public AutomationPackageFile getApFileForExecution(InputStream apInputStream, String inputStreamFileName, IsolatedAutomationPackageExecutionParameters parameters, ObjectId contextId) {
         // for files provided by artifact repository we don't store the file as resource, but just load the file from this repository
         RepositoryObjectReference repositoryObject = parameters.getOriginalRepositoryObject();
         if (repositoryObject == null) {
