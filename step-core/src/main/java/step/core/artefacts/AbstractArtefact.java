@@ -60,7 +60,10 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
 	private DynamicValue<Boolean> instrumentNode = new DynamicValue<>(false);
 	private DynamicValue<Boolean> continueParentNodeExecutionOnError = new DynamicValue<>(false);
 	private boolean isWorkArtefact = false;
-	
+
+	private ChildrenBlock before;
+	private ChildrenBlock after;
+
 	public AbstractArtefact() {
 		super();
 		Map<String, String> defaultAttributes = new HashMap<>();
@@ -137,24 +140,6 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
 
 	@JsonIgnore
 	public boolean isCreateSkeleton() {
-		return false;
-	}
-	
-	/**
-	 * Property artefacts are special artefacts that are directly attached to their
-	 * parent artefact. Property artefacts are not subject to transclusion and
-	 * remain attached to their parent. They are executed in 2 phases.
-	 * <li>During the first phase the method ArtafactHandler.initProperties is
-	 * called for each property artefacts before their parent artefact is
-	 * executed.</li>
-	 * <li>The second phase starts after execution of the parent artefact. During
-	 * the second phase all the property artefact are executed
-	 * (ArtafactHandler.execute_)</li>
-	 * 
-	 * @return true if this artefact is a property artefact
-	 */
-	@JsonIgnore
-	public boolean isPropertyArtefact() {
 		return false;
 	}
 
@@ -249,6 +234,24 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
 
 	public void setWorkArtefact(boolean workArtefact) {
 		isWorkArtefact = workArtefact;
+	}
+
+	@EntityReference(type= EntityManager.recursive)
+	public ChildrenBlock getBefore() {
+		return before;
+	}
+
+	public void setBefore(ChildrenBlock before) {
+		this.before = before;
+	}
+
+	@EntityReference(type= EntityManager.recursive)
+	public ChildrenBlock getAfter() {
+		return after;
+	}
+
+	public void setAfter(ChildrenBlock after) {
+		this.after = after;
 	}
 
 	@Override

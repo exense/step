@@ -16,12 +16,25 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plans.parser.yaml;
+package step.core.yaml.model;
 
-import step.core.Version;
+/**
+ * The wrapper over {@link AbstractYamlArtefact} used for serialization/deserialization.
+ * The representation in yaml looks like:
+ */
+public class NamedYamlArtefact {
 
-public class YamlPlanVersions {
+    private AbstractYamlArtefact<?> yamlArtefact;
 
-    public static final Version ACTUAL_VERSION = new Version("1.0.0");
-    public static final String ACTUAL_JSON_SCHEMA_PATH = "step/plans/parser/yaml/step-yaml-plan-schema-os-1.0.json";
+    public NamedYamlArtefact(AbstractYamlArtefact<?> yamlArtefact) {
+        this.yamlArtefact = yamlArtefact;
+    }
+
+    public AbstractYamlArtefact<?> getYamlArtefact() {
+        return yamlArtefact;
+    }
+
+    public void setYamlArtefact(AbstractYamlArtefact<?> yamlArtefact) {
+        this.yamlArtefact = yamlArtefact;
+    }
 }

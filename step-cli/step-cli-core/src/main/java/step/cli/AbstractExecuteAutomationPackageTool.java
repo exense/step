@@ -28,6 +28,7 @@ import step.client.AbstractRemoteClient;
 import step.client.credentials.ControllerCredentials;
 import step.client.executions.RemoteExecutionManager;
 import step.core.artefacts.reports.ReportNodeStatus;
+import step.core.artefacts.reports.aggregated.AggregatedReportView;
 import step.core.execution.model.AutomationPackageExecutionParameters;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionMode;
@@ -224,12 +225,19 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
                         errorMessage += ": " + String.join(";", errors);
                     }
                     logError(errorMessage, null);
-                } else if (!isStatusSuccess(endedExecution)) {
-                    executionFailureCount++;
-                    String errorSummary = remoteExecutionManager.getFuture(id).getErrorSummary();
-                    logError("Execution " + executionToString(id, endedExecution) + " failed. Result status was " + endedExecution.getResult() + ". Error summary: " + errorSummary, null);
                 } else {
-                    logInfo("Execution " + executionToString(id, endedExecution) + " succeeded. Result status was " + endedExecution.getResult(), null);
+                    //for now print aggregated report
+                    if (params.getPrintAggregatedReport()) {
+                        AggregatedReportView aggregatedReportView = remoteExecutionManager.getAggregatedReportView(endedExecution.getId().toString());
+                        logInfo("Aggregated report:\n" + aggregatedReportView.toString(), null);
+                    }
+                    if (!isStatusSuccess(endedExecution)) {
+                        executionFailureCount++;
+                        String errorSummary = remoteExecutionManager.getFuture(id).getErrorSummary();
+                        logError("Execution " + executionToString(id, endedExecution) + " failed. Result status was " + endedExecution.getResult() + ". Error summary: " + errorSummary, null);
+                    } else {
+                        logInfo("Execution " + executionToString(id, endedExecution) + " succeeded. Result status was " + endedExecution.getResult(), null);
+                    }
                 }
             }
             if (executionFailureCount > 0 && params.getEnsureExecutionSuccess()) {
@@ -347,6 +355,8 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
         private List<ReportType> reportTypes;
         private File reportOutputDir;
 
+        private boolean printAggregatedReport = true;
+
         public String getStepProjectName() {
             return stepProjectName;
         }
@@ -409,6 +419,10 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
 
         public File getReportOutputDir() {
             return reportOutputDir;
+        }
+
+        public boolean getPrintAggregatedReport() {
+            return printAggregatedReport;
         }
 
         public Params setStepProjectName(String stepProjectName) {
@@ -488,6 +502,11 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
 
         public Params setReportOutputDir(File reportOutputDir) {
             this.reportOutputDir = reportOutputDir;
+            return this;
+        }
+
+        public Params setPrintAggregatedReport(boolean printAggregatedReport) {
+            this.printAggregatedReport = printAggregatedReport;
             return this;
         }
     }

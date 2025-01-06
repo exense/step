@@ -5,7 +5,7 @@ import java.util.function.Predicate;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.artefacts.handlers.CancellableSleep;
+import step.core.artefacts.handlers.CancellableSleep;
 import step.core.execution.ExecutionContext;
 
 public class Pacer {

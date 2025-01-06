@@ -18,12 +18,12 @@
  ******************************************************************************/
 package step.plans.parser.yaml;
 
+import step.core.yaml.model.NamedYamlArtefact;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import step.core.plans.agents.configuration.AgentProvisioningConfigurationDeserializer;
 import step.core.plans.agents.configuration.AgentProvisioningConfigurationSerializer;
 import step.core.plans.agents.configuration.AgentProvisioningConfiguration;
-import step.plans.parser.yaml.model.NamedYamlArtefact;
 
 import java.util.List;
 

@@ -22,7 +22,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
-import step.plans.parser.yaml.YamlPlanVersions;
+import step.plans.parser.yaml.model.YamlPlanVersions;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -32,7 +32,7 @@ import java.io.IOException;
  * The tool to generate a json schema for Yaml plans. To run the tool you need to specify the output file (full path)
  * for generated json schema as a command line argument.
  * For example:
- * > java step.plans.parser.yaml.schema.YamlPlanSchemaGenerationTool C:\\temp\\step-yaml-plan-schema-os-1.0.json
+ * > java step.plans.parser.yaml.schema.YamlPlanSchemaGenerationTool C:\\temp\\step-yaml-plan-schema-os-1.1.0.json
  */
 public class YamlPlanSchemaGenerationTool {
 

@@ -1,0 +1,104 @@
+---
+version: "1.0.0"
+name: "BeforeAfterOldVersion"
+root:
+  threadGroup:
+    nodeName: "BeforeAfter"
+    skipNode: false
+    instrumentNode: false
+    continueParentNodeExecutionOnError: false
+    children:
+      - beforeThread:
+          skipNode: false
+          instrumentNode: false
+          continueParentNodeExecutionOnError: false
+          children:
+            - set:
+                skipNode: false
+                instrumentNode: false
+                continueParentNodeExecutionOnError: false
+                key: "var"
+                value: "value"
+            - echo:
+                skipNode: false
+                instrumentNode: false
+                continueParentNodeExecutionOnError: false
+                text:
+                  expression: "var"
+          continueOnError: false
+      - afterThread:
+          skipNode: false
+          instrumentNode: false
+          continueParentNodeExecutionOnError: false
+          children:
+            - echo:
+                skipNode: false
+                instrumentNode: false
+                continueParentNodeExecutionOnError: false
+                text:
+                  expression: "var"
+          continueOnError: false
+      - sequence:
+          skipNode: false
+          instrumentNode: false
+          continueParentNodeExecutionOnError: false
+          children:
+            - echo:
+                skipNode: false
+                instrumentNode: false
+                continueParentNodeExecutionOnError: false
+                text:
+                  expression: "var"
+            - beforeSequence:
+                skipNode: false
+                instrumentNode: false
+                continueParentNodeExecutionOnError: false
+                children:
+                  - echo:
+                      skipNode: false
+                      instrumentNode: false
+                      continueParentNodeExecutionOnError: false
+                      text:
+                        expression: "var"
+                continueOnError: false
+            - afterSequence:
+                skipNode: false
+                instrumentNode: false
+                continueParentNodeExecutionOnError: false
+                children:
+                  - echo:
+                      skipNode: false
+                      instrumentNode: false
+                      continueParentNodeExecutionOnError: false
+                      text:
+                        expression: "var2"
+                continueOnError: false
+          continueOnError: false
+      - beforeThread:
+          skipNode: false
+          instrumentNode: false
+          continueParentNodeExecutionOnError: false
+          children:
+            - set:
+                skipNode: false
+                instrumentNode: false
+                continueParentNodeExecutionOnError: false
+                key: "var2"
+                value: "value2"
+            - echo:
+                skipNode: false
+                instrumentNode: false
+                continueParentNodeExecutionOnError: false
+                text:
+                  expression: "var2"
+          continueOnError: false
+      - performanceAssert:
+          measurementName: simpleTestKeyword
+          expectedValue: 10000
+    users: 1
+    iterations: 1
+    startOffset: 0
+    maxDuration: 0
+    item: "gcounter"
+    localItem: "literationId"
+    userItem: "userId"

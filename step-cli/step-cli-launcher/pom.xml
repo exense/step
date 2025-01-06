@@ -38,6 +38,10 @@
             <version>4.7.6</version>
         </dependency>
         <dependency>
+            <groupId>ch.exense.commons</groupId>
+            <artifactId>exense-basic-commons</artifactId>
+        </dependency>
+        <dependency>
             <groupId>ch.exense.step</groupId>
             <artifactId>step-cli-core</artifactId>
             <version>${project.version}</version>

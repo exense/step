@@ -21,6 +21,7 @@ package step.artefacts.handlers;
 import step.artefacts.IfBlock;
 import step.artefacts.reports.IfBlockReportNode;
 import step.core.artefacts.handlers.ArtefactHandler;
+import step.core.artefacts.handlers.SequentialArtefactScheduler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 

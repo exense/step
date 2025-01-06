@@ -21,7 +21,7 @@ package step.artefacts.automation;
 import step.artefacts.TokenSelector;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.YamlFieldCustomCopy;
-import step.plans.parser.yaml.model.AbstractYamlArtefact;
+import step.core.yaml.model.AbstractYamlArtefact;
 
 public class YamlTokenSelector<T extends TokenSelector> extends AbstractYamlArtefact<T> {
 

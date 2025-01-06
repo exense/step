@@ -20,7 +20,7 @@ package step.artefacts.automation;
 
 import step.artefacts.Sequence;
 import step.core.dynamicbeans.DynamicValue;
-import step.plans.parser.yaml.model.AbstractYamlArtefact;
+import step.core.yaml.model.AbstractYamlArtefact;
 
 public class YamlSequence extends AbstractYamlArtefact<Sequence> {
 

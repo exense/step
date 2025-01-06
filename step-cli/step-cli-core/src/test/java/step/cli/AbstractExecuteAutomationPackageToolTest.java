@@ -5,12 +5,15 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
+import step.artefacts.Echo;
 import step.automation.packages.client.AutomationPackageClientException;
 import step.automation.packages.client.RemoteAutomationPackageClientImpl;
 import step.client.executions.RemoteExecutionFuture;
 import step.client.executions.RemoteExecutionManager;
 import step.controller.multitenancy.Tenant;
+import step.core.artefacts.reports.ParentSource;
 import step.core.artefacts.reports.ReportNodeStatus;
+import step.core.artefacts.reports.aggregated.AggregatedReportView;
 import step.core.execution.model.AutomationPackageExecutionParameters;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionMode;
@@ -156,6 +159,7 @@ public class AbstractExecuteAutomationPackageToolTest {
         RemoteExecutionFuture futureMock = Mockito.mock(RemoteExecutionFuture.class);
         Mockito.when(futureMock.getErrorSummary()).thenReturn("Error summary...");
         Mockito.when((remoteExecutionManagerMock.getFuture(Mockito.anyString()))).thenReturn(futureMock);
+        Mockito.when(remoteExecutionManagerMock.getAggregatedReportView(Mockito.anyString())).thenReturn(new AggregatedReportView(new Echo(), "hash", Map.of("PASSED",1L), List.of(), ParentSource.MAIN));
         return remoteExecutionManagerMock;
     }
 
@@ -172,6 +176,7 @@ public class AbstractExecuteAutomationPackageToolTest {
                         .setExecutionResultTimeoutS(2)
                         .setWaitForExecution(true)
                         .setEnsureExecutionSuccess(ensureExecutionSuccess)
+                        .setPrintAggregatedReport(true)
                         .setIncludePlans(TEST_INCLUDE_PLANS)
                         .setExcludePlans(null)
                         .setIncludeCategories(TEST_INCLUDE_CATEGORIES)

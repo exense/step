@@ -108,102 +108,6 @@ root:
       resultMap:
         dynamic: false
       id: "644fbe4e38a61e07cc3a4df8"
-    - _class: "AfterSequence"
-      attributes:
-        name: "AfterSequence"
-      dynamicName:
-        dynamic: false
-        value: ""
-        expression: ""
-      useDynamicName: false
-      children: []
-      skipNode:
-        dynamic: false
-        value: false
-      instrumentNode:
-        dynamic: false
-        value: false
-      continueParentNodeExecutionOnError:
-        dynamic: false
-        value: false
-      continueOnError:
-        dynamic: false
-        value: false
-      pacing:
-        dynamic: false
-      id: "644fbe4e38a61e07cc3a4df8"
-    - _class: "AfterThread"
-      attributes:
-        name: "AfterThread"
-      dynamicName:
-        dynamic: false
-        value: ""
-        expression: ""
-      useDynamicName: false
-      children: []
-      skipNode:
-        dynamic: false
-        value: false
-      instrumentNode:
-        dynamic: false
-        value: false
-      continueParentNodeExecutionOnError:
-        dynamic: false
-        value: false
-      continueOnError:
-        dynamic: false
-        value: false
-      pacing:
-        dynamic: false
-      id: "644fbe4e38a61e07cc3a4df8"
-    - _class: "BeforeSequence"
-      attributes:
-        name: "BeforeSequence"
-      dynamicName:
-        dynamic: false
-        value: ""
-        expression: ""
-      useDynamicName: false
-      children: []
-      skipNode:
-        dynamic: false
-        value: false
-      instrumentNode:
-        dynamic: false
-        value: false
-      continueParentNodeExecutionOnError:
-        dynamic: false
-        value: false
-      continueOnError:
-        dynamic: false
-        value: false
-      pacing:
-        dynamic: false
-      id: "644fbe4e38a61e07cc3a4df8"
-    - _class: "BeforeThread"
-      attributes:
-        name: "BeforeThread"
-      dynamicName:
-        dynamic: false
-        value: ""
-        expression: ""
-      useDynamicName: false
-      children: []
-      skipNode:
-        dynamic: false
-        value: false
-      instrumentNode:
-        dynamic: false
-        value: false
-      continueParentNodeExecutionOnError:
-        dynamic: false
-        value: false
-      continueOnError:
-        dynamic: false
-        value: false
-      pacing:
-        dynamic: false
-      id: "644fbe4e38a61e07cc3a4df8"
     - _class: "CallKeyword"
       attributes:
         name: "CallKeyword"
@@ -540,38 +444,6 @@ root:
         dynamic: true
         expression: "true"
         expressionType: ""
-      id: "644fbe4e38a61e07cc3a4df8"
-    - _class: "PerformanceAssert"
-      attributes:
-        name: "PerformanceAssert"
-      dynamicName:
-        dynamic: false
-        value: ""
-        expression: ""
-      useDynamicName: false
-      children: []
-      skipNode:
-        dynamic: false
-        value: false
-      instrumentNode:
-        dynamic: false
-        value: false
-      continueParentNodeExecutionOnError:
-        dynamic: false
-        value: false
-      filters:
-        - field:
-            dynamic: false
-            value: "name"
-          filter:
-            dynamic: false
-            value: "GroovyKeyword"
-          filterType: "EQUALS"
-      aggregator: "AVG"
-      comparator: "LOWER_THAN"
-      expectedValue:
-        dynamic: false
-        value: 3000
       id: "644fbe4e38a61e07cc3a4df8"
     - _class: "Placeholder"
       attributes:
@@ -984,6 +856,43 @@ root:
       maxIterations:
         dynamic: false
       id: "644fbe4e38a61e07cc3a4df8"
+  after:
+    "continueOnError":
+      "dynamic": false
+      "value": false
+    steps:
+      - _class: "PerformanceAssert"
+        attributes:
+          name: "PerformanceAssert"
+        dynamicName:
+          dynamic: false
+          value: ""
+          expression: ""
+        useDynamicName: false
+        children: [ ]
+        skipNode:
+          dynamic: false
+          value: false
+        instrumentNode:
+          dynamic: false
+          value: false
+        continueParentNodeExecutionOnError:
+          dynamic: false
+          value: false
+        filters:
+          - field:
+              dynamic: false
+              value: "name"
+            filter:
+              dynamic: false
+              value: "GroovyKeyword"
+            filterType: "EQUALS"
+        aggregator: "AVG"
+        comparator: "LOWER_THAN"
+        expectedValue:
+          dynamic: false
+          value: 3000
+        id: "644fbe4e38a61e07cc3a4df8"
   skipNode:
     dynamic: false
     value: false

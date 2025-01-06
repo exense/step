@@ -19,12 +19,14 @@
 package step.planbuilder;
 
 import java.io.File;
+import java.util.List;
 import java.util.function.Consumer;
 
 import step.artefacts.*;
 import step.artefacts.ThreadGroup;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.CheckArtefact;
+import step.core.artefacts.ChildrenBlock;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.execution.ExecutionContext;
 import step.datapool.excel.ExcelDataPool;
@@ -34,14 +36,6 @@ public class BaseArtefacts {
 	
 	public static Sequence sequence() {
 		return new Sequence();
-	}
-	
-	public static BeforeSequence beforeSequence() {
-		return new BeforeSequence();
-	}
-	
-	public static AfterSequence afterSequence() {
-		return new AfterSequence();
 	}
 	
 	public static Set set(String key, String valueExpression) {
@@ -144,13 +138,15 @@ public class BaseArtefacts {
 		threadGroup.setUsers(new DynamicValue<Integer>(numberOfThreads));
 		return threadGroup;
 	}
-	
-	public static BeforeThread beforeThread() {
-		return new BeforeThread();
-	}
-	
-	public static AfterThread afterThread() {
-		return new AfterThread();
+
+	public static ThreadGroup threadGroup(int numberOfThreads, int numberOfIterationsPerThread,
+							  ChildrenBlock beforeThread, ChildrenBlock afterThread) {
+		ThreadGroup threadGroup = new ThreadGroup();
+		threadGroup.setIterations(new DynamicValue<Integer>(numberOfIterationsPerThread));
+		threadGroup.setUsers(new DynamicValue<Integer>(numberOfThreads));
+		threadGroup.setBeforeThread(beforeThread);
+		threadGroup.setAfterThread(afterThread);
+		return threadGroup;
 	}
 	
 	public static TestScenario testScenario() {
@@ -186,5 +182,11 @@ public class BaseArtefacts {
 		anAssert.setOperator(Assert.AssertOperator.EQUALS);
 		anAssert.setExpected(new DynamicValue<>(expression));
 		return anAssert;
+	}
+
+	public static ChildrenBlock childrenBlock(AbstractArtefact... children) {
+		ChildrenBlock childrenBlock = new ChildrenBlock();
+		childrenBlock.setSteps(List.of(children));
+		return childrenBlock;
 	}
 }

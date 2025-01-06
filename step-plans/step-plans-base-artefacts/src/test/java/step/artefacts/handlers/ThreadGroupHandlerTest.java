@@ -193,18 +193,13 @@ public class ThreadGroupHandlerTest extends AbstractArtefactHandlerTest {
 		final List<String> userIds = new ArrayList<>();
 		// Create a plan with an empty sequence block
 		Plan plan = PlanBuilder.create()
-				.startBlock(threadGroup(1, 2))
-					.startBlock(beforeThread())
-						// the userId should be available in the beforeThread
-						.add(echo("'Before...'+userId"))
-					.endBlock()
+				.startBlock(threadGroup(1, 2,
+						childrenBlock(echo("'Before...'+userId")),
+						childrenBlock(echo("'After...'+userId"))))
 					// the variables userId, literationId, gcounter should be available in the beforeThread
 					.add(echo("'Iteration'+userId+literationId+gcounter"))
 					.add(runnable(c->globalCounterActual.addAndGet(c.getVariablesManager().getVariableAsInteger("gcounter"))))
 					.add(runnable(c->userIds.add(c.getVariablesManager().getVariableAsString("userId"))))
-					.startBlock(afterThread())
-						.add(echo("'After...'+userId"))
-					.endBlock()
 				.endBlock()
 				.build();
 		
@@ -216,21 +211,21 @@ public class ThreadGroupHandlerTest extends AbstractArtefactHandlerTest {
 		StringWriter writer = new StringWriter();
 		result.printTree(writer);
 		
-		assertEquals("ThreadGroup:PASSED:\n" + 
-				" Thread 1:PASSED:\n" + 
-				"  Session:PASSED:\n" + 
-				"   BeforeThread:PASSED:\n" + 
-				"    Echo:PASSED:\n" + 
-				"   Iteration 1:PASSED:\n" + 
-				"    Echo:PASSED:\n" + 
-				"    CheckArtefact:RUNNING:\n" + 
-				"    CheckArtefact:RUNNING:\n" + 
-				"   Iteration 2:PASSED:\n" + 
-				"    Echo:PASSED:\n" + 
-				"    CheckArtefact:RUNNING:\n" + 
-				"    CheckArtefact:RUNNING:\n" + 
-				"   AfterThread:PASSED:\n" + 
-				"    Echo:PASSED:\n" + 
+		assertEquals("ThreadGroup:PASSED:\n" +
+				" Thread 1:PASSED:\n" +
+				"  Session:PASSED:\n" +
+				"   [BEFORE_THREAD]\n" +
+				"    Echo:PASSED:\n" +
+				"   Iteration 1:PASSED:\n" +
+				"    Echo:PASSED:\n" +
+				"    CheckArtefact:RUNNING:\n" +
+				"    CheckArtefact:RUNNING:\n" +
+				"   Iteration 2:PASSED:\n" +
+				"    Echo:PASSED:\n" +
+				"    CheckArtefact:RUNNING:\n" +
+				"    CheckArtefact:RUNNING:\n" +
+				"   [AFTER_THREAD]\n" +
+				"    Echo:PASSED:\n" +
 				"" , writer.toString());	
 		
 		assertEquals(3, globalCounterActual.get());
@@ -246,19 +241,13 @@ public class ThreadGroupHandlerTest extends AbstractArtefactHandlerTest {
 		final List<String> testVarWithinAfter = new ArrayList<>();
 		// Create a plan with an empty sequence block
 		Plan plan = PlanBuilder.create()
-				.startBlock(threadGroup(1, 1))
-					.startBlock(beforeThread())
-						// the userId should be available in the beforeThread
-						.add(set(tastVarname,"\""+value+"\""))
-					.endBlock()
+				.startBlock(threadGroup(1, 1,
+						childrenBlock(set(tastVarname,"\""+value+"\"")),
+						childrenBlock(runnable(c -> testVarWithinAfter.add(c.getVariablesManager().getVariableAsString(tastVarname))))))
 					// the variable testVar should be available within the thread
 					.add(runnable(c -> {
 						testVar.add(c.getVariablesManager().getVariableAsString(tastVarname));
 					}))
-					.startBlock(afterThread())
-						// the variable testVar should be available within the afterThread
-						.add(runnable(c -> testVarWithinAfter.add(c.getVariablesManager().getVariableAsString(tastVarname))))
-					.endBlock()
 				.endBlock()
 				.build();
 
@@ -276,21 +265,13 @@ public class ThreadGroupHandlerTest extends AbstractArtefactHandlerTest {
 	public void testBeforeAndAfterThreadCombinedWithBeforeAndAfterSequence() throws Exception {
 		// Create a plan with an empty sequence block
 		Plan plan = PlanBuilder.create()
-				.startBlock(threadGroup(1, 2))
-					.startBlock(beforeThread())
-						.add(echo("'Before...'+userId"))
-					.endBlock()
-					.startBlock(beforeSequence())
-						// literationId should be available in BeforeSequence 
-						.add(echo("'Before...'+literationId"))
-					.endBlock()
-					.add(echo("'Iteration'"))
-					.add(check("false"))
-					.startBlock(afterSequence())
-						.add(echo("'After...'"))
-					.endBlock()
-					.startBlock(afterThread())
-						.add(echo("'After...'"))
+				.startBlock(threadGroup(1, 2,
+						childrenBlock(echo("'Before...'+userId")),
+						childrenBlock(echo("'After...'"))))
+					.startBlock(sequence()).withBefore(echo("'Before...'+literationId"))
+						.withAfter(echo("'After...'"))
+						.add(echo("'Iteration'"))
+						.add(check("false"))
 					.endBlock()
 				.endBlock()
 				.build();
@@ -303,27 +284,29 @@ public class ThreadGroupHandlerTest extends AbstractArtefactHandlerTest {
 		StringWriter writer = new StringWriter();
 		result.printTree(writer);
 		
-		assertEquals("ThreadGroup:FAILED:\n" + 
-				" Thread 1:FAILED:\n" + 
-				"  Session:FAILED:\n" + 
-				"   BeforeThread:PASSED:\n" + 
-				"    Echo:PASSED:\n" + 
-				"   Iteration 1:FAILED:\n" + 
-				"    BeforeSequence:PASSED:\n" + 
-				"     Echo:PASSED:\n" + 
-				"    Echo:PASSED:\n" + 
-				"    Check:FAILED:The expression 'false' returned false\n" +
-				"    AfterSequence:PASSED:\n" + 
-				"     Echo:PASSED:\n" + 
-				"   Iteration 2:FAILED:\n" + 
-				"    BeforeSequence:PASSED:\n" + 
-				"     Echo:PASSED:\n" + 
-				"    Echo:PASSED:\n" + 
-				"    Check:FAILED:The expression 'false' returned false\n" +
-				"    AfterSequence:PASSED:\n" + 
-				"     Echo:PASSED:\n" + 
-				"   AfterThread:PASSED:\n" + 
-				"    Echo:PASSED:\n" , writer.toString());	
+		assertEquals("ThreadGroup:FAILED:\n" +
+				" Thread 1:FAILED:\n" +
+				"  Session:FAILED:\n" +
+				"   [BEFORE_THREAD]\n" +
+				"    Echo:PASSED:\n" +
+				"   Iteration 1:FAILED:\n" +
+				"    Sequence:FAILED:\n" +
+				"     [BEFORE]\n" +
+				"      Echo:PASSED:\n" +
+				"     Echo:PASSED:\n" +
+				"     Check:FAILED:The expression 'false' returned false\n" +
+				"     [AFTER]\n" +
+				"      Echo:PASSED:\n" +
+				"   Iteration 2:FAILED:\n" +
+				"    Sequence:FAILED:\n" +
+				"     [BEFORE]\n" +
+				"      Echo:PASSED:\n" +
+				"     Echo:PASSED:\n" +
+				"     Check:FAILED:The expression 'false' returned false\n" +
+				"     [AFTER]\n" +
+				"      Echo:PASSED:\n" +
+				"   [AFTER_THREAD]\n" +
+				"    Echo:PASSED:\n" , writer.toString());
 	}
 }
 

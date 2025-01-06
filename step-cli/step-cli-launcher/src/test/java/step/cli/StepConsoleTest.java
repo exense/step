@@ -1,5 +1,6 @@
 package step.cli;
 
+import ch.exense.commons.io.FileHelper;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -10,6 +11,7 @@ import step.core.Constants;
 import step.core.Version;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -271,6 +273,58 @@ public class StepConsoleTest {
         usedParams = localExecuteHistory.get(0);
         Assert.assertEquals(Map.of("key1", "value1", "key2", "value2", "key3", "defaultValue3", "key4", "prioDefaultValue4"), usedParams.executionParameters);
         Assert.assertEquals("step-automation-packages-sample1.jar", usedParams.apFile.getName());
+    }
+
+    @Test
+    public void testPrepareApFile() throws IOException {
+        List<TestApDeployCommand.ExecutionParams> deployExecRegistry = new ArrayList<>();
+        List<TestApExecuteCommand.RemoteExecutionParams> remoteExecutionParams = new ArrayList<>();
+        List<TestApExecuteCommand.LocalExecutionParams> localExecutionParams = new ArrayList<>();
+        Histories histories = new Histories(deployExecRegistry, remoteExecutionParams, localExecutionParams);
+
+        TestApExecuteCommand executeCommand = new TestApExecuteCommand(histories.remoteExecuteHistory, histories.localExecuteHistory);
+        TestApDeployCommand deployCommand = new TestApDeployCommand(histories.deployHistory);
+
+        // get test jar copied from step-automation-packages-sample1 maven module
+        File testJar = new File("src/test/resources/samples/step-automation-packages-sample1.jar");
+
+        // create the temp folder to unzip the jar into
+        File tempFolderIn = FileHelper.createTempFolder("stepcli_test");
+        try {
+            FileHelper.unzip(testJar, tempFolderIn);
+
+            // use the unzipped jar to prepare the new automation package via 'execute' and 'deploy' commands
+            prepareAndVerifyApFile(executeCommand, tempFolderIn);
+            prepareAndVerifyApFile(deployCommand, tempFolderIn);
+        } finally {
+            FileHelper.deleteFolder(tempFolderIn);
+        }
+    }
+
+    private void prepareAndVerifyApFile(StepConsole.ApCommand.AbstractApCommand executeCommand, File inputFolder) throws IOException {
+        File preparedFile = executeCommand.prepareApFile(inputFolder.getAbsolutePath());
+        Assert.assertNotNull(preparedFile);
+
+        File tempFolderOut = FileHelper.createTempFolder("stepcli_test");
+
+        try {
+            FileHelper.unzip(preparedFile, tempFolderOut);
+
+            Assert.assertTrue(new File(tempFolderOut, "automation-package.yml").exists());
+            Assert.assertTrue(new File(tempFolderOut, "keywords.yml").exists());
+            Assert.assertTrue(new File(tempFolderOut, "plan.plan").exists());
+            Assert.assertTrue(new File(tempFolderOut, "plans").exists());
+            Assert.assertTrue(new File(tempFolderOut, "plans/plan1.yml").exists());
+
+            // .apignore file should be ignored
+            Assert.assertFalse(new File(tempFolderOut, ".apignore").exists());
+
+            // the files are marked as excluded in .apignore
+            Assert.assertFalse(new File(tempFolderOut, "ignored").exists());
+            Assert.assertFalse(new File(tempFolderOut, "ignoredFile.yml").exists());
+        } finally {
+            FileHelper.deleteFolder(tempFolderOut);
+        }
     }
 
     private int runMain(Histories histories, String... args) {
