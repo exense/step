@@ -48,7 +48,6 @@ import java.io.File;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_NODE extends ReportNode> {
 
@@ -246,7 +245,10 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 			AbstractArtefact artefactInstance = reportNode.getArtefactInstance();
 			if (artefactInstance != null && !artefactInstance.isWorkArtefact()) {
 				// TODO implement node pruning for time series
-				reportNodeTimeSeries.ingestReportNode(reportNode, getTimeSeriesAdditionalAttributes(context));
+				Map<String, Object> customAttributes = getTimeSeriesContextAttributes(context);
+				customAttributes.put("type", artefactInstance.getClass().getSimpleName());
+				customAttributes.put("name", artefact.getAttributes().get("name"));
+				reportNodeTimeSeries.ingestReportNode(reportNode, customAttributes);
 			}
 		}
 
@@ -257,7 +259,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		return reportNode;
 	}
 
-    private Map<String, Object> getTimeSeriesAdditionalAttributes(ExecutionContext executionContext) {
+    private Map<String, Object> getTimeSeriesContextAttributes(ExecutionContext executionContext) {
         Map<String, Object> attributes = new HashMap<>();
         if (context.getPlan() != null) {
             attributes.put("planId", context.getPlan().getId().toString());
