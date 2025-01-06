@@ -50,7 +50,7 @@ public class FunctionPluginTest {
 
 	@Test
 	public void testNormalMode() {
-		AbstractExecutionEngineContext parentContext = new ExecutionEngineContext(OperationMode.LOCAL);
+		AbstractExecutionEngineContext parentContext = new ExecutionEngineContext(OperationMode.LOCAL , true);
 		InMemoryFunctionAccessorImpl functionAccessor = new InMemoryFunctionAccessorImpl();
 		
 		Function function = new Function();
