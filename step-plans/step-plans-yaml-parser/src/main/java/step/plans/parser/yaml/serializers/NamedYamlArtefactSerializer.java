@@ -19,8 +19,12 @@
 package step.plans.parser.yaml.serializers;
 
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.core.yaml.YamlModelUtils;
 import step.core.yaml.serializers.NamedEntityYamlSerializer;
 import step.core.yaml.serializers.StepYamlSerializer;
@@ -30,9 +34,16 @@ import step.core.yaml.model.NamedYamlArtefact;
 import step.core.yaml.model.SimpleYamlArtefact;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.Consumer;
 
 @StepYamlSerializerAddOn(targetClasses = {NamedYamlArtefact.class})
 public class NamedYamlArtefactSerializer extends StepYamlSerializer<NamedYamlArtefact> {
+
+    private static final Logger log = LoggerFactory.getLogger(NamedYamlArtefactSerializer.class);
 
     public NamedYamlArtefactSerializer() {
         super();
@@ -53,13 +64,40 @@ public class NamedYamlArtefactSerializer extends StepYamlSerializer<NamedYamlArt
             @Override
             protected void writeObject(AbstractYamlArtefact<?> value, JsonGenerator gen) throws IOException {
                 if (value instanceof SimpleYamlArtefact<?>) {
-                    gen.writeTree(((SimpleYamlArtefact<?>) value).toFullJson());
+                    Class<?> artefactClass = value.getArtefactClass();
+                    SimpleYamlArtefact defaultYamlArtefact = new SimpleYamlArtefact(artefactClass, null, yamlObjectMapper);
+                    ObjectNode defaultJson = defaultYamlArtefact.toFullJson();
+                    // TODO: remove default values from result
+                    ObjectNode actualJson = ((SimpleYamlArtefact<?>) value).toFullJson();
+                    gen.writeTree(actualJson);
                 } else {
-                    super.writeObject(value, gen);
+                    try {
+                        AbstractYamlArtefact<?> defaultInstance = value.getClass().getConstructor().newInstance();
+                        ObjectNode defaultJsonNode = (ObjectNode) yamlObjectMapper.valueToTree(defaultInstance);
+                        ObjectNode actualValue = yamlObjectMapper.valueToTree(value);
+                        removeDefaultValues(actualValue, defaultJsonNode);
+                        gen.writeObject(actualValue);
+                    } catch (Exception e) {
+                        throw new RuntimeException("Unable to serialize artifact: " + value.getClass(), e);
+                    }
                 }
             }
         };
         ser.serialize(value.getYamlArtefact(), gen, serializers);
+    }
+
+    protected void removeDefaultValues(ObjectNode actualJson, ObjectNode defaultJson){
+        List<String> fieldsForRemoval = new ArrayList<>();
+        actualJson.fieldNames().forEachRemaining(s -> {
+            JsonNode defaultValue = defaultJson.get(s);
+            if(Objects.equals(defaultValue, actualJson.get(s))){
+                fieldsForRemoval.add(s);
+            }
+        });
+        for (String s : fieldsForRemoval) {
+            actualJson.remove(s);
+        }
+        // TODO: for children also
     }
 
 }
