@@ -22,7 +22,6 @@ import ch.exense.commons.app.Configuration;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.ArtefactFilter;
 import step.core.artefacts.ChildrenBlock;
@@ -42,7 +41,6 @@ import step.core.execution.ReportNodeEventListener;
 import step.core.functions.FunctionGroupHandle;
 import step.core.miscellaneous.ReportNodeAttachmentManager;
 import step.core.miscellaneous.ValidationException;
-import step.core.plans.Plan;
 import step.core.variables.VariablesManager;
 import step.resources.ResourceManager;
 
@@ -50,7 +48,6 @@ import java.io.File;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_NODE extends ReportNode> {
 
