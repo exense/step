@@ -46,7 +46,7 @@ public class RawMeasurementsHandlerTest {
         plan.addAttribute(AbstractOrganizableObject.NAME, "plantTest");
 
 
-        ExecutionEngineContext parentContext = new ExecutionEngineContext(OperationMode.LOCAL);
+        ExecutionEngineContext parentContext = new ExecutionEngineContext(OperationMode.LOCAL, true);
         parentContext.setExecutionAccessor(executionAccessor);
         parentContext.setPlanAccessor(planAccessor);
         MeasurementPlugin measurementPlugin = new MeasurementPlugin(GaugeCollectorRegistry.getInstance());
@@ -90,7 +90,7 @@ public class RawMeasurementsHandlerTest {
 
 
 
-        ExecutionEngineContext parentContext = new ExecutionEngineContext(OperationMode.LOCAL);
+        ExecutionEngineContext parentContext = new ExecutionEngineContext(OperationMode.LOCAL, true);
         parentContext.setExecutionAccessor(executionAccessor);
         parentContext.setPlanAccessor(planAccessor);
         MeasurementPlugin measurementPlugin = new MeasurementPlugin(GaugeCollectorRegistry.getInstance());
