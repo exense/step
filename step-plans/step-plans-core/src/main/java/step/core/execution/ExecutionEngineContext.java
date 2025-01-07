@@ -22,10 +22,13 @@ public class ExecutionEngineContext extends AbstractExecutionEngineContext {
 
 	public ExecutionEngineContext(OperationMode operationMode) {
 		super();
-		// TODO this method should be called in the constructor. All required attributes should be set explicitly
-		// by the caller of this constructor in order to avoid unnecessary instantiation of the attributes as most
-		// of them are replaced by the attributes of the parent context after this constructor is called
-		setDefaultAttributes();
 		setOperationMode(operationMode);
+	}
+
+	public ExecutionEngineContext(OperationMode operationMode, boolean useDefaultAttributes) {
+		this(operationMode);
+		if (useDefaultAttributes) {
+			setDefaultAttributes();
+		}
 	}
 }
