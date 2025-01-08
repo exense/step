@@ -23,6 +23,7 @@ import step.core.dynamicbeans.DynamicValue;
 
 public class YamlFunctionGroup extends YamlTokenSelector<FunctionGroup> {
 
+    // TODO: how are all these 3 fields used in DB model?
     protected DynamicValue<String> dockerImage = new DynamicValue<>();
 
     protected DynamicValue<String> containerUser = new DynamicValue<>();
