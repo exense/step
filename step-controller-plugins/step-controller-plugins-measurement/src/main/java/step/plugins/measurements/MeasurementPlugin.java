@@ -5,6 +5,7 @@ import io.prometheus.client.Collector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.artefacts.reports.CallFunctionReportNode;
+import step.artefacts.reports.TestCaseReportNode;
 import step.artefacts.reports.ThreadReportNode;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
@@ -47,6 +48,7 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 	public static final String PLAN_ID = "planId";
 	public static final String PLAN = "plan";
 	public static final String SCHEDULE	= "schedule";
+	public static final String TEST_CASE = "testcase";
 	public static final String EXECUTION_DESCRIPTION = "execution";
 	public static final String CTX_SCHEDULER_TASK_ID = "$schedulerTaskId";
 	public static final String CTX_SCHEDULE_NAME = "$scheduleName";
@@ -183,6 +185,25 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 		}
 	}
 
+	private Measurement transformToMeasurement(ExecutionContext executionContext, ReportNode node) {
+		Measurement measurement = initMeasurement(executionContext);
+		measurement.setName(node.getName());
+		measurement.setValue(node.getDuration());
+		measurement.setBegin(node.getExecutionTime());
+		enrichWithNodeAttributes(measurement, node);
+		enrichWithAdditionalAttributes(measurement, executionContext);
+		AbstractArtefact artefactInstance = node.getArtefactInstance();
+
+		if (node instanceof TestCaseReportNode) {
+			measurement.setType(TEST_CASE);
+		} else if (isArtefactInstrumented(artefactInstance)) {
+			measurement.setType(TYPE_CUSTOM);
+			measurement.addCustomField(ORIGIN, artefactInstance.getAttribute(AbstractOrganizableObject.NAME));
+		}
+		return measurement;
+	}
+
+
 	@Override
 	public void afterReportNodeExecution(ExecutionContext executionContext, ReportNode node) {
 		if (!generateMetrics(executionContext)) {
@@ -190,7 +211,7 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 		}
 		AbstractArtefact artefactInstance = node.getArtefactInstance();
 		//Case report node is a keyword or an instrumented node
-		if (node instanceof CallFunctionReportNode || isArtefactInstrumented(artefactInstance)) {
+		if (node instanceof CallFunctionReportNode || node instanceof TestCaseReportNode || isArtefactInstrumented(artefactInstance)) {
 			List<Measurement> measurements = new ArrayList<>();
 
 
@@ -215,20 +236,9 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 						measurements.add(measurement);
 					}
 				}
+			} else {
+				measurements.add(transformToMeasurement(executionContext, node));
 			}
-			//Add measure of instrumented nodes
-			if (isArtefactInstrumented(artefactInstance)) {
-				Measurement measurement = initMeasurement(executionContext);
-				measurement.setName(node.getName());
-				measurement.addCustomField(ORIGIN, artefactInstance.getAttribute(AbstractOrganizableObject.NAME));
-				measurement.setValue((long) node.getDuration());
-				measurement.setBegin(node.getExecutionTime());
-				measurement.setType(TYPE_CUSTOM);
-				enrichWithNodeAttributes(measurement, node);
-				enrichWithAdditionalAttributes(measurement, executionContext);
-				measurements.add(measurement);
-			}
-
 			//Delegate to plugins implementation
 			if (!measurements.isEmpty()) {
 				processMeasurements(measurements);
