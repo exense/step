@@ -59,7 +59,6 @@ public class ReportNodeTimeSeries implements Closeable {
         BucketAttributes nodeBucket = new BucketAttributes();
         nodeBucket.put(EXECUTION_ID, reportNode.getExecutionID());
         nodeBucket.put(ARTEFACT_HASH, reportNode.getArtefactHash());
-//        nodeBucket.put(TYPE, reportNode.get)
         nodeBucket.put(STATUS, status.toString());
         if (reportNode.getError() != null) {
             nodeBucket.put(ERROR_CODE, reportNode.getError().getCode());
