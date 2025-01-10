@@ -22,6 +22,7 @@ import ch.exense.commons.app.Configuration;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.ArtefactFilter;
 import step.core.artefacts.ChildrenBlock;
@@ -247,7 +248,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 				// TODO implement node pruning for time series
 				Map<String, Object> customAttributes = getTimeSeriesContextAttributes(context);
 				customAttributes.put("type", artefactInstance.getClass().getSimpleName());
-				customAttributes.put("name", artefact.getAttributes().get("name"));
+				customAttributes.put("name", artefact.getAttributes().get(AbstractOrganizableObject.NAME));
 				reportNodeTimeSeries.ingestReportNode(reportNode, customAttributes);
 			}
 		}

@@ -185,6 +185,25 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 		}
 	}
 
+	private Measurement transformToMeasurement(ExecutionContext executionContext, ReportNode node) {
+		Measurement measurement = initMeasurement(executionContext);
+		measurement.setName(node.getName());
+		measurement.setValue(node.getDuration());
+		measurement.setBegin(node.getExecutionTime());
+		enrichWithNodeAttributes(measurement, node);
+		enrichWithAdditionalAttributes(measurement, executionContext);
+		AbstractArtefact artefactInstance = node.getArtefactInstance();
+
+		if (node instanceof TestCaseReportNode) {
+			measurement.setType(TEST_CASE);
+		} else if (isArtefactInstrumented(artefactInstance)) {
+			measurement.setType(TYPE_CUSTOM);
+			measurement.addCustomField(ORIGIN, artefactInstance.getAttribute(AbstractOrganizableObject.NAME));
+		}
+		return measurement;
+	}
+
+
 	@Override
 	public void afterReportNodeExecution(ExecutionContext executionContext, ReportNode node) {
 		if (!generateMetrics(executionContext)) {
@@ -217,32 +236,9 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 						measurements.add(measurement);
 					}
 				}
+			} else {
+				measurements.add(transformToMeasurement(executionContext, node));
 			}
-			if (node instanceof TestCaseReportNode) {
-				TestCaseReportNode testCase = (TestCaseReportNode) node;
-				Measurement measurement = initMeasurement(executionContext);
-				measurement.setName(testCase.getName());
-				measurement.setType(TEST_CASE);
-				measurement.setValue(testCase.getDuration());
-				measurement.setBegin(testCase.getExecutionTime());
-				enrichWithNodeAttributes(measurement, node);
-				enrichWithAdditionalAttributes(measurement, executionContext);
-				measurements.add(measurement);
-
-			}
-			//Add measure of instrumented nodes
-			if (isArtefactInstrumented(artefactInstance)) {
-				Measurement measurement = initMeasurement(executionContext);
-				measurement.setName(node.getName());
-				measurement.addCustomField(ORIGIN, artefactInstance.getAttribute(AbstractOrganizableObject.NAME));
-				measurement.setValue((long) node.getDuration());
-				measurement.setBegin(node.getExecutionTime());
-				measurement.setType(TYPE_CUSTOM);
-				enrichWithNodeAttributes(measurement, node);
-				enrichWithAdditionalAttributes(measurement, executionContext);
-				measurements.add(measurement);
-			}
-
 			//Delegate to plugins implementation
 			if (!measurements.isEmpty()) {
 				processMeasurements(measurements);
