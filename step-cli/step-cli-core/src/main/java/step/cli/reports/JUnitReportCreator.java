@@ -22,14 +22,11 @@ import ch.exense.commons.io.FileHelper;
 import com.google.common.io.Files;
 import step.cli.AbstractExecuteAutomationPackageTool;
 import step.cli.CliToolLogging;
-import step.cli.StepCliExecutionException;
 import step.client.executions.RemoteExecutionManager;
-import step.core.artefacts.reports.aggregated.AggregatedReportView;
 import step.reports.CustomReportType;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
@@ -52,7 +49,7 @@ public class JUnitReportCreator implements ReportCreator {
 
         for (AbstractExecuteAutomationPackageTool.ReportOutputMode outputMode : outputModes) {
             switch (outputMode) {
-                case filesystem:
+                case file:
                     // automatically unzip file
                     File folderToUnzip = new File(outputFolder, Files.getNameWithoutExtension(preparedReport.getName()));
                     if (!folderToUnzip.exists()) {

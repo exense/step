@@ -1,7 +1,6 @@
 package step.cli;
 
 import ch.exense.commons.io.FileHelper;
-import org.apache.commons.io.FileUtils;
 import org.bson.types.ObjectId;
 import org.junit.*;
 import org.mockito.ArgumentCaptor;
@@ -201,9 +200,12 @@ public class AbstractExecuteAutomationPackageToolTest {
                         .setExecutionResultTimeoutS(2)
                         .setWaitForExecution(true)
                         .setEnsureExecutionSuccess(ensureExecutionSuccess)
-                        .setReportTypes(List.of(AbstractExecuteAutomationPackageTool.ReportType.aggregated))
+                        .setReports(List.of(
+                                new AbstractExecuteAutomationPackageTool.Report(
+                                        AbstractExecuteAutomationPackageTool.ReportType.aggregated,
+                                        List.of(AbstractExecuteAutomationPackageTool.ReportOutputMode.stdout, AbstractExecuteAutomationPackageTool.ReportOutputMode.file)))
+                        )
                         .setReportOutputDir(tempReportFolder)
-                        .setReportOutputModes(List.of(AbstractExecuteAutomationPackageTool.ReportOutputMode.stdout, AbstractExecuteAutomationPackageTool.ReportOutputMode.filesystem))
                         .setIncludePlans(TEST_INCLUDE_PLANS)
                         .setExcludePlans(null)
                         .setIncludeCategories(TEST_INCLUDE_CATEGORIES)

@@ -75,8 +75,8 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
     @Parameter(property = "step-execute-auto-packages.number-of-threads")
     private Integer numberOfThreads;
 
-    @Parameter(property = "step-execute-auto-packages.report-type")
-    private List<AbstractExecuteAutomationPackageTool.ReportType> reportType;
+    @Parameter(property = "step-execute-auto-packages.reports")
+    private List<AbstractExecuteAutomationPackageTool.Report> reports;
 
     @Parameter(property = "step-execute-auto-packages.report-dir")
     private String reportDir;
@@ -93,7 +93,7 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
             }
 
             File reportOutputDir = null;
-            if (getReportType() != null && !getReportType().isEmpty()) {
+            if (getReports() != null && !getReports().isEmpty()) {
                 String resolvedReportDir = getReportDir();
                 if (resolvedReportDir == null) {
                     String targetDir = project.getBuild().getDirectory();
@@ -110,7 +110,7 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
                     .setExecutionResultTimeoutS(getExecutionResultTimeoutS())
                     .setWaitForExecution(getWaitForExecution())
                     .setEnsureExecutionSuccess(getEnsureExecutionSuccess())
-                    .setReportOutputModes(getReportOutputModes())
+                    .setReports(getReports())
                     .setIncludePlans(getIncludePlans())
                     .setExcludePlans(getExcludePlans())
                     .setIncludeCategories(getIncludeCategories())
@@ -118,7 +118,6 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
                     .setWrapIntoTestSet(getWrapIntoTestSet())
                     .setNumberOfThreads(getNumberOfThreads())
                     .setMavenArtifactIdentifier(remoteMavenArtifact)
-                    .setReportTypes(getReportType())
                     .setReportOutputDir(reportOutputDir);
 
             createTool(getUrl(), params).execute();
@@ -302,12 +301,8 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
         this.numberOfThreads = numberOfThreads;
     }
 
-    public List<AbstractExecuteAutomationPackageTool.ReportType> getReportType() {
-        return reportType;
-    }
-
-    public void setReportType(List<AbstractExecuteAutomationPackageTool.ReportType> reportType) {
-        this.reportType = reportType;
+    public List<AbstractExecuteAutomationPackageTool.Report> getReports() {
+        return reports;
     }
 
     public String getReportDir() {

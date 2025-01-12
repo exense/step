@@ -77,31 +77,27 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
         File outputFolder = null;
 
         // prepare folders to store requested reports
-        if (params.getReportTypes() != null && !params.getReportTypes().isEmpty()) {
+        if (params.getReports() != null && !params.getReports().isEmpty()) {
             if (!params.getWaitForExecution()) {
                 throw new StepCliExecutionException("The execution report can only been prepared in synchronous mode");
             }
 
-            if (params.getReportOutputModes() != null && !params.getReportOutputModes().isEmpty()) {
-                // even if the 'filesystem' output mode is not defined, we create some output folder to store (temporarily) the report
-                // because otherwise we will have no location to store the junit report before we print it to console in 'stdout' mode
-                if (params.getReportOutputDir() == null) {
-                    outputFolder = new File(new File("").getAbsolutePath());
-                } else {
-                    outputFolder = params.getReportOutputDir();
-                }
-                if (outputFolder.exists()) {
-                    if (!outputFolder.isDirectory()) {
-                        throw new StepCliExecutionException("Report cannot be generated. Invalid folder: " + outputFolder.getAbsolutePath());
-                    }
-                } else {
-                    boolean dirCreated = outputFolder.mkdir();
-                    if (!dirCreated) {
-                        throw new StepCliExecutionException("Report cannot be generated. Folder hasn't been created: " + outputFolder.getAbsolutePath());
-                    }
+            // even if the 'file' output mode is not defined, we create some output folder to store (temporarily) the report
+            // because otherwise we will have no location to store the junit report before we print it to console in 'stdout' mode
+            if (params.getReportOutputDir() == null) {
+                outputFolder = new File(new File("").getAbsolutePath());
+            } else {
+                outputFolder = params.getReportOutputDir();
+            }
+            if (outputFolder.exists()) {
+                if (!outputFolder.isDirectory()) {
+                    throw new StepCliExecutionException("Report cannot be generated. Invalid folder: " + outputFolder.getAbsolutePath());
                 }
             } else {
-                throw new StepCliExecutionException("Report cannot be prepared. There is no report output mode defined. Supported modes: " + Arrays.toString(ReportOutputMode.values()));
+                boolean dirCreated = outputFolder.mkdir();
+                if (!dirCreated) {
+                    throw new StepCliExecutionException("Report cannot be generated. Folder hasn't been created: " + outputFolder.getAbsolutePath());
+                }
             }
 
         }
@@ -141,11 +137,11 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
                         executionError = ex;
                     }
 
-                    if (params.getReportTypes() != null && !executionIds.isEmpty()) {
+                    if (params.getReports() != null && !executionIds.isEmpty()) {
                         try {
-                            for (ReportType reportType : params.getReportTypes()) {
+                            for (Report report : params.getReports()) {
                                 ReportCreator reportCreator;
-
+                                ReportType reportType = report.getReportType();
                                 switch (reportType) {
                                     case junit:
                                         reportCreator = new JUnitReportCreator(remoteExecutionManager, outputFolder);
@@ -156,7 +152,7 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
                                     default:
                                         throw new UnsupportedOperationException("Unsupported report type: " + reportType);
                                 }
-                                reportCreator.createReport(executionIds, params.getReportOutputModes(), this);
+                                reportCreator.createReport(executionIds, report.getOutputModes(), this);
                             }
 
                         } catch (Exception ex) {
@@ -325,10 +321,8 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
         private String includeCategories;
         private String excludeCategories;
 
-        private List<ReportType> reportTypes;
+        private List<Report> reports;
         private File reportOutputDir;
-
-        private List<ReportOutputMode> reportOutputModes = List.of(ReportOutputMode.filesystem);
 
         public String getStepProjectName() {
             return stepProjectName;
@@ -386,16 +380,12 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
             return numberOfThreads;
         }
 
-        public List<ReportType> getReportTypes() {
-            return reportTypes;
-        }
-
         public File getReportOutputDir() {
             return reportOutputDir;
         }
 
-        public List<ReportOutputMode> getReportOutputModes() {
-            return reportOutputModes;
+        public List<Report> getReports() {
+            return reports;
         }
 
         public Params setStepProjectName(String stepProjectName) {
@@ -468,18 +458,13 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
             return this;
         }
 
-        public Params setReportTypes(List<ReportType> reportTypes) {
-            this.reportTypes = reportTypes;
-            return this;
-        }
-
         public Params setReportOutputDir(File reportOutputDir) {
             this.reportOutputDir = reportOutputDir;
             return this;
         }
 
-        public Params setReportOutputModes(List<ReportOutputMode> reportOutputModes) {
-            this.reportOutputModes = reportOutputModes;
+        public Params setReports(List<Report> reports) {
+            this.reports = reports;
             return this;
         }
     }
@@ -490,7 +475,38 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
     }
 
     public enum ReportOutputMode {
-        filesystem,
+        file,
         stdout
+    }
+
+    public static class Report {
+
+        private final ReportType reportType;
+        private final List<ReportOutputMode> outputModes;
+
+        public Report(ReportType reportType) {
+            this.reportType = reportType;
+            switch (reportType){
+                case junit:
+                    this.outputModes = List.of(ReportOutputMode.file);
+                    break;
+                default:
+                    this.outputModes = List.of(ReportOutputMode.stdout);
+                    break;
+            }
+        }
+
+        public Report(ReportType reportType, List<ReportOutputMode> outputModes) {
+            this.reportType = reportType;
+            this.outputModes = outputModes;
+        }
+
+        public ReportType getReportType() {
+            return reportType;
+        }
+
+        public List<ReportOutputMode> getOutputModes() {
+            return outputModes;
+        }
     }
 }

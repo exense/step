@@ -51,7 +51,7 @@ public class AggregatedReportCreator implements ReportCreator {
                     case stdout:
                         logging.logInfo("Aggregated report:\n" + aggregatedReportView.toString(), null);
                         break;
-                    case filesystem:
+                    case file:
                         // TODO: think about naming and location for stored aggregated reports (should we create the separate folder for each report?)
                         String timestamp = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss-SSSSSS").format(LocalDateTime.now());
                         String fileName = String.format("%s-aggregated.txt", timestamp);
