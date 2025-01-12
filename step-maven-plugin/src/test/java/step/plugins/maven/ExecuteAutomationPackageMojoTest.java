@@ -45,7 +45,6 @@ public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 	}
 
 	private static void assertToolCall(ExecuteAutomationPackageMojoTestable mojo, Boolean ensureExecutionSuccess) throws AutomationPackageClientException {
-		// TODO: fix test
 		Mockito.verify(mojo.mockedTool, Mockito.times(1)).execute();
 		Assert.assertEquals("http://localhost:8080", mojo.url);
 		Assert.assertEquals("abc", mojo.params.getAuthToken());
@@ -54,7 +53,8 @@ public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 		Assert.assertEquals((Integer) 3, mojo.params.getExecutionResultTimeoutS());
 		Assert.assertEquals(true, mojo.params.getWaitForExecution());
 		Assert.assertEquals(ensureExecutionSuccess, mojo.params.getEnsureExecutionSuccess());
-        Assert.assertEquals(List.of(AbstractExecuteAutomationPackageTool.ReportOutputMode.stdout, AbstractExecuteAutomationPackageTool.ReportOutputMode.file), mojo.params.getReports());
+        Assert.assertEquals(AbstractExecuteAutomationPackageTool.ReportType.junit, mojo.params.getReports().get(0).getReportType());
+        Assert.assertEquals(List.of(AbstractExecuteAutomationPackageTool.ReportOutputMode.stdout, AbstractExecuteAutomationPackageTool.ReportOutputMode.file), mojo.params.getReports().get(0).getOutputModes());
 		Assert.assertEquals(createTestCustomParams(), mojo.params.getExecutionParameters());
 		Assert.assertEquals(TEST_INCLUDE_PLANS, mojo.params.getIncludePlans());
 		Assert.assertNull(TEST_INCLUDE_PLANS, mojo.params.getExcludePlans());
@@ -77,7 +77,12 @@ public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 		mojo.setExecutionParameters(params);
 		mojo.setWaitForExecution(true);
 		mojo.setEnsureExecutionSuccess(ensureExecutionSuccess);
-		mojo.setReportOutputModes(List.of(AbstractExecuteAutomationPackageTool.ReportOutputMode.stdout, AbstractExecuteAutomationPackageTool.ReportOutputMode.file));
+
+		ExecuteAutomationPackageMojo.ReportParam reportParam = new ExecuteAutomationPackageMojo.ReportParam();
+		reportParam.setType(AbstractExecuteAutomationPackageTool.ReportType.junit);
+		reportParam.setOutput("stdout,file");
+		mojo.setReports(List.of(reportParam));
+		mojo.setReportDir("C://temp");
 
 		mojo.setIncludePlans(TEST_INCLUDE_PLANS);
 		mojo.setIncludeCategories(TEST_INCLUDE_CATEGORIES);
