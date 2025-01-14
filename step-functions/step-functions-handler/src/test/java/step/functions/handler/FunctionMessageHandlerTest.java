@@ -23,9 +23,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.After;
 import org.junit.Before;
@@ -39,6 +41,7 @@ import step.grid.Token;
 import step.grid.agent.AgentTokenServices;
 import step.grid.agent.handler.MessageHandlerPool;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
+import step.grid.agent.tokenpool.TokenReservationSession;
 import step.grid.contextbuilder.ApplicationContextBuilder;
 import step.grid.filemanager.FileManagerClient;
 import step.grid.filemanager.FileManagerException;
@@ -46,6 +49,8 @@ import step.grid.filemanager.FileVersion;
 import step.grid.filemanager.FileVersionId;
 import step.grid.io.InputMessage;
 import step.grid.io.OutputMessage;
+
+import static org.junit.Assert.assertEquals;
 
 public class FunctionMessageHandlerTest {
 
@@ -56,6 +61,8 @@ public class FunctionMessageHandlerTest {
 	protected MessageHandlerPool messageHandlerPool;
 	
 	protected AgentTokenWrapper agentToken;
+
+	protected int expectedFilesInCache = 0;
 	
 	@Before
 	public void before() {
@@ -66,29 +73,39 @@ public class FunctionMessageHandlerTest {
 	@After
 	public void after() throws Exception {
 		messageHandlerPool.close();
+		//The cleanup task of application context is only triggered when the pool of handler and related application context builders are closed
+		FunctionMessageHandlerTest.TestFileManagerClient fileManagerClient = (FunctionMessageHandlerTest.TestFileManagerClient) tokenServices.getFileManagerClient();
+		assertEquals(expectedFilesInCache, fileManagerClient.cacheUsage.keySet().size());
+		fileManagerClient.cacheUsage.values().forEach(v -> assertEquals(0, v.get()));
 	}
 
 	@Test
 	public void test() throws Exception {
 		AgentTokenWrapper agentToken = getAgentToken(tokenServices);
-		
-		InputMessage message = new InputMessage();
-		
-		HashMap<String, String> properties = new HashMap<String, String>();
+		try (TokenReservationSession tokenReservationSession = new TokenReservationSession()) {
+			agentToken.setTokenReservationSession(tokenReservationSession);
 
-		properties.put(FunctionMessageHandler.FUNCTION_HANDLER_PACKAGE_KEY + ".id", EMPTY_FILE);
-		properties.put(FunctionMessageHandler.FUNCTION_HANDLER_PACKAGE_KEY + ".version", "1");
-		
-		properties.put(FunctionMessageHandler.FUNCTION_HANDLER_KEY, TestFunctionHandler.class.getName());
-		
-		message.setProperties(properties);
-		
-		Input<TestInput> input = getTestInput();
-		
-		message.setPayload(new ObjectMapper().valueToTree(input));
-		
-		OutputMessage outputMessage = messageHandlerPool.get(FunctionMessageHandler.class.getName()).handle(agentToken, message);
-		Assert.assertEquals("Bonjour", outputMessage.getPayload().get("payload").get("message").asText());
+			InputMessage message = new InputMessage();
+
+			HashMap<String, String> properties = new HashMap<String, String>();
+
+			properties.put(FunctionMessageHandler.FUNCTION_HANDLER_PACKAGE_KEY + ".id", EMPTY_FILE);
+			properties.put(FunctionMessageHandler.FUNCTION_HANDLER_PACKAGE_KEY + ".version", "1");
+
+			properties.put(FunctionMessageHandler.FUNCTION_HANDLER_KEY, TestFunctionHandler.class.getName());
+
+			message.setProperties(properties);
+
+			Input<TestInput> input = getTestInput();
+
+			message.setPayload(new ObjectMapper().valueToTree(input));
+
+			OutputMessage outputMessage = messageHandlerPool.get(FunctionMessageHandler.class.getName()).handle(agentToken, message);
+			assertEquals("Bonjour", outputMessage.getPayload().get("payload").get("message").asText());
+
+		}
+		expectedFilesInCache = 1;
+
 	}
 
 	private Input<TestInput> getTestInput() {
@@ -131,7 +148,8 @@ public class FunctionMessageHandlerTest {
 		for (Exception exception : exceptions) {
 			exception.printStackTrace();
 		}
-		Assert.assertEquals(0, exceptions.size());
+		assertEquals(0, exceptions.size());
+		expectedFilesInCache = 1;
 	}
 	
 	/**
@@ -142,20 +160,22 @@ public class FunctionMessageHandlerTest {
 	public void testNoHandlerPackage() throws Exception {
 		AgentTokenServices tokenServices = getLocalAgentTokenServices();
 		AgentTokenWrapper agentToken = getAgentToken(tokenServices);
-		
-		FunctionMessageHandler h = new FunctionMessageHandler();
-		h.init(tokenServices);
-		
-		InputMessage message = new InputMessage();
-		
-		HashMap<String, String> properties = new HashMap<String, String>();
-		properties.put(FunctionMessageHandler.FUNCTION_HANDLER_KEY, TestFunctionHandler.class.getName());
-		message.setProperties(properties);
-		
-		Input<TestInput> input = getTestInput();
-		message.setPayload(new ObjectMapper().valueToTree(input));
-		
-		h.handle(agentToken, message);
+		try (TokenReservationSession tokenReservationSession = new TokenReservationSession()) {
+			agentToken.setTokenReservationSession(tokenReservationSession);
+			FunctionMessageHandler h = new FunctionMessageHandler();
+			h.init(tokenServices);
+
+			InputMessage message = new InputMessage();
+
+			HashMap<String, String> properties = new HashMap<String, String>();
+			properties.put(FunctionMessageHandler.FUNCTION_HANDLER_KEY, TestFunctionHandler.class.getName());
+			message.setProperties(properties);
+
+			Input<TestInput> input = getTestInput();
+			message.setPayload(new ObjectMapper().valueToTree(input));
+
+			h.handle(agentToken, message);
+		}
 	}
 
 	private AgentTokenWrapper getAgentToken(AgentTokenServices tokenServices) {
@@ -170,35 +190,42 @@ public class FunctionMessageHandlerTest {
 		return agentToken;
 	}
 
+	public class TestFileManagerClient implements FileManagerClient {
+		Map<String, AtomicInteger> cacheUsage = new ConcurrentHashMap<>();
+
+		@Override
+		public FileVersion requestFileVersion(FileVersionId fileVersionId, boolean cleanable) throws FileManagerException {
+			if(fileVersionId.getFileId().equals(EMPTY_FILE)) {
+				String uid = fileVersionId.getFileId();
+				File file = new File(".");
+				cacheUsage.computeIfAbsent(fileVersionId.toString(), (k) -> new AtomicInteger(0)).incrementAndGet();
+				return new FileVersion(file, fileVersionId, false);
+			} else {
+				return null;
+			}
+		}
+
+		@Override
+		public void removeFileVersionFromCache(FileVersionId fileVersionId) {
+		}
+
+		@Override
+		public void cleanupCache() {
+		}
+
+		@Override
+		public void releaseFileVersion(FileVersion fileVersion) {
+			cacheUsage.get(fileVersion.getVersionId().toString()).decrementAndGet();
+		}
+
+		@Override
+		public void close() throws Exception {
+			System.out.println("closing filemanager");
+		}
+	}
+
 	private AgentTokenServices getLocalAgentTokenServices() {
-		AgentTokenServices tokenServices = new AgentTokenServices(new FileManagerClient() {
-
-			@Override
-			public FileVersion requestFileVersion(FileVersionId fileVersionId, boolean cleanable) throws FileManagerException {
-				if(fileVersionId.getFileId().equals(EMPTY_FILE)) {
-					String uid = fileVersionId.getFileId();
-					File file = new File(".");
-					return new FileVersion(file, fileVersionId, false);
-				} else {
-					return null;
-				}
-			}
-
-			@Override
-			public void removeFileVersionFromCache(FileVersionId fileVersionId) {
-				
-			}
-
-			@Override
-			public void cleanupCache() {
-
-			}
-
-			@Override
-			public void close() throws Exception {
-
-			}
-		});
+		AgentTokenServices tokenServices = new AgentTokenServices(new FunctionMessageHandlerTest.TestFileManagerClient());
 		tokenServices.setApplicationContextBuilder(new ApplicationContextBuilder());
 		Map<String, String> agentProperties = new HashMap<>();
 		agentProperties.put("myAgentProp1", "myAgentPropValue1");

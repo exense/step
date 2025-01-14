@@ -200,96 +200,97 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 			}
 
 
-			Map<String, String> handlerProperties = functionType.getHandlerProperties(function, executionContext);
-			if(handlerProperties!=null) {
-				properties.putAll(handlerProperties);
-			}
+			try (AbstractFunctionType.HandlerProperties handlerProperties = functionType.getHandlerProperties(function, executionContext)) {
+				if (handlerProperties != null && handlerProperties.properties != null) {
+					properties.putAll(handlerProperties.properties);
+				}
 
-			functionType.beforeFunctionCall(function, input, properties);
+				functionType.beforeFunctionCall(function, input, properties);
 
-			input.setProperties(properties);
+				input.setProperties(properties);
 
-			int callTimeout = function.getCallTimeout().get();
+				int callTimeout = function.getCallTimeout().get();
 
-			//expose additional properties to the keyword
-			properties.put(KEYWORD_NAME_PROP, input.getFunction());
-			properties.put(KEYWORD_TIMEOUT_PROP, Integer.toString(callTimeout));
+				//expose additional properties to the keyword
+				properties.put(KEYWORD_NAME_PROP, input.getFunction());
+				properties.put(KEYWORD_TIMEOUT_PROP, Integer.toString(callTimeout));
 
-			// Calculate the call timeout of the function. The offset is required to ensure that the call timeout of the function,
-			// if used in the function handler, occurs before the agent timeout that will interrupt the thread
-			if(callTimeout < 100) {
-				throw new RuntimeException("The defined call timeout of the function should be higher than 100ms");
-			}
-			input.setFunctionCallTimeout(callTimeout-100l);
+				// Calculate the call timeout of the function. The offset is required to ensure that the call timeout of the function,
+				// if used in the function handler, occurs before the agent timeout that will interrupt the thread
+				if (callTimeout < 100) {
+					throw new RuntimeException("The defined call timeout of the function should be higher than 100ms");
+				}
+				input.setFunctionCallTimeout(callTimeout - 100l);
 
-			// Serialize the input object
-			JsonNode node = jakartaMapper.valueToTree(input);
+				// Serialize the input object
+				JsonNode node = jakartaMapper.valueToTree(input);
 
-			String functionMessageHandler = FunctionMessageHandler.class.getName();
-			String messageHandler;
-			FileVersionId messageHandlerPackage;
-			OutputMessage outputMessage;
-			try {
-				messageHandler = functionMessageHandler;
-				messageHandlerPackage = functionHandlerPackage;
-				outputMessage = gridClient.call(tokenHandleId, node, messageHandler, messageHandlerPackage, messageProperties, callTimeout);
-			} catch (AgentCallTimeoutException e) {
-				attachUnexpectedExceptionToOutput(output, "Timeout after " + callTimeout + "ms while calling the agent. You can increase the call timeout in the configuration screen of the keyword",e );
-				return output;
-			} catch (AgentSideException e) {
-				attachUnexpectedExceptionToOutput(output, "Unexpected error on the agent side: "+e.getMessage(),e );
-				return output;
-			} catch (AgentCommunicationException e) {
-				attachUnexpectedExceptionToOutput(output, "Communication error between the controller and the agent while calling the agent",e);
-				return output;
-			}
+				String functionMessageHandler = FunctionMessageHandler.class.getName();
+				String messageHandler;
+				FileVersionId messageHandlerPackage;
+				OutputMessage outputMessage;
+				try {
+					messageHandler = functionMessageHandler;
+					messageHandlerPackage = functionHandlerPackage;
+					outputMessage = gridClient.call(tokenHandleId, node, messageHandler, messageHandlerPackage, messageProperties, callTimeout);
+				} catch (AgentCallTimeoutException e) {
+					attachUnexpectedExceptionToOutput(output, "Timeout after " + callTimeout + "ms while calling the agent. You can increase the call timeout in the configuration screen of the keyword", e);
+					return output;
+				} catch (AgentSideException e) {
+					attachUnexpectedExceptionToOutput(output, "Unexpected error on the agent side: " + e.getMessage(), e);
+					return output;
+				} catch (AgentCommunicationException e) {
+					attachUnexpectedExceptionToOutput(output, "Communication error between the controller and the agent while calling the agent", e);
+					return output;
+				}
 
-			AgentError agentError = outputMessage.getAgentError();
-			if(agentError != null) {
-				AgentErrorCode errorCode = agentError.getErrorCode();
-				if(errorCode.equals(AgentErrorCode.TIMEOUT_REQUEST_INTERRUPTED)) {
-					output.setError(newAgentError("Timeout after " + callTimeout + "ms while executing the keyword on the agent. The keyword execution could be interrupted on the agent side. You can increase the call timeout in the configuration screen of the keyword"));
-				} else if(errorCode.equals(AgentErrorCode.TIMEOUT_REQUEST_NOT_INTERRUPTED)) {
-					output.setError(newAgentError("Timeout after " + callTimeout + "ms while executing the keyword on the agent. WARNING: The keyword execution couldn't be interrupted on the agent side. You can increase the call timeout in the configuration screen of the keyword"));
-				} else if(errorCode.equals(AgentErrorCode.TOKEN_NOT_FOUND)) {
-					output.setError(newAgentError("The agent token doesn't exist on the agent side"));
-				} else if(errorCode.equals(AgentErrorCode.UNEXPECTED)) {
-					output.setError(newAgentError("Unexpected error while executing the keyword on the agent"));
-				} else if(errorCode.equals(AgentErrorCode.CONTEXT_BUILDER)) {
-					output.setError(newAgentError("Unexpected error on the agent side while building the execution context of the keyword"));
-				} else if(errorCode.equals(AgentErrorCode.CONTEXT_BUILDER_FILE_PROVIDER_CALL_ERROR)) {
-					output.setError(newAgentError("Error while downloading a resource from the controller"));
-				} else if(errorCode.equals(AgentErrorCode.CONTEXT_BUILDER_FILE_PROVIDER_CALL_TIMEOUT)) {
-					String timeout = agentError.getErrorDetails().get(AgentErrorCode.Details.TIMEOUT);
-					String filehandle = agentError.getErrorDetails().get(AgentErrorCode.Details.FILE_HANDLE);
-					String fileversion = agentError.getErrorDetails().get(AgentErrorCode.Details.FILE_VERSION);
-					FileVersion fileVersion = gridClient.getRegisteredFile(new FileVersionId(filehandle, fileversion));
-					if(fileVersion!=null) {
-						output.setError(newAgentError("Timeout after "+ timeout + "ms while downloading the following resource from the controller: "+fileVersion.getFile().getPath()+". You can increase the download timeout by setting gridReadTimeout in AgentConf.js"));
+				AgentError agentError = outputMessage.getAgentError();
+				if (agentError != null) {
+					AgentErrorCode errorCode = agentError.getErrorCode();
+					if (errorCode.equals(AgentErrorCode.TIMEOUT_REQUEST_INTERRUPTED)) {
+						output.setError(newAgentError("Timeout after " + callTimeout + "ms while executing the keyword on the agent. The keyword execution could be interrupted on the agent side. You can increase the call timeout in the configuration screen of the keyword"));
+					} else if (errorCode.equals(AgentErrorCode.TIMEOUT_REQUEST_NOT_INTERRUPTED)) {
+						output.setError(newAgentError("Timeout after " + callTimeout + "ms while executing the keyword on the agent. WARNING: The keyword execution couldn't be interrupted on the agent side. You can increase the call timeout in the configuration screen of the keyword"));
+					} else if (errorCode.equals(AgentErrorCode.TOKEN_NOT_FOUND)) {
+						output.setError(newAgentError("The agent token doesn't exist on the agent side"));
+					} else if (errorCode.equals(AgentErrorCode.UNEXPECTED)) {
+						output.setError(newAgentError("Unexpected error while executing the keyword on the agent"));
+					} else if (errorCode.equals(AgentErrorCode.CONTEXT_BUILDER)) {
+						output.setError(newAgentError("Unexpected error on the agent side while building the execution context of the keyword"));
+					} else if (errorCode.equals(AgentErrorCode.CONTEXT_BUILDER_FILE_PROVIDER_CALL_ERROR)) {
+						output.setError(newAgentError("Error while downloading a resource from the controller"));
+					} else if (errorCode.equals(AgentErrorCode.CONTEXT_BUILDER_FILE_PROVIDER_CALL_TIMEOUT)) {
+						String timeout = agentError.getErrorDetails().get(AgentErrorCode.Details.TIMEOUT);
+						String filehandle = agentError.getErrorDetails().get(AgentErrorCode.Details.FILE_HANDLE);
+						String fileversion = agentError.getErrorDetails().get(AgentErrorCode.Details.FILE_VERSION);
+						FileVersion fileVersion = gridClient.getRegisteredFile(new FileVersionId(filehandle, fileversion));
+						if (fileVersion != null) {
+							output.setError(newAgentError("Timeout after " + timeout + "ms while downloading the following resource from the controller: " + fileVersion.getFile().getPath() + ". You can increase the download timeout by setting gridReadTimeout in AgentConf.js"));
+						} else {
+							output.setError(newAgentError("Timeout after " + timeout + "ms while downloading a resource from the controller. You can increase the download timeout by setting gridReadTimeout in AgentConf.js"));
+						}
 					} else {
-						output.setError(newAgentError("Timeout after "+ timeout + "ms while downloading a resource from the controller. You can increase the download timeout by setting gridReadTimeout in AgentConf.js"));
+						output.setError(newAgentError("Unknown agent error: " + agentError));
 					}
 				} else {
-					output.setError(newAgentError("Unknown agent error: "+agentError));
+					JavaType javaType = jakartaMapper.getTypeFactory().constructParametrizedType(Output.class, Output.class, outputClass);
+					if (outputClass.getName().equals("javax.json.JsonObject")) {
+						output = javaxMapper.readValue(jakartaMapper.treeAsTokens(outputMessage.getPayload()), javaType);
+					} else {
+						output = jakartaMapper.readValue(jakartaMapper.treeAsTokens(outputMessage.getPayload()), javaType);
+					}
 				}
-			} else {
-				JavaType javaType = jakartaMapper.getTypeFactory().constructParametrizedType(Output.class, Output.class, outputClass);
-				if (outputClass.getName().equals("javax.json.JsonObject")) {
-					output = javaxMapper.readValue(jakartaMapper.treeAsTokens(outputMessage.getPayload()), javaType);
-				} else {
-					output = jakartaMapper.readValue(jakartaMapper.treeAsTokens(outputMessage.getPayload()), javaType);
-				}
-			}
 
-			if(outputMessage.getAttachments()!=null) {
-				if(output.getAttachments()==null) {
-					output.setAttachments(outputMessage.getAttachments());
-				} else {
-					output.getAttachments().addAll(outputMessage.getAttachments());
+				if (outputMessage.getAttachments() != null) {
+					if (output.getAttachments() == null) {
+						output.setAttachments(outputMessage.getAttachments());
+					} else {
+						output.getAttachments().addAll(outputMessage.getAttachments());
+					}
 				}
-			}
 
-			return output;
+				return output;
+			}
 		} catch (FunctionExecutionException e) {
 			output.setError(e.getError());
 			Exception source = e.getSource();

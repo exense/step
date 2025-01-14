@@ -39,8 +39,17 @@ public abstract class ProcessBasedFunctionHandler extends JsonBasedFunctionHandl
 
     private static final Logger logger = LoggerFactory.getLogger(ProcessBasedFunctionHandler.class);
 
-    abstract protected List<String> getProcessCommand(Input<JsonObject> input) throws Exception;
-    abstract protected String getProcessName();
+    abstract protected ProcessConfiguration getProcessCommand(Input<JsonObject> input) throws Exception;
+
+    public abstract static class ProcessConfiguration implements AutoCloseable {
+        public final String processName;
+        public final List<String> commands;
+
+        public ProcessConfiguration(String processName, List<String> commands) {
+            this.processName = processName;
+            this.commands = commands;
+        }
+    }
 
     @Override
     public Output<JsonObject> handle(Input<JsonObject> input) throws Exception {
@@ -48,39 +57,39 @@ public abstract class ProcessBasedFunctionHandler extends JsonBasedFunctionHandl
         boolean debug = Boolean.parseBoolean(properties.getOrDefault(DEBUG, Boolean.FALSE.toString()));
         boolean attachWorkFolder = Boolean.parseBoolean(properties.getOrDefault(ATTACH_WORK_FOLDER, Boolean.FALSE.toString()));
 
-        List<String> command = getProcessCommand(input);
-        String processName = getProcessName();
-        try(ManagedProcess process = new ManagedProcess(processName, command)) {
-            createProcessInputMessageAsJson(process, input);
-            createProcessInputAsProperties(process, input);
+        try (ProcessConfiguration processConfiguration = getProcessCommand(input)) {
+            try (ManagedProcess process = new ManagedProcess(processConfiguration.processName, processConfiguration.commands)) {
+                createProcessInputMessageAsJson(process, input);
+                createProcessInputAsProperties(process, input);
 
-            process.start();
-            int returnCode = process.waitFor((long) (input.getFunctionCallTimeout() * 0.9));
+                process.start();
+                int returnCode = process.waitFor((long) (input.getFunctionCallTimeout() * 0.9));
 
-            OutputBuilder outputBuilder = processOutput(process);
+                OutputBuilder outputBuilder = processOutput(process);
 
-            boolean error = false;
-            if (returnCode != 0) {
-                error = true;
-                outputBuilder.appendError("The " + getProcessName() + " execution returned " + returnCode + ". Check logs for more details.");
+                boolean error = false;
+                if (returnCode != 0) {
+                    error = true;
+                    outputBuilder.appendError("The " + processConfiguration.processName + " execution returned " + returnCode + ". Check logs for more details.");
+                }
+
+                if (error || debug) {
+                    attachProcessLogs(processConfiguration, process, outputBuilder);
+                    takeScreenshot(outputBuilder);
+                }
+
+                if (attachWorkFolder) {
+                    attachProcessWorkFolder(process, outputBuilder);
+                }
+
+                return outputBuilder.build();
             }
-
-            if (error || debug) {
-                attachProcessLogs(process, outputBuilder);
-                takeScreenshot(outputBuilder);
-            }
-
-            if (attachWorkFolder) {
-                attachProcessWorkFolder(process, outputBuilder);
-            }
-
-            return outputBuilder.build();
         }
     }
 
-    protected String getSanitizedProcessName() {
+    protected String getSanitizedProcessName(String processName) {
         // Remove leading/trailing whitespace and replace spaces with underscores
-        String sanitized = getProcessName().trim().replaceAll("\\s+", "_");
+        String sanitized = processName.trim().replaceAll("\\s+", "_");
         // Use replaceAll() to remove invalid characters
         sanitized = sanitized.replaceAll("[^a-zA-Z0-9_.]", "_");
         return sanitized;
@@ -183,13 +192,13 @@ public abstract class ProcessBasedFunctionHandler extends JsonBasedFunctionHandl
         return outputBuilder;
     }
 
-    protected void attachProcessLogs(ManagedProcess process, OutputBuilder outputBuilder) {
+    protected void attachProcessLogs(ProcessConfiguration processConfiguration, ManagedProcess process, OutputBuilder outputBuilder) {
         String processOutput = getProcessOutput(process);
-        Attachment attachment = AttachmentHelper.generateAttachmentFromByteArray(processOutput.getBytes(StandardCharsets.UTF_8), getSanitizedProcessName() + ".log");
+        Attachment attachment = AttachmentHelper.generateAttachmentFromByteArray(processOutput.getBytes(StandardCharsets.UTF_8), getSanitizedProcessName(processConfiguration.processName) + ".log");
         outputBuilder.addAttachment(attachment);
         String processErrorOutput = getProcessErrorOutput(process);
         if (processErrorOutput != null && !processErrorOutput.isBlank()) {
-            Attachment errorAttachment = AttachmentHelper.generateAttachmentFromByteArray(processErrorOutput.getBytes(StandardCharsets.UTF_8), getSanitizedProcessName() + "Error.log");
+            Attachment errorAttachment = AttachmentHelper.generateAttachmentFromByteArray(processErrorOutput.getBytes(StandardCharsets.UTF_8), getSanitizedProcessName(processConfiguration.processName) + "Error.log");
             outputBuilder.addAttachment(errorAttachment);
         }
     }

@@ -129,8 +129,8 @@ public class FunctionPluginTest {
 		}
 
 		@Override
-		public Map<String, String> getHandlerProperties(Function function, AbstractStepContext executionContext) {
-			return null;
+		public HandlerProperties getHandlerProperties(Function function, AbstractStepContext executionContext) {
+			return new HandlerProperties(null);
 		}
 
 		@Override

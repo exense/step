@@ -123,7 +123,7 @@ public class TokenSelectionCriteriaMapBuilderTest {
 			}
 
 			@Override
-			public Map<String, String> getHandlerProperties(Function function, AbstractStepContext executionContext) {
+			public HandlerProperties getHandlerProperties(Function function, AbstractStepContext executionContext) {
 				return null;
 			}
 

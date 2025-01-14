@@ -177,8 +177,8 @@ public class CompositeResolvedPlanBuilderTest {
         }
 
         @Override
-        public Map<String, String> getHandlerProperties(CustomFunction function, AbstractStepContext executionContext) {
-            return null;
+        public HandlerProperties getHandlerProperties(CustomFunction function, AbstractStepContext executionContext) {
+            return new HandlerProperties(null);
         }
 
         @Override

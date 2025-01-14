@@ -56,6 +56,8 @@ public abstract class AbstractFunctionType<T extends Function> {
 	
 	protected FunctionTypeConfiguration functionTypeConfiguration;
 
+	protected FileVersion handlerPackageVersion = null;
+
 	protected void setFunctionTypeConfiguration(FunctionTypeConfiguration functionTypeConfiguration) {
 		this.functionTypeConfiguration = functionTypeConfiguration;
 	}
@@ -89,13 +91,30 @@ public abstract class AbstractFunctionType<T extends Function> {
 	public abstract String getHandlerChain(T function);
 	
 	public FileVersionId getHandlerPackage(T function) {
-		return null;
-	};
-	
-	public abstract Map<String, String> getHandlerProperties(T function, AbstractStepContext executionContext);
+		return (handlerPackageVersion != null) ? handlerPackageVersion.getVersionId() : null;
+	}
+
+	public static class HandlerProperties implements AutoCloseable {
+		public final Map<String, String> properties;
+
+        public HandlerProperties(Map<String, String> properties) {
+            this.properties = properties;
+        }
+
+		@Override
+		public void close() throws Exception {
+
+		}
+	}
+
+	public abstract HandlerProperties getHandlerProperties(T function, AbstractStepContext executionContext);
 
 	public void beforeFunctionCall(T function, Input<?> input, Map<String, String> properties) throws FunctionExecutionException {
 		
+	}
+
+	public void afterFunctionCall(T function, Input<?> input, Map<String, String> properties) throws FunctionExecutionException {
+
 	}
 	
 	public abstract T newFunction();
@@ -127,9 +146,10 @@ public abstract class AbstractFunctionType<T extends Function> {
 	 * @param cleanable        whether this version of the file can be cleaned-up at runtime
 	 * @param executionContext the current execution context (should be defined if the function is executing via ExecutionEngine with
 	 *                         execution-scope resource manager)
+	 * @return the {@link FileVersion} of the registered file. The {@link FileVersion} can be used for later retrieval of this version
 	 * @throws RuntimeException
 	 */
-	protected void registerFile(DynamicValue<String> dynamicValue, String propertyName, Map<String, String> props, boolean cleanable, AbstractStepContext executionContext) {
+	protected FileVersion registerFile(DynamicValue<String> dynamicValue, String propertyName, Map<String, String> props, boolean cleanable, AbstractStepContext executionContext) {
 		if(dynamicValue!=null) {
 			String filepath = dynamicValue.get();
 			if(filepath!=null && filepath.trim().length()>0) {
@@ -170,24 +190,21 @@ public abstract class AbstractFunctionType<T extends Function> {
 				} catch (ExecutionException e) {
 					throw new RuntimeException("Error while resolving path "+filepath, e);
 				}
-				registerFile(file, propertyName, props, cleanable);
-			}			
+				return registerFile(file, propertyName, props, cleanable);
+			}
 		}
+		return null;
 	}
 
 	/**
-	 * Register the provided file in the grid's file manager for a given property. Enrich the map with the resulting file and version ids.
-	 * @deprecated
-	 * This method register cleanable resource only, use {@link #registerFile(File, String, Map, boolean)} instead
-	 * to specifically define whether the registered file can be cleaned up at runtime
+	 * Release the provided file version in the grid's file manager. Should be called by the caller registering the file version once it doesn't require it anymore
 	 *
-	 * @param file the {@link File} of the resource to be registered
-	 * @param propertyName the {@link String} name of the property for which we register the file
-	 * @param props the {@link Map} will be enriched with the propertyName id and version of the registered file that can be later used to retrieve the file
-	 * @throws RuntimeException
+	 * @param fileVersion the {@link FileVersion} to be released
 	 */
-	protected void registerFile(File file, String propertyName, Map<String, String> props) {
-		registerFile(file, propertyName, props, true);
+	protected void releaseFile(FileVersion fileVersion) {
+		if (fileVersion != null) {
+			gridFileServices.releaseFile(fileVersion);
+		}
 	}
 
 	/**
@@ -197,11 +214,13 @@ public abstract class AbstractFunctionType<T extends Function> {
 	 * @param propertyName the name of the property for which we register the file
 	 * @param props the {@link Map}  will be enriched with the propertyName id and version of the registered file that can be later used to retrieve the file
 	 * @param cleanable whether this version of the file can be cleaned-up at runtime
+	 * @return the {@link FileVersion} of the registered file. The {@link FileVersion} can be used for later retrieval of this version
 	 * @throws RuntimeException
 	 */
-	protected void registerFile(File file, String propertyName, Map<String, String> props, boolean cleanable) {
-		FileVersionId fileVersionId = registerFile(file, cleanable);
-		registerFileVersionId(propertyName, props, fileVersionId);
+	protected FileVersion registerFile(File file, String propertyName, Map<String, String> props, boolean cleanable) {
+		FileVersion fileVersion = registerFile(file, cleanable);
+		registerFileVersionId(propertyName, props, fileVersion.getVersionId());
+		return fileVersion;
 	}
 
 	private ResourceManager unwrapResourceManager(LayeredResourceManager layeredResourceManager) {
@@ -229,11 +248,11 @@ public abstract class AbstractFunctionType<T extends Function> {
 	 * @return the {@link FileVersionId} of the registered file. The {@link FileVersionId} can be used for later retrieval of this version
 	 * @throws RuntimeException
 	 */
-	protected FileVersionId registerFile(File file, boolean cleanable) {
+	private FileVersion registerFile(File file, boolean cleanable) {
 		FileVersion fileVersion;
 		try {
 			fileVersion = gridFileServices.registerFile(file, cleanable);
-			return fileVersion.getVersionId();
+			return fileVersion;
 		} catch (FileManagerException e) {
 			throw new RuntimeException("Error while registering file "+file.getAbsolutePath(), e);
 		}
@@ -241,22 +260,6 @@ public abstract class AbstractFunctionType<T extends Function> {
 
 	/**
 	 * Register the provided file as resource in the grid's file manager for a given property. Enrich the map with the resulting file and version ids.
-	 * @deprecated
-	 * This method register cleanable resource only, use {@link #registerResource(ClassLoader, String, boolean, String, Map, boolean)} instead
-	 * to specifically define whether the registered file can be cleaned up at runtime
-	 * @param cl the {@link ClassLoader} containing the file as resource
-	 * @param resourceName the name of the file's resource
-	 * @param isDirectory whether this resource is a directory
-	 * @param propertyName the name of the property for which we register the file
-	 * @param props the {@link Map}  will be enriched with the propertyName id and version of the registered file that can be later used to retrieve the file
-	 * @throws RuntimeException
-	 */
-	protected void registerResource(ClassLoader cl, String resourceName, boolean isDirectory, String propertyName, Map<String, String> props) {
-		registerResource(cl, resourceName, isDirectory, propertyName, props, true);
-	}
-
-	/**
-	 * Register the provided file as resource in the grid's file manager for a given property. Enrich the map with the resulting file and version ids.
 	 *
 	 * @param cl the {@link ClassLoader} containing the file as resource
 	 * @param resourceName the name of the file's resource
@@ -264,26 +267,13 @@ public abstract class AbstractFunctionType<T extends Function> {
 	 * @param propertyName the name of the property for which we register the file
 	 * @param props the {@link Map}  will be enriched with the propertyName id and version of the registered file that can be later used to retrieve the file
 	 * @param cleanable whether this version of the file can be cleaned-up at runtime
+	 * @return the {@link FileVersion} of the registered file. The {@link FileVersion} can be used for later retrieval of this version
 	 * @throws RuntimeException
 	 */
-	protected void registerResource(ClassLoader cl, String resourceName, boolean isDirectory, String propertyName, Map<String, String> props, boolean cleanable) {
-		FileVersionId fileVersionId = registerResource(cl, resourceName, isDirectory, cleanable);
-		registerFileVersionId(propertyName, props, fileVersionId);
-	}
-
-	/**
-	 * Register the provided file as resource in the grid's file manager.
-	 * @deprecated
-	 * This method register non-cleanable resource only, use {@link #registerResource(ClassLoader, String, boolean, boolean)} instead
-	 * to specifically define whether the registered file can be cleaned up at runtime
-	 * @param cl the {@link ClassLoader} containing the file as resource
-	 * @param resourceName the name of the file's resource
-	 * @param isDirectory whether this resource is a directory
-	 * @return the {@link FileVersionId} of the registered file. The {@link FileVersionId} can be used for later retrieval of this version
-	 * @throws RuntimeException
-	 */
-	protected FileVersionId registerResource(ClassLoader cl, String resourceName, boolean isDirectory) {
-		return registerResource(cl, resourceName, isDirectory, false);
+	protected FileVersion registerResource(ClassLoader cl, String resourceName, boolean isDirectory, String propertyName, Map<String, String> props, boolean cleanable) {
+		FileVersion fileVersion = registerResource(cl, resourceName, isDirectory, cleanable);
+		registerFileVersionId(propertyName, props, fileVersion.getVersionId());
+		return fileVersion;
 	}
 
 	/**
@@ -293,19 +283,15 @@ public abstract class AbstractFunctionType<T extends Function> {
 	 * @param resourceName the name of the file's resource
 	 * @param isDirectory whether this resource is a directory
 	 * @param cleanable whether this version of the file can be cleaned-up at runtime
-	 * @return the {@link FileVersionId} of the registered file. The {@link FileVersionId} can be used for later retrieval of this version
+	 * @return the {@link FileVersion} of the registered file. The {@link FileVersion} can be used for later retrieval of this version
 	 * @throws RuntimeException
 	 */
-	protected FileVersionId registerResource(ClassLoader cl, String resourceName, boolean isDirectory, boolean cleanable) {
+	protected FileVersion registerResource(ClassLoader cl, String resourceName, boolean isDirectory, boolean cleanable) {
 		try {
-			return gridFileServices.registerFile(cl.getResourceAsStream(resourceName), resourceName, isDirectory, cleanable).getVersionId();
+			return gridFileServices.registerFile(cl.getResourceAsStream(resourceName), resourceName, isDirectory, cleanable);
 		} catch (FileManagerException e) {
 			throw new RuntimeException("Error while registering resource "+resourceName, e);
 		}
-	}
-	
-	protected FileVersionId registerFile(String filepath, boolean cleanable) {
-		return registerFile(new File(filepath), cleanable);
 	}
 
 	protected ResourceManager getResourceManager(AbstractStepContext executionContext) {

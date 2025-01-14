@@ -31,7 +31,7 @@ import step.functions.handler.JsonBasedFunctionHandler;
 import step.functions.io.Input;
 import step.functions.io.Output;
 import step.functions.io.OutputBuilder;
-import step.grid.contextbuilder.ApplicationContextBuilder.ApplicationContext;
+import step.grid.contextbuilder.ApplicationContext;
 import step.grid.filemanager.FileManagerException;
 import step.grid.io.AttachmentHelper;
 
@@ -73,55 +73,58 @@ public class JMeterLocalHandler extends JsonBasedFunctionHandler {
 
 		OutputBuilder out = new OutputBuilder();
 
-		File testPlanFile = retrieveFileVersion(JMETER_TESTPLAN, message.getProperties());
+		try (FileVersionCloseable testPlanFileVersion = retrieveFileVersion(JMETER_TESTPLAN, message.getProperties())) {
+			File testPlanFile = testPlanFileVersion.getFile();
 
-		StandardJMeterEngine jmeter = new StandardJMeterEngine();
+			StandardJMeterEngine jmeter = new StandardJMeterEngine();
 
-		HashTree testPlanTree = SaveService.loadTree(testPlanFile);
+			HashTree testPlanTree = SaveService.loadTree(testPlanFile);
 
-		Arguments arguments = createArguments(message);
-		SampleListenerImpl listener = new SampleListenerImpl(out);
+			Arguments arguments = createArguments(message);
+			SampleListenerImpl listener = new SampleListenerImpl(out);
 
-		testPlanTree.traverse(new HashTreeTraverser() {
+			testPlanTree.traverse(new HashTreeTraverser() {
 
-			@Override
-			public void subtractNode() {
+				@Override
+				public void subtractNode() {
+				}
+
+				@Override
+				public void processPath() {
+				}
+
+				@Override
+				public void addNode(Object node, HashTree subTree) {
+					if (node instanceof TestPlan) {
+						testPlanTree.getTree(node).add(listener);
+						testPlanTree.getTree(node).add(arguments);
+					}
+				}
+			});
+
+			jmeter.configure(testPlanTree);
+			boolean success;
+			try {
+				jmeter.run();
+			} finally {
+				success = listener.collect();
 			}
+			jmeter.reset();
 
-			@Override
-			public void processPath() {
-			}
-
-			@Override
-			public void addNode(Object node, HashTree subTree) {
-				if (node instanceof TestPlan) {
-					testPlanTree.getTree(node).add(listener);
-					testPlanTree.getTree(node).add(arguments);
+			boolean debug = Boolean.parseBoolean(message.getProperties().getOrDefault(DEBUG, "false"));
+			//Appender should always be closed, if errors occurs or debug mode is ON, JMeters logs are attached to the output
+			if (appender != null) {
+				appender.dispose();
+				if (debug || !success) {
+					byte[] logData = appender.getData();
+					if (logData != null && logData.length > 0) {
+						out.addAttachment(AttachmentHelper.generateAttachmentFromByteArray(logData, "log.txt"));
+					}
 				}
 			}
-		});
 
-		jmeter.configure(testPlanTree);
-		boolean success;
-		try {
-			jmeter.run();
-		} finally {
-			success = listener.collect();
+			return out.build();
 		}
-
-		boolean debug = Boolean.parseBoolean(message.getProperties().getOrDefault(DEBUG, "false"));
-		//Appender should always be closed, if errors occurs or debug mode is ON, JMeters logs are attached to the output
-		if (appender != null) {
-			appender.dispose();
-			if (debug || !success) {
-				byte[] logData = appender.getData();
-				if (logData != null && logData.length > 0) {
-					out.addAttachment(AttachmentHelper.generateAttachmentFromByteArray(logData, "log.txt"));
-				}
-			}
-		}
-
-		return out.build();
 	}
 
 	private void initializeContextIfRequired(Input<JsonObject> message, ApplicationContext context) throws FileManagerException {
@@ -133,7 +136,9 @@ public class JMeterLocalHandler extends JsonBasedFunctionHandler {
 				log.error("Unable to obtain root logger, log capturing will not work!", e);
 			}
 
-			File jmeterLibFolder = retrieveFileVersion(JMETER_LIBRARIES, message.getProperties());
+			FileVersionCloseable jmeterLibFileVersion = retrieveFileVersion(JMETER_LIBRARIES, message.getProperties());
+			context.put("jmeterLibFileVersion", jmeterLibFileVersion);
+			File jmeterLibFolder = jmeterLibFileVersion.getFile();
 
 			String jmeterHome = jmeterLibFolder.getAbsolutePath();
 			updateClasspathSystemProperty(jmeterHome);

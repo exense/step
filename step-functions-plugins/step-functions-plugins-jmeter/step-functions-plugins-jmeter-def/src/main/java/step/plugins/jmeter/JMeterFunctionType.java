@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import step.core.AbstractStepContext;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionTypeException;
+import step.grid.filemanager.FileVersion;
 import step.grid.filemanager.FileVersionId;
 import step.resources.ResourceManager;
 
@@ -37,7 +38,6 @@ public class JMeterFunctionType extends AbstractFunctionType<JMeterFunction> {
 	public static final String JMETER_HOME_CONFIG_PROPERTY = "plugins.jmeter.home";
 	public static final String MISSING_JMETER_HOME_MESSAGE_PROPERTY = "plugins.jmeter.home.missing.message";
 
-	private FileVersionId handlerJar;
 	protected final Configuration configuration;
 
 	public JMeterFunctionType(Configuration configuration) {
@@ -48,7 +48,7 @@ public class JMeterFunctionType extends AbstractFunctionType<JMeterFunction> {
 	@Override
 	public void init() {
 		super.init();
-		handlerJar = registerResource(getClass().getClassLoader(), "jmeter-plugin-handler.jar", false);
+		handlerPackageVersion = registerResource(getClass().getClassLoader(), "jmeter-plugin-handler.jar", false, false);
 	}
 
 	@Override
@@ -57,20 +57,21 @@ public class JMeterFunctionType extends AbstractFunctionType<JMeterFunction> {
 	}
 
 	@Override
-	public FileVersionId getHandlerPackage(JMeterFunction function) {
-		return handlerJar;
-	}
-
-	@Override
-	public Map<String, String> getHandlerProperties(JMeterFunction function, AbstractStepContext executionContext) {
-		Map<String, String> props = new HashMap<>();
-		registerFile(function.getJmeterTestplan(), "$jmeter.testplan.file", props, true, executionContext);
-
+	public HandlerProperties getHandlerProperties(JMeterFunction function, AbstractStepContext executionContext) {
 		String home = configuration.getProperty(JMETER_HOME_CONFIG_PROPERTY);
 		if (home != null) {
+			Map<String, String> props = new HashMap<>();
 			File homeFile = new File(home);
-			registerFile(homeFile, "$jmeter.libraries", props);
-			return props;
+			FileVersion jmeterLibFileVersion = registerFile(homeFile, "$jmeter.libraries", props, true);
+			FileVersion jmeterTestplanFileVersion = registerFile(function.getJmeterTestplan(), "$jmeter.testplan.file", props, true, executionContext);
+			return new HandlerProperties(props) {
+				@Override
+				public void close() throws Exception {
+					super.close();
+					releaseFile(jmeterLibFileVersion);
+					releaseFile(jmeterTestplanFileVersion);
+				}
+			};
 		} else {
 			throw new RuntimeException(
 					configuration.getProperty(MISSING_JMETER_HOME_MESSAGE_PROPERTY,

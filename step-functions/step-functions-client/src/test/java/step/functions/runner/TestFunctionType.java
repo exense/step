@@ -32,7 +32,7 @@ public class TestFunctionType extends AbstractFunctionType<TestFunction> {
 	}
 
 	@Override
-	public Map<String, String> getHandlerProperties(TestFunction function, AbstractStepContext executionContext) {
+	public HandlerProperties getHandlerProperties(TestFunction function, AbstractStepContext executionContext) {
 		return null;
 	}
 

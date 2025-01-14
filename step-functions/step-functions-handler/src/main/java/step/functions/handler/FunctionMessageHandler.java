@@ -72,11 +72,10 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 	@Override
 	public OutputMessage handle(AgentTokenWrapper token, InputMessage inputMessage) throws Exception {
 		applicationContextBuilder.resetContext();
-		
 		FileVersionId functionPackage = getFileVersionId(FUNCTION_HANDLER_PACKAGE_KEY, inputMessage.getProperties());
 		if(functionPackage != null) {
-			RemoteApplicationContextFactory functionHandlerContext = new RemoteApplicationContextFactory(token.getServices().getFileManagerClient(), getFileVersionId(FUNCTION_HANDLER_PACKAGE_KEY, inputMessage.getProperties()));
-			applicationContextBuilder.pushContext(functionHandlerContext);
+			RemoteApplicationContextFactory functionHandlerContext = new RemoteApplicationContextFactory(token.getServices().getFileManagerClient(), getFileVersionId(FUNCTION_HANDLER_PACKAGE_KEY, inputMessage.getProperties()), true);
+			token.getTokenReservationSession().put(applicationContextBuilder.pushContext(functionHandlerContext));
 		}
 
 		return applicationContextBuilder.runInContext(() -> {

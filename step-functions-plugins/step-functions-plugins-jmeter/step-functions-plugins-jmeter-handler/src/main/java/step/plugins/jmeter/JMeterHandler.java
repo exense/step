@@ -23,15 +23,15 @@ import javax.json.JsonObject;
 import step.functions.handler.JsonBasedFunctionHandler;
 import step.functions.io.Input;
 import step.functions.io.Output;
+import step.grid.contextbuilder.ApplicationContextControl;
 
 public class JMeterHandler extends JsonBasedFunctionHandler {
 	
 	@Override
 	public Output<JsonObject> handle(Input<JsonObject> input) throws Exception {
-		pushRemoteApplicationContext(JMeterLocalHandler.JMETER_LIBRARIES, input.getProperties());
-		
-		pushLocalApplicationContext(getClass().getClassLoader(), "jmeter-plugin-local-handler.jar");
-		
-		return delegate("step.plugins.jmeter.JMeterLocalHandler", input);
+		try (ApplicationContextControl ignored = pushRemoteApplicationContext(JMeterLocalHandler.JMETER_LIBRARIES, input.getProperties(), false);
+			 ApplicationContextControl ignored1 = pushLocalApplicationContext(getClass().getClassLoader(), "jmeter-plugin-local-handler.jar")) {
+			return delegate("step.plugins.jmeter.JMeterLocalHandler", input);
+		}
 	}
 }
