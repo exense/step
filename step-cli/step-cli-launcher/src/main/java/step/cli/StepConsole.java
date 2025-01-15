@@ -338,7 +338,7 @@ public class StepConsole implements Callable<Integer> {
             @Option(names = {"--numberOfThreads"}, description = "Max number of threads to be used for execution in case of wrapped test set")
             protected Integer numberOfThreads;
 
-            @Option(names = {"--reportType"}, description = "The type of execution report to be generated and stored locally. Supported report types: junit, aggregated")
+            @Option(names = {"--reportType"}, description = "The type of execution report to be generated and stored locally. Supported report types: junit, aggregated. Also (optional) you can specify the output destination: --reportType=junit;output=file,stdout")
             protected List<String> reportType;
 
             @Option(names = {"--reportDir"}, description = "The local folder to store generated execution reports", defaultValue = "reports")
