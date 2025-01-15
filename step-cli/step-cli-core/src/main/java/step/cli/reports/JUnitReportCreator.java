@@ -23,6 +23,7 @@ import com.google.common.io.Files;
 import step.cli.AbstractExecuteAutomationPackageTool;
 import step.cli.CliToolLogging;
 import step.client.executions.RemoteExecutionManager;
+import step.core.execution.model.Execution;
 import step.reports.CustomReportType;
 
 import java.io.File;
@@ -31,7 +32,9 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class JUnitReportCreator implements ReportCreator {
 
@@ -44,8 +47,8 @@ public class JUnitReportCreator implements ReportCreator {
     }
 
     @Override
-    public void createReport(List<String> executionIds, List<AbstractExecuteAutomationPackageTool.ReportOutputMode> outputModes, CliToolLogging logging) throws IOException {
-        File preparedReport = prepareCustomReportOnServer(executionIds, logging);
+    public void createReport(Map<String, Execution> executions, List<AbstractExecuteAutomationPackageTool.ReportOutputMode> outputModes, CliToolLogging logging) throws IOException {
+        File preparedReport = prepareCustomReportOnServer(new ArrayList<>(executions.keySet()), logging);
 
         for (AbstractExecuteAutomationPackageTool.ReportOutputMode outputMode : outputModes) {
             switch (outputMode) {

@@ -20,10 +20,12 @@ package step.cli.reports;
 
 import step.cli.AbstractExecuteAutomationPackageTool;
 import step.cli.CliToolLogging;
+import step.core.execution.model.Execution;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 public interface ReportCreator {
-    void createReport(List<String> executionIds, List<AbstractExecuteAutomationPackageTool.ReportOutputMode> outputModes, CliToolLogging logging) throws IOException;
+    void createReport(Map<String, Execution> executions, List<AbstractExecuteAutomationPackageTool.ReportOutputMode> outputModes, CliToolLogging logging) throws IOException;
 }

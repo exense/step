@@ -120,9 +120,11 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
                 throw logAndThrow("Error while executing automation package: " + e.getMessage());
             }
             if (executionIds != null) {
+                Map<String, Execution> executionInfos = new HashMap<>();
                 logInfo("Execution(s) started in Step:", null);
                 for (String executionId : executionIds) {
                     Execution executionInfo = remoteExecutionManager.get(executionId);
+                    executionInfos.put(executionId, executionInfo);
                     logInfo("- " + executionToString(executionId, executionInfo), null);
                 }
 
@@ -152,7 +154,7 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
                                     default:
                                         throw new UnsupportedOperationException("Unsupported report type: " + reportType);
                                 }
-                                reportCreator.createReport(executionIds, report.getOutputModes(), this);
+                                reportCreator.createReport(executionInfos, report.getOutputModes(), this);
                             }
 
                         } catch (Exception ex) {
