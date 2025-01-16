@@ -18,9 +18,18 @@
  ******************************************************************************/
 package step.core.plans;
 
+import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import step.core.plans.filters.*;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "class")
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = PlanByExcludedCategoriesFilter.class),
+        @JsonSubTypes.Type(value = PlanByExcludedNamesFilter.class),
+        @JsonSubTypes.Type(value = PlanByIncludedCategoriesFilter.class),
+        @JsonSubTypes.Type(value = PlanByIncludedNamesFilter.class),
+        @JsonSubTypes.Type(value = PlanMultiFilter.class)
+})
 public abstract class PlanFilter {
     public abstract boolean isSelected(Plan plan);
 }

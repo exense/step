@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
 import step.automation.packages.AutomationPackageManager;
 import step.automation.packages.AutomationPackageManagerException;
 import step.core.execution.ExecutionContext;
-import step.core.execution.model.AutomationPackageExecutionParameters;
+import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.repositories.ArtefactInfo;
 import step.core.repositories.TestSetStatusOverview;
@@ -92,7 +92,7 @@ public class IsolatedAutomationPackageRepository extends RepositoryWithAutomatio
     }
 
     @Override
-    public AutomationPackageFile getApFileForExecution(InputStream apInputStream, String inputStreamFileName, AutomationPackageExecutionParameters parameters, ObjectId contextId) {
+    public AutomationPackageFile getApFileForExecution(InputStream apInputStream, String inputStreamFileName, IsolatedAutomationPackageExecutionParameters parameters, ObjectId contextId) {
         // for files from input stream we save persists the resource to support re-execution
         Resource apResource = saveApResource(contextId.toString(), apInputStream, inputStreamFileName);
         File file = getApFileByResource(apResource);

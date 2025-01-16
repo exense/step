@@ -14,11 +14,10 @@ import step.controller.multitenancy.Tenant;
 import step.core.artefacts.reports.ParentSource;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.artefacts.reports.aggregated.AggregatedReportView;
-import step.core.execution.model.AutomationPackageExecutionParameters;
+import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionStatus;
-import step.core.plans.PlanFilter;
 import step.core.plans.filters.PlanByExcludedCategoriesFilter;
 import step.core.plans.filters.PlanByIncludedCategoriesFilter;
 import step.core.plans.filters.PlanByIncludedNamesFilter;
@@ -114,12 +113,12 @@ public class AbstractExecuteAutomationPackageToolTest {
 
     private static void assertAutomationPackageClientMockCalls(RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock) throws AutomationPackageClientException {
         ArgumentCaptor<File> fileCaptor = ArgumentCaptor.forClass(File.class);
-        ArgumentCaptor<AutomationPackageExecutionParameters> executionParamsCaptor = ArgumentCaptor.forClass(AutomationPackageExecutionParameters.class);
+        ArgumentCaptor<IsolatedAutomationPackageExecutionParameters> executionParamsCaptor = ArgumentCaptor.forClass(IsolatedAutomationPackageExecutionParameters.class);
         Mockito.verify(remoteAutomationPackageClientMock, Mockito.times(1)).executeAutomationPackage(fileCaptor.capture(), executionParamsCaptor.capture());
         File capturedFile = fileCaptor.getValue();
         Assert.assertEquals("test-file-jar-with-dependencies.jar", capturedFile.getName());
 
-        AutomationPackageExecutionParameters captured = executionParamsCaptor.getValue();
+        IsolatedAutomationPackageExecutionParameters captured = executionParamsCaptor.getValue();
         Assert.assertEquals("testUser", captured.getUserID());
         Assert.assertEquals(ExecutionMode.RUN, captured.getMode());
         PlanMultiFilter planFilter = (PlanMultiFilter) captured.getPlanFilter();

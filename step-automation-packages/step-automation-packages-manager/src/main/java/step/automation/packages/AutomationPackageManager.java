@@ -237,8 +237,8 @@ public class AutomationPackageManager {
         return automationPackage;
     }
 
-    public AutomationPackage getAutomatonPackageById(ObjectId id) {
-        return this.getAutomationPackageById(id, null);
+    public AutomationPackage getAutomatonPackageById(ObjectId id, ObjectPredicate objectPredicate) {
+        return this.getAutomationPackageById(id, objectPredicate);
     }
 
     public AutomationPackage getAutomationPackageByName(String name, ObjectPredicate objectPredicate) {
