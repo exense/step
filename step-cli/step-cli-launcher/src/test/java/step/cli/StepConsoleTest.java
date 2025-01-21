@@ -171,6 +171,27 @@ public class StepConsoleTest {
         usedParams = remoteExecuteHistory.get(0);
         Assert.assertEquals("http://localhost:8080", usedParams.stepUrl);
         Assert.assertEquals(new MavenArtifactIdentifier("ch.exense.step", "step-automation-packages-junit", "0.0.0", "tests"), usedParams.params.getMavenArtifactIdentifier());
+
+        // test various report types and output types
+        remoteExecuteHistory.clear();
+        res = runMain(histories, "ap", "execute", "-p=mvn:ch.exense.step:step-automation-packages-junit:0.0.0:tests", "-u=http://localhost:8080", "--reportType=junit");
+        Assert.assertEquals(0, res);
+        Assert.assertEquals(1, remoteExecuteHistory.size());
+        usedParams = remoteExecuteHistory.get(0);
+        Assert.assertEquals(1, usedParams.params.getReports().size());
+        Assert.assertEquals(AbstractExecuteAutomationPackageTool.ReportType.junit, usedParams.params.getReports().get(0).getReportType());
+        Assert.assertEquals(List.of(AbstractExecuteAutomationPackageTool.ReportOutputMode.file), usedParams.params.getReports().get(0).getOutputModes());
+
+        remoteExecuteHistory.clear();
+        res = runMain(histories, "ap", "execute", "-p=mvn:ch.exense.step:step-automation-packages-junit:0.0.0:tests", "-u=http://localhost:8080", "--reportType=junit;output=stdout", "--reportType=aggregated;output=file,stdout");
+        Assert.assertEquals(0, res);
+        Assert.assertEquals(1, remoteExecuteHistory.size());
+        usedParams = remoteExecuteHistory.get(0);
+        Assert.assertEquals(2, usedParams.params.getReports().size());
+        Assert.assertEquals(AbstractExecuteAutomationPackageTool.ReportType.junit, usedParams.params.getReports().get(0).getReportType());
+        Assert.assertEquals(List.of(AbstractExecuteAutomationPackageTool.ReportOutputMode.stdout), usedParams.params.getReports().get(0).getOutputModes());
+        Assert.assertEquals(AbstractExecuteAutomationPackageTool.ReportType.aggregated, usedParams.params.getReports().get(1).getReportType());
+        Assert.assertEquals(List.of(AbstractExecuteAutomationPackageTool.ReportOutputMode.file, AbstractExecuteAutomationPackageTool.ReportOutputMode.stdout), usedParams.params.getReports().get(1).getOutputModes());
     }
 
     @Test
