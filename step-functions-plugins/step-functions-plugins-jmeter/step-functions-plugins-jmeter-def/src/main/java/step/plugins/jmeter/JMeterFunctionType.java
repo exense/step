@@ -62,7 +62,7 @@ public class JMeterFunctionType extends AbstractFunctionType<JMeterFunction> {
 		if (home != null) {
 			Map<String, String> props = new HashMap<>();
 			File homeFile = new File(home);
-			FileVersion jmeterLibFileVersion = registerFile(homeFile, "$jmeter.libraries", props, true);
+			FileVersion jmeterLibFileVersion = registerFile(homeFile, "$jmeter.libraries", props, false);
 			FileVersion jmeterTestplanFileVersion = registerFile(function.getJmeterTestplan(), "$jmeter.testplan.file", props, true, executionContext);
 			return new HandlerProperties(props) {
 				@Override

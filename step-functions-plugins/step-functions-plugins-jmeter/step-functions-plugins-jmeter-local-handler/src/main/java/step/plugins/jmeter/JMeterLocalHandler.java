@@ -138,7 +138,9 @@ public class JMeterLocalHandler extends JsonBasedFunctionHandler {
 			}
 
 			FileVersionCloseable jmeterLibFileVersion = retrieveFileVersion(JMETER_LIBRARIES, message.getProperties());
-			context.put("jmeterLibFileVersion", jmeterLibFileVersion);
+			//Make sure the file version is closed whenever the app context is closed
+			jmeterLibFileVersion.setInSession(false);
+			context.put(String.valueOf(jmeterLibFileVersion.hashCode()), jmeterLibFileVersion);
 			File jmeterLibFolder = jmeterLibFileVersion.getFile();
 
 			String jmeterHome = jmeterLibFolder.getAbsolutePath();

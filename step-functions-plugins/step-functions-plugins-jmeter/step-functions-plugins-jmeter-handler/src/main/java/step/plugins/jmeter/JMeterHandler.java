@@ -29,7 +29,7 @@ public class JMeterHandler extends JsonBasedFunctionHandler {
 	
 	@Override
 	public Output<JsonObject> handle(Input<JsonObject> input) throws Exception {
-		try (ApplicationContextControl ignored = getTokenReservationSession().putCloseableByHashIfSessionIsAvailable(pushRemoteApplicationContext(JMeterLocalHandler.JMETER_LIBRARIES, input.getProperties(), true));
+		try (ApplicationContextControl ignored = getTokenReservationSession().putCloseableByHashIfSessionIsAvailable(pushRemoteApplicationContext(JMeterLocalHandler.JMETER_LIBRARIES, input.getProperties(), false));
 			 ApplicationContextControl ignored1 = getTokenReservationSession().putCloseableByHashIfSessionIsAvailable(pushLocalApplicationContext(getClass().getClassLoader(), "jmeter-plugin-local-handler.jar"))) {
 			return delegate("step.plugins.jmeter.JMeterLocalHandler", input);
 		}
