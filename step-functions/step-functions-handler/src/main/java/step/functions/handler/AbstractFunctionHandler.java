@@ -29,7 +29,7 @@ import step.grid.agent.tokenpool.SessionAwareCloseable;
 import step.grid.agent.tokenpool.TokenReservationSession;
 import step.grid.agent.tokenpool.TokenSession;
 import step.grid.contextbuilder.*;
-import step.grid.contextbuilder.ApplicationContext;
+import step.grid.contextbuilder.ApplicationContextBuilder.ApplicationContext;
 import step.grid.filemanager.FileManagerClient;
 import step.grid.filemanager.FileManagerException;
 import step.grid.filemanager.FileVersion;

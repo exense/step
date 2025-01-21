@@ -31,7 +31,7 @@ import step.functions.handler.JsonBasedFunctionHandler;
 import step.functions.io.Input;
 import step.functions.io.Output;
 import step.functions.io.OutputBuilder;
-import step.grid.contextbuilder.ApplicationContext;
+import step.grid.contextbuilder.ApplicationContextBuilder.ApplicationContext;
 import step.grid.filemanager.FileManagerException;
 import step.grid.io.AttachmentHelper;
 

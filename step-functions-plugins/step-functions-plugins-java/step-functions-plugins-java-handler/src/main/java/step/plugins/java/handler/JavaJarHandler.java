@@ -29,7 +29,7 @@ import step.core.scanner.AnnotationScanner;
 import step.functions.handler.JsonBasedFunctionHandler;
 import step.functions.io.Input;
 import step.functions.io.Output;
-import step.grid.contextbuilder.ApplicationContext;
+import step.grid.contextbuilder.ApplicationContextBuilder.ApplicationContext;
 import step.grid.contextbuilder.ApplicationContextControl;
 import step.handlers.javahandler.Keyword;
 import step.handlers.javahandler.KeywordExecutor;
