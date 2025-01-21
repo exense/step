@@ -41,7 +41,7 @@ public class JavaJarHandler extends JsonBasedFunctionHandler {
 
 	@Override
 	public Output<JsonObject> handle(Input<JsonObject> input) throws Exception {
-		try (ApplicationContextControl ignored = getTokenReservationSession().putCloseableByHashIfSessionIsAvailable(pushRemoteApplicationContext(FORKED_BRANCH, ScriptHandler.SCRIPT_FILE, input.getProperties(), true))) {
+		try (ApplicationContextControl ignored = getTokenReservationSession().putSessionAwareCloseable(pushRemoteApplicationContext(FORKED_BRANCH, ScriptHandler.SCRIPT_FILE, input.getProperties(), true))) {
 
 			ApplicationContext context = getCurrentContext(FORKED_BRANCH);
 

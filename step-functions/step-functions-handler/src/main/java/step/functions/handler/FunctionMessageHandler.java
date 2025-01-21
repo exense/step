@@ -78,7 +78,7 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 		if(functionPackage != null) {
 			RemoteApplicationContextFactory functionHandlerContext = new RemoteApplicationContextFactory(token.getServices().getFileManagerClient(), functionPackage, true);
 			// The usage of this functionHandlerContext will only be released when the session is closed (if running in a session)), underlying registered file won't be cleanable before this release happens
-			applicationContextControl = token.getTokenReservationSession().putCloseableByHashIfSessionIsAvailable(applicationContextBuilder.pushContext(functionHandlerContext));
+			applicationContextControl = token.getTokenReservationSession().putSessionAwareCloseable(applicationContextBuilder.pushContext(functionHandlerContext));
 		}
 
 		try {

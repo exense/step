@@ -68,7 +68,7 @@ public class ScriptHandler extends JsonBasedFunctionHandler {
 		return runInContext(AbstractFunctionHandler.FORKED_BRANCH, ()->{
 			Map<String, String> properties = input.getProperties();
 
-			try (FileVersionCloseable scriptFileVersion = getTokenReservationSession().putCloseableByHashIfSessionIsAvailable(retrieveFileVersion(ScriptHandler.SCRIPT_FILE, properties))) {
+			try (FileVersionCloseable scriptFileVersion = getTokenReservationSession().putSessionAwareCloseable(retrieveFileVersion(ScriptHandler.SCRIPT_FILE, properties))) {
 
 				File scriptFile = scriptFileVersion.getFile();
 

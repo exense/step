@@ -36,11 +36,11 @@ public class TestFunctionHandler extends AbstractFunctionHandler<TestInput, Test
 		dummyInputProperties.put("testFile.version", "1");
 		
 		// Test application context methods
-		try (ApplicationContextControl ignored = getTokenReservationSession().putCloseableByHashIfSessionIsAvailable(pushRemoteApplicationContext(FORKED_BRANCH, "testFile", dummyInputProperties, true));
-			 ApplicationContextControl ignored1 = getTokenReservationSession().putCloseableByHashIfSessionIsAvailable(pushLocalApplicationContext(FORKED_BRANCH, this.getClass().getClassLoader(), "testResource.jar"))) {
+		try (ApplicationContextControl ignored = getTokenReservationSession().putSessionAwareCloseable(pushRemoteApplicationContext(FORKED_BRANCH, "testFile", dummyInputProperties, true));
+			 ApplicationContextControl ignored1 = getTokenReservationSession().putSessionAwareCloseable(pushLocalApplicationContext(FORKED_BRANCH, this.getClass().getClassLoader(), "testResource.jar"))) {
 			Assert.assertTrue(((URLClassLoader) getCurrentContext(FORKED_BRANCH).getClassLoader()).getURLs()[0].getFile().contains("testResource.jar"));
-			try (ApplicationContextControl ignored2 = getTokenReservationSession().putCloseableByHashIfSessionIsAvailable(pushRemoteApplicationContext("testFile", dummyInputProperties));
-				 ApplicationContextControl ignored3 = getTokenReservationSession().putCloseableByHashIfSessionIsAvailable(pushLocalApplicationContext(this.getClass().getClassLoader(), "testResource.jar"))) {
+			try (ApplicationContextControl ignored2 = getTokenReservationSession().putSessionAwareCloseable(pushRemoteApplicationContext("testFile", dummyInputProperties));
+				 ApplicationContextControl ignored3 = getTokenReservationSession().putSessionAwareCloseable(pushLocalApplicationContext(this.getClass().getClassLoader(), "testResource.jar"))) {
 
 				Assert.assertTrue(((URLClassLoader) getCurrentContext().getClassLoader()).getURLs()[0].getFile().contains("testResource.jar"));
 
