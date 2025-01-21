@@ -25,6 +25,7 @@ import java.util.concurrent.Callable;
 
 import step.functions.io.Input;
 import step.functions.io.Output;
+import step.grid.agent.tokenpool.SessionAwareCloseable;
 import step.grid.agent.tokenpool.TokenReservationSession;
 import step.grid.agent.tokenpool.TokenSession;
 import step.grid.contextbuilder.*;
@@ -223,7 +224,7 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 			RemoteApplicationContextFactory librariesContext = new RemoteApplicationContextFactory(fileManagerClient, librariesFileVersion, cleanable);
 			return applicationContextBuilder.pushContext(branch, librariesContext);
 		}
-		return null;
+		return new ApplicationContextControl(null);
 	}
 	
 	/**
@@ -257,7 +258,7 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 		return delegate(ApplicationContextBuilder.MASTER, functionHandlerClassname, input);
 	}
 
-	public class FileVersionCloseable implements AutoCloseable {
+	public class FileVersionCloseable extends SessionAwareCloseable {
 
 		FileVersion fileVersion;
 
@@ -270,7 +271,7 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 		}
 
 		@Override
-		public void close() throws Exception {
+		protected void _close() throws Exception {
 			if (fileVersion != null) {
 				releaseFileVersion(fileVersion);
 			}

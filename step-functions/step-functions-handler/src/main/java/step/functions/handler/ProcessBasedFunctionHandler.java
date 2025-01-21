@@ -41,7 +41,7 @@ public abstract class ProcessBasedFunctionHandler extends JsonBasedFunctionHandl
 
     abstract protected ProcessConfiguration getProcessCommand(Input<JsonObject> input) throws Exception;
 
-    public abstract static class ProcessConfiguration implements AutoCloseable {
+    public static abstract class ProcessConfiguration implements AutoCloseable {
         public final String processName;
         public final List<String> commands;
 
@@ -57,33 +57,32 @@ public abstract class ProcessBasedFunctionHandler extends JsonBasedFunctionHandl
         boolean debug = Boolean.parseBoolean(properties.getOrDefault(DEBUG, Boolean.FALSE.toString()));
         boolean attachWorkFolder = Boolean.parseBoolean(properties.getOrDefault(ATTACH_WORK_FOLDER, Boolean.FALSE.toString()));
 
-        try (ProcessConfiguration processConfiguration = getProcessCommand(input)) {
-            try (ManagedProcess process = new ManagedProcess(processConfiguration.processName, processConfiguration.commands)) {
-                createProcessInputMessageAsJson(process, input);
-                createProcessInputAsProperties(process, input);
+        try (ProcessConfiguration processConfiguration = getProcessCommand(input);
+             ManagedProcess process = new ManagedProcess(processConfiguration.processName, processConfiguration.commands)) {
+            createProcessInputMessageAsJson(process, input);
+            createProcessInputAsProperties(process, input);
 
-                process.start();
-                int returnCode = process.waitFor((long) (input.getFunctionCallTimeout() * 0.9));
+            process.start();
+            int returnCode = process.waitFor((long) (input.getFunctionCallTimeout() * 0.9));
 
-                OutputBuilder outputBuilder = processOutput(process);
+            OutputBuilder outputBuilder = processOutput(process);
 
-                boolean error = false;
-                if (returnCode != 0) {
-                    error = true;
-                    outputBuilder.appendError("The " + processConfiguration.processName + " execution returned " + returnCode + ". Check logs for more details.");
-                }
-
-                if (error || debug) {
-                    attachProcessLogs(processConfiguration, process, outputBuilder);
-                    takeScreenshot(outputBuilder);
-                }
-
-                if (attachWorkFolder) {
-                    attachProcessWorkFolder(process, outputBuilder);
-                }
-
-                return outputBuilder.build();
+            boolean error = false;
+            if (returnCode != 0) {
+                error = true;
+                outputBuilder.appendError("The " + processConfiguration.processName + " execution returned " + returnCode + ". Check logs for more details.");
             }
+
+            if (error || debug) {
+                attachProcessLogs(processConfiguration, process, outputBuilder);
+                takeScreenshot(outputBuilder);
+            }
+
+            if (attachWorkFolder) {
+                attachProcessWorkFolder(process, outputBuilder);
+            }
+
+            return outputBuilder.build();
         }
     }
 

@@ -52,6 +52,7 @@ import step.grid.io.*;
 import step.grid.tokenpool.Interest;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -87,9 +88,10 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 	private FileVersionId registerClassloaderResource(String functionHandlerResourceName) throws FunctionExecutionServiceException {
 		FileVersion functionHandlerPackageVersionId;
 		try {
-			InputStream resourceAsStream = getClass().getClassLoader().getResourceAsStream(functionHandlerResourceName);
-			functionHandlerPackageVersionId = gridClient.registerFile(resourceAsStream, functionHandlerResourceName, false, false);
-		} catch (FileManagerException e) {
+			try (InputStream resourceAsStream = getClass().getClassLoader().getResourceAsStream(functionHandlerResourceName)) {
+				functionHandlerPackageVersionId = gridClient.registerFile(resourceAsStream, functionHandlerResourceName, false, false);
+			}
+		} catch (FileManagerException | IOException e) {
 			throw new FunctionExecutionServiceException("Error while registering file "+ functionHandlerResourceName +" to the grid", e);
 		}
 		return functionHandlerPackageVersionId.getVersionId();
@@ -263,11 +265,18 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 						String timeout = agentError.getErrorDetails().get(AgentErrorCode.Details.TIMEOUT);
 						String filehandle = agentError.getErrorDetails().get(AgentErrorCode.Details.FILE_HANDLE);
 						String fileversion = agentError.getErrorDetails().get(AgentErrorCode.Details.FILE_VERSION);
-						FileVersion fileVersion = gridClient.getRegisteredFile(new FileVersionId(filehandle, fileversion));
-						if (fileVersion != null) {
-							output.setError(newAgentError("Timeout after " + timeout + "ms while downloading the following resource from the controller: " + fileVersion.getFile().getPath() + ". You can increase the download timeout by setting gridReadTimeout in AgentConf.js"));
-						} else {
-							output.setError(newAgentError("Timeout after " + timeout + "ms while downloading a resource from the controller. You can increase the download timeout by setting gridReadTimeout in AgentConf.js"));
+						FileVersion fileVersion = null;
+						try {
+							fileVersion = gridClient.getRegisteredFile(new FileVersionId(filehandle, fileversion));
+							if (fileVersion != null) {
+								output.setError(newAgentError("Timeout after " + timeout + "ms while downloading the following resource from the controller: " + fileVersion.getFile().getPath() + ". You can increase the download timeout by setting gridReadTimeout in AgentConf.js"));
+							} else {
+								output.setError(newAgentError("Timeout after " + timeout + "ms while downloading a resource from the controller. You can increase the download timeout by setting gridReadTimeout in AgentConf.js"));
+							}
+						} finally {
+							if (fileVersion != null) {
+								gridClient.releaseFile(fileVersion);
+							}
 						}
 					} else {
 						output.setError(newAgentError("Unknown agent error: " + agentError));

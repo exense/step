@@ -33,14 +33,13 @@ public class GeneralScriptHandler extends JsonBasedFunctionHandler {
 		// Using the forked to branch in order no to have the ClassLoader of java-plugin-handler.jar as parent.
 		// the project java-plugin-handler.jar has many dependencies that might conflict with the dependencies of the 
 		// keyword. One of these dependencies is guava for example.
-		try (ApplicationContextControl ignored1 = pushLocalApplicationContext(FORKED_BRANCH, getCurrentContext().getClassLoader(), "step-functions-plugins-java-keyword-handler.jar");
-			 ApplicationContextControl ignored2 = pushRemoteApplicationContext(FORKED_BRANCH, ScriptHandler.PLUGIN_LIBRARIES_FILE, input.getProperties(), true);
-			 ApplicationContextControl ignored3 = pushRemoteApplicationContext(FORKED_BRANCH, ScriptHandler.LIBRARIES_FILE, input.getProperties(), true);) {
+		try (ApplicationContextControl ignored = getTokenReservationSession().putCloseableByHashIfSessionIsAvailable(pushLocalApplicationContext(FORKED_BRANCH, getCurrentContext().getClassLoader(), "step-functions-plugins-java-keyword-handler.jar"));
+			 ApplicationContextControl ignored1 = getTokenReservationSession().putCloseableByHashIfSessionIsAvailable(pushRemoteApplicationContext(FORKED_BRANCH, ScriptHandler.PLUGIN_LIBRARIES_FILE, input.getProperties(), true));
+			 ApplicationContextControl ignored2 = getTokenReservationSession().putCloseableByHashIfSessionIsAvailable(pushRemoteApplicationContext(FORKED_BRANCH, ScriptHandler.LIBRARIES_FILE, input.getProperties(), true))) {
 			String scriptLanguage = input.getProperties().get(ScriptHandler.SCRIPT_LANGUAGE);
-			Class<?> handlerClass = scriptLanguage.equals("java")?JavaJarHandler.class:ScriptHandler.class;
+			Class<?> handlerClass = scriptLanguage.equals("java") ? JavaJarHandler.class : ScriptHandler.class;
 			return delegate(handlerClass.getName(), input);
 		}
-
 	}
 
 }

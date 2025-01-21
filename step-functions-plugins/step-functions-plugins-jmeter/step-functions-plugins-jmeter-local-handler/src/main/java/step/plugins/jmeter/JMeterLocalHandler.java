@@ -73,7 +73,8 @@ public class JMeterLocalHandler extends JsonBasedFunctionHandler {
 
 		OutputBuilder out = new OutputBuilder();
 
-		try (FileVersionCloseable testPlanFileVersion = retrieveFileVersion(JMETER_TESTPLAN, message.getProperties())) {
+		try (FileVersionCloseable testPlanFileVersion = getTokenReservationSession().putCloseableByHashIfSessionIsAvailable(retrieveFileVersion(JMETER_TESTPLAN, message.getProperties()))) {
+
 			File testPlanFile = testPlanFileVersion.getFile();
 
 			StandardJMeterEngine jmeter = new StandardJMeterEngine();

@@ -70,14 +70,14 @@ public class ScriptHandlerTest {
 	private static final Logger logger = LoggerFactory.getLogger(ScriptHandlerTest.class);
 	private MockedGridClientImpl gridClient;
 
-	@Test 
+	@Test
 	public void test1() {
 		GeneralScriptFunction f = buildTestFunction("javascript","test1.js");
 		Output<JsonObject> output = run(f, "{\"key1\":\"val1\"}");
 		Assert.assertEquals("val1",output.getPayload().getString("key1"));
 	}
 	
-	@Test 
+	@Test
 	public void testProperties() {
 		
 		Map<String, String> tokenProperties = new HashMap<>();
@@ -134,28 +134,28 @@ public class ScriptHandlerTest {
 		}
 	}
 
-	@Test 
+	@Test
 	public void testGroovy1() {
 		GeneralScriptFunction f = buildTestFunction("groovy","testGroovy1.groovy");
 		Output<JsonObject> output = run(f, "{\"key1\":\"val1\"}");
 		Assert.assertEquals("val1",output.getPayload().getString("key1"));
 	}
 
-	@Test 
+	@Test
 	public void testGroovy() {
 		GeneralScriptFunction f = buildTestFunction("groovy","testGroovyUTF8.groovy");
 		Output<JsonObject> output = run(f, "{\"key1\":\"val1\"}");
 		Assert.assertEquals("kéÿ1",output.getPayload().getString("key1"));
 	}
-	
-	@Test 
+
+	@Test
 	public void testGroovyThrowable() {
 		GeneralScriptFunction f = buildTestFunction("groovy","throwable.groovy");
 		Output<JsonObject> output = run(f, "{}");
 		assertTrue(output.getError().getMsg().contains("Error while running script throwable.groovy: assert false"));
 	}
-	
-	@Test 
+
+	@Test
 	public void testGroovyThrowableWithErrorHandler() {
 		GeneralScriptFunction f = buildTestFunction("groovy","throwable.groovy");
 		f.setErrorHandlerFile(new DynamicValue<String>(getScriptDir() + "/errorHandler.groovy"));
@@ -170,8 +170,8 @@ public class ScriptHandlerTest {
 //		Output<JsonObject> output = run(f, "{\"key1\":\"val1\"}");
 //		Assert.assertEquals("val1",output.getResult().getString("key1"));
 //	}
-	
-	@Test 
+
+	@Test
 	public void testErrorWithoutErrorHandler() {
 		GeneralScriptFunction f = buildTestFunction("javascript","errorScript.js");
 		Output<JsonObject> out = run(f, "{}");
@@ -179,16 +179,16 @@ public class ScriptHandlerTest {
 		assertTrue(out.getError().getMsg().startsWith("Error while running script errorScript.js"));
 		Assert.assertEquals(1,out.getAttachments().size());
 	}
-	
-	@Test 
+
+	@Test
 	public void testErrorHandler() {
 		GeneralScriptFunction f = buildTestFunction("javascript","errorScript.js");
 		f.setErrorHandlerFile(new DynamicValue<String>(getScriptDir() + "/errorHandler.js"));
 		Output<JsonObject> out = run(f, "{}");
 		assertTrue(out.getError().getMsg().contains("INVALID SCRIPT"));
 	}
-	
-	@Test 
+
+	@Test
 	// Test that attachments generated in the script are conserved after an exception is thrown
 	public void testErrorScriptWithAttachmentAndWithoutErrorHandler() {
 		GeneralScriptFunction f = buildTestFunction("javascript","errorScriptWithAttachment.groovy");
@@ -197,8 +197,8 @@ public class ScriptHandlerTest {
 		assertTrue(out.getError().getMsg().startsWith("Error while running script"));
 		Assert.assertEquals(2,out.getAttachments().size());
 	}
-	
-	@Test 
+
+	@Test
 	public void testErrorHandlerWithError() {
 		GeneralScriptFunction f = buildTestFunction("javascript","errorScript.js");
 		f.setErrorHandlerFile(new DynamicValue<String>(getScriptDir() + "/errorScript.js"));
@@ -211,50 +211,63 @@ public class ScriptHandlerTest {
 	@Test
 	@Category(PerformanceTest.class)
 	public void testParallel() throws InterruptedException, ExecutionException, TimeoutException {
-		int nIt = 100;
-		int nThreads = 10;
-		ExecutorService e = Executors.newFixedThreadPool(nThreads);
+		try {
+			int nIt = 100;
+			int nThreads = 10;
+			ExecutorService e = Executors.newFixedThreadPool(nThreads);
 
-		List<Future<Boolean>> results = new ArrayList<>();
+			List<Future<Boolean>> results = new ArrayList<>();
 
-		for(int i=0;i<nIt;i++) {
-			results.add(e.submit(new Callable<Boolean>() {
+			for (int i = 0; i < nIt; i++) {
+				results.add(e.submit(new Callable<Boolean>() {
 
-				@Override
-				public Boolean call() throws Exception {
-					GeneralScriptFunction f = buildTestFunction("javascript","test1.js");
-					try {
-						//the FunctionRunner recreate a full context with underlying local token, application context builder...
-						//so grid jar are registered in parallel which causes concurrent issues on the ResourceExtractor which has been synchronized now.
-						Output<JsonObject> output = run(f, "{\"key1\":\"val1\"}");
-						if (output.getError() != null) {
-							logger.error(output.getError().getMsg());
-							if (output.getAttachments() != null) {
-								for (Attachment attachment : output.getAttachments()) {
-									byte[] bytes = AttachmentHelper.hexStringToByteArray(attachment.getHexContent());
-									logger.error("Exception: {}", new String(bytes, StandardCharsets.UTF_8));
+					@Override
+					public Boolean call() throws Exception {
+						logger.info("Starting iteration");
+						GeneralScriptFunction f = buildTestFunction("javascript", "test1.js");
+						try {
+							//the FunctionRunner recreate a full context with underlying local token, application context builder...
+							//so grid jar are registered in parallel which causes concurrent issues on the ResourceExtractor which has been synchronized now.
+							Output<JsonObject> output = run(f, "{\"key1\":\"val1\"}");
+							if (output.getError() != null) {
+								logger.error(output.getError().getMsg());
+								if (output.getAttachments() != null) {
+									for (Attachment attachment : output.getAttachments()) {
+										byte[] bytes = AttachmentHelper.hexStringToByteArray(attachment.getHexContent());
+										logger.error("Exception: {}", new String(bytes, StandardCharsets.UTF_8));
+									}
 								}
+								return false;
+							} else {
+								Assert.assertEquals("val1", output.getPayload().getString("key1"));
+								return true;
 							}
+						} catch (Throwable e) {
+							logger.error("Exception while running parallel thread.", e);
+							return false;
 						}
-						Assert.assertEquals("val1", output.getPayload().getString("key1"));
-						return true;
-					} catch (Throwable e) {
-						logger.error("Exception while running parallel thread.", e);
-						return false;
 					}
+				}));
+			}
+			logger.info("waiting all threads to complete");
+			boolean allResult = true;
+			for (Future<Boolean> future : results) {
+				try {
+					Boolean b = future.get(1, TimeUnit.MINUTES);
+					allResult = allResult && b;
+					logger.info("Future execution ended");
+				} catch (Throwable e1) {
+					allResult = false;
+					logger.error("Future throw an error.", e1);
 				}
-			}));
+			}
+			logger.info("all futures executed");
+			assertTrue(allResult);
+		} catch (Throwable e) {
+			logger.error("Error occurred in parallel test", e);
+			throw e;
 		}
 
-		boolean allResult = true;
-		for (Future<Boolean> future : results) {
-			try {
-				allResult = allResult && future.get(1, TimeUnit.MINUTES);
-			} catch (Throwable e1) {
-				logger.error("Future throw an error.", e1);
-			}
-		}
-		assertTrue(allResult);
 	}
 	
 	private GeneralScriptFunction buildTestFunction(String scriptLanguage, String scriptFile) {

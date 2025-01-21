@@ -48,6 +48,7 @@ public class GeneralScriptHandlerTest {
 
 	private TestFileManagerClient testFileManagerClient;
 	private ApplicationContextBuilder applicationContextBuilder;
+	private TokenReservationSession tokenReservationSession;
 
 	@Test
 	public void testJava() throws Exception {
@@ -65,6 +66,7 @@ public class GeneralScriptHandlerTest {
 		Output<JsonObject> output = handler.handle(input);
 		Assert.assertEquals("MyValue", output.getPayload().getString("MyKey"));
 
+		tokenReservationSession.close();
 		applicationContextBuilder.close();
 		assertEquals(1, testFileManagerClient.cacheUsage.keySet().size());
 		testFileManagerClient.cacheUsage.values().forEach(v -> assertEquals(0, v.get()));
@@ -88,6 +90,8 @@ public class GeneralScriptHandlerTest {
 		Output<JsonObject> output = handler.handle(input);
 		Assert.assertEquals("MyValue", output.getPayload().getString("key1"));
 
+		tokenReservationSession.close();
+		applicationContextBuilder.close();
 		assertEquals(1, testFileManagerClient.cacheUsage.keySet().size());
 		testFileManagerClient.cacheUsage.values().forEach(v -> assertEquals(0, v.get()));
 	}
@@ -109,6 +113,8 @@ public class GeneralScriptHandlerTest {
 		Output<JsonObject> output = handler.handle(input);
 		Assert.assertEquals("kéÿ1", output.getPayload().getString("key1"));
 
+		tokenReservationSession.close();
+		applicationContextBuilder.close();
 		assertEquals(1, testFileManagerClient.cacheUsage.keySet().size());
 		testFileManagerClient.cacheUsage.values().forEach(v -> assertEquals(0, v.get()));
 	}
@@ -130,6 +136,8 @@ public class GeneralScriptHandlerTest {
 		Output<JsonObject> output = handler.handle(input);
 		Assert.assertEquals("Error while running script throwable.groovy: assert false\n", output.getError().getMsg());
 
+		tokenReservationSession.close();
+		applicationContextBuilder.close();
 		assertEquals(1, testFileManagerClient.cacheUsage.keySet().size());
 		testFileManagerClient.cacheUsage.values().forEach(v -> assertEquals(0, v.get()));
 	}
@@ -153,6 +161,8 @@ public class GeneralScriptHandlerTest {
 		Output<JsonObject> output = handler.handle(input);
 		Assert.assertEquals("Error handler called", output.getError().getMsg());
 
+		tokenReservationSession.close();
+		applicationContextBuilder.close();
 		assertEquals(2, testFileManagerClient.cacheUsage.keySet().size());
 		testFileManagerClient.cacheUsage.values().forEach(v -> assertEquals(0, v.get()));
 	}
@@ -176,6 +186,8 @@ public class GeneralScriptHandlerTest {
 		Output<JsonObject> output = handler.handle(input);
 		Assert.assertEquals("Error while running error handler script: throwable.groovy. assert false\n", output.getError().getMsg());
 
+		tokenReservationSession.close();
+		applicationContextBuilder.close();
 		assertEquals(1, testFileManagerClient.cacheUsage.keySet().size());
 		testFileManagerClient.cacheUsage.values().forEach(v -> assertEquals(0, v.get()));
 	}
@@ -197,6 +209,8 @@ public class GeneralScriptHandlerTest {
 		Output<JsonObject> output = handler.handle(input);
 		Assert.assertEquals("Unsupported script language: invalidScriptLanguage", output.getError().getMsg());
 
+		tokenReservationSession.close();
+		applicationContextBuilder.close();
 		assertEquals(1, testFileManagerClient.cacheUsage.keySet().size());
 		testFileManagerClient.cacheUsage.values().forEach(v -> assertEquals(0, v.get()));
 	}
@@ -204,7 +218,8 @@ public class GeneralScriptHandlerTest {
 	public GeneralScriptHandler createHandler()
 			throws InstantiationException, IllegalAccessException, ClassNotFoundException {
 		FunctionHandlerFactory factory = getFunctionHandlerFactory();
-		GeneralScriptHandler handler = (GeneralScriptHandler) factory.create(this.getClass().getClassLoader(), GeneralScriptHandler.class.getName(), new TokenSession(), new TokenReservationSession(), new HashMap<>());
+		tokenReservationSession = new TokenReservationSession();
+		GeneralScriptHandler handler = (GeneralScriptHandler) factory.create(this.getClass().getClassLoader(), GeneralScriptHandler.class.getName(), new TokenSession(), tokenReservationSession, new HashMap<>());
 		return handler;
 	}
 

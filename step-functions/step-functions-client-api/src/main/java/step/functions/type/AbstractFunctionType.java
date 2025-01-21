@@ -19,6 +19,8 @@
 package step.functions.type;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -288,8 +290,10 @@ public abstract class AbstractFunctionType<T extends Function> {
 	 */
 	protected FileVersion registerResource(ClassLoader cl, String resourceName, boolean isDirectory, boolean cleanable) {
 		try {
-			return gridFileServices.registerFile(cl.getResourceAsStream(resourceName), resourceName, isDirectory, cleanable);
-		} catch (FileManagerException e) {
+			try (InputStream is = cl.getResourceAsStream(resourceName)) {
+				return gridFileServices.registerFile(is, resourceName, isDirectory, cleanable);
+			}
+		} catch (FileManagerException | IOException e) {
 			throw new RuntimeException("Error while registering resource "+resourceName, e);
 		}
 	}

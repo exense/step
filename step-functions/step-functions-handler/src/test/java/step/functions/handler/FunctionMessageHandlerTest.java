@@ -102,7 +102,6 @@ public class FunctionMessageHandlerTest {
 
 			OutputMessage outputMessage = messageHandlerPool.get(FunctionMessageHandler.class.getName()).handle(agentToken, message);
 			assertEquals("Bonjour", outputMessage.getPayload().get("payload").get("message").asText());
-
 		}
 		expectedFilesInCache = 1;
 
