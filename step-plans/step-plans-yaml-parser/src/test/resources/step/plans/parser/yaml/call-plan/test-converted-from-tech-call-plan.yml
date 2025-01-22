@@ -1,17 +1,11 @@
 ---
-version: "1.0.0"
+version: "1.1.0"
 name: "Plan1"
 root:
   testCase:
     nodeName: "Plan1"
-    skipNode: false
-    instrumentNode: false
-    continueParentNodeExecutionOnError: false
     children:
       - callPlan:
-          skipNode: false
-          instrumentNode: false
-          continueParentNodeExecutionOnError: false
           selectionAttributes:
             - name: "Plan2"
           input:

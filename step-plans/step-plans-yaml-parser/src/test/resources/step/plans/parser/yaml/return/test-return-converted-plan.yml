@@ -1,19 +1,12 @@
 ---
-version: "1.0.0"
+version: "1.1.0"
 name: "Plan with return"
 root:
   sequence:
     nodeName: "Plan with return"
-    skipNode: false
-    instrumentNode: false
-    continueParentNodeExecutionOnError: false
     children:
       - return:
-          skipNode: false
-          instrumentNode: false
-          continueParentNodeExecutionOnError: false
           output:
             - output1: "value"
             - output2:
                 expression: "'some thing dynamic'"
-    continueOnError: false

@@ -4,37 +4,16 @@ name: "Performance assert example"
 root:
   testCase:
     nodeName: "Performance assert example"
-    skipNode: false
-    instrumentNode: false
-    continueParentNodeExecutionOnError: false
     children:
       - threadGroup:
-          skipNode: false
-          instrumentNode: false
-          continueParentNodeExecutionOnError: false
           children:
             - callKeyword:
-                skipNode: false
-                instrumentNode: false
-                continueParentNodeExecutionOnError: false
-                remote: true
                 keyword: "Buy MacBook in OpenCart"
-          users: 1
           iterations: 10
           pacing: 0
-          startOffset: 0
-          maxDuration: 0
-          item: "gcounter"
-          localItem: "literationId"
-          userItem: "userId"
     after:
       continueOnError: false
       steps:
         - performanceAssert:
-            skipNode: false
-            instrumentNode: false
-            continueParentNodeExecutionOnError: false
             measurementName: "Buy MacBook in OpenCart"
-            aggregator: "AVG"
-            comparator: "LOWER_THAN"
             expectedValue: 10000

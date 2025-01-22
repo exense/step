@@ -4,218 +4,76 @@ name: "MainPlan"
 root:
   testCase:
     nodeName: "MainPlan"
-    continueParentNodeExecutionOnError: false
-    instrumentNode: false
-    skipNode: false
     children:
-    - callKeyword:
-        continueParentNodeExecutionOnError: false
-        instrumentNode: false
-        skipNode: false
-        remote: true
-        keyword: "Composite"
-    - callPlan:
-        nodeName: "SubPlan"
-        continueParentNodeExecutionOnError: false
-        instrumentNode: false
-        skipNode: false
-        planId: "66155931b1484e71a63e9faf"
-    - callKeyword:
-        continueParentNodeExecutionOnError: false
-        instrumentNode: false
-        skipNode: false
-        remote: true
-        keyword: "GroovyKeyword"
-    - callKeyword:
-        nodeName: "CallKeyword"
-        continueParentNodeExecutionOnError: false
-        instrumentNode: false
-        skipNode: false
-        children:
-        - assert:
-            continueParentNodeExecutionOnError: true
-            instrumentNode: false
-            skipNode: false
-            customErrorMessage: ""
-            expected: ""
-            doNegate: false
-            operator: "IS_NULL"
-            actual: "test"
-        remote: true
-        keyword: "GroovyKeyword"
-    - callPlan:
-        continueParentNodeExecutionOnError: false
-        instrumentNode: false
-        skipNode: false
-        selectionAttributes:
-          - name: "SubPlan"
-    - check:
-        continueParentNodeExecutionOnError: false
-        instrumentNode: false
-        skipNode: false
-        expression: "true"
-    - dataSet:
-        continueParentNodeExecutionOnError: false
-        instrumentNode: false
-        skipNode: false
-        userItem: "userId"
-        globalCounter: "gcounter"
-        threads: 1
-        dataSource:
-          sequence:
-            forWrite: false
-            inc: 1
-            end: 2
-            start: 1
-        item: "dataSet"
-        resetAtEnd: false
-    - echo:
-        continueParentNodeExecutionOnError: false
-        instrumentNode: false
-        skipNode: false
-        text: "test"
-    - export:
-        continueParentNodeExecutionOnError: false
-        instrumentNode: false
-        skipNode: true
-        filter: ""
-        prefix: ""
-        file: ""
-        value: ""
-    - for:
-        continueParentNodeExecutionOnError: false
-        instrumentNode: false
-        skipNode: false
-        userItem: "userId"
-        globalCounter: "gcounter"
-        threads: 1
-        inc: 1
-        end: 2
-        start: 1
-        item: "counter"
-    - forEach:
-        continueParentNodeExecutionOnError: false
-        instrumentNode: false
-        skipNode: false
-        userItem: "userId"
-        globalCounter: "gcounter"
-        threads: 1
-        dataSource:
-          sequence:
-            inc: 1
-            end: 2
-            start: 1
-        item: "row"
-    - if:
-        continueParentNodeExecutionOnError: false
-        instrumentNode: false
-        skipNode: false
-        condition:
+      - callKeyword:
+          keyword: "Composite"
+      - callPlan:
+          nodeName: "SubPlan"
+          planId: "66155931b1484e71a63e9faf"
+      - callKeyword:
+          keyword: "GroovyKeyword"
+      - callKeyword:
+          nodeName: "CallKeyword"
+          children:
+            - assert:
+                continueParentNodeExecutionOnError: true
+                actual: "test"
+                operator: "IS_NULL"
+          keyword: "GroovyKeyword"
+      - callPlan:
+          selectionAttributes:
+            - name: "SubPlan"
+      - check:
           expression: "true"
-    - placeholder:
-        continueParentNodeExecutionOnError: false
-        instrumentNode: false
-        skipNode: false
-    - retryIfFails:
-        continueParentNodeExecutionOnError: false
-        instrumentNode: false
-        skipNode: false
-        reportLastTryOnly: false
-        releaseTokens: false
-        timeout: 0
-        gracePeriod: 1000
-        maxRetries: 1
-    - return:
-        continueParentNodeExecutionOnError: false
-        instrumentNode: false
-        skipNode: false
-    - script:
-        continueParentNodeExecutionOnError: false
-        instrumentNode: false
-        skipNode: false
-        script: "var test=\"test\";"
-    - sequence:
-        continueParentNodeExecutionOnError: false
-        instrumentNode: false
-        skipNode: false
-        continueOnError: false
-    - session:
-        continueParentNodeExecutionOnError: false
-        instrumentNode: false
-        skipNode: false
-        remote: true
-    - set:
-        continueParentNodeExecutionOnError: false
-        instrumentNode: false
-        skipNode: false
-        value: "test"
-        key: "test"
-    - sleep:
-        continueParentNodeExecutionOnError: false
-        instrumentNode: false
-        skipNode: false
-        releaseTokens: false
-        unit: "ms"
-        duration: 0
-    - switch:
-        continueParentNodeExecutionOnError: false
-        instrumentNode: false
-        skipNode: false
-        children:
-        - case:
-            continueParentNodeExecutionOnError: false
-            instrumentNode: false
-            skipNode: false
-            value: "test"
-        expression:
-          expression: "test"
-    - synchronized:
-        continueParentNodeExecutionOnError: false
-        instrumentNode: false
-        skipNode: false
-        continueOnError: false
-        globalLock: false
-        lockName: ""
-    - testCase:
-        continueParentNodeExecutionOnError: false
-        instrumentNode: false
-        skipNode: false
-    - testScenario:
-        continueParentNodeExecutionOnError: false
-        instrumentNode: false
-        skipNode: false
-    - testSet:
-        continueParentNodeExecutionOnError: false
-        instrumentNode: false
-        skipNode: false
-        threads: 1
-    - threadGroup:
-        continueParentNodeExecutionOnError: false
-        instrumentNode: false
-        skipNode: false
-        userItem: "userId"
-        localItem: "literationId"
-        item: "gcounter"
-        maxDuration: 0
-        startOffset: 0
-        iterations: 1
-        users: 1
-    - while:
-        continueParentNodeExecutionOnError: false
-        instrumentNode: false
-        skipNode: false
-        postCondition:
-          expression: ""
-        condition:
-          expression: "false"
+      - dataSet:
+          dataSource:
+            sequence:
+              forWrite: false
+              start: 1
+              end: 2
+              inc: 1
+      - echo:
+          text: "test"
+      - export:
+          skipNode: true
+      - for: {}
+      - forEach:
+          dataSource:
+            sequence:
+              start: 1
+              end: 2
+              inc: 1
+      - if:
+          condition:
+            expression: "true"
+      - placeholder: {}
+      - retryIfFails: {}
+      - return: {}
+      - script:
+          script: "var test=\"test\";"
+      - sequence: {}
+      - session: {}
+      - set:
+          key: "test"
+          value: "test"
+      - sleep: {}
+      - switch:
+          children:
+            - case:
+                value: "test"
+          expression:
+            expression: "test"
+      - synchronized: {}
+      - testCase: {}
+      - testScenario: {}
+      - testSet: {}
+      - threadGroup: {}
+      - while:
+          condition:
+            expression: "false"
     after:
       continueOnError: false
       steps:
         - performanceAssert:
-            continueParentNodeExecutionOnError: false
-            instrumentNode: false
-            skipNode: false
-            expectedValue: 3000
-            comparator: "LOWER_THAN"
-            aggregator: "AVG"
             measurementName: "GroovyKeyword"
+            expectedValue: 3000

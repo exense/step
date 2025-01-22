@@ -1,16 +1,9 @@
 ---
-version: "1.0.0"
+version: "1.1.0"
 name: "test check artefact"
 root:
   sequence:
     nodeName: "test check artefact"
-    continueParentNodeExecutionOnError: false
-    instrumentNode: false
-    skipNode: false
     children:
       - check:
-          continueParentNodeExecutionOnError: false
-          instrumentNode: false
-          skipNode: false
           expression: "'true'"
-    continueOnError: false

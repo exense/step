@@ -20,14 +20,18 @@ package step.artefacts.automation;
 
 import step.artefacts.ForBlock;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.yaml.YamlFieldCustomCopy;
 import step.datapool.sequence.IntSequenceDataPool;
 
 public class YamlForBlock extends AbstractYamlForBlock<ForBlock> {
 
+    @YamlFieldCustomCopy
     protected DynamicValue<Integer> start = null;
 
+    @YamlFieldCustomCopy
     protected DynamicValue<Integer> end = null;
 
+    @YamlFieldCustomCopy
     protected DynamicValue<Integer> inc = null;
 
     public YamlForBlock() {

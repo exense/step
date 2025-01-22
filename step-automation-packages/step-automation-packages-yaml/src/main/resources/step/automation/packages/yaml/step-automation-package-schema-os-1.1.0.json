@@ -1785,15 +1785,6 @@
             },
             "routing" : {
               "$ref" : "#/$defs/DynamicKeywordInputsDef"
-            },
-            "containerCommand" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            },
-            "containerUser" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
-            },
-            "dockerImage" : {
-              "$ref" : "#/$defs/SmartDynamicValueStringDef"
             }
           }
         }
