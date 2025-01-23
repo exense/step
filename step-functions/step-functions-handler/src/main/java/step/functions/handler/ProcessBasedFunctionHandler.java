@@ -41,7 +41,7 @@ public abstract class ProcessBasedFunctionHandler extends JsonBasedFunctionHandl
 
     abstract protected ProcessConfiguration getProcessCommand(Input<JsonObject> input) throws Exception;
 
-    public static abstract class ProcessConfiguration implements AutoCloseable {
+    public static class ProcessConfiguration{
         public final String processName;
         public final List<String> commands;
 
@@ -57,8 +57,8 @@ public abstract class ProcessBasedFunctionHandler extends JsonBasedFunctionHandl
         boolean debug = Boolean.parseBoolean(properties.getOrDefault(DEBUG, Boolean.FALSE.toString()));
         boolean attachWorkFolder = Boolean.parseBoolean(properties.getOrDefault(ATTACH_WORK_FOLDER, Boolean.FALSE.toString()));
 
-        try (ProcessConfiguration processConfiguration = getProcessCommand(input);
-             ManagedProcess process = new ManagedProcess(processConfiguration.processName, processConfiguration.commands)) {
+        ProcessConfiguration processConfiguration = getProcessCommand(input);
+        try (ManagedProcess process = new ManagedProcess(processConfiguration.processName, processConfiguration.commands)) {
             createProcessInputMessageAsJson(process, input);
             createProcessInputAsProperties(process, input);
 

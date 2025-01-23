@@ -68,51 +68,46 @@ public class ScriptHandler extends JsonBasedFunctionHandler {
 		return runInContext(AbstractFunctionHandler.FORKED_BRANCH, ()->{
 			Map<String, String> properties = input.getProperties();
 
-			try (FileVersionCloseable scriptFileVersion = getTokenReservationSession().putSessionAwareCloseable(retrieveFileVersion(ScriptHandler.SCRIPT_FILE, properties))) {
+			File scriptFile = retrieveFileVersion(ScriptHandler.SCRIPT_FILE, properties);
 
-				File scriptFile = scriptFileVersion.getFile();
+			String scriptLanguage = properties.get(SCRIPT_LANGUAGE);
+			String engineName = scriptLangugaeMap.get(scriptLanguage);
 
-				String scriptLanguage = properties.get(SCRIPT_LANGUAGE);
-				String engineName = scriptLangugaeMap.get(scriptLanguage);
+			OutputBuilder outputBuilder = new OutputBuilder();
+			if (engineName == null) {
+				outputBuilder.setError("Unsupported script language: " + scriptLanguage);
+			} else {
+				ScriptEngine engine = loadScriptEngine(engineName);
 
-				OutputBuilder outputBuilder = new OutputBuilder();
-				if (engineName == null) {
-					outputBuilder.setError("Unsupported script language: " + scriptLanguage);
-				} else {
-					ScriptEngine engine = loadScriptEngine(engineName);
+				Bindings binding = createBindings(input, outputBuilder, properties);
 
-					Bindings binding = createBindings(input, outputBuilder, properties);
-
-					try {
-						executeScript(scriptFile, binding, engine);
-					} catch (Throwable e) {
-						boolean throwException = executeErrorHandlerScript(properties, engine, binding, outputBuilder, e);
-						if (throwException) {
-							outputBuilder.setError("Error while running script " + scriptFile.getName() + ": " + e.getMessage(), e);
-						}
+				try {
+					executeScript(scriptFile, binding, engine);
+				} catch (Throwable e) {
+					boolean throwException = executeErrorHandlerScript(properties, engine, binding, outputBuilder, e);
+					if (throwException) {
+						outputBuilder.setError("Error while running script " + scriptFile.getName() + ": " + e.getMessage(), e);
 					}
 				}
-
-				return outputBuilder.build();
 			}
+
+			return outputBuilder.build();
 		});
 	}
 
 	private boolean executeErrorHandlerScript(Map<String, String> properties, ScriptEngine engine, Bindings binding, OutputBuilder outputBuilder, Throwable exception)
 			throws FileNotFoundException, Exception, IOException {
-		try (FileVersionCloseable errorScriptFileVersion = retrieveFileVersion(ScriptHandler.ERROR_HANDLER_FILE, properties)) {
-			File errorScriptFile = errorScriptFileVersion.getFile();
-			if (errorScriptFile != null) {
-				binding.put("exception", exception);
-				try {
-					executeScript(errorScriptFile, binding, engine);
-				} catch (Throwable e) {
-					outputBuilder.setError("Error while running error handler script: " + errorScriptFile.getName() + ". " + e.getMessage(), e);
-				}
-				return false;
-			} else {
-				return true;
+		File errorScriptFile = retrieveFileVersion(ScriptHandler.ERROR_HANDLER_FILE, properties);
+		if (errorScriptFile != null) {
+			binding.put("exception", exception);
+			try {
+				executeScript(errorScriptFile, binding, engine);
+			} catch (Throwable e) {
+				outputBuilder.setError("Error while running error handler script: " + errorScriptFile.getName() + ". " + e.getMessage(), e);
 			}
+			return false;
+		} else {
+			return true;
 		}
 	}
 

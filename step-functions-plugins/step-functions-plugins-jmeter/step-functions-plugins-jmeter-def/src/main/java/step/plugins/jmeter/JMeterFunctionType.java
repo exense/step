@@ -29,7 +29,6 @@ import step.core.AbstractStepContext;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionTypeException;
 import step.grid.filemanager.FileVersion;
-import step.grid.filemanager.FileVersionId;
 import step.resources.ResourceManager;
 
 public class JMeterFunctionType extends AbstractFunctionType<JMeterFunction> {

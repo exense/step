@@ -25,7 +25,6 @@ import java.util.concurrent.Callable;
 
 import step.functions.io.Input;
 import step.functions.io.Output;
-import step.grid.agent.tokenpool.SessionAwareCloseable;
 import step.grid.agent.tokenpool.TokenReservationSession;
 import step.grid.agent.tokenpool.TokenSession;
 import step.grid.contextbuilder.*;
@@ -140,8 +139,8 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 	 * @param resourceName the name of the resource to be pushed
 	 * @throws ApplicationContextBuilderException exception occurring while building the application context or underlying class loader
 	 */
-	protected ApplicationContextControl pushLocalApplicationContext(ClassLoader classLoader, String resourceName) throws ApplicationContextBuilderException {
-		return pushLocalApplicationContext(ApplicationContextBuilder.MASTER, classLoader, resourceName);
+	protected void pushLocalApplicationContext(ClassLoader classLoader, String resourceName) throws ApplicationContextBuilderException {
+		pushLocalApplicationContext(ApplicationContextBuilder.MASTER, classLoader, resourceName);
 	}
 
 	/**
@@ -150,24 +149,22 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 	 * @param branch       the name of the branch on which the context has to be pushed
 	 * @param classLoader  the classloader to be used to search the file
 	 * @param resourceName the name of the resource to be pushed
-	 * @return ApplicationContextControl closable, should be closed when the pushed application context is not required anymore
 	 * @throws ApplicationContextBuilderException exception occurring while building the application context or underlying class loader
 	 */
-	protected ApplicationContextControl pushLocalApplicationContext(String branch, ClassLoader classLoader, String resourceName) throws ApplicationContextBuilderException {
+	protected void pushLocalApplicationContext(String branch, ClassLoader classLoader, String resourceName) throws ApplicationContextBuilderException {
 		LocalResourceApplicationContextFactory localContext = new LocalResourceApplicationContextFactory(classLoader, resourceName);
-		return applicationContextBuilder.pushContext(branch, localContext);
+		getTokenReservationSession().closeWithSession(applicationContextBuilder.pushContext(branch, localContext));
 	}
 	
 	/**
 	 * Push a new context based on a local folder containing a list of jars to the master branch. See {@link ApplicationContextBuilder} for details
 	 *
 	 * @param libFolder the folder containing the jars to be pushed to the context
-	 * @return ApplicationContextControl closable, should be closed when the pushed application context is not required anymore
 	 * @throws ApplicationContextBuilderException exception occurring while building the application context or underlying class loader
 	 */
-	protected ApplicationContextControl pushLocalFolderApplicationContext(File libFolder) throws ApplicationContextBuilderException {
+	protected void pushLocalFolderApplicationContext(File libFolder) throws ApplicationContextBuilderException {
 		LocalFolderApplicationContextFactory localContext = new LocalFolderApplicationContextFactory(libFolder);
-		return applicationContextBuilder.pushContext(ApplicationContextBuilder.MASTER, localContext);
+		getTokenReservationSession().closeWithSession(applicationContextBuilder.pushContext(ApplicationContextBuilder.MASTER, localContext));
 	}
 	
 	/**
@@ -175,12 +172,11 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 	 *
 	 * @param branch    the name of the branch on which the context has to be pushed
 	 * @param libFolder the folder containing the jars to be pushed to the context
-	 * @return ApplicationContextControl closable, should be closed when the pushed application context is not required anymore
 	 * @throws ApplicationContextBuilderException exception occurring while building the application context or underlying class loader
 	 */
-	protected ApplicationContextControl pushLocalFolderApplicationContext(String branch, File libFolder) throws ApplicationContextBuilderException {
+	protected void pushLocalFolderApplicationContext(String branch, File libFolder) throws ApplicationContextBuilderException {
 		LocalFolderApplicationContextFactory localContext = new LocalFolderApplicationContextFactory(libFolder);
-		return applicationContextBuilder.pushContext(branch, localContext);
+		getTokenReservationSession().closeWithSession(applicationContextBuilder.pushContext(branch, localContext));
 	}
 	
 	/**
@@ -188,11 +184,10 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 	 *
 	 * @param fileId the id of the remote file (jar or folder) to be pushed
 	 * @param properties the map containing the metadata to get the corresponding {@link FileVersionId}
-	 * @return ApplicationContextControl closable, should be closed when the pushed application context is not required anymore
 	 * @throws ApplicationContextBuilderException exception occurring while building the application context or underlying class loader
 	 */
-	protected ApplicationContextControl pushRemoteApplicationContext(String fileId, Map<String, String> properties) throws ApplicationContextBuilderException {
-		return pushRemoteApplicationContext(fileId, properties, true);
+	protected void pushRemoteApplicationContext(String fileId, Map<String, String> properties) throws ApplicationContextBuilderException {
+		pushRemoteApplicationContext(fileId, properties, true);
 	}
 
 	/**
@@ -201,11 +196,10 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 	 * @param fileId the id of the remote file (jar or folder) to be pushed
 	 * @param properties the map containing the metadata to get the corresponding {@link FileVersionId}
 	 * @param cleanable  whether the remote file can be cleaned once stored in the local cache
-	 * @return ApplicationContextControl closable, should be closed when the pushed application context is not required anymore
 	 * @throws ApplicationContextBuilderException exception occurring while building the application context or underlying class loader
 	 */
-	protected ApplicationContextControl pushRemoteApplicationContext(String fileId, Map<String, String> properties, boolean cleanable) throws ApplicationContextBuilderException {
-		return pushRemoteApplicationContext(ApplicationContextBuilder.MASTER, fileId, properties, cleanable);
+	protected void pushRemoteApplicationContext(String fileId, Map<String, String> properties, boolean cleanable) throws ApplicationContextBuilderException {
+		pushRemoteApplicationContext(ApplicationContextBuilder.MASTER, fileId, properties, cleanable);
 	}
 
 	/**
@@ -215,16 +209,14 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 	 * @param fileId     the id of the remote file (jar or folder) to be pushed
 	 * @param properties the map containing the metadata to get the corresponding {@link FileVersionId}
 	 * @param cleanable  whether the remote file can be cleaned once stored in the local cache
-	 * @return ApplicationContextControl closable, should be closed when the pushed application context is not required anymore
 	 * @throws ApplicationContextBuilderException exception occurring while building the application context or underlying class loader
 	 */
-	protected ApplicationContextControl pushRemoteApplicationContext(String branch, String fileId, Map<String, String> properties, boolean cleanable) throws ApplicationContextBuilderException {
+	protected void pushRemoteApplicationContext(String branch, String fileId, Map<String, String> properties, boolean cleanable) throws ApplicationContextBuilderException {
 		FileVersionId librariesFileVersion = getFileVersionId(fileId, properties);
 		if(librariesFileVersion!=null) {
 			RemoteApplicationContextFactory librariesContext = new RemoteApplicationContextFactory(fileManagerClient, librariesFileVersion, cleanable);
-			return applicationContextBuilder.pushContext(branch, librariesContext);
+			getTokenReservationSession().closeWithSession(applicationContextBuilder.pushContext(branch, librariesContext));
 		}
-		return new ApplicationContextControl(null);
 	}
 	
 	/**
@@ -258,7 +250,7 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 		return delegate(ApplicationContextBuilder.MASTER, functionHandlerClassname, input);
 	}
 
-	public class FileVersionCloseable extends SessionAwareCloseable {
+	private class FileVersionCloseable implements AutoCloseable {
 
 		FileVersion fileVersion;
 
@@ -266,28 +258,30 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 			this.fileVersion = fileVersion;
 		}
 
-		public File getFile() {
-			return (fileVersion) != null ? fileVersion.getFile(): null;
-		}
-
 		@Override
-		protected void _close() throws Exception {
+		public void close() throws Exception {
 			if (fileVersion != null) {
 				releaseFileVersion(fileVersion);
 			}
 		}
 	}
 
-	protected FileVersionCloseable retrieveFileVersion(String properyName, Map<String,String> properties, boolean cleanable) throws FileManagerException {
+	protected File retrieveFileVersion(String properyName, Map<String,String> properties, boolean cleanable) throws FileManagerException {
 		FileVersionId fileVersionId = getFileVersionId(properyName, properties);
 		if(fileVersionId != null) {
-			return new FileVersionCloseable(fileManagerClient.requestFileVersion(fileVersionId, cleanable));
+			FileVersion fileVersion = fileManagerClient.requestFileVersion(fileVersionId, cleanable);
+			if (fileVersion != null) {
+				getTokenReservationSession().closeWithSession(new FileVersionCloseable(fileVersion));
+				return fileVersion.getFile();
+			} else {
+				return null;
+			}
 		} else {
-			return new FileVersionCloseable(null);
+			return null;
 		}
 	}
 	
-	protected FileVersionCloseable retrieveFileVersion(String properyName, Map<String,String> properties) throws FileManagerException {
+	protected File retrieveFileVersion(String properyName, Map<String,String> properties) throws FileManagerException {
 		return retrieveFileVersion(properyName,properties, true);
 	}
 

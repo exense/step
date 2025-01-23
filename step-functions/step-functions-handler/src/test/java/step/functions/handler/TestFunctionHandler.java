@@ -25,7 +25,6 @@ import java.util.Map;
 import org.junit.Assert;
 import step.functions.io.Input;
 import step.functions.io.Output;
-import step.grid.contextbuilder.ApplicationContextControl;
 
 public class TestFunctionHandler extends AbstractFunctionHandler<TestInput, TestOutput> {
 
@@ -36,35 +35,33 @@ public class TestFunctionHandler extends AbstractFunctionHandler<TestInput, Test
 		dummyInputProperties.put("testFile.version", "1");
 		
 		// Test application context methods
-		try (ApplicationContextControl ignored = getTokenReservationSession().putSessionAwareCloseable(pushRemoteApplicationContext(FORKED_BRANCH, "testFile", dummyInputProperties, true));
-			 ApplicationContextControl ignored1 = getTokenReservationSession().putSessionAwareCloseable(pushLocalApplicationContext(FORKED_BRANCH, this.getClass().getClassLoader(), "testResource.jar"))) {
-			Assert.assertTrue(((URLClassLoader) getCurrentContext(FORKED_BRANCH).getClassLoader()).getURLs()[0].getFile().contains("testResource.jar"));
-			try (ApplicationContextControl ignored2 = getTokenReservationSession().putSessionAwareCloseable(pushRemoteApplicationContext("testFile", dummyInputProperties));
-				 ApplicationContextControl ignored3 = getTokenReservationSession().putSessionAwareCloseable(pushLocalApplicationContext(this.getClass().getClassLoader(), "testResource.jar"))) {
+		pushRemoteApplicationContext(FORKED_BRANCH, "testFile", dummyInputProperties, true);
+		pushLocalApplicationContext(FORKED_BRANCH, this.getClass().getClassLoader(), "testResource.jar");
+		Assert.assertTrue(((URLClassLoader) getCurrentContext(FORKED_BRANCH).getClassLoader()).getURLs()[0].getFile().contains("testResource.jar"));
+		pushRemoteApplicationContext("testFile", dummyInputProperties);
+		pushLocalApplicationContext(this.getClass().getClassLoader(), "testResource.jar");
 
-				Assert.assertTrue(((URLClassLoader) getCurrentContext().getClassLoader()).getURLs()[0].getFile().contains("testResource.jar"));
+		Assert.assertTrue(((URLClassLoader) getCurrentContext().getClassLoader()).getURLs()[0].getFile().contains("testResource.jar"));
 
-				//  Test property merging
-				Map<String, String> mergedProperties = mergeAllProperties(input);
-				Assert.assertEquals("myTokenPropValue1", mergedProperties.get("myTokenProp1"));
-				Assert.assertEquals("myAgentPropValue1", mergedProperties.get("myAgentProp1"));
-				Assert.assertEquals("myInputPropValue1", mergedProperties.get("myInputProp1"));
+		//  Test property merging
+		Map<String, String> mergedProperties = mergeAllProperties(input);
+		Assert.assertEquals("myTokenPropValue1", mergedProperties.get("myTokenProp1"));
+		Assert.assertEquals("myAgentPropValue1", mergedProperties.get("myAgentProp1"));
+		Assert.assertEquals("myInputPropValue1", mergedProperties.get("myInputProp1"));
 
-				// Test payload
-				Assert.assertEquals("Hallo", input.getPayload().getMessage());
+		// Test payload
+		Assert.assertEquals("Hallo", input.getPayload().getMessage());
 
-				//runInContext(callable)
+		//runInContext(callable)
 
-				// Test getSessions methods
-				Assert.assertNotNull(getTokenSession());
-				Assert.assertNotNull(getTokenReservationSession());
+		// Test getSessions methods
+		Assert.assertNotNull(getTokenSession());
+		Assert.assertNotNull(getTokenReservationSession());
 
-				Assert.assertNotNull(getProperties());
+		Assert.assertNotNull(getProperties());
 
-				// Test delegation
-				return delegate(SecondTestFunctionHandler.class.getName(), input);
-			}
-		}
+		// Test delegation
+		return delegate(SecondTestFunctionHandler.class.getName(), input);
 	}
 
 	@Override

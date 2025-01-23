@@ -18,8 +18,6 @@
  ******************************************************************************/
 package step.functions.runner;
 
-import java.util.Map;
-
 import step.core.AbstractStepContext;
 import step.functions.type.AbstractFunctionType;
 import step.grid.filemanager.FileVersionId;

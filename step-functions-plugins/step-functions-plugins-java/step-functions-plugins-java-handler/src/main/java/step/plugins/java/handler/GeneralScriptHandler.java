@@ -23,7 +23,6 @@ import javax.json.JsonObject;
 import step.functions.handler.JsonBasedFunctionHandler;
 import step.functions.io.Input;
 import step.functions.io.Output;
-import step.grid.contextbuilder.ApplicationContextControl;
 import step.plugins.js223.handler.ScriptHandler;
 
 public class GeneralScriptHandler extends JsonBasedFunctionHandler {
@@ -33,13 +32,12 @@ public class GeneralScriptHandler extends JsonBasedFunctionHandler {
 		// Using the forked to branch in order no to have the ClassLoader of java-plugin-handler.jar as parent.
 		// the project java-plugin-handler.jar has many dependencies that might conflict with the dependencies of the 
 		// keyword. One of these dependencies is guava for example.
-		try (ApplicationContextControl ignored = getTokenReservationSession().putSessionAwareCloseable(pushLocalApplicationContext(FORKED_BRANCH, getCurrentContext().getClassLoader(), "step-functions-plugins-java-keyword-handler.jar"));
-			 ApplicationContextControl ignored1 = getTokenReservationSession().putSessionAwareCloseable(pushRemoteApplicationContext(FORKED_BRANCH, ScriptHandler.PLUGIN_LIBRARIES_FILE, input.getProperties(), true));
-			 ApplicationContextControl ignored2 = getTokenReservationSession().putSessionAwareCloseable(pushRemoteApplicationContext(FORKED_BRANCH, ScriptHandler.LIBRARIES_FILE, input.getProperties(), true))) {
-			String scriptLanguage = input.getProperties().get(ScriptHandler.SCRIPT_LANGUAGE);
-			Class<?> handlerClass = scriptLanguage.equals("java") ? JavaJarHandler.class : ScriptHandler.class;
-			return delegate(handlerClass.getName(), input);
-		}
+		pushLocalApplicationContext(FORKED_BRANCH, getCurrentContext().getClassLoader(), "step-functions-plugins-java-keyword-handler.jar");
+		pushRemoteApplicationContext(FORKED_BRANCH, ScriptHandler.PLUGIN_LIBRARIES_FILE, input.getProperties(), true);
+		pushRemoteApplicationContext(FORKED_BRANCH, ScriptHandler.LIBRARIES_FILE, input.getProperties(), true);
+		String scriptLanguage = input.getProperties().get(ScriptHandler.SCRIPT_LANGUAGE);
+		Class<?> handlerClass = scriptLanguage.equals("java") ? JavaJarHandler.class : ScriptHandler.class;
+		return delegate(handlerClass.getName(), input);
 	}
 
 }

@@ -30,7 +30,6 @@ import step.functions.handler.JsonBasedFunctionHandler;
 import step.functions.io.Input;
 import step.functions.io.Output;
 import step.grid.contextbuilder.ApplicationContextBuilder.ApplicationContext;
-import step.grid.contextbuilder.ApplicationContextControl;
 import step.handlers.javahandler.Keyword;
 import step.handlers.javahandler.KeywordExecutor;
 import step.plugins.js223.handler.ScriptHandler;
@@ -41,24 +40,23 @@ public class JavaJarHandler extends JsonBasedFunctionHandler {
 
 	@Override
 	public Output<JsonObject> handle(Input<JsonObject> input) throws Exception {
-		try (ApplicationContextControl ignored = getTokenReservationSession().putSessionAwareCloseable(pushRemoteApplicationContext(FORKED_BRANCH, ScriptHandler.SCRIPT_FILE, input.getProperties(), true))) {
+		pushRemoteApplicationContext(FORKED_BRANCH, ScriptHandler.SCRIPT_FILE, input.getProperties(), true);
 
-			ApplicationContext context = getCurrentContext(FORKED_BRANCH);
+		ApplicationContext context = getCurrentContext(FORKED_BRANCH);
 
-			String kwClassnames = (String) context.computeIfAbsent(KW_CLASSNAMES_KEY, k -> {
-				try {
-					return getKeywordClassList((URLClassLoader) getCurrentContext(FORKED_BRANCH).getClassLoader());
-				} catch (Exception e) {
-					throw new RuntimeException(e);
-				}
-			});
-			input.getProperties().put(KeywordExecutor.KEYWORD_CLASSES, kwClassnames);
+		String kwClassnames = (String) context.computeIfAbsent(KW_CLASSNAMES_KEY, k -> {
+			try {
+				return getKeywordClassList((URLClassLoader) getCurrentContext(FORKED_BRANCH).getClassLoader());
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		});
+		input.getProperties().put(KeywordExecutor.KEYWORD_CLASSES, kwClassnames);
 
-			// Using the forked to branch in order no to have the ClassLoader of java-plugin-handler.jar as parent.
-			// the project java-plugin-handler.jar has many dependencies that might conflict with the dependencies of the
-			// keyword. One of these dependencies is guava for example.
-			return delegate(FORKED_BRANCH, "step.plugins.java.handler.KeywordHandler", input);
-		}
+		// Using the forked to branch in order no to have the ClassLoader of java-plugin-handler.jar as parent.
+		// the project java-plugin-handler.jar has many dependencies that might conflict with the dependencies of the
+		// keyword. One of these dependencies is guava for example.
+		return delegate(FORKED_BRANCH, "step.plugins.java.handler.KeywordHandler", input);
 	}
 	
 	private String getKeywordClassList(URLClassLoader cl) throws Exception {

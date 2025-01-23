@@ -30,7 +30,6 @@ import step.grid.agent.handler.AbstractMessageHandler;
 import step.grid.agent.handler.context.OutputMessageBuilder;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
 import step.grid.contextbuilder.ApplicationContextBuilder;
-import step.grid.contextbuilder.ApplicationContextControl;
 import step.grid.contextbuilder.RemoteApplicationContextFactory;
 import step.grid.filemanager.FileVersionId;
 import step.grid.io.InputMessage;
@@ -74,61 +73,54 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 	public OutputMessage handle(AgentTokenWrapper token, InputMessage inputMessage) throws Exception {
 		applicationContextBuilder.resetContext();
 		FileVersionId functionPackage = getFileVersionId(FUNCTION_HANDLER_PACKAGE_KEY, inputMessage.getProperties());
-		ApplicationContextControl applicationContextControl = null;
 		if(functionPackage != null) {
 			RemoteApplicationContextFactory functionHandlerContext = new RemoteApplicationContextFactory(token.getServices().getFileManagerClient(), functionPackage, true);
-			// The usage of this functionHandlerContext will only be released when the session is closed (if running in a session)), underlying registered file won't be cleanable before this release happens
-			applicationContextControl = token.getTokenReservationSession().putSessionAwareCloseable(applicationContextBuilder.pushContext(functionHandlerContext));
+			// The usage of this functionHandlerContext will only be released when the session is closed, underlying registered file won't be cleanable before this release happens
+			token.getTokenReservationSession().closeWithSession(applicationContextBuilder.pushContext(functionHandlerContext));
 		}
 
-		try {
-			return applicationContextBuilder.runInContext(() -> {
-				// Merge the token and agent properties
-				Map<String, String> mergedAgentProperties = getMergedAgentProperties(token);
-				// Instantiate the function handler
-				String handlerClass = inputMessage.getProperties().get(FUNCTION_HANDLER_KEY);
+		return applicationContextBuilder.runInContext(() -> {
+			// Merge the token and agent properties
+			Map<String, String> mergedAgentProperties = getMergedAgentProperties(token);
+			// Instantiate the function handler
+			String handlerClass = inputMessage.getProperties().get(FUNCTION_HANDLER_KEY);
 
-				if (handlerClass == null || handlerClass.isEmpty()) {
-					String msg = "There is no supported handler for function type \"" + inputMessage.getProperties().get(FUNCTION_TYPE_KEY) + "\"";
-					throw new UnsupportedOperationException(msg);
-				}
-
-				@SuppressWarnings("rawtypes")
-				AbstractFunctionHandler functionHandler = functionHandlerFactory.create(applicationContextBuilder.getCurrentContext().getClassLoader(),
-						handlerClass, token.getSession(), token.getTokenReservationSession(), mergedAgentProperties);
-
-				// Deserialize the Input from the message payload
-				JavaType javaType = mapper.getTypeFactory().constructParametrizedType(Input.class, Input.class, functionHandler.getInputPayloadClass());
-				Input<?> input = mapper.readValue(mapper.treeAsTokens(inputMessage.getPayload()), javaType);
-
-				// Handle the input
-				MeasurementsBuilder measurementsBuilder = new MeasurementsBuilder();
-				measurementsBuilder.startMeasure(input.getFunction());
-				@SuppressWarnings("unchecked")
-				Output<?> output = functionHandler.handle(input);
-				measurementsBuilder.stopMeasure(customMeasureData());
-
-				List<Measure> outputMeasures = output.getMeasures();
-				// Add type="custom" to all output measures
-				addCustomTypeToOutputMeasures(outputMeasures);
-
-				// Add Keyword measure to output
-				addAdditionalMeasuresToOutput(output, measurementsBuilder.getMeasures());
-
-				// Serialize the output
-				ObjectNode outputPayload = (ObjectNode) mapper.valueToTree(output);
-
-				// Create and return the output message
-				OutputMessageBuilder outputMessageBuilder = new OutputMessageBuilder();
-				outputMessageBuilder.setPayload(outputPayload);
-				return outputMessageBuilder.build();
-
-			});
-		} finally {
-			if (applicationContextControl != null) {
-				applicationContextControl.close();
+			if (handlerClass == null || handlerClass.isEmpty()) {
+				String msg = "There is no supported handler for function type \"" + inputMessage.getProperties().get(FUNCTION_TYPE_KEY) + "\"";
+				throw new UnsupportedOperationException(msg);
 			}
-		}
+
+			@SuppressWarnings("rawtypes")
+			AbstractFunctionHandler functionHandler = functionHandlerFactory.create(applicationContextBuilder.getCurrentContext().getClassLoader(),
+					handlerClass, token.getSession(), token.getTokenReservationSession(), mergedAgentProperties);
+
+			// Deserialize the Input from the message payload
+			JavaType javaType = mapper.getTypeFactory().constructParametrizedType(Input.class, Input.class, functionHandler.getInputPayloadClass());
+			Input<?> input = mapper.readValue(mapper.treeAsTokens(inputMessage.getPayload()), javaType);
+
+			// Handle the input
+			MeasurementsBuilder measurementsBuilder = new MeasurementsBuilder();
+			measurementsBuilder.startMeasure(input.getFunction());
+			@SuppressWarnings("unchecked")
+			Output<?> output = functionHandler.handle(input);
+			measurementsBuilder.stopMeasure(customMeasureData());
+
+			List<Measure> outputMeasures = output.getMeasures();
+			// Add type="custom" to all output measures
+			addCustomTypeToOutputMeasures(outputMeasures);
+
+			// Add Keyword measure to output
+			addAdditionalMeasuresToOutput(output, measurementsBuilder.getMeasures());
+
+			// Serialize the output
+			ObjectNode outputPayload = (ObjectNode) mapper.valueToTree(output);
+
+			// Create and return the output message
+			OutputMessageBuilder outputMessageBuilder = new OutputMessageBuilder();
+			outputMessageBuilder.setPayload(outputPayload);
+			return outputMessageBuilder.build();
+
+		});
 	}
 
 	protected void addCustomTypeToOutputMeasures(List<Measure> outputMeasures) {

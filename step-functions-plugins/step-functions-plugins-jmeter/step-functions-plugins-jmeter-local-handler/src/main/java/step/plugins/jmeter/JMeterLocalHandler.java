@@ -73,59 +73,56 @@ public class JMeterLocalHandler extends JsonBasedFunctionHandler {
 
 		OutputBuilder out = new OutputBuilder();
 
-		try (FileVersionCloseable testPlanFileVersion = getTokenReservationSession().putSessionAwareCloseable(retrieveFileVersion(JMETER_TESTPLAN, message.getProperties()))) {
+		File testPlanFile = retrieveFileVersion(JMETER_TESTPLAN, message.getProperties());
 
-			File testPlanFile = testPlanFileVersion.getFile();
+		StandardJMeterEngine jmeter = new StandardJMeterEngine();
 
-			StandardJMeterEngine jmeter = new StandardJMeterEngine();
+		HashTree testPlanTree = SaveService.loadTree(testPlanFile);
 
-			HashTree testPlanTree = SaveService.loadTree(testPlanFile);
+		Arguments arguments = createArguments(message);
+		SampleListenerImpl listener = new SampleListenerImpl(out);
 
-			Arguments arguments = createArguments(message);
-			SampleListenerImpl listener = new SampleListenerImpl(out);
+		testPlanTree.traverse(new HashTreeTraverser() {
 
-			testPlanTree.traverse(new HashTreeTraverser() {
-
-				@Override
-				public void subtractNode() {
-				}
-
-				@Override
-				public void processPath() {
-				}
-
-				@Override
-				public void addNode(Object node, HashTree subTree) {
-					if (node instanceof TestPlan) {
-						testPlanTree.getTree(node).add(listener);
-						testPlanTree.getTree(node).add(arguments);
-					}
-				}
-			});
-
-			jmeter.configure(testPlanTree);
-			boolean success;
-			try {
-				jmeter.run();
-			} finally {
-				success = listener.collect();
-			}
-			jmeter.reset();
-
-			boolean debug = Boolean.parseBoolean(message.getProperties().getOrDefault(DEBUG, "false"));
-			//Appender should always be closed, if errors occurs or debug mode is ON, JMeters logs are attached to the output
-			if (appender != null) {
-				appender.dispose();
-				if (debug || !success) {
-					byte[] logData = appender.getData();
-					if (logData != null && logData.length > 0) {
-						out.addAttachment(AttachmentHelper.generateAttachmentFromByteArray(logData, "log.txt"));
-					}
-				}
+			@Override
+			public void subtractNode() {
 			}
 
-			return out.build();
+			@Override
+			public void processPath() {
+			}
+
+			@Override
+			public void addNode(Object node, HashTree subTree) {
+				if (node instanceof TestPlan) {
+					testPlanTree.getTree(node).add(listener);
+					testPlanTree.getTree(node).add(arguments);
+				}
+			}
+		});
+
+		jmeter.configure(testPlanTree);
+		boolean success;
+		try {
+			jmeter.run();
+		} finally {
+			success = listener.collect();
 		}
+		jmeter.reset();
+
+		boolean debug = Boolean.parseBoolean(message.getProperties().getOrDefault(DEBUG, "false"));
+		//Appender should always be closed, if errors occurs or debug mode is ON, JMeters logs are attached to the output
+		if (appender != null) {
+			appender.dispose();
+			if (debug || !success) {
+				byte[] logData = appender.getData();
+				if (logData != null && logData.length > 0) {
+					out.addAttachment(AttachmentHelper.generateAttachmentFromByteArray(logData, "log.txt"));
+				}
+			}
+		}
+
+		return out.build();
 	}
 
 	private void initializeContextIfRequired(Input<JsonObject> message, ApplicationContext context) throws FileManagerException {
@@ -137,11 +134,7 @@ public class JMeterLocalHandler extends JsonBasedFunctionHandler {
 				log.error("Unable to obtain root logger, log capturing will not work!", e);
 			}
 
-			FileVersionCloseable jmeterLibFileVersion = retrieveFileVersion(JMETER_LIBRARIES, message.getProperties());
-			//Make sure the file version is closed whenever the app context is closed
-			jmeterLibFileVersion.setInSession(false);
-			context.put(String.valueOf(jmeterLibFileVersion.hashCode()), jmeterLibFileVersion);
-			File jmeterLibFolder = jmeterLibFileVersion.getFile();
+			File jmeterLibFolder = retrieveFileVersion(JMETER_LIBRARIES, message.getProperties());
 
 			String jmeterHome = jmeterLibFolder.getAbsolutePath();
 			updateClasspathSystemProperty(jmeterHome);
