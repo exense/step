@@ -15,6 +15,7 @@ public class ApplicationConfigurationManager {
 				.setRoleManagement(false)
 				.setProjectMembershipManagement(false)
 				.setPasswordManagement(false)
-				.setTitle(configuration.getProperty("ui.title", "Step"));
+				.setTitle(configuration.getProperty("ui.title", "Step"))
+				.setForceLegacyReporting(configuration.getPropertyAsBoolean("ui.reporting.force.legacy", false));
 	}
 }
