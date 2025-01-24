@@ -153,7 +153,7 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 	 */
 	protected void pushLocalApplicationContext(String branch, ClassLoader classLoader, String resourceName) throws ApplicationContextBuilderException {
 		LocalResourceApplicationContextFactory localContext = new LocalResourceApplicationContextFactory(classLoader, resourceName);
-		getTokenReservationSession().closeWithSession(applicationContextBuilder.pushContext(branch, localContext));
+		getTokenReservationSession().registerObjectToBeClosedWithSession(applicationContextBuilder.pushContext(branch, localContext));
 	}
 	
 	/**
@@ -164,7 +164,7 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 	 */
 	protected void pushLocalFolderApplicationContext(File libFolder) throws ApplicationContextBuilderException {
 		LocalFolderApplicationContextFactory localContext = new LocalFolderApplicationContextFactory(libFolder);
-		getTokenReservationSession().closeWithSession(applicationContextBuilder.pushContext(ApplicationContextBuilder.MASTER, localContext));
+		getTokenReservationSession().registerObjectToBeClosedWithSession(applicationContextBuilder.pushContext(ApplicationContextBuilder.MASTER, localContext));
 	}
 	
 	/**
@@ -176,7 +176,7 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 	 */
 	protected void pushLocalFolderApplicationContext(String branch, File libFolder) throws ApplicationContextBuilderException {
 		LocalFolderApplicationContextFactory localContext = new LocalFolderApplicationContextFactory(libFolder);
-		getTokenReservationSession().closeWithSession(applicationContextBuilder.pushContext(branch, localContext));
+		getTokenReservationSession().registerObjectToBeClosedWithSession(applicationContextBuilder.pushContext(branch, localContext));
 	}
 	
 	/**
@@ -215,7 +215,7 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 		FileVersionId librariesFileVersion = getFileVersionId(fileId, properties);
 		if(librariesFileVersion!=null) {
 			RemoteApplicationContextFactory librariesContext = new RemoteApplicationContextFactory(fileManagerClient, librariesFileVersion, cleanable);
-			getTokenReservationSession().closeWithSession(applicationContextBuilder.pushContext(branch, librariesContext));
+			getTokenReservationSession().registerObjectToBeClosedWithSession(applicationContextBuilder.pushContext(branch, librariesContext));
 		}
 	}
 	
@@ -271,7 +271,7 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 		if(fileVersionId != null) {
 			FileVersion fileVersion = fileManagerClient.requestFileVersion(fileVersionId, cleanable);
 			if (fileVersion != null) {
-				getTokenReservationSession().closeWithSession(new FileVersionCloseable(fileVersion));
+				getTokenReservationSession().registerObjectToBeClosedWithSession(new FileVersionCloseable(fileVersion));
 				return fileVersion.getFile();
 			} else {
 				return null;
