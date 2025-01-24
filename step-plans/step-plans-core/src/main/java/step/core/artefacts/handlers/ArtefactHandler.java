@@ -48,7 +48,6 @@ import java.io.File;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_NODE extends ReportNode> {
 
@@ -95,7 +94,6 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		resourceManager = context.getResourceManager();
 		resolvedPlanBuilder = context.get(ResolvedPlanBuilder.class);
 		Configuration configuration = context.getConfiguration();
-		reportNodeTimeSeriesEnabled = configuration.getPropertyAsBoolean("execution.engine.reportnodes.timeseries.enabled", true);
 	}
 	
 	private enum Phase {
@@ -242,7 +240,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 			}
 		}
 
-		if (reportNodeTimeSeriesEnabled) {
+		if (reportNodeTimeSeries.isIngestionEnabled()) {
 			AbstractArtefact artefactInstance = reportNode.getArtefactInstance();
 			if (artefactInstance != null && !artefactInstance.isWorkArtefact()) {
 				// TODO implement node pruning for time series

@@ -205,7 +205,7 @@ public class ExecutionEngine implements AutoCloseable {
 	 * @return the ID of the new {@link Execution}
 	 */
 	public String initializeExecution(ExecutionParameters executionParameters) {
-		Execution execution = ExecutionFactory.createExecution(executionParameters, null, getObjectEnricher(executionParameters, null));
+		Execution execution = ExecutionFactory.createExecution(executionParameters, null, getObjectEnricher(executionParameters, null), executionEngineContext.getConfiguration());
 		return saveExecution(execution);
 	}
 	
@@ -218,7 +218,7 @@ public class ExecutionEngine implements AutoCloseable {
 	 * @return the ID of the new {@link Execution}
 	 */
 	public String initializeExecution(ExecutiontTaskParameters executionTaskParameters) {
-		Execution execution = ExecutionFactory.createExecution(executionTaskParameters.getExecutionsParameters(), executionTaskParameters, getObjectEnricher(null, executionTaskParameters));
+		Execution execution = ExecutionFactory.createExecution(executionTaskParameters.getExecutionsParameters(), executionTaskParameters, getObjectEnricher(null, executionTaskParameters), executionEngineContext.getConfiguration());
 		return saveExecution(execution);
 	}
 
