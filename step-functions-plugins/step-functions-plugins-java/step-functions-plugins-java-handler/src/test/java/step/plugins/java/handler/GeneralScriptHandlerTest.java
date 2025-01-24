@@ -66,13 +66,17 @@ public class GeneralScriptHandlerTest {
 		Output<JsonObject> output = handler.handle(input);
 		Assert.assertEquals("MyValue", output.getPayload().getString("MyKey"));
 
+		closeAndAssertCacheUsage(1);
+	}
+
+	private void closeAndAssertCacheUsage(int expected) {
 		tokenReservationSession.close();
 		applicationContextBuilder.close();
-		assertEquals(1, testFileManagerClient.cacheUsage.keySet().size());
+		assertEquals(expected, testFileManagerClient.cacheUsage.keySet().size());
 		testFileManagerClient.cacheUsage.values().forEach(v -> assertEquals(0, v.get()));
 	}
-	
-	
+
+
 	@Test
 	public void testJS223NashornHappyPath() throws Exception {
 		GeneralScriptHandler handler = createHandler();
@@ -90,10 +94,7 @@ public class GeneralScriptHandlerTest {
 		Output<JsonObject> output = handler.handle(input);
 		Assert.assertEquals("MyValue", output.getPayload().getString("key1"));
 
-		tokenReservationSession.close();
-		applicationContextBuilder.close();
-		assertEquals(1, testFileManagerClient.cacheUsage.keySet().size());
-		testFileManagerClient.cacheUsage.values().forEach(v -> assertEquals(0, v.get()));
+		closeAndAssertCacheUsage(1);
 	}
 	
 	@Test
@@ -113,10 +114,7 @@ public class GeneralScriptHandlerTest {
 		Output<JsonObject> output = handler.handle(input);
 		Assert.assertEquals("kéÿ1", output.getPayload().getString("key1"));
 
-		tokenReservationSession.close();
-		applicationContextBuilder.close();
-		assertEquals(1, testFileManagerClient.cacheUsage.keySet().size());
-		testFileManagerClient.cacheUsage.values().forEach(v -> assertEquals(0, v.get()));
+		closeAndAssertCacheUsage(1);
 	}
 	
 	@Test
@@ -136,10 +134,7 @@ public class GeneralScriptHandlerTest {
 		Output<JsonObject> output = handler.handle(input);
 		Assert.assertEquals("Error while running script throwable.groovy: assert false\n", output.getError().getMsg());
 
-		tokenReservationSession.close();
-		applicationContextBuilder.close();
-		assertEquals(1, testFileManagerClient.cacheUsage.keySet().size());
-		testFileManagerClient.cacheUsage.values().forEach(v -> assertEquals(0, v.get()));
+		closeAndAssertCacheUsage(1);
 	}
 	
 	@Test
@@ -161,10 +156,7 @@ public class GeneralScriptHandlerTest {
 		Output<JsonObject> output = handler.handle(input);
 		Assert.assertEquals("Error handler called", output.getError().getMsg());
 
-		tokenReservationSession.close();
-		applicationContextBuilder.close();
-		assertEquals(2, testFileManagerClient.cacheUsage.keySet().size());
-		testFileManagerClient.cacheUsage.values().forEach(v -> assertEquals(0, v.get()));
+		closeAndAssertCacheUsage(2);
 	}
 	
 	@Test
@@ -186,10 +178,7 @@ public class GeneralScriptHandlerTest {
 		Output<JsonObject> output = handler.handle(input);
 		Assert.assertEquals("Error while running error handler script: throwable.groovy. assert false\n", output.getError().getMsg());
 
-		tokenReservationSession.close();
-		applicationContextBuilder.close();
-		assertEquals(1, testFileManagerClient.cacheUsage.keySet().size());
-		testFileManagerClient.cacheUsage.values().forEach(v -> assertEquals(0, v.get()));
+		closeAndAssertCacheUsage(1);
 	}
 	
 	@Test
@@ -209,10 +198,7 @@ public class GeneralScriptHandlerTest {
 		Output<JsonObject> output = handler.handle(input);
 		Assert.assertEquals("Unsupported script language: invalidScriptLanguage", output.getError().getMsg());
 
-		tokenReservationSession.close();
-		applicationContextBuilder.close();
-		assertEquals(1, testFileManagerClient.cacheUsage.keySet().size());
-		testFileManagerClient.cacheUsage.values().forEach(v -> assertEquals(0, v.get()));
+		closeAndAssertCacheUsage(1);
 	}
 
 	public GeneralScriptHandler createHandler()

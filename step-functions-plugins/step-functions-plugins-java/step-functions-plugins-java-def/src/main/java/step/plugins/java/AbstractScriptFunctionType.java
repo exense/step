@@ -38,7 +38,6 @@ import step.core.dynamicbeans.DynamicValue;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionTypeException;
 import step.functions.type.SetupFunctionException;
-import step.grid.filemanager.FileVersion;
 import step.handlers.javahandler.KeywordExecutor;
 import step.plugins.java.handler.GeneralScriptHandler;
 import step.plugins.js223.handler.ScriptHandler;
@@ -63,31 +62,26 @@ public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction
 	@Override
 	public HandlerProperties getHandlerProperties(T function, AbstractStepContext executionContext) {
 		Map<String, String> props = new HashMap<>();
-		props.put(ScriptHandler.SCRIPT_LANGUAGE, function.getScriptLanguage().get());
-		FileVersion libFileVersion = registerFile(function.getLibrariesFile(), ScriptHandler.LIBRARIES_FILE, props, true, executionContext);
-		FileVersion pluginLibFileVersion = addPluginLibsIfRequired(function.getScriptLanguage().get(), props);
-		FileVersion scriptFileVersion = registerFile(function.getScriptFile(), ScriptHandler.SCRIPT_FILE, props, true, executionContext);
-		FileVersion errorHandlerFileVersion = registerFile(function.getErrorHandlerFile(), ScriptHandler.ERROR_HANDLER_FILE, props, true, executionContext);
+		List<AutoCloseable> createdCloseables = new ArrayList<>();
+		try {
+			props.put(ScriptHandler.SCRIPT_LANGUAGE, function.getScriptLanguage().get());
 
-		if (configuration.getPropertyAsBoolean("plugins.java.validate.properties")) {
-			props.put(KeywordExecutor.VALIDATE_PROPERTIES, Boolean.TRUE.toString());
-		}
-
-		return new HandlerProperties(props) {
-			@Override
-			public void close() throws Exception {
-				super.close();
-				releaseFile(libFileVersion);
-				if (pluginLibFileVersion != null) {
-					releaseFile(pluginLibFileVersion);
-				}
-				releaseFile(scriptFileVersion);
-				releaseFile(errorHandlerFileVersion);
+			createdCloseables.add(registerFile(function.getLibrariesFile(), ScriptHandler.LIBRARIES_FILE, props, true, executionContext));
+			createdCloseables.add(addPluginLibsIfRequired(function.getScriptLanguage().get(), props));
+			createdCloseables.add(registerFile(function.getScriptFile(), ScriptHandler.SCRIPT_FILE, props, true, executionContext));
+			createdCloseables.add(registerFile(function.getErrorHandlerFile(), ScriptHandler.ERROR_HANDLER_FILE, props, true, executionContext));
+			if (configuration.getPropertyAsBoolean("plugins.java.validate.properties")) {
+				props.put(KeywordExecutor.VALIDATE_PROPERTIES, Boolean.TRUE.toString());
 			}
-		};
+
+			return new HandlerProperties(props, createdCloseables);
+		} catch (Throwable e) {
+			closeRegisteredCloseable(createdCloseables);
+			throw e;
+		}
 	}
 
-	protected FileVersion addPluginLibsIfRequired(String scriptLanguage, Map<String, String> props) {
+	protected AutoCloseable addPluginLibsIfRequired(String scriptLanguage, Map<String, String> props) {
 		String property = configuration.getProperty("plugins."+scriptLanguage+".libs", null);
 		if(property != null) {
 			return registerFile(new File(property), ScriptHandler.PLUGIN_LIBRARIES_FILE, props, true);

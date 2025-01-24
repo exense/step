@@ -108,7 +108,6 @@ public class JMeterLocalHandler extends JsonBasedFunctionHandler {
 		} finally {
 			success = listener.collect();
 		}
-		jmeter.reset();
 
 		boolean debug = Boolean.parseBoolean(message.getProperties().getOrDefault(DEBUG, "false"));
 		//Appender should always be closed, if errors occurs or debug mode is ON, JMeters logs are attached to the output

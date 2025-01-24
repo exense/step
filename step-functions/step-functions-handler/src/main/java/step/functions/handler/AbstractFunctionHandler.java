@@ -90,6 +90,10 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 		this.tokenReservationSession = tokenReservationSession;
 	}
 
+	protected void registerObjectToBeClosedWithSession(AutoCloseable autoCloseable) {
+		getTokenReservationSession().registerObjectToBeClosedWithSession(autoCloseable);
+	}
+
 	public void initialize() {
 	}
 	
@@ -153,7 +157,7 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 	 */
 	protected void pushLocalApplicationContext(String branch, ClassLoader classLoader, String resourceName) throws ApplicationContextBuilderException {
 		LocalResourceApplicationContextFactory localContext = new LocalResourceApplicationContextFactory(classLoader, resourceName);
-		getTokenReservationSession().registerObjectToBeClosedWithSession(applicationContextBuilder.pushContext(branch, localContext));
+		registerObjectToBeClosedWithSession(applicationContextBuilder.pushContext(branch, localContext));
 	}
 	
 	/**
@@ -164,7 +168,7 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 	 */
 	protected void pushLocalFolderApplicationContext(File libFolder) throws ApplicationContextBuilderException {
 		LocalFolderApplicationContextFactory localContext = new LocalFolderApplicationContextFactory(libFolder);
-		getTokenReservationSession().registerObjectToBeClosedWithSession(applicationContextBuilder.pushContext(ApplicationContextBuilder.MASTER, localContext));
+		registerObjectToBeClosedWithSession(applicationContextBuilder.pushContext(ApplicationContextBuilder.MASTER, localContext));
 	}
 	
 	/**
@@ -176,7 +180,7 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 	 */
 	protected void pushLocalFolderApplicationContext(String branch, File libFolder) throws ApplicationContextBuilderException {
 		LocalFolderApplicationContextFactory localContext = new LocalFolderApplicationContextFactory(libFolder);
-		getTokenReservationSession().registerObjectToBeClosedWithSession(applicationContextBuilder.pushContext(branch, localContext));
+		registerObjectToBeClosedWithSession(applicationContextBuilder.pushContext(branch, localContext));
 	}
 	
 	/**
@@ -215,7 +219,7 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 		FileVersionId librariesFileVersion = getFileVersionId(fileId, properties);
 		if(librariesFileVersion!=null) {
 			RemoteApplicationContextFactory librariesContext = new RemoteApplicationContextFactory(fileManagerClient, librariesFileVersion, cleanable);
-			getTokenReservationSession().registerObjectToBeClosedWithSession(applicationContextBuilder.pushContext(branch, librariesContext));
+			registerObjectToBeClosedWithSession(applicationContextBuilder.pushContext(branch, librariesContext));
 		}
 	}
 	
@@ -271,7 +275,7 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 		if(fileVersionId != null) {
 			FileVersion fileVersion = fileManagerClient.requestFileVersion(fileVersionId, cleanable);
 			if (fileVersion != null) {
-				getTokenReservationSession().registerObjectToBeClosedWithSession(new FileVersionCloseable(fileVersion));
+				registerObjectToBeClosedWithSession(new FileVersionCloseable(fileVersion));
 				return fileVersion.getFile();
 			} else {
 				return null;

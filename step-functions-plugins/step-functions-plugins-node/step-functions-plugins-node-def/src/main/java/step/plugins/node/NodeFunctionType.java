@@ -19,6 +19,7 @@
 package step.plugins.node;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -46,14 +47,7 @@ public class NodeFunctionType extends AbstractFunctionType<NodeFunction> {
 	@Override
 	public HandlerProperties getHandlerProperties(NodeFunction function, AbstractStepContext executionContext) {
 		Map<String, String> props = new HashMap<>();
-		FileVersion jsFileVersion = registerFile(function.getJsFile(), FILE, props, true, executionContext);
-		return new HandlerProperties(props) {
-			@Override
-			public void close() throws Exception {
-				super.close();
-				releaseFile(jsFileVersion);
-			}
-		};
+		return new HandlerProperties(props, List.of(registerFile(function.getJsFile(), FILE, props, true, executionContext)));
 	}
 
 	@Override

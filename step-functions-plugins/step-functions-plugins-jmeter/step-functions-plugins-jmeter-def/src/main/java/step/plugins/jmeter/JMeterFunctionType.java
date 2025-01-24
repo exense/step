@@ -19,7 +19,9 @@
 package step.plugins.jmeter;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import ch.exense.commons.app.Configuration;
@@ -60,17 +62,18 @@ public class JMeterFunctionType extends AbstractFunctionType<JMeterFunction> {
 		String home = configuration.getProperty(JMETER_HOME_CONFIG_PROPERTY);
 		if (home != null) {
 			Map<String, String> props = new HashMap<>();
-			File homeFile = new File(home);
-			FileVersion jmeterLibFileVersion = registerFile(homeFile, "$jmeter.libraries", props, false);
-			FileVersion jmeterTestplanFileVersion = registerFile(function.getJmeterTestplan(), "$jmeter.testplan.file", props, true, executionContext);
-			return new HandlerProperties(props) {
-				@Override
-				public void close() throws Exception {
-					super.close();
-					releaseFile(jmeterLibFileVersion);
-					releaseFile(jmeterTestplanFileVersion);
-				}
-			};
+			List<AutoCloseable> createdCloseables = new ArrayList<>();
+			try {
+				File homeFile = new File(home);
+				//Execution of jmeter keeps a handle on one of the library jar file even with a clean implementation closing created instances and the related class loader
+				//Therefore the lib folder in the file manager cache of the agent is not cleanable, so it should also be aligned on the grid server side
+				createdCloseables.add(registerFile(homeFile, "$jmeter.libraries", props, false));
+				createdCloseables.add(registerFile(function.getJmeterTestplan(), "$jmeter.testplan.file", props, true, executionContext));
+				return new HandlerProperties(props, createdCloseables);
+			} catch (Throwable e) {
+				closeRegisteredCloseable(createdCloseables);
+				throw e;
+			}
 		} else {
 			throw new RuntimeException(
 					configuration.getProperty(MISSING_JMETER_HOME_MESSAGE_PROPERTY,
