@@ -54,7 +54,7 @@ public abstract class StepJUnit5 extends AbstractKeyword {
 
     @TestFactory
     public List<DynamicNode> plans() {
-        List<StepClassParserResult> testPlans = new JUnitPlansProvider().getTestPlans(executionEngine);
+        List<StepClassParserResult> testPlans = new JUnitPlansProvider(this.getClass()).getTestPlans(executionEngine);
         List<DynamicNode> tests = new ArrayList<>();
         for (StepClassParserResult testPlan : testPlans) {
             tests.add(DynamicTest.dynamicTest(testPlan.getName(), () -> new AbstractLocalPlanRunner(testPlan, executionEngine) {

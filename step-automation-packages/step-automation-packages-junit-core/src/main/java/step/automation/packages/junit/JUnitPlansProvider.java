@@ -35,29 +35,35 @@ import java.util.stream.Collectors;
 
 public class JUnitPlansProvider {
 
+    private final Class<?> testClass;
+
+    public JUnitPlansProvider(Class<?> testClass) {
+        this.testClass = testClass;
+    }
+
     public List<StepClassParserResult> getTestPlans(ExecutionEngine executionEngine) {
         try {
             AutomationPackageManager automationPackageManager = executionEngine.getExecutionEngineContext().require(AutomationPackageManager.class);
-            AutomationPackageFromClassLoaderProvider automationPackageProvider = new AutomationPackageFromClassLoaderProvider(getClass().getClassLoader());
+            AutomationPackageFromClassLoaderProvider automationPackageProvider = new AutomationPackageFromClassLoaderProvider(testClass.getClassLoader());
             ObjectId automationPackageId = automationPackageManager.createOrUpdateAutomationPackage(
                     false, true, null, automationPackageProvider,
                     true, null, null, false
             ).getId();
 
             List<PlanFilter> planFilterList = new ArrayList<>();
-            IncludePlans includePlans = getClass().getAnnotation(IncludePlans.class);
+            IncludePlans includePlans = testClass.getAnnotation(IncludePlans.class);
             if (includePlans != null && includePlans.value() != null) {
                 planFilterList.add(new PlanByIncludedNamesFilter(Arrays.asList(includePlans.value())));
             }
-            ExcludePlans excludePlans = getClass().getAnnotation(ExcludePlans.class);
+            ExcludePlans excludePlans = testClass.getAnnotation(ExcludePlans.class);
             if (excludePlans != null && excludePlans.value() != null) {
                 planFilterList.add(new PlanByExcludedNamesFilter(Arrays.asList(excludePlans.value())));
             }
-            IncludePlanCategories includePlanCategories = getClass().getAnnotation(IncludePlanCategories.class);
+            IncludePlanCategories includePlanCategories = testClass.getAnnotation(IncludePlanCategories.class);
             if (includePlanCategories != null && includePlanCategories.value() != null) {
                 planFilterList.add(new PlanByIncludedCategoriesFilter(Arrays.asList(includePlanCategories.value())));
             }
-            ExcludePlanCategories excludePlanCategories = getClass().getAnnotation(ExcludePlanCategories.class);
+            ExcludePlanCategories excludePlanCategories = testClass.getAnnotation(ExcludePlanCategories.class);
             if (excludePlanCategories != null && excludePlanCategories.value() != null) {
                 planFilterList.add(new PlanByExcludedCategoriesFilter(Arrays.asList(excludePlanCategories.value())));
             }

@@ -37,7 +37,7 @@ public class Step extends AbstractStepRunner {
 				}
 			}).withPluginsFromClasspath().build();
 
-			listPlans = new JUnitPlansProvider().getTestPlans(executionEngine);
+			listPlans = new JUnitPlansProvider(klass).getTestPlans(executionEngine);
 		} catch (Exception e) {
 			throw new InitializationError(e);
 		}
