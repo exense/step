@@ -18,18 +18,10 @@
  ******************************************************************************/
 package step.junit5.runner;
 
-import org.bson.types.ObjectId;
-import org.junit.jupiter.api.DynamicNode;
-import org.junit.jupiter.api.DynamicTest;
-import org.junit.jupiter.api.TestFactory;
-import step.automation.packages.AutomationPackageFromClassLoaderProvider;
-import step.automation.packages.AutomationPackageManager;
+import org.junit.jupiter.api.*;
 import step.automation.packages.junit.*;
-import step.core.accessors.AbstractOrganizableObject;
-import step.core.artefacts.Artefact;
+import step.cli.AbstractExecuteAutomationPackageTool;
 import step.core.execution.ExecutionEngine;
-import step.core.plans.PlanFilter;
-import step.core.plans.filters.*;
 import step.core.plans.runner.PlanRunnerResult;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.handlers.javahandler.AbstractKeyword;
@@ -39,43 +31,55 @@ import step.junit.runners.annotations.ExecutionParameters;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 public abstract class StepJUnit5 extends AbstractKeyword {
 
     private final static Pattern SYSTEM_PROPERTIES_PREFIX = Pattern.compile("STEP_(.+?)");
 
+    private static ExecutionEngine executionEngine;
+
+    @BeforeAll
+    public static void setupExecutionEngine() {
+        AbstractExecutionEnginePlugin plugin = new AbstractExecutionEnginePlugin() {
+        };
+        executionEngine = ExecutionEngine.builder().withPlugin(plugin).withPluginsFromClasspath().build();
+    }
+
+    @AfterAll
+    public static void destroyExecutionEngine() {
+        if (executionEngine != null) {
+            executionEngine.close();
+        }
+    }
+
     @TestFactory
     public List<DynamicNode> plans() {
-        ExecutionEngine executionEngine = ExecutionEngine.builder().withPlugin(new AbstractExecutionEnginePlugin(){}).withPluginsFromClasspath().build();
-
-        List<StepClassParserResult> testPlans = getTestPlans(executionEngine);
+        List<StepClassParserResult> testPlans = new JUnitPlansProvider().getTestPlans(executionEngine);
         List<DynamicNode> tests = new ArrayList<>();
         for (StepClassParserResult testPlan : testPlans) {
             tests.add(DynamicTest.dynamicTest(testPlan.getName(), () -> new AbstractLocalPlanRunner(testPlan, executionEngine) {
                 @Override
                 protected void onExecutionStart() {
-                    // TODO: extensions?
                 }
 
                 @Override
                 protected void onExecutionError(PlanRunnerResult result, String errorText, boolean assertionError) {
-                    // TODO: extensions?
+                    notifyFailure(result, errorText, assertionError);
                 }
 
                 @Override
                 protected void onInitializingException(Exception exception) {
-                    // TODO: extensions?
+                    throw new RuntimeException(exception);
                 }
 
                 @Override
                 protected void onExecutionException(Exception exception) {
-                    // TODO: extensions?
+                    throw new RuntimeException(exception);
                 }
 
                 @Override
                 protected void onTestFinished() {
-                    // TODO: extensions?
+
                 }
 
                 @Override
@@ -138,44 +142,15 @@ public abstract class StepJUnit5 extends AbstractKeyword {
         }
     }
 
-    // TODO: this code is copied from Step.class and be reused
-    private List<StepClassParserResult> getTestPlans(ExecutionEngine executionEngine) {
-        try {
-            AutomationPackageManager automationPackageManager = executionEngine.getExecutionEngineContext().require(AutomationPackageManager.class);
-            AutomationPackageFromClassLoaderProvider automationPackageProvider = new AutomationPackageFromClassLoaderProvider(getClass().getClassLoader());
-            ObjectId automationPackageId = automationPackageManager.createOrUpdateAutomationPackage(
-                    false, true, null, automationPackageProvider,
-                    true, null, null, false
-            ).getId();
-
-            List<PlanFilter> planFilterList = new ArrayList<>();
-            IncludePlans includePlans = getClass().getAnnotation(IncludePlans.class);
-            if (includePlans != null && includePlans.value() != null) {
-                planFilterList.add(new PlanByIncludedNamesFilter(Arrays.asList(includePlans.value())));
-            }
-            ExcludePlans excludePlans = getClass().getAnnotation(ExcludePlans.class);
-            if (excludePlans != null && excludePlans.value() != null) {
-                planFilterList.add(new PlanByExcludedNamesFilter(Arrays.asList(excludePlans.value())));
-            }
-            IncludePlanCategories includePlanCategories = getClass().getAnnotation(IncludePlanCategories.class);
-            if (includePlanCategories != null && includePlanCategories.value() != null) {
-                planFilterList.add(new PlanByIncludedCategoriesFilter(Arrays.asList(includePlanCategories.value())));
-            }
-            ExcludePlanCategories excludePlanCategories = getClass().getAnnotation(ExcludePlanCategories.class);
-            if (excludePlanCategories != null && excludePlanCategories.value() != null) {
-                planFilterList.add(new PlanByExcludedCategoriesFilter(Arrays.asList(excludePlanCategories.value())));
-            }
-            PlanMultiFilter planMultiFilter = new PlanMultiFilter(planFilterList);
-
-            return automationPackageManager.getPackagePlans(automationPackageId)
-                    .stream()
-                    .filter(planMultiFilter::isSelected)
-                    .filter(p -> p.getRoot().getClass().getAnnotation(Artefact.class).validForStandaloneExecution())
-                    .map(p -> new StepClassParserResult(p.getAttribute(AbstractOrganizableObject.NAME), p, null))
-                    .collect(Collectors.toList());
-        } catch (Exception e) {
-            throw new RuntimeException("Cannot read test plans", e);
+    protected void notifyFailure(PlanRunnerResult res, String errorMsg, boolean assertionError) {
+        String executionTree = AbstractExecuteAutomationPackageTool.getExecutionTreeAsString(res);
+        String detailMessage = errorMsg + "\nExecution tree is:\n" + executionTree;
+        if (assertionError) {
+            throw new AssertionError(detailMessage);
+        } else {
+            throw new RuntimeException(detailMessage);
         }
     }
+
 
 }
