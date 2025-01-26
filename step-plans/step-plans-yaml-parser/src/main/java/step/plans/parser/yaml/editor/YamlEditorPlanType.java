@@ -41,12 +41,12 @@ public class YamlEditorPlanType implements PlanType<YamlEditorPlan> {
 
     @Override
     public YamlEditorPlan newPlan(String template) throws Exception {
-        YamlEditorPlan plainTextPlan = new YamlEditorPlan();
+        YamlEditorPlan yamlEditorPlan = new YamlEditorPlan();
         RootArtefactType type = RootArtefactType.valueOf(template);
-        plainTextPlan.setType(type);
-        plainTextPlan.setRoot(type.createRootArtefact());
-        plainTextPlan.setSource("");
-        return plainTextPlan;
+        yamlEditorPlan.setType(type);
+        yamlEditorPlan.setRoot(type.createRootArtefact());
+        yamlEditorPlan.setSource("");
+        return yamlEditorPlan;
     }
 
     @Override

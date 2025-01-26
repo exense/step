@@ -97,7 +97,7 @@ public class PlanServices extends AbstractEntityServices<Plan> {
 	@Override
 	protected Plan beforeSave(Plan entity) {
 		if (entity == null) {
-			throw new ControllerServiceException(400, "Plan is undefined");
+			throw new ControllerServiceException(400, "The submitted plan to be saved is empty or null");
 		}
 		PlanType<Plan> planType = getPlanTypeNotNull(entity.getClass());
 		planType.onBeforeSave(entity);
@@ -107,7 +107,7 @@ public class PlanServices extends AbstractEntityServices<Plan> {
 	protected PlanType<Plan> getPlanTypeNotNull(String planTypeName) {
 		PlanType<Plan> planType = planTypeRegistry.getPlanType(planTypeName);
 		if (planType == null) {
-			throw new ControllerServiceException(400, "Plan type is not resolved by name " + planTypeName);
+			throw new ControllerServiceException(400, "Plan type " + planTypeName + " is not supported");
 		}
 		return planType;
 	}
