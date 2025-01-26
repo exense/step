@@ -1,0 +1,97 @@
+version: 1.0.0
+name: "My package"
+plans:
+  - name: Test Plan
+    root:
+      testCase:
+        children:
+          - echo:
+              text: "Just echo"
+          - echo:
+              text:
+                expression: "myParam"
+          - callKeyword:
+              keyword: "callExisting"
+          - callKeyword:
+              keyword: "customKeywordWithMapInput"
+              inputs:
+                - URL: "https://postman-echo.com/headers"
+                - Name: "my test"
+                - Headers:
+                    myHeader: "myHeadervalue"
+                - ArrayInput:
+                    - 1
+                    - 3
+                    - 5
+  - name: JMeter Plan
+    root:
+      testCase:
+        children:
+          - callKeyword:
+              keyword: "JMeterAutomation"
+              inputs:
+                - url: "www.exense.ch"
+  - name: General Script Plan
+    root:
+      testCase:
+        children:
+          - callKeyword:
+              keyword: "GeneralScriptAutomation"
+  - name: Test Plan with Composite
+    root:
+      testCase:
+        children:
+          - echo:
+              text: "Calling composite"
+          - callKeyword:
+              keyword: "Composite keyword from AP"
+              children:
+                - check:
+                    expression: "output.output1.equals('value')"
+                - check:
+                    expression: "output.output2.equals('some thing dynamic')"
+  - name: Plan with Call Plan
+    root:
+      testCase:
+        nodeName: Plan with Call Plan
+        children:
+          - callPlan:
+              selectionAttributes:
+                - name: "Plan2"
+              input:
+                - inputtest: "some other value"
+  - name: Plan2
+    root:
+      testCase:
+        nodeName: "Plan2"
+        children:
+          - echo:
+              expression: "input.getString(\"inputtest\")"
+keywords:
+  - JMeter:
+      name: "JMeterAutomation"
+      description: "JMeter keyword 1"
+      useCustomTemplate: true
+      callTimeout: 1000
+      jmeterTestplan: "jmeterProject1/jmeterProject1.jmx"
+  - Composite:
+      name: "Composite keyword from AP"
+      plan:
+        root:
+          testCase:
+            children:
+              - echo:
+                  text: "Just echo"
+              - return:
+                  output:
+                    - output1: "value"
+                    - output2:
+                        expression: "'some thing dynamic'"
+  - GeneralScript:
+      name: "GeneralScriptAutomation"
+      scriptLanguage: javascript
+      scriptFile: jsProject/jsSample.js
+parameters:
+  - key: "myParam"
+    value: "myParamValue"
+      
