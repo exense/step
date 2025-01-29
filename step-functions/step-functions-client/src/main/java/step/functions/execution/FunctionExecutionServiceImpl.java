@@ -57,6 +57,8 @@ import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import static step.functions.handler.FunctionMessageHandler.FUNCTION_HANDLER_PACKAGE_CLEANABLE_KEY;
+
 public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 
 	private final GridClient gridClient;
@@ -199,6 +201,7 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 			messageProperties.put(FunctionMessageHandler.FUNCTION_TYPE_KEY, functionType.getClass().getName());
 			if(handlerPackage != null) {
 				messageProperties.putAll(fileVersionIdToMap(FunctionMessageHandler.FUNCTION_HANDLER_PACKAGE_KEY, handlerPackage));
+				messageProperties.put(FUNCTION_HANDLER_PACKAGE_CLEANABLE_KEY, functionType.isHandlerCleanable());
 			}
 
 

@@ -98,6 +98,10 @@ public abstract class AbstractFunctionType<T extends Function> {
 		return (handlerPackageVersion != null) ? handlerPackageVersion.getVersionId() : null;
 	}
 
+	public String isHandlerCleanable() {
+		return Boolean.toString(true);
+	}
+
 	public static class HandlerProperties implements AutoCloseable {
 		public final Map<String, String> properties;
 		private final List<AutoCloseable> registeredCloseable;

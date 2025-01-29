@@ -42,6 +42,7 @@ import java.util.Map;
 public class FunctionMessageHandler extends AbstractMessageHandler {
 
 	public static final String FUNCTION_HANDLER_PACKAGE_KEY = "$functionhandlerjar";
+	public static final String FUNCTION_HANDLER_PACKAGE_CLEANABLE_KEY = "$functionhandlerjarCleanable";
 	
 	public static final String FUNCTION_HANDLER_KEY = "$functionhandler";
 	public static final String FUNCTION_TYPE_KEY = "$functionType";
@@ -74,9 +75,10 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 		applicationContextBuilder.resetContext();
 		FileVersionId functionPackage = getFileVersionId(FUNCTION_HANDLER_PACKAGE_KEY, inputMessage.getProperties());
 		if(functionPackage != null) {
-			RemoteApplicationContextFactory functionHandlerContext = new RemoteApplicationContextFactory(token.getServices().getFileManagerClient(), functionPackage, true);
+			boolean cleanable = Boolean.parseBoolean(inputMessage.getProperties().get(FUNCTION_HANDLER_PACKAGE_CLEANABLE_KEY));
+			RemoteApplicationContextFactory functionHandlerContext = new RemoteApplicationContextFactory(token.getServices().getFileManagerClient(), functionPackage, cleanable);
 			// The usage of this functionHandlerContext will only be released when the session is closed, underlying registered file won't be cleanable before this release happens
-			token.getTokenReservationSession().registerObjectToBeClosedWithSession(applicationContextBuilder.pushContext(functionHandlerContext, true));
+			token.getTokenReservationSession().registerObjectToBeClosedWithSession(applicationContextBuilder.pushContext(functionHandlerContext, cleanable));
 		}
 
 		return applicationContextBuilder.runInContext(() -> {

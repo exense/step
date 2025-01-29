@@ -53,6 +53,11 @@ public class JMeterFunctionType extends AbstractFunctionType<JMeterFunction> {
 	}
 
 	@Override
+	public String isHandlerCleanable() {
+		return Boolean.toString(false);
+	}
+
+	@Override
 	public String getHandlerChain(JMeterFunction function) {
 		return "step.plugins.jmeter.JMeterHandler";
 	}
