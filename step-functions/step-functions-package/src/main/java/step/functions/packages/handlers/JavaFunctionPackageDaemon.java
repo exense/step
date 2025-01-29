@@ -65,9 +65,9 @@ public class JavaFunctionPackageDaemon extends FunctionPackageUtils {
 			// Build classloader
 			try (ApplicationContextBuilder applicationContextBuilder = new ApplicationContextBuilder(ClassLoader.getSystemClassLoader())) {
 				if (packageLibrariesFile != null) {
-					applicationContextBuilder.pushContext(new LocalFolderApplicationContextFactory(packageLibrariesFile));
+					applicationContextBuilder.pushContext(new LocalFolderApplicationContextFactory(packageLibrariesFile), true);
 				}
-				applicationContextBuilder.pushContext(new LocalFileApplicationContextFactory(packageFile));
+				applicationContextBuilder.pushContext(new LocalFileApplicationContextFactory(packageFile), true);
 				ClassLoader cl = applicationContextBuilder.getCurrentContext().getClassLoader();
 
 				// Scan package File for Keyword annotations

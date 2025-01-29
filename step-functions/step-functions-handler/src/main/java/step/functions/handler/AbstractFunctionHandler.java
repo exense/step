@@ -157,7 +157,7 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 	 */
 	protected void pushLocalApplicationContext(String branch, ClassLoader classLoader, String resourceName) throws ApplicationContextBuilderException {
 		LocalResourceApplicationContextFactory localContext = new LocalResourceApplicationContextFactory(classLoader, resourceName);
-		registerObjectToBeClosedWithSession(applicationContextBuilder.pushContext(branch, localContext));
+		registerObjectToBeClosedWithSession(applicationContextBuilder.pushContext(branch, localContext, true));
 	}
 	
 	/**
@@ -168,7 +168,7 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 	 */
 	protected void pushLocalFolderApplicationContext(File libFolder) throws ApplicationContextBuilderException {
 		LocalFolderApplicationContextFactory localContext = new LocalFolderApplicationContextFactory(libFolder);
-		registerObjectToBeClosedWithSession(applicationContextBuilder.pushContext(ApplicationContextBuilder.MASTER, localContext));
+		registerObjectToBeClosedWithSession(applicationContextBuilder.pushContext(ApplicationContextBuilder.MASTER, localContext, true));
 	}
 	
 	/**
@@ -180,7 +180,7 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 	 */
 	protected void pushLocalFolderApplicationContext(String branch, File libFolder) throws ApplicationContextBuilderException {
 		LocalFolderApplicationContextFactory localContext = new LocalFolderApplicationContextFactory(libFolder);
-		registerObjectToBeClosedWithSession(applicationContextBuilder.pushContext(branch, localContext));
+		registerObjectToBeClosedWithSession(applicationContextBuilder.pushContext(branch, localContext, true));
 	}
 	
 	/**
@@ -219,7 +219,7 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 		FileVersionId librariesFileVersion = getFileVersionId(fileId, properties);
 		if(librariesFileVersion!=null) {
 			RemoteApplicationContextFactory librariesContext = new RemoteApplicationContextFactory(fileManagerClient, librariesFileVersion, cleanable);
-			registerObjectToBeClosedWithSession(applicationContextBuilder.pushContext(branch, librariesContext));
+			registerObjectToBeClosedWithSession(applicationContextBuilder.pushContext(branch, librariesContext, cleanable));
 		}
 	}
 	
