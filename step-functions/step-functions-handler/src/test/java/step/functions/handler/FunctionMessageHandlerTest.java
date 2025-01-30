@@ -36,6 +36,8 @@ import org.junit.Test;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.junit.Assert;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.functions.io.Input;
 import step.grid.Token;
 import step.grid.agent.AgentTokenServices;
@@ -43,16 +45,15 @@ import step.grid.agent.handler.MessageHandlerPool;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
 import step.grid.agent.tokenpool.TokenReservationSession;
 import step.grid.contextbuilder.ApplicationContextBuilder;
-import step.grid.filemanager.FileManagerClient;
-import step.grid.filemanager.FileManagerException;
-import step.grid.filemanager.FileVersion;
-import step.grid.filemanager.FileVersionId;
+import step.grid.filemanager.*;
 import step.grid.io.InputMessage;
 import step.grid.io.OutputMessage;
 
 import static org.junit.Assert.assertEquals;
 
 public class FunctionMessageHandlerTest {
+
+	private static final Logger logger = LoggerFactory.getLogger(FunctionMessageHandlerTest.class);
 
 	public static final String EMPTY_FILE = "emptyFile";
 
@@ -76,7 +77,10 @@ public class FunctionMessageHandlerTest {
 		//The cleanup task of application context is only triggered when the pool of handler and related application context builders are closed
 		FunctionMessageHandlerTest.TestFileManagerClient fileManagerClient = (FunctionMessageHandlerTest.TestFileManagerClient) tokenServices.getFileManagerClient();
 		assertEquals(expectedFilesInCache, fileManagerClient.cacheUsage.keySet().size());
-		fileManagerClient.cacheUsage.values().forEach(v -> assertEquals(0, v.get()));
+		fileManagerClient.cacheUsage.forEach((k, v) -> {
+			logger.info("Cache usage for {} is {}", k, v);
+			assertEquals(0, v.get());
+		});
 	}
 
 	@Test
@@ -125,6 +129,7 @@ public class FunctionMessageHandlerTest {
 	 */
 	@Test
 	public void testParallel() throws InterruptedException {
+		logger.info("Starting FunctionMessageHandler parallel test");
 		List<Exception> exceptions = new ArrayList<>();
 		int nThreads = 5;
 		ExecutorService newFixedThreadPool = Executors.newFixedThreadPool(nThreads);
@@ -149,6 +154,7 @@ public class FunctionMessageHandlerTest {
 		}
 		assertEquals(0, exceptions.size());
 		expectedFilesInCache = 1;
+		logger.info("Ending FunctionMessageHandler parallel test");
 	}
 	
 	/**
@@ -194,6 +200,7 @@ public class FunctionMessageHandlerTest {
 
 		@Override
 		public FileVersion requestFileVersion(FileVersionId fileVersionId, boolean cleanable) throws FileManagerException {
+			logger.info("requestFileVersion in TestFileManagerClient for {}", fileVersionId);
 			if(fileVersionId.getFileId().equals(EMPTY_FILE)) {
 				String uid = fileVersionId.getFileId();
 				File file = new File(".");
@@ -214,6 +221,7 @@ public class FunctionMessageHandlerTest {
 
 		@Override
 		public void releaseFileVersion(FileVersion fileVersion) {
+			logger.info("releaseFileVersion in TestFileManagerClient for {}", fileVersion.getVersionId());
 			cacheUsage.get(fileVersion.getVersionId().toString()).decrementAndGet();
 		}
 
