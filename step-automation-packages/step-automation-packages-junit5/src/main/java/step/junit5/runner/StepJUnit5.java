@@ -19,22 +19,21 @@
 package step.junit5.runner;
 
 import org.junit.jupiter.api.*;
-import step.automation.packages.junit.*;
+import step.automation.packages.junit.AbstractLocalPlanRunner;
+import step.automation.packages.junit.JUnitPlansProvider;
+import step.automation.packages.junit.JunitExecutionParametersProvider;
 import step.cli.AbstractExecuteAutomationPackageTool;
 import step.core.execution.ExecutionEngine;
 import step.core.plans.runner.PlanRunnerResult;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.handlers.javahandler.AbstractKeyword;
 import step.junit.runner.StepClassParserResult;
-import step.junit.runners.annotations.ExecutionParameters;
 
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public abstract class StepJUnit5 extends AbstractKeyword {
-
-    private final static Pattern SYSTEM_PROPERTIES_PREFIX = Pattern.compile("STEP_(.+?)");
 
     private static ExecutionEngine executionEngine;
 
@@ -54,7 +53,8 @@ public abstract class StepJUnit5 extends AbstractKeyword {
 
     @TestFactory
     public List<DynamicNode> plans() {
-        List<StepClassParserResult> testPlans = new JUnitPlansProvider(this.getClass()).getTestPlans(executionEngine);
+        Class<? extends StepJUnit5> testClass = this.getClass();
+        List<StepClassParserResult> testPlans = new JUnitPlansProvider(testClass).getTestPlans(executionEngine);
         List<DynamicNode> tests = new ArrayList<>();
         for (StepClassParserResult testPlan : testPlans) {
             tests.add(DynamicTest.dynamicTest(testPlan.getName(), () -> new AbstractLocalPlanRunner(testPlan, executionEngine) {
@@ -79,67 +79,15 @@ public abstract class StepJUnit5 extends AbstractKeyword {
 
                 @Override
                 protected void onTestFinished() {
-
                 }
 
                 @Override
                 protected Map<String, String> getExecutionParameters() {
-                    return StepJUnit5.this.getExecutionParameters();
+                    return new JunitExecutionParametersProvider().getExecutionParameters(testClass);
                 }
             }.runPlan()));
         }
         return tests;
-    }
-
-    protected Map<String, String> getExecutionParameters() {
-        HashMap<String, String> executionParameters = new HashMap<>();
-        // Prio 3: Execution parameters from annotation ExecutionParameters
-        executionParameters.putAll(getExecutionParametersByAnnotation());
-        // Prio 2: Execution parameters from environment variables (prefixed with STEP_*)
-        executionParameters.putAll(getExecutionParametersFromEnvironmentVariables());
-        // Prio 3: Execution parameters from system properties
-        executionParameters.putAll(getExecutionParametersFromSystemProperties());
-        return executionParameters;
-    }
-
-    private Map<String, String> getExecutionParametersByAnnotation() {
-        Map<String, String> executionParameters = new HashMap<>();
-        ExecutionParameters params;
-        if ((params = this.getClass().getAnnotation(ExecutionParameters.class)) != null) {
-            String key = null;
-            for (String param : params.value()) {
-                if (key == null) {
-                    key = param;
-                } else {
-                    executionParameters.put(key, param);
-                    key = null;
-                }
-            }
-        }
-        return executionParameters;
-    }
-
-    protected Map<String, String> getExecutionParametersFromSystemProperties() {
-        Map<String, String> executionParameters = new HashMap<>();
-        System.getProperties().forEach((k, v) ->
-                unescapeParameterKeyIfMatches(k.toString()).ifPresent(key -> executionParameters.put(key, v.toString())));
-        return executionParameters;
-    }
-
-    private Map<String, String> getExecutionParametersFromEnvironmentVariables() {
-        Map<String, String> executionParameters = new HashMap<>();
-        System.getenv().forEach((k, v) -> unescapeParameterKeyIfMatches(k).ifPresent(key -> executionParameters.put(key, v)));
-        return executionParameters;
-    }
-
-    private Optional<String> unescapeParameterKeyIfMatches(String key) {
-        Matcher matcher = SYSTEM_PROPERTIES_PREFIX.matcher(key);
-        if (matcher.matches()) {
-            String unescapedKey = matcher.group(1);
-            return Optional.of(unescapedKey);
-        } else {
-            return Optional.empty();
-        }
     }
 
     protected void notifyFailure(PlanRunnerResult res, String errorMsg, boolean assertionError) {
@@ -151,6 +99,5 @@ public abstract class StepJUnit5 extends AbstractKeyword {
             throw new RuntimeException(detailMessage);
         }
     }
-
 
 }
