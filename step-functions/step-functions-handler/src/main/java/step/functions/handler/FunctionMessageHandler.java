@@ -42,6 +42,7 @@ import java.util.Map;
 public class FunctionMessageHandler extends AbstractMessageHandler {
 
 	public static final String FUNCTION_HANDLER_PACKAGE_KEY = "$functionhandlerjar";
+	public static final String FUNCTION_HANDLER_PACKAGE_CLEANABLE_KEY = "$functionhandlerjarCleanable";
 	
 	public static final String FUNCTION_HANDLER_KEY = "$functionhandler";
 	public static final String FUNCTION_TYPE_KEY = "$functionType";
@@ -72,17 +73,18 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 	@Override
 	public OutputMessage handle(AgentTokenWrapper token, InputMessage inputMessage) throws Exception {
 		applicationContextBuilder.resetContext();
-		
 		FileVersionId functionPackage = getFileVersionId(FUNCTION_HANDLER_PACKAGE_KEY, inputMessage.getProperties());
 		if(functionPackage != null) {
-			RemoteApplicationContextFactory functionHandlerContext = new RemoteApplicationContextFactory(token.getServices().getFileManagerClient(), getFileVersionId(FUNCTION_HANDLER_PACKAGE_KEY, inputMessage.getProperties()));
-			applicationContextBuilder.pushContext(functionHandlerContext);
+			boolean cleanable = Boolean.parseBoolean(inputMessage.getProperties().get(FUNCTION_HANDLER_PACKAGE_CLEANABLE_KEY));
+			RemoteApplicationContextFactory functionHandlerContext = new RemoteApplicationContextFactory(token.getServices().getFileManagerClient(), functionPackage, cleanable);
+			// The usage of this functionHandlerContext will only be released when the session is closed, underlying registered file won't be cleanable before this release happens
+			token.getTokenReservationSession().registerObjectToBeClosedWithSession(applicationContextBuilder.pushContext(functionHandlerContext, cleanable));
 		}
 
 		return applicationContextBuilder.runInContext(() -> {
 			// Merge the token and agent properties
 			Map<String, String> mergedAgentProperties = getMergedAgentProperties(token);
-			// Instantiate the function handler 
+			// Instantiate the function handler
 			String handlerClass = inputMessage.getProperties().get(FUNCTION_HANDLER_KEY);
 
 			if (handlerClass == null || handlerClass.isEmpty()) {
@@ -91,35 +93,35 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 			}
 
 			@SuppressWarnings("rawtypes")
-			AbstractFunctionHandler functionHandler = functionHandlerFactory.create(applicationContextBuilder.getCurrentContext().getClassLoader(), 
+			AbstractFunctionHandler functionHandler = functionHandlerFactory.create(applicationContextBuilder.getCurrentContext().getClassLoader(),
 					handlerClass, token.getSession(), token.getTokenReservationSession(), mergedAgentProperties);
-			
+
 			// Deserialize the Input from the message payload
 			JavaType javaType = mapper.getTypeFactory().constructParametrizedType(Input.class, Input.class, functionHandler.getInputPayloadClass());
 			Input<?> input = mapper.readValue(mapper.treeAsTokens(inputMessage.getPayload()), javaType);
-			
+
 			// Handle the input
 			MeasurementsBuilder measurementsBuilder = new MeasurementsBuilder();
 			measurementsBuilder.startMeasure(input.getFunction());
 			@SuppressWarnings("unchecked")
 			Output<?> output = functionHandler.handle(input);
 			measurementsBuilder.stopMeasure(customMeasureData());
-			
+
 			List<Measure> outputMeasures = output.getMeasures();
 			// Add type="custom" to all output measures
 			addCustomTypeToOutputMeasures(outputMeasures);
-			
+
 			// Add Keyword measure to output
 			addAdditionalMeasuresToOutput(output, measurementsBuilder.getMeasures());
 
 			// Serialize the output
 			ObjectNode outputPayload = (ObjectNode) mapper.valueToTree(output);
 
-			// Create and return the output message 
+			// Create and return the output message
 			OutputMessageBuilder outputMessageBuilder = new OutputMessageBuilder();
 			outputMessageBuilder.setPayload(outputPayload);
 			return outputMessageBuilder.build();
-			
+
 		});
 	}
 
@@ -162,5 +164,12 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 			mergedAgentProperties.putAll(tokenProperties);
 		}
 		return mergedAgentProperties;
+	}
+
+	@Override
+	public void close() throws Exception {
+		if (applicationContextBuilder != null) {
+			applicationContextBuilder.close();
+		}
 	}
 }
