@@ -35,29 +35,29 @@ public class TestFunctionHandler extends AbstractFunctionHandler<TestInput, Test
 		dummyInputProperties.put("testFile.version", "1");
 		
 		// Test application context methods
-		pushRemoteApplicationContext(FORKED_BRANCH, "testFile", dummyInputProperties);
+		pushRemoteApplicationContext(FORKED_BRANCH, "testFile", dummyInputProperties, true);
 		pushLocalApplicationContext(FORKED_BRANCH, this.getClass().getClassLoader(), "testResource.jar");
-		Assert.assertTrue(((URLClassLoader)getCurrentContext(FORKED_BRANCH).getClassLoader()).getURLs()[0].getFile().contains("testResource.jar"));
-
+		Assert.assertTrue(((URLClassLoader) getCurrentContext(FORKED_BRANCH).getClassLoader()).getURLs()[0].getFile().contains("testResource.jar"));
 		pushRemoteApplicationContext("testFile", dummyInputProperties);
 		pushLocalApplicationContext(this.getClass().getClassLoader(), "testResource.jar");
-		Assert.assertTrue(((URLClassLoader)getCurrentContext().getClassLoader()).getURLs()[0].getFile().contains("testResource.jar"));
-		
+
+		Assert.assertTrue(((URLClassLoader) getCurrentContext().getClassLoader()).getURLs()[0].getFile().contains("testResource.jar"));
+
 		//  Test property merging
 		Map<String, String> mergedProperties = mergeAllProperties(input);
 		Assert.assertEquals("myTokenPropValue1", mergedProperties.get("myTokenProp1"));
 		Assert.assertEquals("myAgentPropValue1", mergedProperties.get("myAgentProp1"));
 		Assert.assertEquals("myInputPropValue1", mergedProperties.get("myInputProp1"));
-		
+
 		// Test payload
 		Assert.assertEquals("Hallo", input.getPayload().getMessage());
-		
+
 		//runInContext(callable)
-		
+
 		// Test getSessions methods
 		Assert.assertNotNull(getTokenSession());
-		Assert.assertNull(getTokenReservationSession());
-		
+		Assert.assertNotNull(getTokenReservationSession());
+
 		Assert.assertNotNull(getProperties());
 
 		// Test delegation

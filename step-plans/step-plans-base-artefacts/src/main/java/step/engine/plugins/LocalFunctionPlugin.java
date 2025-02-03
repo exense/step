@@ -113,14 +113,14 @@ public class LocalFunctionPlugin extends AbstractExecutionEnginePlugin {
 		}
 
 		@Override
-		public Map<String, String> getHandlerProperties(LocalFunction function, AbstractStepContext executionContext) {
+		public HandlerProperties getHandlerProperties(LocalFunction function, AbstractStepContext executionContext) {
 			Map<String, String> properties = new HashMap<>();
 			
 			StringBuilder classes = new StringBuilder();
 			classes.append(function.getClassName()+";");
 			properties.put(KeywordExecutor.KEYWORD_CLASSES, classes.toString());
 			
-			return properties;
+			return new HandlerProperties(properties);
 		}
 
 		@Override

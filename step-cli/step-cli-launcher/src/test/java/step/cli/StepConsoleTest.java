@@ -257,6 +257,68 @@ public class StepConsoleTest {
     }
 
     @Test
+    public void testOutdatedVersion(){
+        List<TestApExecuteCommand.RemoteExecutionParams> remoteExecuteHistory = new ArrayList<>();
+        List<TestApExecuteCommand.LocalExecutionParams> localExecuteHistory = new ArrayList<>();
+        List<TestApDeployCommand.ExecutionParams> deployExecuteHistory = new ArrayList<>();
+
+        Histories histories = new Histories(deployExecuteHistory, remoteExecuteHistory, localExecuteHistory);
+
+        Version actualVersion = Constants.STEP_API_VERSION;
+        Version outdatedMajorVersion = new Version(actualVersion.getMajor() - 1, actualVersion.getMinor(), 0);
+        Version outdatedMinorVersion = new Version(actualVersion.getMajor(), actualVersion.getMinor() == 0 ? 1 : actualVersion.getMinor() - 1, 0);
+
+        // 1. REMOTE EXECUTION
+
+        // 1.1 validation failed
+        int res = runMainWithVersion(histories, outdatedMajorVersion, "ap", "execute", "-p=src/test/resources/samples/step-automation-packages-sample1.jar", "-u=http://localhost:8080");
+        Assert.assertEquals(0, remoteExecuteHistory.size());
+        remoteExecuteHistory.clear();
+
+        // 1.2. validation with --force option (execution should be allowed)
+        res = runMainWithVersion(histories, outdatedMajorVersion, "ap", "execute", "-p=src/test/resources/samples/step-automation-packages-sample1.jar", "-u=http://localhost:8080", "--force");
+        Assert.assertEquals(1, remoteExecuteHistory.size());
+        remoteExecuteHistory.clear();
+
+        // 1.3. minor version mismatch without --force option, validation should fail
+        res = runMainWithVersion(histories, outdatedMinorVersion, "ap", "execute", "-p=src/test/resources/samples/step-automation-packages-sample1.jar", "-u=http://localhost:8080");
+        Assert.assertEquals(0, remoteExecuteHistory.size());
+        remoteExecuteHistory.clear();
+
+        // 1.4. minor version mismatch with --force option, validation should fail
+        res = runMainWithVersion(histories, outdatedMinorVersion, "ap", "execute", "-p=src/test/resources/samples/step-automation-packages-sample1.jar", "-u=http://localhost:8080", "--force");
+        Assert.assertEquals(1, remoteExecuteHistory.size());
+        remoteExecuteHistory.clear();
+
+        // 2. LOCAL EXECUTION
+
+        // 2.1 version is not validated for local execution
+        res = runMainWithVersion(histories, outdatedMajorVersion, "ap", "execute", "--local", "-p=src/test/resources/samples/step-automation-packages-sample1.jar", "-u=http://localhost:8080");
+        Assert.assertEquals(1, localExecuteHistory.size());
+        localExecuteHistory.clear();
+
+        // 3. DEPLOY
+        res = runMainWithVersion(histories, outdatedMajorVersion, "ap", "deploy", "-p=src/test/resources/samples/step-automation-packages-sample1.jar", "-u=http://localhost:8080");
+        Assert.assertEquals(0, deployExecuteHistory.size());
+        deployExecuteHistory.clear();
+
+        // 1.2. validation with --force option (execution should be allowed)
+        res = runMainWithVersion(histories, outdatedMajorVersion, "ap", "deploy", "-p=src/test/resources/samples/step-automation-packages-sample1.jar", "-u=http://localhost:8080", "--force");
+        Assert.assertEquals(1, deployExecuteHistory.size());
+        deployExecuteHistory.clear();
+
+        // 1.3. minor version mismatch without --force option (execution should fail)
+        res = runMainWithVersion(histories, outdatedMinorVersion, "ap", "deploy", "-p=src/test/resources/samples/step-automation-packages-sample1.jar", "-u=http://localhost:8080");
+        Assert.assertEquals(0, deployExecuteHistory.size());
+        deployExecuteHistory.clear();
+
+        // 1.4. minor version mismatch with --force option (execution should be allowed)
+        res = runMainWithVersion(histories, outdatedMinorVersion, "ap", "deploy", "-p=src/test/resources/samples/step-automation-packages-sample1.jar", "-u=http://localhost:8080", "--force");
+        Assert.assertEquals(1, deployExecuteHistory.size());
+        deployExecuteHistory.clear();
+    }
+
+    @Test
     public void testLocalExecute(){
         List<TestApExecuteCommand.LocalExecutionParams> localExecuteHistory = new ArrayList<>();
 

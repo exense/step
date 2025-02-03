@@ -38,7 +38,6 @@ import step.core.dynamicbeans.DynamicValue;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionTypeException;
 import step.functions.type.SetupFunctionException;
-import step.grid.filemanager.FileVersionId;
 import step.handlers.javahandler.KeywordExecutor;
 import step.plugins.java.handler.GeneralScriptHandler;
 import step.plugins.js223.handler.ScriptHandler;
@@ -46,8 +45,6 @@ import step.plugins.js223.handler.ScriptHandler;
 public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction> extends AbstractFunctionType<T> {
 
 	private static final Logger log = LoggerFactory.getLogger(AbstractScriptFunctionType.class);
-
-	protected FileVersionId daemonJar;
 	
 	protected Configuration configuration;
 	
@@ -59,40 +56,42 @@ public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction
 	@Override
 	public void init() {
 		super.init();
-		daemonJar = registerResource(getClass().getClassLoader(), "java-plugin-handler.jar", false);
+		handlerPackageVersion = registerResource(getClass().getClassLoader(), "java-plugin-handler.jar", false, false);
 	}
 
 	@Override
-	public Map<String, String> getHandlerProperties(T function, AbstractStepContext executionContext) {
+	public HandlerProperties getHandlerProperties(T function, AbstractStepContext executionContext) {
 		Map<String, String> props = new HashMap<>();
-		props.put(ScriptHandler.SCRIPT_LANGUAGE, function.getScriptLanguage().get());
-		registerFile(function.getLibrariesFile(), ScriptHandler.LIBRARIES_FILE, props, true, executionContext);
-		addPluginLibsIfRequired(function.getScriptLanguage().get(), props);
-		registerFile(function.getScriptFile(), ScriptHandler.SCRIPT_FILE, props, true, executionContext);
-		registerFile(function.getErrorHandlerFile(), ScriptHandler.ERROR_HANDLER_FILE, props, true, executionContext);
+		List<AutoCloseable> createdCloseables = new ArrayList<>();
+		try {
+			props.put(ScriptHandler.SCRIPT_LANGUAGE, function.getScriptLanguage().get());
 
-		if (configuration.getPropertyAsBoolean("plugins.java.validate.properties")) {
-			props.put(KeywordExecutor.VALIDATE_PROPERTIES, Boolean.TRUE.toString());
+			createdCloseables.add(registerFile(function.getLibrariesFile(), ScriptHandler.LIBRARIES_FILE, props, true, executionContext));
+			createdCloseables.add(addPluginLibsIfRequired(function.getScriptLanguage().get(), props));
+			createdCloseables.add(registerFile(function.getScriptFile(), ScriptHandler.SCRIPT_FILE, props, true, executionContext));
+			createdCloseables.add(registerFile(function.getErrorHandlerFile(), ScriptHandler.ERROR_HANDLER_FILE, props, true, executionContext));
+			if (configuration.getPropertyAsBoolean("plugins.java.validate.properties")) {
+				props.put(KeywordExecutor.VALIDATE_PROPERTIES, Boolean.TRUE.toString());
+			}
+
+			return new HandlerProperties(props, createdCloseables);
+		} catch (Throwable e) {
+			closeRegisteredCloseable(createdCloseables);
+			throw e;
 		}
-
-		return props;
 	}
 
-	protected void addPluginLibsIfRequired(String scriptLanguage, Map<String, String> props) {
+	protected AutoCloseable addPluginLibsIfRequired(String scriptLanguage, Map<String, String> props) {
 		String property = configuration.getProperty("plugins."+scriptLanguage+".libs", null);
 		if(property != null) {
-			registerFile(new File(property), ScriptHandler.PLUGIN_LIBRARIES_FILE, props);
+			return registerFile(new File(property), ScriptHandler.PLUGIN_LIBRARIES_FILE, props, true);
 		}
+		return null;
 	}
 	
 	@Override
 	public String getHandlerChain(GeneralScriptFunction function) {
 		return GeneralScriptHandler.class.getName();
-	}
-
-	@Override
-	public FileVersionId getHandlerPackage(GeneralScriptFunction function) {
-		return daemonJar;
 	}
 	
 	public static final Map<String, String> fileExtensionMap = new ConcurrentHashMap<>();
