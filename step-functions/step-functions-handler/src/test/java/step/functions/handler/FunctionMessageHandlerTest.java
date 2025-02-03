@@ -73,9 +73,14 @@ public class FunctionMessageHandlerTest {
 
 	@After
 	public void after() throws Exception {
-		messageHandlerPool.close();
-		//The cleanup task of application context is only triggered when the pool of handler and related application context builders are closed
+		//Application context should be cleaned up as soon as released and usage reach 0i
 		FunctionMessageHandlerTest.TestFileManagerClient fileManagerClient = (FunctionMessageHandlerTest.TestFileManagerClient) tokenServices.getFileManagerClient();
+		assertEquals(expectedFilesInCache, fileManagerClient.cacheUsage.keySet().size());
+		fileManagerClient.cacheUsage.forEach((k, v) -> {
+			logger.info("Cache usage for {} is {}", k, v);
+			assertEquals(0, v.get());
+		});
+		messageHandlerPool.close();
 		assertEquals(expectedFilesInCache, fileManagerClient.cacheUsage.keySet().size());
 		fileManagerClient.cacheUsage.forEach((k, v) -> {
 			logger.info("Cache usage for {} is {}", k, v);
@@ -95,6 +100,7 @@ public class FunctionMessageHandlerTest {
 
 			properties.put(FunctionMessageHandler.FUNCTION_HANDLER_PACKAGE_KEY + ".id", EMPTY_FILE);
 			properties.put(FunctionMessageHandler.FUNCTION_HANDLER_PACKAGE_KEY + ".version", "1");
+			properties.put(FunctionMessageHandler.FUNCTION_HANDLER_PACKAGE_CLEANABLE_KEY, "true");
 
 			properties.put(FunctionMessageHandler.FUNCTION_HANDLER_KEY, TestFunctionHandler.class.getName());
 
