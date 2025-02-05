@@ -19,6 +19,7 @@
 package step.plugins.node;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -26,6 +27,7 @@ import step.core.AbstractStepContext;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.SetupFunctionException;
 import step.grid.agent.AgentTypes;
+import step.grid.filemanager.FileVersion;
 import step.grid.tokenpool.Interest;
 
 public class NodeFunctionType extends AbstractFunctionType<NodeFunction> {
@@ -43,10 +45,9 @@ public class NodeFunctionType extends AbstractFunctionType<NodeFunction> {
 	}
 
 	@Override
-	public Map<String, String> getHandlerProperties(NodeFunction function, AbstractStepContext executionContext) {
+	public HandlerProperties getHandlerProperties(NodeFunction function, AbstractStepContext executionContext) {
 		Map<String, String> props = new HashMap<>();
-		registerFile(function.getJsFile(), FILE, props, true, executionContext);
-		return props;
+		return new HandlerProperties(props, List.of(registerFile(function.getJsFile(), FILE, props, true, executionContext)));
 	}
 
 	@Override

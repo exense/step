@@ -31,7 +31,7 @@ import step.core.accessors.Accessor;
 import step.core.accessors.LayeredAccessor;
 import step.core.artefacts.AbstractArtefact;
 import step.core.execution.ExecutionContext;
-import step.core.execution.model.AutomationPackageExecutionParameters;
+import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.Plan;
@@ -82,7 +82,7 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         this.functionAccessor = functionAccessor;
     }
 
-    private static boolean isLayeredAccessor(Accessor<?> accessor) {
+    protected boolean isLayeredAccessor(Accessor<?> accessor) {
         return accessor instanceof LayeredAccessor;
     }
 
@@ -96,7 +96,7 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
                 ctx = getOrRestorePackageExecutionContext(repositoryParameters, context.getObjectEnricher(), context.getObjectPredicate());
                 //If context is shared across multiple executions, it was created externally and will be closed by the creator,
                 // otherwise it should be closed once the executions ends from the execution context
-                if (!ctx.shared) {
+                if (!ctx.isShared()) {
                     context.put(PackageExecutionContext.class, ctx);
                 }
             } catch (AutomationPackageManagerException e) {
@@ -104,12 +104,13 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
                 return result;
             }
             AutomationPackage automationPackage = ctx.getAutomationPackage();
-            AutomationPackageManager apManager = ctx.getInMemoryManager();
+            AutomationPackageManager apManager = ctx.getAutomationPackageManager();
             Plan plan;
 
+            boolean wrapped = false;
             if (!isWrapPlansIntoTestSet(repositoryParameters)) {
                 // if we don't wrap into test set, we should have one and only filtered plan
-                List<Plan> filteredPlans = getFilteredPackagePlans(automationPackage, repositoryParameters, ctx.getInMemoryManager()).collect(Collectors.toList());
+                List<Plan> filteredPlans = getFilteredPackagePlans(automationPackage, repositoryParameters, ctx.getAutomationPackageManager()).collect(Collectors.toList());
                 if (filteredPlans.isEmpty()) {
                     result.setErrors(List.of("Automation package " + automationPackage.getAttribute(AbstractOrganizableObject.NAME) + " has no applicable plan to execute"));
                     return result;
@@ -126,6 +127,7 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
                 plan = filteredPlans.get(0);
             } else {
                 plan = wrapAllPlansFromApToTestSet(ctx, repositoryParameters);
+                wrapped = true;
             }
 
             if (plan == null) {
@@ -134,7 +136,7 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
                 return result;
             }
 
-            return importPlanForIsolatedExecution(context, result, plan, apManager, automationPackage);
+            return importPlanForExecutionWithinAp(context, result, plan, apManager, automationPackage, wrapped);
         } catch (Exception e) {
             log.error("Error while importing / parsing artifact for execution " + context.getExecutionId(), e);
             List<String> errors = new ArrayList<>();
@@ -171,7 +173,7 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         testSet.addAttribute(AbstractArtefact.NAME, ap.getAttribute(AbstractOrganizableObject.NAME));
 
         planBuilder.startBlock(testSet);
-        getFilteredPackagePlans(ap, repositoryParameters, ctx.getInMemoryManager()).forEach(plan -> {
+        getFilteredPackagePlans(ap, repositoryParameters, ctx.getAutomationPackageManager()).forEach(plan -> {
             String name = getPlanName(plan);
             wrapPlanInTestCase(plan, name);
             planBuilder.add(callPlan(plan.getId().toString(), name));
@@ -213,16 +215,16 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         return (string == null || string.isBlank()) ? new ArrayList<>() : Arrays.stream(string.split(",")).collect(Collectors.toList());
     }
 
-    protected Stream<Plan> getFilteredPackagePlans(AutomationPackage ap, Map<String, String> repositoryParameters, AutomationPackageManager inMemoryManager) {
+    protected Stream<Plan> getFilteredPackagePlans(AutomationPackage ap, Map<String, String> repositoryParameters, AutomationPackageManager apManager) {
         PlanMultiFilter planFilter = getPlanFilter(repositoryParameters);
-        return inMemoryManager.getPackagePlans(ap.getId()).stream().filter(p -> planFilter == null || planFilter.isSelected(p));
+        return apManager.getPackagePlans(ap.getId()).stream().filter(p -> planFilter == null || planFilter.isSelected(p));
     }
 
     protected String getPlanName(Plan plan) {
         return plan.getAttributes().get(AbstractOrganizableObject.NAME);
     }
 
-    public AutomationPackageFile getApFileForExecution(InputStream apInputStream, String inputStreamFileName, AutomationPackageExecutionParameters parameters, ObjectId contextId) {
+    public AutomationPackageFile getApFileForExecution(InputStream apInputStream, String inputStreamFileName, IsolatedAutomationPackageExecutionParameters parameters, ObjectId contextId) {
         // for files provided by artifact repository we don't store the file as resource, but just load the file from this repository
         RepositoryObjectReference repositoryObject = parameters.getOriginalRepositoryObject();
         if (repositoryObject == null) {
@@ -243,7 +245,7 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
             }
             // Here we resolve the original AP file used for previous isolated execution and re-use it to create the execution context
             AutomationPackageFile apFile = restoreApFile(contextId, repositoryParameters);
-            return createPackageExecutionContext(enricher, predicate, contextId, apFile, false);
+            return createIsolatedPackageExecutionContext(enricher, predicate, contextId, apFile, false);
         }
         return current;
     }
@@ -256,7 +258,7 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         return new AutomationPackageFile(artifact, null);
     }
 
-    public PackageExecutionContext createPackageExecutionContext(ObjectEnricher enricher, ObjectPredicate predicate, String contextId, AutomationPackageFile apFile, boolean shared) {
+    public PackageExecutionContext createIsolatedPackageExecutionContext(ObjectEnricher enricher, ObjectPredicate predicate, String contextId, AutomationPackageFile apFile, boolean shared) {
         // prepare the isolated in-memory automation package manager with the only one automation package
         AutomationPackageManager inMemoryPackageManager = manager.createIsolated(
                 new ObjectId(contextId), functionTypeRegistry,
@@ -270,7 +272,7 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
             throw new AutomationPackageManagerException("Cannot read the AP file: " + apFile.getFile().getName());
         }
 
-        PackageExecutionContext res = new PackageExecutionContext(contextId, inMemoryPackageManager, shared);
+        PackageExecutionContext res = new IsolatedPackageExecutionContext(contextId, inMemoryPackageManager, shared);
         if (shared) {
             sharedPackageExecutionContexts.put(contextId, res);
         }
@@ -281,7 +283,10 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         resource.addCustomField(AP_NAME_CUSTOM_FIELD, apName);
     }
 
-    protected ImportResult importPlanForIsolatedExecution(ExecutionContext context, ImportResult result, Plan plan, AutomationPackageManager apManager, AutomationPackage automationPackage) {
+    protected ImportResult importPlanForExecutionWithinAp(ExecutionContext context, ImportResult result,
+                                                          Plan plan, AutomationPackageManager apManager,
+                                                          AutomationPackage automationPackage,
+                                                          boolean fakeWrappedPlan) {
         result.setPlanId(plan.getId().toString());
         enrichPlan(context, plan);
 
@@ -347,25 +352,69 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         }
     }
 
-    public class PackageExecutionContext implements Closeable {
+    public interface PackageExecutionContext extends Closeable {
+        AutomationPackageManager getAutomationPackageManager();
+
+        AutomationPackage getAutomationPackage();
+
+        boolean isShared();
+    }
+
+    public static class LocalPackageExecutionContext implements PackageExecutionContext {
+
+        private final String contextId;
+        private final AutomationPackageManager automationPackageManager;
+        private final AutomationPackage automationPackage;
+
+        public LocalPackageExecutionContext(String contextId, AutomationPackageManager automationPackageManager, AutomationPackage automationPackage) {
+            this.contextId = contextId;
+            this.automationPackageManager = automationPackageManager;
+            this.automationPackage = automationPackage;
+        }
+
+        @Override
+        public AutomationPackageManager getAutomationPackageManager() {
+            return automationPackageManager;
+        }
+
+        @Override
+        public AutomationPackage getAutomationPackage() {
+            return automationPackage;
+        }
+
+        @Override
+        public boolean isShared() {
+            return false;
+        }
+
+        @Override
+        public void close() throws IOException {
+
+        }
+    }
+
+    public class IsolatedPackageExecutionContext implements PackageExecutionContext {
         private final String contextId;
         private final AutomationPackageManager inMemoryManager;
         private final boolean shared;
 
-        public PackageExecutionContext(String contextId, AutomationPackageManager inMemoryManager, boolean shared) {
+        public IsolatedPackageExecutionContext(String contextId, AutomationPackageManager inMemoryManager, boolean shared) {
             this.contextId = contextId;
             this.inMemoryManager = inMemoryManager;
             this.shared = shared;
         }
 
-        public AutomationPackageManager getInMemoryManager() {
+        @Override
+        public AutomationPackageManager getAutomationPackageManager() {
             return inMemoryManager;
         }
 
+        @Override
         public AutomationPackage getAutomationPackage() {
-            return getInMemoryManager().getAllAutomationPackages(null).findFirst().orElse(null);
+            return inMemoryManager.getAllAutomationPackages(null).findFirst().orElse(null);
         }
 
+        @Override
         public boolean isShared() {
             return shared;
         }
@@ -379,7 +428,7 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
             if (shared) {
                 IsolatedAutomationPackageRepository.PackageExecutionContext automationPackageManager = sharedPackageExecutionContexts.remove(contextId);
                 if (automationPackageManager != null) {
-                    automationPackageManager.getInMemoryManager().cleanup();
+                    automationPackageManager.getAutomationPackageManager().cleanup();
                 }
             //Otherwise directly clean the automation package stored in this context
             } else {

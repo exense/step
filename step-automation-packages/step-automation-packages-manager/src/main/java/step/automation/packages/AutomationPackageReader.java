@@ -270,7 +270,8 @@ public class AutomationPackageReader {
                 try (InputStream is = archive.getResourceAsStream(plainTextPlan.getFile())) {
                     Plan parsedPlan = planTextPlanParser.parse(is, plainTextPlan.getRootType() == null ? RootArtefactType.TestCase : plainTextPlan.getRootType());
                     String planNameInYaml = plainTextPlan.getName();
-                    parsedPlan.addAttribute(AbstractOrganizableObject.NAME, (planNameInYaml == null || planNameInYaml.isEmpty()) ? plainTextPlan.getFile() : planNameInYaml);
+                    String finalPlanName = (planNameInYaml == null || planNameInYaml.isEmpty()) ? plainTextPlan.getFile() : planNameInYaml;
+                    YamlPlanReader.setPlanName(parsedPlan, finalPlanName);
                     parsedPlan.setCategories(plainTextPlan.getCategories());
                     targetPackage.getPlans().add(parsedPlan);
                 }
