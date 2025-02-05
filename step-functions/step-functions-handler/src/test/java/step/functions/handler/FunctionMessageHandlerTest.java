@@ -206,13 +206,15 @@ public class FunctionMessageHandlerTest {
 
 		@Override
 		public FileVersion requestFileVersion(FileVersionId fileVersionId, boolean cleanable) throws FileManagerException {
-			logger.info("requestFileVersion in TestFileManagerClient for {}", fileVersionId);
+			logger.info("Attempting to request FileVersion in TestFileManagerClient for {}", fileVersionId);
 			if(fileVersionId.getFileId().equals(EMPTY_FILE)) {
 				String uid = fileVersionId.getFileId();
 				File file = new File(".");
-				cacheUsage.computeIfAbsent(fileVersionId.toString(), (k) -> new AtomicInteger(0)).incrementAndGet();
+				int i = cacheUsage.computeIfAbsent(fileVersionId.toString(), (k) -> new AtomicInteger(0)).incrementAndGet();
+				logger.info("requestFileVersion in TestFileManagerClient for {}, new usage: {}", fileVersionId, i);
 				return new FileVersion(file, fileVersionId, false);
 			} else {
+				logger.error("requested file is null");
 				return null;
 			}
 		}
@@ -227,8 +229,8 @@ public class FunctionMessageHandlerTest {
 
 		@Override
 		public void releaseFileVersion(FileVersion fileVersion) {
-			logger.info("releaseFileVersion in TestFileManagerClient for {}", fileVersion.getVersionId());
-			cacheUsage.get(fileVersion.getVersionId().toString()).decrementAndGet();
+			int i = cacheUsage.get(fileVersion.getVersionId().toString()).decrementAndGet();
+			logger.info("releaseFileVersion in TestFileManagerClient for {}, new usage: {}", fileVersion.getVersionId(), i);
 		}
 
 		@Override
