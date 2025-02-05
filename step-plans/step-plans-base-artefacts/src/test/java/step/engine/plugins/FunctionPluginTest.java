@@ -50,7 +50,7 @@ public class FunctionPluginTest {
 
 	@Test
 	public void testNormalMode() {
-		AbstractExecutionEngineContext parentContext = new ExecutionEngineContext(OperationMode.LOCAL);
+		AbstractExecutionEngineContext parentContext = new ExecutionEngineContext(OperationMode.LOCAL , true);
 		InMemoryFunctionAccessorImpl functionAccessor = new InMemoryFunctionAccessorImpl();
 		
 		Function function = new Function();
@@ -129,8 +129,8 @@ public class FunctionPluginTest {
 		}
 
 		@Override
-		public Map<String, String> getHandlerProperties(Function function, AbstractStepContext executionContext) {
-			return null;
+		public HandlerProperties getHandlerProperties(Function function, AbstractStepContext executionContext) {
+			return new HandlerProperties(null);
 		}
 
 		@Override

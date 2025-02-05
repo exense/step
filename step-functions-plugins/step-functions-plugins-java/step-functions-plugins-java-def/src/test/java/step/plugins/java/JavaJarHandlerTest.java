@@ -47,14 +47,14 @@ public class JavaJarHandlerTest {
 		Output<JsonObject> output = run(f, "{\"key1\":\"val1\"}");
 		Assert.assertEquals("Unexpected error while calling keyword: java.lang.Exception Unable to find method annotated by 'step.handlers.javahandler.Keyword' with name=='dummy'",output.getError().getMsg());
 	}
-	
+
 	@Test 
 	public void testJarWithMatchingKeyword() {
 		GeneralScriptFunction f = buildTestFunction("MyKeywordNotExisting","java-plugin-handler-test.jar");
 		Output<JsonObject> output = run(f, "{}");
 		Assert.assertEquals("Unexpected error while calling keyword: java.lang.Exception Unable to find method annotated by 'step.handlers.javahandler.Keyword' with name=='MyKeywordNotExisting'",output.getError().getMsg());
 	}
-	
+
 	@Test 
 	public void testJarWithKeyword() {
 		GeneralScriptFunction f = buildTestFunction("MyKeyword1","java-plugin-handler-test.jar");
@@ -79,7 +79,7 @@ public class JavaJarHandlerTest {
 		}
 		
 	}
-	
+
 	@Test 
 	public void testProperties() {
 		Map<String, String> properties = new HashMap<>();
@@ -90,7 +90,7 @@ public class JavaJarHandlerTest {
 		Assert.assertEquals("MyValue",output.getPayload().getString("MyKey"));
 		Assert.assertEquals("MyProp",output.getPayload().getString("prop1"));
 	}
-	
+
 	@Test 
 	public void testContextClassloader() {
 		GeneralScriptFunction f = buildTestFunction("TestClassloader","java-plugin-handler-test.jar");

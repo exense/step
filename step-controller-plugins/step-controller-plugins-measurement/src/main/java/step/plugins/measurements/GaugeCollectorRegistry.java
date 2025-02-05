@@ -1,5 +1,6 @@
 package step.plugins.measurements;
 
+import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,7 +22,7 @@ public class GaugeCollectorRegistry {
 	}
 
 	private final ScheduledExecutorService scheduler =
-			Executors.newScheduledThreadPool(1);
+			Executors.newScheduledThreadPool(1, new BasicThreadFactory.Builder().namingPattern("gauge-collector-%d").build());
 
 	Map<String, GaugeCollector> collectors = new HashMap<>();
 	List<MeasurementHandler> handlers = new ArrayList<MeasurementHandler>();
