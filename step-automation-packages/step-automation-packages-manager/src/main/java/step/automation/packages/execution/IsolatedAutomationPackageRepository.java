@@ -93,31 +93,18 @@ public class IsolatedAutomationPackageRepository extends RepositoryWithAutomatio
     }
 
     @Override
-    public TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) throws Exception {
-        PackageExecutionContext ctx = null;
-        try {
-            String contextId = repositoryParameters.get(REPOSITORY_PARAM_CONTEXTID);
-            if (contextId == null) {
-                throw new RuntimeException("Test set status overview cannot be prepared. ContextId is undefined");
-            }
-
-            AutomationPackageFile apFile = restoreApFile(contextId, repositoryParameters);
-            File file = apFile == null ? null : apFile.getFile();
-            if (file == null) {
-                throw new RuntimeException("Automation package file hasn't been found");
-            }
-
-            ctx = super.createPackageExecutionContext(null, objectPredicate, new ObjectId().toString(), new AutomationPackageFile(file, null), false);
-            TestSetStatusOverview overview = new TestSetStatusOverview();
-            List<TestRunStatus> runs = getFilteredPackagePlans(ctx.getAutomationPackage(), repositoryParameters, ctx.getInMemoryManager())
-                    .map(plan -> new TestRunStatus(getPlanName(plan), getPlanName(plan), ReportNodeStatus.NORUN)).collect(Collectors.toList());
-            overview.setRuns(runs);
-            return overview;
-        } finally {
-            if (ctx != null) {
-                ctx.close();
-            }
+    public File getArtifact(Map<String, String> repositoryParameters) {
+        String contextId = repositoryParameters.get(REPOSITORY_PARAM_CONTEXTID);
+        if (contextId == null) {
+            throw new RuntimeException("Test set status overview cannot be prepared. ContextId is undefined");
         }
+
+        AutomationPackageFile apFile = restoreApFile(contextId, repositoryParameters);
+        File file = apFile == null ? null : apFile.getFile();
+        if (file == null) {
+            throw new RuntimeException("Automation package file hasn't been found");
+        }
+        return file;
     }
 
     @Override

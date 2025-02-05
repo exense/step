@@ -30,6 +30,7 @@ import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.Accessor;
 import step.core.accessors.LayeredAccessor;
 import step.core.artefacts.AbstractArtefact;
+import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
 import step.core.execution.model.AutomationPackageExecutionParameters;
 import step.core.objectenricher.ObjectEnricher;
@@ -39,9 +40,7 @@ import step.core.plans.PlanAccessor;
 import step.core.plans.PlanFilter;
 import step.core.plans.builder.PlanBuilder;
 import step.core.plans.filters.*;
-import step.core.repositories.AbstractRepository;
-import step.core.repositories.ImportResult;
-import step.core.repositories.RepositoryObjectReference;
+import step.core.repositories.*;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.type.FunctionTypeRegistry;
@@ -84,6 +83,24 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
 
     private static boolean isLayeredAccessor(Accessor<?> accessor) {
         return accessor instanceof LayeredAccessor;
+    }
+
+    @Override
+    public TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) throws Exception {
+        PackageExecutionContext ctx = null;
+        try {
+            File artifact = getArtifact(repositoryParameters);
+            ctx = createPackageExecutionContext(null, objectPredicate, new ObjectId().toString(), new AutomationPackageFile(artifact, null), false);
+            TestSetStatusOverview overview = new TestSetStatusOverview();
+            List<TestRunStatus> runs = getFilteredPackagePlans(ctx.getAutomationPackage(), repositoryParameters, ctx.getInMemoryManager())
+                    .map(plan -> new TestRunStatus(getPlanName(plan), getPlanName(plan), ReportNodeStatus.NORUN)).collect(Collectors.toList());
+            overview.setRuns(runs);
+            return overview;
+        } finally {
+            if (ctx != null) {
+                ctx.close();
+            }
+        }
     }
 
     @Override
