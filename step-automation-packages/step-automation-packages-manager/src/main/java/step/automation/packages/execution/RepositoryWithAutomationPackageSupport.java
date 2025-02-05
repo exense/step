@@ -90,9 +90,9 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         PackageExecutionContext ctx = null;
         try {
             File artifact = getArtifact(repositoryParameters);
-            ctx = createPackageExecutionContext(null, objectPredicate, new ObjectId().toString(), new AutomationPackageFile(artifact, null), false);
+            ctx = createIsolatedPackageExecutionContext(null, objectPredicate, new ObjectId().toString(), new AutomationPackageFile(artifact, null), false);
             TestSetStatusOverview overview = new TestSetStatusOverview();
-            List<TestRunStatus> runs = getFilteredPackagePlans(ctx.getAutomationPackage(), repositoryParameters, ctx.getInMemoryManager())
+            List<TestRunStatus> runs = getFilteredPackagePlans(ctx.getAutomationPackage(), repositoryParameters, ctx.getAutomationPackageManager())
                     .map(plan -> new TestRunStatus(getPlanName(plan), getPlanName(plan), ReportNodeStatus.NORUN)).collect(Collectors.toList());
             overview.setRuns(runs);
             return overview;
