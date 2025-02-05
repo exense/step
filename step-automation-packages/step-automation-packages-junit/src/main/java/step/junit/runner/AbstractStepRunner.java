@@ -26,7 +26,7 @@ import org.junit.runners.ParentRunner;
 import org.junit.runners.model.InitializationError;
 import org.junit.runners.model.Statement;
 import step.automation.packages.junit.AbstractLocalPlanRunner;
-import step.automation.packages.junit.JunitExecutionParametersProvider;
+import step.automation.packages.junit.JUnitExecutionParametersProvider;
 import step.cli.AbstractExecuteAutomationPackageTool;
 import step.core.execution.ExecutionEngine;
 import step.core.plans.runner.PlanRunnerResult;
@@ -98,7 +98,7 @@ public abstract class AbstractStepRunner extends ParentRunner<StepClassParserRes
 
             @Override
             protected Map<String, String> getExecutionParameters() {
-                return new JunitExecutionParametersProvider().getExecutionParameters(klass);
+                return new JUnitExecutionParametersProvider().getExecutionParameters(klass);
             }
         }.runPlan();
     }

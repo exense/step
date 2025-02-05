@@ -20,28 +20,24 @@ package step.junit5.runner;
 
 import org.junit.jupiter.api.*;
 import step.automation.packages.junit.AbstractLocalPlanRunner;
+import step.automation.packages.junit.JUnitExecutionParametersProvider;
 import step.automation.packages.junit.JUnitPlansProvider;
-import step.automation.packages.junit.JunitExecutionParametersProvider;
 import step.cli.AbstractExecuteAutomationPackageTool;
 import step.core.execution.ExecutionEngine;
 import step.core.plans.runner.PlanRunnerResult;
-import step.engine.plugins.AbstractExecutionEnginePlugin;
-import step.handlers.javahandler.AbstractKeyword;
 import step.junit.runner.StepClassParserResult;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public abstract class StepJUnit5 extends AbstractKeyword {
+public abstract class StepJUnit5 {
 
     private static ExecutionEngine executionEngine;
 
     @BeforeAll
     public static void setupExecutionEngine() {
-        AbstractExecutionEnginePlugin plugin = new AbstractExecutionEnginePlugin() {
-        };
-        executionEngine = ExecutionEngine.builder().withPlugin(plugin).withPluginsFromClasspath().build();
+        executionEngine = ExecutionEngine.builder().withPluginsFromClasspath().build();
     }
 
     @AfterAll
@@ -83,7 +79,7 @@ public abstract class StepJUnit5 extends AbstractKeyword {
 
                 @Override
                 protected Map<String, String> getExecutionParameters() {
-                    return new JunitExecutionParametersProvider().getExecutionParameters(testClass);
+                    return new JUnitExecutionParametersProvider().getExecutionParameters(testClass);
                 }
             }.runPlan()));
         }

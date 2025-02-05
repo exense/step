@@ -26,7 +26,7 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class JunitExecutionParametersProvider {
+public class JUnitExecutionParametersProvider {
 
     private final static Pattern SYSTEM_PROPERTIES_PREFIX = Pattern.compile("STEP_(.+?)");
 
@@ -36,7 +36,7 @@ public class JunitExecutionParametersProvider {
         executionParameters.putAll(getExecutionParametersByAnnotation(testClass));
         // Prio 2: Execution parameters from environment variables (prefixed with STEP_*)
         executionParameters.putAll(getExecutionParametersFromEnvironmentVariables());
-        // Prio 3: Execution parameters from system properties
+        // Prio 1: Execution parameters from system properties
         executionParameters.putAll(getExecutionParametersFromSystemProperties());
         return executionParameters;
     }
