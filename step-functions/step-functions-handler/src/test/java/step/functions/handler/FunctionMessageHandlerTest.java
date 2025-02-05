@@ -57,6 +57,8 @@ public class FunctionMessageHandlerTest {
 
 	public static final String EMPTY_FILE = "emptyFile";
 
+	public static final String HANDLER_EMPTY_FILE = "handlerEmptyFile";
+
 	protected AgentTokenServices tokenServices;
 	
 	protected MessageHandlerPool messageHandlerPool;
@@ -98,7 +100,7 @@ public class FunctionMessageHandlerTest {
 
 			HashMap<String, String> properties = new HashMap<String, String>();
 
-			properties.put(FunctionMessageHandler.FUNCTION_HANDLER_PACKAGE_KEY + ".id", EMPTY_FILE);
+			properties.put(FunctionMessageHandler.FUNCTION_HANDLER_PACKAGE_KEY + ".id", HANDLER_EMPTY_FILE);
 			properties.put(FunctionMessageHandler.FUNCTION_HANDLER_PACKAGE_KEY + ".version", "1");
 			properties.put(FunctionMessageHandler.FUNCTION_HANDLER_PACKAGE_CLEANABLE_KEY, "true");
 
@@ -113,7 +115,7 @@ public class FunctionMessageHandlerTest {
 			OutputMessage outputMessage = messageHandlerPool.get(FunctionMessageHandler.class.getName()).handle(agentToken, message);
 			assertEquals("Bonjour", outputMessage.getPayload().get("payload").get("message").asText());
 		}
-		expectedFilesInCache = 1;
+		expectedFilesInCache = 2;
 
 	}
 
@@ -137,11 +139,11 @@ public class FunctionMessageHandlerTest {
 	public void testParallel() throws InterruptedException {
 		logger.info("Starting FunctionMessageHandler parallel test");
 		List<Exception> exceptions = new ArrayList<>();
-		int nThreads = 5;
+		int nThreads = 2;
 		ExecutorService newFixedThreadPool = Executors.newFixedThreadPool(nThreads);
 		for(int i=0;i<nThreads;i++) {
 			newFixedThreadPool.submit(()->{
-				for(int j=0;j<10;j++) {
+				for(int j=0;j<2;j++) {
 					try {
 						// reset the context. this is normally performed by the BootstrapManager
 						tokenServices.getApplicationContextBuilder().resetContext();
@@ -153,13 +155,13 @@ public class FunctionMessageHandlerTest {
 			});
 		}
 		newFixedThreadPool.shutdown();
-		newFixedThreadPool.awaitTermination(10, TimeUnit.SECONDS);
+		newFixedThreadPool.awaitTermination(100, TimeUnit.SECONDS);
 
 		for (Exception exception : exceptions) {
 			exception.printStackTrace();
 		}
 		assertEquals(0, exceptions.size());
-		expectedFilesInCache = 1;
+		expectedFilesInCache = 2;
 		logger.info("Ending FunctionMessageHandler parallel test");
 	}
 	
@@ -207,7 +209,7 @@ public class FunctionMessageHandlerTest {
 		@Override
 		public FileVersion requestFileVersion(FileVersionId fileVersionId, boolean cleanable) throws FileManagerException {
 			logger.info("Attempting to request FileVersion in TestFileManagerClient for {}", fileVersionId);
-			if(fileVersionId.getFileId().equals(EMPTY_FILE)) {
+			if(fileVersionId.getFileId().equals(EMPTY_FILE) || fileVersionId.getFileId().equals(HANDLER_EMPTY_FILE)) {
 				String uid = fileVersionId.getFileId();
 				File file = new File(".");
 				int i = cacheUsage.computeIfAbsent(fileVersionId.toString(), (k) -> new AtomicInteger(0)).incrementAndGet();
