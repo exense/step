@@ -20,36 +20,28 @@ package step.core.execution.model;
 
 import step.core.artefacts.ArtefactFilter;
 import step.core.plans.PlanFilter;
-import step.core.repositories.RepositoryObjectReference;
 
 import java.util.Map;
 
 public class AutomationPackageExecutionParameters extends CommonExecutionParameters {
 
-    private PlanFilter planFilter;
-
+    protected PlanFilter planFilter;
     private Boolean wrapIntoTestSet = false;
     private Integer numberOfThreads = 0;
-
-    /**
-     * The reference to original artifact in case of isolated execution of automation package (while the real repository is 'isolatedAutomationPackage')
-     */
-    private RepositoryObjectReference originalRepositoryObject;
 
     public AutomationPackageExecutionParameters() {
     }
 
-    public AutomationPackageExecutionParameters(Map<String, String> customParameters, String userID, ArtefactFilter artefactFilter, PlanFilter planFilter, ExecutionMode mode) {
+    public AutomationPackageExecutionParameters(Map<String, String> customParameters, String userID, ArtefactFilter artefactFilter, ExecutionMode mode, PlanFilter planFilter) {
         super(customParameters, userID, artefactFilter, mode);
         this.planFilter = planFilter;
     }
 
-    public ExecutionParameters toExecutionParameters(){
+    public ExecutionParameters toExecutionParameters() {
         ExecutionParameters params = new ExecutionParameters(getMode());
         params.setCustomParameters(getCustomParameters());
         params.setUserID(getUserID());
         params.setArtefactFilter(getArtefactFilter());
-        params.setIsolatedExecution(true);
         return params;
     }
 
@@ -75,13 +67,5 @@ public class AutomationPackageExecutionParameters extends CommonExecutionParamet
 
     public void setNumberOfThreads(Integer numberOfThreads) {
         this.numberOfThreads = numberOfThreads;
-    }
-
-    public RepositoryObjectReference getOriginalRepositoryObject() {
-        return originalRepositoryObject;
-    }
-
-    public void setOriginalRepositoryObject(RepositoryObjectReference originalRepositoryObject) {
-        this.originalRepositoryObject = originalRepositoryObject;
     }
 }
