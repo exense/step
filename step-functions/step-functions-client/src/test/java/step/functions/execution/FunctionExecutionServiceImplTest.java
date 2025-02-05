@@ -342,10 +342,10 @@ public class FunctionExecutionServiceImplTest {
 					}
 					
 					@Override
-					public Map<String, String> getHandlerProperties(Function function, AbstractStepContext executionContext) {
+					public HandlerProperties getHandlerProperties(Function function, AbstractStepContext executionContext) {
 						Map<String, String> handlerProperties = new HashMap<>();
 						handlerProperties.put("handlerProperty1", "handlerProperty1");
-						return handlerProperties;
+						return new HandlerProperties(handlerProperties);
 					}
 					
 					@Override
@@ -372,6 +372,11 @@ public class FunctionExecutionServiceImplTest {
 			@Override
 			public FileVersion registerFile(File file, boolean cleanable) throws FileManagerException {
 				return new FileVersion(null, null, false);
+			}
+
+			@Override
+			public void releaseFile(FileVersion fileVersion) {
+
 			}
 
 			@Override

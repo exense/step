@@ -33,14 +33,11 @@ public class GeneralScriptHandler extends JsonBasedFunctionHandler {
 		// the project java-plugin-handler.jar has many dependencies that might conflict with the dependencies of the 
 		// keyword. One of these dependencies is guava for example.
 		pushLocalApplicationContext(FORKED_BRANCH, getCurrentContext().getClassLoader(), "step-functions-plugins-java-keyword-handler.jar");
-		
-		pushRemoteApplicationContext(FORKED_BRANCH, ScriptHandler.PLUGIN_LIBRARIES_FILE, input.getProperties());
-		
-		pushRemoteApplicationContext(FORKED_BRANCH, ScriptHandler.LIBRARIES_FILE, input.getProperties());
-		
+		pushRemoteApplicationContext(FORKED_BRANCH, ScriptHandler.PLUGIN_LIBRARIES_FILE, input.getProperties(), true);
+		pushRemoteApplicationContext(FORKED_BRANCH, ScriptHandler.LIBRARIES_FILE, input.getProperties(), true);
 		String scriptLanguage = input.getProperties().get(ScriptHandler.SCRIPT_LANGUAGE);
-		Class<?> handlerClass = scriptLanguage.equals("java")?JavaJarHandler.class:ScriptHandler.class;
-		return delegate(handlerClass.getName(), input);		
+		Class<?> handlerClass = scriptLanguage.equals("java") ? JavaJarHandler.class : ScriptHandler.class;
+		return delegate(handlerClass.getName(), input);
 	}
 
 }
