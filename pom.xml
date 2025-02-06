@@ -42,7 +42,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<!-- internal dependencies -->
 		<dependencies.version>2024.9.26</dependencies.version>
-		<step-grid.version>2025.2.6-67a4a97149874336fa1831bd</step-grid.version>
+		<step-grid.version>2025.2.6-67a4d30949874336fa4fa5f8</step-grid.version>
 		<step-framework.version>2025.1.7-677d23537bd6067182b76a3b</step-framework.version>
 
 		<!-- external, non-transitive, dependencies -->
