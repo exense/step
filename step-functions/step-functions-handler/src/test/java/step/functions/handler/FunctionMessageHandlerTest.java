@@ -139,11 +139,11 @@ public class FunctionMessageHandlerTest {
 	public void testParallel() throws InterruptedException {
 		logger.info("Starting FunctionMessageHandler parallel test");
 		List<Exception> exceptions = new ArrayList<>();
-		int nThreads = 2;
+		int nThreads = 5;
 		ExecutorService newFixedThreadPool = Executors.newFixedThreadPool(nThreads);
 		for(int i=0;i<nThreads;i++) {
 			newFixedThreadPool.submit(()->{
-				for(int j=0;j<2;j++) {
+				for(int j=0;j<10;j++) {
 					try {
 						// reset the context. this is normally performed by the BootstrapManager
 						tokenServices.getApplicationContextBuilder().resetContext();
@@ -155,7 +155,7 @@ public class FunctionMessageHandlerTest {
 			});
 		}
 		newFixedThreadPool.shutdown();
-		newFixedThreadPool.awaitTermination(100, TimeUnit.SECONDS);
+		newFixedThreadPool.awaitTermination(10, TimeUnit.SECONDS);
 
 		for (Exception exception : exceptions) {
 			exception.printStackTrace();
