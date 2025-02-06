@@ -24,10 +24,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.automation.packages.AutomationPackageManager;
 import step.automation.packages.AutomationPackageManagerException;
+import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
 import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.repositories.ArtefactInfo;
+import step.core.repositories.TestRunStatus;
 import step.core.repositories.TestSetStatusOverview;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.type.FunctionTypeRegistry;
@@ -45,8 +47,12 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 public class IsolatedAutomationPackageRepository extends RepositoryWithAutomationPackageSupport {
 
@@ -87,8 +93,18 @@ public class IsolatedAutomationPackageRepository extends RepositoryWithAutomatio
     }
 
     @Override
-    public TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) throws Exception {
-        return new TestSetStatusOverview();
+    public File getArtifact(Map<String, String> repositoryParameters) {
+        String contextId = repositoryParameters.get(REPOSITORY_PARAM_CONTEXTID);
+        if (contextId == null) {
+            throw new RuntimeException("Test set status overview cannot be prepared. ContextId is undefined");
+        }
+
+        AutomationPackageFile apFile = restoreApFile(contextId, repositoryParameters);
+        File file = apFile == null ? null : apFile.getFile();
+        if (file == null) {
+            throw new RuntimeException("Automation package file hasn't been found");
+        }
+        return file;
     }
 
     @Override
