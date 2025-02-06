@@ -16,22 +16,10 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.client;
+package step.cli;
 
-import step.automation.packages.AutomationPackageUpdateResult;
-import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
+public interface CliToolLogging {
+    void logError(String errorText, Throwable e);
 
-import java.io.Closeable;
-import java.io.File;
-import java.util.List;
-
-public interface AutomationPackageClient extends Closeable {
-
-    String createAutomationPackage(File automationPackageFile) throws AutomationPackageClientException;
-
-    AutomationPackageUpdateResult createOrUpdateAutomationPackage(File automationPackageFile, boolean async) throws AutomationPackageClientException;
-
-    List<String> executeAutomationPackage(File automationPackageFile, IsolatedAutomationPackageExecutionParameters params) throws AutomationPackageClientException;
-
-    void deleteAutomationPackage(String packageName) throws AutomationPackageClientException;
+    void logInfo(String infoText, Throwable e);
 }

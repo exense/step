@@ -19,6 +19,7 @@
 package step.grid.agent;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
 
@@ -43,6 +44,11 @@ public class AgentRunner {
 			} catch (Exception e) {
 				logger.error("Error while closing agent", e);
 			}
-		}));
+            try {
+                cl.close();
+            } catch (IOException e) {
+				logger.error("Error while closing agent class loader", e);
+            }
+        }));
 	}
 }

@@ -42,9 +42,9 @@ import static step.automation.packages.execution.RepositoryWithAutomationPackage
 import static step.automation.packages.execution.RepositoryWithAutomationPackageSupport.DEFAULT_MAVEN_FOLDER;
 
 @Plugin(dependencies = {AutomationPackagePlugin.class, SchedulerPlugin.class})
-public class IsolatedAutomationPackageRepositoryPlugin extends AbstractControllerPlugin {
+public class AutomationPackageRepositoriesPlugin extends AbstractControllerPlugin {
 
-    private static final Logger log = LoggerFactory.getLogger(IsolatedAutomationPackageRepositoryPlugin.class);
+    private static final Logger log = LoggerFactory.getLogger(AutomationPackageRepositoriesPlugin.class);
     public static final String CONFIG_KEY_ISOLATED_AP_EXECUTION_TIMEOUT = "plugins.automation-package.isolated.execution.timeout";
     private static final Integer DEFAULT_ISOLATED_AP_EXECUTION_TIMEOUT = 0;
     public static final String ISOLATED_AP_HOUSEKEEPING_ENABLED = "isolated_ap_housekeeping_enabled";
@@ -67,7 +67,7 @@ public class IsolatedAutomationPackageRepositoryPlugin extends AbstractControlle
 
         File localRepository = context.getConfiguration().getPropertyAsFile(CONFIGURATION_MAVEN_FOLDER, new File(DEFAULT_MAVEN_FOLDER));
 
-        // repository
+        // repository for isolated execution
         IsolatedAutomationPackageRepository isolatedApRepository = new IsolatedAutomationPackageRepository(
                 context.require(AutomationPackageManager.class),
                 context.getResourceManager(),
@@ -82,9 +82,19 @@ public class IsolatedAutomationPackageRepositoryPlugin extends AbstractControlle
         context.getRepositoryObjectManager().registerRepository(AutomationPackageExecutor.ISOLATED_AUTOMATION_PACKAGE, isolatedApRepository);
         context.put(IsolatedAutomationPackageRepository.class, isolatedApRepository);
 
+        // repository for deployed automation packages
+        LocalAutomationPackageRepository localApRepository = new LocalAutomationPackageRepository(
+                context.require(AutomationPackageManager.class),
+                context.require(FunctionTypeRegistry.class),
+                context.require(FunctionAccessor.class)
+        );
+        context.getRepositoryObjectManager().registerRepository(AutomationPackageExecutor.LOCAL_AUTOMATION_PACKAGE, localApRepository);
+        context.put(LocalAutomationPackageRepository.class, localApRepository);
+
         Integer isolatedExecutionTimeout = context.getConfiguration().getPropertyAsInteger(CONFIG_KEY_ISOLATED_AP_EXECUTION_TIMEOUT, DEFAULT_ISOLATED_AP_EXECUTION_TIMEOUT);
         // isolated ap executor
         AutomationPackageExecutor packageExecutor = new AutomationPackageExecutor(
+                context.require(AutomationPackageManager.class),
                 context.getScheduler(),
                 context.require(ExecutionAccessor.class),
                 context.getRepositoryObjectManager(),
