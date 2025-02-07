@@ -160,13 +160,12 @@ public class ResolvedPlanBuilderForCompositeKeywordTest {
         System.out.println("----------------------");
         System.out.println(node.toString());
 
-        //TODO ordering is false
         Assert.assertEquals("ForBlock: 1x\n" +
                         " CallFunction: 2x\n" +
-                        "  Check: 2x\n" +
                         "  Sequence: 2x\n" +
                         "   Echo: 2x\n" +
-                        "   Return: 2x\n",
+                        "   Return: 2x\n" +
+                        "  Check: 2x\n",
 
                 node.toString());
     }
