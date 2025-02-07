@@ -20,6 +20,7 @@ package step.client;
 
 import org.junit.Assert;
 import org.junit.runner.RunWith;
+import step.automation.packages.junit.ExcludePlans;
 import step.handlers.javahandler.AbstractKeyword;
 import step.handlers.javahandler.Keyword;
 import step.junit.runner.Step;
@@ -28,6 +29,7 @@ import step.junit.runners.annotations.Plan;
 import step.junit.runners.annotations.Plans;
 
 @RunWith(Step.class)
+@ExcludePlans({"JMeter Plan", "testAutomation.plan"})
 @Plans({"plans/plan2.plan", "plans/plan3.plan", "plans/assertsTest.plan"})
 @ExecutionParameters({"PARAM_EXEC","Value","PARAM_EXEC2","Value","PARAM_EXEC3","Value"})
 public class StepRunnerWithPlansAnnotationTest extends AbstractKeyword {

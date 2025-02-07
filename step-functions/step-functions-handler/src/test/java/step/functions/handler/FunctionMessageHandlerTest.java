@@ -57,6 +57,8 @@ public class FunctionMessageHandlerTest {
 
 	public static final String EMPTY_FILE = "emptyFile";
 
+	public static final String HANDLER_EMPTY_FILE = "handlerEmptyFile";
+
 	protected AgentTokenServices tokenServices;
 	
 	protected MessageHandlerPool messageHandlerPool;
@@ -98,7 +100,7 @@ public class FunctionMessageHandlerTest {
 
 			HashMap<String, String> properties = new HashMap<String, String>();
 
-			properties.put(FunctionMessageHandler.FUNCTION_HANDLER_PACKAGE_KEY + ".id", EMPTY_FILE);
+			properties.put(FunctionMessageHandler.FUNCTION_HANDLER_PACKAGE_KEY + ".id", HANDLER_EMPTY_FILE);
 			properties.put(FunctionMessageHandler.FUNCTION_HANDLER_PACKAGE_KEY + ".version", "1");
 			properties.put(FunctionMessageHandler.FUNCTION_HANDLER_PACKAGE_CLEANABLE_KEY, "true");
 
@@ -113,7 +115,7 @@ public class FunctionMessageHandlerTest {
 			OutputMessage outputMessage = messageHandlerPool.get(FunctionMessageHandler.class.getName()).handle(agentToken, message);
 			assertEquals("Bonjour", outputMessage.getPayload().get("payload").get("message").asText());
 		}
-		expectedFilesInCache = 1;
+		expectedFilesInCache = 2;
 
 	}
 
@@ -159,7 +161,7 @@ public class FunctionMessageHandlerTest {
 			exception.printStackTrace();
 		}
 		assertEquals(0, exceptions.size());
-		expectedFilesInCache = 1;
+		expectedFilesInCache = 2;
 		logger.info("Ending FunctionMessageHandler parallel test");
 	}
 	
@@ -206,13 +208,15 @@ public class FunctionMessageHandlerTest {
 
 		@Override
 		public FileVersion requestFileVersion(FileVersionId fileVersionId, boolean cleanable) throws FileManagerException {
-			logger.info("requestFileVersion in TestFileManagerClient for {}", fileVersionId);
-			if(fileVersionId.getFileId().equals(EMPTY_FILE)) {
+			logger.info("Attempting to request FileVersion in TestFileManagerClient for {}", fileVersionId);
+			if(fileVersionId.getFileId().equals(EMPTY_FILE) || fileVersionId.getFileId().equals(HANDLER_EMPTY_FILE)) {
 				String uid = fileVersionId.getFileId();
 				File file = new File(".");
-				cacheUsage.computeIfAbsent(fileVersionId.toString(), (k) -> new AtomicInteger(0)).incrementAndGet();
+				int i = cacheUsage.computeIfAbsent(fileVersionId.toString(), (k) -> new AtomicInteger(0)).incrementAndGet();
+				logger.info("requestFileVersion in TestFileManagerClient for {}, new usage: {}", fileVersionId, i);
 				return new FileVersion(file, fileVersionId, false);
 			} else {
+				logger.error("requested file is null");
 				return null;
 			}
 		}
@@ -227,8 +231,8 @@ public class FunctionMessageHandlerTest {
 
 		@Override
 		public void releaseFileVersion(FileVersion fileVersion) {
-			logger.info("releaseFileVersion in TestFileManagerClient for {}", fileVersion.getVersionId());
-			cacheUsage.get(fileVersion.getVersionId().toString()).decrementAndGet();
+			int i = cacheUsage.get(fileVersion.getVersionId().toString()).decrementAndGet();
+			logger.info("releaseFileVersion in TestFileManagerClient for {}, new usage: {}", fileVersion.getVersionId(), i);
 		}
 
 		@Override

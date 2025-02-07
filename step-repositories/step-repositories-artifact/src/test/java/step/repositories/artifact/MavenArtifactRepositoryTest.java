@@ -37,7 +37,7 @@ public class MavenArtifactRepositoryTest extends AbstractMavenArtifactRepository
     }
 
     @Test
-    public void test() throws IOException {
+    public void test() throws Exception {
         // getArtefactInfo
         ArtefactInfo artefactInfo = artifactRepository.getArtefactInfo(REPOSITORY_PARAMETERS);
         assertEquals("step-automation-packages-junit", artefactInfo.getName());
