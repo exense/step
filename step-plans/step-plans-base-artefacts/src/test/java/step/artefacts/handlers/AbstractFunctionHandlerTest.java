@@ -16,6 +16,7 @@ import step.core.execution.ExecutionEngineContext;
 import step.core.execution.OperationMode;
 import step.core.plans.runner.PlanRunnerResult;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
+import step.engine.plugins.AutomationPackageAccessorLocalPlugin;
 import step.engine.plugins.FunctionPlugin;
 import step.functions.Function;
 import step.functions.execution.FunctionExecutionService;
@@ -102,7 +103,13 @@ public class AbstractFunctionHandlerTest {
     }
 
     protected ExecutionEngine newEngineWithCustomTokenReleaseFunction(Consumer<String> tokenReleaseFunction) {
-        return ExecutionEngine.builder().withOperationMode(OperationMode.CONTROLLER).withPlugin(new BaseArtefactPlugin()).withPlugin(new FunctionPlugin()).withPlugin(newMyFunctionTypePlugin()).withPlugin(new TokenForecastingExecutionPlugin()).withPlugin(new AbstractExecutionEnginePlugin() {
+        return ExecutionEngine.builder().withOperationMode(OperationMode.CONTROLLER)
+                .withPlugin(new AutomationPackageAccessorLocalPlugin())
+                .withPlugin(new BaseArtefactPlugin())
+                .withPlugin(new FunctionPlugin())
+                .withPlugin(newMyFunctionTypePlugin())
+                .withPlugin(new TokenForecastingExecutionPlugin())
+                .withPlugin(new AbstractExecutionEnginePlugin() {
             @Override
             public void initializeExecutionContext(ExecutionEngineContext executionEngineContext,
                                                    ExecutionContext executionContext) {

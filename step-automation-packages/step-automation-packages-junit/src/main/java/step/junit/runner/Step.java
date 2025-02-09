@@ -54,8 +54,9 @@ public class Step extends AbstractStepRunner {
 
 			AutomationPackageManager automationPackageManager = executionEngine.getExecutionEngineContext().require(AutomationPackageManager.class);
 			AutomationPackageFromClassLoaderProvider automationPackageProvider = new AutomationPackageFromClassLoaderProvider(this.klass.getClassLoader());
+			// TODO: use apVersion here
 			ObjectId automationPackageId = automationPackageManager.createOrUpdateAutomationPackage(
-					false, true, null, automationPackageProvider,
+					false, true, null, automationPackageProvider, null,
 					true, null, null, false
 			).getId();
 

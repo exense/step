@@ -65,8 +65,8 @@ public class PlanLocator {
 			Map<String, String> selectionAttributes = selectorHelper.buildSelectionAttributesMap(artefact.getSelectionAttributes().get(), bindings);
 			Stream<Plan> stream = StreamSupport.stream(accessor.findManyByAttributes(selectionAttributes), false);
 			stream = stream.filter(objectPredicate);
-			List<Plan> matchingFunctions = stream.collect(Collectors.toList());
-			a = matchingFunctions.stream().findFirst().orElseThrow(()->new NoSuchElementException("Unable to find plan with attributes: "+selectionAttributes.toString()));
+			List<Plan> matchingPlans = stream.collect(Collectors.toList());
+			a = matchingPlans.stream().findFirst().orElseThrow(()->new NoSuchElementException("Unable to find plan with attributes: "+selectionAttributes.toString()));
 		}
 		return a;
 	}

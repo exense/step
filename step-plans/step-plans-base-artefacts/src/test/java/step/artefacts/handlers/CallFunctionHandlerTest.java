@@ -41,6 +41,7 @@ import step.core.reports.Error;
 import step.core.reports.ErrorType;
 import step.core.reports.Measure;
 import step.datapool.DataSetHandle;
+import step.engine.plugins.AutomationPackageAccessorLocalPlugin;
 import step.engine.plugins.FunctionPlugin;
 import step.functions.io.Output;
 import step.functions.io.OutputBuilder;
@@ -67,8 +68,14 @@ public class CallFunctionHandlerTest extends AbstractFunctionHandlerTest {
 
 	@Before
 	public void before() {
-		executionEngine = ExecutionEngine.builder().withPlugin(new FunctionPlugin()).withPlugin(newMyFunctionTypePlugin())
-				.withPlugin(new ThreadPoolPlugin()).withPlugin(new BaseArtefactPlugin()).withPlugin(new TokenForecastingExecutionPlugin()).build();
+		executionEngine = ExecutionEngine.builder()
+				.withPlugin(new AutomationPackageAccessorLocalPlugin())
+				.withPlugin(new FunctionPlugin())
+				.withPlugin(newMyFunctionTypePlugin())
+				.withPlugin(new ThreadPoolPlugin())
+				.withPlugin(new BaseArtefactPlugin())
+				.withPlugin(new TokenForecastingExecutionPlugin())
+				.build();
 	}
 
 	@After

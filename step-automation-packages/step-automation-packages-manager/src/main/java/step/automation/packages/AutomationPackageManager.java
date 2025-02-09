@@ -293,8 +293,8 @@ public class AutomationPackageManager {
      * @return the id of created package
      * @throws AutomationPackageManagerException
      */
-    public ObjectId createAutomationPackage(InputStream packageStream, String fileName, ObjectEnricher enricher, ObjectPredicate objectPredicate) throws AutomationPackageManagerException {
-        return createOrUpdateAutomationPackage(false, true, null, packageStream, fileName, enricher, objectPredicate, false).getId();
+    public ObjectId createAutomationPackage(InputStream packageStream, String fileName, String apVersion, ObjectEnricher enricher, ObjectPredicate objectPredicate) throws AutomationPackageManagerException {
+        return createOrUpdateAutomationPackage(false, true, null, packageStream, fileName, apVersion, enricher, objectPredicate, false).getId();
     }
 
     /**
@@ -309,11 +309,11 @@ public class AutomationPackageManager {
      * @return the id of created/updated package
      */
     public AutomationPackageUpdateResult createOrUpdateAutomationPackage(boolean allowUpdate, boolean allowCreate, ObjectId explicitOldId,
-                                                                         InputStream inputStream, String fileName, ObjectEnricher enricher,
-                                                                         ObjectPredicate objectPredicate, boolean async) throws AutomationPackageManagerException {
+                                                                         InputStream inputStream, String fileName, String apVersion,
+                                                                         ObjectEnricher enricher, ObjectPredicate objectPredicate, boolean async) throws AutomationPackageManagerException {
         try {
             try (AutomationPackageArchiveProvider provider = new AutomationPackageFromInputStreamProvider(inputStream, fileName)) {
-                return createOrUpdateAutomationPackage(allowUpdate, allowCreate, explicitOldId, provider, false, enricher, objectPredicate, async);
+                return createOrUpdateAutomationPackage(allowUpdate, allowCreate, explicitOldId, provider, apVersion, false, enricher, objectPredicate, async);
             }
         } catch (IOException | AutomationPackageReadingException ex) {
             throw new AutomationPackageManagerException("Automation package cannot be created. Caused by: " + ex.getMessage(), ex);
@@ -332,8 +332,8 @@ public class AutomationPackageManager {
      * @return the id of created/updated package
      */
     public AutomationPackageUpdateResult createOrUpdateAutomationPackage(boolean allowUpdate, boolean allowCreate, ObjectId explicitOldId,
-                                                                         AutomationPackageArchiveProvider automationPackageProvider, boolean isLocalPackage,
-                                                                         ObjectEnricher enricher, ObjectPredicate objectPredicate, boolean async) {
+                                                                         AutomationPackageArchiveProvider automationPackageProvider, String apVersion,
+                                                                         boolean isLocalPackage, ObjectEnricher enricher, ObjectPredicate objectPredicate, boolean async) {
         AutomationPackageArchive automationPackageArchive;
         AutomationPackageContent packageContent;
 
@@ -342,7 +342,7 @@ public class AutomationPackageManager {
         try {
             try {
                 automationPackageArchive = automationPackageProvider.getAutomationPackageArchive();
-                packageContent = readAutomationPackage(automationPackageArchive, isLocalPackage);
+                packageContent = readAutomationPackage(automationPackageArchive, apVersion, isLocalPackage);
             } catch (AutomationPackageReadingException e) {
                 throw new AutomationPackageManagerException("Unable to read automation package. Cause: " + e.getMessage(), e);
             }
@@ -608,9 +608,9 @@ public class AutomationPackageManager {
         return newPackage;
     }
 
-    protected AutomationPackageContent readAutomationPackage(AutomationPackageArchive automationPackageArchive, boolean isLocalPackage) throws AutomationPackageReadingException {
+    protected AutomationPackageContent readAutomationPackage(AutomationPackageArchive automationPackageArchive, String apVersion, boolean isLocalPackage) throws AutomationPackageReadingException {
         AutomationPackageContent packageContent;
-        packageContent = packageReader.readAutomationPackage(automationPackageArchive, isLocalPackage);
+        packageContent = packageReader.readAutomationPackage(automationPackageArchive, apVersion, isLocalPackage);
         if (packageContent == null) {
             throw new AutomationPackageManagerException("Automation package descriptor is missing, allowed names: " + METADATA_FILES);
         } else if (packageContent.getName() == null || packageContent.getName().isEmpty()) {

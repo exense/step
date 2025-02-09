@@ -21,29 +21,22 @@ package step.automation.packages;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.automation.packages.accessor.AutomationPackageAccessor;
-import step.automation.packages.accessor.AutomationPackageAccessorImpl;
+import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 import step.automation.packages.execution.AutomationPackageExecutor;
-import step.automation.packages.execution.IsolatedAutomationPackageRepository;
 import step.automation.packages.scheduler.AutomationPackageSchedulerPlugin;
 import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.core.GlobalContext;
-import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
-import step.core.collections.Collection;
 import step.core.deployment.ObjectHookControllerPlugin;
-import step.core.execution.model.ExecutionAccessor;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
-import step.core.scheduler.SchedulerPlugin;
 import step.engine.plugins.ExecutionEnginePlugin;
-import step.framework.server.tables.Table;
-import step.framework.server.tables.TableRegistry;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.manager.FunctionManager;
 import step.functions.plugin.FunctionControllerPlugin;
-import step.functions.type.FunctionTypeRegistry;
 import step.resources.ResourceManagerControllerPlugin;
 
-@Plugin(dependencies = {ObjectHookControllerPlugin.class, ResourceManagerControllerPlugin.class, FunctionControllerPlugin.class, AutomationPackageSchedulerPlugin.class})
+@Plugin(dependencies = {ObjectHookControllerPlugin.class, ResourceManagerControllerPlugin.class, AutomationPackageAccessorPlugin.class,
+        FunctionControllerPlugin.class, AutomationPackageSchedulerPlugin.class})
 public class AutomationPackagePlugin extends AbstractControllerPlugin {
 
     private static final Logger log = LoggerFactory.getLogger(AutomationPackagePlugin.class);
@@ -60,17 +53,6 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
                 AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS_DEFAULT);
         automationPackageLocks = new AutomationPackageLocks(readLockTimeout);
         context.put(AutomationPackageLocks.class, automationPackageLocks);
-
-        AutomationPackageAccessor packageAccessor = new AutomationPackageAccessorImpl(
-                context.getCollectionFactory().getCollection(AutomationPackageEntity.entityName, AutomationPackage.class)
-        );
-        context.put(AutomationPackageAccessor.class, packageAccessor);
-        context.getEntityManager().register(new AutomationPackageEntity(packageAccessor));
-
-        Collection<AutomationPackage> automationPackageCollection = context.getCollectionFactory().getCollection(AutomationPackageEntity.entityName, AutomationPackage.class);
-
-        Table<AutomationPackage> collection = new Table<>(automationPackageCollection, "automation-package-read", true);
-        context.get(TableRegistry.class).register(AutomationPackageEntity.entityName, collection);
 
         context.getServiceRegistrationCallback().registerService(AutomationPackageServices.class);
 

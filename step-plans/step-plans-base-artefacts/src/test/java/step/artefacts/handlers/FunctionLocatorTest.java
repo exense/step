@@ -2,6 +2,8 @@ package step.artefacts.handlers;
 
 import org.junit.Test;
 import step.artefacts.CallFunction;
+import step.automation.packages.accessor.AutomationPackageAccessor;
+import step.automation.packages.accessor.InMemoryAutomationPackageAccessorImpl;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
@@ -20,6 +22,7 @@ import static org.junit.Assert.assertNotNull;
 public class FunctionLocatorTest {
 
 	private final InMemoryFunctionAccessorImpl functionAccessor = new InMemoryFunctionAccessorImpl();
+	private final InMemoryAutomationPackageAccessorImpl apAccessor = new InMemoryAutomationPackageAccessorImpl();
 
 	@Test
 	public void test() {
@@ -27,9 +30,10 @@ public class FunctionLocatorTest {
 		Function expectedFunction2_noversion = newFunction("function2", null);
 		Function expectedFunction2_v1 = newFunction("function2", "v1");
 		Function expectedFunction2_v2 = newFunction("function2", "v2");
-		
-		FunctionLocator functionLocator = new FunctionLocator(functionAccessor, new SelectorHelper(
-				new DynamicJsonObjectResolver(new DynamicJsonValueResolver(new ExpressionHandler()))));
+
+		FunctionLocator functionLocator = new FunctionLocator(functionAccessor, apAccessor,
+				new SelectorHelper(new DynamicJsonObjectResolver(new DynamicJsonValueResolver(new ExpressionHandler())))
+		);
 
 		// by id
 		CallFunction testArtefact = FunctionArtefacts.keyword("function1");
