@@ -42,6 +42,7 @@ import step.core.plans.Plan;
 import step.core.agents.provisioning.AgentPoolRequirementSpec;
 import step.core.plans.builder.PlanBuilder;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
+import step.engine.plugins.AutomationPackageAccessorLocalPlugin;
 import step.engine.plugins.FunctionPlugin;
 import step.functions.io.Output;
 import step.functions.type.FunctionTypeRegistry;
@@ -307,7 +308,10 @@ public class TokenForcastingTest {
 
 	private static TokenForecastingContext executePlanWithSpecifiedTokenPools(Plan plan, Set<AgentPoolSpec> availableAgentPools) {
 		ForcastingTestPlugin forcastingTestPlugin = new ForcastingTestPlugin(availableAgentPools);
-		try(ExecutionEngine executionEngine = ExecutionEngine.builder().withPlugin(new FunctionPlugin()).withPlugin(new AbstractExecutionEnginePlugin() {
+		try(ExecutionEngine executionEngine = ExecutionEngine.builder()
+				.withPlugin(new AutomationPackageAccessorLocalPlugin())
+				.withPlugin(new FunctionPlugin())
+				.withPlugin(new AbstractExecutionEnginePlugin() {
 			@Override
 			public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
 				super.initializeExecutionContext(executionEngineContext, executionContext);
@@ -315,7 +319,9 @@ public class TokenForcastingTest {
 				functionTypeRegistry.registerFunctionType(new CompositeFunctionType(null));
 				functionTypeRegistry.registerFunctionType(new MyFunctionType());
 				}
-		}).withPlugin(new ThreadPoolPlugin()).withPlugin(new BaseArtefactPlugin()).withPlugin(new TokenForecastingExecutionPlugin())
+		}).withPlugin(new ThreadPoolPlugin())
+				.withPlugin(new BaseArtefactPlugin())
+				.withPlugin(new TokenForecastingExecutionPlugin())
 				.withPlugin(forcastingTestPlugin).build()) {
 			executionEngine.execute(plan);
 		}

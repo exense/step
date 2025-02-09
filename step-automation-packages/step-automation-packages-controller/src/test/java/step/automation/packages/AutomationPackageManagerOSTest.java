@@ -310,7 +310,7 @@ public class AutomationPackageManagerOSTest {
             if (createNew) {
                 result = manager.createAutomationPackage(is, fileName, null,null, null);
             } else {
-                AutomationPackageUpdateResult updateResult = manager.createOrUpdateAutomationPackage(true, true, null, is, null, fileName, null, null, async);
+                AutomationPackageUpdateResult updateResult = manager.createOrUpdateAutomationPackage(true, true, null, is, fileName, null, null, null, async);
                 if (async && expectedDelay) {
                     Assert.assertEquals(AutomationPackageUpdateStatus.UPDATE_DELAYED, updateResult.getStatus());
                 } else {

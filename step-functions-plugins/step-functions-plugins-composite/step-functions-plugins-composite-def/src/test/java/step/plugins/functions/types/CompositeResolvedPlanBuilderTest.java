@@ -22,6 +22,7 @@ import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
 import step.core.plans.runner.PlanRunnerResult;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
+import step.engine.plugins.AutomationPackageAccessorLocalPlugin;
 import step.engine.plugins.FunctionPlugin;
 import step.functions.Function;
 import step.functions.handler.JsonBasedFunctionHandler;
@@ -48,8 +49,12 @@ public class CompositeResolvedPlanBuilderTest {
 
     @Before
     public void before() {
-        engine = new ExecutionEngine.Builder().withPlugin(new BaseArtefactPlugin()).withPlugin(new ThreadPoolPlugin())
-                .withPlugin(new FunctionPlugin()).withPlugin(new AbstractExecutionEnginePlugin() {
+        engine = new ExecutionEngine.Builder()
+                .withPlugin(new AutomationPackageAccessorLocalPlugin())
+                .withPlugin(new BaseArtefactPlugin())
+                .withPlugin(new ThreadPoolPlugin())
+                .withPlugin(new FunctionPlugin())
+                .withPlugin(new AbstractExecutionEnginePlugin() {
                     @Override
                     public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
                         super.initializeExecutionContext(executionEngineContext, executionContext);

@@ -52,6 +52,7 @@ import step.core.execution.OperationMode;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
 import step.core.plans.runner.PlanRunnerResult;
+import step.engine.plugins.AutomationPackageAccessorLocalPlugin;
 import step.engine.plugins.FunctionPlugin;
 import step.functions.io.Output;
 import step.functions.runner.FunctionRunner;
@@ -95,9 +96,13 @@ public class ScriptHandlerTest {
 	@Test
 	public void testWithEngine() throws IOException {
 		MockedGridClientImpl gridClient = null;
-		try (ExecutionEngine executionEngine = ExecutionEngine.builder().withPlugin(new ThreadPoolPlugin())
-				.withPlugin(new BaseArtefactPlugin()).withPlugin(new TokenForecastingExecutionPlugin())
-				.withPlugin(new FunctionPlugin()).withPlugin(new GeneralScriptFunctionPlugin()).build()) {
+		try (ExecutionEngine executionEngine = ExecutionEngine.builder()
+				.withPlugin(new AutomationPackageAccessorLocalPlugin())
+				.withPlugin(new ThreadPoolPlugin())
+				.withPlugin(new BaseArtefactPlugin())
+				.withPlugin(new TokenForecastingExecutionPlugin())
+				.withPlugin(new FunctionPlugin())
+				.withPlugin(new GeneralScriptFunctionPlugin()).build()) {
 			GeneralScriptFunction function = buildTestFunction("javascript", "test1.js");
 			function.addAttribute(AbstractOrganizableObject.NAME, "myJavascriptKeyword");
 			CallFunction callFunction = FunctionArtefacts.keyword(function.getAttribute(AbstractOrganizableObject.NAME), "{\"key1\":\"val1\"}");
