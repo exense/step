@@ -58,6 +58,8 @@ public interface ReportNodeAccessor extends Accessor<ReportNode>, ReportTreeAcce
 
 	Stream<ReportNode> getReportNodesByArtefactHash(String executionId, String artefactPathHash, Integer skip, Integer limit);
 
+	Stream<ReportNode> getReportNodesByArtefactHash(String executionId, String artefactPathHash, Long from, Long to, Integer skip, Integer limit);
+
 	long countReportNodesByArtefactHash(String executionId, String artefactPathHash);
 
 	/**
