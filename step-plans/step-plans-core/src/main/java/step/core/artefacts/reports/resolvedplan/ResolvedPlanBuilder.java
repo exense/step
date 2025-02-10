@@ -37,7 +37,7 @@ public class ResolvedPlanBuilder {
     }
 
     public ResolvedPlanNode buildResolvedPlan(Plan plan) {
-        return buildTreeRecursively(null, plan.getRoot(), null, plan, ParentSource.MAIN ,1);
+        return buildTreeRecursively(null, plan.getRoot(), null, plan, ParentSource.MAIN, 1);
     }
 
     private ResolvedPlanNode buildTreeRecursively(String parentId, AbstractArtefact artefactNode, String currentArtefactPath, Plan plan, ParentSource parentSource, int position) {
@@ -54,12 +54,14 @@ public class ResolvedPlanBuilder {
         ArtefactHandler<AbstractArtefact, ReportNode> artefactHandler = artefactHandlerManager.getArtefactHandler(artefactNode);
         List<ResolvedChildren> resolvedChildrenBySource = artefactHandler.resolveChildrenArtefactBySource(artefactNode, currentArtefactPath);
 
-        AtomicInteger localPosition = new AtomicInteger(0);
+        // Children are added starting at the position 1. The position 0 is reserved for checkAndAddMissingResolvedPlanNode
+        // which is used to insert sub plan resolved dynamically during the execution
+        AtomicInteger localPosition = new AtomicInteger(1);
         // Recursively call children artefacts
         resolvedChildrenBySource.forEach(resolvedChildren -> {
             //filter node that were already processed to avoid stack overflow for plans calling themselves
             resolvedChildren.children.stream().filter(c -> (currentArtefactPath == null || !currentArtefactPath.contains(resolvedChildren.artefactPath)))
-                    .forEach(child -> buildTreeRecursively(resolvedPlanNode.getId().toString(), child, resolvedChildren.artefactPath, plan, resolvedChildren.parentSource, localPosition.incrementAndGet()));
+                    .forEach(child -> buildTreeRecursively(resolvedPlanNode.getId().toString(), child, resolvedChildren.artefactPath, plan, resolvedChildren.parentSource, localPosition.getAndIncrement()));
         });
         return resolvedPlanNode;
     }
@@ -67,7 +69,7 @@ public class ResolvedPlanBuilder {
     /**
      * Check first if it is a plan artefact, or a work artefact which are implicitly created at runtime (iterations, implicit session...)
      * For work artifact, verify whether the artefact hash is known, otherwise create a new resolved plan node and attach it to the closest known parent
-     * This may only occur for dynamic call of keywords and plans that can only be resolved and selected at runtime, therefore, the child is introduced at the first position
+     * This only occurs for dynamic call of keywords and plans that can only be resolved and selected at runtime, therefore, the child (the root of the resolved plan) is introduced at the first position
      *
      * @param <ARTEFACT>       any class extending AbstractArtefact
      * @param artefactHash     the hash of the current artefact to be checked and added if missing
