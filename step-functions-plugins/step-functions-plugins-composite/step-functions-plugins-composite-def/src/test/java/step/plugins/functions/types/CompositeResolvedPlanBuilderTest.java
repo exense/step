@@ -154,8 +154,6 @@ public class CompositeResolvedPlanBuilderTest {
         logger.info("Aggregated report tree");
         logger.info("----------------------");
 
-        //TODO currently the test pass since the execution pass, but the generation of the aggregated plan before
-        //execution actually throw an exception (the call function by dynamic name doesn't work)
         AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(engine.getExecutionEngineContext(), result.getExecutionId());
         AggregatedReportView node = aggregatedReportViewBuilder.buildAggregatedReportView();
         logger.info(node.toString());
