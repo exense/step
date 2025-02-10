@@ -12,13 +12,16 @@ public class ResolvedPlanNode extends AbstractIdentifiableObject {
     public final String artefactHash;
     public final String parentId;
     public final ParentSource parentSource;
+    public final int position;
 
     @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
     public ResolvedPlanNode(@JsonProperty("artefact") AbstractArtefact artefact, @JsonProperty("artefactHash") String artefactHash,
-                            @JsonProperty("parentId") String parentId, @JsonProperty("parentSource") ParentSource parentSource) {
+                            @JsonProperty("parentId") String parentId, @JsonProperty("parentSource") ParentSource parentSource,
+                            @JsonProperty("parentSource") int position) {
         this.artefact = artefact;
         this.artefactHash = artefactHash;
         this.parentId = parentId;
         this.parentSource = parentSource;
+        this.position = position;
     }
 }

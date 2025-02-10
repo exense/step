@@ -160,13 +160,12 @@ public class ResolvedPlanBuilderForCompositeKeywordTest {
         System.out.println("----------------------");
         System.out.println(node.toString());
 
-        //TODO ordering is false
-        Assert.assertEquals("For: 1x: PASSED\n" +
-                        " CallKeyword: 2x: PASSED\n" +
-                        "  Check: 2x: PASSED\n" +
-                        "  Sequence: 2x: PASSED\n" +
-                        "   Echo: 2x: PASSED\n" +
-                        "   Return: 2x: PASSED\n",
+        Assert.assertEquals("For: 1x\n" +
+                        " CallKeyword: 2x\n" +
+                        "  Sequence: 2x\n" +
+                        "   Echo: 2x\n" +
+                        "   Return: 2x\n" +
+                        "  Check: 2x\n",
 
                 node.toString());
     }
