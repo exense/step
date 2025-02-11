@@ -63,7 +63,7 @@ public class ApLocalExecuteCommandHandler {
                 AutomationPackageFromInputStreamProvider automationPackageProvider = new AutomationPackageFromInputStreamProvider(is, apFile.getName());
                 // TODO: use apVersion here?
                 ObjectId automationPackageId = automationPackageManager.createOrUpdateAutomationPackage(
-                        false, true, null, automationPackageProvider, null,
+                        false, true, null, automationPackageProvider, null, null,
                         true, null, null, false
                 ).getId();
 

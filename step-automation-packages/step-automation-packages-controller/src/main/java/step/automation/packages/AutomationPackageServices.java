@@ -84,12 +84,14 @@ public class AutomationPackageServices extends AbstractStepServices {
     @Produces(MediaType.TEXT_PLAIN)
     @Secured(right = "automation-package-write")
     public String createAutomationPackage(@QueryParam("version") String apVersion,
+                                          @QueryParam("activationExpr") String activationExpression,
                                           @FormDataParam("file") InputStream automationPackageInputStream,
                                           @FormDataParam("file") FormDataContentDisposition fileDetail) {
         try {
             ObjectId id = automationPackageManager.createAutomationPackage(
                     automationPackageInputStream, fileDetail.getFileName(),
-                    apVersion, getObjectEnricher(), getObjectPredicate()
+                    apVersion, activationExpression,
+                    getObjectEnricher(), getObjectPredicate()
             );
             return id == null ? null : id.toString();
         } catch (AutomationPackageManagerException e) {
@@ -174,6 +176,7 @@ public class AutomationPackageServices extends AbstractStepServices {
     public AutomationPackageUpdateResult updateAutomationPackageById(@PathParam("id") String id,
                                                                      @QueryParam("async") Boolean async,
                                                                      @QueryParam("version") String apVersion,
+                                                                     @QueryParam("activationExpr") String activationExpression,
                                                                      @FormDataParam("file") InputStream uploadedInputStream,
                                                                      @FormDataParam("file") FormDataContentDisposition fileDetail) {
         AutomationPackage automationPackage = null;
@@ -188,7 +191,7 @@ public class AutomationPackageServices extends AbstractStepServices {
         try {
             return automationPackageManager.createOrUpdateAutomationPackage(
                     true, false, new ObjectId(id),
-                    uploadedInputStream, fileDetail.getFileName(), apVersion,
+                    uploadedInputStream, fileDetail.getFileName(), apVersion, activationExpression,
                     getObjectEnricher(), getObjectPredicate(), async != null && async
             );
         } catch (AutomationPackageManagerException e) {
@@ -202,11 +205,12 @@ public class AutomationPackageServices extends AbstractStepServices {
     @Secured(right = "automation-package-write")
     public Response createOrUpdateAutomationPackage(@QueryParam("async") Boolean async,
                                                     @QueryParam("version") String apVersion,
+                                                    @QueryParam("activationExpr") String activationExpression,
                                                     @FormDataParam("file") InputStream uploadedInputStream,
                                                     @FormDataParam("file") FormDataContentDisposition fileDetail) {
         try {
             AutomationPackageUpdateResult result = automationPackageManager.createOrUpdateAutomationPackage(
-                    true, true, null, uploadedInputStream, fileDetail.getFileName(), apVersion,
+                    true, true, null, uploadedInputStream, fileDetail.getFileName(), apVersion, activationExpression,
                     getObjectEnricher(), getObjectPredicate(), async != null && async
             );
             Response.ResponseBuilder responseBuilder;

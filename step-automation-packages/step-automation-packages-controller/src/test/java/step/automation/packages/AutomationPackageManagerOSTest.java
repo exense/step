@@ -168,7 +168,7 @@ public class AutomationPackageManagerOSTest {
         String fileName = "step-automation-packages-sample1-extended.jar";
         File automationPackageJar = new File("src/test/resources/samples/" + fileName);
         try (InputStream is = new FileInputStream(automationPackageJar)) {
-            AutomationPackageUpdateResult result = manager.createOrUpdateAutomationPackage(true, true, null, is, fileName, null, null, null, false);
+            AutomationPackageUpdateResult result = manager.createOrUpdateAutomationPackage(true, true, null, is, fileName, null, null, null, null, false);
             Assert.assertEquals(AutomationPackageUpdateStatus.UPDATED, result.getStatus());
             ObjectId resultId = result.getId();
 
@@ -256,7 +256,7 @@ public class AutomationPackageManagerOSTest {
 
         try (InputStream is = new FileInputStream(automationPackageJar)) {
             ObjectId result;
-            result = manager.createAutomationPackage(is, fileName,  null,null, null);
+            result = manager.createAutomationPackage(is, fileName,  null, null,null, null);
             AutomationPackage storedPackage = automationPackageAccessor.get(result);
 
             List<Plan> storedPlans = planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
@@ -308,9 +308,9 @@ public class AutomationPackageManagerOSTest {
         try (InputStream is = new FileInputStream(automationPackageJar)) {
             ObjectId result;
             if (createNew) {
-                result = manager.createAutomationPackage(is, fileName, null,null, null);
+                result = manager.createAutomationPackage(is, fileName, null, null,null, null);
             } else {
-                AutomationPackageUpdateResult updateResult = manager.createOrUpdateAutomationPackage(true, true, null, is, fileName, null, null, null, async);
+                AutomationPackageUpdateResult updateResult = manager.createOrUpdateAutomationPackage(true, true, null, is, fileName, null, null, null, null, async);
                 if (async && expectedDelay) {
                     Assert.assertEquals(AutomationPackageUpdateStatus.UPDATE_DELAYED, updateResult.getStatus());
                 } else {
