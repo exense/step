@@ -34,7 +34,10 @@ public class ReportNodeTimeSeries implements Closeable {
     private final TimeSeriesIngestionPipeline ingestionPipeline;
 
     public ReportNodeTimeSeries(CollectionFactory collectionFactory, Configuration configuration) {
-        TimeSeriesCollectionsSettings timeSeriesCollectionsSettings = TimeSeriesCollectionsSettings.readSettings(configuration, TIME_SERIES_MAIN_COLLECTION);
+        this(collectionFactory, TimeSeriesCollectionsSettings.readSettings(configuration, TIME_SERIES_MAIN_COLLECTION));
+    }
+
+    public ReportNodeTimeSeries(CollectionFactory collectionFactory, TimeSeriesCollectionsSettings timeSeriesCollectionsSettings) {
         List<TimeSeriesCollection> timeSeriesCollections = getTimeSeriesCollections(timeSeriesCollectionsSettings, collectionFactory);
         timeSeries = new TimeSeriesBuilder().registerCollections(timeSeriesCollections).build();
         ingestionPipeline = timeSeries.getIngestionPipeline();

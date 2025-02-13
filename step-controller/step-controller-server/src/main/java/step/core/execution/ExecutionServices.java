@@ -260,7 +260,7 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right = "execution-read")
 	public AggregatedReportView getFullAggregatedReportView(@PathParam("id") String executionId) {
-		return getAggregatedReportView(executionId, new AggregatedReportViewBuilder.AggregatedReportViewRequest(null, null));
+		return getAggregatedReportView(executionId, new AggregatedReportViewBuilder.AggregatedReportViewRequest(null, null, null));
 	}
 
 	@Operation(description = "Returns an aggregated report view for the provided execution and aggregation parameters.")
