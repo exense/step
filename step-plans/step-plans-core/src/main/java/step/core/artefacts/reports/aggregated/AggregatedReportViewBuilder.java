@@ -79,7 +79,7 @@ public class AggregatedReportViewBuilder {
         @JsonCreator
         public AggregatedReportViewRequest(@JsonProperty("range") ReportNodeTimeSeries.Range range,
                                            @JsonProperty("resolveSingleInstanceReport") Boolean resolveSingleInstanceReport,
-                                           @JsonProperty("rootReportNodeId") String selectedReportNodeId) {
+                                           @JsonProperty("selectedReportNodeId") String selectedReportNodeId) {
             this.range = range;
             this.resolveSingleInstanceReport = resolveSingleInstanceReport;
             this.selectedReportNodeId = selectedReportNodeId;
