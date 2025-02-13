@@ -48,6 +48,8 @@ public abstract class AbstractYamlArtefact<T extends AbstractArtefact> extends A
 
     public static final String ARTEFACT_ARRAY_DEF = "ArtefactArrayDef";
 
+    public static final String CHILDREN_FIELD_NAME = "children";
+
     @JsonIgnore
     protected ObjectMapper yamlObjectMapper;
 
@@ -85,7 +87,7 @@ public abstract class AbstractYamlArtefact<T extends AbstractArtefact> extends A
         return artefactInstance;
     }
 
-    protected T createArtefactInstance(){
+    public T createArtefactInstance(){
         try {
             return (T) artefactClass.getConstructor().newInstance();
         } catch (Exception e) {
