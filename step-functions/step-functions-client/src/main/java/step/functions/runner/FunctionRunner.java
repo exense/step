@@ -30,6 +30,8 @@ import jakarta.json.JsonObject;
 
 import ch.exense.commons.app.Configuration;
 import ch.exense.commons.io.FileHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.attachments.FileResolver;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicValueResolver;
@@ -51,6 +53,8 @@ import step.resources.LocalResourceManagerImpl;
  * This class is only used in Unit Tests, there should be no production code referencing it.
  */
 public class FunctionRunner {
+
+	private static final Logger logger = LoggerFactory.getLogger(FunctionRunner.class);
 
 	public static class Context implements Closeable {
 				
@@ -96,11 +100,20 @@ public class FunctionRunner {
 			FunctionInput<JsonObject> input = new FunctionInput<>();
 			input.setPayload(argument);
 			input.setProperties(properties);
-			
+			String localTokenHandleId = null;
 			try {
-				return functionExecutionService.callFunction(functionExecutionService.getLocalTokenHandle().getID(), function, input, JsonObject.class, null);
+				localTokenHandleId = functionExecutionService.getLocalTokenHandle().getID();
+				return functionExecutionService.callFunction(localTokenHandleId, function, input, JsonObject.class, null);
 			} catch (Exception e) {
 				throw new RuntimeException(e);
+			} finally {
+				if (localTokenHandleId != null) {
+                    try {
+                        functionExecutionService.returnTokenHandle(localTokenHandleId);
+                    } catch (FunctionExecutionServiceException e) {
+                        logger.error("Unable to return the token handle", e);
+                    }
+                }
 			}
 		}
 

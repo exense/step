@@ -16,22 +16,16 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.client;
+package step.cli.reports;
 
-import step.automation.packages.AutomationPackageUpdateResult;
-import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
+import step.cli.AbstractExecuteAutomationPackageTool;
+import step.cli.CliToolLogging;
+import step.core.execution.model.Execution;
 
-import java.io.Closeable;
-import java.io.File;
+import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
-public interface AutomationPackageClient extends Closeable {
-
-    String createAutomationPackage(File automationPackageFile) throws AutomationPackageClientException;
-
-    AutomationPackageUpdateResult createOrUpdateAutomationPackage(File automationPackageFile, boolean async) throws AutomationPackageClientException;
-
-    List<String> executeAutomationPackage(File automationPackageFile, IsolatedAutomationPackageExecutionParameters params) throws AutomationPackageClientException;
-
-    void deleteAutomationPackage(String packageName) throws AutomationPackageClientException;
+public interface ReportCreator {
+    void createReport(Map<String, Execution> executions, List<AbstractExecuteAutomationPackageTool.ReportOutputMode> outputModes, CliToolLogging logging) throws IOException;
 }

@@ -28,10 +28,10 @@ public class JMeterHandler extends JsonBasedFunctionHandler {
 	
 	@Override
 	public Output<JsonObject> handle(Input<JsonObject> input) throws Exception {
-		pushRemoteApplicationContext(JMeterLocalHandler.JMETER_LIBRARIES, input.getProperties());
-		
+		//Execution of jmeter keeps a handle on one of the library jar file even with a clean implementation closing created instances and the related class loader
+		//Therefore the lib folder in the file manager cache is not cleanable
+		pushRemoteApplicationContext(JMeterLocalHandler.JMETER_LIBRARIES, input.getProperties(), false);
 		pushLocalApplicationContext(getClass().getClassLoader(), "jmeter-plugin-local-handler.jar");
-		
 		return delegate("step.plugins.jmeter.JMeterLocalHandler", input);
 	}
 }

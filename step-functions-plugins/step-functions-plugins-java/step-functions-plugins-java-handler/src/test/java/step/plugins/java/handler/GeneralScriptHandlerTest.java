@@ -20,6 +20,9 @@ package step.plugins.java.handler;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.json.Json;
 import javax.json.JsonObject;
@@ -39,7 +42,13 @@ import step.grid.filemanager.FileVersion;
 import step.grid.filemanager.FileVersionId;
 import step.plugins.js223.handler.ScriptHandler;
 
+import static org.junit.Assert.assertEquals;
+
 public class GeneralScriptHandlerTest {
+
+	private TestFileManagerClient testFileManagerClient;
+	private ApplicationContextBuilder applicationContextBuilder;
+	private TokenReservationSession tokenReservationSession;
 
 	@Test
 	public void testJava() throws Exception {
@@ -56,9 +65,18 @@ public class GeneralScriptHandlerTest {
 		
 		Output<JsonObject> output = handler.handle(input);
 		Assert.assertEquals("MyValue", output.getPayload().getString("MyKey"));
+
+		closeAndAssertCacheUsage(1);
 	}
-	
-	
+
+	private void closeAndAssertCacheUsage(int expected) {
+		tokenReservationSession.close();
+		applicationContextBuilder.close();
+		assertEquals(expected, testFileManagerClient.cacheUsage.keySet().size());
+		testFileManagerClient.cacheUsage.values().forEach(v -> assertEquals(0, v.get()));
+	}
+
+
 	@Test
 	public void testJS223NashornHappyPath() throws Exception {
 		GeneralScriptHandler handler = createHandler();
@@ -75,6 +93,8 @@ public class GeneralScriptHandlerTest {
 		
 		Output<JsonObject> output = handler.handle(input);
 		Assert.assertEquals("MyValue", output.getPayload().getString("key1"));
+
+		closeAndAssertCacheUsage(1);
 	}
 	
 	@Test
@@ -93,6 +113,8 @@ public class GeneralScriptHandlerTest {
 		
 		Output<JsonObject> output = handler.handle(input);
 		Assert.assertEquals("kéÿ1", output.getPayload().getString("key1"));
+
+		closeAndAssertCacheUsage(1);
 	}
 	
 	@Test
@@ -111,6 +133,8 @@ public class GeneralScriptHandlerTest {
 		
 		Output<JsonObject> output = handler.handle(input);
 		Assert.assertEquals("Error while running script throwable.groovy: assert false\n", output.getError().getMsg());
+
+		closeAndAssertCacheUsage(1);
 	}
 	
 	@Test
@@ -131,6 +155,8 @@ public class GeneralScriptHandlerTest {
 		
 		Output<JsonObject> output = handler.handle(input);
 		Assert.assertEquals("Error handler called", output.getError().getMsg());
+
+		closeAndAssertCacheUsage(2);
 	}
 	
 	@Test
@@ -151,6 +177,8 @@ public class GeneralScriptHandlerTest {
 		
 		Output<JsonObject> output = handler.handle(input);
 		Assert.assertEquals("Error while running error handler script: throwable.groovy. assert false\n", output.getError().getMsg());
+
+		closeAndAssertCacheUsage(1);
 	}
 	
 	@Test
@@ -169,40 +197,53 @@ public class GeneralScriptHandlerTest {
 		
 		Output<JsonObject> output = handler.handle(input);
 		Assert.assertEquals("Unsupported script language: invalidScriptLanguage", output.getError().getMsg());
+
+		closeAndAssertCacheUsage(1);
 	}
 
 	public GeneralScriptHandler createHandler()
 			throws InstantiationException, IllegalAccessException, ClassNotFoundException {
 		FunctionHandlerFactory factory = getFunctionHandlerFactory();
-		GeneralScriptHandler handler = (GeneralScriptHandler) factory.create(this.getClass().getClassLoader(), GeneralScriptHandler.class.getName(), new TokenSession(), new TokenReservationSession(), new HashMap<>());
+		tokenReservationSession = new TokenReservationSession();
+		GeneralScriptHandler handler = (GeneralScriptHandler) factory.create(this.getClass().getClassLoader(), GeneralScriptHandler.class.getName(), new TokenSession(), tokenReservationSession, new HashMap<>());
 		return handler;
 	}
 
+	public static class TestFileManagerClient implements FileManagerClient {
+
+		Map<String, AtomicInteger> cacheUsage = new ConcurrentHashMap<>();
+		@Override
+		public FileVersion requestFileVersion(FileVersionId fileVersionId, boolean cleanable) throws FileManagerException {
+			String file = GeneralScriptHandlerTest.class.getClassLoader().getResource(fileVersionId.getFileId()).getFile();
+			cacheUsage.computeIfAbsent(fileVersionId.getFileId(), (v) -> new AtomicInteger(0)).incrementAndGet();
+			return new FileVersion(new File(file), fileVersionId, false);
+		}
+
+		@Override
+		public void removeFileVersionFromCache(FileVersionId fileVersionId) {
+		}
+
+		@Override
+		public void cleanupCache() {
+
+		}
+
+		@Override
+		public void releaseFileVersion(FileVersion fileVersion) {
+			cacheUsage.get(fileVersion.getFileId()).decrementAndGet();
+		}
+
+		@Override
+		public void close() throws Exception {
+
+		}
+	}
+
 	public FunctionHandlerFactory getFunctionHandlerFactory() {
-		ApplicationContextBuilder applicationContextBuilder = new ApplicationContextBuilder();
+		applicationContextBuilder = new ApplicationContextBuilder();
 		applicationContextBuilder.forkCurrentContext(GeneralScriptHandler.FORKED_BRANCH);
-		FunctionHandlerFactory factory = new FunctionHandlerFactory(applicationContextBuilder, new FileManagerClient() {
-			
-			@Override
-			public FileVersion requestFileVersion(FileVersionId fileVersionId, boolean cleanable) throws FileManagerException {
-				String file = GeneralScriptHandlerTest.class.getClassLoader().getResource(fileVersionId.getFileId()).getFile();
-				return new FileVersion(new File(file), fileVersionId, false);
-			}
-			
-			@Override
-			public void removeFileVersionFromCache(FileVersionId fileVersionId) {
-			}
-
-			@Override
-			public void cleanupCache() {
-
-			}
-
-			@Override
-			public void close() throws Exception {
-
-			}
-		});
+		testFileManagerClient = new TestFileManagerClient();
+		FunctionHandlerFactory factory = new FunctionHandlerFactory(applicationContextBuilder, testFileManagerClient );
 		return factory;
 	}
 

@@ -169,6 +169,8 @@ public class ExecutionEngine implements AutoCloseable {
 			ExecutionEngineContext executionEngineContext = new ExecutionEngineContext(operationMode);
 			if(parentContext != null) {
 				executionEngineContext.useAllAttributesFromParentContext(parentContext);
+			} else {
+				executionEngineContext.setDefaultAttributes();
 			}
 			if(objectHookRegistry != null) {
 				executionEngineContext.put(ObjectHookRegistry.class, objectHookRegistry);

@@ -30,6 +30,7 @@ import step.core.collections.Filters;
 import step.core.collections.SearchOrder;
 import step.core.collections.filters.And;
 import step.core.collections.filters.Equals;
+import step.core.timeseries.TimeSeriesFilterBuilder;
 
 
 public class ReportNodeAccessorImpl extends AbstractAccessor<ReportNode> implements ReportTreeAccessor, ReportNodeAccessor {
@@ -105,6 +106,28 @@ public class ReportNodeAccessorImpl extends AbstractAccessor<ReportNode> impleme
 		And filter = filterByExecutionIdAndArtefactHash(executionId, artefactPathHash);
 		return collectionDriver.findLazy(filter, null, skip, limit, 0);
 	}
+
+	@Override
+	public Stream<ReportNode> getReportNodesByArtefactHash(String executionId, String artefactPathHash, Long from, Long to, Integer skip, Integer limit) {
+		And filter = filterByExecutionIdAndArtefactHash(executionId, artefactPathHash);
+		Filter timeFilter = filerByExecutionTime(from, to);
+		return collectionDriver.findLazy(Filters.and(List.of(filter, timeFilter)), null, skip, limit, 0);
+	}
+
+	private Filter filerByExecutionTime(Long from, Long to) {
+		ArrayList<Filter> filters = new ArrayList();
+		if (from != null) {
+			filters.add(Filters.gte("executionTime", from));
+		}
+
+		if (to != null) {
+			filters.add(Filters.lt("executionTime", to));
+		}
+
+		return (filters.isEmpty() ? Filters.empty() : Filters.and(filters));
+	}
+
+
 
 	private static And filterByExecutionIdAndArtefactHash(String executionId, String artefactPathHash) {
 		return Filters.and(List.of(Filters.equals("executionID", executionId), artefactPathHashFilter(artefactPathHash)));

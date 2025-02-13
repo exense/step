@@ -19,7 +19,9 @@
 package step.plugins.jmeter;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import ch.exense.commons.app.Configuration;
@@ -28,7 +30,7 @@ import org.slf4j.LoggerFactory;
 import step.core.AbstractStepContext;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionTypeException;
-import step.grid.filemanager.FileVersionId;
+import step.grid.filemanager.FileVersion;
 import step.resources.ResourceManager;
 
 public class JMeterFunctionType extends AbstractFunctionType<JMeterFunction> {
@@ -37,7 +39,6 @@ public class JMeterFunctionType extends AbstractFunctionType<JMeterFunction> {
 	public static final String JMETER_HOME_CONFIG_PROPERTY = "plugins.jmeter.home";
 	public static final String MISSING_JMETER_HOME_MESSAGE_PROPERTY = "plugins.jmeter.home.missing.message";
 
-	private FileVersionId handlerJar;
 	protected final Configuration configuration;
 
 	public JMeterFunctionType(Configuration configuration) {
@@ -48,7 +49,12 @@ public class JMeterFunctionType extends AbstractFunctionType<JMeterFunction> {
 	@Override
 	public void init() {
 		super.init();
-		handlerJar = registerResource(getClass().getClassLoader(), "jmeter-plugin-handler.jar", false);
+		handlerPackageVersion = registerResource(getClass().getClassLoader(), "jmeter-plugin-handler.jar", false, false);
+	}
+
+	@Override
+	public String isHandlerCleanable() {
+		return Boolean.toString(false);
 	}
 
 	@Override
@@ -57,20 +63,22 @@ public class JMeterFunctionType extends AbstractFunctionType<JMeterFunction> {
 	}
 
 	@Override
-	public FileVersionId getHandlerPackage(JMeterFunction function) {
-		return handlerJar;
-	}
-
-	@Override
-	public Map<String, String> getHandlerProperties(JMeterFunction function, AbstractStepContext executionContext) {
-		Map<String, String> props = new HashMap<>();
-		registerFile(function.getJmeterTestplan(), "$jmeter.testplan.file", props, true, executionContext);
-
+	public HandlerProperties getHandlerProperties(JMeterFunction function, AbstractStepContext executionContext) {
 		String home = configuration.getProperty(JMETER_HOME_CONFIG_PROPERTY);
 		if (home != null) {
-			File homeFile = new File(home);
-			registerFile(homeFile, "$jmeter.libraries", props);
-			return props;
+			Map<String, String> props = new HashMap<>();
+			List<AutoCloseable> createdCloseables = new ArrayList<>();
+			try {
+				File homeFile = new File(home);
+				//Execution of jmeter keeps a handle on one of the library jar file even with a clean implementation closing created instances and the related class loader
+				//Therefore the lib folder in the file manager cache of the agent is not cleanable, so it should also be aligned on the grid server side
+				createdCloseables.add(registerFile(homeFile, "$jmeter.libraries", props, false));
+				createdCloseables.add(registerFile(function.getJmeterTestplan(), "$jmeter.testplan.file", props, true, executionContext));
+				return new HandlerProperties(props, createdCloseables);
+			} catch (Throwable e) {
+				closeRegisteredCloseable(createdCloseables);
+				throw e;
+			}
 		} else {
 			throw new RuntimeException(
 					configuration.getProperty(MISSING_JMETER_HOME_MESSAGE_PROPERTY,

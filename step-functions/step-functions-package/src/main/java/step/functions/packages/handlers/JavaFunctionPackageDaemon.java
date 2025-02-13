@@ -63,54 +63,55 @@ public class JavaFunctionPackageDaemon extends FunctionPackageUtils {
 			File packageFile = resolveMandatoryFile(parameters.getPackageLocation());
 
 			// Build classloader
-			ApplicationContextBuilder applicationContextBuilder = new ApplicationContextBuilder(ClassLoader.getSystemClassLoader());
-			if(packageLibrariesFile != null) {
-				applicationContextBuilder.pushContext(new LocalFolderApplicationContextFactory(packageLibrariesFile));
-			}
-			applicationContextBuilder.pushContext(new LocalFileApplicationContextFactory(packageFile));
-			ClassLoader cl = applicationContextBuilder.getCurrentContext().getClassLoader();
+			try (ApplicationContextBuilder applicationContextBuilder = new ApplicationContextBuilder(ClassLoader.getSystemClassLoader())) {
+				if (packageLibrariesFile != null) {
+					applicationContextBuilder.pushContext(new LocalFolderApplicationContextFactory(packageLibrariesFile), true);
+				}
+				applicationContextBuilder.pushContext(new LocalFileApplicationContextFactory(packageFile), true);
+				ClassLoader cl = applicationContextBuilder.getCurrentContext().getClassLoader();
 
-			// Scan package File for Keyword annotations
-			try(AnnotationScanner annotationScanner = AnnotationScanner.forSpecificJar(packageFile,cl) ){
-				Set<Method> methods = annotationScanner.getMethodsWithAnnotation(Keyword.class);
-				for(Method m:methods) {
-					Keyword annotation = m.getAnnotation(Keyword.class);
-					Function res;
-					if(annotation.planReference() != null && !annotation.planReference().isBlank()){
-						res = CompositeFunctionUtils.createCompositeFunction(annotation, m, new PlanParser().parseCompositePlanFromPlanReference(m, annotation.planReference()));
-					} else {
-						String functionName = annotation.name().length() > 0 ? annotation.name() : m.getName();
+				// Scan package File for Keyword annotations
+				try (AnnotationScanner annotationScanner = AnnotationScanner.forSpecificJar(packageFile, cl)) {
+					Set<Method> methods = annotationScanner.getMethodsWithAnnotation(Keyword.class);
+					for (Method m : methods) {
+						Keyword annotation = m.getAnnotation(Keyword.class);
+						Function res;
+						if (annotation.planReference() != null && !annotation.planReference().isBlank()) {
+							res = CompositeFunctionUtils.createCompositeFunction(annotation, m, new PlanParser().parseCompositePlanFromPlanReference(m, annotation.planReference()));
+						} else {
+							String functionName = annotation.name().length() > 0 ? annotation.name() : m.getName();
 
-						GeneralScriptFunction function = new GeneralScriptFunction();
-						function.setAttributes(new HashMap<>());
-						function.getAttributes().put(AbstractOrganizableObject.NAME, functionName);
+							GeneralScriptFunction function = new GeneralScriptFunction();
+							function.setAttributes(new HashMap<>());
+							function.getAttributes().put(AbstractOrganizableObject.NAME, functionName);
 
-						function.getCallTimeout().setValue(annotation.timeout());
+							function.getCallTimeout().setValue(annotation.timeout());
 
-						if (packageLibrariesFile != null) {
-							function.getLibrariesFile().setValue(parameters.getPackageLibrariesLocation());
+							if (packageLibrariesFile != null) {
+								function.getLibrariesFile().setValue(parameters.getPackageLibrariesLocation());
+							}
+
+							function.getScriptFile().setValue(parameters.getPackageLocation());
+							function.getScriptLanguage().setValue("java");
+							res = function;
+						}
+						res.setDescription(annotation.description());
+						try {
+							res.setSchema(schemaCreator.createJsonSchemaForKeyword(m));
+						} catch (JsonSchemaPreparationException ex) {
+							functions.exception = ex.getMessage();
+							functions.functions.clear();
+							return functions;
 						}
 
-						function.getScriptFile().setValue(parameters.getPackageLocation());
-						function.getScriptLanguage().setValue("java");
-						res = function;
-					}
-					res.setDescription(annotation.description());
-					try {
-						res.setSchema(schemaCreator.createJsonSchemaForKeyword(m));
-					} catch (JsonSchemaPreparationException ex){
-						functions.exception = ex.getMessage();
-						functions.functions.clear();
-						return functions;
-					}
+						String htmlTemplate = res.getAttributes().remove("htmlTemplate");
+						if (htmlTemplate != null && !htmlTemplate.isEmpty()) {
+							res.setHtmlTemplate(htmlTemplate);
+							res.setUseCustomTemplate(true);
+						}
 
-					String htmlTemplate = res.getAttributes().remove("htmlTemplate");
-					if (htmlTemplate != null && !htmlTemplate.isEmpty()) {
-						res.setHtmlTemplate(htmlTemplate);
-						res.setUseCustomTemplate(true);
+						functions.functions.add(res);
 					}
-
-					functions.functions.add(res);
 				}
 			}
 		} catch (Throwable e) {
