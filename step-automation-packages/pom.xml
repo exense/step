@@ -35,6 +35,8 @@
         <module>step-automation-packages-schema</module>
         <module>step-automation-packages-junit-model</module>
         <module>step-automation-packages-junit</module>
+        <module>step-automation-packages-junit5</module>
+        <module>step-automation-packages-junit-core</module>
         <module>step-automation-packages-samples</module>
         <module>step-automation-packages-manager</module>
         <module>step-automation-packages-client</module>
