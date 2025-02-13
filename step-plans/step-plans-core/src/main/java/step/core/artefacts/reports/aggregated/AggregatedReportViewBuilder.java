@@ -115,9 +115,9 @@ public class AggregatedReportViewBuilder {
     }
 
     private boolean isIterationNodeReport(ReportNode n) {
-        AbstractArtefact artefactInstance = n.getArtefactInstance();
+        AbstractArtefact resolvedArtefact = n.getResolvedArtefact();
         //TODO add a property to artefact for such "iteration" artefact"
-        return artefactInstance != null && artefactInstance.isWorkArtefact() && artefactInstance.getAttribute(AbstractOrganizableObject.NAME).startsWith("Iteration");
+        return resolvedArtefact != null && resolvedArtefact.isWorkArtefact() && resolvedArtefact.getAttribute(AbstractOrganizableObject.NAME).startsWith("Iteration");
     }
 
     private void ingestReportNodeRecursively(ReportNode reportNode, ReportNodeTimeSeries reportNodeTimeSeries, Map<String, ReportNode> singleReportNodes) {

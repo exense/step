@@ -573,5 +573,61 @@ public class ResolvedPlanBuilderTest {
 
     }
 
+    @Test
+    public void testScenario() throws IOException, InterruptedException {
+        Plan plan = PlanBuilder.create().startBlock(BaseArtefacts.testScenario())
+                .startBlock(BaseArtefacts.threadGroup(2,5))
+                .add(echo("'in 1st thread gorup'"))
+                .add(sleep(1))
+                .endBlock()
+                .startBlock(BaseArtefacts.threadGroup(2,5))
+                .add(echo("'in 2nd thread group'"))
+                .add(set("key","'value'"))
+                .endBlock()
+                .endBlock().build();
+
+
+        PlanRunnerResult result = engine.execute(plan);
+        result.printTree();
+        logger.info("----------------------");
+        logger.info("Aggregated report tree");
+        logger.info("----------------------");
+
+        AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(engine.getExecutionEngineContext(), result.getExecutionId());
+        AggregatedReportView node = aggregatedReportViewBuilder.buildAggregatedReportView();
+        logger.info(node.toString());
+
+        logger.info(node.toString());
+        assertEquals("TestScenario: 1x: PASSED\n" +
+                        " ThreadGroup: 1x: PASSED\n" +
+                        "  Echo: 10x: PASSED\n" +
+                        "  Sleep: 10x: PASSED\n" +
+                        " ThreadGroup: 1x: PASSED\n" +
+                        "  Echo: 10x: PASSED\n" +
+                        "  Set: 10x: PASSED\n",
+                node.toString());
+
+        // Test partial aggregated tree, starting from the Set node
+        ReportNode reportNode = engine.getExecutionEngineContext().getReportNodeAccessor().getReportNodesByExecutionIDAndClass(result.getExecutionId(), "step.artefacts.reports.SetReportNode").findFirst().orElseThrow(() -> new RuntimeException("No set report node found"));
+        AggregatedReportViewBuilder.AggregatedReportViewRequest aggregatedReportViewRequest = new AggregatedReportViewBuilder.AggregatedReportViewRequest(null, true, reportNode.getId().toHexString());
+        node = aggregatedReportViewBuilder.buildAggregatedReportView(aggregatedReportViewRequest);
+
+        logger.info("----------------------");
+        logger.info("Partial aggregated report tree");
+        logger.info("----------------------");
+        logger.info(node.toString());
+
+        assertEquals("TestScenario: 0x\n" +
+                        " ThreadGroup: 0x\n" +
+                        "  Echo: 0x\n" +
+                        "  Sleep: 0x\n" +
+                        " ThreadGroup: 0x\n" +
+                        "  Echo: 1x: PASSED > in 2nd thread group\n" +
+                        "  Set: 1x: PASSED > key = value\n",
+                node.toString());
+
+
+
+    }
 
 }

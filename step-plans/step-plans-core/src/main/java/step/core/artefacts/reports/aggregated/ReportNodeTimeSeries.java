@@ -71,7 +71,7 @@ public class ReportNodeTimeSeries implements Closeable {
             nodeBucket.putAll(customAttributes);
         }
 
-        ingestionPipeline.ingestPoint(new BucketAttributes(nodeBucket), System.currentTimeMillis(), 1);
+        ingestionPipeline.ingestPoint(new BucketAttributes(nodeBucket), reportNode.getExecutionTime(), 1);
     }
 
     public void flush() {
