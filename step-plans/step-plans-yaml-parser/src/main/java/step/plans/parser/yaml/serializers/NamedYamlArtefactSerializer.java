@@ -78,7 +78,9 @@ public class NamedYamlArtefactSerializer extends StepYamlSerializer<NamedYamlArt
                         removeDefaultValues(actualJson, defaultJson);
                         gen.writeTree(actualJson);
                     } else {
-                        log.debug("Analyze default values for " + value.getClass().getName());
+                        if (log.isDebugEnabled()) {
+                            log.debug("Analyze default values for " + value.getClass().getName());
+                        }
                         AbstractArtefact defaultTechnicalInstance = value.createArtefactInstance();
                         AbstractYamlArtefact<?> defaultYamlInstance = AbstractYamlArtefact.toYamlArtefact(defaultTechnicalInstance, yamlObjectMapper);
                         ObjectNode defaultJson = yamlObjectMapper.valueToTree(defaultYamlInstance);
