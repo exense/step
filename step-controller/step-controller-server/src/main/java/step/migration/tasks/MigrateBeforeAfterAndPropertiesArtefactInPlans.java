@@ -43,19 +43,26 @@ public class MigrateBeforeAfterAndPropertiesArtefactInPlans extends MigrationTas
 	public static final String ARTEFACT_AFTER_THREAD = "AfterThread";
 	public static final String ARTEFACT_PERFORMANCE_ASSERT = "PerformanceAssert";
 	private final Collection<Document> planCollection;
+	private final Collection<Document> functionCollection;
 
 	public MigrateBeforeAfterAndPropertiesArtefactInPlans(CollectionFactory collectionFactory, MigrationContext migrationContext) {
 		super(new Version(3,27,0), collectionFactory, migrationContext);
 
 		planCollection = collectionFactory.getCollection("plans", Document.class);
+		functionCollection = getDocumentCollection("functions");
 	}
 	
 	@Override
 	public void runUpgradeScript() {
+		migratePlans();
+		migrateCompositeFunction();
+	}
+
+	private void migratePlans() {
 		AtomicInteger successCount = new AtomicInteger();
 		AtomicInteger errorCount = new AtomicInteger();
 		logger.info("Migrating BeforeSequence, AfterSequence, BeforeThread and AfterThread to the respective artefact properties for all plans...");
-		
+
 		planCollection.find(Filters.empty(), null, null, null, 0).forEach(p -> {
 			try {
 				DocumentObject root = p.getObject("root");
@@ -64,12 +71,35 @@ public class MigrateBeforeAfterAndPropertiesArtefactInPlans extends MigrationTas
 				successCount.incrementAndGet();
 			} catch(Exception e) {
 				errorCount.incrementAndGet();
-                logger.error("Error while migrating BeforeSequence, AfterSequence, BeforeThread and AfterThread artefacts for plan: {}", p, e);
+				logger.error("Error while migrating BeforeSequence, AfterSequence, BeforeThread and AfterThread artefacts for plan: {}", p, e);
 			}
 		});
-        logger.info("Migrated {} plans.", successCount.get());
+		logger.info("Migrated {} plans.", successCount.get());
 		if(errorCount.get()>0) {
-			logger.error("Got "+errorCount+" errors while migrating sleep controls. See previous error logs for details.");
+            logger.error("Got {} errors while migrating before and after controls for plans. See previous error logs for details.", errorCount);
+		}
+	}
+
+	private void migrateCompositeFunction() {
+		AtomicInteger successCount = new AtomicInteger();
+		AtomicInteger errorCount = new AtomicInteger();
+		logger.info("Migrating BeforeSequence, AfterSequence, BeforeThread and AfterThread to the respective artefact properties for all composite keywords...");
+
+		functionCollection.find(Filters.equals("type", "step.plugins.functions.types.CompositeFunction"), null, null, null, 0)
+				.forEach(c  -> {
+			try {
+				DocumentObject root = c.getObject("plan").getObject("root");
+				migrateAllRecursively(root);
+				functionCollection.save(c);
+				successCount.incrementAndGet();
+			} catch(Exception e) {
+				errorCount.incrementAndGet();
+				logger.error("Error while migrating BeforeSequence, AfterSequence, BeforeThread and AfterThread artefacts for composite: {}", c, e);
+			}
+		});
+		logger.info("Migrated {} composite keywords.", successCount.get());
+		if(errorCount.get()>0) {
+			logger.error("Got {} errors while migrating before and after controls for composite keywords. See previous error logs for details.", errorCount);
 		}
 	}
 
