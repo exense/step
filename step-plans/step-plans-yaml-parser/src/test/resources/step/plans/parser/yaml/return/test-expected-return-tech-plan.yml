@@ -13,6 +13,7 @@ root:
     value: ""
     expression: ""
   useDynamicName: false
+  workArtefact: false
   children:
     - _class: "Return"
       attributes:
@@ -22,6 +23,7 @@ root:
         value: ""
         expression: ""
       useDynamicName: false
+      workArtefact: false
       children: []
       skipNode:
         dynamic: false
