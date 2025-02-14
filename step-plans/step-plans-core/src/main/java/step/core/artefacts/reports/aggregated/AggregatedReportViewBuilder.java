@@ -44,7 +44,7 @@ public class AggregatedReportViewBuilder {
     }
 
     public AggregatedReportView buildAggregatedReportView() {
-        return buildAggregatedReportView(new AggregatedReportViewRequest(null, null, null));
+        return buildAggregatedReportView(new AggregatedReportViewRequest(null, null, null, null));
     }
 
     public AggregatedReportView buildAggregatedReportView(AggregatedReportViewRequest request) {
@@ -56,13 +56,14 @@ public class AggregatedReportViewBuilder {
             return null;
         } else if (request.selectedReportNodeId == null) {
             // Generate complete aggregated report tree
-            return recursivelyBuildAggregatedReportTree(rootResolvedPlanNode, request, mainReportNodesTimeSeries, mainReportNodeAccessor);
+            return recursivelyBuildAggregatedReportTree(rootResolvedPlanNode, request, mainReportNodesTimeSeries, mainReportNodeAccessor, null);
         } else {
             // a node is selected to generate a partial aggregated report
             try (ReportNodeTimeSeries localReportNodesTimeSeries = getInMemoryReportNodeTimeSeries()) {
                 InMemoryReportNodeAccessor inMemoryReportNodeAccessor = new InMemoryReportNodeAccessor();
-                buildPartialReportNodeTimeSeries(request.selectedReportNodeId, localReportNodesTimeSeries, inMemoryReportNodeAccessor);
-                return recursivelyBuildAggregatedReportTree(rootResolvedPlanNode, request, localReportNodesTimeSeries, inMemoryReportNodeAccessor);
+                Set<String> artefactHashSet = buildPartialReportNodeTimeSeries(request.selectedReportNodeId, localReportNodesTimeSeries, inMemoryReportNodeAccessor);
+                artefactHashSet = (request.filterResolvedPlanNodes) ? artefactHashSet : null;
+                return recursivelyBuildAggregatedReportTree(rootResolvedPlanNode, request, localReportNodesTimeSeries, inMemoryReportNodeAccessor, artefactHashSet);
             } catch (IOException e) {
                 //Handle auto-closable exception, the aggregated report view was created in all cases.
                 logger.error("Unable to close the local report node time series", e);
@@ -73,16 +74,19 @@ public class AggregatedReportViewBuilder {
 
     public static class AggregatedReportViewRequest {
         public final ReportNodeTimeSeries.Range range;
-        public final Boolean resolveSingleInstanceReport;
+        public final Boolean resolveSingleInstanceReport; //keep null, will be replaced by system default in such cases
         public final String selectedReportNodeId;
+        public final boolean filterResolvedPlanNodes;
 
         @JsonCreator
         public AggregatedReportViewRequest(@JsonProperty("range") ReportNodeTimeSeries.Range range,
                                            @JsonProperty("resolveSingleInstanceReport") Boolean resolveSingleInstanceReport,
-                                           @JsonProperty("selectedReportNodeId") String selectedReportNodeId) {
+                                           @JsonProperty("selectedReportNodeId") String selectedReportNodeId,
+                                           @JsonProperty("filterResolvedPlanNodes") Boolean filterResolvedPlanNodes) {
             this.range = range;
             this.resolveSingleInstanceReport = resolveSingleInstanceReport;
             this.selectedReportNodeId = selectedReportNodeId;
+            this.filterResolvedPlanNodes = (filterResolvedPlanNodes != null) ? filterResolvedPlanNodes : true;
         }
     }
 
@@ -101,8 +105,9 @@ public class AggregatedReportViewBuilder {
      * @param selectedReportNodeIdStr the id of the selected report node
      * @param reportNodeTimeSeries the inMemory report node time series to be populated
      * @param reportNodeAccessor the inMemory report node accessor to be populated
+     * @return the set of artefact hash part of the partial report
      */
-    private void buildPartialReportNodeTimeSeries(String selectedReportNodeIdStr, ReportNodeTimeSeries reportNodeTimeSeries, ReportNodeAccessor reportNodeAccessor) {
+    private Set<String> buildPartialReportNodeTimeSeries(String selectedReportNodeIdStr, ReportNodeTimeSeries reportNodeTimeSeries, ReportNodeAccessor reportNodeAccessor) {
         ObjectId selectedReportNodeId = new ObjectId(selectedReportNodeIdStr);
         List<ReportNode> path = mainReportNodeAccessor.getReportNodePath(selectedReportNodeId);
         // During ingestion, we store single report node per artefact hash in memory rather than saving all report nodes
@@ -112,6 +117,9 @@ public class AggregatedReportViewBuilder {
                 .ifPresent(n -> ingestReportNodeRecursively(n, reportNodeTimeSeries, singleReportNodes));
         reportNodeAccessor.save(singleReportNodes.values());
         reportNodeTimeSeries.flush();
+        Set<String> reportArtefactHashSet = new HashSet<>(singleReportNodes.keySet());
+        reportArtefactHashSet.addAll(path.stream().map(ReportNode::getArtefactHash).collect(Collectors.toSet()));
+        return reportArtefactHashSet;
     }
 
     private boolean isIterationNodeReport(ReportNode n) {
@@ -127,11 +135,13 @@ public class AggregatedReportViewBuilder {
     }
 
     private AggregatedReportView recursivelyBuildAggregatedReportTree(ResolvedPlanNode resolvedPlanNode, AggregatedReportViewRequest request,
-                                                                      ReportNodeTimeSeries reportNodesTimeSeries, ReportNodeAccessor reportNodeAccessor) {
-        List<AggregatedReportView> children = resolvedPlanNodeAccessor.getByParentId(resolvedPlanNode.getId().toString())
-                .map(n -> recursivelyBuildAggregatedReportTree(n, request, reportNodesTimeSeries, reportNodeAccessor))
-                .collect(Collectors.toList());
+                                                                      ReportNodeTimeSeries reportNodesTimeSeries, ReportNodeAccessor reportNodeAccessor, Set<String> filteredArtefactHashSet) {
         String artefactHash = resolvedPlanNode.artefactHash;
+        List<AggregatedReportView> children = resolvedPlanNodeAccessor.getByParentId(resolvedPlanNode.getId().toString())
+                //filter nodes if artefactHash is provided and node is part of the path
+                .filter(n -> filteredArtefactHashSet == null || filteredArtefactHashSet.contains(n.artefactHash))
+                .map(n -> recursivelyBuildAggregatedReportTree(n, request, reportNodesTimeSeries, reportNodeAccessor, filteredArtefactHashSet))
+                .collect(Collectors.toList());
         Map<String, Long> countByStatus = reportNodesTimeSeries.queryByExecutionIdAndArtefactHash(executionId, artefactHash, request.range);
         ReportNode singleInstanceReportNode = null;
         if (resolveSingleReport(request) && countByStatus.values().stream().reduce(0L, Long::sum) == 1) {
