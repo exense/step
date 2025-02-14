@@ -13,6 +13,7 @@ root:
     value: ""
     expression: ""
   useDynamicName: false
+  workArtefact: false
   children:
     - _class: "DataSet"
       attributes:
@@ -22,6 +23,7 @@ root:
         value: ""
         expression: ""
       useDynamicName: false
+      workArtefact: false
       description: "test excel"
       children: []
       skipNode:
