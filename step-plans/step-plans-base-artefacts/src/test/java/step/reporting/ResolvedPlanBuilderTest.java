@@ -89,7 +89,7 @@ public class ResolvedPlanBuilderTest {
     @Test
     public void simpleTestWithErrors() throws IOException {
         Plan plan = PlanBuilder.create()
-                .startBlock(BaseArtefacts.threadGroup(2, 2))
+                .startBlock(BaseArtefacts.threadGroup(1, 4))
                 .startBlock(FunctionArtefacts.session())
                 .add(echo("'Echo gcounter ' + gcounter"))
                 .add(check("if (gcounter % 3 == 0) { return true} else if (gcounter % 3 == 1) { return false} else if (gcounter % 3 == 2) {return var}"))
