@@ -61,9 +61,10 @@ public class AggregatedReportViewBuilder {
             // a node is selected to generate a partial aggregated report
             try (ReportNodeTimeSeries localReportNodesTimeSeries = getInMemoryReportNodeTimeSeries()) {
                 InMemoryReportNodeAccessor inMemoryReportNodeAccessor = new InMemoryReportNodeAccessor();
-                Set<String> artefactHashSet = buildPartialReportNodeTimeSeries(request.selectedReportNodeId, localReportNodesTimeSeries, inMemoryReportNodeAccessor);
-                artefactHashSet = (request.filterResolvedPlanNodes) ? artefactHashSet : null;
-                return recursivelyBuildAggregatedReportTree(rootResolvedPlanNode, request, localReportNodesTimeSeries, inMemoryReportNodeAccessor, artefactHashSet);
+                Set<String> reportArtefactHashSet = buildPartialReportNodeTimeSeries(request.selectedReportNodeId, localReportNodesTimeSeries, inMemoryReportNodeAccessor);
+                // Only pass the reportArtefactHashSet if aggregate view filtering is enabled
+                reportArtefactHashSet = (request.filterResolvedPlanNodes) ? reportArtefactHashSet : null;
+                return recursivelyBuildAggregatedReportTree(rootResolvedPlanNode, request, localReportNodesTimeSeries, inMemoryReportNodeAccessor, reportArtefactHashSet);
             } catch (IOException e) {
                 //Handle auto-closable exception, the aggregated report view was created in all cases.
                 logger.error("Unable to close the local report node time series", e);
@@ -98,7 +99,7 @@ public class AggregatedReportViewBuilder {
     }
 
     /**
-     * Create an in memory timeseries and report node accessor containing all data required to build a partial aggregated report tree
+     * Populate an in memory timeseries and report node accessor with all data required to build a partial aggregated report tree
      * This aggregated tree will be filtered for the execution path of this single report node. If available we filter on the wrapping (nested) iteration
      * or simply on the selected node and its descendant
      *
@@ -113,10 +114,12 @@ public class AggregatedReportViewBuilder {
         // During ingestion, we store single report node per artefact hash in memory rather than saving all report nodes
         // There are only used to resolve single nodes when building the aggregated tree
         Map<String, ReportNode> singleReportNodes = new HashMap<>();
+        // select the first report node being either an iteration or the selected node and start the recursive ingestion
         path.stream().filter(n -> n.getId().equals(selectedReportNodeId) || isIterationNodeReport(n)).findFirst()
                 .ifPresent(n -> ingestReportNodeRecursively(n, reportNodeTimeSeries, singleReportNodes));
         reportNodeAccessor.save(singleReportNodes.values());
         reportNodeTimeSeries.flush();
+        // build the set of artefact hash to be included in the report (re-ingested nodes + nodes of the path)
         Set<String> reportArtefactHashSet = new HashSet<>(singleReportNodes.keySet());
         reportArtefactHashSet.addAll(path.stream().map(ReportNode::getArtefactHash).collect(Collectors.toSet()));
         return reportArtefactHashSet;
@@ -124,7 +127,7 @@ public class AggregatedReportViewBuilder {
 
     private boolean isIterationNodeReport(ReportNode n) {
         AbstractArtefact resolvedArtefact = n.getResolvedArtefact();
-        //TODO add a property to artefact for such "iteration" artefact"
+        //All iteration work artefact are created with sequence artefact and names starting with "Iteration", we might change to a more robust implementation in the future
         return resolvedArtefact != null && resolvedArtefact.isWorkArtefact() && resolvedArtefact.getAttribute(AbstractOrganizableObject.NAME).startsWith("Iteration");
     }
 
@@ -138,7 +141,7 @@ public class AggregatedReportViewBuilder {
                                                                       ReportNodeTimeSeries reportNodesTimeSeries, ReportNodeAccessor reportNodeAccessor, Set<String> filteredArtefactHashSet) {
         String artefactHash = resolvedPlanNode.artefactHash;
         List<AggregatedReportView> children = resolvedPlanNodeAccessor.getByParentId(resolvedPlanNode.getId().toString())
-                //filter nodes if artefactHash is provided and node is part of the path
+                //filter nodes if filteredArtefactHashSet is provided and node is part of the set
                 .filter(n -> filteredArtefactHashSet == null || filteredArtefactHashSet.contains(n.artefactHash))
                 .map(n -> recursivelyBuildAggregatedReportTree(n, request, reportNodesTimeSeries, reportNodeAccessor, filteredArtefactHashSet))
                 .collect(Collectors.toList());
