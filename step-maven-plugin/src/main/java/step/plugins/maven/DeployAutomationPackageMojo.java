@@ -110,7 +110,8 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
 
     protected class MavenDeployAutomationPackageTool extends AbstractDeployAutomationPackageTool {
         public MavenDeployAutomationPackageTool(String url, String projectName, String authToken, Boolean async) {
-            super(url, projectName, authToken, async);
+            // TODO: add version and activation expression
+            super(url, projectName, authToken, async, null, null);
         }
 
         @Override

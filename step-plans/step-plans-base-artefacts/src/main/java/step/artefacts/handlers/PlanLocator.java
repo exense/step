@@ -66,7 +66,10 @@ public class PlanLocator {
 			Stream<Plan> stream = StreamSupport.stream(accessor.findManyByAttributes(selectionAttributes), false);
 			stream = stream.filter(objectPredicate);
 			List<Plan> matchingPlans = stream.collect(Collectors.toList());
-			a = matchingPlans.stream().findFirst().orElseThrow(()->new NoSuchElementException("Unable to find plan with attributes: "+selectionAttributes.toString()));
+
+			// The same logic as for functions - plans from current automation package have priority in 'CallPlan'
+			List<Plan> orderedPlans = FunctionLocator.prioritizeAutomationPackageLinkedEntities(matchingPlans, bindings);
+			a = orderedPlans.stream().findFirst().orElseThrow(()->new NoSuchElementException("Unable to find plan with attributes: "+selectionAttributes.toString()));
 		}
 		return a;
 	}

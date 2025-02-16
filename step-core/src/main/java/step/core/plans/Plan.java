@@ -32,10 +32,11 @@ import step.core.entities.EntityReference;
 import step.core.objectenricher.EnricheableObject;
 import step.core.plans.agents.configuration.AgentProvisioningConfiguration;
 import step.core.plans.agents.configuration.AutomaticAgentProvisioningConfiguration;
+import step.functions.EvaluationExpression;
 import step.functions.Function;
 
 @JsonTypeInfo(use=Id.CLASS,property= Plan.JSON_CLASS_FIELD)
-public class Plan extends AbstractOrganizableObject implements EnricheableObject {
+public class Plan extends AbstractOrganizableObject implements EnricheableObject, EvaluationExpression {
 
 	public static final String JSON_CLASS_FIELD = "_class";
 
@@ -112,6 +113,7 @@ public class Plan extends AbstractOrganizableObject implements EnricheableObject
 		this.categories = categories;
 	}
 
+	@Override
 	public Expression getEvaluationExpression() {
 		return evaluationExpression;
 	}

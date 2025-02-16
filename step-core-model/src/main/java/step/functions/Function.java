@@ -39,7 +39,7 @@ import static step.functions.Function.JSON_CLASS_FIELD;
  *
  */
 @JsonTypeInfo(use=Id.CLASS, property= JSON_CLASS_FIELD)
-public class Function extends AbstractOrganizableObject implements EnricheableObject {
+public class Function extends AbstractOrganizableObject implements EnricheableObject, EvaluationExpression {
 
 	public final static String JSON_CLASS_FIELD = "type";
 
@@ -153,6 +153,7 @@ public class Function extends AbstractOrganizableObject implements EnricheableOb
 		this.description = description;
 	}
 
+	@Override
 	public Expression getEvaluationExpression() {
 		return evaluationExpression;
 	}

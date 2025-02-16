@@ -274,6 +274,7 @@ public class StepConsole implements Callable<Integer> {
             @Option(names = {"--apVersion"})
             protected String apVersion;
 
+            // TODO: add description + think how can we use the complex expression (groovy script) in CLI args and in http query params
             @Option(names = {"--activationExpr"})
             protected String activationExpr;
 
