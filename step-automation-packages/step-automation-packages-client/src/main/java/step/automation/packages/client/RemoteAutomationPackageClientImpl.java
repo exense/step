@@ -31,6 +31,7 @@ import step.client.AbstractRemoteClient;
 import step.client.credentials.ControllerCredentials;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -47,17 +48,31 @@ public class RemoteAutomationPackageClientImpl extends AbstractRemoteClient impl
     }
 
     @Override
-    public String createAutomationPackage(File automationPackageFile) throws AutomationPackageClientException {
+    public String createAutomationPackage(File automationPackageFile, String apVersion, String activationExpr) throws AutomationPackageClientException {
         return uploadPackage(automationPackageFile, multiPartEntity -> {
-            Invocation.Builder builder = requestBuilder("/rest/automation-packages");
+            Map<String, String> queryParams = new HashMap<>();
+            addQueryParams(apVersion, activationExpr, queryParams);
+            Invocation.Builder builder = requestBuilder("/rest/automation-packages", queryParams);
             return RemoteAutomationPackageClientImpl.this.executeRequest(() -> builder.post(multiPartEntity, String.class));
         });
     }
 
+    private void addQueryParams(String apVersion, String activationExpr, Map<String, String> queryParams) {
+        if (apVersion != null && !apVersion.isEmpty()) {
+            queryParams.put("version", apVersion);
+        }
+        if (activationExpr != null && !activationExpr.isEmpty()) {
+            queryParams.put("activationExpr", activationExpr);
+        }
+    }
+
     @Override
-    public AutomationPackageUpdateResult createOrUpdateAutomationPackage(File automationPackageFile, boolean async) throws AutomationPackageClientException {
+    public AutomationPackageUpdateResult createOrUpdateAutomationPackage(File automationPackageFile, boolean async, String apVersion, String activationExpr) throws AutomationPackageClientException {
         return uploadPackage(automationPackageFile, multiPartEntity -> {
-            Invocation.Builder builder = requestBuilder("/rest/automation-packages", Map.of("async", String.valueOf(async)));
+            Map<String, String> queryParams = new HashMap<>();
+            queryParams.put("async", String.valueOf(async));
+            addQueryParams(apVersion, activationExpr, queryParams);
+            Invocation.Builder builder = requestBuilder("/rest/automation-packages", queryParams);
             return RemoteAutomationPackageClientImpl.this.executeRequest(() -> builder.put(multiPartEntity, AutomationPackageUpdateResult.class));
         });
     }

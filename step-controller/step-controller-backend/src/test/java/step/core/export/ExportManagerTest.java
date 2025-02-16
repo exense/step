@@ -141,7 +141,7 @@ public class ExportManagerTest {
 		
 		FileResolver fileResolver = new FileResolver(resourceManager);
 		SelectorHelper selectorHelper = new SelectorHelper(new DynamicJsonObjectResolver(new DynamicJsonValueResolver(new ExpressionHandler())));
-		FunctionLocator functionLocator = new FunctionLocator(functionAccessor, apAccessor, selectorHelper);
+		FunctionLocator functionLocator = new FunctionLocator(functionAccessor, selectorHelper);
 		entityManager
 				.register(new Entity<>(Parameter.ENTITY_NAME, parameterAccessor, Parameter.class))
 				.register(new PlanEntity(planAccessor, new PlanLocator(planAccessor, selectorHelper), entityManager))

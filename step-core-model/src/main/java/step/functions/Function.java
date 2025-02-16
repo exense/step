@@ -25,6 +25,7 @@ import jakarta.json.JsonObject;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 
+import step.commons.activation.Expression;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.json.JsonProviderCache;
@@ -49,6 +50,7 @@ public class Function extends AbstractOrganizableObject implements EnricheableOb
 	protected Map<String, String> tokenSelectionCriteria;
 	
 	protected boolean managed;
+	protected Expression evaluationExpression;
 	
 	protected boolean useCustomTemplate=false;
 	protected String htmlTemplate="";
@@ -149,5 +151,13 @@ public class Function extends AbstractOrganizableObject implements EnricheableOb
 
 	public void setDescription(String description) {
 		this.description = description;
+	}
+
+	public Expression getEvaluationExpression() {
+		return evaluationExpression;
+	}
+
+	public void setEvaluationExpression(Expression evaluationExpression) {
+		this.evaluationExpression = evaluationExpression;
 	}
 }

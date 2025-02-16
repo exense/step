@@ -24,6 +24,7 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 
+import step.commons.activation.Expression;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.entities.EntityManager;
@@ -48,6 +49,8 @@ public class Plan extends AbstractOrganizableObject implements EnricheableObject
 	protected AgentProvisioningConfiguration agents = new AutomaticAgentProvisioningConfiguration(AutomaticAgentProvisioningConfiguration.PlanAgentsPoolAutoMode.auto_detect);
 	
 	protected boolean visible = true;
+
+	protected Expression evaluationExpression;
 
 	private List<String> categories;
 	
@@ -107,5 +110,13 @@ public class Plan extends AbstractOrganizableObject implements EnricheableObject
 
 	public void setCategories(List<String> categories) {
 		this.categories = categories;
+	}
+
+	public Expression getEvaluationExpression() {
+		return evaluationExpression;
+	}
+
+	public void setEvaluationExpression(Expression evaluationExpression) {
+		this.evaluationExpression = evaluationExpression;
 	}
 }

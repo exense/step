@@ -22,7 +22,6 @@ import ch.exense.commons.app.Configuration;
 import step.artefacts.handlers.FunctionLocator;
 import step.artefacts.handlers.SelectorHelper;
 import step.attachments.FileResolver;
-import step.automation.packages.accessor.AutomationPackageAccessor;
 import step.controller.grid.GridPlugin;
 import step.controller.grid.services.FunctionServices;
 import step.core.GlobalContext;
@@ -85,7 +84,7 @@ public class FunctionControllerPlugin extends AbstractControllerPlugin {
 
 		context.put(FunctionAccessor.class, functionAccessor);
 		SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
-		final FunctionLocator functionLocator = new FunctionLocator(functionAccessor, context.require(AutomationPackageAccessor.class), selectorHelper);
+		final FunctionLocator functionLocator = new FunctionLocator(functionAccessor, selectorHelper);
 		EntityManager entityManager = context.getEntityManager();
 		entityManager.register(new FunctionEntity(functionAccessor, functionLocator, entityManager));
 		context.put(FunctionManager.class, functionManager);

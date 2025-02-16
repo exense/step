@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.automation.packages.accessor.AutomationPackageAccessor;
 import step.automation.packages.accessor.InMemoryAutomationPackageAccessorImpl;
+import step.commons.activation.Expression;
 import step.core.AbstractStepContext;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.collections.IndexField;
@@ -384,7 +385,7 @@ public class AutomationPackageManager {
             enrichers.add(new AutomationPackageLinkEnricher(newPackage.getId().toString()));
 
             ObjectEnricher enricherForIncludedEntities = ObjectEnricherComposer.compose(enrichers);
-            fillStaging(staging, packageContent, oldPackage, enricherForIncludedEntities, automationPackageArchive);
+            fillStaging(staging, packageContent, oldPackage, enricherForIncludedEntities, automationPackageArchive, activationExpr);
 
             // persist and activate automation package
             log.debug("Updating automation package, old package is " + ((oldPackage == null) ? "null" : "not null" + ", async: " + async));
@@ -499,9 +500,10 @@ public class AutomationPackageManager {
         return new AutomationPackageStaging();
     }
 
-    protected void fillStaging(AutomationPackageStaging staging, AutomationPackageContent packageContent, AutomationPackage oldPackage, ObjectEnricher enricherForIncludedEntities, AutomationPackageArchive automationPackageArchive) {
-        staging.getPlans().addAll(preparePlansStaging(packageContent, automationPackageArchive, oldPackage, enricherForIncludedEntities, staging.getResourceManager()));
-        staging.getFunctions().addAll(prepareFunctionsStaging(automationPackageArchive, packageContent, enricherForIncludedEntities, oldPackage, staging.getResourceManager()));
+    protected void fillStaging(AutomationPackageStaging staging, AutomationPackageContent packageContent, AutomationPackage oldPackage, ObjectEnricher enricherForIncludedEntities,
+                               AutomationPackageArchive automationPackageArchive, String evaluationExpression) {
+        staging.getPlans().addAll(preparePlansStaging(packageContent, automationPackageArchive, oldPackage, enricherForIncludedEntities, staging.getResourceManager(), evaluationExpression));
+        staging.getFunctions().addAll(prepareFunctionsStaging(automationPackageArchive, packageContent, enricherForIncludedEntities, oldPackage, staging.getResourceManager(), evaluationExpression));
 
         List<HookEntry> hookEntries = packageContent.getAdditionalData().entrySet().stream().map(e -> new HookEntry(e.getKey(), e.getValue())).collect(Collectors.toList());
         List<String> orderedEntryNames = automationPackageHookRegistry.getOrderedHookFieldNames();
@@ -572,22 +574,35 @@ public class AutomationPackageManager {
     }
 
     protected List<Plan> preparePlansStaging(AutomationPackageContent packageContent, AutomationPackageArchive automationPackageArchive,
-                                             AutomationPackage oldPackage, ObjectEnricher enricher, ResourceManager stagingResourceManager) {
+                                             AutomationPackage oldPackage, ObjectEnricher enricher, ResourceManager stagingResourceManager,
+                                             String evaluationExpression) {
         List<Plan> plans = packageContent.getPlans();
         AutomationPackagePlansAttributesApplier specialAttributesApplier = new AutomationPackagePlansAttributesApplier(stagingResourceManager);
         specialAttributesApplier.applySpecialAttributesToPlans(plans, automationPackageArchive, packageContent, enricher, extensions, operationMode);
 
         fillEntities(plans, oldPackage != null ? getPackagePlans(oldPackage.getId()) : new ArrayList<>(), enricher);
+        if (evaluationExpression != null && !evaluationExpression.isEmpty()){
+            for (Plan plan : plans) {
+                plan.setEvaluationExpression(new Expression(evaluationExpression));
+            }
+        }
         return plans;
     }
 
-    protected List<Function> prepareFunctionsStaging(AutomationPackageArchive automationPackageArchive, AutomationPackageContent packageContent, ObjectEnricher enricher, AutomationPackage oldPackage, ResourceManager stagingResourceManager) {
+    protected List<Function> prepareFunctionsStaging(AutomationPackageArchive automationPackageArchive, AutomationPackageContent packageContent, ObjectEnricher enricher,
+                                                     AutomationPackage oldPackage, ResourceManager stagingResourceManager, String evaluationExpression) {
         AutomationPackageContext apContext = new AutomationPackageContext(operationMode, stagingResourceManager, automationPackageArchive, packageContent, enricher, extensions);
         List<Function> completeFunctions = packageContent.getKeywords().stream().map(keyword -> keyword.prepareKeyword(apContext)).collect(Collectors.toList());
 
         // get old functions with same name and reuse their ids
         List<Function> oldFunctions = oldPackage == null ? new ArrayList<>() : getPackageFunctions(oldPackage.getId());
         fillEntities(completeFunctions, oldFunctions, enricher);
+
+        if (evaluationExpression != null && !evaluationExpression.isEmpty()) {
+            for (Function completeFunction : completeFunctions) {
+                completeFunction.setEvaluationExpression(new Expression(evaluationExpression));
+            }
+        }
         return completeFunctions;
     }
 
@@ -602,8 +617,8 @@ public class AutomationPackageManager {
         newPackage.addAttribute(AbstractOrganizableObject.VERSION, packageContent.getVersion());
 
         newPackage.addCustomField(AutomationPackageEntity.AUTOMATION_PACKAGE_FILE_NAME, fileName);
-        if(activationExpr != null && !activationExpr.isEmpty()) {
-            newPackage.addCustomField(AutomationPackageEntity.AUTOMATION_PACKAGE_ACTIVATION_EXPR, activationExpr);
+        if (activationExpr != null && !activationExpr.isEmpty()) {
+            newPackage.setActivationExpression(new Expression(activationExpr));
         }
         if (enricher != null) {
             enricher.accept(newPackage);

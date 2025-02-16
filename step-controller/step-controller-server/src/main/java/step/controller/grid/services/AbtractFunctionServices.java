@@ -56,7 +56,6 @@ import step.functions.services.GetTokenHandleParameter;
 import step.functions.type.FunctionTypeException;
 import step.functions.type.SetupFunctionException;
 import step.grid.TokenWrapper;
-import step.planbuilder.FunctionArtefacts;
 
 import java.util.HashMap;
 import java.util.List;
@@ -90,7 +89,7 @@ public abstract class AbtractFunctionServices extends AbstractEntityServices<Fun
 		functionExecutionService = getContext().get(FunctionExecutionService.class);
 		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(getContext().getExpressionHandler()));
 		selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
-		functionLocator = new FunctionLocator(functionAccessor, apAccessor, selectorHelper);
+		functionLocator = new FunctionLocator(functionAccessor, selectorHelper);
 		objectPredicateFactory = getContext().get(ObjectPredicateFactory.class);
 	}
 

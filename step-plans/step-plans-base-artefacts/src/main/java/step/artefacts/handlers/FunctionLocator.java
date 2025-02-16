@@ -19,15 +19,16 @@
 package step.artefacts.handlers;
 
 import step.artefacts.CallFunction;
-import step.automation.packages.AutomationPackage;
 import step.automation.packages.AutomationPackageEntity;
-import step.automation.packages.accessor.AutomationPackageAccessor;
+import step.commons.activation.Activator;
+import step.commons.activation.Expression;
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.execution.ExecutionContextBindings;
 import step.core.objectenricher.ObjectPredicate;
-import step.expressions.ExpressionHandler;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 
+import javax.script.SimpleBindings;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -38,16 +39,12 @@ public class FunctionLocator {
 	public static final String KEYWORD_ACTIVE_VERSIONS = "keyword.active.versions";
 	
 	private final FunctionAccessor functionAccessor;
-	private final AutomationPackageAccessor apAccessor;
 	private final SelectorHelper selectorHelper;
-	private final ExpressionHandler expressionHandler;
 
-	public FunctionLocator(FunctionAccessor functionAccessor, AutomationPackageAccessor apAccessor, SelectorHelper selectorHelper) {
+	public FunctionLocator(FunctionAccessor functionAccessor, SelectorHelper selectorHelper) {
 		super();
 		this.functionAccessor = functionAccessor;
-		this.apAccessor = apAccessor;
 		this.selectorHelper= selectorHelper;
-		this.expressionHandler = new ExpressionHandler();
 	}
 
 	/**
@@ -74,65 +71,62 @@ public class FunctionLocator {
 
 			Stream<Function> stream = StreamSupport.stream(functionAccessor.findManyByAttributes(attributes), false);
 			stream = stream.filter(objectPredicate);
-			List<Function> matchingFunctions = stream.collect(Collectors.toList());
+			List<Function> functionsMatchingByAttributes = stream.collect(Collectors.toList());
+
+			// reorder matching functions: the function from current AP has a priority
+			List<Function> functionsWithHighestPriority = new ArrayList<>();
+			List<Function> functionsWithLowerPriority = new ArrayList<>();
+			for (Function matchingFunction : functionsMatchingByAttributes) {
+				boolean functionFromCurrentAp = false;
+				if(bindings.get(ExecutionContextBindings.BINDING_AP) != null){
+					String functionApId = matchingFunction.getCustomField(AutomationPackageEntity.AUTOMATION_PACKAGE_ID, String.class);
+					String planApId = (String) bindings.get(ExecutionContextBindings.BINDING_AP);
+					if(Objects.equals(functionApId, planApId)){
+						functionFromCurrentAp = true;
+					}
+				}
+
+				Expression activationExpression = matchingFunction.getEvaluationExpression();
+				boolean activationExpressionMatched = Activator.evaluateActivationExpression(new SimpleBindings(bindings), activationExpression, Activator.DEFAULT_SCRIPT_ENGINE);
+
+				// if the activation expression returns false, the function is just filtered out
+				if (activationExpressionMatched) {
+					if(functionFromCurrentAp){
+						functionsWithHighestPriority.add(matchingFunction);
+					} else {
+						functionsWithLowerPriority.add(matchingFunction);
+					}
+				}
+			}
+
+			// after prioritization, we check the chosen active keyword version
+			List<Function> orderedFunctions = new ArrayList<>();
+			orderedFunctions.addAll(functionsWithHighestPriority);
+			orderedFunctions.addAll(functionsWithLowerPriority);
 
 			Set<String> activeKeywordVersions = getActiveKeywordVersions(bindings);
-			if(activeKeywordVersions != null && activeKeywordVersions.size()>0) {
+			if (activeKeywordVersions != null && activeKeywordVersions.size() > 0) {
 				// First try to find a function matching one of the active versions
-				function = matchingFunctions.stream().filter(f->{
+				function = orderedFunctions.stream().filter(f -> {
 					String version = f.getAttributes().get(AbstractOrganizableObject.VERSION);
 					return version != null && activeKeywordVersions.contains(version);
 				}).findFirst().orElse(null);
 				// if no function has been found with one of the active versions, return the first function WITHOUT version
-				if(function == null) {
-					function = matchingFunctions.stream().filter(f->{
+				if (function == null) {
+					function = orderedFunctions.stream().filter(f -> {
 						String version = f.getAttributes().get(AbstractOrganizableObject.VERSION);
 						return version == null || version.trim().isEmpty();
-					}).findFirst().orElseThrow(()->new NoSuchElementException("Unable to find keyword with attributes "+selectionAttributesJson+" matching on of the versions: "+activeKeywordVersions));
+					}).findFirst().orElseThrow(() -> new NoSuchElementException("Unable to find keyword with attributes " + selectionAttributesJson + " matching on of the versions: " + activeKeywordVersions));
 				}
 			} else {
-				// Try to resolve the automation packages linked with functions and check their evaluation expressions (if exist)
-				Function matchingFunction = findFirstMatchingFunctionByApEvaluationExpression(bindings, matchingFunctions);
-				if (matchingFunction != null) {
-					return matchingFunction;
-				}
-
 				// No active versions defined. Return the first function
-				function = matchingFunctions.stream().findFirst().orElseThrow(()->new NoSuchElementException("Unable to find keyword with attributes "+selectionAttributesJson));
+				function = orderedFunctions.stream().findFirst().orElseThrow(() -> new NoSuchElementException("Unable to find keyword with attributes " + selectionAttributesJson));
 			}
 			return function;
 		} else {
 			throw new NoSuchElementException("No selection attribute defined");
 		}
 
-	}
-
-	protected Function findFirstMatchingFunctionByApEvaluationExpression(Map<String, Object> bindings, List<Function> matchingFunctions) {
-		// TODO: think about performance (caching)
-		for (Function matchingFunction : matchingFunctions) {
-			String automationPackageId = matchingFunction.getCustomField(AutomationPackageEntity.AUTOMATION_PACKAGE_ID, String.class);
-			if (automationPackageId != null && !automationPackageId.isEmpty()) {
-				AutomationPackage ap = apAccessor.get(automationPackageId);
-				if (ap != null) {
-					String activationExpressionFromAp = ap.getCustomField(AutomationPackageEntity.AUTOMATION_PACKAGE_ACTIVATION_EXPR, String.class);
-					if (activationExpressionFromAp != null && !activationExpressionFromAp.isEmpty()) {
-						Object evalResult = expressionHandler.evaluateGroovyExpression(activationExpressionFromAp, bindings);
-						if (evalResult != null) {
-							if (!(evalResult instanceof Boolean)) {
-								throw new RuntimeException("The evaluation result of activation expression for AP '"
-										+ ap.getAttribute(AbstractOrganizableObject.NAME)
-										+ "' is illegal. The expression should return the boolean result"
-								);
-							}
-							if ((boolean) evalResult) {
-								return matchingFunction;
-							}
-						}
-					}
-				}
-			}
-		}
-		return null;
 	}
 
 	private Set<String> getActiveKeywordVersions(Map<String, Object> bindings) {

@@ -2,7 +2,6 @@ package step.artefacts.handlers;
 
 import org.junit.Test;
 import step.artefacts.CallFunction;
-import step.automation.packages.accessor.AutomationPackageAccessor;
 import step.automation.packages.accessor.InMemoryAutomationPackageAccessorImpl;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
@@ -31,8 +30,8 @@ public class FunctionLocatorTest {
 		Function expectedFunction2_v1 = newFunction("function2", "v1");
 		Function expectedFunction2_v2 = newFunction("function2", "v2");
 
-		FunctionLocator functionLocator = new FunctionLocator(functionAccessor, apAccessor,
-				new SelectorHelper(new DynamicJsonObjectResolver(new DynamicJsonValueResolver(new ExpressionHandler())))
+		FunctionLocator functionLocator = new FunctionLocator(functionAccessor,
+                new SelectorHelper(new DynamicJsonObjectResolver(new DynamicJsonValueResolver(new ExpressionHandler())))
 		);
 
 		// by id
