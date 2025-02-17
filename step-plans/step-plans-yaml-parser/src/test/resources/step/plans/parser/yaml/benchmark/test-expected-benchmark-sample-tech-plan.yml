@@ -13,6 +13,7 @@ root:
     value: ""
     expression: ""
   useDynamicName: false
+  workArtefact: false
   children:
     - _class: "ThreadGroup"
       attributes:
@@ -22,6 +23,7 @@ root:
         value: ""
         expression: ""
       useDynamicName: false
+      workArtefact: false
       children:
         - _class: "CallKeyword"
           attributes:
@@ -31,6 +33,7 @@ root:
             value: ""
             expression: ""
           useDynamicName: false
+          workArtefact: false
           children: []
           skipNode:
             dynamic: false
@@ -108,6 +111,7 @@ root:
           value: ""
           expression: ""
         useDynamicName: false
+        workArtefact: false
         children: [ ]
         skipNode:
           dynamic: false

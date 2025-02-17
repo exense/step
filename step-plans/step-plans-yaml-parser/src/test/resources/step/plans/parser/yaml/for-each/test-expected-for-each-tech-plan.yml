@@ -13,6 +13,7 @@ root:
     value: ""
     expression: ""
   useDynamicName: false
+  workArtefact: false
   children:
     - _class: "ForEach"
       attributes:
@@ -22,6 +23,7 @@ root:
         value: ""
         expression: ""
       useDynamicName: false
+      workArtefact: false
       description: "test sequence"
       children: []
       skipNode:
@@ -72,6 +74,7 @@ root:
         value: ""
         expression: ""
       useDynamicName: false
+      workArtefact: false
       description: "test excel"
       children: []
       skipNode:
@@ -121,6 +124,7 @@ root:
         value: ""
         expression: ""
       useDynamicName: false
+      workArtefact: false
       description: "test csv"
       children: []
       skipNode:
@@ -167,6 +171,7 @@ root:
         value: ""
         expression: ""
       useDynamicName: false
+      workArtefact: false
       description: "test folder"
       children: []
       skipNode:
@@ -210,6 +215,7 @@ root:
         value: ""
         expression: ""
       useDynamicName: false
+      workArtefact: false
       description: "test gsheet"
       children: []
       skipNode:
@@ -259,6 +265,7 @@ root:
         value: ""
         expression: ""
       useDynamicName: false
+      workArtefact: false
       description: "test json"
       children: []
       skipNode:
@@ -302,6 +309,7 @@ root:
         value: ""
         expression: ""
       useDynamicName: false
+      workArtefact: false
       description: "test json array"
       children: []
       skipNode:
@@ -345,6 +353,7 @@ root:
         value: ""
         expression: ""
       useDynamicName: false
+      workArtefact: false
       description: "test sql"
       children: []
       skipNode:
@@ -403,6 +412,7 @@ root:
         value: ""
         expression: ""
       useDynamicName: false
+      workArtefact: false
       description: "test file"
       children: []
       skipNode:
