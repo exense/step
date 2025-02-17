@@ -109,7 +109,7 @@ public class FunctionLocator {
 		List<T> entitiesWithLowerPriority = new ArrayList<>();
 		for (T entity : entities) {
 			boolean entityFromCurrentAp = false;
-			if (bindings.get(ExecutionContextBindings.BINDING_AP) != null) {
+			if (bindings != null && bindings.get(ExecutionContextBindings.BINDING_AP) != null) {
 				String entityApId = entity.getCustomField(AutomationPackageEntity.AUTOMATION_PACKAGE_ID, String.class);
 				String planApId = (String) bindings.get(ExecutionContextBindings.BINDING_AP);
 				if (Objects.equals(entityApId, planApId)) {
@@ -120,7 +120,7 @@ public class FunctionLocator {
 			boolean activationExpressionMatched = true;
 			if (entity instanceof EvaluationExpression) {
 				Expression activationExpression = ((EvaluationExpression) entity).getEvaluationExpression();
-				activationExpressionMatched = Activator.evaluateActivationExpression(new SimpleBindings(bindings), activationExpression, Activator.DEFAULT_SCRIPT_ENGINE);
+				activationExpressionMatched = Activator.evaluateActivationExpression(bindings == null ? null : new SimpleBindings(bindings), activationExpression, Activator.DEFAULT_SCRIPT_ENGINE);
 			}
 
 			// if the activation expression returns false, the entity is just filtered out
