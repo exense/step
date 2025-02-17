@@ -114,11 +114,12 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		}
 
 		try {
-			dynamicBeanResolver.evaluate(artefact, getBindings());
+			dynamicBeanResolver.evaluateMandatoryFieldsEvenForSkippedArtefact(artefact, getBindings());
 			reportNode.setName(getReportNodeNameDynamically(artefact));
 			if(filterArtefact(artefact)) {
 				reportNode.setStatus(ReportNodeStatus.SKIPPED);
 			} else {
+				dynamicBeanResolver.evaluate(artefact, getBindings());
 				try {
 					optionalRunChildrenBlock(artefact.getBefore(), (before) -> {
 						SequentialArtefactScheduler sequentialArtefactScheduler = new SequentialArtefactScheduler(context);
@@ -177,16 +178,17 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		}
 
 		try {
-			dynamicBeanResolver.evaluate(artefact, getBindings());
+			dynamicBeanResolver.evaluateMandatoryFieldsEvenForSkippedArtefact(artefact, getBindings());
 			reportNode.setName(getReportNodeNameDynamically(artefact));
 			reportNode.setArtefactInstance(artefact);
 			reportNode.setResolvedArtefact(artefact);
 
-			context.getExecutionCallbacks().beforeReportNodeExecution(context, reportNode);
-
 			if (filterArtefact(artefact)) {
+				context.getExecutionCallbacks().beforeReportNodeExecution(context, reportNode);
 				reportNode.setStatus(ReportNodeStatus.SKIPPED);
 			} else {
+				dynamicBeanResolver.evaluate(artefact, getBindings());
+				context.getExecutionCallbacks().beforeReportNodeExecution(context, reportNode);
 				Object forcePersistBefore = artefact.getCustomAttribute(FORCE_PERSIST_BEFORE);
 				if(persistBefore || Boolean.TRUE.equals(forcePersistBefore)) {
 					saveReportNode(reportNode);

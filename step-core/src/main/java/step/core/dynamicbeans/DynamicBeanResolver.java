@@ -20,6 +20,7 @@ package step.core.dynamicbeans;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.core.artefacts.AbstractArtefact;
 
 import java.beans.BeanInfo;
 import java.beans.Introspector;
@@ -89,6 +90,21 @@ public class DynamicBeanResolver {
 					logger.debug("Error while evaluating object: "+ o, e);
 				}
 			}			
+		}
+	}
+
+	public void evaluateMandatoryFieldsEvenForSkippedArtefact(AbstractArtefact artefact, Map<String, Object> bindings) {
+		if(artefact != null) {
+			try {
+				if (artefact.isUseDynamicName()) {
+					evaluateDynamicValue(bindings, artefact.getDynamicName());
+				}
+				evaluateDynamicValue(bindings, artefact.getSkipNode());
+			} catch (Exception e) {
+				if (logger.isDebugEnabled()) {
+					logger.debug("Error while evaluating object: " + artefact, e);
+				}
+			}
 		}
 	}
 
