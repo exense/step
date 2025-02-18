@@ -16,22 +16,19 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.client;
+package step.client;
 
-import step.automation.packages.AutomationPackageUpdateResult;
-import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
+import org.junit.experimental.categories.Category;
+import org.junit.runner.RunWith;
+import step.automation.packages.junit.IncludePlans;
+import step.handlers.javahandler.AbstractKeyword;
+import step.junit.categories.LocalJMeter;
+import step.junit.runner.Step;
+import step.junit.runners.annotations.ExecutionParameters;
 
-import java.io.Closeable;
-import java.io.File;
-import java.util.List;
-
-public interface AutomationPackageClient extends Closeable {
-
-    String createAutomationPackage(File automationPackageFile) throws AutomationPackageClientException;
-
-    AutomationPackageUpdateResult createOrUpdateAutomationPackage(File automationPackageFile, boolean async) throws AutomationPackageClientException;
-
-    List<String> executeAutomationPackage(File automationPackageFile, IsolatedAutomationPackageExecutionParameters params) throws AutomationPackageClientException;
-
-    void deleteAutomationPackage(String packageName) throws AutomationPackageClientException;
+@RunWith(Step.class)
+@ExecutionParameters({"PARAM_EXEC","Value","PARAM_EXEC2","Value","PARAM_EXEC3","Value"})
+@IncludePlans({"JMeter Plan", "testAutomation.plan"})
+@Category(LocalJMeter.class)
+public class StepRunnerWithJMeterPlanTest extends AbstractKeyword {
 }

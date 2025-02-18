@@ -35,8 +35,6 @@ import java.util.Map;
 
 public class CompositeFunctionType extends AbstractFunctionType<CompositeFunction> {
 
-	protected FileVersionId handlerJar;
-
 	private final ObjectHookRegistry objectHookRegistry;
 
 	public CompositeFunctionType(ObjectHookRegistry objectHookRegistry) {
@@ -47,7 +45,7 @@ public class CompositeFunctionType extends AbstractFunctionType<CompositeFunctio
 	@Override
 	public void init() {
 		super.init();
-		handlerJar = registerResource(getClass().getClassLoader(), "step-functions-composite-handler.jar", false);
+		handlerPackageVersion = registerResource(getClass().getClassLoader(), "step-functions-composite-handler.jar", false, false);
 	}
 
 	@Override
@@ -56,10 +54,10 @@ public class CompositeFunctionType extends AbstractFunctionType<CompositeFunctio
 	}
 
 	@Override
-	public Map<String, String> getHandlerProperties(CompositeFunction function, AbstractStepContext executionContext) {
+	public HandlerProperties getHandlerProperties(CompositeFunction function, AbstractStepContext executionContext) {
 		Map<String, String> props = new HashMap<>();
 		props.put(ArtefactFunctionHandler.COMPOSITE_FUNCTION_KEY, function.getId().toString());
-		return props;
+		return new HandlerProperties(props);
 	}
 
 	@Override
@@ -93,11 +91,6 @@ public class CompositeFunctionType extends AbstractFunctionType<CompositeFunctio
 	@Override
 	public CompositeFunction copyFunction(CompositeFunction function) throws FunctionTypeException {
 		return super.copyFunction(function);
-	}
-
-	@Override
-	public FileVersionId getHandlerPackage(CompositeFunction function) {
-		return handlerJar;
 	}
 
 	@Override

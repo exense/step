@@ -64,7 +64,7 @@ public class GeneralScriptFunctionType extends AbstractScriptFunctionType<Genera
 	}
 
 	@Override
-	public Map<String, String> getHandlerProperties(GeneralScriptFunction function, AbstractStepContext context) {
+	public HandlerProperties getHandlerProperties(GeneralScriptFunction function, AbstractStepContext context) {
 		String language = getScriptLanguage(function);
 		if (language != null) {
 			String errorHandler = configuration.getProperty("plugins." + language + ".errorhandler", null);

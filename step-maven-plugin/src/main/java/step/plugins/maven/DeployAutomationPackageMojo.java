@@ -123,7 +123,7 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
         }
 
         @Override
-        protected void logError(String errorText, Throwable e) {
+        public void logError(String errorText, Throwable e) {
             if (e != null) {
                 DeployAutomationPackageMojo.this.getLog().error(errorText, e);
             } else {
@@ -132,7 +132,7 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
         }
 
         @Override
-        protected void logInfo(String infoText, Throwable e) {
+        public void logInfo(String infoText, Throwable e) {
             if (e != null) {
                 DeployAutomationPackageMojo.this.getLog().info(infoText, e);
             } else {

@@ -1,10 +1,9 @@
 package step.core.artefacts.reports.resolvedplan;
 
 import step.core.accessors.AbstractAccessor;
-import step.core.collections.Collection;
-import step.core.collections.CollectionFactory;
+import step.core.collections.*;
+import step.core.collections.filters.Equals;
 
-import java.util.Map;
 import java.util.stream.Stream;
 
 public class ResolvedPlanNodeAccessor extends AbstractAccessor<ResolvedPlanNode> {
@@ -17,6 +16,7 @@ public class ResolvedPlanNodeAccessor extends AbstractAccessor<ResolvedPlanNode>
     }
 
     public Stream<ResolvedPlanNode> getByParentId(String parentId) {
-        return findManyByCriteria(Map.of(PARENT_ID, parentId));
+        Equals parentIdFilter = Filters.equals(PARENT_ID, parentId);
+        return this.collectionDriver.find(parentIdFilter, new SearchOrder("position", 1), (Integer)null, (Integer)null, 0);
     }
 }
