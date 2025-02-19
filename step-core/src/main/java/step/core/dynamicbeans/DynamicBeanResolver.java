@@ -93,21 +93,6 @@ public class DynamicBeanResolver {
 		}
 	}
 
-	public void evaluateMandatoryFieldsEvenForSkippedArtefact(AbstractArtefact artefact, Map<String, Object> bindings) {
-		if(artefact != null) {
-			try {
-				if (artefact.isUseDynamicName()) {
-					evaluateDynamicValue(bindings, artefact.getDynamicName());
-				}
-				evaluateDynamicValue(bindings, artefact.getSkipNode());
-			} catch (Exception e) {
-				if (logger.isDebugEnabled()) {
-					logger.debug("Error while evaluating object: " + artefact, e);
-				}
-			}
-		}
-	}
-
 	private void recursivelyEvaluateValue(Map<String, Object> bindings, Object value) {
 		if (value instanceof  List) {
 			List l = (List) value;
@@ -117,7 +102,7 @@ public class DynamicBeanResolver {
 		}
 	}
 
-	private void evaluateDynamicValue(Map<String, Object> bindings, DynamicValue<?> value) {
+	public void evaluateDynamicValue(Map<String, Object> bindings, DynamicValue<?> value) {
 		if(value!=null) {
 			valueResolver.evaluate(value, bindings);
 			evaluate(value.get(), bindings);
