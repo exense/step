@@ -190,7 +190,7 @@ public class DashboardsGenerator {
                 .setSize(1)
                 .setChartSettings(new ChartSettings()
                         .setPrimaryAxes(new AxesSettings()
-                                .setAggregation(new MetricAggregation(MetricAggregationType.COUNT))
+                                .setAggregation(new MetricAggregation(MetricAggregationType.RATE, Map.of(RATE_UNIT_KEY, "s")))
                                 .setUnit("1")
                                 .setDisplayType(AxesDisplayType.LINE)
                                 .setColorizationType(AxesColorizationType.FILL)));
