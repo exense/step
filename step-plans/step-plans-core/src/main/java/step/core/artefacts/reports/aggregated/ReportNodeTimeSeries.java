@@ -26,6 +26,7 @@ public class ReportNodeTimeSeries implements Closeable {
     public static final String TIME_SERIES_MAIN_COLLECTION = "reportNodeTimeSeries";
     public static final String ARTEFACT_HASH = "artefactHash";
     public static final String EXECUTION_ID = "executionId";
+    public static final String TYPE = "type";
     public static final String STATUS = "status";
     public static final String ERROR_CODE = "errorCode";
     public static final String ERROR_MESSAGE = "errorMessage";
@@ -75,8 +76,8 @@ public class ReportNodeTimeSeries implements Closeable {
     }
 
     public static class Range {
-        long from;
-        long to;
+        public long from;
+        public long to;
     }
 
     public Map<String, Long> queryByExecutionIdAndArtefactHash(String executionId, String artefactHash, Range range) {

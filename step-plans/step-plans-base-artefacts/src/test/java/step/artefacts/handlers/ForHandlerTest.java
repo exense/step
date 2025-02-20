@@ -41,6 +41,7 @@ import step.core.plans.builder.PlanBuilder;
 import step.core.plans.runner.DefaultPlanRunner;
 import step.datapool.sequence.IntSequenceDataPool;
 import step.planbuilder.BaseArtefacts;
+import step.threadpool.ThreadPool;
 
 public class ForHandlerTest {
 
@@ -207,7 +208,7 @@ public class ForHandlerTest {
 			});
 		
 		Plan plan = PlanBuilder.create().startBlock(BaseArtefacts.sequence())
-											.add(BaseArtefacts.set("execution_threads_auto", "2"))
+											.add(BaseArtefacts.set(ThreadPool.EXECUTION_THREADS_AUTO, "2"))
 											.startBlock(f)
 												.add(check1)
 											.endBlock()
@@ -245,7 +246,7 @@ public class ForHandlerTest {
 			});
 		
 		Plan plan = PlanBuilder.create().startBlock(BaseArtefacts.sequence())
-											.add(BaseArtefacts.set("execution_threads_auto", "2"))
+											.add(BaseArtefacts.set(ThreadPool.EXECUTION_THREADS_AUTO, "2"))
 											.startBlock(f)
 												.startBlock(for2)
 													.add(check1)

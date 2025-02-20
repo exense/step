@@ -13,9 +13,9 @@ public class MyFunctionType extends AbstractFunctionType<MyFunction> {
     }
 
     @Override
-    public Map<String, String> getHandlerProperties(MyFunction function, AbstractStepContext executionContext) {
+    public HandlerProperties getHandlerProperties(MyFunction function, AbstractStepContext executionContext) {
         String handlerId = MyFunctionHandler.registerHandler(function.getHandler());
-        return Map.of(MyFunctionHandler.HANDLER_ID, handlerId);
+        return new HandlerProperties(Map.of(MyFunctionHandler.HANDLER_ID, handlerId));
     }
 
     @Override
