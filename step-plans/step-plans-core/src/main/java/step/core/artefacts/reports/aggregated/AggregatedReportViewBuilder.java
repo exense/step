@@ -43,11 +43,29 @@ public class AggregatedReportViewBuilder {
         this.mainReportNodesTimeSeries = executionEngineContext.require(ReportNodeTimeSeries.class);
     }
 
+    public static class AggregatedReport {
+        public AggregatedReportView aggregatedReportView;
+        public String selectedReportNodeId;
+        public String resolvedPartialPath;
+
+        public AggregatedReport(AggregatedReportView aggregatedReportView) {
+            this.aggregatedReportView = aggregatedReportView;
+        }
+
+        public AggregatedReport() {
+
+        }
+    }
+
     public AggregatedReportView buildAggregatedReportView() {
         return buildAggregatedReportView(new AggregatedReportViewRequest(null, null, null, null));
     }
 
     public AggregatedReportView buildAggregatedReportView(AggregatedReportViewRequest request) {
+        return buildAggregatedReport(request).aggregatedReportView;
+    }
+
+    public AggregatedReport buildAggregatedReport(AggregatedReportViewRequest request) {
         Objects.requireNonNull(request);
         Execution execution = executionAccessor.get(executionId);
         //Make sure the resolved Plan is available
@@ -56,15 +74,18 @@ public class AggregatedReportViewBuilder {
             return null;
         } else if (request.selectedReportNodeId == null) {
             // Generate complete aggregated report tree
-            return recursivelyBuildAggregatedReportTree(rootResolvedPlanNode, request, mainReportNodesTimeSeries, mainReportNodeAccessor, null);
+            return new AggregatedReport(recursivelyBuildAggregatedReportTree(rootResolvedPlanNode, request, mainReportNodesTimeSeries, mainReportNodeAccessor, null));
         } else {
             // a node is selected to generate a partial aggregated report
             try (ReportNodeTimeSeries localReportNodesTimeSeries = getInMemoryReportNodeTimeSeries()) {
                 InMemoryReportNodeAccessor inMemoryReportNodeAccessor = new InMemoryReportNodeAccessor();
-                Set<String> reportArtefactHashSet = buildPartialReportNodeTimeSeries(request.selectedReportNodeId, localReportNodesTimeSeries, inMemoryReportNodeAccessor);
+                AggregatedReport aggregatedReport = new AggregatedReport();
+                aggregatedReport.selectedReportNodeId = request.selectedReportNodeId;
+                Set<String> reportArtefactHashSet = buildPartialReportNodeTimeSeries(aggregatedReport, localReportNodesTimeSeries, inMemoryReportNodeAccessor);
                 // Only pass the reportArtefactHashSet if aggregate view filtering is enabled
                 reportArtefactHashSet = (request.filterResolvedPlanNodes) ? reportArtefactHashSet : null;
-                return recursivelyBuildAggregatedReportTree(rootResolvedPlanNode, request, localReportNodesTimeSeries, inMemoryReportNodeAccessor, reportArtefactHashSet);
+                aggregatedReport.aggregatedReportView = recursivelyBuildAggregatedReportTree(rootResolvedPlanNode, request, localReportNodesTimeSeries, inMemoryReportNodeAccessor, reportArtefactHashSet);
+                return aggregatedReport;
             } catch (IOException e) {
                 //Handle auto-closable exception, the aggregated report view was created in all cases.
                 logger.error("Unable to close the local report node time series", e);
@@ -103,13 +124,14 @@ public class AggregatedReportViewBuilder {
      * This aggregated tree will be filtered for the execution path of this single report node. If available we filter on the wrapping (nested) iteration
      * or simply on the selected node and its descendant
      *
-     * @param selectedReportNodeIdStr the id of the selected report node
-     * @param reportNodeTimeSeries the inMemory report node time series to be populated
-     * @param reportNodeAccessor the inMemory report node accessor to be populated
+     * @param aggregatedReport the aggregatedReport which contains the selected node, it will be populated with the resolved path
+     * @param reportNodeTimeSeries    the inMemory report node time series to be populated
+     * @param reportNodeAccessor      the inMemory report node accessor to be populated
+     * @param aggregatedReport
      * @return the set of artefact hash part of the partial report
      */
-    private Set<String> buildPartialReportNodeTimeSeries(String selectedReportNodeIdStr, ReportNodeTimeSeries reportNodeTimeSeries, ReportNodeAccessor reportNodeAccessor) {
-        ObjectId selectedReportNodeId = new ObjectId(selectedReportNodeIdStr);
+    private Set<String> buildPartialReportNodeTimeSeries(AggregatedReport aggregatedReport, ReportNodeTimeSeries reportNodeTimeSeries, ReportNodeAccessor reportNodeAccessor) {
+        ObjectId selectedReportNodeId = new ObjectId(aggregatedReport.selectedReportNodeId);
         List<ReportNode> path = mainReportNodeAccessor.getReportNodePath(selectedReportNodeId);
         if (path == null || path.isEmpty()) {
             throw new RuntimeException("Unable to determine the path of the selected node.");
@@ -123,9 +145,9 @@ public class AggregatedReportViewBuilder {
         // There are only used to resolve single nodes when building the aggregated tree
         Map<String, ReportNode> singleReportNodes = new HashMap<>();
         // select the closest iteration node if any otherwise we fall back to the selected node
-        Optional<ReportNode> parentIteration = path.stream().filter(this::isIterationNodeReport).findFirst();
-        parentIteration.ifPresentOrElse(n -> ingestReportNodeRecursively(n, reportNodeTimeSeries, singleReportNodes),
-                        () -> ingestReportNodeRecursively(selectedReportNode, reportNodeTimeSeries, singleReportNodes));
+        ReportNode partialTreeRoot = path.stream().filter(this::isIterationNodeReport).findFirst().orElse(selectedReportNode);
+        aggregatedReport.resolvedPartialPath = partialTreeRoot.getPath();
+        ingestReportNodeRecursively(partialTreeRoot, reportNodeTimeSeries, singleReportNodes);
         reportNodeAccessor.save(singleReportNodes.values());
         reportNodeTimeSeries.flush();
         // build the set of artefact hash to be included in the report (re-ingested nodes + nodes of the path)

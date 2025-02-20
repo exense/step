@@ -32,7 +32,6 @@ import step.reports.CustomReportType;
 import step.controller.services.async.AsyncTaskStatus;
 import step.core.access.User;
 import step.core.artefacts.reports.ReportNode;
-import step.core.artefacts.reports.aggregated.AggregatedReportView;
 import step.core.artefacts.reports.aggregated.AggregatedReportViewBuilder;
 import step.core.artefacts.reports.junitxml.JUnitXmlReportBuilder;
 import step.core.collections.SearchOrder;
@@ -263,7 +262,7 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 	@Path("/{id}/report/aggregated")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right = "execution-read")
-	public AggregatedReportView getFullAggregatedReportView(@PathParam("id") String executionId) {
+	public AggregatedReportViewBuilder.AggregatedReport getFullAggregatedReportView(@PathParam("id") String executionId) {
 		try {
 			return getAggregatedReportView(executionId, new AggregatedReportViewBuilder.AggregatedReportViewRequest(null, null, null, null));
 		} catch (Exception e) {
@@ -278,11 +277,11 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right = "execution-read")
-	public AggregatedReportView getAggregatedReportView(@PathParam("id") String executionId, AggregatedReportViewBuilder.AggregatedReportViewRequest request) {
+	public AggregatedReportViewBuilder.AggregatedReport getAggregatedReportView(@PathParam("id") String executionId, AggregatedReportViewBuilder.AggregatedReportViewRequest request) {
 		try {
 			ExecutionEngineContext executionEngineContext = getScheduler().getExecutor().getExecutionEngine().getExecutionEngineContext();
 			AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(executionEngineContext, executionId);
-			return aggregatedReportViewBuilder.buildAggregatedReportView(request);
+			return aggregatedReportViewBuilder.buildAggregatedReport(request);
 		} catch (Exception e) {
 			logger.error("Unable to build the aggregation report view for executionId {}", executionId, e);
 			throw new ControllerServiceException("Aggregation Report failed: " + e.getMessage());

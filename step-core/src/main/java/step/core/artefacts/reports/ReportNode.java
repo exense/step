@@ -36,6 +36,7 @@ import java.util.Map;
 public class ReportNode extends AbstractIdentifiableObject {
 	
 	protected ObjectId parentID;
+	protected String path;
 	protected String name;
 	protected String executionID;
 	protected ObjectId artefactID;
@@ -67,6 +68,14 @@ public class ReportNode extends AbstractIdentifiableObject {
 
 	public void setParentID(ObjectId parentID) {
 		this.parentID = parentID;
+	}
+
+	public String getPath() {
+		return path;
+	}
+
+	public void setPath(String path) {
+		this.path = path;
 	}
 
 	public String getName() {
