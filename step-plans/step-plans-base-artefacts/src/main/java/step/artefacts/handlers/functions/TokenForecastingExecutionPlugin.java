@@ -28,6 +28,7 @@ import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;
 import step.core.plugins.Plugin;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
+import step.threadpool.ThreadPool;
 
 import java.util.Set;
 
@@ -63,6 +64,14 @@ public class TokenForecastingExecutionPlugin extends AbstractExecutionEnginePlug
 
         // Token forecasting is always calculated, even if the agent provisioning is disabled
         TokenForecastingContext tokenForecastingContext = new TokenForecastingContext(availableAgentPools);
+        String executionThreadsAuto = context.getVariablesManager().getVariableAsString(ThreadPool.EXECUTION_THREADS_AUTO, null);
+        if (executionThreadsAuto != null && !executionThreadsAuto.isEmpty()) {
+            try {
+                tokenForecastingContext.setMaxParallelism(Integer.parseInt(executionThreadsAuto));
+            } catch (NumberFormatException e) {
+                logger.warn("Ignoring unparseable value for parameter {}: {}", ThreadPool.EXECUTION_THREADS_AUTO, executionThreadsAuto, e);
+            }
+        }
         pushTokenForecastingContext(context, tokenForecastingContext, context.getReport());
     }
 
