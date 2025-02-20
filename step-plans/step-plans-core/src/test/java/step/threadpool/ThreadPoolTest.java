@@ -153,7 +153,7 @@ public class ThreadPoolTest {
 	public void testAutoMode() {
 		ExecutionContext context = newExecutionContext();
 		ReportNode rootReportNode = context.getReport();
-		context.getVariablesManager().putVariable(rootReportNode, "execution_threads_auto", 2);
+		context.getVariablesManager().putVariable(rootReportNode, ThreadPool.EXECUTION_THREADS_AUTO, 2);
 		
 		ThreadPool threadPool = new ThreadPool(context);
 		
@@ -211,7 +211,7 @@ public class ThreadPoolTest {
 		ExecutionContext context = newExecutionContext();
 		ReportNode rootReportNode = context.getReport();
 		context.getReportNodeCache().put(rootReportNode);
-		context.getVariablesManager().putVariable(rootReportNode, "execution_threads_auto", 2);
+		context.getVariablesManager().putVariable(rootReportNode, ThreadPool.EXECUTION_THREADS_AUTO, 2);
 
 		ThreadPool threadPool = new ThreadPool(context);
 
@@ -304,7 +304,7 @@ public class ThreadPoolTest {
 		
 		// Empty string => disabled
 		ReportNode rootReportNode = context.getReport();
-		context.getVariablesManager().putVariable(rootReportNode, "execution_threads_auto", "");
+		context.getVariablesManager().putVariable(rootReportNode, ThreadPool.EXECUTION_THREADS_AUTO, "");
 		
 		ThreadPool threadPool = new ThreadPool(context);
 		
