@@ -19,6 +19,9 @@
 package step.plans.parser.yaml.editor;
 
 import org.everit.json.schema.ValidationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.plans.Plan;
 import step.core.plans.PlanCompilationError;
@@ -28,11 +31,15 @@ import step.plans.parser.yaml.YamlPlanReader;
 import step.plans.parser.yaml.schema.YamlPlanValidationException;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.stream.Collectors;
 
 class YamlEditorPlanTypeCompiler implements PlanCompiler<YamlEditorPlan> {
+
+    private static final Logger log = LoggerFactory.getLogger(YamlEditorPlanTypeCompiler.class);
 
     private final YamlPlanReader reader;
     private final LineNumberByJsonPointerResolver lineNumberResolver;
@@ -122,6 +129,16 @@ class YamlEditorPlanTypeCompiler implements PlanCompiler<YamlEditorPlan> {
         plan.setFunctions(parsedPlan.getFunctions());
 
         return plan;
+    }
+
+    public String prepareSource(Plan plan) {
+        try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
+            reader.writeYamlPlan(os, plan);
+            return os.toString();
+        } catch (IOException e) {
+            log.error("Cannot prepare source for plan " + plan.getAttribute(AbstractOrganizableObject.NAME));
+            return "";
+        }
     }
 
     static class YamlEditorPlanCompilationError extends PlanCompilationError {

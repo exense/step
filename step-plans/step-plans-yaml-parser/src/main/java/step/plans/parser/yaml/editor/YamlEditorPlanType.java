@@ -25,7 +25,7 @@ import step.plans.parser.yaml.YamlPlanReader;
 
 public class YamlEditorPlanType implements PlanType<YamlEditorPlan> {
 
-    private final PlanCompiler<YamlEditorPlan> compiler = new YamlEditorPlanTypeCompiler();
+    private final YamlEditorPlanTypeCompiler compiler = new YamlEditorPlanTypeCompiler();
 
     public YamlEditorPlanType() {
     }
@@ -46,10 +46,10 @@ public class YamlEditorPlanType implements PlanType<YamlEditorPlan> {
         RootArtefactType type = RootArtefactType.valueOf(template);
         yamlEditorPlan.setType(type);
         yamlEditorPlan.setRoot(type.createRootArtefact());
-        yamlEditorPlan.setSource("");
         if (name != null) {
             YamlPlanReader.setPlanName(yamlEditorPlan, name);
         }
+        yamlEditorPlan.setSource(compiler.prepareSource(yamlEditorPlan));
         return yamlEditorPlan;
     }
 
