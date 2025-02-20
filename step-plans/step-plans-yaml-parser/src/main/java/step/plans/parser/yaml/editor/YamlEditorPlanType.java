@@ -21,6 +21,7 @@ package step.plans.parser.yaml.editor;
 import org.bson.types.ObjectId;
 import step.core.plans.*;
 import step.plans.nl.RootArtefactType;
+import step.plans.parser.yaml.YamlPlanReader;
 
 public class YamlEditorPlanType implements PlanType<YamlEditorPlan> {
 
@@ -40,12 +41,15 @@ public class YamlEditorPlanType implements PlanType<YamlEditorPlan> {
     }
 
     @Override
-    public YamlEditorPlan newPlan(String template) throws Exception {
+    public YamlEditorPlan newPlan(String template, String name) throws Exception {
         YamlEditorPlan yamlEditorPlan = new YamlEditorPlan();
         RootArtefactType type = RootArtefactType.valueOf(template);
         yamlEditorPlan.setType(type);
         yamlEditorPlan.setRoot(type.createRootArtefact());
         yamlEditorPlan.setSource("");
+        if (name != null) {
+            YamlPlanReader.setPlanName(yamlEditorPlan, name);
+        }
         return yamlEditorPlan;
     }
 

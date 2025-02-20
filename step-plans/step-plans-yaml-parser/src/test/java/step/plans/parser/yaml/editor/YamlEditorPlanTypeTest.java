@@ -49,7 +49,7 @@ public class YamlEditorPlanTypeTest {
             try (FileInputStream is = new FileInputStream(yamlFile)) {
                 byte[] fileContent = is.readAllBytes();
                 String fileContentAsString = new String(fileContent);
-                YamlEditorPlan newPlan = yamlEditorPlanType.newPlan("Sequence");
+                YamlEditorPlan newPlan = yamlEditorPlanType.newPlan("Sequence", "myPlan");
                 newPlan.setSource(fileContentAsString);
 
                 try {

@@ -87,9 +87,9 @@ public class PlanServices extends AbstractEntityServices<Plan> {
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="{entity}-write")
-	public Plan newPlan(@QueryParam("type") String type, @QueryParam("template") String template) throws Exception {
+	public Plan newPlan(@QueryParam("type") String type, @QueryParam("template") String template, @QueryParam("name") String name) throws Exception {
 		PlanType<Plan> planType = getPlanTypeNotNull(type);
-		Plan plan = planType.newPlan(template);
+		Plan plan = planType.newPlan(template, name);
 		getObjectEnricher().accept(plan);
 		return plan;
 	}
