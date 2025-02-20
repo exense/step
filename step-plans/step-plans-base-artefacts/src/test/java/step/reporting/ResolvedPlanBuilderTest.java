@@ -150,6 +150,7 @@ public class ResolvedPlanBuilderTest {
                 .startBlock(BaseArtefacts.for_(1, 10 ,3))
                 .add(echo("'test'"))
                 .startBlock(BaseArtefacts.for_(1, 5))
+                .add(set("key","'value'"))
                 .add(echo("'Echo 2'"))
                 .add(echo("'Echo 3'"))
                 .endBlock()
@@ -171,8 +172,26 @@ public class ResolvedPlanBuilderTest {
         assertEquals("For: 1x: PASSED\n" +
                         " Echo: 10x: PASSED\n" +
                         " For: 10x: PASSED\n" +
+                        "  Set: 50x: PASSED\n" +
                         "  Echo: 50x: PASSED\n" +
                         "  Echo: 50x: PASSED\n",
+                node.toString());
+
+        // Test partial aggregated tree for single Set
+        ReportNode reportNode = engine.getExecutionEngineContext().getReportNodeAccessor().getReportNodesByExecutionIDAndClass(result.getExecutionId(), "step.artefacts.reports.SetReportNode").findFirst().orElseThrow(() -> new RuntimeException("No echo report node found"));
+        AggregatedReportViewBuilder.AggregatedReportViewRequest aggregatedReportViewRequest = new AggregatedReportViewBuilder.AggregatedReportViewRequest(null, true, reportNode.getId().toHexString(), true);
+        node = aggregatedReportViewBuilder.buildAggregatedReportView(aggregatedReportViewRequest);
+
+        logger.info("----------------------");
+        logger.info("Partial aggregated report tree");
+        logger.info("----------------------");
+        logger.info(node.toString());
+
+        assertEquals("For: 0x\n" +
+                        " For: 0x\n" +
+                        "  Set: 1x: PASSED > key = value\n" +
+                        "  Echo: 1x: PASSED > Echo 2\n" +
+                        "  Echo: 1x: PASSED > Echo 3\n",
                 node.toString());
     }
 

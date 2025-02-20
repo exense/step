@@ -111,12 +111,21 @@ public class AggregatedReportViewBuilder {
     private Set<String> buildPartialReportNodeTimeSeries(String selectedReportNodeIdStr, ReportNodeTimeSeries reportNodeTimeSeries, ReportNodeAccessor reportNodeAccessor) {
         ObjectId selectedReportNodeId = new ObjectId(selectedReportNodeIdStr);
         List<ReportNode> path = mainReportNodeAccessor.getReportNodePath(selectedReportNodeId);
+        if (path == null || path.isEmpty()) {
+            throw new RuntimeException("Unable to determine the path of the selected node.");
+        }
+        Collections.reverse(path);
+        ReportNode selectedReportNode = path.get(0);
+        if (!selectedReportNode.getId().equals(selectedReportNodeId)) {
+            throw new RuntimeException("Unable to determine the path of the selected node.");
+        }
         // During ingestion, we store single report node per artefact hash in memory rather than saving all report nodes
         // There are only used to resolve single nodes when building the aggregated tree
         Map<String, ReportNode> singleReportNodes = new HashMap<>();
-        // select the first report node being either an iteration or the selected node and start the recursive ingestion
-        path.stream().filter(n -> n.getId().equals(selectedReportNodeId) || isIterationNodeReport(n)).findFirst()
-                .ifPresent(n -> ingestReportNodeRecursively(n, reportNodeTimeSeries, singleReportNodes));
+        // select the closest iteration node if any otherwise we fall back to the selected node
+        Optional<ReportNode> parentIteration = path.stream().filter(this::isIterationNodeReport).findFirst();
+        parentIteration.ifPresentOrElse(n -> ingestReportNodeRecursively(n, reportNodeTimeSeries, singleReportNodes),
+                        () -> ingestReportNodeRecursively(selectedReportNode, reportNodeTimeSeries, singleReportNodes));
         reportNodeAccessor.save(singleReportNodes.values());
         reportNodeTimeSeries.flush();
         // build the set of artefact hash to be included in the report (re-ingested nodes + nodes of the path)
