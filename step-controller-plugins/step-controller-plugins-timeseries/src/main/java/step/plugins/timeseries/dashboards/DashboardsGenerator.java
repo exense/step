@@ -71,7 +71,7 @@ public class DashboardsGenerator {
         dashboard
                 .setGrouping(List.of("name"))
                 .setDescription("Preconfigured dashboard for execution performance analysis")
-                .setTimeRange(new TimeRangeSelection().setType(TimeRangeSelectionType.RELATIVE).setRelativeSelection(new TimeRangeRelativeSelection().setTimeInMs(60000L)))
+                .setTimeRange(new TimeRangeSelection().setType(TimeRangeSelectionType.FULL))
                 .setFilters(Arrays.asList(
                         emptyFilterFromAttribute(STATUS_ATTRIBUTE, TimeSeriesFilterItemType.OPTIONS, true),
                         emptyFilterFromAttribute(TYPE_ATRIBUTE, TimeSeriesFilterItemType.OPTIONS, true),
