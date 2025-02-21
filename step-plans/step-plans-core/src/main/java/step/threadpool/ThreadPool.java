@@ -41,7 +41,7 @@ import step.core.execution.ExecutionContext;
 
 public class ThreadPool implements Closeable {
 	
-	private static final String EXECUTION_THREADS_AUTO = "execution_threads_auto";
+	public static final String EXECUTION_THREADS_AUTO = "execution_threads_auto";
 
 	private static final String EXECUTION_THREADS_AUTO_CONSUMED = "$execution_threads_auto_consumed";
 
@@ -204,6 +204,7 @@ public class ThreadPool implements Closeable {
 					logger.error("Error while waiting for worker execution to terminate. Execution ID: "+executionContext.getExecutionId(), e);
 				}
 			}
+
 		}
 	}
 

@@ -44,6 +44,24 @@ public class TokenForecastingContext {
     protected final TokenForecastingContext parentContext;
     protected Set<Map<String, Interest>> criteriaWithoutMatch = new HashSet<>();
 
+    // This corresponds to the execution_threads_auto execution parameter, which effectively limits parallelism
+    private Integer maxParallelism;
+
+    protected final Integer getMaxParallelism() {
+        if (parentContext != null) {
+            return parentContext.getMaxParallelism();
+        }
+        return maxParallelism;
+    }
+
+    public final void setMaxParallelism(Integer maxParallelism) {
+        if (parentContext != null) {
+            parentContext.setMaxParallelism(maxParallelism);
+        } else {
+            this.maxParallelism = maxParallelism;
+        }
+    }
+
     public TokenForecastingContext(Set<AgentPoolSpec> availableAgentPools) {
         this.availableAgentPools = availableAgentPools;
         this.parentContext = null;
@@ -144,6 +162,11 @@ public class TokenForecastingContext {
             // Sort the matching pools by descending number of tokens
             List<AgentPoolSpec> matchingPools = key.matchingPools.stream()
                     .sorted(Comparator.comparingInt(o -> -o.numberOfTokens)).collect(Collectors.toList());
+
+            // If max. parallelism is set, we'll never require more tokens than that, so clamp the value immediately
+            if (getMaxParallelism() != null) {
+                requiredNumberOfTokens = Math.min(getMaxParallelism(), requiredNumberOfTokens);
+            }
 
             // If we have more than one matching pool, we calculate the combination than minimizes the total number of agents
             int remainingTokenCount = requiredNumberOfTokens;
