@@ -45,7 +45,6 @@ public class AggregatedReportViewBuilder {
 
     public static class AggregatedReport {
         public AggregatedReportView aggregatedReportView;
-        public String selectedReportNodeId;
         public String resolvedPartialPath;
 
         public AggregatedReport(AggregatedReportView aggregatedReportView) {
@@ -80,8 +79,7 @@ public class AggregatedReportViewBuilder {
             try (ReportNodeTimeSeries localReportNodesTimeSeries = getInMemoryReportNodeTimeSeries()) {
                 InMemoryReportNodeAccessor inMemoryReportNodeAccessor = new InMemoryReportNodeAccessor();
                 AggregatedReport aggregatedReport = new AggregatedReport();
-                aggregatedReport.selectedReportNodeId = request.selectedReportNodeId;
-                Set<String> reportArtefactHashSet = buildPartialReportNodeTimeSeries(aggregatedReport, localReportNodesTimeSeries, inMemoryReportNodeAccessor);
+                Set<String> reportArtefactHashSet = buildPartialReportNodeTimeSeries(aggregatedReport, request.selectedReportNodeId, localReportNodesTimeSeries, inMemoryReportNodeAccessor);
                 // Only pass the reportArtefactHashSet if aggregate view filtering is enabled
                 reportArtefactHashSet = (request.filterResolvedPlanNodes) ? reportArtefactHashSet : null;
                 aggregatedReport.aggregatedReportView = recursivelyBuildAggregatedReportTree(rootResolvedPlanNode, request, localReportNodesTimeSeries, inMemoryReportNodeAccessor, reportArtefactHashSet);
@@ -124,14 +122,14 @@ public class AggregatedReportViewBuilder {
      * This aggregated tree will be filtered for the execution path of this single report node. If available we filter on the wrapping (nested) iteration
      * or simply on the selected node and its descendant
      *
-     * @param aggregatedReport the aggregatedReport which contains the selected node, it will be populated with the resolved path
-     * @param reportNodeTimeSeries    the inMemory report node time series to be populated
-     * @param reportNodeAccessor      the inMemory report node accessor to be populated
-     * @param aggregatedReport
+     * @param aggregatedReport the aggregatedReport, it will be populated with the resolved path
+     * @param selectedReportNodeIdStr the selected report node if for which we generate the partial report
+     * @param reportNodeTimeSeries the inMemory report node time series to be populated
+     * @param reportNodeAccessor   the inMemory report node accessor to be populated
      * @return the set of artefact hash part of the partial report
      */
-    private Set<String> buildPartialReportNodeTimeSeries(AggregatedReport aggregatedReport, ReportNodeTimeSeries reportNodeTimeSeries, ReportNodeAccessor reportNodeAccessor) {
-        ObjectId selectedReportNodeId = new ObjectId(aggregatedReport.selectedReportNodeId);
+    private Set<String> buildPartialReportNodeTimeSeries(AggregatedReport aggregatedReport, String selectedReportNodeIdStr, ReportNodeTimeSeries reportNodeTimeSeries, ReportNodeAccessor reportNodeAccessor) {
+        ObjectId selectedReportNodeId = new ObjectId(selectedReportNodeIdStr);
         List<ReportNode> path = mainReportNodeAccessor.getReportNodePath(selectedReportNodeId);
         if (path == null || path.isEmpty()) {
             throw new RuntimeException("Unable to determine the path of the selected node.");

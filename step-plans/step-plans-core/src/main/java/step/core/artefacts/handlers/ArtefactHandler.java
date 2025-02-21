@@ -65,8 +65,6 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	public static final String TEC_EXECUTION_REPORTNODES_PERSISTONLYNONPASSED = "tec.execution.reportnodes.persistonlynonpassed";
 	public static final String CTX_ADDITIONAL_ATTRIBUTES = "$additionalAttributes";
 
-	private static final SecureRandom SECURE_RANDOM = new SecureRandom(); // Single instance
-
 	protected ExecutionContext context;
 	private ArtefactHandlerManager artefactHandlerManager;
 	private ReportNodeAttachmentManager reportNodeAttachmentManager;
@@ -507,24 +505,12 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		node.setName(getReportNodeName(artefact));
 		node.setParentID(parentReportNode.getId());
 		String parentPath = parentReportNode.getPath();
-		node.setPath(((parentPath != null) ? parentPath : "") + generateShortId(10));//Base64.getEncoder().encodeToString(node.getId().toByteArray()));
+		node.setPath(((parentPath != null) ? parentPath : "") + node.getId());
 		node.setArtefactID(artefact.getId());
 		node.setExecutionID(context.getExecutionId().toString());
 		node.setStatus(ReportNodeStatus.NORUN);
 		node.setParentSource(parentSource);
 		return node;
-	}
-
-	public static String generateShortId(int length) {
-		String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-		StringBuilder id = new StringBuilder(length);
-
-		for (int i = 0; i < length; i++) {
-			int index = SECURE_RANDOM.nextInt(characters.length());
-			id.append(characters.charAt(index));
-		}
-
-		return id.toString();
 	}
 
 	private String getReportNodeNameDynamically(ARTEFACT artefact) {
