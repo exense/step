@@ -1,5 +1,6 @@
 package step.plans.parser.yaml.editor;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -7,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import step.core.plans.PlanCompilationError;
 import step.core.plans.PlanCompiler;
 import step.core.plans.PlanCompilerException;
+import step.plans.parser.yaml.YamlPlanReader;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -16,6 +18,19 @@ import java.util.List;
 public class YamlEditorPlanTypeTest {
 
     private static final Logger log = LoggerFactory.getLogger(YamlEditorPlanTypeTest.class);
+
+    @Test
+    public void testNewPlan() throws Exception {
+        YamlEditorPlanType yamlEditorPlanType = new YamlEditorPlanType();
+        YamlEditorPlan newPlan = yamlEditorPlanType.newPlan("Sequence", "myPlan");
+        log.info("Generated source: {}", newPlan.getSource());
+
+        File yamlFile = new File("src/test/resources/step/plans/parser/yaml/editor/test-valid-source.yml");
+        try (FileInputStream is = new FileInputStream(yamlFile)) {
+            ObjectMapper yamlMapper = YamlPlanReader.createDefaultYamlMapper();
+            Assert.assertEquals(yamlMapper.readTree(newPlan.getSource()), yamlMapper.readTree(is));
+        }
+    }
 
     @Test
     public void testValidationErrors() throws Exception {
@@ -35,7 +50,7 @@ public class YamlEditorPlanTypeTest {
                 Assert.assertEquals("#: required key [name] not found", errors.get(0).getMessage());
                 Assert.assertEquals(1, ((YamlEditorPlanTypeCompiler.YamlEditorPlanCompilationError) errors.get(0)).getLine());
             }
-        }.check("src/test/resources/step/plans/parser/yaml/invalid/test-invalid-plan-1.yml");
+        }.check("src/test/resources/step/plans/parser/yaml/invalid/t0");
     }
 
     private abstract static class CheckValidationErrors {

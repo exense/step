@@ -19,6 +19,7 @@
 package step.plans.parser.yaml.editor;
 
 import org.bson.types.ObjectId;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.plans.*;
 import step.plans.nl.RootArtefactType;
 import step.plans.parser.yaml.YamlPlanReader;
@@ -50,6 +51,7 @@ public class YamlEditorPlanType implements PlanType<YamlEditorPlan> {
             YamlPlanReader.setPlanName(yamlEditorPlan, name);
         }
         yamlEditorPlan.setSource(compiler.prepareSource(yamlEditorPlan));
+        syncRootNodeNameWithPlanName(yamlEditorPlan);
         return yamlEditorPlan;
     }
 
@@ -69,7 +71,18 @@ public class YamlEditorPlanType implements PlanType<YamlEditorPlan> {
 
     @Override
     public void onBeforeSave(YamlEditorPlan plan) {
+        syncRootNodeNameWithPlanName(plan);
+    }
 
+    protected void syncRootNodeNameWithPlanName(YamlEditorPlan plan) {
+        String name = AbstractOrganizableObject.NAME;
+
+        // synchronize root node name with plan name in case they are different
+        String planName = plan.getAttribute(name);
+        String rootName = plan.getRoot().getAttribute(name);
+        if (!rootName.equals(planName)) {
+            plan.getRoot().addAttribute(name, planName);
+        }
     }
 
 }

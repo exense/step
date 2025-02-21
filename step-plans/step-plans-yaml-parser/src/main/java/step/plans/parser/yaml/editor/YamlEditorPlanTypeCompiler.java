@@ -47,7 +47,7 @@ class YamlEditorPlanTypeCompiler implements PlanCompiler<YamlEditorPlan> {
     public YamlEditorPlanTypeCompiler() {
         // TODO: think if we need to configure the actual plan version here (now the default YamlPlanVersions.ACTUAL_VERSION is always used)
         // the reader has 'validateWithJsonSchema'=true
-        reader = new YamlPlanReader(null, null, true, null);
+        reader = new YamlPlanReader(null, true, null);
         lineNumberResolver = new LineNumberByJsonPointerResolver();
     }
 
