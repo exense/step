@@ -95,7 +95,6 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		resourceManager = context.getResourceManager();
 		resolvedPlanBuilder = context.get(ResolvedPlanBuilder.class);
 		Configuration configuration = context.getConfiguration();
-		reportNodeTimeSeriesEnabled = configuration.getPropertyAsBoolean("execution.engine.reportnodes.timeseries.enabled", true);
 	}
 	
 	private enum Phase {
@@ -244,7 +243,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 			}
 		}
 
-		if (reportNodeTimeSeriesEnabled) {
+		if (reportNodeTimeSeries.isIngestionEnabled()) {
 			AbstractArtefact artefactInstance = reportNode.getArtefactInstance();
 			if (artefactInstance != null && !artefactInstance.isWorkArtefact()) {
 				// TODO implement node pruning for time series
