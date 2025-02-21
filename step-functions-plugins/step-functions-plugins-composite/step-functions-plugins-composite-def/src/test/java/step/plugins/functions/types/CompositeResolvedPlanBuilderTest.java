@@ -1,6 +1,7 @@
 package step.plugins.functions.types;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -94,15 +95,14 @@ public class CompositeResolvedPlanBuilderTest {
         logger.info("----------------------");
         logger.info("Aggregated report tree");
         logger.info("----------------------");
-
         AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(engine.getExecutionEngineContext(), result.getExecutionId());
         AggregatedReportView node = aggregatedReportViewBuilder.buildAggregatedReportView();
         logger.info(node.toString());
-        assertEquals("Sequence: 1x\n" +
-                " CallFunction: 1x\n" +
-                "  Sequence: 1x\n" +
-                "   Return: 1x\n" +
-                "  Check: 1x\n",
+        assertEquals("Sequence: 1x: PASSED\n" +
+                        " MyComposite: 1x: PASSED > Input={}, Output={\"myOut\":\"test\"}\n" +
+                        "  Sequence: 1x: PASSED\n" +
+                        "   Return: 1x: PASSED\n" +
+                        "  Check: 1x: PASSED > output.myOut == 'test'\n",
                 node.toString());
     }
 
@@ -112,7 +112,7 @@ public class CompositeResolvedPlanBuilderTest {
         myFunction.addAttribute(AbstractOrganizableObject.NAME, "My function call");
 
         Plan plan = PlanBuilder.create()
-                .startBlock(FunctionArtefacts.keyword("My function call")).add(BaseArtefacts.check("true"))
+                .startBlock(FunctionArtefacts.keyword("My function call")).withBefore(BaseArtefacts.echo("'test'")).add(BaseArtefacts.check("true"))
                 .endBlock().build();
 
 
@@ -123,12 +123,13 @@ public class CompositeResolvedPlanBuilderTest {
         logger.info("----------------------");
         logger.info("Aggregated report tree");
         logger.info("----------------------");
-
         AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(engine.getExecutionEngineContext(), result.getExecutionId());
         AggregatedReportView node = aggregatedReportViewBuilder.buildAggregatedReportView();
         logger.info(node.toString());
-        assertEquals("CallFunction: 1x\n" +
-                " Check: 1x\n",
+        Assert.assertEquals("My function call: 1x: PASSED > Input={}, Output={}\n" +
+                        " [BEFORE]\n" +
+                        "  Echo: 1x: PASSED > test\n" +
+                        " Check: 1x: PASSED > true\n",
                 node.toString());
     }
 
@@ -139,9 +140,9 @@ public class CompositeResolvedPlanBuilderTest {
 
         Plan plan = PlanBuilder.create()
                 .startBlock(BaseArtefacts.sequence())
-                    .add(BaseArtefacts.set("keywordName","'My function call'"))
-                    .add(FunctionArtefacts.keywordWithDynamicSelection(Map.of("name","keywordName")))
-                    .add(BaseArtefacts.check("true"))
+                .add(BaseArtefacts.set("keywordName","'My function call'"))
+                .add(FunctionArtefacts.keywordWithDynamicSelection(Map.of("name","keywordName")))
+                .add(BaseArtefacts.check("true"))
                 .endBlock().build();
 
 
@@ -153,15 +154,13 @@ public class CompositeResolvedPlanBuilderTest {
         logger.info("Aggregated report tree");
         logger.info("----------------------");
 
-        //TODO currently the test pass since the execution pass, but the generation of the aggregated plan before
-        //execution actually throw an exception (the call function by dynamic name doesn't work)
         AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(engine.getExecutionEngineContext(), result.getExecutionId());
         AggregatedReportView node = aggregatedReportViewBuilder.buildAggregatedReportView();
         logger.info(node.toString());
-        assertEquals("Sequence: 1x\n" +
-                        " Set: 1x\n" +
-                        " CallFunction: 1x\n" +
-                        " Check: 1x\n",
+        assertEquals("Sequence: 1x: PASSED\n" +
+                        " Set: 1x: PASSED > keywordName = My function call\n" +
+                        " CallKeyword: 1x: PASSED > Input={}, Output={}\n" +
+                        " Check: 1x: PASSED > true\n",
                 node.toString());
     }
 
@@ -177,8 +176,8 @@ public class CompositeResolvedPlanBuilderTest {
         }
 
         @Override
-        public Map<String, String> getHandlerProperties(CustomFunction function, AbstractStepContext executionContext) {
-            return null;
+        public HandlerProperties getHandlerProperties(CustomFunction function, AbstractStepContext executionContext) {
+            return new HandlerProperties(null);
         }
 
         @Override

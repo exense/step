@@ -1,21 +1,24 @@
 package step.cli;
 
+import ch.exense.commons.io.FileHelper;
 import org.bson.types.ObjectId;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.*;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
+import step.artefacts.Echo;
+import step.artefacts.reports.EchoReportNode;
 import step.automation.packages.client.AutomationPackageClientException;
 import step.automation.packages.client.RemoteAutomationPackageClientImpl;
 import step.client.executions.RemoteExecutionFuture;
 import step.client.executions.RemoteExecutionManager;
 import step.controller.multitenancy.Tenant;
+import step.core.artefacts.reports.ParentSource;
 import step.core.artefacts.reports.ReportNodeStatus;
-import step.core.execution.model.AutomationPackageExecutionParameters;
+import step.core.artefacts.reports.aggregated.AggregatedReportView;
+import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionStatus;
-import step.core.plans.PlanFilter;
 import step.core.plans.filters.PlanByExcludedCategoriesFilter;
 import step.core.plans.filters.PlanByIncludedCategoriesFilter;
 import step.core.plans.filters.PlanByIncludedNamesFilter;
@@ -23,8 +26,13 @@ import step.core.plans.filters.PlanMultiFilter;
 import step.core.repositories.ImportResult;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.nio.file.Files;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
@@ -35,6 +43,21 @@ public class AbstractExecuteAutomationPackageToolTest {
     public static final String TEST_INCLUDE_PLANS = "plan1,plan2";
     public static final String TEST_INCLUDE_CATEGORIES = "PerformanceTest,JMterTest";
     public static final String TEST_EXCLUDE_CATEGORIES = "CypressTest,OidcTest";
+
+    private File tempReportFolder;
+
+    @Before
+    public void before() throws IOException {
+        // create new temp folder before each test to be sure it is empty
+        this.tempReportFolder = Files.createTempDirectory("automation-package-tool-test").toFile();
+    }
+
+    @After
+    public void after() {
+        if (this.tempReportFolder != null) {
+            FileHelper.deleteFolder(this.tempReportFolder);
+        }
+    }
 
     @Test
     public void testExecuteOk() throws Exception {
@@ -52,6 +75,11 @@ public class AbstractExecuteAutomationPackageToolTest {
         tool.execute();
 
         assertAutomationPackageClientMockCalls(remoteAutomationPackageClientMock);
+
+        File[] storedReports = tempReportFolder.listFiles((dir, name) -> name.matches(".*-aggregated.txt"));
+        Assert.assertNotNull(storedReports);
+        Assert.assertEquals(1, storedReports.length);
+        Assert.assertEquals("Echo: 1x: PASSED > Hello\n", new String(Files.readAllBytes(storedReports[0].toPath())));
     }
 
     private static List<String> getExecuteAutomationPackageResult(List<Execution> executions) {
@@ -111,12 +139,12 @@ public class AbstractExecuteAutomationPackageToolTest {
 
     private static void assertAutomationPackageClientMockCalls(RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock) throws AutomationPackageClientException {
         ArgumentCaptor<File> fileCaptor = ArgumentCaptor.forClass(File.class);
-        ArgumentCaptor<AutomationPackageExecutionParameters> executionParamsCaptor = ArgumentCaptor.forClass(AutomationPackageExecutionParameters.class);
+        ArgumentCaptor<IsolatedAutomationPackageExecutionParameters> executionParamsCaptor = ArgumentCaptor.forClass(IsolatedAutomationPackageExecutionParameters.class);
         Mockito.verify(remoteAutomationPackageClientMock, Mockito.times(1)).executeAutomationPackage(fileCaptor.capture(), executionParamsCaptor.capture());
         File capturedFile = fileCaptor.getValue();
         Assert.assertEquals("test-file-jar-with-dependencies.jar", capturedFile.getName());
 
-        AutomationPackageExecutionParameters captured = executionParamsCaptor.getValue();
+        IsolatedAutomationPackageExecutionParameters captured = executionParamsCaptor.getValue();
         Assert.assertEquals("testUser", captured.getUserID());
         Assert.assertEquals(ExecutionMode.RUN, captured.getMode());
         PlanMultiFilter planFilter = (PlanMultiFilter) captured.getPlanFilter();
@@ -156,6 +184,9 @@ public class AbstractExecuteAutomationPackageToolTest {
         RemoteExecutionFuture futureMock = Mockito.mock(RemoteExecutionFuture.class);
         Mockito.when(futureMock.getErrorSummary()).thenReturn("Error summary...");
         Mockito.when((remoteExecutionManagerMock.getFuture(Mockito.anyString()))).thenReturn(futureMock);
+        EchoReportNode echoReportNode = new EchoReportNode();
+        echoReportNode.setEcho("Hello");
+        Mockito.when(remoteExecutionManagerMock.getAggregatedReportView(Mockito.anyString())).thenReturn(new AggregatedReportView(new Echo(), "hash", Map.of("PASSED",1L), List.of(), ParentSource.MAIN, echoReportNode));
         return remoteExecutionManagerMock;
     }
 
@@ -172,6 +203,12 @@ public class AbstractExecuteAutomationPackageToolTest {
                         .setExecutionResultTimeoutS(2)
                         .setWaitForExecution(true)
                         .setEnsureExecutionSuccess(ensureExecutionSuccess)
+                        .setReports(List.of(
+                                new AbstractExecuteAutomationPackageTool.Report(
+                                        AbstractExecuteAutomationPackageTool.ReportType.aggregated,
+                                        List.of(AbstractExecuteAutomationPackageTool.ReportOutputMode.stdout, AbstractExecuteAutomationPackageTool.ReportOutputMode.file)))
+                        )
+                        .setReportOutputDir(tempReportFolder)
                         .setIncludePlans(TEST_INCLUDE_PLANS)
                         .setExcludePlans(null)
                         .setIncludeCategories(TEST_INCLUDE_CATEGORIES)

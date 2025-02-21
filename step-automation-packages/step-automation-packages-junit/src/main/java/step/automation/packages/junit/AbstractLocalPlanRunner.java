@@ -19,6 +19,8 @@
 package step.automation.packages.junit;
 
 import step.core.artefacts.reports.ReportNodeStatus;
+import step.core.artefacts.reports.aggregated.AggregatedReportView;
+import step.core.artefacts.reports.aggregated.AggregatedReportViewBuilder;
 import step.core.execution.ExecutionEngine;
 import step.core.plans.Plan;
 import step.core.plans.runner.PlanRunnerResult;
@@ -49,7 +51,11 @@ public abstract class AbstractLocalPlanRunner {
 
                 if (resultStatus == ReportNodeStatus.PASSED) {
                     // We actually also want to see results when tests complete successfully
+                    System.out.println("----Tree report:");
                     result.printTree();
+                    AggregatedReportView aggregatedReportView = new AggregatedReportViewBuilder(executionEngine.getExecutionEngineContext(), result.getExecutionId()).buildAggregatedReportView();
+                    System.out.println("----Aggregated report:");
+                    System.out.println(aggregatedReportView.toString());
                 } else if (resultStatus == ReportNodeStatus.FAILED) {
                     onExecutionError(result, "Plan execution failed", true);
                 } else if (resultStatus == ReportNodeStatus.TECHNICAL_ERROR) {

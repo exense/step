@@ -47,6 +47,7 @@ public class ReportNode extends AbstractIdentifiableObject {
 	protected Error error;
 	protected Boolean isContributingError;
 	protected Map<String, String> customAttributes;
+	protected ParentSource parentSource;
 	
 	@JsonIgnore
 	protected AbstractArtefact artefactInstance;
@@ -227,6 +228,14 @@ public class ReportNode extends AbstractIdentifiableObject {
 
 	public boolean setVariableInParentScope() {
 		return false;
+	}
+
+	public ParentSource getParentSource() {
+		return parentSource;
+	}
+
+	public void setParentSource(ParentSource parentSource) {
+		this.parentSource = parentSource;
 	}
 
 	/**

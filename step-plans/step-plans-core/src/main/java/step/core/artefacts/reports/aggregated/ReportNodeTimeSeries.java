@@ -26,7 +26,10 @@ public class ReportNodeTimeSeries implements Closeable {
     public static final String TIME_SERIES_MAIN_COLLECTION = "reportNodeTimeSeries";
     public static final String ARTEFACT_HASH = "artefactHash";
     public static final String EXECUTION_ID = "executionId";
+    public static final String TYPE = "type";
     public static final String STATUS = "status";
+    public static final String ERROR_CODE = "errorCode";
+    public static final String ERROR_MESSAGE = "errorMessage";
     private final TimeSeries timeSeries;
     private final TimeSeriesIngestionPipeline ingestionPipeline;
 
@@ -48,8 +51,24 @@ public class ReportNodeTimeSeries implements Closeable {
     }
 
     public void ingestReportNode(ReportNode reportNode) {
+        ingestReportNode(reportNode, null);
+    }
+
+    public void ingestReportNode(ReportNode reportNode, Map<String, Object> customAttributes) {
         ReportNodeStatus status = reportNode.getStatus();
-        ingestionPipeline.ingestPoint(new BucketAttributes(Map.of(EXECUTION_ID, reportNode.getExecutionID(), ARTEFACT_HASH, reportNode.getArtefactHash(), STATUS, status.toString())), System.currentTimeMillis(), 1);
+        BucketAttributes nodeBucket = new BucketAttributes();
+        nodeBucket.put(EXECUTION_ID, reportNode.getExecutionID());
+        nodeBucket.put(ARTEFACT_HASH, reportNode.getArtefactHash());
+        nodeBucket.put(STATUS, status.toString());
+        if (reportNode.getError() != null) {
+            nodeBucket.put(ERROR_CODE, reportNode.getError().getCode());
+            nodeBucket.put(ERROR_MESSAGE, reportNode.getError().getMsg());
+        }
+        if (customAttributes != null) {
+            nodeBucket.putAll(customAttributes);
+        }
+
+        ingestionPipeline.ingestPoint(new BucketAttributes(nodeBucket), System.currentTimeMillis(), 1);
     }
 
     public void flush() {
@@ -57,8 +76,8 @@ public class ReportNodeTimeSeries implements Closeable {
     }
 
     public static class Range {
-        long from;
-        long to;
+        public long from;
+        public long to;
     }
 
     public Map<String, Long> queryByExecutionIdAndArtefactHash(String executionId, String artefactHash, Range range) {

@@ -30,6 +30,7 @@ import step.core.collections.Filters;
 import step.core.collections.SearchOrder;
 import step.core.collections.filters.And;
 import step.core.collections.filters.Equals;
+import step.core.timeseries.TimeSeriesFilterBuilder;
 
 
 public class ReportNodeAccessorImpl extends AbstractAccessor<ReportNode> implements ReportTreeAccessor, ReportNodeAccessor {
@@ -76,7 +77,18 @@ public class ReportNodeAccessorImpl extends AbstractAccessor<ReportNode> impleme
 	public Iterator<ReportNode> getChildren(ObjectId parentID, int skip, int limit) {   
     	return collectionDriver.find(Filters.equals("parentID", parentID), new SearchOrder("executionTime", 1), skip, limit, 0).iterator();
     }
-    
+
+	@Override
+	public Iterator<ReportNode> getChildrenByParentSource(ObjectId parentID, ParentSource parentSource) {
+		return collectionDriver.find(Filters.and(List.of(Filters.equals("parentID", parentID), Filters.equals("parentSource", parentSource.name()))), new SearchOrder("executionTime", 1), null, null, 0).iterator();
+	}
+
+	@Override
+	public Iterator<ReportNode> getChildrenByParentSource(ObjectId parentID, ParentSource parentSource, int skip, int limit) {
+		return collectionDriver.find(Filters.and(List.of(Filters.equals("parentID", parentID), Filters.equals("parentSource", parentSource.name()))), new SearchOrder("executionTime", 1), skip, limit, 0).iterator();
+	}
+
+
 	@Override
 	public Stream<ReportNode> getReportNodesByExecutionID(String executionID) {
 		Objects.requireNonNull(executionID);
@@ -94,6 +106,28 @@ public class ReportNodeAccessorImpl extends AbstractAccessor<ReportNode> impleme
 		And filter = filterByExecutionIdAndArtefactHash(executionId, artefactPathHash);
 		return collectionDriver.findLazy(filter, null, skip, limit, 0);
 	}
+
+	@Override
+	public Stream<ReportNode> getReportNodesByArtefactHash(String executionId, String artefactPathHash, Long from, Long to, Integer skip, Integer limit) {
+		And filter = filterByExecutionIdAndArtefactHash(executionId, artefactPathHash);
+		Filter timeFilter = filerByExecutionTime(from, to);
+		return collectionDriver.findLazy(Filters.and(List.of(filter, timeFilter)), null, skip, limit, 0);
+	}
+
+	private Filter filerByExecutionTime(Long from, Long to) {
+		ArrayList<Filter> filters = new ArrayList();
+		if (from != null) {
+			filters.add(Filters.gte("executionTime", from));
+		}
+
+		if (to != null) {
+			filters.add(Filters.lt("executionTime", to));
+		}
+
+		return (filters.isEmpty() ? Filters.empty() : Filters.and(filters));
+	}
+
+
 
 	private static And filterByExecutionIdAndArtefactHash(String executionId, String artefactPathHash) {
 		return Filters.and(List.of(Filters.equals("executionID", executionId), artefactPathHashFilter(artefactPathHash)));
@@ -126,7 +160,7 @@ public class ReportNodeAccessorImpl extends AbstractAccessor<ReportNode> impleme
 						Filters.equals("_class", class_))),
 				new SearchOrder("executionTime", 1), null, limit, 0);
 	}
-	
+
 	@Override
 	public Stream<ReportNode> getReportNodesByExecutionIDAndCustomAttribute(String executionID, Map<String, String> customAttributes) {
 		Objects.requireNonNull(executionID);
@@ -160,6 +194,11 @@ public class ReportNodeAccessorImpl extends AbstractAccessor<ReportNode> impleme
 	@Override
 	public Iterator<ReportNode> getChildren(String parentID) {
 		return getChildren(new ObjectId(parentID));
+	}
+
+	@Override
+	public Iterator<ReportNode> getChildrenByParentSource(String parentID, ParentSource parentSource) {
+		return getChildrenByParentSource(new ObjectId(parentID), parentSource);
 	}
 
 	@Override

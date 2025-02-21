@@ -20,7 +20,7 @@ package step.artefacts.automation;
 
 import step.artefacts.AbstractForBlock;
 import step.core.dynamicbeans.DynamicValue;
-import step.plans.parser.yaml.model.AbstractYamlArtefact;
+import step.core.yaml.model.AbstractYamlArtefact;
 
 public class AbstractYamlForBlock<T extends AbstractForBlock> extends AbstractYamlArtefact<T> {
     protected DynamicValue<String> item = null;
@@ -41,7 +41,7 @@ public class AbstractYamlForBlock<T extends AbstractForBlock> extends AbstractYa
     }
 
     @Override
-    protected T createArtefactInstance() {
+    public T createArtefactInstance() {
         T res = super.createArtefactInstance();
         res.init();
         return res;

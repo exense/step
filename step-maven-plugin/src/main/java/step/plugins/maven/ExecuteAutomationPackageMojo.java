@@ -27,8 +27,11 @@ import step.cli.MavenArtifactIdentifier;
 import step.cli.StepCliExecutionException;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Mojo(name = "execute-automation-package")
 public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
@@ -73,11 +76,32 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
     @Parameter(property = "step-execute-auto-packages.number-of-threads")
     private Integer numberOfThreads;
 
-    @Parameter(property = "step-execute-auto-packages.report-type")
-    private List<AbstractExecuteAutomationPackageTool.ReportType> reportType;
+    @Parameter(property = "step-execute-auto-packages.reports")
+    private List<ReportParam> reports;
 
     @Parameter(property = "step-execute-auto-packages.report-dir")
     private String reportDir;
+
+    public static class ReportParam {
+        private AbstractExecuteAutomationPackageTool.ReportType type;
+        private String output;
+
+        public AbstractExecuteAutomationPackageTool.ReportType getType() {
+            return type;
+        }
+
+        public void setType(AbstractExecuteAutomationPackageTool.ReportType type) {
+            this.type = type;
+        }
+
+        public String getOutput() {
+            return output;
+        }
+
+        public void setOutput(String output) {
+            this.output = output;
+        }
+    }
 
     @Override
     public void execute() throws MojoExecutionException {
@@ -91,7 +115,7 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
             }
 
             File reportOutputDir = null;
-            if (getReportType() != null && !getReportType().isEmpty()) {
+            if (getReports() != null && !getReports().isEmpty()) {
                 String resolvedReportDir = getReportDir();
                 if (resolvedReportDir == null) {
                     String targetDir = project.getBuild().getDirectory();
@@ -99,6 +123,8 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
                 }
                 reportOutputDir = new File(resolvedReportDir);
             }
+
+            List<AbstractExecuteAutomationPackageTool.Report> parsedReports = parseReports();
 
             AbstractExecuteAutomationPackageTool.Params params = new AbstractExecuteAutomationPackageTool.Params()
                     .setStepProjectName(getStepProjectName())
@@ -108,6 +134,7 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
                     .setExecutionResultTimeoutS(getExecutionResultTimeoutS())
                     .setWaitForExecution(getWaitForExecution())
                     .setEnsureExecutionSuccess(getEnsureExecutionSuccess())
+                    .setReports(parsedReports)
                     .setIncludePlans(getIncludePlans())
                     .setExcludePlans(getExcludePlans())
                     .setIncludeCategories(getIncludeCategories())
@@ -115,7 +142,6 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
                     .setWrapIntoTestSet(getWrapIntoTestSet())
                     .setNumberOfThreads(getNumberOfThreads())
                     .setMavenArtifactIdentifier(remoteMavenArtifact)
-                    .setReportTypes(getReportType())
                     .setReportOutputDir(reportOutputDir);
 
             createTool(getUrl(), params).execute();
@@ -123,6 +149,25 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
             throw new MojoExecutionException("Execution exception", e);
         } catch (Exception e) {
             throw logAndThrow("Unexpected error while uploading automation package to Step", e);
+        }
+    }
+
+    private List<AbstractExecuteAutomationPackageTool.Report> parseReports() {
+        if (getReports() != null) {
+            List<AbstractExecuteAutomationPackageTool.Report> result = new ArrayList<>();
+            for (ReportParam report : getReports()) {
+                if (report.getOutput() == null || report.getOutput().isEmpty()) {
+                    result.add(new AbstractExecuteAutomationPackageTool.Report(report.getType()));
+                } else {
+                    List<AbstractExecuteAutomationPackageTool.ReportOutputMode> outputModes = Arrays.stream(report.getOutput().split(","))
+                            .map(AbstractExecuteAutomationPackageTool.ReportOutputMode::valueOf)
+                            .collect(Collectors.toList());
+                    result.add(new AbstractExecuteAutomationPackageTool.Report(report.getType(), outputModes));
+                }
+            }
+            return result;
+        } else {
+            return null;
         }
     }
 
@@ -243,6 +288,14 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
         this.ensureExecutionSuccess = ensureExecutionSuccess;
     }
 
+    public List<ReportParam> getReports() {
+        return reports;
+    }
+
+    public void setReports(List<ReportParam> reports) {
+        this.reports = reports;
+    }
+
     public String getIncludePlans() {
         return includePlans;
     }
@@ -289,14 +342,6 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
 
     public void setNumberOfThreads(Integer numberOfThreads) {
         this.numberOfThreads = numberOfThreads;
-    }
-
-    public List<AbstractExecuteAutomationPackageTool.ReportType> getReportType() {
-        return reportType;
-    }
-
-    public void setReportType(List<AbstractExecuteAutomationPackageTool.ReportType> reportType) {
-        this.reportType = reportType;
     }
 
     public String getReportDir() {

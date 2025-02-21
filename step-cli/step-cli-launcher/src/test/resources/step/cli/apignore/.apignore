@@ -1,0 +1,14 @@
+#*
+.dotIgnoreFile.txt
+ignoreFile.txt
+/.rootDotIgnoreFile.txt
+
+ignore-folder-or-file
+ignore-folder-pattern/
+ignore-folder-pattern-for-file/
+*/any-sub-folder/
+/root-ignore-folder
+*.exe
+**/any-nested-folder
+*/test/**/aa
+

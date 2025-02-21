@@ -18,9 +18,9 @@
  ******************************************************************************/
 package step.cli;
 
+import ch.exense.commons.io.FileHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.zeroturnaround.zip.ZipUtil;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -30,16 +30,16 @@ import step.client.controller.ControllerServicesClient;
 import step.client.credentials.ControllerCredentials;
 import step.core.Constants;
 import step.core.Version;
+import step.cli.apignore.ApIgnoreFileFilter;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 
 @Command(name = "step",
@@ -51,6 +51,8 @@ import java.util.function.Supplier;
 public class StepConsole implements Callable<Integer> {
 
     public static final String REQUIRED_ERR_MESSAGE = "Illegal parameters. One of the following options is required: '%s'";
+
+    private static final String AP_IGNORE_NAME = ".apignore";
 
     private static final Logger log = LoggerFactory.getLogger(StepConsole.class);
 
@@ -181,12 +183,19 @@ public class StepConsole implements Callable<Integer> {
                         // check if the folder is AP (contains the yaml descriptor)
                         checkApFolder(file);
 
+                        Function<File, Boolean> fileFilter = null;
+                        File apIgnoreFile = new File(file, AP_IGNORE_NAME);
+                        if (apIgnoreFile.exists()) {
+                            ApIgnoreFileFilter gitIgnore = new ApIgnoreFileFilter(file.toPath(), apIgnoreFile.toPath());
+                            fileFilter = file1 -> !file1.getName().equals(AP_IGNORE_NAME) && gitIgnore.accept(file1.toPath());
+                        }
+
                         File tempDirectory = Files.createTempDirectory("stepcli").toFile();
                         tempDirectory.deleteOnExit();
                         File tempFile = new File(tempDirectory, file.getName() + ".stz");
                         tempFile.deleteOnExit();
                         log.info("Preparing AP archive: {}", tempFile.getAbsolutePath());
-                        ZipUtil.pack(file, tempFile);
+                        FileHelper.zip(file, tempFile, fileFilter);
                         return tempFile;
                     } else {
                         return file;
@@ -324,13 +333,13 @@ public class StepConsole implements Callable<Integer> {
             protected boolean local;
 
             @Option(names = {"--wrapIntoTestSet"}, defaultValue = "false", description = "To wrap all executed plans into the single test set", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
-            protected boolean wrapIntoTestSet;        
-            
+            protected boolean wrapIntoTestSet;
+
             @Option(names = {"--numberOfThreads"}, description = "Max number of threads to be used for execution in case of wrapped test set")
             protected Integer numberOfThreads;
 
-            @Option(names = {"--reportType"}, description = "The type of execution report to be generated and stored locally. Supported report types: junit")
-            protected List<AbstractExecuteAutomationPackageTool.ReportType> reportType;
+            @Option(names = {"--reportType"}, description = "The type of execution report to be generated and stored locally. Supported report types: junit, aggregated. Also (optional) you can specify the output destination: --reportType=junit;output=file,stdout")
+            protected List<String> reportType;
 
             @Option(names = {"--reportDir"}, description = "The local folder to store generated execution reports", defaultValue = "reports")
             protected File reportDir;
@@ -408,6 +417,8 @@ public class StepConsole implements Callable<Integer> {
                 checkEeOptionsConsistency(spec);
 
                 checkStepControllerVersion();
+
+                List<AbstractExecuteAutomationPackageTool.Report> reports = parseReportsParams();
                 executeRemotely(stepUrl,
                         new AbstractExecuteAutomationPackageTool.Params()
                                 .setStepProjectName(getStepProjectName())
@@ -423,10 +434,43 @@ public class StepConsole implements Callable<Integer> {
                                 .setExcludeCategories(excludeCategories)
                                 .setWrapIntoTestSet(wrapIntoTestSet)
                                 .setNumberOfThreads(numberOfThreads)
-                                .setReportTypes(reportType)
+                                .setReports(reports)
                                 .setReportOutputDir(reportDir)
                                 .setMavenArtifactIdentifier(getMavenArtifact(apFile))
                 );
+            }
+
+            protected List<AbstractExecuteAutomationPackageTool.Report> parseReportsParams() {
+                List<AbstractExecuteAutomationPackageTool.Report> reports = null;
+                if (reportType != null && !reportType.isEmpty()) {
+                    reports = new ArrayList<>();
+                    for (String reportOption : reportType) {
+                        String[] params = reportOption.split(";");
+                        AbstractExecuteAutomationPackageTool.ReportType reportTypeValue = null;
+                        List<AbstractExecuteAutomationPackageTool.ReportOutputMode> outputModes = null;
+                        for (String param : params) {
+                            String[] paramAndValue = param.split("=");
+                            if (paramAndValue.length < 1) {
+                                throw new StepCliExecutionException("Missing CLI param value: " + Arrays.toString(paramAndValue));
+                            } else if (paramAndValue.length == 1) {
+                                // unnamed parameter means the 'reportType'
+                                reportTypeValue = AbstractExecuteAutomationPackageTool.ReportType.valueOf(paramAndValue[0]);
+                            } else if (paramAndValue[0].equalsIgnoreCase("output")) {
+                                outputModes = Arrays.stream(paramAndValue[1].split(","))
+                                        .map(AbstractExecuteAutomationPackageTool.ReportOutputMode::valueOf)
+                                        .collect(Collectors.toList());
+                            }
+                        }
+                        if (reportTypeValue == null) {
+                            throw new StepCliExecutionException("Unrecognized report type: " + reportOption);
+                        } else if (outputModes == null) {
+                            reports.add(new AbstractExecuteAutomationPackageTool.Report(reportTypeValue));
+                        } else {
+                            reports.add(new AbstractExecuteAutomationPackageTool.Report(reportTypeValue, outputModes));
+                        }
+                    }
+                }
+                return reports;
             }
 
             // for tests

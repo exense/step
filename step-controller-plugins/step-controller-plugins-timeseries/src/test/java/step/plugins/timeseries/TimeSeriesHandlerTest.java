@@ -1,13 +1,16 @@
 package step.plugins.timeseries;
 
+import ch.exense.commons.app.Configuration;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import step.controller.services.async.AsyncTaskManager;
+import step.core.artefacts.reports.aggregated.ReportNodeTimeSeries;
 import step.core.collections.Collection;
 import step.core.collections.inmemory.InMemoryCollection;
+import step.core.collections.inmemory.InMemoryCollectionFactory;
 import step.core.execution.model.Execution;
 import step.core.execution.model.InMemoryExecutionAccessor;
 import step.core.timeseries.TimeSeries;
@@ -48,7 +51,8 @@ public class TimeSeriesHandlerTest {
                 .registerCollection(tsCollection)
                 .build();
         AsyncTaskManager asyncTaskManager = new AsyncTaskManager();
-        handler = new TimeSeriesHandler(BUCKET_RESOLUTION, TS_ATTRIBUTES, measurementsCollection, executionAccessor, timeSeries, asyncTaskManager, SAMPLING_LIMIT);
+        ReportNodeTimeSeries reportNodeTimeSeries = new ReportNodeTimeSeries(new InMemoryCollectionFactory(null), new Configuration());
+        handler = new TimeSeriesHandler(BUCKET_RESOLUTION, TS_ATTRIBUTES, measurementsCollection, executionAccessor, timeSeries, reportNodeTimeSeries, asyncTaskManager, SAMPLING_LIMIT);
     }
 
     @Test

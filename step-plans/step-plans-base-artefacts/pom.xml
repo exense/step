@@ -101,6 +101,10 @@
 			<artifactId>google-api-services-drive</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>com.google.http-client</groupId>
+			<artifactId>google-http-client-jackson2</artifactId>
+		</dependency>
+		<dependency>
 		    <groupId>com.jayway.jsonpath</groupId>
 		    <artifactId>json-path</artifactId>
 		</dependency>
@@ -133,7 +137,6 @@
 			<version>2.10.0</version>
 			<scope>test</scope>
 		</dependency>
-
 	</dependencies>
 
 	<build>

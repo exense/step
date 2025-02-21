@@ -53,7 +53,7 @@ public class AbstractYamlModel {
             Field fieldFrom = allFieldsFrom.stream().filter(f -> fieldYaml.getName().equals(f.getName())).findFirst().orElse(null);
             if(fieldFrom == null){
                 log.error("No source field '{}' has been found in {}. To copy the value from DB model to YAML model " +
-                        "you should either have the same fields in both models or use the YamlFieldNoCopy annotation " +
+                        "you should either have the same fields in both models or use the YamlFieldCustomCopy annotation " +
                         "in yaml model and implement the custom copying", fieldYaml.getName(), from.getClass());
             } else {
                 copyValue(fieldFrom, fieldYaml, from, this, ignoreNulls);

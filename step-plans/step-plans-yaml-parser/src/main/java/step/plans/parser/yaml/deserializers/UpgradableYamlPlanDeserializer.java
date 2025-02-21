@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.everit.json.schema.ValidationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.artefacts.handlers.JsonSchemaValidator;
@@ -40,7 +41,7 @@ import step.plans.parser.yaml.schema.YamlPlanValidationException;
 import java.io.IOException;
 import java.util.Properties;
 
-import static step.plans.parser.yaml.YamlPlanReader.YAML_PLANS_COLLECTION_NAME;
+import static step.plans.parser.yaml.migrations.AbstractYamlPlanMigrationTask.YAML_PLANS_COLLECTION_NAME;
 
 public class UpgradableYamlPlanDeserializer extends JsonDeserializer<YamlPlan> {
 
@@ -104,6 +105,8 @@ public class UpgradableYamlPlanDeserializer extends JsonDeserializer<YamlPlan> {
         if (jsonSchema != null) {
             try {
                 JsonSchemaValidator.validate(jsonSchema, planJsonNode.toString());
+            } catch (ValidationException vex) {
+                throw new YamlPlanValidationException(String.join(", ", vex.getAllMessages()));
             } catch (Exception ex) {
                 throw new YamlPlanValidationException(ex.getMessage(), ex);
             }

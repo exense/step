@@ -39,5 +39,14 @@ public interface ReportTreeAccessor {
 	 */
 	public Iterator<ReportNode> getChildren(String parentID);
 
+	/**
+	 * Returns the list of children of the ReportNode for a specific source
+	 *
+	 * @param parentID the ID of the parent ReportNode
+	 * @param parentSource the source type of the reports nodes to be returned
+	 * @return an Iterator of the list of children
+	 */
+	public Iterator<ReportNode> getChildrenByParentSource(String parentID, ParentSource parentSource);
+
 	Stream<ReportNode> getReportNodesWithContributingErrors(String executionId);
 }

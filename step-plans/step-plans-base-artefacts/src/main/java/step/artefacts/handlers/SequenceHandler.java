@@ -20,6 +20,8 @@ package step.artefacts.handlers;
 
 import step.artefacts.Sequence;
 import step.core.artefacts.handlers.ArtefactHandler;
+import step.core.artefacts.handlers.CancellableSleep;
+import step.core.artefacts.handlers.SequentialArtefactScheduler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 

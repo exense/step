@@ -27,17 +27,21 @@ import step.artefacts.handlers.loadtesting.Pacer;
 import step.artefacts.reports.ThreadReportNode;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
-import step.core.artefacts.handlers.ArtefactHandler;
-import step.core.artefacts.handlers.AtomicReportNodeStatusComposer;
+import step.core.artefacts.ChildrenBlock;
+import step.core.artefacts.handlers.*;
+import step.core.artefacts.reports.ParentSource;
 import step.core.artefacts.reports.ReportNode;
+import step.core.artefacts.reports.resolvedplan.ResolvedChildren;
+import step.core.objectenricher.ObjectPredicate;
+import step.core.plans.PlanAccessor;
+import step.functions.accessor.FunctionAccessor;
 import step.threadpool.IntegerSequenceIterator;
 import step.threadpool.ThreadPool;
 import step.threadpool.ThreadPool.WorkerController;
 import step.threadpool.WorkerItemConsumerFactory;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -96,7 +100,7 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 		}
 		
 		// Attach global iteration counter & user counter
-		LongAdder gcounter = new LongAdder();
+		AtomicLong gcounter = new AtomicLong(0);
 		AtomicReportNodeStatusComposer reportNodeStatusComposer = new AtomicReportNodeStatusComposer(node);
 		
 		Iterator<Integer> groupIterator = new IntegerSequenceIterator(1,numberOfUsers,1);
@@ -122,7 +126,8 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 						thread.setPacing(pacing);
 						thread.setThreadGroup(testArtefact);
 						thread.setMaxDuration(maxDuration);
-						
+						thread.setBeforeThread(testArtefact.getBeforeThread());
+						thread.setAfterThread(testArtefact.getAfterThread());
 						HashMap<String, Object> newVariable = new HashMap<>();
 						newVariable.put(thread.threadGroup.getUserItem().get(), thread.groupId);
 						ReportNode threadReportNode = delegateExecute(thread, node, newVariable);
@@ -136,6 +141,21 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 		}, numberOfUsers);
 
 		reportNodeStatusComposer.applyComposedStatusToParentNode(node);
+	}
+
+	@Override
+	protected List<ResolvedChildren> resolveChildrenArtefactBySource_(ThreadGroup artefactNode, String currentPath) {
+		List<ResolvedChildren> results = new ArrayList<>();
+		ChildrenBlock beforeThread = artefactNode.getBeforeThread();
+		if (beforeThread != null) {
+			results.add(new ResolvedChildren(ParentSource.BEFORE_THREAD, beforeThread.getSteps(),currentPath));
+		}
+		results.add(new ResolvedChildren(ParentSource.MAIN, artefactNode.getChildren(), currentPath));
+		ChildrenBlock afterThread = artefactNode.getAfterThread();
+		if (afterThread != null) {
+			results.add(new ResolvedChildren(ParentSource.AFTER_THREAD, afterThread.getSteps(), currentPath));
+		}
+		return results;
 	}
 
 	@Override
@@ -159,9 +179,13 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 		@JsonIgnore
 		WorkerController<Integer> groupController;
 		@JsonIgnore
-		LongAdder gcounter;
+		AtomicLong gcounter;
 		@JsonIgnore
 		long maxDuration;
+		@JsonIgnore
+		ChildrenBlock beforeThread = new ChildrenBlock();
+		@JsonIgnore
+		ChildrenBlock afterThread = new ChildrenBlock();
 		
 		public Thread() {
 			super();
@@ -215,11 +239,11 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 			this.groupController = groupController;
 		}
 
-		public LongAdder getGcounter() {
+		public AtomicLong getGcounter() {
 			return gcounter;
 		}
 
-		public void setGcounter(LongAdder gcounter) {
+		public void setGcounter(AtomicLong gcounter) {
 			this.gcounter = gcounter;
 		}
 
@@ -229,6 +253,22 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 
 		public void setMaxDuration(long maxDuration) {
 			this.maxDuration = maxDuration;
+		}
+
+		public ChildrenBlock getBeforeThread() {
+			return beforeThread;
+		}
+
+		public void setBeforeThread(ChildrenBlock beforeThread) {
+			this.beforeThread = beforeThread;
+		}
+
+		public ChildrenBlock getAfterThread() {
+			return afterThread;
+		}
+
+		public void setAfterThread(ChildrenBlock afterThread) {
+			this.afterThread = afterThread;
 		}
 	}
 	
@@ -243,52 +283,72 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 			int pacing = thread.pacing;
 			int numberOfIterations = thread.numberOfIterations;
 			long maxDuration = thread.maxDuration;
-			
-			ReportNode reportNode = executeInSession(thread, node, (sessionArtefact, sessionReportNode)->{
-				context.getVariablesManager().putVariable(sessionReportNode, TEC_EXECUTION_REPORTNODES_PERSISTBEFORE, false);
-				SequentialArtefactScheduler sequentialArtefactScheduler = new SequentialArtefactScheduler(context);
-				sequentialArtefactScheduler.executeWithinBeforeAndAfter(sessionArtefact, sessionReportNode, newChildren->{
-					AtomicReportNodeStatusComposer sessionReportNodeStatusComposer = new AtomicReportNodeStatusComposer(sessionReportNode);
-					try {
-						Pacer.scheduleAtConstantPacing(i->{
-							ReportNode iterationReportNode = null;
-							try {
-								thread.gcounter.increment();
-								
-								Sequence iterationTestCase = createWorkArtefact(Sequence.class, sessionArtefact, "Iteration "+i);
 
-								// Force the persistence of the iteration report node before its execution to have it
-								// in the tree view (SED-1002)
-								iterationTestCase.addCustomAttribute(ArtefactHandler.FORCE_PERSIST_BEFORE, true);
-								for(AbstractArtefact child:newChildren) {
-									iterationTestCase.addChild(child);
-								}
-								
-								HashMap<String, Object> newVariable = new HashMap<>();
-								newVariable.put(thread.threadGroup.getLocalItem().get(), i);
-								//For Performance reasons, we might want to expose the LongAdder itself rather than calling "intValue()" every time
-								newVariable.put(thread.threadGroup.getItem().get(), thread.gcounter.intValue());
-								
-								iterationReportNode = delegateExecute(iterationTestCase, sessionReportNode, newVariable);
-								sessionReportNodeStatusComposer.addStatusAndRecompose(iterationReportNode);
-							} catch (Throwable e) {
-								if(iterationReportNode!=null) {
-									failWithException(iterationReportNode, e);
-									sessionReportNodeStatusComposer.addStatusAndRecompose(iterationReportNode);
-								}
-							}
-							
-						}, pacing,
-								c -> !context.isInterrupted()
-										&& (maxDuration == 0 || c.getDuration() < maxDuration)
-										&& (numberOfIterations == 0 || c.getIterations() < numberOfIterations), context);
-					} catch (InterruptedException e) {
-						failWithException(sessionReportNode, e);
+			ReportNode reportNode = executeInSession(thread, node, (sessionArtefact, sessionReportNode)->{
+				AtomicReportNodeStatusComposer sessionReportNodeStatusComposer = new AtomicReportNodeStatusComposer(sessionReportNode);
+				try {
+					optionalRunChildrenBlock(thread.getBeforeThread(), (before) -> {
+						SequentialArtefactScheduler sequentialArtefactScheduler = new SequentialArtefactScheduler(context);
+						sequentialArtefactScheduler.execute_(sessionReportNode, before.getSteps(), before.getContinueOnError().get(), ParentSource.BEFORE_THREAD);
 						sessionReportNodeStatusComposer.addStatusAndRecompose(sessionReportNode);
+					});
+
+					context.getVariablesManager().putVariable(sessionReportNode, TEC_EXECUTION_REPORTNODES_PERSISTBEFORE, false);
+					Pacer.scheduleAtConstantPacing(i->{
+						ReportNode iterationReportNode = null;
+						try {
+							long globalCounterValue = thread.gcounter.incrementAndGet();
+
+							Sequence iterationTestCase = createWorkArtefact(Sequence.class, sessionArtefact, "Iteration "+i);
+
+							// Force the persistence of the iteration report node before its execution to have it
+							// in the tree view (SED-1002)
+							iterationTestCase.addCustomAttribute(ArtefactHandler.FORCE_PERSIST_BEFORE, true);
+							for(AbstractArtefact child:sessionArtefact.getChildren()) {
+								iterationTestCase.addChild(child);
+							}
+
+							HashMap<String, Object> newVariable = new HashMap<>();
+							newVariable.put(thread.threadGroup.getLocalItem().get(), i);
+							//For Performance reasons, we might want to expose the LongAdder itself rather than calling "intValue()" every time
+							newVariable.put(thread.threadGroup.getItem().get(), globalCounterValue);
+
+							iterationReportNode = delegateExecute(iterationTestCase, sessionReportNode, newVariable);
+							sessionReportNodeStatusComposer.addStatusAndRecompose(iterationReportNode);
+						} catch (Throwable e) {
+							if(iterationReportNode!=null) {
+								failWithException(iterationReportNode, e);
+								sessionReportNodeStatusComposer.addStatusAndRecompose(iterationReportNode);
+							}
+						}
+
+					}, pacing,
+							c -> !context.isInterrupted()
+									&& (maxDuration == 0 || c.getDuration() < maxDuration)
+									&& (numberOfIterations == 0 || c.getIterations() < numberOfIterations), context);
+				} catch (InterruptedException e) {
+					failWithException(sessionReportNode, e);
+					sessionReportNodeStatusComposer.addStatusAndRecompose(sessionReportNode);
+				} finally {
+					// Execute the After Thread steps artefacts even when aborting
+					boolean byPassInterrupt = context.isInterrupted();
+					if (byPassInterrupt) {
+						context.byPassInterruptInCurrentThread(true);
 					}
-					sessionReportNodeStatusComposer.applyComposedStatusToParentNode(sessionReportNode);
-					return sessionReportNode;
-				}, BeforeThread.class, AfterThread.class);
+					try{
+						optionalRunChildrenBlock(thread.getAfterThread(), (after) -> {
+							SequentialArtefactScheduler sequentialArtefactScheduler = new SequentialArtefactScheduler(context);
+							sequentialArtefactScheduler.execute_(sessionReportNode, after.getSteps(), after.getContinueOnError().get(), ParentSource.AFTER_THREAD);
+							sessionReportNodeStatusComposer.addStatusAndRecompose(sessionReportNode);
+						});
+					} finally {
+						//resume aborting if required
+						if (byPassInterrupt) {
+							context.byPassInterruptInCurrentThread(false);
+						}
+					}
+				}
+				sessionReportNodeStatusComposer.applyComposedStatusToParentNode(sessionReportNode);
 			});
 			
 			node.setStatus(reportNode.getStatus());

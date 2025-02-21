@@ -28,6 +28,7 @@ import step.artefacts.AbstractForBlock;
 import step.artefacts.Sequence;
 import step.artefacts.reports.ForBlockReportNode;
 import step.core.artefacts.handlers.AtomicReportNodeStatusComposer;
+import step.core.artefacts.handlers.SequentialArtefactScheduler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.datapool.DataPoolFactory;

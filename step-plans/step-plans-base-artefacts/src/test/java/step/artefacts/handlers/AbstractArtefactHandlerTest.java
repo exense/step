@@ -29,6 +29,7 @@ import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.CheckArtefact;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeAccessor;
+import step.core.artefacts.reports.ParentSource;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
 
@@ -45,7 +46,7 @@ public class AbstractArtefactHandlerTest extends AbstractArtefactTest {
 	}
 	
 	protected void createSkeleton(AbstractArtefact artefact, ReportNode parentNode) {
-		context.getArtefactHandlerManager().createReportSkeleton(artefact, parentNode);
+		context.getArtefactHandlerManager().createReportSkeleton(artefact, parentNode, ParentSource.MAIN);
 	}
 	
 	protected ReportNode execute(AbstractArtefact artefact) {
@@ -53,7 +54,7 @@ public class AbstractArtefactHandlerTest extends AbstractArtefactTest {
 	}
 	
 	protected ReportNode execute(AbstractArtefact artefact, ReportNode parentNode) {
-		return context.getArtefactHandlerManager().execute(artefact, parentNode);
+		return context.getArtefactHandlerManager().execute(artefact, parentNode, ParentSource.MAIN);
 	}
 	
 	protected ReportNode getFirstReportNode() {

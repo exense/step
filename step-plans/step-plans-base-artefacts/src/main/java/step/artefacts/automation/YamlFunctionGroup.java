@@ -19,15 +19,8 @@
 package step.artefacts.automation;
 
 import step.artefacts.FunctionGroup;
-import step.core.dynamicbeans.DynamicValue;
 
 public class YamlFunctionGroup extends YamlTokenSelector<FunctionGroup> {
-
-    protected DynamicValue<String> dockerImage = new DynamicValue<>();
-
-    protected DynamicValue<String> containerUser = new DynamicValue<>();
-
-    protected DynamicValue<String> containerCommand = new DynamicValue<>();
 
     public YamlFunctionGroup() {
         super(FunctionGroup.class);

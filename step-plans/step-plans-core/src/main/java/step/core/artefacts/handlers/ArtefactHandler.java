@@ -22,14 +22,18 @@ import ch.exense.commons.app.Configuration;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.ArtefactFilter;
+import step.core.artefacts.ChildrenBlock;
 import step.core.artefacts.WorkArtefactFactory;
+import step.core.artefacts.reports.ParentSource;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.artefacts.reports.aggregated.ReportNodeTimeSeries;
 import step.core.artefacts.reports.resolvedplan.ResolvedPlanBuilder;
+import step.core.artefacts.reports.resolvedplan.ResolvedChildren;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionContextBindings;
@@ -44,7 +48,7 @@ import step.resources.ResourceManager;
 import java.io.File;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.stream.Collectors;
+import java.util.function.Consumer;
 
 public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_NODE extends ReportNode> {
 
@@ -58,6 +62,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	public static final String TEC_EXECUTION_REPORTNODES_PERSISTAFTER = "tec.execution.reportnodes.persistafter";
 	public static final String TEC_EXECUTION_REPORTNODES_PERSISTBEFORE = "tec.execution.reportnodes.persistbefore";
 	public static final String TEC_EXECUTION_REPORTNODES_PERSISTONLYNONPASSED = "tec.execution.reportnodes.persistonlynonpassed";
+	public static final String CTX_ADDITIONAL_ATTRIBUTES = "$additionalAttributes";
 
 	protected ExecutionContext context;
 	private ArtefactHandlerManager artefactHandlerManager;
@@ -68,7 +73,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	private ReportNodeAccessor reportNodeAccessor;
 	private VariablesManager variablesManager;
 	private ReportNodeCache reportNodeCache;
-	private DynamicBeanResolver dynamicBeanResolver;
+	protected DynamicBeanResolver dynamicBeanResolver;
 	private ReportNodeTimeSeries reportNodeTimeSeries;
 	private boolean reportNodeTimeSeriesEnabled;
 	private ResolvedPlanBuilder resolvedPlanBuilder;
@@ -100,8 +105,8 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		EXECUTION;
 	}
 	
-	public void createReportSkeleton(ReportNode parentReportNode, ARTEFACT artefact, Map<String, Object> newVariables) {
-		REPORT_NODE reportNode = beforeDelegation(Phase.SKELETON_CREATION, parentReportNode, artefact, newVariables);
+	public void createReportSkeleton(ReportNode parentReportNode, ARTEFACT artefact, Map<String, Object> newVariables, ParentSource parentSource) {
+		REPORT_NODE reportNode = beforeDelegation(Phase.SKELETON_CREATION, parentReportNode, artefact, newVariables, parentSource);
 		if(parentReportNode != null && parentReportNode.isOrphan()) {
 			reportNode.setOrphan(true);
 		} else {
@@ -114,7 +119,18 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 			if(filterArtefact(artefact)) {
 				reportNode.setStatus(ReportNodeStatus.SKIPPED);
 			} else {
-				createReportSkeleton_(reportNode, artefact);
+				try {
+					optionalRunChildrenBlock(artefact.getBefore(), (before) -> {
+						SequentialArtefactScheduler sequentialArtefactScheduler = new SequentialArtefactScheduler(context);
+						sequentialArtefactScheduler.createReportSkeleton_(reportNode, before.getSteps(), ParentSource.BEFORE);
+					});
+					createReportSkeleton_(reportNode, artefact);
+				} finally {
+					optionalRunChildrenBlock(artefact.getAfter(), (after) -> {
+						SequentialArtefactScheduler sequentialArtefactScheduler = new SequentialArtefactScheduler(context);
+						sequentialArtefactScheduler.createReportSkeleton_(reportNode, after.getSteps(), ParentSource.AFTER);
+					});
+				}
 			}
 		} catch (Throwable e) {
 			getListOfArtefactsNotInitialized().add(artefact.getId().toString());
@@ -129,17 +145,23 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		
 		afterDelegation(reportNode, parentReportNode, artefact);
 	}
-	
+
+	protected void optionalRunChildrenBlock(ChildrenBlock block, Consumer<ChildrenBlock> consumer) {
+		if (block != null && block.getSteps() != null && !block.getSteps().isEmpty()) {
+			consumer.accept(block);
+		}
+	}
+
 	protected abstract void createReportSkeleton_(REPORT_NODE parentNode, ARTEFACT testArtefact);
 	
-	public ReportNode execute(REPORT_NODE parentReportNode, ARTEFACT artefact, Map<String, Object> newVariables) {
+	public ReportNode execute(REPORT_NODE parentReportNode, ARTEFACT artefact, Map<String, Object> newVariables, ParentSource parentSource) {
 		// If the artefact hasn't been initialized during createReportSkeleton phase, relaunch the skeleton creation phase for this node
 		if(getListOfArtefactsNotInitialized().contains(artefact.getId().toString())) {
-			createReportSkeleton(parentReportNode, artefact, newVariables);
+			createReportSkeleton(parentReportNode, artefact, newVariables, parentSource);
 		}
 
-		REPORT_NODE reportNode = beforeDelegation(Phase.EXECUTION, parentReportNode, artefact, newVariables);
-		
+		REPORT_NODE reportNode = beforeDelegation(Phase.EXECUTION, parentReportNode, artefact, newVariables, parentSource);
+
 		long t1 = System.currentTimeMillis();
 		reportNode.setExecutionTime(t1);
 		reportNode.setStatus(ReportNodeStatus.RUNNING);
@@ -155,36 +177,55 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		}
 
 		try {
-			context.getExecutionCallbacks().beforeReportNodeExecution(context, reportNode);
-			
 			dynamicBeanResolver.evaluate(artefact, getBindings());
 			reportNode.setName(getReportNodeNameDynamically(artefact));
 			reportNode.setArtefactInstance(artefact);
 			reportNode.setResolvedArtefact(artefact);
+
+			context.getExecutionCallbacks().beforeReportNodeExecution(context, reportNode);
 
 			if (filterArtefact(artefact)) {
 				reportNode.setStatus(ReportNodeStatus.SKIPPED);
 			} else {
 				Object forcePersistBefore = artefact.getCustomAttribute(FORCE_PERSIST_BEFORE);
 				if(persistBefore || Boolean.TRUE.equals(forcePersistBefore)) {
-					saveReportNode(reportNode);					
+					saveReportNode(reportNode);
 				}
-		
-				List<AbstractArtefact> allChildren = getAllChildren(artefact, context);
-				List<AbstractArtefact> propertyChildren = filterPropertyChildren(allChildren); 
-				// Initialize property children (Phase 1)
-				propertyChildren.forEach(p->artefactHandlerManager.initPropertyArtefact(p, reportNode));
-				
-				execute_(reportNode, artefact);
-				
+
 				AtomicReportNodeStatusComposer reportNodeStatusComposer = new AtomicReportNodeStatusComposer(reportNode);
-				// Execute property children. Property artefact remain attached to their parent
-				// and are executed after their parents. (Phase 2). This allow for instance some
-				// validation after the execution of the parent
-				propertyChildren.forEach(p->{
-					ReportNode propertyReportNode = artefactHandlerManager.execute(p, reportNode);
-					reportNodeStatusComposer.addStatusAndRecompose(propertyReportNode);
-				});
+				try {
+					optionalRunChildrenBlock(artefact.getBefore(), (before) -> {
+						SequentialArtefactScheduler sequentialArtefactScheduler = new SequentialArtefactScheduler(context);
+						dynamicBeanResolver.evaluate(before, getBindings());
+						sequentialArtefactScheduler.execute_(reportNode, before.getSteps(), before.getContinueOnError().get(), ParentSource.BEFORE);
+						reportNodeStatusComposer.addStatusAndRecompose(reportNode);
+					});
+					//Only execute if no before is defined (RUNNING) or before was successful (PASSED)
+					if (reportNode.getStatus().equals(ReportNodeStatus.PASSED) || reportNode.getStatus().equals(ReportNodeStatus.RUNNING)) {
+						execute_(reportNode, artefact);
+						reportNodeStatusComposer.addStatusAndRecompose(reportNode);
+					}
+				} finally {
+					// Execute the AfterSequence artefacts even when aborting
+					boolean byPassInterrupt = context.isInterrupted();
+					if (byPassInterrupt) {
+						context.byPassInterruptInCurrentThread(true);
+					}
+					try{
+						optionalRunChildrenBlock(artefact.getAfter(), (after) -> {
+							SequentialArtefactScheduler sequentialArtefactScheduler = new SequentialArtefactScheduler(context);
+							dynamicBeanResolver.evaluate(after, getBindings());
+							sequentialArtefactScheduler.execute_(reportNode, after.getSteps(), after.getContinueOnError().get(), ParentSource.AFTER);
+							reportNodeStatusComposer.addStatusAndRecompose(reportNode);
+						});
+					} finally {
+						//resume aborting if required
+						if (byPassInterrupt) {
+							context.byPassInterruptInCurrentThread(false);
+						}
+					}
+				}
+
 				reportNodeStatusComposer.applyComposedStatusToParentNode(reportNode);
 			}
 		} catch (Throwable e) {
@@ -207,7 +248,10 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 			AbstractArtefact artefactInstance = reportNode.getArtefactInstance();
 			if (artefactInstance != null && !artefactInstance.isWorkArtefact()) {
 				// TODO implement node pruning for time series
-				reportNodeTimeSeries.ingestReportNode(reportNode);
+				Map<String, Object> customAttributes = getTimeSeriesContextAttributes(context);
+				customAttributes.put("type", artefactInstance.getClass().getSimpleName());
+				customAttributes.put("name", artefact.getAttributes().get(AbstractOrganizableObject.NAME));
+				reportNodeTimeSeries.ingestReportNode(reportNode, customAttributes);
 			}
 		}
 
@@ -218,25 +262,54 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		return reportNode;
 	}
 
-	public AbstractArtefact resolveArtefactCall(ARTEFACT artefact) {
-		return null;
+    private Map<String, Object> getTimeSeriesContextAttributes(ExecutionContext executionContext) {
+        Map<String, Object> attributes = new HashMap<>();
+        if (context.getPlan() != null) {
+            attributes.put("planId", context.getPlan().getId().toString());
+        }
+        attributes.put("taskId", Objects.requireNonNullElse(context.get("$schedulerTaskId"), ""));
+
+        TreeMap<String, String> additionalAttributes = (TreeMap<String, String>) executionContext.get(CTX_ADDITIONAL_ATTRIBUTES);
+        if (additionalAttributes != null) {
+            attributes.putAll(additionalAttributes);
+        }
+
+        return attributes;
+    }
+
+	 /**
+	  * Return the children artefacts grouped by parent source
+	  * By default, Artefacts are grouped by before, main and after source
+	  * Handlers of artefacts defining additional {@link step.core.artefacts.ChildrenBlock} should override the method
+	  * resolveChildrenArtefactBySource_ and return the map in the execution order
+	  *
+	  * @param artefactNode    : the artefact to resolve
+	  * @return the children artefacts grouped by parent source
+	  */
+	public List<ResolvedChildren> resolveChildrenArtefactBySource(ARTEFACT artefactNode, String currentPath) {
+		List<ResolvedChildren> results = new ArrayList<>();
+		ChildrenBlock before = artefactNode.getBefore();
+		if (before != null) {
+			results.add(new ResolvedChildren(ParentSource.BEFORE, before.getSteps(), currentPath));
+		}
+		List<ResolvedChildren> handlerSpecificChildren = resolveChildrenArtefactBySource_(artefactNode, currentPath);
+		results.addAll(handlerSpecificChildren);
+		ChildrenBlock after = artefactNode.getAfter();
+		if (after != null) {
+			results.add(new ResolvedChildren(ParentSource.AFTER, after.getSteps(), currentPath));
+		}
+		return results;
+	}
+
+	protected List<ResolvedChildren> resolveChildrenArtefactBySource_(ARTEFACT artefactNode, String currentPath) {
+		List<ResolvedChildren> results = new ArrayList<>();
+		results.add(new ResolvedChildren(ParentSource.MAIN, artefactNode.getChildren(), currentPath));
+		return results;
 	}
 
 	private boolean filterArtefact(ARTEFACT artefact) {
 		ArtefactFilter filter = context.getExecutionParameters().getArtefactFilter();
 		return (filter!=null&&!filter.isSelected(artefact)) || artefact.getSkipNode().get();
-	}
-
-	/**
-	 * Before calling {@link ArtefactHandler#execute_(ReportNode, AbstractArtefact)}
-	 * for an artefact node N this method is called for each child of N which
-	 * returns true on {@link AbstractArtefact#isPropertyArtefact()}. This allow
-	 * initialization of variables or properties before execution
-	 * 
-	 * @param parentReportNode the parent {@link ReportNode}
-	 * @param artefact         the {@link AbstractArtefact}
-	 */
-	public void initProperties(ReportNode parentReportNode, ARTEFACT artefact) {
 	}
 
 	/**
@@ -248,10 +321,10 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	protected abstract void execute_(REPORT_NODE reportNode, ARTEFACT artefact) throws Exception;
 		
 	@SuppressWarnings("unchecked")
-	private REPORT_NODE beforeDelegation(Phase executionPhase, ReportNode parentReportNode, ARTEFACT artefact, Map<String, Object> newVariables) {
+	private REPORT_NODE beforeDelegation(Phase executionPhase, ReportNode parentReportNode, ARTEFACT artefact, Map<String, Object> newVariables, ParentSource parentSource) {
 		REPORT_NODE reportNode;
 		
-		if(executionPhase==Phase.EXECUTION && artefact.isCreateSkeleton()) {
+		if(executionPhase == Phase.EXECUTION && artefact.isCreateSkeleton()) {
 			// search for the report node that has been created during skeleton phase
 			reportNode = (REPORT_NODE) reportNodeAccessor.getReportNodeByParentIDAndArtefactID(parentReportNode.getId(), artefact.getId());
 			if(reportNode == null) {
@@ -261,12 +334,12 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 				// It is therefore depending on the Plan if all the nodes of the path are persisted.
 				// We use to throw an exception in that case but it seems to be a better option to just ignore this
 				// and create the node again instead of throwing an error
-				reportNode = createReportNode(parentReportNode, artefact);
+				reportNode = createReportNode(parentReportNode, artefact, parentSource);
 				//throw new RuntimeException("Unable to find report node during execution phase. "
 				//		+ "The report node should have been created during skeleton creation phase as the artefact has createSkeleton flag enabled. AbstractArtefact="+testArtefact.toString()+ ". ParentNode:"+ parentNode.toString());
 			}
 		} else {
-			reportNode = createReportNode(parentReportNode, artefact);			
+			reportNode = createReportNode(parentReportNode, artefact, parentSource);
 		}
 
 		String artefactHash = getArtefactHash(artefact);
@@ -275,7 +348,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		//the resolved plan nodes when required
 		// Resolved plans might be disabled
 		if (resolvedPlanBuilder != null) {
-			resolvedPlanBuilder.checkAndAddMissingResolvedPlanNode(artefactHash, artefact, parentReportNode, reportNodeCache);
+			resolvedPlanBuilder.checkAndAddMissingResolvedPlanNode(artefactHash, artefact, parentReportNode, reportNodeCache, reportNode.getParentSource());
 		}
 
 		context.setCurrentReportNode(reportNode);
@@ -294,7 +367,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		
 		addCustomReportNodeAttributes(reportNode);
 		
-		if(executionPhase==Phase.EXECUTION) {
+		if(executionPhase == Phase.EXECUTION) {
 			addReportNodeUpdateListener(reportNode);
 		}
 		
@@ -310,20 +383,26 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		return (String) variablesManager.getVariable(ARTEFACT_PATH);
 	}
 
+	protected void pushArtefactPath(ReportNode node, ARTEFACT artefact) {
+		String currentArtefactPath = currentArtefactPath();
+		String newArtefactPath = ArtefactPathHelper.getPathOfArtefact(currentArtefactPath, artefact);
+		context.getVariablesManager().putVariable(node, ARTEFACT_PATH, newArtefactPath);
+	}
+
 	protected void delegateCreateReportSkeleton(AbstractArtefact artefact, ReportNode parentNode) {
-		artefactHandlerManager.createReportSkeleton(artefact, parentNode, null);
+		artefactHandlerManager.createReportSkeleton(artefact, parentNode, null, ParentSource.MAIN);
 	}
 	
 	protected void delegateCreateReportSkeleton(AbstractArtefact artefact, ReportNode parentNode, Map<String, Object> newVariables) {
-		artefactHandlerManager.createReportSkeleton(artefact, parentNode, newVariables);
+		artefactHandlerManager.createReportSkeleton(artefact, parentNode, newVariables , ParentSource.MAIN);
 	}
 
 	protected ReportNode delegateExecute(AbstractArtefact artefact, ReportNode parentNode) {
-		return artefactHandlerManager.execute(artefact, parentNode, null);
+		return artefactHandlerManager.execute(artefact, parentNode, null, ParentSource.MAIN);
 	}
 	
 	protected ReportNode delegateExecute(AbstractArtefact artefact, ReportNode parentNode, Map<String, Object> newVariables) {
-		return artefactHandlerManager.execute(artefact, parentNode, newVariables);
+		return artefactHandlerManager.execute(artefact, parentNode, newVariables, ParentSource.MAIN);
 	}
 	
 	private void addReportNodeUpdateListener(REPORT_NODE node) {
@@ -421,7 +500,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		context.getExecutionCallbacks().onReportNodeRemoval(context, reportNode);
 	}
 
-	private REPORT_NODE createReportNode(ReportNode parentReportNode, ARTEFACT artefact) {
+	private REPORT_NODE createReportNode(ReportNode parentReportNode, ARTEFACT artefact, ParentSource parentSource) {
 		REPORT_NODE node = createReportNode_(parentReportNode, artefact);
 		node.setId(new ObjectId());
 		node.setName(getReportNodeName(artefact));
@@ -429,6 +508,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		node.setArtefactID(artefact.getId());
 		node.setExecutionID(context.getExecutionId().toString());
 		node.setStatus(ReportNodeStatus.NORUN);
+		node.setParentSource(parentSource);
 		return node;
 	}
 
@@ -447,12 +527,6 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		return name != null ? name : "Unnamed";
 	}
 
-	protected void pushArtefactPath(ReportNode node, ARTEFACT artefact) {
-		String currentArtefactPath = currentArtefactPath();
-		String newArtefactPath = ArtefactPathHelper.getPathOfArtefact(currentArtefactPath, artefact);
-		context.getVariablesManager().putVariable(node, ARTEFACT_PATH, newArtefactPath);
-	}
-
 	/**
 	 * Creates the {@link ReportNode} corresponding to the provided artefact
 	 * @param parentReportNode the parent {@link ReportNode}
@@ -466,7 +540,18 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	}
 	
 	public static List<AbstractArtefact> getChildren(AbstractArtefact artefact, ExecutionContext context) { 
-		return excludePropertyChildren(getAllChildren(artefact, context));
+		return getAllChildren(artefact, context);
+	}
+
+	public static List<AbstractArtefact> getChildrenCopy(List<AbstractArtefact> sourceChildren, ExecutionContext context) {
+		DynamicBeanResolver dynamicBeanResolver = context.getDynamicBeanResolver();
+		List<AbstractArtefact> result = new ArrayList<>();
+		if(sourceChildren!=null) {
+			for(AbstractArtefact child:sourceChildren) {
+				result.add(dynamicBeanResolver.cloneDynamicValues(child));
+			}
+		}
+		return result;
 	}
 
 	private static List<AbstractArtefact> getAllChildren(AbstractArtefact artefact, ExecutionContext context) {
@@ -481,14 +566,6 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		return result;
 	}
 
-	public static List<AbstractArtefact> filterPropertyChildren(List<AbstractArtefact> children) {
-		return children != null ? children.stream().filter(c -> c.isPropertyArtefact()).collect(Collectors.toList()) : null;
-	}
-	
-	public static List<AbstractArtefact> excludePropertyChildren(List<AbstractArtefact> children) {
-		return children != null ? children.stream().filter(c -> !c.isPropertyArtefact()).collect(Collectors.toList()) : null;
-	}
-	
 	protected <T extends AbstractArtefact> T createWorkArtefact(Class<T> artefactClass, AbstractArtefact parentArtefact, String name) {
 		return workArtefactFactory.createWorkArtefact(artefactClass, parentArtefact, name, false);
 	}

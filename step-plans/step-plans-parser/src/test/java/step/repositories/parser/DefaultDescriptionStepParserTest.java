@@ -299,6 +299,64 @@ public class DefaultDescriptionStepParserTest extends AbstractDescriptionStepPar
 		Assert.assertNotNull(artefact);
 		Assert.assertEquals("10", artefact.getMaxDuration().getExpression());
 	}
+
+	@Test
+	public void testThreadGroupBeforeAfterThread() throws ParsingException {
+		List<AbstractStep> steps = new ArrayList<>();
+		steps.add(step("ThreadGroup"));
+		steps.add(step("BeforeThread"));
+		steps.add(step("Echo in before thread"));
+		steps.add(step("End"));
+		steps.add(step("AfterThread"));
+		steps.add(step("Echo in after thread"));
+		steps.add(step("End"));
+		steps.add(step("Echo in thread group"));
+		steps.add(step("AfterSequence"));
+		steps.add(step("Echo in after thread group"));
+		steps.add(step("End"));
+		steps.add(step("BeforeSequence"));
+		steps.add(step("Echo in before thread group"));
+		steps.add(step("End"));
+		steps.add(step("End"));
+
+		ThreadGroup artefact = parseAndGetUniqueChild(steps, ThreadGroup.class);
+		Assert.assertNotNull(artefact);
+		Assert.assertEquals(0, (int)artefact.getMaxDuration().getValue());
+		Assert.assertEquals(1,artefact.getAfter().getSteps().size());
+		Assert.assertEquals(1,artefact.getBefore().getSteps().size());
+		Assert.assertEquals(1,artefact.getAfterThread().getSteps().size());
+		Assert.assertEquals(1,artefact.getBeforeThread().getSteps().size());
+		Assert.assertEquals(1,artefact.getChildren().size());
+	}
+
+	@Test
+	public void testBeforeAfterNewSyntax() throws ParsingException {
+		List<AbstractStep> steps = new ArrayList<>();
+		steps.add(step("ThreadGroup"));
+		steps.add(step("BeforeThread"));
+		steps.add(step("Echo in before thread"));
+		steps.add(step("End"));
+		steps.add(step("AfterThread"));
+		steps.add(step("Echo in after thread"));
+		steps.add(step("End"));
+		steps.add(step("Echo in thread group"));
+		steps.add(step("After"));
+		steps.add(step("Echo in after thread group"));
+		steps.add(step("End"));
+		steps.add(step("Before"));
+		steps.add(step("Echo in before thread group"));
+		steps.add(step("End"));
+		steps.add(step("End"));
+
+		ThreadGroup artefact = parseAndGetUniqueChild(steps, ThreadGroup.class);
+		Assert.assertNotNull(artefact);
+		Assert.assertEquals(0, (int)artefact.getMaxDuration().getValue());
+		Assert.assertEquals(1,artefact.getAfter().getSteps().size());
+		Assert.assertEquals(1,artefact.getBefore().getSteps().size());
+		Assert.assertEquals(1,artefact.getAfterThread().getSteps().size());
+		Assert.assertEquals(1,artefact.getBeforeThread().getSteps().size());
+		Assert.assertEquals(1,artefact.getChildren().size());
+	}
 	
 	@Test
 	public void testTestScenario() throws ParsingException {
@@ -422,6 +480,29 @@ public class DefaultDescriptionStepParserTest extends AbstractDescriptionStepPar
 		Sequence sequence = parseAndGetUniqueChild(steps, Sequence.class);
 		Assert.assertEquals("false",sequence.getContinueOnError().getExpression());
 	}
+
+	@Test
+	public void testSequenceBeforeAfter() throws ParsingException {
+		List<AbstractStep> steps = new ArrayList<>();
+		steps.add(step("Sequence"));
+		steps.add(step("BeforeSequence"));
+		steps.add(step("Echo test in before Sequence"));
+		steps.add(step("End"));
+		steps.add(step("Echo test"));
+		steps.add(step("BeforeSequence"));
+		steps.add(step("Echo test in second before Sequence"));
+		steps.add(step("End"));
+		steps.add(step("AfterSequence"));
+		steps.add(step("Echo test in after Sequence"));
+		steps.add(step("End"));
+		steps.add(step("End"));
+
+		Sequence sequence = parseAndGetUniqueChild(steps, Sequence.class);
+		Assert.assertEquals(1, sequence.getChildren().size());
+		Assert.assertEquals(2, sequence.getBefore().getSteps().size());
+		Assert.assertEquals(1, sequence.getAfter().getSteps().size());
+		Assert.assertFalse(sequence.getContinueOnError().getValue());
+	}
 	
 	@Test
 	public void testRetryIfFailsDefaults() throws ParsingException {
@@ -458,7 +539,7 @@ public class DefaultDescriptionStepParserTest extends AbstractDescriptionStepPar
 		
 		Json.createReader(new StringReader(group.getToken().get())).readObject();
 	}
-	
+
 	@Test
 	public void testIf() throws ParsingException {
 		List<AbstractStep> steps = new ArrayList<>();
@@ -506,7 +587,31 @@ public class DefaultDescriptionStepParserTest extends AbstractDescriptionStepPar
 	public void testPerformanceAssert() throws ParsingException {
 		List<AbstractStep> steps = new ArrayList<>();
 		steps.add(step("PerformanceAssert Measurement= \"myMeasurement1\" \t Comparator=\"higher than\" Metric = \"Count\" Value= 10"));
-		PerformanceAssert artefact = parseAndGetUniqueChild(steps, PerformanceAssert.class);
+		Sequence sequence = parse(steps);
+		Assert.assertEquals(0, sequence.getChildren().size());
+		Assert.assertEquals(1, sequence.getAfter().getSteps().size());
+		Assert.assertTrue(sequence.getAfter().getSteps().get(0) instanceof PerformanceAssert);
+		PerformanceAssert artefact = (PerformanceAssert) sequence.getAfter().getSteps().get(0);
+		Assert.assertEquals("10",artefact.getExpectedValue().getExpression());
+		Filter filter = artefact.getFilters().get(0);
+		Assert.assertEquals("\"myMeasurement1\"", filter.getFilter().getExpression());
+		Assert.assertEquals(Comparator.HIGHER_THAN, artefact.getComparator());
+		Assert.assertEquals(Aggregator.COUNT, artefact.getAggregator());
+	}
+
+	@Test
+	public void testPerformanceAssertInAfter() throws ParsingException {
+		List<AbstractStep> steps = new ArrayList<>();
+		steps.add(step("TestCase"));
+		steps.add(step("After"));
+		steps.add(step("PerformanceAssert Measurement= \"myMeasurement1\" \t Comparator=\"higher than\" Metric = \"Count\" Value= 10"));
+		steps.add(step("End"));
+		steps.add(step("End"));
+		TestCase testCase = parseAndGetUniqueChild(steps, TestCase.class);
+		Assert.assertEquals(0, testCase.getChildren().size());
+		Assert.assertEquals(1, testCase.getAfter().getSteps().size());
+		Assert.assertTrue(testCase.getAfter().getSteps().get(0) instanceof PerformanceAssert);
+		PerformanceAssert artefact = (PerformanceAssert) testCase.getAfter().getSteps().get(0);
 		Assert.assertEquals("10",artefact.getExpectedValue().getExpression());
 		Filter filter = artefact.getFilters().get(0);
 		Assert.assertEquals("\"myMeasurement1\"", filter.getFilter().getExpression());
@@ -518,7 +623,11 @@ public class DefaultDescriptionStepParserTest extends AbstractDescriptionStepPar
 	public void testPerformanceAssertWithMinimalArgs() throws ParsingException {
 		List<AbstractStep> steps = new ArrayList<>();
 		steps.add(step("PerformanceAssert Measurement=\"myMeasurement1\" Value=10"));
-		PerformanceAssert artefact = parseAndGetUniqueChild(steps, PerformanceAssert.class);
+		Sequence sequence = parse(steps);
+		Assert.assertEquals(0, sequence.getChildren().size());
+		Assert.assertEquals(1, sequence.getAfter().getSteps().size());
+		Assert.assertTrue(sequence.getAfter().getSteps().get(0) instanceof PerformanceAssert);
+		PerformanceAssert artefact = (PerformanceAssert) sequence.getAfter().getSteps().get(0);
 		Assert.assertEquals("10",artefact.getExpectedValue().getExpression());
 		Filter filter = artefact.getFilters().get(0);
 		Assert.assertEquals("\"myMeasurement1\"", filter.getFilter().getExpression());

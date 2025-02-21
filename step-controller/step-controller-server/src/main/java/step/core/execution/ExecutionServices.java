@@ -173,6 +173,20 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 		return executionAccessor.findByIds(ids).collect(Collectors.toMap(e -> e.getId().toHexString(), Execution::getDescription));
 	}
 
+	@Operation(description = "Returns the last execution triggered by a specific task.")
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Path("/search/last/by/task-id/{taskId}")
+	@Secured(right="execution-read")
+	public List<Execution> getLastExecutionsByTaskId(
+			@PathParam("taskId") String taskId,
+			@QueryParam("limit") int limit,
+			@QueryParam("from") Long from,
+			@QueryParam("to") Long to) {
+		return executionAccessor.getLastEndedExecutionsBySchedulerTaskID(taskId, limit, from, to);
+	}
+
 	@Operation(description = "Returns the execution matching the provided repository object reference.")
 	@POST
 	@Path("/search/by/ref")
@@ -246,7 +260,7 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right = "execution-read")
 	public AggregatedReportView getFullAggregatedReportView(@PathParam("id") String executionId) {
-		return getAggregatedReportView(executionId, new AggregatedReportViewBuilder.AggregatedReportViewRequest(null));
+		return getAggregatedReportView(executionId, new AggregatedReportViewBuilder.AggregatedReportViewRequest(null, null));
 	}
 
 	@Operation(description = "Returns an aggregated report view for the provided execution and aggregation parameters.")

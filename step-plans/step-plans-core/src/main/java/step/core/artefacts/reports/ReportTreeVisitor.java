@@ -18,10 +18,7 @@
  ******************************************************************************/
 package step.core.artefacts.reports;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Stack;
+import java.util.*;
 import java.util.function.Consumer;
 
 public class ReportTreeVisitor {
@@ -104,12 +101,16 @@ public class ReportTreeVisitor {
 		event.stack = (Stack<ReportNode>) stack.clone();
 		consumer.accept(event);
 		stack.push(root);
-		reportTreeAccessor.getChildren(root.getId().toString()).forEachRemaining(node-> {
-			visitChildrenWithEvents(node, stack, consumer);
+		String rootId = root.getId().toString();
+		Arrays.stream(ParentSource.values()).forEach(source -> {
+			reportTreeAccessor.getChildrenByParentSource(rootId, source).forEachRemaining(node -> {
+				visitChildrenWithEvents(node, stack, consumer);
+			});
 		});
+
 		stack.pop();
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	protected void visitChildrenWithHandler(ReportNode root, Stack<ReportNode> stack, ReportNodeVisitorEventHandler reportNodeVisitorEventHandler) {
 		ReportNodeEvent event = new ReportNodeEvent();
@@ -117,8 +118,11 @@ public class ReportTreeVisitor {
 		event.stack = (Stack<ReportNode>) stack.clone();
 		stack.push(root);
 		reportNodeVisitorEventHandler.startReportNode(event);
-		reportTreeAccessor.getChildren(root.getId().toString()).forEachRemaining(node-> {
-			visitChildrenWithHandler(node, stack, reportNodeVisitorEventHandler);
+		String rootId = root.getId().toString();
+		Arrays.stream(ParentSource.values()).forEach(source -> {
+			reportTreeAccessor.getChildrenByParentSource(rootId, source).forEachRemaining(node-> {
+				visitChildrenWithHandler(node, stack, reportNodeVisitorEventHandler);
+			});
 		});
 		reportNodeVisitorEventHandler.endReportNode(event);
 		stack.pop();
