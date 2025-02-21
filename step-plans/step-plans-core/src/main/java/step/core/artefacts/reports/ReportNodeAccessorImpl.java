@@ -48,6 +48,7 @@ public class ReportNodeAccessorImpl extends AbstractAccessor<ReportNode> impleme
 		createOrUpdateCompoundIndex("executionID", "_class");
 		createOrUpdateCompoundIndex("executionID", "parentID");
 		createOrUpdateCompoundIndex("executionID", "artefactHash");
+		createOrUpdateCompoundIndex("executionID", "path");
 	}
 
 	@Override

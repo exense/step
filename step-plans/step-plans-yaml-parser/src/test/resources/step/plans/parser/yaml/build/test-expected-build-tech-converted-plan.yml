@@ -13,6 +13,7 @@ root:
     value: ""
     expression: ""
   useDynamicName: false
+  workArtefact: false
   children:
     - _class: "Check"
       attributes:
@@ -22,6 +23,7 @@ root:
         value: ""
         expression: ""
       useDynamicName: false
+      workArtefact: false
       children: []
       skipNode:
         dynamic: false
@@ -45,6 +47,7 @@ root:
         value: ""
         expression: ""
       useDynamicName: false
+      workArtefact: false
       children: []
       skipNode:
         dynamic: false
@@ -68,6 +71,7 @@ root:
         value: ""
         expression: ""
       useDynamicName: false
+      workArtefact: false
       children: []
       skipNode:
         dynamic: false
@@ -91,6 +95,7 @@ root:
         value: ""
         expression: ""
       useDynamicName: false
+      workArtefact: false
       children:
         - _class: "Check"
           attributes:
@@ -100,6 +105,7 @@ root:
             value: ""
             expression: ""
           useDynamicName: false
+          workArtefact: false
           children: []
           skipNode:
             dynamic: false
@@ -123,6 +129,7 @@ root:
             value: ""
             expression: ""
           useDynamicName: false
+          workArtefact: false
           children: []
           skipNode:
             dynamic: false
@@ -160,6 +167,7 @@ root:
         value: ""
         expression: ""
       useDynamicName: false
+      workArtefact: false
       children: []
       skipNode:
         dynamic: false
@@ -185,6 +193,7 @@ root:
         value: ""
         expression: ""
       useDynamicName: false
+      workArtefact: false
       children:
         - _class: "CallPlan"
           attributes:
@@ -194,6 +203,7 @@ root:
             value: ""
             expression: ""
           useDynamicName: false
+          workArtefact: false
           children: []
           skipNode:
             dynamic: false
@@ -234,6 +244,7 @@ root:
         value: ""
         expression: ""
       useDynamicName: false
+      workArtefact: false
       children:
         - _class: "Session"
           attributes:
@@ -243,6 +254,7 @@ root:
             value: ""
             expression: ""
           useDynamicName: false
+          workArtefact: false
           children:
             - _class: "Sequence"
               attributes:
@@ -252,6 +264,7 @@ root:
                 value: ""
                 expression: ""
               useDynamicName: false
+              workArtefact: false
               before:
                 continueOnError:
                   dynamic: false
@@ -265,6 +278,7 @@ root:
                       value: ""
                       expression: ""
                     useDynamicName: false
+                    workArtefact: false
                     children: [ ]
                     skipNode:
                       dynamic: false
@@ -290,6 +304,7 @@ root:
                       value: ""
                       expression: ""
                     useDynamicName: false
+                    workArtefact: false
                     children: [ ]
                     skipNode:
                       dynamic: false
@@ -316,6 +331,7 @@ root:
                       value: ""
                       expression: ""
                     useDynamicName: false
+                    workArtefact: false
                     children: [ ]
                     skipNode:
                       dynamic: false
@@ -341,6 +357,7 @@ root:
                       value: ""
                       expression: ""
                     useDynamicName: false
+                    workArtefact: false
                     children: [ ]
                     skipNode:
                       dynamic: false
@@ -366,6 +383,7 @@ root:
                       value: ""
                       expression: ""
                     useDynamicName: false
+                    workArtefact: false
                     children: [ ]
                     skipNode:
                       dynamic: false
@@ -391,6 +409,7 @@ root:
                       value: ""
                       expression: ""
                     useDynamicName: false
+                    workArtefact: false
                     children: [ ]
                     skipNode:
                       dynamic: false
@@ -418,6 +437,7 @@ root:
                       value: ""
                       expression: ""
                     useDynamicName: false
+                    workArtefact: false
                     children: [ ]
                     skipNode:
                       dynamic: false
@@ -444,6 +464,7 @@ root:
                       value: ""
                       expression: ""
                     useDynamicName: false
+                    workArtefact: false
                     children: [ ]
                     skipNode:
                       dynamic: false
@@ -471,6 +492,7 @@ root:
                       value: ""
                       expression: ""
                     useDynamicName: false
+                    workArtefact: false
                     children: [ ]
                     skipNode:
                       dynamic: false
@@ -497,6 +519,7 @@ root:
                       value: ""
                       expression: ""
                     useDynamicName: false
+                    workArtefact: false
                     children: [ ]
                     skipNode:
                       dynamic: false
@@ -523,6 +546,7 @@ root:
                       value: ""
                       expression: ""
                     useDynamicName: false
+                    workArtefact: false
                     children: [ ]
                     skipNode:
                       dynamic: false
@@ -550,6 +574,7 @@ root:
                       value: ""
                       expression: ""
                     useDynamicName: false
+                    workArtefact: false
                     children: [ ]
                     skipNode:
                       dynamic: false
@@ -579,6 +604,7 @@ root:
                     value: ""
                     expression: ""
                   useDynamicName: false
+                  workArtefact: false
                   children: []
                   skipNode:
                     dynamic: false
@@ -603,6 +629,7 @@ root:
                     value: ""
                     expression: ""
                   useDynamicName: false
+                  workArtefact: false
                   children: []
                   skipNode:
                     dynamic: false
@@ -629,6 +656,7 @@ root:
                     value: ""
                     expression: ""
                   useDynamicName: false
+                  workArtefact: false
                   children: []
                   skipNode:
                     dynamic: false
@@ -655,6 +683,7 @@ root:
                     value: ""
                     expression: ""
                   useDynamicName: false
+                  workArtefact: false
                   children: []
                   skipNode:
                     dynamic: false
@@ -680,6 +709,7 @@ root:
                     value: ""
                     expression: ""
                   useDynamicName: false
+                  workArtefact: false
                   children: []
                   skipNode:
                     dynamic: false
@@ -706,6 +736,7 @@ root:
                     value: ""
                     expression: ""
                   useDynamicName: false
+                  workArtefact: false
                   children: []
                   skipNode:
                     dynamic: false
@@ -732,6 +763,7 @@ root:
                     value: ""
                     expression: ""
                   useDynamicName: false
+                  workArtefact: false
                   children: []
                   skipNode:
                     dynamic: false
@@ -758,6 +790,7 @@ root:
                     value: ""
                     expression: ""
                   useDynamicName: false
+                  workArtefact: false
                   children:
                     - _class: "CallPlan"
                       attributes:
@@ -767,6 +800,7 @@ root:
                         value: ""
                         expression: ""
                       useDynamicName: false
+                      workArtefact: false
                       children: []
                       skipNode:
                         dynamic: false
@@ -818,6 +852,7 @@ root:
                     value: ""
                     expression: ""
                   useDynamicName: false
+                  workArtefact: false
                   children: []
                   skipNode:
                     dynamic: false
@@ -848,6 +883,7 @@ root:
                       value: ""
                       expression: ""
                     useDynamicName: false
+                    workArtefact: false
                     children:
                       - _class: "CallPlan"
                         attributes:
@@ -857,6 +893,7 @@ root:
                           value: ""
                           expression: ""
                         useDynamicName: false
+                        workArtefact: false
                         children: [ ]
                         skipNode:
                           dynamic: false
@@ -883,6 +920,7 @@ root:
                           value: ""
                           expression: ""
                         useDynamicName: false
+                        workArtefact: false
                         children:
                           - _class: "Set"
                             attributes:
@@ -892,6 +930,7 @@ root:
                               value: ""
                               expression: ""
                             useDynamicName: false
+                            workArtefact: false
                             children: [ ]
                             skipNode:
                               dynamic: false
@@ -918,6 +957,7 @@ root:
                               value: ""
                               expression: ""
                             useDynamicName: false
+                            workArtefact: false
                             children: [ ]
                             skipNode:
                               dynamic: false
@@ -984,6 +1024,7 @@ root:
                       value: ""
                       expression: ""
                     useDynamicName: false
+                    workArtefact: false
                     children:
                       - _class: "If"
                         attributes:
@@ -993,6 +1034,7 @@ root:
                           value: ""
                           expression: ""
                         useDynamicName: false
+                        workArtefact: false
                         children:
                           - _class: "RetryIfFails"
                             attributes:
@@ -1002,6 +1044,7 @@ root:
                               value: ""
                               expression: ""
                             useDynamicName: false
+                            workArtefact: false
                             children:
                               - _class: "CallPlan"
                                 attributes:
@@ -1011,6 +1054,7 @@ root:
                                   value: ""
                                   expression: ""
                                 useDynamicName: false
+                                workArtefact: false
                                 children: [ ]
                                 skipNode:
                                   dynamic: false
@@ -1091,6 +1135,7 @@ root:
                       value: ""
                       expression: ""
                     useDynamicName: false
+                    workArtefact: false
                     children:
                       - _class: "CallKeyword"
                         attributes:
@@ -1100,6 +1145,7 @@ root:
                           value: ""
                           expression: ""
                         useDynamicName: false
+                        workArtefact: false
                         children: [ ]
                         skipNode:
                           dynamic: false
@@ -1149,6 +1195,7 @@ root:
                       value: ""
                       expression: ""
                     useDynamicName: false
+                    workArtefact: false
                     children:
                       - _class: "If"
                         attributes:
@@ -1158,6 +1205,7 @@ root:
                           value: ""
                           expression: ""
                         useDynamicName: false
+                        workArtefact: false
                         children:
                           - _class: "CallPlan"
                             attributes:
@@ -1167,6 +1215,7 @@ root:
                               value: ""
                               expression: ""
                             useDynamicName: false
+                            workArtefact: false
                             children: [ ]
                             skipNode:
                               dynamic: false
@@ -1222,6 +1271,7 @@ root:
                       value: ""
                       expression: ""
                     useDynamicName: false
+                    workArtefact: false
                     children:
                       - _class: "If"
                         attributes:
@@ -1231,6 +1281,7 @@ root:
                           value: ""
                           expression: ""
                         useDynamicName: false
+                        workArtefact: false
                         children:
                           - _class: "CallPlan"
                             attributes:
@@ -1240,6 +1291,7 @@ root:
                               value: ""
                               expression: ""
                             useDynamicName: false
+                            workArtefact: false
                             children: [ ]
                             skipNode:
                               dynamic: false
