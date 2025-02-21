@@ -50,7 +50,7 @@ public class YamlEditorPlanTypeTest {
                 Assert.assertEquals("#: required key [name] not found", errors.get(0).getMessage());
                 Assert.assertEquals(1, ((YamlEditorPlanTypeCompiler.YamlEditorPlanCompilationError) errors.get(0)).getLine());
             }
-        }.check("src/test/resources/step/plans/parser/yaml/invalid/t0");
+        }.check("src/test/resources/step/plans/parser/yaml/invalid/test-invalid-plan-1.yml");
     }
 
     private abstract static class CheckValidationErrors {
