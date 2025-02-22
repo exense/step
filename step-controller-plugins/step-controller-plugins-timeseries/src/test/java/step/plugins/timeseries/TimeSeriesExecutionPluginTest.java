@@ -29,9 +29,7 @@ import step.core.timeseries.aggregation.TimeSeriesAggregationPipeline;
 import step.core.timeseries.aggregation.TimeSeriesAggregationQuery;
 import step.core.timeseries.aggregation.TimeSeriesAggregationQueryBuilder;
 import step.core.timeseries.aggregation.TimeSeriesAggregationResponse;
-import step.core.timeseries.ingestion.TimeSeriesIngestionPipeline;
 import step.core.views.ViewPlugin;
-import step.engine.plugins.AutomationPackageAccessorLocalPlugin;
 import step.engine.plugins.FunctionPlugin;
 import step.engine.plugins.LocalFunctionPlugin;
 import step.framework.server.ServiceRegistrationCallback;
@@ -102,7 +100,6 @@ public class TimeSeriesExecutionPluginTest extends AbstractKeyword {
 		timeSeriesAggregationPipeline = globalContext.get(TimeSeriesAggregationPipeline.class);
 		engine = ExecutionEngine.builder()
 				.withPlugin(new MeasurementPlugin(GaugeCollectorRegistry.getInstance()))
-				.withPlugin(new AutomationPackageAccessorLocalPlugin())
 				.withPlugin(new FunctionPlugin())
                 .withPlugin(new ThreadPoolPlugin())
 				.withPlugin(new LocalFunctionPlugin())

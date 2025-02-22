@@ -119,7 +119,7 @@ public class AutomationPackageManagerOSTest {
                 automationPackageHookRegistry,
                 new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, automationPackageHookRegistry, serializationRegistry, configuration),
                 automationPackageLocks
-                );
+        );
     }
 
     private static FunctionTypeRegistry prepareTestFunctionTypeRegistry(Configuration configuration) {
@@ -136,12 +136,11 @@ public class AutomationPackageManagerOSTest {
                 return jMeterFunctionType;
             } else if (function instanceof GeneralScriptFunction) {
                 return generalScriptFunctionType;
-            } else if (function instanceof CompositeFunction){
+            } else if (function instanceof CompositeFunction) {
                 return compositeFunctionType;
-            } else if (function instanceof NodeFunction){
+            } else if (function instanceof NodeFunction) {
                 return nodeFunctionType;
-            }
-            else {
+            } else {
                 return null;
             }
         });
@@ -256,7 +255,7 @@ public class AutomationPackageManagerOSTest {
 
         try (InputStream is = new FileInputStream(automationPackageJar)) {
             ObjectId result;
-            result = manager.createAutomationPackage(is, fileName,  null, null,null, null);
+            result = manager.createAutomationPackage(is, fileName, null, null, null, null);
             AutomationPackage storedPackage = automationPackageAccessor.get(result);
 
             List<Plan> storedPlans = planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
@@ -308,7 +307,7 @@ public class AutomationPackageManagerOSTest {
         try (InputStream is = new FileInputStream(automationPackageJar)) {
             ObjectId result;
             if (createNew) {
-                result = manager.createAutomationPackage(is, fileName, null, null,null, null);
+                result = manager.createAutomationPackage(is, fileName, null, null, null, null);
             } else {
                 AutomationPackageUpdateResult updateResult = manager.createOrUpdateAutomationPackage(true, true, null, is, fileName, null, null, null, null, async);
                 if (async && expectedDelay) {

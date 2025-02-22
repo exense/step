@@ -2,7 +2,6 @@ package step.artefacts.handlers;
 
 import org.junit.Test;
 import step.artefacts.CallFunction;
-import step.automation.packages.accessor.InMemoryAutomationPackageAccessorImpl;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
@@ -21,7 +20,6 @@ import static org.junit.Assert.assertNotNull;
 public class FunctionLocatorTest {
 
 	private final InMemoryFunctionAccessorImpl functionAccessor = new InMemoryFunctionAccessorImpl();
-	private final InMemoryAutomationPackageAccessorImpl apAccessor = new InMemoryAutomationPackageAccessorImpl();
 
 	@Test
 	public void test() {

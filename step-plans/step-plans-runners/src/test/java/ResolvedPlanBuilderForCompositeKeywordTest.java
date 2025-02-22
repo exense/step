@@ -18,7 +18,6 @@ import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
 import step.core.plans.runner.PlanRunnerResult;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
-import step.engine.plugins.AutomationPackageAccessorLocalPlugin;
 import step.engine.plugins.FunctionPlugin;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.accessor.InMemoryFunctionAccessorImpl;
@@ -44,7 +43,6 @@ public class ResolvedPlanBuilderForCompositeKeywordTest {
         InMemoryFunctionAccessorImpl functionAccessor = new InMemoryFunctionAccessorImpl();
         parentContext.put(FunctionAccessor.class, functionAccessor);
         engine = new ExecutionEngine.Builder().withParentContext(parentContext)
-                .withPlugin(new AutomationPackageAccessorLocalPlugin())
                 .withPlugin(new FunctionPlugin())
                 .withPlugin(new BaseArtefactPlugin())
                 .withPlugin(new TokenForecastingExecutionPlugin())

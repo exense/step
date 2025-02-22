@@ -103,6 +103,9 @@ public class FunctionLocator {
 
 	}
 
+	/**
+	 * Reorders and filters entities according to the current automation package and activation expression
+	 */
 	public static <T extends AbstractOrganizableObject> List<T> prioritizeAutomationPackageLinkedEntities(List<T> entities, Map<String, Object> bindings) {
 		// reorder entities: entities from current AP have a priority
 		List<T> entitiesWithHighestPriority = new ArrayList<>();

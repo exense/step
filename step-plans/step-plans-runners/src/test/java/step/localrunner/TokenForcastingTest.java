@@ -42,7 +42,6 @@ import step.core.plans.Plan;
 import step.core.agents.provisioning.AgentPoolRequirementSpec;
 import step.core.plans.builder.PlanBuilder;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
-import step.engine.plugins.AutomationPackageAccessorLocalPlugin;
 import step.engine.plugins.BasePlugin;
 import step.engine.plugins.FunctionPlugin;
 import step.functions.io.Output;
@@ -329,7 +328,6 @@ public class TokenForcastingTest {
 		ForcastingTestPlugin forcastingTestPlugin = new ForcastingTestPlugin(availableAgentPools);
 		try (ExecutionEngine executionEngine = ExecutionEngine.builder()
 				.withPlugin(new BasePlugin())
-                .withPlugin(new AutomationPackageAccessorLocalPlugin())
                 .withPlugin(new FunctionPlugin())
 				.withPlugin(new AbstractExecutionEnginePlugin() {
 					@Override

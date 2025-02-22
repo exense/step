@@ -24,7 +24,6 @@ import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
 import step.core.plans.runner.PlanRunnerResult;
 import step.core.plans.runner.PlanRunnerResultAssert;
-import step.engine.plugins.AutomationPackageAccessorLocalPlugin;
 import step.engine.plugins.FunctionPlugin;
 import step.engine.plugins.LocalFunctionPlugin;
 import step.handlers.javahandler.AbstractKeyword;
@@ -52,12 +51,8 @@ public class PerformanceAssertHandlerTest extends AbstractKeyword {
 		filterKeywordMeasure = new Filter(AbstractOrganizableObject.NAME, "TestKeywordWithMeasurements", FilterType.EQUALS);
 		invalidFilter = new Filter(AbstractOrganizableObject.NAME, "NotExistingMeasure...", FilterType.EQUALS);
 		
-		engine = ExecutionEngine.builder()
-				.withPlugin(new AutomationPackageAccessorLocalPlugin())
-				.withPlugin(new FunctionPlugin())
-				.withPlugin(new ThreadPoolPlugin())
-				.withPlugin(new LocalFunctionPlugin())
-				.withPlugin(new BaseArtefactPlugin())
+		engine = ExecutionEngine.builder().withPlugin(new FunctionPlugin()).withPlugin(new ThreadPoolPlugin())
+				.withPlugin(new LocalFunctionPlugin()).withPlugin(new BaseArtefactPlugin())
 				.withPlugin(new PerformanceAssertPlugin()).build();
 	}
 	

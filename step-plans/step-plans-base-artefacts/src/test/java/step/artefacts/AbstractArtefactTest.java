@@ -24,7 +24,6 @@ import step.artefacts.handlers.functions.TokenForecastingExecutionPlugin;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
 import step.core.execution.OperationMode;
-import step.engine.plugins.AutomationPackageAccessorLocalPlugin;
 import step.engine.plugins.FunctionPlugin;
 import step.threadpool.ThreadPoolPlugin;
 
@@ -38,13 +37,9 @@ public class AbstractArtefactTest {
 
 	@Before
 	public void beforeTest() {
-		executionEngine = ExecutionEngine.builder()
-				.withPlugin(new AutomationPackageAccessorLocalPlugin())
-				.withPlugin(new ThreadPoolPlugin())
-				.withPlugin(new BaseArtefactPlugin())
-				.withPlugin(new TokenForecastingExecutionPlugin())
-				.withPlugin(new FunctionPlugin())
-				.withOperationMode(OperationMode.CONTROLLER).build();
+		executionEngine = ExecutionEngine.builder().withPlugin(new ThreadPoolPlugin())
+				.withPlugin(new BaseArtefactPlugin()).withPlugin(new TokenForecastingExecutionPlugin())
+				.withPlugin(new FunctionPlugin()).withOperationMode(OperationMode.CONTROLLER).build();
 	}
 
 	@After

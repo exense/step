@@ -31,7 +31,6 @@ import step.core.execution.ExecutionEngine;
 import step.core.execution.ExecutionEngineContext;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
-import step.engine.plugins.AutomationPackageAccessorLocalPlugin;
 import step.engine.plugins.FunctionPlugin;
 import step.engine.plugins.LocalFunctionPlugin;
 import step.handlers.javahandler.AbstractKeyword;
@@ -60,7 +59,6 @@ public class MeasurementPluginTest extends AbstractKeyword {
 		mc.initGaugeCollectorRegistry(GlobalContextBuilder.createGlobalContext());
 		MeasurementPlugin.registerMeasurementHandlers(new TestMeasurementHandler());
 		engine = ExecutionEngine.builder().withPlugin(new MeasurementPlugin(GaugeCollectorRegistry.getInstance()))
-				.withPlugin(new AutomationPackageAccessorLocalPlugin())
 				.withPlugin(new FunctionPlugin())
 				.withPlugin(new ThreadPoolPlugin())
 				.withPlugin(new LocalFunctionPlugin())

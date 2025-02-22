@@ -68,6 +68,7 @@ public class PlanLocator {
 			List<Plan> matchingPlans = stream.collect(Collectors.toList());
 
 			// The same logic as for functions - plans from current automation package have priority in 'CallPlan'
+			// We use prioritization by current automation package and filtering by activation expressions
 			List<Plan> orderedPlans = FunctionLocator.prioritizeAutomationPackageLinkedEntities(matchingPlans, bindings);
 			a = orderedPlans.stream().findFirst().orElseThrow(()->new NoSuchElementException("Unable to find plan with attributes: "+selectionAttributes.toString()));
 		}

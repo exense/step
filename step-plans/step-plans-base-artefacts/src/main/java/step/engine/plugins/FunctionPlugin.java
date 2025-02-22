@@ -47,9 +47,6 @@ public class FunctionPlugin extends AbstractExecutionEnginePlugin {
 	private FunctionTypeRegistry functionTypeRegistry;
 	private FunctionExecutionService functionExecutionService;
 
-	public FunctionPlugin() {
-	}
-
 	@Override
 	public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext context) {
 		FileResolver fileResolver = context.getFileResolver();
