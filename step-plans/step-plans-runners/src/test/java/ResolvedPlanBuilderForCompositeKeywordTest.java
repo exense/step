@@ -108,14 +108,14 @@ public class ResolvedPlanBuilderForCompositeKeywordTest {
         System.out.println("----------------------");
         System.out.println(node.toString());
 
-        Assert.assertEquals("ForBlock: 1x\n" +
-                " CallPlan: 10x\n" +
-                "  Sequence: 10x\n" +
-                "   CallFunction: 10x\n" +
-                "    Sequence: 10x\n" +
-                "     Echo: 10x\n" +
-                "     Return: 10x\n" +
-                "    Check: 10x\n",
+        Assert.assertEquals("For: 1x: PASSED\n" +
+                        " CallPlan: 10x: PASSED\n" +
+                        "  Sequence: 10x: PASSED\n" +
+                        "   MyComposite: 10x: PASSED\n" +
+                        "    Sequence: 10x: PASSED\n" +
+                        "     Echo: 10x: PASSED\n" +
+                        "     Return: 10x: PASSED\n" +
+                        "    Check: 10x: PASSED\n",
                 node.toString());
     }
 
@@ -166,13 +166,12 @@ public class ResolvedPlanBuilderForCompositeKeywordTest {
         System.out.println("----------------------");
         System.out.println(node.toString());
 
-        //TODO ordering is false
-        Assert.assertEquals("ForBlock: 1x\n" +
-                        " CallFunction: 2x\n" +
-                        "  Check: 2x\n" +
-                        "  Sequence: 2x\n" +
-                        "   Echo: 2x\n" +
-                        "   Return: 2x\n",
+        Assert.assertEquals("For: 1x: PASSED\n" +
+                        " CallKeyword: 2x: PASSED\n" +
+                        "  Sequence: 2x: PASSED\n" +
+                        "   Echo: 2x: PASSED\n" +
+                        "   Return: 2x: PASSED\n" +
+                        "  Check: 2x: PASSED\n",
 
                 node.toString());
     }

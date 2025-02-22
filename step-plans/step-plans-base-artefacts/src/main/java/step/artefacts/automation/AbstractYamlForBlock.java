@@ -41,7 +41,7 @@ public class AbstractYamlForBlock<T extends AbstractForBlock> extends AbstractYa
     }
 
     @Override
-    protected T createArtefactInstance() {
+    public T createArtefactInstance() {
         T res = super.createArtefactInstance();
         res.init();
         return res;

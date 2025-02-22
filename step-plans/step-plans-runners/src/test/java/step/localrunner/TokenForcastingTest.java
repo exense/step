@@ -43,6 +43,7 @@ import step.core.agents.provisioning.AgentPoolRequirementSpec;
 import step.core.plans.builder.PlanBuilder;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.engine.plugins.AutomationPackageAccessorLocalPlugin;
+import step.engine.plugins.BasePlugin;
 import step.engine.plugins.FunctionPlugin;
 import step.functions.io.Output;
 import step.functions.type.FunctionTypeRegistry;
@@ -50,8 +51,10 @@ import step.planbuilder.BaseArtefacts;
 import step.planbuilder.FunctionArtefacts;
 import step.plugins.functions.types.CompositeFunction;
 import step.plugins.functions.types.CompositeFunctionType;
+import step.threadpool.ThreadPool;
 import step.threadpool.ThreadPoolPlugin;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -276,6 +279,13 @@ public class TokenForcastingTest {
 		assertEquals(Set.of(new AgentPoolRequirementSpec("pool3", 3), new AgentPoolRequirementSpec("pool1", 1)),
 				Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
 
+		// If execution_threads_auto is set, it will effectively act as a cap on parallelism (can never be exceeded),
+		// so check that the limit takes effect. With parallelism capped to 5, we expect 1 x pool3 and 1 x pool2 (2 tokens)
+		tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, 5);
+
+		assertEquals(Set.of(new AgentPoolRequirementSpec("pool3", 1), new AgentPoolRequirementSpec("pool2", 1)),
+				Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
+
 		// Multiple matching token pools. In this case we expect 2 x pool2 (with 4 tokens) and 1 x pool1 (with 2 token) for the 10 required tokens
 		availableAgentPools = Set.of(
 				new AgentPoolSpec("pool1", Map.of("$agenttype", "default", "type", "pool"), 2),
@@ -307,23 +317,34 @@ public class TokenForcastingTest {
 	}
 
 	private static TokenForecastingContext executePlanWithSpecifiedTokenPools(Plan plan, Set<AgentPoolSpec> availableAgentPools) {
+		return executePlanWithSpecifiedTokenPools(plan, availableAgentPools, null);
+	}
+
+
+	private static TokenForecastingContext executePlanWithSpecifiedTokenPools(Plan plan, Set<AgentPoolSpec> availableAgentPools, Integer maxParallelism) {
+		Map<String, String> executionParameters = new HashMap<>();
+		if (maxParallelism != null) {
+			executionParameters.put(ThreadPool.EXECUTION_THREADS_AUTO, String.valueOf(maxParallelism));
+		}
 		ForcastingTestPlugin forcastingTestPlugin = new ForcastingTestPlugin(availableAgentPools);
-		try(ExecutionEngine executionEngine = ExecutionEngine.builder()
-				.withPlugin(new AutomationPackageAccessorLocalPlugin())
-				.withPlugin(new FunctionPlugin())
+		try (ExecutionEngine executionEngine = ExecutionEngine.builder()
+				.withPlugin(new BasePlugin())
+                .withPlugin(new AutomationPackageAccessorLocalPlugin())
+                .withPlugin(new FunctionPlugin())
 				.withPlugin(new AbstractExecutionEnginePlugin() {
-			@Override
-			public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
-				super.initializeExecutionContext(executionEngineContext, executionContext);
-				FunctionTypeRegistry functionTypeRegistry = executionContext.require(FunctionTypeRegistry.class);
-				functionTypeRegistry.registerFunctionType(new CompositeFunctionType(null));
-				functionTypeRegistry.registerFunctionType(new MyFunctionType());
-				}
-		}).withPlugin(new ThreadPoolPlugin())
+					@Override
+					public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
+						super.initializeExecutionContext(executionEngineContext, executionContext);
+						FunctionTypeRegistry functionTypeRegistry = executionContext.require(FunctionTypeRegistry.class);
+						functionTypeRegistry.registerFunctionType(new CompositeFunctionType(null));
+						functionTypeRegistry.registerFunctionType(new MyFunctionType());
+					}
+				}).withPlugin(new ThreadPoolPlugin())
 				.withPlugin(new BaseArtefactPlugin())
 				.withPlugin(new TokenForecastingExecutionPlugin())
-				.withPlugin(forcastingTestPlugin).build()) {
-			executionEngine.execute(plan);
+				.withPlugin(forcastingTestPlugin)
+				.build()) {
+			executionEngine.execute(plan, executionParameters);
 		}
 		return forcastingTestPlugin.tokenForecastingContext;
 	}

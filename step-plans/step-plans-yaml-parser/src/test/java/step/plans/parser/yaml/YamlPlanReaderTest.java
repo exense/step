@@ -264,7 +264,7 @@ public class YamlPlanReaderTest {
 	}
 
 	@Test
-	public void checkConversionToYaml() {
+	public void checkBasic() {
 		convertPlanToYaml(
 				"src/test/resources/step/plans/parser/yaml/basic/test-expected-tech-plan.yml",
 				"src/test/resources/step/plans/parser/yaml/basic/test-converted-plan.yml"
@@ -282,8 +282,8 @@ public class YamlPlanReaderTest {
 
 			// convert plan to the yaml format
 			yamlReader.writeYamlPlan(os, plan);
-//			log.info("Converted yaml -->");
-//			log.info(os.toString(StandardCharsets.UTF_8));
+			log.info("Converted yaml -->");
+			log.info(os.toString(StandardCharsets.UTF_8));
 
 			// write yml to another file (to check it manually)
 			if(writeResultsToLocalFiles) {
@@ -332,7 +332,10 @@ public class YamlPlanReaderTest {
 		try (FileInputStream is = new FileInputStream(plainTextPlan);
 			 FileInputStream expectedIS = new FileInputStream(expectedYamlFile);
              ByteArrayOutputStream os = new ByteArrayOutputStream()) {
-			yamlReader.convertFromPlainTextToYaml("converted plaintext plan", is, os);
+			 yamlReader.convertFromPlainTextToYaml("converted plaintext plan", is, os);
+
+			log.info("Converted yaml -->");
+			log.info(os.toString(StandardCharsets.UTF_8));
 
 			if (writeResultsToLocalFiles) {
 				// write yml to another file (to check it manually)

@@ -69,9 +69,36 @@ public class ResolvedPlanBuilderTest {
         logger.info("----------------------");
         logger.info(node.toString());
 
-        assertEquals("ThreadGroup: 1x\n" +
-                        " FunctionGroup: 4x\n" +
-                        "  Echo: 4x\n",
+        assertEquals("ThreadGroup: 1x: PASSED\n" +
+                        " Session: 4x: PASSED\n" +
+                        "  Echo: 4x: PASSED\n",
+                node.toString());
+    }
+
+    @Test
+    public void simpleTestWithErrors() throws IOException {
+        Plan plan = PlanBuilder.create()
+                .startBlock(BaseArtefacts.threadGroup(2, 2))
+                .startBlock(FunctionArtefacts.session())
+                .add(echo("'Echo'"))
+                .add(check("if (gcounter % 3 == 0) { return true} else if (gcounter % 3 == 1) { return false} else if (gcounter % 3 == 2) {return var}"))
+                .endBlock()
+                .endBlock().build();
+        PlanRunnerResult result = engine.execute(plan);
+        result.printTree();
+
+        AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(engine.getExecutionEngineContext(), result.getExecutionId());
+        AggregatedReportView node = aggregatedReportViewBuilder.buildAggregatedReportView();
+
+        logger.info("----------------------");
+        logger.info("Aggregated report tree");
+        logger.info("----------------------");
+        logger.info(node.toString());
+
+        assertEquals("ThreadGroup: 1x: TECHNICAL_ERROR\n" +
+                        " Session: 4x: 1 TECHNICAL_ERROR, 2 FAILED, 1 PASSED\n" +
+                        "  Echo: 4x: PASSED\n" +
+                        "  Check: 4x: 1 TECHNICAL_ERROR, 2 FAILED, 1 PASSED\n",
                 node.toString());
     }
 
@@ -99,11 +126,11 @@ public class ResolvedPlanBuilderTest {
         assertEquals(10, node.children.get(1).countTotal());
         assertEquals(50, node.children.get(1).children.get(0).countTotal());
         assertEquals(50, node.children.get(1).children.get(1).countTotal());
-        assertEquals("ForBlock: 1x\n" +
-                " Echo: 10x\n" +
-                " ForBlock: 10x\n" +
-                "  Echo: 50x\n" +
-                "  Echo: 50x\n",
+        assertEquals("For: 1x: PASSED\n" +
+                        " Echo: 10x: PASSED\n" +
+                        " For: 10x: PASSED\n" +
+                        "  Echo: 50x: PASSED\n" +
+                        "  Echo: 50x: PASSED\n",
                 node.toString());
     }
 
@@ -132,10 +159,10 @@ public class ResolvedPlanBuilderTest {
         AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(engine.getExecutionEngineContext(), result.getExecutionId());
         AggregatedReportView node = aggregatedReportViewBuilder.buildAggregatedReportView();
         logger.info(node.toString());
-        assertEquals("ForBlock: 1x\n" +
-                        " CallPlan: 1x\n" +
-                        "  Sequence: 1x\n" +
-                        "   Echo: 1x\n",
+        assertEquals("For: 1x: PASSED\n" +
+                        " CallPlan: 1x: PASSED\n" +
+                        "  Sequence: 1x: PASSED\n" +
+                        "   Echo: 1x: PASSED > in sub plan\n",
                 node.toString());
 
     }
@@ -173,12 +200,12 @@ public class ResolvedPlanBuilderTest {
         AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(engine.getExecutionEngineContext(), result.getExecutionId());
         AggregatedReportView node = aggregatedReportViewBuilder.buildAggregatedReportView();
         logger.info(node.toString());
-        assertEquals("ForBlock: 1x\n" +
-                        " CallPlan: 2x\n" +
-                        "  Sequence: 1x\n" +
-                        "   Echo: 1x\n" +
-                        "  Sequence: 1x\n" +
-                        "   Set: 1x\n",
+        assertEquals("For: 1x: PASSED\n" +
+                        " CallPlan: 2x: PASSED\n" +
+                        "  Sequence: 1x: PASSED\n" +
+                        "   Echo: 1x: PASSED > test\n" +
+                        "  Sequence: 1x: PASSED\n" +
+                        "   Set: 1x: PASSED > key = value\n",
                 node.toString());
 
     }
@@ -216,23 +243,23 @@ public class ResolvedPlanBuilderTest {
         AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(engine.getExecutionEngineContext(), result.getExecutionId());
         AggregatedReportView node = aggregatedReportViewBuilder.buildAggregatedReportView();
         logger.info(node.toString());
-        assertEquals("ForBlock: 1x\n" +
-                        " CallPlan: 10x\n" +
-                        "  Sequence: 10x\n" +
-                        "   Echo: 10x\n" +
-                        "   Echo: 10x\n" +
-                        "   ForBlock: 10x\n" +
-                        "    CallPlan: 20x\n" +
-                        "     Sequence: 20x\n" +
-                        "      Echo: 20x\n" +
-                        " CallPlan: 10x\n" +
-                        "  Sequence: 10x\n" +
-                        "   Echo: 10x\n" +
-                        "   Echo: 10x\n" +
-                        "   ForBlock: 10x\n" +
-                        "    CallPlan: 20x\n" +
-                        "     Sequence: 20x\n" +
-                        "      Echo: 20x\n",
+        assertEquals("For: 1x: PASSED\n" +
+                        " CallPlan: 10x: PASSED\n" +
+                        "  Sequence: 10x: PASSED\n" +
+                        "   Echo: 10x: PASSED\n" +
+                        "   Echo: 10x: PASSED\n" +
+                        "   For: 10x: PASSED\n" +
+                        "    CallPlan: 20x: PASSED\n" +
+                        "     Sequence: 20x: PASSED\n" +
+                        "      Echo: 20x: PASSED\n" +
+                        " CallPlan: 10x: PASSED\n" +
+                        "  Sequence: 10x: PASSED\n" +
+                        "   Echo: 10x: PASSED\n" +
+                        "   Echo: 10x: PASSED\n" +
+                        "   For: 10x: PASSED\n" +
+                        "    CallPlan: 20x: PASSED\n" +
+                        "     Sequence: 20x: PASSED\n" +
+                        "      Echo: 20x: PASSED\n",
                 node.toString());
 
     }
@@ -266,23 +293,23 @@ public class ResolvedPlanBuilderTest {
         AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(engine.getExecutionEngineContext(), result.getExecutionId());
         AggregatedReportView node = aggregatedReportViewBuilder.buildAggregatedReportView();
         logger.info(node.toString());
-        assertEquals("Sequence: 1x\n" +
-                        " CallPlan: 1x\n" +
-                        "  Sequence: 1x\n" +
-                        "   Set: 1x\n" +
-                        "   IfBlock: 1x\n" +
-                        "    CallPlan: 1x\n" +
-                        "     Sequence: 1x\n" +
-                        "      Set: 1x\n" +
-                        "      IfBlock: 1x\n" +
-                        "       CallPlan: 1x\n" +
-                        "        Sequence: 1x\n" +
-                        "         Set: 1x\n" +
-                        "         IfBlock: 1x\n" +
-                        "          CallPlan: 1x\n" +
-                        "           Sequence: 1x\n" +
-                        "            Set: 1x\n" +
-                        "            IfBlock: 1x\n",
+        assertEquals("Sequence: 1x: PASSED\n" +
+                        " call sub plan: 1x: PASSED\n" +
+                        "  Sequence: 1x: PASSED\n" +
+                        "   Set: 1x: PASSED > nextCount = 2\n" +
+                        "   If: 1x: PASSED\n" +
+                        "    call sub plan: 1x: PASSED\n" +
+                        "     Sequence: 1x: PASSED\n" +
+                        "      Set: 1x: PASSED > nextCount = 3\n" +
+                        "      If: 1x: PASSED\n" +
+                        "       call sub plan: 1x: PASSED\n" +
+                        "        Sequence: 1x: PASSED\n" +
+                        "         Set: 1x: PASSED > nextCount = 4\n" +
+                        "         If: 1x: PASSED\n" +
+                        "          call sub plan: 1x: PASSED\n" +
+                        "           Sequence: 1x: PASSED\n" +
+                        "            Set: 1x: PASSED > nextCount = 5\n" +
+                        "            If: 1x: PASSED\n",
                 node.toString());
     }
 
@@ -302,12 +329,12 @@ public class ResolvedPlanBuilderTest {
         AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(engine.getExecutionEngineContext(), result.getExecutionId());
         AggregatedReportView node = aggregatedReportViewBuilder.buildAggregatedReportView();
         logger.info(node.toString());
-        assertEquals("Sequence: 1x\n" +
+        assertEquals("Sequence: 1x: PASSED\n" +
                         " [BEFORE]\n" +
-                        "  Set: 1x\n" +
-                        " Echo: 1x\n" +
+                        "  Set: 1x: PASSED > myVar = test\n" +
+                        " Echo: 1x: PASSED > myVar value is test\n" +
                         " [AFTER]\n" +
-                        "  Echo: 1x\n",
+                        "  Echo: 1x: PASSED > in after\n",
                 node.toString());
     }
 
@@ -329,13 +356,13 @@ public class ResolvedPlanBuilderTest {
         AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(engine.getExecutionEngineContext(), result.getExecutionId());
         AggregatedReportView node = aggregatedReportViewBuilder.buildAggregatedReportView();
         logger.info(node.toString());
-        assertEquals("Sequence: 1x\n" +
-                        " Sequence: 1x\n" +
+        assertEquals("Sequence: 1x: PASSED\n" +
+                        " Sequence: 1x: PASSED\n" +
                         "  [BEFORE]\n" +
-                        "   Set: 1x\n" +
-                        "  Echo: 1x\n" +
+                        "   Set: 1x: PASSED > myVar = test\n" +
+                        "  Echo: 1x: PASSED > myVar value is test\n" +
                         "  [AFTER]\n" +
-                        "   Echo: 1x\n",
+                        "   Echo: 1x: PASSED > in after\n",
                 node.toString());
     }
 
@@ -377,33 +404,33 @@ public class ResolvedPlanBuilderTest {
         AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(engine.getExecutionEngineContext(), result.getExecutionId());
         AggregatedReportView node = aggregatedReportViewBuilder.buildAggregatedReportView();
         logger.info(node.toString());
-        assertEquals("ForBlock: 1x\n" +
-                        " CallPlan: 10x\n" +
-                        "  Sequence: 10x\n" +
-                        "   Echo: 10x\n" +
-                        "   Echo: 10x\n" +
-                        "   ForBlock: 10x\n" +
+        assertEquals("For: 1x: PASSED\n" +
+                        " CallPlan: 10x: PASSED\n" +
+                        "  Sequence: 10x: PASSED\n" +
+                        "   Echo: 10x: PASSED\n" +
+                        "   Echo: 10x: PASSED\n" +
+                        "   For: 10x: PASSED\n" +
                         "    [BEFORE]\n" +
-                        "     Echo: 10x\n" +
-                        "     Set: 10x\n" +
-                        "    CallPlan: 20x\n" +
-                        "     Sequence: 20x\n" +
-                        "      Echo: 20x\n" +
+                        "     Echo: 10x: PASSED\n" +
+                        "     Set: 10x: PASSED\n" +
+                        "    CallPlan: 20x: PASSED\n" +
+                        "     Sequence: 20x: PASSED\n" +
+                        "      Echo: 20x: PASSED\n" +
                         "    [AFTER]\n" +
-                        "     Echo: 10x\n" +
-                        " CallPlan: 10x\n" +
-                        "  Sequence: 10x\n" +
-                        "   Echo: 10x\n" +
-                        "   Echo: 10x\n" +
-                        "   ForBlock: 10x\n" +
+                        "     Echo: 10x: PASSED\n" +
+                        " CallPlan: 10x: PASSED\n" +
+                        "  Sequence: 10x: PASSED\n" +
+                        "   Echo: 10x: PASSED\n" +
+                        "   Echo: 10x: PASSED\n" +
+                        "   For: 10x: PASSED\n" +
                         "    [BEFORE]\n" +
-                        "     Echo: 10x\n" +
-                        "     Set: 10x\n" +
-                        "    CallPlan: 20x\n" +
-                        "     Sequence: 20x\n" +
-                        "      Echo: 20x\n" +
+                        "     Echo: 10x: PASSED\n" +
+                        "     Set: 10x: PASSED\n" +
+                        "    CallPlan: 20x: PASSED\n" +
+                        "     Sequence: 20x: PASSED\n" +
+                        "      Echo: 20x: PASSED\n" +
                         "    [AFTER]\n" +
-                        "     Echo: 10x\n",
+                        "     Echo: 10x: PASSED\n",
                 node.toString());
 
     }
@@ -426,16 +453,16 @@ public class ResolvedPlanBuilderTest {
         logger.info(node.toString());
 
         logger.info(node.toString());
-        assertEquals("ThreadGroup: 1x\n" +
+        assertEquals("ThreadGroup: 1x: PASSED\n" +
                         " [BEFORE]\n" +
-                        "  Set: 1x\n" +
+                        "  Set: 1x: PASSED > myVar = test\n" +
                         " [BEFORE_THREAD]\n" +
-                        "  Echo: 2x\n" +
-                        " Echo: 10x\n" +
+                        "  Echo: 2x: PASSED\n" +
+                        " Echo: 10x: PASSED\n" +
                         " [AFTER_THREAD]\n" +
-                        "  Echo: 2x\n" +
+                        "  Echo: 2x: PASSED\n" +
                         " [AFTER]\n" +
-                        "  Echo: 1x\n",
+                        "  Echo: 1x: PASSED > in after\n",
                 node.toString());
     }
 

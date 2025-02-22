@@ -6,6 +6,7 @@ import org.junit.*;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import step.artefacts.Echo;
+import step.artefacts.reports.EchoReportNode;
 import step.automation.packages.client.AutomationPackageClientException;
 import step.automation.packages.client.RemoteAutomationPackageClientImpl;
 import step.client.executions.RemoteExecutionFuture;
@@ -78,7 +79,7 @@ public class AbstractExecuteAutomationPackageToolTest {
         File[] storedReports = tempReportFolder.listFiles((dir, name) -> name.matches(".*-aggregated.txt"));
         Assert.assertNotNull(storedReports);
         Assert.assertEquals(1, storedReports.length);
-        Assert.assertEquals("Echo: 1x\n", new String(Files.readAllBytes(storedReports[0].toPath())));
+        Assert.assertEquals("Echo: 1x: PASSED > Hello\n", new String(Files.readAllBytes(storedReports[0].toPath())));
     }
 
     private static List<String> getExecuteAutomationPackageResult(List<Execution> executions) {
@@ -183,7 +184,9 @@ public class AbstractExecuteAutomationPackageToolTest {
         RemoteExecutionFuture futureMock = Mockito.mock(RemoteExecutionFuture.class);
         Mockito.when(futureMock.getErrorSummary()).thenReturn("Error summary...");
         Mockito.when((remoteExecutionManagerMock.getFuture(Mockito.anyString()))).thenReturn(futureMock);
-        Mockito.when(remoteExecutionManagerMock.getAggregatedReportView(Mockito.anyString())).thenReturn(new AggregatedReportView(new Echo(), "hash", Map.of("PASSED",1L), List.of(), ParentSource.MAIN));
+        EchoReportNode echoReportNode = new EchoReportNode();
+        echoReportNode.setEcho("Hello");
+        Mockito.when(remoteExecutionManagerMock.getAggregatedReportView(Mockito.anyString())).thenReturn(new AggregatedReportView(new Echo(), "hash", Map.of("PASSED",1L), List.of(), ParentSource.MAIN, echoReportNode));
         return remoteExecutionManagerMock;
     }
 
