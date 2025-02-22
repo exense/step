@@ -30,7 +30,10 @@ public class MigrateBeforeAfterAndPropertiesArtefactInPlansTest {
             Document newPlan = plans.find(Filters.empty(), null, null, null, 0).findFirst().orElseThrow(() -> new RuntimeException("No plans found in collection"));
             String actual = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(newPlan);
             String expected = new String(expectedIS.readAllBytes(), StandardCharsets.UTF_8);
-            Assert.assertEquals(expected, actual.replace("\r", ""));
+
+            // use object mapper for a "fair" comparison (otherwise the assertion fails on some systems due to differences in line separators)
+            ObjectMapper objectMapper = new ObjectMapper();
+            Assert.assertEquals(objectMapper.readTree(expected), objectMapper.readTree(actual));
         }
     }
 }
