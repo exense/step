@@ -42,7 +42,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<!-- internal dependencies -->
 		<dependencies.version>2024.9.26</dependencies.version>
-		<step-grid.version>2.2.1</step-grid.version>
+		<step-grid.version>2.2.2</step-grid.version>
 		<step-framework.version>2025.1.7-677d23537bd6067182b76a3b</step-framework.version>
 
 		<!-- external, non-transitive, dependencies -->
@@ -272,12 +272,17 @@
 			<dependency>
 				<groupId>com.google.apis</groupId>
 				<artifactId>google-api-services-sheets</artifactId>
-				<version>v4-rev20190109-1.27.0</version>
+				<version>v4-rev20220620-1.32.1</version>
 			</dependency>
 			<dependency>
 				<groupId>com.google.apis</groupId>
 				<artifactId>google-api-services-drive</artifactId>
-				<version>v3-rev20181213-1.27.0</version>
+				<version>v3-rev20220709-1.32.1</version>
+			</dependency>
+			<dependency>
+				<groupId>com.google.http-client</groupId>
+				<artifactId>google-http-client-jackson2</artifactId>
+				<version>1.46.1</version>
 			</dependency>
 			<dependency>
 				<groupId>org.everit.json</groupId>
@@ -324,7 +329,7 @@
 			<dependency>
 				<groupId>net.minidev</groupId>
 				<artifactId>json-smart</artifactId>
-				<version>2.5.0</version>
+				<version>2.5.2</version>
 			</dependency>
 
 			<dependency>
@@ -376,13 +381,6 @@
 				<artifactId>commons-compress</artifactId>
 				<version>1.27.1</version>
 			</dependency>
-
-			<dependency>
-				<groupId>com.google.oauth-client</groupId>
-				<artifactId>google-oauth-client</artifactId>
-				<version>1.36.0</version>
-			</dependency>
-
 		</dependencies>
 	</dependencyManagement>
 

@@ -67,24 +67,6 @@ public abstract class AbstractArtifactRepository extends RepositoryWithAutomatio
 
 	protected abstract String resolveArtifactName(Map<String, String> repositoryParameters);
 
-	@Override
-	public TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) throws IOException {
-		PackageExecutionContext ctx = null;
-		try {
-			File artifact = getArtifact(repositoryParameters);
-			ctx = super.createIsolatedPackageExecutionContext(null, objectPredicate, new ObjectId().toString(), new AutomationPackageFile(artifact, null), false);
-			TestSetStatusOverview overview = new TestSetStatusOverview();
-			List<TestRunStatus> runs = getFilteredPackagePlans(ctx.getAutomationPackage(), repositoryParameters, ctx.getAutomationPackageManager())
-					.map(plan -> new TestRunStatus(getPlanName(plan), getPlanName(plan), ReportNodeStatus.NORUN)).collect(Collectors.toList());
-			overview.setRuns(runs);
-			return overview;
-		} finally {
-			if (ctx != null) {
-				ctx.close();
-			}
-		}
-	}
-
 	public abstract File getArtifact(Map<String, String> repositoryParameters);
 
 	@Override

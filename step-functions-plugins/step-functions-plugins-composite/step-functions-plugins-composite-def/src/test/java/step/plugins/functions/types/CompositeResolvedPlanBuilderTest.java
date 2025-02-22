@@ -98,11 +98,11 @@ public class CompositeResolvedPlanBuilderTest {
         AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(engine.getExecutionEngineContext(), result.getExecutionId());
         AggregatedReportView node = aggregatedReportViewBuilder.buildAggregatedReportView();
         logger.info(node.toString());
-        assertEquals("Sequence: 1x\n" +
-                " CallFunction: 1x\n" +
-                "  Sequence: 1x\n" +
-                "   Return: 1x\n" +
-                "  Check: 1x\n",
+        assertEquals("Sequence: 1x: PASSED\n" +
+                        " MyComposite: 1x: PASSED > Input={}, Output={\"myOut\":\"test\"}\n" +
+                        "  Sequence: 1x: PASSED\n" +
+                        "   Return: 1x: PASSED\n" +
+                        "  Check: 1x: PASSED > output.myOut == 'test'\n",
                 node.toString());
     }
 
@@ -126,10 +126,10 @@ public class CompositeResolvedPlanBuilderTest {
         AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(engine.getExecutionEngineContext(), result.getExecutionId());
         AggregatedReportView node = aggregatedReportViewBuilder.buildAggregatedReportView();
         logger.info(node.toString());
-        Assert.assertEquals("CallFunction: 1x\n" +
-                " [BEFORE]\n" +
-                "  Echo: 1x\n" +
-                " Check: 1x\n",
+        Assert.assertEquals("My function call: 1x: PASSED > Input={}, Output={}\n" +
+                        " [BEFORE]\n" +
+                        "  Echo: 1x: PASSED > test\n" +
+                        " Check: 1x: PASSED > true\n",
                 node.toString());
     }
 
@@ -154,15 +154,13 @@ public class CompositeResolvedPlanBuilderTest {
         logger.info("Aggregated report tree");
         logger.info("----------------------");
 
-        //TODO currently the test pass since the execution pass, but the generation of the aggregated plan before
-        //execution actually throw an exception (the call function by dynamic name doesn't work)
         AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(engine.getExecutionEngineContext(), result.getExecutionId());
         AggregatedReportView node = aggregatedReportViewBuilder.buildAggregatedReportView();
         logger.info(node.toString());
-        assertEquals("Sequence: 1x\n" +
-                        " Set: 1x\n" +
-                        " CallFunction: 1x\n" +
-                        " Check: 1x\n",
+        assertEquals("Sequence: 1x: PASSED\n" +
+                        " Set: 1x: PASSED > keywordName = My function call\n" +
+                        " CallKeyword: 1x: PASSED > Input={}, Output={}\n" +
+                        " Check: 1x: PASSED > true\n",
                 node.toString());
     }
 

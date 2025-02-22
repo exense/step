@@ -41,6 +41,7 @@ import step.threadpool.ThreadPool.WorkerController;
 import step.threadpool.WorkerItemConsumerFactory;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -99,7 +100,7 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 		}
 		
 		// Attach global iteration counter & user counter
-		LongAdder gcounter = new LongAdder();
+		AtomicLong gcounter = new AtomicLong(0);
 		AtomicReportNodeStatusComposer reportNodeStatusComposer = new AtomicReportNodeStatusComposer(node);
 		
 		Iterator<Integer> groupIterator = new IntegerSequenceIterator(1,numberOfUsers,1);
@@ -178,7 +179,7 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 		@JsonIgnore
 		WorkerController<Integer> groupController;
 		@JsonIgnore
-		LongAdder gcounter;
+		AtomicLong gcounter;
 		@JsonIgnore
 		long maxDuration;
 		@JsonIgnore
@@ -238,11 +239,11 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 			this.groupController = groupController;
 		}
 
-		public LongAdder getGcounter() {
+		public AtomicLong getGcounter() {
 			return gcounter;
 		}
 
-		public void setGcounter(LongAdder gcounter) {
+		public void setGcounter(AtomicLong gcounter) {
 			this.gcounter = gcounter;
 		}
 
@@ -296,7 +297,7 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 					Pacer.scheduleAtConstantPacing(i->{
 						ReportNode iterationReportNode = null;
 						try {
-							thread.gcounter.increment();
+							long globalCounterValue = thread.gcounter.incrementAndGet();
 
 							Sequence iterationTestCase = createWorkArtefact(Sequence.class, sessionArtefact, "Iteration "+i);
 
@@ -310,7 +311,7 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 							HashMap<String, Object> newVariable = new HashMap<>();
 							newVariable.put(thread.threadGroup.getLocalItem().get(), i);
 							//For Performance reasons, we might want to expose the LongAdder itself rather than calling "intValue()" every time
-							newVariable.put(thread.threadGroup.getItem().get(), thread.gcounter.intValue());
+							newVariable.put(thread.threadGroup.getItem().get(), globalCounterValue);
 
 							iterationReportNode = delegateExecute(iterationTestCase, sessionReportNode, newVariable);
 							sessionReportNodeStatusComposer.addStatusAndRecompose(iterationReportNode);

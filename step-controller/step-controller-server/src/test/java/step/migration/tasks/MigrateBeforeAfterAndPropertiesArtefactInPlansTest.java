@@ -32,8 +32,7 @@ public class MigrateBeforeAfterAndPropertiesArtefactInPlansTest {
             String expected = new String(expectedIS.readAllBytes(), StandardCharsets.UTF_8);
 
             // use object mapper for a "fair" comparison (otherwise the assertion fails on some systems due to differences in line separators)
-            ObjectMapper objectMapper = new ObjectMapper();
-            Assert.assertEquals(objectMapper.readTree(expected), objectMapper.readTree(actual));
+            Assert.assertEquals(mapper.readTree(expected.replace("\r", "")), mapper.readTree(actual.replace("\r", "")));
         }
     }
 }
