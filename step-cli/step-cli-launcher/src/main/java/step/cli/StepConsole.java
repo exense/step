@@ -271,6 +271,13 @@ public class StepConsole implements Callable<Integer> {
                     description = "Whether to waits for the deployment to complete")
             protected boolean async;
 
+            @Option(names = {"--apVersion"})
+            protected String apVersion;
+
+            // TODO: add description + think how can we use the complex expression (groovy script) in CLI args and in http query params
+            @Option(names = {"--activationExpr"})
+            protected String activationExpr;
+
             @Override
             public Integer call() throws Exception {
                 super.call();
@@ -286,12 +293,12 @@ public class StepConsole implements Callable<Integer> {
                 checkStepUrlRequired();
                 checkEeOptionsConsistency(spec);
                 checkStepControllerVersion();
-                executeTool(stepUrl, getStepProjectName(), getAuthToken(), async);
+                executeTool(stepUrl, getStepProjectName(), getAuthToken(), async, apVersion, activationExpr);
             }
 
             // for tests
-            protected void executeTool(final String stepUrl1, final String projectName, final String authToken1, final boolean async1) {
-                new AbstractDeployAutomationPackageTool(stepUrl1, projectName, authToken1, async1) {
+            protected void executeTool(final String stepUrl1, final String projectName, final String authToken, final boolean async, String apVersion, String activationExpr) {
+                new AbstractDeployAutomationPackageTool(stepUrl1, projectName, authToken, async, apVersion, activationExpr) {
                     @Override
                     protected File getFileToUpload() throws StepCliExecutionException {
                         return prepareApFile(apFile);

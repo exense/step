@@ -29,7 +29,6 @@ import step.core.timeseries.aggregation.TimeSeriesAggregationPipeline;
 import step.core.timeseries.aggregation.TimeSeriesAggregationQuery;
 import step.core.timeseries.aggregation.TimeSeriesAggregationQueryBuilder;
 import step.core.timeseries.aggregation.TimeSeriesAggregationResponse;
-import step.core.timeseries.ingestion.TimeSeriesIngestionPipeline;
 import step.core.views.ViewPlugin;
 import step.engine.plugins.FunctionPlugin;
 import step.engine.plugins.LocalFunctionPlugin;

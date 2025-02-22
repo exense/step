@@ -27,9 +27,10 @@ public class FunctionLocatorTest {
 		Function expectedFunction2_noversion = newFunction("function2", null);
 		Function expectedFunction2_v1 = newFunction("function2", "v1");
 		Function expectedFunction2_v2 = newFunction("function2", "v2");
-		
-		FunctionLocator functionLocator = new FunctionLocator(functionAccessor, new SelectorHelper(
-				new DynamicJsonObjectResolver(new DynamicJsonValueResolver(new ExpressionHandler()))));
+
+		FunctionLocator functionLocator = new FunctionLocator(functionAccessor,
+                new SelectorHelper(new DynamicJsonObjectResolver(new DynamicJsonValueResolver(new ExpressionHandler())))
+		);
 
 		// by id
 		CallFunction testArtefact = FunctionArtefacts.keyword("function1");

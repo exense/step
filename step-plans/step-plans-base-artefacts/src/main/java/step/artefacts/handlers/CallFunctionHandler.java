@@ -29,6 +29,7 @@ import step.artefacts.handlers.functions.FunctionGroupSession;
 import step.artefacts.handlers.functions.TokenSelectionCriteriaMapBuilder;
 import step.artefacts.reports.CallFunctionReportNode;
 import step.attachments.AttachmentMeta;
+import step.automation.packages.accessor.AutomationPackageAccessor;
 import step.common.managedoperations.OperationManager;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
@@ -83,7 +84,8 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 
 	protected FunctionExecutionService functionExecutionService;
 	protected FunctionAccessor functionAccessor;
-	
+	protected AutomationPackageAccessor automationPackageAccessor;
+
 	protected ReportNodeAttachmentManager reportNodeAttachmentManager;
 	protected DynamicJsonObjectResolver dynamicJsonObjectResolver;
 
@@ -97,6 +99,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		super.init(context);
 		FunctionTypeRegistry functionTypeRegistry = context.require(FunctionTypeRegistry.class);
 		functionAccessor = context.require(FunctionAccessor.class);
+		automationPackageAccessor = context.require(AutomationPackageAccessor.class);
 		functionExecutionService = context.require(FunctionExecutionService.class);
 		reportNodeAttachmentManager = new ReportNodeAttachmentManager(context);
 		dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));

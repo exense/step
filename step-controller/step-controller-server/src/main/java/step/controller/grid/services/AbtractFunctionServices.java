@@ -30,6 +30,7 @@ import jakarta.ws.rs.core.UriInfo;
 import step.artefacts.CallFunction;
 import step.artefacts.handlers.FunctionLocator;
 import step.artefacts.handlers.SelectorHelper;
+import step.automation.packages.accessor.AutomationPackageAccessor;
 import step.controller.services.entities.AbstractEntityServices;
 import step.core.access.User;
 import step.core.accessors.AbstractOrganizableObject;
@@ -55,7 +56,6 @@ import step.functions.services.GetTokenHandleParameter;
 import step.functions.type.FunctionTypeException;
 import step.functions.type.SetupFunctionException;
 import step.grid.TokenWrapper;
-import step.planbuilder.FunctionArtefacts;
 
 import java.util.HashMap;
 import java.util.List;
@@ -66,10 +66,11 @@ public abstract class AbtractFunctionServices extends AbstractEntityServices<Fun
 	protected ReportNodeAttachmentManager reportNodeAttachmentManager;
 	
 	protected FunctionAccessor functionAccessor;
+	protected AutomationPackageAccessor apAccessor;
 	protected FunctionManager functionManager;
-	
+
 	protected FunctionExecutionService functionExecutionService;
-	
+
 	protected SelectorHelper selectorHelper;
 	protected FunctionLocator functionLocator;
 	protected ObjectPredicateFactory objectPredicateFactory;
@@ -83,6 +84,7 @@ public abstract class AbtractFunctionServices extends AbstractEntityServices<Fun
 		super.init();
 		reportNodeAttachmentManager = new ReportNodeAttachmentManager(getContext().getResourceManager());
 		functionAccessor = getContext().get(FunctionAccessor.class);
+		apAccessor = getContext().get(AutomationPackageAccessor.class);
 		functionManager = getContext().get(FunctionManager.class);
 		functionExecutionService = getContext().get(FunctionExecutionService.class);
 		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(getContext().getExpressionHandler()));
