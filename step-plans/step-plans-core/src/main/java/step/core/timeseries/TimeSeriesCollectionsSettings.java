@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 public class TimeSeriesCollectionsSettings {
 
     public static final String TIME_SERIES_MAIN_COLLECTION_FLUSH_PERIOD = "{collectionName}.flush.period";
+    public static final String TIME_SERIES_COLLECTION_FLUSH_ASYNC_QUEUE_SIZE = "{collectionName}.flush.async.queue.size";
     public static final String TIME_SERIES_MAIN_RESOLUTION = "{collectionName}.resolution";
     public static final String TIME_SERIES_MINUTE_COLLECTION_ENABLED = "{collectionName}.collections.minute.enabled";
     public static final String TIME_SERIES_MINUTE_COLLECTION_FLUSH_PERIOD = "{collectionName}.collections.minute.flush.period";
@@ -39,6 +40,7 @@ public class TimeSeriesCollectionsSettings {
 
     private long mainResolution;
     private long mainFlushInterval;
+    private int flushAsyncQueueSize;
     private boolean perMinuteEnabled;
     private long perMinuteFlushInterval;
     private boolean hourlyEnabled;
@@ -106,6 +108,15 @@ public class TimeSeriesCollectionsSettings {
         return perMinuteFlushInterval;
     }
 
+    private TimeSeriesCollectionsSettings setFlushAsyncQueueSize(int flushAsyncQueueSize) {
+        this.flushAsyncQueueSize = flushAsyncQueueSize;
+        return this;
+    }
+
+    public int getFlushAsyncQueueSize() {
+        return flushAsyncQueueSize;
+    }
+
     public TimeSeriesCollectionsSettings setPerMinuteFlushInterval(long perMinuteFlushInterval) {
         this.perMinuteFlushInterval = perMinuteFlushInterval;
         return this;
@@ -144,6 +155,7 @@ public class TimeSeriesCollectionsSettings {
         return new TimeSeriesCollectionsSettings()
                 .setMainResolution(mainResolution)
                 .setMainFlushInterval(getPropertyAsLong(configuration, TIME_SERIES_MAIN_COLLECTION_FLUSH_PERIOD, collectionName, Duration.ofSeconds(1).toMillis()))
+                .setFlushAsyncQueueSize(getPropertyAsInteger(configuration, TIME_SERIES_COLLECTION_FLUSH_ASYNC_QUEUE_SIZE, collectionName, 5000))
                 .setPerMinuteEnabled(getPropertyAsBoolean(configuration, TIME_SERIES_MINUTE_COLLECTION_ENABLED, collectionName, true))
                 .setPerMinuteFlushInterval(getPropertyAsLong(configuration, TIME_SERIES_MINUTE_COLLECTION_FLUSH_PERIOD, collectionName, Duration.ofMinutes(1).toMillis()))
                 .setHourlyEnabled(getPropertyAsBoolean(configuration, TIME_SERIES_HOUR_COLLECTION_ENABLED, collectionName, true))
@@ -156,6 +168,10 @@ public class TimeSeriesCollectionsSettings {
 
     private static Long getPropertyAsLong(Configuration configuration, String property, String collectionName, long defaultValue) {
         return configuration.getPropertyAsLong(property(property, collectionName), defaultValue);
+    }
+
+    private static int getPropertyAsInteger(Configuration configuration, String property, String collectionName, int defaultValue) {
+        return configuration.getPropertyAsInteger(property(property, collectionName), defaultValue);
     }
 
     private static boolean getPropertyAsBoolean(Configuration configuration, String property, String collectionName, boolean defaultValue) {
