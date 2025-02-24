@@ -20,15 +20,18 @@ package step.core.execution;
 
 import java.util.HashMap;
 
+import ch.exense.commons.app.Configuration;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionParameters;
 import step.core.execution.model.ExecutionStatus;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.scheduler.ExecutiontTaskParameters;
 
+import static step.core.artefacts.reports.aggregated.ReportNodeTimeSeries.CONF_KEY_REPORT_NODE_TIME_SERIES_ENABLED;
+
 public class ExecutionFactory {
 
-	public static Execution createExecution(ExecutionParameters executionParameters, ExecutiontTaskParameters executionTaskParameter, ObjectEnricher objectEnricher) {
+	public static Execution createExecution(ExecutionParameters executionParameters, ExecutiontTaskParameters executionTaskParameter, ObjectEnricher objectEnricher, Configuration configuration) {
 		Execution execution = new Execution();
 		execution.setStartTime(System.currentTimeMillis());
 		execution.setExecutionParameters(executionParameters);
@@ -47,6 +50,9 @@ public class ExecutionFactory {
 		if (executionParameters.getDescription() != null) {
 			execution.setDescription(executionParameters.getDescription());
 		}
+
+		boolean hasReportNodeTimeSeries = configuration.getPropertyAsBoolean(CONF_KEY_REPORT_NODE_TIME_SERIES_ENABLED, true);
+		execution.addCustomField("hasReportNodeTimeSeries", hasReportNodeTimeSeries);
 
 		return execution;
 	}

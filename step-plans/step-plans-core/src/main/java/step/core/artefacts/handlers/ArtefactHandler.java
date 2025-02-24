@@ -96,7 +96,6 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		resourceManager = context.getResourceManager();
 		resolvedPlanBuilder = context.get(ResolvedPlanBuilder.class);
 		Configuration configuration = context.getConfiguration();
-		reportNodeTimeSeriesEnabled = configuration.getPropertyAsBoolean("execution.engine.reportnodes.timeseries.enabled", true);
 	}
 	
 	private enum Phase {
@@ -197,6 +196,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 				try {
 					optionalRunChildrenBlock(artefact.getBefore(), (before) -> {
 						SequentialArtefactScheduler sequentialArtefactScheduler = new SequentialArtefactScheduler(context);
+						dynamicBeanResolver.evaluate(before, getBindings());
 						sequentialArtefactScheduler.execute_(reportNode, before.getSteps(), before.getContinueOnError().get(), ParentSource.BEFORE);
 						reportNodeStatusComposer.addStatusAndRecompose(reportNode);
 					});
@@ -214,6 +214,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 					try{
 						optionalRunChildrenBlock(artefact.getAfter(), (after) -> {
 							SequentialArtefactScheduler sequentialArtefactScheduler = new SequentialArtefactScheduler(context);
+							dynamicBeanResolver.evaluate(after, getBindings());
 							sequentialArtefactScheduler.execute_(reportNode, after.getSteps(), after.getContinueOnError().get(), ParentSource.AFTER);
 							reportNodeStatusComposer.addStatusAndRecompose(reportNode);
 						});
@@ -243,7 +244,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 			}
 		}
 
-		if (reportNodeTimeSeriesEnabled) {
+		if (reportNodeTimeSeries.isIngestionEnabled()) {
 			AbstractArtefact artefactInstance = reportNode.getArtefactInstance();
 			if (artefactInstance != null && !artefactInstance.isWorkArtefact()) {
 				// TODO implement node pruning for time series
