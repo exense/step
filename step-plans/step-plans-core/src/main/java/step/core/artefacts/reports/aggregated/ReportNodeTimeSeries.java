@@ -14,14 +14,12 @@ import step.core.timeseries.aggregation.TimeSeriesOptimizationType;
 import step.core.timeseries.bucket.BucketAttributes;
 import step.core.timeseries.ingestion.TimeSeriesIngestionPipeline;
 
-import java.io.Closeable;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class ReportNodeTimeSeries implements Closeable {
+public class ReportNodeTimeSeries implements AutoCloseable {
 
     public static final String CONF_KEY_REPORT_NODE_TIME_SERIES_ENABLED = "execution.engine.reportnodes.timeseries.enabled";
     public static final String TIME_SERIES_MAIN_COLLECTION = "reportNodeTimeSeries";
@@ -104,7 +102,7 @@ public class ReportNodeTimeSeries implements Closeable {
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() {
         timeSeries.close();
     }
 }
