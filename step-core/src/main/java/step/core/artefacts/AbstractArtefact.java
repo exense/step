@@ -227,7 +227,6 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
 		this.continueParentNodeExecutionOnError = continueOnError;
 	}
 
-	@JsonIgnore
 	public boolean isWorkArtefact() {
 		return isWorkArtefact;
 	}
