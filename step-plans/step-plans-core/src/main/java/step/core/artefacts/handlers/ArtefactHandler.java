@@ -62,7 +62,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	public static final String TEC_EXECUTION_REPORTNODES_PERSISTAFTER = "tec.execution.reportnodes.persistafter";
 	public static final String TEC_EXECUTION_REPORTNODES_PERSISTBEFORE = "tec.execution.reportnodes.persistbefore";
 	public static final String TEC_EXECUTION_REPORTNODES_PERSISTONLYNONPASSED = "tec.execution.reportnodes.persistonlynonpassed";
-	public static final String TEC_EXECUTION_REPORTNODES_TIMESERIES_ENABLED = "tec.execution.reportnodes.timeseries.disabled";
+	public static final String TEC_EXECUTION_REPORTNODES_TIMESERIES_ENABLED = "tec.execution.reportnodes.timeseries.enabled";
 	public static final String CTX_ADDITIONAL_ATTRIBUTES = "$additionalAttributes";
 
 	protected ExecutionContext context;
