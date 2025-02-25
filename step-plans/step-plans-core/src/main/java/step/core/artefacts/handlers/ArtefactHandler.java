@@ -46,7 +46,6 @@ import step.core.variables.VariablesManager;
 import step.resources.ResourceManager;
 
 import java.io.File;
-import java.security.SecureRandom;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.function.Consumer;
@@ -76,7 +75,6 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	private ReportNodeCache reportNodeCache;
 	protected DynamicBeanResolver dynamicBeanResolver;
 	private ReportNodeTimeSeries reportNodeTimeSeries;
-	private boolean reportNodeTimeSeriesEnabled;
 	private ResolvedPlanBuilder resolvedPlanBuilder;
 
 	public ArtefactHandler() {

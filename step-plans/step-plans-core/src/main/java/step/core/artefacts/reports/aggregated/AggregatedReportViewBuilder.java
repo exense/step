@@ -114,7 +114,7 @@ public class AggregatedReportViewBuilder {
         //Need to create a configuration with all time series details
         return new ReportNodeTimeSeries(new InMemoryCollectionFactory(new Properties()),
                 // to build the report we only need a single time bucket and can flush only once all reports are ingested
-                TimeSeriesCollectionsSettings.buildSingleResolutionSettings(Long.MAX_VALUE, 0));
+                TimeSeriesCollectionsSettings.buildSingleResolutionSettings(Long.MAX_VALUE, 0), true);
     }
 
     /**
