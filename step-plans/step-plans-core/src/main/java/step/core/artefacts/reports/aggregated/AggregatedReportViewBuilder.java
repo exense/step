@@ -18,7 +18,6 @@ import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.timeseries.TimeSeriesCollectionsSettings;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -84,10 +83,6 @@ public class AggregatedReportViewBuilder {
                 reportArtefactHashSet = (request.filterResolvedPlanNodes) ? reportArtefactHashSet : null;
                 aggregatedReport.aggregatedReportView = recursivelyBuildAggregatedReportTree(rootResolvedPlanNode, request, localReportNodesTimeSeries, inMemoryReportNodeAccessor, reportArtefactHashSet);
                 return aggregatedReport;
-            } catch (IOException e) {
-                //Handle auto-closable exception, the aggregated report view was created in all cases.
-                logger.error("Unable to close the local report node time series", e);
-                return null;
             }
         }
     }
