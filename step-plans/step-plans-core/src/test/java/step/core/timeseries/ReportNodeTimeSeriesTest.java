@@ -56,7 +56,7 @@ public class ReportNodeTimeSeriesTest {
             // manually flush all collections
             collections.forEach(c -> c.getIngestionPipeline().flush());
             collections.forEach(c -> {
-                long count = c.getCollection().count(Filters.empty(), null);
+                long count = c.count(Filters.empty(), null);
                 assertEquals(1, count);
             });
         }
