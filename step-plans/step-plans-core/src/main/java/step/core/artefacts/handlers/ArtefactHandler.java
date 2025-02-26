@@ -76,7 +76,6 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	private ReportNodeCache reportNodeCache;
 	protected DynamicBeanResolver dynamicBeanResolver;
 	private ReportNodeTimeSeries reportNodeTimeSeries;
-	private boolean reportNodeTimeSeriesEnabled;
 	private ResolvedPlanBuilder resolvedPlanBuilder;
 
 	public ArtefactHandler() {
@@ -526,6 +525,8 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		node.setId(new ObjectId());
 		node.setName(getReportNodeName(artefact));
 		node.setParentID(parentReportNode.getId());
+		String parentPath = parentReportNode.getPath();
+		node.setPath(((parentPath != null) ? parentPath : "") + node.getId());
 		node.setArtefactID(artefact.getId());
 		node.setExecutionID(context.getExecutionId().toString());
 		node.setStatus(ReportNodeStatus.NORUN);

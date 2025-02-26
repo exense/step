@@ -189,4 +189,15 @@ public class TimeSeriesCollectionsSettings {
         }
     }
 
+    public static TimeSeriesCollectionsSettings buildSingleResolutionSettings(long mainResolution, long mainFlushInterval) {
+        TimeSeriesCollectionsSettings timeSeriesCollectionsSettings = new TimeSeriesCollectionsSettings();
+        timeSeriesCollectionsSettings.setDailyEnabled(false);
+        timeSeriesCollectionsSettings.setHourlyEnabled(false);
+        timeSeriesCollectionsSettings.setPerMinuteEnabled(false);
+        timeSeriesCollectionsSettings.setWeeklyEnabled(false);
+        timeSeriesCollectionsSettings.setMainResolution(mainResolution);
+        timeSeriesCollectionsSettings.setMainFlushInterval(mainFlushInterval);
+        return timeSeriesCollectionsSettings;
+    }
+
 }

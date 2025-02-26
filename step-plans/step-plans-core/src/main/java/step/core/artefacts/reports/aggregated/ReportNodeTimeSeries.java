@@ -34,12 +34,16 @@ public class ReportNodeTimeSeries implements AutoCloseable {
     private final boolean ingestionEnabled;
 
     public ReportNodeTimeSeries(CollectionFactory collectionFactory, Configuration configuration) {
-        TimeSeriesCollectionsSettings timeSeriesCollectionsSettings = TimeSeriesCollectionsSettings.readSettings(configuration, TIME_SERIES_MAIN_COLLECTION);
+        this(collectionFactory, TimeSeriesCollectionsSettings.readSettings(configuration, TIME_SERIES_MAIN_COLLECTION),
+                configuration.getPropertyAsBoolean(CONF_KEY_REPORT_NODE_TIME_SERIES_ENABLED, true));
+    }
+
+    public ReportNodeTimeSeries(CollectionFactory collectionFactory, TimeSeriesCollectionsSettings timeSeriesCollectionsSettings, boolean ingestionEnabled) {
         List<TimeSeriesCollection> timeSeriesCollections = getTimeSeriesCollections(timeSeriesCollectionsSettings, collectionFactory);
         timeSeries = new TimeSeriesBuilder().registerCollections(timeSeriesCollections).build();
         ingestionPipeline = timeSeries.getIngestionPipeline();
         timeSeries.createIndexes(Set.of(new IndexField(EXECUTION_ID, Order.ASC, String.class)));
-        ingestionEnabled = configuration.getPropertyAsBoolean(CONF_KEY_REPORT_NODE_TIME_SERIES_ENABLED, true);
+        this.ingestionEnabled = ingestionEnabled;
     }
 
     private List<TimeSeriesCollection> getTimeSeriesCollections(TimeSeriesCollectionsSettings collectionsSettings, CollectionFactory collectionFactory) {
@@ -69,7 +73,7 @@ public class ReportNodeTimeSeries implements AutoCloseable {
             nodeBucket.putAll(customAttributes);
         }
 
-        ingestionPipeline.ingestPoint(new BucketAttributes(nodeBucket), System.currentTimeMillis(), 1);
+        ingestionPipeline.ingestPoint(new BucketAttributes(nodeBucket), reportNode.getExecutionTime(), 1);
     }
 
     public void flush() {
