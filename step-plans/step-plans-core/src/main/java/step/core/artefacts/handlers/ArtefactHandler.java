@@ -62,6 +62,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	public static final String TEC_EXECUTION_REPORTNODES_PERSISTAFTER = "tec.execution.reportnodes.persistafter";
 	public static final String TEC_EXECUTION_REPORTNODES_PERSISTBEFORE = "tec.execution.reportnodes.persistbefore";
 	public static final String TEC_EXECUTION_REPORTNODES_PERSISTONLYNONPASSED = "tec.execution.reportnodes.persistonlynonpassed";
+	public static final String TEC_EXECUTION_REPORTNODES_TIMESERIES_ENABLED = "tec.execution.reportnodes.timeseries.enabled";
 	public static final String CTX_ADDITIONAL_ATTRIBUTES = "$additionalAttributes";
 
 	protected ExecutionContext context;
@@ -246,7 +247,8 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 			}
 		}
 
-		if (reportNodeTimeSeries.isIngestionEnabled()) {
+		final boolean localReportNodeTSEnabled = variablesManager.getVariableAsBoolean(TEC_EXECUTION_REPORTNODES_TIMESERIES_ENABLED, true);
+		if (reportNodeTimeSeries.isIngestionEnabled() && localReportNodeTSEnabled) {
 			AbstractArtefact artefactInstance = reportNode.getArtefactInstance();
 			if (artefactInstance != null && !artefactInstance.isWorkArtefact()) {
 				// TODO implement node pruning for time series
