@@ -84,7 +84,6 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 
 	protected FunctionExecutionService functionExecutionService;
 	protected FunctionAccessor functionAccessor;
-	protected AutomationPackageAccessor automationPackageAccessor;
 
 	protected ReportNodeAttachmentManager reportNodeAttachmentManager;
 	protected DynamicJsonObjectResolver dynamicJsonObjectResolver;
@@ -99,7 +98,6 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		super.init(context);
 		FunctionTypeRegistry functionTypeRegistry = context.require(FunctionTypeRegistry.class);
 		functionAccessor = context.require(FunctionAccessor.class);
-		automationPackageAccessor = context.require(AutomationPackageAccessor.class);
 		functionExecutionService = context.require(FunctionExecutionService.class);
 		reportNodeAttachmentManager = new ReportNodeAttachmentManager(context);
 		dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));

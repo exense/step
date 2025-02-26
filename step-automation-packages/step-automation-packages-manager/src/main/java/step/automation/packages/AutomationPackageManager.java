@@ -600,7 +600,7 @@ public class AutomationPackageManager {
 
         if (evaluationExpression != null && !evaluationExpression.isEmpty()) {
             for (Function completeFunction : completeFunctions) {
-                completeFunction.setEvaluationExpression(new Expression(evaluationExpression));
+                completeFunction.setActivationExpression(new Expression(evaluationExpression));
             }
         }
         return completeFunctions;

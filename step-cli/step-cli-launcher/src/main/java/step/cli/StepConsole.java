@@ -271,11 +271,10 @@ public class StepConsole implements Callable<Integer> {
                     description = "Whether to waits for the deployment to complete")
             protected boolean async;
 
-            @Option(names = {"--apVersion"})
+            @Option(names = {"--apVersion"}, description = "Optionally set the version of this automation package. This allows to deploy and use multiple versions of the same package on Step")
             protected String apVersion;
 
-            // TODO: add description + think how can we use the complex expression (groovy script) in CLI args and in http query params
-            @Option(names = {"--activationExpr"})
+            @Option(names = {"--activationExpr"}, description = "When deploying multiple versions of the same package (see \"apVersion\"), the expression is used to select the proper versions during the execution of plans. Example: \"env == PROD\"")
             protected String activationExpr;
 
             @Override

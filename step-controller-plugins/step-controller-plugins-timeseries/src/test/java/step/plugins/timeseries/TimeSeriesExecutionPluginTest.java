@@ -101,12 +101,12 @@ public class TimeSeriesExecutionPluginTest extends AbstractKeyword {
 		engine = ExecutionEngine.builder()
 				.withPlugin(new MeasurementPlugin(GaugeCollectorRegistry.getInstance()))
 				.withPlugin(new FunctionPlugin())
-                .withPlugin(new ThreadPoolPlugin())
+				.withPlugin(new ThreadPoolPlugin())
 				.withPlugin(new LocalFunctionPlugin())
-                .withPlugin(new BaseArtefactPlugin())
+				.withPlugin(new BaseArtefactPlugin())
 				.withPlugin(new ExecutionTypePlugin())
 				.withPlugin(new ViewPlugin())
-                .withPlugin(new TimeSeriesExecutionPlugin(timeSeries))
+				.withPlugin(new TimeSeriesExecutionPlugin(timeSeries))
 				.withPlugin(new ViewPlugin())
 				.build();
 

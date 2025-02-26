@@ -46,8 +46,8 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
     @Parameter(property = "step-deploy-automation-package.ap-version")
     private String apVersion;
 
-    @Parameter(property = "step-deploy-automation-package.activation-expr")
-    private String activationExpr;
+    @Parameter(property = "step-deploy-automation-package.activation-expression")
+    private String activationExpression;
 
     @Override
     protected ControllerCredentials getControllerCredentials() {
@@ -60,7 +60,7 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
         try {
             validateEEConfiguration(getStepProjectName(), getAuthToken());
             checkStepControllerVersion();
-            createTool(getUrl(), getStepProjectName(), getAuthToken(), getAsync(), getApVersion(), getActivationExpr()).execute();
+            createTool(getUrl(), getStepProjectName(), getAuthToken(), getAsync(), getApVersion(), getActivationExpression()).execute();
         } catch (StepCliExecutionException e) {
             throw new MojoExecutionException("Execution exception", e);
         } catch (Exception e) {
@@ -123,12 +123,12 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
         this.apVersion = apVersion;
     }
 
-    public String getActivationExpr() {
-        return activationExpr;
+    public String getActivationExpression() {
+        return activationExpression;
     }
 
-    public void setActivationExpr(String activationExpr) {
-        this.activationExpr = activationExpr;
+    public void setActivationExpression(String activationExpression) {
+        this.activationExpression = activationExpression;
     }
 
     protected class MavenDeployAutomationPackageTool extends AbstractDeployAutomationPackageTool {

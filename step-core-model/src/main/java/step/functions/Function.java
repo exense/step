@@ -50,7 +50,7 @@ public class Function extends AbstractOrganizableObject implements EnricheableOb
 	protected Map<String, String> tokenSelectionCriteria;
 	
 	protected boolean managed;
-	protected Expression evaluationExpression;
+	protected Expression activationExpression;
 	
 	protected boolean useCustomTemplate=false;
 	protected String htmlTemplate="";
@@ -154,11 +154,11 @@ public class Function extends AbstractOrganizableObject implements EnricheableOb
 	}
 
 	@Override
-	public Expression getEvaluationExpression() {
-		return evaluationExpression;
+	public Expression getActivationExpression() {
+		return activationExpression;
 	}
 
-	public void setEvaluationExpression(Expression evaluationExpression) {
-		this.evaluationExpression = evaluationExpression;
+	public void setActivationExpression(Expression activationExpression) {
+		this.activationExpression = activationExpression;
 	}
 }

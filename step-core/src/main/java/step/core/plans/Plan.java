@@ -114,7 +114,7 @@ public class Plan extends AbstractOrganizableObject implements EnricheableObject
 	}
 
 	@Override
-	public Expression getEvaluationExpression() {
+	public Expression getActivationExpression() {
 		return evaluationExpression;
 	}
 

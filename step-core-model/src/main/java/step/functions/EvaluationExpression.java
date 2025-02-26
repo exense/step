@@ -21,5 +21,5 @@ package step.functions;
 import step.commons.activation.Expression;
 
 public interface EvaluationExpression {
-    Expression getEvaluationExpression();
+    Expression getActivationExpression();
 }

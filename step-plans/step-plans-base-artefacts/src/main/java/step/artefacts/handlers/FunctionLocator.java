@@ -75,7 +75,7 @@ public class FunctionLocator {
 			List<Function> functionsMatchingByAttributes = stream.collect(Collectors.toList());
 
 			// reorder matching functions: the function from current AP has a priority
-			List<Function> orderedFunctions = prioritizeAutomationPackageLinkedEntities(functionsMatchingByAttributes, bindings);
+			List<Function> orderedFunctions = prioritizeAndFilterApEntities(functionsMatchingByAttributes, bindings);
 
 			// after prioritization, we check the chosen active keyword version
 			Set<String> activeKeywordVersions = getActiveKeywordVersions(bindings);
@@ -106,7 +106,7 @@ public class FunctionLocator {
 	/**
 	 * Reorders and filters entities according to the current automation package and activation expression
 	 */
-	public static <T extends AbstractOrganizableObject> List<T> prioritizeAutomationPackageLinkedEntities(List<T> entities, Map<String, Object> bindings) {
+	public static <T extends AbstractOrganizableObject> List<T> prioritizeAndFilterApEntities(List<T> entities, Map<String, Object> bindings) {
 		// reorder entities: entities from current AP have a priority
 		List<T> entitiesWithHighestPriority = new ArrayList<>();
 		List<T> entitiesWithLowerPriority = new ArrayList<>();
@@ -122,7 +122,7 @@ public class FunctionLocator {
 
 			boolean activationExpressionMatched = true;
 			if (entity instanceof EvaluationExpression) {
-				Expression activationExpression = ((EvaluationExpression) entity).getEvaluationExpression();
+				Expression activationExpression = ((EvaluationExpression) entity).getActivationExpression();
 				activationExpressionMatched = Activator.evaluateActivationExpression(bindings == null ? null : new SimpleBindings(bindings), activationExpression, Activator.DEFAULT_SCRIPT_ENGINE);
 			}
 

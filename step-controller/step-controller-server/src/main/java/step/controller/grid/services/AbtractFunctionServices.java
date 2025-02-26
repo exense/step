@@ -66,7 +66,6 @@ public abstract class AbtractFunctionServices extends AbstractEntityServices<Fun
 	protected ReportNodeAttachmentManager reportNodeAttachmentManager;
 	
 	protected FunctionAccessor functionAccessor;
-	protected AutomationPackageAccessor apAccessor;
 	protected FunctionManager functionManager;
 
 	protected FunctionExecutionService functionExecutionService;
@@ -84,7 +83,6 @@ public abstract class AbtractFunctionServices extends AbstractEntityServices<Fun
 		super.init();
 		reportNodeAttachmentManager = new ReportNodeAttachmentManager(getContext().getResourceManager());
 		functionAccessor = getContext().get(FunctionAccessor.class);
-		apAccessor = getContext().get(AutomationPackageAccessor.class);
 		functionManager = getContext().get(FunctionManager.class);
 		functionExecutionService = getContext().get(FunctionExecutionService.class);
 		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(getContext().getExpressionHandler()));
