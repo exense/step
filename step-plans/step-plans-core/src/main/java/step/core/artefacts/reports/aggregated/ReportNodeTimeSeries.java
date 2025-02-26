@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 
 public class ReportNodeTimeSeries implements Closeable {
 
+    public static final String CONF_KEY_REPORT_NODE_TIME_SERIES_ENABLED = "execution.engine.reportnodes.timeseries.enabled";
     public static final String TIME_SERIES_MAIN_COLLECTION = "reportNodeTimeSeries";
     public static final String ARTEFACT_HASH = "artefactHash";
     public static final String EXECUTION_ID = "executionId";
@@ -32,13 +33,19 @@ public class ReportNodeTimeSeries implements Closeable {
     public static final String ERROR_MESSAGE = "errorMessage";
     private final TimeSeries timeSeries;
     private final TimeSeriesIngestionPipeline ingestionPipeline;
+    private final boolean ingestionEnabled;
 
     public ReportNodeTimeSeries(CollectionFactory collectionFactory, Configuration configuration) {
-        TimeSeriesCollectionsSettings timeSeriesCollectionsSettings = TimeSeriesCollectionsSettings.readSettings(configuration, TIME_SERIES_MAIN_COLLECTION);
+        this(collectionFactory, TimeSeriesCollectionsSettings.readSettings(configuration, TIME_SERIES_MAIN_COLLECTION),
+                configuration.getPropertyAsBoolean(CONF_KEY_REPORT_NODE_TIME_SERIES_ENABLED, true));
+    }
+
+    public ReportNodeTimeSeries(CollectionFactory collectionFactory, TimeSeriesCollectionsSettings timeSeriesCollectionsSettings, boolean ingestionEnabled) {
         List<TimeSeriesCollection> timeSeriesCollections = getTimeSeriesCollections(timeSeriesCollectionsSettings, collectionFactory);
         timeSeries = new TimeSeriesBuilder().registerCollections(timeSeriesCollections).build();
         ingestionPipeline = timeSeries.getIngestionPipeline();
         timeSeries.createIndexes(Set.of(new IndexField(EXECUTION_ID, Order.ASC, String.class)));
+        this.ingestionEnabled = ingestionEnabled;
     }
 
     private List<TimeSeriesCollection> getTimeSeriesCollections(TimeSeriesCollectionsSettings collectionsSettings, CollectionFactory collectionFactory) {
@@ -68,11 +75,15 @@ public class ReportNodeTimeSeries implements Closeable {
             nodeBucket.putAll(customAttributes);
         }
 
-        ingestionPipeline.ingestPoint(new BucketAttributes(nodeBucket), System.currentTimeMillis(), 1);
+        ingestionPipeline.ingestPoint(new BucketAttributes(nodeBucket), reportNode.getExecutionTime(), 1);
     }
 
     public void flush() {
         ingestionPipeline.flush();
+    }
+
+    public boolean isIngestionEnabled() {
+        return ingestionEnabled;
     }
 
     public static class Range {

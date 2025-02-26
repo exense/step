@@ -75,7 +75,6 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	private ReportNodeCache reportNodeCache;
 	protected DynamicBeanResolver dynamicBeanResolver;
 	private ReportNodeTimeSeries reportNodeTimeSeries;
-	private boolean reportNodeTimeSeriesEnabled;
 	private ResolvedPlanBuilder resolvedPlanBuilder;
 
 	public ArtefactHandler() {
@@ -95,7 +94,6 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		resourceManager = context.getResourceManager();
 		resolvedPlanBuilder = context.get(ResolvedPlanBuilder.class);
 		Configuration configuration = context.getConfiguration();
-		reportNodeTimeSeriesEnabled = configuration.getPropertyAsBoolean("execution.engine.reportnodes.timeseries.enabled", true);
 	}
 	
 	private enum Phase {
@@ -114,11 +112,13 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		}
 
 		try {
-			dynamicBeanResolver.evaluate(artefact, getBindings());
+			Map<String, Object> bindings = getBindings();
+			evaluateMandatoryFieldsEvenForSkippedArtefact(artefact, bindings);
 			reportNode.setName(getReportNodeNameDynamically(artefact));
 			if(filterArtefact(artefact)) {
 				reportNode.setStatus(ReportNodeStatus.SKIPPED);
 			} else {
+				dynamicBeanResolver.evaluate(artefact, bindings);
 				try {
 					optionalRunChildrenBlock(artefact.getBefore(), (before) -> {
 						SequentialArtefactScheduler sequentialArtefactScheduler = new SequentialArtefactScheduler(context);
@@ -177,16 +177,18 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		}
 
 		try {
-			dynamicBeanResolver.evaluate(artefact, getBindings());
+			Map<String, Object> bindings = getBindings();
+			evaluateMandatoryFieldsEvenForSkippedArtefact(artefact, bindings);
 			reportNode.setName(getReportNodeNameDynamically(artefact));
 			reportNode.setArtefactInstance(artefact);
 			reportNode.setResolvedArtefact(artefact);
 
-			context.getExecutionCallbacks().beforeReportNodeExecution(context, reportNode);
-
 			if (filterArtefact(artefact)) {
+				context.getExecutionCallbacks().beforeReportNodeExecution(context, reportNode);
 				reportNode.setStatus(ReportNodeStatus.SKIPPED);
 			} else {
+				dynamicBeanResolver.evaluate(artefact, bindings);
+				context.getExecutionCallbacks().beforeReportNodeExecution(context, reportNode);
 				Object forcePersistBefore = artefact.getCustomAttribute(FORCE_PERSIST_BEFORE);
 				if(persistBefore || Boolean.TRUE.equals(forcePersistBefore)) {
 					saveReportNode(reportNode);
@@ -244,7 +246,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 			}
 		}
 
-		if (reportNodeTimeSeriesEnabled) {
+		if (reportNodeTimeSeries.isIngestionEnabled()) {
 			AbstractArtefact artefactInstance = reportNode.getArtefactInstance();
 			if (artefactInstance != null && !artefactInstance.isWorkArtefact()) {
 				// TODO implement node pruning for time series
@@ -454,6 +456,22 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	}
 
 
+	public void evaluateMandatoryFieldsEvenForSkippedArtefact(AbstractArtefact artefact, Map<String, Object> bindings) {
+		if(artefact != null) {
+			try {
+				if (artefact.isUseDynamicName()) {
+					dynamicBeanResolver.evaluateDynamicValue(bindings, artefact.getDynamicName());
+				}
+				dynamicBeanResolver.evaluateDynamicValue(bindings, artefact.getSkipNode());
+			} catch (Exception e) {
+				if (logger.isDebugEnabled()) {
+					logger.debug("Error while evaluating object: " + artefact, e);
+				}
+			}
+		}
+	}
+
+
 	private ReportNode saveReportNode(REPORT_NODE reportNode) {
 		AbstractArtefact resolvedArtefact = reportNode.getResolvedArtefact();
 		if(resolvedArtefact != null) {
@@ -505,6 +523,8 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		node.setId(new ObjectId());
 		node.setName(getReportNodeName(artefact));
 		node.setParentID(parentReportNode.getId());
+		String parentPath = parentReportNode.getPath();
+		node.setPath(((parentPath != null) ? parentPath : "") + node.getId());
 		node.setArtefactID(artefact.getId());
 		node.setExecutionID(context.getExecutionId().toString());
 		node.setStatus(ReportNodeStatus.NORUN);
