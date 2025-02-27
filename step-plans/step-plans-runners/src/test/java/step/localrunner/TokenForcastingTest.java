@@ -328,7 +328,7 @@ public class TokenForcastingTest {
 		ForcastingTestPlugin forcastingTestPlugin = new ForcastingTestPlugin(availableAgentPools);
 		try (ExecutionEngine executionEngine = ExecutionEngine.builder()
 				.withPlugin(new BasePlugin())
-                .withPlugin(new FunctionPlugin())
+				.withPlugin(new FunctionPlugin())
 				.withPlugin(new AbstractExecutionEnginePlugin() {
 					@Override
 					public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
