@@ -583,7 +583,7 @@ public class AutomationPackageManager {
         fillEntities(plans, oldPackage != null ? getPackagePlans(oldPackage.getId()) : new ArrayList<>(), enricher);
         if (evaluationExpression != null && !evaluationExpression.isEmpty()){
             for (Plan plan : plans) {
-                plan.setEvaluationExpression(new Expression(evaluationExpression));
+                plan.setActivationExpression(new Expression(evaluationExpression));
             }
         }
         return plans;

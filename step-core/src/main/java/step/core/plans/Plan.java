@@ -51,7 +51,7 @@ public class Plan extends AbstractOrganizableObject implements EnricheableObject
 	
 	protected boolean visible = true;
 
-	protected Expression evaluationExpression;
+	protected Expression activationExpression;
 
 	private List<String> categories;
 	
@@ -115,10 +115,10 @@ public class Plan extends AbstractOrganizableObject implements EnricheableObject
 
 	@Override
 	public Expression getActivationExpression() {
-		return evaluationExpression;
+		return activationExpression;
 	}
 
-	public void setEvaluationExpression(Expression evaluationExpression) {
-		this.evaluationExpression = evaluationExpression;
+	public void setActivationExpression(Expression activationExpression) {
+		this.activationExpression = activationExpression;
 	}
 }
