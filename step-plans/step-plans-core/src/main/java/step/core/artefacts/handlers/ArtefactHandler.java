@@ -62,6 +62,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	public static final String TEC_EXECUTION_REPORTNODES_PERSISTAFTER = "tec.execution.reportnodes.persistafter";
 	public static final String TEC_EXECUTION_REPORTNODES_PERSISTBEFORE = "tec.execution.reportnodes.persistbefore";
 	public static final String TEC_EXECUTION_REPORTNODES_PERSISTONLYNONPASSED = "tec.execution.reportnodes.persistonlynonpassed";
+	public static final String TEC_EXECUTION_REPORTNODES_TIMESERIES_ENABLED = "tec.execution.reportnodes.timeseries.enabled";
 	public static final String CTX_ADDITIONAL_ATTRIBUTES = "$additionalAttributes";
 
 	protected ExecutionContext context;
@@ -75,7 +76,6 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	private ReportNodeCache reportNodeCache;
 	protected DynamicBeanResolver dynamicBeanResolver;
 	private ReportNodeTimeSeries reportNodeTimeSeries;
-	private boolean reportNodeTimeSeriesEnabled;
 	private ResolvedPlanBuilder resolvedPlanBuilder;
 
 	public ArtefactHandler() {
@@ -113,11 +113,13 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		}
 
 		try {
-			dynamicBeanResolver.evaluate(artefact, getBindings());
+			Map<String, Object> bindings = getBindings();
+			evaluateMandatoryFieldsEvenForSkippedArtefact(artefact, bindings);
 			reportNode.setName(getReportNodeNameDynamically(artefact));
 			if(filterArtefact(artefact)) {
 				reportNode.setStatus(ReportNodeStatus.SKIPPED);
 			} else {
+				dynamicBeanResolver.evaluate(artefact, bindings);
 				try {
 					optionalRunChildrenBlock(artefact.getBefore(), (before) -> {
 						SequentialArtefactScheduler sequentialArtefactScheduler = new SequentialArtefactScheduler(context);
@@ -176,16 +178,18 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		}
 
 		try {
-			dynamicBeanResolver.evaluate(artefact, getBindings());
+			Map<String, Object> bindings = getBindings();
+			evaluateMandatoryFieldsEvenForSkippedArtefact(artefact, bindings);
 			reportNode.setName(getReportNodeNameDynamically(artefact));
 			reportNode.setArtefactInstance(artefact);
 			reportNode.setResolvedArtefact(artefact);
 
-			context.getExecutionCallbacks().beforeReportNodeExecution(context, reportNode);
-
 			if (filterArtefact(artefact)) {
+				context.getExecutionCallbacks().beforeReportNodeExecution(context, reportNode);
 				reportNode.setStatus(ReportNodeStatus.SKIPPED);
 			} else {
+				dynamicBeanResolver.evaluate(artefact, bindings);
+				context.getExecutionCallbacks().beforeReportNodeExecution(context, reportNode);
 				Object forcePersistBefore = artefact.getCustomAttribute(FORCE_PERSIST_BEFORE);
 				if(persistBefore || Boolean.TRUE.equals(forcePersistBefore)) {
 					saveReportNode(reportNode);
@@ -243,7 +247,8 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 			}
 		}
 
-		if (reportNodeTimeSeries.isIngestionEnabled()) {
+		final boolean localReportNodeTSEnabled = variablesManager.getVariableAsBoolean(TEC_EXECUTION_REPORTNODES_TIMESERIES_ENABLED, true);
+		if (reportNodeTimeSeries.isIngestionEnabled() && localReportNodeTSEnabled) {
 			AbstractArtefact artefactInstance = reportNode.getArtefactInstance();
 			if (artefactInstance != null && !artefactInstance.isWorkArtefact()) {
 				// TODO implement node pruning for time series
@@ -453,6 +458,22 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	}
 
 
+	public void evaluateMandatoryFieldsEvenForSkippedArtefact(AbstractArtefact artefact, Map<String, Object> bindings) {
+		if(artefact != null) {
+			try {
+				if (artefact.isUseDynamicName()) {
+					dynamicBeanResolver.evaluateDynamicValue(bindings, artefact.getDynamicName());
+				}
+				dynamicBeanResolver.evaluateDynamicValue(bindings, artefact.getSkipNode());
+			} catch (Exception e) {
+				if (logger.isDebugEnabled()) {
+					logger.debug("Error while evaluating object: " + artefact, e);
+				}
+			}
+		}
+	}
+
+
 	private ReportNode saveReportNode(REPORT_NODE reportNode) {
 		AbstractArtefact resolvedArtefact = reportNode.getResolvedArtefact();
 		if(resolvedArtefact != null) {
@@ -504,6 +525,8 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		node.setId(new ObjectId());
 		node.setName(getReportNodeName(artefact));
 		node.setParentID(parentReportNode.getId());
+		String parentPath = parentReportNode.getPath();
+		node.setPath(((parentPath != null) ? parentPath : "") + node.getId());
 		node.setArtefactID(artefact.getId());
 		node.setExecutionID(context.getExecutionId().toString());
 		node.setStatus(ReportNodeStatus.NORUN);

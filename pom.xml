@@ -43,7 +43,7 @@
 		<!-- internal dependencies -->
 		<dependencies.version>2024.9.26</dependencies.version>
 		<step-grid.version>2.2.2</step-grid.version>
-		<step-framework.version>2025.1.7-677d23537bd6067182b76a3b</step-framework.version>
+		<step-framework.version>2025.2.25-67bd8806d3498159497205e5</step-framework.version>
 
 		<!-- external, non-transitive, dependencies -->
 		<dep.groovy.version>3.0.23</dep.groovy.version>
@@ -284,12 +284,12 @@
 			<dependency>
 				<groupId>com.google.apis</groupId>
 				<artifactId>google-api-services-sheets</artifactId>
-				<version>v4-rev20220620-1.32.1</version>
+				<version>v4-rev20250211-2.0.0</version>
 			</dependency>
 			<dependency>
 				<groupId>com.google.apis</groupId>
 				<artifactId>google-api-services-drive</artifactId>
-				<version>v3-rev20220709-1.32.1</version>
+				<version>v3-rev20250216-2.0.0</version>
 			</dependency>
 			<dependency>
 				<groupId>com.google.http-client</groupId>

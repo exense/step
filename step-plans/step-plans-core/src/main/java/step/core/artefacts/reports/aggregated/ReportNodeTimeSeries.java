@@ -14,14 +14,12 @@ import step.core.timeseries.aggregation.TimeSeriesOptimizationType;
 import step.core.timeseries.bucket.BucketAttributes;
 import step.core.timeseries.ingestion.TimeSeriesIngestionPipeline;
 
-import java.io.Closeable;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class ReportNodeTimeSeries implements Closeable {
+public class ReportNodeTimeSeries implements AutoCloseable {
 
     public static final String CONF_KEY_REPORT_NODE_TIME_SERIES_ENABLED = "execution.engine.reportnodes.timeseries.enabled";
     public static final String TIME_SERIES_MAIN_COLLECTION = "reportNodeTimeSeries";
@@ -36,12 +34,16 @@ public class ReportNodeTimeSeries implements Closeable {
     private final boolean ingestionEnabled;
 
     public ReportNodeTimeSeries(CollectionFactory collectionFactory, Configuration configuration) {
-        TimeSeriesCollectionsSettings timeSeriesCollectionsSettings = TimeSeriesCollectionsSettings.readSettings(configuration, TIME_SERIES_MAIN_COLLECTION);
+        this(collectionFactory, TimeSeriesCollectionsSettings.readSettings(configuration, TIME_SERIES_MAIN_COLLECTION),
+                configuration.getPropertyAsBoolean(CONF_KEY_REPORT_NODE_TIME_SERIES_ENABLED, true));
+    }
+
+    public ReportNodeTimeSeries(CollectionFactory collectionFactory, TimeSeriesCollectionsSettings timeSeriesCollectionsSettings, boolean ingestionEnabled) {
         List<TimeSeriesCollection> timeSeriesCollections = getTimeSeriesCollections(timeSeriesCollectionsSettings, collectionFactory);
         timeSeries = new TimeSeriesBuilder().registerCollections(timeSeriesCollections).build();
         ingestionPipeline = timeSeries.getIngestionPipeline();
         timeSeries.createIndexes(Set.of(new IndexField(EXECUTION_ID, Order.ASC, String.class)));
-        ingestionEnabled = configuration.getPropertyAsBoolean(CONF_KEY_REPORT_NODE_TIME_SERIES_ENABLED, true);
+        this.ingestionEnabled = ingestionEnabled;
     }
 
     private List<TimeSeriesCollection> getTimeSeriesCollections(TimeSeriesCollectionsSettings collectionsSettings, CollectionFactory collectionFactory) {
@@ -71,7 +73,7 @@ public class ReportNodeTimeSeries implements Closeable {
             nodeBucket.putAll(customAttributes);
         }
 
-        ingestionPipeline.ingestPoint(new BucketAttributes(nodeBucket), System.currentTimeMillis(), 1);
+        ingestionPipeline.ingestPoint(new BucketAttributes(nodeBucket), reportNode.getExecutionTime(), 1);
     }
 
     public void flush() {
@@ -104,7 +106,7 @@ public class ReportNodeTimeSeries implements Closeable {
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() {
         timeSeries.close();
     }
 }

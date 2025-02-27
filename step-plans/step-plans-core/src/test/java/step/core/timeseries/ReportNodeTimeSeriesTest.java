@@ -42,23 +42,24 @@ public class ReportNodeTimeSeriesTest {
         configuration.putProperty("reportNodeTimeSeries.collections.day.enabled", "true");
         configuration.putProperty("reportNodeTimeSeries.collections.week.enabled", "true");
         CollectionFactory collectionFactory = new InMemoryCollectionFactory(null);
-        ReportNodeTimeSeries reportNodeTimeSeries = new ReportNodeTimeSeries(collectionFactory, configuration);
-        TimeSeries timeSeries = reportNodeTimeSeries.getTimeSeries();
-        List<TimeSeriesCollection> collections = timeSeries.getCollections();
-        assertEquals(5, collections.size());
-        ReportNode reportNode = new ReportNode();
-        reportNode.setStatus(ReportNodeStatus.PASSED);
-        reportNode.setExecutionID("executionId");
-        reportNode.setArtefactHash("artefactHash");
-        reportNode.setExecutionTime(1000);
+        try (ReportNodeTimeSeries reportNodeTimeSeries = new ReportNodeTimeSeries(collectionFactory, configuration)) {
+            TimeSeries timeSeries = reportNodeTimeSeries.getTimeSeries();
+            List<TimeSeriesCollection> collections = timeSeries.getCollections();
+            assertEquals(5, collections.size());
+            ReportNode reportNode = new ReportNode();
+            reportNode.setStatus(ReportNodeStatus.PASSED);
+            reportNode.setExecutionID("executionId");
+            reportNode.setArtefactHash("artefactHash");
+            reportNode.setExecutionTime(1000);
 
-        reportNodeTimeSeries.ingestReportNode(reportNode);
-        // manually flush all collections
-        collections.forEach(c -> c.getIngestionPipeline().flush());
-        collections.forEach(c -> {
-            long count = c.getCollection().count(Filters.empty(), null);
-            assertEquals(1, count);
-        });
+            reportNodeTimeSeries.ingestReportNode(reportNode);
+            // manually flush all collections
+            collections.forEach(c -> c.getIngestionPipeline().flush());
+            collections.forEach(c -> {
+                long count = c.getCollection().count(Filters.empty(), null);
+                assertEquals(1, count);
+            });
+        }
     }
 
     @Test

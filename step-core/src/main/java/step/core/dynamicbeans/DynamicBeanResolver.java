@@ -20,6 +20,7 @@ package step.core.dynamicbeans;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.core.artefacts.AbstractArtefact;
 
 import java.beans.BeanInfo;
 import java.beans.Introspector;
@@ -101,7 +102,7 @@ public class DynamicBeanResolver {
 		}
 	}
 
-	private void evaluateDynamicValue(Map<String, Object> bindings, DynamicValue<?> value) {
+	public void evaluateDynamicValue(Map<String, Object> bindings, DynamicValue<?> value) {
 		if(value!=null) {
 			valueResolver.evaluate(value, bindings);
 			evaluate(value.get(), bindings);
