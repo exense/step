@@ -199,7 +199,7 @@ public class YamlPlanReader {
 		return yamlMapper;
 	}
 
-	private static ObjectMapper createDefaultYamlMapper() {
+	public static ObjectMapper createDefaultYamlMapper() {
 		YAMLFactory yamlFactory = new YAMLFactory();
 		// Disable native type id to enable conversion to generic Documents
 		yamlFactory.disable(YAMLGenerator.Feature.USE_NATIVE_TYPE_ID);

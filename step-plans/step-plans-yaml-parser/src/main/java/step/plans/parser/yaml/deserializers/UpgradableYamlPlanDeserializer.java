@@ -106,7 +106,7 @@ public class UpgradableYamlPlanDeserializer extends JsonDeserializer<YamlPlan> {
             try {
                 JsonSchemaValidator.validate(jsonSchema, planJsonNode.toString());
             } catch (ValidationException vex) {
-                throw new YamlPlanValidationException(String.join(", ", vex.getAllMessages()));
+                throw new YamlPlanValidationException(String.join(", ", vex.getAllMessages()), vex);
             } catch (Exception ex) {
                 throw new YamlPlanValidationException(ex.getMessage(), ex);
             }
