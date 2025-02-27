@@ -24,6 +24,7 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 
+import step.commons.activation.Expression;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.entities.EntityManager;
@@ -31,10 +32,11 @@ import step.core.entities.EntityReference;
 import step.core.objectenricher.EnricheableObject;
 import step.core.plans.agents.configuration.AgentProvisioningConfiguration;
 import step.core.plans.agents.configuration.AutomaticAgentProvisioningConfiguration;
+import step.functions.EvaluationExpression;
 import step.functions.Function;
 
 @JsonTypeInfo(use=Id.CLASS,property= Plan.JSON_CLASS_FIELD)
-public class Plan extends AbstractOrganizableObject implements EnricheableObject {
+public class Plan extends AbstractOrganizableObject implements EnricheableObject, EvaluationExpression {
 
 	public static final String JSON_CLASS_FIELD = "_class";
 
@@ -48,6 +50,8 @@ public class Plan extends AbstractOrganizableObject implements EnricheableObject
 	protected AgentProvisioningConfiguration agents = new AutomaticAgentProvisioningConfiguration(AutomaticAgentProvisioningConfiguration.PlanAgentsPoolAutoMode.auto_detect);
 	
 	protected boolean visible = true;
+
+	protected Expression activationExpression;
 
 	private List<String> categories;
 	
@@ -107,5 +111,14 @@ public class Plan extends AbstractOrganizableObject implements EnricheableObject
 
 	public void setCategories(List<String> categories) {
 		this.categories = categories;
+	}
+
+	@Override
+	public Expression getActivationExpression() {
+		return activationExpression;
+	}
+
+	public void setActivationExpression(Expression activationExpression) {
+		this.activationExpression = activationExpression;
 	}
 }

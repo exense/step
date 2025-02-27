@@ -42,8 +42,12 @@ public class ResolvedPlanBuilderForCompositeKeywordTest {
         ExecutionEngineContext parentContext = new ExecutionEngineContext(OperationMode.LOCAL, true);
         InMemoryFunctionAccessorImpl functionAccessor = new InMemoryFunctionAccessorImpl();
         parentContext.put(FunctionAccessor.class, functionAccessor);
-        engine = new ExecutionEngine.Builder().withParentContext(parentContext).withPlugin(new FunctionPlugin())
-                .withPlugin(new BaseArtefactPlugin()).withPlugin(new TokenForecastingExecutionPlugin()).withPlugin(new ThreadPoolPlugin()).withPlugin(new AbstractExecutionEnginePlugin() {
+        engine = new ExecutionEngine.Builder().withParentContext(parentContext)
+                .withPlugin(new FunctionPlugin())
+                .withPlugin(new BaseArtefactPlugin())
+                .withPlugin(new TokenForecastingExecutionPlugin())
+                .withPlugin(new ThreadPoolPlugin())
+                .withPlugin(new AbstractExecutionEnginePlugin() {
                     @Override
                     public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
                         super.initializeExecutionContext(executionEngineContext, executionContext);
