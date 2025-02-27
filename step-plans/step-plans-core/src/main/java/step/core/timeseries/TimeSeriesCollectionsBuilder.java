@@ -61,7 +61,7 @@ public class TimeSeriesCollectionsBuilder {
             enabledCollections.add(collection);
         } else {
             // disabled resolutions will be completely dropped from db
-            collection.getCollection().drop();
+            collection.drop();
         }
     }
 }
