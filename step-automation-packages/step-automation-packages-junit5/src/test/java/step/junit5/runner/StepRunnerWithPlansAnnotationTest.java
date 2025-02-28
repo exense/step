@@ -16,31 +16,13 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.junit.runner;
+package step.junit5.runner;
 
-import org.junit.runners.model.InitializationError;
-import step.automation.packages.junit.*;
-import step.core.execution.ExecutionContext;
-import step.core.execution.ExecutionEngine;
-import step.engine.plugins.AbstractExecutionEnginePlugin;
+import step.junit.runners.annotations.ExecutionParameters;
+import step.junit.runners.annotations.Plans;
 
-public class Step extends AbstractStepRunner {
-
-	public Step(Class<?> klass) throws InitializationError {
-		super(klass, klass);
-
-		try {
-			executionEngine = ExecutionEngine.builder().withPlugin(new AbstractExecutionEnginePlugin() {
-				@Override
-				public void afterExecutionEnd(ExecutionContext context) {
-					resourceManager = context.getResourceManager();
-				}
-			}).withPluginsFromClasspath().build();
-
-			listPlans = new JUnitPlansProvider(klass).getTestPlans(executionEngine);
-		} catch (Exception e) {
-			throw new InitializationError(e);
-		}
-	}
+@Plans({"plans/plan2.plan", "plans/plan3.plan", "plans/assertsTest.plan"})
+@ExecutionParameters({"PARAM_EXEC","Value","PARAM_EXEC2","Value","PARAM_EXEC3","Value"})
+public class StepRunnerWithPlansAnnotationTest extends StepJUnit5 {
 
 }
