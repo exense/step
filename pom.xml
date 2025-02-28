@@ -44,7 +44,7 @@
 		<dependencies.version>2024.9.26</dependencies.version>
 		<step-grid.version>2.2.2</step-grid.version>
 		<step-framework.version>2025.2.27-67c05bbdd349815949a77387</step-framework.version>
-		<exense-commons.version>2025.2.28-67c17d4bd3498159495a3742</exense-commons.version>
+		<exense-commons.version>2025.2.28-67c1cb99d349815949c92bbe</exense-commons.version>
 
 		<!-- external, non-transitive, dependencies -->
 		<dep.groovy.version>3.0.23</dep.groovy.version>
@@ -122,6 +122,12 @@
 				<version>${step-grid.version}</version>
 				<type>pom</type>
 				<scope>import</scope>
+			</dependency>
+
+			<dependency>
+				<groupId>ch.exense.commons</groupId>
+				<artifactId>exense-basic-commons</artifactId>
+				<version>${exense-commons.version}</version>
 			</dependency>
 
 			<!-- For some reason, the groovy-all does not contain everything (e.g. dateutil) -->
