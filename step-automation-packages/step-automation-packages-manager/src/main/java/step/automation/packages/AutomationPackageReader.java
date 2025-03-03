@@ -66,6 +66,7 @@ import java.util.stream.Collectors;
  */
 public class AutomationPackageReader {
 
+    public static final String AP_VERSION_SEPARATOR = ".";
     protected static final Logger log = LoggerFactory.getLogger(AutomationPackageReader.class);
     private final PlanParser planTextPlanParser;
     protected String jsonSchemaPath;
@@ -139,7 +140,7 @@ public class AutomationPackageReader {
         }
 
         if (apVersion != null && !apVersion.isEmpty()) {
-            finalName += ".";
+            finalName += AP_VERSION_SEPARATOR;
             finalName += apVersion;
         }
         return finalName;

@@ -169,6 +169,18 @@ public class AutomationPackageServices extends AbstractStepServices {
     }
 
     @PUT
+    @Path("/{id}/metadata")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Secured(right = "automation-package-write")
+    public Response updateAutomationPackageById(@PathParam("id") String id,
+                                                @QueryParam("activationExpr") String activationExpression,
+                                                @QueryParam("version") String apVersion) {
+        checkAutomationPackageAcceptable(id);
+        automationPackageManager.updateAutomationPackageMetadata(new ObjectId(id), apVersion, activationExpression, getObjectPredicate());
+        return Response.status(200).build();
+    }
+
+    @PUT
     @Path("/{id}")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
@@ -179,15 +191,7 @@ public class AutomationPackageServices extends AbstractStepServices {
                                                                      @QueryParam("activationExpr") String activationExpression,
                                                                      @FormDataParam("file") InputStream uploadedInputStream,
                                                                      @FormDataParam("file") FormDataContentDisposition fileDetail) {
-        AutomationPackage automationPackage = null;
-        try {
-            automationPackage = getAutomationPackage(id);
-        } catch (Exception e) {
-            //getAutomationPackage throws exception if the package doesn't exist, whether this is an errors is managed in below createOrUpdateAutomationPackage
-        }
-        if (automationPackage != null) {
-            assertEntityIsAcceptableInContext(automationPackage);
-        }
+        checkAutomationPackageAcceptable(id);
         try {
             return automationPackageManager.createOrUpdateAutomationPackage(
                     true, false, new ObjectId(id),
@@ -196,6 +200,18 @@ public class AutomationPackageServices extends AbstractStepServices {
             );
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage());
+        }
+    }
+
+    private void checkAutomationPackageAcceptable(String id) {
+        AutomationPackage automationPackage = null;
+        try {
+            automationPackage = getAutomationPackage(id);
+        } catch (Exception e) {
+            //getAutomationPackage throws exception if the package doesn't exist, whether this is an errors is managed in below createOrUpdateAutomationPackage
+        }
+        if (automationPackage != null) {
+            assertEntityIsAcceptableInContext(automationPackage);
         }
     }
 

@@ -321,6 +321,40 @@ public class AutomationPackageManager {
         }
     }
 
+    public void updateAutomationPackageMetadata(ObjectId id, String apVersion, String activationExpr, ObjectPredicate objectPredicate) {
+        AutomationPackage ap = getAutomationPackageById(id, objectPredicate);
+        String newApName;
+
+        String oldApName = ap.getAttribute(AbstractOrganizableObject.NAME);
+        int versionSeparatorIndex = oldApName.lastIndexOf(AutomationPackageReader.AP_VERSION_SEPARATOR);
+        if (versionSeparatorIndex >= 0) {
+            String oldNameWithoutVersion = oldApName.substring(0, versionSeparatorIndex);
+            newApName = apVersion == null ? oldNameWithoutVersion : oldNameWithoutVersion + AutomationPackageReader.AP_VERSION_SEPARATOR + apVersion;
+        } else {
+            newApName = apVersion == null ? oldApName : oldApName + AutomationPackageReader.AP_VERSION_SEPARATOR + apVersion;
+        }
+        ap.addAttribute(AbstractOrganizableObject.NAME, newApName);
+        ap.setActivationExpression(activationExpr == null ? null : new Expression(activationExpr));
+
+        // save metadata
+        automationPackageAccessor.save(ap);
+
+        // propagate new activation expression to linked keywords and plans
+        List<Function> keywords = getPackageFunctions(id);
+        for (Function keyword : keywords) {
+            keyword.setActivationExpression(activationExpr == null ? null : new Expression(activationExpr));
+            try {
+                functionManager.saveFunction(keyword);
+            } catch (SetupFunctionException | FunctionTypeException e) {
+                throw new AutomationPackageManagerException("Unable to persist a keyword in automation package", e);
+            }
+        }
+        for (Plan plan : getPackagePlans(id)) {
+            plan.setActivationExpression(activationExpr == null ? null : new Expression(activationExpr));
+            planAccessor.save(plan);
+        }
+    }
+
     /**
      * Creates new or updates the existing automation package
      *
