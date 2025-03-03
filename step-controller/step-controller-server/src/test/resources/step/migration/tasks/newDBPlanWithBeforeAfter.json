@@ -497,7 +497,12 @@
         },
         "id" : "66ced9b0c66055117d1b7ed8"
       } ],
-      "continueOnError" : false
+      "continueOnError" : {
+        "dynamic" : false,
+        "value" : false,
+        "expression" : null,
+        "expressionType" : null
+      }
     }
   },
   "attributes" : {
