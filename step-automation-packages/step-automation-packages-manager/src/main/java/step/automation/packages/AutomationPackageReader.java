@@ -88,8 +88,8 @@ public class AutomationPackageReader {
      * @param isLocalPackage true if the automation package is located in current classloader (i.e. all annotated keywords
      *                       can be read as {@link step.engine.plugins.LocalFunctionPlugin.LocalFunction}, but not as {@link GeneralScriptFunction}
      */
-    public AutomationPackageContent readAutomationPackage(AutomationPackageArchive automationPackageArchive, boolean isLocalPackage) throws AutomationPackageReadingException {
-        return this.readAutomationPackage(automationPackageArchive, isLocalPackage, true);
+    public AutomationPackageContent readAutomationPackage(AutomationPackageArchive automationPackageArchive, String apVersion, boolean isLocalPackage) throws AutomationPackageReadingException {
+        return this.readAutomationPackage(automationPackageArchive, apVersion, isLocalPackage, true);
     }
 
     /**
@@ -97,15 +97,15 @@ public class AutomationPackageReader {
      *                        can be read as {@link step.engine.plugins.LocalFunctionPlugin.LocalFunction}, but not as {@link GeneralScriptFunction}
      * @param scanAnnotations true if it is required to include annotated java keywords and plans as well as located in yaml descriptor
      */
-    public AutomationPackageContent readAutomationPackage(AutomationPackageArchive automationPackageArchive, boolean isLocalPackage, boolean scanAnnotations) throws AutomationPackageReadingException {
+    public AutomationPackageContent readAutomationPackage(AutomationPackageArchive automationPackageArchive, String apVersion, boolean isLocalPackage, boolean scanAnnotations) throws AutomationPackageReadingException {
         try {
             if (automationPackageArchive.hasAutomationPackageDescriptor()) {
                 try (InputStream yamlInputStream = automationPackageArchive.getDescriptorYaml()) {
                     AutomationPackageDescriptorYaml descriptorYaml = getOrCreateDescriptorReader().readAutomationPackageDescriptor(yamlInputStream, automationPackageArchive.getOriginalFileName());
-                    return buildAutomationPackage(descriptorYaml, automationPackageArchive, isLocalPackage, scanAnnotations);
+                    return buildAutomationPackage(descriptorYaml, automationPackageArchive, apVersion, isLocalPackage, scanAnnotations);
                 }
             } else if (automationPackageArchive.getType().equals(AutomationPackageArchiveType.JAVA) && scanAnnotations) {
-                return buildAutomationPackage(null, automationPackageArchive, isLocalPackage, scanAnnotations);
+                return buildAutomationPackage(null, automationPackageArchive, apVersion, isLocalPackage, scanAnnotations);
             } else {
                 return null;
             }
@@ -114,9 +114,10 @@ public class AutomationPackageReader {
         }
     }
 
-    protected AutomationPackageContent buildAutomationPackage(AutomationPackageDescriptorYaml descriptor, AutomationPackageArchive archive, boolean isLocalPackage, boolean scanAnnotations) throws AutomationPackageReadingException {
+    protected AutomationPackageContent buildAutomationPackage(AutomationPackageDescriptorYaml descriptor, AutomationPackageArchive archive, String apVersion,
+                                                              boolean isLocalPackage, boolean scanAnnotations) throws AutomationPackageReadingException {
         AutomationPackageContent res = newContentInstance();
-        res.setName(resolveName(descriptor, archive));
+        res.setName(resolveName(descriptor, archive, apVersion));
 
         if (scanAnnotations) {
             fillAutomationPackageWithAnnotatedKeywordsAndPlans(archive, isLocalPackage, res);
@@ -129,12 +130,19 @@ public class AutomationPackageReader {
         return res;
     }
 
-    private String resolveName(AutomationPackageDescriptorYaml descriptor, AutomationPackageArchive archive) {
+    private String resolveName(AutomationPackageDescriptorYaml descriptor, AutomationPackageArchive archive, String apVersion) {
+        String finalName;
         if (descriptor != null) {
-            return descriptor.getName();
+            finalName = descriptor.getName();
         } else {
-            return Objects.requireNonNullElse(archive.getOriginalFileName(), "local-automation-package");
+            finalName = Objects.requireNonNullElse(archive.getOriginalFileName(), "local-automation-package");
         }
+
+        if (apVersion != null && !apVersion.isEmpty()) {
+            finalName += ".";
+            finalName += apVersion;
+        }
+        return finalName;
     }
 
     protected AutomationPackageContent newContentInstance(){
@@ -288,9 +296,9 @@ public class AutomationPackageReader {
         }
     }
 
-    public AutomationPackageContent readAutomationPackageFromJarFile(File automationPackageJar) throws AutomationPackageReadingException {
+    public AutomationPackageContent readAutomationPackageFromJarFile(File automationPackageJar, String apVersion) throws AutomationPackageReadingException {
         try (AutomationPackageArchive automationPackageArchive = new AutomationPackageArchive(automationPackageJar)) {
-            return readAutomationPackage(automationPackageArchive, false);
+            return readAutomationPackage(automationPackageArchive, apVersion, false);
         } catch (IOException e) {
             throw new AutomationPackageReadingException("IO Exception", e);
         }

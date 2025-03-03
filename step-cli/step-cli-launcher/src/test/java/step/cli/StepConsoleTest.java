@@ -72,7 +72,7 @@ public class StepConsoleTest {
         Histories histories = new Histories(deployExecHistory, null, null);
 
         // for EE
-        int res = runMain(histories, "ap", "deploy", "-p=src/test/resources/samples/step-automation-packages-sample1.jar", "-u=http://localhost:8080", "--projectName=testProject", "--token=abc", "--async");
+        int res = runMain(histories, "ap", "deploy", "-p=src/test/resources/samples/step-automation-packages-sample1.jar", "-u=http://localhost:8080", "--projectName=testProject", "--token=abc", "--async", "--apVersion=ver1", "--activationExpr=true==true");
 
         Assert.assertEquals(0, res);
         Assert.assertEquals(1, deployExecHistory.size());
@@ -82,6 +82,8 @@ public class StepConsoleTest {
         Assert.assertEquals("testProject", usedParams.projectName);
         Assert.assertTrue(usedParams.async);
         Assert.assertEquals("step-automation-packages-sample1.jar", new File(usedParams.apFile).getName());
+        Assert.assertEquals(usedParams.apVersion, "ver1");
+        Assert.assertEquals(usedParams.activationExpr, "true==true");
 
         // for OS (required params only)
         deployExecHistory.clear();
@@ -406,18 +408,22 @@ public class StepConsoleTest {
             private String projectName;
             private String authToken;
             private boolean async;
+            private String apVersion;
+            private String activationExpr;
             private String apFile;
         }
 
         @Override
-        protected void executeTool(String stepUrl1, String projectName, String authToken1, boolean async1) {
+        protected void executeTool(String stepUrl1, String projectName, String authToken1, boolean async, String apVersion, String activationExpr) {
             if (testRegistry != null) {
                 ExecutionParams p = new ExecutionParams();
                 p.stepUrl = stepUrl1;
                 p.projectName = projectName;
                 p.authToken = authToken1;
-                p.async = async1;
+                p.async = async;
                 p.apFile = this.apFile;
+                p.apVersion = apVersion;
+                p.activationExpr = activationExpr;
                 testRegistry.add(p);
             }
         }
