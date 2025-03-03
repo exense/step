@@ -46,7 +46,7 @@ import step.framework.server.security.Secured;
 import step.framework.server.security.SecuredContext;
 import step.plans.parser.yaml.YamlPlanReader;
 
-import java.io.IOException;
+import java.io.ByteArrayInputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -92,6 +92,16 @@ public class PlanServices extends AbstractEntityServices<Plan> {
 		Plan plan = planType.newPlan(template, name);
 		getObjectEnricher().accept(plan);
 		return plan;
+	}
+
+	@Operation(description = "Returns a new plan instance created from the yaml source.")
+	@POST
+	@Path("/yaml")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.TEXT_PLAIN)
+	@Secured(right = "{entity}-write")
+	public Plan newPlanFromYaml(String yamlBody) throws Exception {
+		return yamlPlanReader.readYamlPlan(new ByteArrayInputStream(yamlBody.getBytes()));
 	}
 
 	@Override
