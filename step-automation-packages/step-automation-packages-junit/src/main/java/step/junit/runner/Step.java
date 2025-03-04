@@ -18,26 +18,11 @@
  ******************************************************************************/
 package step.junit.runner;
 
-import org.bson.types.ObjectId;
 import org.junit.runners.model.InitializationError;
-import step.automation.packages.AutomationPackageFromClassLoaderProvider;
-import step.automation.packages.AutomationPackageManager;
-import step.automation.packages.junit.ExcludePlanCategories;
-import step.automation.packages.junit.ExcludePlans;
-import step.automation.packages.junit.IncludePlanCategories;
-import step.automation.packages.junit.IncludePlans;
-import step.core.accessors.AbstractOrganizableObject;
-import step.core.artefacts.Artefact;
+import step.automation.packages.junit.*;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
-import step.core.plans.PlanFilter;
-import step.core.plans.filters.*;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
 
 public class Step extends AbstractStepRunner {
 
@@ -52,38 +37,7 @@ public class Step extends AbstractStepRunner {
 				}
 			}).withPluginsFromClasspath().build();
 
-			AutomationPackageManager automationPackageManager = executionEngine.getExecutionEngineContext().require(AutomationPackageManager.class);
-			AutomationPackageFromClassLoaderProvider automationPackageProvider = new AutomationPackageFromClassLoaderProvider(this.klass.getClassLoader());
-			ObjectId automationPackageId = automationPackageManager.createOrUpdateAutomationPackage(
-					false, true, null, automationPackageProvider,
-					true, null, null, false
-			).getId();
-
-			List<PlanFilter> planFilterList = new ArrayList<>();
-			IncludePlans includePlans = klass.getAnnotation(IncludePlans.class);
-			if(includePlans != null && includePlans.value() != null) {
-				planFilterList.add(new PlanByIncludedNamesFilter(Arrays.asList(includePlans.value())));
-			}
-			ExcludePlans excludePlans = klass.getAnnotation(ExcludePlans.class);
-			if(excludePlans != null && excludePlans.value() != null) {
-				planFilterList.add(new PlanByExcludedNamesFilter(Arrays.asList(excludePlans.value())));
-			}
-			IncludePlanCategories includePlanCategories = klass.getAnnotation(IncludePlanCategories.class);
-			if(includePlanCategories != null && includePlanCategories.value() != null) {
-				planFilterList.add(new PlanByIncludedCategoriesFilter(Arrays.asList(includePlanCategories.value())));
-			}
-			ExcludePlanCategories excludePlanCategories = klass.getAnnotation(ExcludePlanCategories.class);
-			if(excludePlanCategories != null && excludePlanCategories.value() != null) {
-				planFilterList.add(new PlanByExcludedCategoriesFilter(Arrays.asList(excludePlanCategories.value())));
-			}
-			PlanMultiFilter planMultiFilter = new PlanMultiFilter(planFilterList);
-
-			listPlans = automationPackageManager.getPackagePlans(automationPackageId)
-					.stream()
-					.filter(planMultiFilter::isSelected)
-					.filter(p -> p.getRoot().getClass().getAnnotation(Artefact.class).validForStandaloneExecution())
-					.map(p -> new StepClassParserResult(p.getAttribute(AbstractOrganizableObject.NAME), p, null))
-					.collect(Collectors.toList());
+			listPlans = new JUnitPlansProvider(klass).getTestPlans(executionEngine);
 		} catch (Exception e) {
 			throw new InitializationError(e);
 		}

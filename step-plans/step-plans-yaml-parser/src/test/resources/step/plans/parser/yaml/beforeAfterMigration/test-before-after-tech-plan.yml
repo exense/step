@@ -17,6 +17,7 @@
       "expression": ""
     },
     "useDynamicName": false,
+    "workArtefact": false,
     "children": [
       {
         "_class": "Sequence",
@@ -29,6 +30,7 @@
           "expression": ""
         },
         "useDynamicName": false,
+        "workArtefact": false,
         "children": [
           {
             "_class": "Echo",
@@ -41,6 +43,7 @@
               "expression": ""
             },
             "useDynamicName": false,
+            "workArtefact": false,
             "children": [],
             "skipNode": {
               "dynamic": false,
@@ -97,6 +100,7 @@
             "expression": ""
           },
           "useDynamicName": false,
+          "workArtefact": false,
           "children": [ ],
           "skipNode": {
             "dynamic": false,
@@ -135,6 +139,7 @@
             "expression": ""
           },
           "useDynamicName": false,
+          "workArtefact": false,
           "children": [ ],
           "skipNode": {
             "dynamic": false,
@@ -198,7 +203,8 @@
             "dynamic": false,
             "value": false
           },
-          "useDynamicName": false
+          "useDynamicName": false,
+          "workArtefact": false
         }
       ],
       "continueOnError": {
@@ -268,6 +274,7 @@
             "expression": ""
           },
           "useDynamicName": false,
+          "workArtefact": false,
           "children": [],
           "skipNode": {
             "dynamic": false,
@@ -302,6 +309,7 @@
             "expression": ""
           },
           "useDynamicName": false,
+          "workArtefact": false,
           "children": [],
           "skipNode": {
             "dynamic": false,
@@ -341,6 +349,7 @@
             "expression": ""
           },
           "useDynamicName": false,
+          "workArtefact": false,
           "children": [],
           "skipNode": {
             "dynamic": false,
