@@ -46,7 +46,7 @@ import step.framework.server.security.Secured;
 import step.framework.server.security.SecuredContext;
 import step.plans.parser.yaml.YamlPlanReader;
 
-import java.io.IOException;
+import java.io.ByteArrayInputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -67,7 +67,7 @@ public class PlanServices extends AbstractEntityServices<Plan> {
 	protected ObjectPredicateFactory objectPredicateFactory;
 	private ArtefactHandlerRegistry artefactHandlerRegistry;
 
-	private YamlPlanReader yamlPlanReader = new YamlPlanReader();
+	private final YamlPlanReader yamlPlanReader = new YamlPlanReader();
 
 	public PlanServices() {
 		super(EntityManager.plans);
@@ -87,18 +87,52 @@ public class PlanServices extends AbstractEntityServices<Plan> {
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="{entity}-write")
-	public Plan newPlan(@QueryParam("type") String type, @QueryParam("template") String template) throws Exception {
-		PlanType<Plan> planType = planTypeRegistry.getPlanType(type);
-		Plan plan = planType.newPlan(template);
+	public Plan newPlan(@QueryParam("type") String type, @QueryParam("template") String template, @QueryParam("name") String name) throws Exception {
+		PlanType<Plan> planType = getPlanTypeNotNull(type);
+		Plan plan = planType.newPlan(template, name);
 		getObjectEnricher().accept(plan);
 		return plan;
 	}
 
+	@Operation(description = "Returns a new plan instance created from the yaml source.")
+	@POST
+	@Path("/yaml")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.TEXT_PLAIN)
+	@Secured(right = "{entity}-write")
+	public Plan newPlanFromYaml(String yamlBody) {
+		try {
+			return yamlPlanReader.readYamlPlan(new ByteArrayInputStream(yamlBody.getBytes()));
+		} catch (Exception e) {
+			log.error("Deserialization error while reading providing YAML plan.", e);
+			throw new ControllerServiceException("Deserialization error while reading the Yaml plan: " + e.getMessage(), e);
+		}
+	}
+
 	@Override
 	protected Plan beforeSave(Plan entity) {
-		PlanType<Plan> planType = (PlanType<Plan>) planTypeRegistry.getPlanType(entity.getClass());
+		if (entity == null) {
+			throw new ControllerServiceException(400, "The submitted plan to be saved is empty or null");
+		}
+		PlanType<Plan> planType = getPlanTypeNotNull(entity.getClass());
 		planType.onBeforeSave(entity);
 		return super.beforeSave(entity);
+	}
+
+	protected PlanType<Plan> getPlanTypeNotNull(String planTypeName) {
+		PlanType<Plan> planType = planTypeRegistry.getPlanType(planTypeName);
+		if (planType == null) {
+			throw new ControllerServiceException(400, "Plan type " + planTypeName + " is not supported");
+		}
+		return planType;
+	}
+
+	protected PlanType<Plan> getPlanTypeNotNull(Class<? extends Plan> entityClass) {
+		PlanType<Plan> planType = (PlanType<Plan>) planTypeRegistry.getPlanType(entityClass);
+		if (planType == null) {
+			throw new ControllerServiceException(400, "Plan type is not resolved for entity class " + entityClass);
+		}
+		return planType;
 	}
 
 	@Operation(description = "Compiles the plan with the given id.")
