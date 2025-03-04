@@ -114,10 +114,10 @@ public class MigrateBeforeAfterAndPropertiesArtefactInPlans extends MigrationTas
 		AtomicInteger errorCount = new AtomicInteger();
 		logger.info("Migrating BeforeSequence, AfterSequence, BeforeThread and AfterThread to the respective artefact properties for all composite keywords...");
 
-		functionCollection.find(Filters.equals("entity._entityClass", "step.plugins.functions.types.CompositeFunction"), null, null, null, 0)
+		functionCollection.find(Filters.equals("type", "step.plugins.functions.types.CompositeFunction"), null, null, null, 0)
 				.forEach(c  -> {
 			try {
-				DocumentObject root = c.getObject("entity").getObject("plan").getObject("root");
+				DocumentObject root = c.getObject("plan").getObject("root");
 				migrateAllRecursively(root);
 				functionCollection.save(c);
 				successCount.incrementAndGet();
@@ -137,10 +137,10 @@ public class MigrateBeforeAfterAndPropertiesArtefactInPlans extends MigrationTas
 		AtomicInteger errorCount = new AtomicInteger();
 		logger.info("Migrating BeforeSequence, AfterSequence, BeforeThread and AfterThread to the respective artefact properties for all composite keyword versions...");
 
-		functionsVersionCollection.find(Filters.equals("type", "step.plugins.functions.types.CompositeFunction"), null, null, null, 0)
+		functionsVersionCollection.find(Filters.equals("entity._entityClass", "step.plugins.functions.types.CompositeFunction"), null, null, null, 0)
 				.forEach(c  -> {
 					try {
-						DocumentObject root = c.getObject("plan").getObject("root");
+						DocumentObject root = c.getObject("entity").getObject("plan").getObject("root");
 						migrateAllRecursively(root);
 						functionsVersionCollection.save(c);
 						successCount.incrementAndGet();
