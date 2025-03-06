@@ -19,14 +19,12 @@
 package step.core.execution;
 
 import org.bson.types.ObjectId;
-
 import step.core.artefacts.handlers.ArtefactHandlerManager;
 import step.core.artefacts.reports.ReportNode;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.execution.model.ExecutionStatus;
-import step.core.execution.model.ExecutionAgentUrls;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.Plan;
@@ -38,6 +36,8 @@ import step.engine.execution.ExecutionVetoer;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 public class ExecutionContext extends AbstractExecutionEngineContext  {
 
@@ -63,6 +63,10 @@ public class ExecutionContext extends AbstractExecutionEngineContext  {
 	private volatile ExecutionStatus status;
 	private String executionType;
 	private Plan plan;
+
+	// Keep track of agents involved in the execution; access is via tailored methods,
+	// so the implementation is not exposed via the "usual" getters.
+	private final Set<String> agentUrls = ConcurrentHashMap.newKeySet();
 	
 	protected ExecutionContext(String executionId, ExecutionParameters executionParameters) {
 		super();
@@ -81,7 +85,6 @@ public class ExecutionContext extends AbstractExecutionEngineContext  {
 		reportNode.setId(new ObjectId(executionId));
 		reportNodeCache.put(reportNode);
 		setCurrentReportNode(reportNode);
-		put(ExecutionAgentUrls.class, new ExecutionAgentUrls());
 	}
 
 	public ArtefactHandlerManager getArtefactHandlerManager() {
@@ -226,5 +229,21 @@ public class ExecutionContext extends AbstractExecutionEngineContext  {
 
 	public void addExecutionVetoer(ExecutionVetoer executionVetoer) {
 		this.executionVetoers.add(executionVetoer);
+	}
+
+	public void addAgentUrl(String agentUrl) {
+		if (agentUrl != null) {
+			agentUrls.add(agentUrl);
+		}
+	}
+
+	/**
+	 * @return agents involved in the execution, as a single string of
+	 * space-separated URLs.
+	 */
+	public String getAgentUrls() {
+		return agentUrls.stream()
+				.sorted(String.CASE_INSENSITIVE_ORDER)
+				.collect(Collectors.joining(" "));
 	}
 }

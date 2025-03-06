@@ -6,7 +6,6 @@ import step.core.execution.ExecutionContext;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.execution.model.ExecutionStatus;
-import step.core.execution.model.ExecutionAgentUrls;
 
 import java.util.function.Consumer;
 
@@ -36,7 +35,7 @@ public class ExecutionManager {
         updateExecution(execution->{
             if (newStatus == ExecutionStatus.ENDED) {
                 execution.setEndTime(System.currentTimeMillis());
-                String agentsInvolved = executionContext.get(ExecutionAgentUrls.class).toString();
+                String agentsInvolved = executionContext.getAgentUrls();
                 execution.setAgentsInvolved(agentsInvolved);
             }
             execution.setStatus(newStatus);

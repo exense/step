@@ -45,7 +45,6 @@ import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionContextBindings;
 import step.core.execution.ExecutionContextWrapper;
 import step.core.execution.OperationMode;
-import step.core.execution.model.ExecutionAgentUrls;
 import step.core.json.JsonProviderCache;
 import step.core.miscellaneous.ReportNodeAttachmentManager;
 import step.core.miscellaneous.ReportNodeAttachmentManager.AttachmentQuotaException;
@@ -216,7 +215,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				node.setAgentUrl(agentUrl);
 				node.setTokenId(token.getID());
 
-				context.get(ExecutionAgentUrls.class).add(agentUrl);
+				context.addAgentUrl(agentUrl);
 
 				OperationManager.getInstance().enter(OPERATION_KEYWORD_CALL, new Object[]{function.getAttributes(), token.getToken(), token.getAgent()},
 						node.getId().toString());
