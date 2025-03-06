@@ -26,6 +26,7 @@ import step.core.execution.model.ExecutionAccessor;
 import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.execution.model.ExecutionStatus;
+import step.core.execution.model.ExecutionAgentUrls;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.Plan;
@@ -80,6 +81,7 @@ public class ExecutionContext extends AbstractExecutionEngineContext  {
 		reportNode.setId(new ObjectId(executionId));
 		reportNodeCache.put(reportNode);
 		setCurrentReportNode(reportNode);
+		put(ExecutionAgentUrls.class, new ExecutionAgentUrls());
 	}
 
 	public ArtefactHandlerManager getArtefactHandlerManager() {
