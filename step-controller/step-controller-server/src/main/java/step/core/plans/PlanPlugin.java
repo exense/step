@@ -30,6 +30,7 @@ import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.framework.server.tables.Table;
 import step.framework.server.tables.TableRegistry;
+import step.plans.parser.yaml.YamlPlanReader;
 import step.plugins.screentemplating.*;
 import step.plugins.table.settings.*;
 
@@ -56,9 +57,13 @@ public class PlanPlugin extends AbstractControllerPlugin {
 			}
 
 			@Override
-			public Plan newPlan(String template) throws Exception {
+			public Plan newPlan(String template, String name) throws Exception {
 				AbstractArtefact artefact = context.getArtefactHandlerRegistry().getArtefactTypeInstance(template);
-				return PlanBuilder.create().startBlock(artefact).endBlock().build();
+				Plan plan = PlanBuilder.create().startBlock(artefact).endBlock().build();
+				if (name != null) {
+					YamlPlanReader.setPlanName(plan, name);
+				}
+				return plan;
 			}
 
 			@Override

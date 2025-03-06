@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+import static step.core.collections.CollectionFactory.VERSION_COLLECTION_SUFFIX;
 import static step.plans.parser.yaml.migrations.AfterBeforeYamlMigrationTask.*;
 
 /**
@@ -44,18 +45,24 @@ public class MigrateBeforeAfterAndPropertiesArtefactInPlans extends MigrationTas
 	public static final String ARTEFACT_PERFORMANCE_ASSERT = "PerformanceAssert";
 	private final Collection<Document> planCollection;
 	private final Collection<Document> functionCollection;
+	private final Collection<Document> planVersionCollection;
+	private final Collection<Document> functionsVersionCollection;
 
 	public MigrateBeforeAfterAndPropertiesArtefactInPlans(CollectionFactory collectionFactory, MigrationContext migrationContext) {
 		super(new Version(3,27,0), collectionFactory, migrationContext);
 
 		planCollection = collectionFactory.getCollection("plans", Document.class);
+		planVersionCollection = collectionFactory.getCollection("plans" + VERSION_COLLECTION_SUFFIX, Document.class);
 		functionCollection = getDocumentCollection("functions");
+		functionsVersionCollection = collectionFactory.getCollection("functions" + VERSION_COLLECTION_SUFFIX, Document.class);
 	}
 	
 	@Override
 	public void runUpgradeScript() {
 		migratePlans();
+		migratePlanVersions();
 		migrateCompositeFunction();
+		migrateCompositeFunctionVersion();
 	}
 
 	private void migratePlans() {
@@ -80,6 +87,28 @@ public class MigrateBeforeAfterAndPropertiesArtefactInPlans extends MigrationTas
 		}
 	}
 
+	private void migratePlanVersions() {
+		AtomicInteger successCount = new AtomicInteger();
+		AtomicInteger errorCount = new AtomicInteger();
+		logger.info("Migrating BeforeSequence, AfterSequence, BeforeThread and AfterThread to the respective artefact properties for all plans versions...");
+
+		planVersionCollection.find(Filters.empty(), null, null, null, 0).forEach(p -> {
+			try {
+				DocumentObject root = p.getObject("entity").getObject("root");
+				migrateAllRecursively(root);
+				planVersionCollection.save(p);
+				successCount.incrementAndGet();
+			} catch(Exception e) {
+				errorCount.incrementAndGet();
+				logger.error("Error while migrating BeforeSequence, AfterSequence, BeforeThread and AfterThread artefacts for plan version: {}", p, e);
+			}
+		});
+		logger.info("Migrated {} plans versions.", successCount.get());
+		if(errorCount.get()>0) {
+			logger.error("Got {} errors while migrating before and after controls for plans versions. See previous error logs for details.", errorCount);
+		}
+	}
+
 	private void migrateCompositeFunction() {
 		AtomicInteger successCount = new AtomicInteger();
 		AtomicInteger errorCount = new AtomicInteger();
@@ -100,6 +129,29 @@ public class MigrateBeforeAfterAndPropertiesArtefactInPlans extends MigrationTas
 		logger.info("Migrated {} composite keywords.", successCount.get());
 		if(errorCount.get()>0) {
 			logger.error("Got {} errors while migrating before and after controls for composite keywords. See previous error logs for details.", errorCount);
+		}
+	}
+
+	private void migrateCompositeFunctionVersion() {
+		AtomicInteger successCount = new AtomicInteger();
+		AtomicInteger errorCount = new AtomicInteger();
+		logger.info("Migrating BeforeSequence, AfterSequence, BeforeThread and AfterThread to the respective artefact properties for all composite keyword versions...");
+
+		functionsVersionCollection.find(Filters.equals("entity._entityClass", "step.plugins.functions.types.CompositeFunction"), null, null, null, 0)
+				.forEach(c  -> {
+					try {
+						DocumentObject root = c.getObject("entity").getObject("plan").getObject("root");
+						migrateAllRecursively(root);
+						functionsVersionCollection.save(c);
+						successCount.incrementAndGet();
+					} catch(Exception e) {
+						errorCount.incrementAndGet();
+						logger.error("Error while migrating BeforeSequence, AfterSequence, BeforeThread and AfterThread artefacts for composite version: {}", c, e);
+					}
+				});
+		logger.info("Migrated {} composite keyword versions.", successCount.get());
+		if(errorCount.get()>0) {
+			logger.error("Got {} errors while migrating before and after controls for composite keywords versions. See previous error logs for details.", errorCount);
 		}
 	}
 
@@ -150,10 +202,19 @@ public class MigrateBeforeAfterAndPropertiesArtefactInPlans extends MigrationTas
 			} else {
 				//This case is used for instance for PerformanceAssert artefact moved from children to the after children block property
 				//Add this children artefact directly to the source property 'toPropertyKey', if the target property is not yet defined use false as default for continueOnError
-				List<DocumentObject> toSteps = getOrInitPropertySteps(sourceArtifactProperties, false, toPropertyKey);
+				List<DocumentObject> toSteps = getOrInitPropertySteps(sourceArtifactProperties, getDefaultContinueOnError(), toPropertyKey);
 				toSteps.add(artifact);
 			}
 		}
 		sourceChildren.removeAll(fromArray);
+	}
+
+	private Object getDefaultContinueOnError() {
+		DocumentObject continueOnError = new DocumentObject();
+		continueOnError.put("dynamic", false);
+		continueOnError	.put("value", false);
+		continueOnError.put("expression", null);
+		continueOnError	.put("expressionType", null);
+		return continueOnError;
 	}
 }
