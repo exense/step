@@ -204,18 +204,19 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 			TokenWrapper token = selectToken(node, testArtefact, function, functionGroupContext, functionGroupSession, forceLocalToken);
 
 			try {
+				String agentUrl = token.getAgent().getAgentUrl();
+				node.setAgentUrl(agentUrl);
+				node.setTokenId(token.getID());
+
 				Token gridToken = token.getToken();
 				if(gridToken.isLocal()) {
 					TokenReservationSession session = (TokenReservationSession) gridToken.getAttachedObject(TokenWrapper.TOKEN_RESERVATION_SESSION);
 					session.put(AbstractFunctionHandler.EXECUTION_CONTEXT_KEY, new ExecutionContextWrapper(context));
 					session.put(AbstractFunctionHandler.ARTEFACT_PATH, currentArtefactPath());
+				} else {
+					// only report non-local (i.e. actual agent) URLs
+					context.addAgentUrl(agentUrl);
 				}
-
-				String agentUrl = token.getAgent().getAgentUrl();
-				node.setAgentUrl(agentUrl);
-				node.setTokenId(token.getID());
-
-				context.addAgentUrl(agentUrl);
 
 				OperationManager.getInstance().enter(OPERATION_KEYWORD_CALL, new Object[]{function.getAttributes(), token.getToken(), token.getAgent()},
 						node.getId().toString());
