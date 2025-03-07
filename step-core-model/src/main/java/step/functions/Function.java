@@ -25,6 +25,7 @@ import jakarta.json.JsonObject;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 
+import step.commons.activation.Expression;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.json.JsonProviderCache;
@@ -38,7 +39,7 @@ import static step.functions.Function.JSON_CLASS_FIELD;
  *
  */
 @JsonTypeInfo(use=Id.CLASS, property= JSON_CLASS_FIELD)
-public class Function extends AbstractOrganizableObject implements EnricheableObject {
+public class Function extends AbstractOrganizableObject implements EnricheableObject, EvaluationExpression {
 
 	public final static String JSON_CLASS_FIELD = "type";
 
@@ -49,6 +50,7 @@ public class Function extends AbstractOrganizableObject implements EnricheableOb
 	protected Map<String, String> tokenSelectionCriteria;
 	
 	protected boolean managed;
+	protected Expression activationExpression;
 	
 	protected boolean useCustomTemplate=false;
 	protected String htmlTemplate="";
@@ -149,5 +151,14 @@ public class Function extends AbstractOrganizableObject implements EnricheableOb
 
 	public void setDescription(String description) {
 		this.description = description;
+	}
+
+	@Override
+	public Expression getActivationExpression() {
+		return activationExpression;
+	}
+
+	public void setActivationExpression(Expression activationExpression) {
+		this.activationExpression = activationExpression;
 	}
 }

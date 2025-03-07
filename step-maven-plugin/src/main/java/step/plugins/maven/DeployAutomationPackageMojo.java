@@ -43,6 +43,12 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
     @Parameter(property = "step-deploy-automation-package.async")
     private Boolean async;
 
+    @Parameter(property = "step-deploy-automation-package.ap-version")
+    private String apVersion;
+
+    @Parameter(property = "step-deploy-automation-package.activation-expression")
+    private String activationExpression;
+
     @Override
     protected ControllerCredentials getControllerCredentials() {
         String authToken = getAuthToken();
@@ -54,7 +60,7 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
         try {
             validateEEConfiguration(getStepProjectName(), getAuthToken());
             checkStepControllerVersion();
-            createTool(getUrl(), getStepProjectName(), getAuthToken(), getAsync()).execute();
+            createTool(getUrl(), getStepProjectName(), getAuthToken(), getAsync(), getApVersion(), getActivationExpression()).execute();
         } catch (StepCliExecutionException e) {
             throw new MojoExecutionException("Execution exception", e);
         } catch (Exception e) {
@@ -62,8 +68,9 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
         }
     }
 
-    protected AbstractDeployAutomationPackageTool createTool(final String url, final String projectName, final String authToken, final Boolean async) {
-        return new MavenDeployAutomationPackageTool(url, projectName, authToken, async);
+    protected AbstractDeployAutomationPackageTool createTool(final String url, final String projectName, final String authToken, final Boolean async,
+                                                             final String apVersion, final String activationExpr) {
+        return new MavenDeployAutomationPackageTool(url, projectName, authToken, async, apVersion, activationExpr);
     }
 
     protected File getFileToUpload() throws MojoExecutionException {
@@ -108,9 +115,25 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
         this.async = async;
     }
 
+    public String getApVersion() {
+        return apVersion;
+    }
+
+    public void setApVersion(String apVersion) {
+        this.apVersion = apVersion;
+    }
+
+    public String getActivationExpression() {
+        return activationExpression;
+    }
+
+    public void setActivationExpression(String activationExpression) {
+        this.activationExpression = activationExpression;
+    }
+
     protected class MavenDeployAutomationPackageTool extends AbstractDeployAutomationPackageTool {
-        public MavenDeployAutomationPackageTool(String url, String projectName, String authToken, Boolean async) {
-            super(url, projectName, authToken, async);
+        public MavenDeployAutomationPackageTool(String url, String projectName, String authToken, Boolean async, String apVersion, String activationExpr) {
+            super(url, projectName, authToken, async, apVersion, activationExpr);
         }
 
         @Override

@@ -32,12 +32,16 @@ public abstract class AbstractDeployAutomationPackageTool extends AbstractCliToo
     private String authToken;
 
     private Boolean async;
+    private String apVersion;
+    private String activationExpression;
 
-    public AbstractDeployAutomationPackageTool(String url, String stepProjectName, String authToken, Boolean async) {
+    public AbstractDeployAutomationPackageTool(String url, String stepProjectName, String authToken, Boolean async, String apVersion, String activationExpression) {
         super(url);
         this.stepProjectName = stepProjectName;
         this.authToken = authToken;
         this.async = async;
+        this.apVersion = apVersion;
+        this.activationExpression = activationExpression;
     }
 
     @Override
@@ -52,7 +56,7 @@ public abstract class AbstractDeployAutomationPackageTool extends AbstractCliToo
 
             logInfo("Uploading the automation package...", null);
             try {
-                AutomationPackageUpdateResult updateResult = automationPackageClient.createOrUpdateAutomationPackage(packagedTarget, getAsync() != null && getAsync());
+                AutomationPackageUpdateResult updateResult = automationPackageClient.createOrUpdateAutomationPackage(packagedTarget, getAsync() != null && getAsync(), getApVersion(), getActivationExpression());
                 if (updateResult != null && updateResult.getId() != null) {
                     logInfo("Automation package successfully uploaded. With status " + updateResult.getStatus() + ". Id: " + updateResult.getId(), null);
                 } else {
@@ -98,5 +102,21 @@ public abstract class AbstractDeployAutomationPackageTool extends AbstractCliToo
 
     public void setAsync(Boolean async) {
         this.async = async;
+    }
+
+    public String getApVersion() {
+        return apVersion;
+    }
+
+    public String getActivationExpression() {
+        return activationExpression;
+    }
+
+    public void setApVersion(String apVersion) {
+        this.apVersion = apVersion;
+    }
+
+    public void setActivationExpression(String activationExpression) {
+        this.activationExpression = activationExpression;
     }
 }
