@@ -25,6 +25,9 @@ import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.List;
 
+import static step.handlers.javahandler.JsonObjectMapper.getTypeClass;
+import static step.handlers.javahandler.JsonObjectMapper.resolveGenericTypeForArrayOrCollection;
+
 /**
  * Provides the following json schema for arrays or collections:
  * {
@@ -46,7 +49,7 @@ public class CollectionFieldProcessor implements JsonSchemaFieldProcessor {
 
             Class<?> elementType = null;
             try {
-                elementType = step.handlers.javahandler.JsonInputConverter.resolveGenericTypeForCollection(fieldMetadata.getGenericType(), fieldMetadata.getFieldName());
+                elementType = getTypeClass(resolveGenericTypeForArrayOrCollection(fieldMetadata.getGenericType()));
             } catch (Exception ex) {
                 // unresolvable generic type
             }

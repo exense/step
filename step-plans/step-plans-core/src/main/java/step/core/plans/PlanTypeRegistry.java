@@ -39,7 +39,7 @@ public class PlanTypeRegistry {
 	public <T extends Plan> PlanType<T> getPlanType(String planTypeName) {
 		PlanType<?> planType = registry.values().stream().filter(p->{
 			return p.getPlanClass().getName().equals(planTypeName);
-		}).findFirst().get();
+		}).findFirst().orElse(null);
 		return (PlanType<T>) planType;
 	}
 }

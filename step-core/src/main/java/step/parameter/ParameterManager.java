@@ -93,6 +93,10 @@ public class ParameterManager {
 		}
 
 		Date lastModificationDate = new Date();
+		if (sourceParameter == null) {
+			newParameter.setCreationDate(lastModificationDate);
+			newParameter.setCreationUser(modificationUser);
+		}
 		newParameter.setLastModificationDate(lastModificationDate);
 		newParameter.setLastModificationUser(modificationUser);
 
