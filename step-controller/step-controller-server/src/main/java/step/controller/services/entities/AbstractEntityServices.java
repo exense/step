@@ -9,11 +9,11 @@ import step.controller.services.async.AsyncTaskStatus;
 import step.core.GlobalContext;
 import step.core.accessors.AbstractIdentifiableObject;
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.accessors.AbstractTrackedObject;
 import step.core.accessors.Accessor;
 import step.core.deployment.AbstractStepAsyncServices;
 import step.core.deployment.ControllerServiceException;
 import step.core.entities.Entity;
-import step.core.execution.model.Execution;
 import step.framework.server.security.Secured;
 import step.framework.server.tables.service.TableRequest;
 import step.framework.server.tables.service.TableResponse;
@@ -22,6 +22,7 @@ import step.framework.server.tables.service.TableServiceException;
 import step.framework.server.tables.service.bulk.TableBulkOperationReport;
 import step.framework.server.tables.service.bulk.TableBulkOperationRequest;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Spliterator;
@@ -120,8 +121,25 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
     @Consumes(MediaType.APPLICATION_JSON)
     @Secured(right = "{entity}-write")
     public T save(T entity) {
+        trackEntityIfApplicable(entity);
         entity = beforeSave(entity);
         return accessor.save(entity);
+    }
+
+    private void trackEntityIfApplicable(T entity) {
+        if (AbstractTrackedObject.class.isAssignableFrom(entity.getClass())) {
+            AbstractTrackedObject newTrackedEntity = (AbstractTrackedObject) entity;
+            ObjectId sourceId = entity.getId();
+            T sourceEntity = (sourceId != null) ? accessor.get(sourceId) : null;
+            String username = getSession().getUser().getUsername();
+            Date lastModificationDate = new Date();
+            if (sourceEntity == null) {
+                newTrackedEntity.setCreationDate(lastModificationDate);
+                newTrackedEntity.setCreationUser(username);
+            }
+            newTrackedEntity.setLastModificationDate(lastModificationDate);
+            newTrackedEntity.setLastModificationUser(username);
+        }
     }
 
     @Operation(operationId = "clone{Entity}", description = "Clones the entity with the given Id")
