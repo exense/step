@@ -23,8 +23,9 @@ import step.core.accessors.AbstractOrganizableObject;
 import step.core.objectenricher.EnricheableObject;
 
 public class AutomationPackage extends AbstractOrganizableObject implements EnricheableObject {
-    private AutomationPackageStatus status;
 
+    private AutomationPackageStatus status;
+    private String version;
     private Expression activationExpression;
 
     public AutomationPackageStatus getStatus() {
@@ -41,5 +42,13 @@ public class AutomationPackage extends AbstractOrganizableObject implements Enri
 
     public void setActivationExpression(Expression activationExpression) {
         this.activationExpression = activationExpression;
+    }
+
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
     }
 }

@@ -257,11 +257,13 @@ public class AutomationPackageManagerOSTest {
         manager.updateAutomationPackageMetadata(r.storedPackage.getId(), "ver1", null, null);
 
         AutomationPackage actualAp = automationPackageAccessor.get(r.storedPackage.getId());
+        Assert.assertEquals("ver1", actualAp.getVersion());
         Assert.assertEquals("My package.ver1", actualAp.getAttribute(AbstractOrganizableObject.NAME));
 
         // 3. Update version again and add some activation expression
         manager.updateAutomationPackageMetadata(r.storedPackage.getId(), "ver2", "true == true", null);
         actualAp = automationPackageAccessor.get(r.storedPackage.getId());
+        Assert.assertEquals("ver2", actualAp.getVersion());
         Assert.assertEquals("My package.ver2", actualAp.getAttribute(AbstractOrganizableObject.NAME));
         Assert.assertEquals("true == true", actualAp.getActivationExpression().getScript());
 
@@ -284,6 +286,7 @@ public class AutomationPackageManagerOSTest {
         actualAp = automationPackageAccessor.get(r.storedPackage.getId());
         Assert.assertEquals("My package", actualAp.getAttribute(AbstractOrganizableObject.NAME));
         Assert.assertNull(actualAp.getActivationExpression());
+        Assert.assertNull(actualAp.getVersion());
 
         // check that the new activation expression is propagated to all plans and keywords
         storedPlans = planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(actualAp.getId())).collect(Collectors.toList());

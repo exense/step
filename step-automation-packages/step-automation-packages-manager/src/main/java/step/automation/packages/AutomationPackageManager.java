@@ -325,16 +325,18 @@ public class AutomationPackageManager {
         AutomationPackage ap = getAutomationPackageById(id, objectPredicate);
         String newApName;
 
+        String oldApVersion = ap.getVersion();
         String oldApName = ap.getAttribute(AbstractOrganizableObject.NAME);
-        int versionSeparatorIndex = oldApName.lastIndexOf(AutomationPackageReader.AP_VERSION_SEPARATOR);
-        if (versionSeparatorIndex >= 0) {
-            String oldNameWithoutVersion = oldApName.substring(0, versionSeparatorIndex);
+        int versionBeginIndex = oldApVersion == null ? - 1 : oldApName.lastIndexOf(ap.getVersion());
+        if (versionBeginIndex > 0) {
+            String oldNameWithoutVersion = oldApName.substring(0, versionBeginIndex - AutomationPackageReader.AP_VERSION_SEPARATOR.length());
             newApName = apVersion == null ? oldNameWithoutVersion : oldNameWithoutVersion + AutomationPackageReader.AP_VERSION_SEPARATOR + apVersion;
         } else {
             newApName = apVersion == null ? oldApName : oldApName + AutomationPackageReader.AP_VERSION_SEPARATOR + apVersion;
         }
         ap.addAttribute(AbstractOrganizableObject.NAME, newApName);
         ap.setActivationExpression(activationExpr == null ? null : new Expression(activationExpr));
+        ap.setVersion(apVersion);
 
         // save metadata
         automationPackageAccessor.save(ap);
@@ -408,7 +410,7 @@ public class AutomationPackageManager {
             }
 
             // keep old package id
-            newPackage = createNewInstance(automationPackageArchive.getOriginalFileName(), packageContent, activationExpr, oldPackage, enricher);
+            newPackage = createNewInstance(automationPackageArchive.getOriginalFileName(), packageContent, apVersion, activationExpr, oldPackage, enricher);
 
             // prepare staging collections
             AutomationPackageStaging staging = createStaging();
@@ -640,7 +642,7 @@ public class AutomationPackageManager {
         return completeFunctions;
     }
 
-    protected AutomationPackage createNewInstance(String fileName, AutomationPackageContent packageContent, String activationExpr, AutomationPackage oldPackage, ObjectEnricher enricher) {
+    protected AutomationPackage createNewInstance(String fileName, AutomationPackageContent packageContent, String apVersion, String activationExpr, AutomationPackage oldPackage, ObjectEnricher enricher) {
         AutomationPackage newPackage = new AutomationPackage();
 
         // keep old id
@@ -653,6 +655,7 @@ public class AutomationPackageManager {
         newPackage.addCustomField(AutomationPackageEntity.AUTOMATION_PACKAGE_FILE_NAME, fileName);
         if (activationExpr != null && !activationExpr.isEmpty()) {
             newPackage.setActivationExpression(new Expression(activationExpr));
+            newPackage.setVersion(apVersion);
         }
         if (enricher != null) {
             enricher.accept(newPackage);

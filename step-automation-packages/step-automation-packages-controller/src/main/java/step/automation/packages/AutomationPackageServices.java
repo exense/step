@@ -172,12 +172,15 @@ public class AutomationPackageServices extends AbstractStepServices {
     @Path("/{id}/metadata")
     @Produces(MediaType.APPLICATION_JSON)
     @Secured(right = "automation-package-write")
-    public Response updateAutomationPackageById(@PathParam("id") String id,
+    public void updateAutomationPackageMetadata(@PathParam("id") String id,
                                                 @QueryParam("activationExpr") String activationExpression,
                                                 @QueryParam("version") String apVersion) {
         checkAutomationPackageAcceptable(id);
-        automationPackageManager.updateAutomationPackageMetadata(new ObjectId(id), apVersion, activationExpression, getObjectPredicate());
-        return Response.status(200).build();
+        try {
+            automationPackageManager.updateAutomationPackageMetadata(new ObjectId(id), apVersion, activationExpression, getObjectPredicate());
+        } catch (AutomationPackageManagerException e) {
+            throw new ControllerServiceException(e.getMessage());
+        }
     }
 
     @PUT
@@ -185,12 +188,12 @@ public class AutomationPackageServices extends AbstractStepServices {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
     @Secured(right = "automation-package-write")
-    public AutomationPackageUpdateResult updateAutomationPackageById(@PathParam("id") String id,
-                                                                     @QueryParam("async") Boolean async,
-                                                                     @QueryParam("version") String apVersion,
-                                                                     @QueryParam("activationExpr") String activationExpression,
-                                                                     @FormDataParam("file") InputStream uploadedInputStream,
-                                                                     @FormDataParam("file") FormDataContentDisposition fileDetail) {
+    public AutomationPackageUpdateResult updateAutomationPackageMetadata(@PathParam("id") String id,
+                                                                         @QueryParam("async") Boolean async,
+                                                                         @QueryParam("version") String apVersion,
+                                                                         @QueryParam("activationExpr") String activationExpression,
+                                                                         @FormDataParam("file") InputStream uploadedInputStream,
+                                                                         @FormDataParam("file") FormDataContentDisposition fileDetail) {
         checkAutomationPackageAcceptable(id);
         try {
             return automationPackageManager.createOrUpdateAutomationPackage(
