@@ -43,6 +43,7 @@ import step.grid.client.GridClientConfiguration;
 import step.grid.client.LocalGridClientImpl;
 import step.grid.client.TokenLifecycleStrategy;
 import step.grid.contextbuilder.ApplicationContextConfiguration;
+import step.grid.filemanager.FileManagerConfiguration;
 import step.grid.filemanager.FileManagerImplConfig;
 import step.grid.io.AgentErrorCode;
 import step.resources.ResourceManagerControllerPlugin;
@@ -56,9 +57,6 @@ public class GridPlugin extends AbstractControllerPlugin {
 	public static final String GRID_FILENAMANGER_FILE_CLEANUP_ENABLED = "grid.filenamanger.file.cleanup.enabled";
 	public static final String GRID_FILENAMANGER_FILE_CLEANUP_INTERVAL_MINUTES = "grid.filenamanger.file.cleanup.interval.minutes";
 	public static final String GRID_FILEMANAGER_FILE_CLEANUP_LAST_ACCESS_THRESHOLD_MINUTES = "grid.filemanager.file.cleanup.last.access.threshold.minutes";
-	public static final String GRID_CLIENT_APPLICATION_CONTEXT_CLEANUP_ENABLED = "grid.client.application.context.cleanup.enabled";
-	public static final String GRID_CLIENT_APPLICATION_CONTEXT_CLEANUP_INTERVAL_MINUTES = "grid.client.application.context.cleanup.interval.minutes";
-	public static final String GRID_CLIENT_APPLICATION_CONTEXT_CLEANUP_LAST_ACCESS_THRESHOLD_MINUTES = "grid.client.application.context.cleanup.last.access.threshold.minutes";
 
 	private GridImpl grid;
 	private GridClient client;
@@ -109,7 +107,7 @@ public class GridPlugin extends AbstractControllerPlugin {
 
 		TokenLifecycleStrategy tokenLifecycleStrategy = getTokenLifecycleStrategy(configuration);
 		
-		GridClientConfiguration gridClientConfiguration = buildGridClientConfiguration(configuration);
+		GridClientConfiguration gridClientConfiguration = buildGridClientConfiguration(configuration, fileManagerConfig);
 		client = new LocalGridClientImpl(gridClientConfiguration, tokenLifecycleStrategy, grid);
 
 		context.put(TokenLifecycleStrategy.class, tokenLifecycleStrategy);
@@ -137,7 +135,7 @@ public class GridPlugin extends AbstractControllerPlugin {
 				agentErrors);
 	}
 
-	protected GridClientConfiguration buildGridClientConfiguration(Configuration configuration) {
+	protected GridClientConfiguration buildGridClientConfiguration(Configuration configuration, FileManagerConfiguration fileManagerConfig) {
 		GridClientConfiguration gridClientConfiguration = new GridClientConfiguration();
 		gridClientConfiguration.setNoMatchExistsTimeout(configuration.getPropertyAsLong("grid.client.token.selection.nomatch.timeout.ms", gridClientConfiguration.getNoMatchExistsTimeout()));
 		gridClientConfiguration.setMatchExistsTimeout(configuration.getPropertyAsLong("grid.client.token.selection.matchexist.timeout.ms", gridClientConfiguration.getMatchExistsTimeout()));
@@ -148,17 +146,7 @@ public class GridPlugin extends AbstractControllerPlugin {
 		gridClientConfiguration.setReleaseSessionTimeout(configuration.getPropertyAsInteger("grid.client.token.release.timeout.ms", gridClientConfiguration.getReleaseSessionTimeout()));
 		gridClientConfiguration.setAllowInvalidSslCertificates(configuration.getPropertyAsBoolean("grid.client.ssl.allowinvalidcertificate", false));
 		gridClientConfiguration.setMaxStringLength(configuration.getPropertyAsInteger("grid.client.max.string.length.bytes", gridClientConfiguration.getMaxStringLength()));
-		ApplicationContextConfiguration applicationContextConfiguration = new ApplicationContextConfiguration();
-		if (configuration.hasProperty(GRID_CLIENT_APPLICATION_CONTEXT_CLEANUP_ENABLED)) {
-			applicationContextConfiguration.setCleanupEnabled(configuration.getPropertyAsBoolean(GRID_CLIENT_APPLICATION_CONTEXT_CLEANUP_ENABLED));
-		}
-		if (configuration.hasProperty(GRID_CLIENT_APPLICATION_CONTEXT_CLEANUP_INTERVAL_MINUTES)) {
-			applicationContextConfiguration.setCleanupIntervalMinutes(configuration.getPropertyAsLong(GRID_CLIENT_APPLICATION_CONTEXT_CLEANUP_INTERVAL_MINUTES));
-		}
-		if (configuration.hasProperty(GRID_CLIENT_APPLICATION_CONTEXT_CLEANUP_LAST_ACCESS_THRESHOLD_MINUTES)) {
-			applicationContextConfiguration.setCleanupLastAccessTimeThresholdMinutes(configuration.getPropertyAsLong(GRID_CLIENT_APPLICATION_CONTEXT_CLEANUP_LAST_ACCESS_THRESHOLD_MINUTES));
-		}
-		gridClientConfiguration.setLocalTokenApplicationContextConfiguration(applicationContextConfiguration);
+		gridClientConfiguration.setLocalTokenApplicationContextConfiguration(new ApplicationContextConfiguration(fileManagerConfig));
 		return gridClientConfiguration;
 	}
 
