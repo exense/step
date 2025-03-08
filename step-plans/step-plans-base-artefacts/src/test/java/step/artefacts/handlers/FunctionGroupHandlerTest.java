@@ -25,10 +25,14 @@ import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.CheckArtefact;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
 import step.core.execution.ExecutionEngineException;
+import step.core.execution.model.Execution;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
+import step.core.plans.runner.PlanRunnerResult;
+import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.planbuilder.FunctionArtefacts;
 
 import java.io.IOException;
@@ -36,6 +40,7 @@ import java.io.StringWriter;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.assertEquals;
 
@@ -46,7 +51,7 @@ public class FunctionGroupHandlerTest extends AbstractFunctionHandlerTest {
         Plan plan = PlanBuilder.create().startBlock(new FunctionGroup()).add(new CheckArtefact(FunctionGroupHandlerTest::getLocalAndRemoteTokenFromSession)).add(new Echo()).endBlock().build();
 
         StringWriter writer = new StringWriter();
-        try (ExecutionEngine engine = newEngineWithCustomTokenReleaseFunction(this::markTokenAsReleased)) {
+        try (ExecutionEngine engine = newEngineWithCustomTokenReleaseFunction(this::markTokenAsReleased, null)) {
             engine.execute(plan).printTree(writer);
         }
 
@@ -66,7 +71,7 @@ public class FunctionGroupHandlerTest extends AbstractFunctionHandlerTest {
         try (ExecutionEngine engine = newEngineWithCustomTokenReleaseFunction(id -> {
             markTokenAsReleased(id);
             throw new RuntimeException("Test error");
-        })) {
+        }, null)) {
             engine.execute(plan).printTree(writer);
         }
 
@@ -90,7 +95,7 @@ public class FunctionGroupHandlerTest extends AbstractFunctionHandlerTest {
                 tokenReturned.set(true);
                 throw new RuntimeException("Test error");
             }
-        })) {
+        }, null)) {
             engine.execute(plan).printTree(writer);
         }
 
@@ -103,6 +108,9 @@ public class FunctionGroupHandlerTest extends AbstractFunctionHandlerTest {
 
     @Test
     public void testReleaseWaitingArtefacts() throws Exception {
+        // Note: since this is one of the few tests that actually uses a (simulated) remote token,
+        // we also "hijack" it to test that the agent URLs are properly reported in the execution.
+
         AtomicInteger localTokenReturned = new AtomicInteger();
         AtomicInteger tokenReturned = new AtomicInteger();
 
@@ -133,6 +141,15 @@ public class FunctionGroupHandlerTest extends AbstractFunctionHandlerTest {
         retryIfFail.addChild(check1);
 
         StringWriter writer;
+
+        AtomicReference<Execution> executionRef = new AtomicReference<>();
+        AbstractExecutionEnginePlugin executionCapturingPlugin = new AbstractExecutionEnginePlugin() {
+            @Override
+            public void executionFinally(ExecutionContext context) {
+                executionRef.set(context.getExecutionManager().getExecution());
+            }
+        };
+
         try (ExecutionEngine engine = newEngineWithCustomTokenReleaseFunction(id -> {
             if (localToken.getID().equals(id)) {
                 localTokenReturned.incrementAndGet();
@@ -140,9 +157,10 @@ public class FunctionGroupHandlerTest extends AbstractFunctionHandlerTest {
             if (token.getID().equals(id)) {
                 tokenReturned.incrementAndGet();
             }
-        })) {
+        }, executionCapturingPlugin)) {
             writer = new StringWriter();
-            engine.execute(plan).printTree(writer);
+            PlanRunnerResult planRunnerResult = engine.execute(plan);
+            planRunnerResult.printTree(writer);
         }
 
         // Assert that the token have been returned after Session execution
@@ -161,6 +179,9 @@ public class FunctionGroupHandlerTest extends AbstractFunctionHandlerTest {
                 "   Iteration3:FAILED:\n" +
                 "    CheckArtefact:FAILED:\n" +
                 "  CallKeyword:PASSED:\n").replace("CallKeyword", name), writer.toString());
+
+        // check that the remote agent token is properly reported as being involved in the execution
+        assertEquals(REMOTE_URL, executionRef.get().getAgentsInvolved());
     }
 
 }

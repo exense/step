@@ -35,6 +35,8 @@ public class ExecutionManager {
         updateExecution(execution->{
             if (newStatus == ExecutionStatus.ENDED) {
                 execution.setEndTime(System.currentTimeMillis());
+                String agentsInvolved = executionContext.getAgentUrls();
+                execution.setAgentsInvolved(agentsInvolved);
             }
             execution.setStatus(newStatus);
         });
