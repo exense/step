@@ -35,7 +35,6 @@ import org.junit.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.functions.io.Input;
@@ -45,11 +44,13 @@ import step.grid.agent.handler.MessageHandlerPool;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
 import step.grid.agent.tokenpool.TokenReservationSession;
 import step.grid.contextbuilder.ApplicationContextBuilder;
+import step.grid.contextbuilder.ApplicationContextConfiguration;
 import step.grid.filemanager.*;
 import step.grid.io.InputMessage;
 import step.grid.io.OutputMessage;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class FunctionMessageHandlerTest {
 
@@ -75,13 +76,14 @@ public class FunctionMessageHandlerTest {
 
 	@After
 	public void after() throws Exception {
-		//Application context should be cleaned up as soon as released and usage reach 0i
+		//Application context cleanup is now delayed. It is performed by a schedule job or when closed explicitly
 		FunctionMessageHandlerTest.TestFileManagerClient fileManagerClient = (FunctionMessageHandlerTest.TestFileManagerClient) tokenServices.getFileManagerClient();
 		assertEquals(expectedFilesInCache, fileManagerClient.cacheUsage.keySet().size());
 		fileManagerClient.cacheUsage.forEach((k, v) -> {
 			logger.info("Cache usage for {} is {}", k, v);
-			assertEquals(0, v.get());
+			assertTrue(v.get() > 0);
 		});
+		//Closing the messageHandlerPool will close the underlying application context builder and its contexts
 		messageHandlerPool.close();
 		assertEquals(expectedFilesInCache, fileManagerClient.cacheUsage.keySet().size());
 		fileManagerClient.cacheUsage.forEach((k, v) -> {
@@ -243,7 +245,7 @@ public class FunctionMessageHandlerTest {
 
 	private AgentTokenServices getLocalAgentTokenServices() {
 		AgentTokenServices tokenServices = new AgentTokenServices(new FunctionMessageHandlerTest.TestFileManagerClient());
-		tokenServices.setApplicationContextBuilder(new ApplicationContextBuilder());
+		tokenServices.setApplicationContextBuilder(new ApplicationContextBuilder(new ApplicationContextConfiguration()));
 		Map<String, String> agentProperties = new HashMap<>();
 		agentProperties.put("myAgentProp1", "myAgentPropValue1");
 		agentProperties.put("myTokenProp1", "defaultValue");

@@ -42,6 +42,8 @@ import step.grid.client.GridClient;
 import step.grid.client.GridClientConfiguration;
 import step.grid.client.LocalGridClientImpl;
 import step.grid.client.TokenLifecycleStrategy;
+import step.grid.contextbuilder.ApplicationContextConfiguration;
+import step.grid.filemanager.FileManagerConfiguration;
 import step.grid.filemanager.FileManagerImplConfig;
 import step.grid.io.AgentErrorCode;
 import step.resources.ResourceManagerControllerPlugin;
@@ -105,7 +107,7 @@ public class GridPlugin extends AbstractControllerPlugin {
 
 		TokenLifecycleStrategy tokenLifecycleStrategy = getTokenLifecycleStrategy(configuration);
 		
-		GridClientConfiguration gridClientConfiguration = buildGridClientConfiguration(configuration);
+		GridClientConfiguration gridClientConfiguration = buildGridClientConfiguration(configuration, fileManagerConfig);
 		client = new LocalGridClientImpl(gridClientConfiguration, tokenLifecycleStrategy, grid);
 
 		context.put(TokenLifecycleStrategy.class, tokenLifecycleStrategy);
@@ -133,7 +135,7 @@ public class GridPlugin extends AbstractControllerPlugin {
 				agentErrors);
 	}
 
-	protected GridClientConfiguration buildGridClientConfiguration(Configuration configuration) {
+	protected GridClientConfiguration buildGridClientConfiguration(Configuration configuration, FileManagerConfiguration fileManagerConfig) {
 		GridClientConfiguration gridClientConfiguration = new GridClientConfiguration();
 		gridClientConfiguration.setNoMatchExistsTimeout(configuration.getPropertyAsLong("grid.client.token.selection.nomatch.timeout.ms", gridClientConfiguration.getNoMatchExistsTimeout()));
 		gridClientConfiguration.setMatchExistsTimeout(configuration.getPropertyAsLong("grid.client.token.selection.matchexist.timeout.ms", gridClientConfiguration.getMatchExistsTimeout()));
@@ -144,6 +146,7 @@ public class GridPlugin extends AbstractControllerPlugin {
 		gridClientConfiguration.setReleaseSessionTimeout(configuration.getPropertyAsInteger("grid.client.token.release.timeout.ms", gridClientConfiguration.getReleaseSessionTimeout()));
 		gridClientConfiguration.setAllowInvalidSslCertificates(configuration.getPropertyAsBoolean("grid.client.ssl.allowinvalidcertificate", false));
 		gridClientConfiguration.setMaxStringLength(configuration.getPropertyAsInteger("grid.client.max.string.length.bytes", gridClientConfiguration.getMaxStringLength()));
+		gridClientConfiguration.setLocalTokenApplicationContextConfiguration(new ApplicationContextConfiguration(fileManagerConfig));
 		return gridClientConfiguration;
 	}
 

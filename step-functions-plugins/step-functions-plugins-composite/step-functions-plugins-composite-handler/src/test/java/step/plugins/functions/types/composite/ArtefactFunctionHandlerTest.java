@@ -43,6 +43,7 @@ import step.functions.io.Output;
 import step.grid.agent.tokenpool.TokenReservationSession;
 import step.grid.agent.tokenpool.TokenSession;
 import step.grid.contextbuilder.ApplicationContextBuilder;
+import step.grid.contextbuilder.ApplicationContextConfiguration;
 import step.planbuilder.BaseArtefacts;
 
 import javax.json.Json;
@@ -97,7 +98,7 @@ public class ArtefactFunctionHandlerTest {
 	protected ArtefactFunctionHandler createArtefactFunctionHandler(ExecutionContext context) {
 		ArtefactFunctionHandler handler = new ArtefactFunctionHandler();
 		
-		FunctionHandlerFactory functionHandlerFactory = new FunctionHandlerFactory(new ApplicationContextBuilder(), null);
+		FunctionHandlerFactory functionHandlerFactory = new FunctionHandlerFactory(new ApplicationContextBuilder(new ApplicationContextConfiguration()), null);
 		
 		TokenReservationSession tokenReservationSession = new TokenReservationSession();
 		tokenReservationSession.put(AbstractFunctionHandler.EXECUTION_CONTEXT_KEY, context);
