@@ -5,6 +5,7 @@ import step.core.timeseries.bucket.BucketAttributes;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 public final class TimeSeriesAPIResponseBuilder {
     private Long start;
@@ -14,6 +15,7 @@ public final class TimeSeriesAPIResponseBuilder {
     private List<BucketAttributes> matrixKeys;
     private boolean truncated;
     private long collectionResolution;
+    private Set<String> collectionIgnoredAttributes;
     private boolean higherResolutionUsed;
     private boolean ttlCovered = true;
 
@@ -62,12 +64,17 @@ public final class TimeSeriesAPIResponseBuilder {
         return this;
     }
 
+    public TimeSeriesAPIResponseBuilder withCollectionIgnoredAttributes(Set<String> collectionIgnoredAttributes) {
+        this.collectionIgnoredAttributes = collectionIgnoredAttributes;
+        return this;
+    }
+
     public TimeSeriesAPIResponse build() {
         Objects.requireNonNull(start);
         Objects.requireNonNull(interval);
         Objects.requireNonNull(end);
         Objects.requireNonNull(matrix);
         Objects.requireNonNull(matrixKeys);
-        return new TimeSeriesAPIResponse(start, interval, end, matrix, matrixKeys, truncated, collectionResolution, higherResolutionUsed, ttlCovered);
+        return new TimeSeriesAPIResponse(start, interval, end, matrix, matrixKeys, truncated, collectionResolution, collectionIgnoredAttributes, higherResolutionUsed, ttlCovered);
     }
 }
