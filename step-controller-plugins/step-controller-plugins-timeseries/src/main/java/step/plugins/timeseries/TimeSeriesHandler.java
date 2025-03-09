@@ -360,6 +360,7 @@ public class TimeSeriesHandler {
                 .withMatrix(matrix)
                 .withTruncated(series.size() > request.getMaxNumberOfSeries())
                 .withCollectionResolution(response.getCollectionResolution())
+                .withCollectionIgnoredAttributes(response.getCollectionIgnoredAttributes())
                 .withHigherResolutionUsed(response.isHigherResolutionUsed())
                 .withTtlCovered(response.isTtlCovered())
                 .build();
