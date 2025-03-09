@@ -23,7 +23,7 @@ public class TimeSeriesAPIResponse {
     @NotNull
     private final long collectionResolution;
     @NotNull
-    private Set<String> collectionIgnoredAttributes;
+    private final Set<String> collectionIgnoredAttributes;
     @NotNull
     private final boolean higherResolutionUsed;
     @NotNull
