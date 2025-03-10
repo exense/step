@@ -276,6 +276,18 @@ public class AutomationPackageManagerOSTest {
     }
 
     @Test
+    public void testInvalidFile() throws IOException {
+        try (InputStream is = new FileInputStream("src/test/resources/step/automation/packages/picture.png")) {
+            try {
+                manager.createAutomationPackage(is, "picture.png", null, null);
+                Assert.fail("The exception should be thrown in case of invalid automation package file");
+            } catch (AutomationPackageManagerException ex) {
+                // ok - invalid file should cause the exception
+            }
+        }
+    }
+
+    @Test
     public void testUpdateAsync() throws IOException, InterruptedException {
         // 1. Upload new package
         SampleUploadingResult r = uploadSample1WithAsserts(true, true, false);

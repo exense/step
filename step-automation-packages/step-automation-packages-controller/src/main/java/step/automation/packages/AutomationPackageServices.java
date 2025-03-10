@@ -84,7 +84,7 @@ public class AutomationPackageServices extends AbstractStepServices {
     @Produces(MediaType.TEXT_PLAIN)
     @Secured(right = "automation-package-write")
     public String createAutomationPackage(@FormDataParam("file") InputStream automationPackageInputStream,
-                                                                 @FormDataParam("file") FormDataContentDisposition fileDetail) {
+                                          @FormDataParam("file") FormDataContentDisposition fileDetail) {
         try {
             ObjectId id = automationPackageManager.createAutomationPackage(automationPackageInputStream, fileDetail.getFileName(), getObjectEnricher(), getObjectPredicate());
             return id == null ? null : id.toString();
