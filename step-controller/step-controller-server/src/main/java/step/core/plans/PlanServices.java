@@ -102,7 +102,9 @@ public class PlanServices extends AbstractEntityServices<Plan> {
 	@Secured(right = "{entity}-write")
 	public Plan newPlanFromYaml(String yamlBody) {
 		try {
-			return yamlPlanReader.readYamlPlan(new ByteArrayInputStream(yamlBody.getBytes()));
+			Plan plan = yamlPlanReader.readYamlPlan(new ByteArrayInputStream(yamlBody.getBytes()));
+			getObjectEnricher().accept(plan);
+			return plan;
 		} catch (Exception e) {
 			log.error("Deserialization error while reading providing YAML plan.", e);
 			throw new ControllerServiceException("Deserialization error while reading the Yaml plan: " + e.getMessage(), e);
