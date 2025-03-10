@@ -53,6 +53,7 @@ public class Execution extends AbstractOrganizableObject implements EnricheableO
 	private ExecutionParameters executionParameters;
 	private ExecutiontTaskParameters executiontTaskParameters;
 	private String resolvedPlanRootNodeId;
+	private String agentsInvolved;
 
 	public Execution() {
 		super();
@@ -228,6 +229,20 @@ public class Execution extends AbstractOrganizableObject implements EnricheableO
 
 	public void setResolvedPlanRootNodeId(String resolvedPlanRootNodeId) {
 		this.resolvedPlanRootNodeId = resolvedPlanRootNodeId;
+	}
+
+	/**
+	 * Returns a list of agents (i.e., their agent URLs) that were involved in the execution.
+	 * This is only populated after an execution has ended, and may not be available for all executions,
+	 * so null or empty values can be expected and should be treated as "unavailable/not applicable"
+	 * @return the list of involved agents (space-separated)
+	 */
+	public String getAgentsInvolved() {
+		return agentsInvolved;
+	}
+
+	public void setAgentsInvolved(String agentsInvolved) {
+		this.agentsInvolved = agentsInvolved;
 	}
 
 	@Override
