@@ -32,6 +32,7 @@ import step.grid.tokenpool.Interest;
 
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
@@ -44,10 +45,12 @@ public class AbstractFunctionHandlerTest {
     protected AtomicBoolean localTokenReturned;
     protected AtomicBoolean tokenReturned;
 
+    protected final String REMOTE_URL = "http://dummy.url";
+
     @Before
     public void before() {
-        token = token("remote");
-        localToken = token("local");
+        token = token("remote", REMOTE_URL);
+        localToken = token("local", null);
         localTokenReturned = new AtomicBoolean(false);
         tokenReturned = new AtomicBoolean(false);
     }
@@ -101,8 +104,15 @@ public class AbstractFunctionHandlerTest {
         }
     }
 
-    protected ExecutionEngine newEngineWithCustomTokenReleaseFunction(Consumer<String> tokenReleaseFunction) {
-        return ExecutionEngine.builder().withOperationMode(OperationMode.CONTROLLER).withPlugin(new BaseArtefactPlugin()).withPlugin(new FunctionPlugin()).withPlugin(newMyFunctionTypePlugin()).withPlugin(new TokenForecastingExecutionPlugin()).withPlugin(new AbstractExecutionEnginePlugin() {
+    protected ExecutionEngine newEngineWithCustomTokenReleaseFunction(Consumer<String> tokenReleaseFunction, AbstractExecutionEnginePlugin additionalPlugin) {
+        return ExecutionEngine.builder().withOperationMode(OperationMode.CONTROLLER)
+                .withPlugin(new BaseArtefactPlugin())
+                .withPlugin(new FunctionPlugin())
+                .withPlugin(newMyFunctionTypePlugin())
+                .withPlugin(new TokenForecastingExecutionPlugin())
+                .withPlugin(Optional.ofNullable(additionalPlugin).orElse(new AbstractExecutionEnginePlugin() { // dummy one doing nothing
+                }))
+                .withPlugin(new AbstractExecutionEnginePlugin() {
             @Override
             public void initializeExecutionContext(ExecutionEngineContext executionEngineContext,
                                                    ExecutionContext executionContext) {
@@ -161,10 +171,14 @@ public class AbstractFunctionHandlerTest {
         };
     }
 
-    protected TokenWrapper token(String id) {
+    protected TokenWrapper token(String id, String url) {
         Token localToken_ = new Token();
         localToken_.setId(id);
         localToken_.setAgentid(id);
-        return new TokenWrapper(localToken_, new AgentRef());
+        AgentRef agentRef = new AgentRef();
+        if (url != null) {
+            agentRef = new AgentRef("dummyId", url, "dummyAgentType");
+        }
+        return new TokenWrapper(localToken_, agentRef);
     }
 }

@@ -217,6 +217,7 @@ public class ControllerServices extends AbstractStepServices {
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/lib/versions")
+	@Secured(right="controller-manage")
 	public Map<String, String> getLibVersions() {
 		HashMap<String, String> result = new HashMap<>();
 		Arrays.asList(System.getProperty("java.class.path").split(File.pathSeparator)).forEach(e -> {
