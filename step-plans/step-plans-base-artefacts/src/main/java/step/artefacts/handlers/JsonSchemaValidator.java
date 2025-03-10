@@ -25,13 +25,18 @@ import org.json.JSONObject;
 
 public class JsonSchemaValidator {
 
-	public static void validate(String schema, String input) {
+	public static String validate(String schema, String input) {
 		try {
 			JSONObject jsonSchema = new JSONObject(schema);
 			JSONObject jsonSubject = new JSONObject(input);
 			
 			Schema schema_ = SchemaLoader.load(jsonSchema);
 			schema_.validate(jsonSubject);
+			try {
+				return jsonSubject.getString("schemaVersion");
+			} catch (Exception e) {
+				return null;
+			}
 		} catch (JSONException e) {
 			throw new RuntimeException("Error while validating input \n" + input, e);
 		}
