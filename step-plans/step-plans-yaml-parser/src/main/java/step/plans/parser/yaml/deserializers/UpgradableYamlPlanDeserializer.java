@@ -66,6 +66,9 @@ public class UpgradableYamlPlanDeserializer extends JsonDeserializer<YamlPlan> {
             Document yamlPlanDocument = p.getCodec().treeToValue(planJsonNode, Document.class);
             String planVersionString = yamlPlanDocument.getString(YamlPlan.VERSION_FIELD_NAME);
 
+            if (planVersionString == null) {
+                planVersionString =  (String) ctxt.getAttribute("version");
+            }
             // planVersionString == null means than no migration is required (version is actual)
             if (planVersionString != null) {
                 // convert yaml plan to document to perform migrations
