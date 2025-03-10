@@ -83,10 +83,16 @@ public class AutomationPackageServices extends AbstractStepServices {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.TEXT_PLAIN)
     @Secured(right = "automation-package-write")
-    public String createAutomationPackage(@FormDataParam("file") InputStream automationPackageInputStream,
+    public String createAutomationPackage(@QueryParam("version") String apVersion,
+                                          @QueryParam("activationExpr") String activationExpression,
+                                          @FormDataParam("file") InputStream automationPackageInputStream,
                                           @FormDataParam("file") FormDataContentDisposition fileDetail) {
         try {
-            ObjectId id = automationPackageManager.createAutomationPackage(automationPackageInputStream, fileDetail.getFileName(), getObjectEnricher(), getObjectPredicate());
+            ObjectId id = automationPackageManager.createAutomationPackage(
+                    automationPackageInputStream, fileDetail.getFileName(),
+                    apVersion, activationExpression,
+                    getObjectEnricher(), getObjectPredicate()
+            );
             return id == null ? null : id.toString();
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage());
@@ -163,14 +169,44 @@ public class AutomationPackageServices extends AbstractStepServices {
     }
 
     @PUT
+    @Path("/{id}/metadata")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Secured(right = "automation-package-write")
+    public void updateAutomationPackageMetadata(@PathParam("id") String id,
+                                                @QueryParam("activationExpr") String activationExpression,
+                                                @QueryParam("version") String apVersion) {
+        checkAutomationPackageAcceptable(id);
+        try {
+            automationPackageManager.updateAutomationPackageMetadata(new ObjectId(id), apVersion, activationExpression, getObjectPredicate());
+        } catch (AutomationPackageManagerException e) {
+            throw new ControllerServiceException(e.getMessage());
+        }
+    }
+
+    @PUT
     @Path("/{id}")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
     @Secured(right = "automation-package-write")
-    public AutomationPackageUpdateResult updateAutomationPackageById(@PathParam("id") String id,
-                                            @QueryParam("async") Boolean async,
-                                            @FormDataParam("file") InputStream uploadedInputStream,
-                                            @FormDataParam("file") FormDataContentDisposition fileDetail) {
+    public AutomationPackageUpdateResult updateAutomationPackageMetadata(@PathParam("id") String id,
+                                                                         @QueryParam("async") Boolean async,
+                                                                         @QueryParam("version") String apVersion,
+                                                                         @QueryParam("activationExpr") String activationExpression,
+                                                                         @FormDataParam("file") InputStream uploadedInputStream,
+                                                                         @FormDataParam("file") FormDataContentDisposition fileDetail) {
+        checkAutomationPackageAcceptable(id);
+        try {
+            return automationPackageManager.createOrUpdateAutomationPackage(
+                    true, false, new ObjectId(id),
+                    uploadedInputStream, fileDetail.getFileName(), apVersion, activationExpression,
+                    getObjectEnricher(), getObjectPredicate(), async != null && async
+            );
+        } catch (AutomationPackageManagerException e) {
+            throw new ControllerServiceException(e.getMessage());
+        }
+    }
+
+    private void checkAutomationPackageAcceptable(String id) {
         AutomationPackage automationPackage = null;
         try {
             automationPackage = getAutomationPackage(id);
@@ -180,15 +216,6 @@ public class AutomationPackageServices extends AbstractStepServices {
         if (automationPackage != null) {
             assertEntityIsAcceptableInContext(automationPackage);
         }
-        try {
-            return automationPackageManager.createOrUpdateAutomationPackage(
-                    true, false, new ObjectId(id),
-                    uploadedInputStream, fileDetail.getFileName(),
-                    getObjectEnricher(), getObjectPredicate(), async != null && async
-            );
-        } catch (AutomationPackageManagerException e) {
-            throw new ControllerServiceException(e.getMessage());
-        }
     }
 
     @PUT
@@ -196,11 +223,13 @@ public class AutomationPackageServices extends AbstractStepServices {
     @Produces(MediaType.APPLICATION_JSON)
     @Secured(right = "automation-package-write")
     public Response createOrUpdateAutomationPackage(@QueryParam("async") Boolean async,
+                                                    @QueryParam("version") String apVersion,
+                                                    @QueryParam("activationExpr") String activationExpression,
                                                     @FormDataParam("file") InputStream uploadedInputStream,
                                                     @FormDataParam("file") FormDataContentDisposition fileDetail) {
         try {
             AutomationPackageUpdateResult result = automationPackageManager.createOrUpdateAutomationPackage(
-                    true, true, null, uploadedInputStream, fileDetail.getFileName(),
+                    true, true, null, uploadedInputStream, fileDetail.getFileName(), apVersion, activationExpression,
                     getObjectEnricher(), getObjectPredicate(), async != null && async
             );
             Response.ResponseBuilder responseBuilder;

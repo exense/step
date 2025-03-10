@@ -48,8 +48,11 @@ public class CompositeResolvedPlanBuilderTest {
 
     @Before
     public void before() {
-        engine = new ExecutionEngine.Builder().withPlugin(new BaseArtefactPlugin()).withPlugin(new ThreadPoolPlugin())
-                .withPlugin(new FunctionPlugin()).withPlugin(new AbstractExecutionEnginePlugin() {
+        engine = new ExecutionEngine.Builder()
+                .withPlugin(new BaseArtefactPlugin())
+                .withPlugin(new ThreadPoolPlugin())
+                .withPlugin(new FunctionPlugin())
+                .withPlugin(new AbstractExecutionEnginePlugin() {
                     @Override
                     public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
                         super.initializeExecutionContext(executionEngineContext, executionContext);
