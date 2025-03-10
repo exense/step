@@ -331,12 +331,22 @@ public class AutomationPackageManagerOSTest {
     @Test
     public void testInvalidFile() throws IOException {
         try (InputStream is = new FileInputStream("src/test/resources/step/automation/packages/picture.png")) {
-            try {
-                manager.createAutomationPackage(is, "picture.png", null, null);
-                Assert.fail("The exception should be thrown in case of invalid automation package file");
-            } catch (AutomationPackageManagerException ex) {
-                // ok - invalid file should cause the exception
-            }
+            manager.createAutomationPackage(is, "picture.png", null, null, null, null);
+            Assert.fail("The exception should be thrown in case of invalid automation package file");
+        } catch (AutomationPackageManagerException ex) {
+            // ok - invalid file should cause the exception
+        }
+    }
+
+    @Test
+    public void testZipArchive() throws IOException {
+        try (InputStream is = new FileInputStream("src/test/resources/step/automation/packages/step-automation-packages.zip")) {
+            ObjectId result;
+            result = manager.createAutomationPackage(is, "step-automation-packages.zip", null, null, null, null);
+            AutomationPackage storedPackage = automationPackageAccessor.get(result);
+
+            List<Plan> storedPlans = planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
+            Assert.assertEquals(4, storedPlans.size());
         }
     }
 
