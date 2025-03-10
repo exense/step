@@ -63,7 +63,8 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 	@Override
 	public void init(AgentTokenServices agentTokenServices) {
 		super.init(agentTokenServices);
-		applicationContextBuilder = new ApplicationContextBuilder(this.getClass().getClassLoader());
+		applicationContextBuilder = new ApplicationContextBuilder(this.getClass().getClassLoader(),
+				agentTokenServices.getApplicationContextBuilder().getApplicationContextConfiguration());
 		
 		applicationContextBuilder.forkCurrentContext(AbstractFunctionHandler.FORKED_BRANCH);
 		
