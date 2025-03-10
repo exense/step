@@ -18,12 +18,15 @@
  ******************************************************************************/
 package step.core.execution;
 
+import step.automation.packages.AutomationPackageEntity;
+
 import java.util.HashMap;
 import java.util.Map;
 
 public class ExecutionContextBindings {
 	
 	public static final String BINDING_RESOURCE_MANAGER = "resourceManager";
+	public static final String BINDING_AP = "automationPackageId";
 
 	public static Map<String, Object> get(ExecutionContext context) {
 		Map<String, Object> bindings = new HashMap<String, Object>();
@@ -32,6 +35,9 @@ public class ExecutionContextBindings {
 		bindings.put("plan", context.getPlan());
 		bindings.put("variables", context.getVariablesManager());
 		bindings.put(BINDING_RESOURCE_MANAGER, context.getResourceManager());
+		if (context.getPlan() != null && context.getPlan().getCustomField(AutomationPackageEntity.AUTOMATION_PACKAGE_ID) != null) {
+			bindings.put(BINDING_AP, context.getPlan().getCustomField(AutomationPackageEntity.AUTOMATION_PACKAGE_ID));
+		}
 		return bindings;
 	}
 	

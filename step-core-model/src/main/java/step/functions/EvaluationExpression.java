@@ -16,39 +16,10 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages;
+package step.functions;
 
 import step.commons.activation.Expression;
-import step.core.accessors.AbstractOrganizableObject;
-import step.core.objectenricher.EnricheableObject;
 
-public class AutomationPackage extends AbstractOrganizableObject implements EnricheableObject {
-
-    private AutomationPackageStatus status;
-    private String version;
-    private Expression activationExpression;
-
-    public AutomationPackageStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(AutomationPackageStatus status) {
-        this.status = status;
-    }
-
-    public Expression getActivationExpression() {
-        return activationExpression;
-    }
-
-    public void setActivationExpression(Expression activationExpression) {
-        this.activationExpression = activationExpression;
-    }
-
-    public String getVersion() {
-        return version;
-    }
-
-    public void setVersion(String version) {
-        this.version = version;
-    }
+public interface EvaluationExpression {
+    Expression getActivationExpression();
 }

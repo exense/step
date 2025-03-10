@@ -29,6 +29,7 @@ import step.artefacts.handlers.functions.FunctionGroupSession;
 import step.artefacts.handlers.functions.TokenSelectionCriteriaMapBuilder;
 import step.artefacts.reports.CallFunctionReportNode;
 import step.attachments.AttachmentMeta;
+import step.automation.packages.accessor.AutomationPackageAccessor;
 import step.common.managedoperations.OperationManager;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
@@ -83,7 +84,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 
 	protected FunctionExecutionService functionExecutionService;
 	protected FunctionAccessor functionAccessor;
-	
+
 	protected ReportNodeAttachmentManager reportNodeAttachmentManager;
 	protected DynamicJsonObjectResolver dynamicJsonObjectResolver;
 

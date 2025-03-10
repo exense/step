@@ -119,7 +119,7 @@ public class AutomationPackageManagerOSTest {
                 automationPackageHookRegistry,
                 new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, automationPackageHookRegistry, serializationRegistry, configuration),
                 automationPackageLocks
-                );
+        );
     }
 
     private static FunctionTypeRegistry prepareTestFunctionTypeRegistry(Configuration configuration) {
@@ -136,12 +136,11 @@ public class AutomationPackageManagerOSTest {
                 return jMeterFunctionType;
             } else if (function instanceof GeneralScriptFunction) {
                 return generalScriptFunctionType;
-            } else if (function instanceof CompositeFunction){
+            } else if (function instanceof CompositeFunction) {
                 return compositeFunctionType;
-            } else if (function instanceof NodeFunction){
+            } else if (function instanceof NodeFunction) {
                 return nodeFunctionType;
-            }
-            else {
+            } else {
                 return null;
             }
         });
@@ -168,7 +167,7 @@ public class AutomationPackageManagerOSTest {
         String fileName = "step-automation-packages-sample1-extended.jar";
         File automationPackageJar = new File("src/test/resources/samples/" + fileName);
         try (InputStream is = new FileInputStream(automationPackageJar)) {
-            AutomationPackageUpdateResult result = manager.createOrUpdateAutomationPackage(true, true, null, is, fileName, null, null, false);
+            AutomationPackageUpdateResult result = manager.createOrUpdateAutomationPackage(true, true, null, is, fileName, null, null, null, null, false);
             Assert.assertEquals(AutomationPackageUpdateStatus.UPDATED, result.getStatus());
             ObjectId resultId = result.getId();
 
@@ -250,13 +249,67 @@ public class AutomationPackageManagerOSTest {
     }
 
     @Test
+    public void testUpdateMetadata() throws IOException {
+        // 1. Upload new package
+        SampleUploadingResult r = uploadSample1WithAsserts(true, false, false);
+
+        // 2. Update package metadata - change version
+        manager.updateAutomationPackageMetadata(r.storedPackage.getId(), "ver1", null, null);
+
+        AutomationPackage actualAp = automationPackageAccessor.get(r.storedPackage.getId());
+        Assert.assertEquals("ver1", actualAp.getVersion());
+        Assert.assertEquals("My package.ver1", actualAp.getAttribute(AbstractOrganizableObject.NAME));
+
+        // 3. Update version again and add some activation expression
+        manager.updateAutomationPackageMetadata(r.storedPackage.getId(), "ver2", "true == true", null);
+        actualAp = automationPackageAccessor.get(r.storedPackage.getId());
+        Assert.assertEquals("ver2", actualAp.getVersion());
+        Assert.assertEquals("My package.ver2", actualAp.getAttribute(AbstractOrganizableObject.NAME));
+        Assert.assertEquals("true == true", actualAp.getActivationExpression().getScript());
+
+        // check that the new activation expression is propagated to all plans and keywords
+        List<Plan> storedPlans = planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(actualAp.getId())).collect(Collectors.toList());
+        Assert.assertEquals(5, storedPlans.size());
+        for (Plan storedPlan : storedPlans) {
+            Assert.assertEquals("true == true", storedPlan.getActivationExpression().getScript());
+        }
+
+        List<Function> storedFunctions = functionAccessor.findManyByCriteria(getAutomationPackageIdCriteria(actualAp.getId())).collect(Collectors.toList());
+        Assert.assertEquals(6, storedFunctions.size());
+        for (Function storedFunction : storedFunctions) {
+            Assert.assertEquals("true == true", storedFunction.getActivationExpression().getScript());
+        }
+
+        // 4. remove version and activation expression
+        manager.updateAutomationPackageMetadata(r.storedPackage.getId(), null, null, null);
+
+        actualAp = automationPackageAccessor.get(r.storedPackage.getId());
+        Assert.assertEquals("My package", actualAp.getAttribute(AbstractOrganizableObject.NAME));
+        Assert.assertNull(actualAp.getActivationExpression());
+        Assert.assertNull(actualAp.getVersion());
+
+        // check that the new activation expression is propagated to all plans and keywords
+        storedPlans = planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(actualAp.getId())).collect(Collectors.toList());
+        Assert.assertEquals(5, storedPlans.size());
+        for (Plan storedPlan : storedPlans) {
+            Assert.assertNull(storedPlan.getActivationExpression());
+        }
+
+        storedFunctions = functionAccessor.findManyByCriteria(getAutomationPackageIdCriteria(actualAp.getId())).collect(Collectors.toList());
+        Assert.assertEquals(6, storedFunctions.size());
+        for (Function storedFunction : storedFunctions) {
+            Assert.assertNull( storedFunction.getActivationExpression());
+        }
+    }
+
+    @Test
     public void testResourcesInKeywordsAndPlans() throws IOException {
         String fileName = "step-automation-packages-sample2.jar";
         File automationPackageJar = new File("src/test/resources/samples/" + fileName);
 
         try (InputStream is = new FileInputStream(automationPackageJar)) {
             ObjectId result;
-            result = manager.createAutomationPackage(is, fileName, null, null);
+            result = manager.createAutomationPackage(is, fileName, null, null, null, null);
             AutomationPackage storedPackage = automationPackageAccessor.get(result);
 
             List<Plan> storedPlans = planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
@@ -308,9 +361,9 @@ public class AutomationPackageManagerOSTest {
         try (InputStream is = new FileInputStream(automationPackageJar)) {
             ObjectId result;
             if (createNew) {
-                result = manager.createAutomationPackage(is, fileName, null, null);
+                result = manager.createAutomationPackage(is, fileName, null, null, null, null);
             } else {
-                AutomationPackageUpdateResult updateResult = manager.createOrUpdateAutomationPackage(true, true, null, is, fileName, null, null, async);
+                AutomationPackageUpdateResult updateResult = manager.createOrUpdateAutomationPackage(true, true, null, is, fileName, null, null, null, null, async);
                 if (async && expectedDelay) {
                     Assert.assertEquals(AutomationPackageUpdateStatus.UPDATE_DELAYED, updateResult.getStatus());
                 } else {

@@ -27,9 +27,9 @@ import java.util.List;
 
 public interface AutomationPackageClient extends Closeable {
 
-    String createAutomationPackage(File automationPackageFile) throws AutomationPackageClientException;
+    String createAutomationPackage(File automationPackageFile, String apVersion, String evalExpr) throws AutomationPackageClientException;
 
-    AutomationPackageUpdateResult createOrUpdateAutomationPackage(File automationPackageFile, boolean async) throws AutomationPackageClientException;
+    AutomationPackageUpdateResult createOrUpdateAutomationPackage(File automationPackageFile, boolean async, String apVersion, String evalExpr) throws AutomationPackageClientException;
 
     List<String> executeAutomationPackage(File automationPackageFile, IsolatedAutomationPackageExecutionParameters params) throws AutomationPackageClientException;
 
