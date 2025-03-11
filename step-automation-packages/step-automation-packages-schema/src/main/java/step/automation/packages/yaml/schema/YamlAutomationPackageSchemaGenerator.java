@@ -105,9 +105,8 @@ public class YamlAutomationPackageSchemaGenerator {
     protected JsonObjectBuilder createMainAutomationPackageProperties() throws JsonSchemaPreparationException {
         JsonObjectBuilder objectBuilder = jsonProvider.createObjectBuilder();
 
-        // in 'schemaVersion' we should either explicitly specify the current json schema version or skip this field
-        objectBuilder.add("schemaVersion", jsonProvider.createObjectBuilder().add("const", actualVersion.toString()));
-        objectBuilder.add("version", jsonProvider.createObjectBuilder().add("type", "string"));
+        // in 'version' we should either explicitly specify the current json schema version or skip this field
+        objectBuilder.add("version", jsonProvider.createObjectBuilder().add("const", actualVersion.toString()));
         objectBuilder.add("name", jsonProvider.createObjectBuilder().add("type", "string"));
         objectBuilder.add("attributes", jsonProvider.createObjectBuilder().add("type", "object"));
 

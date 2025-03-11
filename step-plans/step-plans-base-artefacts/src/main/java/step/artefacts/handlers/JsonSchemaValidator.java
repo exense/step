@@ -29,11 +29,11 @@ public class JsonSchemaValidator {
 		try {
 			JSONObject jsonSchema = new JSONObject(schema);
 			JSONObject jsonSubject = new JSONObject(input);
-			
+
 			Schema schema_ = SchemaLoader.load(jsonSchema);
 			schema_.validate(jsonSubject);
 			try {
-				return jsonSubject.getString("schemaVersion");
+				return jsonSubject.getString("version");
 			} catch (Exception e) {
 				return null;
 			}
