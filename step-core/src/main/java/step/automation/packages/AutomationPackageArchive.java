@@ -50,8 +50,11 @@ public class AutomationPackageArchive implements Closeable {
 
     public AutomationPackageArchive(File automationPackageFile) throws AutomationPackageReadingException {
         this.internalClassLoader = true;
-        if (!isArchive(automationPackageFile)) {
-            throw new AutomationPackageReadingException("Automation package " + automationPackageFile.getName() + " is neither zip archive nor jar file");
+        if (!automationPackageFile.exists()) {
+            throw new AutomationPackageReadingException("Automation package " + automationPackageFile.getName() + " doesn't exist");
+        }
+        if (!automationPackageFile.isDirectory() && !isArchive(automationPackageFile)) {
+            throw new AutomationPackageReadingException("Automation package " + automationPackageFile.getName() + " is neither zip archive nor jar file nor directory");
         }
         this.originalFile = automationPackageFile;
         this.type = JAVA; //Only supported type for now

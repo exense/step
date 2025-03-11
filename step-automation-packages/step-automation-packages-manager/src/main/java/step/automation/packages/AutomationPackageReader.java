@@ -297,8 +297,8 @@ public class AutomationPackageReader {
         }
     }
 
-    public AutomationPackageContent readAutomationPackageFromJarFile(File automationPackageJar, String apVersion) throws AutomationPackageReadingException {
-        try (AutomationPackageArchive automationPackageArchive = new AutomationPackageArchive(automationPackageJar)) {
+    public AutomationPackageContent readAutomationPackageFromJarFile(File automationPackage, String apVersion) throws AutomationPackageReadingException {
+        try (AutomationPackageArchive automationPackageArchive = new AutomationPackageArchive(automationPackage)) {
             return readAutomationPackage(automationPackageArchive, apVersion, false);
         } catch (IOException e) {
             throw new AutomationPackageReadingException("IO Exception", e);
