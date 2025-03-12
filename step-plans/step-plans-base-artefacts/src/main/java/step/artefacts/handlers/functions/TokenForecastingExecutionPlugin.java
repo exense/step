@@ -43,6 +43,7 @@ public class TokenForecastingExecutionPlugin extends AbstractExecutionEnginePlug
 
     private static final Logger logger = LoggerFactory.getLogger(TokenForecastingExecutionPlugin.class);
     public static final String CONTEXT_OBJECT_KEY = "$tokenForecastingContext";
+    public static final String FORECASTING_AGENT_LIMIT_KEY = "$forecastingAgentLimit";
 
     private Set<AgentPoolSpec> availableAgentPools;
 
