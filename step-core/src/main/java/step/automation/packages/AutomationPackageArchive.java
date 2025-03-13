@@ -21,10 +21,7 @@ package step.automation.packages;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.Closeable;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -53,6 +50,12 @@ public class AutomationPackageArchive implements Closeable {
 
     public AutomationPackageArchive(File automationPackageFile) throws AutomationPackageReadingException {
         this.internalClassLoader = true;
+        if (!automationPackageFile.exists()) {
+            throw new AutomationPackageReadingException("Automation package " + automationPackageFile.getName() + " doesn't exist");
+        }
+        if (!automationPackageFile.isDirectory() && !isArchive(automationPackageFile)) {
+            throw new AutomationPackageReadingException("Automation package " + automationPackageFile.getName() + " is neither zip archive nor jar file nor directory");
+        }
         this.originalFile = automationPackageFile;
         this.type = JAVA; //Only supported type for now
         try {
@@ -61,6 +64,16 @@ public class AutomationPackageArchive implements Closeable {
         } catch (MalformedURLException ex) {
             throw new AutomationPackageReadingException("Unable to read automation package", ex);
         }
+    }
+
+    private static boolean isArchive(File f) {
+        int fileSignature = 0;
+        try (RandomAccessFile raf = new RandomAccessFile(f, "r")) {
+            fileSignature = raf.readInt();
+        } catch (IOException e) {
+            // handle if you like
+        }
+        return fileSignature == 0x504B0304 || fileSignature == 0x504B0506 || fileSignature == 0x504B0708;
     }
 
     public boolean hasAutomationPackageDescriptor() {
