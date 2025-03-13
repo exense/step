@@ -36,7 +36,7 @@ import step.functions.io.Output;
 import step.grid.agent.tokenpool.TokenReservationSession;
 import step.grid.agent.tokenpool.TokenSession;
 import step.grid.contextbuilder.ApplicationContextBuilder;
-import step.grid.contextbuilder.ApplicationContextConfiguration;
+import step.grid.contextbuilder.ExecutionContextCacheConfiguration;
 import step.grid.filemanager.FileManagerClient;
 import step.grid.filemanager.FileManagerException;
 import step.grid.filemanager.FileVersion;
@@ -241,7 +241,7 @@ public class GeneralScriptHandlerTest {
 	}
 
 	public FunctionHandlerFactory getFunctionHandlerFactory() {
-		applicationContextBuilder = new ApplicationContextBuilder(new ApplicationContextConfiguration());
+		applicationContextBuilder = new ApplicationContextBuilder(new ExecutionContextCacheConfiguration());
 		applicationContextBuilder.forkCurrentContext(GeneralScriptHandler.FORKED_BRANCH);
 		testFileManagerClient = new TestFileManagerClient();
 		FunctionHandlerFactory factory = new FunctionHandlerFactory(applicationContextBuilder, testFileManagerClient );

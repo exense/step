@@ -44,7 +44,7 @@ import step.grid.agent.handler.MessageHandlerPool;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
 import step.grid.agent.tokenpool.TokenReservationSession;
 import step.grid.contextbuilder.ApplicationContextBuilder;
-import step.grid.contextbuilder.ApplicationContextConfiguration;
+import step.grid.contextbuilder.ExecutionContextCacheConfiguration;
 import step.grid.filemanager.*;
 import step.grid.io.InputMessage;
 import step.grid.io.OutputMessage;
@@ -245,7 +245,7 @@ public class FunctionMessageHandlerTest {
 
 	private AgentTokenServices getLocalAgentTokenServices() {
 		AgentTokenServices tokenServices = new AgentTokenServices(new FunctionMessageHandlerTest.TestFileManagerClient());
-		tokenServices.setApplicationContextBuilder(new ApplicationContextBuilder(new ApplicationContextConfiguration()));
+		tokenServices.setApplicationContextBuilder(new ApplicationContextBuilder(new ExecutionContextCacheConfiguration()));
 		Map<String, String> agentProperties = new HashMap<>();
 		agentProperties.put("myAgentProp1", "myAgentPropValue1");
 		agentProperties.put("myTokenProp1", "defaultValue");
