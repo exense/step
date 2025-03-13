@@ -43,7 +43,7 @@
 		<!-- internal dependencies -->
 		<dependencies.version>2025.3.3-67c5a07c5a41d362f3edcc7d</dependencies.version>
 		<step-grid.version>2025.3.8-67cc410f5a41d362f349dd6d</step-grid.version>
-		<step-framework.version>2025.2.27-67c05bbdd349815949a77387</step-framework.version>
+		<step-framework.version>2025.3.13-67d2ae785a41d362f316c4ce</step-framework.version>
 		<exense-commons.version>2025.2.28-67c1cb99d349815949c92bbe</exense-commons.version>
 
 		<!-- external, non-transitive, dependencies -->
