@@ -25,8 +25,6 @@ public class AutomationPackageDescriptorYamlImpl extends AbstractAutomationPacka
 
     private String version;
 
-    private String schemaVersion;
-
     private Map<String, String> attributes = new HashMap<>();
 
     private String name;
@@ -47,15 +45,6 @@ public class AutomationPackageDescriptorYamlImpl extends AbstractAutomationPacka
 
     public void setVersion(String version) {
         this.version = version;
-    }
-
-    @Override
-    public String getSchemaVersion() {
-        return schemaVersion;
-    }
-
-    public void setSchemaVersion(String schemaVersion) {
-        this.schemaVersion = schemaVersion;
     }
 
     @Override

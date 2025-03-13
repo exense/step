@@ -91,10 +91,10 @@ public class AutomationPackageDescriptorReader {
     protected <T extends AutomationPackageFragmentYaml> T readAutomationPackageYamlFile(InputStream yaml, Class<T> targetClass, String packageFileName) throws AutomationPackageReadingException {
         try {
             String yamlDescriptorString = new String(yaml.readAllBytes(), StandardCharsets.UTF_8);
-
+            String version = null;
             if (jsonSchema != null) {
                 try {
-                    JsonSchemaValidator.validate(jsonSchema, yamlObjectMapper.readTree(yamlDescriptorString).toString());
+                    version = JsonSchemaValidator.validate(jsonSchema, yamlObjectMapper.readTree(yamlDescriptorString).toString());
                 } catch (Exception ex) {
                     // add error details
                     String message = ex.getMessage();
@@ -105,7 +105,7 @@ public class AutomationPackageDescriptorReader {
                 }
             }
 
-            T res = yamlObjectMapper.readValue(yamlDescriptorString, targetClass);
+            T res = yamlObjectMapper.reader().withAttribute("version", version).readValue(yamlDescriptorString, targetClass);
 
             logAfterRead(packageFileName, res);
             return res;
@@ -154,7 +154,7 @@ public class AutomationPackageDescriptorReader {
         SimpleModule module = new SimpleModule();
 
         // register deserializers to read yaml plans
-        planReader.registerAllSerializersAndDeserializers(module, yamlMapper, false);
+        planReader.registerAllSerializersAndDeserializers(module, yamlMapper, true);
 
         // add annotated jackson deserializers
         StepYamlDeserializersScanner.addAllDeserializerAddonsToModule(module, yamlMapper, List.of(stepYamlDeserializer -> {

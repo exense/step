@@ -2637,11 +2637,8 @@
     }
   },
   "properties" : {
-    "schemaVersion" : {
-      "const" : "1.1.0"
-    },
     "version" : {
-      "type" : "string"
+      "const" : "1.1.0"
     },
     "name" : {
       "type" : "string"
