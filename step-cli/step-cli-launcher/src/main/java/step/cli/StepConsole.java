@@ -271,6 +271,12 @@ public class StepConsole implements Callable<Integer> {
                     description = "Whether to waits for the deployment to complete")
             protected boolean async;
 
+            @Option(names = {"--apVersion"}, description = "Optionally set the version of this automation package. This allows to deploy and use multiple versions of the same package on Step")
+            protected String apVersion;
+
+            @Option(names = {"--activationExpr"}, description = "When deploying multiple versions of the same package (see \"apVersion\"), the expression is used to select the proper versions during the execution of plans. Example: \"env == PROD\"")
+            protected String activationExpr;
+
             @Override
             public Integer call() throws Exception {
                 super.call();
@@ -286,12 +292,12 @@ public class StepConsole implements Callable<Integer> {
                 checkStepUrlRequired();
                 checkEeOptionsConsistency(spec);
                 checkStepControllerVersion();
-                executeTool(stepUrl, getStepProjectName(), getAuthToken(), async);
+                executeTool(stepUrl, getStepProjectName(), getAuthToken(), async, apVersion, activationExpr);
             }
 
             // for tests
-            protected void executeTool(final String stepUrl1, final String projectName, final String authToken1, final boolean async1) {
-                new AbstractDeployAutomationPackageTool(stepUrl1, projectName, authToken1, async1) {
+            protected void executeTool(final String stepUrl1, final String projectName, final String authToken, final boolean async, String apVersion, String activationExpr) {
+                new AbstractDeployAutomationPackageTool(stepUrl1, projectName, authToken, async, apVersion, activationExpr) {
                     @Override
                     protected File getFileToUpload() throws StepCliExecutionException {
                         return prepareApFile(apFile);

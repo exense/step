@@ -24,12 +24,15 @@ public class AbstractDeployAutomationPackageToolTest {
     @Test
     public void testUpload() throws Exception {
         RemoteAutomationPackageClientImpl automationPackageClient = createRemoteAutomationPackageClientMock();
-        DeployAutomationPackageToolTestable tool = new DeployAutomationPackageToolTestable("http://localhost:8080", TENANT_1.getName(), null, false, automationPackageClient);
+        DeployAutomationPackageToolTestable tool = new DeployAutomationPackageToolTestable(
+                "http://localhost:8080", TENANT_1.getName(),
+                null, false, "ver1", "true==true", automationPackageClient
+        );
         tool.execute();
 
         // attributes used to search for existing function packages
         ArgumentCaptor<File> packageFileCaptor = ArgumentCaptor.forClass(File.class);
-        Mockito.verify(automationPackageClient, Mockito.times(1)).createOrUpdateAutomationPackage(packageFileCaptor.capture(), Mockito.anyBoolean());
+        Mockito.verify(automationPackageClient, Mockito.times(1)).createOrUpdateAutomationPackage(packageFileCaptor.capture(), Mockito.anyBoolean(), Mockito.eq("ver1"), Mockito.eq("true==true"));
         Mockito.verify(automationPackageClient, Mockito.times(1)).close();
         Mockito.verifyNoMoreInteractions(automationPackageClient);
         Assert.assertEquals(tool.TEST_FILE, packageFileCaptor.getValue());
@@ -37,7 +40,7 @@ public class AbstractDeployAutomationPackageToolTest {
 
     private RemoteAutomationPackageClientImpl createRemoteAutomationPackageClientMock() throws AutomationPackageClientException {
         RemoteAutomationPackageClientImpl remoteClient = Mockito.mock(RemoteAutomationPackageClientImpl.class);
-        Mockito.when(remoteClient.createOrUpdateAutomationPackage(Mockito.any(), Mockito.anyBoolean())).thenReturn(new AutomationPackageUpdateResult(AutomationPackageUpdateStatus.CREATED, UPDATED_PACK_ID));
+        Mockito.when(remoteClient.createOrUpdateAutomationPackage(Mockito.any(), Mockito.anyBoolean(), Mockito.any(), Mockito.any())).thenReturn(new AutomationPackageUpdateResult(AutomationPackageUpdateStatus.CREATED, UPDATED_PACK_ID));
         return remoteClient;
     }
 
@@ -47,8 +50,9 @@ public class AbstractDeployAutomationPackageToolTest {
 
         private RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock;
 
-        public DeployAutomationPackageToolTestable(String url, String stepProjectName, String authToken, Boolean async, RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock) {
-            super(url, stepProjectName, authToken, async);
+        public DeployAutomationPackageToolTestable(String url, String stepProjectName, String authToken, Boolean async, String apVersion, String activationExpr,
+                                                   RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock) {
+            super(url, stepProjectName, authToken, async, apVersion, activationExpr);
             try {
                 TEST_FILE = FileHelper.createTempFile();
             } catch (IOException e) {

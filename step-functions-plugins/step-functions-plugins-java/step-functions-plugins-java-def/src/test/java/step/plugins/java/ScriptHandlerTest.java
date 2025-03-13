@@ -18,26 +18,13 @@
  ******************************************************************************/
 package step.plugins.java;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
+import ch.exense.commons.app.Configuration;
+import ch.exense.commons.io.FileHelper;
 import ch.exense.commons.test.categories.PerformanceTest;
 import jakarta.json.JsonObject;
-
 import org.bson.types.ObjectId;
 import org.junit.Assert;
 import org.junit.Test;
-
-import ch.exense.commons.app.Configuration;
-import ch.exense.commons.io.FileHelper;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,7 +35,6 @@ import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.execution.ExecutionEngine;
-import step.core.execution.OperationMode;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
 import step.core.plans.runner.PlanRunnerResult;
@@ -62,6 +48,14 @@ import step.grid.io.AttachmentHelper;
 import step.planbuilder.BaseArtefacts;
 import step.planbuilder.FunctionArtefacts;
 import step.threadpool.ThreadPoolPlugin;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.*;
 
 import static org.junit.Assert.*;
 
@@ -95,9 +89,12 @@ public class ScriptHandlerTest {
 	@Test
 	public void testWithEngine() throws IOException {
 		MockedGridClientImpl gridClient = null;
-		try (ExecutionEngine executionEngine = ExecutionEngine.builder().withPlugin(new ThreadPoolPlugin())
-				.withPlugin(new BaseArtefactPlugin()).withPlugin(new TokenForecastingExecutionPlugin())
-				.withPlugin(new FunctionPlugin()).withPlugin(new GeneralScriptFunctionPlugin()).build()) {
+		try (ExecutionEngine executionEngine = ExecutionEngine.builder()
+				.withPlugin(new ThreadPoolPlugin())
+				.withPlugin(new BaseArtefactPlugin())
+				.withPlugin(new TokenForecastingExecutionPlugin())
+				.withPlugin(new FunctionPlugin())
+				.withPlugin(new GeneralScriptFunctionPlugin()).build()) {
 			GeneralScriptFunction function = buildTestFunction("javascript", "test1.js");
 			function.addAttribute(AbstractOrganizableObject.NAME, "myJavascriptKeyword");
 			CallFunction callFunction = FunctionArtefacts.keyword(function.getAttribute(AbstractOrganizableObject.NAME), "{\"key1\":\"val1\"}");

@@ -31,7 +31,6 @@ import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
 import step.core.plans.Plan;
 import step.core.plans.PlanFilter;
-import step.core.plans.filters.PlanMultiFilter;
 import step.core.plans.runner.PlanRunnerResult;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.junit.runner.StepClassParserResult;
@@ -62,7 +61,7 @@ public class ApLocalExecuteCommandHandler {
             try (InputStream is = new FileInputStream(apFile)) {
                 AutomationPackageFromInputStreamProvider automationPackageProvider = new AutomationPackageFromInputStreamProvider(is, apFile.getName());
                 ObjectId automationPackageId = automationPackageManager.createOrUpdateAutomationPackage(
-                        false, true, null, automationPackageProvider,
+                        false, true, null, automationPackageProvider, null, null,
                         true, null, null, false
                 ).getId();
 

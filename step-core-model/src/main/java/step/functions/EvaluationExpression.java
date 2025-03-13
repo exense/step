@@ -16,43 +16,10 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.yaml.model;
+package step.functions;
 
-import java.util.HashMap;
-import java.util.Map;
+import step.commons.activation.Expression;
 
-public class AutomationPackageDescriptorYamlImpl extends AbstractAutomationPackageFragmentYaml implements AutomationPackageDescriptorYaml {
-
-    private String version;
-
-    private Map<String, String> attributes = new HashMap<>();
-
-    private String name;
-
-    @Override
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    @Override
-    public String getVersion() {
-        return version;
-    }
-
-    public void setVersion(String version) {
-        this.version = version;
-    }
-
-    @Override
-    public Map<String, String> getAttributes() {
-        return attributes;
-    }
-
-    public void setAttributes(Map<String, String> attributes) {
-        this.attributes = attributes;
-    }
+public interface EvaluationExpression {
+    Expression getActivationExpression();
 }

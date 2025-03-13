@@ -46,7 +46,7 @@ public class JUnitPlansProvider {
             AutomationPackageManager automationPackageManager = executionEngine.getExecutionEngineContext().require(AutomationPackageManager.class);
             AutomationPackageFromClassLoaderProvider automationPackageProvider = new AutomationPackageFromClassLoaderProvider(testClass.getClassLoader());
             ObjectId automationPackageId = automationPackageManager.createOrUpdateAutomationPackage(
-                    false, true, null, automationPackageProvider,
+                    false, true, null, automationPackageProvider, null, null,
                     true, null, null, false
             ).getId();
 

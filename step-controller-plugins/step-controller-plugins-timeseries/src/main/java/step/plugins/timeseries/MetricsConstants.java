@@ -16,7 +16,7 @@ public class MetricsConstants {
 		public static final MetricAttribute TYPE_ATRIBUTE = new MetricAttribute()
 				.setName("type")
 				.setType(MetricAttributeType.TEXT)
-				.setMetadata(Map.of("knownValues", Arrays.asList("keyword", "custom")))
+				.setMetadata(Map.of("knownValues", Arrays.asList("keyword", "custom", "testcase")))
 				.setDisplayName("Type");
 		public static final MetricAttribute TASK_ATTRIBUTE = new MetricAttribute()
 				.setName("taskId")

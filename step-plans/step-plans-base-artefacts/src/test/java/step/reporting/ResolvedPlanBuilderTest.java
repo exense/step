@@ -37,8 +37,11 @@ public class ResolvedPlanBuilderTest {
 
     @Before
     public void before() {
-        engine = new ExecutionEngine.Builder().withPlugin(new BaseArtefactPlugin()).withPlugin(new ThreadPoolPlugin())
-                .withPlugin(new FunctionPlugin()).withPlugin(new TokenForecastingExecutionPlugin()).build();
+        engine = new ExecutionEngine.Builder()
+                .withPlugin(new BaseArtefactPlugin())
+                .withPlugin(new ThreadPoolPlugin())
+                .withPlugin(new FunctionPlugin())
+                .withPlugin(new TokenForecastingExecutionPlugin()).build();
     }
 
     @After

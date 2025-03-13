@@ -59,8 +59,10 @@ public class MeasurementPluginTest extends AbstractKeyword {
 		mc.initGaugeCollectorRegistry(GlobalContextBuilder.createGlobalContext());
 		MeasurementPlugin.registerMeasurementHandlers(new TestMeasurementHandler());
 		engine = ExecutionEngine.builder().withPlugin(new MeasurementPlugin(GaugeCollectorRegistry.getInstance()))
-				.withPlugin(new FunctionPlugin()).withPlugin(new ThreadPoolPlugin())
-				.withPlugin(new LocalFunctionPlugin()).withPlugin(new BaseArtefactPlugin())
+				.withPlugin(new FunctionPlugin())
+				.withPlugin(new ThreadPoolPlugin())
+				.withPlugin(new LocalFunctionPlugin())
+				.withPlugin(new BaseArtefactPlugin())
 				.build();
 	}
 

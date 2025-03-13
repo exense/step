@@ -29,6 +29,8 @@ import step.artefacts.handlers.FunctionLocator;
 import step.artefacts.handlers.PlanLocator;
 import step.artefacts.handlers.SelectorHelper;
 import step.attachments.FileResolver;
+import step.automation.packages.accessor.AutomationPackageAccessor;
+import step.automation.packages.accessor.InMemoryAutomationPackageAccessorImpl;
 import step.core.Controller;
 import step.core.accessors.AbstractAccessor;
 import step.core.accessors.AbstractOrganizableObject;
@@ -91,6 +93,7 @@ public class ExportManagerTest {
 	private EncryptionManager encryptionManager;
 	private LocalResourceManagerImpl resourceManager;
 	private FunctionAccessor functionAccessor;
+	private AutomationPackageAccessor apAccessor;
 	private Accessor<Parameter> parameterAccessor;
 	private ResourceAccessor resourceAccessor;
 	private ResourceRevisionAccessor resourceRevisionAccessor;
@@ -127,6 +130,7 @@ public class ExportManagerTest {
 		
 		planAccessor = new InMemoryPlanAccessor();
 		functionAccessor = new InMemoryFunctionAccessorImpl();
+		apAccessor = new InMemoryAutomationPackageAccessorImpl();
 		parameterAccessor = new AbstractAccessor<>(new InMemoryCollection<>());
 
 		resourceAccessor = new InMemoryResourceAccessor();

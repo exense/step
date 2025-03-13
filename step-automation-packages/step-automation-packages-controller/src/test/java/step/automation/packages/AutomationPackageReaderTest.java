@@ -66,7 +66,7 @@ public class AutomationPackageReaderTest {
     public void testReadFromPackage() throws AutomationPackageReadingException {
         File automationPackageJar = new File("src/test/resources/samples/step-automation-packages-sample1.jar");
 
-        AutomationPackageContent automationPackageContent = reader.readAutomationPackageFromJarFile(automationPackageJar);
+        AutomationPackageContent automationPackageContent = reader.readAutomationPackageFromJarFile(automationPackageJar, null);
         assertNotNull(automationPackageContent);
 
         // 6 keywords: 4 from descriptor and two from java class with @Keyword annotation
@@ -177,7 +177,7 @@ public class AutomationPackageReaderTest {
     public void testFragmentsWithPackageAP() throws AutomationPackageReadingException {
         File automationPackage = FileHelper.getClassLoaderResourceAsFile(this.getClass().getClassLoader(), "step/automation/packages/step-automation-packages.zip");
 
-        AutomationPackageContent automationPackageContent = reader.readAutomationPackageFromJarFile(automationPackage);
+        AutomationPackageContent automationPackageContent = reader.readAutomationPackageFromJarFile(automationPackage, null);
         assertNotNull(automationPackageContent);
 
         List<Plan> plans = automationPackageContent.getPlans();
@@ -194,7 +194,7 @@ public class AutomationPackageReaderTest {
         File tempFolder = FileHelper.createTempFolder();
         FileHelper.unzip(this.getClass().getClassLoader().getResourceAsStream("step/automation/packages/step-automation-packages.zip"), tempFolder);
 
-        AutomationPackageContent automationPackageContent = reader.readAutomationPackageFromJarFile(tempFolder);
+        AutomationPackageContent automationPackageContent = reader.readAutomationPackageFromJarFile(tempFolder, null);
         assertNotNull(automationPackageContent);
 
         List<Plan> plans = automationPackageContent.getPlans();

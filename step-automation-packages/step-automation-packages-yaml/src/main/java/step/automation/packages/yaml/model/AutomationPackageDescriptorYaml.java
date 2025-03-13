@@ -28,7 +28,5 @@ public interface AutomationPackageDescriptorYaml extends AutomationPackageFragme
 
     String getVersion();
 
-    String getSchemaVersion();
-
     Map<String, String> getAttributes();
 }
