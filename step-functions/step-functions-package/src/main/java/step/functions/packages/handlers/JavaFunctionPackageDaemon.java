@@ -13,7 +13,7 @@ import step.core.accessors.AbstractOrganizableObject;
 import step.core.scanner.AnnotationScanner;
 import step.functions.Function;
 import step.grid.contextbuilder.ApplicationContextBuilder;
-import step.grid.contextbuilder.ApplicationContextConfiguration;
+import step.grid.contextbuilder.ExecutionContextCacheConfiguration;
 import step.grid.contextbuilder.LocalFileApplicationContextFactory;
 import step.grid.contextbuilder.LocalFolderApplicationContextFactory;
 import step.handlers.javahandler.Keyword;
@@ -64,9 +64,9 @@ public class JavaFunctionPackageDaemon extends FunctionPackageUtils {
 			File packageFile = resolveMandatoryFile(parameters.getPackageLocation());
 
 			// Build classloader
-			ApplicationContextConfiguration applicationContextConfiguration = new ApplicationContextConfiguration();
-			applicationContextConfiguration.setCleanupEnabled(false); //not required since the builder is closed directly
-			try (ApplicationContextBuilder applicationContextBuilder = new ApplicationContextBuilder(ClassLoader.getSystemClassLoader(), applicationContextConfiguration)) {
+			ExecutionContextCacheConfiguration executionContextCacheConfiguration = new ExecutionContextCacheConfiguration();
+			executionContextCacheConfiguration.setEnableCleanup(false); //not required since the builder is closed directly
+			try (ApplicationContextBuilder applicationContextBuilder = new ApplicationContextBuilder(ClassLoader.getSystemClassLoader(), executionContextCacheConfiguration)) {
 				if (packageLibrariesFile != null) {
 					applicationContextBuilder.pushContext(new LocalFolderApplicationContextFactory(packageLibrariesFile), true);
 				}

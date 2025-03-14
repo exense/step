@@ -42,7 +42,7 @@ import step.grid.client.GridClient;
 import step.grid.client.GridClientConfiguration;
 import step.grid.client.LocalGridClientImpl;
 import step.grid.client.TokenLifecycleStrategy;
-import step.grid.contextbuilder.ApplicationContextConfiguration;
+import step.grid.contextbuilder.ExecutionContextCacheConfiguration;
 import step.grid.filemanager.FileManagerConfiguration;
 import step.grid.filemanager.FileManagerImplConfig;
 import step.grid.io.AgentErrorCode;
@@ -83,9 +83,9 @@ public class GridPlugin extends AbstractControllerPlugin {
 		fileManagerConfig.setFileLastModificationCacheConcurrencyLevel(configuration.getPropertyAsInteger(GRID_FILEMANAGER_CACHE_CONCURRENCYLEVEL_KEY, 4));
 		fileManagerConfig.setFileLastModificationCacheMaximumsize(configuration.getPropertyAsInteger(GRID_FILEMANAGER_CACHE_MAXIMUMSIZE, 1000));
 		fileManagerConfig.setFileLastModificationCacheExpireAfter(configuration.getPropertyAsInteger(GRID_FILEMANAGER_CACHE_EXPIREAFTER_MS, 500));
-		fileManagerConfig.setCleanupEnabled(configuration.getPropertyAsBoolean(GRID_FILENAMANGER_FILE_CLEANUP_ENABLED, true));
-		fileManagerConfig.setCleanupIntervalMinutes(configuration.getPropertyAsInteger(GRID_FILENAMANGER_FILE_CLEANUP_INTERVAL_MINUTES, 60));
-		fileManagerConfig.setCleanupLastAccessTimeThresholdMinutes(configuration.getPropertyAsLong(GRID_FILEMANAGER_FILE_CLEANUP_LAST_ACCESS_THRESHOLD_MINUTES, 120L));
+		fileManagerConfig.setEnableCleanup(configuration.getPropertyAsBoolean(GRID_FILENAMANGER_FILE_CLEANUP_ENABLED, true));
+		fileManagerConfig.setCleanupFrequencyMinutes(configuration.getPropertyAsInteger(GRID_FILENAMANGER_FILE_CLEANUP_INTERVAL_MINUTES, 60));
+		fileManagerConfig.setCleanupTimeToLiveMinutes(configuration.getPropertyAsLong(GRID_FILEMANAGER_FILE_CLEANUP_LAST_ACCESS_THRESHOLD_MINUTES, 1440L));
 		gridConfig.setFileManagerImplConfig(fileManagerConfig);
 
 		GridConfigurationEditor.List editors = context.get(GridConfigurationEditor.List.class);
@@ -146,7 +146,7 @@ public class GridPlugin extends AbstractControllerPlugin {
 		gridClientConfiguration.setReleaseSessionTimeout(configuration.getPropertyAsInteger("grid.client.token.release.timeout.ms", gridClientConfiguration.getReleaseSessionTimeout()));
 		gridClientConfiguration.setAllowInvalidSslCertificates(configuration.getPropertyAsBoolean("grid.client.ssl.allowinvalidcertificate", false));
 		gridClientConfiguration.setMaxStringLength(configuration.getPropertyAsInteger("grid.client.max.string.length.bytes", gridClientConfiguration.getMaxStringLength()));
-		gridClientConfiguration.setLocalTokenApplicationContextConfiguration(new ApplicationContextConfiguration(fileManagerConfig));
+		gridClientConfiguration.setLocalTokenExecutionContextCacheConfiguration(new ExecutionContextCacheConfiguration());
 		return gridClientConfiguration;
 	}
 
