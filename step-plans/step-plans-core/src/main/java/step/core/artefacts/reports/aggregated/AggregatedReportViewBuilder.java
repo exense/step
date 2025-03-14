@@ -20,6 +20,7 @@ import step.core.timeseries.TimeSeriesCollectionsSettings;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class AggregatedReportViewBuilder {
 
@@ -184,14 +185,16 @@ public class AggregatedReportViewBuilder {
     private ReportNode getSingleReportNodeInstance(ReportNodeAccessor reportNodeAccessor, String executionId, String artefactHash, ReportNodeTimeSeries.Range range) {
         Long from = (range != null) ? range.from : null;
         Long to = (range != null) ? range.to : null;
-        List<ReportNode> reports = reportNodeAccessor.getReportNodesByArtefactHash(executionId, artefactHash, from, to, 0, 2).collect(Collectors.toList());
-        if (reports.size() == 1) {
-            return reports.get(0);
-        } else {
-            String reportCountMsg = (reports.isEmpty()) ? "no" : "more than one";
-            logger.error("Unexpected number of report nodes found. Found {} report for execution id {}, artefactHash: {} and range: {} to {}",
-                    reportCountMsg, executionId, artefactHash, from, to);
-            return null;
+        try (Stream<ReportNode> reportNodesByArtefactHash = reportNodeAccessor.getReportNodesByArtefactHash(executionId, artefactHash, from, to, 0, 2)) {
+            List<ReportNode> reports = reportNodesByArtefactHash.collect(Collectors.toList());
+            if (reports.size() == 1) {
+                return reports.get(0);
+            } else {
+                String reportCountMsg = (reports.isEmpty()) ? "no" : "more than one";
+                logger.error("Unexpected number of report nodes found. Found {} report for execution id {}, artefactHash: {} and range: {} to {}",
+                        reportCountMsg, executionId, artefactHash, from, to);
+                return null;
+            }
         }
     }
 
