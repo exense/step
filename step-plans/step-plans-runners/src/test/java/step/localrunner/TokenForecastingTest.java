@@ -350,7 +350,7 @@ public class TokenForecastingTest {
 				new AgentPoolSpec("pool1", Map.of("$agenttype", "default", "type", "pool"), 1));
 
 		TokenForecastingContext tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableAgentPools);
-		// just to verify that the execution actually was performed the expected number of times (2 threadgroups x nThreads), even if sequentially
+		// just to verify that the execution actually was performed the expected number of times, even if sequentially
 		assertEquals(nThreads, actualCalls.get());
 		assertEquals(Set.of(new AgentPoolRequirementSpec("pool1", nThreads)),
 				Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
