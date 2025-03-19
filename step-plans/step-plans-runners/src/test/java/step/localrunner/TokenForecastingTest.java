@@ -57,11 +57,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertEquals;
 import static step.artefacts.handlers.functions.TokenForecastingExecutionPlugin.getTokenForecastingContext;
 
-public class TokenForcastingTest {
+public class TokenForecastingTest {
 
 	@Test
 	public void test() throws Exception {
@@ -314,6 +315,56 @@ public class TokenForcastingTest {
 				Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
 
 	}
+
+	@Test
+	public void testWithRuntimeVariables() {
+		int nThreads = 7;
+		step.artefacts.Set setVariable = new step.artefacts.Set();
+		setVariable.setKey(new DynamicValue<>("nThreads"));
+		setVariable.setValue(new DynamicValue<>("" + nThreads));
+		ThreadGroup threadGroup = new ThreadGroup();
+		// correctly typed as integer
+		threadGroup.setUsers(new DynamicValue<>("nThreads.toInteger()", ""));
+
+		CallFunction keyword = FunctionArtefacts.keyword("test");
+
+		Plan plan = PlanBuilder.create()
+				.startBlock(BaseArtefacts.testCase())
+				.add(setVariable)
+				.startBlock(threadGroup)
+				.add(keyword)
+				.endBlock()
+				.endBlock()
+				.build();
+
+		AtomicInteger actualCalls = new AtomicInteger();
+
+		MyFunction function = new MyFunction(input -> {
+			actualCalls.incrementAndGet();
+			return new Output<>();
+		});
+		function.addAttribute(AbstractOrganizableObject.NAME, "test");
+		plan.setFunctions(List.of(function));
+
+		Set<AgentPoolSpec> availableAgentPools = Set.of(
+				new AgentPoolSpec("pool1", Map.of("$agenttype", "default", "type", "pool"), 1));
+
+		TokenForecastingContext tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableAgentPools);
+		// just to verify that the execution actually was performed the expected number of times (2 threadgroups x nThreads), even if sequentially
+		assertEquals(nThreads, actualCalls.get());
+		assertEquals(Set.of(new AgentPoolRequirementSpec("pool1", nThreads)),
+				Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
+
+		// This value is interpretable as integer, but string-typed, and used to break forecasting before fixing (SED-3832)
+		threadGroup.setUsers(new DynamicValue<>("nThreads", ""));
+
+		actualCalls.set(0);
+		tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableAgentPools);
+		assertEquals(nThreads, actualCalls.get());
+		assertEquals(Set.of(new AgentPoolRequirementSpec("pool1", nThreads)),
+				Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
+	}
+
 
 	private static TokenForecastingContext executePlanWithSpecifiedTokenPools(Plan plan, Set<AgentPoolSpec> availableAgentPools) {
 		return executePlanWithSpecifiedTokenPools(plan, availableAgentPools, null);
