@@ -329,13 +329,13 @@ public class TokenForecastingTest {
 		CallFunction keyword = FunctionArtefacts.keyword("test");
 
 		Plan plan = PlanBuilder.create()
-				.startBlock(BaseArtefacts.testCase())
+			.startBlock(BaseArtefacts.testCase())
 				.add(setVariable)
 				.startBlock(threadGroup)
-				.add(keyword)
+					.add(keyword)
 				.endBlock()
-				.endBlock()
-				.build();
+			.endBlock()
+			.build();
 
 		AtomicInteger actualCalls = new AtomicInteger();
 
