@@ -52,7 +52,7 @@ import static step.artefacts.handlers.functions.TokenForecastingExecutionPlugin.
 public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode> {
 
 	public void createReportSkeleton_(ReportNode node, ThreadGroup artefact) {
-		Integer numberOfThreads = artefact.getUsers().get();
+		Integer numberOfThreads = artefact.getUsers().getOrDefault(Integer.class,0);
 
 		TokenForecastingContext tokenForecastingContext = getTokenForecastingContext(context);
 		pushNewTokenNumberCalculationContext(context, new MultiplyingTokenForecastingContext(tokenForecastingContext, numberOfThreads));
