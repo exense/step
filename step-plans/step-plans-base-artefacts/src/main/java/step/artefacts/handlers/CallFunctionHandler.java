@@ -139,15 +139,20 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	}
 
 	@Override
+	public boolean pushArtefactPath() {
+		return true;
+	}
+
+
+	@Override
 	protected List<ResolvedChildren> resolveChildrenArtefactBySource_(CallFunction artefactNode, String currentArtefactPath) {
-		String newPath = ArtefactPathHelper.getPathOfArtefact(currentArtefactPath, artefactNode);
 		List<ResolvedChildren> results = new ArrayList<>();
 		try {
 			dynamicBeanResolver.evaluate(artefactNode, getBindings());
 			Function function = getFunction(artefactNode);
 			if(function instanceof CompositeFunction) {
 					AbstractArtefact root = ((CompositeFunction) function).getPlan().getRoot();
-					results.add(new ResolvedChildren(ParentSource.SUB_PLAN, List.of(root), newPath));
+					results.add(new ResolvedChildren(ParentSource.SUB_PLAN, List.of(root), currentArtefactPath));
 			}
 		} catch (NoSuchElementException e) {
 			String message = "Unable to resolve called composite keyword in plan";
@@ -162,7 +167,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				logger.trace("Unable to resolve the function referenced by this callFunction '{}' artefact at this stage.", artefactNode.getAttribute(AbstractOrganizableObject.NAME), e);
 			}
 		}
-		results.add(new ResolvedChildren(ParentSource.MAIN, artefactNode.getChildren(), newPath));
+		results.add(new ResolvedChildren(ParentSource.MAIN, artefactNode.getChildren(), currentArtefactPath));
 		return results;
 	}
 

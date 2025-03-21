@@ -387,6 +387,14 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		return (String) variablesManager.getVariable(ARTEFACT_PATH);
 	}
 
+	/**
+	 * Used by the ResolvedPlanBuilder before th execution. It must be overridden by handler pushing the artefactHash
+	 * return whether this handler push the artefactHash to the path
+	 */
+	public boolean pushArtefactPath() {
+		return false;
+	}
+
 	protected void pushArtefactPath(ReportNode node, ARTEFACT artefact) {
 		String currentArtefactPath = currentArtefactPath();
 		String newArtefactPath = ArtefactPathHelper.getPathOfArtefact(currentArtefactPath, artefact);
