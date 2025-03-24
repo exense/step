@@ -357,6 +357,11 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 
 		context.setCurrentReportNode(reportNode);
 		reportNodeCache.put(reportNode);
+
+		//Directly push the resolved plan node path if required
+		if (pushArtefactPath()) {
+			pushArtefactPath(reportNode, artefact);
+		}
 		
 		if(newVariables!=null) {
 			for(Entry<String, Object> var:newVariables.entrySet()) {
@@ -395,7 +400,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		return false;
 	}
 
-	protected void pushArtefactPath(ReportNode node, ARTEFACT artefact) {
+	private void pushArtefactPath(ReportNode node, ARTEFACT artefact) {
 		String currentArtefactPath = currentArtefactPath();
 		String newArtefactPath = ArtefactPathHelper.getPathOfArtefact(currentArtefactPath, artefact);
 		context.getVariablesManager().putVariable(node, ARTEFACT_PATH, newArtefactPath);
