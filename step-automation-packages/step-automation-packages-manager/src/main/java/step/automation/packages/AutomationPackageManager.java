@@ -64,10 +64,12 @@ public class AutomationPackageManager {
     public static final int DEFAULT_READLOCK_TIMEOUT_SECONDS = 60;
 
     private static final Logger log = LoggerFactory.getLogger(AutomationPackageManager.class);
+    protected File localMavenRepository;
 
     protected final AutomationPackageAccessor automationPackageAccessor;
     protected final FunctionManager functionManager;
     protected final FunctionAccessor functionAccessor;
+    protected final String mavenSettingsXml;
     protected final PlanAccessor planAccessor;
     protected final AutomationPackageReader packageReader;
 
@@ -95,11 +97,14 @@ public class AutomationPackageManager {
                                      Map<String, Object> extensions,
                                      AutomationPackageHookRegistry automationPackageHookRegistry,
                                      AutomationPackageReader packageReader,
-                                     AutomationPackageLocks automationPackageLocks) {
+                                     AutomationPackageLocks automationPackageLocks,
+                                     String mavenSettingsXml,
+                                     File localMavenRepository) {
         this.automationPackageAccessor = automationPackageAccessor;
 
         this.functionManager = functionManager;
         this.functionAccessor = functionAccessor;
+        this.localMavenRepository = localMavenRepository;
         IndexField indexField = AutomationPackageEntity.getIndexField();
         this.functionAccessor.createIndexIfNeeded(indexField);
 
@@ -113,6 +118,7 @@ public class AutomationPackageManager {
         this.resourceManager = resourceManager;
         this.automationPackageLocks = automationPackageLocks;
         this.operationMode = Objects.requireNonNull(operationMode);
+        this.mavenSettingsXml = mavenSettingsXml;
 
         addDefaultExtensions();
     }
@@ -143,7 +149,8 @@ public class AutomationPackageManager {
                 resourceManager,
                 extensions,
                 hookRegistry, reader,
-                new AutomationPackageLocks(DEFAULT_READLOCK_TIMEOUT_SECONDS)
+                new AutomationPackageLocks(DEFAULT_READLOCK_TIMEOUT_SECONDS),
+                null, null
         );
         automationPackageManager.isIsolated = true;
         return automationPackageManager;
@@ -180,7 +187,8 @@ public class AutomationPackageManager {
                 resourceManager1,
                 extensions,
                 hookRegistry, reader,
-                new AutomationPackageLocks(DEFAULT_READLOCK_TIMEOUT_SECONDS)
+                new AutomationPackageLocks(DEFAULT_READLOCK_TIMEOUT_SECONDS),
+                null, null
         );
         automationPackageManager.isIsolated = true;
         return automationPackageManager;
@@ -193,7 +201,9 @@ public class AutomationPackageManager {
                                                                               ResourceManager resourceManager,
                                                                               AutomationPackageHookRegistry hookRegistry,
                                                                               AutomationPackageReader reader,
-                                                                              AutomationPackageLocks locks) {
+                                                                              AutomationPackageLocks locks,
+                                                                              String mavenSettingsXml,
+                                                                              File localMavenRepository) {
         Map<String, Object> extensions = new HashMap<>();
         hookRegistry.onMainAutomationPackageManagerCreate(extensions);
         return new AutomationPackageManager(
@@ -205,7 +215,8 @@ public class AutomationPackageManager {
                 extensions,
                 hookRegistry,
                 reader,
-                locks
+                locks,
+                mavenSettingsXml, localMavenRepository
         );
     }
 
@@ -282,6 +293,26 @@ public class AutomationPackageManager {
         // schedules will be deleted in deleteAdditionalData via hooks
         deleteResources(automationPackage);
         deleteAdditionalData(automationPackage, new AutomationPackageContext(operationMode, resourceManager, null,  null,null, extensions));
+    }
+
+    public ObjectId createAutomationPackageFromMaven(String artifactId, String groupId, String version, String classifier, String activationExpr, ObjectEnricher enricher, ObjectPredicate objectPredicate) {
+        String commonErrorMessage = "Unable to resolve maven artifact for automation package";
+        if (artifactId == null) {
+            throw new AutomationPackageManagerException(commonErrorMessage + ". artifactId is undefined");
+        }
+        if (groupId == null) {
+            throw new AutomationPackageManagerException(commonErrorMessage + ". groupId is undefined");
+        }
+        if (version == null) {
+            throw new AutomationPackageManagerException(commonErrorMessage + ". version is undefined");
+        }
+        try {
+            try (AutomationPackageFromMavenProvider provider = new AutomationPackageFromMavenProvider(mavenSettingsXml, localMavenRepository, artifactId, groupId, version, classifier)) {
+                return createOrUpdateAutomationPackage(false, true, null, provider, version, activationExpr, false, enricher, objectPredicate, false).getId();
+            }
+        } catch (IOException ex) {
+            throw new AutomationPackageManagerException("Automation package cannot be created. Caused by: " + ex.getMessage(), ex);
+        }
     }
 
     /**

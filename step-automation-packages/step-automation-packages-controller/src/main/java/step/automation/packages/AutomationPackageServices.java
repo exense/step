@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.automation.packages;
 
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.PostConstruct;
 import jakarta.ws.rs.*;
@@ -27,6 +28,10 @@ import org.bson.types.ObjectId;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 import step.automation.packages.execution.AutomationPackageExecutor;
 import step.core.access.User;
 import step.core.deployment.AbstractStepServices;
@@ -35,6 +40,11 @@ import step.core.execution.model.AutomationPackageExecutionParameters;
 import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
 import step.framework.server.security.Secured;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
@@ -96,6 +106,62 @@ public class AutomationPackageServices extends AbstractStepServices {
             return id == null ? null : id.toString();
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage());
+        }
+    }
+
+    // TODO: better url?
+
+    /**
+     * @param mavenArtifactXml
+     * Example:
+     * <dependency>
+     *     <groupId>junit</groupId>
+     *     <artifactId>junit</artifactId>
+     *     <version>4.13.2</version>
+     *     <scope>test</scope>
+     * </dependency>
+     */
+    @POST
+    @Path("/mvn")
+    @Consumes(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.TEXT_PLAIN)
+    @Secured(right = "automation-package-write")
+    public String createAutomationPackageFromMaven(@QueryParam("activationExpr") String activationExpression,
+                                                   @RequestBody() String mavenArtifactXml) {
+        try {
+            DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+            try (ByteArrayInputStream bis = new ByteArrayInputStream(mavenArtifactXml.getBytes())) {
+                Document doc = dBuilder.parse(bis);
+                NodeList childNodes = doc.getChildNodes();
+                Node dependency = childNodes.item(0);
+                String groupId = null;
+                String artifactId = null;
+                String versionId = null;
+                NodeList dependencyChildren = dependency.getChildNodes();
+
+                for (int i = 0; i < dependencyChildren.getLength(); i++) {
+                    Node item = dependencyChildren.item(i);
+                    switch (item.getNodeName()) {
+                        case "groupId":
+                            groupId = item.getTextContent() == null ? null : item.getTextContent().trim();
+                            break;
+                        case "artifactId":
+                            artifactId = item.getTextContent() == null ? null : item.getTextContent().trim();
+                            break;
+                        case "version":
+                            versionId = item.getTextContent() == null ? null : item.getTextContent().trim();
+                            break;
+                    }
+                }
+                return automationPackageManager.createAutomationPackageFromMaven(
+                        artifactId, groupId, versionId, null, activationExpression, getObjectEnricher(), getObjectPredicate()
+                ).toString();
+            }
+        } catch (AutomationPackageManagerException e) {
+            throw new ControllerServiceException(e.getMessage());
+        } catch (ParserConfigurationException | IOException | SAXException e) {
+            throw new RuntimeException("Cannot parse the maven artifact xml", e);
         }
     }
 
