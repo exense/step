@@ -79,7 +79,7 @@ public class CallPlanHandler extends ArtefactHandler<CallPlan, ReportNode> {
 	}
 
 	@Override
-	public boolean pushArtefactPath() {
+	public boolean requiresToPushArtefactPathOnResolution() {
 		return true;
 	}
 

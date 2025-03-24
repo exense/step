@@ -359,7 +359,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		reportNodeCache.put(reportNode);
 
 		//Directly push the resolved plan node path if required
-		if (pushArtefactPath()) {
+		if (requiresToPushArtefactPathOnResolution()) {
 			pushArtefactPath(reportNode, artefact);
 		}
 		
@@ -393,10 +393,12 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	}
 
 	/**
-	 * Used by the ResolvedPlanBuilder before th execution. It must be overridden by handler pushing the artefactHash
-	 * return whether this handler push the artefactHash to the path
+	 * This method is used for the resolution of plan nodes before starting the execution and dynamically while checking potential missing resolved nodes
+	 * Resolved plan nodes are identified uniquely in a plan with their artefactHash. For all direct nodes of a plan, the artefact id is enough to build this hash
+	 * For all indirect nodes (i.e. from a sub plan, composite keyword) we need to push the path of the parent (call plan, call keyword).
+	 * return whether this handler requires to push the current artefact to the path
 	 */
-	public boolean pushArtefactPath() {
+	public boolean requiresToPushArtefactPathOnResolution() {
 		return false;
 	}
 

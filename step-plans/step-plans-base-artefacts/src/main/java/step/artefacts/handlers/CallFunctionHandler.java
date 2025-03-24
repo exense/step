@@ -137,7 +137,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	}
 
 	@Override
-	public boolean pushArtefactPath() {
+	public boolean requiresToPushArtefactPathOnResolution() {
 		return true;
 	}
 
