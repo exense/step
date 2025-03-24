@@ -75,7 +75,7 @@ public class CompositeResolvedPlanBuilderTest {
         aReturn.setOutput(new DynamicValue<>("{\"myOut\":\"test\"}"));
 
         Plan compositePlan = PlanBuilder.create()
-                .startBlock(BaseArtefacts.sequence())
+                .startBlock(BaseArtefacts.sequence()).withBefore(BaseArtefacts.echo("'before in composite plan'")).withAfter(BaseArtefacts.echo("'after in composite plan'"))
                 .add(aReturn)
                 .endBlock().build();
 
@@ -87,7 +87,7 @@ public class CompositeResolvedPlanBuilderTest {
         myComposite.addChild(BaseArtefacts.check("output.myOut == 'test'"));
 
         Plan plan = PlanBuilder.create()
-                .startBlock(BaseArtefacts.sequence())
+                .startBlock(BaseArtefacts.sequence()).withBefore(BaseArtefacts.echo("'before in main plan'")).withAfter(BaseArtefacts.echo("'after in main plan'"))
                 .add(myComposite)
                 .endBlock().build();
 
@@ -102,10 +102,18 @@ public class CompositeResolvedPlanBuilderTest {
         AggregatedReportView node = aggregatedReportViewBuilder.buildAggregatedReportView();
         logger.info(node.toString());
         assertEquals("Sequence: 1x: PASSED\n" +
+                        " [BEFORE]\n" +
+                        "  Echo: 1x: PASSED > before in main plan\n" +
                         " MyComposite: 1x: PASSED > Input={}, Output={\"myOut\":\"test\"}\n" +
                         "  Sequence: 1x: PASSED\n" +
+                        "   [BEFORE]\n" +
+                        "    Echo: 1x: PASSED > before in composite plan\n" +
                         "   Return: 1x: PASSED\n" +
-                        "  Check: 1x: PASSED > output.myOut == 'test'\n",
+                        "   [AFTER]\n" +
+                        "    Echo: 1x: PASSED > after in composite plan\n" +
+                        "  Check: 1x: PASSED > output.myOut == 'test'\n" +
+                        " [AFTER]\n" +
+                        "  Echo: 1x: PASSED > after in main plan\n",
                 node.toString());
     }
 

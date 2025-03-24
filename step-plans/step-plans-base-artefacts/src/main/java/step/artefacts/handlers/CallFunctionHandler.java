@@ -109,8 +109,6 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	@Override
 	protected void createReportSkeleton_(CallFunctionReportNode parentNode, CallFunction testArtefact) {
 		try {
-			// Append the artefactId of the current artefact to the path
-			pushArtefactPath(parentNode, testArtefact);
 			Function function = getFunction(testArtefact);
 			if (function instanceof CompositeFunction) {
 				Plan plan = ((CompositeFunction) function).getPlan();
@@ -139,15 +137,20 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	}
 
 	@Override
+	public boolean requiresToPushArtefactPathOnResolution() {
+		return true;
+	}
+
+
+	@Override
 	protected List<ResolvedChildren> resolveChildrenArtefactBySource_(CallFunction artefactNode, String currentArtefactPath) {
-		String newPath = ArtefactPathHelper.getPathOfArtefact(currentArtefactPath, artefactNode);
 		List<ResolvedChildren> results = new ArrayList<>();
 		try {
 			dynamicBeanResolver.evaluate(artefactNode, getBindings());
 			Function function = getFunction(artefactNode);
 			if(function instanceof CompositeFunction) {
 					AbstractArtefact root = ((CompositeFunction) function).getPlan().getRoot();
-					results.add(new ResolvedChildren(ParentSource.SUB_PLAN, List.of(root), newPath));
+					results.add(new ResolvedChildren(ParentSource.SUB_PLAN, List.of(root), currentArtefactPath));
 			}
 		} catch (NoSuchElementException e) {
 			String message = "Unable to resolve called composite keyword in plan";
@@ -162,15 +165,12 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				logger.trace("Unable to resolve the function referenced by this callFunction '{}' artefact at this stage.", artefactNode.getAttribute(AbstractOrganizableObject.NAME), e);
 			}
 		}
-		results.add(new ResolvedChildren(ParentSource.MAIN, artefactNode.getChildren(), newPath));
+		results.add(new ResolvedChildren(ParentSource.MAIN, artefactNode.getChildren(), currentArtefactPath));
 		return results;
 	}
 
 	@Override
 	protected void execute_(CallFunctionReportNode node, CallFunction testArtefact) throws Exception {
-		// Append the artefactId of the current artefact to the path
-		pushArtefactPath(node, testArtefact);
-
 		String argumentStr = testArtefact.getArgument().get();
 		node.setInput(argumentStr);
 		

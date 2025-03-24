@@ -66,9 +66,6 @@ public class CallPlanHandler extends ArtefactHandler<CallPlan, ReportNode> {
 		JsonObject input = JsonProviderCache.createReader(new StringReader(inputJson)).readObject();
 		JsonObject resolvedInput = dynamicJsonObjectResolver.evaluate(input, getBindings());		
 		context.getVariablesManager().putVariable(parentNode, "input", resolvedInput);
-
-		// Append the artefactId of the current artefact to the path
-		pushArtefactPath(parentNode, testArtefact);
 	}
 
 	@Override
@@ -82,14 +79,18 @@ public class CallPlanHandler extends ArtefactHandler<CallPlan, ReportNode> {
 	}
 
 	@Override
+	public boolean requiresToPushArtefactPathOnResolution() {
+		return true;
+	}
+
+	@Override
 	protected List<ResolvedChildren> resolveChildrenArtefactBySource_(CallPlan artefactNode, String currentArtefactPath) {
-		String newPath = ArtefactPathHelper.getPathOfArtefact(currentArtefactPath, artefactNode);
 		List<ResolvedChildren> results = new ArrayList<>();
 		try {
 			dynamicBeanResolver.evaluate(artefactNode, getBindings());
 			Plan plan = selectPlan(artefactNode);
 			if (plan != null) {
-				results.add(new ResolvedChildren(ParentSource.SUB_PLAN, List.of(plan.getRoot()), newPath));
+				results.add(new ResolvedChildren(ParentSource.SUB_PLAN, List.of(plan.getRoot()), currentArtefactPath));
 			}
 		} catch (NoSuchElementException e) {
 			logger.warn("Unable to resolve plan", e);

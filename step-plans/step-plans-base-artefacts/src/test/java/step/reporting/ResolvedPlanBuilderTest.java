@@ -6,8 +6,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.artefacts.BaseArtefactPlugin;
-import step.artefacts.CallPlan;
+import step.artefacts.*;
 import step.artefacts.handlers.functions.TokenForecastingExecutionPlugin;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.reports.ReportNode;
@@ -19,8 +18,11 @@ import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
 import step.core.plans.runner.PlanRunnerResult;
 import step.engine.plugins.FunctionPlugin;
+import step.engine.plugins.LocalFunctionPlugin;
+import step.handlers.javahandler.Keyword;
 import step.planbuilder.BaseArtefacts;
 import step.planbuilder.FunctionArtefacts;
+import step.plans.assertions.PerformanceAssertPlugin;
 import step.threadpool.ThreadPoolPlugin;
 
 import java.io.IOException;
@@ -41,6 +43,8 @@ public class ResolvedPlanBuilderTest {
                 .withPlugin(new BaseArtefactPlugin())
                 .withPlugin(new ThreadPoolPlugin())
                 .withPlugin(new FunctionPlugin())
+                .withPlugin(new LocalFunctionPlugin())
+                .withPlugin(new PerformanceAssertPlugin())
                 .withPlugin(new TokenForecastingExecutionPlugin()).build();
     }
 
@@ -526,15 +530,19 @@ public class ResolvedPlanBuilderTest {
                         "    [AFTER]\n" +
                         "     Echo: 10x: PASSED\n",
                 node.toString());
-
     }
 
     @Test
     public void threadGroup() throws IOException, InterruptedException {
+        Filter filterMyMeasure1Equals = new Filter(AbstractOrganizableObject.NAME, "TestKeyword", FilterType.EQUALS);
+        PerformanceAssert assertWithinKeyword1 = new PerformanceAssert(Aggregator.COUNT, Comparator.EQUALS, 1l, filterMyMeasure1Equals);
         Plan plan = PlanBuilder.create()
                 .startBlock(BaseArtefacts.threadGroup(2,5, childrenBlock(echo("userId")), childrenBlock(echo("userId")))).withBefore(set("myVar", "'test'")).withAfter(echo("'in after'"))
                 .add(echo("'myVar value is ' + myVar"))
                 .add(sleep(1))
+                .startBlock(FunctionArtefacts.keyword("TestKeyword"))
+                    .withAfter(assertWithinKeyword1)
+                .endBlock()
                 .endBlock().build();
 
         PlanRunnerResult result = engine.execute(plan);
@@ -555,6 +563,9 @@ public class ResolvedPlanBuilderTest {
                         "  Echo: 2x: PASSED\n" +
                         " Echo: 10x: PASSED\n" +
                         " Sleep: 10x: PASSED\n" +
+                        " TestKeyword: 10x: PASSED\n" +
+                        "  [AFTER]\n" +
+                        "   PerformanceAssert: 10x: PASSED\n" +
                         " [AFTER_THREAD]\n" +
                         "  Echo: 2x: PASSED\n" +
                         " [AFTER]\n" +
@@ -578,6 +589,9 @@ public class ResolvedPlanBuilderTest {
                         "  Echo: 0x\n" +
                         " Echo: 0x\n" +
                         " Sleep: 0x\n" +
+                        " TestKeyword: 0x\n" +
+                        "  [AFTER]\n" +
+                        "   PerformanceAssert: 0x\n" +
                         " [AFTER_THREAD]\n" +
                         "  Echo: 0x\n" +
                         " [AFTER]\n" +
@@ -616,6 +630,9 @@ public class ResolvedPlanBuilderTest {
                         "  Echo: 0x\n" +
                         " Echo: 1x: PASSED > myVar value is test\n" +
                         " Sleep: 1x: PASSED\n" +
+                        " TestKeyword: 1x: PASSED > Input={}, Output={\"Info\":\"The class 'step.reporting.ResolvedPlanBuilderTest' doesn't extend 'step.handlers.javahandler.AbstractKeyword'. Extend this class to get input parameters from STEP and return output.\"}\n" +
+                        "  [AFTER]\n" +
+                        "   PerformanceAssert: 1x: PASSED\n" +
                         " [AFTER_THREAD]\n" +
                         "  Echo: 0x\n" +
                         " [AFTER]\n" +
@@ -633,7 +650,10 @@ public class ResolvedPlanBuilderTest {
 
         assertEquals("ThreadGroup: 0x\n" +
                         " Echo: 1x: PASSED > myVar value is test\n" +
-                        " Sleep: 1x: PASSED\n",
+                        " Sleep: 1x: PASSED\n" +
+                        " TestKeyword: 1x: PASSED > Input={}, Output={\"Info\":\"The class 'step.reporting.ResolvedPlanBuilderTest' doesn't extend 'step.handlers.javahandler.AbstractKeyword'. Extend this class to get input parameters from STEP and return output.\"}\n" +
+                        "  [AFTER]\n" +
+                        "   PerformanceAssert: 1x: PASSED\n",
                 node.toString());
 
     }
@@ -705,6 +725,11 @@ public class ResolvedPlanBuilderTest {
                         "  Echo: 1x: PASSED > in 2nd thread group\n" +
                         "  Set: 1x: PASSED > key = value\n",
                 node.toString());
+
+    }
+
+    @Keyword
+    public void TestKeyword(){
 
     }
 

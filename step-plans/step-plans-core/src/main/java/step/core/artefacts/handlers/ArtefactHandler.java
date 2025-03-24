@@ -357,6 +357,11 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 
 		context.setCurrentReportNode(reportNode);
 		reportNodeCache.put(reportNode);
+
+		//Directly push the resolved plan node path if required
+		if (requiresToPushArtefactPathOnResolution()) {
+			pushArtefactPath(reportNode, artefact);
+		}
 		
 		if(newVariables!=null) {
 			for(Entry<String, Object> var:newVariables.entrySet()) {
@@ -387,7 +392,17 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		return (String) variablesManager.getVariable(ARTEFACT_PATH);
 	}
 
-	protected void pushArtefactPath(ReportNode node, ARTEFACT artefact) {
+	/**
+	 * This method is used for the resolution of plan nodes before starting the execution and dynamically while checking potential missing resolved nodes
+	 * Resolved plan nodes are identified uniquely in a plan with their artefactHash. For all direct nodes of a plan, the artefact id is enough to build this hash
+	 * For all indirect nodes (i.e. from a sub plan, composite keyword) we need to push the path of the parent (call plan, call keyword).
+	 * return whether this handler requires to push the current artefact to the path
+	 */
+	public boolean requiresToPushArtefactPathOnResolution() {
+		return false;
+	}
+
+	private void pushArtefactPath(ReportNode node, ARTEFACT artefact) {
 		String currentArtefactPath = currentArtefactPath();
 		String newArtefactPath = ArtefactPathHelper.getPathOfArtefact(currentArtefactPath, artefact);
 		context.getVariablesManager().putVariable(node, ARTEFACT_PATH, newArtefactPath);
