@@ -126,6 +126,14 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 	public void initializeData(GlobalContext context) throws Exception {
 		super.initializeData(context);
 		timeSeries.createIndexes(new LinkedHashSet<>(List.of(new IndexField("eId", Order.ASC, String.class))));
+		timeSeries.getCollections().forEach(collection -> {
+			collection.createCompoundIndex(new LinkedHashSet<>(List.of(
+					new IndexField("attributes.taskId", Order.ASC, String.class),
+					new IndexField("attributes.metricType", Order.ASC, String.class),
+					new IndexField("begin", Order.ASC, String.class)
+			)));
+		});
+
 		List<MetricType> metrics = createOrUpdateMetrics(context.require(MetricTypeAccessor.class));
 
 		DashboardView existingExecutionDashboard = dashboardAccessor.findByCriteria(
