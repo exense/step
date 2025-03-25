@@ -44,6 +44,7 @@ public class TokenForecastingExecutionPlugin extends AbstractExecutionEnginePlug
     private static final Logger logger = LoggerFactory.getLogger(TokenForecastingExecutionPlugin.class);
     public static final String CONTEXT_OBJECT_KEY = "$tokenForecastingContext";
     public static final String FORECASTING_AGENT_LIMIT_KEY = "$forecastingAgentLimit";
+    public static final String FORECASTING_TOKEN_LIMIT_KEY = "$forecastingTokenLimit";
 
     private Set<AgentPoolSpec> availableAgentPools;
 
@@ -74,6 +75,8 @@ public class TokenForecastingExecutionPlugin extends AbstractExecutionEnginePlug
                 throw new PluginCriticalException(String.format("Illegal value for parameter %s: %s", ThreadPool.EXECUTION_THREADS_AUTO, executionThreadsAuto));
             }
         }
+        tokenForecastingContext.setMaxAvailableAgents((Integer) context.get(FORECASTING_AGENT_LIMIT_KEY));
+        tokenForecastingContext.setMaxAvailableTokens((Integer) context.get(FORECASTING_TOKEN_LIMIT_KEY));
         pushTokenForecastingContext(context, tokenForecastingContext, context.getReport());
     }
 

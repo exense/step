@@ -46,6 +46,8 @@ public class TokenForecastingContext {
 
     // This corresponds to the execution_threads_auto execution parameter, which effectively limits parallelism
     private Integer maxParallelism;
+    private Integer maxAvailableAgents;
+    private Integer maxAvailableTokens;
 
     protected final Integer getMaxParallelism() {
         if (parentContext != null) {
@@ -59,6 +61,36 @@ public class TokenForecastingContext {
             parentContext.setMaxParallelism(maxParallelism);
         } else {
             this.maxParallelism = maxParallelism;
+        }
+    }
+
+    protected final Integer getMaxAvailableAgents() {
+        if (parentContext != null) {
+            return parentContext.getMaxAvailableAgents();
+        }
+        return maxAvailableAgents;
+    }
+
+    public final void setMaxAvailableAgents(Integer maxAvailableAgents) {
+        if (parentContext != null) {
+            parentContext.setMaxAvailableAgents(maxAvailableAgents);
+        } else {
+            this.maxAvailableAgents = maxAvailableAgents;
+        }
+    }
+
+    protected final Integer getMaxAvailableTokens() {
+        if (parentContext != null) {
+            return parentContext.getMaxAvailableTokens();
+        }
+        return maxAvailableTokens;
+    }
+
+    public final void setMaxAvailableTokens(Integer maxAvailableTokens) {
+        if (parentContext != null) {
+            parentContext.setMaxAvailableTokens(maxAvailableTokens);
+        } else {
+            this.maxAvailableTokens = maxAvailableTokens;
         }
     }
 
@@ -185,6 +217,16 @@ public class TokenForecastingContext {
                 result.add(new AgentPoolRequirementSpec(lastAgentPool.name, key.provisioningParameters, nAgents));
             }
         });
+
+        // At this point, the result contains what we would *like* to get.
+
+        if (getMaxAvailableAgents() == null && getMaxAvailableTokens() == null) {
+            // neither agent nor token limit is set, no problems expected fulfilling requirements
+            return result;
+        }
+
+        int totalRequestedAgents = result.stream().map(r -> r.numberOfAgents).reduce(0, Integer::sum);
+        // TODO: unfinished implementation, not sure how to continue
         return result;
     }
 
