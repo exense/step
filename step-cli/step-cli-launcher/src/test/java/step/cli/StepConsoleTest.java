@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import step.client.controller.ControllerServicesClient;
 import step.core.Constants;
 import step.core.Version;
+import step.core.maven.MavenArtifactIdentifier;
 
 import java.io.File;
 import java.io.IOException;

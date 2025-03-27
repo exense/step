@@ -20,6 +20,7 @@ package step.automation.packages;
 
 import org.apache.maven.settings.building.SettingsBuildingException;
 import org.eclipse.aether.artifact.DefaultArtifact;
+import step.core.maven.MavenArtifactIdentifier;
 import step.repositories.artifact.MavenArtifactClient;
 
 import java.io.File;
@@ -29,23 +30,14 @@ public class AutomationPackageFromMavenProvider implements AutomationPackageArch
 
     private final String mavenSettingsXml;
     private final File localRepository;
-    private final String artifactId;
-    private final String groupId;
-    private final String version;
-    private final String classifier;
+    private final MavenArtifactIdentifier mavenArtifactIdentifier;
 
     public AutomationPackageFromMavenProvider(String mavenSettingsXml,
                                               File localRepository,
-                                              String artifactId,
-                                              String groupId,
-                                              String version,
-                                              String classifier) {
+                                              MavenArtifactIdentifier mavenArtifactIdentifier) {
         this.mavenSettingsXml = mavenSettingsXml;
         this.localRepository = localRepository;
-        this.artifactId = artifactId;
-        this.groupId = groupId;
-        this.version = version;
-        this.classifier = classifier;
+        this.mavenArtifactIdentifier = mavenArtifactIdentifier;
     }
 
     @Override
@@ -53,7 +45,13 @@ public class AutomationPackageFromMavenProvider implements AutomationPackageArch
         // The same client as in MavenArtifactRepository
         try {
             MavenArtifactClient mavenArtifactClient = new MavenArtifactClient(mavenSettingsXml, localRepository);
-            File artifact = mavenArtifactClient.getArtifact(new DefaultArtifact(groupId, artifactId, classifier, "jar", version));
+            File artifact = mavenArtifactClient.getArtifact(new DefaultArtifact(
+                    mavenArtifactIdentifier.getGroupId(),
+                    mavenArtifactIdentifier.getArtifactId(),
+                    mavenArtifactIdentifier.getClassifier(),
+                    "jar",
+                    mavenArtifactIdentifier.getVersion())
+            );
             return new AutomationPackageArchive(artifact);
         } catch (SettingsBuildingException | org.eclipse.aether.resolution.ArtifactResolutionException e) {
             throw new RuntimeException(e);

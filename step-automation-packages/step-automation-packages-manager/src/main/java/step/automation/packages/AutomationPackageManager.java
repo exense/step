@@ -28,6 +28,7 @@ import step.core.AbstractStepContext;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.collections.IndexField;
 import step.core.entities.Entity;
+import step.core.maven.MavenArtifactIdentifier;
 import step.core.objectenricher.EnricheableObject;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectEnricherComposer;
@@ -295,20 +296,20 @@ public class AutomationPackageManager {
         deleteAdditionalData(automationPackage, new AutomationPackageContext(operationMode, resourceManager, null,  null,null, extensions));
     }
 
-    public ObjectId createAutomationPackageFromMaven(String artifactId, String groupId, String version, String classifier, String activationExpr, ObjectEnricher enricher, ObjectPredicate objectPredicate) {
+    public ObjectId createAutomationPackageFromMaven(MavenArtifactIdentifier mavenArtifactIdentifier, String activationExpr, ObjectEnricher enricher, ObjectPredicate objectPredicate) {
         String commonErrorMessage = "Unable to resolve maven artifact for automation package";
-        if (artifactId == null) {
+        if (mavenArtifactIdentifier.getArtifactId() == null) {
             throw new AutomationPackageManagerException(commonErrorMessage + ". artifactId is undefined");
         }
-        if (groupId == null) {
+        if (mavenArtifactIdentifier.getGroupId() == null) {
             throw new AutomationPackageManagerException(commonErrorMessage + ". groupId is undefined");
         }
-        if (version == null) {
+        if (mavenArtifactIdentifier.getVersion() == null) {
             throw new AutomationPackageManagerException(commonErrorMessage + ". version is undefined");
         }
         try {
-            try (AutomationPackageFromMavenProvider provider = new AutomationPackageFromMavenProvider(mavenSettingsXml, localMavenRepository, artifactId, groupId, version, classifier)) {
-                return createOrUpdateAutomationPackage(false, true, null, provider, version, activationExpr, false, enricher, objectPredicate, false).getId();
+            try (AutomationPackageFromMavenProvider provider = new AutomationPackageFromMavenProvider(mavenSettingsXml, localMavenRepository, mavenArtifactIdentifier)) {
+                return createOrUpdateAutomationPackage(false, true, null, provider, mavenArtifactIdentifier.getVersion(), activationExpr, false, enricher, objectPredicate, false).getId();
             }
         } catch (IOException ex) {
             throw new AutomationPackageManagerException("Automation package cannot be created. Caused by: " + ex.getMessage(), ex);
@@ -348,6 +349,29 @@ public class AutomationPackageManager {
                 return createOrUpdateAutomationPackage(allowUpdate, allowCreate, explicitOldId, provider, apVersion, activationExpr, false, enricher, objectPredicate, async);
             }
         } catch (IOException | AutomationPackageReadingException ex) {
+            throw new AutomationPackageManagerException("Automation package cannot be created. Caused by: " + ex.getMessage(), ex);
+        }
+    }
+
+    /**
+     * Creates new or updates the existing automation package
+     *
+     * @param allowUpdate     whether update existing package is allowed
+     * @param allowCreate     whether create new package is allowed
+     * @param explicitOldId   the explicit package id to be updated (if null, the id will be automatically resolved by package name from packageStream)
+     * @param enricher        the enricher used to fill all stored objects (for instance, with product id for multitenant application)
+     * @param objectPredicate the filter for automation package
+     * @return the id of created/updated package
+     */
+    public AutomationPackageUpdateResult createOrUpdateAutomationPackageFromMaven(MavenArtifactIdentifier mavenArtifactIdentifier,
+                                                                                  boolean allowUpdate, boolean allowCreate, ObjectId explicitOldId,
+                                                                                  String activationExpr,
+                                                                                  ObjectEnricher enricher, ObjectPredicate objectPredicate, boolean async) throws AutomationPackageManagerException {
+        try {
+            try (AutomationPackageFromMavenProvider provider = new AutomationPackageFromMavenProvider(mavenSettingsXml, localMavenRepository, mavenArtifactIdentifier)) {
+                return createOrUpdateAutomationPackage(allowUpdate, allowCreate, explicitOldId, provider, mavenArtifactIdentifier.getVersion(), activationExpr, false, enricher, objectPredicate, async);
+            }
+        } catch (IOException ex) {
             throw new AutomationPackageManagerException("Automation package cannot be created. Caused by: " + ex.getMessage(), ex);
         }
     }

@@ -38,6 +38,7 @@ import step.core.deployment.AbstractStepServices;
 import step.core.deployment.ControllerServiceException;
 import step.core.execution.model.AutomationPackageExecutionParameters;
 import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
+import step.core.maven.MavenArtifactIdentifier;
 import step.framework.server.security.Secured;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -129,40 +130,47 @@ public class AutomationPackageServices extends AbstractStepServices {
     public String createAutomationPackageFromMaven(@QueryParam("activationExpr") String activationExpression,
                                                    @RequestBody() String mavenArtifactXml) {
         try {
-            DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-            try (ByteArrayInputStream bis = new ByteArrayInputStream(mavenArtifactXml.getBytes())) {
-                Document doc = dBuilder.parse(bis);
-                NodeList childNodes = doc.getChildNodes();
-                Node dependency = childNodes.item(0);
-                String groupId = null;
-                String artifactId = null;
-                String versionId = null;
-                NodeList dependencyChildren = dependency.getChildNodes();
-
-                for (int i = 0; i < dependencyChildren.getLength(); i++) {
-                    Node item = dependencyChildren.item(i);
-                    switch (item.getNodeName()) {
-                        case "groupId":
-                            groupId = item.getTextContent() == null ? null : item.getTextContent().trim();
-                            break;
-                        case "artifactId":
-                            artifactId = item.getTextContent() == null ? null : item.getTextContent().trim();
-                            break;
-                        case "version":
-                            versionId = item.getTextContent() == null ? null : item.getTextContent().trim();
-                            break;
-                    }
-                }
-                return automationPackageManager.createAutomationPackageFromMaven(
-                        artifactId, groupId, versionId, null, activationExpression, getObjectEnricher(), getObjectPredicate()
-                ).toString();
-            }
+            MavenArtifactIdentifier mavenArtifactIdentifier = getMavenArtifactIdentifierFromXml(mavenArtifactXml);
+            return automationPackageManager.createAutomationPackageFromMaven(
+                    mavenArtifactIdentifier, activationExpression, getObjectEnricher(), getObjectPredicate()
+            ).toString();
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage());
         } catch (ParserConfigurationException | IOException | SAXException e) {
             throw new RuntimeException("Cannot parse the maven artifact xml", e);
         }
+    }
+
+    protected MavenArtifactIdentifier getMavenArtifactIdentifierFromXml(String mavenArtifactXml) throws ParserConfigurationException, IOException, SAXException {
+        MavenArtifactIdentifier mavenArtifactIdentifier;
+        DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+        try (ByteArrayInputStream bis = new ByteArrayInputStream(mavenArtifactXml.getBytes())) {
+            Document doc = dBuilder.parse(bis);
+            NodeList childNodes = doc.getChildNodes();
+            Node dependency = childNodes.item(0);
+            String groupId = null;
+            String artifactId = null;
+            String versionId = null;
+            NodeList dependencyChildren = dependency.getChildNodes();
+
+            for (int i = 0; i < dependencyChildren.getLength(); i++) {
+                Node item = dependencyChildren.item(i);
+                switch (item.getNodeName()) {
+                    case "groupId":
+                        groupId = item.getTextContent() == null ? null : item.getTextContent().trim();
+                        break;
+                    case "artifactId":
+                        artifactId = item.getTextContent() == null ? null : item.getTextContent().trim();
+                        break;
+                    case "version":
+                        versionId = item.getTextContent() == null ? null : item.getTextContent().trim();
+                        break;
+                }
+            }
+            mavenArtifactIdentifier = new MavenArtifactIdentifier(groupId, artifactId, versionId, null);
+        }
+        return mavenArtifactIdentifier;
     }
 
     @POST
@@ -307,6 +315,36 @@ public class AutomationPackageServices extends AbstractStepServices {
             return responseBuilder.entity(result).build();
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage());
+        }
+    }
+
+    /**
+     * @param mavenArtifactXml
+     * Example:
+     * <dependency>
+     *     <groupId>junit</groupId>
+     *     <artifactId>junit</artifactId>
+     *     <version>4.13.2</version>
+     *     <scope>test</scope>
+     * </dependency>
+     */
+    @PUT
+    @Path("/mvn")
+    @Consumes(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.TEXT_PLAIN)
+    @Secured(right = "automation-package-write")
+    public String createOrUpdateAutomationPackageFromMaven(@QueryParam("async") Boolean async,
+                                                           @QueryParam("activationExpr") String activationExpression,
+                                                           @RequestBody() String mavenArtifactXml) {
+        try {
+            MavenArtifactIdentifier mvnIdentifier = getMavenArtifactIdentifierFromXml(mavenArtifactXml);
+            return automationPackageManager.createOrUpdateAutomationPackageFromMaven(
+                    mvnIdentifier, true, true, null, activationExpression, getObjectEnricher(), getObjectPredicate(), async
+            ).toString();
+        } catch (AutomationPackageManagerException e) {
+            throw new ControllerServiceException(e.getMessage());
+        } catch (ParserConfigurationException | IOException | SAXException e) {
+            throw new RuntimeException("Cannot parse the maven artifact xml", e);
         }
     }
 

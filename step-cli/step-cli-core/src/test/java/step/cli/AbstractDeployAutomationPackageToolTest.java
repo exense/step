@@ -11,6 +11,7 @@ import step.automation.packages.AutomationPackageUpdateStatus;
 import step.automation.packages.client.AutomationPackageClientException;
 import step.automation.packages.client.RemoteAutomationPackageClientImpl;
 import step.controller.multitenancy.Tenant;
+import step.core.maven.MavenArtifactIdentifier;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,7 +27,7 @@ public class AbstractDeployAutomationPackageToolTest {
         RemoteAutomationPackageClientImpl automationPackageClient = createRemoteAutomationPackageClientMock();
         DeployAutomationPackageToolTestable tool = new DeployAutomationPackageToolTestable(
                 "http://localhost:8080", TENANT_1.getName(),
-                null, false, "ver1", "true==true", automationPackageClient
+                null, false, "ver1", "true==true", null, automationPackageClient
         );
         tool.execute();
 
@@ -50,9 +51,9 @@ public class AbstractDeployAutomationPackageToolTest {
 
         private RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock;
 
-        public DeployAutomationPackageToolTestable(String url, String stepProjectName, String authToken, Boolean async, String apVersion, String activationExpr,
+        public DeployAutomationPackageToolTestable(String url, String stepProjectName, String authToken, Boolean async, String apVersion, String activationExpr, MavenArtifactIdentifier mavenArtifactIdentifier,
                                                    RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock) {
-            super(url, stepProjectName, authToken, async, apVersion, activationExpr);
+            super(url, stepProjectName, authToken, async, apVersion, activationExpr, mavenArtifactIdentifier);
             try {
                 TEST_FILE = FileHelper.createTempFile();
             } catch (IOException e) {

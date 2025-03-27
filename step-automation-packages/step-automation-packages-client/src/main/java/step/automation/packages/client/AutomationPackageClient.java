@@ -31,6 +31,8 @@ public interface AutomationPackageClient extends Closeable {
 
     AutomationPackageUpdateResult createOrUpdateAutomationPackage(File automationPackageFile, boolean async, String apVersion, String evalExpr) throws AutomationPackageClientException;
 
+    AutomationPackageUpdateResult createOrUpdateAutomationPackageMvn(String mavenArtifactXml, boolean async, String activationExpr) throws AutomationPackageClientException;
+
     List<String> executeAutomationPackage(File automationPackageFile, IsolatedAutomationPackageExecutionParameters params) throws AutomationPackageClientException;
 
     void deleteAutomationPackage(String packageName) throws AutomationPackageClientException;

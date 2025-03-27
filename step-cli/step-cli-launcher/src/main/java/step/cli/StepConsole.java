@@ -31,6 +31,7 @@ import step.client.credentials.ControllerCredentials;
 import step.core.Constants;
 import step.core.Version;
 import step.cli.apignore.ApIgnoreFileFilter;
+import step.core.maven.MavenArtifactIdentifier;
 
 import java.io.File;
 import java.io.IOException;
@@ -140,6 +141,15 @@ public class StepConsole implements Callable<Integer> {
             }
         }
 
+        protected MavenArtifactIdentifier getMavenArtifact(String apFile) {
+            if (apFile != null && apFile.startsWith("mvn:")) {
+                String[] split = apFile.split(":");
+                return new MavenArtifactIdentifier(split[1], split[2], split[3], split.length >= 5 ? split[4] : null);
+            } else {
+                return null;
+            }
+        }
+
         @Override
         public Integer call() throws Exception {
             printConfigIfRequired();
@@ -202,15 +212,6 @@ public class StepConsole implements Callable<Integer> {
                     }
                 } catch (IOException ex) {
                     throw new StepCliExecutionException("Unable to prepare automation package file", ex);
-                }
-            }
-
-            protected MavenArtifactIdentifier getMavenArtifact(String apFile) {
-                if (apFile != null && apFile.startsWith("mvn:")) {
-                    String[] split = apFile.split(":");
-                    return new MavenArtifactIdentifier(split[1], split[2], split[3], split.length >= 5 ? split[4] : null);
-                } else {
-                    return null;
                 }
             }
 
@@ -297,7 +298,7 @@ public class StepConsole implements Callable<Integer> {
 
             // for tests
             protected void executeTool(final String stepUrl1, final String projectName, final String authToken, final boolean async, String apVersion, String activationExpr) {
-                new AbstractDeployAutomationPackageTool(stepUrl1, projectName, authToken, async, apVersion, activationExpr) {
+                new AbstractDeployAutomationPackageTool(stepUrl1, projectName, authToken, async, apVersion, activationExpr, getMavenArtifact(apFile)) {
                     @Override
                     protected File getFileToUpload() throws StepCliExecutionException {
                         return prepareApFile(apFile);
