@@ -45,6 +45,9 @@ public class ResourceServices extends AbstractStepServices {
 
 	protected ResourceManager resourceManager;
 
+	@jakarta.ws.rs.core.Context
+	ServletContext context;
+
 	@PostConstruct
 	public void init() throws Exception {
 		super.init();
@@ -53,8 +56,8 @@ public class ResourceServices extends AbstractStepServices {
 	}
 	
 	@POST
-	@Secured
 	@Path("/content")
+	@Secured(right = "resource-write")
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	@Produces(MediaType.APPLICATION_JSON)
 	public ResourceUploadResponse createResource(@FormDataParam("file") InputStream uploadedInputStream,
@@ -86,8 +89,7 @@ public class ResourceServices extends AbstractStepServices {
 	}
 
 	@POST
-	@Secured
-	//@Path("/")
+	@Secured(right = "resource-write")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	public Resource saveResource(Resource resource) throws IOException {
@@ -96,6 +98,7 @@ public class ResourceServices extends AbstractStepServices {
 	
 	@POST
 	@Path("/{id}/content")
+	@Secured(right = "resource-write")
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	@Produces(MediaType.APPLICATION_JSON)
 	public ResourceUploadResponse saveResourceContent(@PathParam("id") String resourceId, @FormDataParam("file") InputStream uploadedInputStream,
@@ -114,6 +117,7 @@ public class ResourceServices extends AbstractStepServices {
 	@GET
 	@Secured
 	@Path("/{id}")
+	@Secured(right = "resource-read")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Resource getResource(@PathParam("id") String resourceId) throws IOException {
 		try {
@@ -125,6 +129,7 @@ public class ResourceServices extends AbstractStepServices {
 	
 	@GET
 	@Path("/{id}/content")
+	@Secured(right = "resource-read")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getResourceContent(@PathParam("id") String resourceId, @QueryParam("inline") boolean inline) throws IOException {
 		ResourceRevisionContent resourceContent = resourceManager.getResourceContent(resourceId);
@@ -134,6 +139,7 @@ public class ResourceServices extends AbstractStepServices {
 	@DELETE
 	@Secured
 	@Path("/{id}")
+	@Secured(right = "resource-delete")
 	public void deleteResource(@PathParam("id") String resourceId) {
 		resourceManager.deleteResource(resourceId);
 	}
@@ -141,6 +147,7 @@ public class ResourceServices extends AbstractStepServices {
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
     @Path("/revision/{id}/content")
+	@Secured(right = "resource-read")
 	public Response getResourceRevisionContent(@PathParam("id") String resourceRevisionId, @QueryParam("inline") boolean inline) throws IOException {
 		ResourceRevisionContentImpl resourceContent = resourceManager.getResourceRevisionContent(resourceRevisionId);
 		return getResponseForResourceRevisionContent(resourceContent, inline);
@@ -150,12 +157,10 @@ public class ResourceServices extends AbstractStepServices {
 	@Path("/find")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
+	@Secured(right = "resource-read")
 	public List<Resource> findManyByCriteria(Map<String, String> criteria) {
 		return resourceManager.findManyByCriteria(criteria);
 	}
-	
-	@jakarta.ws.rs.core.Context 
-	ServletContext context;
 	
 	protected Response getResponseForResourceRevisionContent(ResourceRevisionContent resourceContent, boolean inline) {
 		StreamingOutput fileStream = new StreamingOutput() {
