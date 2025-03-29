@@ -29,6 +29,8 @@ import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.core.GlobalContext;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 import step.core.collections.Collection;
+import step.core.controller.ControllerSetting;
+import step.core.controller.ControllerSettingAccessor;
 import step.core.deployment.ObjectHookControllerPlugin;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.plugins.AbstractControllerPlugin;
@@ -41,7 +43,13 @@ import step.functions.accessor.FunctionAccessor;
 import step.functions.manager.FunctionManager;
 import step.functions.plugin.FunctionControllerPlugin;
 import step.functions.type.FunctionTypeRegistry;
+import step.repositories.ArtifactRepositoryConstants;
 import step.resources.ResourceManagerControllerPlugin;
+
+import java.io.File;
+
+import static step.automation.packages.execution.RepositoryWithAutomationPackageSupport.CONFIGURATION_MAVEN_FOLDER;
+import static step.automation.packages.execution.RepositoryWithAutomationPackageSupport.DEFAULT_MAVEN_FOLDER;
 
 @Plugin(dependencies = {ObjectHookControllerPlugin.class, ResourceManagerControllerPlugin.class, FunctionControllerPlugin.class, AutomationPackageSchedulerPlugin.class})
 public class AutomationPackagePlugin extends AbstractControllerPlugin {
@@ -90,6 +98,10 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
         if (context.get(AutomationPackageManager.class) == null) {
             log.info("Using the OS implementation of automation package manager");
 
+            // TODO: how to take non-default value?
+            String mavenSettingsId = ArtifactRepositoryConstants.MAVEN_SETTINGS_PREFIX + ArtifactRepositoryConstants.ARTIFACT_PARAM_MAVEN_SETTINGS_DEFAULT;
+            ControllerSetting settingsXml = context.get(ControllerSettingAccessor.class).getSettingByKey(mavenSettingsId);
+
             // moved to 'afterInitializeData' to have the schedule accessor in context
             AutomationPackageManager packageManager = AutomationPackageManager.createMainAutomationPackageManager(
                     context.require(AutomationPackageAccessor.class),
@@ -99,7 +111,8 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
                     context.getResourceManager(),
                     context.require(AutomationPackageHookRegistry.class),
                     context.require(AutomationPackageReader.class),
-                    automationPackageLocks
+                    automationPackageLocks,
+                    settingsXml.getValue(), context.getConfiguration().getPropertyAsFile(CONFIGURATION_MAVEN_FOLDER, new File(DEFAULT_MAVEN_FOLDER))
             );
             context.put(AutomationPackageManager.class, packageManager);
 

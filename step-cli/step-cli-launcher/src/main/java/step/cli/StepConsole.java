@@ -31,6 +31,7 @@ import step.client.credentials.ControllerCredentials;
 import step.core.Constants;
 import step.core.Version;
 import step.cli.apignore.ApIgnoreFileFilter;
+import step.core.maven.MavenArtifactIdentifier;
 
 import java.io.File;
 import java.io.IOException;
@@ -140,6 +141,15 @@ public class StepConsole implements Callable<Integer> {
             }
         }
 
+        protected MavenArtifactIdentifier getMavenArtifact(String apFile) {
+            if (apFile != null && apFile.startsWith("mvn:")) {
+                String[] split = apFile.split(":");
+                return new MavenArtifactIdentifier(split[1], split[2], split[3], split.length >= 5 ? split[4] : null);
+            } else {
+                return null;
+            }
+        }
+
         @Override
         public Integer call() throws Exception {
             printConfigIfRequired();
@@ -205,15 +215,6 @@ public class StepConsole implements Callable<Integer> {
                 }
             }
 
-            protected MavenArtifactIdentifier getMavenArtifact(String apFile) {
-                if (apFile != null && apFile.startsWith("mvn:")) {
-                    String[] split = apFile.split(":");
-                    return new MavenArtifactIdentifier(split[1], split[2], split[3], split.length >= 5 ? split[4] : null);
-                } else {
-                    return null;
-                }
-            }
-
             private void checkApFolder(File param) throws IOException {
                 try (AutomationPackageFromFolderProvider apProvider = new AutomationPackageFromFolderProvider(param)) {
                     try {
@@ -267,11 +268,13 @@ public class StepConsole implements Callable<Integer> {
                 subcommands = {CommandLine.HelpCommand.class})
         public static class ApDeployCommand extends AbstractApCommand {
 
+            public static final String AP_VERSION = "--apVersion";
+
             @Option(names = {"--async"}, defaultValue = "false", showDefaultValue = CommandLine.Help.Visibility.ALWAYS,
                     description = "Whether to waits for the deployment to complete")
             protected boolean async;
 
-            @Option(names = {"--apVersion"}, description = "Optionally set the version of this automation package. This allows to deploy and use multiple versions of the same package on Step")
+            @Option(names = {AP_VERSION}, description = "Optionally set the version of this automation package. This allows to deploy and use multiple versions of the same package on Step")
             protected String apVersion;
 
             @Option(names = {"--activationExpr"}, description = "When deploying multiple versions of the same package (see \"apVersion\"), the expression is used to select the proper versions during the execution of plans. Example: \"env == PROD\"")
@@ -292,12 +295,21 @@ public class StepConsole implements Callable<Integer> {
                 checkStepUrlRequired();
                 checkEeOptionsConsistency(spec);
                 checkStepControllerVersion();
-                executeTool(stepUrl, getStepProjectName(), getAuthToken(), async, apVersion, activationExpr);
+                executeTool(stepUrl, getStepProjectName(), getAuthToken(), async, apVersion, activationExpr, getMavenArtifact(apFile));
+            }
+
+            @Override
+            protected MavenArtifactIdentifier getMavenArtifact(String apFile) {
+                MavenArtifactIdentifier mavenArtifact = super.getMavenArtifact(apFile);
+                if (mavenArtifact != null && apVersion != null && !apVersion.isEmpty()) {
+                    throw new CommandLine.ParameterException(spec.commandLine(), String.format("The %s option is not supported for maven artifacts. The version of the maven artifact is used for automation package", AP_VERSION));
+                }
+                return mavenArtifact;
             }
 
             // for tests
-            protected void executeTool(final String stepUrl1, final String projectName, final String authToken, final boolean async, String apVersion, String activationExpr) {
-                new AbstractDeployAutomationPackageTool(stepUrl1, projectName, authToken, async, apVersion, activationExpr) {
+            protected void executeTool(final String stepUrl1, final String projectName, final String authToken, final boolean async, String apVersion, String activationExpr, final MavenArtifactIdentifier mavenArtifact) {
+                new AbstractDeployAutomationPackageTool(stepUrl1, projectName, authToken, async, apVersion, activationExpr, mavenArtifact) {
                     @Override
                     protected File getFileToUpload() throws StepCliExecutionException {
                         return prepareApFile(apFile);

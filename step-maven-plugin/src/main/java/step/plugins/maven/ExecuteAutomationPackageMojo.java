@@ -23,7 +23,7 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import step.cli.AbstractExecuteAutomationPackageTool;
-import step.cli.MavenArtifactIdentifier;
+import step.core.maven.MavenArtifactIdentifier;
 import step.cli.StepCliExecutionException;
 
 import java.io.File;

@@ -118,7 +118,8 @@ public class AutomationPackageManagerOSTest {
                 resourceManager,
                 automationPackageHookRegistry,
                 new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, automationPackageHookRegistry, serializationRegistry, configuration),
-                automationPackageLocks
+                automationPackageLocks,
+                null, null
         );
     }
 

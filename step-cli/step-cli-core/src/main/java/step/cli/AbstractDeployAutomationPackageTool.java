@@ -22,6 +22,7 @@ import step.automation.packages.AutomationPackageUpdateResult;
 import step.automation.packages.client.AutomationPackageClientException;
 import step.automation.packages.client.RemoteAutomationPackageClientImpl;
 import step.client.credentials.ControllerCredentials;
+import step.core.maven.MavenArtifactIdentifier;
 
 import java.io.File;
 
@@ -34,14 +35,16 @@ public abstract class AbstractDeployAutomationPackageTool extends AbstractCliToo
     private Boolean async;
     private String apVersion;
     private String activationExpression;
+    private MavenArtifactIdentifier mavenArtifactIdentifier;
 
-    public AbstractDeployAutomationPackageTool(String url, String stepProjectName, String authToken, Boolean async, String apVersion, String activationExpression) {
+    public AbstractDeployAutomationPackageTool(String url, String stepProjectName, String authToken, Boolean async, String apVersion, String activationExpression, MavenArtifactIdentifier mavenArtifactIdentifier) {
         super(url);
         this.stepProjectName = stepProjectName;
         this.authToken = authToken;
         this.async = async;
         this.apVersion = apVersion;
         this.activationExpression = activationExpression;
+        this.mavenArtifactIdentifier = mavenArtifactIdentifier;
     }
 
     @Override
@@ -52,24 +55,64 @@ public abstract class AbstractDeployAutomationPackageTool extends AbstractCliToo
 
     public void execute() throws StepCliExecutionException {
         try (RemoteAutomationPackageClientImpl automationPackageClient = createRemoteAutomationPackageClient()) {
-            File packagedTarget = getFileToUpload();
 
-            logInfo("Uploading the automation package...", null);
-            try {
-                AutomationPackageUpdateResult updateResult = automationPackageClient.createOrUpdateAutomationPackage(packagedTarget, getAsync() != null && getAsync(), getApVersion(), getActivationExpression());
-                if (updateResult != null && updateResult.getId() != null) {
-                    logInfo("Automation package successfully uploaded. With status " + updateResult.getStatus() + ". Id: " + updateResult.getId(), null);
-                } else {
-                    throw logAndThrow("Unexpected response from Step. The returned automation package id is null. Please check the controller logs.");
+            AutomationPackageUpdateResult updateResult;
+            if (getMavenArtifactIdentifier() != null) {
+                logInfo("Uploading the automation package from Maven artifactory...", null);
+                try {
+                    updateResult = automationPackageClient.createOrUpdateAutomationPackageMvn(createMavenArtifactXml(getMavenArtifactIdentifier()), getAsync(), getActivationExpression());
+                } catch (AutomationPackageClientException e) {
+                    throw logAndThrow("Error while uploading automation package to Step from Maven artifactory: " + e.getMessage());
                 }
-            } catch (AutomationPackageClientException e) {
-                throw logAndThrow("Error while uploading automation package to Step: " + e.getMessage());
+            } else {
+
+                File packagedTarget = getFileToUpload();
+
+                logInfo("Uploading the automation package...", null);
+                try {
+                    updateResult = automationPackageClient.createOrUpdateAutomationPackage(packagedTarget, getAsync() != null && getAsync(), getApVersion(), getActivationExpression());
+                } catch (AutomationPackageClientException e) {
+                    throw logAndThrow("Error while uploading automation package to Step: " + e.getMessage());
+                }
+            }
+
+            if (updateResult != null && updateResult.getId() != null) {
+                logInfo("Automation package successfully uploaded. With status " + updateResult.getStatus() + ". Id: " + updateResult.getId(), null);
+            } else {
+                throw logAndThrow("Unexpected response from Step. The returned automation package id is null. Please check the controller logs.");
             }
         } catch (StepCliExecutionException e) {
             throw e;
         } catch (Exception e) {
             throw logAndThrow("Unexpected error while uploading automation package to Step", e);
         }
+    }
+
+    protected String createMavenArtifactXml(MavenArtifactIdentifier identifier) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("<dependency>");
+
+        builder.append("<groupId>");
+        if(identifier.getGroupId() != null){
+            builder.append(identifier.getGroupId());
+        }
+        builder.append("</groupId>");
+
+        builder.append("<artifactId>");
+        if(identifier.getArtifactId() != null){
+            builder.append(identifier.getArtifactId());
+        }
+        builder.append("</artifactId>");
+
+        builder.append("<version>");
+        if(identifier.getVersion() != null){
+            builder.append(identifier.getVersion());
+        }
+        builder.append("</version>");
+
+
+        builder.append("</dependency>");
+        return builder.toString();
     }
 
     protected abstract File getFileToUpload() throws StepCliExecutionException;
@@ -118,5 +161,13 @@ public abstract class AbstractDeployAutomationPackageTool extends AbstractCliToo
 
     public void setActivationExpression(String activationExpression) {
         this.activationExpression = activationExpression;
+    }
+
+    public MavenArtifactIdentifier getMavenArtifactIdentifier() {
+        return mavenArtifactIdentifier;
+    }
+
+    public void setMavenArtifactIdentifier(MavenArtifactIdentifier mavenArtifactIdentifier) {
+        this.mavenArtifactIdentifier = mavenArtifactIdentifier;
     }
 }

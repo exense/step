@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.cli;
+package step.core.maven;
 
 import java.util.Objects;
 
@@ -26,10 +26,10 @@ public class MavenArtifactIdentifier {
     private final String version;
     private final String classifier;
 
-    public MavenArtifactIdentifier(String groupId, String artifactId, String versionId, String classifier) {
+    public MavenArtifactIdentifier(String groupId, String artifactId, String version, String classifier) {
         this.groupId = groupId;
         this.artifactId = artifactId;
-        this.version = versionId;
+        this.version = version;
         this.classifier = classifier;
     }
 

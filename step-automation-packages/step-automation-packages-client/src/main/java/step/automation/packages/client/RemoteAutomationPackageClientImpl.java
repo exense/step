@@ -78,6 +78,17 @@ public class RemoteAutomationPackageClientImpl extends AbstractRemoteClient impl
     }
 
     @Override
+    public AutomationPackageUpdateResult createOrUpdateAutomationPackageMvn(String mavenArtifactXml, boolean async, String activationExpr) throws AutomationPackageClientException {
+        Map<String, String> queryParams = new HashMap<>();
+        queryParams.put("async", String.valueOf(async));
+        if (activationExpr != null && !activationExpr.isEmpty()) {
+            queryParams.put("activationExpr", activationExpr);
+        }
+        Invocation.Builder builder = requestBuilder("/rest/automation-packages/mvn", queryParams);
+        return RemoteAutomationPackageClientImpl.this.executeRequest(() -> builder.put(Entity.entity(mavenArtifactXml, MediaType.TEXT_PLAIN) , AutomationPackageUpdateResult.class));
+    }
+
+    @Override
     public List<String> executeAutomationPackage(File automationPackageFile, IsolatedAutomationPackageExecutionParameters params) throws AutomationPackageClientException {
         MultiPart multiPart = prepareFileDataMultiPart(automationPackageFile);
         FormDataBodyPart paramsBodyPart = new FormDataBodyPart("executionParams", params, MediaType.APPLICATION_JSON_TYPE);
