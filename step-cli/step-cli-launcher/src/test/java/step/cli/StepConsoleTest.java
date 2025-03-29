@@ -123,6 +123,23 @@ public class StepConsoleTest {
         Assert.assertEquals("step-automation-packages-sample1.jar", new File(usedParams.apFile).getName());
         Assert.assertEquals("abc", usedParams.authToken);
         Assert.assertEquals("testProject", usedParams.projectName);
+
+        // deploy from artifactory
+        deployExecHistory.clear();
+        res = runMain(histories, "ap", "deploy", "-p=mvn:ch.exense.step:step-automation-packages-junit:0.0.0:tests", "-u=http://localhost:8080");
+        Assert.assertEquals(0, res);
+        Assert.assertEquals(1, deployExecHistory.size());
+        usedParams = deployExecHistory.get(0);
+        Assert.assertEquals("http://localhost:8080", usedParams.stepUrl);
+        Assert.assertEquals("ch.exense.step", usedParams.mavenArtifact.getGroupId());
+        Assert.assertEquals("step-automation-packages-junit", usedParams.mavenArtifact.getArtifactId());
+        Assert.assertEquals("0.0.0", usedParams.mavenArtifact.getVersion());
+        Assert.assertEquals("tests", usedParams.mavenArtifact.getClassifier());
+
+        // deploy from artifactory (failed validation on redundant ap version)
+        deployExecHistory.clear();
+        res = runMain(histories, "ap", "deploy", "-p=mvn:ch.exense.step:step-automation-packages-junit:0.0.0:tests", "-u=http://localhost:8080", "--apVersion=1.0.0");
+        Assert.assertEquals(2, res);
     }
 
     @Test
@@ -412,10 +429,11 @@ public class StepConsoleTest {
             private String apVersion;
             private String activationExpr;
             private String apFile;
+            private MavenArtifactIdentifier mavenArtifact;
         }
 
         @Override
-        protected void executeTool(String stepUrl1, String projectName, String authToken1, boolean async, String apVersion, String activationExpr) {
+        protected void executeTool(String stepUrl1, String projectName, String authToken1, boolean async, String apVersion, String activationExpr, final MavenArtifactIdentifier mavenArtifact) {
             if (testRegistry != null) {
                 ExecutionParams p = new ExecutionParams();
                 p.stepUrl = stepUrl1;
@@ -425,6 +443,7 @@ public class StepConsoleTest {
                 p.apFile = this.apFile;
                 p.apVersion = apVersion;
                 p.activationExpr = activationExpr;
+                p.mavenArtifact = mavenArtifact;
                 testRegistry.add(p);
             }
         }

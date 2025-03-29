@@ -295,7 +295,7 @@ public class StepConsole implements Callable<Integer> {
                 checkStepUrlRequired();
                 checkEeOptionsConsistency(spec);
                 checkStepControllerVersion();
-                executeTool(stepUrl, getStepProjectName(), getAuthToken(), async, apVersion, activationExpr);
+                executeTool(stepUrl, getStepProjectName(), getAuthToken(), async, apVersion, activationExpr, getMavenArtifact(apFile));
             }
 
             @Override
@@ -308,8 +308,8 @@ public class StepConsole implements Callable<Integer> {
             }
 
             // for tests
-            protected void executeTool(final String stepUrl1, final String projectName, final String authToken, final boolean async, String apVersion, String activationExpr) {
-                new AbstractDeployAutomationPackageTool(stepUrl1, projectName, authToken, async, apVersion, activationExpr, getMavenArtifact(apFile)) {
+            protected void executeTool(final String stepUrl1, final String projectName, final String authToken, final boolean async, String apVersion, String activationExpr, final MavenArtifactIdentifier mavenArtifact) {
+                new AbstractDeployAutomationPackageTool(stepUrl1, projectName, authToken, async, apVersion, activationExpr, mavenArtifact) {
                     @Override
                     protected File getFileToUpload() throws StepCliExecutionException {
                         return prepareApFile(apFile);

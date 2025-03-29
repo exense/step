@@ -120,6 +120,7 @@ public class AutomationPackageServices extends AbstractStepServices {
      *     <artifactId>junit</artifactId>
      *     <version>4.13.2</version>
      *     <scope>test</scope>
+     *     <classifier>tests</scope>
      * </dependency>
      */
     @POST
@@ -142,35 +143,7 @@ public class AutomationPackageServices extends AbstractStepServices {
     }
 
     protected MavenArtifactIdentifier getMavenArtifactIdentifierFromXml(String mavenArtifactXml) throws ParserConfigurationException, IOException, SAXException {
-        MavenArtifactIdentifier mavenArtifactIdentifier;
-        DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-        try (ByteArrayInputStream bis = new ByteArrayInputStream(mavenArtifactXml.getBytes())) {
-            Document doc = dBuilder.parse(bis);
-            NodeList childNodes = doc.getChildNodes();
-            Node dependency = childNodes.item(0);
-            String groupId = null;
-            String artifactId = null;
-            String versionId = null;
-            NodeList dependencyChildren = dependency.getChildNodes();
-
-            for (int i = 0; i < dependencyChildren.getLength(); i++) {
-                Node item = dependencyChildren.item(i);
-                switch (item.getNodeName()) {
-                    case "groupId":
-                        groupId = item.getTextContent() == null ? null : item.getTextContent().trim();
-                        break;
-                    case "artifactId":
-                        artifactId = item.getTextContent() == null ? null : item.getTextContent().trim();
-                        break;
-                    case "version":
-                        versionId = item.getTextContent() == null ? null : item.getTextContent().trim();
-                        break;
-                }
-            }
-            mavenArtifactIdentifier = new MavenArtifactIdentifier(groupId, artifactId, versionId, null);
-        }
-        return mavenArtifactIdentifier;
+        return new MavenArtifactIdentifierFromXmlParser().parse(mavenArtifactXml);
     }
 
     @POST
