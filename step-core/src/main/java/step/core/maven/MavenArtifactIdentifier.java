@@ -25,7 +25,6 @@ public class MavenArtifactIdentifier {
     private final String artifactId;
     private final String version;
     private final String classifier;
-    // TODO: if used in 'depencenices' section in pom, there could be additional fields like 'scope' (except for the classifier)
 
     public MavenArtifactIdentifier(String groupId, String artifactId, String version, String classifier) {
         this.groupId = groupId;

@@ -268,11 +268,13 @@ public class StepConsole implements Callable<Integer> {
                 subcommands = {CommandLine.HelpCommand.class})
         public static class ApDeployCommand extends AbstractApCommand {
 
+            public static final String AP_VERSION = "--apVersion";
+
             @Option(names = {"--async"}, defaultValue = "false", showDefaultValue = CommandLine.Help.Visibility.ALWAYS,
                     description = "Whether to waits for the deployment to complete")
             protected boolean async;
 
-            @Option(names = {"--apVersion"}, description = "Optionally set the version of this automation package. This allows to deploy and use multiple versions of the same package on Step")
+            @Option(names = {AP_VERSION}, description = "Optionally set the version of this automation package. This allows to deploy and use multiple versions of the same package on Step")
             protected String apVersion;
 
             @Option(names = {"--activationExpr"}, description = "When deploying multiple versions of the same package (see \"apVersion\"), the expression is used to select the proper versions during the execution of plans. Example: \"env == PROD\"")
@@ -294,6 +296,15 @@ public class StepConsole implements Callable<Integer> {
                 checkEeOptionsConsistency(spec);
                 checkStepControllerVersion();
                 executeTool(stepUrl, getStepProjectName(), getAuthToken(), async, apVersion, activationExpr);
+            }
+
+            @Override
+            protected MavenArtifactIdentifier getMavenArtifact(String apFile) {
+                MavenArtifactIdentifier mavenArtifact = super.getMavenArtifact(apFile);
+                if (mavenArtifact != null && apVersion != null && !apVersion.isEmpty()) {
+                    throw new CommandLine.ParameterException(spec.commandLine(), String.format("The %s option is not supported for maven artifacts. The version of the maven artifact is used for automation package", AP_VERSION));
+                }
+                return mavenArtifact;
             }
 
             // for tests

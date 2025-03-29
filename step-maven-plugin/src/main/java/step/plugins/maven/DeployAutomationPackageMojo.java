@@ -25,14 +25,12 @@ import org.apache.maven.plugins.annotations.Parameter;
 import step.cli.AbstractDeployAutomationPackageTool;
 import step.cli.StepCliExecutionException;
 import step.client.credentials.ControllerCredentials;
+import step.core.maven.MavenArtifactIdentifier;
 
 import java.io.File;
 
 @Mojo(name = "deploy-automation-package")
 public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
-
-    @Parameter(property = "step-deploy-automation-package.artifact-classifier")
-    private String artifactClassifier;
 
     @Parameter(property = "step.step-project-name")
     private String stepProjectName;
@@ -48,6 +46,15 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
 
     @Parameter(property = "step-deploy-automation-package.activation-expression")
     private String activationExpression;
+
+    @Parameter(property = "step-deploy-auto-packages.artifact-group-id")
+    private String artifactGroupId;
+    @Parameter(property = "step-deploy-auto-packages.artifact-id")
+    private String artifactId;
+    @Parameter(property = "step-deploy-auto-packages.artifact-version")
+    private String artifactVersion;
+    @Parameter(property = "step-execute-auto-packages.artifact-classifier", required = false)
+    private String artifactClassifier;
 
     @Override
     protected ControllerCredentials getControllerCredentials() {
@@ -69,8 +76,8 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
     }
 
     protected AbstractDeployAutomationPackageTool createTool(final String url, final String projectName, final String authToken, final Boolean async,
-                                                             final String apVersion, final String activationExpr) {
-        return new MavenDeployAutomationPackageTool(url, projectName, authToken, async, apVersion, activationExpr);
+                                                             final String apVersion, final String activationExpr) throws MojoExecutionException {
+        return new MavenDeployAutomationPackageTool(url, projectName, authToken, async, apVersion, activationExpr, getRemoteMavenIdentifier());
     }
 
     protected File getFileToUpload() throws MojoExecutionException {
@@ -131,10 +138,52 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
         this.activationExpression = activationExpression;
     }
 
+    public String getArtifactGroupId() {
+        return artifactGroupId;
+    }
+
+    public void setArtifactGroupId(String artifactGroupId) {
+        this.artifactGroupId = artifactGroupId;
+    }
+
+    public String getArtifactId() {
+        return artifactId;
+    }
+
+    public void setArtifactId(String artifactId) {
+        this.artifactId = artifactId;
+    }
+
+    public String getArtifactVersion() {
+        return artifactVersion;
+    }
+
+    public void setArtifactVersion(String artifactVersion) {
+        this.artifactVersion = artifactVersion;
+    }
+
+    protected boolean isLocalMavenArtifact() {
+        return getArtifactId() == null || getArtifactId().isEmpty() || getArtifactGroupId() == null || getArtifactGroupId().isEmpty();
+    }
+
+    /**
+     * @return the identifier of the remote maven artifact (alternatively to the deployment of current maven artefact)
+     */
+    protected MavenArtifactIdentifier getRemoteMavenIdentifier() throws MojoExecutionException {
+        MavenArtifactIdentifier remoteMavenArtifact = null;
+        if (!isLocalMavenArtifact()) {
+            if (getApVersion() != null && !getApVersion().isEmpty()) {
+                throw new MojoExecutionException("The 'apVersion' parameter is not supported for remote maven artifacts");
+            }
+            remoteMavenArtifact = new MavenArtifactIdentifier(getArtifactGroupId(), getArtifactId(), getArtifactVersion(), getArtifactClassifier());
+        }
+        return remoteMavenArtifact;
+    }
+
     protected class MavenDeployAutomationPackageTool extends AbstractDeployAutomationPackageTool {
-        // TODO: how to configure maven dependency
-        public MavenDeployAutomationPackageTool(String url, String projectName, String authToken, Boolean async, String apVersion, String activationExpr) {
-            super(url, projectName, authToken, async, apVersion, activationExpr, null);
+
+        public MavenDeployAutomationPackageTool(String url, String projectName, String authToken, Boolean async, String apVersion, String activationExpr, MavenArtifactIdentifier remoteMavenArtifact) {
+            super(url, projectName, authToken, async, apVersion, activationExpr, remoteMavenArtifact);
         }
 
         @Override
