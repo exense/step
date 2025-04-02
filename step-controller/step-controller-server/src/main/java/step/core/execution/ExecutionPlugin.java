@@ -21,6 +21,8 @@ package step.core.execution;
 import step.core.GlobalContext;
 import step.core.artefacts.reports.ReportNode;
 import step.core.collections.Collection;
+import step.core.collections.SearchOrder;
+import step.core.execution.model.ExecutionStatus;
 import step.core.execution.table.*;
 import step.core.execution.type.ExecutionTypeControllerPlugin;
 import step.core.plugins.AbstractControllerPlugin;
@@ -30,6 +32,7 @@ import step.framework.server.tables.TableRegistry;
 import step.plugins.screentemplating.ScreenTemplatePlugin;
 
 import java.util.ArrayList;
+import java.util.List;
 
 @Plugin(dependencies= {ExecutionTypeControllerPlugin.class, ScreenTemplatePlugin.class})
 public class ExecutionPlugin extends AbstractControllerPlugin {
@@ -49,7 +52,17 @@ public class ExecutionPlugin extends AbstractControllerPlugin {
 			execution.setRootReportNode(rootReportNodeFormatter.getRootReportNode(execution));
 			Object executionSummary = executionSummaryFormatter.format(execution);
 			execution.setExecutionSummary(executionSummary);
+			execution.setEffectiveStatus((execution.getStatus().equals(ExecutionStatus.ENDED) ? execution.getResult().name() : execution.getStatus().name()));
 			return execution;
+		}).withDerivedTableSortingFactory(sort -> {
+			if (sort.getField().equals("effectiveStatus")) {
+				int orderValue = sort.getDirection().getValue();
+				return new SearchOrder(List.of(new SearchOrder.FieldSearchOrder("status", orderValue),
+						new SearchOrder.FieldSearchOrder("result", orderValue)));
+			} else {
+				return null;
+			}
+
 		}));
 
 

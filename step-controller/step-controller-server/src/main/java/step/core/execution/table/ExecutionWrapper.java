@@ -27,6 +27,8 @@ public class ExecutionWrapper extends Execution {
 	
 	private Object executionSummary;
 
+	private String effectiveStatus;
+
 	public ReportNode getRootReportNode() {
 		return rootReportNode;
 	}
@@ -41,5 +43,13 @@ public class ExecutionWrapper extends Execution {
 
 	public void setExecutionSummary(Object executionSummary) {
 		this.executionSummary = executionSummary;
+	}
+
+	public String getEffectiveStatus() {
+		return effectiveStatus;
+	}
+
+	public void setEffectiveStatus(String effectiveStatus) {
+		this.effectiveStatus = effectiveStatus;
 	}
 }
