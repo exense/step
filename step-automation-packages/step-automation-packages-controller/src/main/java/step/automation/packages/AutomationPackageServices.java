@@ -18,6 +18,8 @@
  ******************************************************************************/
 package step.automation.packages;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.PostConstruct;
@@ -28,9 +30,6 @@ import org.bson.types.ObjectId;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 import step.automation.packages.execution.AutomationPackageExecutor;
 import step.core.access.User;
@@ -39,12 +38,10 @@ import step.core.deployment.ControllerServiceException;
 import step.core.execution.model.AutomationPackageExecutionParameters;
 import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
 import step.core.maven.MavenArtifactIdentifier;
+import step.core.maven.MavenArtifactIdentifierFromXmlParser;
 import step.framework.server.security.Secured;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
@@ -55,12 +52,15 @@ public class AutomationPackageServices extends AbstractStepServices {
 
     protected AutomationPackageManager automationPackageManager;
     protected AutomationPackageExecutor automationPackageExecutor;
+    protected XmlMapper xmlMapper;
 
     @PostConstruct
     public void init() throws Exception {
         super.init();
         automationPackageManager = getContext().get(AutomationPackageManager.class);
         automationPackageExecutor = getContext().get(AutomationPackageExecutor.class);
+        xmlMapper = new XmlMapper();
+        xmlMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
     @GET
@@ -110,8 +110,6 @@ public class AutomationPackageServices extends AbstractStepServices {
         }
     }
 
-    // TODO: better url?
-
     /**
      * @param mavenArtifactXml
      * Example:
@@ -143,7 +141,7 @@ public class AutomationPackageServices extends AbstractStepServices {
     }
 
     protected MavenArtifactIdentifier getMavenArtifactIdentifierFromXml(String mavenArtifactXml) throws ParserConfigurationException, IOException, SAXException {
-        return new MavenArtifactIdentifierFromXmlParser().parse(mavenArtifactXml);
+        return new MavenArtifactIdentifierFromXmlParser(xmlMapper).parse(mavenArtifactXml);
     }
 
     @POST

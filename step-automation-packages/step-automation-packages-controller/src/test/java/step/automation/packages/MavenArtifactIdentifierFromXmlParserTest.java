@@ -1,18 +1,15 @@
 package step.automation.packages;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.junit.Assert;
 import org.junit.Test;
-import org.xml.sax.SAXException;
 import step.core.maven.MavenArtifactIdentifier;
-
-import javax.xml.parsers.ParserConfigurationException;
-
-import static org.junit.Assert.*;
+import step.core.maven.MavenArtifactIdentifierFromXmlParser;
 
 public class MavenArtifactIdentifierFromXmlParserTest {
 
     @Test
-    public void parse() throws ParserConfigurationException, SAXException {
+    public void parse() throws JsonProcessingException {
         MavenArtifactIdentifierFromXmlParser parser = new MavenArtifactIdentifierFromXmlParser();
         String xml = "<dependency>\n" +
                 "<groupId>org.junit.jupiter</groupId>\n" +

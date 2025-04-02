@@ -21,10 +21,14 @@ package step.core.maven;
 import java.util.Objects;
 
 public class MavenArtifactIdentifier {
-    private final String groupId;
-    private final String artifactId;
-    private final String version;
-    private final String classifier;
+
+    private String groupId;
+    private String artifactId;
+    private String version;
+    private String classifier;
+
+    public MavenArtifactIdentifier() {
+    }
 
     public MavenArtifactIdentifier(String groupId, String artifactId, String version, String classifier) {
         this.groupId = groupId;
@@ -37,16 +41,32 @@ public class MavenArtifactIdentifier {
         return groupId;
     }
 
+    public void setGroupId(String groupId) {
+        this.groupId = groupId;
+    }
+
     public String getArtifactId() {
         return artifactId;
+    }
+
+    public void setArtifactId(String artifactId) {
+        this.artifactId = artifactId;
     }
 
     public String getVersion() {
         return version;
     }
 
+    public void setVersion(String version) {
+        this.version = version;
+    }
+
     public String getClassifier() {
         return classifier;
+    }
+
+    public void setClassifier(String classifier) {
+        this.classifier = classifier;
     }
 
     @Override
