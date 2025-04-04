@@ -265,6 +265,7 @@ public class DefaultDescriptionStepParser extends AbstractDescriptionStepParser 
 	@Step("Before(.*)$")
 	public static void before(ParsingContext parsingContext, String selectionCriteriaExpr) {
 		AbstractArtefact abstractArtefact = parsingContext.peekCurrentArtefact();
+		abstractArtefact = wrapInSequenceIfRequired(parsingContext, abstractArtefact);
 		ChildrenBlock childrenBlock = abstractArtefact.getBefore();
 		if (childrenBlock == null) {
 			childrenBlock = new ChildrenBlock();
@@ -276,6 +277,7 @@ public class DefaultDescriptionStepParser extends AbstractDescriptionStepParser 
 	@Step("After(.*)$")
 	public static void after(ParsingContext parsingContext, String selectionCriteriaExpr) {
 		AbstractArtefact abstractArtefact = parsingContext.peekCurrentArtefact();
+		abstractArtefact = wrapInSequenceIfRequired(parsingContext, abstractArtefact);
 		ChildrenBlock childrenBlock = abstractArtefact.getAfter();
 		if (childrenBlock == null) {
 			childrenBlock = new ChildrenBlock();
@@ -283,7 +285,21 @@ public class DefaultDescriptionStepParser extends AbstractDescriptionStepParser 
 		}
 		parsingContext.addArtefactToCurrentParentSourceAndPush(abstractArtefact, childrenBlock.getSteps());
 	}
-	
+
+	private static AbstractArtefact wrapInSequenceIfRequired(ParsingContext parsingContext, AbstractArtefact abstractArtefact) {
+		if (!(abstractArtefact instanceof Sequence)) {
+			Sequence sequence = new Sequence();
+			sequence.setChildren(abstractArtefact.getChildren());
+			List<AbstractArtefact> newChildren = new ArrayList<>();
+			newChildren.add(sequence);
+			abstractArtefact.setChildren(newChildren);
+			parsingContext.popCurrentArtefact();
+			parsingContext.pushArtefact(sequence);
+			abstractArtefact = sequence;
+		}
+		return abstractArtefact;
+	}
+
 	@Step("Synchronized(.*)$")
 	public static void synchronized_(ParsingContext parsingContext, String selectionCriteriaExpr) {
 		JsonObject object = parseKeyValues(selectionCriteriaExpr);

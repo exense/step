@@ -19,6 +19,7 @@
 package step.plans.nl.parser;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import step.artefacts.CallFunction;
@@ -44,20 +45,21 @@ public class PlanStepParser implements StepParser<PlanStep> {
 	@Override
 	public void parseStep(ParsingContext parsingContext, PlanStep step) {
 		AbstractStep subStep;
-		if(step.command.trim().length()>0) {
+		if(!step.command.trim().isEmpty()) {
 			if(step.command.matches(ASSERT_CHECK_REGEX)) {
-				AbstractArtefact current = parsingContext.peekCurrentArtefact();
+				AbstractArtefact currentArtefact = parsingContext.peekCurrentArtefact();
+				List<AbstractArtefact> currentSteps = parsingContext.peekCurrentSteps();
 				subStep = new ExpectedStep(step.getCommand().replaceFirst(ASSERT_TOKEN, "").trim());
-				// Expected block is parsed only if the current artefact is a CallFunction or if the last child of the current artefact is a CallFunction
-				if(current!=null && current.getChildren()!=null && current.getChildren().size()>0) {
-					AbstractArtefact lastChild = current.getChildren().get(current.getChildren().size()-1);
+				// Expected block is parsed only if the currentArtefact artefact is a CallFunction or if the last child of the currentArtefact artefact is a CallFunction
+				if(currentArtefact!=null && currentSteps!=null && !currentSteps.isEmpty()) {
+					AbstractArtefact lastChild = currentSteps.get(currentSteps.size()-1);
 					if(lastChild instanceof CallFunction) {
 						// the CallFunction is first pushed to the stack, so that the expected steps are added to the CallFunction as child
 						parsingContext.pushArtefact(lastChild);				
 						parsingContext.parseStep(newParsingContext(parsingContext, step), subStep);
 						parsingContext.popCurrentArtefact();
 					}
-				} else if (current instanceof CallFunction) {
+				} else if (currentArtefact instanceof CallFunction) {
 					parsingContext.parseStep(newParsingContext(parsingContext, step), subStep);
 				} else {
 					parsingContext.addParsingError(ASSERT_TOKEN+"s have to be used within or directly after a Keyword");
