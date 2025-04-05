@@ -61,6 +61,10 @@ import static step.automation.packages.AutomationPackageArchive.METADATA_FILES;
 
 public class AutomationPackageManager {
 
+    // TODO: maybe extract and reuse constants from YamlAutomationPackageSchemaGenerator
+    public static final String PLANS_ENTITY_NAME = "plans";
+    public static final String KEYWORDS_ENTITY_NAME = "keywords";
+
     public static final int DEFAULT_READLOCK_TIMEOUT_SECONDS = 60;
 
     private static final Logger log = LoggerFactory.getLogger(AutomationPackageManager.class);
@@ -457,6 +461,24 @@ public class AutomationPackageManager {
             handleExceptionOnPackageUpdate(newPackage);
             throw ex;
         }
+    }
+
+    public Map<String, List<? extends Object>> getAllEntities(ObjectId automationPackageId) {
+        Map<String, List<? extends Object>> result = new HashMap<>();
+        List<Plan> packagePlans = getPackagePlans(automationPackageId);
+        result.put(PLANS_ENTITY_NAME, packagePlans);
+        List<Function> packageFunctions = getPackageFunctions(automationPackageId);
+        result.put(KEYWORDS_ENTITY_NAME, packageFunctions);
+        List<String> allHooksNames = automationPackageHookRegistry.getOrderedHookFieldNames();
+        for (String hookName : allHooksNames) {
+            AutomationPackageHook<?> hook = automationPackageHookRegistry.getHook(hookName);
+            result.putAll(hook.getEntitiesForAutomationPackage(
+                            automationPackageId,
+                            new AutomationPackageContext(operationMode, resourceManager, null, null, null, extensions)
+                    )
+            );
+        }
+        return result;
     }
 
     private ObjectId updateAutomationPackage(AutomationPackage oldPackage, AutomationPackage newPackage,

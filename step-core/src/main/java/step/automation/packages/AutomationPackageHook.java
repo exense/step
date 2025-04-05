@@ -1,9 +1,11 @@
 package step.automation.packages;
 
+import org.bson.types.ObjectId;
 import step.core.AbstractStepContext;
 import step.core.objectenricher.EnricheableObject;
 import step.core.repositories.ImportResult;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -64,5 +66,12 @@ public interface AutomationPackageHook<T> {
      */
     default void beforeIsolatedExecution(AutomationPackage automationPackage, AbstractStepContext executionContext, Map<String, Object> apManagerExtensions, ImportResult importResult){
 
+    }
+
+    /**
+     * Returns the map of database entities managed by this hook
+     */
+    default Map<String, List<? extends Object>> getEntitiesForAutomationPackage(ObjectId automationPackageId, AutomationPackageContext automationPackageContext){
+        return new HashMap<>();
     }
 }

@@ -251,4 +251,15 @@ public class AutomationPackageServices extends AbstractStepServices {
         return automationPackageManager.getDescriptorJsonSchema();
     }
 
+    @GET
+    @Path("{id}/entities")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response listEntities(@PathParam("id") String id){
+        try {
+            return Response.ok(automationPackageManager.getAllEntities(new ObjectId(id))).build();
+        } catch (AutomationPackageManagerException e) {
+            throw new ControllerServiceException(e.getMessage());
+        }
+    }
+
 }
