@@ -26,15 +26,17 @@ public class MavenArtifactIdentifier {
     private String artifactId;
     private String version;
     private String classifier;
+    private String type;
 
     public MavenArtifactIdentifier() {
     }
 
-    public MavenArtifactIdentifier(String groupId, String artifactId, String version, String classifier) {
+    public MavenArtifactIdentifier(String groupId, String artifactId, String version, String classifier, String type) {
         this.groupId = groupId;
         this.artifactId = artifactId;
         this.version = version;
         this.classifier = classifier;
+        this.type = type;
     }
 
     public String getGroupId() {
@@ -69,6 +71,14 @@ public class MavenArtifactIdentifier {
         this.classifier = classifier;
     }
 
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
     @Override
     public String toString() {
         StringBuilder buffer = new StringBuilder(128);
@@ -78,6 +88,9 @@ public class MavenArtifactIdentifier {
             buffer.append(':').append(getClassifier());
         }
         buffer.append(':').append(getVersion());
+        if (getType() != null && !getType().isEmpty()) {
+            buffer.append(':').append(getType());
+        }
         return buffer.toString();
     }
 
@@ -86,11 +99,11 @@ public class MavenArtifactIdentifier {
         if (this == object) return true;
         if (object == null || getClass() != object.getClass()) return false;
         MavenArtifactIdentifier that = (MavenArtifactIdentifier) object;
-        return Objects.equals(groupId, that.groupId) && Objects.equals(artifactId, that.artifactId) && Objects.equals(version, that.version) && Objects.equals(classifier, that.classifier);
+        return Objects.equals(groupId, that.groupId) && Objects.equals(artifactId, that.artifactId) && Objects.equals(version, that.version) && Objects.equals(classifier, that.classifier) && Objects.equals(type, that.type);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(groupId, artifactId, version, classifier);
+        return Objects.hash(groupId, artifactId, version, classifier, type);
     }
 }

@@ -190,7 +190,7 @@ public class StepConsoleTest {
         Assert.assertEquals(1, remoteExecuteHistory.size());
         usedParams = remoteExecuteHistory.get(0);
         Assert.assertEquals("http://localhost:8080", usedParams.stepUrl);
-        Assert.assertEquals(new MavenArtifactIdentifier("ch.exense.step", "step-automation-packages-junit", "0.0.0", "tests"), usedParams.params.getMavenArtifactIdentifier());
+        Assert.assertEquals(new MavenArtifactIdentifier("ch.exense.step", "step-automation-packages-junit", "0.0.0", "tests", null), usedParams.params.getMavenArtifactIdentifier());
 
         // test various report types and output types
         remoteExecuteHistory.clear();

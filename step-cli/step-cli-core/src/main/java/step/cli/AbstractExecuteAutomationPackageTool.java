@@ -279,6 +279,7 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
             repositoryParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_GROUP_ID, params.getMavenArtifactIdentifier().getGroupId());
             repositoryParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_VERSION, params.getMavenArtifactIdentifier().getVersion());
             repositoryParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_CLASSIFIER, params.getMavenArtifactIdentifier().getClassifier());
+            repositoryParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_TYPE, params.getMavenArtifactIdentifier().getType());
             executionParameters.setOriginalRepositoryObject(new RepositoryObjectReference(ArtifactRepositoryConstants.MAVEN_REPO_ID, repositoryParameters));
         }
 

@@ -28,15 +28,12 @@ import java.io.IOException;
 
 public class AutomationPackageFromMavenProvider implements AutomationPackageArchiveProvider {
 
-    private final String mavenSettingsXml;
-    private final File localRepository;
     private final MavenArtifactIdentifier mavenArtifactIdentifier;
+    private final AutomationPackageMavenConfig mavenConfig;
 
-    public AutomationPackageFromMavenProvider(String mavenSettingsXml,
-                                              File localRepository,
+    public AutomationPackageFromMavenProvider(AutomationPackageMavenConfig mavenConfig,
                                               MavenArtifactIdentifier mavenArtifactIdentifier) {
-        this.mavenSettingsXml = mavenSettingsXml;
-        this.localRepository = localRepository;
+        this.mavenConfig = mavenConfig;
         this.mavenArtifactIdentifier = mavenArtifactIdentifier;
     }
 
@@ -44,12 +41,21 @@ public class AutomationPackageFromMavenProvider implements AutomationPackageArch
     public AutomationPackageArchive getAutomationPackageArchive() throws AutomationPackageReadingException {
         // The same client as in MavenArtifactRepository
         try {
-            MavenArtifactClient mavenArtifactClient = new MavenArtifactClient(mavenSettingsXml, localRepository);
+            if (mavenConfig == null) {
+                throw new AutomationPackageReadingException("Maven config is not resolved");
+            }
+            if (mavenConfig.getMavenSettingsXml() == null) {
+                throw new AutomationPackageManagerException("Maven settings xml is not resolved");
+            }
+            if (mavenConfig.getLocalFileRepository() == null) {
+                throw new AutomationPackageManagerException("Maven local file repository is not resolved");
+            }
+            MavenArtifactClient mavenArtifactClient = new MavenArtifactClient(mavenConfig.getMavenSettingsXml(), mavenConfig.getLocalFileRepository());
             File artifact = mavenArtifactClient.getArtifact(new DefaultArtifact(
                     mavenArtifactIdentifier.getGroupId(),
                     mavenArtifactIdentifier.getArtifactId(),
                     mavenArtifactIdentifier.getClassifier(),
-                    "jar",
+                    mavenArtifactIdentifier.getType() == null || mavenArtifactIdentifier.getType().isEmpty() ? "jar" : mavenArtifactIdentifier.getType(),
                     mavenArtifactIdentifier.getVersion())
             );
             return new AutomationPackageArchive(artifact);

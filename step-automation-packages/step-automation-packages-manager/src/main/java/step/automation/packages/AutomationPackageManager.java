@@ -65,12 +65,11 @@ public class AutomationPackageManager {
     public static final int DEFAULT_READLOCK_TIMEOUT_SECONDS = 60;
 
     private static final Logger log = LoggerFactory.getLogger(AutomationPackageManager.class);
-    protected File localMavenRepository;
 
     protected final AutomationPackageAccessor automationPackageAccessor;
     protected final FunctionManager functionManager;
     protected final FunctionAccessor functionAccessor;
-    protected final String mavenSettingsXml;
+    private final AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider;
     protected final PlanAccessor planAccessor;
     protected final AutomationPackageReader packageReader;
 
@@ -99,13 +98,12 @@ public class AutomationPackageManager {
                                      AutomationPackageHookRegistry automationPackageHookRegistry,
                                      AutomationPackageReader packageReader,
                                      AutomationPackageLocks automationPackageLocks,
-                                     String mavenSettingsXml,
-                                     File localMavenRepository) {
+                                     AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider) {
         this.automationPackageAccessor = automationPackageAccessor;
 
         this.functionManager = functionManager;
         this.functionAccessor = functionAccessor;
-        this.localMavenRepository = localMavenRepository;
+        this.mavenConfigProvider = mavenConfigProvider;
         IndexField indexField = AutomationPackageEntity.getIndexField();
         this.functionAccessor.createIndexIfNeeded(indexField);
 
@@ -119,7 +117,6 @@ public class AutomationPackageManager {
         this.resourceManager = resourceManager;
         this.automationPackageLocks = automationPackageLocks;
         this.operationMode = Objects.requireNonNull(operationMode);
-        this.mavenSettingsXml = mavenSettingsXml;
 
         addDefaultExtensions();
     }
@@ -151,7 +148,7 @@ public class AutomationPackageManager {
                 extensions,
                 hookRegistry, reader,
                 new AutomationPackageLocks(DEFAULT_READLOCK_TIMEOUT_SECONDS),
-                null, null
+                null
         );
         automationPackageManager.isIsolated = true;
         return automationPackageManager;
@@ -189,7 +186,7 @@ public class AutomationPackageManager {
                 extensions,
                 hookRegistry, reader,
                 new AutomationPackageLocks(DEFAULT_READLOCK_TIMEOUT_SECONDS),
-                null, null
+                null
         );
         automationPackageManager.isIsolated = true;
         return automationPackageManager;
@@ -203,8 +200,7 @@ public class AutomationPackageManager {
                                                                               AutomationPackageHookRegistry hookRegistry,
                                                                               AutomationPackageReader reader,
                                                                               AutomationPackageLocks locks,
-                                                                              String mavenSettingsXml,
-                                                                              File localMavenRepository) {
+                                                                              AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider) {
         Map<String, Object> extensions = new HashMap<>();
         hookRegistry.onMainAutomationPackageManagerCreate(extensions);
         return new AutomationPackageManager(
@@ -217,7 +213,7 @@ public class AutomationPackageManager {
                 hookRegistry,
                 reader,
                 locks,
-                mavenSettingsXml, localMavenRepository
+                mavenConfigProvider
         );
     }
 
@@ -297,6 +293,21 @@ public class AutomationPackageManager {
     }
 
     public ObjectId createAutomationPackageFromMaven(MavenArtifactIdentifier mavenArtifactIdentifier, String activationExpr, ObjectEnricher enricher, ObjectPredicate objectPredicate) {
+        validateMavenConfigAndArtifactClassifier(mavenArtifactIdentifier);
+        try {
+            try (AutomationPackageFromMavenProvider provider = new AutomationPackageFromMavenProvider(mavenConfigProvider.getConfig(objectPredicate), mavenArtifactIdentifier)) {
+                return createOrUpdateAutomationPackage(false, true, null, provider, mavenArtifactIdentifier.getVersion(), activationExpr, false, enricher, objectPredicate, false).getId();
+            }
+        } catch (IOException ex) {
+            throw new AutomationPackageManagerException("Automation package cannot be created. Caused by: " + ex.getMessage(), ex);
+        }
+    }
+
+    protected void validateMavenConfigAndArtifactClassifier(MavenArtifactIdentifier mavenArtifactIdentifier) throws AutomationPackageManagerException {
+        if (mavenConfigProvider == null) {
+            throw new AutomationPackageManagerException("Maven config provider is not configured for automation package manager");
+        }
+
         String commonErrorMessage = "Unable to resolve maven artifact for automation package";
         if (mavenArtifactIdentifier.getArtifactId() == null) {
             throw new AutomationPackageManagerException(commonErrorMessage + ". artifactId is undefined");
@@ -306,13 +317,6 @@ public class AutomationPackageManager {
         }
         if (mavenArtifactIdentifier.getVersion() == null) {
             throw new AutomationPackageManagerException(commonErrorMessage + ". version is undefined");
-        }
-        try {
-            try (AutomationPackageFromMavenProvider provider = new AutomationPackageFromMavenProvider(mavenSettingsXml, localMavenRepository, mavenArtifactIdentifier)) {
-                return createOrUpdateAutomationPackage(false, true, null, provider, mavenArtifactIdentifier.getVersion(), activationExpr, false, enricher, objectPredicate, false).getId();
-            }
-        } catch (IOException ex) {
-            throw new AutomationPackageManagerException("Automation package cannot be created. Caused by: " + ex.getMessage(), ex);
         }
     }
 
@@ -368,7 +372,8 @@ public class AutomationPackageManager {
                                                                                   String activationExpr,
                                                                                   ObjectEnricher enricher, ObjectPredicate objectPredicate, boolean async) throws AutomationPackageManagerException {
         try {
-            try (AutomationPackageFromMavenProvider provider = new AutomationPackageFromMavenProvider(mavenSettingsXml, localMavenRepository, mavenArtifactIdentifier)) {
+            validateMavenConfigAndArtifactClassifier(mavenArtifactIdentifier);
+            try (AutomationPackageFromMavenProvider provider = new AutomationPackageFromMavenProvider(mavenConfigProvider.getConfig(objectPredicate), mavenArtifactIdentifier)) {
                 return createOrUpdateAutomationPackage(allowUpdate, allowCreate, explicitOldId, provider, mavenArtifactIdentifier.getVersion(), activationExpr, false, enricher, objectPredicate, async);
             }
         } catch (IOException ex) {

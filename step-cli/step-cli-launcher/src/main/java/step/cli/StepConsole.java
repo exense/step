@@ -144,7 +144,7 @@ public class StepConsole implements Callable<Integer> {
         protected MavenArtifactIdentifier getMavenArtifact(String apFile) {
             if (apFile != null && apFile.startsWith("mvn:")) {
                 String[] split = apFile.split(":");
-                return new MavenArtifactIdentifier(split[1], split[2], split[3], split.length >= 5 ? split[4] : null);
+                return new MavenArtifactIdentifier(split[1], split[2], split[3], split.length >= 5 ? split[4] : null, split.length >= 6 ? split[5] : null);
             } else {
                 return null;
             }
@@ -309,11 +309,18 @@ public class StepConsole implements Callable<Integer> {
 
             // for tests
             protected void executeTool(final String stepUrl1, final String projectName, final String authToken, final boolean async, String apVersion, String activationExpr, final MavenArtifactIdentifier mavenArtifact) {
-                new AbstractDeployAutomationPackageTool(stepUrl1, projectName, authToken, async, apVersion, activationExpr, mavenArtifact) {
+                new AbstractDeployAutomationPackageTool(stepUrl1, projectName, authToken, async, apVersion, activationExpr) {
+
                     @Override
-                    protected File getFileToUpload() throws StepCliExecutionException {
+                    protected MavenArtifactIdentifier getMavenArtifactIdentifierToUpload() {
+                        return getMavenArtifact(apFile);
+                    }
+
+                    @Override
+                    protected File getLocalFileToUpload() throws StepCliExecutionException {
                         return prepareApFile(apFile);
                     }
+
                 }.execute();
             }
         }

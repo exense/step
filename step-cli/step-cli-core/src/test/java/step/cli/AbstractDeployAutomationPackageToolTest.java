@@ -27,7 +27,7 @@ public class AbstractDeployAutomationPackageToolTest {
         RemoteAutomationPackageClientImpl automationPackageClient = createRemoteAutomationPackageClientMock();
         DeployAutomationPackageToolTestable tool = new DeployAutomationPackageToolTestable(
                 "http://localhost:8080", TENANT_1.getName(),
-                null, false, "ver1", "true==true", null, automationPackageClient
+                null, false, "ver1", "true==true", automationPackageClient
         );
         tool.execute();
 
@@ -51,9 +51,9 @@ public class AbstractDeployAutomationPackageToolTest {
 
         private RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock;
 
-        public DeployAutomationPackageToolTestable(String url, String stepProjectName, String authToken, Boolean async, String apVersion, String activationExpr, MavenArtifactIdentifier mavenArtifactIdentifier,
+        public DeployAutomationPackageToolTestable(String url, String stepProjectName, String authToken, Boolean async, String apVersion, String activationExpr,
                                                    RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock) {
-            super(url, stepProjectName, authToken, async, apVersion, activationExpr, mavenArtifactIdentifier);
+            super(url, stepProjectName, authToken, async, apVersion, activationExpr);
             try {
                 TEST_FILE = FileHelper.createTempFile();
             } catch (IOException e) {
@@ -63,7 +63,12 @@ public class AbstractDeployAutomationPackageToolTest {
         }
 
         @Override
-        protected File getFileToUpload() throws StepCliExecutionException {
+        protected MavenArtifactIdentifier getMavenArtifactIdentifierToUpload() {
+            return null;
+        }
+
+        @Override
+        protected File getLocalFileToUpload() throws StepCliExecutionException {
             return TEST_FILE;
         }
 

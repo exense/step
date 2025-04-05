@@ -38,6 +38,7 @@ public class MavenArtifactRepository extends AbstractArtifactRepository {
     protected static final String PARAM_ARTIFACT_ID = ArtifactRepositoryConstants.ARTIFACT_PARAM_ARTIFACT_ID;
     protected static final String PARAM_VERSION = ArtifactRepositoryConstants.ARTIFACT_PARAM_VERSION;
     protected static final String PARAM_GROUP_ID = ArtifactRepositoryConstants.ARTIFACT_PARAM_GROUP_ID;
+    protected static final String PARAM_TYPE = ArtifactRepositoryConstants.ARTIFACT_PARAM_TYPE;
     protected static final String PARAM_CLASSIFIER = ArtifactRepositoryConstants.ARTIFACT_PARAM_CLASSIFIER;
 
     protected static final String PARAM_MAVEN_SETTINGS = ArtifactRepositoryConstants.ARTIFACT_PARAM_MAVEN_SETTINGS;
@@ -81,7 +82,8 @@ public class MavenArtifactRepository extends AbstractArtifactRepository {
             String version = AbstractArtifactRepository.getMandatoryRepositoryParameter(repositoryParameters, PARAM_VERSION);
             String groupId = AbstractArtifactRepository.getMandatoryRepositoryParameter(repositoryParameters, PARAM_GROUP_ID);
             String classifier = repositoryParameters.get(PARAM_CLASSIFIER);
-            return mavenArtifactClient.getArtifact(new DefaultArtifact(groupId, artifactId, classifier, "jar", version));
+            String type = repositoryParameters.get(PARAM_TYPE);
+            return mavenArtifactClient.getArtifact(new DefaultArtifact(groupId, artifactId, classifier, type == null || type.isEmpty() ? "jar" : type, version));
         } catch (SettingsBuildingException | ArtifactResolutionException e) {
             throw new RuntimeException(e);
         }

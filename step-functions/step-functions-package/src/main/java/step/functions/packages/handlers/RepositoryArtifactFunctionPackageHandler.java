@@ -120,7 +120,11 @@ public class RepositoryArtifactFunctionPackageHandler extends JavaFunctionPackag
 		String packageLocation = functionPackage.getPackageLocation();
 
 		MavenArtifactIdentifier dependency =  new MavenArtifactIdentifierFromXmlParser().parse(packageLocation);
-		Artifact artifact = new DefaultArtifact(dependency.getGroupId(), dependency.getArtifactId(), dependency.getClassifier(), "jar", dependency.getVersion());
+		Artifact artifact = new DefaultArtifact(
+				dependency.getGroupId(), dependency.getArtifactId(),
+				dependency.getClassifier(), dependency.getType() == null || dependency.getType().isEmpty() ? "jar" : dependency.getType(),
+				dependency.getVersion()
+		);
 		File artifactFile = getArtifactByAether(artifact);
 		
 		// TODO we're changing the package location to the path of the resolved file. 

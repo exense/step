@@ -28,6 +28,7 @@ public class ArtifactRepositoryConstants {
     public static final String ARTIFACT_PARAM_VERSION = "version";
     public static final String ARTIFACT_PARAM_GROUP_ID = "groupId";
     public static final String ARTIFACT_PARAM_CLASSIFIER = "classifier";
+    public static final String ARTIFACT_PARAM_TYPE = "type";
 
     public static final String ARTIFACT_PARAM_MAVEN_SETTINGS = "mavenSettings";
     public static final String ARTIFACT_PARAM_MAVEN_SETTINGS_DEFAULT = "default";
