@@ -31,6 +31,7 @@ import step.core.collections.Collection;
 import step.core.controller.ControllerSetting;
 import step.core.controller.ControllerSettingAccessor;
 import step.core.deployment.ObjectHookControllerPlugin;
+import step.core.objectenricher.ObjectPredicate;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.engine.plugins.ExecutionEnginePlugin;
@@ -99,28 +100,11 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
         if (context.get(AutomationPackageManager.class) == null) {
             log.info("Using the OS implementation of automation package manager");
 
-            AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider = objectPredicate -> {
-                // default maven configuration in controller settings
-                String mavenSettings;
-
-                // TODO: in fact, we have to use the parameters prepared in ParameterManagerPlugin? To be clarified, how to do this
-                ParameterManager parameterManager = context.get(ParameterManager.class);
-
-                // the maven settings are used to deploy the automation package, so there no execution engine and bindings here
-                Map<String, Parameter> allParameters = parameterManager.getAllParameters(new HashMap<>(), objectPredicate);
-
-                // here we take the name of maven settings property alike we do this for repository parameters in MavenArtifactRepository
-                // but here we take this name from Step Parameters, but not from the execution context
-                Parameter mavenSettingsStepParameter = allParameters.get(ARTIFACT_PARAM_MAVEN_SETTINGS);
-                if (mavenSettingsStepParameter != null && mavenSettingsStepParameter.getValue().getValue() != null && !mavenSettingsStepParameter.getValue().getValue().isEmpty()) {
-                    mavenSettings = ArtifactRepositoryConstants.MAVEN_SETTINGS_PREFIX + mavenSettingsStepParameter.getValue().getValue();
-                } else {
-                    // default maven configuration in controller settings
-                    mavenSettings = ArtifactRepositoryConstants.MAVEN_SETTINGS_PREFIX + ArtifactRepositoryConstants.ARTIFACT_PARAM_MAVEN_SETTINGS_DEFAULT;
-                }
-                ControllerSetting settingsXml = context.get(ControllerSettingAccessor.class).getSettingByKey(mavenSettings);
-                return new AutomationPackageMavenConfig(settingsXml.getValue(), context.getConfiguration().getPropertyAsFile(CONFIGURATION_MAVEN_FOLDER, new File(DEFAULT_MAVEN_FOLDER)));
-            };
+            AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider = new MavenConfigProviderImpl(
+                    context.require(ParameterManager.class),
+                    context.require(ControllerSettingAccessor.class),
+                    context.getConfiguration().getPropertyAsFile(CONFIGURATION_MAVEN_FOLDER, new File(DEFAULT_MAVEN_FOLDER))
+            );
 
             // moved to 'afterInitializeData' to have the schedule accessor in context
             // here we pass the step.automation.packages.AutomationPackageMavenConfig.ConfigProvider to resolve maven settings dynamically
@@ -166,5 +150,40 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
     @Override
     public ExecutionEnginePlugin getExecutionEnginePlugin() {
         return new AutomationPackageExecutionPlugin(automationPackageLocks);
+    }
+
+    private static class MavenConfigProviderImpl implements AutomationPackageMavenConfig.ConfigProvider {
+
+        private final ParameterManager parameterManager;
+        private final ControllerSettingAccessor controllerSettingAccessor;
+        private final File localFileRepository;
+
+        public MavenConfigProviderImpl(ParameterManager parameterManager, ControllerSettingAccessor controllerSettingAccessor, File localFileRepository) {
+            this.parameterManager = parameterManager;
+            this.controllerSettingAccessor = controllerSettingAccessor;
+            this.localFileRepository = localFileRepository;
+        }
+
+        @Override
+        public AutomationPackageMavenConfig getConfig(ObjectPredicate objectPredicate) {
+            // default maven configuration in controller settings
+            String mavenSettings;
+
+            // TODO: in fact, we have to use the parameters prepared in ParameterManagerPlugin? To be clarified, how to do this
+            // the maven settings are used to deploy the automation package, so there no execution engine and bindings here
+            Map<String, Parameter> allParameters = parameterManager.getAllParameters(new HashMap<>(), objectPredicate);
+
+            // here we take the name of maven settings property alike we do this for repository parameters in MavenArtifactRepository
+            // but here we take this name from Step Parameters, but not from the execution context
+            Parameter mavenSettingsStepParameter = allParameters.get(ARTIFACT_PARAM_MAVEN_SETTINGS);
+            if (mavenSettingsStepParameter != null && mavenSettingsStepParameter.getValue().getValue() != null && !mavenSettingsStepParameter.getValue().getValue().isEmpty()) {
+                mavenSettings = ArtifactRepositoryConstants.MAVEN_SETTINGS_PREFIX + mavenSettingsStepParameter.getValue().getValue();
+            } else {
+                // default maven configuration in controller settings
+                mavenSettings = ArtifactRepositoryConstants.MAVEN_SETTINGS_PREFIX + ArtifactRepositoryConstants.ARTIFACT_PARAM_MAVEN_SETTINGS_DEFAULT;
+            }
+            ControllerSetting settingsXml = controllerSettingAccessor.getSettingByKey(mavenSettings);
+            return new AutomationPackageMavenConfig(settingsXml.getValue(), localFileRepository);
+        }
     }
 }

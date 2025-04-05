@@ -25,11 +25,15 @@ import org.eclipse.aether.resolution.ArtifactResolutionException;
 import step.automation.packages.AutomationPackageManager;
 import step.core.controller.ControllerSetting;
 import step.core.controller.ControllerSettingAccessor;
+import step.core.objectenricher.ObjectPredicate;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.type.FunctionTypeRegistry;
+import step.parameter.Parameter;
+import step.parameter.ParameterManager;
 import step.repositories.ArtifactRepositoryConstants;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -53,16 +57,32 @@ public class MavenArtifactRepository extends AbstractArtifactRepository {
                     "</settings>\n";
 
     private final ControllerSettingAccessor controllerSettingAccessor;
+    private final ParameterManager parameterManager;
     private final File localRepository;
 
-    public MavenArtifactRepository(AutomationPackageManager manager, FunctionTypeRegistry functionTypeRegistry, FunctionAccessor functionAccessor,  Configuration configuration, ControllerSettingAccessor controllerSettingAccessor) {
+    public MavenArtifactRepository(AutomationPackageManager manager, FunctionTypeRegistry functionTypeRegistry, FunctionAccessor functionAccessor,  Configuration configuration,
+                                   ControllerSettingAccessor controllerSettingAccessor, ParameterManager parameterManager) {
         super(Set.of(PARAM_GROUP_ID, PARAM_ARTIFACT_ID, PARAM_VERSION), manager, functionTypeRegistry, functionAccessor);
         localRepository = configuration.getPropertyAsFile(CONFIGURATION_MAVEN_FOLDER, new File(DEFAULT_MAVEN_FOLDER));
         this.controllerSettingAccessor = controllerSettingAccessor;
+        this.parameterManager = parameterManager;
     }
 
-    private ControllerSetting getMavenSettings(Map<String, String> repositoryParameters) {
-        String mavenSettingsId = MAVEN_SETTINGS_PREFIX + repositoryParameters.getOrDefault(PARAM_MAVEN_SETTINGS, MAVEN_SETTINGS_DEFAULT);
+    private ControllerSetting getMavenSettings(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) {
+
+        // Priority 1: the explicit parameter in repository params
+        String mavenSettingsPostfix = repositoryParameters.get(PARAM_MAVEN_SETTINGS);
+        if (mavenSettingsPostfix == null) {
+            // Priority 2: Step parameter (defined in UI)
+            Parameter mavenSettingsParam = parameterManager == null ? null : parameterManager.getAllParameters(new HashMap<>(), objectPredicate).get(PARAM_MAVEN_SETTINGS);
+            mavenSettingsPostfix = mavenSettingsParam != null && mavenSettingsParam.getValue() != null && !mavenSettingsParam.getValue().getValue().isEmpty() ? mavenSettingsParam.getValue().getValue() : null;
+        }
+        if (mavenSettingsPostfix == null) {
+            // Priority 3: default location
+            mavenSettingsPostfix = MAVEN_SETTINGS_DEFAULT;
+        }
+
+        String mavenSettingsId = MAVEN_SETTINGS_PREFIX + mavenSettingsPostfix;
         ControllerSetting settingsXml = controllerSettingAccessor.getSettingByKey(mavenSettingsId);
 
         if (settingsXml==null) {
@@ -74,8 +94,8 @@ public class MavenArtifactRepository extends AbstractArtifactRepository {
     }
 
     @Override
-    public File getArtifact(Map<String, String> repositoryParameters) {
-        ControllerSetting settingsXml = getMavenSettings(repositoryParameters);
+    public File getArtifact(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) {
+        ControllerSetting settingsXml = getMavenSettings(repositoryParameters, objectPredicate);
         try {
             MavenArtifactClient mavenArtifactClient = new MavenArtifactClient(settingsXml.getValue(), localRepository);
             String artifactId = AbstractArtifactRepository.getMandatoryRepositoryParameter(repositoryParameters, PARAM_ARTIFACT_ID);

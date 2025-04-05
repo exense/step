@@ -100,7 +100,7 @@ public class AutomationPackageExecutor {
         // 2) to read the automation package and fill ap manager with plans, keywords etc.
 
         // so at first we store the input stream as resource
-        IsolatedAutomationPackageRepository.AutomationPackageFile apFile = repository.getApFileForExecution(apInputStream, inputStreamFileName, parameters, contextId);
+        IsolatedAutomationPackageRepository.AutomationPackageFile apFile = repository.getApFileForExecution(apInputStream, inputStreamFileName, parameters, contextId, objectPredicate);
 
         // and then we read the ap from just stored file
         // create single execution context for the whole AP to execute all plans on the same ap manager (for performance reason)

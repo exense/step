@@ -30,6 +30,7 @@ import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.type.FunctionTypeRegistry;
+import step.parameter.ParameterManager;
 import step.repositories.ArtifactRepositoryConstants;
 
 @Plugin(dependencies = {ControllerSettingPlugin.class, AutomationPackagePlugin.class})
@@ -50,7 +51,8 @@ public class ArtifactRepositoryPlugin extends AbstractControllerPlugin {
                 context.require(AutomationPackageManager.class),
                 context.require(FunctionTypeRegistry.class),
                 context.require(FunctionAccessor.class),
-                configuration, controllerSettingAccessor);
+                configuration, controllerSettingAccessor,
+                context.require(ParameterManager.class));
         ResourceArtifactRepository resourceRepository = new ResourceArtifactRepository(
                 context.getResourceManager(),
                 context.require(AutomationPackageManager.class),

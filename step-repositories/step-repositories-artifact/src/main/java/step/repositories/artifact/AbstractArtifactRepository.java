@@ -18,28 +18,21 @@
  ******************************************************************************/
 package step.repositories.artifact;
 
-import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.artefacts.TestSet;
 import step.automation.packages.AutomationPackageManager;
 import step.automation.packages.execution.RepositoryWithAutomationPackageSupport;
-import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.deployment.ControllerServiceException;
 import step.core.execution.ExecutionContext;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.repositories.ArtefactInfo;
-import step.core.repositories.TestRunStatus;
-import step.core.repositories.TestSetStatusOverview;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.type.FunctionTypeRegistry;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public abstract class AbstractArtifactRepository extends RepositoryWithAutomationPackageSupport {
 
@@ -67,7 +60,7 @@ public abstract class AbstractArtifactRepository extends RepositoryWithAutomatio
 
 	protected abstract String resolveArtifactName(Map<String, String> repositoryParameters);
 
-	public abstract File getArtifact(Map<String, String> repositoryParameters);
+	public abstract File getArtifact(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate);
 
 	@Override
 	public void exportExecution(ExecutionContext context, Map<String, String> repositoryParameters) {
