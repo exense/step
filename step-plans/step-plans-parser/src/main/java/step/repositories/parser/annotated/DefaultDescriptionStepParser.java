@@ -261,11 +261,20 @@ public class DefaultDescriptionStepParser extends AbstractDescriptionStepParser 
 		result.getToken().setValue(object.toString());
 		parsingContext.addArtefactToCurrentParentAndPush(result);
 	}
-	
-	@Step("Before(.*)$")
-	public static void before(ParsingContext parsingContext, String selectionCriteriaExpr) {
+
+	@Step(value = "BeforeSequence(.*)$", priority = 2)
+	public static void beforeSequence(ParsingContext parsingContext, String selectionCriteriaExpr) {
 		AbstractArtefact abstractArtefact = parsingContext.peekCurrentArtefact();
 		abstractArtefact = wrapInSequenceIfRequired(parsingContext, abstractArtefact);
+		addBeforeSection(parsingContext, abstractArtefact);
+	}
+
+	@Step("Before(.*)$")
+	public static void before(ParsingContext parsingContext, String selectionCriteriaExpr) {
+		addBeforeSection(parsingContext, parsingContext.peekCurrentArtefact());
+	}
+
+	private static void addBeforeSection(ParsingContext parsingContext, AbstractArtefact abstractArtefact) {
 		ChildrenBlock childrenBlock = abstractArtefact.getBefore();
 		if (childrenBlock == null) {
 			childrenBlock = new ChildrenBlock();
@@ -273,11 +282,20 @@ public class DefaultDescriptionStepParser extends AbstractDescriptionStepParser 
 		}
 		parsingContext.addArtefactToCurrentParentSourceAndPush(abstractArtefact, childrenBlock.getSteps());
 	}
-	
-	@Step("After(.*)$")
-	public static void after(ParsingContext parsingContext, String selectionCriteriaExpr) {
+
+	@Step(value = "AfterSequence(.*)$", priority = 2)
+	public static void afterSequence(ParsingContext parsingContext, String selectionCriteriaExpr) {
 		AbstractArtefact abstractArtefact = parsingContext.peekCurrentArtefact();
 		abstractArtefact = wrapInSequenceIfRequired(parsingContext, abstractArtefact);
+		addAfterSection(parsingContext, abstractArtefact);
+	}
+
+	@Step("After(.*)$")
+	public static void after(ParsingContext parsingContext, String selectionCriteriaExpr) {
+		addAfterSection(parsingContext, parsingContext.peekCurrentArtefact());
+	}
+
+	private static void addAfterSection(ParsingContext parsingContext, AbstractArtefact abstractArtefact) {
 		ChildrenBlock childrenBlock = abstractArtefact.getAfter();
 		if (childrenBlock == null) {
 			childrenBlock = new ChildrenBlock();
