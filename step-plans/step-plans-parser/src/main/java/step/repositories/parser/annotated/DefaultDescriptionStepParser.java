@@ -184,7 +184,7 @@ public class DefaultDescriptionStepParser extends AbstractDescriptionStepParser 
 
 	@Step(value = "BeforeThread(.*)$", priority = 2)
 	public static void beforeThread(ParsingContext parsingContext, String selectionCriteriaExpr) {
-		AbstractArtefact abstractArtefact = parsingContext.peekCurrentArtefact();
+		AbstractArtefact abstractArtefact = parsingContext.peekCurrentNonWrappingArtefact();
 		if (abstractArtefact instanceof ThreadGroup) {
 			ThreadGroup threadGroup = (ThreadGroup) abstractArtefact;
 			ChildrenBlock childrenBlock = threadGroup.getBeforeThread();
@@ -200,7 +200,7 @@ public class DefaultDescriptionStepParser extends AbstractDescriptionStepParser 
 	
 	@Step(value = "AfterThread(.*)$", priority = 2)
 	public static void afterThread(ParsingContext parsingContext, String selectionCriteriaExpr) {
-		AbstractArtefact abstractArtefact = parsingContext.peekCurrentArtefact();
+		AbstractArtefact abstractArtefact = parsingContext.peekCurrentNonWrappingArtefact();
 		if (abstractArtefact instanceof ThreadGroup) {
 			ThreadGroup threadGroup = (ThreadGroup) abstractArtefact;
 			ChildrenBlock childrenBlock = threadGroup.getAfterThread();
@@ -271,7 +271,7 @@ public class DefaultDescriptionStepParser extends AbstractDescriptionStepParser 
 
 	@Step("Before(.*)$")
 	public static void before(ParsingContext parsingContext, String selectionCriteriaExpr) {
-		addBeforeSection(parsingContext, parsingContext.peekCurrentArtefact());
+		addBeforeSection(parsingContext, parsingContext.peekCurrentNonWrappingArtefact());
 	}
 
 	private static void addBeforeSection(ParsingContext parsingContext, AbstractArtefact abstractArtefact) {
@@ -292,7 +292,7 @@ public class DefaultDescriptionStepParser extends AbstractDescriptionStepParser 
 
 	@Step("After(.*)$")
 	public static void after(ParsingContext parsingContext, String selectionCriteriaExpr) {
-		addAfterSection(parsingContext, parsingContext.peekCurrentArtefact());
+		addAfterSection(parsingContext, parsingContext.peekCurrentNonWrappingArtefact());
 	}
 
 	private static void addAfterSection(ParsingContext parsingContext, AbstractArtefact abstractArtefact) {
@@ -311,8 +311,7 @@ public class DefaultDescriptionStepParser extends AbstractDescriptionStepParser 
 			List<AbstractArtefact> newChildren = new ArrayList<>();
 			newChildren.add(sequence);
 			abstractArtefact.setChildren(newChildren);
-			parsingContext.popCurrentArtefact();
-			parsingContext.pushArtefact(sequence);
+			parsingContext.pushWrappingArtefact(sequence);
 			abstractArtefact = sequence;
 		}
 		return abstractArtefact;
