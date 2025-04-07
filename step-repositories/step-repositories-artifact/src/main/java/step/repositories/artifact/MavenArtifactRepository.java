@@ -68,36 +68,36 @@ public class MavenArtifactRepository extends AbstractArtifactRepository {
         this.parameterManager = parameterManager;
     }
 
-    private ControllerSetting getMavenSettings(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) {
-
+    private String getMavenSettingsXml(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) {
         // Priority 1: the explicit parameter in repository params
         String mavenSettingsPostfix = repositoryParameters.get(PARAM_MAVEN_SETTINGS);
         if (mavenSettingsPostfix == null) {
-            // Priority 2: Step parameter (defined in UI)
+            // Priority 2: Step parameter (the whole settings.xml defined in UI)
             Parameter mavenSettingsParam = parameterManager == null ? null : parameterManager.getAllParameters(new HashMap<>(), objectPredicate).get(PARAM_MAVEN_SETTINGS);
-            mavenSettingsPostfix = mavenSettingsParam != null && mavenSettingsParam.getValue() != null && !mavenSettingsParam.getValue().getValue().isEmpty() ? mavenSettingsParam.getValue().getValue() : null;
+            if (mavenSettingsParam != null && mavenSettingsParam.getValue() != null && !mavenSettingsParam.getValue().getValue().isEmpty()) {
+                return mavenSettingsParam.getValue().getValue();
+            }
         }
-        if (mavenSettingsPostfix == null) {
-            // Priority 3: default location
-            mavenSettingsPostfix = MAVEN_SETTINGS_DEFAULT;
-        }
+
+        // Priority 3: default location
+        mavenSettingsPostfix = MAVEN_SETTINGS_DEFAULT;
 
         String mavenSettingsId = MAVEN_SETTINGS_PREFIX + mavenSettingsPostfix;
-        ControllerSetting settingsXml = controllerSettingAccessor.getSettingByKey(mavenSettingsId);
+        ControllerSetting controllerSetting = controllerSettingAccessor.getSettingByKey(mavenSettingsId);
 
-        if (settingsXml==null) {
-            AbstractArtifactRepository.logger.warn("No settings found for \""+mavenSettingsId+"\", using empty settings instead.");
-            controllerSettingAccessor.updateOrCreateSetting(mavenSettingsId,MAVEN_EMPTY_SETTINGS);
-            settingsXml = controllerSettingAccessor.getSettingByKey(mavenSettingsId);
+        if (controllerSetting == null) {
+            AbstractArtifactRepository.logger.warn("No settings found for \"" + mavenSettingsId + "\", using empty settings instead.");
+            controllerSettingAccessor.updateOrCreateSetting(mavenSettingsId, MAVEN_EMPTY_SETTINGS);
+            controllerSetting = controllerSettingAccessor.getSettingByKey(mavenSettingsId);
         }
-        return settingsXml;
+        return controllerSetting == null ? null : controllerSetting.getValue();
     }
 
     @Override
     public File getArtifact(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) {
-        ControllerSetting settingsXml = getMavenSettings(repositoryParameters, objectPredicate);
+        String settingsXml = getMavenSettingsXml(repositoryParameters, objectPredicate);
         try {
-            MavenArtifactClient mavenArtifactClient = new MavenArtifactClient(settingsXml.getValue(), localRepository);
+            MavenArtifactClient mavenArtifactClient = new MavenArtifactClient(settingsXml, localRepository);
             String artifactId = AbstractArtifactRepository.getMandatoryRepositoryParameter(repositoryParameters, PARAM_ARTIFACT_ID);
             String version = AbstractArtifactRepository.getMandatoryRepositoryParameter(repositoryParameters, PARAM_VERSION);
             String groupId = AbstractArtifactRepository.getMandatoryRepositoryParameter(repositoryParameters, PARAM_GROUP_ID);

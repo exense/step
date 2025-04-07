@@ -28,8 +28,8 @@ import step.automation.packages.scheduler.AutomationPackageSchedulerPlugin;
 import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.core.GlobalContext;
 import step.core.collections.Collection;
-import step.core.controller.ControllerSetting;
 import step.core.controller.ControllerSettingAccessor;
+import step.core.controller.ControllerSettingPlugin;
 import step.core.deployment.ObjectHookControllerPlugin;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.plugins.AbstractControllerPlugin;
@@ -42,6 +42,7 @@ import step.functions.manager.FunctionManager;
 import step.functions.plugin.FunctionControllerPlugin;
 import step.parameter.Parameter;
 import step.parameter.ParameterManager;
+import step.plugins.parametermanager.ParameterManagerPlugin;
 import step.repositories.ArtifactRepositoryConstants;
 import step.resources.ResourceManagerControllerPlugin;
 
@@ -53,7 +54,7 @@ import static step.automation.packages.execution.RepositoryWithAutomationPackage
 import static step.automation.packages.execution.RepositoryWithAutomationPackageSupport.DEFAULT_MAVEN_FOLDER;
 import static step.repositories.ArtifactRepositoryConstants.ARTIFACT_PARAM_MAVEN_SETTINGS;
 
-@Plugin(dependencies = {ObjectHookControllerPlugin.class, ResourceManagerControllerPlugin.class, FunctionControllerPlugin.class, AutomationPackageSchedulerPlugin.class})
+@Plugin(dependencies = {ObjectHookControllerPlugin.class, ResourceManagerControllerPlugin.class, FunctionControllerPlugin.class, AutomationPackageSchedulerPlugin.class, ParameterManagerPlugin.class, ControllerSettingPlugin.class})
 public class AutomationPackagePlugin extends AbstractControllerPlugin {
 
     private static final Logger log = LoggerFactory.getLogger(AutomationPackagePlugin.class);
@@ -169,21 +170,22 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
             // default maven configuration in controller settings
             String mavenSettings;
 
-            // TODO: in fact, we have to use the parameters prepared in ParameterManagerPlugin? To be clarified, how to do this
             // the maven settings are used to deploy the automation package, so there no execution engine and bindings here
             Map<String, Parameter> allParameters = parameterManager.getAllParameters(new HashMap<>(), objectPredicate);
+
+            String settingsXml;
 
             // here we take the name of maven settings property alike we do this for repository parameters in MavenArtifactRepository
             // but here we take this name from Step Parameters, but not from the execution context
             Parameter mavenSettingsStepParameter = allParameters.get(ARTIFACT_PARAM_MAVEN_SETTINGS);
             if (mavenSettingsStepParameter != null && mavenSettingsStepParameter.getValue().getValue() != null && !mavenSettingsStepParameter.getValue().getValue().isEmpty()) {
-                mavenSettings = ArtifactRepositoryConstants.MAVEN_SETTINGS_PREFIX + mavenSettingsStepParameter.getValue().getValue();
+                settingsXml = mavenSettingsStepParameter.getValue().getValue();
             } else {
                 // default maven configuration in controller settings
                 mavenSettings = ArtifactRepositoryConstants.MAVEN_SETTINGS_PREFIX + ArtifactRepositoryConstants.ARTIFACT_PARAM_MAVEN_SETTINGS_DEFAULT;
+                settingsXml = controllerSettingAccessor.getSettingByKey(mavenSettings).getValue();
             }
-            ControllerSetting settingsXml = controllerSettingAccessor.getSettingByKey(mavenSettings);
-            return new AutomationPackageMavenConfig(settingsXml.getValue(), localFileRepository);
+            return new AutomationPackageMavenConfig(settingsXml, localFileRepository);
         }
     }
 }
