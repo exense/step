@@ -102,7 +102,7 @@ public class AutomationPackageSchedulerHook implements AutomationPackageHook<Exe
     }
 
     @Override
-    public Map<String, List<?>> getEntitiesForAutomationPackage(ObjectId automationPackageId, AutomationPackageContext automationPackageContext) {
+    public Map<String, List<? extends AbstractOrganizableObject>> getEntitiesForAutomationPackage(ObjectId automationPackageId, AutomationPackageContext automationPackageContext) {
         return Map.of(AutomationPackageSchedule.FIELD_NAME_IN_AP, getPackageSchedules(automationPackageId, automationPackageContext));
     }
 

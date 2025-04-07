@@ -2,6 +2,7 @@ package step.automation.packages;
 
 import org.bson.types.ObjectId;
 import step.core.AbstractStepContext;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.objectenricher.EnricheableObject;
 import step.core.repositories.ImportResult;
 
@@ -71,7 +72,7 @@ public interface AutomationPackageHook<T> {
     /**
      * Returns the map of database entities managed by this hook
      */
-    default Map<String, List<? extends Object>> getEntitiesForAutomationPackage(ObjectId automationPackageId, AutomationPackageContext automationPackageContext){
+    default Map<String, List<? extends AbstractOrganizableObject>> getEntitiesForAutomationPackage(ObjectId automationPackageId, AutomationPackageContext automationPackageContext){
         return new HashMap<>();
     }
 }

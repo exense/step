@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.automation.packages.accessor.AutomationPackageAccessor;
 import step.automation.packages.accessor.InMemoryAutomationPackageAccessorImpl;
+import step.automation.packages.model.AutomationPackageKeyword;
 import step.commons.activation.Expression;
 import step.core.AbstractStepContext;
 import step.core.accessors.AbstractOrganizableObject;
@@ -58,12 +59,9 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import static step.automation.packages.AutomationPackageArchive.METADATA_FILES;
+import static step.plans.parser.yaml.YamlPlan.PLANS_ENTITY_NAME;
 
 public class AutomationPackageManager {
-
-    // TODO: maybe extract and reuse constants from YamlAutomationPackageSchemaGenerator
-    public static final String PLANS_ENTITY_NAME = "plans";
-    public static final String KEYWORDS_ENTITY_NAME = "keywords";
 
     public static final int DEFAULT_READLOCK_TIMEOUT_SECONDS = 60;
 
@@ -463,12 +461,12 @@ public class AutomationPackageManager {
         }
     }
 
-    public Map<String, List<? extends Object>> getAllEntities(ObjectId automationPackageId) {
-        Map<String, List<? extends Object>> result = new HashMap<>();
+    public Map<String, List<? extends AbstractOrganizableObject>> getAllEntities(ObjectId automationPackageId) {
+        Map<String, List<? extends AbstractOrganizableObject>> result = new HashMap<>();
         List<Plan> packagePlans = getPackagePlans(automationPackageId);
         result.put(PLANS_ENTITY_NAME, packagePlans);
         List<Function> packageFunctions = getPackageFunctions(automationPackageId);
-        result.put(KEYWORDS_ENTITY_NAME, packageFunctions);
+        result.put(AutomationPackageKeyword.KEYWORDS_ENTITY_NAME, packageFunctions);
         List<String> allHooksNames = automationPackageHookRegistry.getOrderedHookFieldNames();
         for (String hookName : allHooksNames) {
             AutomationPackageHook<?> hook = automationPackageHookRegistry.getHook(hookName);

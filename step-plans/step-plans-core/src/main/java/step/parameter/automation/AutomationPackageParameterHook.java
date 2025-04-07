@@ -116,7 +116,7 @@ public class AutomationPackageParameterHook implements AutomationPackageHook<Par
     }
 
     @Override
-    public Map<String, List<?>> getEntitiesForAutomationPackage(ObjectId automationPackageId, AutomationPackageContext automationPackageContext) {
+    public Map<String, List<? extends AbstractOrganizableObject>> getEntitiesForAutomationPackage(ObjectId automationPackageId, AutomationPackageContext automationPackageContext) {
         return Map.of(AutomationPackageParameterJsonSchema.FIELD_NAME_IN_AP, getParametersForAutomationPackage(automationPackageContext, automationPackageId));
     }
 
