@@ -51,6 +51,7 @@ public class ReportNodeTimeSeriesTest {
             reportNode.setExecutionID("executionId");
             reportNode.setArtefactHash("artefactHash");
             reportNode.setExecutionTime(1000);
+            reportNode.setDuration(1000);
 
             reportNodeTimeSeries.ingestReportNode(reportNode);
             // manually flush all collections
