@@ -269,7 +269,7 @@ public class DefaultDescriptionStepParser extends AbstractDescriptionStepParser 
 		addBeforeSection(parsingContext, abstractArtefact);
 	}
 
-	@Step("Before(.*)$")
+	@Step("Before( *)$")
 	public static void before(ParsingContext parsingContext, String selectionCriteriaExpr) {
 		addBeforeSection(parsingContext, parsingContext.peekCurrentNonWrappingArtefact());
 	}
@@ -290,7 +290,7 @@ public class DefaultDescriptionStepParser extends AbstractDescriptionStepParser 
 		addAfterSection(parsingContext, abstractArtefact);
 	}
 
-	@Step("After(.*)$")
+	@Step("After( *)$")
 	public static void after(ParsingContext parsingContext, String selectionCriteriaExpr) {
 		addAfterSection(parsingContext, parsingContext.peekCurrentNonWrappingArtefact());
 	}
