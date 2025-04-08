@@ -75,12 +75,13 @@ public class MavenArtifactRepository extends AbstractArtifactRepository {
             // Priority 2: Step parameter (the whole settings.xml defined in UI)
             Parameter mavenSettingsParam = parameterManager == null ? null : parameterManager.getAllParameters(new HashMap<>(), objectPredicate).get(PARAM_MAVEN_SETTINGS);
             if (mavenSettingsParam != null && mavenSettingsParam.getValue() != null && !mavenSettingsParam.getValue().getValue().isEmpty()) {
+                // in mavenSettingParam we keep the settings.xml explicitly
                 return mavenSettingsParam.getValue().getValue();
+            } else {
+                // Priority 3: default location
+                mavenSettingsPostfix = MAVEN_SETTINGS_DEFAULT;
             }
         }
-
-        // Priority 3: default location
-        mavenSettingsPostfix = MAVEN_SETTINGS_DEFAULT;
 
         String mavenSettingsId = MAVEN_SETTINGS_PREFIX + mavenSettingsPostfix;
         ControllerSetting controllerSetting = controllerSettingAccessor.getSettingByKey(mavenSettingsId);
