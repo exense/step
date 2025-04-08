@@ -461,6 +461,9 @@ public class AutomationPackageManager {
         }
     }
 
+    /**
+     * @return all DB entities linked with the automation package
+     */
     public Map<String, List<? extends AbstractOrganizableObject>> getAllEntities(ObjectId automationPackageId) {
         Map<String, List<? extends AbstractOrganizableObject>> result = new HashMap<>();
         List<Plan> packagePlans = getPackagePlans(automationPackageId);
