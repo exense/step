@@ -188,7 +188,7 @@ public class AutomationPackageManagerOSTest {
 
             // 5 plans have been updated, 1 plan has been added
             List<Plan> storedPlans = planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(resultId)).collect(Collectors.toList());
-            Assert.assertEquals(PLANS_COUNT + SCHEDULES_COUNT, storedPlans.size());
+            Assert.assertEquals(PLANS_COUNT + 1, storedPlans.size());
 
             Plan updatedPlan = storedPlans.stream().filter(p -> p.getAttribute(AbstractOrganizableObject.NAME).equals(PLAN_NAME_FROM_DESCRIPTOR)).findFirst().orElse(null);
             Plan updatedPlanPlainText = storedPlans.stream().filter(p -> p.getAttribute(AbstractOrganizableObject.NAME).equals(PLAN_NAME_FROM_DESCRIPTOR_PLAIN_TEXT)).findFirst().orElse(null);
@@ -201,7 +201,7 @@ public class AutomationPackageManagerOSTest {
 
             // 6 functions have been updated, 1 function has been added
             List<Function> storedFunctions = functionAccessor.findManyByCriteria(getAutomationPackageIdCriteria(resultId)).collect(Collectors.toList());
-            Assert.assertEquals(KEYWORDS_COUNT + SCHEDULES_COUNT, storedFunctions.size());
+            Assert.assertEquals(KEYWORDS_COUNT + 1, storedFunctions.size());
 
             Function updatedFunction = storedFunctions.stream().filter(f -> f.getAttribute(AbstractOrganizableObject.NAME).equals(J_METER_KEYWORD_1)).findFirst().orElse(null);
             Assert.assertNotNull(updatedFunction);
@@ -225,7 +225,7 @@ public class AutomationPackageManagerOSTest {
 
             // 1 parameter is saved
             List<Parameter> allParameters = parameterAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result.getId())).collect(Collectors.toList());
-            Assert.assertEquals(SCHEDULES_COUNT, allParameters.size());
+            Assert.assertEquals(1, allParameters.size());
             Parameter parameter = allParameters.get(0);
             assertEquals("myKey", parameter.getKey());
             assertEquals("myValue", parameter.getValue().get());
@@ -322,7 +322,7 @@ public class AutomationPackageManagerOSTest {
             AutomationPackage storedPackage = automationPackageAccessor.get(result);
 
             List<Plan> storedPlans = planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
-            Assert.assertEquals(SCHEDULES_COUNT, storedPlans.size());
+            Assert.assertEquals(1, storedPlans.size());
             Plan forEachExcelPlan = storedPlans.get(0);
             Assert.assertEquals("Test excel plan", forEachExcelPlan.getAttribute(AbstractOrganizableObject.NAME));
             ForEachBlock forEachArtefact = (ForEachBlock) forEachExcelPlan.getRoot().getChildren().get(0);
@@ -330,7 +330,7 @@ public class AutomationPackageManagerOSTest {
             checkUploadedResource(excelDataPool.getFile(), "excel1.xlsx");
 
             List<Function> storedFunctions = functionAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
-            Assert.assertEquals(SCHEDULES_COUNT, storedFunctions.size());
+            Assert.assertEquals(1, storedFunctions.size());
             JMeterFunction jMeterFunction = (JMeterFunction) storedFunctions.get(0);
             DynamicValue<String> jmeterTestplanRef = jMeterFunction.getJmeterTestplan();
             checkUploadedResource(jmeterTestplanRef, "jmeterProject1.xml");
@@ -364,7 +364,7 @@ public class AutomationPackageManagerOSTest {
         // 1. Upload new package
         SampleUploadingResult r = uploadSample1WithAsserts(true, true, false);
         uploadSample1WithAsserts(false, true, false);
-        ExecutorService executor = Executors.newFixedThreadPool(SCHEDULES_COUNT);
+        ExecutorService executor = Executors.newFixedThreadPool(1);
         executor.submit(() -> {
             PlanRunnerResult execute = newExecutionEngineBuilder().build().execute(r.storedPlans.get(0));
         });
@@ -389,10 +389,21 @@ public class AutomationPackageManagerOSTest {
         log.info("{}", actualJsonNode);
 
         Assert.assertEquals(4, allEntities.size());
-        Assert.assertEquals(KEYWORDS_COUNT, allEntities.get("keywords").size());
-        Assert.assertEquals(PLANS_COUNT, allEntities.get("plans").size());
-        Assert.assertEquals(SCHEDULES_COUNT, allEntities.get("schedules").size());
-        Assert.assertEquals(PARAMETERS_COUNT, allEntities.get("parameters").size());
+        List<Function> keywords = (List<Function>) allEntities.get("keywords");
+        Assert.assertEquals(KEYWORDS_COUNT, keywords.size());
+        findFunctionByClassAndName(keywords, JMeterFunction.class, J_METER_KEYWORD_1);
+
+        List<Plan> plans = (List<Plan>) allEntities.get("plans");
+        Assert.assertEquals(PLANS_COUNT, plans.size());
+        findPlanByName(plans, PLAN_NAME_FROM_DESCRIPTOR);
+
+        List<ExecutiontTaskParameters> schedules = (List<ExecutiontTaskParameters>) allEntities.get("schedules");
+        Assert.assertEquals(SCHEDULES_COUNT, schedules.size());
+        findByName(schedules, SCHEDULE_1);
+
+        List<Parameter> parameters = (List<Parameter>) allEntities.get("parameters");
+        Assert.assertEquals(PARAMETERS_COUNT, parameters.size());
+        Assert.assertTrue(parameters.stream().anyMatch(p -> p.getDescription().equals("some description")));
     }
 
     private void checkUploadedResource(DynamicValue<String> fileResourceReference, String expectedFileName) {
