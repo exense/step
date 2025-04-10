@@ -240,17 +240,21 @@ public class ThreadPool implements Closeable {
 	}
 
 	public Integer forecastNumberOfThreads(Integer originalNumberOfThreads, boolean originalAsMaximum) {
-		Integer execution_threads_auto = getAutoNumberOfThreads();
-		if (execution_threads_auto != null) {
+		Integer executionThreadsAuto = getAutoNumberOfThreads();
+		if (executionThreadsAuto != null) {
 			if (isAutoNumberOfThreadsConsumed()) {
 				return 1;
 			} else {
+				if (originalNumberOfThreads != null && originalNumberOfThreads <= 1) {
+					// behave the same as at runtime, i.e. don't override non-parallelized "first-level" nodes
+					return originalNumberOfThreads;
+				}
 				consumeAutoNumberOfThreads();
-				if (originalAsMaximum && originalNumberOfThreads != null && execution_threads_auto > originalNumberOfThreads) {
+				if (originalAsMaximum && originalNumberOfThreads != null && executionThreadsAuto > originalNumberOfThreads) {
 					// avoid overprovisioning in case it's clear that no more than the original will ever be needed
 					return originalNumberOfThreads;
 				}
-				return execution_threads_auto;
+				return executionThreadsAuto;
 			}
 		}
 		return originalNumberOfThreads;
