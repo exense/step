@@ -101,8 +101,12 @@ public class ParsingContext {
 	protected StackEntry pop() {
 		return stack.pop();
 	}
-	
-	public AbstractArtefact popToFirstNonWrappingArtefact() {
+
+	/**
+	 * This method pop the last non wrapping artefact from the stack. If any wrapping artefact exist in the stack before the non wrapping artefact, they will be popped too
+	 * @return the non wrapping artefact popped
+	 */
+	public AbstractArtefact popNonWrappingArtifact() {
 		StackEntry entry = stack.pop();
 		while (entry.wrappingEntry) {
 			entry = stack.pop();

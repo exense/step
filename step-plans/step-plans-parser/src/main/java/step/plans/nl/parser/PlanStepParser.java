@@ -57,7 +57,7 @@ public class PlanStepParser implements StepParser<PlanStep> {
 						// the CallFunction is first pushed to the stack, so that the expected steps are added to the CallFunction as child
 						parsingContext.pushArtefact(lastChild);				
 						parsingContext.parseStep(newParsingContext(parsingContext, step), subStep);
-						parsingContext.popToFirstNonWrappingArtefact();
+						parsingContext.popNonWrappingArtifact();
 					}
 				} else if (currentArtefact instanceof CallFunction) {
 					parsingContext.parseStep(newParsingContext(parsingContext, step), subStep);
