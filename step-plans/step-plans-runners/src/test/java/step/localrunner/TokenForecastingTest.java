@@ -615,7 +615,7 @@ public class TokenForecastingTest {
 				Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
 		assertEquals(85, invocations.get());
 
-		// UC3: L1=1, overriding execution_threads_auto to 2 -> expecting l3=(1 * 2 * 1) + l2=(2 * 1) + l1=1 => 5 agents, but 85 invocations
+		// UC4: L1=1, overriding execution_threads_auto to 2 -> expecting l3=(1 * 2 * 1) + l2=(2 * 1) + l1=1 => 5 agents, but 85 invocations
 		// Note how the execution_threads_auto now overrides the threads at the SECOND level, not the first (because L1 is not parallelized).
 		// If it was overriding at L1, it would be l3=(1 * 1 * 2) + l2=(1*2) + l1=2 => 6 agents (same as UC2).
 		invocations.set(0);
