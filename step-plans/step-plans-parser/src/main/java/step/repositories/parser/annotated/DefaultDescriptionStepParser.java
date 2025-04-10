@@ -545,7 +545,7 @@ public class DefaultDescriptionStepParser extends AbstractDescriptionStepParser 
 	
 	@Step("^End[ \t\n]*$")
 	public static void end(ParsingContext parsingContext) {
-		parsingContext.popCurrentArtefact();
+		parsingContext.popToFirstNonWrappingArtefact();
 	}
 
 	public static final String METRIC = "Metric";

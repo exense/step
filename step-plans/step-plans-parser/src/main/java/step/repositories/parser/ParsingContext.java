@@ -102,7 +102,7 @@ public class ParsingContext {
 		return stack.pop();
 	}
 	
-	public AbstractArtefact popCurrentArtefact() {
+	public AbstractArtefact popToFirstNonWrappingArtefact() {
 		StackEntry entry = stack.pop();
 		while (entry.wrappingEntry) {
 			entry = stack.pop();

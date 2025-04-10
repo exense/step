@@ -48,7 +48,7 @@ public class StepsParserTest extends AbstractStepParserTest {
 				if(step.getName().equals("Start")) {
 					parsingContext.addArtefactToCurrentParentAndPush(new ForBlock());
 				} else if(step.getName().equals("End")) {
-					parsingContext.popCurrentArtefact();
+					parsingContext.popToFirstNonWrappingArtefact();
 				} else if(step.getName().equals("Echo")) {
 					parsingContext.addArtefactToCurrentParent(new Echo());
 				} else if(step.getName().equals("Other Echo")) {
