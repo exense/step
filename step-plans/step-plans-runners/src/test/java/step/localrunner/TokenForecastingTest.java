@@ -556,6 +556,77 @@ public class TokenForecastingTest {
 
 	}
 
+	@Test
+	public void testNestedThreadGroups() {
+
+		ThreadGroup tgLevel1 = new ThreadGroup();
+		ThreadGroup tgLevel2 = new ThreadGroup();
+		ThreadGroup tgLevel3 = new ThreadGroup();
+
+		CallFunction testKeyword = FunctionArtefacts.keyword("test");
+		testKeyword.setToken(new DynamicValue<>("{\"type\":{\"value\":\"pool\",\"dynamic\":false}}"));
+
+		Plan plan = PlanBuilder.create()
+			.startBlock(tgLevel1)
+				.add(testKeyword)
+				.startBlock(tgLevel2)
+					.add(testKeyword)
+					.startBlock(tgLevel3)
+						.add(testKeyword)
+					.endBlock()
+				.endBlock()
+			.endBlock()
+		.build();
+
+		AtomicInteger invocations = new AtomicInteger();
+		MyFunction function = new MyFunction(input -> {
+			invocations.incrementAndGet();
+            return new Output<>();
+		});
+		function.addAttribute(AbstractOrganizableObject.NAME, "test");
+		plan.setFunctions(List.of(function));
+
+		Set<AgentPoolSpec> availableAgentPools = Set.of(
+				new AgentPoolSpec("pool1", Map.of("$agenttype", "default", "type", "pool"), 1));
+
+
+		tgLevel1.setUsers(new DynamicValue<>(3));
+		tgLevel2.setUsers(new DynamicValue<>(7));
+		tgLevel3.setUsers(new DynamicValue<>(11));
+		// UC1: L1=3, no overriding of execution_threads_auto -> expecting l3=(11 * 7 * 3) + l2=(7 * 3) + l1=3 => 255 invocations/agents
+		invocations.set(0);
+		TokenForecastingContext tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, null);
+		assertEquals(Set.of(new AgentPoolRequirementSpec("pool1", 255)),
+				Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
+		assertEquals(255, invocations.get());
+
+		// UC2: L1=3, overriding of execution_threads_auto to 2 -> expecting l3=(1 * 1 * 2) + l2=(1 * 2) + l1=2 => 6 agents, but still 255 invocations
+		invocations.set(0);
+		tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, 2);
+		assertEquals(Set.of(new AgentPoolRequirementSpec("pool1", 6)),
+				Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
+		assertEquals(255, invocations.get());
+
+		// UC3: L1=1, no overriding of execution_threads_auto -> expecting l3=(11 * 7 * 1) + l2=(7 * 1) + l1=1 => 85 invocations/agents
+		invocations.set(0);
+		tgLevel1.setUsers(new DynamicValue<>(1));
+		tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, null);
+		assertEquals(Set.of(new AgentPoolRequirementSpec("pool1", 85)),
+				Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
+		assertEquals(85, invocations.get());
+
+		// UC3: L1=1, overriding execution_threads_auto to 2 -> expecting l3=(1 * 2 * 1) + l2=(2 * 1) + l1=1 => 5 agents, but 85 invocations
+		// Note how the execution_threads_auto now overrides the threads at the SECOND level, not the first (because L1 is not parallelized).
+		// If it was overriding at L1, it would be l3=(1 * 1 * 2) + l2=(1*2) + l1=2 => 6 agents (same as UC2).
+		invocations.set(0);
+		tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, 2);
+		assertEquals(Set.of(new AgentPoolRequirementSpec("pool1", 5)),
+				Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
+		assertEquals(85, invocations.get());
+
+	}
+
+
 	private static TokenForecastingContext executePlanWithSpecifiedTokenPools(Plan plan, Set<AgentPoolSpec> availableAgentPools) {
 		return executePlanWithSpecifiedTokenPools(plan, availableAgentPools, null);
 	}
