@@ -20,6 +20,7 @@ package step.core.execution;
 
 import step.core.GlobalContext;
 import step.core.artefacts.reports.ReportNode;
+import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.collections.Collection;
 import step.core.collections.SearchOrder;
 import step.core.execution.model.ExecutionStatus;
@@ -52,7 +53,13 @@ public class ExecutionPlugin extends AbstractControllerPlugin {
 			execution.setRootReportNode(rootReportNodeFormatter.getRootReportNode(execution));
 			Object executionSummary = executionSummaryFormatter.format(execution);
 			execution.setExecutionSummary(executionSummary);
-			execution.setEffectiveStatus((execution.getStatus().equals(ExecutionStatus.ENDED) ? execution.getResult().name() : execution.getStatus().name()));
+			ExecutionStatus status = execution.getStatus();
+			ReportNodeStatus result = execution.getResult();
+			if (status != null) {
+				execution.setEffectiveStatus(status.equals(ExecutionStatus.ENDED) ? ((result != null) ? result.name() : status.name()) : status.name());
+			} else if (result != null) {
+				execution.setEffectiveStatus(result.name());
+			}
 			return execution;
 		}).withDerivedTableSortingFactory(sort -> {
 			if (sort.getField().equals("effectiveStatus")) {
