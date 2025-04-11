@@ -169,22 +169,22 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
         public AutomationPackageMavenConfig getConfig(ObjectPredicate objectPredicate) {
             // default maven configuration in controller settings
             String mavenSettings;
-
-            // the maven settings are used to deploy the automation package, so there no execution engine and bindings here
-            Map<String, Parameter> allParameters = parameterManager.getAllParameters(new HashMap<>(), objectPredicate);
-
             String settingsXml;
+
+            // TODO: we indented to apply the user-defined multitenant parameter, but old Step Parameters are only designed for executions, so it will be replaced with special user settings (SED-3921)
+            // the maven settings are used to deploy the automation package, so there no execution engine and bindings here
+//            Map<String, Parameter> allParameters = parameterManager.getAllParameters(new HashMap<>(), objectPredicate);
 
             // here we take the name of maven settings property alike we do this for repository parameters in MavenArtifactRepository
             // but here we take this name from Step Parameters, but not from the execution context
-            Parameter mavenSettingsStepParameter = allParameters.get(ARTIFACT_PARAM_MAVEN_SETTINGS);
-            if (mavenSettingsStepParameter != null && mavenSettingsStepParameter.getValue().getValue() != null && !mavenSettingsStepParameter.getValue().getValue().isEmpty()) {
-                settingsXml = mavenSettingsStepParameter.getValue().getValue();
-            } else {
+//            Parameter mavenSettingsStepParameter = allParameters.get(ARTIFACT_PARAM_MAVEN_SETTINGS);
+//            if (mavenSettingsStepParameter != null && mavenSettingsStepParameter.getValue().getValue() != null && !mavenSettingsStepParameter.getValue().getValue().isEmpty()) {
+//                settingsXml = mavenSettingsStepParameter.getValue().getValue();
+//            } else {
                 // default maven configuration in controller settings
                 mavenSettings = ArtifactRepositoryConstants.MAVEN_SETTINGS_PREFIX + ArtifactRepositoryConstants.ARTIFACT_PARAM_MAVEN_SETTINGS_DEFAULT;
                 settingsXml = controllerSettingAccessor.getSettingByKey(mavenSettings).getValue();
-            }
+//            }
             return new AutomationPackageMavenConfig(settingsXml, localFileRepository);
         }
     }

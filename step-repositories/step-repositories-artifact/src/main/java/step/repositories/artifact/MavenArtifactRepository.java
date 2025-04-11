@@ -72,15 +72,16 @@ public class MavenArtifactRepository extends AbstractArtifactRepository {
         // Priority 1: the explicit parameter in repository params
         String mavenSettingsPostfix = repositoryParameters.get(PARAM_MAVEN_SETTINGS);
         if (mavenSettingsPostfix == null) {
+            // TODO: here we indented to apply the user-defined multitenant parameter, but old Step Parameters are only designed for executions, so it will be replaced with special user settings (SED-3921)
             // Priority 2: Step parameter (the whole settings.xml defined in UI)
-            Parameter mavenSettingsParam = parameterManager == null ? null : parameterManager.getAllParameters(new HashMap<>(), objectPredicate).get(PARAM_MAVEN_SETTINGS);
-            if (mavenSettingsParam != null && mavenSettingsParam.getValue() != null && !mavenSettingsParam.getValue().getValue().isEmpty()) {
+//            Parameter mavenSettingsParam = parameterManager == null ? null : parameterManager.getAllParameters(new HashMap<>(), objectPredicate).get(PARAM_MAVEN_SETTINGS);
+//            if (mavenSettingsParam != null && mavenSettingsParam.getValue() != null && !mavenSettingsParam.getValue().getValue().isEmpty()) {
                 // in mavenSettingParam we keep the settings.xml explicitly
-                return mavenSettingsParam.getValue().getValue();
-            } else {
+//                return mavenSettingsParam.getValue().getValue();
+//            } else {
                 // Priority 3: default location
                 mavenSettingsPostfix = MAVEN_SETTINGS_DEFAULT;
-            }
+//            }
         }
 
         String mavenSettingsId = MAVEN_SETTINGS_PREFIX + mavenSettingsPostfix;
