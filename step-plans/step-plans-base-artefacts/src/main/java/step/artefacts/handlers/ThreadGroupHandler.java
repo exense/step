@@ -32,9 +32,6 @@ import step.core.artefacts.handlers.*;
 import step.core.artefacts.reports.ParentSource;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.resolvedplan.ResolvedChildren;
-import step.core.objectenricher.ObjectPredicate;
-import step.core.plans.PlanAccessor;
-import step.functions.accessor.FunctionAccessor;
 import step.threadpool.IntegerSequenceIterator;
 import step.threadpool.ThreadPool;
 import step.threadpool.ThreadPool.WorkerController;
@@ -42,7 +39,6 @@ import step.threadpool.WorkerItemConsumerFactory;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.LongAdder;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -52,7 +48,8 @@ import static step.artefacts.handlers.functions.TokenForecastingExecutionPlugin.
 public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode> {
 
 	public void createReportSkeleton_(ReportNode node, ThreadGroup artefact) {
-		Integer numberOfThreads = artefact.getUsers().getOrDefault(Integer.class,0);
+		int numberOfThreads = artefact.getUsers().getOrDefault(Integer.class, 0);
+		numberOfThreads = context.require(ThreadPool.class).forecastNumberOfThreads(numberOfThreads);
 
 		TokenForecastingContext tokenForecastingContext = getTokenForecastingContext(context);
 		pushNewTokenNumberCalculationContext(context, new MultiplyingTokenForecastingContext(tokenForecastingContext, numberOfThreads));
