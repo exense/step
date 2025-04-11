@@ -218,7 +218,7 @@ public class ThreadPool implements Closeable {
 
 	public Integer getAutoNumberOfThreads() {
 		Object autoNumberOfThreads = executionContext.getVariablesManager().getVariableAsString(EXECUTION_THREADS_AUTO, null);
-		if(autoNumberOfThreads != null && autoNumberOfThreads.toString().trim().length() > 0) {
+		if(autoNumberOfThreads != null && !autoNumberOfThreads.toString().trim().isEmpty()) {
 			return Integer.parseInt(autoNumberOfThreads.toString());
 		} else {
 			return null;
@@ -227,14 +227,41 @@ public class ThreadPool implements Closeable {
 	}
 
 	protected boolean isAutoNumberOfThreadsConsumed() {
-		Object autoNumberOfThreads = executionContext.getVariablesManager().getVariableAsString(EXECUTION_THREADS_AUTO_CONSUMED, "false");
+		Object autoNumberOfThreads = executionContext.getVariablesManager().getVariableAsString(EXECUTION_THREADS_AUTO_CONSUMED, Boolean.FALSE.toString());
 		return Boolean.parseBoolean(autoNumberOfThreads.toString());
 	}
 
 	protected void consumeAutoNumberOfThreads() {
-		executionContext.getVariablesManager().putVariable(executionContext.getCurrentReportNode(), EXECUTION_THREADS_AUTO_CONSUMED, "true");
+		executionContext.getVariablesManager().putVariable(executionContext.getCurrentReportNode(), EXECUTION_THREADS_AUTO_CONSUMED, Boolean.TRUE.toString());
 	}
-	
+
+	public Integer forecastNumberOfThreads(Integer originalNumberOfThreads) {
+		return forecastNumberOfThreads(originalNumberOfThreads, false);
+	}
+
+	public Integer forecastNumberOfThreads(Integer originalNumberOfThreads, boolean originalAsMaximum) {
+		Integer executionThreadsAuto = getAutoNumberOfThreads();
+		if (executionThreadsAuto != null) {
+			if (isAutoNumberOfThreadsConsumed()) {
+				return 1;
+			} else {
+				if (originalNumberOfThreads != null && originalNumberOfThreads <= 1) {
+					// behave the same as at runtime, i.e. don't override non-parallelized "first-level" nodes
+					return originalNumberOfThreads;
+				}
+				consumeAutoNumberOfThreads();
+				if (originalAsMaximum && originalNumberOfThreads != null && executionThreadsAuto > originalNumberOfThreads) {
+					// avoid overprovisioning in case it's clear that no more than the original will ever be needed
+					return originalNumberOfThreads;
+				}
+				return executionThreadsAuto;
+			}
+		}
+		return originalNumberOfThreads;
+	}
+
+
+
 	private <WORK_ITEM> void createWorkerAndRun(BatchContext batchContext, Consumer<WORK_ITEM> workItemConsumer, Iterator<WORK_ITEM> workItemIterator, int workerId) {
 		Stack<BatchContext> stack = pushBatchContextToStack(batchContext);
 		try {

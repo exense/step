@@ -87,19 +87,30 @@ public class ParsingContext {
 	}
 
 	public void addArtefactToCurrentParentSourceAndPush(AbstractArtefact artefact, List<AbstractArtefact> steps) {
-		stack.push(new StackEntry(currentStep, artefact, steps));
+		stack.push(new StackEntry(currentStep, artefact, steps, false));
 	}
 	
 	public void pushArtefact(AbstractArtefact artefact) {
-		stack.push(new StackEntry(currentStep, artefact, artefact.getChildren()));
+		stack.push(new StackEntry(currentStep, artefact, artefact.getChildren(), false));
+	}
+
+	public void pushWrappingArtefact(AbstractArtefact artefact) {
+		stack.push(new StackEntry(currentStep, artefact, artefact.getChildren(), true));
 	}
 	
 	protected StackEntry pop() {
 		return stack.pop();
 	}
-	
-	public AbstractArtefact popCurrentArtefact() {
+
+	/**
+	 * This method pop the last non wrapping artefact from the stack. If any wrapping artefact exist in the stack before the non wrapping artefact, they will be popped too
+	 * @return the non wrapping artefact popped
+	 */
+	public AbstractArtefact popNonWrappingArtifact() {
 		StackEntry entry = stack.pop();
+		while (entry.wrappingEntry) {
+			entry = stack.pop();
+		}
 		return entry.artefact;
 	}
 	
@@ -110,7 +121,17 @@ public class ParsingContext {
 	protected StackEntry peek() {
 		return stack.peek();
 	}
-	
+
+	public AbstractArtefact peekCurrentNonWrappingArtefact() {
+		for (int i = stack.size() - 1; i >= 0; i--) {
+			StackEntry stackEntry = stack.get(i);
+			if (!stackEntry.wrappingEntry) {
+				return stackEntry.artefact;
+			}
+		}
+		throw new RuntimeException("The artefacts stack does not contain any non wrapping \"artificial\" artefact. This should never happen, at least the root has to be a concrete artefact");
+	}
+
 	public AbstractArtefact peekCurrentArtefact() {
 		StackEntry entry = stack.peek();
 		return entry.artefact;
@@ -177,17 +198,23 @@ public class ParsingContext {
 	
 	protected static class StackEntry {
 		
-		AbstractStep step;
+		final AbstractStep step;
 		
-		AbstractArtefact artefact;
+		final AbstractArtefact artefact;
 
-		List<AbstractArtefact> steps;
+		final List<AbstractArtefact> steps;
 
-		public StackEntry(AbstractStep step, AbstractArtefact artefact, List<AbstractArtefact> steps) {
+		//To keep the support of AfterSequence and AfterSequence in plain text, we had to introduce wrapping "Sequence" artefacts
+		//Example: for a For loop with an afterSequence containing an echo, the generated plan must be a For artefact containing a sequence which has the echo in its after section
+		//these must be marked in the stack to now that "end" must close it and its parent. Also after section in plain text must be attached to the current but non wrapping artefact
+		final boolean wrappingEntry;
+
+		public StackEntry(AbstractStep step, AbstractArtefact artefact, List<AbstractArtefact> steps, boolean wrappingEntry) {
 			super();
 			this.step = step;
 			this.artefact = artefact;
 			this.steps = steps;
+			this.wrappingEntry = wrappingEntry;
 		}
 	}
 }

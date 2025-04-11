@@ -133,7 +133,7 @@ public class CustomDescriptionStepParser implements StepParser<DescriptionStep> 
 
 		@Override
 		public Object visitFunctionDeclarationEndExpression(FunctionDeclarationEndExpressionContext ctx) {
-			AbstractArtefact rootArtefact = parsingContext.popCurrentArtefact();
+			AbstractArtefact rootArtefact = parsingContext.popNonWrappingArtifact();
 
 			// TODO put the attributes map to an intermediary stack as it doesn't belong to
 			// the artefact

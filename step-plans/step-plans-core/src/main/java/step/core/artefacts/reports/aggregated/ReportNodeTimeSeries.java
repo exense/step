@@ -73,7 +73,7 @@ public class ReportNodeTimeSeries implements AutoCloseable {
             nodeBucket.putAll(customAttributes);
         }
 
-        ingestionPipeline.ingestPoint(new BucketAttributes(nodeBucket), reportNode.getExecutionTime(), 1);
+        ingestionPipeline.ingestPoint(new BucketAttributes(nodeBucket), reportNode.getExecutionTime(), reportNode.getDuration());
     }
 
     public void flush() {
