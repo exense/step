@@ -27,24 +27,20 @@ import step.core.collections.Collection;
 import step.core.collections.Filters;
 import step.core.collections.filters.Equals;
 import step.core.deployment.ObjectHookControllerPlugin;
-import step.core.dynamicbeans.DynamicValue;
 import step.core.encryption.EncryptionManager;
-import step.core.encryption.EncryptionManagerException;
 import step.core.entities.Entity;
-import step.core.export.ExportContext;
-import step.core.imports.ImportContext;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.engine.plugins.ExecutionEnginePlugin;
 import step.framework.server.tables.Table;
 import step.framework.server.tables.TableRegistry;
+import step.parameter.AbstractEncryptedValuesManager;
 import step.parameter.Parameter;
 import step.parameter.ParameterManager;
 import step.plugins.encryption.EncryptionManagerDependencyPlugin;
 import step.plugins.screentemplating.*;
 
 import java.util.Set;
-import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 import static step.parameter.Parameter.PARAMETER_PROTECTED_VALUE_FIELD;
@@ -70,7 +66,7 @@ public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
 		context.put("ParameterAccessor", parameterAccessor);
 
 		context.get(TableRegistry.class).register(ENTITY_PARAMETERS, new Table<>(collection, "param-read", true)
-				.withResultItemTransformer((p,s) -> ParameterServices.maskProtectedValue(p))
+				.withResultItemTransformer((p,s) -> AbstractEncryptedValuesManager.maskProtectedValue(p))
 				.withDerivedTableFiltersFactory(lf -> {
 					Set<String> allFilterAttributes = lf.stream().map(Filters::collectFilterAttributes).flatMap(Set::stream).collect(Collectors.toSet());
 					return allFilterAttributes.contains(PARAMETER_VALUE_FIELD + ".value") ? new Equals(PARAMETER_PROTECTED_VALUE_FIELD, false) : Filters.empty();
@@ -84,8 +80,8 @@ public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
 				Parameter.ENTITY_NAME, 
 				parameterAccessor,
 				Parameter.class));
-		context.getEntityManager().registerExportHook(new ParameterExportBiConsumer());
-		context.getEntityManager().registerImportHook(new ParameterImportBiConsumer(encryptionManager));
+		context.getEntityManager().registerExportHook(new EncyptedEntityExportBiConsumer(Parameter.class));
+		context.getEntityManager().registerImportHook(new EncryptedEntityImportBiConsumer(encryptionManager, Parameter.class));
 		
 		context.getServiceRegistrationCallback().registerService(ParameterServices.class);
 	}
@@ -108,69 +104,6 @@ public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
 	@Override
 	public ExecutionEnginePlugin getExecutionEnginePlugin() {
 		return new ParameterManagerPlugin(parameterManager);
-	}
-
-	public static String EXPORT_PROTECT_PARAM_WARN = "The parameter list contains protected parameter. The values of these parameters won't be exported and will have to be reset at import.";
-	public static String EXPORT_ENCRYPT_PARAM_WARN = "The parameter list contains encrypted parameters. The values of these parameters will be reset if you import them on an other installation of step.";
-	public static String IMPORT_DECRYPT_FAIL_WARN = "The export file contains encrypted parameter which could not be decrypted. The values of these parameters will be reset.";
-	public static String IMPORT_DECRYPT_NO_EM_WARN = "The export file contains encrypted parameters. The values of these parameters will be reset.";
-	public static String IMPORT_RESET_WARN = "The export file contains protected parameters. Their values must be reset.";
-
-	public static class ParameterExportBiConsumer implements BiConsumer<Object, ExportContext> {
-
-		@Override
-		public void accept(Object object_, ExportContext exportContext) {
-			if (object_ instanceof Parameter) {
-				Parameter param = (Parameter) object_;
-				//if protected and not encrypted, mask value by changing it to reset value
-				if (param.getProtectedValue() != null && param.getProtectedValue()) {
-					if (param.getValue() != null) {
-						param.setValue(new DynamicValue<>(ParameterManager.RESET_VALUE));
-						exportContext.addMessage(EXPORT_PROTECT_PARAM_WARN);
-					} else {
-						exportContext.addMessage(EXPORT_ENCRYPT_PARAM_WARN);
-					}
-				}
-			}
-		}
-	}
-
-	public static class ParameterImportBiConsumer implements BiConsumer<Object, ImportContext> {
-
-		private final EncryptionManager encryptionManager;
-
-		public ParameterImportBiConsumer(EncryptionManager encryptionManager) {
-			this.encryptionManager = encryptionManager;
-		}
-
-		@Override
-		public void accept(Object object_, ImportContext importContext) {
-			if (object_ instanceof Parameter) {
-				Parameter param = (Parameter) object_;
-				//if importing protected and encrypted value
-				if (param.getProtectedValue() != null && param.getProtectedValue()) {
-					if (param.getValue() == null) {
-						//if we have a valid encryption manager and can still decrypt keep encrypted value, else reset
-						if (encryptionManager != null && param.getEncryptedValue() != null) {
-							try {
-								encryptionManager.decrypt(param.getEncryptedValue());
-							} catch (EncryptionManagerException e) {
-								param.setValue(new DynamicValue<>(ParameterManager.RESET_VALUE));
-								param.setEncryptedValue(null);
-								importContext.addMessage(IMPORT_DECRYPT_FAIL_WARN);
-							}
-						} else {
-							param.setValue(new DynamicValue<>(ParameterManager.RESET_VALUE));
-							param.setEncryptedValue(null);
-							importContext.addMessage(IMPORT_DECRYPT_NO_EM_WARN);
-						}
-					} else {
-						param.setValue(new DynamicValue<>(ParameterManager.RESET_VALUE));
-						importContext.addMessage(IMPORT_RESET_WARN);
-					}
-				}
-			}
-		}
 	}
 
 

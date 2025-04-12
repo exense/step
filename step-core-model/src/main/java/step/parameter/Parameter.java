@@ -18,38 +18,20 @@
  ******************************************************************************/
 package step.parameter;
 
-import step.commons.activation.ActivableObject;
 import step.commons.activation.Expression;
-import step.core.accessors.AbstractTrackedObject;
+import step.core.EncryptedTrackedObject;
 import step.core.dynamicbeans.DynamicValue;
-import step.core.objectenricher.EnricheableObject;
 
-public class Parameter extends AbstractTrackedObject implements ActivableObject, EnricheableObject {
+public class Parameter extends EncryptedTrackedObject {
 	
 	public static final String ENTITY_NAME = "parameters";
-	public static final String PARAMETER_VALUE_FIELD = "value";
-	public static final String PARAMETER_PROTECTED_VALUE_FIELD = "protectedValue";
 
-	
-	protected String key;
-	
-	protected DynamicValue<String> value;
-	
 	protected String description;
 	
 	protected Expression activationExpression;
 	
 	protected Integer priority;
-	
-	protected Boolean protectedValue = false;
-	
-	/**
-	 * When running with an encryption manager, the value of protected
-	 * {@link Parameter}s is encrypted and the encrypted value is stored into this
-	 * field
-	 */
-	protected String encryptedValue;
-	
+
 	protected ParameterScope scope;
 	protected String scopeEntity;
 	
@@ -63,22 +45,6 @@ public class Parameter extends AbstractTrackedObject implements ActivableObject,
 		this.value = new DynamicValue<>(value);
 		this.description = description;
 		this.activationExpression = activationExpression;
-	}
-
-	public String getKey() {
-		return key;
-	}
-
-	public void setKey(String key) {
-		this.key = key;
-	}
-
-	public DynamicValue<String> getValue() {
-		return value;
-	}
-
-	public void setValue(DynamicValue<String> value) {
-		this.value = value;
 	}
 
 	@Override
@@ -107,25 +73,10 @@ public class Parameter extends AbstractTrackedObject implements ActivableObject,
 		this.description = description;
 	}
 
-	public Boolean getProtectedValue() {
-		return protectedValue;
-	}
-
-	public void setProtectedValue(Boolean protectedValue) {
-		this.protectedValue = protectedValue;
-	}
-
-	public String getEncryptedValue() {
-		return encryptedValue;
-	}
-
-	public void setEncryptedValue(String encryptedValue) {
-		this.encryptedValue = encryptedValue;
-	}
-
 	/**
 	 * @return the {@link ParameterScope} of this parameter
 	 */
+	@Override
 	public ParameterScope getScope() {
 		return scope;
 	}
@@ -135,9 +86,10 @@ public class Parameter extends AbstractTrackedObject implements ActivableObject,
 	}
 
 	/**
-	 * @return the name of the entity this parameter is restricted to. For instance: if the scope of a Parameter 
+	 * @return the name of the entity this parameter is restricted to. For instance: if the scope of a Parameter
 	 * is set to FUNCTION, the scopeEntity represent the name of the Function for which this parameter applies
 	 */
+	@Override
 	public String getScopeEntity() {
 		return scopeEntity;
 	}
