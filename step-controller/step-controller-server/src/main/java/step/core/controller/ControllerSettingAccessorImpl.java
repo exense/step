@@ -31,7 +31,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class ControllerSettingAccessorImpl extends AbstractAccessor<ControllerSetting> implements ControllerSettingAccessor {
+public class ControllerSettingAccessorImpl extends SettingAccessorWithHook<ControllerSetting> implements ControllerSettingAccessor {
 
 	private static final Logger log = LoggerFactory.getLogger(ControllerSettingAccessorImpl.class);
 

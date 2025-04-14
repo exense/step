@@ -23,6 +23,7 @@ import step.core.accessors.AbstractAccessor;
 import step.usersettings.UserSetting;
 import step.usersettings.UserSettingAccessor;
 
+// TODO: maybe not required
 public class RemoteUserSettingAccessor extends AbstractAccessor<UserSetting> implements UserSettingAccessor {
 
     public RemoteUserSettingAccessor(RemoteCollectionFactory remoteCollectionFactory) {

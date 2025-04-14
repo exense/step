@@ -18,9 +18,10 @@
  ******************************************************************************/
 package step.core.controller;
 
+import step.core.ValueWithKey;
 import step.core.accessors.AbstractIdentifiableObject;
 
-public class ControllerSetting extends AbstractIdentifiableObject {
+public class ControllerSetting extends AbstractIdentifiableObject implements ValueWithKey {
 
 	protected String key;
 	
@@ -36,6 +37,7 @@ public class ControllerSetting extends AbstractIdentifiableObject {
 		super();
 	}
 
+	@Override
 	public String getKey() {
 		return key;
 	}

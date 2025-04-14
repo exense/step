@@ -116,9 +116,6 @@ public class ParameterServices extends AbstractEntityServices<Parameter> {
 		return authorizationManager.checkRightInContext(getSession(), "param-global-write");
 	}
 
-	protected static boolean isProtected(Parameter oldParameter) {
-		return oldParameter.getProtectedValue()!=null && oldParameter.getProtectedValue();
-	}
 
 	@Override
 	public Parameter clone(String id) {

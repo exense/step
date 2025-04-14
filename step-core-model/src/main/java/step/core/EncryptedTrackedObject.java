@@ -25,7 +25,7 @@ import step.core.objectenricher.EnricheableObject;
 import step.parameter.Parameter;
 import step.parameter.ParameterScope;
 
-public abstract class EncryptedTrackedObject extends AbstractTrackedObject implements ActivableObject, EnricheableObject {
+public abstract class EncryptedTrackedObject extends AbstractTrackedObject implements ActivableObject, EnricheableObject, ValueWithKey {
 
     public static final String PARAMETER_PROTECTED_VALUE_FIELD = "protectedValue";
     public static final String PARAMETER_VALUE_FIELD = "value";
@@ -68,6 +68,7 @@ public abstract class EncryptedTrackedObject extends AbstractTrackedObject imple
         this.encryptedValue = encryptedValue;
     }
 
+    @Override
     public String getKey() {
         return key;
     }

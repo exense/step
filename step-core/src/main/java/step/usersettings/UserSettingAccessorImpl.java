@@ -16,22 +16,14 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plugins.usersettings;
+package step.usersettings;
 
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.ws.rs.Path;
-import step.controller.services.entities.AbstractEntityServices;
-import step.framework.server.security.SecuredContext;
-import step.usersettings.UserSetting;
+import step.core.accessors.AbstractAccessor;
+import step.core.collections.Collection;
 
-// TODO: think about permissions
-@Path("/userSettings")
-@Tag(name = "UserSettings")
-@Tag(name = "Entity=UserSetting")
-@SecuredContext(key = "entity", value = "usersetting")
-public class UserSettingServices extends AbstractEntityServices<UserSetting> {
+public class UserSettingAccessorImpl extends AbstractAccessor<UserSetting> {
 
-    public UserSettingServices() {
-        super(UserSetting.ENTITY_NAME);
+    public UserSettingAccessorImpl(Collection<UserSetting> collectionDriver) {
+        super(collectionDriver);
     }
 }
