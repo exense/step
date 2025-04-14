@@ -298,15 +298,6 @@ public class StepConsole implements Callable<Integer> {
                 executeTool(stepUrl, getStepProjectName(), getAuthToken(), async, apVersion, activationExpr, getMavenArtifact(apFile));
             }
 
-            @Override
-            protected MavenArtifactIdentifier getMavenArtifact(String apFile) {
-                MavenArtifactIdentifier mavenArtifact = super.getMavenArtifact(apFile);
-                if (mavenArtifact != null && apVersion != null && !apVersion.isEmpty()) {
-                    throw new CommandLine.ParameterException(spec.commandLine(), String.format("The %s option is not supported for maven artifacts. The version of the maven artifact is used for automation package", AP_VERSION));
-                }
-                return mavenArtifact;
-            }
-
             // for tests
             protected void executeTool(final String stepUrl1, final String projectName, final String authToken, final boolean async, String apVersion, String activationExpr, final MavenArtifactIdentifier mavenArtifact) {
                 new AbstractDeployAutomationPackageTool(stepUrl1, projectName, authToken, async, apVersion, activationExpr) {

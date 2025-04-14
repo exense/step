@@ -178,9 +178,6 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
     protected MavenArtifactIdentifier getRemoteMavenIdentifier() throws MojoExecutionException {
         MavenArtifactIdentifier remoteMavenArtifact = null;
         if (!isLocalMavenArtifact()) {
-            if (getApVersion() != null && !getApVersion().isEmpty()) {
-                throw new MojoExecutionException("The 'apVersion' parameter is not supported for remote maven artifacts");
-            }
             remoteMavenArtifact = new MavenArtifactIdentifier(getArtifactGroupId(), getArtifactId(), getArtifactVersion(), getArtifactClassifier(), getArtifactType());
         }
         return remoteMavenArtifact;

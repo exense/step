@@ -126,7 +126,7 @@ public class StepConsoleTest {
 
         // deploy from artifactory
         deployExecHistory.clear();
-        res = runMain(histories, "ap", "deploy", "-p=mvn:ch.exense.step:step-automation-packages-junit:0.0.0:tests", "-u=http://localhost:8080");
+        res = runMain(histories, "ap", "deploy", "-p=mvn:ch.exense.step:step-automation-packages-junit:0.0.0:tests", "-u=http://localhost:8080",  "--apVersion=1.0.0");
         Assert.assertEquals(0, res);
         Assert.assertEquals(1, deployExecHistory.size());
         usedParams = deployExecHistory.get(0);
@@ -135,11 +135,6 @@ public class StepConsoleTest {
         Assert.assertEquals("step-automation-packages-junit", usedParams.mavenArtifact.getArtifactId());
         Assert.assertEquals("0.0.0", usedParams.mavenArtifact.getVersion());
         Assert.assertEquals("tests", usedParams.mavenArtifact.getClassifier());
-
-        // deploy from artifactory (failed validation on redundant ap version)
-        deployExecHistory.clear();
-        res = runMain(histories, "ap", "deploy", "-p=mvn:ch.exense.step:step-automation-packages-junit:0.0.0:tests", "-u=http://localhost:8080", "--apVersion=1.0.0");
-        Assert.assertEquals(2, res);
     }
 
     @Test

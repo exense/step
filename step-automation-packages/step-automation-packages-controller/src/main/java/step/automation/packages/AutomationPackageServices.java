@@ -126,12 +126,13 @@ public class AutomationPackageServices extends AbstractStepServices {
     @Consumes(MediaType.TEXT_PLAIN)
     @Produces(MediaType.TEXT_PLAIN)
     @Secured(right = "automation-package-write")
-    public String createAutomationPackageFromMaven(@QueryParam("activationExpr") String activationExpression,
+    public String createAutomationPackageFromMaven(@QueryParam("version") String apVersion,
+                                                   @QueryParam("activationExpr") String activationExpression,
                                                    @RequestBody() String mavenArtifactXml) {
         try {
             MavenArtifactIdentifier mavenArtifactIdentifier = getMavenArtifactIdentifierFromXml(mavenArtifactXml);
             return automationPackageManager.createAutomationPackageFromMaven(
-                    mavenArtifactIdentifier, activationExpression, getObjectEnricher(), getObjectPredicate()
+                    mavenArtifactIdentifier, apVersion, activationExpression, getObjectEnricher(), getObjectPredicate()
             ).toString();
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage());

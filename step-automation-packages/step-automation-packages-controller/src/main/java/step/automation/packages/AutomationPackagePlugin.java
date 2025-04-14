@@ -40,19 +40,14 @@ import step.framework.server.tables.TableRegistry;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.manager.FunctionManager;
 import step.functions.plugin.FunctionControllerPlugin;
-import step.parameter.Parameter;
-import step.parameter.ParameterManager;
 import step.plugins.parametermanager.ParameterManagerPlugin;
 import step.repositories.ArtifactRepositoryConstants;
 import step.resources.ResourceManagerControllerPlugin;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
 
 import static step.automation.packages.execution.RepositoryWithAutomationPackageSupport.CONFIGURATION_MAVEN_FOLDER;
 import static step.automation.packages.execution.RepositoryWithAutomationPackageSupport.DEFAULT_MAVEN_FOLDER;
-import static step.repositories.ArtifactRepositoryConstants.ARTIFACT_PARAM_MAVEN_SETTINGS;
 
 @Plugin(dependencies = {ObjectHookControllerPlugin.class, ResourceManagerControllerPlugin.class, FunctionControllerPlugin.class, AutomationPackageSchedulerPlugin.class, ParameterManagerPlugin.class, ControllerSettingPlugin.class})
 public class AutomationPackagePlugin extends AbstractControllerPlugin {
@@ -102,7 +97,6 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
             log.info("Using the OS implementation of automation package manager");
 
             AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider = new MavenConfigProviderImpl(
-                    context.require(ParameterManager.class),
                     context.require(ControllerSettingAccessor.class),
                     context.getConfiguration().getPropertyAsFile(CONFIGURATION_MAVEN_FOLDER, new File(DEFAULT_MAVEN_FOLDER))
             );
@@ -155,12 +149,10 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
 
     private static class MavenConfigProviderImpl implements AutomationPackageMavenConfig.ConfigProvider {
 
-        private final ParameterManager parameterManager;
         private final ControllerSettingAccessor controllerSettingAccessor;
         private final File localFileRepository;
 
-        public MavenConfigProviderImpl(ParameterManager parameterManager, ControllerSettingAccessor controllerSettingAccessor, File localFileRepository) {
-            this.parameterManager = parameterManager;
+        public MavenConfigProviderImpl(ControllerSettingAccessor controllerSettingAccessor, File localFileRepository) {
             this.controllerSettingAccessor = controllerSettingAccessor;
             this.localFileRepository = localFileRepository;
         }

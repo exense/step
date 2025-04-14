@@ -61,7 +61,7 @@ public abstract class AbstractDeployAutomationPackageTool extends AbstractCliToo
                 try {
                     updateResult = automationPackageClient.createOrUpdateAutomationPackageMvn(
                             createMavenArtifactXml(mavenArtifactIdentifierToUpload),
-                            getAsync(), getActivationExpression()
+                            getAsync(), getApVersion(), getActivationExpression()
                     );
                 } catch (AutomationPackageClientException e) {
                     throw logAndThrow("Error while uploading automation package to Step from Maven artifactory: " + e.getMessage());
