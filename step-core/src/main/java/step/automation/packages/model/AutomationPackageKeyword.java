@@ -22,6 +22,9 @@ import step.automation.packages.AutomationPackageContext;
 import step.functions.Function;
 
 public interface AutomationPackageKeyword {
+
+    String KEYWORDS_ENTITY_NAME = "keywords";
+
     Function prepareKeyword(AutomationPackageContext context);
 
 }

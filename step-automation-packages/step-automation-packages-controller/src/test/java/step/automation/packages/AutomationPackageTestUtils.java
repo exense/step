@@ -79,13 +79,17 @@ public class AutomationPackageTestUtils {
         throw new AssertionError("Keyword not found: " + clazz);
     }
 
-    public static Plan findPlanByName(List<Plan> plans, String name) throws AssertionError {
-        for (Plan plan : plans) {
-            if (plan.getAttribute(AbstractOrganizableObject.NAME).equals(name)) {
-                return plan;
+    public static <T extends AbstractOrganizableObject> T findByName(List<T> objects, String name){
+        for (T object : objects) {
+            if (object.getAttribute(AbstractOrganizableObject.NAME).equals(name)) {
+                return object;
             }
         }
-        throw new AssertionError("Plan not found: " + name);
+        throw new AssertionError("Object not found: " + name);
+    }
+
+    public static Plan findPlanByName(List<Plan> plans, String name) throws AssertionError {
+        return findByName(plans, name);
     }
 
     public static Function findFunctionByClassAndName(List<Function> functions, Class<?> clazz, String name) throws AssertionError {

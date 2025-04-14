@@ -29,6 +29,8 @@ import java.util.List;
 
 public class YamlPlan {
 
+	public static final String PLANS_ENTITY_NAME = "plans";
+
 	// this name should be kept untouched to support the migrations for old versions
 	public static final String VERSION_FIELD_NAME = "version";
 
