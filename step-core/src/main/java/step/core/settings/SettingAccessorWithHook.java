@@ -16,15 +16,15 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.core.controller;
+package step.core.settings;
 
 import step.core.ValueWithKey;
-import step.core.accessors.AbstractAccessor;
 import step.core.accessors.AbstractIdentifiableObject;
-import step.core.collections.Collection;
 
-public class SettingAccessorWithHook<T extends AbstractIdentifiableObject & ValueWithKey> extends AbstractAccessor<T> {
-    public SettingAccessorWithHook(Collection<T> collectionDriver) {
-        super(collectionDriver);
-    }
+public interface SettingAccessorWithHook<T extends AbstractIdentifiableObject & ValueWithKey> {
+
+    void addHook(String key, SettingHook<T> hook);
+
+    boolean removeHook(String key, SettingHook<T> hook);
+
 }

@@ -18,10 +18,11 @@
  ******************************************************************************/
 package step.usersettings;
 
-import step.core.accessors.AbstractAccessor;
 import step.core.collections.Collection;
+import step.core.settings.AbstractSettingAccessorWithHook;
 
-public class UserSettingAccessorImpl extends AbstractAccessor<UserSetting> {
+// TODO: is step-core a good place for these classes?
+public class UserSettingAccessorImpl extends AbstractSettingAccessorWithHook<UserSetting> {
 
     public UserSettingAccessorImpl(Collection<UserSetting> collectionDriver) {
         super(collectionDriver);
