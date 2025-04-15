@@ -29,10 +29,10 @@ import step.client.AbstractRemoteClient;
 import step.client.credentials.ControllerCredentials;
 import step.client.executions.RemoteExecutionManager;
 import step.core.artefacts.reports.ReportNodeStatus;
-import step.core.artefacts.reports.aggregated.AggregatedReportView;
 import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionMode;
+import step.core.maven.MavenArtifactIdentifier;
 import step.core.plans.PlanFilter;
 import step.core.plans.filters.*;
 import step.core.plans.runner.PlanRunnerResult;
@@ -279,6 +279,7 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
             repositoryParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_GROUP_ID, params.getMavenArtifactIdentifier().getGroupId());
             repositoryParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_VERSION, params.getMavenArtifactIdentifier().getVersion());
             repositoryParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_CLASSIFIER, params.getMavenArtifactIdentifier().getClassifier());
+            repositoryParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_TYPE, params.getMavenArtifactIdentifier().getType());
             executionParameters.setOriginalRepositoryObject(new RepositoryObjectReference(ArtifactRepositoryConstants.MAVEN_REPO_ID, repositoryParameters));
         }
 

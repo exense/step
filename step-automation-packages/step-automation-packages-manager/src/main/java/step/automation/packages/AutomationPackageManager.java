@@ -28,6 +28,7 @@ import step.core.AbstractStepContext;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.collections.IndexField;
 import step.core.entities.Entity;
+import step.core.maven.MavenArtifactIdentifier;
 import step.core.objectenricher.EnricheableObject;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectEnricherComposer;
@@ -68,6 +69,7 @@ public class AutomationPackageManager {
     protected final AutomationPackageAccessor automationPackageAccessor;
     protected final FunctionManager functionManager;
     protected final FunctionAccessor functionAccessor;
+    private final AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider;
     protected final PlanAccessor planAccessor;
     protected final AutomationPackageReader packageReader;
 
@@ -95,11 +97,13 @@ public class AutomationPackageManager {
                                      Map<String, Object> extensions,
                                      AutomationPackageHookRegistry automationPackageHookRegistry,
                                      AutomationPackageReader packageReader,
-                                     AutomationPackageLocks automationPackageLocks) {
+                                     AutomationPackageLocks automationPackageLocks,
+                                     AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider) {
         this.automationPackageAccessor = automationPackageAccessor;
 
         this.functionManager = functionManager;
         this.functionAccessor = functionAccessor;
+        this.mavenConfigProvider = mavenConfigProvider;
         IndexField indexField = AutomationPackageEntity.getIndexField();
         this.functionAccessor.createIndexIfNeeded(indexField);
 
@@ -143,7 +147,8 @@ public class AutomationPackageManager {
                 resourceManager,
                 extensions,
                 hookRegistry, reader,
-                new AutomationPackageLocks(DEFAULT_READLOCK_TIMEOUT_SECONDS)
+                new AutomationPackageLocks(DEFAULT_READLOCK_TIMEOUT_SECONDS),
+                null
         );
         automationPackageManager.isIsolated = true;
         return automationPackageManager;
@@ -180,7 +185,8 @@ public class AutomationPackageManager {
                 resourceManager1,
                 extensions,
                 hookRegistry, reader,
-                new AutomationPackageLocks(DEFAULT_READLOCK_TIMEOUT_SECONDS)
+                new AutomationPackageLocks(DEFAULT_READLOCK_TIMEOUT_SECONDS),
+                null
         );
         automationPackageManager.isIsolated = true;
         return automationPackageManager;
@@ -193,7 +199,8 @@ public class AutomationPackageManager {
                                                                               ResourceManager resourceManager,
                                                                               AutomationPackageHookRegistry hookRegistry,
                                                                               AutomationPackageReader reader,
-                                                                              AutomationPackageLocks locks) {
+                                                                              AutomationPackageLocks locks,
+                                                                              AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider) {
         Map<String, Object> extensions = new HashMap<>();
         hookRegistry.onMainAutomationPackageManagerCreate(extensions);
         return new AutomationPackageManager(
@@ -205,7 +212,8 @@ public class AutomationPackageManager {
                 extensions,
                 hookRegistry,
                 reader,
-                locks
+                locks,
+                mavenConfigProvider
         );
     }
 
@@ -284,6 +292,34 @@ public class AutomationPackageManager {
         deleteAdditionalData(automationPackage, new AutomationPackageContext(operationMode, resourceManager, null,  null,null, extensions));
     }
 
+    public ObjectId createAutomationPackageFromMaven(MavenArtifactIdentifier mavenArtifactIdentifier, String apVersion, String activationExpr, ObjectEnricher enricher, ObjectPredicate objectPredicate) {
+        validateMavenConfigAndArtifactClassifier(mavenArtifactIdentifier);
+        try {
+            try (AutomationPackageFromMavenProvider provider = new AutomationPackageFromMavenProvider(mavenConfigProvider.getConfig(objectPredicate), mavenArtifactIdentifier)) {
+                return createOrUpdateAutomationPackage(false, true, null, provider, apVersion, activationExpr, false, enricher, objectPredicate, false).getId();
+            }
+        } catch (IOException ex) {
+            throw new AutomationPackageManagerException("Automation package cannot be created. Caused by: " + ex.getMessage(), ex);
+        }
+    }
+
+    protected void validateMavenConfigAndArtifactClassifier(MavenArtifactIdentifier mavenArtifactIdentifier) throws AutomationPackageManagerException {
+        if (mavenConfigProvider == null) {
+            throw new AutomationPackageManagerException("Maven config provider is not configured for automation package manager");
+        }
+
+        String commonErrorMessage = "Unable to resolve maven artifact for automation package";
+        if (mavenArtifactIdentifier.getArtifactId() == null) {
+            throw new AutomationPackageManagerException(commonErrorMessage + ". artifactId is undefined");
+        }
+        if (mavenArtifactIdentifier.getGroupId() == null) {
+            throw new AutomationPackageManagerException(commonErrorMessage + ". groupId is undefined");
+        }
+        if (mavenArtifactIdentifier.getVersion() == null) {
+            throw new AutomationPackageManagerException(commonErrorMessage + ". version is undefined");
+        }
+    }
+
     /**
      * Creates the new automation package. The exception will be thrown, if the package with the same name already exists.
      *
@@ -317,6 +353,30 @@ public class AutomationPackageManager {
                 return createOrUpdateAutomationPackage(allowUpdate, allowCreate, explicitOldId, provider, apVersion, activationExpr, false, enricher, objectPredicate, async);
             }
         } catch (IOException | AutomationPackageReadingException ex) {
+            throw new AutomationPackageManagerException("Automation package cannot be created. Caused by: " + ex.getMessage(), ex);
+        }
+    }
+
+    /**
+     * Creates new or updates the existing automation package
+     *
+     * @param allowUpdate     whether update existing package is allowed
+     * @param allowCreate     whether create new package is allowed
+     * @param explicitOldId   the explicit package id to be updated (if null, the id will be automatically resolved by package name from packageStream)
+     * @param enricher        the enricher used to fill all stored objects (for instance, with product id for multitenant application)
+     * @param objectPredicate the filter for automation package
+     * @return the id of created/updated package
+     */
+    public AutomationPackageUpdateResult createOrUpdateAutomationPackageFromMaven(MavenArtifactIdentifier mavenArtifactIdentifier,
+                                                                                  boolean allowUpdate, boolean allowCreate, ObjectId explicitOldId,
+                                                                                  String activationExpr,
+                                                                                  ObjectEnricher enricher, ObjectPredicate objectPredicate, boolean async) throws AutomationPackageManagerException {
+        try {
+            validateMavenConfigAndArtifactClassifier(mavenArtifactIdentifier);
+            try (AutomationPackageFromMavenProvider provider = new AutomationPackageFromMavenProvider(mavenConfigProvider.getConfig(objectPredicate), mavenArtifactIdentifier)) {
+                return createOrUpdateAutomationPackage(allowUpdate, allowCreate, explicitOldId, provider, mavenArtifactIdentifier.getVersion(), activationExpr, false, enricher, objectPredicate, async);
+            }
+        } catch (IOException ex) {
             throw new AutomationPackageManagerException("Automation package cannot be created. Caused by: " + ex.getMessage(), ex);
         }
     }

@@ -16,37 +16,67 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.cli;
+package step.core.maven;
 
 import java.util.Objects;
 
 public class MavenArtifactIdentifier {
-    private final String groupId;
-    private final String artifactId;
-    private final String version;
-    private final String classifier;
 
-    public MavenArtifactIdentifier(String groupId, String artifactId, String versionId, String classifier) {
+    private String groupId;
+    private String artifactId;
+    private String version;
+    private String classifier;
+    private String type;
+
+    public MavenArtifactIdentifier() {
+    }
+
+    public MavenArtifactIdentifier(String groupId, String artifactId, String version, String classifier, String type) {
         this.groupId = groupId;
         this.artifactId = artifactId;
-        this.version = versionId;
+        this.version = version;
         this.classifier = classifier;
+        this.type = type;
     }
 
     public String getGroupId() {
         return groupId;
     }
 
+    public void setGroupId(String groupId) {
+        this.groupId = groupId;
+    }
+
     public String getArtifactId() {
         return artifactId;
+    }
+
+    public void setArtifactId(String artifactId) {
+        this.artifactId = artifactId;
     }
 
     public String getVersion() {
         return version;
     }
 
+    public void setVersion(String version) {
+        this.version = version;
+    }
+
     public String getClassifier() {
         return classifier;
+    }
+
+    public void setClassifier(String classifier) {
+        this.classifier = classifier;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 
     @Override
@@ -58,6 +88,9 @@ public class MavenArtifactIdentifier {
             buffer.append(':').append(getClassifier());
         }
         buffer.append(':').append(getVersion());
+        if (getType() != null && !getType().isEmpty()) {
+            buffer.append(':').append(getType());
+        }
         return buffer.toString();
     }
 
@@ -66,11 +99,11 @@ public class MavenArtifactIdentifier {
         if (this == object) return true;
         if (object == null || getClass() != object.getClass()) return false;
         MavenArtifactIdentifier that = (MavenArtifactIdentifier) object;
-        return Objects.equals(groupId, that.groupId) && Objects.equals(artifactId, that.artifactId) && Objects.equals(version, that.version) && Objects.equals(classifier, that.classifier);
+        return Objects.equals(groupId, that.groupId) && Objects.equals(artifactId, that.artifactId) && Objects.equals(version, that.version) && Objects.equals(classifier, that.classifier) && Objects.equals(type, that.type);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(groupId, artifactId, version, classifier);
+        return Objects.hash(groupId, artifactId, version, classifier, type);
     }
 }

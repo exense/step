@@ -23,7 +23,7 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import step.cli.AbstractExecuteAutomationPackageTool;
-import step.cli.MavenArtifactIdentifier;
+import step.core.maven.MavenArtifactIdentifier;
 import step.cli.StepCliExecutionException;
 
 import java.io.File;
@@ -51,6 +51,8 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
     private String artifactVersion;
     @Parameter(property = "step-execute-auto-packages.artifact-classifier", required = false)
     private String artifactClassifier;
+    @Parameter(property = "step-execute-auto-packages.artifact-type", required = false)
+    private String artifactType;
 
     @Parameter(property = "step-execute-auto-packages.execution-parameters", required = false)
     private Map<String, String> executionParameters;
@@ -111,7 +113,7 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
 
             MavenArtifactIdentifier remoteMavenArtifact = null;
             if (!isLocalMavenArtifact()) {
-                remoteMavenArtifact = new MavenArtifactIdentifier(getArtifactGroupId(), getArtifactId(), getArtifactVersion(), getArtifactClassifier());
+                remoteMavenArtifact = new MavenArtifactIdentifier(getArtifactGroupId(), getArtifactId(), getArtifactVersion(), getArtifactClassifier(), getArtifactType());
             }
 
             File reportOutputDir = null;
@@ -350,5 +352,13 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
 
     public void setReportDir(String reportDir) {
         this.reportDir = reportDir;
+    }
+
+    public String getArtifactType() {
+        return artifactType;
+    }
+
+    public void setArtifactType(String artifactType) {
+        this.artifactType = artifactType;
     }
 }
