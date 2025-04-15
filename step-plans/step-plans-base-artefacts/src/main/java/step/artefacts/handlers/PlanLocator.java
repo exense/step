@@ -61,6 +61,9 @@ public class PlanLocator {
 		Plan a;
 		if(artefact.getPlanId()!=null) {
 			a =  accessor.get(artefact.getPlanId());
+			if (a == null) {
+				throw new  NoSuchElementException("Unable to find plan with id: " + artefact.getPlanId());
+			}
 		} else {
 			Map<String, String> selectionAttributes = selectorHelper.buildSelectionAttributesMap(artefact.getSelectionAttributes().get(), bindings);
 			Stream<Plan> stream = StreamSupport.stream(accessor.findManyByAttributes(selectionAttributes), false);
