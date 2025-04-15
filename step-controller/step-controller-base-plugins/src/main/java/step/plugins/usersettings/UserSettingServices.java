@@ -34,4 +34,7 @@ public class UserSettingServices extends AbstractEntityServices<UserSetting> {
     public UserSettingServices() {
         super(UserSetting.ENTITY_NAME);
     }
+
+    // TODO: we have to add some specific endpoints here
+
 }

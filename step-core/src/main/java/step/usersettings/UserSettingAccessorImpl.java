@@ -22,7 +22,7 @@ import step.core.collections.Collection;
 import step.core.settings.AbstractSettingAccessorWithHook;
 
 // TODO: is step-core a good place for these classes?
-public class UserSettingAccessorImpl extends AbstractSettingAccessorWithHook<UserSetting> {
+public class UserSettingAccessorImpl extends AbstractSettingAccessorWithHook<UserSetting> implements UserSettingAccessor {
 
     public UserSettingAccessorImpl(Collection<UserSetting> collectionDriver) {
         super(collectionDriver);
