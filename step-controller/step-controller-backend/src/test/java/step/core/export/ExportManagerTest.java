@@ -72,7 +72,7 @@ import step.planbuilder.FunctionArtefacts;
 import step.plugins.functions.types.CompositeFunction;
 import step.plugins.functions.types.CompositeFunctionType;
 import step.plugins.parametermanager.EncryptedEntityImportBiConsumer;
-import step.plugins.parametermanager.EncyptedEntityExportBiConsumer;
+import step.plugins.parametermanager.EncryptedEntityExportBiConsumer;
 import step.resources.*;
 
 import java.io.File;
@@ -86,8 +86,8 @@ import static org.junit.Assert.*;
 import static step.planbuilder.BaseArtefacts.callPlan;
 import static step.planbuilder.BaseArtefacts.sequence;
 import static step.plugins.parametermanager.EncryptedEntityImportBiConsumer.*;
-import static step.plugins.parametermanager.EncyptedEntityExportBiConsumer.EXPORT_ENCRYPT_PARAM_WARN;
-import static step.plugins.parametermanager.EncyptedEntityExportBiConsumer.EXPORT_PROTECT_PARAM_WARN;
+import static step.plugins.parametermanager.EncryptedEntityExportBiConsumer.EXPORT_ENCRYPT_PARAM_WARN;
+import static step.plugins.parametermanager.EncryptedEntityExportBiConsumer.EXPORT_PROTECT_PARAM_WARN;
 
 public class ExportManagerTest {
 
@@ -153,7 +153,7 @@ public class ExportManagerTest {
 				.register(new ResourceEntity(resourceAccessor, resourceManager, fileResolver, entityManager))
 				.register(new Entity<>(EntityManager.resourceRevisions, resourceRevisionAccessor, ResourceRevision.class));
 		
-		entityManager.registerExportHook(new EncyptedEntityExportBiConsumer(Parameter.class));
+		entityManager.registerExportHook(new EncryptedEntityExportBiConsumer(Parameter.class));
 		entityManager.registerImportHook(new EncryptedEntityImportBiConsumer(encryptionManager, Parameter.class));
 		entityManager.registerImportHook(new ResourceImporter(resourceManager));
 		

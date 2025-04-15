@@ -34,7 +34,7 @@ import step.framework.server.tables.TableRegistry;
 import step.parameter.AbstractEncryptedValuesManager;
 import step.plugins.encryption.EncryptionManagerDependencyPlugin;
 import step.plugins.parametermanager.EncryptedEntityImportBiConsumer;
-import step.plugins.parametermanager.EncyptedEntityExportBiConsumer;
+import step.plugins.parametermanager.EncryptedEntityExportBiConsumer;
 import step.plugins.screentemplating.ScreenTemplatePlugin;
 import step.usersettings.UserSetting;
 import step.usersettings.UserSettingAccessor;
@@ -80,7 +80,7 @@ public class UserSettingControllerPlugin extends AbstractControllerPlugin {
                 UserSetting.ENTITY_NAME,
                 userSettingAccessor,
                 UserSetting.class));
-        context.getEntityManager().registerExportHook(new EncyptedEntityExportBiConsumer(UserSetting.class));
+        context.getEntityManager().registerExportHook(new EncryptedEntityExportBiConsumer(UserSetting.class));
         context.getEntityManager().registerImportHook(new EncryptedEntityImportBiConsumer(encryptionManager, UserSetting.class));
 
         context.getServiceRegistrationCallback().registerService(UserSettingServices.class);

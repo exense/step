@@ -80,7 +80,7 @@ public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
 				Parameter.ENTITY_NAME, 
 				parameterAccessor,
 				Parameter.class));
-		context.getEntityManager().registerExportHook(new EncyptedEntityExportBiConsumer(Parameter.class));
+		context.getEntityManager().registerExportHook(new EncryptedEntityExportBiConsumer(Parameter.class));
 		context.getEntityManager().registerImportHook(new EncryptedEntityImportBiConsumer(encryptionManager, Parameter.class));
 		
 		context.getServiceRegistrationCallback().registerService(ParameterServices.class);

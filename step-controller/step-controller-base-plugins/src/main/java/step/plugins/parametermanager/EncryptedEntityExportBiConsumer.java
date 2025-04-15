@@ -26,13 +26,13 @@ import step.parameter.ParameterManager;
 
 import java.util.function.BiConsumer;
 
-public class EncyptedEntityExportBiConsumer implements BiConsumer<Object, ExportContext> {
+public class EncryptedEntityExportBiConsumer implements BiConsumer<Object, ExportContext> {
 
     public static String EXPORT_PROTECT_PARAM_WARN = "The parameter list contains protected parameter. The values of these parameters won't be exported and will have to be reset at import.";
     public static String EXPORT_ENCRYPT_PARAM_WARN = "The parameter list contains encrypted parameters. The values of these parameters will be reset if you import them on an other installation of step.";
     private final Class<? extends EncryptedTrackedObject> clazz;
 
-    public EncyptedEntityExportBiConsumer(Class<? extends EncryptedTrackedObject> clazz) {
+    public EncryptedEntityExportBiConsumer(Class<? extends EncryptedTrackedObject> clazz) {
         this.clazz = clazz;
     }
 
