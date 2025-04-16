@@ -53,25 +53,8 @@ public class ExecutionPlugin extends AbstractControllerPlugin {
 			execution.setRootReportNode(rootReportNodeFormatter.getRootReportNode(execution));
 			Object executionSummary = executionSummaryFormatter.format(execution);
 			execution.setExecutionSummary(executionSummary);
-			ExecutionStatus status = execution.getStatus();
-			ReportNodeStatus result = execution.getResult();
-			if (status != null) {
-				execution.setEffectiveStatus(status.equals(ExecutionStatus.ENDED) ? ((result != null) ? result.name() : status.name()) : status.name());
-			} else if (result != null) {
-				execution.setEffectiveStatus(result.name());
-			}
 			return execution;
-		}).withDerivedTableSortingFactory(sort -> {
-			if (sort.getField().equals("effectiveStatus")) {
-				int orderValue = sort.getDirection().getValue();
-				return new SearchOrder(List.of(new SearchOrder.FieldSearchOrder("status", orderValue),
-						new SearchOrder.FieldSearchOrder("result", orderValue)));
-			} else {
-				return null;
-			}
-
 		}));
-
 
 		tableRegistry.register("leafReports", new Table<>(reportsCollection, "execution-read", false)
 				.withTableFiltersFactory(new LeafReportNodeTableFilterFactory(context)).withResultListFactory(()->new ArrayList<>(){}));
