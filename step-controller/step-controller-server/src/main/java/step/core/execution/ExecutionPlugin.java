@@ -20,10 +20,7 @@ package step.core.execution;
 
 import step.core.GlobalContext;
 import step.core.artefacts.reports.ReportNode;
-import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.collections.Collection;
-import step.core.collections.SearchOrder;
-import step.core.execution.model.ExecutionStatus;
 import step.core.execution.table.*;
 import step.core.execution.type.ExecutionTypeControllerPlugin;
 import step.core.plugins.AbstractControllerPlugin;
@@ -33,7 +30,6 @@ import step.framework.server.tables.TableRegistry;
 import step.plugins.screentemplating.ScreenTemplatePlugin;
 
 import java.util.ArrayList;
-import java.util.List;
 
 @Plugin(dependencies= {ExecutionTypeControllerPlugin.class, ScreenTemplatePlugin.class})
 public class ExecutionPlugin extends AbstractControllerPlugin {
@@ -55,6 +51,7 @@ public class ExecutionPlugin extends AbstractControllerPlugin {
 			execution.setExecutionSummary(executionSummary);
 			return execution;
 		}));
+
 
 		tableRegistry.register("leafReports", new Table<>(reportsCollection, "execution-read", false)
 				.withTableFiltersFactory(new LeafReportNodeTableFilterFactory(context)).withResultListFactory(()->new ArrayList<>(){}));
