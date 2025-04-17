@@ -25,7 +25,7 @@ import step.framework.server.security.SecuredContext;
 import step.usersettings.UserSetting;
 
 // TODO: think about permissions
-@Path("/userSettings")
+@Path("/user-settings")
 @Tag(name = "UserSettings")
 @Tag(name = "Entity=UserSetting")
 @SecuredContext(key = "entity", value = "usersetting")
