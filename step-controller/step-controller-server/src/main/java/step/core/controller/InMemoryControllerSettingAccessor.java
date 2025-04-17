@@ -5,7 +5,7 @@ import step.core.collections.inmemory.InMemoryCollection;
 public class InMemoryControllerSettingAccessor extends ControllerSettingAccessorImpl implements ControllerSettingAccessor {
 
 	public InMemoryControllerSettingAccessor() {
-		super(new InMemoryCollection<ControllerSetting>());
+		super(new InMemoryCollection<>());
 	}
 
 	protected ControllerSetting copy(ControllerSetting controllerSetting){
