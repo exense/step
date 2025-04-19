@@ -94,13 +94,11 @@ public class YamlKeywordDefinition {
         public boolean applyCustomProcessing(Class<?> objectClass, Field field, FieldMetadata fieldMetadata, JsonObjectBuilder propertiesBuilder, List<String> requiredPropertiesOutput, JsonSchemaCreator schemaCreator) throws JsonSchemaPreparationException {
             JsonProvider jsonProvider = JsonProvider.provider();
             YamlJsonSchemaHelper jsonSchemaHelper = new YamlJsonSchemaHelper(jsonProvider);
-            JsonObjectBuilder nestedPropertyParamsBuilder = jsonProvider.createObjectBuilder();
             JsonArrayBuilder oneOfArrayBuilder = jsonProvider.createArrayBuilder();
             oneOfArrayBuilder
                     .add(jsonProvider.createObjectBuilder().add("type", "string"))
                     .add(jsonSchemaHelper.createPatternPropertiesWithDynamicValues());
-            nestedPropertyParamsBuilder.add("oneOf", oneOfArrayBuilder);
-            propertiesBuilder.add(fieldMetadata.getFieldName(), nestedPropertyParamsBuilder);
+            propertiesBuilder.add("oneOf", oneOfArrayBuilder);
             return true;
         }
     }

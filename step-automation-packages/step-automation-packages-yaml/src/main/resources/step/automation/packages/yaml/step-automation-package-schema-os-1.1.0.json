@@ -366,34 +366,35 @@
             "routing" : {
               "$ref" : "#/$defs/DynamicKeywordInputsDef"
             },
+            "standardKeyword" : {
+              "enum" : [ ]
+            },
             "keyword" : {
-              "keyword" : {
-                "oneOf" : [ {
-                  "type" : "string"
-                }, {
-                  "type" : "object",
-                  "patternProperties" : {
-                    ".*" : {
-                      "anyOf" : [ {
-                        "type" : "number"
-                      }, {
-                        "type" : "boolean"
-                      }, {
-                        "type" : "string"
-                      }, {
-                        "type" : "object"
-                      }, {
-                        "type" : "array"
-                      }, {
-                        "$ref" : "#/$defs/DynamicExpressionDef"
-                      }, {
-                        "type" : "null"
-                      } ]
-                    }
-                  },
-                  "additionalProperties" : false
-                } ]
-              }
+              "oneOf" : [ {
+                "type" : "string"
+              }, {
+                "type" : "object",
+                "patternProperties" : {
+                  ".*" : {
+                    "anyOf" : [ {
+                      "type" : "number"
+                    }, {
+                      "type" : "boolean"
+                    }, {
+                      "type" : "string"
+                    }, {
+                      "type" : "object"
+                    }, {
+                      "type" : "array"
+                    }, {
+                      "$ref" : "#/$defs/DynamicExpressionDef"
+                    }, {
+                      "type" : "null"
+                    } ]
+                  }
+                },
+                "additionalProperties" : false
+              } ]
             },
             "inputs" : {
               "$ref" : "#/$defs/DynamicKeywordInputsDef"

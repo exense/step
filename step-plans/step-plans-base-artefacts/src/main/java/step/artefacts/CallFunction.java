@@ -30,6 +30,7 @@ public class CallFunction extends TokenSelector {
 	
 	public static final String ARTEFACT_NAME = "CallKeyword";
 
+	private boolean isStandardFunction = false;
 	private DynamicValue<String> function = new DynamicValue<>("{}");
 
 	private DynamicValue<String> argument = new DynamicValue<>("{}");
@@ -63,4 +64,12 @@ public class CallFunction extends TokenSelector {
 	public boolean isCallingArtefactsFromOtherPlans() {
 		return true;
 	}
+
+    public boolean isStandardFunction() {
+        return isStandardFunction;
+    }
+
+    public void setStandardFunction(boolean standardFunction) {
+        isStandardFunction = standardFunction;
+    }
 }
