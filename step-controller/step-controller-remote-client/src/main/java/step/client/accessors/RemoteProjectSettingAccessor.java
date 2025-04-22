@@ -16,15 +16,20 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.usersettings;
+package step.client.accessors;
 
-import step.core.collections.Collection;
-import step.core.settings.AbstractSettingAccessorWithHook;
+import step.client.collections.remote.RemoteCollectionFactory;
+import step.core.accessors.AbstractAccessor;
+import step.projectsettings.ProjectSetting;
+import step.projectsettings.ProjectSettingAccessor;
 
-// TODO: is step-core a good place for these classes?
-public class UserSettingAccessorImpl extends AbstractSettingAccessorWithHook<UserSetting> implements UserSettingAccessor {
+// TODO: maybe not required
+public class RemoteProjectSettingAccessor extends AbstractAccessor<ProjectSetting> implements ProjectSettingAccessor {
 
-    public UserSettingAccessorImpl(Collection<UserSetting> collectionDriver) {
-        super(collectionDriver);
+    public RemoteProjectSettingAccessor(RemoteCollectionFactory remoteCollectionFactory) {
+        super(remoteCollectionFactory.getCollection( ProjectSetting.ENTITY_NAME, ProjectSetting.class));
     }
+
+
 }
+

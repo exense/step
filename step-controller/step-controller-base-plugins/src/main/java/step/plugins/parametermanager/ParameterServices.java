@@ -28,6 +28,8 @@ import step.controller.services.entities.AbstractEntityServices;
 import step.core.GlobalContext;
 import step.core.accessors.Accessor;
 import step.core.deployment.ControllerServiceException;
+import step.encryption.AbstractEncryptedValuesManager;
+import step.encryption.EncryptedValueManagerException;
 import step.framework.server.access.AuthorizationManager;
 import step.framework.server.security.Secured;
 import step.framework.server.security.SecuredContext;
@@ -99,7 +101,7 @@ public class ParameterServices extends AbstractEntityServices<Parameter> {
 		assertRights(newParameter);
 		try {
 			return AbstractEncryptedValuesManager.maskProtectedValue(parameterManager.save(newParameter, sourceParameter, getSession().getUser().getUsername()));
-		} catch (ParameterManagerException e) {
+		} catch (EncryptedValueManagerException e) {
 			throw new ControllerServiceException(e.getMessage());
 		}
 	}

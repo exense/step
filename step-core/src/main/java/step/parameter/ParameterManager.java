@@ -23,6 +23,7 @@ import step.commons.activation.Activator;
 import step.core.accessors.Accessor;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.encryption.EncryptionManager;
+import step.encryption.AbstractEncryptedValuesManager;
 
 public class ParameterManager extends AbstractEncryptedValuesManager<Parameter> {
 
@@ -44,6 +45,11 @@ public class ParameterManager extends AbstractEncryptedValuesManager<Parameter> 
 	@Override
 	protected Accessor<Parameter> getAccessor() {
 		return parameterAccessor;
+	}
+
+	@Override
+	protected String getEntityNameForLogging() {
+		return "parameter";
 	}
 
 	public Accessor<Parameter> getParameterAccessor() {

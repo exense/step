@@ -102,7 +102,7 @@ public class ParameterManagerPlugin extends AbstractExecutionEnginePlugin {
 		// Resolve the active parameters
 		Map<String, Object> contextBindings = ExecutionContextBindings.get(context);
 		ObjectPredicate objectPredicate = context.getObjectPredicate();
-		Map<String, Parameter> allParameters = getParameterManagerFromContext(context).getAllParameters(contextBindings, objectPredicate);
+		Map<String, Parameter> allParameters = getParameterManagerFromContext(context).getAllObjects(contextBindings, objectPredicate);
 
 		// Add all the active parameters to the execution parameter map of the Execution object
 		buildExecutionParametersMapAndUpdateExecution(context, allParameters);

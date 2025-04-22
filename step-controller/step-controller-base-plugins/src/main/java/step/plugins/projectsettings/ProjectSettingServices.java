@@ -16,9 +16,23 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.usersettings;
+package step.plugins.projectsettings;
 
-import step.core.accessors.Accessor;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.ws.rs.Path;
+import step.controller.services.entities.AbstractEntityServices;
+import step.framework.server.security.SecuredContext;
+import step.projectsettings.ProjectSetting;
 
-public interface UserSettingAccessor extends Accessor<UserSetting> {
+// TODO: think about permissions
+@Path("/project-settings")
+@Tag(name = "ProjectSettings")
+@Tag(name = "Entity=ProjectSetting")
+@SecuredContext(key = "entity", value = "projectsetting")
+public class ProjectSettingServices extends AbstractEntityServices<ProjectSetting> {
+
+    public ProjectSettingServices() {
+        super(ProjectSetting.ENTITY_NAME);
+    }
+
 }

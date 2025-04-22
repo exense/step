@@ -16,16 +16,16 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.usersettings;
+package step.projectsettings;
 
 import step.commons.activation.Expression;
 import step.core.EncryptedTrackedObject;
 import step.core.dynamicbeans.DynamicValue;
 import step.parameter.ParameterScope;
 
-public class UserSetting extends EncryptedTrackedObject {
+public class ProjectSetting extends EncryptedTrackedObject {
 
-    public static final String ENTITY_NAME = "usersettings";
+    public static final String ENTITY_NAME = "projectsettings";
 
     protected String description;
 
@@ -36,16 +36,16 @@ public class UserSetting extends EncryptedTrackedObject {
 
     /**
      * When running with an encryption manager, the value of protected
-     * {@link UserSetting}s is encrypted and the encrypted value is stored into this
+     * {@link ProjectSetting}s is encrypted and the encrypted value is stored into this
      * field
      */
     protected String encryptedValue;
 
-    public UserSetting() {
+    public ProjectSetting() {
         super();
     }
 
-    public UserSetting(Expression activationExpression, String key, String value, String description) {
+    public ProjectSetting(Expression activationExpression, String key, String value, String description) {
         super();
         this.key = key;
         this.value = new DynamicValue<>(value);
@@ -92,6 +92,6 @@ public class UserSetting extends EncryptedTrackedObject {
 
     @Override
     public String toString() {
-        return "UserSetting [key=" + key + "]";
+        return "ProjectSetting [key=" + key + "]";
     }
 }

@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plugins.usersettings;
+package step.plugins.projectsettings;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,15 +31,15 @@ import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.framework.server.tables.Table;
 import step.framework.server.tables.TableRegistry;
-import step.parameter.AbstractEncryptedValuesManager;
+import step.encryption.AbstractEncryptedValuesManager;
 import step.plugins.encryption.EncryptionManagerDependencyPlugin;
 import step.plugins.parametermanager.EncryptedEntityImportBiConsumer;
 import step.plugins.parametermanager.EncryptedEntityExportBiConsumer;
 import step.plugins.screentemplating.ScreenTemplatePlugin;
-import step.usersettings.UserSetting;
-import step.usersettings.UserSettingAccessor;
-import step.usersettings.UserSettingAccessorImpl;
-import step.usersettings.UserSettingManager;
+import step.projectsettings.ProjectSetting;
+import step.projectsettings.ProjectSettingAccessor;
+import step.projectsettings.ProjectSettingAccessorImpl;
+import step.projectsettings.ProjectSettingManager;
 
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -48,11 +48,11 @@ import static step.core.EncryptedTrackedObject.PARAMETER_PROTECTED_VALUE_FIELD;
 import static step.core.EncryptedTrackedObject.PARAMETER_VALUE_FIELD;
 
 @Plugin(dependencies= {ObjectHookControllerPlugin.class, ScreenTemplatePlugin.class, EncryptionManagerDependencyPlugin.class})
-public class UserSettingControllerPlugin extends AbstractControllerPlugin {
+public class ProjectSettingControllerPlugin extends AbstractControllerPlugin {
 
-    public static Logger logger = LoggerFactory.getLogger(UserSettingControllerPlugin.class);
+    public static Logger logger = LoggerFactory.getLogger(ProjectSettingControllerPlugin.class);
 
-    private UserSettingManager userSettingManager;
+    private ProjectSettingManager projectSettingManager;
     private EncryptionManager encryptionManager;
 
     @Override
@@ -60,30 +60,30 @@ public class UserSettingControllerPlugin extends AbstractControllerPlugin {
         // The encryption manager might be null
         encryptionManager = context.get(EncryptionManager.class);
 
-        Collection<UserSetting> collection = context.getCollectionFactory().getCollection(UserSetting.ENTITY_NAME, UserSetting.class);
+        Collection<ProjectSetting> collection = context.getCollectionFactory().getCollection(ProjectSetting.ENTITY_NAME, ProjectSetting.class);
 
-        UserSettingAccessor userSettingAccessor = new UserSettingAccessorImpl(collection);
-        context.put("UserSettingAccessor", userSettingAccessor);
+        ProjectSettingAccessor projectSettingAccessor = new ProjectSettingAccessorImpl(collection);
+        context.put("ProjectSettingAccessor", projectSettingAccessor);
 
-        context.get(TableRegistry.class).register(UserSetting.ENTITY_NAME, new Table<>(collection, "param-read", true)
+        context.get(TableRegistry.class).register(ProjectSetting.ENTITY_NAME, new Table<>(collection, "param-read", true)
                 .withResultItemTransformer((p,s) -> AbstractEncryptedValuesManager.maskProtectedValue(p))
                 .withDerivedTableFiltersFactory(lf -> {
                     Set<String> allFilterAttributes = lf.stream().map(Filters::collectFilterAttributes).flatMap(Set::stream).collect(Collectors.toSet());
                     return allFilterAttributes.contains(PARAMETER_VALUE_FIELD + ".value") ? new Equals(PARAMETER_PROTECTED_VALUE_FIELD, false) : Filters.empty();
                 }));
 
-        UserSettingManager userSettingManager = new UserSettingManager(userSettingAccessor, encryptionManager, context.getConfiguration(), context.getDynamicBeanResolver());
-        context.put(UserSettingManager.class, userSettingManager);
-        this.userSettingManager = userSettingManager;
+        ProjectSettingManager projectSettingManager = new ProjectSettingManager(projectSettingAccessor, encryptionManager, context.getConfiguration(), context.getDynamicBeanResolver());
+        context.put(ProjectSettingManager.class, projectSettingManager);
+        this.projectSettingManager = projectSettingManager;
 
         context.getEntityManager().register(new Entity<>(
-                UserSetting.ENTITY_NAME,
-                userSettingAccessor,
-                UserSetting.class));
-        context.getEntityManager().registerExportHook(new EncryptedEntityExportBiConsumer(UserSetting.class));
-        context.getEntityManager().registerImportHook(new EncryptedEntityImportBiConsumer(encryptionManager, UserSetting.class));
+                ProjectSetting.ENTITY_NAME,
+                projectSettingAccessor,
+                ProjectSetting.class));
+        context.getEntityManager().registerExportHook(new EncryptedEntityExportBiConsumer(ProjectSetting.class));
+        context.getEntityManager().registerImportHook(new EncryptedEntityImportBiConsumer(encryptionManager, ProjectSetting.class));
 
-        context.getServiceRegistrationCallback().registerService(UserSettingServices.class);
+        context.getServiceRegistrationCallback().registerService(ProjectSettingServices.class);
     }
 
     @Override
@@ -92,11 +92,11 @@ public class UserSettingControllerPlugin extends AbstractControllerPlugin {
         if(encryptionManager != null) {
             if(encryptionManager.isFirstStart()) {
                 logger.info("First start of the encryption manager. Encrypting all protected parameters...");
-                userSettingManager.encryptAllParameters();
+                projectSettingManager.encryptAll();
             }
             if(encryptionManager.isKeyPairChanged()) {
                 logger.info("Key pair of encryption manager changed. Resetting all protected parameters...");
-                userSettingManager.resetAllProtectedParameters();
+                projectSettingManager.resetAllProtectedValues();
             }
         }
     }

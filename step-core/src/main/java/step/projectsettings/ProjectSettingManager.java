@@ -16,30 +16,35 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.usersettings;
+package step.projectsettings;
 
 import ch.exense.commons.app.Configuration;
 import step.commons.activation.Activator;
 import step.core.accessors.Accessor;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.encryption.EncryptionManager;
-import step.parameter.AbstractEncryptedValuesManager;
+import step.encryption.AbstractEncryptedValuesManager;
 
-public class UserSettingManager extends AbstractEncryptedValuesManager<UserSetting> {
+public class ProjectSettingManager extends AbstractEncryptedValuesManager<ProjectSetting> {
 
-    private final Accessor<UserSetting> userSettingAccessor;
+    private final Accessor<ProjectSetting> accessor;
 
-    public UserSettingManager(Accessor<UserSetting> parameterAccessor, EncryptionManager encryptionManager, Configuration configuration, DynamicBeanResolver dynamicBeanResolver) {
-        this(parameterAccessor, encryptionManager, configuration.getProperty("tec.activator.scriptEngine", Activator.DEFAULT_SCRIPT_ENGINE), dynamicBeanResolver);
+    public ProjectSettingManager(Accessor<ProjectSetting> accessor, EncryptionManager encryptionManager, Configuration configuration, DynamicBeanResolver dynamicBeanResolver) {
+        this(accessor, encryptionManager, configuration.getProperty("tec.activator.scriptEngine", Activator.DEFAULT_SCRIPT_ENGINE), dynamicBeanResolver);
     }
 
-    public UserSettingManager(Accessor<UserSetting> userSettingAccessor, EncryptionManager encryptionManager, String defaultScriptEngine, DynamicBeanResolver dynamicBeanResolver) {
+    public ProjectSettingManager(Accessor<ProjectSetting> accessor, EncryptionManager encryptionManager, String defaultScriptEngine, DynamicBeanResolver dynamicBeanResolver) {
         super(encryptionManager, defaultScriptEngine, dynamicBeanResolver);
-        this.userSettingAccessor = userSettingAccessor;
+        this.accessor = accessor;
     }
 
     @Override
-    protected Accessor<UserSetting> getAccessor() {
-        return userSettingAccessor;
+    protected Accessor<ProjectSetting> getAccessor() {
+        return accessor;
+    }
+
+    @Override
+    protected String getEntityNameForLogging() {
+        return "project setting";
     }
 }

@@ -34,7 +34,7 @@ import step.core.plugins.Plugin;
 import step.engine.plugins.ExecutionEnginePlugin;
 import step.framework.server.tables.Table;
 import step.framework.server.tables.TableRegistry;
-import step.parameter.AbstractEncryptedValuesManager;
+import step.encryption.AbstractEncryptedValuesManager;
 import step.parameter.Parameter;
 import step.parameter.ParameterManager;
 import step.plugins.encryption.EncryptionManagerDependencyPlugin;
@@ -92,11 +92,11 @@ public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
 		if(encryptionManager != null) {
 			if(encryptionManager.isFirstStart()) {
 				logger.info("First start of the encryption manager. Encrypting all protected parameters...");
-				parameterManager.encryptAllParameters();
+				parameterManager.encryptAll();
 			}
 			if(encryptionManager.isKeyPairChanged()) {
 				logger.info("Key pair of encryption manager changed. Resetting all protected parameters...");
-				parameterManager.resetAllProtectedParameters();
+				parameterManager.resetAllProtectedValues();
 			}
 		}
 	}
