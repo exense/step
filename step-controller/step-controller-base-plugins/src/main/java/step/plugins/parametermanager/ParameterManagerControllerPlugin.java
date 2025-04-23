@@ -37,6 +37,8 @@ import step.framework.server.tables.TableRegistry;
 import step.encryption.AbstractEncryptedValuesManager;
 import step.parameter.Parameter;
 import step.parameter.ParameterManager;
+import step.plugins.encryption.EncryptedEntityExportBiConsumer;
+import step.plugins.encryption.EncryptedEntityImportBiConsumer;
 import step.plugins.encryption.EncryptionManagerDependencyPlugin;
 import step.plugins.screentemplating.*;
 
@@ -80,8 +82,8 @@ public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
 				Parameter.ENTITY_NAME, 
 				parameterAccessor,
 				Parameter.class));
-		context.getEntityManager().registerExportHook(new EncryptedEntityExportBiConsumer(Parameter.class));
-		context.getEntityManager().registerImportHook(new EncryptedEntityImportBiConsumer(encryptionManager, Parameter.class));
+		context.getEntityManager().registerExportHook(new EncryptedEntityExportBiConsumer(Parameter.class, parameterManager.getEntityNameForLogging()));
+		context.getEntityManager().registerImportHook(new EncryptedEntityImportBiConsumer(encryptionManager, Parameter.class, parameterManager.getEntityNameForLogging()));
 		
 		context.getServiceRegistrationCallback().registerService(ParameterServices.class);
 	}

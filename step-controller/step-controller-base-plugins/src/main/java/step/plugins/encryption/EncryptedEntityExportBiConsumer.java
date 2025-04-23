@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plugins.parametermanager;
+package step.plugins.encryption;
 
 import step.core.EncryptedTrackedObject;
 import step.core.dynamicbeans.DynamicValue;
@@ -28,12 +28,14 @@ import java.util.function.BiConsumer;
 
 public class EncryptedEntityExportBiConsumer implements BiConsumer<Object, ExportContext> {
 
-    public static String EXPORT_PROTECT_PARAM_WARN = "The parameter list contains protected parameter. The values of these parameters won't be exported and will have to be reset at import.";
-    public static String EXPORT_ENCRYPT_PARAM_WARN = "The parameter list contains encrypted parameters. The values of these parameters will be reset if you import them on an other installation of step.";
+    private static String EXPORT_PROTECT_WARN = "The %s list contains protected parameter. The values of these %ss won't be exported and will have to be reset at import.";
+    private static String EXPORT_ENCRYPT_WARN = "The %s list contains encrypted %ss. The values of these %ss will be reset if you import them on an other installation of step.";
     private final Class<? extends EncryptedTrackedObject> clazz;
+    private final String entityNameForLog;
 
-    public EncryptedEntityExportBiConsumer(Class<? extends EncryptedTrackedObject> clazz) {
+    public EncryptedEntityExportBiConsumer(Class<? extends EncryptedTrackedObject> clazz, String entityNameForLog) {
         this.clazz = clazz;
+        this.entityNameForLog = entityNameForLog;
     }
 
     @Override
@@ -44,11 +46,19 @@ public class EncryptedEntityExportBiConsumer implements BiConsumer<Object, Expor
             if (param.getProtectedValue() != null && param.getProtectedValue()) {
                 if (param.getValue() != null) {
                     param.setValue(new DynamicValue<>(ParameterManager.RESET_VALUE));
-                    exportContext.addMessage(EXPORT_PROTECT_PARAM_WARN);
+                    exportContext.addMessage(getExportProtectParamWarn());
                 } else {
-                    exportContext.addMessage(EXPORT_ENCRYPT_PARAM_WARN);
+                    exportContext.addMessage(getExportEncryptParamWarn());
                 }
             }
         }
+    }
+
+    private String getExportProtectParamWarn(){
+        return String.format(EXPORT_PROTECT_WARN, entityNameForLog, entityNameForLog);
+    }
+
+    private String getExportEncryptParamWarn(){
+        return String.format(EXPORT_ENCRYPT_WARN, entityNameForLog, entityNameForLog, entityNameForLog);
     }
 }

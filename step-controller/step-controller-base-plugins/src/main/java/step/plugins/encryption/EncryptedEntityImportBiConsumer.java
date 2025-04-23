@@ -16,30 +16,31 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plugins.parametermanager;
+package step.plugins.encryption;
 
 import step.core.EncryptedTrackedObject;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.encryption.EncryptionManager;
 import step.core.encryption.EncryptionManagerException;
 import step.core.imports.ImportContext;
-import step.parameter.Parameter;
 import step.parameter.ParameterManager;
 
 import java.util.function.BiConsumer;
 
 public class EncryptedEntityImportBiConsumer implements BiConsumer<Object, ImportContext> {
 
-    public static String IMPORT_DECRYPT_FAIL_WARN = "The export file contains encrypted parameter which could not be decrypted. The values of these parameters will be reset.";
-    public static String IMPORT_DECRYPT_NO_EM_WARN = "The export file contains encrypted parameters. The values of these parameters will be reset.";
-    public static String IMPORT_RESET_WARN = "The export file contains protected parameters. Their values must be reset.";
+    private static String IMPORT_DECRYPT_FAIL_WARN = "The export file contains encrypted %s which could not be decrypted. The values of these %ss will be reset.";
+    private static String IMPORT_DECRYPT_NO_EM_WARN = "The export file contains encrypted %ss. The values of these %ss will be reset.";
+    private static String IMPORT_RESET_WARN = "The export file contains protected %ss. Their values must be reset.";
 
     private final EncryptionManager encryptionManager;
     private final Class<? extends EncryptedTrackedObject> clazz;
+    private final String entityNameForLog;
 
-    public EncryptedEntityImportBiConsumer(EncryptionManager encryptionManager, Class<? extends EncryptedTrackedObject> clazz) {
+    public EncryptedEntityImportBiConsumer(EncryptionManager encryptionManager, Class<? extends EncryptedTrackedObject> clazz, String entityNameForLog) {
         this.encryptionManager = encryptionManager;
         this.clazz = clazz;
+        this.entityNameForLog = entityNameForLog;
     }
 
     @Override
@@ -56,18 +57,30 @@ public class EncryptedEntityImportBiConsumer implements BiConsumer<Object, Impor
                         } catch (EncryptionManagerException e) {
                             param.setValue(new DynamicValue<>(ParameterManager.RESET_VALUE));
                             param.setEncryptedValue(null);
-                            importContext.addMessage(IMPORT_DECRYPT_FAIL_WARN);
+                            importContext.addMessage(getImportDecryptFailWarn());
                         }
                     } else {
                         param.setValue(new DynamicValue<>(ParameterManager.RESET_VALUE));
                         param.setEncryptedValue(null);
-                        importContext.addMessage(IMPORT_DECRYPT_NO_EM_WARN);
+                        importContext.addMessage(getImportDecryptNoEmWarn());
                     }
                 } else {
                     param.setValue(new DynamicValue<>(ParameterManager.RESET_VALUE));
-                    importContext.addMessage(IMPORT_RESET_WARN);
+                    importContext.addMessage(getImportResetWarn());
                 }
             }
         }
+    }
+
+    private String getImportDecryptFailWarn() {
+        return String.format(IMPORT_DECRYPT_FAIL_WARN, entityNameForLog, entityNameForLog);
+    }
+
+    private String getImportDecryptNoEmWarn() {
+        return String.format(IMPORT_DECRYPT_NO_EM_WARN, entityNameForLog, entityNameForLog);
+    }
+
+    private String getImportResetWarn() {
+        return String.format(IMPORT_RESET_WARN, entityNameForLog);
     }
 }

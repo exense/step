@@ -48,7 +48,7 @@ public class ParameterManager extends AbstractEncryptedValuesManager<Parameter> 
 	}
 
 	@Override
-	protected String getEntityNameForLogging() {
+	public String getEntityNameForLogging() {
 		return "parameter";
 	}
 

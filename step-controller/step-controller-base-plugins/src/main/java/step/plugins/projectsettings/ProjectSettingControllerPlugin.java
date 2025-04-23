@@ -33,8 +33,8 @@ import step.framework.server.tables.Table;
 import step.framework.server.tables.TableRegistry;
 import step.encryption.AbstractEncryptedValuesManager;
 import step.plugins.encryption.EncryptionManagerDependencyPlugin;
-import step.plugins.parametermanager.EncryptedEntityImportBiConsumer;
-import step.plugins.parametermanager.EncryptedEntityExportBiConsumer;
+import step.plugins.encryption.EncryptedEntityImportBiConsumer;
+import step.plugins.encryption.EncryptedEntityExportBiConsumer;
 import step.plugins.screentemplating.ScreenTemplatePlugin;
 import step.projectsettings.ProjectSetting;
 import step.projectsettings.ProjectSettingAccessor;
@@ -80,8 +80,8 @@ public class ProjectSettingControllerPlugin extends AbstractControllerPlugin {
                 ProjectSetting.ENTITY_NAME,
                 projectSettingAccessor,
                 ProjectSetting.class));
-        context.getEntityManager().registerExportHook(new EncryptedEntityExportBiConsumer(ProjectSetting.class));
-        context.getEntityManager().registerImportHook(new EncryptedEntityImportBiConsumer(encryptionManager, ProjectSetting.class));
+        context.getEntityManager().registerExportHook(new EncryptedEntityExportBiConsumer(ProjectSetting.class, projectSettingManager.getEntityNameForLogging()));
+        context.getEntityManager().registerImportHook(new EncryptedEntityImportBiConsumer(encryptionManager, ProjectSetting.class, projectSettingManager.getEntityNameForLogging()));
 
         context.getServiceRegistrationCallback().registerService(ProjectSettingServices.class);
     }

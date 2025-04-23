@@ -228,6 +228,6 @@ public abstract class AbstractEncryptedValuesManager<T extends EncryptedTrackedO
         return defaultScriptEngine;
     }
 
-    protected abstract String getEntityNameForLogging();
+    public abstract String getEntityNameForLogging();
 
 }

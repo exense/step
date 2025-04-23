@@ -44,7 +44,7 @@ public class ProjectSettingManager extends AbstractEncryptedValuesManager<Projec
     }
 
     @Override
-    protected String getEntityNameForLogging() {
+    public String getEntityNameForLogging() {
         return "project setting";
     }
 }
