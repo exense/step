@@ -18,4 +18,12 @@ package step.core.agents.provisioning;
 public class AgentProvisioningRestrictions {
     public Integer agentCountLimit;
     public Integer tokenCountLimit;
+
+    @Override
+    public String toString() {
+        return "AgentProvisioningRestrictions{" +
+                "agentCountLimit=" + agentCountLimit +
+                ", tokenCountLimit=" + tokenCountLimit +
+                '}';
+    }
 }
