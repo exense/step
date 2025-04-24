@@ -235,7 +235,7 @@ public class ThreadPool implements Closeable {
 		executionContext.getVariablesManager().putVariable(executionContext.getCurrentReportNode(), EXECUTION_THREADS_AUTO_CONSUMED, Boolean.TRUE.toString());
 	}
 
-	public Integer forecastNumberOfThreads(final int specifiedNumberOfThreads, OptionalInt requiredNumberOfThreads) {
+	public int forecastNumberOfThreads(final int specifiedNumberOfThreads, OptionalInt requiredNumberOfThreads) {
 		Integer autoNumberOfThreads = getAutoNumberOfThreads();
 		int effectiveNumberOfThreads = specifiedNumberOfThreads;
 		if (autoNumberOfThreads != null) {

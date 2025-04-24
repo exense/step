@@ -380,7 +380,8 @@ public class TokenForecastingTest {
 		// Because of pooling/thread reuse in the executors, the exact number of threads
 		// being used can vary: an upper bound should always be known, but the system
 		// may actually be using FEWER threads (precisely because of pooling and reuse).
-		// In such cases, still check the number, but using a generous estimate of the expected range
+		// In such cases, still check the number, but using a generous estimate of the expected range, IOW
+		// the lower bound should be a conservative estimate just to check that parallelization has taken place at all.
 		void assertInvocationsAndThreadsRange(int invocations, int minThreads, int maxThreads) {
 			assertEquals(invocations, this.invocations.get());
 			assertTrue(String.format("Expected at least %d threads, but actual count=%d", minThreads, this.threads.size()), this.threads.size() >= minThreads);
