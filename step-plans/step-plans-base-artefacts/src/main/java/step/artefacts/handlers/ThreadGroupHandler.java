@@ -49,7 +49,7 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 
 	public void createReportSkeleton_(ReportNode node, ThreadGroup artefact) {
 		int numberOfThreads = artefact.getUsers().getOrDefault(Integer.class, 0);
-		numberOfThreads = context.require(ThreadPool.class).forecastNumberOfThreads(numberOfThreads);
+		numberOfThreads = context.require(ThreadPool.class).forecastNumberOfThreads(numberOfThreads, OptionalInt.empty());
 
 		TokenForecastingContext tokenForecastingContext = getTokenForecastingContext(context);
 		pushNewTokenNumberCalculationContext(context, new MultiplyingTokenForecastingContext(tokenForecastingContext, numberOfThreads));

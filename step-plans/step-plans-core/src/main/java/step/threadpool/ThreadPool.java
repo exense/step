@@ -235,29 +235,29 @@ public class ThreadPool implements Closeable {
 		executionContext.getVariablesManager().putVariable(executionContext.getCurrentReportNode(), EXECUTION_THREADS_AUTO_CONSUMED, Boolean.TRUE.toString());
 	}
 
-	public Integer forecastNumberOfThreads(Integer originalNumberOfThreads) {
-		return forecastNumberOfThreads(originalNumberOfThreads, false);
-	}
-
-	public Integer forecastNumberOfThreads(Integer originalNumberOfThreads, boolean originalAsMaximum) {
-		Integer executionThreadsAuto = getAutoNumberOfThreads();
-		if (executionThreadsAuto != null) {
-			if (isAutoNumberOfThreadsConsumed()) {
-				return 1;
-			} else {
-				if (originalNumberOfThreads != null && originalNumberOfThreads <= 1) {
-					// behave the same as at runtime, i.e. don't override non-parallelized "first-level" nodes
-					return originalNumberOfThreads;
-				}
+	public Integer forecastNumberOfThreads(final int specifiedNumberOfThreads, OptionalInt requiredNumberOfThreads) {
+		Integer autoNumberOfThreads = getAutoNumberOfThreads();
+		int effectiveNumberOfThreads = specifiedNumberOfThreads;
+		if (autoNumberOfThreads != null) {
+			// Use and "consume" the autoNumberOfThreads (execution_threads_auto) variable if:
+			// 1. it is not consumed yet, AND
+			// 2. the required number of threads is NOT set, OR it is set and greater than 1.
+			// IOW, if the required number is only 0 or 1, "postpone" consumption of the autoNumberOfThreads to children.
+			if (!isAutoNumberOfThreadsConsumed() && requiredNumberOfThreads.orElse(Integer.MAX_VALUE) > 1) {
 				consumeAutoNumberOfThreads();
-				if (originalAsMaximum && originalNumberOfThreads != null && executionThreadsAuto > originalNumberOfThreads) {
-					// avoid overprovisioning in case it's clear that no more than the original will ever be needed
-					return originalNumberOfThreads;
+				if (requiredNumberOfThreads.isPresent()) {
+					// We know the exact number of required threads. They constitute an upper bound,
+					// and it makes no sense to overprovision.
+					effectiveNumberOfThreads = Math.min(requiredNumberOfThreads.getAsInt(), autoNumberOfThreads);
+				} else {
+					effectiveNumberOfThreads = autoNumberOfThreads;
 				}
-				return executionThreadsAuto;
+			} else {
+				// skip parallelism.
+				effectiveNumberOfThreads = 1;
 			}
 		}
-		return originalNumberOfThreads;
+		return effectiveNumberOfThreads;
 	}
 
 

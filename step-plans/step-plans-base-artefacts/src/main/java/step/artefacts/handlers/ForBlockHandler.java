@@ -36,6 +36,7 @@ import step.threadpool.WorkerItemConsumerFactory;
 
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.OptionalInt;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
@@ -54,7 +55,7 @@ public class ForBlockHandler extends AbstractSessionArtefactHandler<AbstractForB
 			DataPoolRow nextValue;
 			int rowCount = 0;
 
-			Integer numberOfThreads = context.require(ThreadPool.class).forecastNumberOfThreads(testArtefact.getThreads().get());
+			Integer numberOfThreads = context.require(ThreadPool.class).forecastNumberOfThreads(testArtefact.getThreads().get(), OptionalInt.empty());
 			TokenForecastingContext tokenForecastingContext = getTokenForecastingContext(context);
 			pushNewTokenNumberCalculationContext(context, new MultiplyingTokenForecastingContext(tokenForecastingContext, numberOfThreads));
 

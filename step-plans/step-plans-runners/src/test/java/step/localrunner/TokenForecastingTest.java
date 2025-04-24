@@ -1,21 +1,3 @@
-/*******************************************************************************
- * Copyright (C) 2020, exense GmbH
- *
- * This file is part of STEP
- *
- * STEP is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * STEP is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
- ******************************************************************************/
 package step.localrunner;
 
 import org.junit.Test;
@@ -32,6 +14,7 @@ import step.core.agents.provisioning.driver.AgentProvisioningDriver;
 import step.core.agents.provisioning.driver.AgentProvisioningDriverConfiguration;
 import step.core.agents.provisioning.driver.AgentProvisioningRequest;
 import step.core.agents.provisioning.driver.AgentProvisioningStatus;
+import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionContext;
@@ -52,13 +35,17 @@ import step.plugins.functions.types.CompositeFunctionType;
 import step.threadpool.ThreadPool;
 import step.threadpool.ThreadPoolPlugin;
 
+import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static step.artefacts.handlers.functions.TokenForecastingExecutionPlugin.getTokenForecastingContext;
 
 public class TokenForecastingTest {
@@ -140,7 +127,7 @@ public class TokenForecastingTest {
 	}
 
 	@Test
-	public void testWithSelectionCriteria() throws Exception {
+	public void testWithSelectionCriteria() {
 		ThreadGroup threadGroup = new ThreadGroup();
 		threadGroup.setUsers(new DynamicValue<>("1*1", ""));
 
@@ -216,7 +203,7 @@ public class TokenForecastingTest {
 
 
 	@Test
-	public void testWithNestedSessions() throws Exception {
+	public void testWithNestedSessions() {
 		ThreadGroup threadGroup = new ThreadGroup();
 		threadGroup.setUsers(new DynamicValue<>("1*4", ""));
 
@@ -253,7 +240,7 @@ public class TokenForecastingTest {
 	}
 
 	@Test
-	public void testWithMultipleMatchingPools() throws Exception {
+	public void testWithMultipleMatchingPools() {
 		ThreadGroup threadGroup = new ThreadGroup();
 		threadGroup.setUsers(new DynamicValue<>(10));
 
@@ -364,6 +351,45 @@ public class TokenForecastingTest {
 				Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
 	}
 
+	private void sleep() {
+		try {
+			Thread.sleep(10);
+		} catch (InterruptedException ignored) {}
+	}
+
+	private static class Stats {
+		AtomicInteger invocations = new AtomicInteger();
+		Set<Thread> threads = ConcurrentHashMap.newKeySet();
+
+		void update() {
+			invocations.incrementAndGet();
+			threads.add(Thread.currentThread());
+		}
+
+		void clear() {
+			invocations.set(0);
+			threads.clear();
+		}
+
+		void assertInvocationsAndThreads(int invocations, int threads) {
+			assertEquals(invocations, this.invocations.get());
+			assertEquals(threads, this.threads.size());
+			clear();
+		}
+
+		// Because of pooling/thread reuse in the executors, the exact number of threads
+		// being used can vary: an upper bound should always be known, but the system
+		// may actually be using FEWER threads (precisely because of pooling and reuse).
+		// In such cases, still check the number, but using a generous estimate of the expected range
+		void assertInvocationsAndThreadsRange(int invocations, int minThreads, int maxThreads) {
+			assertEquals(invocations, this.invocations.get());
+			assertTrue(this.threads.size() >= minThreads);
+			assertTrue(this.threads.size() <= maxThreads);
+			clear();
+		}
+	}
+
+
 	@Test
 	public void testAdjacentNestedForBlocks() {
 		IntSequenceDataPool outerRange1 = new IntSequenceDataPool();
@@ -412,35 +438,39 @@ public class TokenForecastingTest {
 				.endBlock()
 		.build();
 
-		AtomicInteger invocations = new AtomicInteger();
+		Stats stats = new Stats();
 		MyFunction function = new MyFunction(input -> {
-			invocations.incrementAndGet();
+			sleep();
+			stats.update();
 			return new Output<>();
 		});
 
 		function.addAttribute(AbstractOrganizableObject.NAME, "test");
 		plan.setFunctions(List.of(function));
-		plan.setFunctions(List.of(function));
 
 		Set<AgentPoolSpec> availableAgentPools = Set.of(
 				new AgentPoolSpec("pool1", Map.of("$agenttype", "default", "type", "pool"), 1));
-		TokenForecastingContext tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, null);
+		TokenForecastingContext forecast = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, null);
 
-		assertEquals(Set.of(new AgentPoolRequirementSpec("pool1", 24)),
-				Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
-		assertEquals(39, invocations.get());
+		// we expect 24 agents because that is the MAXIMUM that is required concurrently
+		assertAgentCountPool1(forecast, 24);
+		// at least 24 different threads being used (exact value may change because of pool allocation/reuse,
+		// usually ~ 25 or 26. See below for another explanation)
+		stats.assertInvocationsAndThreadsRange(39, 24, 39);
 
-		invocations.set(0);
-		tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, 42);
-		assertEquals(Set.of(new AgentPoolRequirementSpec("pool1", 42)),
-				Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
-		assertEquals(39, invocations.get());
+		forecast = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, 42);
+		// for loops cannot forecast exact requirements, so autoNumberOfThreads is returned unchanged
+		assertAgentCountPool1(forecast, 42);
+		// HOWEVER, all inner loops are re-entrant, so are run single-threaded. Which means that
+		// effective concurrency is bound by outer loop, and the "largest" outer loop has 4 iterations=4 threads.
+		// As above, numbers of actual threads used may vary slightly (usually observed: around 5 or 6)
+		// This is more than 4 because there was a loop (with 3 iterations) before which also needed threads,
+		// so pooled threads may be reused, or new ones allocated (exact behavior cannot be predicted)
+		stats.assertInvocationsAndThreadsRange(39, 4, 7);
 
-		invocations.set(0);
-		tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, 1);
-		assertEquals(Set.of(new AgentPoolRequirementSpec("pool1", 1)),
-				Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
-		assertEquals(39, invocations.get());
+		forecast = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, 1);
+		assertAgentCountPool1(forecast, 1);
+		stats.assertInvocationsAndThreads(39, 1);
 
 	}
 
@@ -448,29 +478,30 @@ public class TokenForecastingTest {
 	public void testForInsideThreadGroup() {
 
 		ThreadGroup threadGroup = new ThreadGroup();
-		threadGroup.setUsers(new DynamicValue<>(2));
+		threadGroup.setUsers(new DynamicValue<>(3));
 		IntSequenceDataPool forRange = new IntSequenceDataPool();
 
 		forRange.setStart(new DynamicValue<>(1));
-		forRange.setEnd(new DynamicValue<>(3));
+		forRange.setEnd(new DynamicValue<>(4));
 		ForBlock forBlock = new ForBlock();
-		forBlock.setThreads(new DynamicValue<>(3));
+		forBlock.setThreads(new DynamicValue<>(4));
 		forBlock.setDataSource(forRange);
 
 		CallFunction testKeyword = FunctionArtefacts.keyword("test");
 		testKeyword.setToken(new DynamicValue<>("{\"type\":{\"value\":\"pool\",\"dynamic\":false}}"));
 
 		Plan plan = PlanBuilder.create()
-			.startBlock(threadGroup) // 2 threads
-				.startBlock(forBlock) // 1..3, 3 threads
-					.add(testKeyword) // 6 invocations
+			.startBlock(threadGroup) // 3 threads
+				.startBlock(forBlock) // 1..4, 4 threads
+					.add(testKeyword) // 12 invocations
 				.endBlock()
 			.endBlock()
 		.build();
 
-		AtomicInteger invocations = new AtomicInteger();
+		Stats stats = new Stats();
 		MyFunction function = new MyFunction(input -> {
-			invocations.incrementAndGet();
+			sleep();
+			stats.update();
 			return new Output<>();
 		});
 		function.addAttribute(AbstractOrganizableObject.NAME, "test");
@@ -478,25 +509,24 @@ public class TokenForecastingTest {
 
 		Set<AgentPoolSpec> availableAgentPools = Set.of(
 				new AgentPoolSpec("pool1", Map.of("$agenttype", "default", "type", "pool"), 1));
-		TokenForecastingContext tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, null);
 
-		assertEquals(Set.of(new AgentPoolRequirementSpec("pool1", 6)),
-				Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
-		assertEquals(6, invocations.get());
+		TokenForecastingContext forecast = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, null);
+		assertAgentCountPool1(forecast, 12);
+		stats.assertInvocationsAndThreads(12, 12);
 
-		invocations.set(0);
-		tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, 42);
+		forecast = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, 42);
+		// autoNumberOfThreads = 42, so forecasting returns that.
+		assertAgentCountPool1(forecast, 42);
+		// outer loop is executed 3 times, inner loop parallelism is disabled because of autoNumberOfThreads setting -> 3 threads
+		stats.assertInvocationsAndThreads(12, 3);
 
-		assertEquals(Set.of(new AgentPoolRequirementSpec("pool1", 42)),
-				Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
-		assertEquals(6, invocations.get());
+		forecast = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, 2);
+		assertAgentCountPool1(forecast, 2);
+		stats.assertInvocationsAndThreads(12, 2);
 
-		invocations.set(0);
-		tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, 1);
-
-		assertEquals(Set.of(new AgentPoolRequirementSpec("pool1", 1)),
-				Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
-		assertEquals(6, invocations.get());
+		forecast = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, 1);
+		assertAgentCountPool1(forecast, 1);
+		stats.assertInvocationsAndThreads(12, 1);
 
 	}
 
@@ -524,9 +554,10 @@ public class TokenForecastingTest {
 			.endBlock()
 		.build();
 
-		AtomicInteger invocations = new AtomicInteger();
+		Stats stats = new Stats();
 		MyFunction function = new MyFunction(input -> {
-			invocations.incrementAndGet();
+			sleep();
+			stats.update();
 			return new Output<>();
 		});
 		function.addAttribute(AbstractOrganizableObject.NAME, "test");
@@ -534,26 +565,24 @@ public class TokenForecastingTest {
 
 		Set<AgentPoolSpec> availableAgentPools = Set.of(
 				new AgentPoolSpec("pool1", Map.of("$agenttype", "default", "type", "pool"), 1));
-		TokenForecastingContext tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, null);
+		TokenForecastingContext forecast = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, null);
 
-		assertEquals(Set.of(new AgentPoolRequirementSpec("pool1", 6)),
-				Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
-		assertEquals(6, invocations.get());
+		assertAgentCountPool1(forecast, 6);
+		stats.assertInvocationsAndThreads(6, 6);
 
-		invocations.set(0);
-		tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, 42);
+		forecast = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, 42);
+		// autoNumberOfThreads = 42, so forecasting returns that.
+		assertAgentCountPool1(forecast, 42);
+		// outer loop is executed 3 times, inner loop parallelism is disabled because of autoNumberOfThreads setting -> 3 threads
+		stats.assertInvocationsAndThreads(6, 3);
 
-		assertEquals(Set.of(new AgentPoolRequirementSpec("pool1", 42)),
-				Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
-		assertEquals(6, invocations.get());
+		forecast = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, 2);
+		assertAgentCountPool1(forecast, 2);
+		stats.assertInvocationsAndThreads(6, 2);
 
-		invocations.set(0);
-		tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, 1);
-
-		assertEquals(Set.of(new AgentPoolRequirementSpec("pool1", 1)),
-				Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
-		assertEquals(6, invocations.get());
-
+		forecast = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, 1);
+		assertAgentCountPool1(forecast, 1);
+		stats.assertInvocationsAndThreads(6, 1);
 	}
 
 	@Test
@@ -578,10 +607,11 @@ public class TokenForecastingTest {
 			.endBlock()
 		.build();
 
-		AtomicInteger invocations = new AtomicInteger();
+		Stats stats = new Stats();
 		MyFunction function = new MyFunction(input -> {
-			invocations.incrementAndGet();
-            return new Output<>();
+			sleep();
+			stats.update();
+			return new Output<>();
 		});
 		function.addAttribute(AbstractOrganizableObject.NAME, "test");
 		plan.setFunctions(List.of(function));
@@ -594,48 +624,236 @@ public class TokenForecastingTest {
 		tgLevel2.setUsers(new DynamicValue<>(7));
 		tgLevel3.setUsers(new DynamicValue<>(11));
 		// UC1: L1=3, no overriding of execution_threads_auto -> expecting l3=(11 * 7 * 3) + l2=(7 * 3) + l1=3 => 255 invocations/agents
-		invocations.set(0);
-		TokenForecastingContext tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, null);
-		assertEquals(Set.of(new AgentPoolRequirementSpec("pool1", 255)),
-				Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
-		assertEquals(255, invocations.get());
+
+		TokenForecastingContext forecast = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, null);
+		assertAgentCountPool1(forecast, 255);
+		// can't exactly predict number of effective threads used because of executor pools, but it's usually somewhere around 130
+		stats.assertInvocationsAndThreadsRange(255, 100, 255);
 
 		// UC2: L1=3, overriding of execution_threads_auto to 2 -> expecting l3=(1 * 1 * 2) + l2=(1 * 2) + l1=2 => 6 agents, but still 255 invocations
-		invocations.set(0);
-		tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, 2);
-		assertEquals(Set.of(new AgentPoolRequirementSpec("pool1", 6)),
-				Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
-		assertEquals(255, invocations.get());
+
+		forecast = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, 2);
+		assertAgentCountPool1(forecast, 6);
+		stats.assertInvocationsAndThreads(255, 2);
 
 		// UC3: L1=1, no overriding of execution_threads_auto -> expecting l3=(11 * 7 * 1) + l2=(7 * 1) + l1=1 => 85 invocations/agents
-		invocations.set(0);
-		tgLevel1.setUsers(new DynamicValue<>(1));
-		tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, null);
-		assertEquals(Set.of(new AgentPoolRequirementSpec("pool1", 85)),
-				Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
-		assertEquals(85, invocations.get());
 
-		// UC4: L1=1, overriding execution_threads_auto to 2 -> expecting l3=(1 * 2 * 1) + l2=(2 * 1) + l1=1 => 5 agents, but 85 invocations
-		// Note how the execution_threads_auto now overrides the threads at the SECOND level, not the first (because L1 is not parallelized).
-		// If it was overriding at L1, it would be l3=(1 * 1 * 2) + l2=(1*2) + l1=2 => 6 agents (same as UC2).
-		invocations.set(0);
-		tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, 2);
-		assertEquals(Set.of(new AgentPoolRequirementSpec("pool1", 5)),
-				Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
-		assertEquals(85, invocations.get());
+		tgLevel1.setUsers(new DynamicValue<>(1));
+		forecast = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, null);
+		assertAgentCountPool1(forecast, 85);
+		// again, exact number of threads actually used is hard to tell, usually somewhere around 80
+		stats.assertInvocationsAndThreadsRange(85, 50, 85);
+	}
+
+	private void assertAgentCountPool1(TokenForecastingContext forecast, int expectedAgentCount) {
+		assertEquals(Set.of(new AgentPoolRequirementSpec("pool1", expectedAgentCount)),
+				Set.copyOf(forecast.getAgentPoolRequirementSpec()));
+	}
+
+
+	@Test
+	public void testTestSetWithTestCases() {
+
+		CallFunction testKeyword = FunctionArtefacts.keyword("test");
+		testKeyword.setToken(new DynamicValue<>("{\"type\":{\"value\":\"pool\",\"dynamic\":false}}"));
+		Stats stats = new Stats();
+
+		MyFunction function = new MyFunction(input -> {
+			sleep();
+			stats.update();
+			return new Output<>();
+		});
+		function.addAttribute(AbstractOrganizableObject.NAME, "test");
+
+		Set<AgentPoolSpec> availableAgentPools = Set.of(
+				new AgentPoolSpec("pool1", Map.of("$agenttype", "default", "type", "pool"), 1));
+
+		var testSet = new TestSet();
+
+		// This is a very common structure (e.g. generated by Azure DevOps Test Suites)
+
+		Plan plan = PlanBuilder.create()
+				.startBlock(testSet)
+					.startBlock(new TestCase())
+						.add(testKeyword)
+					.endBlock()
+					.startBlock(new TestCase())
+						.add(testKeyword)
+						.add(testKeyword)
+					.endBlock()
+					.startBlock(new TestCase())
+						.add(testKeyword)
+						.add(testKeyword)
+						.add(testKeyword)
+					.endBlock()
+				.endBlock()
+				.build();
+
+		plan.setFunctions(List.of(function));
+
+
+		TokenForecastingContext forecast = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, null);
+		stats.assertInvocationsAndThreads(6, 1); // default for TestSet is 1 thread
+		assertAgentCountPool1(forecast, 1);
+
+		testSet.setThreads(new DynamicValue<>(42));
+		forecast = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, null);
+		stats.assertInvocationsAndThreads(6, 3); // only 3 threads actually in use (= number of TestSet children)
+		assertAgentCountPool1(forecast, 3);
+
+		forecast = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, 2);
+		stats.assertInvocationsAndThreads(6, 2);
+		assertAgentCountPool1(forecast, 2);
+
+		forecast = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, 3);
+		stats.assertInvocationsAndThreads(6, 3);
+		assertAgentCountPool1(forecast, 3);
+
+		forecast = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, 42);
+		stats.assertInvocationsAndThreads(6, 3);
+		assertAgentCountPool1(forecast, 3);
 
 	}
 
+	@Test
+	public void testTestSetWithTestCasesAndDynamicAutoThreads() {
+
+		CallFunction testKeyword = FunctionArtefacts.keyword("test");
+		testKeyword.setToken(new DynamicValue<>("{\"type\":{\"value\":\"pool\",\"dynamic\":false}}"));
+		Stats stats = new Stats();
+
+		MyFunction function = new MyFunction(input -> {
+			sleep();
+			stats.update();
+			return new Output<>();
+		});
+		function.addAttribute(AbstractOrganizableObject.NAME, "test");
+
+		Set<AgentPoolSpec> availableAgentPools = Set.of(
+				new AgentPoolSpec("pool1", Map.of("$agenttype", "default", "type", "pool"), 1));
+
+		var testSet = new TestSet();
+		var autoThreads = new step.artefacts.Set();
+		autoThreads.setKey(new DynamicValue<>("execution_threads_auto"));
+
+		Plan plan = PlanBuilder.create()
+				.startBlock(new Sequence())
+					.add(autoThreads)
+					.startBlock(testSet)
+						.startBlock(new TestCase())
+							.add(testKeyword)
+						.endBlock()
+						.startBlock(new TestCase())
+							.add(testKeyword)
+							.add(testKeyword)
+						.endBlock()
+						.startBlock(new TestCase())
+							.add(testKeyword)
+							.add(testKeyword)
+							.add(testKeyword)
+						.endBlock()
+					.endBlock()
+				.endBlock()
+				.build();
+
+		plan.setFunctions(List.of(function));
+
+
+		autoThreads.setValue(new DynamicValue<>("1"));
+		TokenForecastingContext forecast = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, null);
+		stats.assertInvocationsAndThreads(6, 1);
+		assertAgentCountPool1(forecast, 1);
+
+		testSet.setThreads(new DynamicValue<>(42)); // effectively ignored because overridden by execution_threads_auto at runtime
+		autoThreads.setValue(new DynamicValue<>("5")); // effectively will also be clamped to 3 at runtime
+		forecast = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, null);
+		stats.assertInvocationsAndThreads(6, 3); // only 3 threads actually in use (= number of TestSet children)
+		assertAgentCountPool1(forecast, 3);
+
+		autoThreads.setValue(new DynamicValue<>("2"));
+		forecast = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, null);
+		stats.assertInvocationsAndThreads(6, 2);
+		assertAgentCountPool1(forecast, 2);
+
+		forecast = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, 1);
+		// autoNumberOfThreads given as parameter to execution is ignored (rather: overwritten by variable Set)
+		stats.assertInvocationsAndThreads(6, 2);
+		assertAgentCountPool1(forecast, 2);
+
+	}
+
+
+	@Test
+	public void testTestScenario() {
+
+		CallFunction testKeyword = FunctionArtefacts.keyword("test");
+		testKeyword.setToken(new DynamicValue<>("{\"type\":{\"value\":\"pool\",\"dynamic\":false}}"));
+		Stats stats = new Stats();
+
+		MyFunction function = new MyFunction(input -> {
+			sleep();
+			stats.update();
+			return new Output<>();
+		});
+		function.addAttribute(AbstractOrganizableObject.NAME, "test");
+
+		Set<AgentPoolSpec> availableAgentPools = Set.of(
+				new AgentPoolSpec("pool1", Map.of("$agenttype", "default", "type", "pool"), 1));
+
+		var testScenario = new TestScenario();
+
+		Plan plan = PlanBuilder.create()
+				.startBlock(testScenario)
+					.startBlock(new TestCase())
+						.add(testKeyword)
+					.endBlock()
+					.startBlock(new TestCase())
+						.add(testKeyword)
+						.add(testKeyword)
+					.endBlock()
+					.startBlock(new TestCase())
+						.add(testKeyword)
+						.add(testKeyword)
+						.add(testKeyword)
+					.endBlock()
+				.endBlock()
+				.build();
+
+		plan.setFunctions(List.of(function));
+
+
+		TokenForecastingContext forecast = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, null);
+		stats.assertInvocationsAndThreads(6, 3); // default for TestScenario is number of children
+		assertAgentCountPool1(forecast, 3);
+
+		forecast = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, 1);
+		stats.assertInvocationsAndThreads(6, 1);
+		assertAgentCountPool1(forecast, 1);
+
+		forecast = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, 2);
+		stats.assertInvocationsAndThreads(6, 2);
+		assertAgentCountPool1(forecast, 2);
+
+		forecast = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, 3);
+		stats.assertInvocationsAndThreads(6, 3);
+		assertAgentCountPool1(forecast, 3);
+
+		// autoNumberOfThreads will be considered, but clamped to actual number of children of TestScenario (3).
+		forecast = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, 42);
+		stats.assertInvocationsAndThreads(6, 3);
+		assertAgentCountPool1(forecast, 3);
+
+	}
 
 	private static TokenForecastingContext executePlanWithSpecifiedTokenPools(Plan plan, Set<AgentPoolSpec> availableAgentPools) {
 		return executePlanWithSpecifiedTokenPools(plan, availableAgentPools, null);
 	}
 
 
-	private static TokenForecastingContext executePlanWithSpecifiedTokenPools(Plan plan, Set<AgentPoolSpec> availableAgentPools, Integer execution_threads_auto) {
+	private static TokenForecastingContext executePlanWithSpecifiedTokenPools(Plan plan, Set<AgentPoolSpec> availableAgentPools, Integer autoNumberOfThreads) {
 		Map<String, String> executionParameters = new HashMap<>();
-		if (execution_threads_auto != null) {
-			executionParameters.put(ThreadPool.EXECUTION_THREADS_AUTO, String.valueOf(execution_threads_auto));
+		if (autoNumberOfThreads != null) {
+			executionParameters.put(ThreadPool.EXECUTION_THREADS_AUTO, String.valueOf(autoNumberOfThreads));
 		}
 		ForcastingTestPlugin forcastingTestPlugin = new ForcastingTestPlugin(availableAgentPools);
 		try (ExecutionEngine executionEngine = ExecutionEngine.builder()
@@ -654,7 +872,20 @@ public class TokenForecastingTest {
 				.withPlugin(new TokenForecastingExecutionPlugin())
 				.withPlugin(forcastingTestPlugin)
 				.build()) {
-			executionEngine.execute(plan, executionParameters);
+			var result = executionEngine.execute(plan, executionParameters);
+			try {
+				result.waitForExecutionToTerminate();
+				if (!result.getResult().equals(ReportNodeStatus.PASSED)) {
+					try {
+						result.printTree(new PrintWriter(System.err), true, true);
+					} catch (Exception oops) {
+						oops.printStackTrace();
+					}
+				}
+				assertEquals(ReportNodeStatus.PASSED, result.getResult());
+			} catch (InterruptedException|TimeoutException e) {
+				throw new RuntimeException(e);
+			}
 		}
 		return forcastingTestPlugin.tokenForecastingContext;
 	}
@@ -673,7 +904,7 @@ public class TokenForecastingTest {
 			super.initializeExecutionEngineContext(parentContext, executionEngineContext);
 			AgentProvisioningDriverConfiguration agentProvisioningDriverConfiguration = new AgentProvisioningDriverConfiguration();
 			agentProvisioningDriverConfiguration.availableAgentPools = availableTokenPools;
-			executionEngineContext.put(AgentProvisioningDriver.class, new ForcastingTestDriver(agentProvisioningDriverConfiguration));
+			executionEngineContext.put(AgentProvisioningDriver.class, new ForecastingTestDriver(agentProvisioningDriverConfiguration));
 		}
 
 		@Override
@@ -683,11 +914,11 @@ public class TokenForecastingTest {
 		}
 	}
 
-	public static class ForcastingTestDriver implements AgentProvisioningDriver {
+	public static class ForecastingTestDriver implements AgentProvisioningDriver {
 
 		AgentProvisioningDriverConfiguration agentProvisioningDriverConfiguration;
 
-		public ForcastingTestDriver(AgentProvisioningDriverConfiguration agentProvisioningDriverConfiguration) {
+		public ForecastingTestDriver(AgentProvisioningDriverConfiguration agentProvisioningDriverConfiguration) {
 			this.agentProvisioningDriverConfiguration = agentProvisioningDriverConfiguration;
 		}
 
