@@ -383,8 +383,8 @@ public class TokenForecastingTest {
 		// In such cases, still check the number, but using a generous estimate of the expected range
 		void assertInvocationsAndThreadsRange(int invocations, int minThreads, int maxThreads) {
 			assertEquals(invocations, this.invocations.get());
-			assertTrue(this.threads.size() >= minThreads);
-			assertTrue(this.threads.size() <= maxThreads);
+			assertTrue(String.format("Expected at least %d threads, but actual count=%d", minThreads, this.threads.size()), this.threads.size() >= minThreads);
+			assertTrue(String.format("Expected at most %d threads, but actual count=%d", maxThreads, this.threads.size()), this.threads.size() <= maxThreads);
 			clear();
 		}
 	}
