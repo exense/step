@@ -10,6 +10,7 @@ import step.artefacts.*;
 import step.artefacts.handlers.functions.TokenForecastingExecutionPlugin;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.reports.ReportNode;
+import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.artefacts.reports.aggregated.AggregatedReportView;
 import step.core.artefacts.reports.aggregated.AggregatedReportViewBuilder;
 import step.core.dynamicbeans.DynamicValue;
@@ -90,6 +91,38 @@ public class ResolvedPlanBuilderTest {
         assertEquals("ThreadGroup: 0x\n" +
                         " Session: 1x: PASSED\n" +
                         "  Echo: 1x: PASSED > Echo\n",
+                node.toString());
+
+
+        //Test with running nodes
+        //Change status of first echo report node and update it in the inMemory collection, note that parent nodes are not changed here
+        reportNode.setStatus(ReportNodeStatus.RUNNING);
+        engine.getExecutionEngineContext().getReportNodeAccessor().save(reportNode);
+        aggregatedReportViewBuilder = new AggregatedReportViewBuilder(engine.getExecutionEngineContext(), result.getExecutionId());
+        node = aggregatedReportViewBuilder.buildAggregatedReportView();
+
+        logger.info("----------------------");
+        logger.info("Aggregated report tree");
+        logger.info("----------------------");
+        logger.info(node.toString());
+
+        assertEquals("ThreadGroup: 1x: PASSED\n" +
+                        " Session: 4x: PASSED\n" +
+                        "  Echo: 5x: 1 RUNNING, 4 PASSED\n",
+                node.toString());
+
+        // Test partial aggregated tree with RUNNING node
+        aggregatedReportViewRequest = new AggregatedReportViewBuilder.AggregatedReportViewRequest(null, true, reportNode.getId().toHexString(), false);
+        node = aggregatedReportViewBuilder.buildAggregatedReportView(aggregatedReportViewRequest);
+
+        logger.info("----------------------");
+        logger.info("Partial aggregated report tree");
+        logger.info("----------------------");
+        logger.info(node.toString());
+
+        assertEquals("ThreadGroup: 0x\n" +
+                        " Session: 1x: PASSED\n" +
+                        "  Echo: 1x: RUNNING > Echo\n",
                 node.toString());
     }
 
@@ -203,7 +236,7 @@ public class ResolvedPlanBuilderTest {
     }
 
     @Test
-    public void planWithSimpleCallPlan() throws IOException, InterruptedException {
+    public void planWithSimpleCallPlan() throws IOException {
         Plan subPlan = PlanBuilder.create()
                 .startBlock(BaseArtefacts.sequence())
                 .add(echo("'in sub plan'"))
@@ -236,7 +269,7 @@ public class ResolvedPlanBuilderTest {
     }
 
     @Test
-    public void planWithDynamicCallPlan() throws IOException, InterruptedException {
+    public void planWithDynamicCallPlan() throws IOException {
         Plan subPlan = PlanBuilder.create()
                 .startBlock(BaseArtefacts.sequence())
                 .add(echo("'test'"))
@@ -279,7 +312,7 @@ public class ResolvedPlanBuilderTest {
     }
 
     @Test
-    public void planWithCallPlan() throws IOException, InterruptedException {
+    public void planWithCallPlan() throws IOException {
         Plan subSubPlan = PlanBuilder.create()
                 .startBlock(BaseArtefacts.sequence())
                 .add(echo("'Echo 4'"))
@@ -333,7 +366,7 @@ public class ResolvedPlanBuilderTest {
     }
 
     @Test
-    public void planWithRecursiveCallPlan() throws IOException, InterruptedException {
+    public void planWithRecursiveCallPlan() throws IOException {
 
         ObjectId planId = new ObjectId();
         Plan subPlan = PlanBuilder.create()
@@ -412,7 +445,7 @@ public class ResolvedPlanBuilderTest {
     }
 
     @Test
-    public void rootSequenceWithBeforeAfter() throws IOException, InterruptedException {
+    public void rootSequenceWithBeforeAfter() throws IOException {
         Plan plan = PlanBuilder.create()
                 .startBlock(BaseArtefacts.sequence()).withBefore(set("myVar", "'test'")).withAfter(echo("'in after'"))
                 .add(echo("'myVar value is ' + myVar"))
@@ -437,7 +470,7 @@ public class ResolvedPlanBuilderTest {
     }
 
     @Test
-    public void subSequenceWithBeforeAfter() throws IOException, InterruptedException {
+    public void subSequenceWithBeforeAfter() throws IOException {
         Plan plan = PlanBuilder.create()
                 .startBlock(BaseArtefacts.sequence())
                 .startBlock(BaseArtefacts.sequence()).withBefore(set("myVar", "'test'")).withAfter(echo("'in after'"))
@@ -465,7 +498,7 @@ public class ResolvedPlanBuilderTest {
     }
 
     @Test
-    public void planWithCallPlanAndBeforeAfter() throws IOException, InterruptedException {
+    public void planWithCallPlanAndBeforeAfter() throws IOException {
         Plan subSubPlan = PlanBuilder.create()
                 .startBlock(BaseArtefacts.sequence())
                 .add(echo("'Echo ' + myVar"))
@@ -535,7 +568,7 @@ public class ResolvedPlanBuilderTest {
     @Test
     public void threadGroup() throws IOException, InterruptedException {
         Filter filterMyMeasure1Equals = new Filter(AbstractOrganizableObject.NAME, "TestKeyword", FilterType.EQUALS);
-        PerformanceAssert assertWithinKeyword1 = new PerformanceAssert(Aggregator.COUNT, Comparator.EQUALS, 1l, filterMyMeasure1Equals);
+        PerformanceAssert assertWithinKeyword1 = new PerformanceAssert(Aggregator.COUNT, Comparator.EQUALS, 1L, filterMyMeasure1Equals);
         Plan plan = PlanBuilder.create()
                 .startBlock(BaseArtefacts.threadGroup(2,5, childrenBlock(echo("userId")), childrenBlock(echo("userId")))).withBefore(set("myVar", "'test'")).withAfter(echo("'in after'"))
                 .add(echo("'myVar value is ' + myVar"))
