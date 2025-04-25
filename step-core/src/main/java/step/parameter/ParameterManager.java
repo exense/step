@@ -24,6 +24,7 @@ import step.core.accessors.Accessor;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.encryption.EncryptionManager;
 import step.encryption.AbstractEncryptedValuesManager;
+import step.encryption.EncryptedValueManagerException;
 
 public class ParameterManager extends AbstractEncryptedValuesManager<Parameter> {
 
@@ -56,4 +57,13 @@ public class ParameterManager extends AbstractEncryptedValuesManager<Parameter> 
 		return getAccessor();
 	}
 
+	@Override
+	protected void validateBeforeSave(Parameter newObj) {
+		super.validateBeforeSave(newObj);
+
+		ParameterScope scope = newObj.getScope();
+		if(scope != null && scope.equals(ParameterScope.GLOBAL) && newObj.getScopeEntity() != null) {
+			throw new EncryptedValueManagerException("Scope entity cannot be set for " + getEntityNameForLogging() + "s with GLOBAL scope.");
+		}
+	}
 }

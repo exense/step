@@ -29,7 +29,6 @@ import step.core.encryption.EncryptionManager;
 import step.core.encryption.EncryptionManagerException;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.plugins.exceptions.PluginCriticalException;
-import step.parameter.ParameterScope;
 
 import javax.script.Bindings;
 import javax.script.ScriptException;
@@ -62,14 +61,7 @@ public abstract class AbstractEncryptedValuesManager<T extends EncryptedTrackedO
     }
 
     public T save(T newObj, T sourceObj, String modificationUser) {
-        if (isProtected(newObj) && newObj.getValue() != null && newObj.getValue().isDynamic()) {
-            throw new EncryptedValueManagerException("Protected entity (" + getEntityNameForLogging() + ") do not support values with dynamic expression.");
-        }
-
-        ParameterScope scope = newObj.getScope();
-        if(scope != null && scope.equals(ParameterScope.GLOBAL) && newObj.getScopeEntity() != null) {
-            throw new EncryptedValueManagerException("Scope entity cannot be set for " + getEntityNameForLogging() + "s with GLOBAL scope.");
-        }
+        validateBeforeSave(newObj);
 
         if(sourceObj != null && isProtected(sourceObj)) {
             // protected value should not be changed
@@ -96,6 +88,12 @@ public abstract class AbstractEncryptedValuesManager<T extends EncryptedTrackedO
         newObj.setLastModificationUser(modificationUser);
 
         return getAccessor().save(newObj);
+    }
+
+    protected void validateBeforeSave(T newObj) {
+        if (isProtected(newObj) && newObj.getValue() != null && newObj.getValue().isDynamic()) {
+            throw new EncryptedValueManagerException("Protected entity (" + getEntityNameForLogging() + ") do not support values with dynamic expression.");
+        }
     }
 
     protected abstract Accessor<T> getAccessor();

@@ -76,7 +76,6 @@ public class Parameter extends EncryptedTrackedObject {
 	/**
 	 * @return the {@link ParameterScope} of this parameter
 	 */
-	@Override
 	public ParameterScope getScope() {
 		return scope;
 	}

@@ -79,12 +79,6 @@ public class ProjectSetting extends EncryptedTrackedObject {
         this.description = description;
     }
 
-
-    @Override
-    public ParameterScope getScope() {
-        return ParameterScope.GLOBAL;
-    }
-
     @Override
     public String getScopeEntity() {
         return null;

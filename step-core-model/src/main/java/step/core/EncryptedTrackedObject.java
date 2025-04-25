@@ -77,7 +77,5 @@ public abstract class EncryptedTrackedObject extends AbstractTrackedObject imple
         this.key = key;
     }
 
-    public abstract ParameterScope getScope();
-
     public abstract String getScopeEntity();
 }

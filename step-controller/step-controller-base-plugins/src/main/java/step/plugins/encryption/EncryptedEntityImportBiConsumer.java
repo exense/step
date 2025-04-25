@@ -23,15 +23,11 @@ import step.core.dynamicbeans.DynamicValue;
 import step.core.encryption.EncryptionManager;
 import step.core.encryption.EncryptionManagerException;
 import step.core.imports.ImportContext;
-import step.parameter.ParameterManager;
+import step.encryption.AbstractEncryptedValuesManager;
 
 import java.util.function.BiConsumer;
 
 public class EncryptedEntityImportBiConsumer implements BiConsumer<Object, ImportContext> {
-
-    private static String IMPORT_DECRYPT_FAIL_WARN = "The export file contains encrypted %s which could not be decrypted. The values of these %ss will be reset.";
-    private static String IMPORT_DECRYPT_NO_EM_WARN = "The export file contains encrypted %ss. The values of these %ss will be reset.";
-    private static String IMPORT_RESET_WARN = "The export file contains protected %ss. Their values must be reset.";
 
     private final EncryptionManager encryptionManager;
     private final Class<? extends EncryptedTrackedObject> clazz;
@@ -55,17 +51,17 @@ public class EncryptedEntityImportBiConsumer implements BiConsumer<Object, Impor
                         try {
                             encryptionManager.decrypt(param.getEncryptedValue());
                         } catch (EncryptionManagerException e) {
-                            param.setValue(new DynamicValue<>(ParameterManager.RESET_VALUE));
+                            param.setValue(new DynamicValue<>(AbstractEncryptedValuesManager.RESET_VALUE));
                             param.setEncryptedValue(null);
                             importContext.addMessage(getImportDecryptFailWarn());
                         }
                     } else {
-                        param.setValue(new DynamicValue<>(ParameterManager.RESET_VALUE));
+                        param.setValue(new DynamicValue<>(AbstractEncryptedValuesManager.RESET_VALUE));
                         param.setEncryptedValue(null);
                         importContext.addMessage(getImportDecryptNoEmWarn());
                     }
                 } else {
-                    param.setValue(new DynamicValue<>(ParameterManager.RESET_VALUE));
+                    param.setValue(new DynamicValue<>(AbstractEncryptedValuesManager.RESET_VALUE));
                     importContext.addMessage(getImportResetWarn());
                 }
             }
@@ -73,14 +69,14 @@ public class EncryptedEntityImportBiConsumer implements BiConsumer<Object, Impor
     }
 
     private String getImportDecryptFailWarn() {
-        return String.format(IMPORT_DECRYPT_FAIL_WARN, entityNameForLog, entityNameForLog);
+        return String.format("The export file contains encrypted %s which could not be decrypted. The values of these %ss will be reset.", entityNameForLog, entityNameForLog);
     }
 
     private String getImportDecryptNoEmWarn() {
-        return String.format(IMPORT_DECRYPT_NO_EM_WARN, entityNameForLog, entityNameForLog);
+        return String.format("The export file contains encrypted %ss. The values of these %ss will be reset.", entityNameForLog, entityNameForLog);
     }
 
     private String getImportResetWarn() {
-        return String.format(IMPORT_RESET_WARN, entityNameForLog);
+        return String.format("The export file contains protected %ss. Their values must be reset.", entityNameForLog);
     }
 }

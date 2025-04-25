@@ -24,11 +24,10 @@ import step.controller.services.entities.AbstractEntityServices;
 import step.framework.server.security.SecuredContext;
 import step.projectsettings.ProjectSetting;
 
-// TODO: think about permissions
 @Path("/project-settings")
 @Tag(name = "ProjectSettings")
 @Tag(name = "Entity=ProjectSetting")
-@SecuredContext(key = "entity", value = "projectsetting")
+@SecuredContext(key = "entity", value = "project-setting")
 public class ProjectSettingServices extends AbstractEntityServices<ProjectSetting> {
 
     public ProjectSettingServices() {

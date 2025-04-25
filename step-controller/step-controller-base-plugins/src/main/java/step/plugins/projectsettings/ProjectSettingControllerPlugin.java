@@ -37,8 +37,6 @@ import step.plugins.encryption.EncryptedEntityImportBiConsumer;
 import step.plugins.encryption.EncryptedEntityExportBiConsumer;
 import step.plugins.screentemplating.ScreenTemplatePlugin;
 import step.projectsettings.ProjectSetting;
-import step.projectsettings.ProjectSettingAccessor;
-import step.projectsettings.ProjectSettingAccessorImpl;
 import step.projectsettings.ProjectSettingManager;
 
 import java.util.Set;

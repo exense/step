@@ -16,9 +16,10 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.projectsettings;
+package step.plugins.projectsettings;
 
 import step.core.accessors.Accessor;
+import step.projectsettings.ProjectSetting;
 
 public interface ProjectSettingAccessor extends Accessor<ProjectSetting> {
 }

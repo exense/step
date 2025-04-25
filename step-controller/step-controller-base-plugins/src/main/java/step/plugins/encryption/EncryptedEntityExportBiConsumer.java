@@ -21,15 +21,12 @@ package step.plugins.encryption;
 import step.core.EncryptedTrackedObject;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.export.ExportContext;
-import step.parameter.Parameter;
-import step.parameter.ParameterManager;
+import step.encryption.AbstractEncryptedValuesManager;
 
 import java.util.function.BiConsumer;
 
 public class EncryptedEntityExportBiConsumer implements BiConsumer<Object, ExportContext> {
 
-    private static String EXPORT_PROTECT_WARN = "The %s list contains protected parameter. The values of these %ss won't be exported and will have to be reset at import.";
-    private static String EXPORT_ENCRYPT_WARN = "The %s list contains encrypted %ss. The values of these %ss will be reset if you import them on an other installation of step.";
     private final Class<? extends EncryptedTrackedObject> clazz;
     private final String entityNameForLog;
 
@@ -41,11 +38,11 @@ public class EncryptedEntityExportBiConsumer implements BiConsumer<Object, Expor
     @Override
     public void accept(Object object_, ExportContext exportContext) {
         if (object_ != null && clazz.isAssignableFrom(object_.getClass())) {
-            Parameter param = (Parameter) object_;
+            EncryptedTrackedObject param = (EncryptedTrackedObject) object_;
             //if protected and not encrypted, mask value by changing it to reset value
             if (param.getProtectedValue() != null && param.getProtectedValue()) {
                 if (param.getValue() != null) {
-                    param.setValue(new DynamicValue<>(ParameterManager.RESET_VALUE));
+                    param.setValue(new DynamicValue<>(AbstractEncryptedValuesManager.RESET_VALUE));
                     exportContext.addMessage(getExportProtectParamWarn());
                 } else {
                     exportContext.addMessage(getExportEncryptParamWarn());
@@ -55,10 +52,10 @@ public class EncryptedEntityExportBiConsumer implements BiConsumer<Object, Expor
     }
 
     private String getExportProtectParamWarn(){
-        return String.format(EXPORT_PROTECT_WARN, entityNameForLog, entityNameForLog);
+        return String.format("The %s list contains protected %s. The values of these %ss won't be exported and will have to be reset at import.", entityNameForLog, entityNameForLog, entityNameForLog);
     }
 
     private String getExportEncryptParamWarn(){
-        return String.format(EXPORT_ENCRYPT_WARN, entityNameForLog, entityNameForLog, entityNameForLog);
+        return String.format("The %s list contains encrypted %ss. The values of these %ss will be reset if you import them on an other installation of step.", entityNameForLog, entityNameForLog, entityNameForLog);
     }
 }

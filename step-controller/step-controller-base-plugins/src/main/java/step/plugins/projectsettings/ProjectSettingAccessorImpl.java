@@ -16,20 +16,15 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.client.accessors;
+package step.plugins.projectsettings;
 
-import step.client.collections.remote.RemoteCollectionFactory;
-import step.core.accessors.AbstractAccessor;
+import step.core.collections.Collection;
+import step.core.settings.AbstractSettingAccessorWithHook;
 import step.projectsettings.ProjectSetting;
-import step.projectsettings.ProjectSettingAccessor;
 
-// TODO: maybe not required
-public class RemoteProjectSettingAccessor extends AbstractAccessor<ProjectSetting> implements ProjectSettingAccessor {
+public class ProjectSettingAccessorImpl extends AbstractSettingAccessorWithHook<ProjectSetting> implements ProjectSettingAccessor {
 
-    public RemoteProjectSettingAccessor(RemoteCollectionFactory remoteCollectionFactory) {
-        super(remoteCollectionFactory.getCollection( ProjectSetting.ENTITY_NAME, ProjectSetting.class));
+    public ProjectSettingAccessorImpl(Collection<ProjectSetting> collectionDriver) {
+        super(collectionDriver);
     }
-
-
 }
-
