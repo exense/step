@@ -48,18 +48,28 @@ import static step.artefacts.handlers.functions.TokenForecastingExecutionPlugin.
 public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode> {
 
 	public void createReportSkeleton_(ReportNode node, ThreadGroup artefact) {
+		ThreadPool threadPool = context.require(ThreadPool.class);
 		int numberOfThreads = artefact.getUsers().getOrDefault(Integer.class, 0);
-		numberOfThreads = context.require(ThreadPool.class).forecastNumberOfThreads(numberOfThreads, OptionalInt.empty());
+		numberOfThreads = threadPool.forecastNumberOfThreads(numberOfThreads, OptionalInt.empty(), true);
 
 		TokenForecastingContext tokenForecastingContext = getTokenForecastingContext(context);
-		pushNewTokenNumberCalculationContext(context, new MultiplyingTokenForecastingContext(tokenForecastingContext, numberOfThreads));
-
-		// The skeleton phase has to be executed within a session to match the behaviour of the execution
-		// and properly estimate the required number of tokens
-		createReportNodeSkeletonInSession(artefact, node, (sessionArtefact, sessionReportNode) -> {
+		if (numberOfThreads == 1 && threadPool.getAutoNumberOfThreads() != null) {
+			// If the number of threads is one AND the autoNumberOfThreads is set, essentially the behavior is the same as a sequence.
+			// Creating a session would effectively overestimate the number of tokens. However, for reasons I don't fully understand, this
+			// is ONLY the case then the autoNumberOfThreads is present (and numberOfThreads==1). In all other cases, the logic below applies.
 			SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
-			scheduler.createReportSkeleton_(sessionReportNode, sessionArtefact);
-		});
+			scheduler.createReportSkeleton_(node, artefact);
+		}
+		else {
+			pushNewTokenNumberCalculationContext(context, new MultiplyingTokenForecastingContext(tokenForecastingContext, numberOfThreads));
+			// The skeleton phase has to be executed within a session to match the behaviour of the execution
+			// and properly estimate the required number of tokens
+			createReportNodeSkeletonInSession(artefact, node, (sessionArtefact, sessionReportNode) -> {
+				SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
+				scheduler.createReportSkeleton_(sessionReportNode, sessionArtefact);
+			});
+		}
+
 	}
 
 	private void createReportNodeSkeletonInSession(AbstractArtefact artefact, ReportNode node, BiConsumer<AbstractArtefact, ReportNode> consumer, String artefactName, Map<String, Object> newVariables) {

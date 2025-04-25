@@ -55,7 +55,7 @@ public class ForBlockHandler extends AbstractSessionArtefactHandler<AbstractForB
 			DataPoolRow nextValue;
 			int rowCount = 0;
 
-			Integer numberOfThreads = context.require(ThreadPool.class).forecastNumberOfThreads(testArtefact.getThreads().get(), OptionalInt.empty());
+			Integer numberOfThreads = context.require(ThreadPool.class).forecastNumberOfThreads(testArtefact.getThreads().get(), OptionalInt.empty(), false);
 			TokenForecastingContext tokenForecastingContext = getTokenForecastingContext(context);
 			pushNewTokenNumberCalculationContext(context, new MultiplyingTokenForecastingContext(tokenForecastingContext, numberOfThreads));
 

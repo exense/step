@@ -46,7 +46,7 @@ public class TestSetHandler extends ArtefactHandler<TestSet, ReportNode> {
 
 		TokenForecastingContext tokenForecastingContext = getTokenForecastingContext(context);
 
-		int threads = context.require(ThreadPool.class).forecastNumberOfThreads(getNumberThreads(testSet), OptionalInt.of(getChildren(testSet).size()));
+		int threads = context.require(ThreadPool.class).forecastNumberOfThreads(getNumberThreads(testSet), OptionalInt.of(getChildren(testSet).size()), false);
 
 		MaxAndMultiplyingTokenForecastingContext newTokenForecastingContext = new MaxAndMultiplyingTokenForecastingContext(tokenForecastingContext, threads);
 		pushNewTokenNumberCalculationContext(context, newTokenForecastingContext);

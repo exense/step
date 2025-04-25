@@ -43,7 +43,7 @@ public class TestScenarioHandler extends ArtefactHandler<TestScenario, ReportNod
 	public void createReportSkeleton_(ReportNode node, TestScenario testArtefact) {
 		TokenForecastingContext tokenForecastingContext = getTokenForecastingContext(context);
 		int numberOfThreads = testArtefact.getChildren().size();
-		numberOfThreads = context.require(ThreadPool.class).forecastNumberOfThreads(numberOfThreads, OptionalInt.of(numberOfThreads));
+		numberOfThreads = context.require(ThreadPool.class).forecastNumberOfThreads(numberOfThreads, OptionalInt.of(numberOfThreads), false);
 		MaxAndMultiplyingTokenForecastingContext newTokenForecastingContext = new MaxAndMultiplyingTokenForecastingContext(tokenForecastingContext, numberOfThreads);
 		pushNewTokenNumberCalculationContext(context, newTokenForecastingContext);
 		try {

@@ -235,7 +235,8 @@ public class ThreadPool implements Closeable {
 		executionContext.getVariablesManager().putVariable(executionContext.getCurrentReportNode(), EXECUTION_THREADS_AUTO_CONSUMED, Boolean.TRUE.toString());
 	}
 
-	public int forecastNumberOfThreads(final int specifiedNumberOfThreads, OptionalInt requiredNumberOfThreads) {
+	// Note that in the case of TestSet and TestScenario, the value returned from here is treated as an upper bound.
+	public int forecastNumberOfThreads(int specifiedNumberOfThreads, OptionalInt requiredNumberOfThreads, boolean specifiedIsMaximum) {
 		Integer autoNumberOfThreads = getAutoNumberOfThreads();
 		int effectiveNumberOfThreads = specifiedNumberOfThreads;
 		if (autoNumberOfThreads != null) {
@@ -245,17 +246,14 @@ public class ThreadPool implements Closeable {
 			// IOW, if the required number is only 0 or 1, "postpone" consumption of the autoNumberOfThreads to children.
 			if (!isAutoNumberOfThreadsConsumed() && requiredNumberOfThreads.orElse(Integer.MAX_VALUE) > 1) {
 				consumeAutoNumberOfThreads();
-				if (requiredNumberOfThreads.isPresent()) {
-					// We know the exact number of required threads. They constitute an upper bound,
-					// and it makes no sense to overprovision.
-					effectiveNumberOfThreads = Math.min(requiredNumberOfThreads.getAsInt(), autoNumberOfThreads);
-				} else {
-					effectiveNumberOfThreads = autoNumberOfThreads;
-				}
+				effectiveNumberOfThreads = autoNumberOfThreads;
 			} else {
-				// skip parallelism.
+				// skip parallelization
 				effectiveNumberOfThreads = 1;
 			}
+		}
+		if (specifiedIsMaximum) {
+			return Math.min(specifiedNumberOfThreads, effectiveNumberOfThreads);
 		}
 		return effectiveNumberOfThreads;
 	}
