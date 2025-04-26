@@ -67,7 +67,6 @@ public abstract class AbstractDeployAutomationPackageTool extends AbstractCliToo
                     throw logAndThrow("Error while uploading automation package to Step from Maven artifactory: " + e.getMessage());
                 }
             } else {
-
                 File packagedTarget = getLocalFileToUpload();
                 logInfo("Uploading the automation package...", null);
                 try {

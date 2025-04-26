@@ -303,16 +303,16 @@ public class AutomationPackageServices extends AbstractStepServices {
     @PUT
     @Path("/mvn")
     @Consumes(MediaType.TEXT_PLAIN)
-    @Produces(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.APPLICATION_JSON)
     @Secured(right = "automation-package-write")
-    public String createOrUpdateAutomationPackageFromMaven(@QueryParam("async") Boolean async,
-                                                           @QueryParam("activationExpr") String activationExpression,
-                                                           @RequestBody() String mavenArtifactXml) {
+    public AutomationPackageUpdateResult createOrUpdateAutomationPackageFromMaven(@QueryParam("async") Boolean async,
+                                                                                  @QueryParam("activationExpr") String activationExpression,
+                                                                                  @RequestBody() String mavenArtifactXml) {
         try {
             MavenArtifactIdentifier mvnIdentifier = getMavenArtifactIdentifierFromXml(mavenArtifactXml);
             return automationPackageManager.createOrUpdateAutomationPackageFromMaven(
                     mvnIdentifier, true, true, null, activationExpression, getObjectEnricher(), getObjectPredicate(), async == null ? false : async
-            ).toString();
+            );
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage());
         } catch (ParserConfigurationException | IOException | SAXException e) {
