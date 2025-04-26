@@ -67,10 +67,14 @@ public class RemoteAutomationPackageClientImpl extends AbstractRemoteClient impl
     }
 
     @Override
-    public AutomationPackageUpdateResult createOrUpdateAutomationPackage(File automationPackageFile, boolean async, String apVersion, String activationExpr) throws AutomationPackageClientException {
+    public AutomationPackageUpdateResult createOrUpdateAutomationPackage(File automationPackageFile, Boolean async, String apVersion, String activationExpr) throws AutomationPackageClientException {
         return uploadPackage(automationPackageFile, multiPartEntity -> {
             Map<String, String> queryParams = new HashMap<>();
-            queryParams.put("async", String.valueOf(async));
+
+            // if 'async' is not defined on client it will be resolved on the server ('false' by default)
+            if (async != null) {
+                queryParams.put("async", String.valueOf(async));
+            }
             addQueryParams(apVersion, activationExpr, queryParams);
             Invocation.Builder builder = requestBuilder("/rest/automation-packages", queryParams);
             return RemoteAutomationPackageClientImpl.this.executeRequest(() -> builder.put(multiPartEntity, AutomationPackageUpdateResult.class));
@@ -78,9 +82,13 @@ public class RemoteAutomationPackageClientImpl extends AbstractRemoteClient impl
     }
 
     @Override
-    public AutomationPackageUpdateResult createOrUpdateAutomationPackageMvn(String mavenArtifactXml, boolean async, String apVersion, String activationExpr) throws AutomationPackageClientException {
+    public AutomationPackageUpdateResult createOrUpdateAutomationPackageMvn(String mavenArtifactXml, Boolean async, String apVersion, String activationExpr) throws AutomationPackageClientException {
         Map<String, String> queryParams = new HashMap<>();
-        queryParams.put("async", String.valueOf(async));
+
+        // if 'async' is not defined on client it will be resolved on the server ('false' by default)
+        if (async != null) {
+            queryParams.put("async", String.valueOf(async));
+        }
         if (activationExpr != null && !activationExpr.isEmpty()) {
             queryParams.put("activationExpr", activationExpr);
         }

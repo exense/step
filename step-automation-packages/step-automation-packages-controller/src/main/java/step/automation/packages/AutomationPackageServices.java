@@ -311,7 +311,7 @@ public class AutomationPackageServices extends AbstractStepServices {
         try {
             MavenArtifactIdentifier mvnIdentifier = getMavenArtifactIdentifierFromXml(mavenArtifactXml);
             return automationPackageManager.createOrUpdateAutomationPackageFromMaven(
-                    mvnIdentifier, true, true, null, activationExpression, getObjectEnricher(), getObjectPredicate(), async
+                    mvnIdentifier, true, true, null, activationExpression, getObjectEnricher(), getObjectPredicate(), async == null ? false : async
             ).toString();
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage());
