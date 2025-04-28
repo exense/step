@@ -2,9 +2,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import step.artefacts.BaseArtefactPlugin;
-import step.artefacts.CallFunction;
-import step.artefacts.Return;
+import step.artefacts.*;
 import step.artefacts.handlers.functions.TokenForecastingExecutionPlugin;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.reports.aggregated.AggregatedReportView;
@@ -24,11 +22,13 @@ import step.functions.accessor.InMemoryFunctionAccessorImpl;
 import step.functions.type.FunctionTypeRegistry;
 import step.planbuilder.BaseArtefacts;
 import step.planbuilder.FunctionArtefacts;
+import step.plans.assertions.PerformanceAssertPlugin;
 import step.plugins.functions.types.CompositeFunction;
 import step.plugins.functions.types.CompositeFunctionType;
 import step.threadpool.ThreadPoolPlugin;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ResolvedPlanBuilderForCompositeKeywordTest {
@@ -47,6 +47,7 @@ public class ResolvedPlanBuilderForCompositeKeywordTest {
                 .withPlugin(new BaseArtefactPlugin())
                 .withPlugin(new TokenForecastingExecutionPlugin())
                 .withPlugin(new ThreadPoolPlugin())
+                .withPlugin(new PerformanceAssertPlugin())
                 .withPlugin(new AbstractExecutionEnginePlugin() {
                     @Override
                     public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
@@ -77,9 +78,13 @@ public class ResolvedPlanBuilderForCompositeKeywordTest {
         compositeFunction.addAttribute(AbstractOrganizableObject.NAME, MY_COMPOSITE);
         compositeFunction.setPlan(compositePlan);
 
+        PerformanceAssert performanceAssert = new PerformanceAssert();
+        Filter filterByName = new Filter(AbstractOrganizableObject.NAME, MY_COMPOSITE, FilterType.EQUALS);
+        performanceAssert.setFilters(new ArrayList<>(List.of(filterByName)));
+
         Plan subPlan = PlanBuilder.create()
                 .startBlock(BaseArtefacts.sequence())
-                    .startBlock(FunctionArtefacts.keyword(MY_COMPOSITE))
+                    .startBlock(FunctionArtefacts.keyword(MY_COMPOSITE)).withAfter(performanceAssert)
                         .add(BaseArtefacts.check("output.myOutput == 'some output values'"))
                     .endBlock()
                 .endBlock().build();
@@ -113,6 +118,8 @@ public class ResolvedPlanBuilderForCompositeKeywordTest {
                         "    Sequence: 10x: PASSED\n" +
                         "     Echo: 10x: PASSED\n" +
                         "     Return: 10x: PASSED\n" +
+                        "    [AFTER]\n" +
+                        "     PerformanceAssert: 10x: PASSED\n" +
                         "    Check: 10x: PASSED\n",
                 node.toString());
     }

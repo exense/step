@@ -52,7 +52,8 @@ public class ResolvedPlanBuilder {
 
         // It is the responsibility of the handler to return relevant artefact node by source in the expected execution order
         ArtefactHandler<AbstractArtefact, ReportNode> artefactHandler = artefactHandlerManager.getArtefactHandler(artefactNode);
-        List<ResolvedChildren> resolvedChildrenBySource = artefactHandler.resolveChildrenArtefactBySource(artefactNode, currentArtefactPath);
+        String newPath = (artefactHandler.requiresToPushArtefactPathOnResolution()) ? ArtefactPathHelper.getPathOfArtefact(currentArtefactPath, artefactNode) : currentArtefactPath;
+        List<ResolvedChildren> resolvedChildrenBySource = artefactHandler.resolveChildrenArtefactBySource(artefactNode, newPath);
 
         // Children are added starting at the position 1. The position 0 is reserved for checkAndAddMissingResolvedPlanNode
         // which is used to insert sub plan resolved dynamically during the execution

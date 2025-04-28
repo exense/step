@@ -19,6 +19,6 @@
 package step.core;
 
 public interface Constants {
-    String STEP_API_VERSION_STRING = "3.27.0";
+    String STEP_API_VERSION_STRING = "3.27.2";
     Version STEP_API_VERSION = new Version(STEP_API_VERSION_STRING);
 }

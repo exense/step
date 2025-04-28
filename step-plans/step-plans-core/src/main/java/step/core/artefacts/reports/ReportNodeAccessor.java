@@ -91,6 +91,17 @@ public interface ReportNodeAccessor extends Accessor<ReportNode>, ReportTreeAcce
 
 	ReportNode getReportNodeByParentIDAndArtefactID(ObjectId parentID, ObjectId artefactID);
 
+	/**
+	 * Warning: this method must be used within a try-with-resources statement or similar control structure to ensure that the stream's I/O resources are closed promptly after the stream's operations have completed.
+	 * Return the list of running report nodes for the given execution ID and time interval
+	 *
+	 * @param executionID the id of the execution
+	 * @param from the start of the time interval
+	 * @param to the end of the time interval
+	 * @return a {@link Stream} with all report nodes of this execution
+	 */
+	Stream<ReportNode> getRunningReportNodesByExecutionID(String executionID, Long from, Long to);
+
 	ReportNode getRootReportNode(String executionID);
 
 	Iterator<ReportNode> getChildren(String parentID);

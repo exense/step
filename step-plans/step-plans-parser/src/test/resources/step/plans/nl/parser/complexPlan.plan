@@ -1,0 +1,30 @@
+//For loop
+For 1 to 2
+    //Call a keyword
+    CallFunction
+        //Assert - City equals Basel
+        Assert City = "Basel"
+    //BeforeSequence
+    BeforeSequence
+        //some echo in before sequence
+        Echo  "${counter}"
+    //before sequence end
+    End
+    //some echo in iteration
+    Echo  "${counter}"
+    //AfterSequence
+    AfterSequence
+        //some echo in afterSequence
+        Echo  "${counter}"
+    //after sequence end
+    End
+    //After section
+    After
+        //some echo in after section
+        Echo in after
+    //After end
+    End
+    //some other echo in iteration
+    Echo  "${counter}"
+    //For end
+End

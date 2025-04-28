@@ -30,7 +30,8 @@ import step.core.collections.Filters;
 import step.core.collections.SearchOrder;
 import step.core.collections.filters.And;
 import step.core.collections.filters.Equals;
-import step.core.timeseries.TimeSeriesFilterBuilder;
+
+import static step.core.artefacts.reports.ReportNodeStatus.RUNNING;
 
 
 public class ReportNodeAccessorImpl extends AbstractAccessor<ReportNode> implements ReportTreeAccessor, ReportNodeAccessor {
@@ -69,15 +70,15 @@ public class ReportNodeAccessorImpl extends AbstractAccessor<ReportNode> impleme
 		}
 	}
 
-    @Override
-	public Iterator<ReportNode> getChildren(ObjectId parentID) {    	
-    	return collectionDriver.find(Filters.equals("parentID", parentID), new SearchOrder("executionTime", 1), null, null, 0).iterator();
-    }
-    
-    @Override
-	public Iterator<ReportNode> getChildren(ObjectId parentID, int skip, int limit) {   
-    	return collectionDriver.find(Filters.equals("parentID", parentID), new SearchOrder("executionTime", 1), skip, limit, 0).iterator();
-    }
+	@Override
+	public Iterator<ReportNode> getChildren(ObjectId parentID) {
+		return collectionDriver.find(Filters.equals("parentID", parentID), new SearchOrder("executionTime", 1), null, null, 0).iterator();
+	}
+
+	@Override
+	public Iterator<ReportNode> getChildren(ObjectId parentID, int skip, int limit) {
+		return collectionDriver.find(Filters.equals("parentID", parentID), new SearchOrder("executionTime", 1), skip, limit, 0).iterator();
+	}
 
 	@Override
 	public Iterator<ReportNode> getChildrenByParentSource(ObjectId parentID, ParentSource parentSource) {
@@ -116,7 +117,7 @@ public class ReportNodeAccessorImpl extends AbstractAccessor<ReportNode> impleme
 	}
 
 	private Filter filerByExecutionTime(Long from, Long to) {
-		ArrayList<Filter> filters = new ArrayList();
+		ArrayList<Filter> filters = new ArrayList<>();
 		if (from != null) {
 			filters.add(Filters.gte("executionTime", from));
 		}
@@ -183,7 +184,16 @@ public class ReportNodeAccessorImpl extends AbstractAccessor<ReportNode> impleme
 				Filters.and(List.of(Filters.equals("parentID", parentID), Filters.equals("artefactID", artefactID))),
 				null, null, null, 0).findFirst().orElse(null);
 	}
-    
+
+	@Override
+	public Stream<ReportNode> getRunningReportNodesByExecutionID(String executionID, Long from, Long to) {
+		Objects.requireNonNull(executionID);
+		Filter timeFilter = filerByExecutionTime(from, to);
+		return collectionDriver.findLazy(
+				Filters.and(List.of(Filters.equals("executionID", executionID), Filters.equals("status", RUNNING.name()), timeFilter)),
+				new SearchOrder("executionTime", 1), null, null, 0);
+	}
+
 	@Override
 	public ReportNode getRootReportNode(String executionID) {
 		Objects.requireNonNull(executionID);

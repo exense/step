@@ -18,6 +18,8 @@ import step.artefacts.PerformanceAssert;
 import step.artefacts.Set;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.reports.ReportNodeStatus;
+import step.core.artefacts.reports.aggregated.AggregatedReportView;
+import step.core.artefacts.reports.aggregated.AggregatedReportViewBuilder;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.execution.ExecutionEngine;
 import step.core.plans.Plan;
@@ -330,6 +332,28 @@ public class PerformanceAssertHandlerTest extends AbstractKeyword {
 						" TestKeywordWithMeasurements:PASSED:\n" +
 						" PerformanceAssert:TECHNICAL_ERROR:PerformanceAssert can only be defined in an 'after' or 'after thread' block\n"
 				, execute.getTreeAsString());
+	}
+
+	@Test
+	public void testAssertForSingleKeyword() throws IOException {
+		PerformanceAssert assert1 = new PerformanceAssert(filterMyMeasure1, Aggregator.AVG, Comparator.LOWER_THAN, 3000l);
+		Plan testKeywordWithMeasurements = PlanBuilder.create().startBlock(BaseArtefacts.sequence())
+				.startBlock(FunctionArtefacts.keyword("TestKeywordWithMeasurements")).withAfter(assert1).endBlock().endBlock().build();
+		PlanRunnerResult execute = engine.execute(testKeywordWithMeasurements);
+		assertEquals("Sequence:PASSED:\n" +
+						" TestKeywordWithMeasurements:PASSED:\n" +
+						"  [AFTER]\n" +
+						"   PerformanceAssert:PASSED:\n"
+				, execute.getTreeAsString());
+		//Test the related aggregated report
+		AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(engine.getExecutionEngineContext(), execute.getExecutionId());
+		AggregatedReportView node = aggregatedReportViewBuilder.buildAggregatedReportView();
+		assertEquals("Sequence: 1x: PASSED\n" +
+						" TestKeywordWithMeasurements: 1x: PASSED > Input={}, Output={}\n" +
+						"  [AFTER]\n" +
+						"   PerformanceAssert: 1x: PASSED\n",
+				node.toString());
+
 	}
 
 	protected PlanRunnerResult execute(PerformanceAssert... asserts) {
