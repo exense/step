@@ -64,7 +64,7 @@ import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
-import static step.automation.packages.AutomationPackagePlugin.AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS_DEFAULT;
+import static step.automation.packages.AutomationPackageLocks.AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS_DEFAULT;
 import static step.automation.packages.AutomationPackageTestUtils.*;
 
 public class AutomationPackageManagerOSTest {
