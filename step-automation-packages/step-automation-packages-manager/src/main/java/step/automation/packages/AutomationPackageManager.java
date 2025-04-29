@@ -607,15 +607,20 @@ public class AutomationPackageManager {
         hookEntries.sort(Comparator.comparingInt(he -> orderedEntryNames.indexOf(he.fieldName)));
 
         for (HookEntry hookEntry : hookEntries) {
-            boolean hooked =  automationPackageHookRegistry.onPrepareStaging(
-                    hookEntry.fieldName,
-                    new AutomationPackageContext(operationMode, staging.getResourceManager(), automationPackageArchive, packageContent, enricherForIncludedEntities, extensions),
-                    packageContent,
-                    hookEntry.values,
-                    oldPackage, staging);
+            try {
+                boolean hooked = automationPackageHookRegistry.onPrepareStaging(
+                        hookEntry.fieldName,
+                        new AutomationPackageContext(operationMode, staging.getResourceManager(), automationPackageArchive, packageContent, enricherForIncludedEntities, extensions),
+                        packageContent,
+                        hookEntry.values,
+                        oldPackage, staging);
 
-            if (!hooked) {
-                log.warn("Additional field in automation package has been ignored and skipped: " + hookEntry.fieldName);
+                if (!hooked) {
+                    log.warn("Additional field in automation package has been ignored and skipped: " + hookEntry.fieldName);
+                }
+            } catch (Exception e){
+                // throw AutomationPackageManagerException to be handled as ControllerException in services
+                throw new AutomationPackageManagerException("Cannot invoke onPrepareStaging hook for AP " + packageContent.getName() + ". " + e.getMessage(), e);
             }
         }
     }
@@ -650,13 +655,19 @@ public class AutomationPackageManager {
         // save task parameters and additional objects via hooks
         List<HookEntry> hookEntries = staging.getAdditionalObjects().entrySet().stream().map(e -> new HookEntry(e.getKey(), e.getValue())).collect(Collectors.toList());
         for (HookEntry hookEntry : hookEntries) {
-            boolean hooked = automationPackageHookRegistry.onCreate(
-                    hookEntry.fieldName, hookEntry.values,
-                    new AutomationPackageContext(operationMode, resourceManager, automationPackageArchive, packageContent, objectEnricher, extensions)
-            );
-            if (!hooked) {
-                log.warn("Additional field in automation package has been ignored and skipped: " + hookEntry.fieldName);
+            try {
+                boolean hooked = automationPackageHookRegistry.onCreate(
+                        hookEntry.fieldName, hookEntry.values,
+                        new AutomationPackageContext(operationMode, resourceManager, automationPackageArchive, packageContent, objectEnricher, extensions)
+                );
+                if (!hooked) {
+                    log.warn("Additional field in automation package has been ignored and skipped: " + hookEntry.fieldName);
+                }
+            } catch (Exception e){
+                // throw AutomationPackageManagerException to be handled as ControllerException in services
+                throw new AutomationPackageManagerException("Cannot invoke onCreate hook for AP " + packageContent.getName() + ". " + e.getMessage(), e);
             }
+
         }
     }
 
@@ -666,7 +677,12 @@ public class AutomationPackageManager {
     }
 
     public void runExtensionsBeforeIsolatedExecution(AutomationPackage automationPackage, AbstractStepContext executionContext, Map<String, Object> apManagerExtensions, ImportResult importResult){
-        automationPackageHookRegistry.beforeIsolatedExecution(automationPackage, executionContext, apManagerExtensions, importResult);
+        try {
+            automationPackageHookRegistry.beforeIsolatedExecution(automationPackage, executionContext, apManagerExtensions, importResult);
+        } catch (Exception e){
+            // throw AutomationPackageManagerException to be handled as ControllerException in services
+            throw new AutomationPackageManagerException("Cannot invoke beforeIsolatedExecution hook for AP " + automationPackage.getAttribute(AbstractOrganizableObject.NAME) + ". " + e.getMessage(), e);
+        }
     }
 
     protected List<Plan> preparePlansStaging(AutomationPackageContent packageContent, AutomationPackageArchive automationPackageArchive,
@@ -777,7 +793,12 @@ public class AutomationPackageManager {
     }
 
     protected void deleteAdditionalData(AutomationPackage automationPackage, AutomationPackageContext context) {
-        automationPackageHookRegistry.onAutomationPackageDelete(automationPackage, context, null);
+        try {
+            automationPackageHookRegistry.onAutomationPackageDelete(automationPackage, context, null);
+        } catch (Exception e){
+            // throw AutomationPackageManagerException to be handled as ControllerException in services
+            throw new AutomationPackageManagerException("Cannot invoke onAutomationPackageDelete hook for AP " + automationPackage.getAttribute(AbstractOrganizableObject.NAME) + ". " + e.getMessage(), e);
+        }
     }
 
     protected List<Function> getFunctionsByCriteria(Map<String, String> criteria) {
