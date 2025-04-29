@@ -462,6 +462,10 @@ public class TokenForecastingTest {
 		// so pooled threads may be reused, or new ones allocated (exact behavior cannot be predicted)
 		stats.assertInvocationsAndThreadsRange(39, 4, 7);
 
+		forecast = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, 2);
+		assertAgentCountPool1(forecast, 2);
+		stats.assertInvocationsAndThreads(39, 2);
+
 		forecast = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, 1);
 		assertAgentCountPool1(forecast, 1);
 		stats.assertInvocationsAndThreads(39, 1);
@@ -506,17 +510,17 @@ public class TokenForecastingTest {
 
 		forecast = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, 42);
 		// autoNumberOfThreads = 42, but clamped to the actual number of iterations==3, matching runtime behavior
-		assertAgentCountPool1(forecast, 3);
-		// outer loop is executed 3 times, inner loop parallelism is disabled because of autoNumberOfThreads setting -> 3 threads
-		stats.assertInvocationsAndThreads(12, 3);
+		assertAgentCountPool1(forecast, 42);
+		// outer loop is executed 42 times, inner loop parallelism is disabled because of autoNumberOfThreads setting -> 42 threads, 42*4 invocations
+		stats.assertInvocationsAndThreads(168, 42);
 
 		forecast = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, 2);
 		assertAgentCountPool1(forecast, 2);
-		stats.assertInvocationsAndThreads(12, 2);
+		stats.assertInvocationsAndThreads(8, 2);
 
 		forecast = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, 1);
 		assertAgentCountPool1(forecast, 1);
-		stats.assertInvocationsAndThreads(12, 1);
+		stats.assertInvocationsAndThreads(4, 1);
 
 	}
 
@@ -563,16 +567,18 @@ public class TokenForecastingTest {
 		forecast = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, 42);
 		// autoNumberOfThreads = 42, so forecasting returns that.
 		assertAgentCountPool1(forecast, 42);
-		// outer loop is executed 3 times, inner loop parallelism is disabled because of autoNumberOfThreads setting -> 3 threads
-		stats.assertInvocationsAndThreads(6, 3);
+		// outer loop is executed 3 times, inner loop is 1 per thread, but parallelism is disabled because of autoNumberOfThreads setting -> 3 threads and 3 invocations
+		stats.assertInvocationsAndThreads(3, 3);
 
 		forecast = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, 2);
+		//outer loop still executed 3 times with inner loop 1 per thread. There is only one inner thread because of autoNumberOfThreads setting -> so 2 threads, 3 invocations
 		assertAgentCountPool1(forecast, 2);
-		stats.assertInvocationsAndThreads(6, 2);
+		stats.assertInvocationsAndThreads(3, 2);
 
 		forecast = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, 1);
+		//outer loop still executed 3 times with inner loop 1 per thread. There is only one inner thread because of autoNumberOfThreads setting -> so 1 threads, 3 invocations
 		assertAgentCountPool1(forecast, 1);
-		stats.assertInvocationsAndThreads(6, 1);
+		stats.assertInvocationsAndThreads(3, 1);
 	}
 
 	@Test
@@ -633,34 +639,34 @@ public class TokenForecastingTest {
 		assertAgentCountPool1(forecast, 75);
 
 		// UC2: execution_threads_auto overridden to 2:
-		// Number of USERS: L1=3, L2=4, L3=5
 		// Number of THREADS: L1=2, L2=1, L3=1. Note that NO new threads are spawned when inner parallelism is 1 (i.e. only 2 outer threads used)
-		// Expected total invocations: [L1] 3 * 5 = 15 + [L2] (3 * 4) * 4 = 48 + [L3] (3 * 4 * 5) * 3 = 180 => 243.
+		// Expected total invocations: [L1] 2 * 5 = 10 + [L2] (2) * 4 = 8 + [L3] (2) * 3 = 6 => 24.
 		// Expected total threads: [L1] 2 => 2 (inner loops are not parallelized and don't spawn new threads)
+		//However since we have here nested (implicit) sessions in thread groups we still need an agent token for each sessions so : 2+2+2
 		forecast = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, 2);
-		stats.assertInvocationsAndThreads(243, 2);
-		assertAgentCountPool1(forecast, 2);
+		stats.assertInvocationsAndThreads(24, 2);
+		assertAgentCountPool1(forecast, 6);
 
-		// Basically the same as above, just explicitly setting the number of threads to 1 instead of 2
+		// Basically the same as above, just explicitly setting the number of threads to 1 instead of 2, so iteration are 5+4+3
+		// due to the nested session with need 1 + 1 + 1 agent tokens
 		forecast = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, 1);
-		stats.assertInvocationsAndThreads(243, 1);
-		assertAgentCountPool1(forecast, 1);
+		stats.assertInvocationsAndThreads(12, 1);
+		assertAgentCountPool1(forecast, 3);
 
 		// UC3: execution_threads_auto overridden to 7. HOWEVER, it will effectively be limited by the number of USERS of L1 => 3
-		// Number of USERS: L1=3, L2=4, L3=5
-		// Number of THREADS: L1=3, L2=1, L3=1. Note that NO new threads are spawned when inner parallelism is 1.
-		// Expected total invocations: [L1] 3 * 5 = 15 + [L2] (3 * 4) * 4 = 48 + [L3] (3 * 4 * 5) * 3 = 180 => 243.
-		// Expected total threads: [L1] 3 => 3 (inner loops are not parallelized and don't spawn new threads)
+		// Number of THREADS: L1=7, L2=1, L3=1. Note that NO new threads are spawned when inner parallelism is 1.
+		// Expected total invocations: [L1] 7 * 5 = 35 + [L2] (7) * 4 = 28 + [L3] (7) * 3 = 21 => 84.
+		// Expected total threads: [L1] 7 => 7 (inner loops are not parallelized and don't spawn new threads)
+		// Expected total agent tokens: [L1] 7 => 7 + 7 + 7 (nested sessions require different agent tokens)
 		forecast = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, 7);
-		stats.assertInvocationsAndThreads(243, 3);
-		assertAgentCountPool1(forecast, 3);
+		stats.assertInvocationsAndThreads(84, 7);
+		assertAgentCountPool1(forecast, 21);
 
 		// Set outermost loop to 1 User, but preserve parallelism otherwise
 		tgLevel1.setUsers(new DynamicValue<>(1));
 
 		// UC4: no execution_threads_auto
-		// Number of USERS: L1=1, L2=4, L3=5
-		// Number of THREADS: L1=3, L2=4, L3=5; HOWEVER, L1 is now limited by the number of USERS, therefore L1=1.
+		// Number of THREADS: L1=1, L2=4, L3=5;
 		// Expected total invocations: [L1] 1 * 5 = 5 + [L2] (1 * 4) * 4 = 16 + [L3] (1 * 4 * 5) * 3 = 60 => 81.
 		// Expected total threads: [L1] 1 + [L2] 1 * 4 = 4 + [L3] 1 * 4 * 5 = 20 => 25
 		forecast = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, null);
@@ -668,13 +674,13 @@ public class TokenForecastingTest {
 		assertAgentCountPool1(forecast, 25);
 
 		// UC5: execution_threads_auto=5, again limited by number of users and therefore EFFECTIVELY 1.
-		// Number of USERS: L1=1, L2=4, L3=5
-		// Number of THREADS: L1=1, L2=1, L3=1. Note that NO new threads are spawned when inner parallelism is 1.
-		// Expected total invocations: [L1] 1 * 5 = 5 + [L2] (1 * 4) * 4 = 16 + [L3] (1 * 4 * 5) * 3 = 60 => 81.
-		// Expected total threads: [L1] 1 + [L2] 1 * 4 = 4 + [L3] 1 * 4 * 5 = 20 => 25
+		// Number of THREADS: L1=5, L2=1, L3=1. Note that NO new threads are spawned when inner parallelism is 1.
+		// Expected total invocations: [L1] 5 * 5 = 25 + [L2] (5) * 4 = 20 + [L3] (5) * 3 = 15 => 60.
+		// Expected total threads: [L1] 5 (inner loops are not parallelized and don't spawn new threads)
+		// Expected total agent tokens: [L1] 5 => 5 + 5 + 5 (nested sessions require different agent tokens)
 		forecast = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, 5);
-		stats.assertInvocationsAndThreads(81, 1);
-		assertAgentCountPool1(forecast, 1);
+		stats.assertInvocationsAndThreads(60, 5);
+		assertAgentCountPool1(forecast, 15);
 	}
 
 	private void assertAgentCountPool1(TokenForecastingContext forecast, int expectedAgentCount) {

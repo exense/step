@@ -138,14 +138,7 @@ public class ThreadPool implements Closeable {
 	}
 
 	public <WORK_ITEM> void consumeWork(Iterator<WORK_ITEM> workItemIterator,
-										WorkerItemConsumerFactory<WORK_ITEM> workItemConsumerFactory,
-										int specifiedNumberOfThreads) {
-		consumeWork(workItemIterator, workItemConsumerFactory, specifiedNumberOfThreads, OptionalInt.empty());
-	}
-
-	public <WORK_ITEM> void consumeWork(Iterator<WORK_ITEM> workItemIterator,
-			WorkerItemConsumerFactory<WORK_ITEM> workItemConsumerFactory, int specifiedNumberOfThreads,
-										OptionalInt requiredNumberOfThreads) {
+			WorkerItemConsumerFactory<WORK_ITEM> workItemConsumerFactory, int numberOfThreads) {
 		// Wrapping the iterator to avoid concurrency issues as iterators aren't ThreadSafe 
 		Iterator<WORK_ITEM> threadSafeIterator = new Iterator<WORK_ITEM>() {
 			@Override
@@ -160,27 +153,13 @@ public class ThreadPool implements Closeable {
 				}
 			}
 		};
-		
-		Integer autoNumberOfThreads = getAutoNumberOfThreads();
-		if (autoNumberOfThreads != null) {
-			if(!isAutoNumberOfThreadsConsumed() && requiredNumberOfThreads.orElse(Integer.MAX_VALUE) > 1) {
-				// Forcing the number of threads to the required autoNumberOfThreads for the 
-				// first Artefact using the ThreadPool (Level = 1)
-				specifiedNumberOfThreads = autoNumberOfThreads;
-				consumeAutoNumberOfThreads();
-			} else {
-				// Avoid parallelism for the artefacts that are children of an artefact 
-				// already using the ThreadPool (Level > 1)
-				specifiedNumberOfThreads = 1;
-			}
-		}
-		
-		final BatchContext batchContext = new BatchContext(executionContext, specifiedNumberOfThreads>1);
+
+		final BatchContext batchContext = new BatchContext(executionContext, numberOfThreads>1);
 		
 		WorkerController<WORK_ITEM> workerController = new WorkerController<>(batchContext);
 		Consumer<WORK_ITEM> workItemConsumer = workItemConsumerFactory.createWorkItemConsumer(workerController);
 		
-		if(specifiedNumberOfThreads == 1) {
+		if(numberOfThreads == 1) {
 			// No parallelism, run the worker in the current thread
 			createWorkerAndRun(batchContext, workItemConsumer, threadSafeIterator, 0);
 		} else {
@@ -188,7 +167,7 @@ public class ThreadPool implements Closeable {
 			List<Future<?>> futures = new ArrayList<>();
 			long parentThreadId = Thread.currentThread().getId();
 			// Create one worker for each "thread"
-			for (int i = 0; i < specifiedNumberOfThreads; i++) {
+			for (int i = 0; i < numberOfThreads; i++) {
 				int workerId = i;
 				futures.add(executorService.submit(() -> {
 					executionContext.associateThread(parentThreadId, currentReportNode);
@@ -206,6 +185,27 @@ public class ThreadPool implements Closeable {
 			}
 
 		}
+	}
+
+	public int getEffectiveNumberOfThreads(int specifiedNumberOfThreads) {
+		return getEffectiveNumberOfThreads(specifiedNumberOfThreads, Integer.MAX_VALUE);
+	}
+
+	public int getEffectiveNumberOfThreads(int specifiedNumberOfThreads, int requiredNumberOfThreads) {
+		Integer autoNumberOfThreads = getAutoNumberOfThreads();
+		if (autoNumberOfThreads != null) {
+			if(!isAutoNumberOfThreadsConsumed() && requiredNumberOfThreads > 1) {
+				// Forcing the number of threads to the required autoNumberOfThreads for the
+				// first Artefact using the ThreadPool (Level = 1)
+				specifiedNumberOfThreads = autoNumberOfThreads;
+				consumeAutoNumberOfThreads();
+			} else {
+				// Avoid parallelism for the artefacts that are children of an artefact
+				// already using the ThreadPool (Level > 1)
+				specifiedNumberOfThreads = 1;
+			}
+		}
+		return specifiedNumberOfThreads;
 	}
 
 	/**
@@ -234,31 +234,6 @@ public class ThreadPool implements Closeable {
 	protected void consumeAutoNumberOfThreads() {
 		executionContext.getVariablesManager().putVariable(executionContext.getCurrentReportNode(), EXECUTION_THREADS_AUTO_CONSUMED, Boolean.TRUE.toString());
 	}
-
-	// Note that in the case of TestSet and TestScenario, the value returned from here is treated as an upper bound.
-	public int forecastNumberOfThreads(int specifiedNumberOfThreads, OptionalInt requiredNumberOfThreads, boolean specifiedIsMaximum) {
-		Integer autoNumberOfThreads = getAutoNumberOfThreads();
-		int effectiveNumberOfThreads = specifiedNumberOfThreads;
-		if (autoNumberOfThreads != null) {
-			// Use and "consume" the autoNumberOfThreads (execution_threads_auto) variable if:
-			// 1. it is not consumed yet, AND
-			// 2. the required number of threads is NOT set, OR it is set and greater than 1.
-			// IOW, if the required number is only 0 or 1, "postpone" consumption of the autoNumberOfThreads to children.
-			if (!isAutoNumberOfThreadsConsumed() && requiredNumberOfThreads.orElse(Integer.MAX_VALUE) > 1) {
-				consumeAutoNumberOfThreads();
-				effectiveNumberOfThreads = autoNumberOfThreads;
-			} else {
-				// skip parallelization
-				effectiveNumberOfThreads = 1;
-			}
-		}
-		if (specifiedIsMaximum) {
-			return Math.min(specifiedNumberOfThreads, effectiveNumberOfThreads);
-		}
-		return effectiveNumberOfThreads;
-	}
-
-
 
 	private <WORK_ITEM> void createWorkerAndRun(BatchContext batchContext, Consumer<WORK_ITEM> workItemConsumer, Iterator<WORK_ITEM> workItemIterator, int workerId) {
 		Stack<BatchContext> stack = pushBatchContextToStack(batchContext);
