@@ -18,11 +18,14 @@
  ******************************************************************************/
 package step.artefacts;
 
+import step.core.artefacts.Artefact;
+
 /**
  * Required for the housekeeping job (executions created prior to the deprecation / removal of this class)
  * Used only for report node deserialization
  */
 @Deprecated
+@Artefact
 public class AfterThread extends Sequence {
 	
 }
