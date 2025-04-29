@@ -141,7 +141,8 @@ public class AbstractFunctionHandlerTest {
 
             @Override
             public TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests,
-                                               boolean createSession, TokenWrapperOwner tokenWrapperOwner) {
+                                               boolean createSession, TokenWrapperOwner tokenWrapperOwner,
+                                               boolean skipAutoProvisioning) {
                 return token;
             }
 

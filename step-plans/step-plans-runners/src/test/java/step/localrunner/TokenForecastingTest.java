@@ -59,7 +59,9 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static step.artefacts.handlers.functions.TokenForecastingExecutionPlugin.getTokenForecastingContext;
+import static step.artefacts.handlers.functions.TokenSelectionCriteriaMapBuilder.SKIP_AUTO_PROVISIONING;
 
 public class TokenForecastingTest {
 
@@ -141,6 +143,23 @@ public class TokenForecastingTest {
 
 	@Test
 	public void testWithSelectionCriteria() throws Exception {
+		Plan plan = getPlanWithMultipleSelectionCriteria(false);
+
+		// One matching token pool
+		Set<AgentPoolSpec> availableAgentPools = Set.of(
+				new AgentPoolSpec("pool1", Map.of("$agenttype", "default", "type", "pool1"), 1),
+				new AgentPoolSpec("pool2", Map.of("$agenttype", "default", "type", "pool2"), 1),
+				new AgentPoolSpec("pool3", Map.of("$agenttype", "default", "type", "pool3"), 1));
+
+		TokenForecastingContext tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableAgentPools);
+
+		assertEquals(Set.of(new AgentPoolRequirementSpec("pool1", 1),
+				new AgentPoolRequirementSpec("pool2", 6),
+				new AgentPoolRequirementSpec("pool3", 3)),
+				Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
+	}
+
+	private static Plan getPlanWithMultipleSelectionCriteria(boolean skipAutoProvisioning) {
 		ThreadGroup threadGroup = new ThreadGroup();
 		threadGroup.setUsers(new DynamicValue<>("1*1", ""));
 
@@ -154,7 +173,12 @@ public class TokenForecastingTest {
 		threadGroup4.setUsers(new DynamicValue<>(4));
 
 		CallFunction testKeyword = FunctionArtefacts.keyword("test");
-		testKeyword.setToken(new DynamicValue<>("{\"type\":{\"value\":\"pool3\",\"dynamic\":false}}"));
+		if (skipAutoProvisioning) {
+			testKeyword.setToken(new DynamicValue<>("{\"type\":{\"value\":\"pool3\",\"dynamic\":false}," +
+					"\"" + SKIP_AUTO_PROVISIONING + "\":{\"value\":\"\",\"dynamic\":false}}"));
+		} else {
+			testKeyword.setToken(new DynamicValue<>("{\"type\":{\"value\":\"pool3\",\"dynamic\":false}}"));
+		}
 
 		Plan otherPlan = PlanBuilder.create()
 				.startBlock(threadGroup3)
@@ -163,7 +187,12 @@ public class TokenForecastingTest {
 		otherPlan.addAttribute(AbstractOrganizableObject.NAME, "MyOtherPlan");
 
 		CallFunction callFunction = FunctionArtefacts.keyword("test");
-		callFunction.setToken(new DynamicValue<>("{\"type\":{\"value\":\"pool2\",\"dynamic\":false}}"));
+		if (skipAutoProvisioning) {
+			callFunction.setToken(new DynamicValue<>("{\"type\":{\"value\":\"pool2\",\"dynamic\":false}," +
+					"\"" + SKIP_AUTO_PROVISIONING + "\":{\"value\":\"\",\"dynamic\":false}}"));
+		} else {
+			callFunction.setToken(new DynamicValue<>("{\"type\":{\"value\":\"pool2\",\"dynamic\":false}}"));
+		}
 		Plan compositePlan = PlanBuilder.create()
 				.startBlock(threadGroup4)
 					.add(callFunction)
@@ -183,6 +212,7 @@ public class TokenForecastingTest {
 					.endBlock()
 					.startBlock(threadGroup2)
 						.startBlock(session2)
+							.add(BaseArtefacts.set((skipAutoProvisioning) ? "route_to_" + SKIP_AUTO_PROVISIONING : "dummy", "''"))
 							.add(FunctionArtefacts.keyword("test"))
 						.endBlock()
 					.endBlock()
@@ -199,6 +229,30 @@ public class TokenForecastingTest {
 		function.addAttribute(AbstractOrganizableObject.NAME, "test");
 
 		plan.setFunctions(List.of(function, compositeFunction));
+		return plan;
+	}
+
+	@Test
+	public void testWithSelectionCriteriaAndMissingPool() throws Exception {
+		Plan plan = getPlanWithMultipleSelectionCriteria(false);
+
+		// One matching token pool
+		Set<AgentPoolSpec> availableAgentPools = Set.of(
+				new AgentPoolSpec("pool1", Map.of("$agenttype", "default", "type", "pool1"), 1),
+				new AgentPoolSpec("pool2", Map.of("$agenttype", "default", "type", "pool2"), 1));
+
+		TokenForecastingContext tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableAgentPools);
+
+		assertEquals(Set.of(new AgentPoolRequirementSpec("pool1", 1),
+						new AgentPoolRequirementSpec("pool2", 6)),
+				Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
+		assertEquals(1, tokenForecastingContext.getCriteriaWithoutMatch().size());
+		assertEquals("pool3", tokenForecastingContext.getCriteriaWithoutMatch().stream().findFirst().get().values().stream().findFirst().get().getSelectionPattern().toString());
+	}
+
+	@Test
+	public void testWithSelectionCriteriaAndSkipAutoProvisioning() throws Exception {
+		Plan plan = getPlanWithMultipleSelectionCriteria(true);
 
 		// One matching token pool
 		Set<AgentPoolSpec> availableAgentPools = Set.of(
@@ -208,10 +262,9 @@ public class TokenForecastingTest {
 
 		TokenForecastingContext tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableAgentPools);
 
-		assertEquals(Set.of(new AgentPoolRequirementSpec("pool1", 1),
-				new AgentPoolRequirementSpec("pool2", 6),
-				new AgentPoolRequirementSpec("pool3", 3)),
+		assertEquals(Set.of(new AgentPoolRequirementSpec("pool1", 1)),
 				Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
+		assertTrue(tokenForecastingContext.getCriteriaWithoutMatch().isEmpty());
 	}
 
 
