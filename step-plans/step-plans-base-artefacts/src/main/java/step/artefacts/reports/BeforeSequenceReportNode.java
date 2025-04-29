@@ -4,6 +4,7 @@ import step.core.artefacts.reports.ReportNode;
 
 /**
  * Required for the housekeeping job (executions created prior to the deprecation / removal of this class)
+ * Used only for report node deserialization
  */
 @Deprecated
 public class BeforeSequenceReportNode  extends ReportNode {
