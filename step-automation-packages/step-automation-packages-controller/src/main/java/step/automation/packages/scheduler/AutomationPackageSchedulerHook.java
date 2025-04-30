@@ -123,7 +123,7 @@ public class AutomationPackageSchedulerHook implements AutomationPackageHook<Exe
             if (cronExclusionsAsStrings != null && !cronExclusionsAsStrings.isEmpty()) {
                 List<CronExclusion> cronExclusions = cronExclusionsAsStrings.stream()
                         .map(e -> {
-                            validateCronExpression(packageContent.getName(), e);
+                            validateCronExpression(e, packageContent.getName());
                             return e;
                         })
                         .map(s -> new CronExclusion(s, "")).collect(Collectors.toList());
