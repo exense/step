@@ -61,7 +61,7 @@ public class ThreadPoolTest {
 			public Consumer<String> createWorkItemConsumer(WorkerController<String> control) {
 				return item -> processedItems.add(item);
 			}
-		}, 1);
+		}, threadPool.getEffectiveNumberOfThreads(1));
 		
 		Assert.assertEquals(itemList, processedItems);
 	}
@@ -85,7 +85,7 @@ public class ThreadPoolTest {
 					}
 				};
 			}
-		}, 1);
+		}, threadPool.getEffectiveNumberOfThreads(1));
 		
 		Assert.assertEquals(Arrays.asList("item1", "item2"), processedItems);
 	}
@@ -109,7 +109,7 @@ public class ThreadPoolTest {
 					}
 				};
 			}
-		}, 1);
+		}, threadPool.getEffectiveNumberOfThreads(1));
 		
 		Assert.assertEquals(Arrays.asList("item1", "item2"), processedItems);
 	}
@@ -137,7 +137,7 @@ public class ThreadPoolTest {
 					count.incrementAndGet();
 				};
 			}
-		}, 5);
+		}, threadPool.getEffectiveNumberOfThreads(5));
 		
 		for (String item : itemList) {
 			if(!processedItems.contains(item)) {
@@ -188,10 +188,10 @@ public class ThreadPoolTest {
 								processedItems.add(item1+item2);
 							};
 						}
-					}, 4);
+					}, threadPool.getEffectiveNumberOfThreads(4));
 				};
 			}
-		}, 4);
+		}, threadPool.getEffectiveNumberOfThreads(4));
 		
 		Assert.assertEquals(2, threadIdLevel1.size());
 		Assert.assertEquals(2, threadIdLevel2.size());
@@ -268,13 +268,13 @@ public class ThreadPoolTest {
 											workers3.updateAndGet(x -> x < control.getWorkerId() ? control.getWorkerId() : x);
 										};
 									}
-								}, 4);
+								}, threadPool.getEffectiveNumberOfThreads(4));
 							};
 						}
-					}, 4);
+					}, threadPool.getEffectiveNumberOfThreads(4));
 				};
 			}
-		}, 4, OptionalInt.of(1));
+		}, threadPool.getEffectiveNumberOfThreads(4, 1));
 
 		Assert.assertEquals(0, workers1.get());
 		Assert.assertEquals(1, workers2.get());
@@ -341,10 +341,10 @@ public class ThreadPoolTest {
 								processedItems.add(item1+item2);
 							};
 						}
-					}, 4);
+					}, threadPool.getEffectiveNumberOfThreads(4));
 				};
 			}
-		}, 4);
+		}, threadPool.getEffectiveNumberOfThreads(4));
 		
 		Assert.assertEquals(4, threadIdLevel1.size());
 		Assert.assertEquals(16, threadIdLevel2.size());

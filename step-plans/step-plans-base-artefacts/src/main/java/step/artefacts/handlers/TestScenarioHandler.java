@@ -42,7 +42,8 @@ public class TestScenarioHandler extends ArtefactHandler<TestScenario, ReportNod
 	@Override
 	public void createReportSkeleton_(ReportNode node, TestScenario testArtefact) {
 		TokenForecastingContext tokenForecastingContext = getTokenForecastingContext(context);
-		int numberOfThreads = context.require(ThreadPool.class).forecastNumberOfThreads(testArtefact.getChildren().size(), true);
+		int numberOfThreads = testArtefact.getChildren().size();
+		numberOfThreads = context.require(ThreadPool.class).getEffectiveNumberOfThreads(numberOfThreads, numberOfThreads);
 		MaxAndMultiplyingTokenForecastingContext newTokenForecastingContext = new MaxAndMultiplyingTokenForecastingContext(tokenForecastingContext, numberOfThreads);
 		pushNewTokenNumberCalculationContext(context, newTokenForecastingContext);
 		try {
@@ -63,6 +64,7 @@ public class TestScenarioHandler extends ArtefactHandler<TestScenario, ReportNod
 		Iterator<AbstractArtefact> iterator = artefacts.iterator();
 		
 		ThreadPool threadPool = context.get(ThreadPool.class);
+		int effectiveNumberOfThreads = threadPool.getEffectiveNumberOfThreads(artefacts.size(), artefacts.size());
 		threadPool.consumeWork(iterator, new WorkerItemConsumerFactory<AbstractArtefact>() {
 			@Override
 			public Consumer<AbstractArtefact> createWorkItemConsumer(WorkerController<AbstractArtefact> control) {
@@ -71,7 +73,7 @@ public class TestScenarioHandler extends ArtefactHandler<TestScenario, ReportNod
 					reportNodeStatusComposer.addStatusAndRecompose(childReportNode);
 				};
 			}
-		}, artefacts.size(), OptionalInt.of(artefacts.size()));
+		}, effectiveNumberOfThreads);
 
 		reportNodeStatusComposer.applyComposedStatusToParentNode(node);
 	}
