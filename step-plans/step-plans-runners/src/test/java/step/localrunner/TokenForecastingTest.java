@@ -19,18 +19,17 @@
 package step.localrunner;
 
 import org.junit.Test;
-import step.artefacts.BaseArtefactPlugin;
-import step.artefacts.CallFunction;
-import step.artefacts.FunctionGroup;
 import step.artefacts.ThreadGroup;
-import step.artefacts.handlers.functions.TokenForecastingExecutionPlugin;
+import step.artefacts.*;
 import step.artefacts.handlers.functions.TokenForecastingContext;
+import step.artefacts.handlers.functions.TokenForecastingExecutionPlugin;
 import step.artefacts.handlers.functions.test.MyFunction;
 import step.artefacts.handlers.functions.test.MyFunctionType;
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.agents.provisioning.AgentPoolRequirementSpec;
 import step.core.agents.provisioning.AgentPoolSpec;
-import step.core.agents.provisioning.driver.AgentProvisioningDriverConfiguration;
 import step.core.agents.provisioning.driver.AgentProvisioningDriver;
+import step.core.agents.provisioning.driver.AgentProvisioningDriverConfiguration;
 import step.core.agents.provisioning.driver.AgentProvisioningRequest;
 import step.core.agents.provisioning.driver.AgentProvisioningStatus;
 import step.core.dynamicbeans.DynamicValue;
@@ -39,8 +38,8 @@ import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
 import step.core.execution.ExecutionEngineContext;
 import step.core.plans.Plan;
-import step.core.agents.provisioning.AgentPoolRequirementSpec;
 import step.core.plans.builder.PlanBuilder;
+import step.datapool.sequence.IntSequenceDataPool;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.engine.plugins.BasePlugin;
 import step.engine.plugins.FunctionPlugin;
@@ -365,16 +364,278 @@ public class TokenForecastingTest {
 				Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
 	}
 
+	@Test
+	public void testAdjacentNestedForBlocks() {
+		IntSequenceDataPool outerRange1 = new IntSequenceDataPool();
+		outerRange1.setStart(new DynamicValue<>(1));
+		outerRange1.setEnd(new DynamicValue<>(3));
+		ForBlock outerForBlock1 = new ForBlock();
+		outerForBlock1.setThreads(new DynamicValue<>(3));
+		outerForBlock1.setDataSource(outerRange1);
+
+		IntSequenceDataPool outerRange2 = new IntSequenceDataPool();
+		outerRange2.setStart(new DynamicValue<>(1));
+		outerRange2.setEnd(new DynamicValue<>(4));
+		ForBlock outerForBlock2 = new ForBlock();
+		outerForBlock2.setThreads(new DynamicValue<>(4));
+		outerForBlock2.setDataSource(outerRange2);
+
+		IntSequenceDataPool innerRange1 = new IntSequenceDataPool();
+		innerRange1.setStart(new DynamicValue<>(1));
+		innerRange1.setEnd(new DynamicValue<>(5));
+		ForBlock innerForBlock1 = new ForBlock();
+		innerForBlock1.setThreads(new DynamicValue<>(5));
+		innerForBlock1.setDataSource(innerRange1);
+
+		IntSequenceDataPool innerRange2 = new IntSequenceDataPool();
+		innerRange2.setStart(new DynamicValue<>(1));
+		innerRange2.setEnd(new DynamicValue<>(6));
+		ForBlock innerForBlock2 = new ForBlock();
+		innerForBlock2.setThreads(new DynamicValue<>(6));
+		innerForBlock2.setDataSource(innerRange2);
+
+		CallFunction testKeyword = FunctionArtefacts.keyword("test");
+		testKeyword.setToken(new DynamicValue<>("{\"type\":{\"value\":\"pool\",\"dynamic\":false}}"));
+
+		Plan plan = PlanBuilder.create()
+				.startBlock(BaseArtefacts.sequence())
+					.startBlock(outerForBlock1) // 1..3, 3 threads
+						.startBlock(innerForBlock1) // 1..5, 5 threads
+							.add(testKeyword) // 15 invocations
+						.endBlock()
+					.endBlock()
+					.startBlock(outerForBlock2) // 1..4, 4 threads
+						.startBlock(innerForBlock2) // 1..6, 6 threads
+							.add(testKeyword)  // 24 invocations
+						.endBlock()
+					.endBlock()
+				.endBlock()
+		.build();
+
+		AtomicInteger invocations = new AtomicInteger();
+		MyFunction function = new MyFunction(input -> {
+			invocations.incrementAndGet();
+			return new Output<>();
+		});
+
+		function.addAttribute(AbstractOrganizableObject.NAME, "test");
+		plan.setFunctions(List.of(function));
+		plan.setFunctions(List.of(function));
+
+		Set<AgentPoolSpec> availableAgentPools = Set.of(
+				new AgentPoolSpec("pool1", Map.of("$agenttype", "default", "type", "pool"), 1));
+		TokenForecastingContext tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, null);
+
+		assertEquals(Set.of(new AgentPoolRequirementSpec("pool1", 24)),
+				Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
+		assertEquals(39, invocations.get());
+
+		invocations.set(0);
+		tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, 42);
+		assertEquals(Set.of(new AgentPoolRequirementSpec("pool1", 42)),
+				Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
+		assertEquals(39, invocations.get());
+
+		invocations.set(0);
+		tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, 1);
+		assertEquals(Set.of(new AgentPoolRequirementSpec("pool1", 1)),
+				Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
+		assertEquals(39, invocations.get());
+
+	}
+
+	@Test
+	public void testForInsideThreadGroup() {
+
+		ThreadGroup threadGroup = new ThreadGroup();
+		threadGroup.setUsers(new DynamicValue<>(2));
+		IntSequenceDataPool forRange = new IntSequenceDataPool();
+
+		forRange.setStart(new DynamicValue<>(1));
+		forRange.setEnd(new DynamicValue<>(3));
+		ForBlock forBlock = new ForBlock();
+		forBlock.setThreads(new DynamicValue<>(3));
+		forBlock.setDataSource(forRange);
+
+		CallFunction testKeyword = FunctionArtefacts.keyword("test");
+		testKeyword.setToken(new DynamicValue<>("{\"type\":{\"value\":\"pool\",\"dynamic\":false}}"));
+
+		Plan plan = PlanBuilder.create()
+			.startBlock(threadGroup) // 2 threads
+				.startBlock(forBlock) // 1..3, 3 threads
+					.add(testKeyword) // 6 invocations
+				.endBlock()
+			.endBlock()
+		.build();
+
+		AtomicInteger invocations = new AtomicInteger();
+		MyFunction function = new MyFunction(input -> {
+			invocations.incrementAndGet();
+			return new Output<>();
+		});
+		function.addAttribute(AbstractOrganizableObject.NAME, "test");
+		plan.setFunctions(List.of(function));
+
+		Set<AgentPoolSpec> availableAgentPools = Set.of(
+				new AgentPoolSpec("pool1", Map.of("$agenttype", "default", "type", "pool"), 1));
+		TokenForecastingContext tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, null);
+
+		assertEquals(Set.of(new AgentPoolRequirementSpec("pool1", 6)),
+				Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
+		assertEquals(6, invocations.get());
+
+		invocations.set(0);
+		tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, 42);
+
+		assertEquals(Set.of(new AgentPoolRequirementSpec("pool1", 42)),
+				Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
+		assertEquals(6, invocations.get());
+
+		invocations.set(0);
+		tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, 1);
+
+		assertEquals(Set.of(new AgentPoolRequirementSpec("pool1", 1)),
+				Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
+		assertEquals(6, invocations.get());
+
+	}
+
+	@Test
+	public void testThreadGroupInsideFor() {
+
+		ThreadGroup threadGroup = new ThreadGroup();
+		threadGroup.setUsers(new DynamicValue<>(2));
+		IntSequenceDataPool forRange = new IntSequenceDataPool();
+
+		forRange.setStart(new DynamicValue<>(1));
+		forRange.setEnd(new DynamicValue<>(3));
+		ForBlock forBlock = new ForBlock();
+		forBlock.setThreads(new DynamicValue<>(3));
+		forBlock.setDataSource(forRange);
+
+		CallFunction testKeyword = FunctionArtefacts.keyword("test");
+		testKeyword.setToken(new DynamicValue<>("{\"type\":{\"value\":\"pool\",\"dynamic\":false}}"));
+
+		Plan plan = PlanBuilder.create()
+			.startBlock(forBlock) // 1..3, 3 threads
+				.startBlock(threadGroup) // 2 threads
+					.add(testKeyword) // 6 invocations
+				.endBlock()
+			.endBlock()
+		.build();
+
+		AtomicInteger invocations = new AtomicInteger();
+		MyFunction function = new MyFunction(input -> {
+			invocations.incrementAndGet();
+			return new Output<>();
+		});
+		function.addAttribute(AbstractOrganizableObject.NAME, "test");
+		plan.setFunctions(List.of(function));
+
+		Set<AgentPoolSpec> availableAgentPools = Set.of(
+				new AgentPoolSpec("pool1", Map.of("$agenttype", "default", "type", "pool"), 1));
+		TokenForecastingContext tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, null);
+
+		assertEquals(Set.of(new AgentPoolRequirementSpec("pool1", 6)),
+				Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
+		assertEquals(6, invocations.get());
+
+		invocations.set(0);
+		tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, 42);
+
+		assertEquals(Set.of(new AgentPoolRequirementSpec("pool1", 42)),
+				Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
+		assertEquals(6, invocations.get());
+
+		invocations.set(0);
+		tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, 1);
+
+		assertEquals(Set.of(new AgentPoolRequirementSpec("pool1", 1)),
+				Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
+		assertEquals(6, invocations.get());
+
+	}
+
+	@Test
+	public void testNestedThreadGroups() {
+
+		ThreadGroup tgLevel1 = new ThreadGroup();
+		ThreadGroup tgLevel2 = new ThreadGroup();
+		ThreadGroup tgLevel3 = new ThreadGroup();
+
+		CallFunction testKeyword = FunctionArtefacts.keyword("test");
+		testKeyword.setToken(new DynamicValue<>("{\"type\":{\"value\":\"pool\",\"dynamic\":false}}"));
+
+		Plan plan = PlanBuilder.create()
+			.startBlock(tgLevel1)
+				.add(testKeyword)
+				.startBlock(tgLevel2)
+					.add(testKeyword)
+					.startBlock(tgLevel3)
+						.add(testKeyword)
+					.endBlock()
+				.endBlock()
+			.endBlock()
+		.build();
+
+		AtomicInteger invocations = new AtomicInteger();
+		MyFunction function = new MyFunction(input -> {
+			invocations.incrementAndGet();
+            return new Output<>();
+		});
+		function.addAttribute(AbstractOrganizableObject.NAME, "test");
+		plan.setFunctions(List.of(function));
+
+		Set<AgentPoolSpec> availableAgentPools = Set.of(
+				new AgentPoolSpec("pool1", Map.of("$agenttype", "default", "type", "pool"), 1));
+
+
+		tgLevel1.setUsers(new DynamicValue<>(3));
+		tgLevel2.setUsers(new DynamicValue<>(7));
+		tgLevel3.setUsers(new DynamicValue<>(11));
+		// UC1: L1=3, no overriding of execution_threads_auto -> expecting l3=(11 * 7 * 3) + l2=(7 * 3) + l1=3 => 255 invocations/agents
+		invocations.set(0);
+		TokenForecastingContext tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, null);
+		assertEquals(Set.of(new AgentPoolRequirementSpec("pool1", 255)),
+				Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
+		assertEquals(255, invocations.get());
+
+		// UC2: L1=3, overriding of execution_threads_auto to 2 -> expecting l3=(1 * 1 * 2) + l2=(1 * 2) + l1=2 => 6 agents, but still 255 invocations
+		invocations.set(0);
+		tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, 2);
+		assertEquals(Set.of(new AgentPoolRequirementSpec("pool1", 6)),
+				Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
+		assertEquals(255, invocations.get());
+
+		// UC3: L1=1, no overriding of execution_threads_auto -> expecting l3=(11 * 7 * 1) + l2=(7 * 1) + l1=1 => 85 invocations/agents
+		invocations.set(0);
+		tgLevel1.setUsers(new DynamicValue<>(1));
+		tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, null);
+		assertEquals(Set.of(new AgentPoolRequirementSpec("pool1", 85)),
+				Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
+		assertEquals(85, invocations.get());
+
+		// UC4: L1=1, overriding execution_threads_auto to 2 -> expecting l3=(1 * 2 * 1) + l2=(2 * 1) + l1=1 => 5 agents, but 85 invocations
+		// Note how the execution_threads_auto now overrides the threads at the SECOND level, not the first (because L1 is not parallelized).
+		// If it was overriding at L1, it would be l3=(1 * 1 * 2) + l2=(1*2) + l1=2 => 6 agents (same as UC2).
+		invocations.set(0);
+		tokenForecastingContext = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, 2);
+		assertEquals(Set.of(new AgentPoolRequirementSpec("pool1", 5)),
+				Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
+		assertEquals(85, invocations.get());
+
+	}
+
 
 	private static TokenForecastingContext executePlanWithSpecifiedTokenPools(Plan plan, Set<AgentPoolSpec> availableAgentPools) {
 		return executePlanWithSpecifiedTokenPools(plan, availableAgentPools, null);
 	}
 
 
-	private static TokenForecastingContext executePlanWithSpecifiedTokenPools(Plan plan, Set<AgentPoolSpec> availableAgentPools, Integer maxParallelism) {
+	private static TokenForecastingContext executePlanWithSpecifiedTokenPools(Plan plan, Set<AgentPoolSpec> availableAgentPools, Integer execution_threads_auto) {
 		Map<String, String> executionParameters = new HashMap<>();
-		if (maxParallelism != null) {
-			executionParameters.put(ThreadPool.EXECUTION_THREADS_AUTO, String.valueOf(maxParallelism));
+		if (execution_threads_auto != null) {
+			executionParameters.put(ThreadPool.EXECUTION_THREADS_AUTO, String.valueOf(execution_threads_auto));
 		}
 		ForcastingTestPlugin forcastingTestPlugin = new ForcastingTestPlugin(availableAgentPools);
 		try (ExecutionEngine executionEngine = ExecutionEngine.builder()

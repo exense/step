@@ -18,14 +18,10 @@
  ******************************************************************************/
 package step.artefacts.handlers;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Objects;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
-
 import step.artefacts.AbstractForBlock;
 import step.artefacts.Sequence;
+import step.artefacts.handlers.functions.MultiplyingTokenForecastingContext;
+import step.artefacts.handlers.functions.TokenForecastingContext;
 import step.artefacts.reports.ForBlockReportNode;
 import step.core.artefacts.handlers.AtomicReportNodeStatusComposer;
 import step.core.artefacts.handlers.SequentialArtefactScheduler;
@@ -38,6 +34,14 @@ import step.threadpool.ThreadPool;
 import step.threadpool.ThreadPool.WorkerController;
 import step.threadpool.WorkerItemConsumerFactory;
 
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
+
+import static step.artefacts.handlers.functions.TokenForecastingExecutionPlugin.getTokenForecastingContext;
+import static step.artefacts.handlers.functions.TokenForecastingExecutionPlugin.pushNewTokenNumberCalculationContext;
+
 public class ForBlockHandler extends AbstractSessionArtefactHandler<AbstractForBlock, ForBlockReportNode> {
 	
 	private static final String BREAK_VARIABLE = "break";
@@ -47,8 +51,13 @@ public class ForBlockHandler extends AbstractSessionArtefactHandler<AbstractForB
 		DataSet<?> dataSet = null;
 		try {
 			dataSet = getDataPool(testArtefact);
-			DataPoolRow nextValue = null;
+			DataPoolRow nextValue;
 			int rowCount = 0;
+
+			Integer numberOfThreads = context.require(ThreadPool.class).forecastNumberOfThreads(testArtefact.getThreads().get());
+			TokenForecastingContext tokenForecastingContext = getTokenForecastingContext(context);
+			pushNewTokenNumberCalculationContext(context, new MultiplyingTokenForecastingContext(tokenForecastingContext, numberOfThreads));
+
 			while((nextValue=dataSet.next())!=null) {				
 				try {
 					if(context.isInterrupted()) {
@@ -62,10 +71,7 @@ public class ForBlockHandler extends AbstractSessionArtefactHandler<AbstractForB
 					newVariable.put(testArtefact.getGlobalCounter().get(), rowCount);
 					newVariable.put(testArtefact.getUserItem().get(), 1);
 
-					Integer numberOfThreads = testArtefact.getThreads().get();
-					ThreadPool threadPool = context.get(ThreadPool.class);
-					Integer autoNumberOfThreads = Objects.requireNonNullElse(threadPool.getAutoNumberOfThreads(), 0);
-					if (numberOfThreads > 1 || autoNumberOfThreads > 1) {
+					if (numberOfThreads > 1) {
 						createReportNodeSkeletonInSession(testArtefact, node, (sessionArtefact, sessionReportNode) -> {
 							SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
 							scheduler.createReportSkeleton_(sessionReportNode, sessionArtefact);
@@ -99,7 +105,7 @@ public class ForBlockHandler extends AbstractSessionArtefactHandler<AbstractForB
 	public void execute_(ForBlockReportNode node, AbstractForBlock testArtefact) {
 		final DataSet<?> dataSet = getDataPool(testArtefact);
 		try {
-			Iterator<DataPoolRow> workItemIterator = new Iterator<DataPoolRow>() {
+			Iterator<DataPoolRow> workItemIterator = new Iterator<>() {
 
 				@Override
 				public boolean hasNext() {
@@ -132,7 +138,7 @@ public class ForBlockHandler extends AbstractSessionArtefactHandler<AbstractForB
 							newVariable.put(testArtefact.getItem().get(), workItem.getValue());
 							newVariable.put(testArtefact.getGlobalCounter().get(), i);
 							newVariable.put(testArtefact.getUserItem().get(), control.getWorkerId());
-							
+
 							ReportNode iterationReportNode;
 							if(control.isParallel()) {
 								iterationReportNode = executeInSession(testArtefact, node, (sessionArtefact, sessionReportNode)->{
@@ -143,9 +149,9 @@ public class ForBlockHandler extends AbstractSessionArtefactHandler<AbstractForB
 								Sequence iterationTestCase = createWorkArtefact(Sequence.class, testArtefact, "Iteration "+i, true);
 								iterationReportNode = delegateExecute(iterationTestCase, node, newVariable);
 							}
-							
+
 							reportNodeStatusComposer.addStatusAndRecompose(iterationReportNode);
-							
+
 							if(iterationReportNode.getStatus()==ReportNodeStatus.TECHNICAL_ERROR || iterationReportNode.getStatus()==ReportNodeStatus.FAILED) {
 								failedLoopsCounter.incrementAndGet();
 							}
