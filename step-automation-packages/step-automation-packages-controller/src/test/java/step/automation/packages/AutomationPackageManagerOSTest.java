@@ -471,7 +471,7 @@ public class AutomationPackageManagerOSTest {
                 new AutomationPackageExecutionPlugin(automationPackageLocks),
                 new AbstractExecutionEnginePlugin() {
                     @Override
-                    public void beforeExecutionEnd(ExecutionContext context) {
+                    public void abortExecution(ExecutionContext context) {
                         try {
                             //delay end of execution to test locks
                             Thread.sleep(2000);

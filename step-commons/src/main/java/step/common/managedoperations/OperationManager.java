@@ -32,12 +32,12 @@ public class OperationManager {
 	}
 	
 	public void enter(String name, Object details) {
-		enter(name,details,null);
+		enter(name, details, null, null);
 	}
 
-	public void enter(String name, Object details, String reportNodeId) {
+	public void enter(String name, Object details, String reportNodeId, String artefactHash) {
 		long tid = Thread.currentThread().getId();
-		Operation operation = new Operation(name, new Date(), details, reportNodeId, tid);
+		Operation operation = new Operation(name, new Date(), details, reportNodeId, artefactHash, tid);
 		operations.put(tid, operation);
 		
 	}

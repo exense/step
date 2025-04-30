@@ -82,7 +82,12 @@ public interface ExecutionCallbacks {
 
 	void deprovisionRequiredResources(ExecutionContext context);
 
-	void beforeExecutionEnd(ExecutionContext context);
+	/**
+	 * This method is only called by the ExecutionEngineRunner abort method, currently only exposed via REST service
+	 * It is not part of the normal execution lifecycle
+	 * @param context
+	 */
+	void abortExecution(ExecutionContext context);
 
 	void forceStopExecution(ExecutionContext context);
 

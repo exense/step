@@ -2,10 +2,12 @@ package step.core.artefacts.reports.aggregated;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import step.common.managedoperations.Operation;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.reports.ParentSource;
 import step.core.artefacts.reports.ReportNode;
+import step.core.timeseries.bucket.Bucket;
 
 import java.util.List;
 import java.util.Map;
@@ -19,18 +21,24 @@ public class AggregatedReportView {
     public final List<AggregatedReportView> children;
     public final ParentSource parentSource;
     public final ReportNode singleInstanceReportNode;
+    public final Map<String, Bucket> bucketsByStatus;
+    public final List<Operation> currentOperations;
 
     @JsonCreator
     public AggregatedReportView(@JsonProperty("artefact") AbstractArtefact artefact, @JsonProperty("artefactHash") String artefactHash,
                                 @JsonProperty("countByStatus") Map<String, Long> countByStatus, @JsonProperty("children") List<AggregatedReportView> children,
                                 @JsonProperty("parentSource") ParentSource parentSource,
-                                @JsonProperty("singleInstanceReportNode") ReportNode singleInstanceReportNode) {
+                                @JsonProperty("singleInstanceReportNode") ReportNode singleInstanceReportNode,
+                                @JsonProperty("bucketsByStatus") Map<String, Bucket> bucketsByStatus,
+                                @JsonProperty("currentOperations") List<Operation> currentOperations) {
         this.artefact = artefact;
         this.artefactHash = artefactHash;
         this.countByStatus = countByStatus;
         this.children = children;
         this.parentSource = parentSource;
         this.singleInstanceReportNode = singleInstanceReportNode;
+        this.bucketsByStatus = bucketsByStatus;
+        this.currentOperations = currentOperations;
     }
 
     public long countTotal() {

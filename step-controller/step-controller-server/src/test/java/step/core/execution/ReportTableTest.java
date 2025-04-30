@@ -6,8 +6,10 @@ import org.junit.Test;
 import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.handlers.functions.TokenForecastingExecutionPlugin;
 import step.core.artefacts.reports.ReportNode;
+import step.core.artefacts.reports.aggregated.AggregatedReport;
 import step.core.artefacts.reports.aggregated.AggregatedReportView;
 import step.core.artefacts.reports.aggregated.AggregatedReportViewBuilder;
+import step.core.artefacts.reports.aggregated.AggregatedReportViewRequest;
 import step.core.execution.table.ReportNodeTableFilterFactory;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
@@ -68,8 +70,8 @@ public class ReportTableTest {
 
         // Test partial aggregated tree for single Echo (echo in the outer for loop)
         ReportNode reportNode = engine.getExecutionEngineContext().getReportNodeAccessor().getReportNodesByExecutionIDAndClass(result.getExecutionId(), "step.artefacts.reports.EchoReportNode").findFirst().orElseThrow(() -> new RuntimeException("No echo report aggregatedReportView found"));
-        AggregatedReportViewBuilder.AggregatedReportViewRequest aggregatedReportViewRequest = new AggregatedReportViewBuilder.AggregatedReportViewRequest(null, true, reportNode.getId().toHexString(), true);
-        AggregatedReportViewBuilder.AggregatedReport aggregatedReport = aggregatedReportViewBuilder.buildAggregatedReport(aggregatedReportViewRequest);
+        AggregatedReportViewRequest aggregatedReportViewRequest = new AggregatedReportViewRequest(null, true, reportNode.getId().toHexString(), true, null);
+        AggregatedReport aggregatedReport = aggregatedReportViewBuilder.buildAggregatedReport(aggregatedReportViewRequest);
 
         assertEquals("For: 0x\n" +
                         " Echo: 1x: PASSED > test\n" +
