@@ -72,7 +72,22 @@ public class FunctionExecutionServiceImplTest {
 	public void testHappyPath() throws FunctionExecutionServiceException {
 		FunctionExecutionService f = getFunctionExecutionServiceForGridClientTest(null, null, null, null);
 
-		TokenWrapper token = f.getTokenHandle(new HashMap<>(), new HashMap<>(), true, new TokenWrapperOwner() {});
+		TokenWrapper token = f.getTokenHandle(new HashMap<>(), new HashMap<>(), true, new TokenWrapperOwner() {}, false);
+		FunctionInput<JsonObject> i = getDummyInput();
+		Assert.assertFalse(beforeFunctionCallHasBeenCall.get());
+		Output<JsonObject> output = f.callFunction(token.getID(), getFunction(), i, JsonObject.class, null);
+		Assert.assertNotNull(output);
+		Assert.assertTrue(beforeFunctionCallHasBeenCall.get());
+
+		Assert.assertNull(output.getError());
+		f.returnTokenHandle(token.getID());
+	}
+
+	@Test
+	public void testHappyPathWithSkipAutoProvisioning() throws FunctionExecutionServiceException {
+		FunctionExecutionService f = getFunctionExecutionServiceForGridClientTest(null, null, null, null);
+
+		TokenWrapper token = f.getTokenHandle(new HashMap<>(), new HashMap<>(), true, new TokenWrapperOwner() {}, true);
 		FunctionInput<JsonObject> i = getDummyInput();
 		Assert.assertFalse(beforeFunctionCallHasBeenCall.get());
 		Output<JsonObject> output = f.callFunction(token.getID(), getFunction(), i, JsonObject.class, null);
@@ -103,7 +118,7 @@ public class FunctionExecutionServiceImplTest {
 		{
 			try {
 				f.getTokenHandle(new HashMap<>(), new HashMap<>(), true, new TokenWrapperOwner() {
-				});
+				}, false);
 				Assert.fail("Expected exception to be thrown");
 			} catch (FunctionExecutionServiceException e) {
 				Assert.assertEquals("Error while retrieving agent token: Execution vetoing exception", e.getMessage());
@@ -113,7 +128,7 @@ public class FunctionExecutionServiceImplTest {
 		f.unregisterTokenLifecycleInterceptor(interceptor);
 		{
 			TokenWrapper token = f.getTokenHandle(new HashMap<>(), new HashMap<>(), true, new TokenWrapperOwner() {
-			});
+			}, false);
 			FunctionInput<JsonObject> i = getDummyInput();
 			Assert.assertFalse(beforeFunctionCallHasBeenCall.get());
 			Output<JsonObject> output = f.callFunction(token.getID(), getFunction(), i, JsonObject.class, null);
@@ -131,7 +146,7 @@ public class FunctionExecutionServiceImplTest {
 		
 		FunctionExecutionServiceException e = null;
 		try {
-			f.getTokenHandle(new HashMap<>(), new HashMap<>(), true, null);
+			f.getTokenHandle(new HashMap<>(), new HashMap<>(), true, null, false);
 		} catch (FunctionExecutionServiceException e1) {
 			e = e1;
 		}
@@ -145,7 +160,7 @@ public class FunctionExecutionServiceImplTest {
 		
 		FunctionExecutionServiceException e = null;
 		try {
-			f.getTokenHandle(new HashMap<>(), new HashMap<>(), true, null);
+			f.getTokenHandle(new HashMap<>(), new HashMap<>(), true, null, false);
 		} catch (FunctionExecutionServiceException e1) {
 			e = e1;
 		}
@@ -158,7 +173,7 @@ public class FunctionExecutionServiceImplTest {
 		FunctionExecutionService f = getFunctionExecutionServiceForGridClientTest(null, null, null, new AgentCommunicationException("Release error"));
 		
 		FunctionExecutionServiceException e = null;
-		TokenWrapper token = f.getTokenHandle(new HashMap<>(), new HashMap<>(), true, null);
+		TokenWrapper token = f.getTokenHandle(new HashMap<>(), new HashMap<>(), true, null, false);
 		try {
 			f.returnTokenHandle(token.getID());
 		} catch (FunctionExecutionServiceException e1) {
@@ -173,7 +188,7 @@ public class FunctionExecutionServiceImplTest {
 		FunctionExecutionService f = getFunctionExecutionServiceForGridClientTest(null, null, null, new AgentCallTimeoutException(functionCallTimeout, "Release error", null));
 		
 		FunctionExecutionServiceException e = null;
-		TokenWrapper token = f.getTokenHandle(new HashMap<>(), new HashMap<>(), true, null);
+		TokenWrapper token = f.getTokenHandle(new HashMap<>(), new HashMap<>(), true, null, false);
 		try {
 			f.returnTokenHandle(token.getID());
 		} catch (FunctionExecutionServiceException e1) {
@@ -267,7 +282,7 @@ public class FunctionExecutionServiceImplTest {
 
 	protected Output<JsonObject> callFunctionWithDummyInput(FunctionExecutionService f)
 			throws FunctionExecutionServiceException {
-		TokenWrapper token = f.getTokenHandle(new HashMap<>(), new HashMap<>(), true, new TokenWrapperOwner() {});
+		TokenWrapper token = f.getTokenHandle(new HashMap<>(), new HashMap<>(), true, new TokenWrapperOwner() {}, false);
 		FunctionInput<JsonObject> i = getDummyInput();
 		Output<JsonObject> output = f.callFunction(token.getID(), getFunction(), i, JsonObject.class, null);
 		return output;

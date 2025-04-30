@@ -2,10 +2,7 @@ package step.artefacts.handlers.functions;
 
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import step.functions.execution.FunctionExecutionService;
-import step.functions.execution.FunctionExecutionServiceException;
 import step.grid.Token;
 import step.grid.TokenWrapper;
 import step.grid.tokenpool.Interest;
@@ -25,7 +22,7 @@ public class FunctionGroupSessionTest {
     public void test() throws Exception {
         AtomicInteger callCount = new AtomicInteger();
         FunctionExecutionService functionExecutionService = Mockito.mock(FunctionExecutionService.class);
-        Mockito.when(functionExecutionService.getTokenHandle(Mockito.any(), Mockito.any(), Mockito.anyBoolean(), Mockito.any())).thenAnswer(invocationOnMock -> {
+        Mockito.when(functionExecutionService.getTokenHandle(Mockito.any(), Mockito.any(), Mockito.anyBoolean(), Mockito.any(), Mockito.anyBoolean())).thenAnswer(invocationOnMock -> {
             callCount.incrementAndGet();
             Object argument = invocationOnMock.getArgument(1);
             TokenWrapper tokenWrapper = new TokenWrapper();
@@ -53,6 +50,11 @@ public class FunctionGroupSessionTest {
 
         // Get a token with the same criteria and ensure that the same token is returned
         remoteToken = functionGroupSession.getRemoteToken(Map.of("attribute1", new Interest(Pattern.compile("value1"), true)), null);
+        assertNotNull(remoteToken);
+        assertEquals(1, callCount.get());
+
+        // Get a token with the same criteria + the flag disabling the auto provisioning to ensure that the same token is returned
+        remoteToken = functionGroupSession.getRemoteToken(Map.of(), Map.of("attribute1", new Interest(Pattern.compile("value1"), true)), null, true, true);
         assertNotNull(remoteToken);
         assertEquals(1, callCount.get());
 

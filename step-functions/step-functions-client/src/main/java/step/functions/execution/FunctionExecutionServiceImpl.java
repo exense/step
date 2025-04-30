@@ -120,7 +120,7 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
 	}
 
 	@Override
-	public TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests, boolean createSession, TokenWrapperOwner tokenWrapperOwner) throws FunctionExecutionServiceException {
+	public TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests, boolean createSession, TokenWrapperOwner tokenWrapperOwner, boolean skipAutoProvisioning) throws FunctionExecutionServiceException {
 		TokenWrapper tokenWrapper = null;
 		try {
 			tokenWrapper = gridClient.getTokenHandle(attributes, interests, createSession, tokenWrapperOwner);
