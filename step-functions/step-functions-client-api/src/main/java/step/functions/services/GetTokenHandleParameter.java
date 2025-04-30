@@ -29,6 +29,7 @@ public class GetTokenHandleParameter {
 	boolean createSession;
 	boolean local;
 	String reservationDescription;
+	boolean skipAutoProvisioning = false;
 
 	public Map<String, String> getAttributes() {
 		return attributes;
@@ -68,5 +69,13 @@ public class GetTokenHandleParameter {
 
 	public void setReservationDescription(String reservationDescription) {
 		this.reservationDescription = reservationDescription;
+	}
+
+	public boolean isSkipAutoProvisioning() {
+		return skipAutoProvisioning;
+	}
+
+	public void setSkipAutoProvisioning(boolean skipAutoProvisioning) {
+		this.skipAutoProvisioning = skipAutoProvisioning;
 	}
 }
