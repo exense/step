@@ -19,6 +19,7 @@
 package step.automation.packages.scheduler;
 
 import org.bson.types.ObjectId;
+import org.quartz.CronExpression;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.automation.packages.*;
@@ -33,6 +34,7 @@ import step.core.repositories.RepositoryObjectReference;
 import step.core.scheduler.*;
 import step.core.scheduler.automation.AutomationPackageSchedule;
 
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -112,10 +114,19 @@ public class AutomationPackageSchedulerHook implements AutomationPackageHook<Exe
 
             execTaskParameters.setActive(schedule.getActive() == null || schedule.getActive());
             execTaskParameters.addAttribute(AbstractOrganizableObject.NAME, schedule.getName());
+
+            // validate the cron expression to avoid failures on 'onCreate' hook, when the AP is already partially persisted
+            validateCronExpression(schedule.getCron(), packageContent.getName());
             execTaskParameters.setCronExpression(schedule.getCron());
+
             List<String> cronExclusionsAsStrings = schedule.getCronExclusions();
             if (cronExclusionsAsStrings != null && !cronExclusionsAsStrings.isEmpty()) {
-                List<CronExclusion> cronExclusions = cronExclusionsAsStrings.stream().map(s -> new CronExclusion(s, "")).collect(Collectors.toList());
+                List<CronExclusion> cronExclusions = cronExclusionsAsStrings.stream()
+                        .map(e -> {
+                            validateCronExpression(packageContent.getName(), e);
+                            return e;
+                        })
+                        .map(s -> new CronExclusion(s, "")).collect(Collectors.toList());
                 execTaskParameters.setCronExclusions(cronExclusions);
             }
             String assertionPlanName = schedule.getAssertionPlanName();
@@ -151,6 +162,16 @@ public class AutomationPackageSchedulerHook implements AutomationPackageHook<Exe
         Entity.reuseOldIds(completeExecTasksParameters, oldPackage != null ? getPackageSchedules(oldPackage.getId(), packageContext) : new ArrayList<>());
         completeExecTasksParameters.forEach(packageContext.getEnricher());
         return completeExecTasksParameters;
+    }
+
+    private static void validateCronExpression(String cron, String apName) {
+        if (cron != null && !cron.isEmpty()) {
+            try {
+                new CronExpression(cron);
+            } catch (ParseException e) {
+                throw new AutomationPackageHookException("Invalid cron expression (" + cron + ") has been found in AP " + apName + ". " + e.getMessage(), e);
+            }
+        }
     }
 
     protected Plan lookupPlanByName(List<Plan> plansStaging, String planName, AutomationPackageContext context) {
