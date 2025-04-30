@@ -36,6 +36,7 @@ import step.threadpool.WorkerItemConsumerFactory;
 
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.OptionalInt;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
@@ -54,7 +55,7 @@ public class ForBlockHandler extends AbstractSessionArtefactHandler<AbstractForB
 			DataPoolRow nextValue;
 			int rowCount = 0;
 
-			Integer numberOfThreads = context.require(ThreadPool.class).forecastNumberOfThreads(testArtefact.getThreads().get());
+			int numberOfThreads = context.require(ThreadPool.class).getEffectiveNumberOfThreads(testArtefact.getThreads().get());
 			TokenForecastingContext tokenForecastingContext = getTokenForecastingContext(context);
 			pushNewTokenNumberCalculationContext(context, new MultiplyingTokenForecastingContext(tokenForecastingContext, numberOfThreads));
 
@@ -127,6 +128,7 @@ public class ForBlockHandler extends AbstractSessionArtefactHandler<AbstractForB
 			Integer numberOfThreads = testArtefact.getThreads().get();
 			
 			ThreadPool threadPool = context.get(ThreadPool.class);
+			int effectiveNumberOfThreads = threadPool.getEffectiveNumberOfThreads(numberOfThreads);
 			threadPool.consumeWork(workItemIterator, new WorkerItemConsumerFactory<DataPoolRow>() {
 				@Override
 				public Consumer<DataPoolRow> createWorkItemConsumer(WorkerController<DataPoolRow> control) {
@@ -168,7 +170,7 @@ public class ForBlockHandler extends AbstractSessionArtefactHandler<AbstractForB
 						}
 					};
 				}
-			}, numberOfThreads);
+			}, effectiveNumberOfThreads);
 			
 			node.setErrorCount(failedLoopsCounter.get());
 			node.setCount(loopsCounter.get());

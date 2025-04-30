@@ -48,18 +48,18 @@ import static step.artefacts.handlers.functions.TokenForecastingExecutionPlugin.
 public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode> {
 
 	public void createReportSkeleton_(ReportNode node, ThreadGroup artefact) {
+		ThreadPool threadPool = context.require(ThreadPool.class);
 		int numberOfThreads = artefact.getUsers().getOrDefault(Integer.class, 0);
-		numberOfThreads = context.require(ThreadPool.class).forecastNumberOfThreads(numberOfThreads);
+		numberOfThreads = threadPool.getEffectiveNumberOfThreads(numberOfThreads);
 
 		TokenForecastingContext tokenForecastingContext = getTokenForecastingContext(context);
-		pushNewTokenNumberCalculationContext(context, new MultiplyingTokenForecastingContext(tokenForecastingContext, numberOfThreads));
-
-		// The skeleton phase has to be executed within a session to match the behaviour of the execution
-		// and properly estimate the required number of tokens
-		createReportNodeSkeletonInSession(artefact, node, (sessionArtefact, sessionReportNode) -> {
-			SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
-			scheduler.createReportSkeleton_(sessionReportNode, sessionArtefact);
-		});
+			pushNewTokenNumberCalculationContext(context, new MultiplyingTokenForecastingContext(tokenForecastingContext, numberOfThreads));
+			// The skeleton phase has to be executed within a session to match the behaviour of the execution
+			// and properly estimate the required number of tokens
+			createReportNodeSkeletonInSession(artefact, node, (sessionArtefact, sessionReportNode) -> {
+				SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
+				scheduler.createReportSkeleton_(sessionReportNode, sessionArtefact);
+			});
 	}
 
 	private void createReportNodeSkeletonInSession(AbstractArtefact artefact, ReportNode node, BiConsumer<AbstractArtefact, ReportNode> consumer, String artefactName, Map<String, Object> newVariables) {
@@ -99,18 +99,19 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 		// Attach global iteration counter & user counter
 		AtomicLong gcounter = new AtomicLong(0);
 		AtomicReportNodeStatusComposer reportNodeStatusComposer = new AtomicReportNodeStatusComposer(node);
-		
-		Iterator<Integer> groupIterator = new IntegerSequenceIterator(1,numberOfUsers,1);
+
+		ThreadPool threadPool = context.get(ThreadPool.class);
+		int effectiveNumberOfThreads = threadPool.getEffectiveNumberOfThreads(numberOfUsers);
+		Iterator<Integer> groupIterator = new IntegerSequenceIterator(1, effectiveNumberOfThreads,1);
 		
 		final long groupStartTime = System.currentTimeMillis();
-		
-		ThreadPool threadPool = context.get(ThreadPool.class);
+
 		threadPool.consumeWork(groupIterator, new WorkerItemConsumerFactory<Integer>() {
 			@Override
 			public Consumer<Integer> createWorkItemConsumer(WorkerController<Integer> groupController) {
 				return groupID -> {
 					try {
-						final long localStartOffset = startOffset + (long) (1.0 * pack*Math.floor((groupID - 1)/pack) / numberOfUsers * rampup);
+						final long localStartOffset = startOffset + (long) (1.0 * pack*Math.floor((groupID - 1)/pack) / effectiveNumberOfThreads * rampup);
 
 						CancellableSleep.sleep(localStartOffset, context::isInterrupted, ThreadGroupHandler.class);
 
@@ -135,7 +136,7 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 					}
 				};
 			}
-		}, numberOfUsers);
+		}, effectiveNumberOfThreads);
 
 		reportNodeStatusComposer.applyComposedStatusToParentNode(node);
 	}
