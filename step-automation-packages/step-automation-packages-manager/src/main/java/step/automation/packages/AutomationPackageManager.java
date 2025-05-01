@@ -619,9 +619,9 @@ public class AutomationPackageManager {
                     log.warn("Additional field in automation package has been ignored and skipped: " + hookEntry.fieldName);
                 }
             } catch (Exception e){
-                String fieldNameStr = hookEntry.fieldName == null ? "" : "on field '" + hookEntry.fieldName + "'";
+                String fieldNameStr = hookEntry.fieldName == null ? "" : " for '" + hookEntry.fieldName + "'";
                 // throw AutomationPackageManagerException to be handled as ControllerException in services
-                throw new AutomationPackageManagerException("Invocation of onPrepareStaging hook has been failed " + fieldNameStr + " for AP '" + packageContent.getName() + "'. " + e.getMessage(), e);
+                throw new AutomationPackageManagerException("onPrepareStaging hook invocation failed" + fieldNameStr + " in the automation package '" + packageContent.getName() + "'. " + e.getMessage(), e);
             }
         }
     }
@@ -665,9 +665,9 @@ public class AutomationPackageManager {
                     log.warn("Additional field in automation package has been ignored and skipped: " + hookEntry.fieldName);
                 }
             } catch (Exception e){
-                String fieldNameStr = hookEntry.fieldName == null ? "" : "on field '" + hookEntry.fieldName + "'";
+                String fieldNameStr = hookEntry.fieldName == null ? "" : " for '" + hookEntry.fieldName + "'";
                 // throw AutomationPackageManagerException to be handled as ControllerException in services
-                throw new AutomationPackageManagerException("Invocation of onCreate hook has been failed " + fieldNameStr + " for AP '" + packageContent.getName() + "'. " + e.getMessage(), e);
+                throw new AutomationPackageManagerException("onCreate hook invocation failed" + fieldNameStr + " in the automation package '" + packageContent.getName() + "'. " + e.getMessage(), e);
             }
 
         }
@@ -683,7 +683,7 @@ public class AutomationPackageManager {
             automationPackageHookRegistry.beforeIsolatedExecution(automationPackage, executionContext, apManagerExtensions, importResult);
         } catch (Exception e){
             // throw AutomationPackageManagerException to be handled as ControllerException in services
-            throw new AutomationPackageManagerException("Invocation of beforeIsolatedExecution hook has been failed for AP '" + automationPackage.getAttribute(AbstractOrganizableObject.NAME) + "'. " + e.getMessage(), e);
+            throw new AutomationPackageManagerException("beforeIsolatedExecution hook invocation failed in the automation package '" + automationPackage.getAttribute(AbstractOrganizableObject.NAME) + "'. " + e.getMessage(), e);
         }
     }
 
@@ -799,7 +799,7 @@ public class AutomationPackageManager {
             automationPackageHookRegistry.onAutomationPackageDelete(automationPackage, context, null);
         } catch (Exception e){
             // throw AutomationPackageManagerException to be handled as ControllerException in services
-            throw new AutomationPackageManagerException("Invocation of onAutomationPackageDelete hook has been failed for AP '" + automationPackage.getAttribute(AbstractOrganizableObject.NAME) + "'. " + e.getMessage(), e);
+            throw new AutomationPackageManagerException("onAutomationPackageDelete hook invocation failed in the automation package '" + automationPackage.getAttribute(AbstractOrganizableObject.NAME) + "'. " + e.getMessage(), e);
         }
     }
 

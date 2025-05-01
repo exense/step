@@ -26,6 +26,7 @@ import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.MultiPart;
 import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
 import step.automation.packages.AutomationPackageUpdateResult;
+import step.client.ControllerClientException;
 import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
 import step.client.AbstractRemoteClient;
 import step.client.credentials.ControllerCredentials;
@@ -119,7 +120,7 @@ public class RemoteAutomationPackageClientImpl extends AbstractRemoteClient impl
     private <T> T executeAutomationPackageClientRequest(Supplier<T> provider) throws AutomationPackageClientException {
         try {
             return executeRequest(provider);
-        } catch (ControllerServiceException e) {
+        } catch (ControllerServiceException | ControllerClientException e) {
             throw new AutomationPackageClientException(e.getMessage());
         }
     }
@@ -129,7 +130,7 @@ public class RemoteAutomationPackageClientImpl extends AbstractRemoteClient impl
         Entity<MultiPart> entity = Entity.entity(multiPart, multiPart.getMediaType());
         try {
             return executeRequest.apply(entity);
-        } catch (ControllerServiceException e) {
+        } catch (ControllerServiceException | ControllerClientException e) {
             throw new AutomationPackageClientException(e.getMessage());
         }
     }
