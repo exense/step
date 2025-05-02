@@ -71,6 +71,10 @@ public abstract class AbstractStepServices extends AbstractServices<User> {
 		return objectHookRegistry.getObjectEnricher(getSession());
 	}
 
+	protected ObjectOverlapper getObjectOverlapper(){
+		return objectHookRegistry.getObjectOverlapper(getSession());
+	}
+
 	protected ObjectFilter getObjectFilter() {
 		return objectHookRegistry.getObjectFilter(getSession());
 	}

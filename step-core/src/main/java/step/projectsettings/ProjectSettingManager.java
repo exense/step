@@ -23,7 +23,14 @@ import step.commons.activation.Activator;
 import step.core.accessors.Accessor;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.encryption.EncryptionManager;
+import step.core.objectenricher.ObjectOverlapper;
 import step.encryption.AbstractEncryptedValuesManager;
+
+import java.util.List;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 public class ProjectSettingManager extends AbstractEncryptedValuesManager<ProjectSetting> {
 
@@ -46,5 +53,15 @@ public class ProjectSettingManager extends AbstractEncryptedValuesManager<Projec
     @Override
     public String getEntityNameForLogging() {
         return "project setting";
+    }
+
+    public List<ProjectSetting> getAllSettingsWithUniqueKeys(ObjectOverlapper objectOverlapper) {
+        // TODO: think if the ObjectFilter should also be applied here
+        List<ProjectSetting> allSettings = StreamSupport.stream(
+                Spliterators.spliteratorUnknownSize(accessor.getAll(), Spliterator.ORDERED),
+                false).collect(Collectors.toList());
+
+        // to support multitenancy here we want to filter out settings (defined for global project) overridden in local project
+        return objectOverlapper == null ? allSettings : objectOverlapper.overlapObjects(allSettings);
     }
 }

@@ -19,10 +19,22 @@
 package step.plugins.projectsettings;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.annotation.PostConstruct;
+import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import step.controller.services.async.AsyncTaskStatus;
 import step.controller.services.entities.AbstractEntityServices;
+import step.core.deployment.ControllerServiceException;
+import step.framework.server.security.Secured;
 import step.framework.server.security.SecuredContext;
+import step.framework.server.tables.service.bulk.TableBulkOperationReport;
+import step.framework.server.tables.service.bulk.TableBulkOperationRequest;
 import step.projectsettings.ProjectSetting;
+import step.projectsettings.ProjectSettingManager;
+
+import java.util.List;
 
 @Path("/project-settings")
 @Tag(name = "ProjectSettings")
@@ -30,8 +42,48 @@ import step.projectsettings.ProjectSetting;
 @SecuredContext(key = "entity", value = "project-setting")
 public class ProjectSettingServices extends AbstractEntityServices<ProjectSetting> {
 
+    private ProjectSettingManager manager;
+
     public ProjectSettingServices() {
         super(ProjectSetting.ENTITY_NAME);
     }
 
+    @PostConstruct
+    public void init() throws Exception {
+        super.init();
+        manager = getContext().require(ProjectSettingManager.class);
+    }
+
+    @Override
+    protected ProjectSetting beforeSave(ProjectSetting entity) {
+        getObjectOverlapper().onBeforeSave(entity);
+        return super.beforeSave(entity);
+    }
+
+    @GET
+    @Path("/unique/all")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Secured(right = "{entity}-read")
+    public List<ProjectSetting> getUniqueSettings() {
+        try {
+            return manager.getAllSettingsWithUniqueKeys(getObjectOverlapper());
+        } catch (Exception e) {
+            throw new ControllerServiceException(e.getMessage());
+        }
+    }
+
+    @Override
+    public AsyncTaskStatus<TableBulkOperationReport> cloneEntities(TableBulkOperationRequest request) {
+        throw new UnsupportedOperationException("Clone is not supported for project settings");
+    }
+
+    @Override
+    public ProjectSetting clone(String id) {
+        throw new UnsupportedOperationException("Clone is not supported for project settings");
+    }
+
+    @Override
+    protected ProjectSetting cloneEntity(ProjectSetting entity) {
+        throw new UnsupportedOperationException("Clone is not supported for project settings");
+    }
 }
