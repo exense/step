@@ -179,7 +179,7 @@ public class TokenForecastingTest {
 		CallFunction testKeyword = FunctionArtefacts.keyword("test");
 		if (skipAutoProvisioning) {
 			testKeyword.setToken(new DynamicValue<>("{\"type\":{\"value\":\"pool3\",\"dynamic\":false}," +
-					"\"" + SKIP_AUTO_PROVISIONING + "\":{\"value\":\"\",\"dynamic\":false}}"));
+					"\"" + SKIP_AUTO_PROVISIONING + "\":{\"value\":\"true\",\"dynamic\":false}}"));
 		} else {
 			testKeyword.setToken(new DynamicValue<>("{\"type\":{\"value\":\"pool3\",\"dynamic\":false}}"));
 		}
@@ -191,14 +191,13 @@ public class TokenForecastingTest {
 		otherPlan.addAttribute(AbstractOrganizableObject.NAME, "MyOtherPlan");
 
 		CallFunction callFunction = FunctionArtefacts.keyword("test");
-		if (skipAutoProvisioning) {
-			callFunction.setToken(new DynamicValue<>("{\"type\":{\"value\":\"pool2\",\"dynamic\":false}," +
-					"\"" + SKIP_AUTO_PROVISIONING + "\":{\"value\":\"\",\"dynamic\":false}}"));
-		} else {
-			callFunction.setToken(new DynamicValue<>("{\"type\":{\"value\":\"pool2\",\"dynamic\":false}}"));
-		}
+		callFunction.setToken(new DynamicValue<>("{\"type\":{\"value\":\"pool2\",\"dynamic\":false}," +
+				"\"" + SKIP_AUTO_PROVISIONING + "\":{\"expression\":\"variable\",\"dynamic\":true}}"));
+		step.artefacts.Set setVariable = BaseArtefacts.set("variable", (skipAutoProvisioning) ? "'true'" : "'false'");
+
 		Plan compositePlan = PlanBuilder.create()
 				.startBlock(threadGroup4)
+					.add(setVariable)
 					.add(callFunction)
 				.endBlock().build();
 
@@ -216,7 +215,7 @@ public class TokenForecastingTest {
 					.endBlock()
 					.startBlock(threadGroup2)
 						.startBlock(session2)
-							.add(BaseArtefacts.set((skipAutoProvisioning) ? "route_to_" + SKIP_AUTO_PROVISIONING : "dummy", "''"))
+							.add(BaseArtefacts.set((skipAutoProvisioning) ? "route_to_" + SKIP_AUTO_PROVISIONING : "dummy", "'true'"))
 							.add(FunctionArtefacts.keyword("test"))
 						.endBlock()
 					.endBlock()
