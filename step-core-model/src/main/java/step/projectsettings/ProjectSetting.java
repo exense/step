@@ -21,9 +21,9 @@ package step.projectsettings;
 import step.commons.activation.Expression;
 import step.core.EncryptedTrackedObject;
 import step.core.dynamicbeans.DynamicValue;
-import step.parameter.ParameterScope;
+import step.multitenancy.TenantOverlapping;
 
-public class ProjectSetting extends EncryptedTrackedObject {
+public class ProjectSetting extends EncryptedTrackedObject implements TenantOverlapping<String> {
 
     public static final String ENTITY_NAME = "projectsettings";
 
@@ -51,6 +51,16 @@ public class ProjectSetting extends EncryptedTrackedObject {
         this.value = new DynamicValue<>(value);
         this.description = description;
         this.activationExpression = activationExpression;
+    }
+
+    @Override
+    public String getKey() {
+        return key;
+    }
+
+    @Override
+    public String getEntityName() {
+        return ENTITY_NAME;
     }
 
     @Override
@@ -88,4 +98,6 @@ public class ProjectSetting extends EncryptedTrackedObject {
     public String toString() {
         return "ProjectSetting [key=" + key + "]";
     }
+
+
 }
