@@ -39,7 +39,10 @@ public abstract class AbstractExecutionEnginePlugin extends AbstractPlugin imple
 	
 	@Override
 	public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {}
-	
+
+	@Override
+	public void finalizeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {}
+
 	@Override
 	public void executionStart(ExecutionContext context) {}
 
