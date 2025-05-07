@@ -442,7 +442,6 @@ public class AutomationPackageManager {
                         try {
                             updateAutomationPackage(oldPackage, finalNewPackage, packageContent, staging, enricherForIncludedEntities, false, automationPackageArchive);
                         } catch (Exception e) {
-                            handleExceptionOnPackageUpdate(finalNewPackage);
                             log.error("Exception on delayed AP update", e);
                         }
                     });
@@ -454,7 +453,6 @@ public class AutomationPackageManager {
                 }
             }
         } catch (Exception ex) {
-            handleExceptionOnPackageUpdate(newPackage);
             throw ex;
         }
     }
@@ -485,20 +483,6 @@ public class AutomationPackageManager {
             //Clear delayed status
             newPackage.setStatus(null);
             automationPackageAccessor.save(newPackage);
-        }
-    }
-
-    private void handleExceptionOnPackageUpdate(AutomationPackage automationPackage) {
-        // cleanup created resources
-        try {
-            if (automationPackage != null) {
-                List<Resource> resources = resourceManager.findManyByCriteria(AutomationPackageEntity.getAutomationPackageIdCriteria(automationPackage.getId()));
-                for (Resource resource : resources) {
-                    resourceManager.deleteResource(resource.getId().toString());
-                }
-            }
-        } catch (Exception e) {
-            log.warn("Cannot cleanup resource", e);
         }
     }
 

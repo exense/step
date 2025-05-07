@@ -25,6 +25,8 @@ import step.automation.packages.*;
 import step.automation.packages.AutomationPackageHook;
 import step.automation.packages.AutomationPackageContent;
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.collections.Filter;
+import step.core.collections.Filters;
 import step.core.entities.Entity;
 import step.core.execution.model.ExecutionParameters;
 import step.core.plans.Plan;
@@ -156,8 +158,13 @@ public class AutomationPackageSchedulerHook implements AutomationPackageHook<Exe
     protected Plan lookupPlanByName(List<Plan> plansStaging, String planName, AutomationPackageContext context) {
         Plan plan = plansStaging.stream().filter(p -> Objects.equals(p.getAttribute(AbstractOrganizableObject.NAME), planName)).findFirst().orElse(null);
         if (plan == null) {
+            //Get current package ID and use it to filter out deployd entities from previous version
+            Plan enrichablePlan = new Plan();
+            context.getEnricher().accept(enrichablePlan);
             // schedule can reference the existing persisted plan (not defined inside the automation package)
-            plan = getPlanAccessor(context).findByAttributes(Map.of(AbstractOrganizableObject.NAME, planName));
+            Filter persistedPlanFilter = Filters.and(List.of(Filters.equals("attributes." + AbstractOrganizableObject.NAME, planName),
+                    Filters.not(Filters.equals("customFields." + AutomationPackageEntity.AUTOMATION_PACKAGE_ID, enrichablePlan.getCustomField(AutomationPackageEntity.AUTOMATION_PACKAGE_ID).toString()))));
+            plan = getPlanAccessor(context).getCollectionDriver().find(persistedPlanFilter,  null, null, 1, 0).findFirst().orElse(null);
         }
         return plan;
     }
