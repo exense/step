@@ -28,28 +28,35 @@ import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import step.automation.packages.execution.AutomationPackageExecutor;
+import step.controller.services.async.AsyncTaskStatus;
 import step.core.access.User;
-import step.core.deployment.AbstractStepServices;
+import step.core.deployment.AbstractStepAsyncServices;
 import step.core.deployment.ControllerServiceException;
 import step.core.execution.model.AutomationPackageExecutionParameters;
 import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
 import step.framework.server.security.Secured;
+import step.framework.server.tables.service.TableService;
+import step.framework.server.tables.service.bulk.TableBulkOperationReport;
+import step.framework.server.tables.service.bulk.TableBulkOperationRequest;
 
 import java.io.InputStream;
 import java.util.List;
+import java.util.function.Consumer;
 
 @Path("/automation-packages")
 @Tag(name = "Automation packages")
-public class AutomationPackageServices extends AbstractStepServices {
+public class AutomationPackageServices extends AbstractStepAsyncServices {
 
     protected AutomationPackageManager automationPackageManager;
     protected AutomationPackageExecutor automationPackageExecutor;
+    protected TableService tableService;
 
     @PostConstruct
     public void init() throws Exception {
         super.init();
         automationPackageManager = getContext().get(AutomationPackageManager.class);
         automationPackageExecutor = getContext().get(AutomationPackageExecutor.class);
+        tableService = getContext().require(TableService.class);
     }
 
     @GET
@@ -70,6 +77,10 @@ public class AutomationPackageServices extends AbstractStepServices {
     @Produces(MediaType.APPLICATION_JSON)
     @Secured(right = "automation-package-delete")
     public void deleteAutomationPackage(@PathParam("id") String id) {
+        deleteSingleAutomationPackage(id);
+    }
+
+    private void deleteSingleAutomationPackage(String id) {
         try {
             AutomationPackage automationPackage = getAutomationPackage(id);
             assertEntityIsAcceptableInContext(automationPackage);
@@ -249,6 +260,16 @@ public class AutomationPackageServices extends AbstractStepServices {
     @Produces(MediaType.APPLICATION_JSON)
     public String getAutomationPackageDescriptorSchema() {
         return automationPackageManager.getDescriptorJsonSchema();
+    }
+
+    @POST
+    @Path("/bulk/delete")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Secured(right = "automation-package-delete")
+    public AsyncTaskStatus<TableBulkOperationReport> bulkDelete(TableBulkOperationRequest request) {
+        Consumer<String> consumer = this::deleteSingleAutomationPackage;
+        return scheduleAsyncTaskWithinSessionContext(h ->
+                tableService.performBulkOperation(AutomationPackageEntity.entityName, request, consumer, getSession()));
     }
 
 }
