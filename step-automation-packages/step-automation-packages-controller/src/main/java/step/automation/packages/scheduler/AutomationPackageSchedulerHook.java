@@ -57,7 +57,7 @@ public class AutomationPackageSchedulerHook implements AutomationPackageHook<Exe
         if (isSchedulerInContext(context)) {
             ExecutionScheduler executionScheduler = getExecutionScheduler(context);
             for (ExecutiontTaskParameters entity : entities) {
-                //make sure the execution parameter of the schedule are enriched too (required to execute in same project
+                // make sure the execution parameter of the schedule are enriched too (required to execute in same project
                 // as the schedule and populate event bindings
                 context.getEnricher().accept(entity.getExecutionsParameters());
                 executionScheduler.addOrUpdateExecutionTask(entity, false);
@@ -101,6 +101,11 @@ public class AutomationPackageSchedulerHook implements AutomationPackageHook<Exe
                     )
             );
         }
+    }
+
+    @Override
+    public Map<String, List<? extends AbstractOrganizableObject>> getEntitiesForAutomationPackage(ObjectId automationPackageId, AutomationPackageContext automationPackageContext) {
+        return Map.of(AutomationPackageSchedule.FIELD_NAME_IN_AP, getPackageSchedules(automationPackageId, automationPackageContext));
     }
 
     protected List<ExecutiontTaskParameters> prepareExecutionTasksParamsStaging(List<AutomationPackageSchedule> objects,
