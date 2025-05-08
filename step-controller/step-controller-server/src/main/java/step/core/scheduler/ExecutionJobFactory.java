@@ -26,8 +26,8 @@ import org.quartz.SchedulerException;
 import org.quartz.spi.JobFactory;
 import org.quartz.spi.TriggerFiredBundle;
 
+import step.automation.packages.AutomationPackageLocks;
 import step.core.GlobalContext;
-import step.core.controller.ControllerSetting;
 import step.core.controller.ControllerSettingAccessor;
 import step.core.execution.ExecutionEngine;
 
@@ -36,39 +36,30 @@ public class ExecutionJobFactory implements JobFactory {
 	private final ExecutionEngine executionEngine;
 	private final ControllerSettingAccessor controllerSettingAccessor;
 	private final ExecutionTaskAccessor executionTaskAccessor;
-	
+	private final AutomationPackageLocks automationPackageLocks;
+
 	public ExecutionJobFactory(GlobalContext context, ExecutionEngine executionEngine) {
 		super();
-		controllerSettingAccessor = context.require(ControllerSettingAccessor.class);
+		this.controllerSettingAccessor = context.require(ControllerSettingAccessor.class);
 		this.executionEngine = executionEngine;
 		this.executionTaskAccessor = context.getScheduleAccessor();
+		this.automationPackageLocks = context.require(AutomationPackageLocks.class);
 	}
 
 	@Override
 	public Job newJob(TriggerFiredBundle arg0, Scheduler arg1) throws SchedulerException {
 		JobDataMap data = arg0.getJobDetail().getJobDataMap();
-		String executionID;
+		String executionID = null;
+		String executionTaskID = null;
 		if (data.containsKey(Executor.EXECUTION_ID)) {
 			executionID = data.getString(Executor.EXECUTION_ID);
 		} else {
 			try {
-				String executionTaskID = data.getString(Executor.EXECUTION_TASK_ID);
-				ExecutiontTaskParameters executiontTaskParameters = executionTaskAccessor.get(new ObjectId(executionTaskID));
-
-				ControllerSetting schedulerUsernameSetting = controllerSettingAccessor.getSettingByKey("scheduler_execution_username");
-				if (schedulerUsernameSetting != null) {
-					String schedulerUsername = schedulerUsernameSetting.getValue();
-					if (schedulerUsername != null && schedulerUsername.trim().length() > 0) {
-						// Override the execution user if the setting scheduler_execution_username is set
-						executiontTaskParameters.getExecutionsParameters().setUserID(schedulerUsername);
-					}
-				}
-
-				executionID = executionEngine.initializeExecution(executiontTaskParameters);
+				executionTaskID = data.getString(Executor.EXECUTION_TASK_ID);
 			} catch (Exception e) {
 				return new LoggerJob("Unable to create new job for execution", e);
 			}
 		}
-		return new ExecutionJob(executionEngine, executionID);
+		return new ExecutionJob(executionEngine, executionTaskAccessor, controllerSettingAccessor, automationPackageLocks, executionID, executionTaskID);
 	}
 }

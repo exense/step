@@ -44,6 +44,7 @@ import step.plugins.parametermanager.ParameterManagerPlugin;
 import step.repositories.ArtifactRepositoryConstants;
 import step.resources.ResourceManagerControllerPlugin;
 
+@Plugin(dependencies = {ObjectHookControllerPlugin.class, ResourceManagerControllerPlugin.class, FunctionControllerPlugin.class, AutomationPackageSchedulerPlugin.class})
 import java.io.File;
 
 import static step.automation.packages.execution.RepositoryWithAutomationPackageSupport.CONFIGURATION_MAVEN_FOLDER;
@@ -53,8 +54,6 @@ import static step.automation.packages.execution.RepositoryWithAutomationPackage
 public class AutomationPackagePlugin extends AbstractControllerPlugin {
 
     private static final Logger log = LoggerFactory.getLogger(AutomationPackagePlugin.class);
-    public static final String AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS = "automationPackage.lock.read.timeout.secs";
-    public static final int AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS_DEFAULT = 600;
     protected AutomationPackageLocks automationPackageLocks;
 
     @Override

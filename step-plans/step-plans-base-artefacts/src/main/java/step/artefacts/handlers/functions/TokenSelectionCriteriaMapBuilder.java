@@ -108,6 +108,7 @@ public class TokenSelectionCriteriaMapBuilder {
 	}
 
 	public boolean shouldSkipAutoProvisioning(CallFunction testArtefact, Function function, FunctionGroupHandler.FunctionGroupContext functionGroupContext, Map<String, Object> bindings) {
-		return _buildSelectionCriteriaMap(testArtefact, function, functionGroupContext, bindings).containsKey(SKIP_AUTO_PROVISIONING);
+		Interest interest = _buildSelectionCriteriaMap(testArtefact, function, functionGroupContext, bindings).get(SKIP_AUTO_PROVISIONING);
+		return (interest != null && interest.getSelectionPattern().pattern().equals(Boolean.TRUE.toString()));
 	}
 }
