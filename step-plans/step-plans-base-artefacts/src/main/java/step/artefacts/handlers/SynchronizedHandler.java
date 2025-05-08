@@ -56,7 +56,7 @@ public class SynchronizedHandler extends ArtefactHandler<Synchronized, ReportNod
 		Lock lock = getLock(testArtefact);
 		
 		String operation = lock.global?"Waiting for global lock":"Waiting for lock";
-		OperationManager.getInstance().enter(operation, lock.name);
+		OperationManager.getInstance().enter(operation, lock.name, node.getId().toString(), node.getArtefactHash());
 		ReentrantLock reentrantLock = lock.lock;
 		reentrantLock.lockInterruptibly();
 		try {

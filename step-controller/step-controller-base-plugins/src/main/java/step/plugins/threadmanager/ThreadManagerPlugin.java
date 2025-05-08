@@ -22,9 +22,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.artefacts.handlers.CallFunctionHandler;
 import step.core.artefacts.reports.ReportNode;
+import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionContext;
+import step.core.execution.ExecutionEngineContext;
 import step.core.plugins.IgnoreDuringAutoDiscovery;
 import step.core.plugins.Plugin;
+import step.core.plugins.threadmanager.ThreadManager;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.grid.Token;
 import step.grid.client.GridClient;
@@ -40,6 +43,12 @@ public class ThreadManagerPlugin extends AbstractExecutionEnginePlugin {
 	public ThreadManagerPlugin(ThreadManager threadManager) {
 		super();
 		this.threadManager = threadManager;
+	}
+
+	@Override
+	public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext executionEngineContext) {
+		super.initializeExecutionEngineContext(parentContext, executionEngineContext);
+		executionEngineContext.computeIfAbsent(ThreadManager.class, k -> threadManager);
 	}
 
 	@Override
@@ -68,8 +77,8 @@ public class ThreadManagerPlugin extends AbstractExecutionEnginePlugin {
 	}
 
 	@Override
-	public void beforeExecutionEnd(ExecutionContext context) {
-		threadManager.beforeExecutionEnd(context);
+	public void abortExecution(ExecutionContext context) {
+		threadManager.abortExecution(context);
 	}
 
 	@Override

@@ -77,7 +77,7 @@ public class SleepHandler extends ArtefactHandler<Sleep, ReportNode> {
 		if (inSession) {
 			details.put("Release token", Boolean.toString(releaseToken));
 		}
-		OperationManager.getInstance().enter("Sleep", details, node.getId().toString());
+		OperationManager.getInstance().enter("Sleep", details, node.getId().toString(), node.getArtefactHash());
 
 		ReportNodeStatus finalStatus = ReportNodeStatus.PASSED;
 		if (!context.isSimulation()) {

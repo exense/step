@@ -159,7 +159,7 @@ public class ExecutionEngineRunner {
 		if(executionContext.getStatus()!=ExecutionStatus.ENDED) {
 			updateStatus(executionContext, ExecutionStatus.ABORTING);
 		}
-		executionContext.getExecutionCallbacks().beforeExecutionEnd(executionContext);
+		executionContext.getExecutionCallbacks().abortExecution(executionContext);
 	}
 
 	public static void forceAbort(ExecutionContext executionContext) {
