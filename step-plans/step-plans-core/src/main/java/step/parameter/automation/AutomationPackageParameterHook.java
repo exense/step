@@ -27,11 +27,10 @@ import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.Accessor;
 import step.core.accessors.InMemoryAccessor;
 import step.core.accessors.LayeredAccessor;
-import step.core.encryption.EncryptionManagerException;
 import step.core.repositories.ImportResult;
 import step.parameter.Parameter;
 import step.parameter.ParameterManager;
-import step.parameter.ParameterManagerException;
+import step.encryption.EncryptedValueManagerException;
 
 import java.util.Iterator;
 import java.util.List;
@@ -75,9 +74,9 @@ public class AutomationPackageParameterHook implements AutomationPackageHook<Par
             context.getEnricher().accept(entity);
             try {
                 getParameterManager(context.getExtensions()).save(entity, null, null);
-            } catch (ParameterManagerException e) {
+            } catch (EncryptedValueManagerException e) {
                 log.error("The automation package parameter {} cannot be saved for automation package {}.", entity.getKey(), context.getAutomationPackageArchive().getOriginalFileName(), e);
-                throw new ParameterManagerException("The automation package parameter " + entity.getKey() + " cannot be saved: " + e.getMessage());
+                throw new EncryptedValueManagerException("The automation package parameter " + entity.getKey() + " cannot be saved: " + e.getMessage());
             }
         }
     }
