@@ -279,13 +279,17 @@ public class ExecutionEngine implements AutoCloseable {
 	}
 	
 	private PlanRunnerResult execute(String executionId, ExecutionParameters executionParameters, ExecutiontTaskParameters executiontTaskParameters) {
-		ExecutionContext context = newExecutionContext(executionId, executionParameters, executiontTaskParameters);
-		ExecutionEngineRunner executionEngineRunner = new ExecutionEngineRunner(context);
-		currentExecutions.put(executionId, context);
+		ExecutionContext context = null;
 		try {
+			context = newExecutionContext(executionId, executionParameters, executiontTaskParameters);
+			ExecutionEngineRunner executionEngineRunner = new ExecutionEngineRunner(context);
+			currentExecutions.put(executionId, context);
 			return executionEngineRunner.execute(); 
 		} finally {
 			currentExecutions.remove(executionId);
+			if (context != null) {
+				plugins.finalizeExecutionContext(executionEngineContext, context);
+			}
 		}
 	}
 	
@@ -297,18 +301,26 @@ public class ExecutionEngine implements AutoCloseable {
 		return newExecutionContext(new ObjectId().toString(), new ExecutionParameters(), null);
 	}
 
-	public ExecutionContext newExecutionContext(String executionId, ExecutionParameters executionParameters, ExecutiontTaskParameters executiontTaskParameters) {
+	/**
+	 * This method create a new execution context and invoke the plugins initializeExecutionContext hook
+	 * the caller must ensure to call the finalizeExecutionContext when done with the context.
+	 * @param executionId the execution ID for which we create an execution context
+	 * @param executionParameters execution parameters
+	 * @param executionTaskParameters optional schedule execution tasks parameters
+	 * @return the created execution context
+	 */
+	private ExecutionContext newExecutionContext(String executionId, ExecutionParameters executionParameters, ExecutiontTaskParameters executionTaskParameters) {
 		ExecutionContext executionContext = new ExecutionContext(executionId, executionParameters);
 		executionContext.useAllAttributesFromParentContext(executionEngineContext);
 
 		// Use a layered plan accessor to isolate the local context from the parent one
-		// This allow temporary persistence of plans for the duration of the execution
+		// This allows temporary persistence of plans for the duration of the execution
 		LayeredPlanAccessor planAccessor = new LayeredPlanAccessor();
 		planAccessor.pushAccessor(executionEngineContext.getPlanAccessor());
 		planAccessor.pushAccessor(new InMemoryPlanAccessor());
 		executionContext.setPlanAccessor(planAccessor);
 
-		addObjectHooksToExecutionContext(executionParameters, executiontTaskParameters, executionContext);
+		addObjectHooksToExecutionContext(executionParameters, executionTaskParameters, executionContext);
 
 		executionContext.setExecutionCallbacks(plugins);
 		plugins.initializeExecutionContext(executionEngineContext, executionContext);

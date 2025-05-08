@@ -322,10 +322,13 @@ public class DefaultDescriptionStepParserTest extends AbstractDescriptionStepPar
 		ThreadGroup artefact = parseAndGetUniqueChild(steps, ThreadGroup.class);
 		Assert.assertNotNull(artefact);
 		Assert.assertEquals(0, (int)artefact.getMaxDuration().getValue());
-		Assert.assertEquals(1,artefact.getAfter().getSteps().size());
-		Assert.assertEquals(1,artefact.getBefore().getSteps().size());
 		Assert.assertEquals(1,artefact.getAfterThread().getSteps().size());
 		Assert.assertEquals(1,artefact.getBeforeThread().getSteps().size());
+		Assert.assertEquals(1,artefact.getChildren().size());
+		AbstractArtefact abstractArtefact = artefact.getChildren().get(0);
+		Assert.assertTrue(abstractArtefact instanceof Sequence);
+		Assert.assertEquals(1,abstractArtefact.getAfter().getSteps().size());
+		Assert.assertEquals(1,abstractArtefact.getBefore().getSteps().size());
 		Assert.assertEquals(1,artefact.getChildren().size());
 	}
 
