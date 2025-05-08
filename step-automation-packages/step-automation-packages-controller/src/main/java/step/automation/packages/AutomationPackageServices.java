@@ -18,6 +18,9 @@
  ******************************************************************************/
 package step.automation.packages;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.PostConstruct;
 import jakarta.ws.rs.*;
@@ -27,6 +30,7 @@ import org.bson.types.ObjectId;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
+import org.xml.sax.SAXException;
 import step.automation.packages.execution.AutomationPackageExecutor;
 import step.core.access.User;
 import step.core.accessors.AbstractOrganizableObject;
@@ -34,8 +38,12 @@ import step.core.deployment.AbstractStepServices;
 import step.core.deployment.ControllerServiceException;
 import step.core.execution.model.AutomationPackageExecutionParameters;
 import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
+import step.core.maven.MavenArtifactIdentifier;
+import step.core.maven.MavenArtifactIdentifierFromXmlParser;
 import step.framework.server.security.Secured;
 
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
@@ -46,12 +54,15 @@ public class AutomationPackageServices extends AbstractStepServices {
 
     protected AutomationPackageManager automationPackageManager;
     protected AutomationPackageExecutor automationPackageExecutor;
+    protected XmlMapper xmlMapper;
 
     @PostConstruct
     public void init() throws Exception {
         super.init();
         automationPackageManager = getContext().get(AutomationPackageManager.class);
         automationPackageExecutor = getContext().get(AutomationPackageExecutor.class);
+        xmlMapper = new XmlMapper();
+        xmlMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
     @GET
@@ -99,6 +110,41 @@ public class AutomationPackageServices extends AbstractStepServices {
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage());
         }
+    }
+
+    /**
+     * @param mavenArtifactXml
+     * Example:
+     * <dependency>
+     *     <groupId>junit</groupId>
+     *     <artifactId>junit</artifactId>
+     *     <version>4.13.2</version>
+     *     <scope>test</scope>
+     *     <classifier>tests</scope>
+     * </dependency>
+     */
+    @POST
+    @Path("/mvn")
+    @Consumes(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.TEXT_PLAIN)
+    @Secured(right = "automation-package-write")
+    public String createAutomationPackageFromMaven(@QueryParam("version") String apVersion,
+                                                   @QueryParam("activationExpr") String activationExpression,
+                                                   @RequestBody() String mavenArtifactXml) {
+        try {
+            MavenArtifactIdentifier mavenArtifactIdentifier = getMavenArtifactIdentifierFromXml(mavenArtifactXml);
+            return automationPackageManager.createAutomationPackageFromMaven(
+                    mavenArtifactIdentifier, apVersion, activationExpression, getObjectEnricher(), getObjectPredicate()
+            ).toString();
+        } catch (AutomationPackageManagerException e) {
+            throw new ControllerServiceException(e.getMessage());
+        } catch (ParserConfigurationException | IOException | SAXException e) {
+            throw new RuntimeException("Cannot parse the maven artifact xml", e);
+        }
+    }
+
+    protected MavenArtifactIdentifier getMavenArtifactIdentifierFromXml(String mavenArtifactXml) throws ParserConfigurationException, IOException, SAXException {
+        return new MavenArtifactIdentifierFromXmlParser(xmlMapper).parse(mavenArtifactXml);
     }
 
     @POST
@@ -243,6 +289,37 @@ public class AutomationPackageServices extends AbstractStepServices {
             return responseBuilder.entity(result).build();
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage());
+        }
+    }
+
+    /**
+     * @param mavenArtifactXml
+     * Example:
+     * <dependency>
+     *     <groupId>junit</groupId>
+     *     <artifactId>junit</artifactId>
+     *     <version>4.13.2</version>
+     *     <scope>test</scope>
+     * </dependency>
+     */
+    @PUT
+    @Path("/mvn")
+    @Consumes(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Secured(right = "automation-package-write")
+    public AutomationPackageUpdateResult createOrUpdateAutomationPackageFromMaven(@QueryParam("async") Boolean async,
+                                                                                  @QueryParam("version") String apVersion,
+                                                                                  @QueryParam("activationExpr") String activationExpression,
+                                                                                  @RequestBody() String mavenArtifactXml) {
+        try {
+            MavenArtifactIdentifier mvnIdentifier = getMavenArtifactIdentifierFromXml(mavenArtifactXml);
+            return automationPackageManager.createOrUpdateAutomationPackageFromMaven(
+                    mvnIdentifier, true, true, null, apVersion, activationExpression, getObjectEnricher(), getObjectPredicate(), async == null ? false : async
+            );
+        } catch (AutomationPackageManagerException e) {
+            throw new ControllerServiceException(e.getMessage());
+        } catch (ParserConfigurationException | IOException | SAXException e) {
+            throw new RuntimeException("Cannot parse the maven artifact xml", e);
         }
     }
 

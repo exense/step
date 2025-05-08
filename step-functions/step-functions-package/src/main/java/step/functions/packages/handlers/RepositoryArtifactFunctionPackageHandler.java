@@ -1,13 +1,6 @@
 package step.functions.packages.handlers;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import ch.exense.commons.app.Configuration;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
 import org.eclipse.aether.DefaultRepositorySystemSession;
 import org.eclipse.aether.RepositorySystem;
@@ -30,27 +23,32 @@ import org.eclipse.aether.transport.http.HttpTransporterFactory;
 import org.eclipse.aether.util.repository.AuthenticationBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-
-import ch.exense.commons.app.Configuration;
 import step.attachments.FileResolver;
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.maven.MavenArtifactIdentifier;
+import step.core.maven.MavenArtifactIdentifierFromXmlParser;
 import step.core.objectenricher.ObjectEnricher;
 import step.functions.Function;
 import step.functions.packages.FunctionPackage;
 import step.resources.Resource;
 import step.resources.ResourceManager;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 public class RepositoryArtifactFunctionPackageHandler extends JavaFunctionPackageHandler {
 
 	private static final Logger logger = LoggerFactory.getLogger(RepositoryArtifactFunctionPackageHandler.class);
 	
-	private ResourceManager resourceManager;
-	private RepositorySystem repositorySystem;
+	private final ResourceManager resourceManager;
+	private final RepositorySystem repositorySystem;
 	private List<RemoteRepository> repositories;
-	private LocalRepository localRepository;
+	private final LocalRepository localRepository;
 
 	public RepositoryArtifactFunctionPackageHandler(ResourceManager resourceManager, FileResolver fileResolver, Configuration config) {
 		super(fileResolver, config);
@@ -120,10 +118,13 @@ public class RepositoryArtifactFunctionPackageHandler extends JavaFunctionPackag
 
 	public List<Function> buildFunctions(FunctionPackage functionPackage, boolean preview, ObjectEnricher objectEnricher) throws Exception {
 		String packageLocation = functionPackage.getPackageLocation();
-		XmlMapper mapper = new XmlMapper();
-		mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-		Dependency dependency = mapper.readValue(packageLocation, Dependency.class);
-		Artifact artifact = new DefaultArtifact(dependency.groupId, dependency.artifactId, dependency.classifier, "jar", dependency.version);
+
+		MavenArtifactIdentifier dependency =  new MavenArtifactIdentifierFromXmlParser().parse(packageLocation);
+		Artifact artifact = new DefaultArtifact(
+				dependency.getGroupId(), dependency.getArtifactId(),
+				dependency.getClassifier(), dependency.getType() == null || dependency.getType().isEmpty() ? "jar" : dependency.getType(),
+				dependency.getVersion()
+		);
 		File artifactFile = getArtifactByAether(artifact);
 		
 		// TODO we're changing the package location to the path of the resolved file. 
@@ -139,39 +140,6 @@ public class RepositoryArtifactFunctionPackageHandler extends JavaFunctionPackag
 		}
 		List<Function> functions = super.buildFunctions(functionPackage, preview, objectEnricher);
 		return functions;
-	}
-
-	protected static class Dependency {
-		
-	    private String groupId;
-	    private String artifactId;
-	    private String version;
-	    private String classifier;
-	    
-		public String getGroupId() {
-			return groupId;
-		}
-		public void setGroupId(String groupId) {
-			this.groupId = groupId;
-		}
-		public String getArtifactId() {
-			return artifactId;
-		}
-		public void setArtifactId(String artifactId) {
-			this.artifactId = artifactId;
-		}
-		public String getVersion() {
-			return version;
-		}
-		public void setVersion(String version) {
-			this.version = version;
-		}
-		public String getClassifier() {
-			return classifier;
-		}
-		public void setClassifier(String classifier) {
-			this.classifier = classifier;
-		}
 	}
 
 	private RepositorySystem newRepositorySystem() {

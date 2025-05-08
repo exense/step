@@ -29,7 +29,7 @@ public interface Repository {
 
 	ArtefactInfo getArtefactInfo(Map<String, String> repositoryParameters) throws Exception;
 
-	default File getArtifact(Map<String, String> repositoryParameters) {
+	default File getArtifact(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) {
 		throw new UnsupportedOperationException("This repository doesn't support getArtifact method");
 	}
 
