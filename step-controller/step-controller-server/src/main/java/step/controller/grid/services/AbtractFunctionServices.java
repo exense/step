@@ -30,7 +30,6 @@ import jakarta.ws.rs.core.UriInfo;
 import step.artefacts.CallFunction;
 import step.artefacts.handlers.FunctionLocator;
 import step.artefacts.handlers.SelectorHelper;
-import step.automation.packages.accessor.AutomationPackageAccessor;
 import step.controller.services.entities.AbstractEntityServices;
 import step.core.access.User;
 import step.core.accessors.AbstractOrganizableObject;
@@ -200,7 +199,7 @@ public abstract class AbtractFunctionServices extends AbstractEntityServices<Fun
 			tokenWrapperOwner.setUsername(session.getUser().getUsername());
 			tokenWrapperOwner.setIpAddress(req.getRemoteAddr());
 			tokenWrapperOwner.setDescription(parameter.getReservationDescription());
-			return functionExecutionService.getTokenHandle(parameter.getAttributes(), parameter.getInterests(), parameter.isCreateSession(), tokenWrapperOwner);
+			return functionExecutionService.getTokenHandle(parameter.getAttributes(), parameter.getInterests(), parameter.isCreateSession(), tokenWrapperOwner, parameter.isSkipAutoProvisioning());
 		} else {
 			return functionExecutionService.getLocalTokenHandle();
 		}

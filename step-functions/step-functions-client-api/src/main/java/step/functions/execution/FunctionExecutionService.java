@@ -36,7 +36,7 @@ public interface FunctionExecutionService {
 
 	TokenWrapper getLocalTokenHandle();
 
-	TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests, boolean createSession, TokenWrapperOwner tokenWrapperOwner) throws FunctionExecutionServiceException;
+	TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests, boolean createSession, TokenWrapperOwner tokenWrapperOwner, boolean skipAutoProvisioning) throws FunctionExecutionServiceException;
 	
 	void returnTokenHandle(String tokenHandleId) throws FunctionExecutionServiceException;
 

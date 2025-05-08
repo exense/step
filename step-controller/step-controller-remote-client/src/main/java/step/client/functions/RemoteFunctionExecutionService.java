@@ -61,11 +61,12 @@ public class RemoteFunctionExecutionService extends AbstractRemoteClient impleme
 	}
 
 	@Override
-	public TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests, boolean createSession, TokenWrapperOwner tokenWrapperOwner) {
+	public TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests, boolean createSession, TokenWrapperOwner tokenWrapperOwner, boolean skipAutoProvisioning) {
 		GetTokenHandleParameter parameter = new GetTokenHandleParameter();
 		parameter.setAttributes(attributes);
 		parameter.setInterests(interests);
 		parameter.setCreateSession(createSession);
+		parameter.setSkipAutoProvisioning(skipAutoProvisioning);
 		
 		Builder b = requestBuilder("/rest/functions/executor/tokens/select");
 		Entity<GetTokenHandleParameter> entity = Entity.entity(parameter, MediaType.APPLICATION_JSON);
