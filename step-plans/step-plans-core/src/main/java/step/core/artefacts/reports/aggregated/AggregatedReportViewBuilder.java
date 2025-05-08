@@ -1,7 +1,5 @@
 package step.core.artefacts.reports.aggregated;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,23 +62,21 @@ public class AggregatedReportViewBuilder {
 
 
     public FlatAggregatedReport buildFlatAggregatedReport(AggregatedReportViewRequest request) {
-        AggregatedReport aggregatedReport = this.buildAggregatedReport(request);
-        List<AggregatedReportView> results = flattenAndFilterRecursively(aggregatedReport.aggregatedReportView, request);
-        return new FlatAggregatedReport(results);
+        Optional<AggregatedReport> aggregatedReport = Optional.ofNullable(buildAggregatedReport(request));
+        return aggregatedReport.map(ar -> new FlatAggregatedReport(flattenAndFilterRecursively(ar.aggregatedReportView, request)))
+                .orElse(null);
     }
 
-    private static List<AggregatedReportView> flattenAndFilterRecursively(AggregatedReportView aggregatedReportView, AggregatedReportViewRequest request) {
-        List<AggregatedReportView> result = new ArrayList<>();
+    private static List<FlatAggregatedReportView> flattenAndFilterRecursively(AggregatedReportView aggregatedReportView, AggregatedReportViewRequest request) {
+        List<FlatAggregatedReportView> result = new ArrayList<>();
         if (aggregatedReportView != null) {
             if (shouldIncludeAggregatedReport(request, aggregatedReportView.artefact)) {
-                result.add(aggregatedReportView);
+                result.add(new FlatAggregatedReportView(aggregatedReportView));
             }
             if (aggregatedReportView.children != null) {
                 for (AggregatedReportView child : aggregatedReportView.children) {
                     result.addAll(flattenAndFilterRecursively(child, request));
                 }
-                //since we return as a flat list we do not need to keep the children
-                aggregatedReportView.children.clear();
             }
         }
         return result;

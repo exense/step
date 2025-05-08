@@ -3,9 +3,9 @@ package step.core.artefacts.reports.aggregated;
 import java.util.List;
 
 public class FlatAggregatedReport {
-    public List<AggregatedReportView> aggregatedReportViews;
+    public List<FlatAggregatedReportView> aggregatedReportViews;
 
-    public FlatAggregatedReport(List<AggregatedReportView> aggregatedReportViews) {
+    public FlatAggregatedReport(List<FlatAggregatedReportView> aggregatedReportViews) {
         this.aggregatedReportViews = aggregatedReportViews;
     }
 

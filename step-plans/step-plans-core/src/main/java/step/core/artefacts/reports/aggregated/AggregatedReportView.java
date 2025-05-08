@@ -11,18 +11,11 @@ import step.core.timeseries.bucket.Bucket;
 
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
-public class AggregatedReportView {
+public class AggregatedReportView extends AbstractAggregatedReportView {
 
-    public final AbstractArtefact artefact;
-    public final String artefactHash;
-    public final Map<String, Long> countByStatus;
     public final List<AggregatedReportView> children;
     public final ParentSource parentSource;
-    public final ReportNode singleInstanceReportNode;
-    public final Map<String, Bucket> bucketsByStatus;
-    public final List<Operation> currentOperations;
 
     @JsonCreator
     public AggregatedReportView(@JsonProperty("artefact") AbstractArtefact artefact, @JsonProperty("artefactHash") String artefactHash,
@@ -31,18 +24,9 @@ public class AggregatedReportView {
                                 @JsonProperty("singleInstanceReportNode") ReportNode singleInstanceReportNode,
                                 @JsonProperty("bucketsByStatus") Map<String, Bucket> bucketsByStatus,
                                 @JsonProperty("currentOperations") List<Operation> currentOperations) {
-        this.artefact = artefact;
-        this.artefactHash = artefactHash;
-        this.countByStatus = countByStatus;
+        super(artefact, artefactHash, countByStatus, singleInstanceReportNode, bucketsByStatus, currentOperations);
         this.children = children;
         this.parentSource = parentSource;
-        this.singleInstanceReportNode = singleInstanceReportNode;
-        this.bucketsByStatus = bucketsByStatus;
-        this.currentOperations = currentOperations;
-    }
-
-    public long countTotal() {
-        return countByStatus.values().stream().reduce(Long::sum).orElse(0L);
     }
 
     @Override
@@ -52,7 +36,7 @@ public class AggregatedReportView {
         return stringBuilder.toString();
     }
 
-    private static void recursiveToString(AggregatedReportView node, int level, StringBuilder stringBuilder) {
+    private void recursiveToString(AggregatedReportView node, int level, StringBuilder stringBuilder) {
         //String name = node.artefact.getClass().getSimpleName();
         String name = node.artefact.getAttribute(AbstractOrganizableObject.NAME);
         String indentation = " ".repeat(level);
@@ -84,18 +68,4 @@ public class AggregatedReportView {
         }
     }
 
-    public static StringBuffer getStatusCountDetails(AggregatedReportView node) {
-        StringBuffer stringBuffer = new StringBuffer();
-        long totalCount = node.countTotal();
-        stringBuffer.append(totalCount).append("x");
-        if (totalCount > 0) {
-            stringBuffer.append(": ");
-            if (node.countByStatus.size() == 1) {
-                stringBuffer.append(node.countByStatus.keySet().stream().findFirst().orElseThrow(() -> new RuntimeException("No statuses found")));
-            } else {
-                stringBuffer.append(node.countByStatus.entrySet().stream().map(entry -> entry.getValue() + " " + entry.getKey()).collect(Collectors.joining(", ")));
-            }
-        }
-        return stringBuffer;
-    }
 }

@@ -291,7 +291,7 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 		}
 	}
 
-	@Operation(description = "Returns an flat aggregated report view for the provided execution and aggregation parameters.")
+	@Operation(description = "Returns a flat aggregated report view for the provided execution and aggregation parameters.")
 	@POST
 	@Path("/{id}/report/aggregated/flat")
 	@Consumes(MediaType.APPLICATION_JSON)
