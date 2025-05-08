@@ -44,8 +44,6 @@ public abstract class AbstractAggregatedReportView {
         StringBuilder stringBuilder = new StringBuilder();
         //String name = node.artefact.getClass().getSimpleName();
         String name = artefact.getAttribute(AbstractOrganizableObject.NAME);
-        String indentation = " ";
-        stringBuilder.append(indentation);
         stringBuilder.append(name).append(": ").append(getStatusCountDetails(this));
         //Print report for single instance
         if (singleInstanceReportNode != null) {
