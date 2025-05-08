@@ -44,9 +44,10 @@ import step.plugins.parametermanager.ParameterManagerPlugin;
 import step.repositories.ArtifactRepositoryConstants;
 import step.resources.ResourceManagerControllerPlugin;
 
-@Plugin(dependencies = {ObjectHookControllerPlugin.class, ResourceManagerControllerPlugin.class, FunctionControllerPlugin.class, AutomationPackageSchedulerPlugin.class})
 import java.io.File;
 
+import static step.automation.packages.AutomationPackageLocks.AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS;
+import static step.automation.packages.AutomationPackageLocks.AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS_DEFAULT;
 import static step.automation.packages.execution.RepositoryWithAutomationPackageSupport.CONFIGURATION_MAVEN_FOLDER;
 import static step.automation.packages.execution.RepositoryWithAutomationPackageSupport.DEFAULT_MAVEN_FOLDER;
 
