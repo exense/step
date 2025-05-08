@@ -93,9 +93,6 @@ public class AutomationPackageSchedulerHook implements AutomationPackageHook<Exe
                     targetStaging.getPlans()
             );
 
-            // validate the cron expression to avoid failures on 'onCreate' hook, when the AP is already partially persisted
-            validateCronExpressions(preparedForStaging, apContext);
-
             targetStaging.getAdditionalObjects().put(
                     AutomationPackageSchedule.FIELD_NAME_IN_AP,
                     preparedForStaging
@@ -153,6 +150,11 @@ public class AutomationPackageSchedulerHook implements AutomationPackageHook<Exe
             execTaskParameters.setExecutionsParameters(executionParameters);
             completeExecTasksParameters.add(execTaskParameters);
         }
+
+        // IMPORTANT: validate parameters BEFORE reusing old ids, because within 'validateCronExpressions' we create and remove temporary calendar in db
+        // validate the cron expression to avoid failures on 'onCreate' hook, when the AP is already partially persisted
+        validateCronExpressions(completeExecTasksParameters, packageContext);
+
         Entity.reuseOldIds(completeExecTasksParameters, oldPackage != null ? getPackageSchedules(oldPackage.getId(), packageContext) : new ArrayList<>());
         completeExecTasksParameters.forEach(packageContext.getEnricher());
         return completeExecTasksParameters;
