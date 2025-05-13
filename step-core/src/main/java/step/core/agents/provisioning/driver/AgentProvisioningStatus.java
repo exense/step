@@ -19,14 +19,21 @@
 
 package step.core.agents.provisioning.driver;
 
+import step.core.accessors.AbstractIdentifiableObject;
 import step.core.agents.provisioning.AgentProvisioningReport;
 
-public class AgentProvisioningStatus {
+public class AgentProvisioningStatus extends AbstractIdentifiableObject {
 
+    public static String AGENT_PROVISIONING_STATUS_ENTITY_NAME = "agentProvisioningStatuses";
+    public static String AGENT_PROVISIONING_STATUS_ID_CUSTOM_FIELD = "AgentProvisioningStatusID";
+
+    public String executionId;
     public String statusDescription;
     public boolean completed = false;
 
     public AgentProvisioningError error;
     public AgentProvisioningReport provisioningReport;
 
+    public AgentProvisioningStatus() {
+    }
 }
