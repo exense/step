@@ -33,6 +33,8 @@ import java.util.regex.Pattern;
 
 public class TokenSelectionCriteriaMapBuilder {
 
+	public static String SKIP_AUTO_PROVISIONING = "$skip_auto_provisioning";
+
 	private static final String ROUTE_TO = "route_to_";
 
 	private final FunctionTypeRegistry functionTypeRegistry;
@@ -48,6 +50,12 @@ public class TokenSelectionCriteriaMapBuilder {
 	}
 
 	public Map<String, Interest> buildSelectionCriteriaMap(CallFunction callFunction, Function function, FunctionGroupHandler.FunctionGroupContext functionGroupContext, Map<String, Object> bindings) {
+		Map<String, Interest> allSelectionCriteria = _buildSelectionCriteriaMap(callFunction, function, functionGroupContext, bindings);
+		allSelectionCriteria.remove(SKIP_AUTO_PROVISIONING);
+		return allSelectionCriteria;
+	}
+
+	private Map<String, Interest> _buildSelectionCriteriaMap(CallFunction callFunction, Function function, FunctionGroupHandler.FunctionGroupContext functionGroupContext, Map<String, Object> bindings) {
 		Map<String, Interest> selectionCriteria = new HashMap<>();
 
 		// Criteria from CallFunction Artefact
@@ -99,4 +107,8 @@ public class TokenSelectionCriteriaMapBuilder {
 		return addtionalSelectionCriteria;
 	}
 
+	public boolean shouldSkipAutoProvisioning(CallFunction testArtefact, Function function, FunctionGroupHandler.FunctionGroupContext functionGroupContext, Map<String, Object> bindings) {
+		Interest interest = _buildSelectionCriteriaMap(testArtefact, function, functionGroupContext, bindings).get(SKIP_AUTO_PROVISIONING);
+		return (interest != null && interest.getSelectionPattern().pattern().equals(Boolean.TRUE.toString()));
+	}
 }

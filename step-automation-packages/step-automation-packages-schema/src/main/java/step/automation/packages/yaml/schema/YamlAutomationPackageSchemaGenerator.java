@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.json.JsonObjectBuilder;
 import jakarta.json.spi.JsonProvider;
+import step.automation.packages.model.AutomationPackageKeyword;
 import step.plans.automation.AutomationPackagePlainTextPlanJsonSchema;
 import step.parameter.automation.AutomationPackageParameterJsonSchema;
 import step.core.Version;
@@ -31,6 +32,7 @@ import step.automation.packages.schema.AutomationPackageJsonSchemaExtension;
 import step.core.yaml.schema.JsonSchemaExtension;
 import step.core.yaml.schema.YamlJsonSchemaHelper;
 import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
+import step.plans.parser.yaml.YamlPlan;
 import step.plans.parser.yaml.model.YamlPlanVersions;
 import step.plans.parser.yaml.schema.YamlPlanJsonSchemaGenerator;
 
@@ -112,12 +114,12 @@ public class YamlAutomationPackageSchemaGenerator {
 
         // TODO: split keyword and plans definitions
         JsonObjectBuilder builder = jsonProvider.createObjectBuilder();
-        objectBuilder.add("keywords",
+        objectBuilder.add(AutomationPackageKeyword.KEYWORDS_ENTITY_NAME,
                 jsonProvider.createObjectBuilder()
                         .add("type", "array")
                         .add("items", YamlJsonSchemaHelper.addRef(builder, YamlKeywordSchemaGenerator.KEYWORD_DEF)));
 
-        objectBuilder.add("plans",
+        objectBuilder.add(YamlPlan.PLANS_ENTITY_NAME,
                 jsonProvider.createObjectBuilder()
                         .add("type", "array")
                         .add("items", YamlJsonSchemaHelper.addRef(jsonProvider.createObjectBuilder(), YamlJsonSchemaHelper.PLAN_DEF))

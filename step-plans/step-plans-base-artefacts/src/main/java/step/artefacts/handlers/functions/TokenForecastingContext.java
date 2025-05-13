@@ -188,18 +188,22 @@ public class TokenForecastingContext {
             private final ConcurrentHashMap<String, Key> tokens = new ConcurrentHashMap<>();
 
             @Override
-            public TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests, boolean createSession, TokenWrapperOwner tokenWrapperOwner) {
+            public TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests, boolean createSession, TokenWrapperOwner tokenWrapperOwner, boolean skipAutoProvisioning) {
                 Key pool;
                 TokenWrapper tokenWrapper;
-                try {
-                    pool = TokenForecastingContext.this.requireToken(interests, 1);
-                    tokenWrapper = newTokenWrapper(false, pool);
-                    // Keep track of the pool associated to this token. We need this information in the release() method
-                    tokens.put(tokenWrapper.getID(), pool);
-                } catch (NoMatchingTokenPoolException e) {
-                    // No token pool matches the selection criteria. Keep track of these criteria
-                    reportFailedSelection(interests);
+                if (skipAutoProvisioning) {
                     tokenWrapper = newTokenWrapper(false, null);
+                } else {
+                    try {
+                        pool = TokenForecastingContext.this.requireToken(interests, 1);
+                        tokenWrapper = newTokenWrapper(false, pool);
+                        // Keep track of the pool associated to this token. We need this information in the release() method
+                        tokens.put(tokenWrapper.getID(), pool);
+                    } catch (NoMatchingTokenPoolException e) {
+                        // No token pool matches the selection criteria. Keep track of these criteria
+                        reportFailedSelection(interests);
+                        tokenWrapper = newTokenWrapper(false, null);
+                    }
                 }
                 return tokenWrapper;
             }
