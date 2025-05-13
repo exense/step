@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.automation.packages.accessor.AutomationPackageAccessor;
 import step.automation.packages.accessor.InMemoryAutomationPackageAccessorImpl;
+import step.automation.packages.model.AutomationPackageKeyword;
 import step.commons.activation.Expression;
 import step.core.AbstractStepContext;
 import step.core.accessors.AbstractOrganizableObject;
@@ -58,6 +59,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import static step.automation.packages.AutomationPackageArchive.METADATA_FILES;
+import static step.plans.parser.yaml.YamlPlan.PLANS_ENTITY_NAME;
 
 public class AutomationPackageManager {
 
@@ -442,7 +444,6 @@ public class AutomationPackageManager {
                         try {
                             updateAutomationPackage(oldPackage, finalNewPackage, packageContent, staging, enricherForIncludedEntities, false, automationPackageArchive);
                         } catch (Exception e) {
-                            handleExceptionOnPackageUpdate(finalNewPackage);
                             log.error("Exception on delayed AP update", e);
                         }
                     });
@@ -454,9 +455,29 @@ public class AutomationPackageManager {
                 }
             }
         } catch (Exception ex) {
-            handleExceptionOnPackageUpdate(newPackage);
             throw ex;
         }
+    }
+
+    /**
+     * @return all DB entities linked with the automation package
+     */
+    public Map<String, List<? extends AbstractOrganizableObject>> getAllEntities(ObjectId automationPackageId) {
+        Map<String, List<? extends AbstractOrganizableObject>> result = new HashMap<>();
+        List<Plan> packagePlans = getPackagePlans(automationPackageId);
+        result.put(PLANS_ENTITY_NAME, packagePlans);
+        List<Function> packageFunctions = getPackageFunctions(automationPackageId);
+        result.put(AutomationPackageKeyword.KEYWORDS_ENTITY_NAME, packageFunctions);
+        List<String> allHooksNames = automationPackageHookRegistry.getOrderedHookFieldNames();
+        for (String hookName : allHooksNames) {
+            AutomationPackageHook<?> hook = automationPackageHookRegistry.getHook(hookName);
+            result.putAll(hook.getEntitiesForAutomationPackage(
+                            automationPackageId,
+                            new AutomationPackageContext(operationMode, resourceManager, null, null, null, extensions)
+                    )
+            );
+        }
+        return result;
     }
 
     private ObjectId updateAutomationPackage(AutomationPackage oldPackage, AutomationPackage newPackage,
@@ -485,20 +506,6 @@ public class AutomationPackageManager {
             //Clear delayed status
             newPackage.setStatus(null);
             automationPackageAccessor.save(newPackage);
-        }
-    }
-
-    private void handleExceptionOnPackageUpdate(AutomationPackage automationPackage) {
-        // cleanup created resources
-        try {
-            if (automationPackage != null) {
-                List<Resource> resources = resourceManager.findManyByCriteria(AutomationPackageEntity.getAutomationPackageIdCriteria(automationPackage.getId()));
-                for (Resource resource : resources) {
-                    resourceManager.deleteResource(resource.getId().toString());
-                }
-            }
-        } catch (Exception e) {
-            log.warn("Cannot cleanup resource", e);
         }
     }
 

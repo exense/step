@@ -40,15 +40,15 @@ import step.framework.server.tables.TableRegistry;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.manager.FunctionManager;
 import step.functions.plugin.FunctionControllerPlugin;
-import step.functions.type.FunctionTypeRegistry;
 import step.resources.ResourceManagerControllerPlugin;
+
+import static step.automation.packages.AutomationPackageLocks.AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS;
+import static step.automation.packages.AutomationPackageLocks.AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS_DEFAULT;
 
 @Plugin(dependencies = {ObjectHookControllerPlugin.class, ResourceManagerControllerPlugin.class, FunctionControllerPlugin.class, AutomationPackageSchedulerPlugin.class})
 public class AutomationPackagePlugin extends AbstractControllerPlugin {
 
     private static final Logger log = LoggerFactory.getLogger(AutomationPackagePlugin.class);
-    public static final String AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS = "automationPackage.lock.read.timeout.secs";
-    public static final int AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS_DEFAULT = 600;
     protected AutomationPackageLocks automationPackageLocks;
 
     @Override

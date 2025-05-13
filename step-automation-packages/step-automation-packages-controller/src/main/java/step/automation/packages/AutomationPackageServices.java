@@ -30,6 +30,8 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 import step.automation.packages.execution.AutomationPackageExecutor;
 import step.controller.services.async.AsyncTaskStatus;
 import step.core.access.User;
+import step.core.accessors.AbstractOrganizableObject;
+import step.core.deployment.AbstractStepServices;
 import step.core.deployment.AbstractStepAsyncServices;
 import step.core.deployment.ControllerServiceException;
 import step.core.execution.model.AutomationPackageExecutionParameters;
@@ -42,6 +44,7 @@ import step.framework.server.tables.service.bulk.TableBulkOperationRequest;
 import java.io.InputStream;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.Map;
 
 @Path("/automation-packages")
 @Tag(name = "Automation packages")
@@ -260,6 +263,17 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     @Produces(MediaType.APPLICATION_JSON)
     public String getAutomationPackageDescriptorSchema() {
         return automationPackageManager.getDescriptorJsonSchema();
+    }
+
+    @GET
+    @Path("{id}/entities")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Map<String, List<? extends AbstractOrganizableObject>> listEntities(@PathParam("id") String id){
+        try {
+            return automationPackageManager.getAllEntities(new ObjectId(id));
+        } catch (AutomationPackageManagerException e) {
+            throw new ControllerServiceException(e.getMessage());
+        }
     }
 
     @POST
